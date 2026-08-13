@@ -1,0 +1,30 @@
+schema: spec-driven
+
+context: |
+  Skills Gateway: an enterprise gateway for git-distributed AI agent skill
+  marketplaces (Claude Code plugins, Copilot, Cursor). Canonical design:
+  ARCHITECTURE.md in the repo root; decisions in docs/decisions/ (ADRs).
+  Tech stack: Java 25+, Spring Boot 4, Maven (wrapper, Nisse git-based
+  versioning), JGit from day 1 (embedded upload-pack; no subprocess git),
+  JdbcClient + Flyway + PostgreSQL (no JPA), GraalVM native-image as a
+  release profile, Spotless (palantir-java-format) + Checkstyle.
+  Auth: OIDC (OAuth2) browser login for the web portal + hashed PATs for
+  git clients; the app is its own BFF (tokens never reach the browser).
+  Requirements traceability: reqstool (SSOT in docs/reqstool/, config in
+  .reqstool-ai.yaml, URN skills-gateway, prefixes GW_ / SVC_GW_).
+  We use Conventional Commits with DCO sign-off (git commit -s).
+
+rules:
+  proposal:
+    - Reference reqstool requirement IDs when applicable
+    - Keep proposals focused on a single capability
+  specs:
+    - "reqstool is SSOT: NEVER duplicate requirement text or GIVEN/WHEN/THEN scenarios"
+    - "Follow conventions in the reqstool-openspec skill conventions"
+    - "Use ### Requirement: <ID> with 'The system SHALL implement <ID>.'"
+    - "Use #### Scenario: <SVC_ID> with 'The system SHALL pass <SVC_ID>.'"
+    - "IDs only — no file paths. Use reqstool CLI to look up details."
+    - "Validate with: openspec validate --all --strict"
+  tasks:
+    - Include the reqstool SVC IDs that the task covers
+    - Include tasks for adding @Requirements/@SVCs annotations alongside the implementation and test tasks they belong to

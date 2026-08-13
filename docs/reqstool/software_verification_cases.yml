@@ -1,0 +1,102 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/reqstool/reqstool-client/main/src/reqstool/resources/schemas/v1/software_verification_cases.schema.json
+
+cases:
+  - id: SVC_GW_0001
+    requirement_ids: ["GW_0001"]
+    title: Register a marketplace via the admin interface
+    verification: automated-test
+    description: |
+      GIVEN a running gateway with no registered marketplaces
+      WHEN an administrator registers a marketplace clone URL
+      THEN the marketplace is listed as registered with that URL
+    revision: "0.1.0"
+
+  - id: SVC_GW_0002
+    requirement_ids: ["GW_0002"]
+    title: Ingest a marketplace into a held snapshot
+    verification: automated-test
+    description: |
+      GIVEN a registered marketplace whose repository has a valid manifest
+      WHEN ingestion runs
+      THEN a snapshot identified by the upstream head commit SHA exists in state held
+    revision: "0.1.0"
+
+  - id: SVC_GW_0003
+    requirement_ids: ["GW_0003"]
+    title: Reject manifests with external plugin sources
+    verification: automated-test
+    description: |
+      GIVEN a marketplace whose manifest declares a github, url, git-subdir, npm, or archive plugin source
+      WHEN ingestion runs
+      THEN the snapshot is rejected with a policy violation and cannot be approved
+    revision: "0.1.0"
+
+  - id: SVC_GW_0004
+    requirement_ids: ["GW_0004"]
+    title: Upstream changes never alter served content
+    verification: automated-test
+    description: |
+      GIVEN an approved snapshot being served and a new commit pushed upstream
+      WHEN ingestion fetches the update
+      THEN clients still receive the previously approved snapshot and the new snapshot is held
+    revision: "0.1.0"
+
+  - id: SVC_GW_0005
+    requirement_ids: ["GW_0005"]
+    title: Approve a held snapshot with a recorded decision
+    verification: automated-test
+    description: |
+      GIVEN a held snapshot
+      WHEN a reviewer approves it
+      THEN the snapshot state becomes approved and the decision record contains the reviewer identity and timestamp
+    revision: "0.1.0"
+
+  - id: SVC_GW_0006
+    requirement_ids: ["GW_0006"]
+    title: Clone an approved snapshot with a standard git client
+    verification: automated-test
+    description: |
+      GIVEN an approved snapshot
+      WHEN a standard git client clones the facade URL over HTTP
+      THEN the clone succeeds and the content equals the approved snapshot
+    revision: "0.1.0"
+
+  - id: SVC_GW_0007
+    requirement_ids: ["GW_0007"]
+    title: Held content is not fetchable from the facade
+    verification: automated-test
+    description: |
+      GIVEN one approved snapshot and one held snapshot for a marketplace
+      WHEN a git client lists refs and fetches from the facade
+      THEN only the approved refs are advertised and held objects cannot be fetched
+    revision: "0.1.0"
+
+  - id: SVC_GW_0008
+    requirement_ids: ["GW_0008"]
+    title: Every facade fetch is audit-logged
+    verification: automated-test
+    description: |
+      GIVEN the facade is serving an approved snapshot
+      WHEN a client fetches from it
+      THEN an audit record with source address, repository, ref, commit SHA, and timestamp is appended
+    revision: "0.1.0"
+
+  - id: SVC_GW_0009
+    requirement_ids: ["GW_0009"]
+    title: Provenance of an approved snapshot is retrievable
+    verification: automated-test
+    description: |
+      GIVEN an approved snapshot
+      WHEN its provenance is queried
+      THEN the upstream URL, upstream commit SHA, approver, and approval timestamp are returned
+    revision: "0.1.0"
+
+  - id: SVC_GW_0010
+    requirement_ids: ["GW_0010"]
+    title: List marketplaces and snapshot states via the admin interface
+    verification: automated-test
+    description: |
+      GIVEN a gateway with registered marketplaces and snapshots in different states
+      WHEN an administrator lists them via the administrative HTTP interface
+      THEN all marketplaces and their snapshots are returned with their states
+    revision: "0.1.0"

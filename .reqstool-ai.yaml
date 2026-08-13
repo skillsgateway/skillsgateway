@@ -1,0 +1,22 @@
+# reqstool-ai configuration
+#
+# This file tells reqstool-ai skills where to find your reqstool files
+# and how to generate IDs for new requirements and SVCs.
+
+# Project URN — matches the urn in your reqstool YAML files
+urn: skills-gateway
+
+# Revision string for new requirements and SVCs
+revision: "0.1.0"
+
+# System-level reqstool directory (contains the SSOT requirements and SVCs)
+system:
+  path: docs/reqstool
+
+# Single-module project: the gateway service shares the system reqstool dir
+# (split into system + per-service modules when more services are added)
+modules:
+  gateway:
+    path: docs/reqstool
+    req_prefix: GW_
+    svc_prefix: SVC_GW_
