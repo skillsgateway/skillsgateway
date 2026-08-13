@@ -50,6 +50,17 @@ framework preference.
   ESLint as edit-time gates.
 - **Baseline discipline:** visual snapshots are only updated when the UI
   change is intentional; baseline diffs are what the human reviews.
+- **Design-quality channel: Impeccable** (impeccable.style — design
+  commands, automated "slop" checks, `DESIGN.md`; Claude Code-native,
+  inherits existing tokens/components). Adopt **at portal-start, pinned**.
+  It fills the one gap the harness leaves open: baselines catch
+  *regressions* but cannot judge whether a design was ever good. Loop
+  position: implement → Playwright verify → slop check + `/audit` →
+  only then update visual baselines. `DESIGN.md` becomes the portal's
+  in-repo design contract alongside the UI-engineering skill. Advisory
+  quality signal on top of the hard gates (axe/Playwright), never a
+  substitute for them, and workflow tooling only — never a product
+  dependency.
 
 ### Contracts and rules — no second spec system
 
