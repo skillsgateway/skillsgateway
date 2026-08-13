@@ -86,3 +86,35 @@ requirements:
     rationale: Administrators need a single operational surface; this interface is the seed of the portal.
     categories: ["functional-suitability", "interaction-capability"]
     revision: 0.1.0
+
+  - id: GW_0011
+    title: Web authentication via OIDC
+    significance: shall
+    description: The system shall require an authenticated OIDC (OAuth2) session for all web and administrative HTTP interface access; unauthenticated requests shall be redirected to the identity provider for login.
+    rationale: Enterprise SSO is OIDC-only by decision (ADR 0002); the app acts as its own BFF so tokens never reach the browser.
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0012
+    title: Git client authentication via personal access tokens
+    significance: shall
+    description: The system shall require personal access token authentication on the git facade and shall reject unauthenticated or invalid-token fetches; the authenticated identity shall be recorded in the fetch audit log.
+    rationale: Git clients cannot perform interactive OIDC; token auth over the standard credential-helper flow is the only workable mechanism, and it upgrades the audit ledger from IP-level to identity-level (GW_0008).
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0013
+    title: Personal access token management
+    significance: shall
+    description: The system shall allow an authenticated user to create and revoke personal access tokens; tokens shall be stored only as cryptographic hashes and the cleartext value shall be shown exactly once at creation.
+    rationale: Tokens are credentials; hash-at-rest and show-once are the baseline expected of an enterprise security product.
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0014
+    title: SBOM endpoint
+    significance: shall
+    description: The system shall expose its own CycloneDX software bill of materials over an HTTP endpoint.
+    rationale: A supply-chain security product should demonstrate supply-chain transparency for itself; Security teams can inventory the gateway with the same tooling the gateway advocates.
+    categories: ["security", "maintainability"]
+    revision: 0.1.0

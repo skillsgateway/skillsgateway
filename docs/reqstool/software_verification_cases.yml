@@ -100,3 +100,43 @@ cases:
       WHEN an administrator lists them via the administrative HTTP interface
       THEN all marketplaces and their snapshots are returned with their states
     revision: "0.1.0"
+
+  - id: SVC_GW_0011
+    requirement_ids: ["GW_0011"]
+    title: Web access requires an OIDC session
+    verification: automated-test
+    description: |
+      GIVEN a running gateway configured with an OIDC identity provider
+      WHEN an unauthenticated browser request hits the administrative interface
+      THEN it is redirected to the identity provider login, and the same request with an authenticated session succeeds
+    revision: "0.1.0"
+
+  - id: SVC_GW_0012
+    requirement_ids: ["GW_0012"]
+    title: Git facade requires a valid personal access token
+    verification: automated-test
+    description: |
+      GIVEN an approved snapshot being served
+      WHEN a git client fetches without a token or with a revoked/invalid token, and then with a valid token
+      THEN the unauthenticated fetches are rejected and the valid-token fetch succeeds with the identity recorded in the audit log
+    revision: "0.1.0"
+
+  - id: SVC_GW_0013
+    requirement_ids: ["GW_0013"]
+    title: Tokens are shown once and stored hashed; revocation takes effect
+    verification: automated-test
+    description: |
+      GIVEN an authenticated user
+      WHEN they create a personal access token and later revoke it
+      THEN the cleartext is returned only at creation, only a hash is persisted, and fetches with the revoked token are rejected
+    revision: "0.1.0"
+
+  - id: SVC_GW_0014
+    requirement_ids: ["GW_0014"]
+    title: SBOM endpoint serves the CycloneDX BOM
+    verification: automated-test
+    description: |
+      GIVEN a running gateway built with SBOM generation
+      WHEN the SBOM endpoint is requested
+      THEN a CycloneDX document is returned listing the application's components
+    revision: "0.1.0"
