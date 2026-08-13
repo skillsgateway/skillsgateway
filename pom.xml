@@ -37,15 +37,15 @@
         <checkstyle.version>13.10.0</checkstyle.version>
         <native-plugin.version>1.1.9</native-plugin.version>
         <reqstool-plugin.version>1.0.4</reqstool-plugin.version>
-        <testcontainers.version>2.0.5</testcontainers.version>
+        <arconia.version>0.29.0</arconia.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>org.testcontainers</groupId>
-                <artifactId>testcontainers-bom</artifactId>
-                <version>${testcontainers.version}</version>
+                <groupId>io.arconia</groupId>
+                <artifactId>arconia-bom</artifactId>
+                <version>${arconia.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -116,14 +116,10 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Testcontainers via Arconia Dev Services: Postgres auto-starts in dev/test. -->
         <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers-junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers-postgresql</artifactId>
+            <groupId>io.arconia</groupId>
+            <artifactId>arconia-dev-services-postgresql</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

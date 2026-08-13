@@ -30,6 +30,10 @@ discussion, so the scaffold and the upcoming port have one reference.
   subprocess architecture would pay Java's costs without its payoff.
   Week-1 port task: prove JGit upload-pack inside a native image
   (fallback: Quarkus's official JGit extension).
+- **Dev/test containers: Arconia Dev Services** (`arconia-dev-services-postgresql`,
+  Arconia BOM) — Quarkus-style zero-config Testcontainers: Postgres
+  auto-starts and wires via service connections in dev and test; no manual
+  `@Testcontainers`/`@Container` plumbing.
 - **Data access: JdbcClient + Flyway on PostgreSQL. JPA/Hibernate rejected:**
   supported under native-image but adds build-time enhancement, metadata
   weight, and lazy-proxy edge cases — for a three-table schema it buys
