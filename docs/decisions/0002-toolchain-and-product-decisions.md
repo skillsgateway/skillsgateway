@@ -53,6 +53,15 @@ discussion, so the scaffold and the upcoming port have one reference.
   pattern: browser holds only a session cookie, tokens stay server-side;
   same-origin `/api`). No separate BFF service until more frontends or
   backends exist. SPA framework chosen when portal work starts.
+- **Frontend placement: monorepo, `ui/` top-level directory** — the pattern
+  of comparable single-product infra (Keycloak's `js/` admin/account UIs in
+  the server monorepo; agentgateway's `ui/` beside its Rust crates; Gitea,
+  Grafana likewise). Maven orchestrates the SPA build
+  (frontend-maven-plugin pinning node/pnpm) and bundles the output into the
+  jar's static resources, so `./mvnw package` still yields **one
+  deployable** (native image included). Dev loop: Vite dev server proxying
+  `/api` to the running app. If the build graph grows, promote to a Maven
+  multi-module (`server/`, `ui/`) — the layout anticipates that split.
 - **Maven coordinates:** `io.github.jimisola.skillsgateway:skills-gateway`.
 
 ## Consequences
