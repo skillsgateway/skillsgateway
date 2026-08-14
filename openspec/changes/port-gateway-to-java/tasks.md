@@ -67,5 +67,5 @@
 
 ## 11. Native spike and traceability closure
 
-- [ ] 11.1 GraalVM native spike: `./mvnw -Pnative native:compile` + smoke clone against the native binary; record outcome (and any reachability metadata added) in ADR 0002
-- [ ] 11.2 Full verification: `./mvnw verify` green; `reqstool status local -p docs/reqstool` = 14/14 PASS; `openspec validate --all --strict` passes
+- [x] 11.1 GraalVM native spike: `./mvnw -Pnative native:compile` + smoke clone against the native binary; record outcome (and any reachability metadata added) in ADR 0002
+- [x] 11.2 Full verification: `./mvnw verify` green; `reqstool status local -p docs/reqstool` = 14/14 PASS; `openspec validate --all --strict` passes

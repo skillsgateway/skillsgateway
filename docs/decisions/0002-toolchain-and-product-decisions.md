@@ -68,6 +68,15 @@ discussion, so the scaffold and the upcoming port have one reference.
 
 - The scaffold (this branch) wires all of the above with a minimal
   compilable application and one sanity test.
+- **Native spike outcome (2026-08-14, resolved):** JGit upload-pack inside
+  a GraalVM CE 25 native image works out of the box — no reachability
+  metadata needed. Smoke-verified end to end: 0.3 s startup, Flyway
+  migrated, real `git clone` through PAT auth delivered the approved
+  commit, audit ledger populated. One AOT lesson encoded in
+  application.yaml: property-conditional beans are fixed at build time,
+  so the OAuth2 client registration ships with env-overridable defaults
+  (`SGW_OIDC_*`) rather than being supplied purely at runtime. The
+  Quarkus fallback clause is retired.
 - Next change: `port-gateway-to-java` — JGit-based ingestion/approval/façade
   against the existing GW_*/SVC_GW_* contract, auth requirements GW_0011+,
   and a storage seam JGit-DFS can implement later (local disk in v1,
