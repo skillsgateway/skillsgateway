@@ -143,3 +143,43 @@ requirements:
     rationale: Allowing consumers to choose refs would bypass the vetting pipeline's single-lineage guarantee (one quarantined default-branch history per marketplace) and reopen the mutable-ref rug-pull surface (threat T3).
     categories: ["security"]
     revision: 0.1.0
+
+  - id: GW_0018
+    title: Portal marketplace and snapshot administration
+    significance: shall
+    description: The system shall provide a browser portal, served by the gateway itself behind the OIDC session, where an administrator can register marketplaces, trigger ingestion, list snapshots with their states, and approve or reject held snapshots.
+    rationale: The administrative interface (GW_0010) needs a human-usable surface; serving the portal from the gateway keeps the app its own BFF (ADR 0002) so tokens never reach the browser.
+    categories: ["functional-suitability", "interaction-capability"]
+    revision: 0.1.0
+
+  - id: GW_0019
+    title: Portal token self-service
+    significance: shall
+    description: The system shall provide a portal page where an authenticated user can create and revoke personal access tokens, with the cleartext value shown exactly once at creation.
+    rationale: Token lifecycle (GW_0013) must be usable without raw HTTP calls; show-once in the UI preserves the hash-at-rest guarantee end to end.
+    categories: ["functional-suitability", "security"]
+    revision: 0.1.0
+
+  - id: GW_0020
+    title: Snapshot content inventory
+    significance: shall
+    description: The system shall expose, for any snapshot, the plugins declared by its marketplace manifest and the skills found under each plugin's source tree.
+    rationale: Reviewers must see what a snapshot actually ships before approving it, and future per-plugin or per-skill limiting needs this inventory as its policy surface.
+    categories: ["functional-suitability", "security"]
+    revision: 0.1.0
+
+  - id: GW_0021
+    title: Forge metadata at registration
+    significance: should
+    description: On registration of a marketplace hosted on a supported forge (GitHub, GitLab, Bitbucket Cloud, Bitbucket Server/Data Center, Azure DevOps, Gitea/Forgejo), the system should retrieve and store the project name, description, and last upstream update time; registration shall succeed regardless of whether the lookup does.
+    rationale: Forge metadata gives administrators provenance context at a glance; being best-effort keeps registration independent of forge availability.
+    categories: ["functional-suitability"]
+    revision: 0.2.0
+
+  - id: GW_0022
+    title: Administrative actions are audit-logged
+    significance: shall
+    description: The system shall append administrative actions — marketplace registration, snapshot ingestion, approval decisions, and token creation/revocation — to the append-only audit ledger with the acting identity and timestamp.
+    rationale: Compliance questions cover who changed the governance state, not only who fetched content; one ledger answers both.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0

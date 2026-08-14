@@ -24,13 +24,26 @@ jobs:
           java-version: '25'
           cache: maven
 
-      - name: Build and test (includes Spotless, Checkstyle, SBOM, reqstool annotations)
+      # Storybook story tests (inside mvnw verify) and the e2e suite run in real
+      # chromium, so browsers must exist before the Maven build.
+      - name: Install UI dependencies and Playwright chromium
+        working-directory: ui
+        run: |
+          corepack enable pnpm
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+
+      - name: Build and test (Java + UI gates, packaged jar)
         run: ./mvnw --batch-mode verify
+
+      - name: Portal e2e (real login via mock OIDC IdP)
+        working-directory: ui
+        run: pnpm e2e
 
       - name: Install reqstool CLI
         run: pipx install reqstool
 
-      - name: Requirements traceability gate
+      - name: Requirements traceability gate (backend + portal results)
         run: |
           reqstool status local -p docs/reqstool | tee reqstool-status.txt
           grep -q '· PASS$' reqstool-status.txt
@@ -47,3 +60,13 @@ jobs:
           name: sbom-cyclonedx
           path: target/classes/META-INF/sbom/application.cdx.json
           if-no-files-found: error
+
+      - name: Upload e2e artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-artifacts
+          path: |
+            ui/test-results
+            ui/playwright-report
+          if-no-files-found: ignore

@@ -20,11 +20,18 @@ of the full loop lives in the sibling `skills-gateway-python-mvp` repository.
 ## Build and run locally
 
 ```bash
-./mvnw verify                                # tests + quality gates (needs Docker)
+./mvnw verify                                # Java + portal gates, packaged jar (needs Docker)
+(cd ui && pnpm e2e)                          # portal e2e: real browser + mock OIDC login
+reqstool status local -p docs/reqstool       # traceability gate (after the two above)
 ./mvnw -Pnative -DskipTests package          # GraalVM native binary (needs GraalVM CE 25)
 docker build -t skills-gateway:local .       # OCI image from the native binary
 docker compose up                            # gateway + PostgreSQL on :8080
 ```
+
+The admin portal (React/Vite, `ui/`) is built inside `./mvnw verify` and served
+from the jar at `/` behind the OIDC login. Portal development: `cd ui && pnpm dev`
+(proxies `/api` to a locally running gateway), `pnpm test` (vitest + Storybook
+story tests with axe), `pnpm storybook` for the component workbench.
 
 The API is documented with springdoc: `/v3/api-docs` (OpenAPI 3) and
 `/swagger-ui.html` (UI), behind the OIDC login like the rest of the web
