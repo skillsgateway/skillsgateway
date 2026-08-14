@@ -36,3 +36,13 @@
 ## 6. Verification
 
 - [x] 6.1 `./mvnw verify` (incl. UI gates) green; `reqstool status local -p docs/reqstool` 19/19 PASS after e2e results; `openspec validate --all --strict`
+
+## 7. Owner-directed iteration (Scalar, inventory, forge metadata, restyle)
+
+- [x] 7.1 Replace Swagger UI with Scalar at /docs (com.scalar.maven:scalar, purple theme); springdoc -api artifact only
+- [x] 7.2 Enrich OpenAPI: @Tag/@Operation/@ApiResponse on all endpoints, expanded @OpenAPIDefinition
+- [x] 7.3 GW_0020 snapshot content inventory: /api/snapshots/{id}/content + SnapshotContentService + SVC_GW_0020 test; detail page shows plugins/skills
+- [x] 7.4 GW_0021 forge metadata (GitHub/GitLab/Gitea, best effort): V2 migration, ForgeMetadataService, SVC_GW_0021 test with fake forge
+- [x] 7.5 Restyle to agentgateway-inspired layout: grouped sidebar nav, purple accent, breadcrumb bar, dark-mode toggle (next-themes), overview page, marketplace detail route
+- [x] 7.6 dev-insecure-auth toggle (off by default) for local UI work; DevAuthTests
+- [x] 7.7 Fix annotations merge to read per-source-set processor outputs (clean builds)

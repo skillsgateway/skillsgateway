@@ -9,7 +9,24 @@ import { parse, stringify } from "yaml";
 
 const uiDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const repoRoot = path.dirname(uiDir);
-const javaFile = path.join(repoRoot, "target", "reqstool", "annotations.yml");
+// The Java annotation processor writes one file per source set at compile time;
+// the reqstool-maven-plugin's own merged file only exists from the package phase on.
+const javaMainFile = path.join(
+  repoRoot,
+  "target",
+  "generated-sources",
+  "annotations",
+  "resources",
+  "annotations.yml",
+);
+const javaTestFile = path.join(
+  repoRoot,
+  "target",
+  "generated-test-sources",
+  "test-annotations",
+  "resources",
+  "annotations.yml",
+);
 const tsFile = path.join(uiDir, "reqstool", "annotations.yml");
 const outFile = path.join(repoRoot, "target", "reqstool", "annotations-combined.yml");
 
@@ -28,23 +45,23 @@ function mergeSection(a = {}, b = {}) {
   return merged;
 }
 
-const java = load(javaFile);
-const ts = load(tsFile);
-
-if (!fs.existsSync(javaFile)) {
-  console.error(`missing ${javaFile} — run the Java build first`);
+if (!fs.existsSync(javaMainFile)) {
+  console.error(`missing ${javaMainFile} — run the Java build first`);
   process.exit(1);
 }
 
-const combined = {
-  requirement_annotations: {
-    implementations: mergeSection(
-      java.requirement_annotations?.implementations,
-      ts.requirement_annotations?.implementations,
-    ),
-    tests: mergeSection(java.requirement_annotations?.tests, ts.requirement_annotations?.tests),
-  },
-};
+const combined = { requirement_annotations: { implementations: {}, tests: {} } };
+for (const file of [javaMainFile, javaTestFile, tsFile]) {
+  const part = load(file);
+  combined.requirement_annotations.implementations = mergeSection(
+    combined.requirement_annotations.implementations,
+    part.requirement_annotations?.implementations,
+  );
+  combined.requirement_annotations.tests = mergeSection(
+    combined.requirement_annotations.tests,
+    part.requirement_annotations?.tests,
+  );
+}
 
 fs.mkdirSync(path.dirname(outFile), { recursive: true });
 fs.writeFileSync(

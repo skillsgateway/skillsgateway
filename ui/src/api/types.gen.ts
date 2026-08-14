@@ -29,6 +29,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /**
+         * Reject a held snapshot
+         * @description Marks the snapshot rejected with the reviewer identity and timestamp; its content is never served.
+         */
         post: operations["reject"];
         delete?: never;
         options?: never;
@@ -45,6 +49,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /**
+         * Approve a held snapshot
+         * @description Publishes the snapshot to the git facade and records the reviewer identity and timestamp. Only held snapshots can be approved.
+         */
         post: operations["approve"];
         delete?: never;
         options?: never;
@@ -59,8 +67,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * List marketplaces and their snapshots
+         * @description All registered marketplaces with every snapshot and its state (held, approved, or rejected).
+         */
         get: operations["listMarketplaces"];
         put?: never;
+        /**
+         * Register a marketplace
+         * @description Registers an upstream git skill marketplace by clone URL. The URL scheme must be on the configured allowlist (default http/https). The ingested ref is set by the gateway (the upstream default branch) and cannot be overridden; a request supplying any other ref is rejected.
+         */
         post: operations["registerMarketplace"];
         delete?: never;
         options?: never;
@@ -77,7 +93,43 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /**
+         * Ingest the upstream default branch
+         * @description Fetches the marketplace's upstream default branch into quarantine and records an immutable snapshot pinned to the upstream commit SHA. The snapshot is held until a reviewer approves it; manifests declaring non-local plugin sources are rejected.
+         */
         post: operations["ingest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/docs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getDocs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/docs/scalar.js": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getScalarJs"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -91,7 +143,31 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * Snapshot provenance
+         * @description What was served, from where, and who approved it: upstream URL, upstream commit SHA, state, reviewer, and timestamps.
+         */
         get: operations["provenance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Snapshot content inventory
+         * @description The plugins declared by the snapshot's marketplace manifest and the skills found under each plugin's source tree — the basis for future per-plugin/per-skill limiting.
+         */
+        get: operations["snapshotContent"];
         put?: never;
         post?: never;
         delete?: never;
@@ -107,6 +183,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * Current user
+         * @description Username of the authenticated browser session.
+         */
         get: operations["me"];
         put?: never;
         post?: never;
@@ -123,6 +203,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * Fetch audit ledger
+         * @description Append-only record of every git facade fetch: client source address, authenticated identity, repository, ref, commit SHA, and timestamp. Portal actions are not in this ledger; approvals live in snapshot provenance.
+         */
         get: operations["audit"];
         put?: never;
         post?: never;
@@ -189,6 +273,11 @@ export interface components {
             url?: string;
             /** Format: date-time */
             createdAt?: string;
+            forge?: string;
+            forgeProject?: string;
+            description?: string;
+            /** Format: date-time */
+            upstreamUpdatedAt?: string;
         };
         TokenView: {
             /** Format: int64 */
@@ -213,6 +302,23 @@ export interface components {
             /** Format: date-time */
             decidedAt?: string;
         };
+        PluginContent: {
+            name?: string;
+            description?: string;
+            source?: string;
+            skills?: components["schemas"]["SkillInfo"][];
+        };
+        SkillInfo: {
+            name?: string;
+            path?: string;
+        };
+        SnapshotContent: {
+            /** Format: int64 */
+            snapshotId?: number;
+            sha?: string;
+            state?: string;
+            plugins?: components["schemas"]["PluginContent"][];
+        };
         MarketplaceView: {
             /** Format: int64 */
             id?: number;
@@ -220,6 +326,11 @@ export interface components {
             url?: string;
             /** Format: date-time */
             createdAt?: string;
+            forge?: string;
+            forgeProject?: string;
+            description?: string;
+            /** Format: date-time */
+            upstreamUpdatedAt?: string;
             snapshots?: components["schemas"]["Snapshot"][];
         };
     };
@@ -286,8 +397,26 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Snapshot rejected */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description Snapshot is not in the held state */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -308,8 +437,26 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Snapshot approved and now served */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description Snapshot is not in the held state */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -352,8 +499,35 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description Marketplace registered */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Marketplace"];
+                };
+            };
+            /** @description Disallowed URL scheme, or a ref other than the default branch */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Marketplace"];
+                };
+            };
+            /** @description A marketplace with that name already exists */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Marketplace"];
+                };
+            };
+            /** @description Invalid marketplace name */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -374,13 +548,71 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description Snapshot recorded (held, or rejected on policy violation) */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description Marketplace not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description Upstream fetch failed */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+        };
+    };
+    getDocs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
             /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Snapshot"];
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    getScalarJs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
                 };
             };
         };
@@ -396,13 +628,53 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Provenance record */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "*/*": components["schemas"]["Provenance"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Provenance"];
+                };
+            };
+        };
+    };
+    snapshotContent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Plugins and skills in the snapshot */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SnapshotContent"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SnapshotContent"];
                 };
             };
         };

@@ -190,3 +190,23 @@ cases:
       WHEN the user creates a personal access token and later revokes it
       THEN the cleartext is displayed exactly once at creation, never again afterwards, and the revoked token is marked revoked
     revision: "0.1.0"
+
+  - id: SVC_GW_0020
+    requirement_ids: ["GW_0020"]
+    title: Snapshot content lists plugins and their skills
+    verification: automated-test
+    description: |
+      GIVEN an ingested snapshot whose manifest declares multiple plugins with skills under their source trees
+      WHEN the snapshot's content is requested
+      THEN every declared plugin is returned with the skills found under it and the snapshot's commit SHA
+    revision: "0.1.0"
+
+  - id: SVC_GW_0021
+    requirement_ids: ["GW_0021"]
+    title: Forge metadata is captured at registration when available
+    verification: automated-test
+    description: |
+      GIVEN a marketplace URL whose forge exposes a repository metadata API
+      WHEN the marketplace is registered
+      THEN the project name, description, and last update time are stored with the marketplace
+    revision: "0.1.0"

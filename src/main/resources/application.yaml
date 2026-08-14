@@ -23,6 +23,12 @@ spring:
 skills-gateway:
   data-dir: data
 
+scalar:
+  enabled: true
+  path: /docs
+  url: /v3/api-docs
+  theme: purple
+
 management:
   endpoints:
     web:

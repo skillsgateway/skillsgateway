@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
 import {
@@ -218,8 +219,18 @@ function MarketplaceCard({ marketplace }: { marketplace: MarketplaceView }) {
     <Card>
       <CardHeader className="flex-row items-center justify-between">
         <div>
-          <CardTitle>{marketplace.name}</CardTitle>
-          <CardDescription className="break-all">{marketplace.url}</CardDescription>
+          <CardTitle>
+            <Link to={`/marketplaces/${marketplace.name}`} className="hover:underline">
+              {marketplace.name}
+            </Link>
+          </CardTitle>
+          <CardDescription className="break-all">
+            {marketplace.url}
+            {marketplace.description ? <span className="block">{marketplace.description}</span> : null}
+            {marketplace.upstreamUpdatedAt ? (
+              <span className="block text-xs">upstream updated {marketplace.upstreamUpdatedAt}</span>
+            ) : null}
+          </CardDescription>
         </div>
         <Button
           variant="outline"

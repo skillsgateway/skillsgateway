@@ -159,3 +159,19 @@ requirements:
     rationale: Token lifecycle (GW_0013) must be usable without raw HTTP calls; show-once in the UI preserves the hash-at-rest guarantee end to end.
     categories: ["functional-suitability", "security"]
     revision: 0.1.0
+
+  - id: GW_0020
+    title: Snapshot content inventory
+    significance: shall
+    description: The system shall expose, for any snapshot, the plugins declared by its marketplace manifest and the skills found under each plugin's source tree.
+    rationale: Reviewers must see what a snapshot actually ships before approving it, and future per-plugin or per-skill limiting needs this inventory as its policy surface.
+    categories: ["functional-suitability", "security"]
+    revision: 0.1.0
+
+  - id: GW_0021
+    title: Forge metadata at registration
+    significance: should
+    description: On registration of a marketplace hosted on a supported forge (GitHub, GitLab, Gitea/Forgejo), the system should retrieve and store the project name, description, and last upstream update time; registration shall succeed regardless of whether the lookup does.
+    rationale: Forge metadata gives administrators provenance context at a glance; being best-effort keeps registration independent of forge availability.
+    categories: ["functional-suitability"]
+    revision: 0.1.0

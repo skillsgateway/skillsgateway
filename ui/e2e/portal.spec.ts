@@ -12,7 +12,8 @@ async function login(page: Page, username: string) {
   await page.waitForURL(/9090/);
   await page.getByPlaceholder(/enter any user/i).fill(username);
   await page.getByRole("button", { name: /sign.?in/i }).click();
-  await page.waitForURL(/marketplaces/);
+  // Back on the portal: the sidebar navigation is the landmark.
+  await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
 }
 
 function uniqueName(prefix: string) {
@@ -24,6 +25,10 @@ function uniqueName(prefix: string) {
  */
 test("admin_registers_ingests_and_approves_a_marketplace_in_the_portal", async ({ page }) => {
   await login(page, "alice");
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Marketplaces" })
+    .click();
   const name = uniqueName("corp");
 
   await page.getByRole("button", { name: "Register marketplace" }).click();
@@ -42,6 +47,12 @@ test("admin_registers_ingests_and_approves_a_marketplace_in_the_portal", async (
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByText("Decided by")).toBeVisible();
   await expect(dialog.getByText("alice")).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  // Detail view: the snapshot's plugin/skill inventory (GW_0020).
+  await page.getByRole("link", { name, exact: true }).click();
+  await page.getByRole("button", { name: /Show contents of snapshot \d+/ }).click();
+  await expect(page.getByText("hello", { exact: true }).first()).toBeVisible();
 });
 
 /**

@@ -40,6 +40,7 @@
         <arconia.version>0.29.0</arconia.version>
         <cyclonedx-plugin.version>2.9.3</cyclonedx-plugin.version>
         <springdoc.version>3.1.0</springdoc.version>
+        <scalar.version>0.4.4</scalar.version>
         <frontend-plugin.version>2.0.2</frontend-plugin.version>
         <node.version>v24.14.1</node.version>
         <pnpm.version>11.21.0</pnpm.version>
@@ -82,10 +83,16 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+        <!-- OpenAPI document only (no Swagger UI); the reference UI is Scalar. -->
         <dependency>
             <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
             <version>${springdoc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.scalar.maven</groupId>
+            <artifactId>scalar</artifactId>
+            <version>${scalar.version}</version>
         </dependency>
 
         <!-- Boot 4 moved Flyway auto-configuration into its own module. -->

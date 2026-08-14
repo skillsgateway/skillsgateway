@@ -61,6 +61,16 @@ export function useProvenance(snapshotId: number | null) {
   });
 }
 
+export type SnapshotContent = components["schemas"]["SnapshotContent"];
+
+export function useSnapshotContent(snapshotId: number | null) {
+  return useQuery({
+    queryKey: ["snapshot-content", snapshotId],
+    queryFn: () => api<SnapshotContent>(`/api/snapshots/${snapshotId}/content`),
+    enabled: snapshotId !== null,
+  });
+}
+
 export function useAudit() {
   return useQuery({
     queryKey: ["audit"],
