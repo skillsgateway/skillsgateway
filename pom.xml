@@ -38,6 +38,7 @@
         <native-plugin.version>1.1.9</native-plugin.version>
         <reqstool-plugin.version>1.0.4</reqstool-plugin.version>
         <arconia.version>0.29.0</arconia.version>
+        <cyclonedx-plugin.version>2.9.3</cyclonedx-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -73,7 +74,16 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jdbc</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
 
+        <!-- Boot 4 moved Flyway auto-configuration into its own module. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-flyway</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
@@ -127,6 +137,22 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!-- JDK 23+ no longer runs classpath-discovered annotation processors;
+                         reqstool's processor (and its Jackson deps) must be on the processor path. -->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>io.github.reqstool</groupId>
+                            <artifactId>reqstool-java-annotations</artifactId>
+                            <version>${reqstool-annotations.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
+            <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
@@ -173,6 +199,27 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.cyclonedx</groupId>
+                <artifactId>cyclonedx-maven-plugin</artifactId>
+                <version>${cyclonedx-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>makeAggregateBom</goal>
+                        </goals>
+                        <!-- Before test/package so tests and the jar both see the BOM
+                             on the classpath where the actuator sbom endpoint finds it. -->
+                        <phase>generate-resources</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <outputDirectory>${project.build.outputDirectory}/META-INF/sbom</outputDirectory>
+                    <outputName>application.cdx</outputName>
+                    <outputFormat>json</outputFormat>
+                </configuration>
             </plugin>
 
             <plugin>
