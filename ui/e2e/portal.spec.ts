@@ -119,6 +119,35 @@ test("webhooks_page_lists_subscribers_and_delivery_attempts", async ({ page }) =
 });
 
 /**
+ * @SVCs SVC_GW_0036
+ */
+test("snapshot_soft_delete_and_restore_in_the_portal", async ({ page }) => {
+  await login(page, "alice");
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Marketplaces" })
+    .click();
+  const name = uniqueName("retain");
+
+  await page.getByRole("button", { name: "Register marketplace" }).click();
+  await page.getByLabel("Name").fill(name);
+  await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
+  await page.getByRole("button", { name: "Register", exact: true }).click();
+  await page.getByRole("button", { name: `Ingest ${name}` }).click();
+  await expect(page.getByText("held", { exact: true })).toBeVisible();
+
+  // Retention lives with the snapshot, on the marketplace's own page.
+  await page.getByRole("link", { name, exact: true }).click();
+  await page.getByRole("button", { name: /Delete snapshot \d+/ }).click();
+  await expect(page.getByText("deleted", { exact: true })).toBeVisible();
+  await expect(page.getByText(/restorable until/)).toBeVisible();
+
+  await page.getByRole("button", { name: /Restore snapshot \d+/ }).click();
+  await expect(page.getByText("deleted", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Delete snapshot \d+/ })).toBeVisible();
+});
+
+/**
  * @SVCs SVC_GW_0030
  */
 test("audit_page_exports_the_ledger_and_lists_sinks", async ({ page }) => {

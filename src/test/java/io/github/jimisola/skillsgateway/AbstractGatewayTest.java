@@ -65,7 +65,15 @@ import org.springframework.web.context.WebApplicationContext;
             // Audit export passes are driven explicitly by the tests, and the commit-settling lag
             // is removed so an entry appended by the test is immediately exportable.
             "skills-gateway.audit-export.enabled=false",
-            "skills-gateway.audit-export.lag=0s"
+            "skills-gateway.audit-export.lag=0s",
+            // Retention passes are driven explicitly by the tests, and the age thresholds are
+            // compressed so a snapshot ingested by a test is immediately eligible. Every retention
+            // test scopes its pass to its own marketplace, so no other test's fixtures are reached.
+            "skills-gateway.retention.enabled=false",
+            "skills-gateway.retention.defaults.held-max-age=1ms",
+            "skills-gateway.retention.defaults.superseded-min-age=0s",
+            "skills-gateway.retention.defaults.min-idle=1h",
+            "skills-gateway.retention.defaults.restore-window=1h"
         })
 abstract class AbstractGatewayTest {
 

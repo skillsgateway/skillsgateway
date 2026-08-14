@@ -3,6 +3,7 @@ package io.github.jimisola.skillsgateway.config;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "skills-gateway")
@@ -11,7 +12,8 @@ public record SkillsGatewayProperties(
         List<String> allowedUrlSchemes,
         Boolean devInsecureAuth,
         Webhooks webhooks,
-        AuditExport auditExport) {
+        AuditExport auditExport,
+        Retention retention) {
 
     public SkillsGatewayProperties {
         if (dataDir == null) {
@@ -28,6 +30,89 @@ public record SkillsGatewayProperties(
         }
         if (auditExport == null) {
             auditExport = new AuditExport(null, null, null, null, null, null);
+        }
+        if (retention == null) {
+            retention = new Retention(null, null, null, null, null, null);
+        }
+    }
+
+    /**
+     * Snapshot retention (GW_0031–GW_0034). {@code enabled=false} — the default — stops both
+     * scheduled passes: an upgrade never deletes anything until an operator opts in, while the
+     * on-demand endpoints stay available for a dry run.
+     */
+    public record Retention(
+            Boolean enabled,
+            Duration pollInterval,
+            Duration compactionInterval,
+            Integer batchSize,
+            Policy defaults,
+            Map<String, Policy> marketplaces) {
+
+        private static final Policy FALLBACK =
+                new Policy(Duration.ofDays(90), true, Duration.ofDays(30), Duration.ofDays(30), Duration.ofDays(14));
+
+        public Retention {
+            if (enabled == null) {
+                enabled = false;
+            }
+            if (pollInterval == null) {
+                pollInterval = Duration.ofHours(1);
+            }
+            if (compactionInterval == null) {
+                compactionInterval = Duration.ofHours(6);
+            }
+            if (batchSize == null) {
+                batchSize = 200;
+            }
+            defaults = merge(defaults, FALLBACK);
+            marketplaces = marketplaces == null ? Map.of() : Map.copyOf(marketplaces);
+        }
+
+        /** The policy in force for a marketplace: its overrides over the global defaults. */
+        public Policy policyFor(String marketplace) {
+            return merge(marketplaces.get(marketplace), defaults);
+        }
+
+        private static Policy merge(Policy override, Policy base) {
+            if (override == null) {
+                return base;
+            }
+            return new Policy(
+                    override.heldMaxAge() == null ? base.heldMaxAge() : override.heldMaxAge(),
+                    override.superseded() == null ? base.superseded() : override.superseded(),
+                    override.supersededMinAge() == null ? base.supersededMinAge() : override.supersededMinAge(),
+                    override.minIdle() == null ? base.minIdle() : override.minIdle(),
+                    override.restoreWindow() == null ? base.restoreWindow() : override.restoreWindow());
+        }
+
+        /**
+         * One resolved retention policy. Fields are nullable only so a per-marketplace override can
+         * leave a knob unset and inherit it; {@link #policyFor(String)} always returns a complete one.
+         *
+         * @param heldMaxAge how long a snapshot may stay held before it is eligible; zero or
+         *     negative disables the criterion
+         * @param superseded whether a non-approved snapshot overtaken by a later approved snapshot
+         *     of the same marketplace is eligible
+         * @param supersededMinAge minimum age a superseded snapshot must reach to be eligible
+         * @param minIdle a snapshot fetched through the facade within this window is never eligible
+         * @param restoreWindow how long a soft-deleted snapshot stays restorable before compaction
+         *     may remove it permanently
+         */
+        public record Policy(
+                Duration heldMaxAge,
+                Boolean superseded,
+                Duration supersededMinAge,
+                Duration minIdle,
+                Duration restoreWindow) {
+
+            public boolean heldCriterionEnabled() {
+                return heldMaxAge != null && !heldMaxAge.isZero() && !heldMaxAge.isNegative();
+            }
+
+            public boolean supersededCriterionEnabled() {
+                return Boolean.TRUE.equals(superseded);
+            }
         }
     }
 

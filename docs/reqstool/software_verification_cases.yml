@@ -300,3 +300,63 @@ cases:
       WHEN the administrator opens the audit page
       THEN the ledger export download control is present and the sink is listed with its target and current ledger position
     revision: "0.1.0"
+
+  - id: SVC_GW_0031
+    requirement_ids: ["GW_0031"]
+    title: Retention selects the aged and superseded snapshots and nothing else
+    verification: automated-test
+    description: |
+      GIVEN a marketplace with a snapshot held beyond the configured quarantine age, a non-approved snapshot that a later approved snapshot has superseded, and a recently ingested held snapshot
+      WHEN the retention policy is evaluated
+      THEN the aged snapshot and the superseded snapshot are selected, each with the criterion that selected it, and the recent snapshot is not
+    revision: "0.1.0"
+
+  - id: SVC_GW_0032
+    requirement_ids: ["GW_0032"]
+    title: A deleted snapshot is marked, keeps its state, and is restorable within the window
+    verification: automated-test
+    description: |
+      GIVEN a snapshot deleted through the administrative API
+      WHEN the snapshot is read back and then restored before its purge time
+      THEN the deletion carries a reason and a purge time in the future while the vetting state is unchanged, and after the restore the deletion marks are cleared
+    revision: "0.1.0"
+
+  - id: SVC_GW_0033
+    requirement_ids: ["GW_0033"]
+    title: An approved snapshot is never selected and cannot be deleted
+    verification: automated-test
+    description: |
+      GIVEN an approved snapshot that is published to the git facade and would otherwise match every retention criterion
+      WHEN the retention policy is evaluated and an administrator requests its deletion
+      THEN the snapshot is not among the selected candidates, the deletion request is refused, and the snapshot remains undeleted
+    revision: "0.1.0"
+
+  - id: SVC_GW_0034
+    requirement_ids: ["GW_0034"]
+    title: Compaction removes expired soft deletions and their quarantine reference
+    verification: automated-test
+    description: |
+      GIVEN one soft-deleted snapshot whose restore window has elapsed and one whose window has not
+      WHEN the compaction pass runs
+      THEN the expired snapshot's record and its pinned reference in the quarantine repository are gone, and the snapshot still inside its window is untouched
+    revision: "0.1.0"
+
+  - id: SVC_GW_0035
+    requirement_ids: ["GW_0035"]
+    title: The ledger records the retention decision, deletion, restore, and removal
+    verification: automated-test
+    description: |
+      GIVEN a snapshot taken through a policy evaluation, a restore, and a compaction pass
+      WHEN the audit ledger is read
+      THEN it contains an entry for each of the evaluation outcome, the soft deletion with its reason, the restore, and the permanent removal, each with the acting identity and the snapshot commit SHA
+    revision: "0.1.0"
+
+  - id: SVC_GW_0036
+    requirement_ids: ["GW_0036"]
+    title: Portal deletes a snapshot and restores it
+    verification: automated-test
+    description: |
+      GIVEN an authenticated portal session and a marketplace with an undecided snapshot
+      WHEN the administrator deletes the snapshot from the marketplace detail page and then restores it
+      THEN the snapshot is shown as deleted with its restore deadline, and after the restore it is shown as not deleted again
+    revision: "0.1.0"
