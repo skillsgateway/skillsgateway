@@ -14,6 +14,7 @@ import io.github.jimisola.skillsgateway.persistence.SnapshotNotFoundException;
 import io.github.jimisola.skillsgateway.persistence.SnapshotRepository;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.net.URI;
@@ -76,17 +77,49 @@ public class AdminController {
         this.auditLogger = auditLogger;
     }
 
-    public record RegisterMarketplaceRequest(String name, String url, String ref) {}
-
-    public record MarketplaceView(
-            long id,
+    @Schema(description = "Marketplace registration request")
+    public record RegisterMarketplaceRequest(
+            @Schema(
+                    description = "Gateway-local marketplace name; becomes the facade clone path /git/{name}",
+                    example = "corp-marketplace",
+                    pattern = "^[a-z0-9][a-z0-9_-]*$")
             String name,
+
+            @Schema(
+                    description =
+                            "Upstream clone URL; scheme must be on the configured allowlist" + " (default http/https)",
+                    example = "https://github.com/acme/skills-marketplace.git")
             String url,
-            Instant createdAt,
+
+            @Schema(
+                    description = "Must be omitted or equal the upstream default branch; the ingested ref"
+                            + " is the gateway's decision, never the consumer's (GW_0017)",
+                    example = "main")
+            String ref) {}
+
+    @Schema(description = "A registered marketplace with its snapshots and forge metadata")
+    public record MarketplaceView(
+            @Schema(description = "Marketplace id") long id,
+
+            @Schema(description = "Gateway-local name (also the facade clone path)")
+            String name,
+
+            @Schema(description = "Upstream clone URL") String url,
+            @Schema(description = "Registration time") Instant createdAt,
+
+            @Schema(description = "Detected forge (github, gitlab, bitbucket, azure-devops, gitea) or null")
             String forge,
+
+            @Schema(description = "Project path on the forge, e.g. acme/skills")
             String forgeProject,
+
+            @Schema(description = "Project description from the forge")
             String description,
+
+            @Schema(description = "Last upstream update as reported by the forge")
             Instant upstreamUpdatedAt,
+
+            @Schema(description = "All snapshots of this marketplace, any state")
             List<Snapshot> snapshots) {}
 
     @PostMapping("/marketplaces")
