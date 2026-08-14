@@ -346,6 +346,13 @@
                         <artifactId>native-maven-plugin</artifactId>
                         <version>${native-plugin.version}</version>
                         <extensions>true</extensions>
+                        <configuration>
+                            <buildArgs>
+                                <!-- Mostly-static: everything statically linked except glibc,
+                                     so the binary runs on distroless *base* (no libz there). -->
+                                <buildArg>--static-nolibc</buildArg>
+                            </buildArgs>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
