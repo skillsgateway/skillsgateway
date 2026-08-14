@@ -150,3 +150,23 @@ cases:
       WHEN the packaging test validates them
       THEN the Dockerfile runs the native binary, and the chart's Deployment wires the image, the actuator health probes, and the PostgreSQL and OIDC configuration
     revision: "0.1.0"
+
+  - id: SVC_GW_0016
+    requirement_ids: ["GW_0016"]
+    title: Non-allowlisted URL schemes are rejected at registration
+    verification: automated-test
+    description: |
+      GIVEN a running gateway with its URL scheme allowlist configured
+      WHEN an administrator attempts to register marketplaces with ssh, ext, and scheme-less clone URLs
+      THEN each registration is rejected with HTTP 400 and no marketplace is persisted
+    revision: "0.1.0"
+
+  - id: SVC_GW_0017
+    requirement_ids: ["GW_0017"]
+    title: Consumer-supplied refs other than the default branch are rejected
+    verification: automated-test
+    description: |
+      GIVEN a running gateway
+      WHEN a registration request supplies a ref other than the upstream default branch
+      THEN it is rejected with HTTP 400 and no marketplace is persisted, while omitting the ref or supplying the default branch registers normally
+    revision: "0.1.0"
