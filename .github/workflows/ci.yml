@@ -13,12 +13,12 @@ jobs:
     name: Build & gates
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # Nisse derives the Maven version from git history; shallow clones break it.
           fetch-depth: 0
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '25'
@@ -40,7 +40,7 @@ jobs:
         working-directory: ui
         run: pnpm e2e
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
 
@@ -59,7 +59,7 @@ jobs:
         run: openspec validate --all --strict
 
       - name: Upload CycloneDX SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sbom-cyclonedx
           path: target/classes/META-INF/sbom/application.cdx.json
@@ -67,7 +67,7 @@ jobs:
 
       - name: Upload e2e artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-artifacts
           path: |
