@@ -138,7 +138,7 @@ public class AdminController {
             @RequestBody RegisterMarketplaceRequest request, Authentication authentication) {
         if (request.name() == null || !MARKETPLACE_NAME.matcher(request.name()).matches()) {
             throw new ResponseStatusException(
-                    HttpStatus.UNPROCESSABLE_ENTITY, "name must match " + MARKETPLACE_NAME.pattern());
+                    HttpStatus.UNPROCESSABLE_CONTENT, "name must match " + MARKETPLACE_NAME.pattern());
         }
         requireAllowlistedScheme(request.url());
         requireDefaultBranchRef(request.ref());
