@@ -41,6 +41,9 @@
         <cyclonedx-plugin.version>2.9.3</cyclonedx-plugin.version>
         <springdoc.version>3.1.0</springdoc.version>
         <scalar.version>0.4.4</scalar.version>
+        <!-- Skips the UI gate execution (typecheck/lint/vitest/tags) without skipping
+             the UI build; used by the native workflow where no browsers exist. -->
+        <skip.ui.verify>false</skip.ui.verify>
         <frontend-plugin.version>2.0.2</frontend-plugin.version>
         <node.version>v24.14.1</node.version>
         <pnpm.version>11.21.0</pnpm.version>
@@ -276,6 +279,7 @@
                         <phase>test</phase>
                         <configuration>
                             <arguments>run verify</arguments>
+                            <skip>${skip.ui.verify}</skip>
                         </configuration>
                     </execution>
                     <execution>
