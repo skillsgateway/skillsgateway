@@ -29,6 +29,10 @@ oidc:
   tokenUri: ""
   jwkSetUri: ""
 
+# Git storage (/data). emptyDir by default; set an existing PVC for durability.
+persistence:
+  existingClaim: ""
+
 resources: {}
 
 nodeSelector: {}
