@@ -1,7 +1,7 @@
+import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCreateToken, useRevokeToken, useTokens, type IssuedToken } from "@/api/queries";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,16 @@ import {
 } from "@/components/ui/table";
 
 export function IssuedTokenDialog({ issued, onClose }: { issued: IssuedToken; onClose: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(issued.token ?? "");
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Could not access the clipboard");
+    }
+  };
   return (
     <Dialog open onOpenChange={(open) => (open ? undefined : onClose())}>
       <DialogContent>
@@ -33,14 +43,22 @@ export function IssuedTokenDialog({ issued, onClose }: { issued: IssuedToken; on
             This value is shown exactly once — copy it now. Only a hash is stored.
           </DialogDescription>
         </DialogHeader>
-        <Alert>
-          <AlertTitle>Personal access token</AlertTitle>
-          <AlertDescription>
-            <code data-testid="token-cleartext" className="break-all">
+        <div className="space-y-2">
+          <Label htmlFor="token-cleartext-box">Personal access token</Label>
+          <div id="token-cleartext-box" className="flex items-center gap-2 rounded-md border bg-muted p-3">
+            <code data-testid="token-cleartext" className="flex-1 break-all text-sm">
               {issued.token}
             </code>
-          </AlertDescription>
-        </Alert>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Copy token to clipboard"
+              onClick={() => void copy()}
+            >
+              {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
+            </Button>
+          </div>
+        </div>
         <DialogFooter>
           <Button onClick={onClose}>Done</Button>
         </DialogFooter>
