@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "skills-gateway")
-public record SkillsGatewayProperties(Path dataDir, List<String> allowedUrlSchemes) {
+public record SkillsGatewayProperties(Path dataDir, List<String> allowedUrlSchemes, Boolean devInsecureAuth) {
 
     public SkillsGatewayProperties {
         if (dataDir == null) {
@@ -13,6 +13,9 @@ public record SkillsGatewayProperties(Path dataDir, List<String> allowedUrlSchem
         }
         if (allowedUrlSchemes == null || allowedUrlSchemes.isEmpty()) {
             allowedUrlSchemes = List.of("http", "https");
+        }
+        if (devInsecureAuth == null) {
+            devInsecureAuth = false;
         }
     }
 }
