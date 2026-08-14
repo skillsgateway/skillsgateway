@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/api/audit/sinks/{id}/cursor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set an audit export sink's ledger position
+         * @description Replay: setting the position back re-delivers every ledger entry after it on the next export pass. Receivers de-duplicate on the ledger sequence carried by each entry.
+         */
+        put: operations["setCursor"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/webhooks": {
         parameters: {
             query?: never;
@@ -122,6 +142,30 @@ export interface paths {
          * @description Fetches the marketplace's upstream default branch into quarantine and records an immutable snapshot pinned to the upstream commit SHA. The snapshot is held until a reviewer approves it; manifests declaring non-local plugin sources are rejected.
          */
         post: operations["ingest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/audit/sinks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List audit export sinks
+         * @description Every registered sink with its target, its position in the ledger, and how many entries it still has to receive. Signing secrets are never returned.
+         */
+        get: operations["listSinks"];
+        put?: never;
+        /**
+         * Register an audit export sink
+         * @description Registers a push consumer of the ledger. Batches are POSTed to the target URL by the same signed, retried delivery machinery as lifecycle webhooks; the signing secret is returned exactly once, in this response.
+         */
+        post: operations["createSink"];
         delete?: never;
         options?: never;
         head?: never;
@@ -260,6 +304,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/audit/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stream the audit ledger as NDJSON
+         * @description Newline-delimited JSON, one ledger entry per line in ascending ledger sequence, for ingestion by an external SIEM. Poll incrementally by passing the sequence from the X-Skills-Gateway-Audit-Cursor response header back as 'after'; an empty body means the consumer is caught up. Entries younger than the commit-settling lag are withheld so a cursor can never step over an in-flight append.
+         */
+        get: operations["export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/webhooks/{id}": {
         parameters: {
             query?: never;
@@ -296,10 +360,79 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/audit/sinks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete an audit export sink
+         * @description Removes the sink and its delivery channel; no further batches are queued for it.
+         */
+        delete: operations["deleteSink"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description Cursor reset request */
+        CursorRequest: {
+            /**
+             * Format: int64
+             * @description Ledger sequence to resume after; entries following it are delivered again
+             */
+            after?: number;
+        };
+        /** @description A registered audit export sink */
+        SinkView: {
+            /**
+             * Format: int64
+             * @description Sink id
+             */
+            id?: number;
+            /** @description Sink name */
+            name?: string;
+            /** @description Sink kind */
+            kind?: string;
+            /** @description Target URL */
+            url?: string;
+            /**
+             * Format: int64
+             * @description Ledger sequence last handed to this sink
+             */
+            cursorPosition?: number;
+            /**
+             * Format: int64
+             * @description Highest ledger sequence written so far
+             */
+            ledgerHead?: number;
+            /**
+             * Format: int64
+             * @description Ledger entries not yet handed to this sink
+             */
+            behind?: number;
+            /**
+             * Format: int32
+             * @description Maximum ledger entries per batch
+             */
+            batchSize?: number;
+            /** @description Whether export passes run for this sink */
+            enabled?: boolean;
+            /**
+             * Format: date-time
+             * @description Creation time
+             */
+            createdAt?: string;
+        };
         /** @description Webhook subscriber registration request */
         CreateSubscriberRequest: {
             /**
@@ -435,6 +568,62 @@ export interface components {
              * @description Last upstream update as reported by the forge
              */
             upstreamUpdatedAt?: string;
+        };
+        /** @description Audit export sink registration request */
+        CreateSinkRequest: {
+            /**
+             * @description Gateway-local sink name
+             * @example siem
+             */
+            name?: string;
+            /**
+             * @description Target URL batches are POSTed to; scheme must be on the configured allowlist (default http/https)
+             * @example https://siem.example.com/ingest/skills-gateway
+             */
+            url?: string;
+            /**
+             * Format: int64
+             * @description Ledger sequence to start after; omit to start at the beginning
+             * @example 0
+             */
+            after?: number;
+            /**
+             * Format: int32
+             * @description Maximum ledger entries per batch
+             * @example 500
+             */
+            batchSize?: number;
+        };
+        /** @description A newly registered audit export sink, with its show-once signing secret */
+        CreatedSink: {
+            /**
+             * Format: int64
+             * @description Sink id
+             */
+            id?: number;
+            /** @description Sink name */
+            name?: string;
+            /** @description Sink kind */
+            kind?: string;
+            /** @description Target URL batches are POSTed to */
+            url?: string;
+            /**
+             * Format: int64
+             * @description Ledger sequence the sink starts after
+             */
+            cursorPosition?: number;
+            /**
+             * Format: int32
+             * @description Maximum ledger entries per batch
+             */
+            batchSize?: number;
+            /** @description Signing secret of the sink's delivery channel - shown exactly once */
+            secret?: string;
+            /**
+             * Format: date-time
+             * @description Creation time
+             */
+            createdAt?: string;
         };
         /** @description A webhook subscriber without its signing secret */
         SubscriberView: {
@@ -603,6 +792,7 @@ export interface components {
             /** @description All snapshots of this marketplace, any state */
             snapshots?: components["schemas"]["Snapshot"][];
         };
+        StreamingResponseBody: unknown;
     };
     responses: never;
     parameters: never;
@@ -612,6 +802,41 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    setCursor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CursorRequest"];
+            };
+        };
+        responses: {
+            /** @description Position updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SinkView"];
+                };
+            };
+            /** @description Sink not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SinkView"];
+                };
+            };
+        };
+    };
     list: {
         parameters: {
             query?: never;
@@ -918,6 +1143,77 @@ export interface operations {
             };
         };
     };
+    listSinks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SinkView"][];
+                };
+            };
+        };
+    };
+    createSink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSinkRequest"];
+            };
+        };
+        responses: {
+            /** @description Sink registered; response carries the show-once secret */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreatedSink"];
+                };
+            };
+            /** @description Disallowed URL scheme */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreatedSink"];
+                };
+            };
+            /** @description A sink or webhook subscriber with that name already exists */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreatedSink"];
+                };
+            };
+            /** @description Invalid sink name */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreatedSink"];
+                };
+            };
+        };
+    };
     getDocs: {
         parameters: {
             query?: never;
@@ -1086,6 +1382,29 @@ export interface operations {
             };
         };
     };
+    export: {
+        parameters: {
+            query?: {
+                after?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The entries after the cursor, newline-delimited */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/x-ndjson": components["schemas"]["StreamingResponseBody"];
+                };
+            };
+        };
+    };
     delete: {
         parameters: {
             query?: never;
@@ -1126,6 +1445,33 @@ export interface operations {
         responses: {
             /** @description OK */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteSink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sink deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sink not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -63,6 +63,30 @@ export const createdSubscriber: Schemas["CreatedSubscriber"] = {
   createdAt: "2026-08-14T10:00:00Z",
 };
 
+export const auditSink: Schemas["SinkView"] = {
+  id: 2,
+  name: "siem",
+  kind: "webhook",
+  url: "https://siem.example.com/ingest/skills-gateway",
+  cursorPosition: 42,
+  ledgerHead: 45,
+  behind: 3,
+  batchSize: 500,
+  enabled: true,
+  createdAt: "2026-08-14T10:00:00Z",
+};
+
+export const createdAuditSink: Schemas["CreatedSink"] = {
+  id: 3,
+  name: "new-siem",
+  kind: "webhook",
+  url: "https://siem.example.com/ingest/skills-gateway",
+  cursorPosition: 0,
+  batchSize: 500,
+  secret: "whsec_sink_shown_once",
+  createdAt: "2026-08-14T10:00:00Z",
+};
+
 export const handlers = [
   http.get("/api/me", () => HttpResponse.json({ username: "alice" })),
   http.get("/api/marketplaces", () => HttpResponse.json([marketplace])),
@@ -75,6 +99,8 @@ export const handlers = [
   http.get("/api/tokens", () => HttpResponse.json<Schemas["TokenView"][]>([])),
   http.post("/api/tokens", () => HttpResponse.json(issuedToken, { status: 201 })),
   http.get("/api/audit", () => HttpResponse.json([])),
+  http.get("/api/audit/sinks", () => HttpResponse.json<Schemas["SinkView"][]>([auditSink])),
+  http.post("/api/audit/sinks", () => HttpResponse.json(createdAuditSink, { status: 201 })),
   http.get("/api/webhooks", () => HttpResponse.json<Schemas["SubscriberView"][]>([subscriber])),
   http.get("/api/webhooks/deliveries", () => HttpResponse.json<Schemas["WebhookDelivery"][]>([delivery])),
   http.post("/api/webhooks", () => HttpResponse.json(createdSubscriber, { status: 201 })),

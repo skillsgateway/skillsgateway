@@ -117,3 +117,28 @@ test("webhooks_page_lists_subscribers_and_delivery_attempts", async ({ page }) =
     page.getByRole("row", { name: new RegExp(`snapshot\\.ingested ${subscriberName}`) }),
   ).toBeVisible();
 });
+
+/**
+ * @SVCs SVC_GW_0030
+ */
+test("audit_page_exports_the_ledger_and_lists_sinks", async ({ page }) => {
+  await login(page, "alice");
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Audit log" }).click();
+
+  const sinkName = uniqueName("sink");
+  // Nothing listens there: the sink still registers, and its position is what this page shows.
+  await page.getByLabel("Sink name").fill(sinkName);
+  await page.getByLabel("Target URL").fill("http://127.0.0.1:9/ingest");
+  await page.getByRole("button", { name: "Add sink" }).click();
+  await expect(page.getByTestId("sink-secret")).toBeVisible();
+  await page.getByRole("button", { name: "Done" }).click();
+
+  const sinkRow = page.getByRole("row", { name: new RegExp(sinkName) });
+  await expect(sinkRow).toBeVisible();
+  await expect(sinkRow.getByText(/entries/)).toBeVisible();
+
+  // The export affordance is a real download of the NDJSON stream.
+  const download = page.waitForEvent("download");
+  await page.getByRole("link", { name: /Download ledger/ }).click();
+  expect((await download).suggestedFilename()).toBe("audit-ledger.ndjson");
+});

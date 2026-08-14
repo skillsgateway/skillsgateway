@@ -76,3 +76,23 @@ CREATE TABLE webhook_deliveries (
 
 -- The dispatcher's only query.
 CREATE INDEX idx_webhook_deliveries_due ON webhook_deliveries (state, next_attempt_at);
+
+-- Audit ledger export sinks (GW_0028..GW_0029).
+
+CREATE TABLE audit_sinks (
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    -- Only 'webhook' is accepted in v1; the column exists so a Kafka or syslog sink
+    -- slots in behind the same cursor contract without a schema change.
+    kind TEXT NOT NULL CHECK (kind IN ('webhook')),
+    -- The delivery channel: an ordinary webhook subscriber, so audit batches are signed,
+    -- retried, and recorded by exactly the machinery lifecycle events already use.
+    subscriber_id BIGINT NOT NULL REFERENCES webhook_subscribers (id) ON DELETE CASCADE,
+    -- Id of the last fetch_log entry handed to this sink; the only per-consumer state.
+    -- Resetting it is what "replay" means (GW_0029).
+    cursor_position BIGINT NOT NULL DEFAULT 0,
+    batch_size INTEGER NOT NULL DEFAULT 500,
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL
+);
