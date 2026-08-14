@@ -51,6 +51,9 @@ public class FilesystemGitStorage implements GitStorage {
         Repository repository = open(path);
         if (!repository.getObjectDatabase().exists()) {
             repository.create(true);
+            // JGit initializes bare repos with HEAD -> refs/heads/master; the gateway
+            // publishes to main, and clients need HEAD to resolve for checkout.
+            repository.updateRef(Constants.HEAD).link(Constants.R_HEADS + "main");
         }
         return repository;
     }
