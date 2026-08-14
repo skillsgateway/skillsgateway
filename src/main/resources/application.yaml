@@ -1,3 +1,30 @@
 spring:
   application:
     name: skills-gateway
+  security:
+    oauth2:
+      client:
+        # Registration must exist at AOT build time (native-image evaluates
+        # auto-configuration conditions then); real deployments override the
+        # SGW_OIDC_* environment variables.
+        registration:
+          idp:
+            client-id: ${SGW_OIDC_CLIENT_ID:change-me}
+            client-secret: ${SGW_OIDC_CLIENT_SECRET:change-me}
+            scope: openid
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/idp"
+        provider:
+          idp:
+            authorization-uri: ${SGW_OIDC_AUTHORIZATION_URI:https://idp.invalid/authorize}
+            token-uri: ${SGW_OIDC_TOKEN_URI:https://idp.invalid/token}
+            jwk-set-uri: ${SGW_OIDC_JWK_SET_URI:https://idp.invalid/jwks}
+
+skills-gateway:
+  data-dir: data
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,sbom

@@ -360,6 +360,11 @@ inward.
 2. **LLM review confidence.** Semantic scanning of prose will have false
    negatives; adversaries will optimize against it. It must gate *triage
    priority*, not substitute for tier-appropriate human review.
+   Designated tooling for when this connector is built: **promptfoo**
+   (promptfoo.dev) as its eval + red-team harness — a CI-run corpus of
+   known-malicious/benign skills asserting detection (prompt changes that
+   degrade detection fail the build), plus adversarial injection
+   generation against the reviewer prompt.
 3. **Format churn.** Marketplace/manifest formats are young and moving;
    adapters must be versioned and the ingestion contract conservative
    (unknown manifest constructs → quarantine, not pass-through).
