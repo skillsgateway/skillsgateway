@@ -23,7 +23,7 @@ of the full loop lives in the sibling `skills-gateway-python-mvp` repository.
 ./mvnw verify                                # Java + portal gates, packaged jar (needs Docker)
 (cd ui && pnpm e2e)                          # portal e2e: real browser + mock OIDC login
 reqstool status local -p docs/reqstool       # traceability gate (after the two above)
-./mvnw -Pnative -DskipTests package          # GraalVM native binary (needs GraalVM CE 25)
+./mvnw -Pnative -DskipTests native:compile          # GraalVM native binary (needs GraalVM CE 25)
 docker build -t skills-gateway:local .       # OCI image from the native binary
 docker compose up                            # gateway + PostgreSQL on :8080
 ```
