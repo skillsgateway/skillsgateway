@@ -2,6 +2,7 @@ package io.github.jimisola.skillsgateway.auth;
 
 import io.github.jimisola.skillsgateway.admin.AdminAuditLogger;
 import io.github.jimisola.skillsgateway.persistence.AccessToken;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -30,10 +31,20 @@ public class TokenController {
         this.auditLogger = auditLogger;
     }
 
-    public record CreateTokenRequest(String name) {}
+    @Schema(description = "Token creation request")
+    public record CreateTokenRequest(
+            @Schema(description = "Human-readable token name", example = "ci-runner")
+            String name) {}
 
     /** Never exposes the stored hash. */
-    public record TokenView(long id, String name, Instant createdAt, Instant revokedAt) {}
+    @Schema(description = "A token without its secret; the cleartext is only returned at creation")
+    public record TokenView(
+            @Schema(description = "Token id") long id,
+            @Schema(description = "Token name") String name,
+            @Schema(description = "Creation time") Instant createdAt,
+
+            @Schema(description = "Revocation time, or null while active")
+            Instant revokedAt) {}
 
     @PostMapping
     public ResponseEntity<TokenService.IssuedToken> create(

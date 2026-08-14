@@ -3,6 +3,7 @@ package io.github.jimisola.skillsgateway.auth;
 import io.github.jimisola.skillsgateway.persistence.AccessToken;
 import io.github.jimisola.skillsgateway.persistence.TokenRepository;
 import io.github.reqstool.annotations.Requirements;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -26,7 +27,15 @@ public class TokenService {
         this.tokenRepository = tokenRepository;
     }
 
-    public record IssuedToken(long id, String name, String token, Instant createdAt) {}
+    @Schema(description = "A freshly issued token; the only time the cleartext is ever returned")
+    public record IssuedToken(
+            @Schema(description = "Token id") long id,
+            @Schema(description = "Token name") String name,
+
+            @Schema(description = "Cleartext token value - shown exactly once, only a hash is stored")
+            String token,
+
+            @Schema(description = "Creation time") Instant createdAt) {}
 
     /**
      * Only the SHA-256 of the token is stored; the cleartext is returned exactly once. Unsalted,
