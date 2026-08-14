@@ -41,7 +41,9 @@ jobs:
           cache: maven
 
       - name: Build native image
-        run: ./mvnw --batch-mode -Pnative -DskipTests package
+        # native:compile forks the package lifecycle; the UI gate execution is
+        # skipped (no browsers here) while the UI bundle itself is still built.
+        run: ./mvnw --batch-mode -Pnative -DskipTests -Dskip.ui.verify=true native:compile
 
       - name: Build container image
         run: docker build -t skills-gateway:ci .
