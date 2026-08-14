@@ -205,7 +205,7 @@ requirements:
     significance: shall
     description: The system shall persist every webhook delivery and retry a failed delivery with exponential backoff up to a configured maximum number of attempts, recording the outcome of each attempt and marking the delivery failed when the attempts are exhausted.
     rationale: Receivers are transiently unavailable; durable deliveries with bounded backoff make delivery reliable without letting a dead endpoint retry forever or lose the record of what happened.
-    categories: ["fault-tolerance", "functional-suitability"]
+    categories: ["reliability", "functional-suitability"]
     revision: 0.1.0
 
   - id: GW_0026

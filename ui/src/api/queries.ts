@@ -7,6 +7,9 @@ export type Snapshot = components["schemas"]["Snapshot"];
 export type Provenance = components["schemas"]["Provenance"];
 export type TokenView = components["schemas"]["TokenView"];
 export type IssuedToken = components["schemas"]["IssuedToken"];
+export type SubscriberView = components["schemas"]["SubscriberView"];
+export type CreatedSubscriber = components["schemas"]["CreatedSubscriber"];
+export type WebhookDelivery = components["schemas"]["WebhookDelivery"];
 
 export function useMe() {
   return useQuery({
@@ -99,5 +102,39 @@ export function useRevokeToken() {
   return useMutation({
     mutationFn: (id: number) => api<void>(`/api/tokens/${id}`, { method: "DELETE" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tokens"] }),
+  });
+}
+
+export function useWebhookSubscribers() {
+  return useQuery({
+    queryKey: ["webhook-subscribers"],
+    queryFn: () => api<SubscriberView[]>("/api/webhooks"),
+  });
+}
+
+export function useWebhookDeliveries() {
+  return useQuery({
+    queryKey: ["webhook-deliveries"],
+    queryFn: () => api<WebhookDelivery[]>("/api/webhooks/deliveries?limit=50"),
+  });
+}
+
+export function useCreateWebhookSubscriber() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: { name: string; url: string; events: string }) =>
+      api<CreatedSubscriber>("/api/webhooks", { method: "POST", body: JSON.stringify(request) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["webhook-subscribers"] }),
+  });
+}
+
+export function useDeleteWebhookSubscriber() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api<void>(`/api/webhooks/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["webhook-subscribers"] });
+      void queryClient.invalidateQueries({ queryKey: ["webhook-deliveries"] });
+    },
   });
 }

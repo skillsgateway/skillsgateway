@@ -32,6 +32,37 @@ export const issuedToken: Schemas["IssuedToken"] = {
   createdAt: "2026-08-14T10:00:00Z",
 };
 
+export const subscriber: Schemas["SubscriberView"] = {
+  id: 3,
+  name: "ci-bot",
+  url: "https://ci.example.com/hooks/skills-gateway",
+  events: "snapshot.approved",
+  enabled: true,
+  createdAt: "2026-08-14T10:00:00Z",
+};
+
+export const delivery: Schemas["WebhookDelivery"] = {
+  id: 11,
+  subscriberId: 3,
+  event: "snapshot.approved",
+  payload: '{"event":"snapshot.approved"}',
+  state: "delivered",
+  attempts: 1,
+  nextAttemptAt: "2026-08-14T10:00:00Z",
+  lastStatus: 200,
+  createdAt: "2026-08-14T10:00:00Z",
+  updatedAt: "2026-08-14T10:00:01Z",
+};
+
+export const createdSubscriber: Schemas["CreatedSubscriber"] = {
+  id: 4,
+  name: "new-bot",
+  url: "https://ci.example.com/hooks/skills-gateway",
+  events: "*",
+  secret: "whsec_shown_once",
+  createdAt: "2026-08-14T10:00:00Z",
+};
+
 export const handlers = [
   http.get("/api/me", () => HttpResponse.json({ username: "alice" })),
   http.get("/api/marketplaces", () => HttpResponse.json([marketplace])),
@@ -44,4 +75,7 @@ export const handlers = [
   http.get("/api/tokens", () => HttpResponse.json<Schemas["TokenView"][]>([])),
   http.post("/api/tokens", () => HttpResponse.json(issuedToken, { status: 201 })),
   http.get("/api/audit", () => HttpResponse.json([])),
+  http.get("/api/webhooks", () => HttpResponse.json<Schemas["SubscriberView"][]>([subscriber])),
+  http.get("/api/webhooks/deliveries", () => HttpResponse.json<Schemas["WebhookDelivery"][]>([delivery])),
+  http.post("/api/webhooks", () => HttpResponse.json(createdSubscriber, { status: 201 })),
 ];
