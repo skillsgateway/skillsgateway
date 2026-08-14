@@ -1,0 +1,81 @@
+name: Native image
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Weekly, Monday 04:30 UTC
+    - cron: '30 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    name: Native build, container & smoke test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: skillsgateway
+          POSTGRES_USER: skillsgateway
+          POSTGRES_PASSWORD: skillsgateway
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U skillsgateway"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: graalvm-community
+          cache: maven
+
+      - name: Build native image
+        run: ./mvnw --batch-mode -Pnative -DskipTests package
+
+      - name: Build container image
+        run: docker build -t skills-gateway:ci .
+
+      - name: Smoke test container
+        run: |
+          docker run -d --name gateway --network host \
+            -e SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/skillsgateway \
+            -e SPRING_DATASOURCE_USERNAME=skillsgateway \
+            -e SPRING_DATASOURCE_PASSWORD=skillsgateway \
+            skills-gateway:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8080/actuator/health | grep -q '"UP"'; then
+              echo "gateway healthy"; exit 0
+            fi
+            sleep 2
+          done
+          echo "gateway did not become healthy"; docker logs gateway; exit 1
+
+      - name: Helm lint
+        run: helm lint helm/skills-gateway
+
+      - name: Export image
+        run: docker save skills-gateway:ci | gzip > skills-gateway-image.tar.gz
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: skills-gateway-native-image
+          path: skills-gateway-image.tar.gz
+
+      - name: Upload native-build SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx-native
+          path: target/classes/META-INF/sbom/application.cdx.json
+          if-no-files-found: error

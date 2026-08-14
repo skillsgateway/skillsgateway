@@ -1,0 +1,9 @@
+apiVersion: v2
+name: skills-gateway
+description: Enterprise gateway for git-distributed AI agent skill marketplaces
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/jimisola/skills-gateway
+sources:
+  - https://github.com/jimisola/skills-gateway

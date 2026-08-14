@@ -1,0 +1,36 @@
+# Default values for skills-gateway.
+
+image:
+  repository: skills-gateway
+  tag: ""          # defaults to .Chart.AppVersion
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 8080
+
+# External PostgreSQL — enterprise deployments bring their own database.
+postgresql:
+  host: ""
+  port: 5432
+  database: skillsgateway
+  username: skillsgateway
+  # Name of an existing Secret with key `password` for the database user.
+  existingSecret: ""
+
+# OIDC identity provider for the web/admin surface (GW_0011).
+oidc:
+  clientId: ""
+  # Name of an existing Secret with key `client-secret`.
+  existingSecret: ""
+  authorizationUri: ""
+  tokenUri: ""
+  jwkSetUri: ""
+
+resources: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
