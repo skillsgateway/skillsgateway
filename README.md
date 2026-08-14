@@ -17,6 +17,26 @@ the product implementation (Java 25 / Spring Boot 4 / JGit, GraalVM
 native-image at release) is being scaffolded. A validated Python prototype
 of the full loop lives in the sibling `skills-gateway-python-mvp` repository.
 
+## Build and run locally
+
+```bash
+./mvnw verify                                # tests + quality gates (needs Docker)
+./mvnw -Pnative -DskipTests package          # GraalVM native binary (needs GraalVM CE 25)
+docker build -t skills-gateway:local .       # OCI image from the native binary
+docker compose up                            # gateway + PostgreSQL on :8080
+```
+
+The API is documented with springdoc: `/v3/api-docs` (OpenAPI 3) and
+`/swagger-ui.html` (UI), behind the OIDC login like the rest of the web
+surface. Point the `SGW_OIDC_*` environment variables at your IdP to log in
+locally; `/actuator/health` is available unauthenticated.
+
+Kubernetes deployment: `helm/skills-gateway` (bring your own PostgreSQL and
+OIDC provider — see `values.yaml`).
+
+Dependency updates are automated with Renovate (`renovate.json`); enable the
+Renovate GitHub App on the repository for it to take effect.
+
 ## Documentation
 
 Arriving on the scaffold branch:

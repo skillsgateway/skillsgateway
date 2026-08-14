@@ -118,3 +118,12 @@ requirements:
     rationale: A supply-chain security product should demonstrate supply-chain transparency for itself; Security teams can inventory the gateway with the same tooling the gateway advocates.
     categories: ["security", "maintainability"]
     revision: 0.1.0
+
+  - id: GW_0015
+    title: Container distribution
+    significance: shall
+    description: The system shall be distributable as an OCI container image running the GraalVM native binary and deployable via a provided Helm chart.
+    rationale: Enterprises deploy to Kubernetes; a container image plus chart makes the gateway installable without bespoke packaging, and the native binary keeps the image small and fast to start.
+    categories: ["flexibility", "maintainability"]
+    implementation: configuration
+    revision: 0.1.0

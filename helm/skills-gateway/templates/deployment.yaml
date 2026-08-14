@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "skills-gateway.fullname" . }}
+  labels:
+    {{- include "skills-gateway.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "skills-gateway.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "skills-gateway.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: skills-gateway
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://{{ required "postgresql.host is required" .Values.postgresql.host }}:{{ .Values.postgresql.port }}/{{ .Values.postgresql.database }}"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: {{ .Values.postgresql.username | quote }}
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "postgresql.existingSecret is required" .Values.postgresql.existingSecret }}
+                  key: password
+            - name: SGW_OIDC_CLIENT_ID
+              value: {{ .Values.oidc.clientId | quote }}
+            - name: SGW_OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "oidc.existingSecret is required" .Values.oidc.existingSecret }}
+                  key: client-secret
+            - name: SGW_OIDC_AUTHORIZATION_URI
+              value: {{ .Values.oidc.authorizationUri | quote }}
+            - name: SGW_OIDC_TOKEN_URI
+              value: {{ .Values.oidc.tokenUri | quote }}
+            - name: SGW_OIDC_JWK_SET_URI
+              value: {{ .Values.oidc.jwkSetUri | quote }}
+          # The exact /actuator/health path is the only unauthenticated
+          # actuator endpoint; liveness/readiness subpaths would be
+          # redirected to the IdP.
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -39,6 +39,7 @@
         <reqstool-plugin.version>1.0.4</reqstool-plugin.version>
         <arconia.version>0.29.0</arconia.version>
         <cyclonedx-plugin.version>2.9.3</cyclonedx-plugin.version>
+        <springdoc.version>3.1.0</springdoc.version>
     </properties>
 
     <dependencyManagement>
@@ -77,6 +78,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
         </dependency>
 
         <!-- Boot 4 moved Flyway auto-configuration into its own module. -->

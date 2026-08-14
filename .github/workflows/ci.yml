@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    name: Build & gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Nisse derives the Maven version from git history; shallow clones break it.
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Build and test (includes Spotless, Checkstyle, SBOM, reqstool annotations)
+        run: ./mvnw --batch-mode verify
+
+      - name: Install reqstool CLI
+        run: pipx install reqstool
+
+      - name: Requirements traceability gate
+        run: |
+          reqstool status local -p docs/reqstool | tee reqstool-status.txt
+          grep -q '· PASS$' reqstool-status.txt
+
+      - name: Install OpenSpec CLI
+        run: npm install -g @fission-ai/openspec@1.3.1
+
+      - name: OpenSpec validation gate
+        run: openspec validate --all --strict
+
+      - name: Upload CycloneDX SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx
+          path: target/classes/META-INF/sbom/application.cdx.json
+          if-no-files-found: error

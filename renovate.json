@@ -1,0 +1,18 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Group Spring Boot and the Boot-aligned Arconia BOM",
+      "groupName": "spring boot",
+      "matchPackageNames": [
+        "org.springframework.boot{/,}**",
+        "io.arconia{/,}**"
+      ]
+    }
+  ],
+  "maven-wrapper": {
+    "enabled": true
+  }
+}
