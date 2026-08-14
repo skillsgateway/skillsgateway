@@ -47,9 +47,9 @@ existing requirement changes)
 ## Impact
 
 - New: `webhook/` package (subscriber + delivery repositories, signer, dispatcher,
-  controller), Flyway migration `V2__webhooks.sql` (tables `webhook_subscribers`,
-  `webhook_deliveries`), `ui/src/pages/webhooks.tsx`.
-- Changed: `AdminController` (event emission on ingest/approve/reject),
+  controller), `ui/src/pages/webhooks.tsx`.
+- Changed: `V1__init.sql` (tables `webhook_subscribers`, `webhook_deliveries` — the repo
+  keeps a single migration), `AdminController` (event emission on ingest/approve/reject),
   `SkillsGatewayProperties` (webhook dispatcher tuning), `SkillsGatewayApplication`
   (`@EnableScheduling`), `ui` router/nav, generated OpenAPI types, MSW handlers,
   `docs/reqstool/*.yml`.

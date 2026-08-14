@@ -30,9 +30,9 @@ templates; replay/redelivery from the portal; webhook receipt (inbound hooks).
   `WebhookService.emit(...)` writes one `webhook_deliveries` row per matching subscriber
   and returns. An admin action never blocks on, or fails because of, a receiver.
 
-- **Two tables, added in a new migration `V2__webhooks.sql`.** The repo's standing
-  convention is a single `V1__init.sql`; the owner directed this change to add the next
-  version instead, so V1 is left untouched and V2 adds:
+- **Two tables, folded into `V1__init.sql`.** The repo keeps a single migration until the
+  owner says otherwise — Testcontainers and the e2e compose stack recreate the schema every
+  run, so there is no deployed schema to migrate from. V1 gains:
   - `webhook_subscribers(id, name UNIQUE, url, secret, events, enabled, created_at)` —
     `events` is a comma-delimited list of event names (`*` = all). A text list keeps the
     JdbcClient mapping trivial and native-image-safe versus a Postgres array type.
@@ -96,7 +96,8 @@ templates; replay/redelivery from the portal; webhook receipt (inbound hooks).
 
 ## Migration Plan
 
-Additive: `V2__webhooks.sql` creates two new tables; no existing table or row changes.
+Additive: `V1__init.sql` gains two new tables; no existing table or column changes. Because the
+schema is created from scratch on every run, folding into V1 needs no versioned step.
 With no subscribers registered the dispatcher is a no-op query every 5 seconds. Rollback
 is a revert plus dropping the two tables.
 
