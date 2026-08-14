@@ -22,7 +22,7 @@ class IngestionTests extends AbstractGatewayTest {
     void registeredMarketplaceIsListedWithItsUrl() throws Exception {
         String name = uniqueName("corp");
         Path upstream = createUpstream(DEFAULT_MANIFEST);
-        String url = upstream.toAbsolutePath().toString();
+        String url = upstream.toUri().toString();
 
         mockMvc.perform(post("/api/marketplaces")
                         .with(oidcLogin())
@@ -70,5 +70,47 @@ class IngestionTests extends AbstractGatewayTest {
         assertThat(registered.snapshot().violation()).contains("non-local");
         assertThatThrownBy(() -> approvalService.approve(registered.snapshot().id(), "alice"))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @SVCs({"SVC_GW_0016"})
+    void nonAllowlistedUrlSchemesAreRejectedAtRegistration() throws Exception {
+        for (String url : List.of("ssh://git@evil.example/repo.git", "ext::sh -c whoami", "/var/tmp/local-repo")) {
+            String name = uniqueName("corp");
+            mockMvc.perform(post("/api/marketplaces")
+                            .with(oidcLogin())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"name\":\"%s\",\"url\":%s}".formatted(name, jsonString(url))))
+                    .andExpect(status().isBadRequest());
+            assertThat(marketplaceRepository.findByName(name)).isEmpty();
+        }
+    }
+
+    @Test
+    @SVCs({"SVC_GW_0017"})
+    void consumerSuppliedRefOtherThanDefaultBranchIsRejected() throws Exception {
+        Path upstream = createUpstream(DEFAULT_MANIFEST);
+        String url = upstream.toUri().toString();
+
+        String rejected = uniqueName("corp");
+        mockMvc.perform(post("/api/marketplaces")
+                        .with(oidcLogin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(
+                                "{\"name\":\"%s\",\"url\":\"%s\",\"ref\":\"feature-branch\"}".formatted(rejected, url)))
+                .andExpect(status().isBadRequest());
+        assertThat(marketplaceRepository.findByName(rejected)).isEmpty();
+
+        String accepted = uniqueName("corp");
+        mockMvc.perform(post("/api/marketplaces")
+                        .with(oidcLogin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"%s\",\"url\":\"%s\",\"ref\":\"main\"}".formatted(accepted, url)))
+                .andExpect(status().isCreated());
+        assertThat(marketplaceRepository.findByName(accepted)).isPresent();
+    }
+
+    private static String jsonString(String value) {
+        return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
     }
 }
