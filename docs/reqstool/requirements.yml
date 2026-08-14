@@ -1,0 +1,120 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/reqstool/reqstool-client/main/src/reqstool/resources/schemas/v1/requirements.schema.json
+
+metadata:
+  urn: skills-gateway
+  variant: microservice
+  title: Skills Gateway
+  url: https://github.com/jimisola/skills-gateway
+
+requirements:
+  - id: GW_0001
+    title: Marketplace registration
+    significance: shall
+    description: The system shall allow an administrator to register an upstream git skill marketplace by its clone URL.
+    rationale: Registration is the entry point for governance; only registered upstreams are ever fetched.
+    categories: ["functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0002
+    title: Immutable snapshot ingestion
+    significance: shall
+    description: The system shall fetch a registered marketplace's default branch into a quarantine area and record an immutable snapshot identified by the upstream commit SHA.
+    rationale: Pinning to commit SHAs is the basis for vetting, provenance, and rug-pull protection; the quarantine area is never served.
+    categories: ["functional-suitability", "security"]
+    revision: 0.1.0
+
+  - id: GW_0003
+    title: Local-only plugin sources
+    significance: shall
+    description: The system shall reject a snapshot whose marketplace manifest declares any plugin source other than a relative path within the marketplace repository.
+    rationale: External sources (github, url, git-subdir, npm, archive) let installs fetch content that was never vetted (threat T4); the MVP fails closed instead of resolving them.
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0004
+    title: Snapshots held until approved
+    significance: shall
+    description: The system shall not serve any snapshot until it has been explicitly approved; upstream changes shall never automatically alter served content.
+    rationale: Mutable git refs enable rug pulls (threat T3); the approval gate between quarantine and published content is the core control.
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0005
+    title: Manual approval decision
+    significance: shall
+    description: The system shall allow an authorized reviewer to approve or reject a held snapshot and record the decision, reviewer identity, and timestamp.
+    rationale: The MVP vetting connector is human approval; the decision record is the start of the provenance trail.
+    categories: ["functional-suitability", "security"]
+    revision: 0.1.0
+
+  - id: GW_0006
+    title: Git smart-HTTP facade
+    significance: shall
+    description: The system shall serve approved snapshots as read-only git repositories over HTTP such that standard git clients (including claude plugin marketplace add) can clone and fetch them.
+    rationale: Speaking the client's native protocol means zero client modification and no bespoke tooling to distribute.
+    categories: ["functional-suitability", "compatibility"]
+    revision: 0.1.0
+
+  - id: GW_0007
+    title: Only approved content fetchable
+    significance: shall
+    description: The facade shall expose only approved refs and objects; quarantined or rejected snapshot content shall not be fetchable.
+    rationale: Serving the raw mirror would leak unvetted branches, tags, and history to clients.
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0008
+    title: Fetch audit log
+    significance: shall
+    description: The system shall record every facade fetch with client source address (and identity when available), repository, ref, commit SHA, and timestamp in an append-only audit log.
+    rationale: Inventory and blast-radius questions (threat T6) reduce to a query over the fetch ledger.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0009
+    title: Snapshot provenance record
+    significance: shall
+    description: The system shall record for each approved snapshot the upstream URL, upstream commit SHA, approver, and approval timestamp, and keep the record retrievable after the fact.
+    rationale: Compliance must be able to answer exactly what was served, from where, and who approved it.
+    categories: ["security", "maintainability"]
+    revision: 0.1.0
+
+  - id: GW_0010
+    title: Administrative interface
+    significance: shall
+    description: The system shall provide an administrative HTTP interface to register marketplaces, list snapshots and their states, and approve or reject held snapshots.
+    rationale: Administrators need a single operational surface; this interface is the seed of the portal.
+    categories: ["functional-suitability", "interaction-capability"]
+    revision: 0.1.0
+
+  - id: GW_0011
+    title: Web authentication via OIDC
+    significance: shall
+    description: The system shall require an authenticated OIDC (OAuth2) session for all web and administrative HTTP interface access; unauthenticated requests shall be redirected to the identity provider for login.
+    rationale: Enterprise SSO is OIDC-only by decision (ADR 0002); the app acts as its own BFF so tokens never reach the browser.
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0012
+    title: Git client authentication via personal access tokens
+    significance: shall
+    description: The system shall require personal access token authentication on the git facade and shall reject unauthenticated or invalid-token fetches; the authenticated identity shall be recorded in the fetch audit log.
+    rationale: Git clients cannot perform interactive OIDC; token auth over the standard credential-helper flow is the only workable mechanism, and it upgrades the audit ledger from IP-level to identity-level (GW_0008).
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0013
+    title: Personal access token management
+    significance: shall
+    description: The system shall allow an authenticated user to create and revoke personal access tokens; tokens shall be stored only as cryptographic hashes and the cleartext value shall be shown exactly once at creation.
+    rationale: Tokens are credentials; hash-at-rest and show-once are the baseline expected of an enterprise security product.
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0014
+    title: SBOM endpoint
+    significance: shall
+    description: The system shall expose its own CycloneDX software bill of materials over an HTTP endpoint.
+    rationale: A supply-chain security product should demonstrate supply-chain transparency for itself; Security teams can inventory the gateway with the same tooling the gateway advocates.
+    categories: ["security", "maintainability"]
+    revision: 0.1.0
