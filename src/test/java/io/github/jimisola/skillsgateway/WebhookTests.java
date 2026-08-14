@@ -179,12 +179,14 @@ class WebhookTests extends AbstractGatewayTest {
             long subscriberId = createSubscriber(uniqueName("failing"), receiver.url(), "*", null);
             webhookService.emit("snapshot.ingested", "corp", 7L, "def456", "held", "alice");
 
-            Duration firstBackoff = dispatchOnceAndMeasureBackoff(subscriberId, 1);
-            Thread.sleep(firstBackoff.toMillis() + 50);
-            Duration secondBackoff = dispatchOnceAndMeasureBackoff(subscriberId, 2);
-            assertThat(secondBackoff).isGreaterThan(firstBackoff);
+            WebhookDelivery first = dispatchOnce(subscriberId, 1);
+            waitUntilDue(first);
+            WebhookDelivery second = dispatchOnce(subscriberId, 2);
+            // The scheduled interval grows: measured from the row itself, not from wall clock,
+            // so a slow attempt cannot make the comparison flaky.
+            assertThat(scheduledBackoff(second)).isGreaterThan(scheduledBackoff(first));
 
-            Thread.sleep(secondBackoff.toMillis() + 50);
+            waitUntilDue(second);
             assertThat(webhookDispatcher.dispatchDue()).isPositive();
             WebhookDelivery exhausted =
                     deliveryRepository.listBySubscriber(subscriberId).getFirst();
@@ -196,15 +198,26 @@ class WebhookTests extends AbstractGatewayTest {
         }
     }
 
-    /** Dispatches one pass and returns how far into the future the next attempt was pushed. */
-    private Duration dispatchOnceAndMeasureBackoff(long subscriberId, int expectedAttempts) {
-        Instant before = Instant.now();
+    /** Dispatches one pass and returns the delivery, asserting the attempt was recorded. */
+    private WebhookDelivery dispatchOnce(long subscriberId, int expectedAttempts) {
         assertThat(webhookDispatcher.dispatchDue()).isPositive();
         WebhookDelivery delivery =
                 deliveryRepository.listBySubscriber(subscriberId).getFirst();
         assertThat(delivery.state()).isEqualTo(WebhookDelivery.PENDING);
         assertThat(delivery.attempts()).isEqualTo(expectedAttempts);
         assertThat(delivery.lastStatus()).isEqualTo(500);
-        return Duration.between(before, delivery.nextAttemptAt());
+        return delivery;
+    }
+
+    /** The interval the dispatcher scheduled: both timestamps are written by the same update. */
+    private static Duration scheduledBackoff(WebhookDelivery delivery) {
+        return Duration.between(delivery.updatedAt(), delivery.nextAttemptAt());
+    }
+
+    private static void waitUntilDue(WebhookDelivery delivery) throws InterruptedException {
+        long millis = Duration.between(Instant.now(), delivery.nextAttemptAt()).toMillis();
+        if (millis > 0) {
+            Thread.sleep(millis + 50);
+        }
     }
 }
