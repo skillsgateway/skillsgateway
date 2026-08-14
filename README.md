@@ -28,10 +28,15 @@ docker build -t skills-gateway:local .       # OCI image from the native binary
 docker compose up                            # gateway + PostgreSQL on :8080
 ```
 
-The admin portal (React/Vite, `ui/`) is built inside `./mvnw verify` and served
-from the jar at `/` behind the OIDC login. Portal development: `cd ui && pnpm dev`
-(proxies `/api` to a locally running gateway), `pnpm test` (vitest + Storybook
-story tests with axe), `pnpm storybook` for the component workbench.
+The admin portal (React/Vite, `ui/`) is **built by the Maven build** — the
+frontend-maven-plugin provisions node/pnpm, runs the UI gates, and packages the
+bundle into the jar, served at `/` behind the OIDC login. You never need pnpm to
+build or run the gateway. The `cd ui && pnpm …` commands exist only for UI
+development loops (`pnpm dev` proxies `/api` to a running gateway, `pnpm test`,
+`pnpm storybook`) and for the e2e suite (`pnpm e2e`), which is deliberately
+outside `mvnw verify`.
+
+Contributions: see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 The API is documented with springdoc: `/v3/api-docs` (OpenAPI 3) and
 `/swagger-ui.html` (UI), behind the OIDC login like the rest of the web
