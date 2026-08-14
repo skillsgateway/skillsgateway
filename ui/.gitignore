@@ -1,0 +1,10 @@
+node_modules/
+node/
+dist/
+test-results/
+playwright-report/
+reqstool/annotations.yml
+*.tsbuildinfo
+
+*storybook.log
+storybook-static

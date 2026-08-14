@@ -170,3 +170,23 @@ cases:
       WHEN a registration request supplies a ref other than the upstream default branch
       THEN it is rejected with HTTP 400 and no marketplace is persisted, while omitting the ref or supplying the default branch registers normally
     revision: "0.1.0"
+
+  - id: SVC_GW_0018
+    requirement_ids: ["GW_0018"]
+    title: Admin completes the register-ingest-approve workflow in the portal
+    verification: automated-test
+    description: |
+      GIVEN a running gateway with PostgreSQL and an OIDC identity provider
+      WHEN an administrator logs in through the browser, registers a marketplace, triggers ingestion, and approves the held snapshot in the portal
+      THEN the portal shows the snapshot as approved and the underlying state matches
+    revision: "0.1.0"
+
+  - id: SVC_GW_0019
+    requirement_ids: ["GW_0019"]
+    title: User creates and revokes a token in the portal with show-once cleartext
+    verification: automated-test
+    description: |
+      GIVEN an authenticated portal session
+      WHEN the user creates a personal access token and later revokes it
+      THEN the cleartext is displayed exactly once at creation, never again afterwards, and the revoked token is marked revoked
+    revision: "0.1.0"
