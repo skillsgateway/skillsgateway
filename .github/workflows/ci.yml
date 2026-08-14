@@ -40,10 +40,12 @@ jobs:
         working-directory: ui
         run: pnpm e2e
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
       - name: Install reqstool CLI
-        # Pinned to the commit matching the locally used 0.11.1.dev20 (the released
-        # 0.11.0 schema predates `implementation:` values beyond in-code/N-A).
-        run: pipx install 'reqstool @ git+https://github.com/reqstool/reqstool-client@315a3dbca35aabdd9925aa498d233b23caf8c47b'
+        run: pipx install --python "$(which python3.13)" reqstool==0.12.0
 
       - name: Requirements traceability gate (backend + portal results)
         run: |
