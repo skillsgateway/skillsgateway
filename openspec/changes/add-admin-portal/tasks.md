@@ -46,3 +46,4 @@
 - [x] 7.5 Restyle to agentgateway-inspired layout: grouped sidebar nav, purple accent, breadcrumb bar, dark-mode toggle (next-themes), overview page, marketplace detail route
 - [x] 7.6 dev-insecure-auth toggle (off by default) for local UI work; DevAuthTests
 - [x] 7.7 Fix annotations merge to read per-source-set processor outputs (clean builds)
+- [x] 7.8 GW_0022 admin-action audit: register/ingest/approve/reject/token events appended to the ledger with the acting identity; SVC_GW_0022 test

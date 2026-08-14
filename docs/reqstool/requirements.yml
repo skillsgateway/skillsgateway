@@ -175,3 +175,11 @@ requirements:
     rationale: Forge metadata gives administrators provenance context at a glance; being best-effort keeps registration independent of forge availability.
     categories: ["functional-suitability"]
     revision: 0.1.0
+
+  - id: GW_0022
+    title: Administrative actions are audit-logged
+    significance: shall
+    description: The system shall append administrative actions — marketplace registration, snapshot ingestion, approval decisions, and token creation/revocation — to the append-only audit ledger with the acting identity and timestamp.
+    rationale: Compliance questions cover who changed the governance state, not only who fetched content; one ledger answers both.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0

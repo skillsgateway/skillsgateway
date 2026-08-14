@@ -1,5 +1,6 @@
 package io.github.jimisola.skillsgateway.auth;
 
+import io.github.jimisola.skillsgateway.admin.AdminAuditLogger;
 import io.github.jimisola.skillsgateway.persistence.AccessToken;
 import java.time.Instant;
 import java.util.List;
@@ -18,10 +19,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/tokens")
 public class TokenController {
 
-    private final TokenService tokenService;
+    /** Token events are not tied to a marketplace; the ledger column is NOT NULL. */
+    private static final String NO_MARKETPLACE = "-";
 
-    public TokenController(TokenService tokenService) {
+    private final TokenService tokenService;
+    private final AdminAuditLogger auditLogger;
+
+    public TokenController(TokenService tokenService, AdminAuditLogger auditLogger) {
         this.tokenService = tokenService;
+        this.auditLogger = auditLogger;
     }
 
     public record CreateTokenRequest(String name) {}
@@ -33,6 +39,7 @@ public class TokenController {
     public ResponseEntity<TokenService.IssuedToken> create(
             @RequestBody CreateTokenRequest request, Authentication authentication) {
         TokenService.IssuedToken issued = tokenService.create(authentication.getName(), request.name());
+        auditLogger.record(authentication.getName(), NO_MARKETPLACE, "token-created", null);
         return ResponseEntity.status(HttpStatus.CREATED).body(issued);
     }
 
@@ -45,9 +52,11 @@ public class TokenController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> revoke(@PathVariable long id, Authentication authentication) {
-        return tokenService.revoke(id, authentication.getName())
-                ? ResponseEntity.noContent().build()
-                : ResponseEntity.notFound().build();
+        if (!tokenService.revoke(id, authentication.getName())) {
+            return ResponseEntity.notFound().build();
+        }
+        auditLogger.record(authentication.getName(), NO_MARKETPLACE, "token-revoked", null);
+        return ResponseEntity.noContent().build();
     }
 
     private static TokenView view(AccessToken token) {

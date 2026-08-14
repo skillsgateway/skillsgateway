@@ -210,3 +210,13 @@ cases:
       WHEN the marketplace is registered
       THEN the project name, description, and last update time are stored with the marketplace
     revision: "0.1.0"
+
+  - id: SVC_GW_0022
+    requirement_ids: ["GW_0022"]
+    title: Admin actions appear in the audit ledger with the acting identity
+    verification: automated-test
+    description: |
+      GIVEN an authenticated administrator
+      WHEN they register a marketplace, ingest it, approve the snapshot, and create and revoke a token
+      THEN the ledger contains a record for each action with the administrator's identity
+    revision: "0.1.0"

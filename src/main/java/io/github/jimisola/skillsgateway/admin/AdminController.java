@@ -53,6 +53,7 @@ public class AdminController {
     private final SkillsGatewayProperties properties;
     private final ForgeMetadataService forgeMetadataService;
     private final SnapshotContentService snapshotContentService;
+    private final AdminAuditLogger auditLogger;
 
     public AdminController(
             MarketplaceRepository marketplaceRepository,
@@ -62,7 +63,8 @@ public class AdminController {
             FetchLogRepository fetchLogRepository,
             SkillsGatewayProperties properties,
             ForgeMetadataService forgeMetadataService,
-            SnapshotContentService snapshotContentService) {
+            SnapshotContentService snapshotContentService,
+            AdminAuditLogger auditLogger) {
         this.marketplaceRepository = marketplaceRepository;
         this.snapshotRepository = snapshotRepository;
         this.ingestionService = ingestionService;
@@ -71,6 +73,7 @@ public class AdminController {
         this.properties = properties;
         this.forgeMetadataService = forgeMetadataService;
         this.snapshotContentService = snapshotContentService;
+        this.auditLogger = auditLogger;
     }
 
     public record RegisterMarketplaceRequest(String name, String url, String ref) {}
@@ -98,7 +101,8 @@ public class AdminController {
     @ApiResponse(responseCode = "400", description = "Disallowed URL scheme, or a ref other than the default branch")
     @ApiResponse(responseCode = "409", description = "A marketplace with that name already exists")
     @ApiResponse(responseCode = "422", description = "Invalid marketplace name")
-    public ResponseEntity<Marketplace> registerMarketplace(@RequestBody RegisterMarketplaceRequest request) {
+    public ResponseEntity<Marketplace> registerMarketplace(
+            @RequestBody RegisterMarketplaceRequest request, Authentication authentication) {
         if (request.name() == null || !MARKETPLACE_NAME.matcher(request.name()).matches()) {
             throw new ResponseStatusException(
                     HttpStatus.UNPROCESSABLE_ENTITY, "name must match " + MARKETPLACE_NAME.pattern());
@@ -113,6 +117,7 @@ public class AdminController {
                 request.name(),
                 request.url(),
                 forgeMetadataService.resolve(request.url()).orElse(null));
+        auditLogger.record(authentication.getName(), marketplace.name(), "marketplace-registered", null);
         return ResponseEntity.status(HttpStatus.CREATED).body(marketplace);
     }
 
@@ -188,12 +193,13 @@ public class AdminController {
     @ApiResponse(responseCode = "201", description = "Snapshot recorded (held, or rejected on policy violation)")
     @ApiResponse(responseCode = "404", description = "Marketplace not found")
     @ApiResponse(responseCode = "502", description = "Upstream fetch failed")
-    public ResponseEntity<Snapshot> ingest(@PathVariable String name) {
+    public ResponseEntity<Snapshot> ingest(@PathVariable String name, Authentication authentication) {
         Marketplace marketplace = marketplaceRepository
                 .findByName(name)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "marketplace '%s' not found".formatted(name)));
         Snapshot snapshot = ingestionService.ingest(marketplace);
+        auditLogger.record(authentication.getName(), marketplace.name(), "snapshot-ingested", snapshot.sha());
         return ResponseEntity.status(HttpStatus.CREATED).body(snapshot);
     }
 
@@ -207,7 +213,13 @@ public class AdminController {
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
     @ApiResponse(responseCode = "409", description = "Snapshot is not in the held state")
     public Snapshot approve(@PathVariable long id, Authentication authentication) {
-        return approvalService.approve(id, authentication.getName());
+        Snapshot snapshot = approvalService.approve(id, authentication.getName());
+        auditLogger.record(
+                authentication.getName(),
+                marketplaceName(snapshot.marketplaceId()),
+                "snapshot-approved",
+                snapshot.sha());
+        return snapshot;
     }
 
     @PostMapping("/snapshots/{id}/reject")
@@ -220,7 +232,20 @@ public class AdminController {
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
     @ApiResponse(responseCode = "409", description = "Snapshot is not in the held state")
     public Snapshot reject(@PathVariable long id, Authentication authentication) {
-        return approvalService.reject(id, authentication.getName());
+        Snapshot snapshot = approvalService.reject(id, authentication.getName());
+        auditLogger.record(
+                authentication.getName(),
+                marketplaceName(snapshot.marketplaceId()),
+                "snapshot-rejected",
+                snapshot.sha());
+        return snapshot;
+    }
+
+    private String marketplaceName(long marketplaceId) {
+        return marketplaceRepository
+                .findById(marketplaceId)
+                .map(Marketplace::name)
+                .orElse("unknown");
     }
 
     @GetMapping("/snapshots/{id}/provenance")
