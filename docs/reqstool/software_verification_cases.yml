@@ -220,3 +220,43 @@ cases:
       WHEN they register a marketplace, ingest it, approve the snapshot, and create and revoke a token
       THEN the ledger contains a record for each action with the administrator's identity
     revision: "0.1.0"
+
+  - id: SVC_GW_0023
+    requirement_ids: ["GW_0023"]
+    title: Lifecycle events reach only the subscribers that filter for them
+    verification: automated-test
+    description: |
+      GIVEN two webhook subscribers, one filtering for snapshot.approved and one filtering for snapshot.rejected
+      WHEN a snapshot is ingested and then approved
+      THEN a delivery exists for the approved subscriber carrying the event name, marketplace, snapshot id, and commit SHA, and none exists for the rejected-only subscriber
+    revision: "0.1.0"
+
+  - id: SVC_GW_0024
+    requirement_ids: ["GW_0024"]
+    title: Deliveries carry a verifiable HMAC-SHA256 signature and secrets are shown once
+    verification: automated-test
+    description: |
+      GIVEN a webhook subscriber created through the admin API
+      WHEN the cleartext secret is returned at creation and a delivery is signed with it
+      THEN the signature header equals the HMAC-SHA256 of the exact request body under that secret, and no later API response exposes the secret
+    revision: "0.1.0"
+
+  - id: SVC_GW_0025
+    requirement_ids: ["GW_0025"]
+    title: A failing delivery is retried with backoff and finally marked failed
+    verification: automated-test
+    description: |
+      GIVEN a subscriber whose endpoint rejects deliveries
+      WHEN the dispatcher processes the delivery until the configured maximum number of attempts is reached
+      THEN each attempt is recorded with its outcome, the next attempt is scheduled later than the previous one, and the delivery ends in the failed state
+    revision: "0.1.0"
+
+  - id: SVC_GW_0026
+    requirement_ids: ["GW_0026"]
+    title: Portal shows webhook subscribers and their delivery attempts
+    verification: automated-test
+    description: |
+      GIVEN an authenticated portal session and a registered webhook subscriber with a delivery attempt
+      WHEN the administrator opens the webhooks page
+      THEN the subscriber is listed with its event filter and the delivery attempt is listed with its event and state
+    revision: "0.1.0"
