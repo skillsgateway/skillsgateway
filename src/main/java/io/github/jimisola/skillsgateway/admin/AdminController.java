@@ -1,6 +1,7 @@
 package io.github.jimisola.skillsgateway.admin;
 
 import io.github.jimisola.skillsgateway.approval.ApprovalService;
+import io.github.jimisola.skillsgateway.config.SkillsGatewayProperties;
 import io.github.jimisola.skillsgateway.ingestion.IngestionException;
 import io.github.jimisola.skillsgateway.ingestion.IngestionService;
 import io.github.jimisola.skillsgateway.persistence.FetchLogRepository;
@@ -10,8 +11,11 @@ import io.github.jimisola.skillsgateway.persistence.Snapshot;
 import io.github.jimisola.skillsgateway.persistence.SnapshotNotFoundException;
 import io.github.jimisola.skillsgateway.persistence.SnapshotRepository;
 import io.github.reqstool.annotations.Requirements;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 import org.springframework.http.HttpStatus;
@@ -33,26 +37,32 @@ public class AdminController {
 
     private static final Pattern MARKETPLACE_NAME = Pattern.compile("^[a-z0-9][a-z0-9_-]*$");
 
+    /** The gateway ingests only the upstream default branch; this is not consumer-selectable. */
+    private static final String DEFAULT_BRANCH = "main";
+
     private final MarketplaceRepository marketplaceRepository;
     private final SnapshotRepository snapshotRepository;
     private final IngestionService ingestionService;
     private final ApprovalService approvalService;
     private final FetchLogRepository fetchLogRepository;
+    private final SkillsGatewayProperties properties;
 
     public AdminController(
             MarketplaceRepository marketplaceRepository,
             SnapshotRepository snapshotRepository,
             IngestionService ingestionService,
             ApprovalService approvalService,
-            FetchLogRepository fetchLogRepository) {
+            FetchLogRepository fetchLogRepository,
+            SkillsGatewayProperties properties) {
         this.marketplaceRepository = marketplaceRepository;
         this.snapshotRepository = snapshotRepository;
         this.ingestionService = ingestionService;
         this.approvalService = approvalService;
         this.fetchLogRepository = fetchLogRepository;
+        this.properties = properties;
     }
 
-    public record RegisterMarketplaceRequest(String name, String url) {}
+    public record RegisterMarketplaceRequest(String name, String url, String ref) {}
 
     public record MarketplaceView(long id, String name, String url, Instant createdAt, List<Snapshot> snapshots) {}
 
@@ -62,12 +72,42 @@ public class AdminController {
             throw new ResponseStatusException(
                     HttpStatus.UNPROCESSABLE_ENTITY, "name must match " + MARKETPLACE_NAME.pattern());
         }
+        requireAllowlistedScheme(request.url());
+        requireDefaultBranchRef(request.ref());
         if (marketplaceRepository.findByName(request.name()).isPresent()) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT, "marketplace '%s' already exists".formatted(request.name()));
         }
         Marketplace marketplace = marketplaceRepository.register(request.name(), request.url());
         return ResponseEntity.status(HttpStatus.CREATED).body(marketplace);
+    }
+
+    /** Fails closed: scheme-less and unparseable URLs are rejected along with non-allowlisted schemes. */
+    @Requirements({"GW_0016"})
+    private void requireAllowlistedScheme(String url) {
+        String scheme = null;
+        if (url != null) {
+            try {
+                scheme = new URI(url).getScheme();
+            } catch (URISyntaxException e) {
+                scheme = null;
+            }
+        }
+        if (scheme == null || !properties.allowedUrlSchemes().contains(scheme.toLowerCase(Locale.ROOT))) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "url scheme must be one of %s".formatted(properties.allowedUrlSchemes()));
+        }
+    }
+
+    /** The ingested ref is the gateway's decision (upstream default branch), never the consumer's. */
+    @Requirements({"GW_0017"})
+    private void requireDefaultBranchRef(String ref) {
+        if (ref != null && !DEFAULT_BRANCH.equals(ref)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "ref is set by the gateway (upstream default branch '%s') and cannot be overridden"
+                            .formatted(DEFAULT_BRANCH));
+        }
     }
 
     @GetMapping("/marketplaces")

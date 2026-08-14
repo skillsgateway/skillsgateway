@@ -127,3 +127,19 @@ requirements:
     categories: ["flexibility", "maintainability"]
     implementation: configuration
     revision: 0.1.0
+
+  - id: GW_0016
+    title: Marketplace URL scheme allowlist
+    significance: shall
+    description: The system shall reject registration of a marketplace whose clone URL scheme is not on the configured allowlist (default http and https); scheme-less or unparseable URLs shall be rejected.
+    rationale: "Git URL schemes such as ssh, file, and C-git's ext:: family are an injection surface; failing closed at the registration boundary keeps every later fetch inside vetted transports even as the transport set grows."
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0017
+    title: Gateway-pinned ingestion ref
+    significance: shall
+    description: The gateway shall determine the git ref that is ingested (the upstream default branch); a registration request that supplies a ref other than the default branch shall be rejected with HTTP 400.
+    rationale: Allowing consumers to choose refs would bypass the vetting pipeline's single-lineage guarantee (one quarantined default-branch history per marketplace) and reopen the mutable-ref rug-pull surface (threat T3).
+    categories: ["security"]
+    revision: 0.1.0

@@ -52,7 +52,9 @@ import org.springframework.web.context.WebApplicationContext;
             "spring.security.oauth2.client.provider.idp.authorization-uri=https://idp.invalid/authorize",
             "spring.security.oauth2.client.provider.idp.token-uri=https://idp.invalid/token",
             "spring.security.oauth2.client.provider.idp.jwk-set-uri=https://idp.invalid/jwks",
-            "skills-gateway.data-dir=target/test-git-data"
+            "skills-gateway.data-dir=target/test-git-data",
+            // file is allowed only here so HTTP-level tests can register local fixtures.
+            "skills-gateway.allowed-url-schemes=http,https,file"
         })
 abstract class AbstractGatewayTest {
 
