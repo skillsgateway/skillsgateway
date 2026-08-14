@@ -1,0 +1,37 @@
+# Local run of the packaged gateway image against PostgreSQL.
+#
+#   ./mvnw -Pnative -DskipTests package
+#   docker build -t skills-gateway:local .
+#   docker compose up
+#
+# The OIDC variables default to the build-time placeholders; point them at a
+# real IdP (SGW_OIDC_*) to log in to the web/admin surface locally.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: skillsgateway
+      POSTGRES_USER: skillsgateway
+      POSTGRES_PASSWORD: skillsgateway
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U skillsgateway"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  gateway:
+    image: ${SGW_IMAGE:-skills-gateway:local}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/skillsgateway
+      SPRING_DATASOURCE_USERNAME: skillsgateway
+      SPRING_DATASOURCE_PASSWORD: skillsgateway
+      SGW_OIDC_CLIENT_ID: ${SGW_OIDC_CLIENT_ID:-change-me}
+      SGW_OIDC_CLIENT_SECRET: ${SGW_OIDC_CLIENT_SECRET:-change-me}
+      SGW_OIDC_AUTHORIZATION_URI: ${SGW_OIDC_AUTHORIZATION_URI:-https://idp.invalid/authorize}
+      SGW_OIDC_TOKEN_URI: ${SGW_OIDC_TOKEN_URI:-https://idp.invalid/token}
+      SGW_OIDC_JWK_SET_URI: ${SGW_OIDC_JWK_SET_URI:-https://idp.invalid/jwks}
+    ports:
+      - "8080:8080"

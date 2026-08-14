@@ -140,3 +140,13 @@ cases:
       WHEN the SBOM endpoint is requested
       THEN a CycloneDX document is returned listing the application's components
     revision: "0.1.0"
+
+  - id: SVC_GW_0015
+    requirement_ids: ["GW_0015"]
+    title: Packaging artifacts are present and mutually consistent
+    verification: automated-test
+    description: |
+      GIVEN the repository's packaging artifacts (Dockerfile and Helm chart)
+      WHEN the packaging test validates them
+      THEN the Dockerfile runs the native binary, and the chart's Deployment wires the image, the actuator health probes, and the PostgreSQL and OIDC configuration
+    revision: "0.1.0"
