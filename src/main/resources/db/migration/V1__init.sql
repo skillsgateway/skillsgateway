@@ -2,7 +2,12 @@ CREATE TABLE marketplaces (
     id BIGSERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     url TEXT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL
+    created_at TIMESTAMPTZ NOT NULL,
+    -- Best-effort forge metadata captured at registration (GW_0021).
+    forge TEXT,
+    forge_project TEXT,
+    description TEXT,
+    upstream_updated_at TIMESTAMPTZ
 );
 
 CREATE TABLE snapshots (

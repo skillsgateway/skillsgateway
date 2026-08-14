@@ -9,6 +9,7 @@ import io.github.jimisola.skillsgateway.persistence.SnapshotNotFoundException;
 import io.github.jimisola.skillsgateway.persistence.SnapshotRepository;
 import io.github.jimisola.skillsgateway.storage.GitStorage;
 import io.github.reqstool.annotations.Requirements;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,11 +42,37 @@ public class SnapshotContentService {
         this.marketplaceRepository = marketplaceRepository;
     }
 
-    public record SkillInfo(String name, String path) {}
+    @Schema(description = "A skill found under a plugin's source tree")
+    public record SkillInfo(
+            @Schema(description = "Skill directory name") String name,
 
-    public record PluginContent(String name, String description, String source, List<SkillInfo> skills) {}
+            @Schema(description = "Path of the SKILL.md within the snapshot")
+            String path) {}
 
-    public record SnapshotContent(long snapshotId, String sha, String state, List<PluginContent> plugins) {}
+    @Schema(description = "A plugin declared by the marketplace manifest")
+    public record PluginContent(
+            @Schema(description = "Plugin name from the manifest")
+            String name,
+
+            @Schema(description = "Plugin description from the manifest")
+            String description,
+
+            @Schema(description = "Relative source path inside the marketplace repository")
+            String source,
+
+            @Schema(description = "Skills found under <source>/skills/")
+            List<SkillInfo> skills) {}
+
+    @Schema(description = "What a snapshot ships: the manifest's plugins and their skills")
+    public record SnapshotContent(
+            @Schema(description = "Snapshot id") long snapshotId,
+            @Schema(description = "Upstream commit SHA") String sha,
+
+            @Schema(description = "held, approved, or rejected")
+            String state,
+
+            @Schema(description = "Plugins declared by the manifest")
+            List<PluginContent> plugins) {}
 
     @Requirements({"GW_0020"})
     public SnapshotContent content(long snapshotId) {

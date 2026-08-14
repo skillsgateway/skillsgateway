@@ -6,6 +6,7 @@ import io.github.jimisola.skillsgateway.persistence.Snapshot;
 import io.github.jimisola.skillsgateway.persistence.SnapshotRepository;
 import io.github.jimisola.skillsgateway.storage.GitStorage;
 import io.github.reqstool.annotations.Requirements;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Optional;
@@ -78,6 +79,7 @@ public class ApprovalService {
         });
     }
 
+    @Schema(description = "Provenance of a snapshot: what was served, from where, and who approved it")
     public record Provenance(
             long snapshotId,
             String marketplace,

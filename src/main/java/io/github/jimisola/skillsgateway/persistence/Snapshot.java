@@ -1,15 +1,30 @@
 package io.github.jimisola.skillsgateway.persistence;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 
+@Schema(description = "An immutable, SHA-identified snapshot of an upstream marketplace")
 public record Snapshot(
-        long id,
-        long marketplaceId,
+        @Schema(description = "Snapshot id") long id,
+        @Schema(description = "Owning marketplace id") long marketplaceId,
+
+        @Schema(description = "Upstream commit SHA the snapshot is pinned to")
         String sha,
+
+        @Schema(
+                description = "held, approved, or rejected",
+                allowableValues = {"held", "approved", "rejected"})
         String state,
+
+        @Schema(description = "Policy violation that rejected the snapshot, or null")
         String violation,
-        Instant createdAt,
+
+        @Schema(description = "Ingestion time") Instant createdAt,
+
+        @Schema(description = "Reviewer who decided, or null while held")
         String decidedBy,
+
+        @Schema(description = "Decision time, or null while held")
         Instant decidedAt) {
 
     public static final String HELD = "held";
