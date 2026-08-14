@@ -12,6 +12,8 @@ import io.github.jimisola.skillsgateway.persistence.MarketplaceRepository;
 import io.github.jimisola.skillsgateway.persistence.Snapshot;
 import io.github.jimisola.skillsgateway.persistence.SnapshotNotFoundException;
 import io.github.jimisola.skillsgateway.persistence.SnapshotRepository;
+import io.github.jimisola.skillsgateway.webhook.WebhookEvent;
+import io.github.jimisola.skillsgateway.webhook.WebhookService;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -55,6 +57,7 @@ public class AdminController {
     private final ForgeMetadataService forgeMetadataService;
     private final SnapshotContentService snapshotContentService;
     private final AdminAuditLogger auditLogger;
+    private final WebhookService webhookService;
 
     public AdminController(
             MarketplaceRepository marketplaceRepository,
@@ -65,7 +68,8 @@ public class AdminController {
             SkillsGatewayProperties properties,
             ForgeMetadataService forgeMetadataService,
             SnapshotContentService snapshotContentService,
-            AdminAuditLogger auditLogger) {
+            AdminAuditLogger auditLogger,
+            WebhookService webhookService) {
         this.marketplaceRepository = marketplaceRepository;
         this.snapshotRepository = snapshotRepository;
         this.ingestionService = ingestionService;
@@ -75,6 +79,7 @@ public class AdminController {
         this.forgeMetadataService = forgeMetadataService;
         this.snapshotContentService = snapshotContentService;
         this.auditLogger = auditLogger;
+        this.webhookService = webhookService;
     }
 
     @Schema(description = "Marketplace registration request")
@@ -233,6 +238,7 @@ public class AdminController {
                         HttpStatus.NOT_FOUND, "marketplace '%s' not found".formatted(name)));
         Snapshot snapshot = ingestionService.ingest(marketplace);
         auditLogger.record(authentication.getName(), marketplace.name(), "snapshot-ingested", snapshot.sha());
+        emit(WebhookEvent.SNAPSHOT_INGESTED, marketplace.name(), snapshot, authentication.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(snapshot);
     }
 
@@ -252,6 +258,11 @@ public class AdminController {
                 marketplaceName(snapshot.marketplaceId()),
                 "snapshot-approved",
                 snapshot.sha());
+        emit(
+                WebhookEvent.SNAPSHOT_APPROVED,
+                marketplaceName(snapshot.marketplaceId()),
+                snapshot,
+                authentication.getName());
         return snapshot;
     }
 
@@ -271,7 +282,17 @@ public class AdminController {
                 marketplaceName(snapshot.marketplaceId()),
                 "snapshot-rejected",
                 snapshot.sha());
+        emit(
+                WebhookEvent.SNAPSHOT_REJECTED,
+                marketplaceName(snapshot.marketplaceId()),
+                snapshot,
+                authentication.getName());
         return snapshot;
+    }
+
+    /** Enqueue-only: the admin response never waits on, nor fails because of, a receiver. */
+    private void emit(String event, String marketplace, Snapshot snapshot, String actor) {
+        webhookService.emit(event, marketplace, snapshot.id(), snapshot.sha(), snapshot.state(), actor);
     }
 
     private String marketplaceName(long marketplaceId) {

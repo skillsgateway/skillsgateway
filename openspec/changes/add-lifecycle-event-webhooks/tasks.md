@@ -8,7 +8,7 @@
 ## 2. Persistence
 
 - [ ] 2.1 Flyway `V2__webhooks.sql`: `webhook_subscribers` and `webhook_deliveries` with the state check constraint and the `(state, next_attempt_at)` dispatch index
-- [ ] 2.2 `WebhookSubscriber` / `WebhookDelivery` records and their JdbcClient repositories, including the `FOR UPDATE SKIP LOCKED` claim query
+- [ ] 2.2 `WebhookSubscriber` / `WebhookDelivery` records and their JdbcClient repositories, including the atomic conditional claim query
 
 ## 3. Emission and signing
 

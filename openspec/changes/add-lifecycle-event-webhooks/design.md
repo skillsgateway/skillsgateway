@@ -41,12 +41,15 @@ templates; replay/redelivery from the portal; webhook receipt (inbound hooks).
     `state IN ('pending','delivered','failed')` and an index on
     `(state, next_attempt_at)` — the dispatcher's only query.
 
-- **Dispatcher = `@Scheduled` poller with `FOR UPDATE SKIP LOCKED`.** A fixed-delay
-  scheduled method claims due pending deliveries (`state='pending' AND next_attempt_at <=
-  now()`), POSTs each with a `RestClient` under a connect/read timeout, and updates the
-  row. `SKIP LOCKED` makes the claim safe if a second replica ever runs. Chosen over an
-  in-memory queue (loses deliveries on restart, invisible to operators) and over a broker
-  (no broker in the stack).
+- **Dispatcher = `@Scheduled` poller with an atomic conditional claim.** A fixed-delay
+  scheduled method lists due pending deliveries (`state='pending' AND next_attempt_at <=
+  now()`), then claims each with a single `UPDATE … SET next_attempt_at = now + lease
+  WHERE id = ? AND state = 'pending' AND next_attempt_at <= now RETURNING *`: the row is
+  won by exactly one caller, and an interrupted attempt becomes due again when the lease
+  expires. This is preferred over holding a `FOR UPDATE SKIP LOCKED` transaction across
+  the outbound HTTP call, and over an in-memory queue (loses deliveries on restart,
+  invisible to operators) or a broker (no broker in the stack). Each claimed delivery is
+  POSTed with a `RestClient` under a connect/read timeout.
 
 - **Backoff:** attempt *n* (1-based) schedules the next attempt at
   `now + base * 2^(n-1)`, capped, with `base` and `max-attempts` configurable under
