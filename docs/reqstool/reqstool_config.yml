@@ -5,6 +5,8 @@ build: maven
 resources:
   requirements: requirements.yml
   software_verification_cases: software_verification_cases.yml
-  annotations: ../../target/reqstool/annotations.yml
+  # Combined Java + TypeScript annotations (merged by ui/scripts/merge-annotations.mjs).
+  annotations: ../../target/reqstool/annotations-combined.yml
   test_results:
     - ../../target/surefire-reports/**/*.xml
+    - ../../ui/test-results/**/*.xml
