@@ -303,6 +303,8 @@
       
         
       
+        
+      
     
     
     
@@ -363,6 +365,34 @@
     
   
     Lifecycle — quarantine to serve
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../concepts/vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vetting — the connector chain
   
 
     
@@ -475,6 +505,10 @@
   
     
     
+      
+        
+      
+        
       
         
       
@@ -606,6 +640,62 @@
     
   
     Approving and rejecting snapshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../guides/waiving-findings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Waiving a vetting finding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../guides/re-vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Re-vetting approved content
   
 
     
@@ -1456,6 +1546,10 @@ polling, batch payload, signature, replay — is in
 <td><code>sha</code></td>
 <td>The commit involved, when there is one.</td>
 </tr>
+<tr>
+<td><code>detail</code></td>
+<td>Free-text qualifier, when the entry needs one: the vetting chain outcome, a connector's verdict, or the reason a reviewer gave when overriding a blocked outcome.</td>
+</tr>
 </tbody>
 </table>
 <h2 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h2>
@@ -1481,6 +1575,78 @@ polling, batch payload, signature, replay — is in
 <p>Negotiation rounds are not recorded.</p>
 <p><strong>From the API</strong> — registration, ingestion, approve and reject, each carrying
 the acting OIDC principal.</p>
+<p><strong>From the vetting chain</strong> — every run, recorded under the <code>admin</code> source with
+<code>vetting</code> as the principal:</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>When</th>
+<th><code>detail</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>vetting-verdict</code></td>
+<td>One per connector per run.</td>
+<td><code>{connector}={state}</code>, e.g. <code>secret-scan=fail</code>.</td>
+</tr>
+<tr>
+<td><code>vetting-completed</code></td>
+<td>Once per run.</td>
+<td><code>trigger={ingestion\|revet-scheduled\|revet-manual}; outcome={clear\|blocked}; connectors={n}; chain={connector@version,…}</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>From continuous re-vetting</strong> — see
+<a href="../../../guides/re-vetting/">Re-vetting approved content</a>. The scheduled sweep
+records <code>revet-policy</code> as the principal; an on-demand run records the operator.</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>When</th>
+<th><code>detail</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>revet-clear</code></td>
+<td>A re-vetting run found nothing.</td>
+<td><code>trigger=…; outcome=…</code>.</td>
+</tr>
+<tr>
+<td><code>revet-inconclusive</code></td>
+<td>The chain could not conclude, so the snapshot stays approved.</td>
+<td>The connectors that could not answer.</td>
+</tr>
+<tr>
+<td><code>revet-violation</code></td>
+<td>A retroactive violation on an approved snapshot.</td>
+<td><code>trigger=…; mode={WARN\|ENFORCE}; connectors=…; rules=…; fetchedBy={n}</code>.</td>
+</tr>
+<tr>
+<td><code>revet-violation-affected</code></td>
+<td>One per identity that had already fetched the snapshot.</td>
+<td><code>principal=…; fetches=…; lastFetch=…</code>.</td>
+</tr>
+<tr>
+<td><code>snapshot-revoked</code></td>
+<td>The state transition out of <code>approved</code>.</td>
+<td>The violation that caused it.</td>
+</tr>
+<tr>
+<td><code>snapshot-unpublished</code></td>
+<td>The published refs were removed.</td>
+<td>Whether the marketplace still serves anything.</td>
+</tr>
+<tr>
+<td><code>snapshot-unpublish-failed</code></td>
+<td>A revoked snapshot's refs could not be removed.</td>
+<td>The failure. <strong>Needs a person</strong>: the record and the wire disagree.</td>
+</tr>
+</tbody>
+</table>
 <h2 id="what-this-answers">What this answers<a class="headerlink" href="#what-this-answers" title="Permanent link">&para;</a></h2>
 <p>Because entries carry principal, marketplace and SHA, the inventory question is
 a single query:</p>
@@ -1488,6 +1654,8 @@ a single query:</p>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">FROM</span><span class="w"> </span><span class="n">fetch_log</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">sha</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;3f9c2ab...&#39;</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">ts</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">now</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">interval</span><span class="w"> </span><span class="s1">&#39;90 days&#39;</span><span class="p">;</span>
 </code></pre></div>
+<p><code>GET /api/snapshots/{id}/fetchers</code> answers exactly this from the API, and it is
+what the portal shows beneath a revoked snapshot.</p>
 <p>That is the "which of our developers received this exact content" question that
 git distribution otherwise cannot answer.</p>
 

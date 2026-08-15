@@ -16,7 +16,7 @@
         <link rel="prev" href="../..">
       
       
-        <link rel="next" href="../snapshots-and-ledger/">
+        <link rel="next" href="../vetting/">
       
       
         
@@ -305,6 +305,8 @@
       
         
       
+        
+      
     
     
     
@@ -447,6 +449,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Stage 2 — approval">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#approval-is-not-permanent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Approval is not permanent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -475,6 +494,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vetting — the connector chain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -579,6 +626,10 @@
   
     
     
+      
+        
+      
+        
       
         
       
@@ -710,6 +761,62 @@
     
   
     Approving and rejecting snapshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/waiving-findings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Waiving a vetting finding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/re-vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Re-vetting approved content
   
 
     
@@ -1304,6 +1411,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Stage 2 — approval">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#approval-is-not-permanent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Approval is not permanent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1363,11 +1487,18 @@ physically lives in a different git repository from published content.</p>
     B --&gt; C{"Ingestion accepts?"}
     C --&gt;|"external source,&lt;br/&gt;disallowed scheme"| D["Rejected fail-closed&lt;br/&gt;violation recorded"]
     C --&gt;|ok| E["Snapshot: held&lt;br/&gt;refs/snapshots/{sha} in quarantine"]
-    E --&gt; F["Reviewer inspects&lt;br/&gt;contents + provenance"]
+    E --&gt; V["Vetting chain runs&lt;br/&gt;verdict per connector"]
+    V --&gt; F["Reviewer inspects&lt;br/&gt;verdicts + contents + provenance"]
     F --&gt;|reject| G["state: rejected&lt;br/&gt;previous approval keeps serving"]
     F --&gt;|approve| H["ApprovalService publishes&lt;br/&gt;refs/heads/main → sha"]
     H --&gt; I["Clients fetch the new SHA"]
-    E -.-&gt; L[("Audit ledger")]
+    H --&gt; R["Re-vetting sweep&lt;br/&gt;runs the chain again, later"]
+    R --&gt;|"violation, enforce mode"| X["state: revoked&lt;br/&gt;published refs removed"]
+    X --&gt;|"fresh approve decision"| H
+    R -.-&gt; L
+    X -.-&gt; L
+    V -.-&gt; L[("Audit ledger")]
+    E -.-&gt; L
     G -.-&gt; L
     H -.-&gt; L</code></pre>
 <h2 id="the-two-repositories">The two repositories<a class="headerlink" href="#the-two-repositories" title="Permanent link">&para;</a></h2>
@@ -1408,10 +1539,24 @@ calling the endpoint — decides when to look for new commits.</p>
 must be on the allowlist, and the ref is the gateway's decision, not the
 registrant's. See <a href="../trust-boundaries/">Trust boundaries</a>.</p>
 <p>Ingesting the same upstream commit twice does not create a second snapshot — the
-snapshot is keyed by the upstream SHA.</p>
+snapshot is keyed by the upstream SHA, and the chain is not re-run for one that
+already exists.</p>
+<p>Once a snapshot is recorded as <code>held</code>, the <strong>vetting chain</strong> runs against the
+content just pinned: each connector answers with a verdict, the verdicts are
+recorded against the snapshot, and they aggregate fail-closed into a <code>clear</code> or
+<code>blocked</code> outcome. The chain never changes the snapshot's state — a vetted
+snapshot is still <code>held</code>. What it decides is whether approving it is an ordinary
+act or one that needs a written reason. See
+<a href="../vetting/">Vetting — the connector chain</a>.</p>
 <h2 id="stage-2-approval">Stage 2 — approval<a class="headerlink" href="#stage-2-approval" title="Permanent link">&para;</a></h2>
 <p>A held snapshot is inert. It is stored, it is inspectable in the portal, and it
 is serving nothing.</p>
+<p>Approval is gated by the chain: a snapshot whose <em>effective</em> outcome is blocked
+— its latest run objects and some blocking finding is not covered by an active
+waiver, which includes a snapshot the chain never ran against — is refused.
+There is no override flag. The way past a finding is a scoped, justified,
+expiring <a href="../../guides/waiving-findings/">waiver</a> for it, and every waiver that
+let an approval through is written to the ledger.</p>
 <p><code>ApprovalService.approve</code> is the <strong>only</strong> code in the system that publishes. It
 fetches the pinned <code>refs/snapshots/{sha}</code> from quarantine into the published
 repository and force-updates <code>refs/heads/main</code> to that exact SHA. Rejection
@@ -1433,8 +1578,23 @@ marks the snapshot <code>rejected</code> and touches no repository at all.</p>
     Svc--&gt;&gt;API: snapshot {state: approved, decidedBy, decidedAt}
     API--&gt;&gt;Rev: 200</code></pre>
 <p>Both decisions record the deciding principal and timestamp and append to the
-ledger. Both return <strong>409 Conflict</strong> on a snapshot that is not <code>held</code> — you
-cannot re-approve, and you cannot approve something already rejected.</p>
+ledger. Both return <strong>409 Conflict</strong> on a snapshot that is already <code>approved</code> or
+<code>rejected</code> — you cannot re-approve, and you cannot approve something already
+rejected.</p>
+<p>A <code>revoked</code> snapshot is the one exception, and it is decidable through these same
+two endpoints. That is how content retracted by
+<a href="../../guides/re-vetting/">continuous re-vetting</a> comes back: the same gate, a new
+reviewer, a new timestamp.</p>
+<h3 id="approval-is-not-permanent">Approval is not permanent<a class="headerlink" href="#approval-is-not-permanent" title="Permanent link">&para;</a></h3>
+<p>Publication holds until something takes it back, and one thing can:
+<a href="../../guides/re-vetting/">continuous re-vetting</a> re-runs the chain over approved
+content on a schedule. If a run objects to the content and no active waiver
+covers the finding, the violation is recorded and announced — and, when the
+gateway is configured to enforce, the snapshot moves to <code>revoked</code> and its
+published refs are removed.</p>
+<p>That path only ever <em>unpublishes</em>. <code>ApprovalService.approve</code> remains the sole
+publisher, which is why a revoked snapshot returns to being served only by going
+back through it.</p>
 <h2 id="stage-3-serving">Stage 3 — serving<a class="headerlink" href="#stage-3-serving" title="Permanent link">&para;</a></h2>
 <p>The facade serves the published repository read-only over git smart-HTTP at
 <code>/git/{marketplace}</code>, authenticated by personal access token. Clients see one

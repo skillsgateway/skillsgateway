@@ -16,7 +16,7 @@
         <link rel="prev" href="../registering-a-marketplace/">
       
       
-        <link rel="next" href="../consuming-skills/">
+        <link rel="next" href="../waiving-findings/">
       
       
         
@@ -303,6 +303,8 @@
       
         
       
+        
+      
     
     
     
@@ -363,6 +365,34 @@
     
   
     Lifecycle — quarantine to serve
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vetting — the connector chain
   
 
     
@@ -477,6 +507,10 @@
   
     
     
+      
+        
+      
+        
       
         
       
@@ -704,6 +738,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#vetting-verdicts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vetting verdicts
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -725,6 +770,17 @@
     <span class="md-ellipsis">
       
         Deciding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#re-approving-a-revoked-snapshot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Re-approving a revoked snapshot
       
     </span>
   </a>
@@ -768,6 +824,62 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../waiving-findings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Waiving a vetting finding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../re-vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Re-vetting approved content
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1368,6 +1480,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#vetting-verdicts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vetting verdicts
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1389,6 +1512,17 @@
     <span class="md-ellipsis">
       
         Deciding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#re-approving-a-revoked-snapshot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Re-approving a revoked snapshot
       
     </span>
   </a>
@@ -1486,6 +1620,22 @@ page.</p>
 <p>If ingestion flagged the snapshot — an external plugin source, for instance,
 which is rejected fail-closed in the current scope — the reason is on the
 snapshot row and rendered in the portal as destructive text.</p>
+<h3 id="vetting-verdicts">Vetting verdicts<a class="headerlink" href="#vetting-verdicts" title="Permanent link">&para;</a></h3>
+<p>Before anything else, read what the vetting chain concluded. The snapshot card
+on the marketplace detail page — and the approve dialog itself — shows the chain
+outcome and, per connector, its verdict and every finding with the file and line
+it came from.</p>
+<p>A <strong>blocked</strong> outcome means at least one connector failed, errored or has not
+answered, or that the chain never ran for this snapshot at all.</p>
+<div class="admonition warning">
+<p class="admonition-title">A clear outcome is not a clean bill of health</p>
+<p>The built-in connectors are pattern matchers. They catch known credential
+shapes and known prompt-injection markers; a paraphrased instruction or an
+unshaped secret goes straight past them. Treat <code>clear</code> as "nothing known
+matched", and keep reading the content. The limits of each connector are
+listed under <em>What these connectors can and cannot see</em> next to the
+verdicts, and in <a href="../../concepts/vetting/">Vetting — the connector chain</a>.</p>
+</div>
 <h2 id="what-to-look-for">What to look for<a class="headerlink" href="#what-to-look-for" title="Permanent link">&para;</a></h2>
 <p>The threats that matter here are the ones no scanner catches:</p>
 <ul>
@@ -1504,13 +1654,19 @@ snapshot row and rendered in the portal as destructive text.</p>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p>On the <strong>Marketplaces</strong> page, held snapshots show <strong>Approve</strong> and <strong>Reject</strong>
-buttons in their row. Both fire immediately — there is no confirmation
-dialog.</p>
+buttons in their row. <strong>Reject</strong> fires immediately. <strong>Approve</strong> opens a
+dialog showing the vetting verdicts; if the chain blocked the snapshot, the
+confirm button stays disabled until every blocking finding is waived from
+that same dialog.</p>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/1/approve
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/1/reject
 </code></pre></div>
+<p>Neither takes a request body. A snapshot the vetting chain blocked is
+refused with 409 until each blocking finding is covered by an active
+<a href="../waiving-findings/">waiver</a>; the problem document lists them in
+<code>uncoveredFindings</code>.</p>
 </div>
 </div>
 </div>
@@ -1538,19 +1694,30 @@ already approved keeps serving.</p>
 </tr>
 <tr>
 <td>409</td>
-<td>The snapshot is not <code>held</code>.</td>
+<td>The snapshot is neither <code>held</code> nor <code>revoked</code>, or its effective vetting outcome is blocked (see <code>uncoveredFindings</code>).</td>
 </tr>
 </tbody>
 </table>
 <div class="admonition warning">
-<p class="admonition-title">Decisions are one-way</p>
-<p>A snapshot that is not <code>held</code> cannot be approved or rejected. There is no
-revocation state and no re-decision — the state machine is
-<code>held → approved | rejected</code>, once.</p>
-<p>To move a marketplace back to earlier content, approve the earlier snapshot
-is <em>not</em> possible either. Plan rollbacks by re-ingesting the desired
-upstream commit.</p>
+<p class="admonition-title">An approved snapshot cannot be re-decided</p>
+<p>Approving is not reversible by hand. A snapshot that is <code>approved</code> or
+<code>rejected</code> returns 409 from both endpoints, and there is no un-approve.</p>
+<p>To move a marketplace back to earlier content, re-ingest the desired
+upstream commit and approve that snapshot. Approving an older one is not a
+rollback mechanism.</p>
 </div>
+<h2 id="re-approving-a-revoked-snapshot">Re-approving a revoked snapshot<a class="headerlink" href="#re-approving-a-revoked-snapshot" title="Permanent link">&para;</a></h2>
+<p>A snapshot that <a href="../re-vetting/">continuous re-vetting</a> revoked is decidable
+again, and the route back is this same <strong>Approve</strong> — deliberately, because a
+retraction the gateway made without a person has to be answerable by one.</p>
+<p>Nothing about the gate is relaxed for it. The effective vetting outcome is
+evaluated exactly as for a held snapshot, so the finding that caused the
+violation has to be waived (or fixed by re-ingesting a corrected upstream
+commit) before the approval succeeds. What the decision records is fresh: a new
+reviewer, a new timestamp, and the revocation marks cleared. What the snapshot
+was revoked for stays in the audit ledger.</p>
+<p>Rejecting it instead is the terminal answer, and the right one when the finding
+is not something anyone intends to accept.</p>
 <h2 id="rejection-is-not-deletion">Rejection is not deletion<a class="headerlink" href="#rejection-is-not-deletion" title="Permanent link">&para;</a></h2>
 <p>The rejected snapshot stays as evidence — it is the record that someone looked
 at this exact upstream commit and said no.</p>
@@ -1563,6 +1730,9 @@ restricted application.</p>
 <h2 id="after-approval">After approval<a class="headerlink" href="#after-approval" title="Permanent link">&para;</a></h2>
 <p>The content is live. Verify it and point clients at it —
 <a href="../consuming-skills/">Consuming approved skills</a>.</p>
+<p>If the chain objected and you accepted the risk, see
+<a href="../waiving-findings/">Waiving a vetting finding</a> for what the acceptance covers
+and when it lapses.</p>
 
 
 

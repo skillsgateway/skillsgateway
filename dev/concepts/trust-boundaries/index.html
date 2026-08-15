@@ -305,6 +305,8 @@
       
         
       
+        
+      
     
     
     
@@ -365,6 +367,34 @@
     
   
     Lifecycle — quarantine to serve
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vetting — the connector chain
   
 
     
@@ -605,6 +635,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -721,6 +755,62 @@
     
   
     Approving and rejecting snapshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/waiving-findings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Waiving a vetting finding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/re-vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Re-vetting approved content
   
 
     
@@ -1482,8 +1572,13 @@ valid PAT even in development mode.</p>
 <p><code>ApprovalService</code> is the only publisher. The invariant is structural rather than
 procedural: nothing else in the codebase writes to <code>{data-dir}/published/</code>, and
 the facade reads nothing else.</p>
-<p>A snapshot that is not <code>held</code> cannot be decided again, so the published ref
-moves only through a deliberate, recorded, one-time decision.</p>
+<p>An <code>approved</code> or <code>rejected</code> snapshot cannot be decided again, so the published
+ref only ever advances through a deliberate, recorded decision.</p>
+<p>It can also <em>retreat</em>, and only one thing makes it: an enforced
+<a href="../../guides/re-vetting/">re-vetting</a> violation, which removes the published
+refs and moves the snapshot to <code>revoked</code>. That path never publishes — it only
+unpublishes — so <code>ApprovalService</code> remains the sole publisher, and a revoked
+snapshot returns to being served only by going back through it.</p>
 <h2 id="the-web-surface">The web surface<a class="headerlink" href="#the-web-surface" title="Permanent link">&para;</a></h2>
 <p>Everything that is not <code>/git/**</code> is the web chain: OIDC authorization-code login
 only, with the application acting as its own BFF. The browser never holds a

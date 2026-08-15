@@ -303,6 +303,8 @@
       
         
       
+        
+      
     
     
     
@@ -363,6 +365,34 @@
     
   
     Lifecycle — quarantine to serve
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vetting — the connector chain
   
 
     
@@ -475,6 +505,10 @@
   
     
     
+      
+        
+      
+        
       
         
       
@@ -606,6 +640,62 @@
     
   
     Approving and rejecting snapshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/waiving-findings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Waiving a vetting finding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/re-vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Re-vetting approved content
   
 
     
@@ -1120,6 +1210,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#revoked-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Revoked snapshots
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1379,6 +1480,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#revoked-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Revoked snapshots
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1481,13 +1593,13 @@ applies these:</p>
 <tr>
 <td><a href="#superseded">Superseded</a></td>
 <td>Selector</td>
-<td><code>held</code> or <code>rejected</code> snapshots of a marketplace that a later <code>approved</code> snapshot has overtaken, once older than <code>superseded-min-age</code>.</td>
+<td><code>held</code>, <code>rejected</code> or <code>revoked</code> snapshots of a marketplace that a later <code>approved</code> snapshot has overtaken, once older than <code>superseded-min-age</code>.</td>
 <td><code>superseded</code>, <code>superseded-min-age</code></td>
 </tr>
 <tr>
 <td><a href="#minimum-idle">Minimum idle</a></td>
 <td><strong>Veto</strong></td>
-<td>Nothing. It <em>removes</em> any candidate whose SHA was fetched through the facade within <code>min-idle</code>.</td>
+<td>Nothing. It <em>removes</em> any candidate whose SHA was fetched from <em>its own</em> marketplace through the facade within <code>min-idle</code>.</td>
 <td><code>min-idle</code></td>
 </tr>
 <tr>
@@ -1516,8 +1628,12 @@ the gateway cannot yet prove that nothing references it.</p>
 <p>The criterion is a boolean as well as an age: <code>superseded: false</code> turns it off
 without disturbing <code>superseded-min-age</code>.</p>
 <h3 id="minimum-idle">Minimum idle<a class="headerlink" href="#minimum-idle" title="Permanent link">&para;</a></h3>
-<p>A candidate whose SHA appears in the ledger as a facade fetch (<code>source &lt;&gt; 'admin'</code>)
-within <code>min-idle</code> (default <code>30d</code>) is dropped from the pass.</p>
+<p>A candidate whose SHA appears in the ledger as a facade fetch of <strong>its own
+marketplace</strong> (<code>source &lt;&gt; 'admin'</code>) within <code>min-idle</code> (default <code>30d</code>) is dropped
+from the pass. The marketplace is part of the match because a SHA is not unique
+across marketplaces — a fork, a mirror, or the same upstream registered twice all
+carry it — and the facade serves per marketplace, so traffic to one marketplace
+says nothing about whether another's identically-pinned snapshot is still in use.</p>
 <div class="admonition note">
 <p class="admonition-title">This veto cannot select anything today — and that is the point</p>
 <p>Only <em>approved</em> snapshots are ever served, and approved snapshots are
@@ -1529,8 +1645,9 @@ into a catalog inherits the protection instead of having to remember it.</p>
 <h3 id="approved-snapshots">Approved snapshots<a class="headerlink" href="#approved-snapshots" title="Permanent link">&para;</a></h3>
 <p>An <code>approved</code> snapshot is what the facade serves. It is never eligible:</p>
 <ul>
-<li>every eligibility query carries <code>state &lt;&gt; 'approved'</code>, so a policy pass cannot
-  reach one;</li>
+<li>every eligibility query names the deletable states explicitly —
+  <code>state IN ('held', 'rejected', 'revoked')</code> — so a policy pass cannot reach an
+  approved one;</li>
 <li>the soft-delete <code>UPDATE</code> itself excludes approved snapshots, so served content
   stays served whatever a caller asks for;</li>
 <li><code>DELETE /api/snapshots/{id}</code> refuses an approved snapshot with <strong>409</strong> before
@@ -1540,6 +1657,24 @@ into a catalog inherits the protection instead of having to remember it.</p>
 policy pass and the manual endpoint alike. As a consequence retention never
 touches the <strong>published</strong> repository — the only ref compaction removes lives in
 quarantine.</p>
+<h3 id="revoked-snapshots">Revoked snapshots<a class="headerlink" href="#revoked-snapshots" title="Permanent link">&para;</a></h3>
+<p>A snapshot that <a href="../../guides/re-vetting/">re-vetting revoked</a> is <em>not</em> approved,
+so the guard above no longer covers it. That is deliberate, not a side effect:
+the deletable states are named explicitly in the SQL precisely so that a new
+state has to be added on purpose to become deletable.</p>
+<p>Retention treats <code>revoked</code> exactly as it treats <code>rejected</code>:</p>
+<ul>
+<li>the <strong>superseded</strong> criterion may select it — it is not being served, and a
+  later approved snapshot has taken its place;</li>
+<li><strong><code>held-max-age</code> never does</strong>, because that criterion names <code>held</code> itself;</li>
+<li>an administrator may delete it by hand, which the approved guard refused
+  before the revocation;</li>
+<li>the <strong><code>min-idle</code> veto still applies</strong>, which is what keeps a recently-revoked
+  snapshot around while the consumers that fetched it before the revocation are
+  still recent.</li>
+</ul>
+<p>Deleting one destroys nothing anyone could fetch. What it was revoked for, and
+who had already fetched it, stays in the append-only ledger regardless.</p>
 <h2 id="the-two-passes">The two passes<a class="headerlink" href="#the-two-passes" title="Permanent link">&para;</a></h2>
 <p>Deletion is reversible first and permanent later, and the two are separate
 passes so that a wrong criterion costs a mark rather than content.</p>
@@ -1551,8 +1686,8 @@ passes so that a wrong criterion costs a mark rather than content.</p>
     Purged --&gt; [*]
 
     note right of Live
-        state stays held | approved | rejected
-        deletion is orthogonal, never a fourth state
+        state stays held | approved | rejected | revoked
+        deletion is orthogonal, never a state of its own
     end note
     note right of SoftDeleted
         deleted_at, deleted_reason, purge_after set

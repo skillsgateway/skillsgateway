@@ -305,6 +305,8 @@
       
         
       
+        
+      
     
     
     
@@ -365,6 +367,34 @@
     
   
     Lifecycle — quarantine to serve
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vetting — the connector chain
   
 
     
@@ -502,6 +532,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -618,6 +652,62 @@
     
   
     Approving and rejecting snapshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/waiving-findings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Waiving a vetting finding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/re-vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Re-vetting approved content
   
 
     
@@ -1210,6 +1300,24 @@ reachable by a client.</dd>
 <dt><strong>Audit ledger</strong> (or just <em>ledger</em>)</dt>
 <dd>The append-only <code>fetch_log</code> table recording every facade fetch and every
 administrative action. No code path updates or deletes it.</dd>
+<dt><strong>Chain run</strong></dt>
+<dd>One execution of the vetting chain against one snapshot, recorded with its
+verdicts, its findings, and a fail-closed <code>clear</code> or <code>blocked</code> outcome.</dd>
+<dt><strong>Connector</strong></dt>
+<dd>A pluggable vetting component. It is handed a snapshot's identity and a
+read-only walk over its files, and answers with a verdict. The gateway
+orchestrates connectors; it does not vet content itself.</dd>
+<dt><strong>Finding</strong></dt>
+<dd>One thing a connector found: a stable rule id, a severity, a <code>path:line</code>
+location, and a message. The rule id is the identity a future waiver would
+be written against.</dd>
+<dt><strong>Override</strong></dt>
+<dd>Approving a snapshot whose chain run blocked, with a mandatory reason. The
+reason is recorded against the run and in the ledger. It is blanket and
+non-expiring — the minimum auditable escape hatch, not a waiver.</dd>
+<dt><strong>Verdict</strong></dt>
+<dd>A connector's conclusion about a snapshot: <code>PASS</code>, <code>WARN</code>, <code>FAIL</code>, <code>ERROR</code>
+or <code>PENDING</code>. Only <code>PASS</code> and <code>WARN</code> let a chain run clear.</dd>
 <dt><strong>BFF</strong> (backend for frontend)</dt>
 <dd>The pattern the portal uses: the application holds the OIDC tokens and the
 browser holds only a session cookie.</dd>
@@ -1219,6 +1327,11 @@ touch. Authenticated by PAT only; writes impossible by construction.</dd>
 <dt><strong>Held</strong></dt>
 <dd>The state every snapshot starts in. Stored, inspectable, and serving
 nothing.</dd>
+<dt><strong>Revoked</strong></dt>
+<dd>A snapshot that was approved and published, and that a later re-vetting run
+retroactively quarantined. Its published refs are gone; its quarantined copy
+is not. It returns to being served only through a fresh approve decision.
+See <a href="../../guides/re-vetting/">Re-vetting approved content</a>.</dd>
 <dt><strong>Ingestion</strong></dt>
 <dd>Cloning an upstream default branch into quarantine and pinning the tip
 commit as <code>refs/snapshots/{sha}</code>. Explicit — there is no upstream watcher.</dd>
