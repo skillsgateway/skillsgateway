@@ -91,7 +91,8 @@ The threats that matter here are the ones no scanner catches:
     On the **Marketplaces** page, held snapshots show **Approve** and **Reject**
     buttons in their row. **Reject** fires immediately. **Approve** opens a
     dialog showing the vetting verdicts; if the chain blocked the snapshot, the
-    confirm button stays disabled until you type a reason.
+    confirm button stays disabled until every blocking finding is waived from
+    that same dialog.
 
 === "API"
 
@@ -100,14 +101,10 @@ The threats that matter here are the ones no scanner catches:
     $ curl -X POST localhost:8080/api/snapshots/1/reject
     ```
 
-    A snapshot the vetting chain blocked needs a reason, or the approval is
-    refused with 409:
-
-    ```console
-    $ curl -X POST localhost:8080/api/snapshots/1/approve \
-        -H 'Content-Type: application/json' \
-        -d '{"overrideReason":"documented dummy key in the fixtures directory"}'
-    ```
+    Neither takes a request body. A snapshot the vetting chain blocked is
+    refused with 409 until each blocking finding is covered by an active
+    [waiver](waiving-findings.md); the problem document lists them in
+    `uncoveredFindings`.
 
 **Approve** publishes: the pinned `refs/snapshots/{sha}` is fetched from
 quarantine into the published repository and `refs/heads/main` is force-updated
@@ -121,7 +118,7 @@ already approved keeps serving.
 | --- | --- |
 | 200 | Decided. |
 | 404 | Unknown snapshot. |
-| 409 | The snapshot is not `held`, or its vetting chain blocked and no reason was given. |
+| 409 | The snapshot is not `held`, or its effective vetting outcome is blocked (see `uncoveredFindings`). |
 
 !!! warning "Decisions are one-way"
 
@@ -151,3 +148,7 @@ restricted application.
 
 The content is live. Verify it and point clients at it —
 [Consuming approved skills](consuming-skills.md).
+
+If the chain objected and you accepted the risk, see
+[Waiving a vetting finding](waiving-findings.md) for what the acceptance covers
+and when it lapses.

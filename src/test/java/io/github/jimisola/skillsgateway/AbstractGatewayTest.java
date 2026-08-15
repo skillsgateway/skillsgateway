@@ -215,7 +215,7 @@ abstract class AbstractGatewayTest {
     }
 
     protected Snapshot approve(long snapshotId) {
-        return approvalService.approve(snapshotId, "alice");
+        return approvalService.approve(snapshotId, "alice").snapshot();
     }
 
     protected String newPat() {

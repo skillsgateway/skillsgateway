@@ -166,22 +166,23 @@ function ProvenanceDialog({ snapshotId, onClose }: { snapshotId: number; onClose
 }
 
 /**
- * The review step: the reviewer sees every connector's verdict and its findings before
- * deciding, and a snapshot the chain blocked can only be approved with a reason — which the
- * server demands independently, and records in the ledger.
+ * The review step: the reviewer sees every connector's verdict and its findings before deciding.
+ * A snapshot whose effective outcome is blocked cannot be approved from here at all — the way
+ * past it is to accept each blocking finding with a scoped, expiring waiver, recorded from the
+ * finding itself in the report below. The server enforces the same rule independently.
  *
- * @Requirements GW_0042
+ * @Requirements GW_0042, GW_0047
  */
 function ApproveDialog({ snapshotId, onClose }: { snapshotId: number; onClose: () => void }) {
   const vetting = useSnapshotVetting(snapshotId);
   const decide = useDecideSnapshot();
-  const [reason, setReason] = useState("");
-  const blocked = vetting.data?.outcome !== "CLEAR";
-  const needsReason = blocked && reason.trim().length === 0;
+  const blocked = vetting.data?.outcome === "BLOCKED" || vetting.data?.outcome === undefined;
 
   return (
     <Dialog open onOpenChange={(open) => (open ? undefined : onClose())}>
-      <DialogContent>
+      {/* Wider than the default: the review surface carries findings, their locations, and the
+          waiver form beside each one. */}
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Approve snapshot {snapshotId}</DialogTitle>
           <DialogDescription>
@@ -190,32 +191,19 @@ function ApproveDialog({ snapshotId, onClose }: { snapshotId: number; onClose: (
         </DialogHeader>
         <VettingReport snapshotId={snapshotId} />
         {blocked ? (
-          <div className="space-y-2">
-            <Label htmlFor={`override-reason-${snapshotId}`}>Reason for approving anyway</Label>
-            <Input
-              id={`override-reason-${snapshotId}`}
-              autoComplete="off"
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-              placeholder="Why is this acceptable?"
-            />
-            <p className="text-xs text-muted-foreground">
-              The vetting chain did not clear this snapshot. The reason is recorded against the
-              chain run and in the audit ledger.
-            </p>
-          </div>
+          <p className="text-xs text-muted-foreground">
+            The vetting chain did not clear this snapshot. Waive each blocking finding above — with
+            a justification and an expiry — and the approval unblocks. Every waiver is recorded in
+            the audit ledger with your identity.
+          </p>
         ) : null}
         <DialogFooter>
           <Button
-            disabled={decide.isPending || needsReason}
+            disabled={decide.isPending || blocked}
             aria-label={`Confirm approval of snapshot ${snapshotId}`}
             onClick={() =>
               decide.mutate(
-                {
-                  id: snapshotId,
-                  decision: "approve",
-                  ...(blocked ? { overrideReason: reason.trim() } : {}),
-                },
+                { id: snapshotId, decision: "approve" },
                 {
                   onSuccess: () => {
                     toast.success(`Snapshot ${snapshotId} approved`);

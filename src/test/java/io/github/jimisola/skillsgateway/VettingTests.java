@@ -3,10 +3,12 @@ package io.github.jimisola.skillsgateway;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.github.jimisola.skillsgateway.approval.ApprovalService;
 import io.github.jimisola.skillsgateway.approval.VettingBlockedException;
 import io.github.jimisola.skillsgateway.config.SkillsGatewayProperties;
 import io.github.jimisola.skillsgateway.persistence.Snapshot;
 import io.github.jimisola.skillsgateway.storage.GitStorage;
+import io.github.jimisola.skillsgateway.vetting.Severity;
 import io.github.jimisola.skillsgateway.vetting.SnapshotUnderVetting;
 import io.github.jimisola.skillsgateway.vetting.Verdict;
 import io.github.jimisola.skillsgateway.vetting.VerdictState;
@@ -14,8 +16,13 @@ import io.github.jimisola.skillsgateway.vetting.VettingChain;
 import io.github.jimisola.skillsgateway.vetting.VettingConnector;
 import io.github.jimisola.skillsgateway.vetting.VettingRepository;
 import io.github.jimisola.skillsgateway.vetting.VettingService;
+import io.github.jimisola.skillsgateway.vetting.WaiverEvaluation;
+import io.github.jimisola.skillsgateway.vetting.WaiverScope;
+import io.github.jimisola.skillsgateway.vetting.WaiverService;
 import io.github.jimisola.skillsgateway.webhook.WebhookService;
 import io.github.reqstool.annotations.SVCs;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -55,6 +62,9 @@ class VettingTests extends AbstractGatewayTest {
 
     @Autowired
     private VettingRepository vettingRepository;
+
+    @Autowired
+    private WaiverService waiverService;
 
     @Autowired
     private GitStorage storage;
@@ -193,46 +203,99 @@ class VettingTests extends AbstractGatewayTest {
         assertThat(verdictOf(clean, "prompt-injection").state()).isEqualTo(VerdictState.PASS);
     }
 
+    /**
+     * The gate's central property, carried over from the blanket-override era and tightened: a
+     * blocked snapshot cannot be approved without a recorded, attributed acceptance — and now that
+     * acceptance has to name every blocking finding individually. Waiving one of two is still a
+     * refusal, which is exactly what the old single-reason mechanism could not express.
+     */
     @Test
     @SVCs({"SVC_GW_0041"})
-    void aBlockedSnapshotIsApprovedOnlyWithARecordedReason() throws Exception {
+    void aBlockedSnapshotIsApprovedOnlyOnceWaiversCoverEveryBlockingFinding() throws Exception {
         String name = uniqueName("vetgate");
         Registered blocked = registerAndIngest(
                 name, createUpstream(DEFAULT_MANIFEST, Map.of("plugins/hello/DEPLOY.md", PLANTED_SECRETS)));
         long snapshotId = blocked.snapshot().id();
         assertThat(vettingService.blocked(snapshotId)).isTrue();
 
+        // Two distinct blocking findings were planted, so covering one cannot be enough.
+        List<io.github.jimisola.skillsgateway.vetting.Finding> blocking = findingsOf(blocked, "secret-scan").stream()
+                .filter(finding -> finding.severity().atLeast(Severity.HIGH))
+                .toList();
+        assertThat(blocking).hasSizeGreaterThan(1);
+
         assertThatThrownBy(() -> approvalService.approve(snapshotId, "alice"))
                 .isInstanceOf(VettingBlockedException.class)
-                .satisfies(thrown -> assertThat(((VettingBlockedException) thrown).blockingConnectors())
-                        .contains("secret-scan"));
+                .satisfies(thrown -> {
+                    assertThat(((VettingBlockedException) thrown).blockingConnectors())
+                            .contains("secret-scan");
+                    assertThat(((VettingBlockedException) thrown).uncoveredFindings())
+                            .extracting(WaiverEvaluation.UncoveredFinding::ruleId)
+                            .containsExactlyInAnyOrderElementsOf(blocking.stream()
+                                    .map(io.github.jimisola.skillsgateway.vetting.Finding::id)
+                                    .toList());
+                });
 
         // Refused before the transition: still held, and nothing was published.
         assertThat(snapshotRepository.findById(snapshotId).orElseThrow().state())
                 .isEqualTo(Snapshot.HELD);
         assertThat(storage.publishedIfServing(name)).isEmpty();
 
-        Snapshot approved = approvalService.approve(snapshotId, "alice", "documented dummy key in fixtures");
+        // Partial coverage is still a refusal — the finding nobody accepted still blocks.
+        waiverService.create(
+                snapshotId,
+                blocking.getFirst().id(),
+                WaiverScope.SNAPSHOT,
+                null,
+                "documented dummy key in fixtures",
+                Instant.now().plus(Duration.ofDays(7)),
+                "alice");
+        assertThatThrownBy(() -> approvalService.approve(snapshotId, "alice"))
+                .isInstanceOf(VettingBlockedException.class)
+                .satisfies(thrown -> assertThat(((VettingBlockedException) thrown).uncoveredFindings())
+                        .extracting(WaiverEvaluation.UncoveredFinding::ruleId)
+                        .containsExactly(blocking.get(1).id()));
+        assertThat(snapshotRepository.findById(snapshotId).orElseThrow().state())
+                .isEqualTo(Snapshot.HELD);
+        assertThat(storage.publishedIfServing(name)).isEmpty();
 
-        assertThat(approved.state()).isEqualTo(Snapshot.APPROVED);
+        for (int i = 1; i < blocking.size(); i++) {
+            waiverService.create(
+                    snapshotId,
+                    blocking.get(i).id(),
+                    WaiverScope.SNAPSHOT,
+                    null,
+                    "documented dummy material in fixtures",
+                    Instant.now().plus(Duration.ofDays(7)),
+                    "alice");
+        }
+
+        ApprovalService.Approved approved = approvalService.approve(snapshotId, "alice");
+
+        assertThat(approved.snapshot().state()).isEqualTo(Snapshot.APPROVED);
+        // The acceptance is attributed and time-bounded, and the raw run is untouched by it.
+        assertThat(approved.waiversApplied())
+                .extracting(WaiverEvaluation.Suppression::approvedBy)
+                .containsOnly("alice");
+        assertThat(approved.waiversApplied())
+                .allSatisfy(suppression -> assertThat(suppression.expiresAt()).isAfter(Instant.now()));
         VettingRepository.Run run = vettingRepository.latestRun(snapshotId).orElseThrow();
         assertThat(run.outcome()).isEqualTo(VettingChain.Outcome.BLOCKED);
-        assertThat(run.overrideBy()).isEqualTo("alice");
-        assertThat(run.overrideReason()).isEqualTo("documented dummy key in fixtures");
-        assertThat(run.overrideAt()).isNotNull();
+        assertThat(waiverService.evaluate(snapshotId).outcome()).isEqualTo(VettingChain.Outcome.CLEAR_WITH_WAIVERS);
     }
 
+    /**
+     * The run and every verdict land in the ledger. The acceptance half of the trail moved to the
+     * waiver lifecycle (SVC_GW_0048), which records strictly more than the single override entry
+     * this test used to assert: what was accepted, on what scope, by whom, and until when.
+     */
     @Test
     @SVCs({"SVC_GW_0043"})
-    void theLedgerRecordsTheChainRunTheVerdictsAndTheOverride() throws Exception {
+    void theLedgerRecordsTheChainRunAndTheVerdicts() throws Exception {
         String name = uniqueName("vetledger");
         Registered blocked = registerAndIngest(
                 name, createUpstream(DEFAULT_MANIFEST, Map.of("plugins/hello/DEPLOY.md", PLANTED_SECRETS)));
         String sha = blocked.snapshot().sha();
-
-        approvalService.approve(blocked.snapshot().id(), "alice", "accepted for the pilot ring");
-        // The override entry is appended by the admin surface, as it is the acting identity there.
-        auditLogger.record("alice", name, "snapshot-approved-override", sha, "accepted for the pilot ring");
 
         List<Map<String, Object>> entries = fetchLogRepository.list().stream()
                 .filter(entry -> name.equals(entry.get("marketplace")))
@@ -250,13 +313,8 @@ class VettingTests extends AbstractGatewayTest {
                 .extracting(entry -> String.valueOf(entry.get("detail")))
                 .contains("secret-scan=fail", "prompt-injection=pass");
         assertThat(entries)
-                .filteredOn(entry -> "snapshot-approved-override".equals(entry.get("event")))
-                .singleElement()
-                .satisfies(entry -> {
-                    assertThat(entry.get("principal")).isEqualTo("alice");
-                    assertThat(entry.get("sha")).isEqualTo(sha);
-                    assertThat(entry.get("detail")).isEqualTo("accepted for the pilot ring");
-                });
+                .filteredOn(entry -> "vetting-verdict".equals(entry.get("event")))
+                .allSatisfy(entry -> assertThat(entry.get("sha")).isEqualTo(sha));
     }
 
     /** A chain with exactly the given connectors, over the real repository and storage. */

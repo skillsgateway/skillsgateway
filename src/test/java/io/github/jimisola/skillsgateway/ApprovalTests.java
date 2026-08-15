@@ -15,7 +15,8 @@ class ApprovalTests extends AbstractGatewayTest {
     void approvingHeldSnapshotRecordsReviewerAndTimestamp() throws Exception {
         Registered registered = registerAndIngest(uniqueName("corp"), createUpstream(DEFAULT_MANIFEST));
 
-        Snapshot approved = approvalService.approve(registered.snapshot().id(), "alice");
+        Snapshot approved =
+                approvalService.approve(registered.snapshot().id(), "alice").snapshot();
 
         assertThat(approved.state()).isEqualTo(Snapshot.APPROVED);
         assertThat(approved.decidedBy()).isEqualTo("alice");

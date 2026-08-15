@@ -161,8 +161,13 @@ public class VettingService {
     }
 
     /**
-     * Whether approving this snapshot is gated (GW_0038, GW_0041). A snapshot with no run at all
-     * is blocked: absence of evidence is not evidence of safety.
+     * Whether the chain itself objects to this snapshot, before any waiver is considered
+     * (GW_0038). A snapshot with no run at all is blocked: absence of evidence is not evidence of
+     * safety.
+     *
+     * <p>This is the <em>recorded</em> answer, not the one that gates an approval. The gate reads
+     * the effective outcome from {@code WaiverService.evaluate}, which layers the waivers active
+     * at that instant over this run (GW_0045).
      */
     @Requirements({"GW_0038"})
     public boolean blocked(long snapshotId) {
@@ -170,11 +175,5 @@ public class VettingService {
                 .latestRun(snapshotId)
                 .map(run -> run.outcome().blocked())
                 .orElse(true);
-    }
-
-    /** Records the reviewer's override against the run that blocked the approval. */
-    @Requirements({"GW_0041"})
-    public void recordOverride(long runId, String reviewer, String reason) {
-        vettingRepository.recordOverride(runId, reviewer, reason);
     }
 }

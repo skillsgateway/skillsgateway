@@ -108,7 +108,7 @@ The card action is **Ingest** (`POST /api/marketplaces/{name}/ingest`), toasting
 | --- | --- |
 | Commit | First 12 characters of the SHA, monospace. |
 | State | Badge — `approved` (primary), `held` (secondary), `rejected` (destructive). |
-| Vetting | Badge — `vetting clear` (primary) or `vetting blocked` (destructive), from `GET /api/snapshots/{id}/vetting`. A snapshot the chain never ran against reads *blocked*. |
+| Vetting | Badge from `GET /api/snapshots/{id}/vetting`: `vetting clear` (primary), `vetting clear with waivers` (secondary) or `vetting blocked` (destructive). A snapshot the chain never ran against reads *blocked*. The waived case is a separate badge on purpose — an accepted risk must not read as a clean chain. |
 | Violation | The ingestion violation, or "—". |
 | Decided by | The deciding principal, or "—". |
 | Actions | Right-aligned buttons. |
@@ -122,15 +122,35 @@ the moment content becomes reachable by clients, so the verdicts come first.
 #### Approve dialog
 
 Titled *Approve snapshot {id}*, it renders the [vetting report](#vetting) for
-the snapshot and then, only when the chain outcome is blocked, a required
-**Reason for approving anyway** field. The confirm control
-(*Confirm approval of snapshot {id}*) stays disabled until a reason is typed;
-the server refuses a reasonless approval of a blocked snapshot independently,
-with `409`, so the disabled button mirrors policy rather than replacing it.
+the snapshot. The confirm control (*Confirm approval of snapshot {id}*) is
+disabled for as long as the effective outcome is `BLOCKED`; there is no field to
+type past it. The way to enable it is to waive each blocking finding from the
+report itself. The server enforces the same rule independently, with `409`, so
+the disabled button mirrors policy rather than replacing it.
 
-Confirming calls `POST /api/snapshots/{id}/approve`, sending
-`{"overrideReason": "…"}` when the outcome was blocked, and toasts
+Confirming calls `POST /api/snapshots/{id}/approve` with no body and toasts
 *Snapshot {id} approved*.
+
+#### Waiving a finding
+
+Each blocking finding in the report carries a **Waive finding {rule}** button
+that opens an inline form beside it:
+
+| Control | Notes |
+| --- | --- |
+| **Scope** | *This snapshot only* (default) or *This path in the marketplace* |
+| **Expires on** | date input, defaulting to 30 days out |
+| **Justification** | required; *Record waiver for {rule}* stays disabled while it is empty |
+
+*Record waiver for {rule}* calls `POST /api/snapshots/{id}/waivers` and toasts
+*Waiver recorded for {rule}*. The finding is then struck through and badged
+**waived by {approver} until {date}**, and the outcome badge becomes
+**vetting clear with waivers** once nothing is left uncovered.
+
+Below the verdicts, **Accepted risks** lists every waiver whose rule appears in
+this run — active, expired and revoked alike — with its rule, scope,
+justification, approver and expiry. An active one carries
+*Revoke waiver {id}*, which calls `DELETE /api/waivers/{id}`.
 
 **Provenance** is always available, opening a dialog fed by
 `GET /api/snapshots/{id}/provenance`: marketplace, upstream URL, upstream SHA,
@@ -175,14 +195,22 @@ Each snapshot card carries a **Vetting** section fed by
 `GET /api/snapshots/{id}/vetting`, above the contents toggle and always visible
 — the evidence is not behind a click.
 
-It shows the chain outcome badge, the override (*overridden by {who}: {reason}*)
-when one was recorded, and one block per connector: an icon and badge for the
-verdict state, the connector name, a one-line summary, and every finding as
-severity badge, rule id, `path:line`, and message. A connector with nothing to
-report shows "Nothing found."
+It shows the effective chain outcome badge and one block per connector: an icon
+and badge for the verdict state, the connector name, a one-line summary, and
+every finding as severity badge, rule id, `path:line`, and message. A connector
+with nothing to report shows "Nothing found."
 
-A snapshot the chain never ran against says so explicitly, and states that
-approving it therefore requires a recorded reason.
+A finding an active waiver is suppressing is struck through and badged
+**waived by {approver} until {date}**; one that still blocks carries a
+**Waive finding {rule}** button. When the effective outcome only clears because
+of a waiver, the header adds *the chain objected; active waivers are suppressing
+what it found*. Blocking findings are also summarised as a single line naming
+what must be waived before approval unblocks. See
+[Waiving a finding](#waiving-a-finding) for the form and the
+**Accepted risks** list.
+
+A snapshot the chain never ran against says so explicitly, and states that there
+is nothing to waive — a snapshot with no evidence cannot be approved at all.
 
 A collapsed *What these connectors can and cannot see* disclosure lists each
 configured connector and its self-description, so the limits of the heuristics
