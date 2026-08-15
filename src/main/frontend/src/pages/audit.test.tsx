@@ -24,6 +24,30 @@ test("export_download_and_sink_positions_are_shown", async () => {
   expect(await screen.findByRole("row", { name: /siem.*42.*3 entries/ })).toBeInTheDocument();
 });
 
+test("add_sink_is_disabled_until_the_name_and_url_are_valid", async () => {
+  const user = userEvent.setup();
+  renderPage();
+  const nameField = await screen.findByLabelText("Sink name");
+  const urlField = screen.getByLabelText("Target URL");
+  const addButton = screen.getByRole("button", { name: "Add sink" });
+
+  expect(addButton).toBeDisabled();
+
+  await user.type(nameField, "   ");
+  expect(addButton).toBeDisabled();
+
+  await user.clear(nameField);
+  await user.type(nameField, "new-siem");
+  expect(addButton).toBeDisabled();
+
+  await user.type(urlField, "siem.example.com/ingest");
+  expect(addButton).toBeDisabled();
+
+  await user.clear(urlField);
+  await user.type(urlField, "https://siem.example.com/ingest");
+  expect(addButton).toBeEnabled();
+});
+
 test("created_sink_secret_is_shown_once_in_a_dialog", async () => {
   const user = userEvent.setup();
   renderPage();

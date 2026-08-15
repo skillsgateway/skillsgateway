@@ -10,6 +10,7 @@ import {
   useResetAuditSinkCursor,
   type CreatedSink,
 } from "@/api/queries";
+import { GATEWAY_NAME_HINT, isAbsoluteUrl, isValidGatewayName } from "@/lib/form-rules";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -108,14 +109,21 @@ export function AuditPage() {
   const rows = audit.data ?? [];
   const columns = rows.length > 0 ? Object.keys(rows[0] ?? {}) : [];
 
+  // Mirrors AuditController.createSink: the name must match the gateway name pattern
+  // (422) and the URL must parse with a scheme (400). The scheme allowlist itself is
+  // operator configuration, so it stays server-side and surfaces as a toast.
+  const trimmedName = name.trim();
+  const trimmedUrl = url.trim();
+  const canCreate =
+    isValidGatewayName(trimmedName) && isAbsoluteUrl(trimmedUrl) && !create.isPending;
+
   const onCreate = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!name.trim() || !url.trim()) {
-      toast.error("Name and URL are required");
+    if (!canCreate) {
       return;
     }
     create.mutate(
-      { name: name.trim(), url: url.trim() },
+      { name: trimmedName, url: trimmedUrl },
       {
         onSuccess: (sink) => {
           setCreated(sink);
@@ -155,30 +163,38 @@ export function AuditPage() {
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Export sinks</h2>
-        <form onSubmit={onCreate} className="flex flex-wrap items-end gap-3">
-          <div className="space-y-2">
-            <Label htmlFor="sink-name">Sink name</Label>
-            <Input
-              id="sink-name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              autoComplete="off"
-              placeholder="siem"
-            />
+        <form onSubmit={onCreate} className="space-y-2">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="sink-name">Sink name</Label>
+              <Input
+                id="sink-name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                autoComplete="off"
+                placeholder="siem"
+                aria-describedby="sink-form-hint"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sink-url">Target URL</Label>
+              <Input
+                id="sink-url"
+                value={url}
+                onChange={(event) => setUrl(event.target.value)}
+                autoComplete="off"
+                placeholder="https://siem.example.com/ingest/skills-gateway"
+                aria-describedby="sink-form-hint"
+              />
+            </div>
+            <Button type="submit" disabled={!canCreate}>
+              {create.isPending ? "Adding…" : "Add sink"}
+            </Button>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="sink-url">Target URL</Label>
-            <Input
-              id="sink-url"
-              value={url}
-              onChange={(event) => setUrl(event.target.value)}
-              autoComplete="off"
-              placeholder="https://siem.example.com/ingest/skills-gateway"
-            />
-          </div>
-          <Button type="submit" disabled={create.isPending}>
-            {create.isPending ? "Adding…" : "Add sink"}
-          </Button>
+          <p id="sink-form-hint" className="text-xs text-muted-foreground">
+            A name and a target URL are required — Add sink enables once both are valid.{" "}
+            {GATEWAY_NAME_HINT}
+          </p>
         </form>
         {sinks.isLoading ? <p>Loading…</p> : null}
         {sinks.isError ? (
