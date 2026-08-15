@@ -29,6 +29,18 @@ scalar:
   url: /v3/api-docs
   theme: purple
 
+# Local observability is opt-in: the LGTM dev service and OpenTelemetry export are
+# both off unless the "observability" profile is active (application-observability.yaml).
+# This keeps `./mvnw verify` and the e2e suite free of an extra container and of any
+# OTLP export attempts.
+arconia:
+  dev:
+    services:
+      lgtm:
+        enabled: false
+  otel:
+    enabled: false
+
 management:
   endpoints:
     web:
