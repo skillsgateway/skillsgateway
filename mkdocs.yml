@@ -1,0 +1,118 @@
+# MkDocs configuration for the Skills Gateway documentation site.
+#
+# Local build (must pass before any PR that touches docs):
+#
+#   pip install -r docs/requirements.txt
+#   mkdocs build --strict
+#
+# `--strict` turns broken internal links and nav warnings into build failures,
+# which is what makes this usable as a gate.
+#
+# Versioning is handled by mike (see .github/workflows/docs.yml): `dev` is
+# deployed from every push to main, and a `v*` tag deploys that version behind
+# the `stable` alias.
+
+site_name: Skills Gateway
+site_description: >-
+  Enterprise gateway for git-distributed AI agent skill marketplaces —
+  quarantined ingestion, hold-until-approved vetting, a read-only git facade,
+  and an append-only audit ledger.
+site_url: https://jimisola.github.io/skills-gateway/
+repo_url: https://github.com/jimisola/skills-gateway
+repo_name: jimisola/skills-gateway
+edit_uri: edit/main/docs/manual/
+copyright: Licensed under the Apache License 2.0
+
+# docs/ already holds non-site content (reqstool/, decisions/), so the site
+# lives in its own clean directory rather than taking over docs/ wholesale.
+docs_dir: docs/manual
+
+theme:
+  name: material
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - content.code.copy
+    - content.action.edit
+    - search.highlight
+    - search.suggest
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: deep purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: deep purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  # Mermaid is rendered natively by Material through this custom fence — all
+  # diagrams in this site are ```mermaid blocks, including the C4 container
+  # view, which uses Mermaid's own C4Container syntax. No external renderer.
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+plugins:
+  - search
+
+extra:
+  version:
+    # mike drives the version selector in the header.
+    provider: mike
+    default: dev
+
+nav:
+  - Home: index.md
+  - Concepts:
+      - Lifecycle — quarantine to serve: concepts/lifecycle.md
+      - Snapshots and the audit ledger: concepts/snapshots-and-ledger.md
+      - Trust boundaries: concepts/trust-boundaries.md
+      - Glossary: concepts/glossary.md
+  - Guides:
+      - Local development: guides/local-development.md
+      - Registering a marketplace: guides/registering-a-marketplace.md
+      - Approving and rejecting snapshots: guides/approving-snapshots.md
+      - Consuming approved skills: guides/consuming-skills.md
+  - Reference:
+      - Configuration: reference/configuration.md
+      - REST API:
+          - Overview: reference/api/index.md
+          - Marketplaces and snapshots: reference/api/marketplaces.md
+          - Access tokens: reference/api/tokens.md
+          - Audit: reference/api/audit.md
+      - Git smart-HTTP facade: reference/git-facade.md
+      - Compatibility and allowlists: reference/compatibility.md
+      - Admin portal: reference/portal.md
+      - Architecture decisions: reference/decisions.md
