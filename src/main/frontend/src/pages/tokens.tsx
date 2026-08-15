@@ -79,13 +79,18 @@ export function TokensPage() {
   const [name, setName] = useState("");
   const [issued, setIssued] = useState<IssuedToken | null>(null);
 
+  // The server stores the name verbatim (NOT NULL, no further constraint), so the only
+  // client-side rule is the one that keeps a blank name out of the list.
+  const trimmedName = name.trim();
+  const canCreate = trimmedName.length > 0 && !create.isPending;
+
   const onCreate = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!name.trim()) {
+    if (!trimmedName) {
       toast.error("Token name is required");
       return;
     }
-    create.mutate(name.trim(), {
+    create.mutate(trimmedName, {
       onSuccess: (token) => {
         setIssued(token);
         setName("");
@@ -103,20 +108,26 @@ export function TokensPage() {
           rest and shown exactly once.
         </p>
       </div>
-      <form onSubmit={onCreate} className="flex items-end gap-3">
-        <div className="space-y-2">
-          <Label htmlFor="token-name">Token name</Label>
-          <Input
-            id="token-name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            autoComplete="off"
-            placeholder="ci-runner"
-          />
+      <form onSubmit={onCreate} className="space-y-2">
+        <div className="flex items-end gap-3">
+          <div className="space-y-2">
+            <Label htmlFor="token-name">Token name</Label>
+            <Input
+              id="token-name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              autoComplete="off"
+              placeholder="ci-runner"
+              aria-describedby="token-name-hint"
+            />
+          </div>
+          <Button type="submit" disabled={!canCreate}>
+            {create.isPending ? "Creating…" : "Create token"}
+          </Button>
         </div>
-        <Button type="submit" disabled={create.isPending}>
-          {create.isPending ? "Creating…" : "Create token"}
-        </Button>
+        <p id="token-name-hint" className="text-xs text-muted-foreground">
+          A name is required — it identifies the token in this list.
+        </p>
       </form>
       {tokens.isLoading ? <p>Loading…</p> : null}
       {tokens.isError ? (
