@@ -26,7 +26,7 @@ other is wide open.
 
 | Channel | How it works | Governable today? |
 | --- | --- | --- |
-| **Package managers** | npm, PyPI, OCI. Point the client at an Artifactory/Nexus remote repository and you inherit proxying, caching, scanning, immutable versions and audit logs. | Yes — and Skills Gateway deliberately does **not** rebuild this. |
+| **Package managers** | npm, PyPI, OCI. Point the client at an artifact repository manager's proxy repository and you inherit proxying, caching, scanning, immutable versions and audit logs. | Yes — and Skills Gateway deliberately does **not** rebuild this. |
 | **Git** | A Claude Code marketplace is just a git repository containing `.claude-plugin/marketplace.json`. Installing a plugin performs a `git clone` from GitHub, or wherever the manifest points. | **No.** No proxy point, no immutable versions, no scanning hook, no inventory. Every laptop clones straight from the public internet. |
 
 That second channel is where the ecosystem's growth actually is, and it is the
