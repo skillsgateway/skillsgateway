@@ -19,8 +19,18 @@ CREATE TABLE snapshots (
     created_at TIMESTAMPTZ NOT NULL,
     decided_by TEXT,
     decided_at TIMESTAMPTZ,
+    -- Retention (GW_0031..GW_0034). Deletion is orthogonal to the vetting state: a deleted
+    -- snapshot keeps the state it was decided into, so the record of what was held, approved,
+    -- or rejected survives, and a restore cannot invent a transition.
+    deleted_at TIMESTAMPTZ,
+    deleted_reason TEXT,
+    -- When the restore window elapses and compaction may remove the row and its git storage.
+    purge_after TIMESTAMPTZ,
     UNIQUE (marketplace_id, sha)
 );
+
+-- The compaction pass's only query: soft-deleted snapshots whose window has elapsed.
+CREATE INDEX idx_snapshots_purge_queue ON snapshots (purge_after) WHERE deleted_at IS NOT NULL;
 
 -- Append-only fetch ledger: no UPDATE/DELETE is ever issued against this table.
 CREATE TABLE fetch_log (

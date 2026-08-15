@@ -61,6 +61,26 @@ export function useDecideSnapshot() {
   });
 }
 
+/**
+ * Retention deletes a snapshot by marking it, so the invalidated view is the marketplace
+ * listing the snapshot lives in — nothing is removed from it.
+ */
+export function useSoftDeleteSnapshot() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api<Snapshot>(`/api/snapshots/${id}`, { method: "DELETE" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["marketplaces"] }),
+  });
+}
+
+export function useRestoreSnapshot() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api<Snapshot>(`/api/snapshots/${id}/restore`, { method: "POST" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["marketplaces"] }),
+  });
+}
+
 export function useProvenance(snapshotId: number | null) {
   return useQuery({
     queryKey: ["provenance", snapshotId],

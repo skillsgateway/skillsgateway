@@ -25,9 +25,23 @@ public record Snapshot(
         String decidedBy,
 
         @Schema(description = "Decision time, or null while held")
-        Instant decidedAt) {
+        Instant decidedAt,
+
+        @Schema(description = "When the snapshot was soft-deleted, or null when it is live")
+        Instant deletedAt,
+
+        @Schema(description = "Retention criterion or administrative reason for the deletion")
+        String deletedReason,
+
+        @Schema(description = "End of the restore window; after it compaction removes the snapshot permanently")
+        Instant purgeAfter) {
 
     public static final String HELD = "held";
     public static final String APPROVED = "approved";
     public static final String REJECTED = "rejected";
+
+    /** Soft-deleted: marked for removal but still restorable until {@link #purgeAfter()}. */
+    public boolean deleted() {
+        return deletedAt != null;
+    }
 }
