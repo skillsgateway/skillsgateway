@@ -11,6 +11,10 @@ export type SubscriberView = components["schemas"]["SubscriberView"];
 export type CreatedSubscriber = components["schemas"]["CreatedSubscriber"];
 export type WebhookDelivery = components["schemas"]["WebhookDelivery"];
 export type SinkView = components["schemas"]["SinkView"];
+export type VettingView = components["schemas"]["VettingView"];
+export type VettingRun = components["schemas"]["Run"];
+export type VettingVerdict = components["schemas"]["VerdictView"];
+export type VettingFinding = components["schemas"]["Finding"];
 export type CreatedSink = components["schemas"]["CreatedSink"];
 
 /** Same-origin download of the NDJSON ledger stream; the session cookie is the credential. */
@@ -52,12 +56,40 @@ export function useIngest() {
   });
 }
 
+/**
+ * Approving a snapshot whose vetting chain blocked requires a reason; the server is
+ * authoritative and answers 409 without one, so the reason travels as an ordinary field
+ * rather than as a client-side precondition.
+ */
 export function useDecideSnapshot() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, decision }: { id: number; decision: "approve" | "reject" }) =>
-      api<Snapshot>(`/api/snapshots/${id}/${decision}`, { method: "POST" }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["marketplaces"] }),
+    mutationFn: ({
+      id,
+      decision,
+      overrideReason,
+    }: {
+      id: number;
+      decision: "approve" | "reject";
+      overrideReason?: string;
+    }) =>
+      api<Snapshot>(`/api/snapshots/${id}/${decision}`, {
+        method: "POST",
+        ...(overrideReason ? { body: JSON.stringify({ overrideReason }) } : {}),
+      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["marketplaces"] });
+      void queryClient.invalidateQueries({ queryKey: ["snapshot-vetting"] });
+    },
+  });
+}
+
+/** A snapshot's latest vetting chain run: the evidence a reviewer decides on. */
+export function useSnapshotVetting(snapshotId: number | null) {
+  return useQuery({
+    queryKey: ["snapshot-vetting", snapshotId],
+    queryFn: () => api<VettingView>(`/api/snapshots/${snapshotId}/vetting`),
+    enabled: snapshotId !== null,
   });
 }
 

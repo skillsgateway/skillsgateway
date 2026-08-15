@@ -4,6 +4,7 @@ import io.github.jimisola.skillsgateway.persistence.Marketplace;
 import io.github.jimisola.skillsgateway.persistence.Snapshot;
 import io.github.jimisola.skillsgateway.persistence.SnapshotRepository;
 import io.github.jimisola.skillsgateway.storage.GitStorage;
+import io.github.jimisola.skillsgateway.vetting.VettingService;
 import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
 import java.util.List;
@@ -31,10 +32,12 @@ public class IngestionService {
 
     private final GitStorage storage;
     private final SnapshotRepository snapshotRepository;
+    private final VettingService vettingService;
 
-    public IngestionService(GitStorage storage, SnapshotRepository snapshotRepository) {
+    public IngestionService(GitStorage storage, SnapshotRepository snapshotRepository, VettingService vettingService) {
         this.storage = storage;
         this.snapshotRepository = snapshotRepository;
+        this.vettingService = vettingService;
     }
 
     /**
@@ -42,7 +45,7 @@ public class IngestionService {
      * Never touches the published repository: upstream changes cannot alter served content until a
      * reviewer approves (publication happens only in ApprovalService).
      */
-    @Requirements({"GW_0002", "GW_0004"})
+    @Requirements({"GW_0002", "GW_0004", "GW_0037"})
     public Snapshot ingest(Marketplace marketplace) {
         try (Repository repo = storage.quarantine(marketplace.name())) {
             ObjectId sha = fetchUpstreamHead(repo, marketplace.url());
@@ -55,7 +58,14 @@ public class IngestionService {
             }
             String violation = validateManifest(repo, sha);
             String state = violation == null ? Snapshot.HELD : Snapshot.REJECTED;
-            return snapshotRepository.create(marketplace.id(), sha.name(), state, violation);
+            Snapshot snapshot = snapshotRepository.create(marketplace.id(), sha.name(), state, violation);
+            if (Snapshot.HELD.equals(state)) {
+                // The chain runs against the content just pinned, and its outcome gates the
+                // approval — it never changes the snapshot's state. A rejected snapshot is already
+                // unapprovable, so there is nothing for the chain to protect there.
+                vettingService.vet(snapshot, marketplace.name());
+            }
+            return snapshot;
         } catch (IOException | GitAPIException e) {
             throw new IngestionException("ingestion failed for marketplace '%s'".formatted(marketplace.name()), e);
         }

@@ -13,6 +13,29 @@ a narrower meaning here.
 :   The append-only `fetch_log` table recording every facade fetch and every
     administrative action. No code path updates or deletes it.
 
+**Chain run**
+:   One execution of the vetting chain against one snapshot, recorded with its
+    verdicts, its findings, and a fail-closed `clear` or `blocked` outcome.
+
+**Connector**
+:   A pluggable vetting component. It is handed a snapshot's identity and a
+    read-only walk over its files, and answers with a verdict. The gateway
+    orchestrates connectors; it does not vet content itself.
+
+**Finding**
+:   One thing a connector found: a stable rule id, a severity, a `path:line`
+    location, and a message. The rule id is the identity a future waiver would
+    be written against.
+
+**Override**
+:   Approving a snapshot whose chain run blocked, with a mandatory reason. The
+    reason is recorded against the run and in the ledger. It is blanket and
+    non-expiring — the minimum auditable escape hatch, not a waiver.
+
+**Verdict**
+:   A connector's conclusion about a snapshot: `PASS`, `WARN`, `FAIL`, `ERROR`
+    or `PENDING`. Only `PASS` and `WARN` let a chain run clear.
+
 **BFF** (backend for frontend)
 :   The pattern the portal uses: the application holds the OIDC tokens and the
     browser holds only a session cookie.

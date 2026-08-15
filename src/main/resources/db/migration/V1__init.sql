@@ -41,7 +41,11 @@ CREATE TABLE fetch_log (
     marketplace TEXT NOT NULL,
     event TEXT NOT NULL,
     ref TEXT,
-    sha TEXT
+    sha TEXT,
+    -- Free-text qualifier for an entry that needs one: today the vetting chain outcome and
+    -- the reason a reviewer gave when overriding it (GW_0043). Its own column rather than an
+    -- overloaded `ref`, so the exported ledger schema stays honest for SIEM consumers.
+    detail TEXT
 );
 
 CREATE TABLE access_tokens (
@@ -106,3 +110,58 @@ CREATE TABLE audit_sinks (
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL
 );
+
+-- Snapshot vetting (GW_0037..GW_0043).
+--
+-- Deliberately separate from `snapshots.state`: vetting is evidence about a commit, not a
+-- vetting state of its own. A snapshot stays `held` whatever the chain says — the chain
+-- gates the approval — which is what lets a later re-vetting pass record a new run against
+-- an already-approved snapshot without inventing a state transition.
+
+CREATE TABLE vetting_runs (
+    id BIGSERIAL PRIMARY KEY,
+    snapshot_id BIGINT NOT NULL REFERENCES snapshots (id) ON DELETE CASCADE,
+    -- What caused the run. Only 'ingestion' is written in v1; the column exists so a
+    -- scheduled re-vetting pass slots in without a schema change.
+    trigger TEXT NOT NULL,
+    started_at TIMESTAMPTZ NOT NULL,
+    finished_at TIMESTAMPTZ,
+    -- Fail-closed aggregate over the run's verdicts; see VettingChain.
+    outcome TEXT NOT NULL CHECK (outcome IN ('clear', 'blocked')),
+    -- Set only when a reviewer approved the snapshot despite a blocked outcome (GW_0041).
+    override_by TEXT,
+    override_at TIMESTAMPTZ,
+    override_reason TEXT
+);
+
+-- The only read path: the latest run of one snapshot.
+CREATE INDEX idx_vetting_runs_latest ON vetting_runs (snapshot_id, id DESC);
+
+CREATE TABLE vetting_verdicts (
+    id BIGSERIAL PRIMARY KEY,
+    run_id BIGINT NOT NULL REFERENCES vetting_runs (id) ON DELETE CASCADE,
+    connector TEXT NOT NULL,
+    -- Position in the chain, so the recorded run can be replayed in the order it ran.
+    position INTEGER NOT NULL,
+    -- 'pending' is groundwork for an asynchronous connector whose callback has not arrived;
+    -- the aggregation treats it as blocking, so the gate is already correct.
+    state TEXT NOT NULL CHECK (state IN ('pass', 'warn', 'fail', 'error', 'pending')),
+    detail TEXT,
+    report_url TEXT,
+    created_at TIMESTAMPTZ NOT NULL,
+    UNIQUE (run_id, connector)
+);
+
+CREATE TABLE vetting_findings (
+    id BIGSERIAL PRIMARY KEY,
+    verdict_id BIGINT NOT NULL REFERENCES vetting_verdicts (id) ON DELETE CASCADE,
+    -- Stable rule identifier ('aws-access-key-id'), not an ordinal: it is the identity a
+    -- scoped waiver will be written against.
+    finding_id TEXT NOT NULL,
+    severity TEXT NOT NULL CHECK (severity IN ('info', 'low', 'medium', 'high', 'critical')),
+    location TEXT,
+    message TEXT NOT NULL
+);
+
+CREATE INDEX idx_vetting_verdicts_run ON vetting_verdicts (run_id);
+CREATE INDEX idx_vetting_findings_verdict ON vetting_findings (verdict_id);

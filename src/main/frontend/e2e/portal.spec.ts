@@ -40,7 +40,9 @@ test("admin_registers_ingests_and_approves_a_marketplace_in_the_portal", async (
   await page.getByRole("button", { name: `Ingest ${name}` }).click();
   await expect(page.getByText("held", { exact: true })).toBeVisible();
 
+  // Approval goes through the review dialog: the reviewer sees the verdicts first (GW_0042).
   await page.getByRole("button", { name: /Approve snapshot \d+/ }).click();
+  await page.getByRole("button", { name: /Confirm approval of snapshot \d+/ }).click();
   await expect(page.getByText("approved", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: /Provenance of snapshot \d+/ }).click();
@@ -173,4 +175,46 @@ test("audit_page_exports_the_ledger_and_lists_sinks", async ({ page }) => {
   const download = page.waitForEvent("download");
   await page.getByRole("link", { name: /Download ledger/ }).click();
   expect((await download).suggestedFilename()).toBe("audit-ledger.ndjson");
+});
+
+/**
+ * @SVCs SVC_GW_0042
+ */
+test("vetting_verdicts_are_shown_and_a_blocked_snapshot_needs_a_reason", async ({ page }) => {
+  await login(page, "alice");
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Marketplaces" })
+    .click();
+  const name = uniqueName("tainted");
+
+  await page.getByRole("button", { name: "Register marketplace" }).click();
+  await page.getByLabel("Name").fill(name);
+  await page
+    .getByLabel("Clone URL")
+    .fill(process.env.E2E_TAINTED_UPSTREAM_URL ?? "file:///tmp/e2e-tainted");
+  await page.getByRole("button", { name: "Register", exact: true }).click();
+  await page.getByRole("button", { name: `Ingest ${name}` }).click();
+
+  // Scoped to this marketplace's own card: earlier tests in the run leave their
+  // own held snapshots on the page.
+  const card = page.locator("[data-slot=card]").filter({ hasText: name });
+  await expect(card.getByText("held", { exact: true })).toBeVisible();
+
+  // The chain blocked it, and the table says so before anything is clicked.
+  await expect(card.getByText("vetting blocked")).toBeVisible();
+
+  await card.getByRole("button", { name: /Approve snapshot \d+/ }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByText("prompt-injection").first()).toBeVisible();
+  await expect(dialog.getByText("instruction-override").first()).toBeVisible();
+
+  // Fail-closed at the surface too: no reason, no approval.
+  const confirm = dialog.getByRole("button", { name: /Confirm approval of snapshot \d+/ });
+  await expect(confirm).toBeDisabled();
+
+  await dialog.getByLabel("Reason for approving anyway").fill("accepted for the pilot ring");
+  await expect(confirm).toBeEnabled();
+  await confirm.click();
+  await expect(card.getByText("approved", { exact: true })).toBeVisible();
 });

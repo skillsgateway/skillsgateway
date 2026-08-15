@@ -108,13 +108,29 @@ The card action is **Ingest** (`POST /api/marketplaces/{name}/ingest`), toasting
 | --- | --- |
 | Commit | First 12 characters of the SHA, monospace. |
 | State | Badge — `approved` (primary), `held` (secondary), `rejected` (destructive). |
+| Vetting | Badge — `vetting clear` (primary) or `vetting blocked` (destructive), from `GET /api/snapshots/{id}/vetting`. A snapshot the chain never ran against reads *blocked*. |
 | Violation | The ingestion violation, or "—". |
 | Decided by | The deciding principal, or "—". |
 | Actions | Right-aligned buttons. |
 
-**Approve** and **Reject** appear only while the state is `held`, and toast
-*Snapshot {id} approved* / *rejected*. Approve is the moment content becomes
-reachable by clients.
+**Approve** and **Reject** appear only while the state is `held`. **Reject**
+fires immediately and toasts *Snapshot {id} rejected*.
+
+**Approve** opens the review dialog rather than acting immediately — approve is
+the moment content becomes reachable by clients, so the verdicts come first.
+
+#### Approve dialog
+
+Titled *Approve snapshot {id}*, it renders the [vetting report](#vetting) for
+the snapshot and then, only when the chain outcome is blocked, a required
+**Reason for approving anyway** field. The confirm control
+(*Confirm approval of snapshot {id}*) stays disabled until a reason is typed;
+the server refuses a reasonless approval of a blocked snapshot independently,
+with `409`, so the disabled button mirrors policy rather than replacing it.
+
+Confirming calls `POST /api/snapshots/{id}/approve`, sending
+`{"overrideReason": "…"}` when the outcome was blocked, and toasts
+*Snapshot {id} approved*.
 
 **Provenance** is always available, opening a dialog fed by
 `GET /api/snapshots/{id}/provenance`: marketplace, upstream URL, upstream SHA,
@@ -152,6 +168,26 @@ badge per skill found under it. Plugins with no skills show "no skills found".
 
 This is the review surface, and it works on `held` snapshots — inspecting a
 snapshot must not require serving it.
+
+### Vetting
+
+Each snapshot card carries a **Vetting** section fed by
+`GET /api/snapshots/{id}/vetting`, above the contents toggle and always visible
+— the evidence is not behind a click.
+
+It shows the chain outcome badge, the override (*overridden by {who}: {reason}*)
+when one was recorded, and one block per connector: an icon and badge for the
+verdict state, the connector name, a one-line summary, and every finding as
+severity badge, rule id, `path:line`, and message. A connector with nothing to
+report shows "Nothing found."
+
+A snapshot the chain never ran against says so explicitly, and states that
+approving it therefore requires a recorded reason.
+
+A collapsed *What these connectors can and cannot see* disclosure lists each
+configured connector and its self-description, so the limits of the heuristics
+are readable at the point of decision. The same section is embedded in the
+[approve dialog](#approve-dialog) on the marketplaces page.
 
 ### Retention controls
 

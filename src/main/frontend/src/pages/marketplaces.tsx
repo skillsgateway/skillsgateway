@@ -10,9 +10,11 @@ import {
   useMarketplaces,
   useProvenance,
   useRegisterMarketplace,
+  useSnapshotVetting,
   type MarketplaceView,
   type Snapshot,
 } from "@/api/queries";
+import { OutcomeBadge, VettingReport } from "@/components/vetting-report";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -163,15 +165,93 @@ function ProvenanceDialog({ snapshotId, onClose }: { snapshotId: number; onClose
   );
 }
 
+/**
+ * The review step: the reviewer sees every connector's verdict and its findings before
+ * deciding, and a snapshot the chain blocked can only be approved with a reason — which the
+ * server demands independently, and records in the ledger.
+ *
+ * @Requirements GW_0042
+ */
+function ApproveDialog({ snapshotId, onClose }: { snapshotId: number; onClose: () => void }) {
+  const vetting = useSnapshotVetting(snapshotId);
+  const decide = useDecideSnapshot();
+  const [reason, setReason] = useState("");
+  const blocked = vetting.data?.outcome !== "CLEAR";
+  const needsReason = blocked && reason.trim().length === 0;
+
+  return (
+    <Dialog open onOpenChange={(open) => (open ? undefined : onClose())}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Approve snapshot {snapshotId}</DialogTitle>
+          <DialogDescription>
+            Approving publishes this snapshot to the git facade. Review the vetting verdicts first.
+          </DialogDescription>
+        </DialogHeader>
+        <VettingReport snapshotId={snapshotId} />
+        {blocked ? (
+          <div className="space-y-2">
+            <Label htmlFor={`override-reason-${snapshotId}`}>Reason for approving anyway</Label>
+            <Input
+              id={`override-reason-${snapshotId}`}
+              autoComplete="off"
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              placeholder="Why is this acceptable?"
+            />
+            <p className="text-xs text-muted-foreground">
+              The vetting chain did not clear this snapshot. The reason is recorded against the
+              chain run and in the audit ledger.
+            </p>
+          </div>
+        ) : null}
+        <DialogFooter>
+          <Button
+            disabled={decide.isPending || needsReason}
+            aria-label={`Confirm approval of snapshot ${snapshotId}`}
+            onClick={() =>
+              decide.mutate(
+                {
+                  id: snapshotId,
+                  decision: "approve",
+                  ...(blocked ? { overrideReason: reason.trim() } : {}),
+                },
+                {
+                  onSuccess: () => {
+                    toast.success(`Snapshot ${snapshotId} approved`);
+                    onClose();
+                  },
+                  onError: (error) => toast.error(error.message),
+                },
+              )
+            }
+          >
+            {decide.isPending ? "Approving…" : "Approve"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** The chain outcome next to the snapshot's own state, so the table shows both at a glance. */
+function VettingOutcomeCell({ snapshotId }: { snapshotId: number }) {
+  const vetting = useSnapshotVetting(snapshotId);
+  if (vetting.isLoading) return <span className="text-xs text-muted-foreground">…</span>;
+  if (vetting.isError) return <span className="text-xs text-muted-foreground">unavailable</span>;
+  return <OutcomeBadge outcome={vetting.data?.outcome} />;
+}
+
 function SnapshotRow({ snapshot, onProvenance }: { snapshot: Snapshot; onProvenance: (id: number) => void }) {
   const decide = useDecideSnapshot();
+  const [approving, setApproving] = useState(false);
   const id = snapshot.id ?? 0;
   const held = snapshot.state === "held";
-  const act = (decision: "approve" | "reject") =>
+  const act = (decision: "reject") =>
     decide.mutate(
       { id, decision },
       {
-        onSuccess: () => toast.success(`Snapshot ${id} ${decision === "approve" ? "approved" : "rejected"}`),
+        onSuccess: () => toast.success(`Snapshot ${id} rejected`),
         onError: (error) => toast.error(error.message),
       },
     );
@@ -179,6 +259,9 @@ function SnapshotRow({ snapshot, onProvenance }: { snapshot: Snapshot; onProvena
     <TableRow>
       <TableCell className="font-mono">{snapshot.sha?.slice(0, 12)}</TableCell>
       <TableCell>{stateBadge(snapshot.state)}</TableCell>
+      <TableCell>
+        <VettingOutcomeCell snapshotId={id} />
+      </TableCell>
       <TableCell className="text-muted-foreground">{snapshot.violation ?? "—"}</TableCell>
       <TableCell>{snapshot.decidedBy ?? "—"}</TableCell>
       <TableCell className="space-x-2 text-right">
@@ -186,7 +269,7 @@ function SnapshotRow({ snapshot, onProvenance }: { snapshot: Snapshot; onProvena
           <>
             <Button
               size="sm"
-              onClick={() => act("approve")}
+              onClick={() => setApproving(true)}
               disabled={decide.isPending}
               aria-label={`Approve snapshot ${id}`}
             >
@@ -206,6 +289,7 @@ function SnapshotRow({ snapshot, onProvenance }: { snapshot: Snapshot; onProvena
         <Button size="sm" variant="outline" onClick={() => onProvenance(id)} aria-label={`Provenance of snapshot ${id}`}>
           Provenance
         </Button>
+        {approving ? <ApproveDialog snapshotId={id} onClose={() => setApproving(false)} /> : null}
       </TableCell>
     </TableRow>
   );
@@ -255,6 +339,7 @@ function MarketplaceCard({ marketplace }: { marketplace: MarketplaceView }) {
               <TableRow>
                 <TableHead>Commit</TableHead>
                 <TableHead>State</TableHead>
+                <TableHead>Vetting</TableHead>
                 <TableHead>Violation</TableHead>
                 <TableHead>Decided by</TableHead>
                 <TableHead className="text-right">Actions</TableHead>

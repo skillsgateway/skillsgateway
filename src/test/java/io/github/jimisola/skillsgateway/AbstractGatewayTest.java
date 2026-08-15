@@ -149,6 +149,24 @@ abstract class AbstractGatewayTest {
         return dir;
     }
 
+    /**
+     * As {@link #createUpstream(String)}, with extra files committed on top — the fixture shape the
+     * vetting tests need to plant content a connector should react to.
+     */
+    protected static Path createUpstream(String manifestJson, Map<String, String> extraFiles)
+            throws IOException, GitAPIException {
+        Path dir = createUpstream(manifestJson);
+        try (Git git = Git.open(dir.toFile())) {
+            for (Map.Entry<String, String> file : extraFiles.entrySet()) {
+                Path path = dir.resolve(file.getKey());
+                Files.createDirectories(path.getParent());
+                Files.writeString(path, file.getValue());
+            }
+            commitAll(git, "add fixture content");
+        }
+        return dir;
+    }
+
     /** Adds a commit upstream and returns the new head SHA. */
     protected static String addUpstreamCommit(Path upstreamDir, String marker) throws IOException, GitAPIException {
         try (Git git = Git.open(upstreamDir.toFile())) {
