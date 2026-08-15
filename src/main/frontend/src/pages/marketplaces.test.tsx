@@ -24,6 +24,32 @@ test("lists_registered_marketplaces_with_held_snapshots", async () => {
   expect(screen.getByRole("button", { name: "Reject snapshot 1" })).toBeInTheDocument();
 });
 
+test("register_is_disabled_until_the_name_and_url_are_valid", async () => {
+  const user = userEvent.setup();
+  renderPage();
+  await user.click(await screen.findByRole("button", { name: "Register marketplace" }));
+  const nameField = screen.getByLabelText("Name");
+  const urlField = screen.getByLabelText("Clone URL");
+  const register = screen.getByRole("button", { name: "Register" });
+
+  expect(register).toBeDisabled();
+
+  await user.type(nameField, "corp-two");
+  expect(register).toBeDisabled();
+
+  await user.type(urlField, "not-a-url");
+  expect(register).toBeDisabled();
+
+  await user.clear(urlField);
+  await user.type(urlField, "https://github.com/org/marketplace.git");
+  expect(register).toBeEnabled();
+
+  // A name the server's pattern rejects disables it again.
+  await user.clear(nameField);
+  await user.type(nameField, "Bad Name");
+  expect(register).toBeDisabled();
+});
+
 test("register_dialog_rejects_invalid_name_and_malformed_url", async () => {
   const user = userEvent.setup();
   renderPage();
@@ -63,4 +89,10 @@ test("approving_a_blocked_snapshot_shows_the_findings_and_offers_a_waiver", asyn
   await user.type(within(dialog).getByLabelText("Justification"), "documented dummy key");
   expect(record).toBeEnabled();
   expect(confirm).toBeDisabled();
+
+  // The server refuses a waiver that has already lapsed, so the control refuses it first.
+  const expiry = within(dialog).getByLabelText("Expires on");
+  await user.clear(expiry);
+  await user.type(expiry, "2020-01-01");
+  expect(record).toBeDisabled();
 });

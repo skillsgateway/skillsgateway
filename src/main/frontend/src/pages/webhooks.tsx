@@ -8,6 +8,7 @@ import {
   useWebhookSubscribers,
   type CreatedSubscriber,
 } from "@/api/queries";
+import { GATEWAY_NAME_HINT, isAbsoluteUrl, isValidGatewayName } from "@/lib/form-rules";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -105,14 +106,22 @@ export function WebhooksPage() {
   const subscriberName = (id: number | undefined) =>
     subscribers.data?.find((subscriber) => subscriber.id === id)?.name ?? String(id ?? "");
 
+  // Mirrors WebhookController: the name must match the gateway name pattern (422) and the
+  // URL must parse with a scheme (400). Which schemes and which event names are accepted
+  // is server policy — the allowlist is configuration and the event registry is a server
+  // constant — so those stay server-side and surface as a ProblemDetail toast.
+  const trimmedName = name.trim();
+  const trimmedUrl = url.trim();
+  const canCreate =
+    isValidGatewayName(trimmedName) && isAbsoluteUrl(trimmedUrl) && !create.isPending;
+
   const onCreate = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!name.trim() || !url.trim()) {
-      toast.error("Name and URL are required");
+    if (!canCreate) {
       return;
     }
     create.mutate(
-      { name: name.trim(), url: url.trim(), events: events.trim() || "*" },
+      { name: trimmedName, url: trimmedUrl, events: events.trim() || "*" },
       {
         onSuccess: (subscriber) => {
           setCreated(subscriber);
@@ -135,40 +144,49 @@ export function WebhooksPage() {
         </p>
       </div>
 
-      <form onSubmit={onCreate} className="flex flex-wrap items-end gap-3">
-        <div className="space-y-2">
-          <Label htmlFor="subscriber-name">Subscriber name</Label>
-          <Input
-            id="subscriber-name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            autoComplete="off"
-            placeholder="ci-bot"
-          />
+      <form onSubmit={onCreate} className="space-y-2">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="space-y-2">
+            <Label htmlFor="subscriber-name">Subscriber name</Label>
+            <Input
+              id="subscriber-name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              autoComplete="off"
+              placeholder="ci-bot"
+              aria-describedby="subscriber-form-hint"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="subscriber-url">Target URL</Label>
+            <Input
+              id="subscriber-url"
+              value={url}
+              onChange={(event) => setUrl(event.target.value)}
+              autoComplete="off"
+              placeholder="https://ci.example.com/hooks/skills-gateway"
+              aria-describedby="subscriber-form-hint"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="subscriber-events">Events</Label>
+            <Input
+              id="subscriber-events"
+              value={events}
+              onChange={(event) => setEvents(event.target.value)}
+              autoComplete="off"
+              placeholder="snapshot.approved,snapshot.rejected"
+              aria-describedby="subscriber-form-hint"
+            />
+          </div>
+          <Button type="submit" disabled={!canCreate}>
+            {create.isPending ? "Adding…" : "Add subscriber"}
+          </Button>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="subscriber-url">Target URL</Label>
-          <Input
-            id="subscriber-url"
-            value={url}
-            onChange={(event) => setUrl(event.target.value)}
-            autoComplete="off"
-            placeholder="https://ci.example.com/hooks/skills-gateway"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="subscriber-events">Events</Label>
-          <Input
-            id="subscriber-events"
-            value={events}
-            onChange={(event) => setEvents(event.target.value)}
-            autoComplete="off"
-            placeholder="snapshot.approved,snapshot.rejected"
-          />
-        </div>
-        <Button type="submit" disabled={create.isPending}>
-          {create.isPending ? "Adding…" : "Add subscriber"}
-        </Button>
+        <p id="subscriber-form-hint" className="text-xs text-muted-foreground">
+          A name and a target URL are required — Add subscriber enables once both are
+          valid. {GATEWAY_NAME_HINT} Leave Events as * to receive every event.
+        </p>
       </form>
 
       <section className="space-y-3">
