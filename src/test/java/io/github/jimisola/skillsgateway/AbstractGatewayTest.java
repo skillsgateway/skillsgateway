@@ -54,7 +54,14 @@ import org.springframework.web.context.WebApplicationContext;
             "spring.security.oauth2.client.provider.idp.jwk-set-uri=https://idp.invalid/jwks",
             "skills-gateway.data-dir=target/test-git-data",
             // file is allowed only here so HTTP-level tests can register local fixtures.
-            "skills-gateway.allowed-url-schemes=http,https,file"
+            "skills-gateway.allowed-url-schemes=http,https,file",
+            // Webhook dispatch is driven explicitly by the tests: the poller is off and the
+            // backoff is compressed so retry behaviour is observable without long sleeps.
+            "skills-gateway.webhooks.enabled=false",
+            "skills-gateway.webhooks.base-backoff=100ms",
+            "skills-gateway.webhooks.max-backoff=1s",
+            "skills-gateway.webhooks.max-attempts=3",
+            "skills-gateway.webhooks.timeout=2s"
         })
 abstract class AbstractGatewayTest {
 

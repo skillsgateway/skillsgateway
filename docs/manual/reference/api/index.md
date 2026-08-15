@@ -54,6 +54,7 @@ consumed by the portal with a session cookie.
 | [Marketplaces and snapshots](marketplaces.md) | Register, list, ingest, inspect contents, approve, reject, provenance |
 | [Access tokens](tokens.md) | Create, list, revoke |
 | [Audit](audit.md) | Read the ledger |
+| [Webhooks](../../guides/lifecycle-webhooks.md) | Register, list and delete subscribers; list delivery attempts |
 
 ## Session
 
@@ -72,4 +73,4 @@ footer.
 | `/actuator/sbom` | CycloneDX SBOM. Authenticated. |
 | `/v3/api-docs`, `/docs` | OpenAPI document and Scalar UI. Authenticated. |
 | `/oauth2/authorization/idp`, `/login/oauth2/code/idp` | OIDC login and callback. |
-| `/`, `/marketplaces`, `/marketplaces/{name}`, `/audit`, `/tokens` | Forwarded to the single-page application. |
+| `/`, `/marketplaces`, `/marketplaces/{name}`, `/audit`, `/tokens`, `/webhooks` | Forwarded to the single-page application. |
