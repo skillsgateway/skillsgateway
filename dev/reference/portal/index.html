@@ -2129,7 +2129,9 @@ headers and signature verification.</p>
 <p>"Personal access tokens authenticate git clients against the facade. Values are
 hashed at rest and shown exactly once."</p>
 <p>An inline form with a <strong>Token name</strong> field and a <strong>Create token</strong> button posts to
-<code>POST /api/tokens</code>. The response opens a show-once dialog — "This value is shown
+<code>POST /api/tokens</code>. <strong>Create token</strong> stays disabled until the name field holds a
+non-blank value — the name is trimmed before it is sent. The response opens a
+show-once dialog — "This value is shown
 exactly once — copy it now. Only a hash is stored." — with the token in a code
 block and a clipboard button that flips to a checkmark for two seconds.</p>
 <table>
