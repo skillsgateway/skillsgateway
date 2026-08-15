@@ -364,7 +364,7 @@ class RevetEnforceTests extends AbstractGatewayTest {
         long marketplaceId =
                 marketplaceRepository.findByName(marketplace).orElseThrow().id();
         return snapshotRepository
-                .candidates(marketplaceId, true, Instant.now(), false, Instant.now(), Instant.EPOCH, 50)
+                .candidates(marketplaceId, marketplace, true, Instant.now(), false, Instant.now(), Instant.EPOCH, 50)
                 .stream()
                 .map(candidate -> candidate.snapshot().id())
                 .toList();
