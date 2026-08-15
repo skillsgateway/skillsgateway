@@ -13,6 +13,22 @@ function renderPage() {
   );
 }
 
+test("create_token_is_disabled_until_the_name_is_non_blank", async () => {
+  const user = userEvent.setup();
+  renderPage();
+  const nameField = await screen.findByLabelText("Token name");
+  const createButton = screen.getByRole("button", { name: "Create token" });
+
+  expect(createButton).toBeDisabled();
+
+  await user.type(nameField, "   ");
+  expect(createButton).toBeDisabled();
+
+  await user.clear(nameField);
+  await user.type(nameField, "ci-runner");
+  expect(createButton).toBeEnabled();
+});
+
 test("created_token_cleartext_is_shown_once_in_a_dialog", async () => {
   const user = userEvent.setup();
   renderPage();

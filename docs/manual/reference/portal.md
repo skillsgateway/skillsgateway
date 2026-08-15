@@ -299,7 +299,9 @@ headers and signature verification.
 hashed at rest and shown exactly once."
 
 An inline form with a **Token name** field and a **Create token** button posts to
-`POST /api/tokens`. The response opens a show-once dialog — "This value is shown
+`POST /api/tokens`. **Create token** stays disabled until the name field holds a
+non-blank value — the name is trimmed before it is sent. The response opens a
+show-once dialog — "This value is shown
 exactly once — copy it now. Only a hash is stored." — with the token in a code
 block and a clipboard button that flips to a checkmark for two seconds.
 
