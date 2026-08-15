@@ -1,4 +1,4 @@
-import { GitBranch, Home, KeyRound, Moon, ScrollText, Store, Sun, BookOpen } from "lucide-react";
+import { GitBranch, Home, KeyRound, Moon, ScrollText, Store, Sun, Webhook, BookOpen } from "lucide-react";
 import { useTheme } from "next-themes";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,10 @@ const groups = [
   },
   {
     label: "Governance",
-    items: [{ to: "/audit", label: "Audit log", icon: ScrollText }],
+    items: [
+      { to: "/audit", label: "Audit log", icon: ScrollText },
+      { to: "/webhooks", label: "Webhooks", icon: Webhook },
+    ],
   },
   {
     label: "Access",
@@ -30,6 +33,7 @@ function breadcrumb(pathname: string): string {
   if (pathname.startsWith("/marketplaces")) return "Marketplaces";
   if (pathname.startsWith("/audit")) return "Audit log";
   if (pathname.startsWith("/tokens")) return "Access tokens";
+  if (pathname.startsWith("/webhooks")) return "Webhooks";
   return "";
 }
 

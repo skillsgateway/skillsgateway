@@ -13,6 +13,7 @@ A fixed sidebar, grouped:
 | Gateway | Overview | [`/`](#overview) |
 | Gateway | Marketplaces | [`/marketplaces`](#marketplaces) |
 | Governance | Audit log | [`/audit`](#audit-log) |
+| Governance | Webhooks | [`/webhooks`](#webhooks) |
 | Access | Access tokens | [`/tokens`](#access-tokens) |
 | Tools | API reference | `/docs` — the Scalar API reference, not a portal route |
 
@@ -171,6 +172,64 @@ There is no filtering, search or paging — it is a recent-activity view rather
 than an investigation tool.
 
 Empty state: "No fetches recorded yet."
+
+---
+
+## Webhooks
+
+**Route:** `/webhooks` · **Heading:** Webhooks
+
+"Snapshot lifecycle events are POSTed to each subscriber that filters for them,
+signed with HMAC-SHA256 and retried with backoff until delivered."
+
+### Add subscriber
+
+An inline form with **Subscriber name**, **Target URL** and **Events** — the
+last defaults to `*` and is placeholder-hinted with
+`snapshot.approved,snapshot.rejected`. Name and URL are both required client-side
+before `POST /api/webhooks` is called; everything else is enforced server-side
+and surfaces as an error toast.
+
+The response opens a show-once dialog — "This signing secret is shown exactly
+once — copy it now." — with the `whsec_…` value in a code block and a clipboard
+button that flips to a checkmark for two seconds, the same pattern as
+[Access tokens](#access-tokens).
+
+### Subscribers
+
+| Column | Contents |
+| --- | --- |
+| Name | The subscriber name. |
+| Target URL | The registered endpoint. |
+| Events | The filter, rendered as a chip; `*` displays as "all events". |
+| Status | `enabled` (primary badge) or `disabled` (secondary). |
+| Actions | **Delete**, which fires immediately. |
+
+**Delete** calls `DELETE /api/webhooks/{id}` and toasts *Subscriber '{name}'
+deleted*. It removes the delivery history with the subscriber.
+
+Empty state: "No subscribers yet."
+
+### Delivery attempts
+
+From `GET /api/webhooks/deliveries` — the operator's view of a failing
+integration.
+
+| Column | Contents |
+| --- | --- |
+| Event | The lifecycle event name. |
+| Subscriber | Resolved from the subscriber list held in the browser; falls back to the raw id. |
+| State | Badge — `delivered` (primary), `failed` (destructive), `pending` (secondary). |
+| Attempts | Attempts made so far. |
+| Last response | The last HTTP status, else the last error, else "—". |
+| Queued | Enqueue timestamp. |
+
+Read-only: there is no manual redelivery and no editing. Empty state: "No
+deliveries yet."
+
+The secret is never re-displayed anywhere on this page. See
+[Receiving lifecycle webhooks](../guides/lifecycle-webhooks.md) for the payload,
+headers and signature verification.
 
 ---
 

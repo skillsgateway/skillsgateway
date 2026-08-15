@@ -9,6 +9,7 @@ import { MarketplaceDetailPage } from "@/pages/marketplace-detail";
 import { MarketplacesPage } from "@/pages/marketplaces";
 import { OverviewPage } from "@/pages/overview";
 import { TokensPage } from "@/pages/tokens";
+import { WebhooksPage } from "@/pages/webhooks";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -26,6 +27,7 @@ const router = createBrowserRouter([
       { path: "/marketplaces/:name", element: <MarketplaceDetailPage /> },
       { path: "/audit", element: <AuditPage /> },
       { path: "/tokens", element: <TokensPage /> },
+      { path: "/webhooks", element: <WebhooksPage /> },
     ],
   },
 ]);

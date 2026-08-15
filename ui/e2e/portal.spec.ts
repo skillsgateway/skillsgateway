@@ -80,3 +80,40 @@ test("token_cleartext_is_shown_once_and_revocation_marks_it_revoked", async ({ p
   await row.getByRole("button", { name: `Revoke token ${tokenName}` }).click();
   await expect(row.getByText("revoked")).toBeVisible();
 });
+
+/**
+ * @SVCs SVC_GW_0026
+ */
+test("webhooks_page_lists_subscribers_and_delivery_attempts", async ({ page }) => {
+  await login(page, "alice");
+  await page.getByRole("link", { name: "Webhooks" }).click();
+
+  const subscriberName = uniqueName("hook");
+  await page.getByLabel("Subscriber name").fill(subscriberName);
+  // Nothing listens there: the delivery is still recorded, which is what this page shows.
+  await page.getByLabel("Target URL").fill("http://127.0.0.1:9/hook");
+  await page.getByRole("button", { name: "Add subscriber" }).click();
+  await expect(page.getByTestId("webhook-secret")).toBeVisible();
+  await page.getByRole("button", { name: "Done" }).click();
+
+  const subscriberRow = page.getByRole("row", { name: new RegExp(subscriberName) });
+  await expect(subscriberRow.getByText("all events")).toBeVisible();
+
+  // A lifecycle event: register and ingest a marketplace, then come back.
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Marketplaces" })
+    .click();
+  const marketplaceName = uniqueName("hookcorp");
+  await page.getByRole("button", { name: "Register marketplace" }).click();
+  await page.getByLabel("Name").fill(marketplaceName);
+  await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
+  await page.getByRole("button", { name: "Register", exact: true }).click();
+  await page.getByRole("button", { name: `Ingest ${marketplaceName}` }).click();
+  await expect(page.getByText("held", { exact: true })).toBeVisible();
+
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Webhooks" }).click();
+  await expect(
+    page.getByRole("row", { name: new RegExp(`snapshot\\.ingested ${subscriberName}`) }),
+  ).toBeVisible();
+});

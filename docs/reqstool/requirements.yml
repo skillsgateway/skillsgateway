@@ -183,3 +183,35 @@ requirements:
     rationale: Compliance questions cover who changed the governance state, not only who fetched content; one ledger answers both.
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
+
+  - id: GW_0023
+    title: Snapshot lifecycle event webhooks
+    significance: shall
+    description: The system shall deliver a snapshot lifecycle event (ingestion, approval, rejection) by HTTP POST to every registered webhook subscriber whose event filter includes that event, and to no other subscriber.
+    rationale: Downstream systems must react to vetting decisions when they happen instead of polling the gateway; per-subscriber filtering keeps each receiver's blast radius to the events it asked for.
+    categories: ["functional-suitability", "interaction-capability"]
+    revision: 0.1.0
+
+  - id: GW_0024
+    title: Signed webhook payloads
+    significance: shall
+    description: The system shall sign every webhook request with an HMAC-SHA256 over the exact request body using the subscriber's secret, transmitted in a signature header, and shall return the subscriber secret in cleartext exactly once at subscriber creation.
+    rationale: A receiver must be able to prove a delivery came from the gateway and was not tampered with; show-once mirrors the personal access token contract (GW_0013) so secrets are never re-readable from the API.
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0025
+    title: Webhook delivery retry with backoff
+    significance: shall
+    description: The system shall persist every webhook delivery and retry a failed delivery with exponential backoff up to a configured maximum number of attempts, recording the outcome of each attempt and marking the delivery failed when the attempts are exhausted.
+    rationale: Receivers are transiently unavailable; durable deliveries with bounded backoff make delivery reliable without letting a dead endpoint retry forever or lose the record of what happened.
+    categories: ["reliability", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0026
+    title: Portal webhook administration
+    significance: shall
+    description: The system shall provide a portal page, behind the OIDC session, listing the registered webhook subscribers with their event filters and the recent delivery attempts with their state, attempt count, and response status.
+    rationale: Webhook integrations fail silently; an operator needs to see which subscriber is failing and why without querying the database.
+    categories: ["functional-suitability", "interaction-capability"]
+    revision: 0.1.0

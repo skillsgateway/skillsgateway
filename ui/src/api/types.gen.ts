@@ -4,6 +4,30 @@
  */
 
 export interface paths {
+    "/api/webhooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List webhook subscribers
+         * @description Every registered receiver with its event filter. Signing secrets are never returned.
+         */
+        get: operations["list"];
+        put?: never;
+        /**
+         * Register a webhook subscriber
+         * @description Registers a receiver for snapshot lifecycle events. The signing secret is returned exactly once, in this response, and is never readable afterwards.
+         */
+        post: operations["create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tokens": {
         parameters: {
             query?: never;
@@ -11,9 +35,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list"];
+        get: operations["list_1"];
         put?: never;
-        post: operations["create"];
+        post: operations["create_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -136,6 +160,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/webhooks/deliveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List recent delivery attempts
+         * @description Most recent deliveries first, with state, attempt count, and the last response status or error — the operator's view of a failing integration.
+         */
+        get: operations["deliveries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/snapshots/{id}/provenance": {
         parameters: {
             query?: never;
@@ -216,6 +260,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/webhooks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a webhook subscriber
+         * @description Removes the subscriber and its delivery history; no further events are queued for it.
+         */
+        delete: operations["delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tokens/{id}": {
         parameters: {
             query?: never;
@@ -236,36 +300,123 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description Webhook subscriber registration request */
+        CreateSubscriberRequest: {
+            /**
+             * @description Gateway-local subscriber name
+             * @example ci-bot
+             */
+            name?: string;
+            /**
+             * @description Target URL; scheme must be on the configured allowlist (default http/https)
+             * @example https://ci.example.com/hooks/skills-gateway
+             */
+            url?: string;
+            /**
+             * @description Comma-delimited event filter, or * for every event
+             * @example snapshot.approved,snapshot.rejected
+             */
+            events?: string;
+        };
+        /** @description A freshly created subscriber; the only time the signing secret is ever returned */
+        CreatedSubscriber: {
+            /**
+             * Format: int64
+             * @description Subscriber id
+             */
+            id?: number;
+            /** @description Subscriber name */
+            name?: string;
+            /** @description Target URL */
+            url?: string;
+            /** @description Comma-delimited event filter, or * for all */
+            events?: string;
+            /** @description Signing secret - shown exactly once */
+            secret?: string;
+            /**
+             * Format: date-time
+             * @description Creation time
+             */
+            createdAt?: string;
+        };
+        /** @description Token creation request */
         CreateTokenRequest: {
+            /**
+             * @description Human-readable token name
+             * @example ci-runner
+             */
             name?: string;
         };
+        /** @description A freshly issued token; the only time the cleartext is ever returned */
         IssuedToken: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Token id
+             */
             id?: number;
+            /** @description Token name */
             name?: string;
+            /** @description Cleartext token value - shown exactly once, only a hash is stored */
             token?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Creation time
+             */
             createdAt?: string;
         };
+        /** @description An immutable, SHA-identified snapshot of an upstream marketplace */
         Snapshot: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
             id?: number;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Owning marketplace id
+             */
             marketplaceId?: number;
+            /** @description Upstream commit SHA the snapshot is pinned to */
             sha?: string;
-            state?: string;
+            /**
+             * @description held, approved, or rejected
+             * @enum {string}
+             */
+            state?: "held" | "approved" | "rejected";
+            /** @description Policy violation that rejected the snapshot, or null */
             violation?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Ingestion time
+             */
             createdAt?: string;
+            /** @description Reviewer who decided, or null while held */
             decidedBy?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Decision time, or null while held
+             */
             decidedAt?: string;
         };
+        /** @description Marketplace registration request */
         RegisterMarketplaceRequest: {
+            /**
+             * @description Gateway-local marketplace name; becomes the facade clone path /git/{name}
+             * @example corp-marketplace
+             */
             name?: string;
+            /**
+             * @description Upstream clone URL; scheme must be on the configured allowlist (default http/https)
+             * @example https://github.com/acme/skills-marketplace.git
+             */
             url?: string;
+            /**
+             * @description Must be omitted or equal the upstream default branch; the ingested ref is the gateway's decision, never the consumer's (GW_0017)
+             * @example main
+             */
             ref?: string;
         };
+        /** @description A registered upstream marketplace */
         Marketplace: {
             /** Format: int64 */
             id?: number;
@@ -273,21 +424,109 @@ export interface components {
             url?: string;
             /** Format: date-time */
             createdAt?: string;
+            /** @description Detected forge (github, gitlab, bitbucket, azure-devops, gitea) or null */
             forge?: string;
+            /** @description Project path on the forge */
             forgeProject?: string;
+            /** @description Project description from the forge */
             description?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Last upstream update as reported by the forge
+             */
             upstreamUpdatedAt?: string;
         };
-        TokenView: {
-            /** Format: int64 */
+        /** @description A webhook subscriber without its signing secret */
+        SubscriberView: {
+            /**
+             * Format: int64
+             * @description Subscriber id
+             */
             id?: number;
+            /** @description Subscriber name */
             name?: string;
-            /** Format: date-time */
+            /** @description Target URL */
+            url?: string;
+            /** @description Comma-delimited event filter, or * */
+            events?: string;
+            /** @description Whether deliveries are queued for this subscriber */
+            enabled?: boolean;
+            /**
+             * Format: date-time
+             * @description Creation time
+             */
             createdAt?: string;
-            /** Format: date-time */
+        };
+        /** @description One webhook delivery: an event queued for a subscriber, with its attempt history */
+        WebhookDelivery: {
+            /**
+             * Format: int64
+             * @description Delivery id; sent as the de-duplication header
+             */
+            id?: number;
+            /**
+             * Format: int64
+             * @description Owning subscriber id
+             */
+            subscriberId?: number;
+            /** @description Lifecycle event name */
+            event?: string;
+            /** @description Serialized JSON body; the exact bytes that are signed and sent */
+            payload?: string;
+            /**
+             * @description pending, delivered, or failed
+             * @enum {string}
+             */
+            state?: "pending" | "delivered" | "failed";
+            /**
+             * Format: int32
+             * @description Attempts made so far
+             */
+            attempts?: number;
+            /**
+             * Format: date-time
+             * @description When the next attempt becomes due
+             */
+            nextAttemptAt?: string;
+            /**
+             * Format: int32
+             * @description HTTP status of the last attempt, or null
+             */
+            lastStatus?: number;
+            /** @description Error of the last attempt, or null */
+            lastError?: string;
+            /**
+             * Format: date-time
+             * @description Enqueue time
+             */
+            createdAt?: string;
+            /**
+             * Format: date-time
+             * @description Last state change
+             */
+            updatedAt?: string;
+        };
+        /** @description A token without its secret; the cleartext is only returned at creation */
+        TokenView: {
+            /**
+             * Format: int64
+             * @description Token id
+             */
+            id?: number;
+            /** @description Token name */
+            name?: string;
+            /**
+             * Format: date-time
+             * @description Creation time
+             */
+            createdAt?: string;
+            /**
+             * Format: date-time
+             * @description Revocation time, or null while active
+             */
             revokedAt?: string;
         };
+        /** @description Provenance of a snapshot: what was served, from where, and who approved it */
         Provenance: {
             /** Format: int64 */
             snapshotId?: number;
@@ -302,35 +541,66 @@ export interface components {
             /** Format: date-time */
             decidedAt?: string;
         };
+        /** @description A plugin declared by the marketplace manifest */
         PluginContent: {
+            /** @description Plugin name from the manifest */
             name?: string;
+            /** @description Plugin description from the manifest */
             description?: string;
+            /** @description Relative source path inside the marketplace repository */
             source?: string;
+            /** @description Skills found under <source>/skills/ */
             skills?: components["schemas"]["SkillInfo"][];
         };
+        /** @description A skill found under a plugin's source tree */
         SkillInfo: {
+            /** @description Skill directory name */
             name?: string;
+            /** @description Path of the SKILL.md within the snapshot */
             path?: string;
         };
+        /** @description What a snapshot ships: the manifest's plugins and their skills */
         SnapshotContent: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
             snapshotId?: number;
+            /** @description Upstream commit SHA */
             sha?: string;
+            /** @description held, approved, or rejected */
             state?: string;
+            /** @description Plugins declared by the manifest */
             plugins?: components["schemas"]["PluginContent"][];
         };
+        /** @description A registered marketplace with its snapshots and forge metadata */
         MarketplaceView: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Marketplace id
+             */
             id?: number;
+            /** @description Gateway-local name (also the facade clone path) */
             name?: string;
+            /** @description Upstream clone URL */
             url?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Registration time
+             */
             createdAt?: string;
+            /** @description Detected forge (github, gitlab, bitbucket, azure-devops, gitea) or null */
             forge?: string;
+            /** @description Project path on the forge, e.g. acme/skills */
             forgeProject?: string;
+            /** @description Project description from the forge */
             description?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Last upstream update as reported by the forge
+             */
             upstreamUpdatedAt?: string;
+            /** @description All snapshots of this marketplace, any state */
             snapshots?: components["schemas"]["Snapshot"][];
         };
     };
@@ -357,12 +627,83 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["TokenView"][];
+                    "*/*": components["schemas"]["SubscriberView"][];
                 };
             };
         };
     };
     create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSubscriberRequest"];
+            };
+        };
+        responses: {
+            /** @description Subscriber registered; response carries the show-once secret */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreatedSubscriber"];
+                };
+            };
+            /** @description Disallowed URL scheme, or an unknown event name */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreatedSubscriber"];
+                };
+            };
+            /** @description A subscriber with that name already exists */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreatedSubscriber"];
+                };
+            };
+            /** @description Invalid subscriber name */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreatedSubscriber"];
+                };
+            };
+        };
+    };
+    list_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TokenView"][];
+                };
+            };
+        };
+    };
+    create_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -617,6 +958,28 @@ export interface operations {
             };
         };
     };
+    deliveries: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WebhookDelivery"][];
+                };
+            };
+        };
+    };
     provenance: {
         parameters: {
             query?: never;
@@ -720,6 +1083,33 @@ export interface operations {
                         [key: string]: unknown;
                     }[];
                 };
+            };
+        };
+    };
+    delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Subscriber deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Subscriber not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
