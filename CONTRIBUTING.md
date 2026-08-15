@@ -18,6 +18,9 @@
 2. New behavior gets a requirement + verification case in `docs/reqstool/`
    (`GW_*` / `SVC_GW_*`) and traceability annotations in the code and tests.
 3. Implement on a branch named `<type>/<kebab-description>`.
+   Any change to behavior, the REST API, configuration, or the portal updates
+   the affected pages under `docs/manual/` **in the same PR** — see
+   `.claude/skills/documentation/SKILL.md`.
 4. Run the gates (below), open a PR; the PR title must be a Conventional Commit
    (it becomes the squash commit). PRs are merged manually by the maintainer.
 5. After merge, the OpenSpec change is archived into `openspec/specs/`.
@@ -29,6 +32,7 @@
 (cd ui && pnpm e2e)                     # real-browser e2e (compose.e2e.yaml)
 reqstool status local -p docs/reqstool  # must end "PASS"
 openspec validate --all --strict
+mkdocs build --strict                   # docs site (pip install -r docs/requirements.txt)
 ```
 
 CI enforces the same gates per PR (`.github/workflows/ci.yml`) plus a native
@@ -46,8 +50,20 @@ image build on main (`native.yml`).
 ## Code conventions
 
 See `.claude/skills/code-conventions/SKILL.md` (build, Java/TS style,
-traceability) and `.claude/skills/design-conventions/SKILL.md` (portal UI).
-Architecture context: `ARCHITECTURE.md` and `docs/decisions/`.
+traceability), `.claude/skills/design-conventions/SKILL.md` (portal UI), and
+`.claude/skills/documentation/SKILL.md` (docs structure, Markdown and Mermaid
+conventions). Architecture context: `ARCHITECTURE.md` and `docs/decisions/`.
+
+## Documentation
+
+The published site is MkDocs Material, built from `docs/manual/` and configured
+by `mkdocs.yml`. Rolling `dev` docs publish from `main`; `v*` tags publish a
+versioned release behind the `stable` alias (mike).
+
+```bash
+pip install -r docs/requirements.txt
+mkdocs build --strict
+```
 
 ## License
 

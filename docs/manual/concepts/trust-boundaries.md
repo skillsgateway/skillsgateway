@@ -1,0 +1,155 @@
+# Trust boundaries
+
+Three boundaries carry the security weight of the system. Everything else is
+plumbing.
+
+!!! danger "Changes here need adversarial tests"
+
+    A change touching facade authentication, `ApprovalService`, or the
+    registration allowlist should ship with negative tests — rejected schemes,
+    revoked tokens, quarantine unreachability, push attempts — not only
+    happy-path coverage.
+
+## Container view
+
+```mermaid
+C4Container
+    title Skills Gateway — container view
+
+    Person(reviewer, "Reviewer / operator", "Registers marketplaces, approves snapshots, manages access tokens")
+    Person(developer, "Developer / CI", "Installs skills with an unmodified git client")
+
+    System_Ext(upstream, "Upstream git forge", "Hosts the marketplace repository")
+    System_Ext(idp, "OIDC identity provider", "Authorization-code login for the web surface")
+
+    Container_Boundary(gw, "Skills Gateway") {
+        Container(spa, "Admin portal", "React, Vite", "Served from the same jar at / behind OIDC")
+        Container(api, "Admin API", "Spring MVC, /api/**", "Registration, ingestion, approval, provenance, tokens, ledger read")
+        Container(facade, "Git facade", "JGit GitServlet, /git/**", "Read-only smart-HTTP, PAT auth, receive-pack disabled")
+        ContainerDb(db, "PostgreSQL", "Flyway, JdbcClient", "Marketplaces, snapshots, access tokens, append-only fetch_log")
+        ContainerDb(store, "Git store", "Filesystem bare repos", "quarantine/{name}.git and published/{name}.git")
+    }
+
+    Rel(reviewer, spa, "Uses", "HTTPS")
+    Rel(spa, api, "Calls", "JSON over session cookie")
+    Rel(reviewer, idp, "Authenticates with", "OIDC")
+    Rel(api, idp, "Validates login", "authorization code")
+    Rel(api, upstream, "Clones the default branch", "HTTPS via JGit")
+    Rel(api, store, "Writes quarantine pins, publishes refs/heads/main")
+    Rel(api, db, "Reads and writes")
+    Rel(developer, facade, "git clone / fetch", "smart-HTTP + PAT")
+    Rel(facade, store, "Reads the published repo only")
+    Rel(facade, db, "Appends fetch entries")
+```
+
+## 1. Registration — an operator's URL becomes an outbound fetch
+
+Registering a marketplace hands the gateway a URL it will later clone. Two gates
+apply before the row is written.
+
+**URL scheme allowlist.** The URL is parsed and its scheme lower-cased and
+matched against `skills-gateway.allowed-url-schemes` (default `http`, `https`).
+Anything else — `file:`, `ssh:`, `ext:`, and any URL that fails to parse or
+carries no scheme at all — is rejected **fail-closed** with 400. The same check
+guards every operator-supplied outbound URL in the product.
+
+**Gateway-pinned ref.** The `ref` field must be absent or exactly `main`. Which
+ref gets ingested is the gateway's decision, not the registrant's. Multi-ref
+publication is a designed future feature and will arrive as promotion per
+`(upstream, ref)` — not by relaxing this check.
+
+Marketplace names are additionally constrained to `^[a-z0-9][a-z0-9_-]*$`, which
+is also what makes them safe as path segments on the facade.
+
+See [Compatibility and allowlists](../reference/compatibility.md) for the full
+matrix.
+
+## 2. The facade — an anonymous network peer becomes a reader
+
+`/git/**` is served by its own Spring Security filter chain, ordered ahead of
+the web chain, and it is **stateless**:
+
+- HTTP Basic, with a provider manager whose only provider is the PAT provider.
+  An OIDC browser session can never authenticate a git fetch, because no OIDC
+  provider exists in that chain.
+- Only the password field is read; the username is ignored (`token` by
+  convention). This is what makes the standard git credential helper work
+  unmodified.
+- Tokens are `sgw_` + Base64url of 32 random bytes. Only an unsalted SHA-256 hex
+  digest is stored, and the cleartext is returned exactly once. Unsalted is
+  deliberate — these are high-entropy random tokens, not user-chosen passwords.
+- Receive-pack is disabled by construction, so there is no write path to reject
+  at runtime.
+
+```mermaid
+sequenceDiagram
+    participant G as git client
+    participant F as gitChain (Order 1)
+    participant PAT as PatAuthenticationProvider
+    participant S as Git storage
+    participant L as fetch_log
+
+    G->>F: GET /git/acme/info/refs?service=git-upload-pack
+    F-->>G: 401 + WWW-Authenticate Basic
+    G->>F: retry with Basic token:sgw_...
+    F->>PAT: authenticate (password only)
+    PAT->>PAT: sha256Hex(token) → find active token
+    alt no active token
+        PAT-->>G: 401 bad credentials
+    else valid
+        PAT-->>F: principal + ROLE_GIT
+        F->>S: publishedIfServing("acme")
+        alt never approved
+            S-->>G: 404 repository not found
+        else serving
+            S-->>F: published repo (read-only)
+            F->>L: record info-refs
+            F-->>G: advertise refs/heads/main
+            G->>F: POST /git/acme/git-upload-pack
+            F->>L: record upload-pack per wanted object
+            F-->>G: packfile
+        end
+    end
+```
+
+!!! note "The facade chain is unconditional"
+
+    The `dev-insecure-auth` escape hatch does not touch it. `/git/**` requires a
+    valid PAT even in development mode.
+
+## 3. Approval — held content becomes served content
+
+`ApprovalService` is the only publisher. The invariant is structural rather than
+procedural: nothing else in the codebase writes to `{data-dir}/published/`, and
+the facade reads nothing else.
+
+A snapshot that is not `held` cannot be decided again, so the published ref
+moves only through a deliberate, recorded, one-time decision.
+
+## The web surface
+
+Everything that is not `/git/**` is the web chain: OIDC authorization-code login
+only, with the application acting as its own BFF. The browser never holds a
+token; the session cookie is its only credential. `/actuator/health` is the sole
+unauthenticated path.
+
+Requests to `/api/**` that lack a session get a clean **401** rather than a 302
+to the identity provider, so an expired session surfaces in the SPA as an error
+instead of an HTML login page rendered into a `fetch()`.
+
+!!! warning "dev-insecure-auth"
+
+    `skills-gateway.dev-insecure-auth=true` makes the **entire web surface**
+    unauthenticated and injects a synthetic principal `dev`. It exists for local
+    development, logs a loud warning at startup, and must never be set in a
+    deployed environment. See [Local development](../guides/local-development.md).
+
+## What is not a boundary yet
+
+There is no role model in the portal. Any authenticated browser session can
+register, ingest, approve and reject. The only per-user scoping is access
+tokens: you see and revoke your own.
+
+Admin/reviewer separation is a designed future capability. Until it lands, treat
+**access to the portal** as the reviewer privilege and grant it through the
+identity provider.

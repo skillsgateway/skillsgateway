@@ -1,0 +1,63 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# mike commits to gh-pages, so concurrent runs would race.
+concurrency:
+  group: docs-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Build & publish documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # mike reads and rewrites the gh-pages branch, so it needs the full
+          # repository, not a shallow clone of one branch.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+
+      - name: Install the documentation toolchain
+        run: pip install -r docs/requirements.txt
+
+      # The same gate contributors run locally. It fails on broken internal
+      # links, so a bad xref never reaches the published site.
+      - name: Build (strict)
+        run: mkdocs build --strict
+
+      - name: Configure git identity for mike
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+
+      # Rolling development docs. Every push to main replaces the `dev`
+      # version in place; `dev` is the site default until a release exists.
+      - name: Deploy dev docs
+        if: github.ref == 'refs/heads/main'
+        run: mike deploy --push --update-aliases dev
+
+      # A `v*` tag publishes that release as its own version and points the
+      # `stable` alias at it. `--update-aliases` moves `stable` off whatever
+      # it pointed at before, so this is also the upgrade path for later
+      # releases. No tags exist yet; the first one activates versioned docs
+      # without any change to this workflow.
+      - name: Deploy release docs
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mike deploy --push --update-aliases "$version" stable
+          # The first release takes over the default landing version from
+          # `dev`; on later releases this is a no-op that keeps it on stable.
+          mike set-default --push stable
