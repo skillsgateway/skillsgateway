@@ -1,9 +1,9 @@
 # Skills Gateway
 
 An enterprise gateway for git-distributed AI agent skill marketplaces
-(Claude Code plugins, GitHub Copilot, Cursor) — the missing analogue of
-Artifactory/Nexus for the part of the skills ecosystem that never touches a
-package manager.
+(Claude Code plugins, GitHub Copilot, Cursor) — the missing artifact
+repository manager for the part of the skills ecosystem that never touches
+a package manager.
 
 Skill marketplaces are git repositories cloned straight from the public
 internet: no vetting gate, no immutable versions, no inventory, no audit
@@ -17,9 +17,7 @@ JGit (GraalVM native-image at release): ingestion into quarantine, hold until
 approved, and serving approved SHA-pinned content through the PAT-authenticated
 git smart-HTTP facade, with an admin portal and an append-only audit ledger.
 Lifecycle webhooks, ledger export, and snapshot retention build on that. There
-are no releases or tags yet, interfaces may still change, and the shape of the
-full loop was validated by a Python prototype in the sibling
-`skills-gateway-python-mvp` repository.
+are no releases or tags yet, and interfaces may still change.
 
 ## What it does
 
