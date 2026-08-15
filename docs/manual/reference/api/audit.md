@@ -29,8 +29,25 @@ schema-lessly.
 !!! note "No filtering, search or paging"
 
     This endpoint returns the whole table. It is a recent-activity view, not an
-    investigation tool. Continuous export to an external system is a separate
-    capability.
+    investigation tool. For a continuous, resumable feed use the export
+    endpoints below.
+
+---
+
+## Export endpoints
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /api/audit/export` | Stream entries as `application/x-ndjson`, one per line in ledger order. `?after=` (default `0`) and `?limit=` (default `1000`, capped at `10000`). The resume sequence comes back in `X-Skills-Gateway-Audit-Cursor`. |
+| `POST /api/audit/sinks` | Register a push sink. **201** with the show-once signing secret; **400** disallowed scheme, **409** name taken, **422** bad name. |
+| `GET /api/audit/sinks` | List sinks with `cursorPosition`, `ledgerHead` and `behind`. Secrets are never returned. |
+| `PUT /api/audit/sinks/{id}/cursor` | Set the position — replay. **200** with the sink, **404** unknown. |
+| `DELETE /api/audit/sinks/{id}` | Remove the sink and its delivery channel. **204**, or **404**. |
+
+Both paths withhold entries younger than the commit-settling lag, and every
+entry carries its ledger `id` as the de-duplication key. Task-shaped coverage —
+polling, batch payload, signature, replay — is in
+[Exporting the audit ledger](../../guides/exporting-the-audit-ledger.md).
 
 ## Entry fields
 

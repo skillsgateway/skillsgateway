@@ -53,7 +53,7 @@ consumed by the portal with a session cookie.
 | --- | --- |
 | [Marketplaces and snapshots](marketplaces.md) | Register, list, ingest, inspect contents, approve, reject, provenance |
 | [Access tokens](tokens.md) | Create, list, revoke |
-| [Audit](audit.md) | Read the ledger |
+| [Audit](audit.md) | Read the ledger; stream it as NDJSON; register, replay and delete export sinks |
 | [Webhooks](../../guides/lifecycle-webhooks.md) | Register, list and delete subscribers; list delivery attempts |
 
 ## Session

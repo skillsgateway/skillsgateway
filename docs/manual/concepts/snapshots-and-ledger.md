@@ -103,14 +103,31 @@ Because entries carry the principal, marketplace and SHA, the inventory question
 — "every identity that fetched this exact content" — is a single query against
 the ledger.
 
+### Exporting it
+
+The portal view is a recent-activity table; evidence lives in your compliance
+system. The ledger is therefore also readable as a continuous feed, either
+pulled as newline-delimited JSON or pushed to a registered *sink*.
+
+A sink is nothing but a **cursor over the ledger** — the sequence of the last
+entry it has been handed. No entry is copied into a per-consumer queue, which is
+what keeps the append-only table the single copy of the evidence and makes replay
+a write to one column. Delivery is at-least-once and each entry carries its
+ledger sequence, so a receiver de-duplicates on that.
+
+The ledger sequence is assigned before its row commits, so both paths withhold
+the last few seconds of entries rather than risk a cursor stepping over an
+append still in flight — bounded staleness in exchange for no gaps. See
+[Exporting the audit ledger](../guides/exporting-the-audit-ledger.md).
+
 ### What the ledger is not
 
 - Not hash-chained — there is no tamper-evidence beyond the append-only
   discipline of the code and your database controls.
 - Not itself retained or archived by the product. How long you keep it is your
   compliance decision.
-- Not yet streamed anywhere. Continuous export to a SIEM is a separate
-  capability.
+- Not a real-time alerting channel. Export is cursor-based and settles for a few
+  seconds before an entry is handed on.
 
 ## Current scope limits
 

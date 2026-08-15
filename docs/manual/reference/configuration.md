@@ -8,6 +8,7 @@ Every setting the gateway reads, with its default and what consumes it.
 | --- | --- | --- |
 | [`skills-gateway.*`](#skills-gateway) | Storage location, the URL-scheme allowlist, and the development auth escape hatch. | No — all defaulted. |
 | [`skills-gateway.webhooks.*`](#webhooks) | Outbound lifecycle-webhook dispatch: poll interval, retry budget and backoff. | No — all defaulted. |
+| [`skills-gateway.audit-export.*`](#audit-export) | Ledger export: the commit-settling lag, batch and page sizes. | No — all defaulted. |
 | [`spring.datasource.*`](#datasource) | PostgreSQL connection. Supplied entirely by environment. | **Yes** |
 | [`spring.security.oauth2.client.*`](#oidc-login) | OIDC login for the web surface. | **Yes** |
 | [`management.endpoints.*`](#actuator) | Which actuator endpoints are exposed. | No |
@@ -112,6 +113,58 @@ skills-gateway:
     one-hour cap and keeps a dead receiver in the queue for hours. Receivers
     must de-duplicate on the delivery id regardless — see
     [Receiving lifecycle webhooks](../guides/lifecycle-webhooks.md).
+
+---
+
+## Audit export
+
+Tuning for the ledger export — the NDJSON pull endpoint and the scheduled
+exporter that feeds push sinks. Java-side defaults again; nothing appears in
+`application.yaml`.
+
+```yaml
+skills-gateway:
+  audit-export:
+    # Stops the exporter poller only. The pull endpoint keeps serving and sinks
+    # keep their cursors, so turning this back on resumes where it left off.
+    enabled: true
+
+    # How often each enabled sink is offered the next batch.
+    poll-interval: 30s
+
+    # Commit-settling window. The ledger id is a BIGSERIAL assigned before
+    # commit, so a lower id can become visible after a higher one; both export
+    # paths withhold entries younger than this so a cursor cannot step over an
+    # append that was still in flight. The cost is staleness, not correctness.
+    lag: 5s
+
+    # Ledger entries per pushed batch, unless the sink overrides it.
+    batch-size: 500
+
+    # GET /api/audit/export page size when ?limit= is omitted, and the ceiling
+    # it is clamped to when it is given.
+    default-page-size: 1000
+    max-page-size: 10000
+```
+
+| Property | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `skills-gateway.audit-export.enabled` | boolean | `true` | `false` pauses push export; the pull endpoint is unaffected. |
+| `skills-gateway.audit-export.poll-interval` | duration | `30s` | Fixed delay between export passes. |
+| `skills-gateway.audit-export.lag` | duration | `5s` | Entries younger than this are withheld from both paths. |
+| `skills-gateway.audit-export.batch-size` | integer | `500` | Per-sink default; a sink may set its own, clamped to `max-page-size`. |
+| `skills-gateway.audit-export.default-page-size` | integer | `1000` | Applied when `?limit=` is absent. |
+| `skills-gateway.audit-export.max-page-size` | integer | `10000` | Hard ceiling on `?limit=` and on a sink's batch size. |
+
+!!! warning "`lag: 0` reintroduces the skip window"
+
+    Setting the lag to zero lets a cursor advance past an entry that had an id
+    but was not yet committed — that entry is then never exported, and the gap
+    is silent. Shorten it only with evidence about your commit latency; a
+    compliance feed with a hole in it is worse than one that is seconds behind.
+
+Sinks, cursors and replay are described in
+[Exporting the audit ledger](../guides/exporting-the-audit-ledger.md).
 
 ---
 

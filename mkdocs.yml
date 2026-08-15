@@ -106,6 +106,7 @@ nav:
       - Approving and rejecting snapshots: guides/approving-snapshots.md
       - Consuming approved skills: guides/consuming-skills.md
       - Receiving lifecycle webhooks: guides/lifecycle-webhooks.md
+      - Exporting the audit ledger: guides/exporting-the-audit-ledger.md
   - Reference:
       - Configuration: reference/configuration.md
       - REST API:
