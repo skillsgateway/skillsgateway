@@ -62,6 +62,9 @@ test("token_cleartext_is_shown_once_and_revocation_marks_it_revoked", async ({ p
   await login(page, "alice");
   await page.getByRole("link", { name: "Access tokens" }).click();
 
+  // The name is required: nothing can be submitted until one is entered.
+  await expect(page.getByRole("button", { name: "Create token" })).toBeDisabled();
+
   const tokenName = uniqueName("token");
   await page.getByLabel("Token name").fill(tokenName);
   await page.getByRole("button", { name: "Create token" }).click();
