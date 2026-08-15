@@ -10,6 +10,11 @@ export type IssuedToken = components["schemas"]["IssuedToken"];
 export type SubscriberView = components["schemas"]["SubscriberView"];
 export type CreatedSubscriber = components["schemas"]["CreatedSubscriber"];
 export type WebhookDelivery = components["schemas"]["WebhookDelivery"];
+export type SinkView = components["schemas"]["SinkView"];
+export type CreatedSink = components["schemas"]["CreatedSink"];
+
+/** Same-origin download of the NDJSON ledger stream; the session cookie is the credential. */
+export const AUDIT_EXPORT_URL = "/api/audit/export";
 
 export function useMe() {
   return useQuery({
@@ -78,6 +83,43 @@ export function useAudit() {
   return useQuery({
     queryKey: ["audit"],
     queryFn: () => api<Record<string, unknown>[]>("/api/audit"),
+  });
+}
+
+export function useAuditSinks() {
+  return useQuery({
+    queryKey: ["audit-sinks"],
+    queryFn: () => api<SinkView[]>("/api/audit/sinks"),
+  });
+}
+
+export function useCreateAuditSink() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: { name: string; url: string }) =>
+      api<CreatedSink>("/api/audit/sinks", { method: "POST", body: JSON.stringify(request) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["audit-sinks"] }),
+  });
+}
+
+export function useDeleteAuditSink() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api<void>(`/api/audit/sinks/${id}`, { method: "DELETE" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["audit-sinks"] }),
+  });
+}
+
+/** Replay: rewinding a sink's position re-delivers everything after it. */
+export function useResetAuditSinkCursor() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, after }: { id: number; after: number }) =>
+      api<SinkView>(`/api/audit/sinks/${id}/cursor`, {
+        method: "PUT",
+        body: JSON.stringify({ after }),
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["audit-sinks"] }),
   });
 }
 

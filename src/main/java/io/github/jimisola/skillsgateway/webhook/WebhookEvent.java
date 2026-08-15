@@ -16,5 +16,13 @@ public final class WebhookEvent {
 
     public static final List<String> ALL = List.of(SNAPSHOT_INGESTED, SNAPSHOT_APPROVED, SNAPSHOT_REJECTED);
 
+    /**
+     * Event name carried by audit ledger export batches (GW_0028). Deliberately outside
+     * {@link #ALL}: it is provisioned by creating an audit export sink, never by subscribing a
+     * lifecycle receiver, and {@code WebhookService.emit} is never called with it — so not even a
+     * {@code *} subscriber receives ledger content it did not ask for.
+     */
+    public static final String AUDIT_EXPORT = "audit.export";
+
     private WebhookEvent() {}
 }

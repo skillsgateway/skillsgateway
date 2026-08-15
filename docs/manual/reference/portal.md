@@ -161,9 +161,46 @@ Empty state: "No snapshots yet."
 
 **Route:** `/audit` · **Heading:** Audit log
 
-The ledger, from `GET /api/audit`.
+The ledger and its export surface. Subtitle: "Append-only ledger of every facade
+fetch and administrative action, exportable to an external compliance system."
 
-The table is **schema-less**: columns are the keys of the first returned row, in
+### Export
+
+A **Download ledger (NDJSON)** link pointing at `/api/audit/export` — a plain
+same-origin, session-authenticated download, not a fetch through the API client.
+
+### Export sinks
+
+An inline form with **Sink name** and **Target URL** posts to
+`POST /api/audit/sinks`; the response opens the same show-once secret dialog as
+[Access tokens](#access-tokens) and [Webhooks](#webhooks).
+
+| Column | Contents |
+| --- | --- |
+| Name | The sink name. |
+| Target URL | Where batches are POSTed. |
+| Position | The sink's cursor — the last ledger sequence handed to it, monospace. |
+| Behind | Entries not yet handed over, as "{n} entries". |
+| Status | `enabled` (primary badge) or `disabled` (secondary). |
+| Actions | **Replay** and **Delete**, both firing immediately. |
+
+**Replay** sets the cursor to `0` — the whole ledger, from the beginning — and
+toasts *Sink '{name}' will replay the ledger*. Replaying to an arbitrary
+position is API-only (`PUT /api/audit/sinks/{id}/cursor`).
+
+**Delete** calls `DELETE /api/audit/sinks/{id}`, taking the sink's delivery
+channel with it, and toasts *Sink '{name}' deleted*.
+
+Sink deliveries are ordinary webhook deliveries, so their attempts appear on the
+[Webhooks](#webhooks) page rather than here.
+
+Empty state: "No export sinks yet."
+
+### Ledger
+
+The table, from `GET /api/audit`.
+
+It is **schema-less**: columns are the keys of the first returned row, in
 order, and every cell renders as monospace text with nulls shown as "—". In
 practice those columns are `id`, `ts`, `source`, `principal`, `marketplace`,
 `event`, `ref` and `sha`.

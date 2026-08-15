@@ -61,7 +61,11 @@ import org.springframework.web.context.WebApplicationContext;
             "skills-gateway.webhooks.base-backoff=100ms",
             "skills-gateway.webhooks.max-backoff=1s",
             "skills-gateway.webhooks.max-attempts=3",
-            "skills-gateway.webhooks.timeout=2s"
+            "skills-gateway.webhooks.timeout=2s",
+            // Audit export passes are driven explicitly by the tests, and the commit-settling lag
+            // is removed so an entry appended by the test is immediately exportable.
+            "skills-gateway.audit-export.enabled=false",
+            "skills-gateway.audit-export.lag=0s"
         })
 abstract class AbstractGatewayTest {
 

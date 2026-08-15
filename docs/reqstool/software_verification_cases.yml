@@ -260,3 +260,43 @@ cases:
       WHEN the administrator opens the webhooks page
       THEN the subscriber is listed with its event filter and the delivery attempt is listed with its event and state
     revision: "0.1.0"
+
+  - id: SVC_GW_0027
+    requirement_ids: ["GW_0027"]
+    title: Ledger entries stream as newline-delimited JSON from a cursor
+    verification: automated-test
+    description: |
+      GIVEN an audit ledger holding several entries
+      WHEN the export stream is requested first without a cursor and then with the cursor returned by that response
+      THEN the first response carries one JSON object per line in ascending sequence with the resume cursor, and the second response contains only entries appended after it
+    revision: "0.1.0"
+
+  - id: SVC_GW_0028
+    requirement_ids: ["GW_0028"]
+    title: A sink receives the entries after its position exactly once per pass
+    verification: automated-test
+    description: |
+      GIVEN a registered audit export sink whose position is behind the ledger head
+      WHEN the exporter runs a pass and then runs a second pass with no new ledger entries
+      THEN the first pass durably records one signed delivery carrying the entries after the position and advances the position to the last of them, and the second pass records no further delivery
+    revision: "0.1.0"
+
+  - id: SVC_GW_0029
+    requirement_ids: ["GW_0029"]
+    title: Resetting a sink position re-delivers the entries after it
+    verification: automated-test
+    description: |
+      GIVEN an audit export sink whose position is at the ledger head after a completed export pass
+      WHEN an administrator sets the sink position back to an earlier sequence and the exporter runs again
+      THEN a new delivery is recorded carrying the entries following that sequence
+    revision: "0.1.0"
+
+  - id: SVC_GW_0030
+    requirement_ids: ["GW_0030"]
+    title: Portal audit page offers the export download and lists sinks
+    verification: automated-test
+    description: |
+      GIVEN an authenticated portal session and a registered audit export sink
+      WHEN the administrator opens the audit page
+      THEN the ledger export download control is present and the sink is listed with its target and current ledger position
+    revision: "0.1.0"
