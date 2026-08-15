@@ -215,3 +215,35 @@ requirements:
     rationale: Webhook integrations fail silently; an operator needs to see which subscriber is failing and why without querying the database.
     categories: ["functional-suitability", "interaction-capability"]
     revision: 0.1.0
+
+  - id: GW_0027
+    title: Audit ledger streaming export
+    significance: shall
+    description: The system shall expose an authenticated endpoint that streams audit ledger entries as newline-delimited JSON in ascending ledger sequence, accepting a cursor that excludes every entry up to and including that sequence and a bounded page size, and returning the sequence to resume from.
+    rationale: Compliance evidence belongs in the organisation's SIEM, not only in the portal; a newline-delimited stream with an explicit cursor lets an external collector ingest the ledger incrementally without holding the whole table in memory.
+    categories: ["functional-suitability", "security"]
+    revision: 0.1.0
+
+  - id: GW_0028
+    title: Audit export sinks with at-least-once delivery
+    significance: shall
+    description: The system shall support registering audit export sinks, each tracking its own position in the append-only ledger, and shall deliver the entries after a sink's position to that sink at least once, advancing the position only after the delivery has been durably recorded.
+    rationale: A push consumer must never silently miss a ledger entry; making the durable delivery record precede the position advance turns a crash into a duplicate rather than a gap, and per-sink positions keep consumers independent of each other.
+    categories: ["functional-suitability", "reliability", "security"]
+    revision: 0.1.0
+
+  - id: GW_0029
+    title: Audit export cursor replay
+    significance: shall
+    description: The system shall allow an administrator to set an audit export sink's position to any earlier ledger sequence, after which the entries following that sequence are delivered to the sink again.
+    rationale: A consumer that lost or corrupted its copy of the ledger needs the gateway to re-send history; expressing replay as a position reset keeps one delivery path instead of a separate replay mode.
+    categories: ["functional-suitability", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_0030
+    title: Portal audit export surface
+    significance: shall
+    description: The system shall provide, on the portal audit page behind the OIDC session, a control that downloads the ledger export stream and a listing of the registered audit export sinks with their target and current ledger position.
+    rationale: An operator must be able to hand an auditor a ledger extract and to see whether each configured sink is keeping up, without database or raw HTTP access.
+    categories: ["functional-suitability", "interaction-capability"]
+    revision: 0.1.0
