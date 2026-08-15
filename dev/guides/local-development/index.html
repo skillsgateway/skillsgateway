@@ -709,6 +709,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observability
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ui-development-loop" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1462,6 +1473,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observability
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ui-development-loop" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1595,28 +1617,84 @@ relative to the working directory. In the container image it is <code>/data</cod
 published repositories — everything else is rebuildable from the database
 and upstream, but approved refs are not.</p>
 </div>
+<h2 id="observability">Observability<a class="headerlink" href="#observability" title="Permanent link">&para;</a></h2>
+<p>Traces, metrics and logs can be sent to a local <strong>Grafana LGTM</strong> stack — the
+<code>grafana/otel-lgtm</code> image, which bundles an OpenTelemetry Collector with Loki
+(logs), Tempo (traces), Prometheus (metrics) and Grafana. It is provisioned as
+an <a href="https://arconia.io">Arconia</a> dev service, so there is nothing to install and
+no compose file to start.</p>
+<p>It is <strong>opt-in through the <code>observability</code> Spring profile</strong> and off in every
+other run: <code>./mvnw clean verify</code> and the e2e suite start no LGTM container and
+attempt no OTLP export, which keeps the test loop fast and the logs quiet.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>spring-boot:run<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span>-Dspring-boot.run.profiles<span class="o">=</span>observability<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span>-Dspring-boot.run.useTestClasspath<span class="o">=</span><span class="nb">true</span>
+</code></pre></div>
+<p><code>useTestClasspath</code> is required: the dev-service and OpenTelemetry dependencies
+are test scope so that they never reach the packaged jar, the container image or
+the native binary. The same flag also gives you the PostgreSQL dev service, so
+the datasource environment variables above are not needed for this run.</p>
+<p>The stack takes a moment to pull on first use. Watch the log for the Grafana
+URL, which is on a random port:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Dev Service &#39;lgtm&#39; is ready — Grafana: http://localhost:&lt;port&gt;
+</code></pre></div>
+<p>Log in is not required (anonymous admin). Explore traces in <strong>Tempo</strong>, metrics
+in <strong>Prometheus</strong> and logs in <strong>Loki</strong>; all three are pre-provisioned as Grafana
+data sources by the image.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Default here</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>arconia.dev.services.lgtm.enabled</code></td>
+<td><code>false</code>, <code>true</code> under <code>observability</code></td>
+<td>Starts the LGTM container</td>
+</tr>
+<tr>
+<td><code>arconia.otel.enabled</code></td>
+<td><code>false</code>, <code>true</code> under <code>observability</code></td>
+<td>Enables the OpenTelemetry SDK and OTLP export</td>
+</tr>
+</tbody>
+</table>
+<p>Ports are random by default; pin them with
+<code>arconia.dev.services.lgtm.grafana-port</code> and friends if you want stable
+bookmarks. See the
+<a href="https://docs.arconia.io/arconia/latest/dev-services/lgtm/">Arconia dev services documentation</a>
+for the full property list.</p>
+<div class="admonition note">
+<p class="admonition-title">Development only</p>
+<p>The gateway ships no OpenTelemetry export in production builds. The
+<code>observability</code> profile exists for the local development loop; wiring a
+deployed gateway to a collector is a separate, not-yet-implemented concern.</p>
+</div>
 <h2 id="ui-development-loop">UI development loop<a class="headerlink" href="#ui-development-loop" title="Permanent link">&para;</a></h2>
 <p>Only needed when changing the portal:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>ui
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="gp">$ </span>corepack<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>pnpm
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="gp">$ </span>pnpm<span class="w"> </span>install
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="gp">$ </span>pnpm<span class="w"> </span>dev<span class="w">          </span><span class="c1"># proxies /api and /actuator to localhost:8080</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="gp">$ </span>pnpm<span class="w"> </span><span class="nb">test</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="gp">$ </span>pnpm<span class="w"> </span>storybook
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>src/main/frontend
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="gp">$ </span>corepack<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>pnpm
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="gp">$ </span>pnpm<span class="w"> </span>install
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="gp">$ </span>pnpm<span class="w"> </span>dev<span class="w">          </span><span class="c1"># proxies /api and /actuator to localhost:8080</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="gp">$ </span>pnpm<span class="w"> </span><span class="nb">test</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="gp">$ </span>pnpm<span class="w"> </span>storybook
 </code></pre></div>
 <h2 id="the-gates">The gates<a class="headerlink" href="#the-gates" title="Permanent link">&para;</a></h2>
 <p>All must pass before any pull request:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>clean<span class="w"> </span>verify<span class="w">                     </span><span class="c1"># Java + UI gates, packaged jar</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="gp">$ </span><span class="o">(</span><span class="nb">cd</span><span class="w"> </span>ui<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pnpm<span class="w"> </span>e2e<span class="o">)</span><span class="w">                     </span><span class="c1"># real-browser e2e vs a mock OIDC IdP</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="gp">$ </span>reqstool<span class="w"> </span>status<span class="w"> </span><span class="nb">local</span><span class="w"> </span>-p<span class="w"> </span>docs/reqstool<span class="w">  </span><span class="c1"># must end &quot;PASS&quot;</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="gp">$ </span>openspec<span class="w"> </span>validate<span class="w"> </span>--all<span class="w"> </span>--strict
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="gp">$ </span>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict<span class="w">                   </span><span class="c1"># documentation</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>clean<span class="w"> </span>verify<span class="w">                     </span><span class="c1"># Java + UI gates, packaged jar</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="gp">$ </span><span class="o">(</span><span class="nb">cd</span><span class="w"> </span>src/main/frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pnpm<span class="w"> </span>e2e<span class="o">)</span><span class="w">      </span><span class="c1"># real-browser e2e vs a mock OIDC IdP</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="gp">$ </span>reqstool<span class="w"> </span>status<span class="w"> </span><span class="nb">local</span><span class="w"> </span>-p<span class="w"> </span>docs/reqstool<span class="w">  </span><span class="c1"># must end &quot;PASS&quot;</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="gp">$ </span>openspec<span class="w"> </span>validate<span class="w"> </span>--all<span class="w"> </span>--strict
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="gp">$ </span>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict<span class="w">                   </span><span class="c1"># documentation</span>
 </code></pre></div>
 <p>Use <code>clean</code> for the reqstool gate — incremental compilation truncates the
 generated annotation files.</p>
 <p>For the documentation gate:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="gp">$ </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>docs/requirements.txt
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="gp">$ </span>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="gp">$ </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>docs/requirements.txt
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="gp">$ </span>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict
 </code></pre></div>
 <h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <ul>
