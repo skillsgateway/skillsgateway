@@ -35,8 +35,10 @@ generated annotation files.
 
 ## Process
 
-- Every behavior change starts as an OpenSpec change (`/opsx:propose`) and ends
-  archived into `openspec/specs/` (`/opsx:archive`).
+- Every behavior change starts as an OpenSpec change (`/opsx:propose`). A PR
+  isn't done until its change is archived into `openspec/specs/`
+  (`/opsx:archive`) as the final commit of the PR, after implementation and
+  gates.
 - Requirements live in `docs/reqstool/` (SSOT, `GW_*` / `SVC_GW_*`). Never state
   requirement text anywhere else; code carries `@Requirements`/`@SVCs`
   annotations (Java) or JSDoc tags (TypeScript).
