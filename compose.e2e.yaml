@@ -1,5 +1,5 @@
 # Portal e2e infrastructure: PostgreSQL + a mock OIDC identity provider.
-# The gateway itself runs from the boot jar on the host (see ui/e2e/run-e2e.sh)
+# The gateway itself runs from the boot jar on the host (see src/main/frontend/e2e/run-e2e.sh)
 # so Playwright exercises the real application with a real login redirect.
 services:
   postgres:
