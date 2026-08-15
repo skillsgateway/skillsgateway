@@ -29,10 +29,12 @@
 5. Changes touching trust boundaries (facade auth, `ApprovalService`, the
    registration allowlist) are held to a higher bar: adversarial/negative tests
    are required, per `.claude/skills/old-coder/SKILL.md`.
-6. Open a PR; the PR title must be a Conventional Commit (it becomes the squash
-   commit). PRs are merged manually by the maintainer.
-7. After merge, the OpenSpec change (including its `evidence.md`) is archived
-   into `openspec/specs/`.
+6. Archive the OpenSpec change (including its `evidence.md`) into
+   `openspec/specs/` as the final commit of the PR.
+7. Open (or finalize) the PR; the PR title must be a Conventional Commit (it
+   becomes the squash commit). The PR contains the implementation, docs,
+   evidence, and the archived change. PRs are merged manually by the
+   maintainer.
 
 ## Gates — all must pass
 
