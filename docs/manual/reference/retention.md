@@ -15,7 +15,7 @@ applies these:
 | Criterion | Kind | Selects | Governed by |
 | --- | --- | --- | --- |
 | [Held too long](#held-too-long) | Selector | `held` snapshots ingested more than `held-max-age` ago. | `held-max-age` |
-| [Superseded](#superseded) | Selector | `held` or `rejected` snapshots of a marketplace that a later `approved` snapshot has overtaken, once older than `superseded-min-age`. | `superseded`, `superseded-min-age` |
+| [Superseded](#superseded) | Selector | `held`, `rejected` or `revoked` snapshots of a marketplace that a later `approved` snapshot has overtaken, once older than `superseded-min-age`. | `superseded`, `superseded-min-age` |
 | [Minimum idle](#minimum-idle) | **Veto** | Nothing. It *removes* any candidate whose SHA was fetched through the facade within `min-idle`. | `min-idle` |
 | [Approved](#approved-snapshots) | **Absolute guard** | Nothing. An `approved` snapshot is never eligible, by policy or by hand. | Not configurable |
 
@@ -61,8 +61,9 @@ within `min-idle` (default `30d`) is dropped from the pass.
 
 An `approved` snapshot is what the facade serves. It is never eligible:
 
-- every eligibility query carries `state <> 'approved'`, so a policy pass cannot
-  reach one;
+- every eligibility query names the deletable states explicitly —
+  `state IN ('held', 'rejected', 'revoked')` — so a policy pass cannot reach an
+  approved one;
 - the soft-delete `UPDATE` itself excludes approved snapshots, so served content
   stays served whatever a caller asks for;
 - `DELETE /api/snapshots/{id}` refuses an approved snapshot with **409** before
@@ -72,6 +73,27 @@ The guard is in SQL, not only in Java, which is why the check holds for the
 policy pass and the manual endpoint alike. As a consequence retention never
 touches the **published** repository — the only ref compaction removes lives in
 quarantine.
+
+### Revoked snapshots
+
+A snapshot that [re-vetting revoked](../guides/re-vetting.md) is *not* approved,
+so the guard above no longer covers it. That is deliberate, not a side effect:
+the deletable states are named explicitly in the SQL precisely so that a new
+state has to be added on purpose to become deletable.
+
+Retention treats `revoked` exactly as it treats `rejected`:
+
+- the **superseded** criterion may select it — it is not being served, and a
+  later approved snapshot has taken its place;
+- **`held-max-age` never does**, because that criterion names `held` itself;
+- an administrator may delete it by hand, which the approved guard refused
+  before the revocation;
+- the **`min-idle` veto still applies**, which is what keeps a recently-revoked
+  snapshot around while the consumers that fetched it before the revocation are
+  still recent.
+
+Deleting one destroys nothing anyone could fetch. What it was revoked for, and
+who had already fetched it, stays in the append-only ledger regardless.
 
 ## The two passes
 
@@ -87,8 +109,8 @@ stateDiagram-v2
     Purged --> [*]
 
     note right of Live
-        state stays held | approved | rejected
-        deletion is orthogonal, never a fourth state
+        state stays held | approved | rejected | revoked
+        deletion is orthogonal, never a state of its own
     end note
     note right of SoftDeleted
         deleted_at, deleted_reason, purge_after set

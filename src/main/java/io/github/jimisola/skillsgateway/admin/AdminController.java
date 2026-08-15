@@ -209,8 +209,8 @@ public class AdminController {
     @Tag(name = "Marketplaces")
     @Operation(
             summary = "List marketplaces and their snapshots",
-            description =
-                    "All registered marketplaces with every snapshot and its state" + " (held, approved, or rejected).")
+            description = "All registered marketplaces with every snapshot and its state"
+                    + " (held, approved, rejected, or revoked).")
     public List<MarketplaceView> listMarketplaces() {
         return marketplaceRepository.list().stream()
                 .map(marketplace -> new MarketplaceView(
@@ -248,12 +248,15 @@ public class AdminController {
     }
 
     @PostMapping("/snapshots/{id}/approve")
-    @Requirements({"GW_0041"})
+    @Requirements({"GW_0041", "GW_0050"})
     @Tag(name = "Snapshots")
     @Operation(
-            summary = "Approve a held snapshot",
+            summary = "Approve a held or revoked snapshot",
             description = "Publishes the snapshot to the git facade and records the reviewer identity and"
-                    + " timestamp. Takes no request body. Only held snapshots can be approved. A snapshot whose"
+                    + " timestamp. Takes no request body. Held snapshots and snapshots that re-vetting revoked"
+                    + " can be approved; a revoked one is re-published only by this fresh decision, behind the"
+                    + " same gate, which means the violation that revoked it must have been waived or fixed"
+                    + " first. A snapshot whose"
                     + " effective vetting outcome is blocked — its chain run objects and at least one blocking"
                     + " finding is not covered by an active waiver, including a snapshot with no chain run at"
                     + " all — is refused, and the problem document names both the blocking connectors and the"
@@ -263,7 +266,7 @@ public class AdminController {
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
     @ApiResponse(
             responseCode = "409",
-            description = "Snapshot is not in the held state, or its effective vetting outcome is blocked")
+            description = "Snapshot is neither held nor revoked, or its effective vetting outcome is blocked")
     public Snapshot approve(@PathVariable long id, Authentication authentication) {
         ApprovalService.Approved approved = approvalService.approve(id, authentication.getName());
         Snapshot snapshot = approved.snapshot();
@@ -281,12 +284,13 @@ public class AdminController {
     @PostMapping("/snapshots/{id}/reject")
     @Tag(name = "Snapshots")
     @Operation(
-            summary = "Reject a held snapshot",
-            description = "Marks the snapshot rejected with the reviewer identity and timestamp;"
-                    + " its content is never served.")
+            summary = "Reject a held or revoked snapshot",
+            description = "Marks the snapshot rejected with the reviewer identity and timestamp; its content is"
+                    + " never served again. This is the terminal answer to a re-vetting revocation the reviewer"
+                    + " does not intend to waive.")
     @ApiResponse(responseCode = "200", description = "Snapshot rejected")
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
-    @ApiResponse(responseCode = "409", description = "Snapshot is not in the held state")
+    @ApiResponse(responseCode = "409", description = "Snapshot is neither held nor revoked")
     public Snapshot reject(@PathVariable long id, Authentication authentication) {
         Snapshot snapshot = approvalService.reject(id, authentication.getName());
         auditLogger.record(

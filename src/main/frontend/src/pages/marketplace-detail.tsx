@@ -5,7 +5,9 @@ import { toast } from "sonner";
 import {
   useMarketplaces,
   useRestoreSnapshot,
+  useRevetSnapshot,
   useSnapshotContent,
+  useSnapshotFetchers,
   useSoftDeleteSnapshot,
   type Snapshot,
 } from "@/api/queries";
@@ -13,20 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { RevocationNote, SnapshotStateBadge } from "@/components/snapshot-state";
 import { VettingReport } from "@/components/vetting-report";
-
-function stateBadge(state?: string) {
-  switch (state) {
-    case "approved":
-      return <Badge>approved</Badge>;
-    case "held":
-      return <Badge variant="secondary">held</Badge>;
-    case "rejected":
-      return <Badge variant="destructive">rejected</Badge>;
-    default:
-      return <Badge variant="outline">{state ?? "unknown"}</Badge>;
-  }
-}
 
 /**
  * Retention state of one snapshot: whether it is deleted, until when it can be restored, and
@@ -81,6 +71,89 @@ function RetentionControls({ snapshot }: { snapshot: Snapshot }) {
     >
       Delete
     </Button>
+  );
+}
+
+/**
+ * Re-vetting of one snapshot: the control that asks for a fresh run, and — for a snapshot a
+ * violation revoked — why it was taken back and who already had it.
+ *
+ * The affected list is the point of the panel. A revoked snapshot is not an incident the gateway
+ * can close on its own: every identity named here has already cloned the content, so the operator's
+ * next action is about them, not about the ref. It is fetched only for a revoked snapshot, so an
+ * ordinary review never asks the ledger a question it does not need answered.
+ *
+ * @Requirements GW_0055
+ */
+function RevetPanel({ snapshot }: { snapshot: Snapshot }) {
+  const id = snapshot.id ?? 0;
+  const revet = useRevetSnapshot();
+  const revoked = snapshot.state === "revoked";
+  const fetchers = useSnapshotFetchers(revoked ? id : null);
+  const approved = snapshot.state === "approved";
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <RevocationNote snapshot={snapshot} />
+        {approved ? (
+          <Button
+            size="sm"
+            variant="outline"
+            className="ml-auto"
+            disabled={revet.isPending}
+            aria-label={`Re-vet snapshot ${id}`}
+            onClick={() =>
+              revet.mutate(id, {
+                onSuccess: (result) =>
+                  result.classification === "VIOLATION"
+                    ? toast.error(
+                        result.revoked
+                          ? `Snapshot ${id} revoked by a re-vetting violation`
+                          : `Snapshot ${id} has a re-vetting violation; it is still published`,
+                      )
+                    : toast.success(
+                        result.classification === "INCONCLUSIVE"
+                          ? `Re-vetting of snapshot ${id} could not conclude`
+                          : `Snapshot ${id} re-vetted clear`,
+                      ),
+                onError: (error) => toast.error(error.message),
+              })
+            }
+          >
+            {revet.isPending ? "Re-vetting…" : "Re-vet now"}
+          </Button>
+        ) : null}
+      </div>
+      {revoked ? (
+        <section aria-label={`Identities that fetched snapshot ${id}`} className="rounded-md border p-3">
+          <h3 className="text-sm font-medium">Already fetched by</h3>
+          {fetchers.isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading fetch history…</p>
+          ) : fetchers.isError ? (
+            <p role="alert" className="text-sm text-destructive">
+              {fetchers.error.message}
+            </p>
+          ) : (fetchers.data ?? []).length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nobody fetched this snapshot's content through the facade.
+            </p>
+          ) : (
+            <ul className="mt-2 space-y-1">
+              {(fetchers.data ?? []).map((fetcher) => (
+                <li key={fetcher.principal} className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="font-medium">{fetcher.principal}</span>
+                  <span className="rounded-md border bg-muted px-2 py-0.5 text-xs">
+                    {fetcher.fetches} fetch{fetcher.fetches === 1 ? "" : "es"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">last {fetcher.lastFetch}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
+    </div>
   );
 }
 
@@ -202,7 +275,7 @@ export function MarketplaceDetailPage() {
                 <CardContent className="space-y-3 py-4">
                   <div className="flex items-center gap-3">
                     <span className="font-mono text-sm">{snapshot.sha?.slice(0, 12)}</span>
-                    {stateBadge(snapshot.state)}
+                    <SnapshotStateBadge state={snapshot.state} />
                     {snapshot.decidedBy ? (
                       <span className="text-xs text-muted-foreground">
                         decided by {snapshot.decidedBy}
@@ -224,6 +297,7 @@ export function MarketplaceDetailPage() {
                     <p className="text-sm text-destructive">{snapshot.violation}</p>
                   ) : null}
                   <Separator />
+                  <RevetPanel snapshot={snapshot} />
                   <VettingReport snapshotId={id} />
                   {open ? (
                     <>

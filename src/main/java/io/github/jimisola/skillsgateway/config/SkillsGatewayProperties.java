@@ -36,7 +36,7 @@ public record SkillsGatewayProperties(
             retention = new Retention(null, null, null, null, null, null);
         }
         if (vetting == null) {
-            vetting = new Vetting(null, null, null, null);
+            vetting = new Vetting(null, null, null, null, null);
         }
     }
 
@@ -55,9 +55,14 @@ public record SkillsGatewayProperties(
      *     outcome is next computed, whether or not the sweep has run, so the interval only decides
      *     how promptly the lapse is announced.
      * @param waiverSweepBatchSize how many lapsed waivers one sweep pass records
+     * @param revet continuous re-vetting of approved content (GW_0049-GW_0054)
      */
     public record Vetting(
-            Duration timeout, Long maxFileBytes, Duration waiverSweepInterval, Integer waiverSweepBatchSize) {
+            Duration timeout,
+            Long maxFileBytes,
+            Duration waiverSweepInterval,
+            Integer waiverSweepBatchSize,
+            Revet revet) {
 
         public Vetting {
             if (timeout == null) {
@@ -72,7 +77,71 @@ public record SkillsGatewayProperties(
             if (waiverSweepBatchSize == null || waiverSweepBatchSize <= 0) {
                 waiverSweepBatchSize = 200;
             }
+            if (revet == null) {
+                revet = new Revet(null, null, null, null, null);
+            }
         }
+    }
+
+    /**
+     * Continuous re-vetting of already-approved content (GW_0049-GW_0051).
+     *
+     * <p>The two switches answer different questions and default differently on purpose.
+     * {@code enabled} controls whether fresh <em>evidence</em> is produced, and defaults to true:
+     * re-running read-only scanners over pinned content writes a run and changes nothing else, and
+     * an estate whose approvals are never re-examined is exactly the gap this feature closes.
+     * {@code mode} controls whether that evidence <em>retracts</em> content, and defaults to
+     * {@code WARN}: auto-quarantine pulls skills out from under every team that fetched them, so an
+     * upgrade must never start doing it. An operator turns on enforcement once they have watched
+     * warn mode for a cycle and know the blast radius.
+     *
+     * @param enabled whether the scheduled sweep runs; the manual endpoints work either way, so a
+     *     re-vet can always be asked for on demand
+     * @param interval how often the sweep runs
+     * @param cadence how long a snapshot's latest run may be before the sweep picks it again.
+     *     Together with {@code batchSize} this is what stops a tick from re-vetting everything: the
+     *     sweep takes the oldest-vetted snapshots first, so a large estate is covered over many
+     *     ticks rather than all at once.
+     * @param batchSize how many snapshots one sweep pass re-vets
+     * @param mode what a violation does; see {@link RevetMode}
+     */
+    public record Revet(Boolean enabled, Duration interval, Duration cadence, Integer batchSize, RevetMode mode) {
+
+        public Revet {
+            if (enabled == null) {
+                enabled = true;
+            }
+            if (interval == null) {
+                interval = Duration.ofHours(6);
+            }
+            if (cadence == null) {
+                cadence = Duration.ofHours(24);
+            }
+            if (batchSize == null || batchSize <= 0) {
+                batchSize = 25;
+            }
+            if (mode == null) {
+                mode = RevetMode.WARN;
+            }
+        }
+
+        public boolean enforcing() {
+            return mode == RevetMode.ENFORCE;
+        }
+    }
+
+    /** What a re-vetting violation does to the snapshot it was found on (GW_0050, GW_0051). */
+    public enum RevetMode {
+
+        /**
+         * Record and announce, change nothing. The violation lands in the ledger, the lifecycle
+         * event goes out, and the portal shows it — but the snapshot stays approved and published.
+         * The default, and the way to measure a policy before it can take content away.
+         */
+        WARN,
+
+        /** Revoke the snapshot and stop serving it (GW_0050). */
+        ENFORCE
     }
 
     /**

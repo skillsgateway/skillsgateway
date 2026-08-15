@@ -20,6 +20,8 @@ export type WaiverSuppression = components["schemas"]["Suppression"];
 export type UncoveredFinding = components["schemas"]["UncoveredFinding"];
 export type WaiverScope = NonNullable<Waiver["scope"]>;
 export type CreatedSink = components["schemas"]["CreatedSink"];
+export type RevetResult = components["schemas"]["RevetResult"];
+export type Fetcher = components["schemas"]["Fetcher"];
 
 /** Same-origin download of the NDJSON ledger stream; the session cookie is the credential. */
 export const AUDIT_EXPORT_URL = "/api/audit/export";
@@ -129,6 +131,39 @@ export function useWaivers(marketplace: string | null) {
     queryKey: ["waivers", marketplace],
     queryFn: () => api<Waiver[]>(`/api/marketplaces/${encodeURIComponent(marketplace!)}/waivers`),
     enabled: marketplace !== null,
+  });
+}
+
+/**
+ * Re-vets an approved snapshot now. The server decides what the answer means: in warn mode — the
+ * default — a violation is recorded and nothing is unpublished, and in enforce mode the snapshot
+ * is revoked. The button never chooses, which is why there is no mode in the request.
+ *
+ * @Requirements GW_0055
+ */
+export function useRevetSnapshot() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api<RevetResult>(`/api/snapshots/${id}/revet`, { method: "POST" }),
+    onSuccess: () => {
+      // The state may have moved to revoked, so the listing is invalidated too, not only the
+      // vetting evidence.
+      void queryClient.invalidateQueries({ queryKey: ["marketplaces"] });
+      void queryClient.invalidateQueries({ queryKey: ["snapshot-vetting"] });
+      void queryClient.invalidateQueries({ queryKey: ["snapshot-fetchers"] });
+    },
+  });
+}
+
+/**
+ * Who received this snapshot's content through the facade — the blast radius of a retroactive
+ * violation. Only fetched for a snapshot that has one, so an ordinary review does not query it.
+ */
+export function useSnapshotFetchers(snapshotId: number | null) {
+  return useQuery({
+    queryKey: ["snapshot-fetchers", snapshotId],
+    queryFn: () => api<Fetcher[]>(`/api/snapshots/${snapshotId}/fetchers`),
+    enabled: snapshotId !== null,
   });
 }
 

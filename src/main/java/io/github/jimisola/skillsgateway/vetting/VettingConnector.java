@@ -23,6 +23,19 @@ public interface VettingConnector {
     /** Ascending chain position. Ties are broken by {@link #name()} so the order is total. */
     int order();
 
+    /**
+     * Identity of the rule set this connector currently carries, recorded on every run it takes
+     * part in (GW_0049). It answers the question continuous re-vetting exists to raise: when a
+     * snapshot that cleared last month is blocked today, was it the content that changed, or the
+     * connector? Bump it whenever the rules change.
+     *
+     * <p>Default {@code "1"} so that adding a connector never requires thinking about versioning
+     * before there is anything to version.
+     */
+    default String version() {
+        return "1";
+    }
+
     /** Reviewer-facing one-liner: what this connector looks for, and what it cannot see. */
     String description();
 

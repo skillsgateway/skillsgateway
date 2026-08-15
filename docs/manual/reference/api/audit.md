@@ -83,8 +83,21 @@ the acting OIDC principal.
 | Event | When | `detail` |
 | --- | --- | --- |
 | `vetting-verdict` | One per connector per run. | `{connector}={state}`, e.g. `secret-scan=fail`. |
-| `vetting-completed` | Once per run. | `outcome={clear\|blocked}; connectors={n}`. |
-| `snapshot-approved-override` | A reviewer approved a snapshot the chain blocked. | The reason they gave. Carries the reviewer as `principal`. |
+| `vetting-completed` | Once per run. | `trigger={ingestion\|revet-scheduled\|revet-manual}; outcome={clear\|blocked}; connectors={n}; chain={connector@version,…}`. |
+
+**From continuous re-vetting** — see
+[Re-vetting approved content](../../guides/re-vetting.md). The scheduled sweep
+records `revet-policy` as the principal; an on-demand run records the operator.
+
+| Event | When | `detail` |
+| --- | --- | --- |
+| `revet-clear` | A re-vetting run found nothing. | `trigger=…; outcome=…`. |
+| `revet-inconclusive` | The chain could not conclude, so the snapshot stays approved. | The connectors that could not answer. |
+| `revet-violation` | A retroactive violation on an approved snapshot. | `trigger=…; mode={WARN\|ENFORCE}; connectors=…; rules=…; fetchedBy={n}`. |
+| `revet-violation-affected` | One per identity that had already fetched the snapshot. | `principal=…; fetches=…; lastFetch=…`. |
+| `snapshot-revoked` | The state transition out of `approved`. | The violation that caused it. |
+| `snapshot-unpublished` | The published refs were removed. | Whether the marketplace still serves anything. |
+| `snapshot-unpublish-failed` | A revoked snapshot's refs could not be removed. | The failure. **Needs a person**: the record and the wire disagree. |
 
 ## What this answers
 
@@ -96,6 +109,9 @@ SELECT DISTINCT principal
 FROM fetch_log
 WHERE sha = '3f9c2ab...' AND ts > now() - interval '90 days';
 ```
+
+`GET /api/snapshots/{id}/fetchers` answers exactly this from the API, and it is
+what the portal shows beneath a revoked snapshot.
 
 That is the "which of our developers received this exact content" question that
 git distribution otherwise cannot answer.

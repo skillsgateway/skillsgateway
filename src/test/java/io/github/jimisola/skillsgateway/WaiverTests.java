@@ -365,6 +365,7 @@ class WaiverTests extends AbstractGatewayTest {
                 VettingChain.aggregate(List.of(state)),
                 Instant.now(),
                 Instant.now(),
+                "secret-scan@1",
                 List.of(new VettingRepository.VerdictView(1L, "secret-scan", 0, state, null, null, findings)));
     }
 
@@ -376,6 +377,7 @@ class WaiverTests extends AbstractGatewayTest {
                 VettingChain.Outcome.BLOCKED,
                 Instant.now(),
                 Instant.now(),
+                "secret-scan@1",
                 List.of());
     }
 }

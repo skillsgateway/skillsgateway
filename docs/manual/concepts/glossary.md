@@ -48,6 +48,12 @@ a narrower meaning here.
 :   The state every snapshot starts in. Stored, inspectable, and serving
     nothing.
 
+**Revoked**
+:   A snapshot that was approved and published, and that a later re-vetting run
+    retroactively quarantined. Its published refs are gone; its quarantined copy
+    is not. It returns to being served only through a fresh approve decision.
+    See [Re-vetting approved content](../guides/re-vetting.md).
+
 **Ingestion**
 :   Cloning an upstream default branch into quarantine and pinning the tip
     commit as `refs/snapshots/{sha}`. Explicit — there is no upstream watcher.

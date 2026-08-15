@@ -40,6 +40,13 @@ The chain never changes the snapshot's own state. A vetted snapshot is still
 `held`; what the chain decides is whether approving it is an ordinary act or one
 that has to be justified in writing.
 
+That separation is what lets the same chain run again, later, over a snapshot
+that is already approved and served — a new run against unchanged state. What
+such a run *means* is a separate judgement, described in
+[Re-vetting approved content](../guides/re-vetting.md): only a connector that
+objects to the content can retract it, and a connector that merely broke never
+can.
+
 ## The connector contract
 
 A connector has a stable name, a position in the chain, and one method that
@@ -166,12 +173,18 @@ lapsed waiver. It has no authority over the gate — the gate is already correct
 without it — so it only decides whether the lapse is *announced* in the ledger
 rather than merely observable in it.
 
-!!! warning "Expiry re-closes the gate; it does not retract published content"
+!!! warning "Expiry re-closes the gate immediately; retraction waits for a re-vet"
 
-    A snapshot that was approved while a waiver was active stays published when
-    that waiver lapses. What returns is the *gate*: the snapshot reads as blocked
-    again, and any future approval needs a fresh acceptance. Automatic
-    re-vetting of already-approved content is a separate capability.
+    A snapshot approved while a waiver was active stays published the moment that
+    waiver lapses. What returns instantly is the *gate*: the snapshot reads as
+    blocked again, and any future approval needs a fresh acceptance.
+
+    Taking the content back is
+    [continuous re-vetting](../guides/re-vetting.md)'s job. The next re-vetting
+    run over that snapshot finds the finding uncovered again and reports a
+    violation — recorded and announced in the default `warn` mode, and revoking
+    the snapshot under `enforce`. So under enforcement a waiver's expiry is a
+    real deadline, not a reminder.
 
 !!! warning "`connector-error` is waivable"
 

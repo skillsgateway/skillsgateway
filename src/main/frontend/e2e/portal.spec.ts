@@ -257,3 +257,73 @@ test("a_finding_is_waived_from_the_review_surface_and_the_waiver_is_listed", asy
   await confirm.click();
   await expect(card.getByText("approved", { exact: true })).toBeVisible();
 });
+
+/**
+ * The whole retraction loop in a browser: waive a finding to publish content the chain objects
+ * to, withdraw the acceptance, re-vet, and watch the gateway take the content back.
+ *
+ * This is the sharpest end of the feature — under enforcement the gateway unpublishes content on
+ * its own — so the acceptance test drives it the way an operator would, and checks the two things
+ * an operator needs afterwards: why it went, and who already had it.
+ *
+ * @SVCs SVC_GW_0055
+ */
+test("a_revoked_snapshot_shows_its_violation_and_who_had_already_fetched_it", async ({ page }) => {
+  await login(page, "alice");
+  const card = await registerTainted(page, "revoked");
+  await expect(card.getByText("vetting blocked")).toBeVisible();
+
+  // Publish it the only sanctioned way: an explicit, justified, expiring acceptance per finding.
+  await card.getByRole("button", { name: /Approve snapshot \d+/ }).click();
+  const dialog = page.getByRole("dialog");
+  const confirm = dialog.getByRole("button", { name: /Confirm approval of snapshot \d+/ });
+  for (let i = 0; i < 10; i++) {
+    const waive = dialog.getByRole("button", { name: /^Waive finding / }).first();
+    if ((await waive.count()) === 0) break;
+    const rule = (await waive.getAttribute("aria-label"))!.replace("Waive finding ", "");
+    await waive.click();
+    await dialog.getByLabel("Justification").first().fill("accepted for the pilot ring");
+    await dialog.getByRole("button", { name: `Record waiver for ${rule}` }).click();
+    await expect(dialog.getByText(/waived by alice until/).first()).toBeVisible();
+  }
+  await expect(confirm).toBeEnabled();
+  await confirm.click();
+  await expect(card.getByText("approved", { exact: true })).toBeVisible();
+
+  // Withdraw every acceptance. The gate closes immediately; publication does not move yet —
+  // that is exactly the gap continuous re-vetting exists to close.
+  await card.getByRole("link").first().click();
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  // Wait for the evidence to load before counting controls: an empty list here would silently
+  // mean "revoked nothing", and the test would then be asserting against a still-waived snapshot.
+  const waivers = page.getByRole("region", { name: "Waivers" });
+  await expect(waivers).toBeVisible();
+  const revoke = waivers.getByRole("button", { name: /^Revoke waiver \d+/ });
+  await expect(revoke.first()).toBeVisible();
+  for (let i = 0; i < 10 && (await revoke.count()) > 0; i++) {
+    const before = await revoke.count();
+    await revoke.first().click();
+    await expect(revoke).toHaveCount(before - 1, { timeout: 15_000 });
+  }
+  await expect(waivers.getByText("active")).toHaveCount(0);
+  // The gate has closed again, but publication has not moved: this is the gap re-vetting closes.
+  await expect(page.getByText("approved", { exact: true }).first()).toBeVisible();
+
+  // Now ask for fresh evidence. Under enforcement the answer takes the content away.
+  await page.getByRole("button", { name: /^Re-vet snapshot \d+/ }).first().click();
+  await expect(page.getByText(/revoked by a re-vetting violation/)).toBeVisible({ timeout: 30_000 });
+
+  // The state, the reason, the identity that revoked it, and the blast radius are all on the page.
+  await expect(page.getByText("revoked", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText(/re-vetting violation/).first()).toBeVisible();
+  await expect(page.getByText(/revoked by/).first()).toBeVisible();
+  const affected = page.getByRole("region", { name: /Identities that fetched snapshot \d+/ });
+  await expect(affected).toBeVisible();
+  // Nobody cloned this fixture through the facade, and the panel says so rather than showing
+  // an empty list a reviewer would have to interpret.
+  await expect(affected.getByText(/Nobody fetched this snapshot/)).toBeVisible();
+
+  // A revoked snapshot is not re-vetted again — it is not being served — and the way back is a
+  // fresh decision on the marketplaces page.
+  await expect(page.getByRole("button", { name: /^Re-vet snapshot \d+/ })).toHaveCount(0);
+});

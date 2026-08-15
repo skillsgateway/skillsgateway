@@ -118,17 +118,32 @@ already approved keeps serving.
 | --- | --- |
 | 200 | Decided. |
 | 404 | Unknown snapshot. |
-| 409 | The snapshot is not `held`, or its effective vetting outcome is blocked (see `uncoveredFindings`). |
+| 409 | The snapshot is neither `held` nor `revoked`, or its effective vetting outcome is blocked (see `uncoveredFindings`). |
 
-!!! warning "Decisions are one-way"
+!!! warning "An approved snapshot cannot be re-decided"
 
-    A snapshot that is not `held` cannot be approved or rejected. There is no
-    revocation state and no re-decision — the state machine is
-    `held → approved | rejected`, once.
+    Approving is not reversible by hand. A snapshot that is `approved` or
+    `rejected` returns 409 from both endpoints, and there is no un-approve.
 
-    To move a marketplace back to earlier content, approve the earlier snapshot
-    is *not* possible either. Plan rollbacks by re-ingesting the desired
-    upstream commit.
+    To move a marketplace back to earlier content, re-ingest the desired
+    upstream commit and approve that snapshot. Approving an older one is not a
+    rollback mechanism.
+
+## Re-approving a revoked snapshot
+
+A snapshot that [continuous re-vetting](re-vetting.md) revoked is decidable
+again, and the route back is this same **Approve** — deliberately, because a
+retraction the gateway made without a person has to be answerable by one.
+
+Nothing about the gate is relaxed for it. The effective vetting outcome is
+evaluated exactly as for a held snapshot, so the finding that caused the
+violation has to be waived (or fixed by re-ingesting a corrected upstream
+commit) before the approval succeeds. What the decision records is fresh: a new
+reviewer, a new timestamp, and the revocation marks cleared. What the snapshot
+was revoked for stays in the audit ledger.
+
+Rejecting it instead is the terminal answer, and the right one when the finding
+is not something anyone intends to accept.
 
 ## Rejection is not deletion
 

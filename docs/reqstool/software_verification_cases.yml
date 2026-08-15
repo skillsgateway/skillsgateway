@@ -480,3 +480,73 @@ cases:
       WHEN the audit ledger is read
       THEN it holds an entry for each waiver's creation carrying the rule, the scope and the expiry, an entry for the waiver that let the approval through, and an entry for the revocation, each with the marketplace and the acting identity
     revision: "0.1.0"
+
+  - id: SVC_GW_0049
+    requirement_ids: ["GW_0049"]
+    title: The sweep re-vets the least recently vetted approved snapshots in bounded batches
+    verification: automated-test
+    description: |
+      GIVEN several approved snapshots whose latest chain runs are of different ages, and a held and a rejected snapshot alongside them
+      WHEN a re-vetting sweep runs with a batch size smaller than the number of eligible snapshots, and a snapshot is re-vetted on demand
+      THEN only approved snapshots are selected, the oldest-vetted ones are taken first, no more than the batch size are re-vetted, each pass records a new chain run carrying its trigger and the chain's connector versions, and the snapshots' own states are unchanged by the runs
+    revision: "0.1.0"
+
+  - id: SVC_GW_0050
+    requirement_ids: ["GW_0050"]
+    title: Enforced re-vetting revokes an approved snapshot and stops the facade serving it
+    verification: automated-test
+    description: |
+      GIVEN an approved and published snapshot that a git client can clone, in a gateway configured to enforce re-vetting violations, whose content the chain now objects to
+      WHEN the snapshot is re-vetted
+      THEN the snapshot moves to the revoked state, a clone of the marketplace fails and the revoked commit can no longer be fetched by reference, the quarantined copy is still present, and re-publishing it succeeds only after a waiver covers the finding and a fresh approve decision is recorded
+    revision: "0.1.0"
+
+  - id: SVC_GW_0051
+    requirement_ids: ["GW_0051"]
+    title: Warn mode records the violation and never unpublishes
+    verification: automated-test
+    description: |
+      GIVEN an approved and published snapshot whose content the chain now objects to, in a gateway using the default re-vetting mode
+      WHEN the snapshot is re-vetted
+      THEN the violation is recorded in the ledger and announced as a lifecycle event, the snapshot stays approved, and a git client can still clone the marketplace at the same commit
+    revision: "0.1.0"
+
+  - id: SVC_GW_0052
+    requirement_ids: ["GW_0052"]
+    title: A connector error during re-vetting never revokes the snapshot
+    verification: automated-test
+    description: |
+      GIVEN an approved and published snapshot in a gateway configured to enforce re-vetting violations, and a connector that throws or exceeds its time limit
+      WHEN the snapshot is re-vetted, and separately when the run produces no verdict at all
+      THEN each run is recorded as inconclusive, the snapshot stays approved and served, and the recorded run still blocks that snapshot's approval
+    revision: "0.1.0"
+
+  - id: SVC_GW_0053
+    requirement_ids: ["GW_0053"]
+    title: A violation names the identities that fetched the snapshot
+    verification: automated-test
+    description: |
+      GIVEN an approved snapshot that two authenticated identities have cloned through the git facade and one has only asked the refs of
+      WHEN a re-vetting run finds a violation on it
+      THEN the reported affected identities are exactly the two that received content, each with its fetch count and last fetch time, and the violation and revocation lifecycle events are emitted to a subscriber
+    revision: "0.1.0"
+
+  - id: SVC_GW_0054
+    requirement_ids: ["GW_0054"]
+    title: The ledger records the retroactive violation and every state transition
+    verification: automated-test
+    description: |
+      GIVEN an approved snapshot that an identity has fetched, re-vetted under enforcement into a violation and then re-approved after a waiver
+      WHEN the audit ledger is read
+      THEN it holds the re-vetting run's outcome with its trigger, the violation with the objecting connectors and the mode in force, an entry naming the affected identity, the revocation, the unpublication, and the fresh approval, each with the marketplace and the acting identity
+    revision: "0.1.0"
+
+  - id: SVC_GW_0055
+    requirement_ids: ["GW_0055"]
+    title: Portal shows a revoked snapshot, its violation and who fetched it
+    verification: automated-test
+    description: |
+      GIVEN an authenticated portal session and a marketplace whose approved snapshot has been revoked by a re-vetting violation
+      WHEN the reviewer opens the marketplace
+      THEN the snapshot is shown as revoked with the reason, the blocking findings of the re-vetting run and the identities that had fetched it are listed, and a control re-vets the snapshot on demand
+    revision: "0.1.0"
