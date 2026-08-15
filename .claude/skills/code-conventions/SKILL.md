@@ -58,6 +58,13 @@ openspec validate --all --strict
   above Playwright `test(...)` calls — test titles must be snake_case
   identifiers (junit-name matching).
 - Never weaken or delete an existing SVC test to make a change pass.
+- Tooling division of labor: **look up** requirements/SVCs/status through the
+  reqstool MCP tools (`get_requirement`, `list_svcs`, `get_requirements_status`,
+  …) instead of reading whole YAML files; **edit** the YAML files directly;
+  **verify** only with the CLI gate (`reqstool status local -p docs/reqstool`
+  after `./mvnw clean verify`). The MCP server loads its model at startup and
+  does not see generated annotation/test artifacts — its status output can be
+  stale and must never be cited as the gate verdict.
 
 ## Git
 
