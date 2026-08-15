@@ -22,6 +22,12 @@ public class AdminAuditLogger {
 
     @Requirements({"GW_0022"})
     public void record(String principal, String marketplace, String event, String sha) {
-        fetchLogRepository.append(SOURCE, principal, marketplace, event, null, sha);
+        record(principal, marketplace, event, sha, null);
+    }
+
+    /** As {@link #record}, carrying the entry's free-text qualifier (a vetting outcome or reason). */
+    @Requirements({"GW_0022", "GW_0043"})
+    public void record(String principal, String marketplace, String event, String sha, String detail) {
+        fetchLogRepository.append(SOURCE, principal, marketplace, event, null, sha, detail);
     }
 }

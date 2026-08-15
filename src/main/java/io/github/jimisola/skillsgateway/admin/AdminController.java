@@ -1,6 +1,7 @@
 package io.github.jimisola.skillsgateway.admin;
 
 import io.github.jimisola.skillsgateway.approval.ApprovalService;
+import io.github.jimisola.skillsgateway.approval.VettingBlockedException;
 import io.github.jimisola.skillsgateway.config.SkillsGatewayProperties;
 import io.github.jimisola.skillsgateway.ingestion.ForgeMetadataService;
 import io.github.jimisola.skillsgateway.ingestion.IngestionException;
@@ -242,17 +243,44 @@ public class AdminController {
         return ResponseEntity.status(HttpStatus.CREATED).body(snapshot);
     }
 
+    @Schema(description = "Approval request; the reason is required only for a snapshot the vetting chain blocked")
+    public record ApproveRequest(
+            @Schema(
+                    description = "Why the reviewer is approving a snapshot whose vetting chain blocked."
+                            + " Recorded against the chain run and in the audit ledger (GW_0041).",
+                    example = "false positive: the key in fixtures/ is a documented dummy value")
+            String overrideReason) {}
+
     @PostMapping("/snapshots/{id}/approve")
+    @Requirements({"GW_0041"})
     @Tag(name = "Snapshots")
     @Operation(
             summary = "Approve a held snapshot",
             description = "Publishes the snapshot to the git facade and records the reviewer identity and"
-                    + " timestamp. Only held snapshots can be approved.")
+                    + " timestamp. Only held snapshots can be approved. A snapshot whose latest vetting chain"
+                    + " run did not clear — including one that has no chain run at all — is refused unless the"
+                    + " request carries an override reason, which is recorded against the run and in the"
+                    + " audit ledger.")
     @ApiResponse(responseCode = "200", description = "Snapshot approved and now served")
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
-    @ApiResponse(responseCode = "409", description = "Snapshot is not in the held state")
-    public Snapshot approve(@PathVariable long id, Authentication authentication) {
-        Snapshot snapshot = approvalService.approve(id, authentication.getName());
+    @ApiResponse(
+            responseCode = "409",
+            description = "Snapshot is not in the held state, or its vetting chain blocked and no reason was given")
+    public Snapshot approve(
+            @PathVariable long id,
+            @RequestBody(required = false) ApproveRequest request,
+            Authentication authentication) {
+        String overrideReason = request == null ? null : request.overrideReason();
+        Snapshot snapshot = approvalService.approve(id, authentication.getName(), overrideReason);
+        String marketplace = marketplaceName(snapshot.marketplaceId());
+        if (overrideReason != null && !overrideReason.isBlank()) {
+            auditLogger.record(
+                    authentication.getName(),
+                    marketplace,
+                    "snapshot-approved-override",
+                    snapshot.sha(),
+                    overrideReason);
+        }
         auditLogger.record(
                 authentication.getName(),
                 marketplaceName(snapshot.marketplaceId()),
@@ -341,5 +369,14 @@ public class AdminController {
     @ExceptionHandler(IngestionException.class)
     public ProblemDetail ingestionFailed(IngestionException e) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY, e.getMessage());
+    }
+
+    /** Fail-closed approval gate: the response names the connectors that blocked (GW_0041). */
+    @ExceptionHandler(VettingBlockedException.class)
+    public ProblemDetail vettingBlocked(VettingBlockedException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+        problem.setTitle("Vetting chain blocked this snapshot");
+        problem.setProperty("blockingConnectors", e.blockingConnectors());
+        return problem;
     }
 }

@@ -61,6 +61,7 @@ polling, batch payload, signature, replay — is in
 | `event` | What happened — see below. |
 | `ref` | The ref involved, when there is one. |
 | `sha` | The commit involved, when there is one. |
+| `detail` | Free-text qualifier, when the entry needs one: the vetting chain outcome, a connector's verdict, or the reason a reviewer gave when overriding a blocked outcome. |
 
 ## Events
 
@@ -75,6 +76,15 @@ Negotiation rounds are not recorded.
 
 **From the API** — registration, ingestion, approve and reject, each carrying
 the acting OIDC principal.
+
+**From the vetting chain** — every run, recorded under the `admin` source with
+`vetting` as the principal:
+
+| Event | When | `detail` |
+| --- | --- | --- |
+| `vetting-verdict` | One per connector per run. | `{connector}={state}`, e.g. `secret-scan=fail`. |
+| `vetting-completed` | Once per run. | `outcome={clear\|blocked}; connectors={n}`. |
+| `snapshot-approved-override` | A reviewer approved a snapshot the chain blocked. | The reason they gave. Carries the reviewer as `principal`. |
 
 ## What this answers
 

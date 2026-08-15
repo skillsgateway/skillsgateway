@@ -169,6 +169,48 @@ Sinks, cursors and replay are described in
 
 ---
 
+## Vetting
+
+The connector chain that runs at ingestion. Java-side defaults; nothing appears
+in `application.yaml`.
+
+```yaml
+skills-gateway:
+  vetting:
+    # How long a single connector may take before its verdict is recorded as an
+    # error — which blocks the snapshot. A wedged connector must never wedge
+    # ingestion, and a connector that never answers must never look like a pass.
+    timeout: 30s
+
+    # Files larger than this are handed to connectors unread. They are reported
+    # as an informational 'file-not-scanned' finding, never skipped in silence.
+    max-file-bytes: 1048576
+```
+
+| Property | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `skills-gateway.vetting.timeout` | duration | `30s` | Per connector, per run. Exceeding it is an `ERROR` verdict, which blocks. |
+| `skills-gateway.vetting.max-file-bytes` | integer | `1048576` | Zero or negative falls back to the default. |
+
+!!! note "There is no switch that turns vetting off"
+
+    Deliberately. A snapshot with no chain run is blocked either way, so a kill
+    switch would buy an estate of blocked snapshots with no findings to explain
+    them. To get past a connector that is wrong about a snapshot, approve it with
+    a reason — that is what the override is for, and it leaves a record.
+
+!!! warning "A shortened timeout silently converts slow connectors into blockers"
+
+    Lowering `timeout` does not make vetting faster; it makes slow connectors
+    fail. A connector that times out is recorded as `ERROR` and blocks the
+    snapshot, so every affected approval then needs an override reason.
+
+The chain, the verdict states, the aggregation rule and the honest limits of the
+built-in scanners are described in
+[Vetting — the connector chain](../concepts/vetting.md).
+
+---
+
 ## Retention
 
 Snapshot retention: which snapshots the gateway may delete, and when the two

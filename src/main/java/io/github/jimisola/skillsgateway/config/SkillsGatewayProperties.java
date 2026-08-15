@@ -13,7 +13,8 @@ public record SkillsGatewayProperties(
         Boolean devInsecureAuth,
         Webhooks webhooks,
         AuditExport auditExport,
-        Retention retention) {
+        Retention retention,
+        Vetting vetting) {
 
     public SkillsGatewayProperties {
         if (dataDir == null) {
@@ -33,6 +34,32 @@ public record SkillsGatewayProperties(
         }
         if (retention == null) {
             retention = new Retention(null, null, null, null, null, null);
+        }
+        if (vetting == null) {
+            vetting = new Vetting(null, null);
+        }
+    }
+
+    /**
+     * The vetting chain (GW_0037-GW_0043). There is deliberately no enable/disable switch: the
+     * chain is the approval gate's evidence, and an operator who could switch it off would be
+     * switching off the record rather than the gate — a snapshot with no chain run is blocked
+     * either way, so the only thing a kill switch would buy is a blocked estate with no findings.
+     *
+     * @param timeout how long a single connector may take before its verdict is recorded as an
+     *     error, which blocks; a wedged connector must never wedge ingestion
+     * @param maxFileBytes files larger than this are handed to connectors as unread, and reported
+     *     as an informational finding rather than skipped in silence
+     */
+    public record Vetting(Duration timeout, Long maxFileBytes) {
+
+        public Vetting {
+            if (timeout == null) {
+                timeout = Duration.ofSeconds(30);
+            }
+            if (maxFileBytes == null || maxFileBytes <= 0) {
+                maxFileBytes = 1024L * 1024L;
+            }
         }
     }
 

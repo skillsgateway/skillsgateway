@@ -99,6 +99,48 @@ export const createdAuditSink: Schemas["CreatedSink"] = {
   createdAt: "2026-08-14T10:00:00Z",
 };
 
+/** A blocked chain run: one connector failed, one passed — the reviewer's evidence. */
+export const blockedVetting: Schemas["VettingView"] = {
+  snapshotId: 1,
+  outcome: "BLOCKED",
+  run: {
+    runId: 5,
+    snapshotId: 1,
+    trigger: "ingestion",
+    outcome: "BLOCKED",
+    startedAt: "2026-08-14T10:00:00Z",
+    finishedAt: "2026-08-14T10:00:01Z",
+    verdicts: [
+      {
+        verdictId: 9,
+        connector: "secret-scan",
+        position: 0,
+        state: "FAIL",
+        detail: "1 finding(s); worst critical",
+        findings: [
+          {
+            id: "aws-access-key-id",
+            severity: "CRITICAL",
+            location: "plugins/hello/DEPLOY.md:5",
+            message: "an AWS access key id is committed in this file",
+          },
+        ],
+      },
+      {
+        verdictId: 10,
+        connector: "prompt-injection",
+        position: 1,
+        state: "PASS",
+        findings: [],
+      },
+    ],
+  },
+  connectors: [
+    { name: "secret-scan", order: 100, description: "Regex and entropy rules over text files." },
+    { name: "prompt-injection", order: 200, description: "Pattern heuristics over instructions." },
+  ],
+};
+
 export const handlers = [
   http.get("/api/me", () => HttpResponse.json({ username: "alice" })),
   http.get("/api/marketplaces", () => HttpResponse.json([marketplace])),
@@ -117,6 +159,10 @@ export const handlers = [
     }),
   ),
   http.post("/api/snapshots/:id/restore", () => HttpResponse.json(heldSnapshot)),
+  http.get("/api/snapshots/:id/vetting", () => HttpResponse.json(blockedVetting)),
+  http.post("/api/snapshots/:id/approve", () =>
+    HttpResponse.json<Schemas["Snapshot"]>({ ...heldSnapshot, state: "approved", decidedBy: "alice" }),
+  ),
   http.get("/api/tokens", () => HttpResponse.json<Schemas["TokenView"][]>([])),
   http.post("/api/tokens", () => HttpResponse.json(issuedToken, { status: 201 })),
   http.get("/api/audit", () => HttpResponse.json([])),

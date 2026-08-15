@@ -94,16 +94,70 @@ because reviewing must not require serving.
 
 ---
 
+## `GET /snapshots/{id}/vetting`
+
+The snapshot's latest vetting chain run: each connector's verdict in chain
+order, the findings behind it, and the fail-closed aggregate that gates
+approval. A snapshot the chain has never run against reports
+`"outcome":"BLOCKED"` and `"run":null`.
+
+```json
+{"snapshotId":12,"outcome":"BLOCKED",
+ "run":{"runId":5,"snapshotId":12,"trigger":"ingestion","outcome":"BLOCKED",
+        "startedAt":"...","finishedAt":"...",
+        "overrideBy":null,"overrideAt":null,"overrideReason":null,
+        "verdicts":[
+          {"verdictId":9,"connector":"secret-scan","position":0,"state":"FAIL",
+           "detail":"1 finding(s); worst critical","reportUrl":null,
+           "findings":[{"id":"aws-access-key-id","severity":"CRITICAL",
+                        "location":"plugins/hello/DEPLOY.md:5",
+                        "message":"an AWS access key id is committed in this file"}]},
+          {"verdictId":10,"connector":"prompt-injection","position":1,
+           "state":"PASS","detail":null,"reportUrl":null,"findings":[]}]},
+ "connectors":[{"name":"secret-scan","order":100,"description":"..."},
+               {"name":"prompt-injection","order":200,"description":"..."}]}
+```
+
+`state` is one of `PASS`, `WARN`, `FAIL`, `ERROR`, `PENDING`; `severity` is one
+of `INFO`, `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`; `outcome` is `CLEAR` or
+`BLOCKED`. What each means is described in
+[Vetting — the connector chain](../../concepts/vetting.md).
+
+| Status | Cause |
+| --- | --- |
+| 200 | The latest chain run and the configured chain. |
+| 404 | Unknown snapshot. |
+
+---
+
 ## `POST /snapshots/{id}/approve`
 
 **The only endpoint that publishes.** Fetches the pinned quarantine ref into the
 published repository and force-updates `refs/heads/main` to that SHA.
 
+The body is optional:
+
+```json
+{"overrideReason":"documented dummy key in the fixtures directory"}
+```
+
+It is **required** when the snapshot's latest vetting chain run did not clear —
+including when there is no run at all. Without it the request is refused, and
+the problem document carries a `blockingConnectors` array. With it, the reason
+is recorded against the chain run (with the approving identity and time) and
+appended to the audit ledger as `snapshot-approved-override`.
+
 | Status | Cause |
 | --- | --- |
 | 200 | Approved; returns the snapshot with `decidedBy` and `decidedAt`. |
 | 404 | Unknown snapshot. |
-| 409 | The snapshot is not `held`. |
+| 409 | The snapshot is not `held`, or its vetting chain blocked and no `overrideReason` was given. |
+
+!!! warning "A blocked snapshot can still be published"
+
+    The gate is a written, attributed reason — not a prohibition. Approving with
+    an override publishes the content exactly as an ordinary approval does. The
+    difference is that the ledger says who accepted the risk and why.
 
 ---
 

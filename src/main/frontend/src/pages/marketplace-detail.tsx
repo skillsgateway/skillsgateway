@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { VettingReport } from "@/components/vetting-report";
 
 function stateBadge(state?: string) {
   switch (state) {
@@ -222,6 +223,8 @@ export function MarketplaceDetailPage() {
                   {snapshot.violation ? (
                     <p className="text-sm text-destructive">{snapshot.violation}</p>
                   ) : null}
+                  <Separator />
+                  <VettingReport snapshotId={id} />
                   {open ? (
                     <>
                       <Separator />

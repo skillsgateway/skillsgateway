@@ -23,8 +23,20 @@ public final class WebhookEvent {
 
     public static final String SNAPSHOT_RESTORED = "snapshot.restored";
 
-    public static final List<String> ALL =
-            List.of(SNAPSHOT_INGESTED, SNAPSHOT_APPROVED, SNAPSHOT_REJECTED, SNAPSHOT_SOFT_DELETED, SNAPSHOT_RESTORED);
+    /**
+     * A vetting chain run finished (GW_0037). The payload reports the snapshot's own state, which
+     * the chain never changes: what a receiver acts on is that fresh verdicts are now readable at
+     * {@code /api/snapshots/{id}/vetting}.
+     */
+    public static final String SNAPSHOT_VETTED = "snapshot.vetted";
+
+    public static final List<String> ALL = List.of(
+            SNAPSHOT_INGESTED,
+            SNAPSHOT_APPROVED,
+            SNAPSHOT_REJECTED,
+            SNAPSHOT_SOFT_DELETED,
+            SNAPSHOT_RESTORED,
+            SNAPSHOT_VETTED);
 
     /**
      * Event name carried by audit ledger export batches (GW_0028). Deliberately outside
