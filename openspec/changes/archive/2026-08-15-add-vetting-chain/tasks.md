@@ -62,5 +62,5 @@
 
 ## 10. Gates and archive
 
-- [ ] 10.1 `./mvnw clean verify`, `(cd src/main/frontend && pnpm e2e)`, `reqstool status local -p docs/reqstool`, `openspec validate --all --strict`, `mkdocs build --strict`
-- [ ] 10.2 Write `openspec/changes/add-vetting-chain/evidence.md` with the fresh gate run, then archive the change
+- [x] 10.1 `./mvnw clean verify`, `(cd src/main/frontend && pnpm e2e)`, `reqstool status local -p docs/reqstool`, `openspec validate --all --strict`, `mkdocs build --strict`
+- [x] 10.2 Write `openspec/changes/add-vetting-chain/evidence.md` with the fresh gate run, then archive the change
