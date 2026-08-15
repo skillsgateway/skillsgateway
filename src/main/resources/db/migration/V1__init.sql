@@ -14,11 +14,21 @@ CREATE TABLE snapshots (
     id BIGSERIAL PRIMARY KEY,
     marketplace_id BIGINT NOT NULL REFERENCES marketplaces (id),
     sha TEXT NOT NULL,
-    state TEXT NOT NULL CHECK (state IN ('held', 'approved', 'rejected')),
+    -- held -> approved | rejected, approved -> revoked, revoked -> approved | rejected.
+    -- 'revoked' is retroactive quarantine (GW_0050): a snapshot that was approved and published,
+    -- and whose later re-vetting run found a violation the active waivers do not cover. It is a
+    -- state of its own rather than a return to 'held' because the difference matters to everyone
+    -- reading it — the content was served, and to whom is answerable from the fetch ledger.
+    state TEXT NOT NULL CHECK (state IN ('held', 'approved', 'rejected', 'revoked')),
     violation TEXT,
     created_at TIMESTAMPTZ NOT NULL,
     decided_by TEXT,
     decided_at TIMESTAMPTZ,
+    -- Revocation stamps are their own columns rather than an overwrite of decided_by/decided_at:
+    -- who approved the snapshot, and when, must survive the revocation that retracted it. Cleared
+    -- when a fresh approve decision re-publishes the snapshot (GW_0050).
+    revoked_at TIMESTAMPTZ,
+    revoked_by TEXT,
     -- Retention (GW_0031..GW_0034). Deletion is orthogonal to the vetting state: a deleted
     -- snapshot keeps the state it was decided into, so the record of what was held, approved,
     -- or rejected survives, and a restore cannot invent a transition.
@@ -31,6 +41,9 @@ CREATE TABLE snapshots (
 
 -- The compaction pass's only query: soft-deleted snapshots whose window has elapsed.
 CREATE INDEX idx_snapshots_purge_queue ON snapshots (purge_after) WHERE deleted_at IS NOT NULL;
+
+-- The continuous re-vetting sweep's only query: live approved snapshots, oldest run first.
+CREATE INDEX idx_snapshots_revet_queue ON snapshots (id) WHERE state = 'approved' AND deleted_at IS NULL;
 
 -- Append-only fetch ledger: no UPDATE/DELETE is ever issued against this table.
 CREATE TABLE fetch_log (
@@ -121,11 +134,16 @@ CREATE TABLE audit_sinks (
 CREATE TABLE vetting_runs (
     id BIGSERIAL PRIMARY KEY,
     snapshot_id BIGINT NOT NULL REFERENCES snapshots (id) ON DELETE CASCADE,
-    -- What caused the run. Only 'ingestion' is written in v1; the column exists so a
-    -- scheduled re-vetting pass slots in without a schema change.
+    -- What caused the run: 'ingestion', 'revet-scheduled' (the continuous re-vetting sweep,
+    -- GW_0049) or 'revet-manual' (an operator asking for one now, which is also how a scanner
+    -- feed update is turned into fresh evidence).
     trigger TEXT NOT NULL,
     started_at TIMESTAMPTZ NOT NULL,
     finished_at TIMESTAMPTZ,
+    -- Identity of the chain that produced the run: 'connector@version' for every connector, in
+    -- chain order. Recorded so "the same content was vetted again and the answer changed" can be
+    -- told apart from "a different chain looked at it" without re-deriving anything (GW_0049).
+    chain TEXT,
     -- Fail-closed aggregate over the run's verdicts; see VettingChain. Deliberately raw: this
     -- is what the connectors said, and waivers never rewrite it. The outcome that gates the
     -- approval is the *effective* one, derived on read from this run plus the waivers active

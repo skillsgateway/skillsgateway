@@ -22,7 +22,10 @@ paths are relative to `/api`.
  "decidedBy":null,"decidedAt":null}
 ```
 
-`state` is one of `held`, `approved`, `rejected`.
+`state` is one of `held`, `approved`, `rejected`, `revoked`. A revoked snapshot
+also carries `revokedBy` and `revokedAt`, and its `violation` says what
+re-vetting found. See
+[Re-vetting approved content](../../guides/re-vetting.md).
 
 ---
 
@@ -202,6 +205,78 @@ with its revoker and time.
 
 ---
 
+## Continuous re-vetting
+
+Re-running the chain over content that is **already approved**. What a fresh
+violation does is a deployment setting, not a request parameter — see
+[Re-vetting approved content](../../guides/re-vetting.md) and the
+[`revet` configuration block](../configuration.md#continuous-re-vetting).
+
+### `POST /snapshots/{id}/revet`
+
+Runs the chain again over the snapshot's pinned content, recording a new run
+with trigger `revet-manual`.
+
+```json
+{"snapshotId":12,"marketplace":"corp-marketplace","sha":"3f9c2ab…","runId":31,
+ "classification":"VIOLATION","outcome":"BLOCKED","revoked":true,"mode":"ENFORCE",
+ "uncovered":[{"connector":"secret-scan","ruleId":"aws-access-key-id",
+               "location":"plugins/hello/DEPLOY.md:5","severity":"CRITICAL",
+               "message":"an AWS access key id is committed in this file"}],
+ "affected":[{"principal":"team-payments","fetches":12,
+              "lastFetch":"2026-08-14T22:10:00Z"}]}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `classification` | `CLEAR`, `VIOLATION` (the chain objects to the content), or `INCONCLUSIVE` (it blocks only because a connector errored, timed out, or has not answered). |
+| `outcome` | The effective vetting outcome after the waivers active at that instant. |
+| `revoked` | Whether this run revoked and unpublished the snapshot. Always `false` in `warn` mode and for `INCONCLUSIVE`. |
+| `mode` | The re-vetting mode in force. |
+| `uncovered` | The blocking findings no active waiver covers — the reason for a violation. |
+| `affected` | Identities that had already fetched this snapshot's content. |
+
+| Status | Cause |
+| --- | --- |
+| 200 | The run and what it concluded. |
+| 404 | Unknown snapshot. |
+| 409 | The snapshot is not `approved`. Only served content is re-vetted. |
+
+### `POST /marketplaces/{name}/revet`
+
+The same, over every live approved snapshot of the marketplace. This is the
+operational answer to a scanner rule set or advisory feed that has just moved:
+the built-in connectors have no feed to subscribe to, so an operator calling
+this after updating one is how a feed update becomes fresh evidence.
+
+Returns a pass summary — `revetted`, `violations`, `revoked`, `inconclusive`,
+and the individual `results`.
+
+| Status | Cause |
+| --- | --- |
+| 200 | What the pass re-vetted and concluded. |
+| 404 | Unknown marketplace. |
+
+### `GET /snapshots/{id}/fetchers`
+
+Every authenticated identity that **received** this snapshot's content through
+the git facade, with how often and when it last did — the blast radius of a
+retroactive violation, read from the append-only fetch ledger.
+
+```json
+[{"principal":"team-payments","fetches":12,"lastFetch":"2026-08-14T22:10:00Z"}]
+```
+
+Only pack transfers count. A ref advertisement means a client asked, not that it
+received anything, so counting it would name teams that never got the content.
+
+| Status | Cause |
+| --- | --- |
+| 200 | The identities that fetched the snapshot's content. |
+| 404 | Unknown snapshot. |
+
+---
+
 ## `POST /snapshots/{id}/approve`
 
 **The only endpoint that publishes.** Fetches the pinned quarantine ref into the
@@ -228,7 +303,12 @@ ledger as `waiver-applied`.
 | --- | --- |
 | 200 | Approved; returns the snapshot with `decidedBy` and `decidedAt`. |
 | 404 | Unknown snapshot. |
-| 409 | The snapshot is not `held`, or its effective vetting outcome is blocked. |
+| 409 | The snapshot is neither `held` nor `revoked`, or its effective vetting outcome is blocked. |
+
+A `revoked` snapshot is approved through this same endpoint and no other — there
+is no un-revoke. The gate is unchanged, so the finding that revoked it must be
+waived or fixed first; the transition records a fresh reviewer and clears the
+revocation marks.
 
 !!! warning "A blocked snapshot can still be published"
 
@@ -242,14 +322,16 @@ ledger as `waiver-applied`.
 ## `POST /snapshots/{id}/reject`
 
 Mark the snapshot `rejected`. No repository is touched; whatever was already
-approved keeps serving.
+approved keeps serving. This is also the terminal answer to a `revoked`
+snapshot nobody intends to waive.
 
 Same status codes as approve.
 
-!!! warning "Decisions are one-way"
+!!! warning "An approved snapshot cannot be re-decided"
 
-    There is no revocation state and no re-decision. A snapshot that is not
-    `held` returns 409 from both endpoints.
+    Both endpoints return 409 for a snapshot that is `approved` or `rejected`.
+    The only way out of `approved` is an enforced re-vetting violation, which
+    the gateway makes, not a caller.
 
 ---
 

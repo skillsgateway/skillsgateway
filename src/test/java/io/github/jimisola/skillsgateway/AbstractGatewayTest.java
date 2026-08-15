@@ -73,7 +73,14 @@ import org.springframework.web.context.WebApplicationContext;
             "skills-gateway.retention.defaults.held-max-age=1ms",
             "skills-gateway.retention.defaults.superseded-min-age=0s",
             "skills-gateway.retention.defaults.min-idle=1h",
-            "skills-gateway.retention.defaults.restore-window=1h"
+            "skills-gateway.retention.defaults.restore-window=1h",
+            // Re-vetting passes are driven explicitly by the tests: the sweep is off so no
+            // background pass can re-vet another test's fixtures, and the cadence is removed so a
+            // snapshot vetted moments ago is immediately due. The mode is left at its production
+            // default (warn); RevetEnforceTests overrides it, which is the whole point of the two
+            // classes being separate.
+            "skills-gateway.vetting.revet.enabled=false",
+            "skills-gateway.vetting.revet.cadence=0s"
         })
 abstract class AbstractGatewayTest {
 

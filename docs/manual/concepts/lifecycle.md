@@ -17,6 +17,11 @@ flowchart TD
     F -->|reject| G["state: rejected<br/>previous approval keeps serving"]
     F -->|approve| H["ApprovalService publishes<br/>refs/heads/main → sha"]
     H --> I["Clients fetch the new SHA"]
+    H --> R["Re-vetting sweep<br/>runs the chain again, later"]
+    R -->|"violation, enforce mode"| X["state: revoked<br/>published refs removed"]
+    X -->|"fresh approve decision"| H
+    R -.-> L
+    X -.-> L
     V -.-> L[("Audit ledger")]
     E -.-> L
     G -.-> L
@@ -68,9 +73,12 @@ act or one that needs a written reason. See
 A held snapshot is inert. It is stored, it is inspectable in the portal, and it
 is serving nothing.
 
-Approval is gated by the chain: a snapshot whose latest run is `blocked` — which
-includes one the chain never ran against — is refused unless the reviewer
-supplies an override reason, recorded against the run and in the ledger.
+Approval is gated by the chain: a snapshot whose *effective* outcome is blocked
+— its latest run objects and some blocking finding is not covered by an active
+waiver, which includes a snapshot the chain never ran against — is refused.
+There is no override flag. The way past a finding is a scoped, justified,
+expiring [waiver](../guides/waiving-findings.md) for it, and every waiver that
+let an approval through is written to the ledger.
 
 `ApprovalService.approve` is the **only** code in the system that publishes. It
 fetches the pinned `refs/snapshots/{sha}` from quarantine into the published
@@ -97,8 +105,27 @@ sequenceDiagram
 ```
 
 Both decisions record the deciding principal and timestamp and append to the
-ledger. Both return **409 Conflict** on a snapshot that is not `held` — you
-cannot re-approve, and you cannot approve something already rejected.
+ledger. Both return **409 Conflict** on a snapshot that is already `approved` or
+`rejected` — you cannot re-approve, and you cannot approve something already
+rejected.
+
+A `revoked` snapshot is the one exception, and it is decidable through these same
+two endpoints. That is how content retracted by
+[continuous re-vetting](../guides/re-vetting.md) comes back: the same gate, a new
+reviewer, a new timestamp.
+
+### Approval is not permanent
+
+Publication holds until something takes it back, and one thing can:
+[continuous re-vetting](../guides/re-vetting.md) re-runs the chain over approved
+content on a schedule. If a run objects to the content and no active waiver
+covers the finding, the violation is recorded and announced — and, when the
+gateway is configured to enforce, the snapshot moves to `revoked` and its
+published refs are removed.
+
+That path only ever *unpublishes*. `ApprovalService.approve` remains the sole
+publisher, which is why a revoked snapshot returns to being served only by going
+back through it.
 
 ## Stage 3 — serving
 

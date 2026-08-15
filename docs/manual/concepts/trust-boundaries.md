@@ -123,8 +123,14 @@ sequenceDiagram
 procedural: nothing else in the codebase writes to `{data-dir}/published/`, and
 the facade reads nothing else.
 
-A snapshot that is not `held` cannot be decided again, so the published ref
-moves only through a deliberate, recorded, one-time decision.
+An `approved` or `rejected` snapshot cannot be decided again, so the published
+ref only ever advances through a deliberate, recorded decision.
+
+It can also *retreat*, and only one thing makes it: an enforced
+[re-vetting](../guides/re-vetting.md) violation, which removes the published
+refs and moves the snapshot to `revoked`. That path never publishes — it only
+unpublishes — so `ApprovalService` remains the sole publisher, and a revoked
+snapshot returns to being served only by going back through it.
 
 ## The web surface
 

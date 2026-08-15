@@ -220,6 +220,67 @@ limits of the built-in scanners are described in
 
 ---
 
+## Continuous re-vetting
+
+Re-running the chain over content that is **already approved and served**, and
+what a fresh violation on it does. Java-side defaults; nothing appears in
+`application.yaml`.
+
+```yaml
+skills-gateway:
+  vetting:
+    revet:
+      # Whether the scheduled sweep runs. ON by default: it only ever produces
+      # evidence — a new chain run over pinned content — and never retracts
+      # anything on its own. The on-demand endpoints work regardless.
+      enabled: true
+
+      # WARN (default): a violation is recorded and announced in full, and the
+      # snapshot stays approved and published.
+      # ENFORCE: a violation revokes the snapshot and removes its published refs.
+      mode: warn
+
+      # How often the sweep runs.
+      interval: 6h
+
+      # A snapshot is re-vetted only when its newest run is older than this. With
+      # batch-size, this is what stops a tick re-vetting the whole estate: the
+      # sweep takes the oldest-vetted snapshots first and covers the rest in
+      # rotation over later ticks.
+      cadence: 24h
+      batch-size: 25
+```
+
+| Property | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `skills-gateway.vetting.revet.enabled` | boolean | `true` | Runs the scheduled sweep. `POST /api/snapshots/{id}/revet` and `POST /api/marketplaces/{name}/revet` are unaffected. |
+| `skills-gateway.vetting.revet.mode` | `warn` \| `enforce` | `warn` | What a violation does. `warn` never unpublishes anything. |
+| `skills-gateway.vetting.revet.interval` | duration | `6h` | Sweep schedule. |
+| `skills-gateway.vetting.revet.cadence` | duration | `24h` | Minimum age of a snapshot's newest run before the sweep picks it again. |
+| `skills-gateway.vetting.revet.batch-size` | integer | `25` | Approved snapshots re-vetted per pass. |
+
+!!! warning "`enforce` unpublishes content teams are already using"
+
+    Under `enforce`, a re-vetting violation revokes the snapshot and removes
+    the refs the facade serves it through — with no person in the loop. The
+    next `git fetch` by every consuming team fails. Run `warn` for at least one
+    full sweep cycle first and read the `revet-violation` ledger entries: each
+    one names the identities that had already fetched the snapshot, which is
+    the blast radius `enforce` would have caused.
+
+!!! note "A broken connector never revokes anything"
+
+    A run that blocks only because a connector errored, timed out, or has not
+    answered is recorded as **inconclusive**, and leaves the snapshot approved
+    and served in either mode. Retraction needs a connector that objects to the
+    *content*. This does not loosen the approval gate: an inconclusive run still
+    blocks approving, re-approving or publishing that snapshot.
+
+The sweep, the revoked state, and the re-approval path are described in
+[Re-vetting approved content](../guides/re-vetting.md).
+
+---
+
 ## Retention
 
 Snapshot retention: which snapshots the gateway may delete, and when the two

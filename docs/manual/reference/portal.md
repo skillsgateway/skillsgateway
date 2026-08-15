@@ -107,13 +107,15 @@ The card action is **Ingest** (`POST /api/marketplaces/{name}/ingest`), toasting
 | Column | Contents |
 | --- | --- |
 | Commit | First 12 characters of the SHA, monospace. |
-| State | Badge — `approved` (primary), `held` (secondary), `rejected` (destructive). |
+| State | Badge — `approved` (primary), `held` (secondary), `rejected` and `revoked` (destructive). |
 | Vetting | Badge from `GET /api/snapshots/{id}/vetting`: `vetting clear` (primary), `vetting clear with waivers` (secondary) or `vetting blocked` (destructive). A snapshot the chain never ran against reads *blocked*. The waived case is a separate badge on purpose — an accepted risk must not read as a clean chain. |
 | Violation | The ingestion violation, or "—". |
 | Decided by | The deciding principal, or "—". |
 | Actions | Right-aligned buttons. |
 
-**Approve** and **Reject** appear only while the state is `held`. **Reject**
+**Approve** and **Reject** appear while the state is `held` or `revoked`; on a
+revoked snapshot the approve control reads **Re-approve** and goes through the
+same gate. **Reject**
 fires immediately and toasts *Snapshot {id} rejected*.
 
 **Approve** opens the review dialog rather than acting immediately — approve is
@@ -217,13 +219,37 @@ configured connector and its self-description, so the limits of the heuristics
 are readable at the point of decision. The same section is embedded in the
 [approve dialog](#approve-dialog) on the marketplaces page.
 
+### Re-vetting panel
+
+Above the vetting section, each snapshot card carries the re-vetting surface.
+
+| Snapshot | Shown |
+| --- | --- |
+| State `approved` | A **Re-vet now** button. |
+| State `revoked` | *revoked by {revokedBy} on {revokedAt}*, and an **Already fetched by** panel. |
+| Anything else | Nothing — re-vetting is about content that is being served. |
+
+**Re-vet now** calls `POST /api/snapshots/{id}/revet` and toasts what the run
+concluded: *re-vetted clear*, *could not conclude*, *has a re-vetting violation;
+it is still published* (warn mode), or *revoked by a re-vetting violation*
+(enforce mode). Why the snapshot was revoked is the card's own `violation` line.
+
+**Already fetched by** lists every identity that received the snapshot's content
+through the facade, each with a fetch count and a last-fetch time, from
+`GET /api/snapshots/{id}/fetchers`. It is only requested for a revoked snapshot.
+When nobody fetched it, the panel says so rather than showing an empty list.
+
+The way back is on the [marketplaces](#marketplaces) page: a revoked snapshot's
+approve control reads **Re-approve** and goes through the ordinary gate. See
+[Re-vetting approved content](../guides/re-vetting.md).
+
 ### Retention controls
 
 Each snapshot card carries its retention state and the control that changes it:
 
 | Snapshot | Shown |
 | --- | --- |
-| Not deleted, state `held` or `rejected` | A **Delete** button. |
+| Not deleted, state `held`, `rejected` or `revoked` | A **Delete** button. |
 | Not deleted, state `approved` | Nothing — an approved snapshot is served by the facade and the gateway refuses to delete it. |
 | Deleted | A destructive `deleted` badge, "restorable until {purgeAfter}", and a **Restore** button. |
 

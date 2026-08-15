@@ -84,6 +84,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/snapshots/{id}/revet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Re-vet an approved snapshot now
+         * @description Runs the vetting chain again over the snapshot's pinned content and records a new run with trigger revet-manual. If the run's effective outcome — after the waivers active right now — objects to the content, the violation is written to the ledger and announced as snapshot.revet_violation. In enforce mode the snapshot is then revoked and its published refs are removed; in warn mode, the default, publication is untouched. A run that only blocks because a connector errored or has not answered is recorded as inconclusive and never revokes anything.
+         */
+        post: operations["revetSnapshot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/snapshots/{id}/restore": {
         parameters: {
             query?: never;
@@ -114,8 +134,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Reject a held snapshot
-         * @description Marks the snapshot rejected with the reviewer identity and timestamp; its content is never served.
+         * Reject a held or revoked snapshot
+         * @description Marks the snapshot rejected with the reviewer identity and timestamp; its content is never served again. This is the terminal answer to a re-vetting revocation the reviewer does not intend to waive.
          */
         post: operations["reject"];
         delete?: never;
@@ -134,8 +154,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Approve a held snapshot
-         * @description Publishes the snapshot to the git facade and records the reviewer identity and timestamp. Takes no request body. Only held snapshots can be approved. A snapshot whose effective vetting outcome is blocked — its chain run objects and at least one blocking finding is not covered by an active waiver, including a snapshot with no chain run at all — is refused, and the problem document names both the blocking connectors and the uncovered findings. Record a scoped, expiring waiver for each of those findings and approve again; every waiver that let the approval through is written to the ledger.
+         * Approve a held or revoked snapshot
+         * @description Publishes the snapshot to the git facade and records the reviewer identity and timestamp. Takes no request body. Held snapshots and snapshots that re-vetting revoked can be approved; a revoked one is re-published only by this fresh decision, behind the same gate, which means the violation that revoked it must have been waived or fixed first. A snapshot whose effective vetting outcome is blocked — its chain run objects and at least one blocking finding is not covered by an active waiver, including a snapshot with no chain run at all — is refused, and the problem document names both the blocking connectors and the uncovered findings. Record a scoped, expiring waiver for each of those findings and approve again; every waiver that let the approval through is written to the ledger.
          */
         post: operations["approve"];
         delete?: never;
@@ -193,7 +213,7 @@ export interface paths {
         };
         /**
          * List marketplaces and their snapshots
-         * @description All registered marketplaces with every snapshot and its state (held, approved, or rejected).
+         * @description All registered marketplaces with every snapshot and its state (held, approved, rejected, or revoked).
          */
         get: operations["listMarketplaces"];
         put?: never;
@@ -202,6 +222,26 @@ export interface paths {
          * @description Registers an upstream git skill marketplace by clone URL. The URL scheme must be on the configured allowlist (default http/https). The ingested ref is set by the gateway (the upstream default branch) and cannot be overridden; a request supplying any other ref is rejected.
          */
         post: operations["registerMarketplace"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/marketplaces/{name}/revet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Re-vet every approved snapshot of a marketplace now
+         * @description Runs the vetting chain again over every live approved snapshot of the marketplace, one run each, and applies the configured re-vetting mode to each result. This is the operational answer to a connector rule set or advisory feed that has just been updated.
+         */
+        post: operations["revetMarketplace"];
         delete?: never;
         options?: never;
         head?: never;
@@ -336,6 +376,26 @@ export interface paths {
          * @description What was served, from where, and who approved it: upstream URL, upstream commit SHA, state, reviewer, and timestamps.
          */
         get: operations["provenance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/fetchers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Who fetched this snapshot
+         * @description Every authenticated identity that received this snapshot's content through the git facade, with how many times and when it last did — the blast radius of a retroactive violation, answered from the append-only fetch ledger. Only pack transfers count: a ref advertisement means the client asked, not that it received anything.
+         */
+        get: operations["fetchers"];
         put?: never;
         post?: never;
         delete?: never;
@@ -748,6 +808,75 @@ export interface components {
             /** @description Whether the waiver suppresses anything right now */
             active?: boolean;
         };
+        /** @description An identity that fetched a snapshot's content through the git facade */
+        Fetcher: {
+            /** @description Authenticated identity that fetched it */
+            principal?: string;
+            /**
+             * Format: int64
+             * @description How many times it received a pack for this commit
+             */
+            fetches?: number;
+            /**
+             * Format: date-time
+             * @description The most recent of those fetches
+             */
+            lastFetch?: string;
+        };
+        /** @description What one re-vetting run concluded about one approved snapshot */
+        RevetResult: {
+            /**
+             * Format: int64
+             * @description Snapshot that was re-vetted
+             */
+            snapshotId?: number;
+            /** @description Marketplace it belongs to */
+            marketplace?: string;
+            /** @description Commit SHA that was re-vetted */
+            sha?: string;
+            /**
+             * Format: int64
+             * @description Chain run this re-vetting recorded
+             */
+            runId?: number;
+            /**
+             * @description What the run means for already-approved content
+             * @enum {string}
+             */
+            classification?: "CLEAR" | "VIOLATION" | "INCONCLUSIVE";
+            /**
+             * @description The effective vetting outcome after active waivers
+             * @enum {string}
+             */
+            outcome?: "CLEAR" | "CLEAR_WITH_WAIVERS" | "BLOCKED";
+            /** @description Whether the snapshot was revoked and unpublished as a result */
+            revoked?: boolean;
+            /**
+             * @description Mode in force for this run: WARN records the violation and leaves publication alone, ENFORCE revokes
+             * @enum {string}
+             */
+            mode?: "WARN" | "ENFORCE";
+            /** @description Blocking findings no active waiver covers; the reason for a violation */
+            uncovered?: components["schemas"]["UncoveredFinding"][];
+            /** @description Identities that fetched this commit through the facade before the violation */
+            affected?: components["schemas"]["Fetcher"][];
+        };
+        /** @description A blocking finding that no active waiver covers */
+        UncoveredFinding: {
+            /** @description Connector whose verdict carried the finding */
+            connector?: string;
+            /** @description Finding rule identifier */
+            ruleId?: string;
+            /** @description Where the finding was located */
+            location?: string;
+            /**
+             * @description How much it matters
+             * @enum {string}
+             */
+            severity?: "INFO" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+            /** @description Reviewer-facing explanation */
+            message?: string;
+        };
         /** @description An immutable, SHA-identified snapshot of an upstream marketplace */
         Snapshot: {
             /**
@@ -763,11 +892,11 @@ export interface components {
             /** @description Upstream commit SHA the snapshot is pinned to */
             sha?: string;
             /**
-             * @description held, approved, or rejected
+             * @description held, approved, rejected, or revoked (retroactively quarantined by re-vetting)
              * @enum {string}
              */
-            state?: "held" | "approved" | "rejected";
-            /** @description Policy violation that rejected the snapshot, or null */
+            state?: "held" | "approved" | "rejected" | "revoked";
+            /** @description Policy or vetting violation that rejected or revoked the snapshot, or null */
             violation?: string;
             /**
              * Format: date-time
@@ -781,6 +910,13 @@ export interface components {
              * @description Decision time, or null while held
              */
             decidedAt?: string;
+            /**
+             * Format: date-time
+             * @description When re-vetting revoked the snapshot, or null
+             */
+            revokedAt?: string;
+            /** @description Identity that revoked it, or null */
+            revokedBy?: string;
             /**
              * Format: date-time
              * @description When the snapshot was soft-deleted, or null when it is live
@@ -1036,7 +1172,7 @@ export interface components {
              * @description What caused the run
              * @enum {string}
              */
-            trigger?: "ingestion";
+            trigger?: "ingestion" | "revet-scheduled" | "revet-manual";
             /**
              * @description Fail-closed aggregate of the run's verdicts
              * @enum {string}
@@ -1052,6 +1188,11 @@ export interface components {
              * @description When the run finished, or null if it never did
              */
             finishedAt?: string;
+            /**
+             * @description Identity of the chain that produced the run: connector@version in chain order
+             * @example prompt-injection@1,secret-scan@1
+             */
+            chain?: string;
             /** @description The run's verdicts, in chain order */
             verdicts?: components["schemas"]["VerdictView"][];
         };
@@ -1075,22 +1216,6 @@ export interface components {
              * @description When the acceptance lapses
              */
             expiresAt?: string;
-        };
-        /** @description A blocking finding that no active waiver covers */
-        UncoveredFinding: {
-            /** @description Connector whose verdict carried the finding */
-            connector?: string;
-            /** @description Finding rule identifier */
-            ruleId?: string;
-            /** @description Where the finding was located */
-            location?: string;
-            /**
-             * @description How much it matters
-             * @enum {string}
-             */
-            severity?: "INFO" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
-            /** @description Reviewer-facing explanation */
-            message?: string;
         };
         /** @description One connector's recorded verdict within a chain run */
         VerdictView: {
@@ -1160,6 +1285,13 @@ export interface components {
             decidedBy?: string;
             /** Format: date-time */
             decidedAt?: string;
+            /**
+             * Format: date-time
+             * @description When re-vetting revoked the snapshot, or null
+             */
+            revokedAt?: string;
+            /** @description Identity that revoked it, or null */
+            revokedBy?: string;
         };
         /** @description A plugin declared by the marketplace manifest */
         PluginContent: {
@@ -1451,6 +1583,46 @@ export interface operations {
             };
         };
     };
+    revetSnapshot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The re-vetting run and what it concluded */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RevetResult"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RevetResult"];
+                };
+            };
+            /** @description The snapshot is not approved; only served content is re-vetted */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RevetResult"];
+                };
+            };
+        };
+    };
     restore: {
         parameters: {
             query?: never;
@@ -1520,7 +1692,7 @@ export interface operations {
                     "*/*": components["schemas"]["Snapshot"];
                 };
             };
-            /** @description Snapshot is not in the held state */
+            /** @description Snapshot is neither held nor revoked */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -1560,7 +1732,7 @@ export interface operations {
                     "*/*": components["schemas"]["Snapshot"];
                 };
             };
-            /** @description Snapshot is not in the held state, or its effective vetting outcome is blocked */
+            /** @description Snapshot is neither held nor revoked, or its effective vetting outcome is blocked */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -1681,6 +1853,37 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["Marketplace"];
+                };
+            };
+        };
+    };
+    revetMarketplace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description What the pass re-vetted and concluded */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PassResult"];
+                };
+            };
+            /** @description Marketplace not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PassResult"];
                 };
             };
         };
@@ -1916,6 +2119,37 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["Provenance"];
+                };
+            };
+        };
+    };
+    fetchers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The identities that fetched the snapshot's content */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Fetcher"][];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Fetcher"][];
                 };
             };
         };

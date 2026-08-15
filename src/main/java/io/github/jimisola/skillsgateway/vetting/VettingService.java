@@ -83,12 +83,41 @@ public class VettingService {
     }
 
     /**
+     * Identity of the chain as configured right now: {@code connector@version} for each connector,
+     * in chain order (GW_0049). Stamped on every run so that a changed answer about unchanged
+     * content can be attributed to the chain rather than guessed at.
+     */
+    public String chainIdentity() {
+        return connectors.stream()
+                .map(connector -> connector.name() + "@" + connector.version())
+                .collect(java.util.stream.Collectors.joining(","));
+    }
+
+    /**
      * Runs the chain against a snapshot and records the run. Returns the aggregated outcome; the
      * snapshot's own state is untouched.
      */
     @Requirements({"GW_0037", "GW_0038", "GW_0043"})
     public VettingChain.Outcome vet(Snapshot snapshot, String marketplace) {
-        long runId = vettingRepository.startRun(snapshot.id(), VettingRepository.TRIGGER_INGESTION);
+        return run(snapshot, marketplace, VettingRepository.TRIGGER_INGESTION).outcome();
+    }
+
+    /** One chain run and the id it was recorded under. */
+    public record Run(long runId, VettingChain.Outcome outcome) {}
+
+    /**
+     * {@link #vet} with the cause of the run made explicit, and the run id handed back so a caller
+     * that has to reason about the run it just produced — re-vetting does — can read it back
+     * rather than guess which one is latest.
+     *
+     * <p>Nothing about the vetting itself differs by trigger: the same connectors run over the same
+     * pinned content, and the snapshot's state is untouched whatever the answer. What a re-vetting
+     * verdict <em>means</em> is decided by {@code RevetService}, not here, so this method stays the
+     * one place the chain executes.
+     */
+    @Requirements({"GW_0037", "GW_0038", "GW_0043", "GW_0049"})
+    public Run run(Snapshot snapshot, String marketplace, String trigger) {
+        long runId = vettingRepository.startRun(snapshot.id(), trigger, chainIdentity());
         List<VerdictState> states = new ArrayList<>(connectors.size());
         try (QuarantineSnapshot content = open(snapshot, marketplace)) {
             int position = 0;
@@ -118,10 +147,11 @@ public class VettingService {
                 marketplace,
                 "vetting-completed",
                 snapshot.sha(),
-                "outcome=%s; connectors=%d".formatted(outcome.stored(), states.size()));
+                "trigger=%s; outcome=%s; connectors=%d; chain=%s"
+                        .formatted(trigger, outcome.stored(), states.size(), chainIdentity()));
         webhookService.emit(
                 WebhookEvent.SNAPSHOT_VETTED, marketplace, snapshot.id(), snapshot.sha(), snapshot.state(), "vetting");
-        return outcome;
+        return new Run(runId, outcome);
     }
 
     private QuarantineSnapshot open(Snapshot snapshot, String marketplace) throws java.io.IOException {
@@ -158,6 +188,16 @@ public class VettingService {
     /** The snapshot's latest chain run, or empty when the chain has never run for it. */
     public Optional<VettingRepository.Run> latestRun(long snapshotId) {
         return vettingRepository.latestRun(snapshotId);
+    }
+
+    /**
+     * One recorded run by id, with its verdicts and findings. Re-vetting reads back the run it just
+     * produced by id rather than asking for the latest: "latest" is a race the moment two passes
+     * overlap, and the judgement about retracting live content must be made about the run that was
+     * actually made, not whichever finished last.
+     */
+    public Optional<VettingRepository.Run> recordedRun(long runId) {
+        return vettingRepository.run(runId);
     }
 
     /**

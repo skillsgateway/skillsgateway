@@ -29,12 +29,34 @@ export const deletedSnapshot: Schemas["Snapshot"] = {
   purgeAfter: "2026-08-28T11:00:00Z",
 };
 
+/**
+ * Retroactively quarantined by a re-vetting violation: approved once, then revoked, so it carries
+ * both an approval record and a revocation record at the same time (GW_0050).
+ */
+export const revokedSnapshot: Schemas["Snapshot"] = {
+  id: 3,
+  marketplaceId: 1,
+  sha: "9999888877776666555544443333222211110000",
+  state: "revoked",
+  violation: "re-vetting violation: [secret-scan]",
+  createdAt: "2026-08-09T10:00:00Z",
+  decidedBy: "alice",
+  decidedAt: "2026-08-09T11:00:00Z",
+  revokedAt: "2026-08-15T09:00:00Z",
+  revokedBy: "revet-policy",
+};
+
+export const fetchers: Schemas["Fetcher"][] = [
+  { principal: "team-payments", fetches: 12, lastFetch: "2026-08-14T22:10:00Z" },
+  { principal: "ci-runner", fetches: 3, lastFetch: "2026-08-13T06:00:00Z" },
+];
+
 export const marketplace: Schemas["MarketplaceView"] = {
   id: 1,
   name: "corp-marketplace",
   url: "https://github.com/corp/marketplace.git",
   createdAt: "2026-08-14T09:00:00Z",
-  snapshots: [heldSnapshot, deletedSnapshot],
+  snapshots: [heldSnapshot, deletedSnapshot, revokedSnapshot],
 };
 
 export const issuedToken: Schemas["IssuedToken"] = {
@@ -214,6 +236,21 @@ export const handlers = [
   http.post("/api/snapshots/:id/approve", () =>
     HttpResponse.json<Schemas["Snapshot"]>({ ...heldSnapshot, state: "approved", decidedBy: "alice" }),
   ),
+  http.post("/api/snapshots/:id/revet", () =>
+    HttpResponse.json<Schemas["RevetResult"]>({
+      snapshotId: 1,
+      marketplace: "corp-marketplace",
+      sha: heldSnapshot.sha,
+      runId: 9,
+      classification: "CLEAR",
+      outcome: "CLEAR",
+      revoked: false,
+      mode: "WARN",
+      uncovered: [],
+      affected: [],
+    }),
+  ),
+  http.get("/api/snapshots/:id/fetchers", () => HttpResponse.json(fetchers)),
   http.get("/api/tokens", () => HttpResponse.json<Schemas["TokenView"][]>([])),
   http.post("/api/tokens", () => HttpResponse.json(issuedToken, { status: 201 })),
   http.get("/api/audit", () => HttpResponse.json([])),
