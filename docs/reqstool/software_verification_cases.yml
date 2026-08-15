@@ -360,3 +360,73 @@ cases:
       WHEN the administrator deletes the snapshot from the marketplace detail page and then restores it
       THEN the snapshot is shown as deleted with its restore deadline, and after the restore it is shown as not deleted again
     revision: "0.1.0"
+
+  - id: SVC_GW_0037
+    requirement_ids: ["GW_0037"]
+    title: Ingestion records a chain run with a verdict per connector
+    verification: automated-test
+    description: |
+      GIVEN a registered marketplace whose upstream content is clean
+      WHEN the marketplace is ingested and the snapshot's vetting record is read
+      THEN a chain run exists for the snapshot's commit SHA holding one verdict per configured connector, in chain order, each with its findings
+    revision: "0.1.0"
+
+  - id: SVC_GW_0038
+    requirement_ids: ["GW_0038"]
+    title: A connector that throws blocks the snapshot instead of being skipped
+    verification: automated-test
+    description: |
+      GIVEN a chain containing a connector that raises an exception
+      WHEN a snapshot is ingested and its vetting record is read
+      THEN the failing connector has an error verdict carrying the failure, the run outcome is blocked, and the snapshot is still held and unserved
+    revision: "0.1.0"
+
+  - id: SVC_GW_0039
+    requirement_ids: ["GW_0039"]
+    title: The secret scanner finds planted credentials and clears clean content
+    verification: automated-test
+    description: |
+      GIVEN one upstream carrying a cloud access key and a private key block and one upstream carrying neither
+      WHEN both are ingested
+      THEN the first snapshot's secret-scanning verdict fails with a finding per planted credential naming the file it was found in, and the second snapshot's verdict passes
+    revision: "0.1.0"
+
+  - id: SVC_GW_0040
+    requirement_ids: ["GW_0040"]
+    title: The prompt-injection scanner finds planted markers in skill instructions
+    verification: automated-test
+    description: |
+      GIVEN an upstream whose skill instructions contain instruction-override phrasing, a credential file path, and an invisible control character
+      WHEN the marketplace is ingested
+      THEN the prompt-injection verdict fails with a finding for each marker naming the instruction file, and a clean upstream's verdict passes
+    revision: "0.1.0"
+
+  - id: SVC_GW_0041
+    requirement_ids: ["GW_0041"]
+    title: A blocked snapshot is approved only with a recorded reason
+    verification: automated-test
+    description: |
+      GIVEN a snapshot whose chain run aggregated to a blocked outcome
+      WHEN approval is requested without a reason and then with one
+      THEN the first request is refused and the snapshot is neither approved nor served, and the second approves it and records the reason with the approving identity against the chain run
+    revision: "0.1.0"
+
+  - id: SVC_GW_0042
+    requirement_ids: ["GW_0042"]
+    title: Portal shows the verdicts and demands a reason for a blocked snapshot
+    verification: automated-test
+    description: |
+      GIVEN an authenticated portal session and a marketplace whose snapshot has a blocked chain outcome
+      WHEN the reviewer opens the snapshot's vetting detail and approves it
+      THEN the connector verdicts and their findings are shown, approval is refused until a reason is entered, and the snapshot is approved once it is
+    revision: "0.1.0"
+
+  - id: SVC_GW_0043
+    requirement_ids: ["GW_0043"]
+    title: The ledger records the chain run, the verdicts, and the override
+    verification: automated-test
+    description: |
+      GIVEN a snapshot taken through a blocking chain run and approved with an override reason
+      WHEN the audit ledger is read
+      THEN it holds an entry for the chain run outcome, an entry per connector verdict, and an entry for the override carrying the reason, each with the marketplace, the commit SHA, and the acting identity
+    revision: "0.1.0"

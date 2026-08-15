@@ -295,3 +295,59 @@ requirements:
     rationale: An operator who sees a snapshot vanish from the retention pass needs to recognise a mistake and undo it within the window without database access.
     categories: ["functional-suitability", "interaction-capability"]
     revision: 0.1.0
+
+  - id: GW_0037
+    title: Ordered vetting connector chain at ingestion
+    significance: shall
+    description: The system shall run, at ingestion of a snapshot, an ordered chain of vetting connectors against the quarantined content pinned to the snapshot's commit SHA, and shall record for that chain run each connector's verdict together with its findings, each finding carrying a rule identifier, a severity, a location and a message.
+    rationale: Vetting must be evidence attached to the exact bytes a reviewer decides on; running the chain at ingestion against the SHA-pinned quarantine content and recording a verdict per connector and run makes the evidence reproducible, comparable between snapshots, and reusable by a later re-run.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0038
+    title: Fail-closed vetting chain aggregation
+    significance: shall
+    description: The system shall aggregate a chain run to a cleared outcome only when every connector in the chain returned a passing or warning verdict, and shall aggregate to a blocked outcome otherwise, counting a connector that fails, that reports an unfinished verdict, that raises an error, or that exceeds its time limit as blocking, and counting a snapshot with no recorded chain run as blocked.
+    rationale: A vetting chain whose failure mode is to let content through is worse than none; treating a crash, a timeout and an absent run as blocking removes every path by which a snapshot reaches the facade without evidence.
+    categories: ["security", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_0039
+    title: Secret scanning connector
+    significance: shall
+    description: The system shall provide a built-in vetting connector that scans the textual content of a snapshot for credential material — including cloud access keys, private key blocks, forge and messaging service tokens, and assignment-shaped high-entropy values — and returns a failing verdict with a finding located at the offending path for each match of high severity.
+    rationale: Credentials committed into a skill repository are exfiltrated to every developer who installs it and are the most mechanically detectable class of harmful content, so they are the first thing the chain should catch.
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0040
+    title: Prompt-injection heuristic connector
+    significance: shall
+    description: The system shall provide a built-in vetting connector that scans a snapshot's Markdown instruction content for known prompt-injection markers — including instruction-override phrasing, attempts to disclose the system prompt, references to credential file locations, instructions to conceal actions from the user or reviewer, and invisible or bidirectional control characters — and returns a failing verdict with a finding located at the offending path for each match of high severity.
+    rationale: Skill instructions are prose that executes with the agent's privileges (threat T1); pattern heuristics cannot prove content safe but reliably surface the known markers a reviewer would otherwise have to find by reading every file.
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0041
+    title: Approval gate on the vetting outcome
+    significance: shall
+    description: The system shall refuse to approve a snapshot whose latest chain run aggregated to a blocked outcome unless the approval request carries a non-empty override reason, and shall record that reason together with the approving identity against the chain run.
+    rationale: Recording verdicts without acting on them turns vetting into decoration; requiring a written, attributed reason makes accepting a blocked snapshot a deliberate and reviewable act rather than an ordinary click.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0042
+    title: Portal vetting surface
+    significance: shall
+    description: The system shall show, in the portal behind the OIDC session, each snapshot's chain outcome together with every connector's verdict and its findings, and shall require the reviewer to supply a reason before approving a snapshot whose outcome is blocked.
+    rationale: The reviewer is the control the whole gateway rests on; the evidence and the consequence of ignoring it must both be in front of that person at the moment of the decision, not in a log.
+    categories: ["interaction-capability", "security"]
+    revision: 0.1.0
+
+  - id: GW_0043
+    title: Vetting actions are audit-logged
+    significance: shall
+    description: The system shall append every chain run outcome, every connector verdict, and every approval override to the append-only audit ledger with the marketplace, the snapshot commit SHA, the acting identity, and, for an override, the reason given.
+    rationale: An auditor asking why a snapshot with findings is being served must be able to answer it from the ledger alone, without reading the vetting tables or trusting the portal.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0

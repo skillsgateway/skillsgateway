@@ -97,6 +97,7 @@ nav:
   - Home: index.md
   - Concepts:
       - Lifecycle — quarantine to serve: concepts/lifecycle.md
+      - Vetting — the connector chain: concepts/vetting.md
       - Snapshots and the audit ledger: concepts/snapshots-and-ledger.md
       - Trust boundaries: concepts/trust-boundaries.md
       - Glossary: concepts/glossary.md

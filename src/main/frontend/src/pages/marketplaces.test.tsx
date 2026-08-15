@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { expect, test } from "vitest";
@@ -33,4 +33,25 @@ test("register_dialog_rejects_invalid_name_and_malformed_url", async () => {
   await user.click(screen.getByRole("button", { name: "Register" }));
   const alerts = await screen.findAllByRole("alert");
   expect(alerts.length).toBeGreaterThanOrEqual(2);
+});
+
+/**
+ * The blocked snapshot cannot be approved by clicking through: the dialog shows the failing
+ * connector's finding and keeps the confirm control disabled until a reason is typed.
+ */
+test("approving_a_blocked_snapshot_shows_the_findings_and_requires_a_reason", async () => {
+  const user = userEvent.setup();
+  renderPage();
+  await user.click(await screen.findByRole("button", { name: "Approve snapshot 1" }));
+
+  const dialog = await screen.findByRole("dialog");
+  expect((await within(dialog).findAllByText("secret-scan")).length).toBeGreaterThan(0);
+  expect(await within(dialog).findByText(/an AWS access key id is committed/)).toBeInTheDocument();
+
+  const confirm = within(dialog).getByRole("button", { name: "Confirm approval of snapshot 1" });
+  expect(confirm).toBeDisabled();
+
+  await user.type(within(dialog).getByLabelText("Reason for approving anyway"), "documented dummy key");
+  expect(confirm).toBeEnabled();
+  expect(dialog).toBeInTheDocument();
 });

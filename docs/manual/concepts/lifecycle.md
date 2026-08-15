@@ -12,11 +12,13 @@ flowchart TD
     B --> C{"Ingestion accepts?"}
     C -->|"external source,<br/>disallowed scheme"| D["Rejected fail-closed<br/>violation recorded"]
     C -->|ok| E["Snapshot: held<br/>refs/snapshots/{sha} in quarantine"]
-    E --> F["Reviewer inspects<br/>contents + provenance"]
+    E --> V["Vetting chain runs<br/>verdict per connector"]
+    V --> F["Reviewer inspects<br/>verdicts + contents + provenance"]
     F -->|reject| G["state: rejected<br/>previous approval keeps serving"]
     F -->|approve| H["ApprovalService publishes<br/>refs/heads/main → sha"]
     H --> I["Clients fetch the new SHA"]
-    E -.-> L[("Audit ledger")]
+    V -.-> L[("Audit ledger")]
+    E -.-> L
     G -.-> L
     H -.-> L
 ```
@@ -50,12 +52,25 @@ must be on the allowlist, and the ref is the gateway's decision, not the
 registrant's. See [Trust boundaries](trust-boundaries.md).
 
 Ingesting the same upstream commit twice does not create a second snapshot — the
-snapshot is keyed by the upstream SHA.
+snapshot is keyed by the upstream SHA, and the chain is not re-run for one that
+already exists.
+
+Once a snapshot is recorded as `held`, the **vetting chain** runs against the
+content just pinned: each connector answers with a verdict, the verdicts are
+recorded against the snapshot, and they aggregate fail-closed into a `clear` or
+`blocked` outcome. The chain never changes the snapshot's state — a vetted
+snapshot is still `held`. What it decides is whether approving it is an ordinary
+act or one that needs a written reason. See
+[Vetting — the connector chain](vetting.md).
 
 ## Stage 2 — approval
 
 A held snapshot is inert. It is stored, it is inspectable in the portal, and it
 is serving nothing.
+
+Approval is gated by the chain: a snapshot whose latest run is `blocked` — which
+includes one the chain never ran against — is refused unless the reviewer
+supplies an override reason, recorded against the run and in the ledger.
 
 `ApprovalService.approve` is the **only** code in the system that publishes. It
 fetches the pinned `refs/snapshots/{sha}` from quarantine into the published

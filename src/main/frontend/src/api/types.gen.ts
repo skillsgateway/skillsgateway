@@ -115,7 +115,7 @@ export interface paths {
         put?: never;
         /**
          * Approve a held snapshot
-         * @description Publishes the snapshot to the git facade and records the reviewer identity and timestamp. Only held snapshots can be approved.
+         * @description Publishes the snapshot to the git facade and records the reviewer identity and timestamp. Only held snapshots can be approved. A snapshot whose latest vetting chain run did not clear — including one that has no chain run at all — is refused unless the request carries an override reason, which is recorded against the run and in the audit ledger.
          */
         post: operations["approve"];
         delete?: never;
@@ -276,6 +276,26 @@ export interface paths {
          * @description Most recent deliveries first, with state, attempt count, and the last response status or error — the operator's view of a failing integration.
          */
         get: operations["deliveries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/vetting": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Snapshot vetting verdicts
+         * @description The snapshot's latest vetting chain run: each connector's verdict in chain order, the findings behind it, and the fail-closed aggregate that gates approval. A snapshot the chain has never run against reports a blocked outcome and no run.
+         */
+        get: operations["vetting"];
         put?: never;
         post?: never;
         delete?: never;
@@ -643,6 +663,14 @@ export interface components {
              */
             purgeAfter?: string;
         };
+        /** @description Approval request; the reason is required only for a snapshot the vetting chain blocked */
+        ApproveRequest: {
+            /**
+             * @description Why the reviewer is approving a snapshot whose vetting chain blocked. Recorded against the chain run and in the audit ledger (GW_0041).
+             * @example false positive: the key in fixtures/ is a documented dummy value
+             */
+            overrideReason?: string;
+        };
         /** @description Outcome of a retention pass */
         PassResult: {
             /**
@@ -839,6 +867,122 @@ export interface components {
              * @description Revocation time, or null while active
              */
             revokedAt?: string;
+        };
+        /** @description A connector configured in the vetting chain */
+        ConnectorView: {
+            /** @description Stable connector name */
+            name?: string;
+            /**
+             * Format: int32
+             * @description Position in the chain
+             */
+            order?: number;
+            /** @description What the connector looks for, and what it cannot see */
+            description?: string;
+        };
+        /** @description One thing a vetting connector found in a snapshot */
+        Finding: {
+            /**
+             * @description Stable rule identifier, e.g. aws-access-key-id
+             * @example aws-access-key-id
+             */
+            id?: string;
+            /**
+             * @description How much the finding matters
+             * @enum {string}
+             */
+            severity?: "INFO" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+            /** @description Where in the snapshot it was found, normally path:line */
+            location?: string;
+            /** @description Reviewer-facing explanation; never echoes the matched secret */
+            message?: string;
+        };
+        /** @description One execution of the vetting chain against a snapshot */
+        Run: {
+            /**
+             * Format: int64
+             * @description Chain run id
+             */
+            runId?: number;
+            /**
+             * Format: int64
+             * @description Snapshot the run vetted
+             */
+            snapshotId?: number;
+            /**
+             * @description What caused the run
+             * @enum {string}
+             */
+            trigger?: "ingestion";
+            /**
+             * @description Fail-closed aggregate of the run's verdicts
+             * @enum {string}
+             */
+            outcome?: "CLEAR" | "BLOCKED";
+            /**
+             * Format: date-time
+             * @description When the run started
+             */
+            startedAt?: string;
+            /**
+             * Format: date-time
+             * @description When the run finished, or null if it never did
+             */
+            finishedAt?: string;
+            /** @description Reviewer who approved despite a blocked outcome, or null */
+            overrideBy?: string;
+            /**
+             * Format: date-time
+             * @description When the override was recorded, or null
+             */
+            overrideAt?: string;
+            /** @description Reason the reviewer gave for the override, or null */
+            overrideReason?: string;
+            /** @description The run's verdicts, in chain order */
+            verdicts?: components["schemas"]["VerdictView"][];
+        };
+        /** @description One connector's recorded verdict within a chain run */
+        VerdictView: {
+            /**
+             * Format: int64
+             * @description Verdict id
+             */
+            verdictId?: number;
+            /** @description Connector name */
+            connector?: string;
+            /**
+             * Format: int32
+             * @description Position of the connector in the chain
+             */
+            position?: number;
+            /**
+             * @description The connector's conclusion
+             * @enum {string}
+             */
+            state?: "PASS" | "WARN" | "FAIL" | "ERROR" | "PENDING";
+            /** @description One-line summary of the findings, or null when there are none */
+            detail?: string;
+            /** @description External report URL, when the connector produced one */
+            reportUrl?: string;
+            /** @description What the connector found */
+            findings?: components["schemas"]["Finding"][];
+        };
+        /** @description A snapshot's latest vetting chain run, and the chain that produced it */
+        VettingView: {
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            snapshotId?: number;
+            /**
+             * @description Fail-closed aggregate of the run; a snapshot with no run is blocked
+             * @enum {string}
+             */
+            outcome?: "CLEAR" | "BLOCKED";
+            /** @description The latest run with its verdicts and findings, or null if the chain never ran */
+            run?: components["schemas"]["Run"];
+            /** @description The connectors configured in the chain, in the order they run */
+            connectors?: components["schemas"]["ConnectorView"][];
         };
         /** @description Provenance of a snapshot: what was served, from where, and who approved it */
         Provenance: {
@@ -1190,7 +1334,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ApproveRequest"];
+            };
+        };
         responses: {
             /** @description Snapshot approved and now served */
             200: {
@@ -1210,7 +1358,7 @@ export interface operations {
                     "*/*": components["schemas"]["Snapshot"];
                 };
             };
-            /** @description Snapshot is not in the held state */
+            /** @description Snapshot is not in the held state, or its vetting chain blocked and no reason was given */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -1504,6 +1652,37 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["WebhookDelivery"][];
+                };
+            };
+        };
+    };
+    vetting: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The latest chain run and the configured chain */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VettingView"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VettingView"];
                 };
             };
         };

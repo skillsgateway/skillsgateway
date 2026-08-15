@@ -22,8 +22,14 @@ public class FetchLogRepository {
     }
 
     public void append(String source, String principal, String marketplace, String event, String ref, String sha) {
-        jdbc.sql("INSERT INTO fetch_log (ts, source, principal, marketplace, event, ref, sha)"
-                        + " VALUES (:now, :source, :principal, :marketplace, :event, :ref, :sha)")
+        append(source, principal, marketplace, event, ref, sha, null);
+    }
+
+    /** As {@link #append}, with the free-text qualifier the entry needs (an override reason). */
+    public void append(
+            String source, String principal, String marketplace, String event, String ref, String sha, String detail) {
+        jdbc.sql("INSERT INTO fetch_log (ts, source, principal, marketplace, event, ref, sha, detail)"
+                        + " VALUES (:now, :source, :principal, :marketplace, :event, :ref, :sha, :detail)")
                 .param("now", OffsetDateTime.now())
                 .param("source", source)
                 .param("principal", principal)
@@ -31,6 +37,7 @@ public class FetchLogRepository {
                 .param("event", event)
                 .param("ref", ref)
                 .param("sha", sha)
+                .param("detail", detail)
                 .update();
     }
 
@@ -99,7 +106,10 @@ public class FetchLogRepository {
             @Schema(description = "Served ref, for fetches") String ref,
 
             @Schema(description = "Commit SHA, when the entry concerns one")
-            String sha) {}
+            String sha,
+
+            @Schema(description = "Free-text qualifier, such as the reason given for a vetting override")
+            String detail) {}
 
     private static AuditEntry map(ResultSet rs, int rowNum) throws SQLException {
         return new AuditEntry(
@@ -112,7 +122,8 @@ public class FetchLogRepository {
                 rs.getString("marketplace"),
                 rs.getString("event"),
                 rs.getString("ref"),
-                rs.getString("sha"));
+                rs.getString("sha"),
+                rs.getString("detail"));
     }
 
     public record FetchRecord(long id, Instant ts, String source, String principal, String marketplace, String event) {}
