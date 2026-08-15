@@ -7,6 +7,7 @@ Every setting the gateway reads, with its default and what consumes it.
 | Block | Purpose | Required in production |
 | --- | --- | --- |
 | [`skills-gateway.*`](#skills-gateway) | Storage location, the URL-scheme allowlist, and the development auth escape hatch. | No — all defaulted. |
+| [`skills-gateway.webhooks.*`](#webhooks) | Outbound lifecycle-webhook dispatch: poll interval, retry budget and backoff. | No — all defaulted. |
 | [`spring.datasource.*`](#datasource) | PostgreSQL connection. Supplied entirely by environment. | **Yes** |
 | [`spring.security.oauth2.client.*`](#oidc-login) | OIDC login for the web surface. | **Yes** |
 | [`management.endpoints.*`](#actuator) | Which actuator endpoints are exposed. | No |
@@ -56,6 +57,61 @@ skills-gateway:
     It permits **all** of `/api/**`, `/actuator/**` and `/docs` without
     authentication, and attributes every audit entry to `dev`. There is no
     partial mode.
+
+---
+
+## Webhooks
+
+Tuning for the outbound dispatcher that delivers snapshot lifecycle events. None
+of it appears in `application.yaml`; every value below is a Java-side default,
+and omitting the whole block is identical to omitting each key.
+
+```yaml
+skills-gateway:
+  webhooks:
+    # Stops the polling dispatcher only. Events are still enqueued as delivery
+    # rows and the admin API keeps working, so turning this back on drains
+    # whatever accumulated instead of losing it.
+    enabled: true
+
+    # How often the dispatcher looks for due deliveries. Also the floor on
+    # end-to-end latency for the first attempt.
+    poll-interval: 5s
+
+    # Attempt n schedules the next attempt at base-backoff * 2^(n-1),
+    # never later than max-backoff.
+    base-backoff: 10s
+    max-backoff: 1h
+
+    # Total attempts per delivery, first one included. Reaching it marks the
+    # delivery 'failed'; it is never retried again.
+    max-attempts: 5
+
+    # Connect and read timeout for the outbound POST. The claim lease is
+    # derived from it, so a slow receiver cannot strand a delivery.
+    timeout: 10s
+
+    # Deliveries claimed per poll pass.
+    batch-size: 50
+```
+
+| Property | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `skills-gateway.webhooks.enabled` | boolean | `true` | `false` pauses delivery; it does not stop emission. |
+| `skills-gateway.webhooks.poll-interval` | duration | `5s` | Fixed delay between dispatch passes. |
+| `skills-gateway.webhooks.base-backoff` | duration | `10s` | First retry delay; doubles per attempt. |
+| `skills-gateway.webhooks.max-backoff` | duration | `1h` | Ceiling on the doubling. |
+| `skills-gateway.webhooks.max-attempts` | integer | `5` | Attempt budget per delivery. |
+| `skills-gateway.webhooks.timeout` | duration | `10s` | Connect and read timeout per attempt. |
+| `skills-gateway.webhooks.batch-size` | integer | `50` | Deliveries claimed per pass. |
+
+!!! warning "Raising the retry budget raises the retry window"
+
+    The delays compound: with the defaults a delivery is abandoned about two
+    minutes after the event. `max-attempts: 12` with the same base reaches the
+    one-hour cap and keeps a dead receiver in the queue for hours. Receivers
+    must de-duplicate on the delivery id regardless — see
+    [Receiving lifecycle webhooks](../guides/lifecycle-webhooks.md).
 
 ---
 
