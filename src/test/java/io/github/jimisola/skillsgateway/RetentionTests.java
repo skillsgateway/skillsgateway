@@ -92,6 +92,35 @@ class RetentionTests extends AbstractGatewayTest {
                 .doesNotContain(approved.id(), recentlyServed.id());
     }
 
+    /**
+     * The last-served guard is about this marketplace's traffic. A SHA is not unique across
+     * marketplaces — a fork, a mirror, or the same upstream registered twice all carry it — so a
+     * fetch of another marketplace's identically-pinned snapshot must not veto this one, which
+     * would otherwise hold it in quarantine for as long as the other marketplace stays in use.
+     */
+    @Test
+    @SVCs({"SVC_GW_0031"})
+    void aFetchOfAnotherMarketplaceSharingTheCommitDoesNotVetoSelection() throws Exception {
+        Path upstream = createUpstream(DEFAULT_MANIFEST);
+        String mine = uniqueName("shared");
+        String theirs = uniqueName("mirror");
+        Registered registered = registerAndIngest(mine, upstream);
+        Registered mirror = registerAndIngest(theirs, upstream);
+        assertThat(mirror.snapshot().sha()).isEqualTo(registered.snapshot().sha());
+
+        fetchLogRepository.append(
+                "127.0.0.1",
+                "bob",
+                theirs,
+                "upload-pack",
+                "main",
+                mirror.snapshot().sha());
+
+        assertThat(retentionService.candidates(mine))
+                .extracting(RetentionService.Candidate::snapshotId, RetentionService.Candidate::reason)
+                .contains(tuple(registered.snapshot().id(), "held-too-long"));
+    }
+
     @Test
     @SVCs({"SVC_GW_0032"})
     void deletionMarksTheSnapshotAndARestoreInsideTheWindowClearsIt() throws Exception {

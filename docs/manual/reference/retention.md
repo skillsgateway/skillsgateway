@@ -16,7 +16,7 @@ applies these:
 | --- | --- | --- | --- |
 | [Held too long](#held-too-long) | Selector | `held` snapshots ingested more than `held-max-age` ago. | `held-max-age` |
 | [Superseded](#superseded) | Selector | `held`, `rejected` or `revoked` snapshots of a marketplace that a later `approved` snapshot has overtaken, once older than `superseded-min-age`. | `superseded`, `superseded-min-age` |
-| [Minimum idle](#minimum-idle) | **Veto** | Nothing. It *removes* any candidate whose SHA was fetched through the facade within `min-idle`. | `min-idle` |
+| [Minimum idle](#minimum-idle) | **Veto** | Nothing. It *removes* any candidate whose SHA was fetched from *its own* marketplace through the facade within `min-idle`. | `min-idle` |
 | [Approved](#approved-snapshots) | **Absolute guard** | Nothing. An `approved` snapshot is never eligible, by policy or by hand. | Not configurable |
 
 A snapshot is deleted when a selector picks it and no veto or guard removes it.
@@ -46,8 +46,12 @@ without disturbing `superseded-min-age`.
 
 ### Minimum idle
 
-A candidate whose SHA appears in the ledger as a facade fetch (`source <> 'admin'`)
-within `min-idle` (default `30d`) is dropped from the pass.
+A candidate whose SHA appears in the ledger as a facade fetch of **its own
+marketplace** (`source <> 'admin'`) within `min-idle` (default `30d`) is dropped
+from the pass. The marketplace is part of the match because a SHA is not unique
+across marketplaces — a fork, a mirror, or the same upstream registered twice all
+carry it — and the facade serves per marketplace, so traffic to one marketplace
+says nothing about whether another's identically-pinned snapshot is still in use.
 
 !!! note "This veto cannot select anything today — and that is the point"
 
