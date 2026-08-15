@@ -14,7 +14,17 @@ public final class WebhookEvent {
     public static final String SNAPSHOT_APPROVED = "snapshot.approved";
     public static final String SNAPSHOT_REJECTED = "snapshot.rejected";
 
-    public static final List<String> ALL = List.of(SNAPSHOT_INGESTED, SNAPSHOT_APPROVED, SNAPSHOT_REJECTED);
+    /**
+     * Retention deletions (GW_0032). They are lifecycle events like any other — the snapshot's
+     * vetting state is unchanged by them, so the payload keeps reporting held or rejected, and the
+     * actor distinguishes an operator from the scheduled policy pass.
+     */
+    public static final String SNAPSHOT_SOFT_DELETED = "snapshot.soft_deleted";
+
+    public static final String SNAPSHOT_RESTORED = "snapshot.restored";
+
+    public static final List<String> ALL =
+            List.of(SNAPSHOT_INGESTED, SNAPSHOT_APPROVED, SNAPSHOT_REJECTED, SNAPSHOT_SOFT_DELETED, SNAPSHOT_RESTORED);
 
     /**
      * Event name carried by audit ledger export batches (GW_0028). Deliberately outside

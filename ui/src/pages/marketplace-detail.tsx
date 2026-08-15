@@ -1,7 +1,14 @@
 import { ArrowLeft, Puzzle } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { useMarketplaces, useSnapshotContent } from "@/api/queries";
+import { toast } from "sonner";
+import {
+  useMarketplaces,
+  useRestoreSnapshot,
+  useSnapshotContent,
+  useSoftDeleteSnapshot,
+  type Snapshot,
+} from "@/api/queries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +25,62 @@ function stateBadge(state?: string) {
     default:
       return <Badge variant="outline">{state ?? "unknown"}</Badge>;
   }
+}
+
+/**
+ * Retention state of one snapshot: whether it is deleted, until when it can be restored, and
+ * the control that does it. An approved snapshot is served by the facade and the gateway
+ * refuses to delete it (GW_0033), so no delete control is offered for one.
+ *
+ * @Requirements GW_0036
+ */
+function RetentionControls({ snapshot }: { snapshot: Snapshot }) {
+  const softDelete = useSoftDeleteSnapshot();
+  const restore = useRestoreSnapshot();
+  const id = snapshot.id ?? 0;
+  const busy = softDelete.isPending || restore.isPending;
+
+  if (snapshot.deletedAt) {
+    return (
+      <>
+        <Badge variant="destructive">deleted</Badge>
+        <span className="text-xs text-muted-foreground">
+          restorable until {snapshot.purgeAfter ?? "—"}
+        </span>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={busy}
+          aria-label={`Restore snapshot ${id}`}
+          onClick={() =>
+            restore.mutate(id, {
+              onSuccess: () => toast.success(`Snapshot ${id} restored`),
+              onError: (error) => toast.error(error.message),
+            })
+          }
+        >
+          Restore
+        </Button>
+      </>
+    );
+  }
+  if (snapshot.state === "approved") return null;
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      disabled={busy}
+      aria-label={`Delete snapshot ${id}`}
+      onClick={() =>
+        softDelete.mutate(id, {
+          onSuccess: () => toast.success(`Snapshot ${id} deleted; it can be restored`),
+          onError: (error) => toast.error(error.message),
+        })
+      }
+    >
+      Delete
+    </Button>
+  );
 }
 
 function SnapshotContentView({ snapshotId }: { snapshotId: number }) {
@@ -144,8 +207,10 @@ export function MarketplaceDetailPage() {
                         decided by {snapshot.decidedBy}
                       </span>
                     ) : null}
+                    <div className="ml-auto flex items-center gap-2">
+                      <RetentionControls snapshot={snapshot} />
+                    </div>
                     <Button
-                      className="ml-auto"
                       size="sm"
                       variant="outline"
                       aria-label={`${open ? "Hide" : "Show"} contents of snapshot ${id}`}

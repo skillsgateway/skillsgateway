@@ -9,6 +9,7 @@ Every setting the gateway reads, with its default and what consumes it.
 | [`skills-gateway.*`](#skills-gateway) | Storage location, the URL-scheme allowlist, and the development auth escape hatch. | No — all defaulted. |
 | [`skills-gateway.webhooks.*`](#webhooks) | Outbound lifecycle-webhook dispatch: poll interval, retry budget and backoff. | No — all defaulted. |
 | [`skills-gateway.audit-export.*`](#audit-export) | Ledger export: the commit-settling lag, batch and page sizes. | No — all defaulted. |
+| [`skills-gateway.retention.*`](#retention) | Snapshot retention policies and the schedules that apply them. **Off by default.** | No — all defaulted. |
 | [`spring.datasource.*`](#datasource) | PostgreSQL connection. Supplied entirely by environment. | **Yes** |
 | [`spring.security.oauth2.client.*`](#oidc-login) | OIDC login for the web surface. | **Yes** |
 | [`management.endpoints.*`](#actuator) | Which actuator endpoints are exposed. | No |
@@ -165,6 +166,85 @@ skills-gateway:
 
 Sinks, cursors and replay are described in
 [Exporting the audit ledger](../guides/exporting-the-audit-ledger.md).
+
+---
+
+## Retention
+
+Snapshot retention: which snapshots the gateway may delete, and when the two
+passes run. Java-side defaults; nothing appears in `application.yaml`.
+
+```yaml
+skills-gateway:
+  retention:
+    # OFF by default. Retention only ever deletes because an operator asked for
+    # it; an upgrade never starts deleting on its own. The on-demand endpoints
+    # work regardless, so a policy can be inspected before this is flipped.
+    enabled: false
+
+    # Evaluation marks (soft delete); compaction removes (hard delete). They are
+    # separate schedules because the restore window only means anything if the
+    # two are decoupled in time.
+    poll-interval: 1h
+    compaction-interval: 6h
+
+    # Snapshots considered per marketplace per pass.
+    batch-size: 200
+
+    # The policy every marketplace inherits.
+    defaults:
+      # A snapshot still 'held' this long after ingestion is eligible.
+      # Zero or negative disables the criterion rather than selecting everything.
+      held-max-age: 90d
+
+      # Whether a held/rejected snapshot overtaken by a later approved snapshot
+      # of the same marketplace is eligible.
+      superseded: true
+      superseded-min-age: 30d
+
+      # Veto, not a selector: a candidate whose SHA was fetched through the
+      # facade within this window is dropped from the pass.
+      min-idle: 30d
+
+      # How long a soft-deleted snapshot stays restorable before compaction may
+      # remove it. Resolved at deletion time, not at compaction time.
+      restore-window: 14d
+
+    # Per-marketplace overrides; unset fields fall back to defaults.
+    marketplaces:
+      acme:
+        held-max-age: 30d
+```
+
+| Property | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `skills-gateway.retention.enabled` | boolean | `false` | Runs the scheduled passes. The on-demand endpoints are unaffected. |
+| `skills-gateway.retention.poll-interval` | duration | `1h` | Evaluation (soft delete) interval. |
+| `skills-gateway.retention.compaction-interval` | duration | `6h` | Compaction (hard delete) interval. |
+| `skills-gateway.retention.batch-size` | integer | `200` | Snapshots per marketplace per pass. |
+| `skills-gateway.retention.defaults.held-max-age` | duration | `90d` | Zero or negative disables the criterion. |
+| `skills-gateway.retention.defaults.superseded` | boolean | `true` | Enables the supersession criterion. |
+| `skills-gateway.retention.defaults.superseded-min-age` | duration | `30d` | Minimum age of a superseded snapshot. |
+| `skills-gateway.retention.defaults.min-idle` | duration | `30d` | Fetch-recency veto window. |
+| `skills-gateway.retention.defaults.restore-window` | duration | `14d` | Restore window applied at deletion time. |
+| `skills-gateway.retention.marketplaces.<name>.*` | policy | *(empty)* | Same keys as `defaults`; unset fields inherit. |
+
+!!! warning "Enabling retention starts deleting on the next pass"
+
+    Preview first: `GET /api/retention/candidates` shows exactly what the
+    policies in force would select, and writes nothing. Approved snapshots are
+    never eligible, but a generous `held-max-age` can still clear a large
+    review backlog on the first pass.
+
+!!! danger "Compaction cannot be undone"
+
+    A soft-deleted snapshot is restorable only until its `purge_after`. After
+    compaction the row and the unreachable git objects are gone, and only the
+    ledger entry remains. Size `restore-window` so a mistake is noticed inside
+    it.
+
+Criteria, guards and the two passes are described in
+[Snapshot retention](retention.md).
 
 ---
 

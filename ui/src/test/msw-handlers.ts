@@ -17,12 +17,24 @@ export const heldSnapshot: Schemas["Snapshot"] = {
   createdAt: "2026-08-14T10:00:00Z",
 };
 
+/** Soft-deleted by retention: still listed, still rejected, restorable until purgeAfter. */
+export const deletedSnapshot: Schemas["Snapshot"] = {
+  id: 2,
+  marketplaceId: 1,
+  sha: "1111222233334444555566667777888899990000",
+  state: "rejected",
+  createdAt: "2026-08-10T10:00:00Z",
+  deletedAt: "2026-08-14T11:00:00Z",
+  deletedReason: "held-too-long",
+  purgeAfter: "2026-08-28T11:00:00Z",
+};
+
 export const marketplace: Schemas["MarketplaceView"] = {
   id: 1,
   name: "corp-marketplace",
   url: "https://github.com/corp/marketplace.git",
   createdAt: "2026-08-14T09:00:00Z",
-  snapshots: [heldSnapshot],
+  snapshots: [heldSnapshot, deletedSnapshot],
 };
 
 export const issuedToken: Schemas["IssuedToken"] = {
@@ -96,6 +108,15 @@ export const handlers = [
       { status: 201 },
     ),
   ),
+  http.delete("/api/snapshots/:id", () =>
+    HttpResponse.json<Schemas["Snapshot"]>({
+      ...heldSnapshot,
+      deletedAt: "2026-08-14T12:00:00Z",
+      deletedReason: "manual",
+      purgeAfter: "2026-08-28T12:00:00Z",
+    }),
+  ),
+  http.post("/api/snapshots/:id/restore", () => HttpResponse.json(heldSnapshot)),
   http.get("/api/tokens", () => HttpResponse.json<Schemas["TokenView"][]>([])),
   http.post("/api/tokens", () => HttpResponse.json(issuedToken, { status: 201 })),
   http.get("/api/audit", () => HttpResponse.json([])),

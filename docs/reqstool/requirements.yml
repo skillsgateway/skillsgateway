@@ -247,3 +247,51 @@ requirements:
     rationale: An operator must be able to hand an auditor a ledger extract and to see whether each configured sink is keeping up, without database or raw HTTP access.
     categories: ["functional-suitability", "interaction-capability"]
     revision: 0.1.0
+
+  - id: GW_0031
+    title: Snapshot retention policy evaluation
+    significance: shall
+    description: The system shall evaluate snapshots against a retention policy, configurable globally and per marketplace, that selects a snapshot held in quarantine longer than a configured age and a non-approved snapshot superseded by a later approved snapshot of the same marketplace, and shall exclude any snapshot served through the git facade within a configured idle period.
+    rationale: Quarantine grows with every upstream commit; stated criteria let an operator reclaim snapshot rows and git storage predictably instead of by hand, and per-marketplace policies keep a high-churn marketplace from dictating the retention of the rest.
+    categories: ["functional-suitability", "maintainability"]
+    revision: 0.1.0
+
+  - id: GW_0032
+    title: Snapshot soft delete with restore window
+    significance: shall
+    description: The system shall delete a snapshot selected by retention, or by an administrator, by marking it deleted with the reason and the time after which it may be purged, leaving its vetting state unchanged, and shall restore the snapshot on request at any time before that purge time.
+    rationale: Deletion driven by a policy must be recoverable; marking the snapshot instead of removing it makes a wrong criterion a reversible mistake, and keeping the vetting state means the record of what was held, approved, or rejected survives the deletion.
+    categories: ["functional-suitability", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_0033
+    title: Approved snapshots are never eligible for deletion
+    significance: shall
+    description: The system shall never select an approved snapshot for retention deletion and shall refuse an administrator's request to delete one, so that content published to the git facade cannot be removed by any retention path.
+    rationale: The gateway's core promise is that served content is an approved, SHA-pinned snapshot; a retention policy that could reach published content would break clones and the provenance of what consumers already fetched.
+    categories: ["security", "reliability", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0034
+    title: Scheduled hard-delete compaction
+    significance: shall
+    description: The system shall run a scheduled compaction that permanently removes each soft-deleted snapshot whose restore window has elapsed, deleting both its record and the pinned commit reference in the marketplace's quarantine repository so the unreachable git objects are reclaimed, and shall leave soft-deleted snapshots whose window has not elapsed untouched.
+    rationale: Soft deletion alone reclaims nothing; separating the permanent removal into its own pass is what makes the restore window meaningful, and reclaiming git storage is the point of retention.
+    categories: ["functional-suitability", "performance-efficiency"]
+    revision: 0.1.0
+
+  - id: GW_0035
+    title: Retention actions are audit-logged
+    significance: shall
+    description: The system shall append every retention action — the outcome of a policy evaluation, a soft deletion with its reason, a restore, and a permanent removal — to the append-only audit ledger with the acting identity, the marketplace, and the snapshot commit SHA.
+    rationale: Deletion is the most consequential thing the gateway does to its own content; an auditor must be able to reconstruct what was removed, why, and on whose authority.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0036
+    title: Portal snapshot deletion surface
+    significance: shall
+    description: The system shall show, on the portal page listing a marketplace's snapshots behind the OIDC session, whether a snapshot is deleted together with the time until which it can be restored, and shall offer controls to delete a snapshot and to restore a deleted one.
+    rationale: An operator who sees a snapshot vanish from the retention pass needs to recognise a mistake and undo it within the window without database access.
+    categories: ["functional-suitability", "interaction-capability"]
+    revision: 0.1.0

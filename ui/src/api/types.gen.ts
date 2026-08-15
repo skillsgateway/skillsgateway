@@ -64,6 +64,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/snapshots/{id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore a soft-deleted snapshot
+         * @description Clears the deletion marks, provided compaction has not yet removed the snapshot.
+         */
+        post: operations["restore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/snapshots/{id}/reject": {
         parameters: {
             query?: never;
@@ -98,6 +118,46 @@ export interface paths {
          * @description Publishes the snapshot to the git facade and records the reviewer identity and timestamp. Only held snapshots can be approved.
          */
         post: operations["approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/retention/evaluate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run a retention evaluation pass
+         * @description Soft-deletes every snapshot the policies select. Equivalent to what the scheduled pass does when retention is enabled.
+         */
+        post: operations["evaluate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/retention/compact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run a compaction pass
+         * @description Permanently removes every soft-deleted snapshot whose restore window has elapsed, together with its pinned commit in the quarantine repository.
+         */
+        post: operations["compact"];
         delete?: never;
         options?: never;
         head?: never;
@@ -264,6 +324,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/retention/candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview the retention candidates
+         * @description The snapshots the policies in force would delete right now, each with the criterion that selected it. A dry run: nothing is written.
+         */
+        get: operations["candidates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me": {
         parameters: {
             query?: never;
@@ -355,6 +435,26 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["revoke"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Soft-delete a snapshot
+         * @description Marks the snapshot deleted and restorable until the end of the marketplace's restore window; its vetting state is unchanged. Approved snapshots are served by the git facade and can never be deleted.
+         */
+        delete: operations["softDelete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -530,6 +630,31 @@ export interface components {
              * @description Decision time, or null while held
              */
             decidedAt?: string;
+            /**
+             * Format: date-time
+             * @description When the snapshot was soft-deleted, or null when it is live
+             */
+            deletedAt?: string;
+            /** @description Retention criterion or administrative reason for the deletion */
+            deletedReason?: string;
+            /**
+             * Format: date-time
+             * @description End of the restore window; after it compaction removes the snapshot permanently
+             */
+            purgeAfter?: string;
+        };
+        /** @description Outcome of a retention pass */
+        PassResult: {
+            /**
+             * Format: int32
+             * @description Snapshots evaluated as eligible
+             */
+            selected?: number;
+            /**
+             * Format: int32
+             * @description Snapshots acted on by this pass
+             */
+            acted?: number;
         };
         /** @description Marketplace registration request */
         RegisterMarketplaceRequest: {
@@ -762,6 +887,30 @@ export interface components {
             /** @description Plugins declared by the manifest */
             plugins?: components["schemas"]["PluginContent"][];
         };
+        /** @description A snapshot a retention policy would delete, and the criterion that selected it */
+        Candidate: {
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            snapshotId?: number;
+            /** @description Marketplace the snapshot belongs to */
+            marketplace?: string;
+            /** @description Upstream commit SHA the snapshot is pinned to */
+            sha?: string;
+            /** @description Vetting state; never approved, which is categorically ineligible */
+            state?: string;
+            /**
+             * @description Criterion that selected the snapshot
+             * @enum {string}
+             */
+            reason?: "held-too-long" | "superseded";
+            /**
+             * Format: date-time
+             * @description Ingestion time
+             */
+            createdAt?: string;
+        };
         /** @description A registered marketplace with its snapshots and forge metadata */
         MarketplaceView: {
             /**
@@ -952,6 +1101,46 @@ export interface operations {
             };
         };
     };
+    restore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Snapshot restored */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description Snapshot is not deleted */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+        };
+    };
     reject: {
         parameters: {
             query?: never;
@@ -1028,6 +1217,49 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+        };
+    };
+    evaluate: {
+        parameters: {
+            query?: {
+                /** @description Restrict to one marketplace */
+                marketplace?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pass outcome */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PassResult"];
+                };
+            };
+        };
+    };
+    compact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pass outcome */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PassResult"];
                 };
             };
         };
@@ -1338,6 +1570,29 @@ export interface operations {
             };
         };
     };
+    candidates: {
+        parameters: {
+            query?: {
+                /** @description Restrict to one marketplace */
+                marketplace?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Candidate snapshots */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Candidate"][];
+                };
+            };
+        };
+    };
     me: {
         parameters: {
             query?: never;
@@ -1449,6 +1704,46 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    softDelete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Snapshot marked deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description Snapshot is approved, or already deleted */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
             };
         };
     };
