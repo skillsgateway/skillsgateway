@@ -10,7 +10,7 @@ description: Skills Gateway build commands, quality gates, Java and TypeScript c
 ```bash
 ./mvnw clean verify                     # everything: Java tests (Arconia/Testcontainers PostgreSQL),
                                         # Spotless, Checkstyle, CycloneDX SBOM, UI gates, packaged jar
-(cd ui && pnpm e2e)                     # Playwright vs the real jar + mock OIDC IdP (compose.e2e.yaml)
+(cd src/main/frontend && pnpm e2e)    # Playwright vs the real jar + mock OIDC IdP (compose.e2e.yaml)
 reqstool status local -p docs/reqstool  # must end "N/N complete · PASS" (run after the two above)
 openspec validate --all --strict
 ./mvnw -Pnative -DskipTests native:compile   # GraalVM native binary (release path; CI does this)
@@ -19,7 +19,7 @@ openspec validate --all --strict
 - Always `clean` before trusting the reqstool gate: the annotation processor
   writes per-source-set files that incremental compilation truncates.
 - The UI is built INSIDE `./mvnw verify` (frontend-maven-plugin, pinned
-  node/pnpm); `cd ui && pnpm …` is only for UI development loops and e2e.
+  node/pnpm); `cd src/main/frontend && pnpm …` is only for UI development loops and e2e.
 - `./mvnw -q spotless:apply` before committing Java.
 
 ## Java
@@ -37,11 +37,11 @@ openspec validate --all --strict
   `@Tag`, `@Operation`, `@ApiResponse`, and `@Schema` on their DTOs (the
   Scalar reference at `/docs` renders them).
 
-## TypeScript / UI (`ui/`)
+## TypeScript / UI (`src/main/frontend/`)
 
 - Strict TS, oxlint, vitest (+ Storybook story tests with axe-as-error),
   Playwright e2e. `pnpm verify` runs the whole UI gate.
-- API types are GENERATED: `ui/openapi.json` → `src/api/types.gen.ts`
+- API types are GENERATED: `src/main/frontend/openapi.json` → `src/api/types.gen.ts`
   (`pnpm exec openapi-typescript openapi.json -o src/api/types.gen.ts`).
   Regenerate after backend API changes (snapshot comes from
   `OpenApiDocsTests` → `target/openapi.json`). Never hand-edit.

@@ -3,8 +3,8 @@
 # Prerequisite: the boot jar exists (./mvnw -DskipTests package or ./mvnw verify).
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-UI_DIR="$REPO_ROOT/ui"
+REPO_ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
+UI_DIR="$REPO_ROOT/src/main/frontend"
 COMPOSE="docker compose -f $REPO_ROOT/compose.e2e.yaml"
 JAR="$(ls -t "$REPO_ROOT"/target/skills-gateway-*.jar 2>/dev/null | grep -v plain | head -1 || true)"
 

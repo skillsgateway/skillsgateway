@@ -40,7 +40,7 @@
 
 ```bash
 ./mvnw clean verify                     # Java + UI gates + packaged jar
-(cd ui && pnpm e2e)                     # real-browser e2e (compose.e2e.yaml)
+(cd src/main/frontend && pnpm e2e)    # real-browser e2e (compose.e2e.yaml)
 reqstool status local -p docs/reqstool  # must end "PASS"
 openspec validate --all --strict
 mkdocs build --strict                   # docs site (pip install -r docs/requirements.txt)

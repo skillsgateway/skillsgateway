@@ -27,7 +27,7 @@ jobs:
       # Storybook story tests (inside mvnw verify) and the e2e suite run in real
       # chromium, so browsers must exist before the Maven build.
       - name: Install UI dependencies and Playwright chromium
-        working-directory: ui
+        working-directory: src/main/frontend
         run: |
           corepack enable pnpm
           pnpm install --frozen-lockfile
@@ -37,7 +37,7 @@ jobs:
         run: ./mvnw --batch-mode verify
 
       - name: Portal e2e (real login via mock OIDC IdP)
-        working-directory: ui
+        working-directory: src/main/frontend
         run: pnpm e2e
 
       - uses: actions/setup-python@v7
@@ -71,6 +71,6 @@ jobs:
         with:
           name: e2e-artifacts
           path: |
-            ui/test-results
-            ui/playwright-report
+            src/main/frontend/test-results
+            src/main/frontend/playwright-report
           if-no-files-found: ignore
