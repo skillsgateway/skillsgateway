@@ -14,6 +14,11 @@ Load these before working in their areas:
 - `.claude/skills/code-conventions` — build, gates, Java/TS conventions, traceability annotations
 - `.claude/skills/design-conventions` — portal design system and UI verification rules
 - `.claude/skills/documentation` — MkDocs site structure, Markdown/Mermaid conventions, docs-in-same-PR rule
+- `.claude/skills/old-coder` — evidence-first discipline for high-assurance work:
+  changes touching trust boundaries (facade auth, `ApprovalService`, registration
+  allowlist) or anything with data-loss/concurrency stakes. OpenSpec stays the
+  approved spec of *what* to build; old-coder governs *how* the implementation
+  earns trust (prove tests fail, gauntlet, evidence report).
 
 ## The gates (all must pass before any PR)
 
@@ -39,6 +44,14 @@ generated annotation files.
 - Documentation lives in `docs/manual/` (MkDocs Material). Any change to
   behavior, the REST API, configuration, or the portal updates the affected
   pages **in the same PR**.
+- Evidence, not adjectives: every OpenSpec change gets an
+  `openspec/changes/<name>/evidence.md` — the commands and pasted result tails
+  of one final fresh run of all gates after the last code edit, plus the commit
+  SHA. The PR body carries an **Evidence** section summarizing it. The report
+  archives with the change.
+- Risk-scaled enforcement: changes touching trust boundaries (facade auth,
+  `ApprovalService`, registration allowlist) require adversarial/negative tests
+  and the `.claude/skills/old-coder` discipline, not just happy-path coverage.
 - Conventional Commits with DCO sign-off (`git commit -s`); branches
   `<type>/<kebab-description>`; PR titles are conventional commits (squash).
 - Work on branches, open PRs; merging is done manually by the owner.

@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "old-coder": {
+      "source": "amazingang/old-coder",
+      "sourceType": "github",
+      "skillPath": "skills/old-coder/SKILL.md",
+      "computedHash": "3fb78e613ebff5aaf5d4c438cbe5c4a302d6dc988cfecab34aa2c26d322a0565"
+    }
+  }
+}

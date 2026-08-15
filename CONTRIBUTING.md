@@ -21,9 +21,18 @@
    Any change to behavior, the REST API, configuration, or the portal updates
    the affected pages under `docs/manual/` **in the same PR** — see
    `.claude/skills/documentation/SKILL.md`.
-4. Run the gates (below), open a PR; the PR title must be a Conventional Commit
-   (it becomes the squash commit). PRs are merged manually by the maintainer.
-5. After merge, the OpenSpec change is archived into `openspec/specs/`.
+4. Run the gates (below) one final time after the last code edit and record the
+   evidence: `openspec/changes/<name>/evidence.md` with each gate's command, the
+   pasted tail of its actual output (numbers, not adjectives), and the commit
+   SHA it was run against. The PR body carries an **Evidence** section
+   summarizing it — the review target is the evidence, not every diff line.
+5. Changes touching trust boundaries (facade auth, `ApprovalService`, the
+   registration allowlist) are held to a higher bar: adversarial/negative tests
+   are required, per `.claude/skills/old-coder/SKILL.md`.
+6. Open a PR; the PR title must be a Conventional Commit (it becomes the squash
+   commit). PRs are merged manually by the maintainer.
+7. After merge, the OpenSpec change (including its `evidence.md`) is archived
+   into `openspec/specs/`.
 
 ## Gates — all must pass
 
