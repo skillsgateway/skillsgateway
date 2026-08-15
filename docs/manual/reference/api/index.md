@@ -55,6 +55,7 @@ consumed by the portal with a session cookie.
 | [Access tokens](tokens.md) | Create, list, revoke |
 | [Audit](audit.md) | Read the ledger; stream it as NDJSON; register, replay and delete export sinks |
 | [Webhooks](../../guides/lifecycle-webhooks.md) | Register, list and delete subscribers; list delivery attempts |
+| [Retention](../retention.md#endpoints) | Preview candidates, evaluate, compact, soft-delete and restore snapshots |
 
 ## Session
 

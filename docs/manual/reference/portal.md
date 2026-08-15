@@ -153,6 +153,27 @@ badge per skill found under it. Plugins with no skills show "no skills found".
 This is the review surface, and it works on `held` snapshots — inspecting a
 snapshot must not require serving it.
 
+### Retention controls
+
+Each snapshot card carries its retention state and the control that changes it:
+
+| Snapshot | Shown |
+| --- | --- |
+| Not deleted, state `held` or `rejected` | A **Delete** button. |
+| Not deleted, state `approved` | Nothing — an approved snapshot is served by the facade and the gateway refuses to delete it. |
+| Deleted | A destructive `deleted` badge, "restorable until {purgeAfter}", and a **Restore** button. |
+
+**Delete** calls `DELETE /api/snapshots/{id}` and toasts *Snapshot {id} deleted;
+it can be restored*. **Restore** calls `POST /api/snapshots/{id}/restore` and
+toasts *Snapshot {id} restored*. Both fire immediately, like every other
+mutation in the portal — deletion here is a reversible mark, not a purge.
+
+!!! warning "The restore deadline is the real one"
+
+    Once `purgeAfter` has passed, a compaction run removes the snapshot and its
+    quarantine ref permanently and the card disappears. See
+    [Snapshot retention](retention.md).
+
 Empty state: "No snapshots yet."
 
 ---

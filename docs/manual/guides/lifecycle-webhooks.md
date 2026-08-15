@@ -12,10 +12,18 @@ the moment it is ingested, approved or rejected instead of polling
 | `snapshot.ingested` | An ingestion succeeded and produced a snapshot. |
 | `snapshot.approved` | A held snapshot was approved and published. |
 | `snapshot.rejected` | A held snapshot was rejected. |
+| `snapshot.soft_deleted` | A snapshot was marked deleted, by an administrator or by a retention policy. |
+| `snapshot.restored` | A soft-deleted snapshot's marks were cleared. |
 
 Those are all of them. The snapshot state machine is
 `held → approved | rejected` with no revocation state, so there is no
-`snapshot.revoked` event to subscribe to.
+`snapshot.revoked` event to subscribe to — and deletion is orthogonal to that
+state machine, which is why the retention events carry the snapshot's unchanged
+vetting state.
+
+A deletion made by the scheduled policy pass rather than by a person carries the
+actor `retention-policy`, so a receiver can tell the two apart. See
+[Reclaiming snapshot storage](snapshot-retention.md).
 
 ## 1. Register a subscriber
 
