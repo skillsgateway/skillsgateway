@@ -13,6 +13,7 @@ import io.github.jimisola.skillsgateway.persistence.MarketplaceRepository;
 import io.github.jimisola.skillsgateway.persistence.Snapshot;
 import io.github.jimisola.skillsgateway.persistence.SnapshotNotFoundException;
 import io.github.jimisola.skillsgateway.persistence.SnapshotRepository;
+import io.github.jimisola.skillsgateway.vetting.WaiverService;
 import io.github.jimisola.skillsgateway.webhook.WebhookEvent;
 import io.github.jimisola.skillsgateway.webhook.WebhookService;
 import io.github.reqstool.annotations.Requirements;
@@ -59,6 +60,7 @@ public class AdminController {
     private final SnapshotContentService snapshotContentService;
     private final AdminAuditLogger auditLogger;
     private final WebhookService webhookService;
+    private final WaiverService waiverService;
 
     public AdminController(
             MarketplaceRepository marketplaceRepository,
@@ -70,7 +72,8 @@ public class AdminController {
             ForgeMetadataService forgeMetadataService,
             SnapshotContentService snapshotContentService,
             AdminAuditLogger auditLogger,
-            WebhookService webhookService) {
+            WebhookService webhookService,
+            WaiverService waiverService) {
         this.marketplaceRepository = marketplaceRepository;
         this.snapshotRepository = snapshotRepository;
         this.ingestionService = ingestionService;
@@ -81,6 +84,7 @@ public class AdminController {
         this.snapshotContentService = snapshotContentService;
         this.auditLogger = auditLogger;
         this.webhookService = webhookService;
+        this.waiverService = waiverService;
     }
 
     @Schema(description = "Marketplace registration request")
@@ -243,49 +247,29 @@ public class AdminController {
         return ResponseEntity.status(HttpStatus.CREATED).body(snapshot);
     }
 
-    @Schema(description = "Approval request; the reason is required only for a snapshot the vetting chain blocked")
-    public record ApproveRequest(
-            @Schema(
-                    description = "Why the reviewer is approving a snapshot whose vetting chain blocked."
-                            + " Recorded against the chain run and in the audit ledger (GW_0041).",
-                    example = "false positive: the key in fixtures/ is a documented dummy value")
-            String overrideReason) {}
-
     @PostMapping("/snapshots/{id}/approve")
     @Requirements({"GW_0041"})
     @Tag(name = "Snapshots")
     @Operation(
             summary = "Approve a held snapshot",
             description = "Publishes the snapshot to the git facade and records the reviewer identity and"
-                    + " timestamp. Only held snapshots can be approved. A snapshot whose latest vetting chain"
-                    + " run did not clear — including one that has no chain run at all — is refused unless the"
-                    + " request carries an override reason, which is recorded against the run and in the"
-                    + " audit ledger.")
+                    + " timestamp. Takes no request body. Only held snapshots can be approved. A snapshot whose"
+                    + " effective vetting outcome is blocked — its chain run objects and at least one blocking"
+                    + " finding is not covered by an active waiver, including a snapshot with no chain run at"
+                    + " all — is refused, and the problem document names both the blocking connectors and the"
+                    + " uncovered findings. Record a scoped, expiring waiver for each of those findings and"
+                    + " approve again; every waiver that let the approval through is written to the ledger.")
     @ApiResponse(responseCode = "200", description = "Snapshot approved and now served")
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
     @ApiResponse(
             responseCode = "409",
-            description = "Snapshot is not in the held state, or its vetting chain blocked and no reason was given")
-    public Snapshot approve(
-            @PathVariable long id,
-            @RequestBody(required = false) ApproveRequest request,
-            Authentication authentication) {
-        String overrideReason = request == null ? null : request.overrideReason();
-        Snapshot snapshot = approvalService.approve(id, authentication.getName(), overrideReason);
+            description = "Snapshot is not in the held state, or its effective vetting outcome is blocked")
+    public Snapshot approve(@PathVariable long id, Authentication authentication) {
+        ApprovalService.Approved approved = approvalService.approve(id, authentication.getName());
+        Snapshot snapshot = approved.snapshot();
         String marketplace = marketplaceName(snapshot.marketplaceId());
-        if (overrideReason != null && !overrideReason.isBlank()) {
-            auditLogger.record(
-                    authentication.getName(),
-                    marketplace,
-                    "snapshot-approved-override",
-                    snapshot.sha(),
-                    overrideReason);
-        }
-        auditLogger.record(
-                authentication.getName(),
-                marketplaceName(snapshot.marketplaceId()),
-                "snapshot-approved",
-                snapshot.sha());
+        waiverService.recordUse(marketplace, snapshot.sha(), authentication.getName(), approved.waiversApplied());
+        auditLogger.record(authentication.getName(), marketplace, "snapshot-approved", snapshot.sha());
         emit(
                 WebhookEvent.SNAPSHOT_APPROVED,
                 marketplaceName(snapshot.marketplaceId()),
@@ -371,12 +355,17 @@ public class AdminController {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY, e.getMessage());
     }
 
-    /** Fail-closed approval gate: the response names the connectors that blocked (GW_0041). */
+    /**
+     * Fail-closed approval gate (GW_0041). The response names the connectors that blocked and,
+     * beside them, every blocking finding no active waiver covers — which is exactly the set of
+     * waivers the reviewer must record for this approval to succeed.
+     */
     @ExceptionHandler(VettingBlockedException.class)
     public ProblemDetail vettingBlocked(VettingBlockedException e) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
         problem.setTitle("Vetting chain blocked this snapshot");
         problem.setProperty("blockingConnectors", e.blockingConnectors());
+        problem.setProperty("uncoveredFindings", e.uncoveredFindings());
         return problem;
     }
 }

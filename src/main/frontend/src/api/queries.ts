@@ -15,6 +15,10 @@ export type VettingView = components["schemas"]["VettingView"];
 export type VettingRun = components["schemas"]["Run"];
 export type VettingVerdict = components["schemas"]["VerdictView"];
 export type VettingFinding = components["schemas"]["Finding"];
+export type Waiver = components["schemas"]["WaiverView"];
+export type WaiverSuppression = components["schemas"]["Suppression"];
+export type UncoveredFinding = components["schemas"]["UncoveredFinding"];
+export type WaiverScope = NonNullable<Waiver["scope"]>;
 export type CreatedSink = components["schemas"]["CreatedSink"];
 
 /** Same-origin download of the NDJSON ledger stream; the session cookie is the credential. */
@@ -57,30 +61,74 @@ export function useIngest() {
 }
 
 /**
- * Approving a snapshot whose vetting chain blocked requires a reason; the server is
- * authoritative and answers 409 without one, so the reason travels as an ordinary field
- * rather than as a client-side precondition.
+ * Approving takes no body. A snapshot whose effective vetting outcome is blocked is refused by
+ * the server with 409 and the findings no waiver covers; the way past it is to record a waiver
+ * per blocking finding, never a flag on this request.
  */
 export function useDecideSnapshot() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      id,
-      decision,
-      overrideReason,
-    }: {
-      id: number;
-      decision: "approve" | "reject";
-      overrideReason?: string;
-    }) =>
-      api<Snapshot>(`/api/snapshots/${id}/${decision}`, {
-        method: "POST",
-        ...(overrideReason ? { body: JSON.stringify({ overrideReason }) } : {}),
-      }),
+    mutationFn: ({ id, decision }: { id: number; decision: "approve" | "reject" }) =>
+      api<Snapshot>(`/api/snapshots/${id}/${decision}`, { method: "POST" }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["marketplaces"] });
       void queryClient.invalidateQueries({ queryKey: ["snapshot-vetting"] });
+      void queryClient.invalidateQueries({ queryKey: ["waivers"] });
     },
+  });
+}
+
+/**
+ * Records an accepted risk for one finding. Scope, justification and expiry are all required by
+ * the server; the dialog mirrors that but never substitutes for it.
+ */
+export function useCreateWaiver() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      snapshotId,
+      ruleId,
+      scope,
+      path,
+      justification,
+      expiresAt,
+    }: {
+      snapshotId: number;
+      ruleId: string;
+      scope: WaiverScope;
+      path?: string;
+      justification: string;
+      expiresAt: string;
+    }) =>
+      api<Waiver>(`/api/snapshots/${snapshotId}/waivers`, {
+        method: "POST",
+        body: JSON.stringify({ ruleId, scope, path, justification, expiresAt }),
+      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["snapshot-vetting"] });
+      void queryClient.invalidateQueries({ queryKey: ["waivers"] });
+    },
+  });
+}
+
+/** Withdraws a waiver; the snapshot it was clearing becomes blocked again on the next read. */
+export function useRevokeWaiver() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api<Waiver>(`/api/waivers/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["snapshot-vetting"] });
+      void queryClient.invalidateQueries({ queryKey: ["waivers"] });
+    },
+  });
+}
+
+/** A marketplace's waivers, active and lapsed alike. */
+export function useWaivers(marketplace: string | null) {
+  return useQuery({
+    queryKey: ["waivers", marketplace],
+    queryFn: () => api<Waiver[]>(`/api/marketplaces/${encodeURIComponent(marketplace!)}/waivers`),
+    enabled: marketplace !== null,
   });
 }
 

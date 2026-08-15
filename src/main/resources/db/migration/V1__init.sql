@@ -111,7 +111,7 @@ CREATE TABLE audit_sinks (
     updated_at TIMESTAMPTZ NOT NULL
 );
 
--- Snapshot vetting (GW_0037..GW_0043).
+-- Snapshot vetting (GW_0037..GW_0048).
 --
 -- Deliberately separate from `snapshots.state`: vetting is evidence about a commit, not a
 -- vetting state of its own. A snapshot stays `held` whatever the chain says — the chain
@@ -126,12 +126,11 @@ CREATE TABLE vetting_runs (
     trigger TEXT NOT NULL,
     started_at TIMESTAMPTZ NOT NULL,
     finished_at TIMESTAMPTZ,
-    -- Fail-closed aggregate over the run's verdicts; see VettingChain.
-    outcome TEXT NOT NULL CHECK (outcome IN ('clear', 'blocked')),
-    -- Set only when a reviewer approved the snapshot despite a blocked outcome (GW_0041).
-    override_by TEXT,
-    override_at TIMESTAMPTZ,
-    override_reason TEXT
+    -- Fail-closed aggregate over the run's verdicts; see VettingChain. Deliberately raw: this
+    -- is what the connectors said, and waivers never rewrite it. The outcome that gates the
+    -- approval is the *effective* one, derived on read from this run plus the waivers active
+    -- at that instant (GW_0045), which is what makes expiry (GW_0046) need no scheduler.
+    outcome TEXT NOT NULL CHECK (outcome IN ('clear', 'blocked'))
 );
 
 -- The only read path: the latest run of one snapshot.
@@ -165,3 +164,40 @@ CREATE TABLE vetting_findings (
 
 CREATE INDEX idx_vetting_verdicts_run ON vetting_verdicts (run_id);
 CREATE INDEX idx_vetting_findings_verdict ON vetting_findings (verdict_id);
+
+-- Vetting waivers (GW_0044..GW_0048): scoped, expiring accepted-risk exceptions.
+--
+-- A waiver names one rule on one marketplace and one scope. It never rewrites a run; it is an
+-- input to the effective-outcome computation, which is why expiry is a comparison against
+-- `now` at evaluation time rather than a state anything has to transition through.
+
+CREATE TABLE vetting_waivers (
+    id BIGSERIAL PRIMARY KEY,
+    -- A waiver never crosses a marketplace: the marketplace is the unit of trust the gateway
+    -- governs, so it is also the widest an accepted risk may reach.
+    marketplace_id BIGINT NOT NULL REFERENCES marketplaces (id) ON DELETE CASCADE,
+    -- The stable rule identifier from vetting_findings.finding_id.
+    rule_id TEXT NOT NULL,
+    -- 'snapshot' pins the waiver to one commit SHA and dies with it; 'path' survives
+    -- re-ingestion and is matched as a directory prefix on the finding's path.
+    scope_kind TEXT NOT NULL CHECK (scope_kind IN ('snapshot', 'path')),
+    scope_value TEXT NOT NULL CHECK (scope_value <> ''),
+    justification TEXT NOT NULL CHECK (justification <> ''),
+    approved_by TEXT NOT NULL CHECK (approved_by <> ''),
+    created_at TIMESTAMPTZ NOT NULL,
+    -- NOT NULL is the "no unlimited waivers" rule expressed in the schema rather than only in
+    -- the service: an unbounded accepted risk cannot be represented at all.
+    expires_at TIMESTAMPTZ NOT NULL,
+    revoked_at TIMESTAMPTZ,
+    revoked_by TEXT,
+    -- Stamped by the expiry sweep the first time it observes this waiver past its expiry, so
+    -- the ledger entry is written once. The gate never reads it: expiry is decided by
+    -- comparing expires_at to now, whether or not the sweep has ever run.
+    expired_recorded_at TIMESTAMPTZ
+);
+
+-- The evaluation query: every waiver of one marketplace, filtered in memory by rule and scope.
+CREATE INDEX idx_vetting_waivers_marketplace ON vetting_waivers (marketplace_id, rule_id);
+-- The sweep's only query.
+CREATE INDEX idx_vetting_waivers_expiry_sweep ON vetting_waivers (expires_at)
+    WHERE expired_recorded_at IS NULL AND revoked_at IS NULL;

@@ -36,7 +36,7 @@ public record SkillsGatewayProperties(
             retention = new Retention(null, null, null, null, null, null);
         }
         if (vetting == null) {
-            vetting = new Vetting(null, null);
+            vetting = new Vetting(null, null, null, null);
         }
     }
 
@@ -50,8 +50,14 @@ public record SkillsGatewayProperties(
      *     error, which blocks; a wedged connector must never wedge ingestion
      * @param maxFileBytes files larger than this are handed to connectors as unread, and reported
      *     as an informational finding rather than skipped in silence
+     * @param waiverSweepInterval how often lapsed waivers are noted in the ledger (GW_0048). This
+     *     knob cannot open a hole: a waiver stops suppressing its finding the moment the effective
+     *     outcome is next computed, whether or not the sweep has run, so the interval only decides
+     *     how promptly the lapse is announced.
+     * @param waiverSweepBatchSize how many lapsed waivers one sweep pass records
      */
-    public record Vetting(Duration timeout, Long maxFileBytes) {
+    public record Vetting(
+            Duration timeout, Long maxFileBytes, Duration waiverSweepInterval, Integer waiverSweepBatchSize) {
 
         public Vetting {
             if (timeout == null) {
@@ -59,6 +65,12 @@ public record SkillsGatewayProperties(
             }
             if (maxFileBytes == null || maxFileBytes <= 0) {
                 maxFileBytes = 1024L * 1024L;
+            }
+            if (waiverSweepInterval == null) {
+                waiverSweepInterval = Duration.ofHours(1);
+            }
+            if (waiverSweepBatchSize == null || waiverSweepBatchSize <= 0) {
+                waiverSweepBatchSize = 200;
             }
         }
     }

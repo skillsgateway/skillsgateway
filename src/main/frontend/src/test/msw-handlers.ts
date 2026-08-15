@@ -103,6 +103,18 @@ export const createdAuditSink: Schemas["CreatedSink"] = {
 export const blockedVetting: Schemas["VettingView"] = {
   snapshotId: 1,
   outcome: "BLOCKED",
+  recordedOutcome: "BLOCKED",
+  suppressed: [],
+  uncovered: [
+    {
+      connector: "secret-scan",
+      ruleId: "aws-access-key-id",
+      location: "plugins/hello/DEPLOY.md:5",
+      severity: "CRITICAL",
+      message: "an AWS access key id is committed in this file",
+    },
+  ],
+  waivers: [],
   run: {
     runId: 5,
     snapshotId: 1,
@@ -141,6 +153,38 @@ export const blockedVetting: Schemas["VettingView"] = {
   ],
 };
 
+/** The same run, once the blocking finding has been accepted: cleared, but visibly by a waiver. */
+export const waivedVetting: Schemas["VettingView"] = {
+  ...blockedVetting,
+  outcome: "CLEAR_WITH_WAIVERS",
+  recordedOutcome: "BLOCKED",
+  uncovered: [],
+  suppressed: [
+    {
+      connector: "secret-scan",
+      ruleId: "aws-access-key-id",
+      location: "plugins/hello/DEPLOY.md:5",
+      waiverId: 3,
+      approvedBy: "alice",
+      expiresAt: "2026-09-14T23:59:59Z",
+    },
+  ],
+  waivers: [
+    {
+      id: 3,
+      marketplace: "corp-marketplace",
+      ruleId: "aws-access-key-id",
+      scope: "SNAPSHOT",
+      scopeValue: "a1b2c3",
+      justification: "documented dummy key in fixtures",
+      approvedBy: "alice",
+      createdAt: "2026-08-15T10:00:00Z",
+      expiresAt: "2026-09-14T23:59:59Z",
+      active: true,
+    },
+  ],
+};
+
 export const handlers = [
   http.get("/api/me", () => HttpResponse.json({ username: "alice" })),
   http.get("/api/marketplaces", () => HttpResponse.json([marketplace])),
@@ -160,6 +204,13 @@ export const handlers = [
   ),
   http.post("/api/snapshots/:id/restore", () => HttpResponse.json(heldSnapshot)),
   http.get("/api/snapshots/:id/vetting", () => HttpResponse.json(blockedVetting)),
+  http.post("/api/snapshots/:id/waivers", () =>
+    HttpResponse.json<Schemas["WaiverView"]>(waivedVetting.waivers![0], { status: 201 }),
+  ),
+  http.get("/api/marketplaces/:name/waivers", () => HttpResponse.json(waivedVetting.waivers)),
+  http.delete("/api/waivers/:id", () =>
+    HttpResponse.json<Schemas["WaiverView"]>({ ...waivedVetting.waivers![0], active: false }),
+  ),
   http.post("/api/snapshots/:id/approve", () =>
     HttpResponse.json<Schemas["Snapshot"]>({ ...heldSnapshot, state: "approved", decidedBy: "alice" }),
   ),

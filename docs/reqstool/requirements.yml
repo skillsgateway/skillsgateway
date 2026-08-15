@@ -331,23 +331,63 @@ requirements:
   - id: GW_0041
     title: Approval gate on the vetting outcome
     significance: shall
-    description: The system shall refuse to approve a snapshot whose latest chain run aggregated to a blocked outcome unless the approval request carries a non-empty override reason, and shall record that reason together with the approving identity against the chain run.
-    rationale: Recording verdicts without acting on them turns vetting into decoration; requiring a written, attributed reason makes accepting a blocked snapshot a deliberate and reviewable act rather than an ordinary click.
+    description: The system shall refuse to approve a snapshot whose effective vetting outcome is blocked, shall name in the refusal both the connectors that blocked and every blocking finding that no active waiver covers, and shall approve such a snapshot only once an active waiver covers each of those findings.
+    rationale: Recording verdicts without acting on them turns vetting into decoration; requiring an active, scoped waiver per blocking finding makes accepting a blocked snapshot a deliberate act aimed at exactly what was found, so a finding nobody examined can never ride along with one that was justified.
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_0042
     title: Portal vetting surface
     significance: shall
-    description: The system shall show, in the portal behind the OIDC session, each snapshot's chain outcome together with every connector's verdict and its findings, and shall require the reviewer to supply a reason before approving a snapshot whose outcome is blocked.
+    description: The system shall show, in the portal behind the OIDC session, each snapshot's effective chain outcome together with every connector's verdict and its findings, marking each finding a waiver currently suppresses, and shall refuse approval of a snapshot whose effective outcome is blocked.
     rationale: The reviewer is the control the whole gateway rests on; the evidence and the consequence of ignoring it must both be in front of that person at the moment of the decision, not in a log.
     categories: ["interaction-capability", "security"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_0043
     title: Vetting actions are audit-logged
     significance: shall
-    description: The system shall append every chain run outcome, every connector verdict, and every approval override to the append-only audit ledger with the marketplace, the snapshot commit SHA, the acting identity, and, for an override, the reason given.
+    description: The system shall append every chain run outcome and every connector verdict to the append-only audit ledger with the marketplace, the snapshot commit SHA, and the acting identity.
     rationale: An auditor asking why a snapshot with findings is being served must be able to answer it from the ledger alone, without reading the vetting tables or trusting the portal.
+    categories: ["security", "functional-suitability"]
+    revision: 0.2.0
+
+  - id: GW_0044
+    title: Scoped, expiring vetting waivers
+    significance: shall
+    description: The system shall allow a reviewer to record a waiver that accepts one vetting finding rule identifier on one marketplace, scoped either to a single snapshot commit SHA or to a path within the marketplace, and shall reject a waiver that omits a justification, an approving identity, or an expiry instant in the future.
+    rationale: An accepted risk that is not narrow, attributed, justified and temporary is indistinguishable from a disabled control; refusing an unbounded or unexplained waiver at the point of creation is what keeps every acceptance reviewable.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0045
+    title: Waivers suppress findings in the effective vetting outcome
+    significance: shall
+    description: The system shall compute a snapshot's effective vetting outcome from its latest recorded chain run with every finding covered by an active waiver excluded from the verdict it belongs to, shall leave the recorded run itself unchanged, shall report the outcome as cleared-with-waivers rather than cleared whenever a waiver suppressed a finding of that run, and shall keep a non-clearing verdict that carries no findings blocking.
+    rationale: Waiving a finding must change the gate, not the record; deriving the outcome rather than rewriting the run keeps the raw evidence intact for an auditor, and naming the waived case separately stops an accepted risk from reading as a clean chain.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0046
+    title: Waiver expiry and revocation restore the block
+    significance: shall
+    description: The system shall decide whether a waiver is active at the instant a snapshot's effective vetting outcome is computed, and shall treat a waiver whose expiry has passed or that has been revoked as suppressing nothing, so that the snapshot's effective outcome reverts to blocked and approval is refused again without any scheduled pass having to run.
+    rationale: An exception that outlives its justification is a permanent hole; evaluating expiry at decision time makes the reversion unconditional rather than dependent on a scheduler that may be disabled, delayed, or missing.
+    categories: ["security", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_0047
+    title: Portal waiver management surface
+    significance: shall
+    description: The system shall let a reviewer, in the portal behind the OIDC session, create a waiver for a specific finding from the snapshot review surface by supplying a justification, a scope and an expiry, and shall list a marketplace's waivers with their rule, scope, justification, approver, expiry, and whether each is still active.
+    rationale: A waiver that can only be written through the API is a waiver nobody reviews; putting creation next to the finding it accepts and the list next to the content it affects is what makes an accepted risk visible to the next reviewer.
+    categories: ["interaction-capability", "security"]
+    revision: 0.1.0
+
+  - id: GW_0048
+    title: Waiver lifecycle is audit-logged
+    significance: shall
+    description: The system shall append to the append-only audit ledger the creation of every waiver with its rule, scope and expiry, the revocation of a waiver, the first observation that a waiver has expired, and every waiver that suppressed a finding for an approval, each with the marketplace and the acting identity.
+    rationale: An auditor asking why a snapshot with a critical finding is being served must be able to read the accepted risk, who accepted it, and until when, from the ledger alone.
     categories: ["security", "functional-suitability"]
     revision: 0.1.0

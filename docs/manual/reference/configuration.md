@@ -185,28 +185,37 @@ skills-gateway:
     # Files larger than this are handed to connectors unread. They are reported
     # as an informational 'file-not-scanned' finding, never skipped in silence.
     max-file-bytes: 1048576
+
+    # How often lapsed waivers are noted in the audit ledger. This cannot open a
+    # hole: a waiver stops suppressing its finding the moment the effective
+    # outcome is next computed, whether or not this sweep has run.
+    waiver-sweep-interval: 1h
+    waiver-sweep-batch-size: 200
 ```
 
 | Property | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `skills-gateway.vetting.timeout` | duration | `30s` | Per connector, per run. Exceeding it is an `ERROR` verdict, which blocks. |
 | `skills-gateway.vetting.max-file-bytes` | integer | `1048576` | Zero or negative falls back to the default. |
+| `skills-gateway.vetting.waiver-sweep-interval` | duration | `1h` | How often `waiver-expired` ledger entries are written. Has no effect on the gate. |
+| `skills-gateway.vetting.waiver-sweep-batch-size` | integer | `200` | Lapsed waivers recorded per pass. |
 
 !!! note "There is no switch that turns vetting off"
 
     Deliberately. A snapshot with no chain run is blocked either way, so a kill
     switch would buy an estate of blocked snapshots with no findings to explain
-    them. To get past a connector that is wrong about a snapshot, approve it with
-    a reason — that is what the override is for, and it leaves a record.
+    them. To get past a connector that is wrong about a snapshot, waive the
+    findings it raised — scoped, justified and expiring, and on the record.
 
 !!! warning "A shortened timeout silently converts slow connectors into blockers"
 
     Lowering `timeout` does not make vetting faster; it makes slow connectors
     fail. A connector that times out is recorded as `ERROR` and blocks the
-    snapshot, so every affected approval then needs an override reason.
+    snapshot, so every affected approval then needs a `connector-error` waiver —
+    which is a reviewer writing down that the scanner never looked.
 
-The chain, the verdict states, the aggregation rule and the honest limits of the
-built-in scanners are described in
+The chain, the verdict states, the aggregation rule, waivers, and the honest
+limits of the built-in scanners are described in
 [Vetting — the connector chain](../concepts/vetting.md).
 
 ---

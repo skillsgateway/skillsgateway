@@ -64,6 +64,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/snapshots/{id}/waivers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept a vetting finding on this snapshot's marketplace
+         * @description Records a scoped, expiring waiver for one finding rule. The marketplace — and, for SNAPSHOT scope, the commit SHA — are taken from the snapshot, so a waiver cannot be mis-scoped to content it does not belong to. A justification, the acting identity and a future expiry are all mandatory; an unlimited waiver cannot be expressed. While an active waiver covers a finding, that finding no longer contributes to the snapshot's effective vetting outcome.
+         */
+        post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/snapshots/{id}/restore": {
         parameters: {
             query?: never;
@@ -115,7 +135,7 @@ export interface paths {
         put?: never;
         /**
          * Approve a held snapshot
-         * @description Publishes the snapshot to the git facade and records the reviewer identity and timestamp. Only held snapshots can be approved. A snapshot whose latest vetting chain run did not clear — including one that has no chain run at all — is refused unless the request carries an override reason, which is recorded against the run and in the audit ledger.
+         * @description Publishes the snapshot to the git facade and records the reviewer identity and timestamp. Takes no request body. Only held snapshots can be approved. A snapshot whose effective vetting outcome is blocked — its chain run objects and at least one blocking finding is not covered by an active waiver, including a snapshot with no chain run at all — is refused, and the problem document names both the blocking connectors and the uncovered findings. Record a scoped, expiring waiver for each of those findings and approve again; every waiver that let the approval through is written to the ledger.
          */
         post: operations["approve"];
         delete?: never;
@@ -293,7 +313,7 @@ export interface paths {
         };
         /**
          * Snapshot vetting verdicts
-         * @description The snapshot's latest vetting chain run: each connector's verdict in chain order, the findings behind it, and the fail-closed aggregate that gates approval. A snapshot the chain has never run against reports a blocked outcome and no run.
+         * @description The snapshot's latest vetting chain run: each connector's verdict in chain order, the findings behind it, the waivers currently suppressing any of them, and the fail-closed effective aggregate that gates approval. A snapshot the chain has never run against reports a blocked outcome and no run.
          */
         get: operations["vetting"];
         put?: never;
@@ -384,6 +404,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/marketplaces/{name}/waivers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A marketplace's vetting waivers
+         * @description Every waiver recorded for the marketplace, newest first, active and lapsed alike. A lapsed or revoked waiver is kept and returned with active=false: the record of what was once accepted, by whom and until when is part of the audit trail.
+         */
+        get: operations["list_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/audit": {
         parameters: {
             query?: never;
@@ -444,6 +484,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/waivers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Withdraw a waiver
+         * @description Revokes the waiver. It stops suppressing its finding immediately — the effective vetting outcome is recomputed on every read — so a snapshot that was cleared only by this waiver becomes blocked again. The row is kept, with its revoker and time.
+         */
+        delete: operations["revoke"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tokens/{id}": {
         parameters: {
             query?: never;
@@ -454,7 +514,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["revoke"];
+        delete: operations["revoke_1"];
         options?: never;
         head?: never;
         patch?: never;
@@ -617,6 +677,77 @@ export interface components {
              */
             createdAt?: string;
         };
+        /** @description Request to accept one finding rule on a snapshot's marketplace, until an expiry */
+        WaiverRequest: {
+            /**
+             * @description Finding rule identifier to accept
+             * @example aws-access-key-id
+             */
+            ruleId: string;
+            /**
+             * @description SNAPSHOT pins the waiver to this snapshot's commit SHA; PATH applies it to a path in the marketplace and survives re-ingestion
+             * @enum {string}
+             */
+            scope: "SNAPSHOT" | "PATH";
+            /**
+             * @description Repository-relative path for PATH scope; ignored for SNAPSHOT scope, which always takes the snapshot's own SHA
+             * @example plugins/hello
+             */
+            path?: string;
+            /** @description Why this risk is accepted; recorded and shown to the next reviewer */
+            justification: string;
+            /**
+             * Format: date-time
+             * @description When the acceptance lapses. Required and must be in the future: there are no unlimited waivers.
+             * @example 2026-12-31T00:00:00Z
+             */
+            expiresAt: string;
+        };
+        /** @description A waiver as returned by the API, with its activity resolved as of now */
+        WaiverView: {
+            /**
+             * Format: int64
+             * @description Waiver id
+             */
+            id?: number;
+            /** @description Marketplace the waiver belongs to */
+            marketplace?: string;
+            /**
+             * @description Finding rule identifier being accepted
+             * @example aws-access-key-id
+             */
+            ruleId?: string;
+            /**
+             * @description How the scope value is matched
+             * @enum {string}
+             */
+            scope?: "SNAPSHOT" | "PATH";
+            /** @description A commit SHA for snapshot scope, a repository-relative path for path scope */
+            scopeValue?: string;
+            /** @description Why the risk is accepted */
+            justification?: string;
+            /** @description Identity that accepted the risk */
+            approvedBy?: string;
+            /**
+             * Format: date-time
+             * @description When the waiver was created
+             */
+            createdAt?: string;
+            /**
+             * Format: date-time
+             * @description When the acceptance lapses; never null
+             */
+            expiresAt?: string;
+            /**
+             * Format: date-time
+             * @description When the waiver was revoked, or null
+             */
+            revokedAt?: string;
+            /** @description Identity that revoked it, or null */
+            revokedBy?: string;
+            /** @description Whether the waiver suppresses anything right now */
+            active?: boolean;
+        };
         /** @description An immutable, SHA-identified snapshot of an upstream marketplace */
         Snapshot: {
             /**
@@ -662,14 +793,6 @@ export interface components {
              * @description End of the restore window; after it compaction removes the snapshot permanently
              */
             purgeAfter?: string;
-        };
-        /** @description Approval request; the reason is required only for a snapshot the vetting chain blocked */
-        ApproveRequest: {
-            /**
-             * @description Why the reviewer is approving a snapshot whose vetting chain blocked. Recorded against the chain run and in the audit ledger (GW_0041).
-             * @example false positive: the key in fixtures/ is a documented dummy value
-             */
-            overrideReason?: string;
         };
         /** @description Outcome of a retention pass */
         PassResult: {
@@ -918,7 +1041,7 @@ export interface components {
              * @description Fail-closed aggregate of the run's verdicts
              * @enum {string}
              */
-            outcome?: "CLEAR" | "BLOCKED";
+            outcome?: "CLEAR" | "CLEAR_WITH_WAIVERS" | "BLOCKED";
             /**
              * Format: date-time
              * @description When the run started
@@ -929,17 +1052,45 @@ export interface components {
              * @description When the run finished, or null if it never did
              */
             finishedAt?: string;
-            /** @description Reviewer who approved despite a blocked outcome, or null */
-            overrideBy?: string;
-            /**
-             * Format: date-time
-             * @description When the override was recorded, or null
-             */
-            overrideAt?: string;
-            /** @description Reason the reviewer gave for the override, or null */
-            overrideReason?: string;
             /** @description The run's verdicts, in chain order */
             verdicts?: components["schemas"]["VerdictView"][];
+        };
+        /** @description A finding an active waiver is currently suppressing */
+        Suppression: {
+            /** @description Connector whose verdict carried the finding */
+            connector?: string;
+            /** @description Finding rule identifier */
+            ruleId?: string;
+            /** @description Where the finding was located */
+            location?: string;
+            /**
+             * Format: int64
+             * @description Waiver suppressing it
+             */
+            waiverId?: number;
+            /** @description Identity that accepted the risk */
+            approvedBy?: string;
+            /**
+             * Format: date-time
+             * @description When the acceptance lapses
+             */
+            expiresAt?: string;
+        };
+        /** @description A blocking finding that no active waiver covers */
+        UncoveredFinding: {
+            /** @description Connector whose verdict carried the finding */
+            connector?: string;
+            /** @description Finding rule identifier */
+            ruleId?: string;
+            /** @description Where the finding was located */
+            location?: string;
+            /**
+             * @description How much it matters
+             * @enum {string}
+             */
+            severity?: "INFO" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+            /** @description Reviewer-facing explanation */
+            message?: string;
         };
         /** @description One connector's recorded verdict within a chain run */
         VerdictView: {
@@ -967,7 +1118,7 @@ export interface components {
             /** @description What the connector found */
             findings?: components["schemas"]["Finding"][];
         };
-        /** @description A snapshot's latest vetting chain run, and the chain that produced it */
+        /** @description A snapshot's latest vetting chain run, the waivers over it, and the chain that produced it */
         VettingView: {
             /**
              * Format: int64
@@ -975,12 +1126,23 @@ export interface components {
              */
             snapshotId?: number;
             /**
-             * @description Fail-closed aggregate of the run; a snapshot with no run is blocked
+             * @description The effective outcome, which is what gates approval: the run's verdicts with every waived finding removed. CLEAR_WITH_WAIVERS means nothing objects any more only because an active waiver is suppressing a finding. A snapshot with no run is blocked.
              * @enum {string}
              */
-            outcome?: "CLEAR" | "BLOCKED";
+            outcome?: "CLEAR" | "CLEAR_WITH_WAIVERS" | "BLOCKED";
+            /**
+             * @description What the connectors themselves concluded, before any waiver was applied
+             * @enum {string}
+             */
+            recordedOutcome?: "CLEAR" | "BLOCKED";
             /** @description The latest run with its verdicts and findings, or null if the chain never ran */
             run?: components["schemas"]["Run"];
+            /** @description Findings an active waiver is currently suppressing, keyed by connector, rule and location */
+            suppressed?: components["schemas"]["Suppression"][];
+            /** @description Blocking findings that no active waiver covers; the waivers approval still needs */
+            uncovered?: components["schemas"]["UncoveredFinding"][];
+            /** @description Waivers of this snapshot's marketplace whose rule appears in this run, active and lapsed alike, so an expired acceptance stays visible */
+            waivers?: components["schemas"]["WaiverView"][];
             /** @description The connectors configured in the chain, in the order they run */
             connectors?: components["schemas"]["ConnectorView"][];
         };
@@ -1245,6 +1407,50 @@ export interface operations {
             };
         };
     };
+    create_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WaiverRequest"];
+            };
+        };
+        responses: {
+            /** @description Waiver recorded */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WaiverView"];
+                };
+            };
+            /** @description Missing justification or expiry, an expiry in the past, or an unusable scope */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WaiverView"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WaiverView"];
+                };
+            };
+        };
+    };
     restore: {
         parameters: {
             query?: never;
@@ -1334,11 +1540,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["ApproveRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Snapshot approved and now served */
             200: {
@@ -1358,7 +1560,7 @@ export interface operations {
                     "*/*": components["schemas"]["Snapshot"];
                 };
             };
-            /** @description Snapshot is not in the held state, or its vetting chain blocked and no reason was given */
+            /** @description Snapshot is not in the held state, or its effective vetting outcome is blocked */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -1794,6 +1996,37 @@ export interface operations {
             };
         };
     };
+    list_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The marketplace's waivers */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WaiverView"][];
+                };
+            };
+            /** @description Marketplace not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WaiverView"][];
+                };
+            };
+        };
+    };
     audit: {
         parameters: {
             query?: never;
@@ -1867,6 +2100,37 @@ export interface operations {
         };
     };
     revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Waiver revoked */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WaiverView"];
+                };
+            };
+            /** @description Waiver not found, or already revoked */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WaiverView"];
+                };
+            };
+        };
+    };
+    revoke_1: {
         parameters: {
             query?: never;
             header?: never;
