@@ -15,7 +15,7 @@ import {
   type Snapshot,
 } from "@/api/queries";
 import { OutcomeBadge, VettingReport } from "@/components/vetting-report";
-import { Badge } from "@/components/ui/badge";
+import { SnapshotStateBadge } from "@/components/snapshot-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -48,19 +48,6 @@ const registerSchema = z.object({
 });
 
 type RegisterForm = z.infer<typeof registerSchema>;
-
-function stateBadge(state?: string) {
-  switch (state) {
-    case "approved":
-      return <Badge>approved</Badge>;
-    case "held":
-      return <Badge variant="secondary">held</Badge>;
-    case "rejected":
-      return <Badge variant="destructive">rejected</Badge>;
-    default:
-      return <Badge variant="outline">{state ?? "unknown"}</Badge>;
-  }
-}
 
 function RegisterMarketplaceDialog() {
   const [open, setOpen] = useState(false);
@@ -234,7 +221,9 @@ function SnapshotRow({ snapshot, onProvenance }: { snapshot: Snapshot; onProvena
   const decide = useDecideSnapshot();
   const [approving, setApproving] = useState(false);
   const id = snapshot.id ?? 0;
-  const held = snapshot.state === "held";
+  // A revoked snapshot is decidable again: the retraction was made without a person, so a person
+  // has to be able to answer it — by re-approving behind the same gate, or by rejecting for good.
+  const decidable = snapshot.state === "held" || snapshot.state === "revoked";
   const act = (decision: "reject") =>
     decide.mutate(
       { id, decision },
@@ -246,14 +235,14 @@ function SnapshotRow({ snapshot, onProvenance }: { snapshot: Snapshot; onProvena
   return (
     <TableRow>
       <TableCell className="font-mono">{snapshot.sha?.slice(0, 12)}</TableCell>
-      <TableCell>{stateBadge(snapshot.state)}</TableCell>
+      <TableCell><SnapshotStateBadge state={snapshot.state} /></TableCell>
       <TableCell>
         <VettingOutcomeCell snapshotId={id} />
       </TableCell>
       <TableCell className="text-muted-foreground">{snapshot.violation ?? "—"}</TableCell>
       <TableCell>{snapshot.decidedBy ?? "—"}</TableCell>
       <TableCell className="space-x-2 text-right">
-        {held ? (
+        {decidable ? (
           <>
             <Button
               size="sm"
@@ -261,7 +250,7 @@ function SnapshotRow({ snapshot, onProvenance }: { snapshot: Snapshot; onProvena
               disabled={decide.isPending}
               aria-label={`Approve snapshot ${id}`}
             >
-              Approve
+              {snapshot.state === "revoked" ? "Re-approve" : "Approve"}
             </Button>
             <Button
               size="sm"

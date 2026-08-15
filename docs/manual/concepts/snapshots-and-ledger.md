@@ -26,9 +26,10 @@ retention.
 | Field | Meaning |
 | --- | --- |
 | `sha` | The 40-hex upstream commit. This is the pin. |
-| `state` | `held`, `approved`, or `rejected`. Set at ingestion and changed exactly once by a decision. |
-| `violation` | Why ingestion flagged the snapshot, when it did. |
-| `decidedBy` / `decidedAt` | The principal who decided, and when. |
+| `state` | `held`, `approved`, `rejected`, or `revoked`. Set at ingestion and changed only by a decision or by an enforced re-vetting violation. |
+| `violation` | Why ingestion flagged the snapshot, or why re-vetting revoked it. Cleared by a fresh decision. |
+| `decidedBy` / `decidedAt` | The principal who decided, and when. Survives a revocation. |
+| `revokedBy` / `revokedAt` | The identity that revoked it, and when. Cleared by a fresh decision. |
 | `createdAt` | When the gateway ingested it. |
 
 ```mermaid
@@ -36,12 +37,34 @@ stateDiagram-v2
     [*] --> held: ingest
     held --> approved: approve (publishes)
     held --> rejected: reject
+    approved --> revoked: enforced re-vetting violation<br/>(unpublishes)
+    revoked --> approved: fresh approve decision<br/>(re-publishes)
+    revoked --> rejected: reject
     approved --> [*]: serving on refs/heads/main
     rejected --> [*]: never served
+    revoked --> [*]: served once, not any more
 ```
 
-The state machine is deliberately tiny and one-way. There is no revocation
-state, and re-deciding is refused with 409.
+The state machine stays small, and every edge is deliberate.
+
+`approved → revoked` is the only transition the gateway makes without a person,
+and only when [continuous re-vetting](../guides/re-vetting.md) is configured to
+enforce. It removes the published refs; it does not touch quarantine, so the
+content is still there to be re-reviewed.
+
+`revoked → approved` is the way back, and it is the *ordinary* approve endpoint —
+no un-revoke, no undo. That means the violation must be waived or fixed first,
+because the same effective-vetting gate applies, and it means the return is a
+recorded decision with a named reviewer.
+
+Everything else is refused with 409: an approved snapshot cannot be re-decided,
+and a rejected one cannot be approved.
+
+!!! note "Deletion is not a state"
+
+    Retention marks a snapshot deleted without touching `state` — a deleted
+    snapshot is still whichever of the four it was. See
+    [Snapshot retention](../reference/retention.md).
 
 ### Why SHA pinning is the point
 

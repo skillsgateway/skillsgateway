@@ -43,7 +43,7 @@ consumed by the portal with a session cookie.
 | --- | --- |
 | 400 | The request violated a trust-boundary rule — a disallowed URL scheme, or a non-default ref. |
 | 404 | No such marketplace, snapshot or token. |
-| 409 | A state conflict — a duplicate name, or a decision on a snapshot that is not `held`. |
+| 409 | A state conflict — a duplicate name, a decision on a snapshot that is already `approved` or `rejected`, or a re-vet of one that is not `approved`. |
 | 422 | A name failed `^[a-z0-9][a-z0-9_-]*$`. |
 | 502 | Ingestion failed against the upstream. |
 
@@ -51,7 +51,7 @@ consumed by the portal with a session cookie.
 
 | Area | Endpoints |
 | --- | --- |
-| [Marketplaces and snapshots](marketplaces.md) | Register, list, ingest, inspect contents, approve, reject, provenance |
+| [Marketplaces and snapshots](marketplaces.md) | Register, list, ingest, inspect contents, vetting, waivers, re-vet, fetchers, approve, reject, provenance |
 | [Access tokens](tokens.md) | Create, list, revoke |
 | [Audit](audit.md) | Read the ledger; stream it as NDJSON; register, replay and delete export sinks |
 | [Webhooks](../../guides/lifecycle-webhooks.md) | Register, list and delete subscribers; list delivery attempts |

@@ -23,4 +23,23 @@ public interface GitStorage {
 
     /** Open the published repository only if it exists and has served content. */
     Optional<Repository> publishedIfServing(String marketplace) throws IOException;
+
+    /**
+     * The exact inverse of publication (GW_0050): removes every published ref through which one
+     * snapshot's content is reachable, and nothing else.
+     *
+     * <p>Two refs put a snapshot on the wire, and both must go. {@code refs/heads/main} is the
+     * served tip — removed only when it is still this snapshot, so revoking a snapshot a later
+     * approval has already superseded does not take the marketplace down with it. And
+     * {@code refs/snapshots/<sha>}, which approval copies alongside main, is advertised by
+     * upload-pack in its own right: leaving it behind would keep the revoked commit fetchable by
+     * name after the marketplace stopped resolving at all.
+     *
+     * <p>Nothing is re-ingested and quarantine is untouched: the content is still there to be
+     * re-reviewed, it has merely stopped being served.
+     *
+     * @return true when this call is what stopped the marketplace serving — i.e. the removed ref
+     *     was the tip — so the caller can say so in the ledger without re-deriving it
+     */
+    boolean unpublish(String marketplace, String sha) throws IOException;
 }

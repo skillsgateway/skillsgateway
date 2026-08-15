@@ -46,6 +46,43 @@ public class FetchLogRepository {
     }
 
     /**
+     * Every identity that has fetched one commit through the facade, with how often and when it
+     * last did (GW_0053) — the blast-radius report of ARCHITECTURE.md §5, answered from the ledger
+     * the gateway has been keeping all along rather than from anything new.
+     *
+     * <p>Only {@code upload-pack} entries count. A ref advertisement ({@code info-refs}) happens on
+     * every {@code git fetch} whether or not anything is transferred, so counting it would name
+     * teams that never received the content and bury the ones that did.
+     *
+     * <p>This names principals, not teams: the gateway knows who authenticated, and mapping a
+     * principal to a team is the identity provider's knowledge, not the ledger's. Direct
+     * per-team notification is a follow-on; what exists today is the list an operator acts on.
+     */
+    public List<Fetcher> fetchersOf(String sha) {
+        return jdbc.sql("SELECT principal, COUNT(*) AS fetches, MAX(ts) AS last_fetch FROM fetch_log"
+                        + " WHERE sha = :sha AND event = 'upload-pack' AND principal IS NOT NULL"
+                        + " GROUP BY principal ORDER BY MAX(ts) DESC")
+                .param("sha", sha)
+                .query((rs, rowNum) -> new Fetcher(
+                        rs.getString("principal"),
+                        rs.getLong("fetches"),
+                        MarketplaceRepository.instant(rs, "last_fetch")))
+                .list();
+    }
+
+    /** One identity that received a snapshot's content through the facade. */
+    @Schema(description = "An identity that fetched a snapshot's content through the git facade")
+    public record Fetcher(
+            @Schema(description = "Authenticated identity that fetched it")
+            String principal,
+
+            @Schema(description = "How many times it received a pack for this commit")
+            long fetches,
+
+            @Schema(description = "The most recent of those fetches")
+            Instant lastFetch) {}
+
+    /**
      * The page of ledger entries an export consumer sees next: everything after its cursor, in
      * ledger order, bounded by {@code limit} (GW_0027, GW_0028).
      *

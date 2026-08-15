@@ -14,16 +14,27 @@ the moment it is ingested, approved or rejected instead of polling
 | `snapshot.rejected` | A held snapshot was rejected. |
 | `snapshot.soft_deleted` | A snapshot was marked deleted, by an administrator or by a retention policy. |
 | `snapshot.restored` | A soft-deleted snapshot's marks were cleared. |
+| `snapshot.vetted` | A vetting chain run finished. The verdicts are readable at `GET /api/snapshots/{id}/vetting`. |
+| `snapshot.revet_violation` | A re-vetting run found a violation on a snapshot that is **already approved**. |
+| `snapshot.revoked` | A snapshot was retroactively quarantined; the facade no longer serves it. |
 
-Those are all of them. The snapshot state machine is
-`held → approved | rejected` with no revocation state, so there is no
-`snapshot.revoked` event to subscribe to — and deletion is orthogonal to that
-state machine, which is why the retention events carry the snapshot's unchanged
-vetting state.
+Those are all of them. Deletion is orthogonal to the snapshot state machine,
+which is why the retention events carry the snapshot's unchanged vetting state.
 
-A deletion made by the scheduled policy pass rather than by a person carries the
-actor `retention-policy`, so a receiver can tell the two apart. See
-[Reclaiming snapshot storage](snapshot-retention.md).
+An action taken by a scheduled pass rather than by a person carries a policy
+actor — `retention-policy` for deletions, `revet-policy` for re-vetting — so a
+receiver can tell the two apart. See
+[Reclaiming snapshot storage](snapshot-retention.md) and
+[Re-vetting approved content](re-vetting.md).
+
+!!! warning "`snapshot.revet_violation` is the one that needs a receiver"
+
+    It says content a team is *already using* has stopped being acceptable, and
+    in the default warn mode it is the only signal — nothing is unpublished, so
+    nothing breaks to announce it. Read the payload's `state` to tell the two
+    apart: `approved` means it is still being served and someone has to act;
+    `revoked` means enforcement already retracted it and
+    `snapshot.revoked` follows.
 
 ## 1. Register a subscriber
 

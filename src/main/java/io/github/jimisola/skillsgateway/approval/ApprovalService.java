@@ -61,16 +61,23 @@ public class ApprovalService {
      * found and nothing else. The waivers that were in force are returned to the caller, which
      * appends them to the ledger as the acting identity.
      *
+     * <p>A snapshot that re-vetting revoked (GW_0050) comes back through this exact method and no
+     * other. That is what "not re-publishable without a fresh approve decision" means concretely:
+     * the same gate, evaluated against the same effective outcome — so the violation that caused
+     * the revocation must have been waived, or fixed by re-ingestion, before this can succeed — and
+     * a new reviewer identity and timestamp recorded by the transition. There is no un-revoke.
+     *
      * @return the decided snapshot together with the waivers that let it through
      */
-    @Requirements({"GW_0005", "GW_0041"})
+    @Requirements({"GW_0005", "GW_0041", "GW_0050"})
     public Approved approve(long snapshotId, String reviewer) {
-        // The state machine comes first: a snapshot that is not held is unapprovable for a reason
-        // that has nothing to do with vetting, and saying "vetting blocked it" would be wrong.
+        // The state machine comes first: a snapshot that is neither held nor revoked is unapprovable
+        // for a reason that has nothing to do with vetting, and saying "vetting blocked it" would
+        // be wrong.
         Snapshot current =
                 snapshotRepository.findById(snapshotId).orElseThrow(() -> new SnapshotNotFoundException(snapshotId));
         List<WaiverEvaluation.Suppression> applied = List.of();
-        if (Snapshot.HELD.equals(current.state())) {
+        if (current.decidable()) {
             WaiverEvaluation.Effect effect = waiverService.evaluate(current);
             if (effect.blocked()) {
                 throw new VettingBlockedException(snapshotId, effect.blockingConnectors(), effect.uncovered());
@@ -117,7 +124,9 @@ public class ApprovalService {
                     snapshot.violation(),
                     snapshot.createdAt(),
                     snapshot.decidedBy(),
-                    snapshot.decidedAt());
+                    snapshot.decidedAt(),
+                    snapshot.revokedAt(),
+                    snapshot.revokedBy());
         });
     }
 
@@ -131,5 +140,11 @@ public class ApprovalService {
             String violation,
             Instant ingestedAt,
             String decidedBy,
-            Instant decidedAt) {}
+            Instant decidedAt,
+
+            @Schema(description = "When re-vetting revoked the snapshot, or null")
+            Instant revokedAt,
+
+            @Schema(description = "Identity that revoked it, or null")
+            String revokedBy) {}
 }

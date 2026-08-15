@@ -24,8 +24,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 public class VettingRepository {
 
-    /** The only trigger written in v1; scheduled re-vetting will add its own. */
+    /** A run the ingestion of a new snapshot caused. */
     public static final String TRIGGER_INGESTION = "ingestion";
+
+    /** A run the continuous re-vetting sweep caused (GW_0049). */
+    public static final String TRIGGER_REVET_SCHEDULED = "revet-scheduled";
+
+    /**
+     * A run an operator asked for. This is also how a scanner or advisory feed update is turned
+     * into fresh evidence today: the built-in connectors have no external feed to subscribe to, so
+     * "the feed moved" is an operator calling the re-vet endpoint (GW_0049).
+     */
+    public static final String TRIGGER_REVET_MANUAL = "revet-manual";
 
     private final JdbcClient jdbc;
 
@@ -33,14 +43,18 @@ public class VettingRepository {
         this.jdbc = jdbc;
     }
 
-    /** Starts a run, already carrying the fail-closed outcome it has before anything ran. */
-    public long startRun(long snapshotId, String trigger) {
-        return jdbc.sql("INSERT INTO vetting_runs (snapshot_id, trigger, started_at, outcome)"
-                        + " VALUES (:snapshotId, :trigger, :now, :outcome) RETURNING id")
+    /**
+     * Starts a run, already carrying the fail-closed outcome it has before anything ran, and
+     * stamped with the identity of the chain that is about to produce it.
+     */
+    public long startRun(long snapshotId, String trigger, String chain) {
+        return jdbc.sql("INSERT INTO vetting_runs (snapshot_id, trigger, started_at, outcome, chain)"
+                        + " VALUES (:snapshotId, :trigger, :now, :outcome, :chain) RETURNING id")
                 .param("snapshotId", snapshotId)
                 .param("trigger", trigger)
                 .param("now", OffsetDateTime.now())
                 .param("outcome", VettingChain.Outcome.BLOCKED.stored())
+                .param("chain", chain)
                 .query(Long.class)
                 .single();
     }
@@ -113,7 +127,25 @@ public class VettingRepository {
                 r.outcome(),
                 r.startedAt(),
                 r.finishedAt(),
+                r.chain(),
                 verdicts(r.runId())));
+    }
+
+    /** One run by id, with its verdicts and findings — what a just-finished re-vet reads back. */
+    public Optional<Run> run(long runId) {
+        return jdbc.sql("SELECT * FROM vetting_runs WHERE id = :runId")
+                .param("runId", runId)
+                .query(VettingRepository::mapRun)
+                .optional()
+                .map(r -> new Run(
+                        r.runId(),
+                        r.snapshotId(),
+                        r.trigger(),
+                        r.outcome(),
+                        r.startedAt(),
+                        r.finishedAt(),
+                        r.chain(),
+                        verdicts(r.runId())));
     }
 
     private List<VerdictView> verdicts(long runId) {
@@ -174,7 +206,7 @@ public class VettingRepository {
 
             @Schema(
                     description = "What caused the run",
-                    allowableValues = {"ingestion"})
+                    allowableValues = {"ingestion", "revet-scheduled", "revet-manual"})
             String trigger,
 
             @Schema(description = "Fail-closed aggregate of the run's verdicts")
@@ -184,6 +216,11 @@ public class VettingRepository {
 
             @Schema(description = "When the run finished, or null if it never did")
             Instant finishedAt,
+
+            @Schema(
+                    description = "Identity of the chain that produced the run: connector@version in chain order",
+                    example = "prompt-injection@1,secret-scan@1")
+            String chain,
 
             @Schema(description = "The run's verdicts, in chain order")
             List<VerdictView> verdicts) {
@@ -195,6 +232,19 @@ public class VettingRepository {
                     .map(VerdictView::connector)
                     .toList();
         }
+
+        /** The recorded state of one connector's verdict in this run, or empty if it has none. */
+        public java.util.Optional<VerdictState> stateOf(String connector) {
+            return verdicts.stream()
+                    .filter(verdict -> verdict.connector().equals(connector))
+                    .map(VerdictView::state)
+                    .findFirst();
+        }
+
+        /** Whether this run was produced by re-vetting rather than by ingesting the snapshot. */
+        public boolean revet() {
+            return TRIGGER_REVET_SCHEDULED.equals(trigger) || TRIGGER_REVET_MANUAL.equals(trigger);
+        }
     }
 
     private static Run mapRun(ResultSet rs, int rowNum) throws SQLException {
@@ -205,6 +255,7 @@ public class VettingRepository {
                 VettingChain.Outcome.of(rs.getString("outcome")),
                 instant(rs, "started_at"),
                 instant(rs, "finished_at"),
+                rs.getString("chain"),
                 List.of());
     }
 

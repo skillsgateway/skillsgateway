@@ -391,3 +391,59 @@ requirements:
     rationale: An auditor asking why a snapshot with a critical finding is being served must be able to read the accepted risk, who accepted it, and until when, from the ledger alone.
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
+
+  - id: GW_0049
+    title: Continuous re-vetting of approved snapshots
+    significance: shall
+    description: The system shall re-run the vetting chain over already-approved snapshots on a configurable schedule, selecting the snapshots whose most recent chain run is oldest in bounded batches so that no pass re-vets the whole estate, shall record each pass as a new chain run carrying its trigger and the identity and version of every connector in the chain, shall leave the snapshot's own state unchanged by the run itself, and shall additionally re-vet a named snapshot or every approved snapshot of a named marketplace on demand.
+    rationale: An approval is a judgement made against the evidence of one day; connectors gain rules and acceptances lapse, so an estate whose approvals are never re-examined slowly becomes a set of unverified assertions. Oldest-first bounded batches make the cost proportional and the coverage fair, and the on-demand pass is how an updated scanner rule set is turned into fresh evidence now.
+    categories: ["security", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_0050
+    title: Auto-quarantine of a violating approved snapshot
+    significance: shall
+    description: The system shall, when a re-vetting run's effective outcome computed against the waivers active at that instant objects to the content of an approved snapshot and the configured re-vetting mode is enforcing, move that snapshot to a revoked state, remove every published git reference through which its content was reachable so that the git facade no longer serves it, leave the quarantined copy untouched, and refuse to serve or re-publish it again until a fresh approve decision is recorded against it through the ordinary approval gate.
+    rationale: Content that has become unacceptable must stop being served without waiting for someone to notice, and the retraction must be an explicit state rather than a silent deletion so that a consumer's next fetch fails loudly instead of quietly returning stale content; requiring a fresh decision to republish is what stops an automatic retraction from being undone automatically.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0051
+    title: Warn-only re-vetting mode
+    significance: shall
+    description: The system shall provide a re-vetting mode, and shall use it by default, in which a re-vetting violation on an approved snapshot is recorded and announced in full but the snapshot keeps its approved state and its published references, so that no snapshot is ever unpublished while that mode is in force.
+    rationale: Auto-quarantine retracts content every consuming team already depends on, so an upgrade must never start doing it; a mode that produces the same evidence without acting lets an operator measure the blast radius of a policy before granting it the power to take content away.
+    categories: ["reliability", "security"]
+    revision: 0.1.0
+
+  - id: GW_0052
+    title: An inconclusive re-vetting run never revokes
+    significance: shall
+    description: The system shall distinguish a re-vetting run that blocks because a connector objected to the content from one that blocks only because a connector errored, timed out, has not answered, or produced no verdict at all, shall record the latter as inconclusive and leave the snapshot approved and served whatever the re-vetting mode, and shall continue to treat every such run as blocking for the purposes of approving, re-approving or publishing that snapshot.
+    rationale: A broken connector is evidence about the scanner and not about the content, and treating it as grounds for retraction would let a single scanner outage revoke an entire estate at once — turning a scanner bug into an outage of exactly the content the gateway exists to serve. Nothing is weakened, because fail-closed still governs every path that publishes.
+    categories: ["reliability", "security"]
+    revision: 0.1.0
+
+  - id: GW_0053
+    title: Re-vetting violations are announced with their affected consumers
+    significance: shall
+    description: The system shall emit a lifecycle event when a re-vetting run finds a violation on an approved snapshot and a further lifecycle event when a snapshot is revoked, and shall report, from the append-only fetch ledger, every authenticated identity that received that snapshot's content through the git facade together with how often and when it last did.
+    rationale: A retroactive violation is only actionable if the operator can see who already has the content; the ledger has recorded exactly that since the first fetch, so the blast radius is a report rather than an investigation, and an event is what lets a receiver act without polling.
+    categories: ["security", "interaction-capability"]
+    revision: 0.1.0
+
+  - id: GW_0054
+    title: Re-vetting and revocation are audit-logged
+    significance: shall
+    description: The system shall append to the append-only audit ledger the outcome of every re-vetting run with its trigger, each retroactive violation with the objecting connectors, the rules behind it and the mode in force, one entry per identity affected by that violation, and every revocation and unpublication with the acting identity and the marketplace.
+    rationale: A retraction of content that was previously approved is the most consequential thing the gateway does on its own; an auditor must be able to read what was found, when, under which policy, who was affected and what was taken away, from the ledger alone.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0055
+    title: Portal re-vetting and revocation surface
+    significance: shall
+    description: The system shall show, in the portal behind the OIDC session, that a snapshot has been revoked and why, the findings of the re-vetting run that revoked it, the identities that had fetched its content, and a control that re-vets a snapshot on demand.
+    rationale: A retraction nobody can see the reason for is indistinguishable from an outage; putting the violation, its findings and the affected identities on the page that shows the snapshot is what lets a reviewer decide between waiving, rejecting and re-approving without leaving the portal.
+    categories: ["interaction-capability", "security"]
+    revision: 0.1.0

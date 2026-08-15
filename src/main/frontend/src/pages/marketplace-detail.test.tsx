@@ -26,3 +26,32 @@ test("deleted_snapshot_shows_its_restore_deadline_and_control", async () => {
   expect(screen.getByRole("button", { name: "Delete snapshot 1" })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Delete snapshot 2" })).not.toBeInTheDocument();
 });
+
+/**
+ * A revoked snapshot has to explain itself. The badge alone is an outage nobody can attribute:
+ * the reason, the revoking identity, and above all the list of teams that already cloned the
+ * content are what turn a retraction into something an operator can act on.
+ */
+test("revoked_snapshot_shows_the_violation_and_who_already_fetched_it", async () => {
+  renderPage();
+
+  expect(await screen.findByText("revoked")).toBeInTheDocument();
+  expect(screen.getByText(/re-vetting violation: \[secret-scan\]/)).toBeInTheDocument();
+  expect(screen.getByText(/revoked by revet-policy/)).toBeInTheDocument();
+
+  const affected = await screen.findByRole("region", {
+    name: "Identities that fetched snapshot 3",
+  });
+  expect(affected).toBeInTheDocument();
+  expect(await screen.findByText("team-payments")).toBeInTheDocument();
+  expect(screen.getByText("12 fetches")).toBeInTheDocument();
+  expect(screen.getByText("ci-runner")).toBeInTheDocument();
+
+  // A revoked snapshot is not re-vetted from here: re-vetting is about content that is being
+  // served, and this one is not. Deciding it again is the marketplaces page's job.
+  expect(screen.queryByRole("button", { name: "Re-vet snapshot 3" })).not.toBeInTheDocument();
+  // And nothing offers a fetch history for a snapshot that was never revoked.
+  expect(
+    screen.queryByRole("region", { name: "Identities that fetched snapshot 1" }),
+  ).not.toBeInTheDocument();
+});

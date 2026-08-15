@@ -72,6 +72,9 @@ $COMPOSE up -d --wait
 GATEWAY_PORT="${E2E_GATEWAY_PORT:-8081}"
 mkdir -p "$UI_DIR/test-results"
 DATA_DIR="$(mktemp -d "${TMPDIR:-/tmp}/e2e-data.XXXXXX")"
+# Re-vetting: the scheduled sweep is off, so no background pass can revoke a fixture out from
+# under a running test — but the mode is ENFORCE, because the acceptance suite has to see the
+# retraction a deployment that opts in would see, not the warn-mode default that changes nothing.
 SERVER_PORT="$GATEWAY_PORT" \
 SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5433/skillsgateway" \
 SPRING_DATASOURCE_USERNAME=skillsgateway \
@@ -83,6 +86,8 @@ SGW_OIDC_TOKEN_URI="http://localhost:9090/default/token" \
 SGW_OIDC_JWK_SET_URI="http://localhost:9090/default/jwks" \
 SKILLSGATEWAY_DATADIR="$DATA_DIR" \
 SKILLSGATEWAY_ALLOWEDURLSCHEMES="http,https,file" \
+SKILLSGATEWAY_VETTING_REVET_ENABLED=false \
+SKILLSGATEWAY_VETTING_REVET_MODE=enforce \
 java -jar "$JAR" > "$UI_DIR/test-results/gateway-e2e.log" 2>&1 &
 GATEWAY_PID=$!
 
