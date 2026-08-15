@@ -16,7 +16,7 @@
         <link rel="prev" href="../tokens/">
       
       
-        <link rel="next" href="../../git-facade/">
+        <link rel="next" href="../../retention/">
       
       
         
@@ -484,6 +484,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -641,6 +647,90 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../guides/lifecycle-webhooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Receiving lifecycle webhooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../guides/exporting-the-audit-ledger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exporting the audit ledger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../guides/snapshot-retention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reclaiming snapshot storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -658,6 +748,8 @@
   
     
     
+      
+        
       
         
       
@@ -950,6 +1042,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#export-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export endpoints
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#entry-fields" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -994,6 +1097,34 @@
           </ul>
         </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../retention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Snapshot retention
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1156,6 +1287,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#export-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export endpoints
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#entry-fields" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1234,9 +1376,45 @@ schema-lessly.</p>
 <div class="admonition note">
 <p class="admonition-title">No filtering, search or paging</p>
 <p>This endpoint returns the whole table. It is a recent-activity view, not an
-investigation tool. Continuous export to an external system is a separate
-capability.</p>
+investigation tool. For a continuous, resumable feed use the export
+endpoints below.</p>
 </div>
+<hr />
+<h2 id="export-endpoints">Export endpoints<a class="headerlink" href="#export-endpoints" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /api/audit/export</code></td>
+<td>Stream entries as <code>application/x-ndjson</code>, one per line in ledger order. <code>?after=</code> (default <code>0</code>) and <code>?limit=</code> (default <code>1000</code>, capped at <code>10000</code>). The resume sequence comes back in <code>X-Skills-Gateway-Audit-Cursor</code>.</td>
+</tr>
+<tr>
+<td><code>POST /api/audit/sinks</code></td>
+<td>Register a push sink. <strong>201</strong> with the show-once signing secret; <strong>400</strong> disallowed scheme, <strong>409</strong> name taken, <strong>422</strong> bad name.</td>
+</tr>
+<tr>
+<td><code>GET /api/audit/sinks</code></td>
+<td>List sinks with <code>cursorPosition</code>, <code>ledgerHead</code> and <code>behind</code>. Secrets are never returned.</td>
+</tr>
+<tr>
+<td><code>PUT /api/audit/sinks/{id}/cursor</code></td>
+<td>Set the position — replay. <strong>200</strong> with the sink, <strong>404</strong> unknown.</td>
+</tr>
+<tr>
+<td><code>DELETE /api/audit/sinks/{id}</code></td>
+<td>Remove the sink and its delivery channel. <strong>204</strong>, or <strong>404</strong>.</td>
+</tr>
+</tbody>
+</table>
+<p>Both paths withhold entries younger than the commit-settling lag, and every
+entry carries its ledger <code>id</code> as the de-duplication key. Task-shaped coverage —
+polling, batch payload, signature, replay — is in
+<a href="../../../guides/exporting-the-audit-ledger/">Exporting the audit ledger</a>.</p>
 <h2 id="entry-fields">Entry fields<a class="headerlink" href="#entry-fields" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

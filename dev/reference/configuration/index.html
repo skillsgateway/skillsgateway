@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://jimisola.github.io/skills-gateway/dev/reference/configuration/">
       
       
-        <link rel="prev" href="../../guides/consuming-skills/">
+        <link rel="prev" href="../../guides/snapshot-retention/">
       
       
         <link rel="next" href="../api/">
@@ -484,6 +484,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -641,6 +647,90 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/lifecycle-webhooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Receiving lifecycle webhooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/exporting-the-audit-ledger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exporting the audit ledger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/snapshot-retention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reclaiming snapshot storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -658,6 +748,8 @@
   
     
     
+      
+        
       
         
       
@@ -798,6 +890,39 @@
     <span class="md-ellipsis">
       
         skills-gateway
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#webhooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Webhooks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audit-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit export
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#retention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retention
       
     </span>
   </a>
@@ -1037,6 +1162,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../retention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Snapshot retention
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../git-facade/" class="md-nav__link">
         
   
@@ -1198,6 +1351,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#webhooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Webhooks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audit-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit export
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#retention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retention
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#datasource" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1295,6 +1481,21 @@
 <td>No — all defaulted.</td>
 </tr>
 <tr>
+<td><a href="#webhooks"><code>skills-gateway.webhooks.*</code></a></td>
+<td>Outbound lifecycle-webhook dispatch: poll interval, retry budget and backoff.</td>
+<td>No — all defaulted.</td>
+</tr>
+<tr>
+<td><a href="#audit-export"><code>skills-gateway.audit-export.*</code></a></td>
+<td>Ledger export: the commit-settling lag, batch and page sizes.</td>
+<td>No — all defaulted.</td>
+</tr>
+<tr>
+<td><a href="#retention"><code>skills-gateway.retention.*</code></a></td>
+<td>Snapshot retention policies and the schedules that apply them. <strong>Off by default.</strong></td>
+<td>No — all defaulted.</td>
+</tr>
+<tr>
 <td><a href="#datasource"><code>spring.datasource.*</code></a></td>
 <td>PostgreSQL connection. Supplied entirely by environment.</td>
 <td><strong>Yes</strong></td>
@@ -1380,12 +1581,323 @@ authentication, and attributes every audit entry to <code>dev</code>. There is n
 partial mode.</p>
 </div>
 <hr />
+<h2 id="webhooks">Webhooks<a class="headerlink" href="#webhooks" title="Permanent link">&para;</a></h2>
+<p>Tuning for the outbound dispatcher that delivers snapshot lifecycle events. None
+of it appears in <code>application.yaml</code>; every value below is a Java-side default,
+and omitting the whole block is identical to omitting each key.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">webhooks</span><span class="p">:</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="c1"># Stops the polling dispatcher only. Events are still enqueued as delivery</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="c1"># rows and the admin API keeps working, so turning this back on drains</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="c1"># whatever accumulated instead of losing it.</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="c1"># How often the dispatcher looks for due deliveries. Also the floor on</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="c1"># end-to-end latency for the first attempt.</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="nt">poll-interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5s</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="c1"># Attempt n schedules the next attempt at base-backoff * 2^(n-1),</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span><span class="c1"># never later than max-backoff.</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="nt">base-backoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10s</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span><span class="nt">max-backoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1h</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span><span class="c1"># Total attempts per delivery, first one included. Reaching it marks the</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">    </span><span class="c1"># delivery &#39;failed&#39;; it is never retried again.</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">    </span><span class="nt">max-attempts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">    </span><span class="c1"># Connect and read timeout for the outbound POST. The claim lease is</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">    </span><span class="c1"># derived from it, so a slow receiver cannot strand a delivery.</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10s</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">    </span><span class="c1"># Deliveries claimed per poll pass.</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="w">    </span><span class="nt">batch-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>skills-gateway.webhooks.enabled</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td><code>false</code> pauses delivery; it does not stop emission.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.webhooks.poll-interval</code></td>
+<td>duration</td>
+<td><code>5s</code></td>
+<td>Fixed delay between dispatch passes.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.webhooks.base-backoff</code></td>
+<td>duration</td>
+<td><code>10s</code></td>
+<td>First retry delay; doubles per attempt.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.webhooks.max-backoff</code></td>
+<td>duration</td>
+<td><code>1h</code></td>
+<td>Ceiling on the doubling.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.webhooks.max-attempts</code></td>
+<td>integer</td>
+<td><code>5</code></td>
+<td>Attempt budget per delivery.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.webhooks.timeout</code></td>
+<td>duration</td>
+<td><code>10s</code></td>
+<td>Connect and read timeout per attempt.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.webhooks.batch-size</code></td>
+<td>integer</td>
+<td><code>50</code></td>
+<td>Deliveries claimed per pass.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title">Raising the retry budget raises the retry window</p>
+<p>The delays compound: with the defaults a delivery is abandoned about two
+minutes after the event. <code>max-attempts: 12</code> with the same base reaches the
+one-hour cap and keeps a dead receiver in the queue for hours. Receivers
+must de-duplicate on the delivery id regardless — see
+<a href="../../guides/lifecycle-webhooks/">Receiving lifecycle webhooks</a>.</p>
+</div>
+<hr />
+<h2 id="audit-export">Audit export<a class="headerlink" href="#audit-export" title="Permanent link">&para;</a></h2>
+<p>Tuning for the ledger export — the NDJSON pull endpoint and the scheduled
+exporter that feeds push sinks. Java-side defaults again; nothing appears in
+<code>application.yaml</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">audit-export</span><span class="p">:</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="c1"># Stops the exporter poller only. The pull endpoint keeps serving and sinks</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="c1"># keep their cursors, so turning this back on resumes where it left off.</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="c1"># How often each enabled sink is offered the next batch.</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span><span class="nt">poll-interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30s</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">    </span><span class="c1"># Commit-settling window. The ledger id is a BIGSERIAL assigned before</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">    </span><span class="c1"># commit, so a lower id can become visible after a higher one; both export</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">    </span><span class="c1"># paths withhold entries younger than this so a cursor cannot step over an</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">    </span><span class="c1"># append that was still in flight. The cost is staleness, not correctness.</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="w">    </span><span class="nt">lag</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5s</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="w">    </span><span class="c1"># Ledger entries per pushed batch, unless the sink overrides it.</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="w">    </span><span class="nt">batch-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="w">    </span><span class="c1"># GET /api/audit/export page size when ?limit= is omitted, and the ceiling</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="w">    </span><span class="c1"># it is clamped to when it is given.</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="w">    </span><span class="nt">default-page-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="w">    </span><span class="nt">max-page-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10000</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>skills-gateway.audit-export.enabled</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td><code>false</code> pauses push export; the pull endpoint is unaffected.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.audit-export.poll-interval</code></td>
+<td>duration</td>
+<td><code>30s</code></td>
+<td>Fixed delay between export passes.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.audit-export.lag</code></td>
+<td>duration</td>
+<td><code>5s</code></td>
+<td>Entries younger than this are withheld from both paths.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.audit-export.batch-size</code></td>
+<td>integer</td>
+<td><code>500</code></td>
+<td>Per-sink default; a sink may set its own, clamped to <code>max-page-size</code>.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.audit-export.default-page-size</code></td>
+<td>integer</td>
+<td><code>1000</code></td>
+<td>Applied when <code>?limit=</code> is absent.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.audit-export.max-page-size</code></td>
+<td>integer</td>
+<td><code>10000</code></td>
+<td>Hard ceiling on <code>?limit=</code> and on a sink's batch size.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title"><code>lag: 0</code> reintroduces the skip window</p>
+<p>Setting the lag to zero lets a cursor advance past an entry that had an id
+but was not yet committed — that entry is then never exported, and the gap
+is silent. Shorten it only with evidence about your commit latency; a
+compliance feed with a hole in it is worse than one that is seconds behind.</p>
+</div>
+<p>Sinks, cursors and replay are described in
+<a href="../../guides/exporting-the-audit-ledger/">Exporting the audit ledger</a>.</p>
+<hr />
+<h2 id="retention">Retention<a class="headerlink" href="#retention" title="Permanent link">&para;</a></h2>
+<p>Snapshot retention: which snapshots the gateway may delete, and when the two
+passes run. Java-side defaults; nothing appears in <code>application.yaml</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">retention</span><span class="p">:</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="c1"># OFF by default. Retention only ever deletes because an operator asked for</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="c1"># it; an upgrade never starts deleting on its own. The on-demand endpoints</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="c1"># work regardless, so a policy can be inspected before this is flipped.</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">    </span><span class="c1"># Evaluation marks (soft delete); compaction removes (hard delete). They are</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="c1"># separate schedules because the restore window only means anything if the</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="c1"># two are decoupled in time.</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="nt">poll-interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1h</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">    </span><span class="nt">compaction-interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6h</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">    </span><span class="c1"># Snapshots considered per marketplace per pass.</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">    </span><span class="nt">batch-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">200</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="w">    </span><span class="c1"># The policy every marketplace inherits.</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">    </span><span class="nt">defaults</span><span class="p">:</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">      </span><span class="c1"># A snapshot still &#39;held&#39; this long after ingestion is eligible.</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">      </span><span class="c1"># Zero or negative disables the criterion rather than selecting everything.</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="w">      </span><span class="nt">held-max-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90d</span>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="w">      </span><span class="c1"># Whether a held/rejected snapshot overtaken by a later approved snapshot</span>
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="w">      </span><span class="c1"># of the same marketplace is eligible.</span>
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="w">      </span><span class="nt">superseded</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="w">      </span><span class="nt">superseded-min-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30d</span>
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a>
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a><span class="w">      </span><span class="c1"># Veto, not a selector: a candidate whose SHA was fetched through the</span>
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a><span class="w">      </span><span class="c1"># facade within this window is dropped from the pass.</span>
+<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a><span class="w">      </span><span class="nt">min-idle</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30d</span>
+<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a>
+<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a><span class="w">      </span><span class="c1"># How long a soft-deleted snapshot stays restorable before compaction may</span>
+<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a><span class="w">      </span><span class="c1"># remove it. Resolved at deletion time, not at compaction time.</span>
+<a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a><span class="w">      </span><span class="nt">restore-window</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">14d</span>
+<a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a>
+<a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a><span class="w">    </span><span class="c1"># Per-marketplace overrides; unset fields fall back to defaults.</span>
+<a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a><span class="w">    </span><span class="nt">marketplaces</span><span class="p">:</span>
+<a id="__codelineno-3-38" name="__codelineno-3-38" href="#__codelineno-3-38"></a><span class="w">      </span><span class="nt">acme</span><span class="p">:</span>
+<a id="__codelineno-3-39" name="__codelineno-3-39" href="#__codelineno-3-39"></a><span class="w">        </span><span class="nt">held-max-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30d</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>skills-gateway.retention.enabled</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Runs the scheduled passes. The on-demand endpoints are unaffected.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.retention.poll-interval</code></td>
+<td>duration</td>
+<td><code>1h</code></td>
+<td>Evaluation (soft delete) interval.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.retention.compaction-interval</code></td>
+<td>duration</td>
+<td><code>6h</code></td>
+<td>Compaction (hard delete) interval.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.retention.batch-size</code></td>
+<td>integer</td>
+<td><code>200</code></td>
+<td>Snapshots per marketplace per pass.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.retention.defaults.held-max-age</code></td>
+<td>duration</td>
+<td><code>90d</code></td>
+<td>Zero or negative disables the criterion.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.retention.defaults.superseded</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Enables the supersession criterion.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.retention.defaults.superseded-min-age</code></td>
+<td>duration</td>
+<td><code>30d</code></td>
+<td>Minimum age of a superseded snapshot.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.retention.defaults.min-idle</code></td>
+<td>duration</td>
+<td><code>30d</code></td>
+<td>Fetch-recency veto window.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.retention.defaults.restore-window</code></td>
+<td>duration</td>
+<td><code>14d</code></td>
+<td>Restore window applied at deletion time.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.retention.marketplaces.&lt;name&gt;.*</code></td>
+<td>policy</td>
+<td><em>(empty)</em></td>
+<td>Same keys as <code>defaults</code>; unset fields inherit.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title">Enabling retention starts deleting on the next pass</p>
+<p>Preview first: <code>GET /api/retention/candidates</code> shows exactly what the
+policies in force would select, and writes nothing. Approved snapshots are
+never eligible, but a generous <code>held-max-age</code> can still clear a large
+review backlog on the first pass.</p>
+</div>
+<div class="admonition danger">
+<p class="admonition-title">Compaction cannot be undone</p>
+<p>A soft-deleted snapshot is restorable only until its <code>purge_after</code>. After
+compaction the row and the unreachable git objects are gone, and only the
+ledger entry remains. Size <code>restore-window</code> so a mistake is noticed inside
+it.</p>
+</div>
+<p>Criteria, guards and the two passes are described in
+<a href="../retention/">Snapshot retention</a>.</p>
+<hr />
 <h2 id="datasource">Datasource<a class="headerlink" href="#datasource" title="Permanent link">&para;</a></h2>
 <p>Not present in <code>application.yaml</code> at all — supplied purely by environment.
 PostgreSQL is assumed.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_URL</span><span class="o">=</span>jdbc:postgresql://postgres:5432/skillsgateway
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_USERNAME</span><span class="o">=</span>skillsgateway
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_PASSWORD</span><span class="o">=</span>skillsgateway
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_URL</span><span class="o">=</span>jdbc:postgresql://postgres:5432/skillsgateway
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_USERNAME</span><span class="o">=</span>skillsgateway
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_PASSWORD</span><span class="o">=</span>skillsgateway
 </code></pre></div>
 <p>The Helm chart exposes these as <code>postgresql.host</code> (<strong>required</strong>, no default),
 <code>postgresql.port</code> (<code>5432</code>), <code>postgresql.database</code> and <code>postgresql.username</code>
@@ -1443,11 +1955,11 @@ defaults are the placeholders below rather than being absent.</p>
 <p>Register that redirect URI with your identity provider.</p>
 <hr />
 <h2 id="actuator">Actuator<a class="headerlink" href="#actuator" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">management</span><span class="p">:</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">endpoints</span><span class="p">:</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">web</span><span class="p">:</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">      </span><span class="nt">exposure</span><span class="p">:</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">        </span><span class="nt">include</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">health,sbom</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">management</span><span class="p">:</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">endpoints</span><span class="p">:</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="nt">web</span><span class="p">:</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">      </span><span class="nt">exposure</span><span class="p">:</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">        </span><span class="nt">include</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">health,sbom</span>
 </code></pre></div>
 <p>Only two endpoints are exposed. <code>/actuator/health</code> is the <strong>only</strong>
 unauthenticated path in the application; <code>/actuator/sbom</code> serves the CycloneDX
@@ -1460,11 +1972,11 @@ both Kubernetes probes point at the bare path.</p>
 </div>
 <hr />
 <h2 id="api-documentation">API documentation<a class="headerlink" href="#api-documentation" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">scalar</span><span class="p">:</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/docs</span><span class="w">        </span><span class="c1"># the Scalar UI</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/v3/api-docs</span><span class="w">  </span><span class="c1"># the OpenAPI document it renders</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="nt">theme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">purple</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">scalar</span><span class="p">:</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/docs</span><span class="w">        </span><span class="c1"># the Scalar UI</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/v3/api-docs</span><span class="w">  </span><span class="c1"># the OpenAPI document it renders</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span><span class="nt">theme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">purple</span>
 </code></pre></div>
 <p>Both paths sit behind the OIDC login like the rest of the web surface.</p>
 <hr />

@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://jimisola.github.io/skills-gateway/dev/guides/approving-snapshots/">
+        <link rel="canonical" href="https://jimisola.github.io/skills-gateway/dev/guides/lifecycle-webhooks/">
       
       
-        <link rel="prev" href="../registering-a-marketplace/">
+        <link rel="prev" href="../consuming-skills/">
       
       
-        <link rel="next" href="../consuming-skills/">
+        <link rel="next" href="../exporting-the-audit-ledger/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Approving and rejecting snapshots - Skills Gateway</title>
+        <title>Receiving lifecycle webhooks - Skills Gateway</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#approving-and-rejecting-snapshots" class="md-skip">
+        <a href="#receiving-lifecycle-webhooks" class="md-skip">
           Skip to content
         </a>
       
@@ -118,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Approving and rejecting snapshots
+              Receiving lifecycle webhooks
             
           </span>
         </div>
@@ -597,37 +597,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Approving and rejecting snapshots
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../approving-snapshots/" class="md-nav__link">
         
   
   
@@ -643,131 +616,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#reviewing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reviewing
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Reviewing">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#contents" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Contents
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#provenance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Provenance
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#violations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Violations
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-to-look-for" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What to look for
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#deciding" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deciding
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#rejection-is-not-deletion" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rejection is not deletion
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#who-may-approve" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Who may approve
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#after-approval" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        After approval
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -805,10 +653,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../lifecycle-webhooks/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Receiving lifecycle webhooks
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -824,6 +699,103 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Events
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-register-a-subscriber" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Register a subscriber
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-handle-the-delivery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Handle the delivery
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-verify-the-signature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Verify the signature
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#delivery-retry-and-backoff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Delivery, retry and backoff
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#watch-what-happened" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Watch what happened
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remove-a-subscriber" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remove a subscriber
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1324,60 +1296,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#reviewing" class="md-nav__link">
+  <a href="#events" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Reviewing
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Reviewing">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#contents" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Contents
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#provenance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Provenance
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#violations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Violations
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-to-look-for" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What to look for
+        Events
       
     </span>
   </a>
@@ -1385,10 +1307,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#deciding" class="md-nav__link">
+  <a href="#1-register-a-subscriber" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Deciding
+        1. Register a subscriber
       
     </span>
   </a>
@@ -1396,10 +1318,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#rejection-is-not-deletion" class="md-nav__link">
+  <a href="#2-handle-the-delivery" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Rejection is not deletion
+        2. Handle the delivery
       
     </span>
   </a>
@@ -1407,10 +1329,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#who-may-approve" class="md-nav__link">
+  <a href="#3-verify-the-signature" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Who may approve
+        3. Verify the signature
       
     </span>
   </a>
@@ -1418,10 +1340,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#after-approval" class="md-nav__link">
+  <a href="#delivery-retry-and-backoff" class="md-nav__link">
     <span class="md-ellipsis">
       
-        After approval
+        Delivery, retry and backoff
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#watch-what-happened" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Watch what happened
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remove-a-subscriber" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remove a subscriber
       
     </span>
   </a>
@@ -1445,7 +1389,7 @@
 
 
   
-    <a href="https://github.com/jimisola/skills-gateway/edit/main/docs/manual/guides/approving-snapshots.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/jimisola/skills-gateway/edit/main/docs/manual/guides/lifecycle-webhooks.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -1453,116 +1397,274 @@
   
 
 
-<h1 id="approving-and-rejecting-snapshots">Approving and rejecting snapshots<a class="headerlink" href="#approving-and-rejecting-snapshots" title="Permanent link">&para;</a></h1>
-<p>Approval is the gate. It is the only way content reaches a client, and today it
-is a human pressing a button.</p>
-<p>That is a smaller claim than it sounds. The security property does not come from
-the sophistication of the vetting; it comes from the fact that <strong>nothing is
-served until someone decides</strong>, and that the decision is recorded against an
-immutable SHA.</p>
-<h2 id="reviewing">Reviewing<a class="headerlink" href="#reviewing" title="Permanent link">&para;</a></h2>
-<p>A held snapshot gives you three things.</p>
-<h3 id="contents">Contents<a class="headerlink" href="#contents" title="Permanent link">&para;</a></h3>
-<p><code>GET /api/snapshots/{id}/content</code> enumerates what the snapshot declares — each
-plugin with its name, <code>source</code> and description, and the skills found under each.
-In the portal this is the <strong>Show contents</strong> toggle on the marketplace detail
-page.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/snapshots/1/content
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">&quot;snapshotId&quot;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">&quot;sha&quot;</span><span class="p">:</span><span class="s2">&quot;3f9c2ab...&quot;</span><span class="p">,</span><span class="nt">&quot;state&quot;</span><span class="p">:</span><span class="s2">&quot;held&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">&quot;plugins&quot;</span><span class="p">:[{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="s2">&quot;acme-tools&quot;</span><span class="p">,</span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="s2">&quot;...&quot;</span><span class="p">,</span><span class="nt">&quot;source&quot;</span><span class="p">:</span><span class="s2">&quot;./plugins/acme-tools&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">             </span><span class="nt">&quot;skills&quot;</span><span class="p">:[{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="s2">&quot;deploy&quot;</span><span class="p">,</span><span class="nt">&quot;path&quot;</span><span class="p">:</span><span class="s2">&quot;skills/deploy/SKILL.md&quot;</span><span class="p">}]}]}</span>
-</code></pre></div>
-<p>This works on <code>held</code> snapshots by design — reviewing must not require serving.</p>
-<h3 id="provenance">Provenance<a class="headerlink" href="#provenance" title="Permanent link">&para;</a></h3>
-<p>Where it came from and who has touched it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/snapshots/1/provenance
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span><span class="nt">&quot;snapshotId&quot;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">&quot;marketplace&quot;</span><span class="p">:</span><span class="s2">&quot;acme&quot;</span><span class="p">,</span><span class="nt">&quot;upstreamUrl&quot;</span><span class="p">:</span><span class="s2">&quot;https://github.com/acme/skills.git&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w"> </span><span class="nt">&quot;upstreamSha&quot;</span><span class="p">:</span><span class="s2">&quot;3f9c2ab...&quot;</span><span class="p">,</span><span class="nt">&quot;state&quot;</span><span class="p">:</span><span class="s2">&quot;held&quot;</span><span class="p">,</span><span class="nt">&quot;violation&quot;</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w"> </span><span class="nt">&quot;ingestedAt&quot;</span><span class="p">:</span><span class="s2">&quot;...&quot;</span><span class="p">,</span><span class="nt">&quot;decidedBy&quot;</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">&quot;decidedAt&quot;</span><span class="p">:</span><span class="kc">null</span><span class="p">}</span>
-</code></pre></div>
-<h3 id="violations">Violations<a class="headerlink" href="#violations" title="Permanent link">&para;</a></h3>
-<p>If ingestion flagged the snapshot — an external plugin source, for instance,
-which is rejected fail-closed in the current scope — the reason is on the
-snapshot row and rendered in the portal as destructive text.</p>
-<h2 id="what-to-look-for">What to look for<a class="headerlink" href="#what-to-look-for" title="Permanent link">&para;</a></h2>
-<p>The threats that matter here are the ones no scanner catches:</p>
-<ul>
-<li><strong>Instructions, not just code.</strong> <code>SKILL.md</code>, commands and agent definitions
-  are read by an agent as instructions. Look for anything directing the agent
-  toward credentials, network calls, or files outside the skill's stated
-  purpose.</li>
-<li><strong>Hooks and MCP servers.</strong> These execute without the user ever invoking a
-  skill. A plugin that registers them deserves more scrutiny than a
-  markdown-only skill.</li>
-<li><strong>The diff, on updates.</strong> A skill that grows a <code>scripts/</code> directory has
-  changed category, and that transition is itself worth a closer look.</li>
-</ul>
-<h2 id="deciding">Deciding<a class="headerlink" href="#deciding" title="Permanent link">&para;</a></h2>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Portal</label><label for="__tabbed_1_2">API</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<p>On the <strong>Marketplaces</strong> page, held snapshots show <strong>Approve</strong> and <strong>Reject</strong>
-buttons in their row. Both fire immediately — there is no confirmation
-dialog.</p>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/1/approve
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/1/reject
-</code></pre></div>
-</div>
-</div>
-</div>
-<p><strong>Approve</strong> publishes: the pinned <code>refs/snapshots/{sha}</code> is fetched from
-quarantine into the published repository and <code>refs/heads/main</code> is force-updated
-to that SHA. From the next client fetch onward, this is what the marketplace
-serves.</p>
-<p><strong>Reject</strong> marks the snapshot <code>rejected</code> and touches no repository. Whatever was
-already approved keeps serving.</p>
+<h1 id="receiving-lifecycle-webhooks">Receiving lifecycle webhooks<a class="headerlink" href="#receiving-lifecycle-webhooks" title="Permanent link">&para;</a></h1>
+<p>The gateway records every vetting decision in the ledger. Webhooks push those
+same decisions outward, so CI, chat and inventory systems learn about a snapshot
+the moment it is ingested, approved or rejected instead of polling
+<code>/api/marketplaces</code>.</p>
+<h2 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Status</th>
-<th>Cause</th>
+<th>Event</th>
+<th>Emitted when</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>200</td>
-<td>Decided.</td>
+<td><code>snapshot.ingested</code></td>
+<td>An ingestion succeeded and produced a snapshot.</td>
 </tr>
 <tr>
-<td>404</td>
-<td>Unknown snapshot.</td>
+<td><code>snapshot.approved</code></td>
+<td>A held snapshot was approved and published.</td>
 </tr>
 <tr>
-<td>409</td>
-<td>The snapshot is not <code>held</code>.</td>
+<td><code>snapshot.rejected</code></td>
+<td>A held snapshot was rejected.</td>
+</tr>
+<tr>
+<td><code>snapshot.soft_deleted</code></td>
+<td>A snapshot was marked deleted, by an administrator or by a retention policy.</td>
+</tr>
+<tr>
+<td><code>snapshot.restored</code></td>
+<td>A soft-deleted snapshot's marks were cleared.</td>
 </tr>
 </tbody>
 </table>
-<div class="admonition warning">
-<p class="admonition-title">Decisions are one-way</p>
-<p>A snapshot that is not <code>held</code> cannot be approved or rejected. There is no
-revocation state and no re-decision — the state machine is
-<code>held → approved | rejected</code>, once.</p>
-<p>To move a marketplace back to earlier content, approve the earlier snapshot
-is <em>not</em> possible either. Plan rollbacks by re-ingesting the desired
-upstream commit.</p>
+<p>Those are all of them. The snapshot state machine is
+<code>held → approved | rejected</code> with no revocation state, so there is no
+<code>snapshot.revoked</code> event to subscribe to — and deletion is orthogonal to that
+state machine, which is why the retention events carry the snapshot's unchanged
+vetting state.</p>
+<p>A deletion made by the scheduled policy pass rather than by a person carries the
+actor <code>retention-policy</code>, so a receiver can tell the two apart. See
+<a href="../snapshot-retention/">Reclaiming snapshot storage</a>.</p>
+<h2 id="1-register-a-subscriber">1. Register a subscriber<a class="headerlink" href="#1-register-a-subscriber" title="Permanent link">&para;</a></h2>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Portal</label><label for="__tabbed_1_2">API</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p><strong>Webhooks</strong> → fill in <strong>Subscriber name</strong>, <strong>Target URL</strong> and <strong>Events</strong> →
+<strong>Add subscriber</strong>. The signing secret appears in a dialog with a copy
+button.</p>
 </div>
-<h2 id="rejection-is-not-deletion">Rejection is not deletion<a class="headerlink" href="#rejection-is-not-deletion" title="Permanent link">&para;</a></h2>
-<p>The rejected snapshot stays as evidence — it is the record that someone looked
-at this exact upstream commit and said no.</p>
-<h2 id="who-may-approve">Who may approve<a class="headerlink" href="#who-may-approve" title="Permanent link">&para;</a></h2>
-<p>Anyone with a portal session. There is no role model: any authenticated session
-can register, ingest, approve and reject.</p>
-<p>Until admin/reviewer separation lands, <strong>access to the portal is the reviewer
-privilege</strong>. Grant it through your identity provider and treat the portal as a
-restricted application.</p>
-<h2 id="after-approval">After approval<a class="headerlink" href="#after-approval" title="Permanent link">&para;</a></h2>
-<p>The content is live. Verify it and point clients at it —
-<a href="../consuming-skills/">Consuming approved skills</a>.</p>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/webhooks<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">&#39;Content-Type: application/json&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="err">&#39;</span><span class="o">{</span><span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;ci-bot&quot;</span>,<span class="s2">&quot;url&quot;</span>:<span class="s2">&quot;https://ci.example.com/hooks/skills-gateway&quot;</span>,
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">         &quot;events&quot;:&quot;snapshot.approved,snapshot.rejected&quot;}&#39;</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="s2">&quot;ci-bot&quot;</span><span class="p">,</span><span class="nt">&quot;url&quot;</span><span class="p">:</span><span class="s2">&quot;https://ci.example.com/hooks/skills-gateway&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">&quot;events&quot;</span><span class="p">:</span><span class="s2">&quot;snapshot.approved,snapshot.rejected&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w"> </span><span class="nt">&quot;secret&quot;</span><span class="p">:</span><span class="s2">&quot;whsec_...&quot;</span><span class="p">,</span><span class="nt">&quot;createdAt&quot;</span><span class="p">:</span><span class="s2">&quot;...&quot;</span><span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td><code>^[a-z0-9][a-z0-9_-]*$</code>, unique. A bad name is <strong>422</strong>, a duplicate is <strong>409</strong>.</td>
+</tr>
+<tr>
+<td><code>url</code></td>
+<td>The scheme must be on <code>skills-gateway.allowed-url-schemes</code>. Unparseable or scheme-less URLs are rejected — the check fails closed. <strong>400</strong>.</td>
+</tr>
+<tr>
+<td><code>events</code></td>
+<td>Comma-delimited event names, or <code>*</code> for every event. Blank means <code>*</code>. An unknown name is <strong>400</strong>, not silently dropped.</td>
+</tr>
+</tbody>
+</table>
+<p>The filter is exact-match per name: <code>*</code> is the only wildcard, and
+<code>snapshot.*</code> is not a valid filter. A subscriber only ever receives events its
+filter lists.</p>
+<p>Registering an outbound target is an egress decision, which is why it is an
+authenticated administrative act behind the same scheme allowlist as marketplace
+registration.</p>
+<div class="admonition danger">
+<p class="admonition-title">The signing secret is shown exactly once</p>
+<p><code>whsec_…</code> is returned only in the creation response and by no other endpoint.
+Unlike a personal access token it is stored recoverably — signing needs the
+key — but nothing ever reads it back over the API. A lost secret means
+deleting the subscriber and registering it again.</p>
+</div>
+<h2 id="2-handle-the-delivery">2. Handle the delivery<a class="headerlink" href="#2-handle-the-delivery" title="Permanent link">&para;</a></h2>
+<p>Each delivery is a <code>POST</code> of a JSON body with four headers:</p>
+<table>
+<thead>
+<tr>
+<th>Header</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>X-Skills-Gateway-Event</code></td>
+<td>The event name.</td>
+</tr>
+<tr>
+<td><code>X-Skills-Gateway-Delivery</code></td>
+<td>The delivery id — your de-duplication key.</td>
+</tr>
+<tr>
+<td><code>X-Skills-Gateway-Timestamp</code></td>
+<td>ISO-8601 time of <em>this attempt</em>, so it differs between retries.</td>
+</tr>
+<tr>
+<td><code>X-Skills-Gateway-Signature</code></td>
+<td><code>sha256=&lt;lowercase hex&gt;</code> — HMAC-SHA256 over the exact body bytes, keyed with the subscriber's secret.</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span><span class="nt">&quot;event&quot;</span><span class="p">:</span><span class="s2">&quot;snapshot.approved&quot;</span><span class="p">,</span><span class="nt">&quot;occurredAt&quot;</span><span class="p">:</span><span class="s2">&quot;2026-08-15T09:14:22.481Z&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w"> </span><span class="nt">&quot;marketplace&quot;</span><span class="p">:</span><span class="s2">&quot;acme&quot;</span><span class="p">,</span><span class="nt">&quot;snapshotId&quot;</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w"> </span><span class="nt">&quot;sha&quot;</span><span class="p">:</span><span class="s2">&quot;3f9c2ab9d1e4c7b6a5f80c3d2e1b0a9f8c7d6e5f&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w"> </span><span class="nt">&quot;state&quot;</span><span class="p">:</span><span class="s2">&quot;approved&quot;</span><span class="p">,</span><span class="nt">&quot;actor&quot;</span><span class="p">:</span><span class="s2">&quot;alice@example.com&quot;</span><span class="p">}</span>
+</code></pre></div>
+<p><code>state</code> is the snapshot state <em>after</em> the event, and <code>actor</code> is the principal
+that performed the admin action.</p>
+<h2 id="3-verify-the-signature">3. Verify the signature<a class="headerlink" href="#3-verify-the-signature" title="Permanent link">&para;</a></h2>
+<p>Compute the HMAC over the raw request body — the bytes as received, before any
+JSON parsing or re-serialization. The payload is serialized once when the event
+is emitted and stored, so every retry sends byte-identical content.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Python</label><label for="__tabbed_2_2">Node</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span><span class="o">,</span><span class="w"> </span><span class="nn">hmac</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">verify</span><span class="p">(</span><span class="n">secret</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">header</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">expected</span> <span class="o">=</span> <span class="s2">&quot;sha256=&quot;</span> <span class="o">+</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        <span class="n">secret</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">body</span><span class="p">,</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="k">return</span> <span class="n">hmac</span><span class="o">.</span><span class="n">compare_digest</span><span class="p">(</span><span class="n">expected</span><span class="p">,</span> <span class="n">header</span><span class="p">)</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">createHmac</span><span class="p">,</span><span class="w"> </span><span class="nx">timingSafeEqual</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;node:crypto&quot;</span><span class="p">;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kd">function</span><span class="w"> </span><span class="nx">verify</span><span class="p">(</span><span class="nx">secret</span><span class="p">,</span><span class="w"> </span><span class="nx">body</span><span class="p">,</span><span class="w"> </span><span class="nx">header</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">expected</span><span class="w"> </span><span class="o">=</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="s2">&quot;sha256=&quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">createHmac</span><span class="p">(</span><span class="s2">&quot;sha256&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">secret</span><span class="p">).</span><span class="nx">update</span><span class="p">(</span><span class="nx">body</span><span class="p">).</span><span class="nx">digest</span><span class="p">(</span><span class="s2">&quot;hex&quot;</span><span class="p">);</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">Buffer</span><span class="p">.</span><span class="kr">from</span><span class="p">(</span><span class="nx">expected</span><span class="p">);</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">Buffer</span><span class="p">.</span><span class="kr">from</span><span class="p">(</span><span class="nx">header</span><span class="p">);</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">a</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">b</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">timingSafeEqual</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span><span class="w"> </span><span class="nx">b</span><span class="p">);</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Compare in constant time, and reject before parsing</p>
+<p>Use <code>hmac.compare_digest</code> / <code>timingSafeEqual</code> rather than <code>==</code>, and verify
+before the body reaches any application logic. An unsigned or wrongly signed
+request is an unauthenticated request.</p>
+</div>
+<h2 id="delivery-retry-and-backoff">Delivery, retry and backoff<a class="headerlink" href="#delivery-retry-and-backoff" title="Permanent link">&para;</a></h2>
+<p>Emission is enqueue-only. The admin action writes one delivery row per matching
+subscriber and returns; an unreachable receiver can never fail or slow down an
+approval. A background dispatcher polls for due deliveries, claims each one with
+an atomic conditional update, and POSTs it.</p>
+<pre class="mermaid"><code>sequenceDiagram
+    autonumber
+    actor Reviewer
+    participant API as AdminController
+    participant DB as webhook_deliveries
+    participant Disp as WebhookDispatcher
+    participant Rcv as Subscriber endpoint
+
+    Reviewer-&gt;&gt;API: POST /api/snapshots/42/approve
+    API-&gt;&gt;DB: enqueue snapshot.approved (state=pending)
+    API--&gt;&gt;Reviewer: 200 (never waits for the receiver)
+
+    loop every poll-interval (5s)
+        Disp-&gt;&gt;DB: claim due pending deliveries
+    end
+    Disp-&gt;&gt;Rcv: POST payload + X-Skills-Gateway-Signature
+    Rcv--&gt;&gt;Disp: 503
+    Disp-&gt;&gt;DB: attempts=1, next_attempt_at = now + 10s (state=pending)
+
+    Disp-&gt;&gt;Rcv: POST identical bytes, same delivery id
+    Rcv--&gt;&gt;Disp: 200
+    Disp-&gt;&gt;DB: state=delivered, last_status=200</code></pre>
+<p>A 2xx marks the delivery <code>delivered</code>. Everything else — a non-2xx status or a
+transport error — is retried, because a 4xx from a receiver is usually a
+misconfiguration an operator will fix and the attempt budget bounds the cost.
+Attempt <em>n</em> schedules the next attempt at <code>base × 2^(n-1)</code>, capped:</p>
+<table>
+<thead>
+<tr>
+<th>Attempt</th>
+<th>Delay before it, with the defaults</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>immediate (within one poll interval)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>10s</td>
+</tr>
+<tr>
+<td>3</td>
+<td>20s</td>
+</tr>
+<tr>
+<td>4</td>
+<td>40s</td>
+</tr>
+<tr>
+<td>5</td>
+<td>80s</td>
+</tr>
+</tbody>
+</table>
+<p>After the fifth attempt the delivery is <code>failed</code> and never retried. A delivery
+whose subscriber has been deleted fails immediately with
+<code>subscriber no longer exists</code>.</p>
+<p>Tune all of this under
+<a href="../../reference/configuration/#webhooks"><code>skills-gateway.webhooks.*</code></a>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Delivery is at-least-once</p>
+<p>A receiver that returns 2xx after a network timeout will be retried, and a
+process restart mid-attempt makes the delivery due again once its lease
+expires. <strong>De-duplicate on <code>X-Skills-Gateway-Delivery</code></strong> — it is stable
+across every retry of the same delivery — and treat handlers as idempotent.</p>
+</div>
+<h2 id="watch-what-happened">Watch what happened<a class="headerlink" href="#watch-what-happened" title="Permanent link">&para;</a></h2>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Portal</label><label for="__tabbed_3_2">API</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>The <strong>Webhooks</strong> page lists recent delivery attempts with their event,
+subscriber, state, attempt count and last response — see
+<a href="../../reference/portal/#webhooks">Admin portal</a>.</p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span><span class="s1">&#39;localhost:8080/api/webhooks/deliveries?limit=20&#39;</span>
+</code></pre></div>
+<p>Most recent first. <code>limit</code> defaults to 100 and is clamped to 500.</p>
+</div>
+</div>
+</div>
+<p>Each row carries <code>state</code>, <code>attempts</code>, <code>lastStatus</code> and <code>lastError</code>, which is
+enough to tell a receiver that is down from one that is rejecting the payload.</p>
+<h2 id="remove-a-subscriber">Remove a subscriber<a class="headerlink" href="#remove-a-subscriber" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>localhost:8080/api/webhooks/1
+</code></pre></div>
+<p><strong>204</strong> on success, <strong>404</strong> if it never existed. The subscriber and its delivery
+history go with it, and no further events are queued for it. Subscriber creation
+and deletion are themselves recorded in the ledger as
+<code>webhook-subscriber-created</code> and <code>webhook-subscriber-deleted</code>.</p>
 
 
 

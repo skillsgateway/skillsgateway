@@ -529,6 +529,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#exporting-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exporting it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#what-the-ledger-is-not" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -635,6 +646,12 @@
   
     
     
+      
+        
+      
+        
+      
+        
       
         
       
@@ -801,6 +818,90 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/lifecycle-webhooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Receiving lifecycle webhooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/exporting-the-audit-ledger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exporting the audit ledger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/snapshot-retention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reclaiming snapshot storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -816,6 +917,8 @@
   
     
     
+      
+        
       
         
       
@@ -1071,6 +1174,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/retention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Snapshot retention
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/git-facade/" class="md-nav__link">
         
   
@@ -1294,6 +1425,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#exporting-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exporting it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#what-the-ledger-is-not" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1478,14 +1620,27 @@ filtering, search or paging: it is a recent-activity view.</p>
 <p>Because entries carry the principal, marketplace and SHA, the inventory question
 — "every identity that fetched this exact content" — is a single query against
 the ledger.</p>
+<h3 id="exporting-it">Exporting it<a class="headerlink" href="#exporting-it" title="Permanent link">&para;</a></h3>
+<p>The portal view is a recent-activity table; evidence lives in your compliance
+system. The ledger is therefore also readable as a continuous feed, either
+pulled as newline-delimited JSON or pushed to a registered <em>sink</em>.</p>
+<p>A sink is nothing but a <strong>cursor over the ledger</strong> — the sequence of the last
+entry it has been handed. No entry is copied into a per-consumer queue, which is
+what keeps the append-only table the single copy of the evidence and makes replay
+a write to one column. Delivery is at-least-once and each entry carries its
+ledger sequence, so a receiver de-duplicates on that.</p>
+<p>The ledger sequence is assigned before its row commits, so both paths withhold
+the last few seconds of entries rather than risk a cursor stepping over an
+append still in flight — bounded staleness in exchange for no gaps. See
+<a href="../../guides/exporting-the-audit-ledger/">Exporting the audit ledger</a>.</p>
 <h3 id="what-the-ledger-is-not">What the ledger is not<a class="headerlink" href="#what-the-ledger-is-not" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Not hash-chained — there is no tamper-evidence beyond the append-only
   discipline of the code and your database controls.</li>
 <li>Not itself retained or archived by the product. How long you keep it is your
   compliance decision.</li>
-<li>Not yet streamed anywhere. Continuous export to a SIEM is a separate
-  capability.</li>
+<li>Not a real-time alerting channel. Export is cursor-based and settles for a few
+  seconds before an entry is handed on.</li>
 </ul>
 <h2 id="current-scope-limits">Current scope limits<a class="headerlink" href="#current-scope-limits" title="Permanent link">&para;</a></h2>
 <p>Both limits are enforced, not merely documented:</p>

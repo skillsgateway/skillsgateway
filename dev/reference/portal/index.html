@@ -484,6 +484,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -641,6 +647,90 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/lifecycle-webhooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Receiving lifecycle webhooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/exporting-the-audit-ledger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exporting the audit ledger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/snapshot-retention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reclaiming snapshot storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -658,6 +748,8 @@
   
     
     
+      
+        
       
         
       
@@ -913,6 +1005,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../retention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Snapshot retention
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../git-facade/" class="md-nav__link">
         
   
@@ -1156,6 +1276,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#retention-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retention controls
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1169,6 +1300,95 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Audit log">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export-sinks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export sinks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ledger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ledger
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#webhooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Webhooks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Webhooks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#add-subscriber" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Add subscriber
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subscribers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subscribers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delivery-attempts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Delivery attempts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1381,6 +1601,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#retention-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retention controls
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1394,6 +1625,95 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Audit log">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export-sinks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export sinks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ledger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ledger
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#webhooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Webhooks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Webhooks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#add-subscriber" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Add subscriber
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subscribers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subscribers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delivery-attempts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Delivery attempts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1462,6 +1782,11 @@ session cookie is its only credential.</p>
 <td>Governance</td>
 <td>Audit log</td>
 <td><a href="#audit-log"><code>/audit</code></a></td>
+</tr>
+<tr>
+<td>Governance</td>
+<td>Webhooks</td>
+<td><a href="#webhooks"><code>/webhooks</code></a></td>
 </tr>
 <tr>
 <td>Access</td>
@@ -1609,18 +1934,195 @@ one block per declared plugin: name, <code>source</code>, optional description, 
 badge per skill found under it. Plugins with no skills show "no skills found".</p>
 <p>This is the review surface, and it works on <code>held</code> snapshots — inspecting a
 snapshot must not require serving it.</p>
+<h3 id="retention-controls">Retention controls<a class="headerlink" href="#retention-controls" title="Permanent link">&para;</a></h3>
+<p>Each snapshot card carries its retention state and the control that changes it:</p>
+<table>
+<thead>
+<tr>
+<th>Snapshot</th>
+<th>Shown</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Not deleted, state <code>held</code> or <code>rejected</code></td>
+<td>A <strong>Delete</strong> button.</td>
+</tr>
+<tr>
+<td>Not deleted, state <code>approved</code></td>
+<td>Nothing — an approved snapshot is served by the facade and the gateway refuses to delete it.</td>
+</tr>
+<tr>
+<td>Deleted</td>
+<td>A destructive <code>deleted</code> badge, "restorable until {purgeAfter}", and a <strong>Restore</strong> button.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Delete</strong> calls <code>DELETE /api/snapshots/{id}</code> and toasts <em>Snapshot {id} deleted;
+it can be restored</em>. <strong>Restore</strong> calls <code>POST /api/snapshots/{id}/restore</code> and
+toasts <em>Snapshot {id} restored</em>. Both fire immediately, like every other
+mutation in the portal — deletion here is a reversible mark, not a purge.</p>
+<div class="admonition warning">
+<p class="admonition-title">The restore deadline is the real one</p>
+<p>Once <code>purgeAfter</code> has passed, a compaction run removes the snapshot and its
+quarantine ref permanently and the card disappears. See
+<a href="../retention/">Snapshot retention</a>.</p>
+</div>
 <p>Empty state: "No snapshots yet."</p>
 <hr />
 <h2 id="audit-log">Audit log<a class="headerlink" href="#audit-log" title="Permanent link">&para;</a></h2>
 <p><strong>Route:</strong> <code>/audit</code> · <strong>Heading:</strong> Audit log</p>
-<p>The ledger, from <code>GET /api/audit</code>.</p>
-<p>The table is <strong>schema-less</strong>: columns are the keys of the first returned row, in
+<p>The ledger and its export surface. Subtitle: "Append-only ledger of every facade
+fetch and administrative action, exportable to an external compliance system."</p>
+<h3 id="export">Export<a class="headerlink" href="#export" title="Permanent link">&para;</a></h3>
+<p>A <strong>Download ledger (NDJSON)</strong> link pointing at <code>/api/audit/export</code> — a plain
+same-origin, session-authenticated download, not a fetch through the API client.</p>
+<h3 id="export-sinks">Export sinks<a class="headerlink" href="#export-sinks" title="Permanent link">&para;</a></h3>
+<p>An inline form with <strong>Sink name</strong> and <strong>Target URL</strong> posts to
+<code>POST /api/audit/sinks</code>; the response opens the same show-once secret dialog as
+<a href="#access-tokens">Access tokens</a> and <a href="#webhooks">Webhooks</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Name</td>
+<td>The sink name.</td>
+</tr>
+<tr>
+<td>Target URL</td>
+<td>Where batches are POSTed.</td>
+</tr>
+<tr>
+<td>Position</td>
+<td>The sink's cursor — the last ledger sequence handed to it, monospace.</td>
+</tr>
+<tr>
+<td>Behind</td>
+<td>Entries not yet handed over, as "{n} entries".</td>
+</tr>
+<tr>
+<td>Status</td>
+<td><code>enabled</code> (primary badge) or <code>disabled</code> (secondary).</td>
+</tr>
+<tr>
+<td>Actions</td>
+<td><strong>Replay</strong> and <strong>Delete</strong>, both firing immediately.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Replay</strong> sets the cursor to <code>0</code> — the whole ledger, from the beginning — and
+toasts <em>Sink '{name}' will replay the ledger</em>. Replaying to an arbitrary
+position is API-only (<code>PUT /api/audit/sinks/{id}/cursor</code>).</p>
+<p><strong>Delete</strong> calls <code>DELETE /api/audit/sinks/{id}</code>, taking the sink's delivery
+channel with it, and toasts <em>Sink '{name}' deleted</em>.</p>
+<p>Sink deliveries are ordinary webhook deliveries, so their attempts appear on the
+<a href="#webhooks">Webhooks</a> page rather than here.</p>
+<p>Empty state: "No export sinks yet."</p>
+<h3 id="ledger">Ledger<a class="headerlink" href="#ledger" title="Permanent link">&para;</a></h3>
+<p>The table, from <code>GET /api/audit</code>.</p>
+<p>It is <strong>schema-less</strong>: columns are the keys of the first returned row, in
 order, and every cell renders as monospace text with nulls shown as "—". In
 practice those columns are <code>id</code>, <code>ts</code>, <code>source</code>, <code>principal</code>, <code>marketplace</code>,
 <code>event</code>, <code>ref</code> and <code>sha</code>.</p>
 <p>There is no filtering, search or paging — it is a recent-activity view rather
 than an investigation tool.</p>
 <p>Empty state: "No fetches recorded yet."</p>
+<hr />
+<h2 id="webhooks">Webhooks<a class="headerlink" href="#webhooks" title="Permanent link">&para;</a></h2>
+<p><strong>Route:</strong> <code>/webhooks</code> · <strong>Heading:</strong> Webhooks</p>
+<p>"Snapshot lifecycle events are POSTed to each subscriber that filters for them,
+signed with HMAC-SHA256 and retried with backoff until delivered."</p>
+<h3 id="add-subscriber">Add subscriber<a class="headerlink" href="#add-subscriber" title="Permanent link">&para;</a></h3>
+<p>An inline form with <strong>Subscriber name</strong>, <strong>Target URL</strong> and <strong>Events</strong> — the
+last defaults to <code>*</code> and is placeholder-hinted with
+<code>snapshot.approved,snapshot.rejected</code>. Name and URL are both required client-side
+before <code>POST /api/webhooks</code> is called; everything else is enforced server-side
+and surfaces as an error toast.</p>
+<p>The response opens a show-once dialog — "This signing secret is shown exactly
+once — copy it now." — with the <code>whsec_…</code> value in a code block and a clipboard
+button that flips to a checkmark for two seconds, the same pattern as
+<a href="#access-tokens">Access tokens</a>.</p>
+<h3 id="subscribers">Subscribers<a class="headerlink" href="#subscribers" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Name</td>
+<td>The subscriber name.</td>
+</tr>
+<tr>
+<td>Target URL</td>
+<td>The registered endpoint.</td>
+</tr>
+<tr>
+<td>Events</td>
+<td>The filter, rendered as a chip; <code>*</code> displays as "all events".</td>
+</tr>
+<tr>
+<td>Status</td>
+<td><code>enabled</code> (primary badge) or <code>disabled</code> (secondary).</td>
+</tr>
+<tr>
+<td>Actions</td>
+<td><strong>Delete</strong>, which fires immediately.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Delete</strong> calls <code>DELETE /api/webhooks/{id}</code> and toasts <em>Subscriber '{name}'
+deleted</em>. It removes the delivery history with the subscriber.</p>
+<p>Empty state: "No subscribers yet."</p>
+<h3 id="delivery-attempts">Delivery attempts<a class="headerlink" href="#delivery-attempts" title="Permanent link">&para;</a></h3>
+<p>From <code>GET /api/webhooks/deliveries</code> — the operator's view of a failing
+integration.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Event</td>
+<td>The lifecycle event name.</td>
+</tr>
+<tr>
+<td>Subscriber</td>
+<td>Resolved from the subscriber list held in the browser; falls back to the raw id.</td>
+</tr>
+<tr>
+<td>State</td>
+<td>Badge — <code>delivered</code> (primary), <code>failed</code> (destructive), <code>pending</code> (secondary).</td>
+</tr>
+<tr>
+<td>Attempts</td>
+<td>Attempts made so far.</td>
+</tr>
+<tr>
+<td>Last response</td>
+<td>The last HTTP status, else the last error, else "—".</td>
+</tr>
+<tr>
+<td>Queued</td>
+<td>Enqueue timestamp.</td>
+</tr>
+</tbody>
+</table>
+<p>Read-only: there is no manual redelivery and no editing. Empty state: "No
+deliveries yet."</p>
+<p>The secret is never re-displayed anywhere on this page. See
+<a href="../../guides/lifecycle-webhooks/">Receiving lifecycle webhooks</a> for the payload,
+headers and signature verification.</p>
 <hr />
 <h2 id="access-tokens">Access tokens<a class="headerlink" href="#access-tokens" title="Permanent link">&para;</a></h2>
 <p><strong>Route:</strong> <code>/tokens</code> · <strong>Heading:</strong> Access tokens</p>

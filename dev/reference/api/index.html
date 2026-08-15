@@ -484,6 +484,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -641,6 +647,90 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/lifecycle-webhooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Receiving lifecycle webhooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/exporting-the-audit-ledger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exporting the audit ledger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/snapshot-retention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reclaiming snapshot storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -658,6 +748,8 @@
   
     
     
+      
+        
       
         
       
@@ -903,6 +995,34 @@
           </ul>
         </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../retention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Snapshot retention
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1217,7 +1337,15 @@ consumed by the portal with a session cookie.</p>
 </tr>
 <tr>
 <td><a href="audit/">Audit</a></td>
-<td>Read the ledger</td>
+<td>Read the ledger; stream it as NDJSON; register, replay and delete export sinks</td>
+</tr>
+<tr>
+<td><a href="../../guides/lifecycle-webhooks/">Webhooks</a></td>
+<td>Register, list and delete subscribers; list delivery attempts</td>
+</tr>
+<tr>
+<td><a href="../retention/#endpoints">Retention</a></td>
+<td>Preview candidates, evaluate, compact, soft-delete and restore snapshots</td>
 </tr>
 </tbody>
 </table>
@@ -1252,7 +1380,7 @@ footer.</p>
 <td>OIDC login and callback.</td>
 </tr>
 <tr>
-<td><code>/</code>, <code>/marketplaces</code>, <code>/marketplaces/{name}</code>, <code>/audit</code>, <code>/tokens</code></td>
+<td><code>/</code>, <code>/marketplaces</code>, <code>/marketplaces/{name}</code>, <code>/audit</code>, <code>/tokens</code>, <code>/webhooks</code></td>
 <td>Forwarded to the single-page application.</td>
 </tr>
 </tbody>
