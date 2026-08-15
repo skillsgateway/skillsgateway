@@ -61,7 +61,11 @@ discussion, so the scaffold and the upcoming port have one reference.
   jar's static resources, so `./mvnw package` still yields **one
   deployable** (native image included). Dev loop: Vite dev server proxying
   `/api` to the running app. If the build graph grows, promote to a Maven
-  multi-module (`server/`, `ui/`) — the layout anticipates that split.
+  multi-module (`server/`, `frontend/`) — the layout anticipates that split.
+  **Amended 2026-08-15:** the directory moved from the top-level `ui/` to
+  `src/main/frontend/`, so the SPA sources sit inside the Maven source tree
+  with the rest of the module's sources. The decision itself — single
+  repository, Maven-orchestrated SPA build, one deployable — is unchanged.
 - **Maven coordinates:** `io.github.jimisola.skillsgateway:skills-gateway`.
 
 ## Consequences

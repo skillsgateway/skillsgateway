@@ -10,10 +10,10 @@ the verification harness are decided there; this skill is the working style.
 
 ## Components & theme
 
-- **shadcn/ui on Base UI primitives only** (`ui/src/components/ui/`) — never
+- **shadcn/ui on Base UI primitives only** (`src/main/frontend/src/components/ui/`) — never
   add a second component library or primitive layer. Missing component? Add it
   with `pnpm dlx shadcn@latest add <name>`.
-- Theme tokens live in `ui/src/index.css` (light + `.dark` blocks). Accent is
+- Theme tokens live in `src/main/frontend/src/index.css` (light + `.dark` blocks). Accent is
   violet/purple (`--primary`). Never hardcode colors where a token exists.
 - Icons: lucide-react only.
 - Dark mode via next-themes (`class` attribute); every surface must work in

@@ -6,7 +6,7 @@
 
 ## Context and Problem Statement
 
-The portal (ADR 0002: SPA served by the app as its own BFF, monorepo `ui/`)
+The portal (ADR 0002: SPA served by the app as its own BFF, monorepo `src/main/frontend/`)
 will be developed agent-first: the primary design constraint is a **closed
 SDLC loop** — an agent must be able to build → run → inspect → interact →
 screenshot → test → diagnose → modify → repeat, without a human acting as

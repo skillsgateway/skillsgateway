@@ -47,7 +47,7 @@ Five gates must pass before any PR; CI enforces the same set:
 
 ```bash
 ./mvnw clean verify                          # Java + portal gates, packaged jar (needs Docker)
-(cd ui && pnpm e2e)                          # portal e2e: real browser + mock OIDC login
+(cd src/main/frontend && pnpm e2e)           # portal e2e: real browser + mock OIDC login
 reqstool status local -p docs/reqstool       # traceability gate (after the two above)
 openspec validate --all --strict             # spec-driven change workflow
 mkdocs build --strict                        # docs site (pip install -r docs/requirements.txt)
@@ -64,10 +64,10 @@ docker build -t skills-gateway:local .       # OCI image from the native binary
 docker compose up                            # gateway + PostgreSQL on :8080 (compose.yaml)
 ```
 
-The admin portal (React/Vite, `ui/`) is **built by the Maven build** — the
+The admin portal (React/Vite, `src/main/frontend/`) is **built by the Maven build** — the
 frontend-maven-plugin provisions node/pnpm, runs the UI gates, and packages the
 bundle into the jar, served at `/` behind the OIDC login. You never need pnpm to
-build or run the gateway. The `cd ui && pnpm …` commands exist only for UI
+build or run the gateway. The `cd src/main/frontend && pnpm …` commands exist only for UI
 development loops (`pnpm dev` proxies `/api` to a running gateway, `pnpm test`,
 `pnpm storybook`) and for the e2e suite (`pnpm e2e`), which is deliberately
 outside `mvnw verify`.

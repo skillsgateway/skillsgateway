@@ -4,7 +4,7 @@ Enterprise gateway for git-distributed AI agent skill marketplaces: quarantined
 ingestion of upstream git repos into SHA-pinned snapshots, held-until-approved
 vetting, a read-only git smart-HTTP facade serving only approved content, and an
 append-only audit ledger. Java 25 / Spring Boot 4 backend, React/Vite portal in
-`ui/`, PostgreSQL, JGit (never subprocess git).
+`src/main/frontend/`, PostgreSQL, JGit (never subprocess git).
 
 ## Skills
 
@@ -24,7 +24,7 @@ Load these before working in their areas:
 
 ```bash
 ./mvnw clean verify                     # Java + UI gates + packaged jar (needs Docker)
-(cd ui && pnpm e2e)                     # real-browser e2e vs mock OIDC IdP (needs Docker)
+(cd src/main/frontend && pnpm e2e)    # real-browser e2e vs mock OIDC IdP (needs Docker)
 reqstool status local -p docs/reqstool  # requirements traceability — must end "PASS"
 openspec validate --all --strict
 mkdocs build --strict                   # docs site — pip install -r docs/requirements.txt
