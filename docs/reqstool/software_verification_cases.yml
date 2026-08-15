@@ -403,30 +403,80 @@ cases:
 
   - id: SVC_GW_0041
     requirement_ids: ["GW_0041"]
-    title: A blocked snapshot is approved only with a recorded reason
+    title: A blocked snapshot is approved only once waivers cover every blocking finding
     verification: automated-test
     description: |
-      GIVEN a snapshot whose chain run aggregated to a blocked outcome
-      WHEN approval is requested without a reason and then with one
-      THEN the first request is refused and the snapshot is neither approved nor served, and the second approves it and records the reason with the approving identity against the chain run
-    revision: "0.1.0"
+      GIVEN a snapshot whose chain run aggregated to a blocked outcome on more than one finding
+      WHEN approval is requested with no waiver, then after one of the blocking findings is waived, and finally after all of them are
+      THEN the first two requests are refused naming the findings still uncovered, the snapshot is neither approved nor served after either, and the third approves it
+    revision: "0.2.0"
 
   - id: SVC_GW_0042
     requirement_ids: ["GW_0042"]
-    title: Portal shows the verdicts and demands a reason for a blocked snapshot
+    title: Portal shows the verdicts and refuses approval while the outcome is blocked
     verification: automated-test
     description: |
       GIVEN an authenticated portal session and a marketplace whose snapshot has a blocked chain outcome
-      WHEN the reviewer opens the snapshot's vetting detail and approves it
-      THEN the connector verdicts and their findings are shown, approval is refused until a reason is entered, and the snapshot is approved once it is
-    revision: "0.1.0"
+      WHEN the reviewer opens the snapshot's vetting detail
+      THEN the connector verdicts and their findings are shown and the approval control is refused while the effective outcome is blocked
+    revision: "0.2.0"
 
   - id: SVC_GW_0043
     requirement_ids: ["GW_0043"]
-    title: The ledger records the chain run, the verdicts, and the override
+    title: The ledger records the chain run and the verdicts
     verification: automated-test
     description: |
-      GIVEN a snapshot taken through a blocking chain run and approved with an override reason
+      GIVEN a snapshot taken through a blocking chain run
       WHEN the audit ledger is read
-      THEN it holds an entry for the chain run outcome, an entry per connector verdict, and an entry for the override carrying the reason, each with the marketplace, the commit SHA, and the acting identity
+      THEN it holds an entry for the chain run outcome and an entry per connector verdict, each with the marketplace, the commit SHA, and the acting identity
+    revision: "0.2.0"
+
+  - id: SVC_GW_0044
+    requirement_ids: ["GW_0044"]
+    title: A waiver without justification, approver or a future expiry is refused
+    verification: automated-test
+    description: |
+      GIVEN a snapshot carrying a failing vetting finding
+      WHEN waivers are requested with no expiry, with an expiry already in the past, and with a blank justification, and then with all fields present
+      THEN each of the first three is refused and no waiver is recorded for it, and the fourth is recorded carrying the acting identity as its approver
+    revision: "0.1.0"
+
+  - id: SVC_GW_0045
+    requirement_ids: ["GW_0045"]
+    title: A waiver suppresses only the finding its scope names
+    verification: automated-test
+    description: |
+      GIVEN a snapshot whose chain run failed on one rule at one path
+      WHEN a waiver is written for a different rule, then one for the same rule pinned to a different commit SHA, then one for the same rule under an unrelated path, and finally one for that rule scoped to this snapshot
+      THEN the effective outcome stays blocked for the first three and becomes cleared-with-waivers for the last, while the recorded run outcome stays blocked throughout
+    revision: "0.1.0"
+
+  - id: SVC_GW_0046
+    requirement_ids: ["GW_0046"]
+    title: An expired or revoked waiver stops suppressing its finding
+    verification: automated-test
+    description: |
+      GIVEN a snapshot whose only blocking finding is covered by an active waiver, so its effective outcome is cleared-with-waivers
+      WHEN the waiver's expiry passes, and separately when an equivalent waiver is revoked
+      THEN in both cases the effective outcome is blocked again and approval is refused, with no scheduled pass having run
+    revision: "0.1.0"
+
+  - id: SVC_GW_0047
+    requirement_ids: ["GW_0047"]
+    title: Portal waives a finding and lists the waiver
+    verification: automated-test
+    description: |
+      GIVEN an authenticated portal session and a marketplace whose snapshot has a blocked chain outcome
+      WHEN the reviewer waives the blocking finding from the review surface with a justification and an expiry and then approves the snapshot
+      THEN the finding is shown as waived, the waiver is listed with its rule, scope, approver and expiry, the outcome is shown as cleared with waivers, and the approval succeeds
+    revision: "0.1.0"
+
+  - id: SVC_GW_0048
+    requirement_ids: ["GW_0048"]
+    title: The ledger records waiver creation, use and revocation
+    verification: automated-test
+    description: |
+      GIVEN a waiver created against a blocking finding and used to approve the snapshot, and a second waiver that is revoked
+      WHEN the audit ledger is read
+      THEN it holds an entry for each waiver's creation carrying the rule, the scope and the expiry, an entry for the waiver that let the approval through, and an entry for the revocation, each with the marketplace and the acting identity
     revision: "0.1.0"

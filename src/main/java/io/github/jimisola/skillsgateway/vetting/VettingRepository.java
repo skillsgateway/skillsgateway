@@ -16,9 +16,10 @@ import org.springframework.transaction.annotation.Transactional;
  * Persistence of chain runs, their per-connector verdicts, and the findings behind them
  * (GW_0037).
  *
- * <p>Runs are append-only in spirit: a re-vetting pass inserts a new run rather than updating the
- * previous one, so a snapshot's vetting history is the list of its runs. The single mutation is
- * stamping an approval override onto a run (GW_0041).
+ * <p>Runs are append-only: a re-vetting pass inserts a new run rather than updating the previous
+ * one, so a snapshot's vetting history is the list of its runs, and nothing ever edits what a
+ * connector said. Accepting a finding is a waiver ({@link WaiverRepository}) layered over the run
+ * at evaluation time, never an edit to the run itself (GW_0045).
  */
 @Repository
 public class VettingRepository {
@@ -96,21 +97,6 @@ public class VettingRepository {
     }
 
     /**
-     * Stamps the reviewer's override onto the run whose outcome blocked the approval (GW_0041).
-     * Only a blocked run can carry one, so an override can never be recorded against a chain that
-     * did not object.
-     */
-    public void recordOverride(long runId, String reviewer, String reason) {
-        jdbc.sql("UPDATE vetting_runs SET override_by = :reviewer, override_at = :now,"
-                        + " override_reason = :reason WHERE id = :id AND outcome = 'blocked'")
-                .param("reviewer", reviewer)
-                .param("now", OffsetDateTime.now())
-                .param("reason", reason)
-                .param("id", runId)
-                .update();
-    }
-
-    /**
      * The snapshot's most recent chain run with its verdicts and findings, or empty when the chain
      * has never run for it — which callers must treat as blocked (GW_0038).
      */
@@ -127,9 +113,6 @@ public class VettingRepository {
                 r.outcome(),
                 r.startedAt(),
                 r.finishedAt(),
-                r.overrideBy(),
-                r.overrideAt(),
-                r.overrideReason(),
                 verdicts(r.runId())));
     }
 
@@ -202,15 +185,6 @@ public class VettingRepository {
             @Schema(description = "When the run finished, or null if it never did")
             Instant finishedAt,
 
-            @Schema(description = "Reviewer who approved despite a blocked outcome, or null")
-            String overrideBy,
-
-            @Schema(description = "When the override was recorded, or null")
-            Instant overrideAt,
-
-            @Schema(description = "Reason the reviewer gave for the override, or null")
-            String overrideReason,
-
             @Schema(description = "The run's verdicts, in chain order")
             List<VerdictView> verdicts) {
 
@@ -231,9 +205,6 @@ public class VettingRepository {
                 VettingChain.Outcome.of(rs.getString("outcome")),
                 instant(rs, "started_at"),
                 instant(rs, "finished_at"),
-                rs.getString("override_by"),
-                instant(rs, "override_at"),
-                rs.getString("override_reason"),
                 List.of());
     }
 

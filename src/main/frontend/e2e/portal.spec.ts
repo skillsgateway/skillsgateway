@@ -177,16 +177,13 @@ test("audit_page_exports_the_ledger_and_lists_sinks", async ({ page }) => {
   expect((await download).suggestedFilename()).toBe("audit-ledger.ndjson");
 });
 
-/**
- * @SVCs SVC_GW_0042
- */
-test("vetting_verdicts_are_shown_and_a_blocked_snapshot_needs_a_reason", async ({ page }) => {
-  await login(page, "alice");
+/** Registers the tainted fixture and ingests it, returning its marketplace card. */
+async function registerTainted(page: Page, prefix: string) {
   await page
     .getByRole("navigation", { name: "Main" })
     .getByRole("link", { name: "Marketplaces" })
     .click();
-  const name = uniqueName("tainted");
+  const name = uniqueName(prefix);
 
   await page.getByRole("button", { name: "Register marketplace" }).click();
   await page.getByLabel("Name").fill(name);
@@ -200,6 +197,15 @@ test("vetting_verdicts_are_shown_and_a_blocked_snapshot_needs_a_reason", async (
   // own held snapshots on the page.
   const card = page.locator("[data-slot=card]").filter({ hasText: name });
   await expect(card.getByText("held", { exact: true })).toBeVisible();
+  return card;
+}
+
+/**
+ * @SVCs SVC_GW_0042
+ */
+test("vetting_verdicts_are_shown_and_a_blocked_snapshot_cannot_be_approved", async ({ page }) => {
+  await login(page, "alice");
+  const card = await registerTainted(page, "tainted");
 
   // The chain blocked it, and the table says so before anything is clicked.
   await expect(card.getByText("vetting blocked")).toBeVisible();
@@ -209,11 +215,44 @@ test("vetting_verdicts_are_shown_and_a_blocked_snapshot_needs_a_reason", async (
   await expect(dialog.getByText("prompt-injection").first()).toBeVisible();
   await expect(dialog.getByText("instruction-override").first()).toBeVisible();
 
-  // Fail-closed at the surface too: no reason, no approval.
+  // Fail-closed at the surface too: there is no reason field to type past the gate with,
+  // and the confirm control stays disabled while anything is uncovered.
+  const confirm = dialog.getByRole("button", { name: /Confirm approval of snapshot \d+/ });
+  await expect(confirm).toBeDisabled();
+  await expect(dialog.getByLabel("Reason for approving anyway")).toHaveCount(0);
+});
+
+/**
+ * @SVCs SVC_GW_0047
+ */
+test("a_finding_is_waived_from_the_review_surface_and_the_waiver_is_listed", async ({ page }) => {
+  await login(page, "alice");
+  const card = await registerTainted(page, "waived");
+  await expect(card.getByText("vetting blocked")).toBeVisible();
+
+  await card.getByRole("button", { name: /Approve snapshot \d+/ }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByText("instruction-override").first()).toBeVisible();
+
+  // Waive every blocking finding the server named; approval unblocks only when none is left.
   const confirm = dialog.getByRole("button", { name: /Confirm approval of snapshot \d+/ });
   await expect(confirm).toBeDisabled();
 
-  await dialog.getByLabel("Reason for approving anyway").fill("accepted for the pilot ring");
+  for (let i = 0; i < 10; i++) {
+    const waive = dialog.getByRole("button", { name: /^Waive finding / }).first();
+    if ((await waive.count()) === 0) break;
+    const rule = (await waive.getAttribute("aria-label"))!.replace("Waive finding ", "");
+    await waive.click();
+    await dialog.getByLabel("Justification").first().fill("accepted for the pilot ring");
+    await dialog.getByRole("button", { name: `Record waiver for ${rule}` }).click();
+    // The finding is now shown as accepted rather than blocking.
+    await expect(dialog.getByText(new RegExp(`waived by alice until`)).first()).toBeVisible();
+  }
+
+  // Cleared, but visibly by an acceptance rather than by a clean chain.
+  await expect(dialog.getByText("vetting clear with waivers")).toBeVisible();
+  await expect(dialog.getByText("accepted for the pilot ring").first()).toBeVisible();
+
   await expect(confirm).toBeEnabled();
   await confirm.click();
   await expect(card.getByText("approved", { exact: true })).toBeVisible();

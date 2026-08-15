@@ -27,10 +27,13 @@ flowchart TD
     end
 
     C --> A["Aggregate verdicts<br/>clear iff every verdict is pass or warn"]
-    A -->|clear| RV["Reviewer sees verdicts<br/>Approve enabled"]
-    A -->|blocked| RB["Reviewer sees verdicts<br/>Approve requires a recorded reason"]
+    A --> E["Effective outcome<br/>run + waivers active right now"]
+    E -->|clear| RV["Reviewer sees verdicts<br/>Approve enabled"]
+    E -->|clear with waivers| RW["Reviewer sees verdicts<br/>and what was accepted"]
+    E -->|blocked| RB["Reviewer sees the findings<br/>no waiver covers"]
     RV -->|"POST /api/snapshots/{id}/approve"| P["Published repository<br/>refs/heads/main"]
-    RB -->|"approve with overrideReason"| P
+    RW -->|"POST /api/snapshots/{id}/approve"| P
+    RB -->|"POST /api/snapshots/{id}/waivers per finding"| E
 ```
 
 The chain never changes the snapshot's own state. A vetted snapshot is still
@@ -48,8 +51,8 @@ move a ref, write to quarantine, or read another marketplace's content.
 A verdict carries a state, an optional external report URL, and a list of
 findings. A finding has a **stable rule id** (`aws-access-key-id`), a severity,
 a location (normally `path:line`), and a reviewer-facing message. The rule id is
-the identity a future scoped waiver will be written against, so it is part of
-the contract rather than a display string.
+the identity a [scoped waiver](#waivers-accepted-risks-with-a-scope-and-an-expiry)
+is written against, so it is part of the contract rather than a display string.
 
 ### Verdict states
 
@@ -90,20 +93,94 @@ because a reviewer should see everything that is wrong with a snapshot at once.
 
 ## The approval gate
 
-`POST /api/snapshots/{id}/approve` refuses a snapshot whose latest run is
-blocked, with `409` and a problem document naming the blocking connectors.
+`POST /api/snapshots/{id}/approve` takes no request body. It refuses a snapshot
+whose **effective** outcome is blocked, with `409` and a problem document naming
+both the blocking connectors and — in `uncoveredFindings` — every blocking
+finding that no active waiver covers. That array is the reviewer's worklist: it
+is exactly the set of waivers that must exist for the approval to succeed.
 
-To approve it anyway, the request carries an `overrideReason`. The reason is
-mandatory, and it is recorded twice: against the chain run (with the approving
-identity and the time) and in the append-only audit ledger.
+There is no blanket override. The only way past objecting connectors is to
+accept each blocking finding individually with a
+[waiver](#waivers-accepted-risks-with-a-scope-and-an-expiry).
 
-!!! warning "The override is blunt, on purpose"
+## Waivers: accepted risks with a scope and an expiry
 
-    One reason covers the whole snapshot, has no expiry, and is not scoped to a
-    finding. It is the smallest escape hatch that is still auditable. Scoped,
-    expiring, per-finding waivers are a separate capability; when they arrive
-    they become the ordinary way a blocked snapshot is cleared, and the blanket
-    override becomes the last resort.
+A **waiver** is an accepted-risk exception for **one finding rule**, on **one
+marketplace**, within **one scope**, until **one date**. All four are mandatory,
+and so are a justification and the identity accepting the risk. There is no way
+to express an unlimited waiver — `expires_at` is `NOT NULL` in the schema, and a
+past expiry is refused at creation.
+
+| Scope | The scope value is | It covers a finding when |
+| --- | --- | --- |
+| `SNAPSHOT` | the snapshot's commit SHA | the finding is on that exact commit |
+| `PATH` | a repository-relative path | the finding's path is that path, or lies under it |
+
+Scope is matched against the **path part** of a finding's location, never the
+line number: inserting a line above a finding moves the number, and a waiver
+that evaporates on an unrelated edit trains reviewers to re-waive without
+reading. Path matching is a prefix on a segment boundary — `plugins/a` covers
+`plugins/a/x.md` but never `plugins/ab.md` — and there is no glob syntax.
+
+`SNAPSHOT` scope is the tighter of the two and is what the portal offers first:
+it dies with the SHA, so the next ingestion blocks again and the acceptance has
+to be made deliberately a second time. A `PATH` waiver survives re-ingestion,
+which is its purpose and also its cost — it covers content that does not exist
+under that path yet. That is why an expiry is mandatory rather than advisory.
+
+### The effective outcome
+
+The recorded chain run is never rewritten. It stays raw evidence of what the
+connectors said. What gates an approval is the **effective outcome**, computed
+on every read from that run plus the waivers active *at that instant*:
+
+- a `PASS` or `WARN` verdict stays clearing — a waiver can only ever remove an
+  objection, never create one;
+- a blocking verdict **with no findings** stays blocking. `PENDING` can never be
+  waived away, because there is nothing to name;
+- a blocking verdict **with** findings is re-derived from the findings that are
+  left, by the same severity rule the connector's own state came from. Waive
+  every `HIGH`/`CRITICAL` finding and the verdict clears.
+
+| Effective states | A waiver suppressed something | Outcome |
+| --- | --- | --- |
+| all clearing, run non-empty | no | `CLEAR` |
+| all clearing, run non-empty | yes | `CLEAR_WITH_WAIVERS` |
+| anything else, or no run at all | — | `BLOCKED` |
+
+`CLEAR_WITH_WAIVERS` is a different word from `CLEAR` on purpose. A reviewer or
+an auditor glancing at a badge must never read an accepted risk as a clean
+chain.
+
+### Expiry needs no scheduler
+
+A waiver is active only while `expires_at` is in the future and it has not been
+revoked, and that is decided at the moment the effective outcome is computed —
+on the approve request, on the vetting API read, on the portal poll. So an
+expired waiver stops suppressing on the very next evaluation, and the snapshot's
+effective outcome reverts to `BLOCKED` with nothing having had to run in the
+background. Revoking a waiver has the same effect immediately.
+
+An hourly sweep writes a `waiver-expired` entry the first time it notices a
+lapsed waiver. It has no authority over the gate — the gate is already correct
+without it — so it only decides whether the lapse is *announced* in the ledger
+rather than merely observable in it.
+
+!!! warning "Expiry re-closes the gate; it does not retract published content"
+
+    A snapshot that was approved while a waiver was active stays published when
+    that waiver lapses. What returns is the *gate*: the snapshot reads as blocked
+    again, and any future approval needs a fresh acceptance. Automatic
+    re-vetting of already-approved content is a separate capability.
+
+!!! warning "`connector-error` is waivable"
+
+    A connector that crashed or timed out records a `connector-error` finding,
+    and the uniform rule above makes it waivable like any other. That is a real
+    operational need — an external scanner down for a day — but it means
+    accepting "the scanner never looked at this". It is the single most
+    consequential thing a reviewer can write here, and the ledger names the rule
+    so it can be found.
 
 ## The built-in connectors
 
@@ -160,18 +237,29 @@ never invisible.
 ## What lands in the ledger
 
 Every chain run writes to the append-only ledger: one entry per connector
-verdict (`vetting-verdict`, with `connector=state` in its detail), one entry for
-the run outcome (`vetting-completed`), and — when a reviewer overrides —
-`snapshot-approved-override` carrying the reason and the approving identity.
+verdict (`vetting-verdict`, with `connector=state` in its detail) and one entry
+for the run outcome (`vetting-completed`).
+
+The whole waiver lifecycle lands there too:
+
+| Event | Written when | Detail carries |
+| --- | --- | --- |
+| `waiver-created` | a risk is accepted | rule, scope, expiry |
+| `waiver-applied` | a waiver lets an approval through | waiver id, rule, location, approver, expiry |
+| `waiver-revoked` | a waiver is withdrawn | rule, scope |
+| `waiver-expired` | the sweep first notices a lapse | rule, scope, approver, expiry |
 
 An auditor asking "why is a snapshot with a critical finding being served" can
-answer it from the ledger alone.
+answer it from the ledger alone — including what was accepted, by whom, and
+until when.
 
 ## Reading further
 
 - [Approving and rejecting snapshots](../guides/approving-snapshots.md) — the
   reviewer's task, end to end.
+- [Waiving a vetting finding](../guides/waiving-findings.md) — accepting a risk,
+  end to end.
 - [Admin portal](../reference/portal.md#vetting) — where the verdicts appear.
-- [Configuration](../reference/configuration.md#vetting) — the two knobs.
+- [Configuration](../reference/configuration.md#vetting) — the knobs.
 - [Trust boundaries](trust-boundaries.md) — why approval is the boundary the
   chain protects.

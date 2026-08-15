@@ -6,12 +6,13 @@ import io.github.jimisola.skillsgateway.persistence.Snapshot;
 import io.github.jimisola.skillsgateway.persistence.SnapshotNotFoundException;
 import io.github.jimisola.skillsgateway.persistence.SnapshotRepository;
 import io.github.jimisola.skillsgateway.storage.GitStorage;
-import io.github.jimisola.skillsgateway.vetting.VettingRepository;
-import io.github.jimisola.skillsgateway.vetting.VettingService;
+import io.github.jimisola.skillsgateway.vetting.WaiverEvaluation;
+import io.github.jimisola.skillsgateway.vetting.WaiverService;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -27,60 +28,56 @@ public class ApprovalService {
     private final GitStorage storage;
     private final SnapshotRepository snapshotRepository;
     private final MarketplaceRepository marketplaceRepository;
-    private final VettingService vettingService;
+    private final WaiverService waiverService;
 
     public ApprovalService(
             GitStorage storage,
             SnapshotRepository snapshotRepository,
             MarketplaceRepository marketplaceRepository,
-            VettingService vettingService) {
+            WaiverService waiverService) {
         this.storage = storage;
         this.snapshotRepository = snapshotRepository;
         this.marketplaceRepository = marketplaceRepository;
-        this.vettingService = vettingService;
+        this.waiverService = waiverService;
     }
 
-    /** Approval of a snapshot whose vetting chain did not object. */
-    public Snapshot approve(long snapshotId, String reviewer) {
-        return approve(snapshotId, reviewer, null);
-    }
+    /**
+     * An approved snapshot together with the waivers that were in force when the gate let it
+     * through — empty for a snapshot the chain cleared on its own merits (GW_0048).
+     */
+    public record Approved(Snapshot snapshot, List<WaiverEvaluation.Suppression> waiversApplied) {}
 
     /**
      * Records the decision, then copies the pinned commit to published and advances main.
      *
-     * <p>The vetting gate comes first and fails closed (GW_0041): a snapshot whose latest chain run
-     * blocked — including one that has no chain run at all — is refused unless the reviewer supplies
-     * a reason, which is then recorded against the run and in the ledger by the caller. The check
-     * precedes the state transition, so a refused approval leaves the snapshot held and publishes
-     * nothing.
+     * <p>The vetting gate comes first and fails closed (GW_0041): a snapshot whose <em>effective</em>
+     * outcome is blocked — its latest chain run objects and at least one blocking finding is not
+     * covered by an active waiver, including the case of a snapshot with no chain run at all — is
+     * refused. The check precedes the state transition, so a refused approval leaves the snapshot
+     * held and publishes nothing.
      *
-     * <p>This blanket override is deliberately the minimum auditable escape hatch; scoped,
-     * expiring, per-finding waivers replace it.
+     * <p>There is no blanket override. Approving past objecting connectors means recording a scoped,
+     * expiring waiver for each blocking finding first, so the reviewer accepts exactly what was
+     * found and nothing else. The waivers that were in force are returned to the caller, which
+     * appends them to the ledger as the acting identity.
+     *
+     * @return the decided snapshot together with the waivers that let it through
      */
     @Requirements({"GW_0005", "GW_0041"})
-    public Snapshot approve(long snapshotId, String reviewer, String overrideReason) {
+    public Approved approve(long snapshotId, String reviewer) {
         // The state machine comes first: a snapshot that is not held is unapprovable for a reason
         // that has nothing to do with vetting, and saying "vetting blocked it" would be wrong.
         Snapshot current =
                 snapshotRepository.findById(snapshotId).orElseThrow(() -> new SnapshotNotFoundException(snapshotId));
-        boolean overridden = false;
-        if (Snapshot.HELD.equals(current.state()) && vettingService.blocked(snapshotId)) {
-            if (overrideReason == null || overrideReason.isBlank()) {
-                throw new VettingBlockedException(
-                        snapshotId,
-                        vettingService
-                                .latestRun(snapshotId)
-                                .map(VettingRepository.Run::blockingConnectors)
-                                .orElse(java.util.List.of()));
+        List<WaiverEvaluation.Suppression> applied = List.of();
+        if (Snapshot.HELD.equals(current.state())) {
+            WaiverEvaluation.Effect effect = waiverService.evaluate(current);
+            if (effect.blocked()) {
+                throw new VettingBlockedException(snapshotId, effect.blockingConnectors(), effect.uncovered());
             }
-            overridden = true;
+            applied = effect.suppressions();
         }
         Snapshot decided = snapshotRepository.decide(snapshotId, Snapshot.APPROVED, reviewer);
-        if (overridden) {
-            vettingService
-                    .latestRun(snapshotId)
-                    .ifPresent(run -> vettingService.recordOverride(run.runId(), reviewer, overrideReason));
-        }
         Marketplace marketplace = marketplaceRepository
                 .findById(decided.marketplaceId())
                 .orElseThrow(
@@ -99,7 +96,7 @@ public class ApprovalService {
         } catch (IOException | GitAPIException e) {
             throw new ApprovalException("publish failed for snapshot %d".formatted(snapshotId), e);
         }
-        return decided;
+        return new Approved(decided, applied);
     }
 
     public Snapshot reject(long snapshotId, String reviewer) {

@@ -33,6 +33,15 @@ public final class VettingChain {
         /** Every connector answered, and none of them objects. */
         CLEAR,
 
+        /**
+         * Nothing objects any more, but only because an active waiver is suppressing a finding
+         * (GW_0045). Deliberately a different word from {@link #CLEAR}: a reviewer or an auditor
+         * looking at a badge must never read an accepted risk as a clean chain. It is never
+         * produced by {@link #aggregate(Collection)} — only by evaluating waivers over a run —
+         * and it is never stored on the run, whose recorded outcome stays raw.
+         */
+        CLEAR_WITH_WAIVERS,
+
         /** Something objects, errored, is missing, or has not answered. Approval is gated. */
         BLOCKED;
 
