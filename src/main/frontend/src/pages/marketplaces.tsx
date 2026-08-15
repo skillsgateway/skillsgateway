@@ -15,6 +15,7 @@ import {
   type Snapshot,
 } from "@/api/queries";
 import { OutcomeBadge, VettingReport } from "@/components/vetting-report";
+import { GATEWAY_NAME, GATEWAY_NAME_HINT } from "@/lib/form-rules";
 import { SnapshotStateBadge } from "@/components/snapshot-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,7 +42,7 @@ import {
 const registerSchema = z.object({
   name: z
     .string()
-    .regex(/^[a-z0-9][a-z0-9_-]*$/, "lowercase letters, digits, - and _; must not start with - or _"),
+    .regex(GATEWAY_NAME, "lowercase letters, digits, - and _; must not start with - or _"),
   // Scheme policy is enforced server-side (GW_0016, configurable allowlist);
   // the client only requires a well-formed absolute URL.
   url: z.url({ error: "must be a valid URL" }),
@@ -52,10 +53,14 @@ type RegisterForm = z.infer<typeof registerSchema>;
 function RegisterMarketplaceDialog() {
   const [open, setOpen] = useState(false);
   const register = useRegisterMarketplace();
+  // onChange validation is what lets Register stay disabled until both fields would be
+  // accepted by the server, rather than failing on press.
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
     defaultValues: { name: "", url: "" },
+    mode: "onChange",
   });
+  const canRegister = form.formState.isValid && !register.isPending;
 
   const onSubmit = form.handleSubmit((values) => {
     register.mutate(values, {
@@ -81,9 +86,22 @@ function RegisterMarketplaceDialog() {
         <form onSubmit={(event) => void onSubmit(event)} className="space-y-4" noValidate>
           <div className="space-y-2">
             <Label htmlFor="marketplace-name">Name</Label>
-            <Input id="marketplace-name" autoComplete="off" {...form.register("name")} />
+            <Input
+              id="marketplace-name"
+              autoComplete="off"
+              aria-invalid={form.formState.errors.name ? true : undefined}
+              aria-describedby={
+                form.formState.errors.name
+                  ? "marketplace-name-hint marketplace-name-error"
+                  : "marketplace-name-hint"
+              }
+              {...form.register("name")}
+            />
+            <p id="marketplace-name-hint" className="text-xs text-muted-foreground">
+              {GATEWAY_NAME_HINT} It becomes the facade clone path /git/&#123;name&#125;.
+            </p>
             {form.formState.errors.name ? (
-              <p role="alert" className="text-sm text-destructive">
+              <p id="marketplace-name-error" role="alert" className="text-sm text-destructive">
                 {form.formState.errors.name.message}
               </p>
             ) : null}
@@ -94,16 +112,27 @@ function RegisterMarketplaceDialog() {
               id="marketplace-url"
               placeholder="https://github.com/org/marketplace.git"
               autoComplete="off"
+              aria-invalid={form.formState.errors.url ? true : undefined}
+              aria-describedby={
+                form.formState.errors.url
+                  ? "marketplace-url-hint marketplace-url-error"
+                  : "marketplace-url-hint"
+              }
               {...form.register("url")}
             />
+            <p id="marketplace-url-hint" className="text-xs text-muted-foreground">
+              A full clone URL. Register stays disabled until the name and the URL are
+              both well-formed; the gateway also checks the URL scheme against its
+              allowlist.
+            </p>
             {form.formState.errors.url ? (
-              <p role="alert" className="text-sm text-destructive">
+              <p id="marketplace-url-error" role="alert" className="text-sm text-destructive">
                 {form.formState.errors.url.message}
               </p>
             ) : null}
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={register.isPending}>
+            <Button type="submit" disabled={!canRegister}>
               {register.isPending ? "Registering…" : "Register"}
             </Button>
           </DialogFooter>

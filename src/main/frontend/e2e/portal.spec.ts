@@ -32,6 +32,8 @@ test("admin_registers_ingests_and_approves_a_marketplace_in_the_portal", async (
   const name = uniqueName("corp");
 
   await page.getByRole("button", { name: "Register marketplace" }).click();
+  // An empty dialog cannot be submitted: Register enables once both fields are valid.
+  await expect(page.getByRole("button", { name: "Register", exact: true })).toBeDisabled();
   await page.getByLabel("Name").fill(name);
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
   await page.getByRole("button", { name: "Register", exact: true }).click();
@@ -64,6 +66,9 @@ test("token_cleartext_is_shown_once_and_revocation_marks_it_revoked", async ({ p
   await login(page, "alice");
   await page.getByRole("link", { name: "Access tokens" }).click();
 
+  // The name is required: nothing can be submitted until one is entered.
+  await expect(page.getByRole("button", { name: "Create token" })).toBeDisabled();
+
   const tokenName = uniqueName("token");
   await page.getByLabel("Token name").fill(tokenName);
   await page.getByRole("button", { name: "Create token" }).click();
@@ -91,6 +96,7 @@ test("webhooks_page_lists_subscribers_and_delivery_attempts", async ({ page }) =
   await page.getByRole("link", { name: "Webhooks" }).click();
 
   const subscriberName = uniqueName("hook");
+  await expect(page.getByRole("button", { name: "Add subscriber" })).toBeDisabled();
   await page.getByLabel("Subscriber name").fill(subscriberName);
   // Nothing listens there: the delivery is still recorded, which is what this page shows.
   await page.getByLabel("Target URL").fill("http://127.0.0.1:9/hook");
@@ -157,6 +163,7 @@ test("audit_page_exports_the_ledger_and_lists_sinks", async ({ page }) => {
   await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Audit log" }).click();
 
   const sinkName = uniqueName("sink");
+  await expect(page.getByRole("button", { name: "Add sink" })).toBeDisabled();
   // Nothing listens there: the sink still registers, and its position is what this page shows.
   await page.getByLabel("Sink name").fill(sinkName);
   await page.getByLabel("Target URL").fill("http://127.0.0.1:9/ingest");

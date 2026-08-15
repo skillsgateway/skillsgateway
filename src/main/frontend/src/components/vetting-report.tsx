@@ -100,7 +100,14 @@ function WaiveForm({
   const [expiresAt, setExpiresAt] = useState(defaultExpiry());
   const path = (finding.location ?? "").replace(/:\d+$/, "");
   const rule = finding.id ?? "";
-  const incomplete = justification.trim().length === 0 || expiresAt.length === 0;
+  // The API takes an instant; a date control gives a day, so the waiver lapses at its end.
+  // This is the exact value posted below, and the exact value WaiverService compares
+  // against now — so the client's "is it still in the future?" is the server's own test
+  // (a justification is likewise mandatory there, never blank).
+  const expiryInstant = new Date(`${expiresAt}T23:59:59Z`).getTime();
+  const expiryIsFuture = Number.isFinite(expiryInstant) && expiryInstant > Date.now();
+  const incomplete = justification.trim().length === 0 || !expiryIsFuture;
+  const hintId = `waiver-hint-${snapshotId}-${rule}`;
 
   return (
     <div className="mt-2 space-y-2 rounded-md border bg-muted/40 p-3">
@@ -127,6 +134,10 @@ function WaiveForm({
             id={`waiver-expiry-${snapshotId}-${rule}`}
             type="date"
             value={expiresAt}
+            // The native control refuses a past day for the same reason the server does.
+            min={new Date().toISOString().slice(0, 10)}
+            aria-invalid={expiryIsFuture ? undefined : true}
+            aria-describedby={hintId}
             onChange={(event) => setExpiresAt(event.target.value)}
           />
         </div>
@@ -137,10 +148,15 @@ function WaiveForm({
           id={`waiver-justification-${snapshotId}-${rule}`}
           autoComplete="off"
           value={justification}
+          aria-describedby={hintId}
           onChange={(event) => setJustification(event.target.value)}
           placeholder="Why is this acceptable?"
         />
       </div>
+      <p id={hintId} className="text-xs text-muted-foreground">
+        Record waiver enables once a justification is written and the expiry is a future
+        date. Both are mandatory — the gateway refuses an unlimited or unexplained waiver.
+      </p>
       <div className="flex gap-2">
         <Button
           size="sm"
@@ -154,8 +170,7 @@ function WaiveForm({
                 scope,
                 ...(scope === "PATH" ? { path } : {}),
                 justification: justification.trim(),
-                // The API takes an instant; a date control gives a day, so it lapses at its end.
-                expiresAt: new Date(`${expiresAt}T23:59:59Z`).toISOString(),
+                expiresAt: new Date(expiryInstant).toISOString(),
               },
               {
                 onSuccess: () => {

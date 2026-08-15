@@ -36,6 +36,12 @@ carries a breadcrumb and a dark-mode toggle.
   confirmation dialogs.
 - Buttons disable while their mutation is in flight and swap to a progressive
   label ("Registering…", "Ingesting…").
+- **A form's submit button is disabled until every required field is valid**, and
+  a muted hint beneath the form (bound to the fields with `aria-describedby`)
+  states what it is waiting for. The client rules mirror the server's; whitespace
+  never counts as a value. Rules the client cannot know — the URL scheme
+  allowlist, the webhook event registry — stay server-side and surface as an
+  error toast.
 - Every list renders a bare "Loading…" and, on failure, an error paragraph with
   `role="alert"`.
 - Timestamps render as raw ISO-8601 strings.
@@ -91,6 +97,9 @@ ingests the upstream default branch; the ref is not selectable."
 | Name | `^[a-z0-9][a-z0-9_-]*$` — "lowercase letters, digits, `-` and `_`; must not start with `-` or `_`" |
 | Clone URL | Must be a valid URL. The scheme allowlist is enforced server-side and surfaces as an error toast. |
 
+**Register** stays disabled until both fields are valid; it enables as soon as the
+name matches the pattern and the clone URL parses.
+
 Submits `POST /api/marketplaces`; toasts *Marketplace '{name}' registered*.
 
 ### Marketplace cards
@@ -141,8 +150,12 @@ that opens an inline form beside it:
 | Control | Notes |
 | --- | --- |
 | **Scope** | *This snapshot only* (default) or *This path in the marketplace* |
-| **Expires on** | date input, defaulting to 30 days out |
-| **Justification** | required; *Record waiver for {rule}* stays disabled while it is empty |
+| **Expires on** | date input, defaulting to 30 days out; must be in the future — the waiver lapses at the end of the chosen day |
+| **Justification** | required; whitespace does not count |
+
+*Record waiver for {rule}* stays disabled until the justification is non-blank
+**and** the expiry is still in the future, which is exactly what the server
+requires.
 
 *Record waiver for {rule}* calls `POST /api/snapshots/{id}/waivers` and toasts
 *Waiver recorded for {rule}*. The finding is then struck through and badged
@@ -283,7 +296,9 @@ same-origin, session-authenticated download, not a fetch through the API client.
 ### Export sinks
 
 An inline form with **Sink name** and **Target URL** posts to
-`POST /api/audit/sinks`; the response opens the same show-once secret dialog as
+`POST /api/audit/sinks`. **Add sink** stays disabled until the name matches
+`^[a-z0-9][a-z0-9_-]*$` and the target URL parses with a scheme; the scheme
+allowlist itself stays server-side. The response opens the same show-once secret dialog as
 [Access tokens](#access-tokens) and [Webhooks](#webhooks).
 
 | Column | Contents |
@@ -334,9 +349,11 @@ signed with HMAC-SHA256 and retried with backoff until delivered."
 
 An inline form with **Subscriber name**, **Target URL** and **Events** — the
 last defaults to `*` and is placeholder-hinted with
-`snapshot.approved,snapshot.rejected`. Name and URL are both required client-side
-before `POST /api/webhooks` is called; everything else is enforced server-side
-and surfaces as an error toast.
+`snapshot.approved,snapshot.rejected`. **Add subscriber** stays disabled until the
+name matches `^[a-z0-9][a-z0-9_-]*$` and the target URL parses with a scheme;
+only then is `POST /api/webhooks` called. Everything else — the scheme allowlist
+and the set of known event names — is enforced server-side and surfaces as an
+error toast.
 
 The response opens a show-once dialog — "This signing secret is shown exactly
 once — copy it now." — with the `whsec_…` value in a code block and a clipboard
@@ -389,7 +406,9 @@ headers and signature verification.
 hashed at rest and shown exactly once."
 
 An inline form with a **Token name** field and a **Create token** button posts to
-`POST /api/tokens`. The response opens a show-once dialog — "This value is shown
+`POST /api/tokens`. **Create token** stays disabled until the name field holds a
+non-blank value — the name is trimmed before it is sent. The response opens a
+show-once dialog — "This value is shown
 exactly once — copy it now. Only a hash is stored." — with the token in a code
 block and a clipboard button that flips to a checkmark for two seconds.
 
