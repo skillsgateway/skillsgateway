@@ -127,6 +127,7 @@ public class RetentionService {
             snapshotRepository
                     .candidates(
                             marketplace.id(),
+                            marketplace.name(),
                             policy.heldCriterionEnabled(),
                             now.minus(policy.heldMaxAge()),
                             policy.supersededCriterionEnabled(),

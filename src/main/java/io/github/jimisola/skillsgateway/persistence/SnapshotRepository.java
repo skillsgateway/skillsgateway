@@ -159,6 +159,13 @@ public class SnapshotRepository {
      * never returned twice, and a snapshot served through the facade since {@code idleCutoff} is
      * vetoed regardless of which criterion matched it.
      *
+     * <p>The idle veto matches the fetch on marketplace <em>and</em> commit, not on the commit
+     * alone. A SHA is not unique across marketplaces — a fork, a mirror, or the same upstream
+     * registered twice all carry it — and the facade serves per marketplace, so a fetch of one
+     * marketplace says nothing about whether another marketplace's identically-pinned snapshot is
+     * still in use. Vetoing on the SHA alone let any marketplace's traffic hold every other
+     * marketplace's snapshots in quarantine indefinitely.
+     *
      * <p>Deletable states are named explicitly rather than written as "not approved" (GW_0050):
      * {@code revoked} joined the state machine after retention did, and a categorical guard phrased
      * as a negation would have admitted it silently. It <em>is</em> admitted — a revoked snapshot is
@@ -169,6 +176,7 @@ public class SnapshotRepository {
      */
     public List<Candidate> candidates(
             long marketplaceId,
+            String marketplaceName,
             boolean heldEnabled,
             Instant heldCutoff,
             boolean supersededEnabled,
@@ -186,9 +194,11 @@ public class SnapshotRepository {
                         + " AND s.deleted_at IS NULL"
                         + " AND (" + heldMatch + " OR " + supersededMatch + ")"
                         + " AND NOT EXISTS (SELECT 1 FROM fetch_log f WHERE f.sha = s.sha"
+                        + " AND f.marketplace = :marketplaceName"
                         + " AND f.source <> 'admin' AND f.ts > :idleCutoff)"
                         + " ORDER BY s.id LIMIT :limit")
                 .param("marketplaceId", marketplaceId)
+                .param("marketplaceName", marketplaceName)
                 .param("heldEnabled", heldEnabled)
                 .param("heldCutoff", heldCutoff.atOffset(ZoneOffset.UTC))
                 .param("supersededEnabled", supersededEnabled)

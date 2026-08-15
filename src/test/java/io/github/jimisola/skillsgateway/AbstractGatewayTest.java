@@ -140,6 +140,13 @@ abstract class AbstractGatewayTest {
      * Creates an upstream marketplace repository on disk with JGit (never the git binary: the host
      * git config enforces GPG signing, which JGit ignores). Returns the work tree; its absolute
      * path doubles as the clone URL for registration.
+     *
+     * <p>The commit message carries a unique marker so that two fixtures built from the same
+     * manifest never share a commit SHA. Without it they do: the tree, the fixed author identity
+     * and the message are all identical, and a git timestamp has second granularity, so any two
+     * fixtures created within the same second are the same commit. Tests would then couple through
+     * every SHA-keyed table — the fetch ledger above all — in a way that depends on how fast the
+     * suite happens to run. The marker changes only the commit object; the content is untouched.
      */
     protected static Path createUpstream(String manifestJson) throws IOException, GitAPIException {
         Path dir = newWorkDir("upstream");
@@ -151,7 +158,7 @@ abstract class AbstractGatewayTest {
             Path skill = dir.resolve("plugins/hello/skills/hello/SKILL.md");
             Files.createDirectories(skill.getParent());
             Files.writeString(skill, "# Hello\n\nA test skill that says hello.\n");
-            commitAll(git, "initial marketplace content");
+            commitAll(git, "initial marketplace content " + uniqueName("fixture"));
         }
         return dir;
     }
