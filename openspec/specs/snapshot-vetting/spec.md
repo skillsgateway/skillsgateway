@@ -1,7 +1,7 @@
 # snapshot-vetting Specification
 
 ## Purpose
-The pluggable vetting chain: ordered connectors run at ingestion against the quarantined, SHA-pinned snapshot, fail-closed aggregation of their verdicts, the built-in secret and prompt-injection scanners, the approval gate with a recorded reviewer override, the portal surface that puts the evidence in front of the reviewer, and the ledger record of every run, verdict and override.
+The pluggable vetting chain: ordered connectors run at ingestion against the quarantined, SHA-pinned snapshot, fail-closed aggregation of their verdicts, the built-in secret and prompt-injection scanners, the approval gate that refuses a snapshot whose effective outcome is blocked until an active waiver covers every blocking finding, the portal surface that puts the evidence in front of the reviewer, and the ledger record of every run and verdict.
 ## Requirements
 ### Requirement: GW_0037
 The system SHALL implement GW_0037.
