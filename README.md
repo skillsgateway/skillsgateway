@@ -51,7 +51,18 @@ Renovate GitHub App on the repository for it to take effect.
 
 ## Documentation
 
-Arriving on the scaffold branch:
+The user-facing documentation site (MkDocs Material, `docs/manual/`) is
+published to <https://jimisola.github.io/skills-gateway>: background and goals,
+concepts (the quarantine → approve → serve lifecycle, snapshots and the audit
+ledger, trust boundaries), guides, and reference (configuration, REST API, git
+façade, portal). Build it locally with:
+
+```bash
+pip install -r docs/requirements.txt
+mkdocs build --strict
+```
+
+In the repository:
 
 - `ARCHITECTURE.md` — the full architecture (threat model, connector-based
   vetting, two-repo promotion, git façade, observability, roadmap)

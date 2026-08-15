@@ -13,6 +13,7 @@ Load these before working in their areas:
 - `.claude/skills/architecture` — system model, threat model, where decisions live (ADRs)
 - `.claude/skills/code-conventions` — build, gates, Java/TS conventions, traceability annotations
 - `.claude/skills/design-conventions` — portal design system and UI verification rules
+- `.claude/skills/documentation` — MkDocs site structure, Markdown/Mermaid conventions, docs-in-same-PR rule
 
 ## The gates (all must pass before any PR)
 
@@ -21,6 +22,7 @@ Load these before working in their areas:
 (cd ui && pnpm e2e)                     # real-browser e2e vs mock OIDC IdP (needs Docker)
 reqstool status local -p docs/reqstool  # requirements traceability — must end "PASS"
 openspec validate --all --strict
+mkdocs build --strict                   # docs site — pip install -r docs/requirements.txt
 ```
 
 Use `clean` for the reqstool gate: incremental compilation truncates the
@@ -34,6 +36,9 @@ generated annotation files.
   requirement text anywhere else; code carries `@Requirements`/`@SVCs`
   annotations (Java) or JSDoc tags (TypeScript).
 - Never weaken or delete an existing SVC test to make a change pass.
+- Documentation lives in `docs/manual/` (MkDocs Material). Any change to
+  behavior, the REST API, configuration, or the portal updates the affected
+  pages **in the same PR**.
 - Conventional Commits with DCO sign-off (`git commit -s`); branches
   `<type>/<kebab-description>`; PR titles are conventional commits (squash).
 - Work on branches, open PRs; merging is done manually by the owner.

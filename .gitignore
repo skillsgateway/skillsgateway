@@ -2,6 +2,9 @@
 target/
 .mvn/wrapper/maven-wrapper.jar
 
+# MkDocs build output
+site/
+
 # IDE
 .idea/
 *.iml
