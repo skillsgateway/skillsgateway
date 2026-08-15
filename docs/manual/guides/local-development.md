@@ -107,6 +107,57 @@ relative to the working directory. In the container image it is `/data`.
     published repositories — everything else is rebuildable from the database
     and upstream, but approved refs are not.
 
+## Observability
+
+Traces, metrics and logs can be sent to a local **Grafana LGTM** stack — the
+`grafana/otel-lgtm` image, which bundles an OpenTelemetry Collector with Loki
+(logs), Tempo (traces), Prometheus (metrics) and Grafana. It is provisioned as
+an [Arconia](https://arconia.io) dev service, so there is nothing to install and
+no compose file to start.
+
+It is **opt-in through the `observability` Spring profile** and off in every
+other run: `./mvnw clean verify` and the e2e suite start no LGTM container and
+attempt no OTLP export, which keeps the test loop fast and the logs quiet.
+
+```console
+$ ./mvnw spring-boot:run \
+    -Dspring-boot.run.profiles=observability \
+    -Dspring-boot.run.useTestClasspath=true
+```
+
+`useTestClasspath` is required: the dev-service and OpenTelemetry dependencies
+are test scope so that they never reach the packaged jar, the container image or
+the native binary. The same flag also gives you the PostgreSQL dev service, so
+the datasource environment variables above are not needed for this run.
+
+The stack takes a moment to pull on first use. Watch the log for the Grafana
+URL, which is on a random port:
+
+```
+Dev Service 'lgtm' is ready — Grafana: http://localhost:<port>
+```
+
+Log in is not required (anonymous admin). Explore traces in **Tempo**, metrics
+in **Prometheus** and logs in **Loki**; all three are pre-provisioned as Grafana
+data sources by the image.
+
+| Property | Default here | Purpose |
+| --- | --- | --- |
+| `arconia.dev.services.lgtm.enabled` | `false`, `true` under `observability` | Starts the LGTM container |
+| `arconia.otel.enabled` | `false`, `true` under `observability` | Enables the OpenTelemetry SDK and OTLP export |
+
+Ports are random by default; pin them with
+`arconia.dev.services.lgtm.grafana-port` and friends if you want stable
+bookmarks. See the
+[Arconia dev services documentation](https://docs.arconia.io/arconia/latest/dev-services/lgtm/)
+for the full property list.
+
+!!! note "Development only"
+
+    The gateway ships no OpenTelemetry export in production builds. The
+    `observability` profile exists for the local development loop; wiring a
+    deployed gateway to a collector is a separate, not-yet-implemented concern.
+
 ## UI development loop
 
 Only needed when changing the portal:

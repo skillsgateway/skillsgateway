@@ -151,6 +151,23 @@
             <artifactId>arconia-dev-services-postgresql</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Opt-in local observability (Spring profile "observability"): the Grafana LGTM
+             stack as a dev service plus OTLP export from the application. Both are test
+             scope on purpose — they must never reach the runtime jar, the container image
+             or the GraalVM native binary. `spring-boot:run` picks them up with
+             -Dspring-boot.run.useTestClasspath=true; see docs/manual/guides/local-development.md.
+             Disabled by default in application.yaml, so tests neither start the LGTM
+             container nor initialise the OpenTelemetry SDK. -->
+        <dependency>
+            <groupId>io.arconia</groupId>
+            <artifactId>arconia-dev-services-lgtm</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.arconia</groupId>
+            <artifactId>arconia-opentelemetry-spring-boot-starter</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

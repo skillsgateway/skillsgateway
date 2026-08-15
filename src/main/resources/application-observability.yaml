@@ -1,0 +1,21 @@
+# Opt-in local observability.
+#
+#   ./mvnw spring-boot:run -Dspring-boot.run.profiles=observability \
+#                          -Dspring-boot.run.useTestClasspath=true
+#
+# Starts the Grafana LGTM stack (grafana/otel-lgtm: OpenTelemetry Collector, Loki,
+# Tempo, Prometheus, Grafana) as an Arconia dev service and exports traces, metrics
+# and logs to it over OTLP. The Grafana URL is logged at startup.
+#
+# The supporting dependencies are test scope, so nothing here is reachable from the
+# packaged jar, the container image or the native binary.
+arconia:
+  dev:
+    services:
+      lgtm:
+        enabled: true
+        # The image boots six processes (collector, Loki, Tempo, Prometheus,
+        # Pyroscope, Grafana); the 2-minute default is tight on a small Docker VM.
+        startup-timeout: 5m
+  otel:
+    enabled: true
