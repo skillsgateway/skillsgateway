@@ -15,7 +15,8 @@ public record SkillsGatewayProperties(
         AuditExport auditExport,
         Retention retention,
         Vetting vetting,
-        Sync sync) {
+        Sync sync,
+        Catalog catalog) {
 
     public SkillsGatewayProperties {
         if (dataDir == null) {
@@ -41,6 +42,29 @@ public record SkillsGatewayProperties(
         }
         if (sync == null) {
             sync = new Sync(null, null, null, null);
+        }
+        if (catalog == null) {
+            catalog = new Catalog(null, null);
+        }
+    }
+
+    /**
+     * The global virtual catalog (GW_0061–GW_0063). {@code name} is reserved: registration
+     * refuses it, because the catalog occupies that facade path.
+     *
+     * @param enabled whether publications and revocations rebuild the catalog and the endpoints
+     *     answer; an existing catalog repository is never deleted by turning this off
+     * @param name the catalog's facade path segment and reserved marketplace name
+     */
+    public record Catalog(Boolean enabled, String name) {
+
+        public Catalog {
+            if (enabled == null) {
+                enabled = true;
+            }
+            if (name == null || name.isBlank()) {
+                name = "catalog";
+            }
         }
     }
 

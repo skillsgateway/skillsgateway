@@ -600,3 +600,33 @@ cases:
       WHEN the audit ledger is read
       THEN it contains the mode change with the acting identity and each sync-triggered ingestion with the snapshot SHA and a trigger identity distinguishing scheduler and webhook from a human, and a snapshot-ingested lifecycle event was emitted for each
     revision: "0.1.0"
+
+  - id: SVC_GW_0061
+    requirement_ids: ["GW_0061"]
+    title: The catalog aggregates exactly the served estate under namespaced paths
+    verification: automated-test
+    description: |
+      GIVEN two marketplaces with approved snapshots and a third with only a held snapshot
+      WHEN the catalog is cloned through the facade with a real git client
+      THEN the clone contains each approved marketplace's content under a subdirectory named after it, the merged manifest lists their plugins with marketplace-prefixed names and relative sources into those subdirectories, and the held-only marketplace appears nowhere
+    revision: "0.1.0"
+
+  - id: SVC_GW_0062
+    requirement_ids: ["GW_0062"]
+    title: Publications and revocations reshape the catalog on their own
+    verification: automated-test
+    description: |
+      GIVEN a served catalog containing a marketplace whose snapshot is then revoked under enforcing re-vetting, and another marketplace approved afterwards
+      WHEN the catalog is fetched again with no manual regeneration
+      THEN the revoked marketplace's subtree and plugins are gone and its SHA is unreachable from every advertised catalog reference, the newly approved marketplace is present, and with nothing serving at all the catalog still serves a manifest with an empty plugin list
+    revision: "0.1.0"
+
+  - id: SVC_GW_0063
+    requirement_ids: ["GW_0063"]
+    title: Catalog constituents, fetch audit, manual rebuild, and the reserved name
+    verification: automated-test
+    description: |
+      GIVEN a served catalog
+      WHEN its constituents are read from the API, it is cloned through the facade, a manual regeneration is requested, and a marketplace registration under the catalog's name is attempted
+      THEN the API lists exactly the marketplace-and-SHA pairs the clone contains, the clone is on the fetch ledger under the catalog's name, the manual regeneration lands on the ledger with the acting identity, and the registration is refused
+    revision: "0.1.0"

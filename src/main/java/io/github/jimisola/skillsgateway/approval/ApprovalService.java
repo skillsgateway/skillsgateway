@@ -1,5 +1,6 @@
 package io.github.jimisola.skillsgateway.approval;
 
+import io.github.jimisola.skillsgateway.catalog.CatalogService;
 import io.github.jimisola.skillsgateway.persistence.Marketplace;
 import io.github.jimisola.skillsgateway.persistence.MarketplaceRepository;
 import io.github.jimisola.skillsgateway.persistence.Snapshot;
@@ -29,16 +30,19 @@ public class ApprovalService {
     private final SnapshotRepository snapshotRepository;
     private final MarketplaceRepository marketplaceRepository;
     private final WaiverService waiverService;
+    private final CatalogService catalogService;
 
     public ApprovalService(
             GitStorage storage,
             SnapshotRepository snapshotRepository,
             MarketplaceRepository marketplaceRepository,
-            WaiverService waiverService) {
+            WaiverService waiverService,
+            CatalogService catalogService) {
         this.storage = storage;
         this.snapshotRepository = snapshotRepository;
         this.marketplaceRepository = marketplaceRepository;
         this.waiverService = waiverService;
+        this.catalogService = catalogService;
     }
 
     /**
@@ -103,6 +107,9 @@ public class ApprovalService {
         } catch (IOException | GitAPIException e) {
             throw new ApprovalException("publish failed for snapshot %d".formatted(snapshotId), e);
         }
+        // The published set just grew; the catalog re-derives from it (GW_0062). Never fails the
+        // approval that triggered it.
+        catalogService.rebuildQuietly();
         return new Approved(decided, applied);
     }
 
