@@ -41,4 +41,35 @@ class PackagingTests {
         assertThat(Files.exists(chart.resolve("templates/service.yaml"))).isTrue();
         assertThat(Files.readString(REPO_ROOT.resolve("compose.yaml"))).contains("SPRING_DATASOURCE_URL");
     }
+
+    @Test
+    @SVCs({"SVC_GW_0072"})
+    void releaseWorkflowCarriesThePublishByDigestContract() throws IOException {
+        String workflow = Files.readString(REPO_ROOT.resolve(".github/workflows/native.yml"));
+
+        // publishes to the project namespace, by commit SHA and latest on main, version on releases
+        assertThat(workflow).contains("ghcr.io/skillsgateway/skillsgateway");
+        assertThat(workflow).contains("sha-${{ github.sha }}");
+        assertThat(workflow).contains("latest");
+        assertThat(workflow).contains("tags: ['v*']");
+        assertThat(workflow).contains("${{ github.ref_name }}");
+
+        // publish steps are gated on push events only — cron and manual runs never move a tag
+        assertThat(workflow).contains("github.event_name == 'push'");
+        assertThat(workflow).doesNotContain("github.event_name == 'schedule'");
+
+        // permissions publishing and attestation require
+        assertThat(workflow).contains("packages: write");
+        assertThat(workflow).contains("id-token: write");
+        assertThat(workflow).contains("attestations: write");
+
+        // digest surfaced in the job summary, SBOM attested against the pushed image after the push
+        assertThat(workflow).contains("GITHUB_STEP_SUMMARY");
+        assertThat(workflow).contains("attest-sbom");
+        assertThat(workflow).contains("sbom-path: target/classes/META-INF/sbom/application.cdx.json");
+        int push = workflow.indexOf("Push image");
+        int attest = workflow.indexOf("Attest SBOM");
+        assertThat(push).as("push step present").isPositive();
+        assertThat(attest).as("attestation ordered after the push").isGreaterThan(push);
+    }
 }
