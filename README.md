@@ -41,6 +41,11 @@ are no releases or tags yet, and interfaces may still change.
 
 ## Run it
 
+Runtime requirements: **PostgreSQL 18** (every provisioning path in the repo —
+compose, e2e infrastructure, CI, and the Arconia/Testcontainers dev services —
+runs 18) and an **OIDC identity provider** for the web surface. `compose.yaml`
+brings its own PostgreSQL; the Helm chart expects you to bring both.
+
 ```bash
 ./mvnw -Pnative -DskipTests native:compile   # GraalVM native binary (needs GraalVM CE 25)
 docker build -t skills-gateway:local .       # OCI image from the native binary
