@@ -3,6 +3,7 @@ name: Native image
 on:
   push:
     branches: [main]
+    tags: ['v*']
   schedule:
     # Weekly, Monday 04:30 UTC
     - cron: '30 4 * * 1'
@@ -15,6 +16,13 @@ jobs:
   native:
     name: Native build, container & smoke test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Publishing runs only on push events (never schedule/dispatch); these
+      # cover the GHCR push and the SBOM attestation.
+      packages: write
+      id-token: write
+      attestations: write
     services:
       postgres:
         image: postgres:17
@@ -65,6 +73,50 @@ jobs:
 
       - name: Helm lint
         run: helm lint helm/skills-gateway
+
+      # --- Publication: only the smoke-tested image, only from push events ---
+      # (main pushes and v* tags; scheduled and manual runs never move a tag)
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push image
+        if: github.event_name == 'push'
+        id: push
+        run: |
+          IMAGE=ghcr.io/skillsgateway/skillsgateway
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            TAGS="${{ github.ref_name }}"
+          else
+            TAGS="sha-${{ github.sha }} latest"
+          fi
+          for tag in $TAGS; do
+            docker tag skills-gateway:ci "$IMAGE:$tag"
+            docker push "$IMAGE:$tag"
+          done
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE:${TAGS%% *}" | cut -d@ -f2)
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Published image"
+            echo '```'
+            echo "$IMAGE@$DIGEST"
+            echo '```'
+            echo "Tags: $TAGS"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Attest SBOM
+        if: github.event_name == 'push'
+        uses: actions/attest-sbom@v3
+        with:
+          subject-name: ghcr.io/skillsgateway/skillsgateway
+          subject-digest: ${{ steps.push.outputs.digest }}
+          sbom-path: target/classes/META-INF/sbom/application.cdx.json
+          push-to-registry: true
 
       - name: Export image
         run: docker save skills-gateway:ci | gzip > skills-gateway-image.tar.gz

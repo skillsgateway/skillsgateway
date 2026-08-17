@@ -575,3 +575,12 @@ requirements:
     rationale: Who may do what must be answerable from the gateway's own records, and changing it must not need a redeploy; the configuration-listed admins are the escape hatch that survives any bad grant edit, so the API must not be able to take them away, and the identity endpoint is how the portal and CLI adapt to what the caller may do.
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
+
+  - id: GW_0072
+    title: Container image publication by digest
+    significance: shall
+    description: The system's release automation shall publish the smoke-tested container image to the project's public registry namespace addressable by immutable digest, tagging main-branch builds with the commit SHA and a moving latest tag and tagged releases with their version, shall publish only from push events so that scheduled and manually dispatched builds can never move a published tag, shall surface the pushed image digest in the build output, and shall attach the build's CycloneDX SBOM to the published image as a registry attestation.
+    rationale: Downstream platforms mirror images into their own registries pinned by digest, so an unpublished image is an undeliverable product; publishing only what the same workflow just smoke-tested, only from push events, keeps every published digest traceable to a reviewed commit, and the attested SBOM lets consumers verify the inventory of exactly the bytes they pinned.
+    categories: ["security", "flexibility"]
+    implementation: configuration
+    revision: 0.1.0

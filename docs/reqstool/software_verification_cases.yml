@@ -710,3 +710,13 @@ cases:
       WHEN the no-role session attempts to grant, the admin grants and revokes approver and auditor roles, an approver grant omitting its marketplace and one naming an unknown marketplace are attempted, a duplicate grant is attempted, and the session identity endpoint is read by the admin and by a granted principal
       THEN the no-role grant is refused with an authorization error, the admin's grant and revocation succeed and each lands on the append-only ledger with actor, target, role and marketplace, the malformed and duplicate grants are refused, the configuration-bootstrapped admin holds admin with no database row an API call could revoke, and the identity endpoint reports enforcement state and each caller's effective roles
     revision: "0.1.0"
+
+  - id: SVC_GW_0072
+    requirement_ids: ["GW_0072"]
+    title: The release workflow carries the publish-by-digest contract
+    verification: automated-test
+    description: |
+      GIVEN the repository's release workflow definition
+      WHEN the packaging test validates it
+      THEN the workflow pushes the smoke-tested image to the project's registry namespace with commit-SHA and latest tags on main and a version tag on releases, gates every publish step on push events, holds the permissions publishing and attestation require, surfaces the pushed digest in the job summary, and attests the CycloneDX SBOM against the pushed image after the push
+    revision: "0.1.0"

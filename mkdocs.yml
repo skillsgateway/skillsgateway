@@ -123,6 +123,7 @@ nav:
           - Audit: reference/api/audit.md
           - Roles: reference/api/roles.md
       - Snapshot retention: reference/retention.md
+      - Container image: reference/container-image.md
       - Git smart-HTTP facade: reference/git-facade.md
       - Compatibility and allowlists: reference/compatibility.md
       - Admin portal: reference/portal.md
