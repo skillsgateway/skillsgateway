@@ -550,3 +550,53 @@ cases:
       WHEN the reviewer opens the marketplace
       THEN the snapshot is shown as revoked with the reason, the blocking findings of the re-vetting run and the identities that had fetched it are listed, and a control re-vets the snapshot on demand
     revision: "0.1.0"
+
+  - id: SVC_GW_0056
+    requirement_ids: ["GW_0056"]
+    title: Sync mode is per marketplace, defaulted, changeable, and never bypasses approval
+    verification: automated-test
+    description: |
+      GIVEN a newly registered marketplace
+      WHEN its sync mode is read, changed by an operator to each valid mode, and a sync-triggered ingestion runs
+      THEN the mode defaults to on-demand, each change is applied and an invalid mode is refused, and every sync-triggered snapshot lands held (or rejected on policy violation) and is never approved or published by any sync path
+    revision: "0.1.0"
+
+  - id: SVC_GW_0057
+    requirement_ids: ["GW_0057"]
+    title: Scheduled sweep polls only scheduled marketplaces, oldest first, bounded, and survives one failure
+    verification: automated-test
+    description: |
+      GIVEN marketplaces in each sync mode, one of them with an unreachable upstream
+      WHEN the scheduled sweep runs with a batch bound smaller than the eligible set
+      THEN only scheduled marketplaces are ingested, selection is least-recently-attempted first and respects the bound, the unreachable marketplace's failure is recorded without stopping the rest, and its attempt stamp makes it eligible again on a later pass
+    revision: "0.1.0"
+
+  - id: SVC_GW_0058
+    requirement_ids: ["GW_0058"]
+    title: Webhook endpoint accepts only a validly signed request and never trusts the payload
+    verification: automated-test
+    description: |
+      GIVEN a marketplace in webhook mode with a gateway-generated secret returned exactly once
+      WHEN the inbound endpoint receives a validly signed request, requests with a missing, malformed, or wrong-secret signature, a tampered body, an oversized body, and requests for an unknown marketplace and one not in webhook mode
+      THEN only the validly signed request triggers ingestion of the registered upstream's default branch (a foreign URL or ref in the payload is ignored), a held snapshot appears for it, and every other request is rejected with no snapshot created
+    revision: "0.1.0"
+
+  - id: SVC_GW_0059
+    requirement_ids: ["GW_0059"]
+    title: A failing upstream never affects what the facade serves
+    verification: automated-test
+    description: |
+      GIVEN a marketplace with an approved, published snapshot whose upstream then becomes unreachable
+      WHEN a scheduled sweep and a validly signed webhook trigger both attempt ingestion
+      THEN both attempts fail internally without changing any snapshot state or published reference, and a real git clone through the facade still serves the approved SHA
+    revision: "0.1.0"
+
+  - id: SVC_GW_0060
+    requirement_ids: ["GW_0060"]
+    title: Mode changes and sync-triggered ingestions are on the ledger
+    verification: automated-test
+    description: |
+      GIVEN a marketplace whose sync mode is changed and which is then ingested by the scheduler and by a signed webhook request
+      WHEN the audit ledger is read
+      THEN it contains the mode change with the acting identity and each sync-triggered ingestion with the snapshot SHA and a trigger identity distinguishing scheduler and webhook from a human, and a snapshot-ingested lifecycle event was emitted for each
+    revision: "0.1.0"

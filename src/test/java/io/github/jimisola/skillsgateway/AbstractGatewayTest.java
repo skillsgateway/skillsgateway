@@ -80,7 +80,10 @@ import org.springframework.web.context.WebApplicationContext;
             // default (warn); RevetEnforceTests overrides it, which is the whole point of the two
             // classes being separate.
             "skills-gateway.vetting.revet.enabled=false",
-            "skills-gateway.vetting.revet.cadence=0s"
+            "skills-gateway.vetting.revet.cadence=0s",
+            // Sync sweeps are driven explicitly by the tests: a live background sweep would ingest
+            // other tests' scheduled fixtures mid-run.
+            "skills-gateway.sync.enabled=false"
         })
 abstract class AbstractGatewayTest {
 

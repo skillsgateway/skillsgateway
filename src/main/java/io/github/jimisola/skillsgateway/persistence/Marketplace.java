@@ -19,4 +19,18 @@ public record Marketplace(
         String description,
 
         @Schema(description = "Last upstream update as reported by the forge")
-        Instant upstreamUpdatedAt) {}
+        Instant upstreamUpdatedAt,
+
+        @Schema(
+                description = "How upstream content reaches quarantine: on-demand, scheduled, or webhook."
+                        + " The trigger only — every mode lands snapshots held behind the approval gate.",
+                allowableValues = {"on-demand", "scheduled", "webhook"})
+        String syncMode,
+
+        @Schema(description = "Last sync attempt (success or failure), or null before the first one")
+        Instant lastSyncAt) {
+
+    public static final String SYNC_ON_DEMAND = "on-demand";
+    public static final String SYNC_SCHEDULED = "scheduled";
+    public static final String SYNC_WEBHOOK = "webhook";
+}

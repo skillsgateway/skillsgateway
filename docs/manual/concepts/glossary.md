@@ -88,6 +88,13 @@ a narrower meaning here.
 :   One upstream commit captured at one moment, with a vetting decision
     attached. The unit of review, approval, serving and audit.
 
+**Sync mode**
+:   How new upstream content reaches quarantine for one marketplace:
+    `on-demand` (an operator's explicit call, the default), `scheduled` (the
+    gateway's polling sweep), or `webhook` (a signed forge push webhook). Only
+    the trigger — every mode lands snapshots `held` behind the same approval
+    gate.
+
 **Upload-pack**
 :   The git smart-HTTP operation that serves objects to a fetching client. The
     only git service the facade enables; receive-pack (push) is disabled.

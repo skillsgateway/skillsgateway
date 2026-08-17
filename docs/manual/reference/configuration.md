@@ -10,6 +10,7 @@ Every setting the gateway reads, with its default and what consumes it.
 | [`skills-gateway.webhooks.*`](#webhooks) | Outbound lifecycle-webhook dispatch: poll interval, retry budget and backoff. | No — all defaulted. |
 | [`skills-gateway.audit-export.*`](#audit-export) | Ledger export: the commit-settling lag, batch and page sizes. | No — all defaulted. |
 | [`skills-gateway.retention.*`](#retention) | Snapshot retention policies and the schedules that apply them. **Off by default.** | No — all defaulted. |
+| [`skills-gateway.sync.*`](#upstream-sync) | Upstream sync: the polling sweep's schedule and batch, and the inbound webhook body bound. | No — all defaulted. |
 | [`spring.datasource.*`](#datasource) | PostgreSQL connection. Supplied entirely by environment. | **Yes** |
 | [`spring.security.oauth2.client.*`](#oidc-login) | OIDC login for the web surface. | **Yes** |
 | [`management.endpoints.*`](#actuator) | Which actuator endpoints are exposed. | No |
@@ -357,6 +358,45 @@ skills-gateway:
 
 Criteria, guards and the two passes are described in
 [Snapshot retention](retention.md).
+
+---
+
+## Upstream sync
+
+How automated ingestion behaves for marketplaces whose sync mode is
+`scheduled` or `webhook`. Java-side defaults; nothing appears in
+`application.yaml`.
+
+```yaml
+skills-gateway:
+  sync:
+    # Whether the scheduled polling sweep runs. ON by default, and still safe
+    # on upgrade: the sweep only touches marketplaces an operator has
+    # explicitly moved to the `scheduled` sync mode, so an estate of defaults
+    # (all on-demand) sees no change. The inbound webhook endpoint and the
+    # sync-mode endpoint work regardless.
+    enabled: true
+
+    # How often the sweep runs, and how many scheduled marketplaces one pass
+    # ingests — least recently attempted first, so a large estate is covered
+    # in rotation rather than all at once.
+    poll-interval: 10m
+    batch-size: 10
+
+    # Inbound webhook bodies larger than this are rejected with 413 before the
+    # HMAC is computed, bounding the work an unauthenticated caller can cause.
+    max-webhook-body-bytes: 1048576
+```
+
+| Property | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `skills-gateway.sync.enabled` | boolean | `true` | Runs the scheduled sweep. Touches only `scheduled`-mode marketplaces. |
+| `skills-gateway.sync.poll-interval` | duration | `10m` | Sweep schedule. |
+| `skills-gateway.sync.batch-size` | integer | `10` | Scheduled marketplaces ingested per pass, oldest attempt first. |
+| `skills-gateway.sync.max-webhook-body-bytes` | long | `1048576` | Inbound webhook body bound; larger requests get 413 unverified. |
+
+Modes, the webhook secret lifecycle, and the outage guarantee are described in
+[Syncing from upstream automatically](../guides/upstream-sync.md).
 
 ---
 

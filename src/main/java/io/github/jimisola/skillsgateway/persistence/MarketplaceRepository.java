@@ -68,6 +68,48 @@ public class MarketplaceRepository {
                 .list();
     }
 
+    /**
+     * Sets the sync mode, and with it the webhook secret: the caller passes the freshly generated
+     * secret when the new mode is webhook and null otherwise, so leaving webhook mode always
+     * discards the key (GW_0056, GW_0058).
+     */
+    @Requirements({"GW_0056"})
+    public Optional<Marketplace> updateSyncMode(String name, String mode, String webhookSecret) {
+        return jdbc.sql("UPDATE marketplaces SET sync_mode = :mode, webhook_secret = :secret"
+                        + " WHERE name = :name RETURNING *")
+                .param("mode", mode)
+                .param("secret", webhookSecret)
+                .param("name", name)
+                .query(MarketplaceRepository::map)
+                .optional();
+    }
+
+    /** The HMAC key for the inbound webhook; empty when the marketplace is not in webhook mode. */
+    public Optional<String> webhookSecret(String name) {
+        return jdbc.sql("SELECT webhook_secret FROM marketplaces WHERE name = :name AND webhook_secret IS NOT NULL")
+                .param("name", name)
+                .query(String.class)
+                .optional();
+    }
+
+    /** The scheduled sweep's queue: scheduled marketplaces, least recently attempted first (GW_0057). */
+    @Requirements({"GW_0057"})
+    public List<Marketplace> dueScheduledSync(int limit) {
+        return jdbc.sql("SELECT * FROM marketplaces WHERE sync_mode = 'scheduled'"
+                        + " ORDER BY last_sync_at ASC NULLS FIRST, id ASC LIMIT :limit")
+                .param("limit", limit)
+                .query(MarketplaceRepository::map)
+                .list();
+    }
+
+    /** Stamped per attempt, success or failure, so a dead upstream cannot monopolize the queue. */
+    public void stampSyncAttempt(long id) {
+        jdbc.sql("UPDATE marketplaces SET last_sync_at = :now WHERE id = :id")
+                .param("now", OffsetDateTime.now())
+                .param("id", id)
+                .update();
+    }
+
     static Marketplace map(ResultSet rs, int rowNum) throws SQLException {
         return new Marketplace(
                 rs.getLong("id"),
@@ -77,7 +119,9 @@ public class MarketplaceRepository {
                 rs.getString("forge"),
                 rs.getString("forge_project"),
                 rs.getString("description"),
-                instant(rs, "upstream_updated_at"));
+                instant(rs, "upstream_updated_at"),
+                rs.getString("sync_mode"),
+                instant(rs, "last_sync_at"));
     }
 
     static Instant instant(ResultSet rs, String column) throws SQLException {
