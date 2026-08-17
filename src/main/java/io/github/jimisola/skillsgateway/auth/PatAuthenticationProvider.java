@@ -29,8 +29,16 @@ public class PatAuthenticationProvider implements AuthenticationProvider {
         }
         return tokenService
                 .authenticate(credentials.toString())
-                .map(accessToken -> (Authentication) UsernamePasswordAuthenticationToken.authenticated(
-                        accessToken.principal(), "n/a", List.of(new SimpleGrantedAuthority("ROLE_GIT"))))
+                .map(accessToken -> {
+                    UsernamePasswordAuthenticationToken authenticated =
+                            UsernamePasswordAuthenticationToken.authenticated(
+                                    accessToken.principal(), "n/a", List.of(new SimpleGrantedAuthority("ROLE_GIT")));
+                    // The token rides with the authentication so the facade can enforce its
+                    // scopes (GW_0064) and the audit hook can attribute the fetch to it
+                    // (GW_0067) without a second lookup.
+                    authenticated.setDetails(accessToken);
+                    return (Authentication) authenticated;
+                })
                 .orElseThrow(() -> new BadCredentialsException("invalid token"));
     }
 

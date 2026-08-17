@@ -511,3 +511,35 @@ requirements:
     rationale: An aggregate is only trustworthy if what exactly it contains, and who fetched it, remain answerable from the gateway's own records; the reserved name keeps the catalog's facade path from ever being claimable by a registrant.
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
+
+  - id: GW_0064
+    title: Marketplace-scoped access tokens
+    significance: shall
+    description: The system shall let a personal access token carry a list of marketplace names — the virtual catalog's name being a valid entry — shall validate every scope against the registered marketplaces and the catalog name when the token is created, shall refuse a git facade request from a scoped token for any marketplace outside its list with an answer indistinguishable from that for a marketplace that does not exist, and shall treat a token without scopes as granting every marketplace, so that existing tokens keep their behavior.
+    rationale: A leaked CI token limited to one marketplace is an incident contained to that marketplace; answering out-of-scope exactly like not-found keeps a scoped token from doubling as a directory of what else the gateway governs.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0065
+    title: Access token expiry
+    significance: shall
+    description: The system shall let a token carry an expiry timestamp, shall refuse an expired token at authentication time exactly as it refuses a revoked one, deciding by comparing the stamp to the current instant with no scheduled process involved, shall let an operator cap the maximum lifetime accepted at creation through configuration, and shall refuse a creation request beyond the cap rather than silently shortening it.
+    rationale: A credential that dies on its own bounds the window a leak matters; deciding expiry by comparison at use means no sweep can be late and no scheduler outage can keep a dead token alive, and refusing rather than clamping keeps the issued grant exactly what was asked for.
+    categories: ["security", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_0066
+    title: Access token rotation
+    significance: shall
+    description: The system shall let a token's owner, and only its owner, rotate a live token — producing a new secret returned exactly once while keeping the name, the scopes and the same expiry deadline, revoking the old token before the new one is issued so a failure between the two steps leaves no live secret rather than two, recording which token the new one replaced — and shall refuse to rotate a revoked or expired token.
+    rationale: Rotation exists so a possibly-exposed secret can be retired without renegotiating the grant; it must therefore be able to change only the secret, or it becomes a privilege-escalation and lifetime-extension path wearing a hygiene feature's name.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0067
+    title: Per-token fetch attribution
+    significance: shall
+    description: The system shall record, in every git facade entry of the append-only ledger, the identity of the token that authenticated the request alongside the principal, shall carry that attribution through the ledger listing and the audit export, and shall append token creation, revocation and rotation to the ledger with the acting identity, the token's name and its scopes.
+    rationale: A principal with several tokens is several distinct credentials; an auditor tracing a leak needs to know which one fetched what, and the lifecycle entries are what let the trace end at when that credential was born, rotated, or killed.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0

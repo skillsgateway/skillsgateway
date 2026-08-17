@@ -44,11 +44,18 @@ public class GitFacadeConfiguration {
     }
 
     /** The facade only ever opens published repositories; quarantine is unreachable from here. */
-    @Requirements({"GW_0007"})
+    @Requirements({"GW_0007", "GW_0064"})
     Repository resolvePublished(HttpServletRequest request, String name)
             throws RepositoryNotFoundException, ServiceMayNotContinueException {
         String marketplace = name.endsWith(".git") ? name.substring(0, name.length() - 4) : name;
         if (!MARKETPLACE_NAME.matcher(marketplace).matches()) {
+            throw new RepositoryNotFoundException(name);
+        }
+        // Scope enforcement (GW_0064), before the storage lookup: an out-of-scope request gets
+        // the same not-found a nonexistent marketplace gets, so a scoped token cannot probe what
+        // else the gateway governs. An unscoped token permits everything.
+        var token = auditHook.currentToken();
+        if (token != null && !token.permitsMarketplace(marketplace)) {
             throw new RepositoryNotFoundException(name);
         }
         Optional<Repository> serving;

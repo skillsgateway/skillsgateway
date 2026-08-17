@@ -31,6 +31,16 @@ Git clients authenticate with PATs, not with your portal session.
 Tokens are scoped to the creating principal: you only ever see and revoke your
 own.
 
+!!! tip "Scope it, expire it, rotate it"
+
+    A token can be limited to named marketplaces (`"scopes":["acme","catalog"]`)
+    and given an expiry (`"expiresAt":"..."`) — a leaked CI token limited to one
+    marketplace is an incident contained to that marketplace, and one that dies
+    on its own bounds the window a leak matters. Suspect exposure without
+    wanting to reconfigure anything? `POST /api/tokens/{id}/rotate` issues a
+    fresh secret with the identical grant and kills the old one in the same
+    act. See [Access tokens](../reference/api/tokens.md).
+
 ## 2. Verify the remote
 
 The username is ignored; the token goes in the password field.

@@ -80,6 +80,17 @@ a narrower meaning here.
 :   `{data-dir}/quarantine/{marketplace}.git`. Holds one immutable
     `refs/snapshots/{sha}` per ingested commit. **Never served.**
 
+**Rotation**
+:   Replacing a token's secret while keeping its grant — name, scopes, and the
+    same expiry deadline. The old token is revoked before the new one is
+    issued, so a failure between the steps leaves no live secret rather than
+    two.
+
+**Scope** (of a token)
+:   The marketplace names a token may fetch through the facade; the virtual
+    catalog's name is a valid entry. Empty means all. Out-of-scope answers are
+    indistinguishable from not-found.
+
 **Skill**
 :   A unit of agent capability — a `SKILL.md` directory in the open Agent Skills
     format, or a component of a Claude Code plugin.

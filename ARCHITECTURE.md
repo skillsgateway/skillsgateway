@@ -373,7 +373,11 @@ inward.
   synthesized facade repo aggregating the served estate, strictly derived
   from published content (GW_0061–GW_0063); per-team catalogs, entitlements,
   and per-plugin/skill filtering remain the rest of the virtual-marketplaces
-  item.
+  item. *Implemented:* token lifecycle — marketplace-scoped PATs enforced at
+  the facade, expiry decided at authentication time, rotation that cannot
+  widen a grant, per-token fetch attribution on the ledger (GW_0064–GW_0067);
+  team entitlements and SSO-derived short-lived credentials are deferred
+  (issues #26, #59).
 - **Phase 3 — assurance & scale.** Client telemetry inventory, kill switch
   with fleet force-uninstall, signed attestations, additional tool adapters,
   Artifactory/Nexus catalog federation, OCI re-publication.
