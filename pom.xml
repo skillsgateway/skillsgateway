@@ -11,15 +11,15 @@
         <relativePath/>
     </parent>
 
-    <groupId>io.github.jimisola.skillsgateway</groupId>
-    <artifactId>skills-gateway</artifactId>
+    <groupId>dev.skillsgateway</groupId>
+    <artifactId>skills-gateway-server</artifactId>
     <!-- Version is derived from git state by the Nisse core extension (ADR 0002). -->
     <version>${nisse.jgit.dynamicVersion}</version>
     <packaging>jar</packaging>
 
     <name>Skills Gateway</name>
     <description>Enterprise gateway for git-distributed AI agent skill marketplaces</description>
-    <url>https://github.com/jimisola/skills-gateway</url>
+    <url>https://github.com/skillsgateway/skillsgateway</url>
 
     <licenses>
         <license>

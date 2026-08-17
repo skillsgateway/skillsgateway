@@ -8,7 +8,7 @@ RUN mkdir -p /data && chown 65532:65532 /data
 
 FROM gcr.io/distroless/base-debian12:nonroot
 
-COPY target/skills-gateway /app/skills-gateway
+COPY target/skills-gateway-server /app/skills-gateway-server
 # Writable git storage for the nonroot user (uid 65532); override with
 # SKILLSGATEWAY_DATADIR and mount a volume in real deployments.
 COPY --from=dirs --chown=65532:65532 /data /data
@@ -18,4 +18,4 @@ WORKDIR /app
 USER nonroot
 EXPOSE 8080
 
-ENTRYPOINT ["/app/skills-gateway"]
+ENTRYPOINT ["/app/skills-gateway-server"]
