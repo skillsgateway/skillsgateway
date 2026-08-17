@@ -119,8 +119,8 @@ codebase; the losing branch is recorded where it was a near call.
    browsing surface's *metadata* reads (`/content`, `/vetting`,
    `/provenance`). The first line of each controller method is
    `roleService.requireApproverOfSnapshot(...)` (the existing confused-deputy-
-   safe resolver for id routes). RoleEnforcementTests gains an
-   `APPROVER_SCOPED_READS` classification: denied to the no-role session,
+   safe resolver for id routes). RoleEnforcementTests gains a dedicated
+   approver-scoped-reads method: denied to the no-role session,
    denied to the auditor (whose charter, GW_0070, enumerates ledger and
    listings, not content), allowed to the owning approver and the admin, and
    denied to an approver of a different marketplace through the bare id.

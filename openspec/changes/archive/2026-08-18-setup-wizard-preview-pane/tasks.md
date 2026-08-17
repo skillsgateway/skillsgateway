@@ -34,7 +34,7 @@
       (modify + add + remove), ingest; the held snapshot's diff names the
       served baseline and exactly the changed paths with text diffs; a
       never-served marketplace's diff reports no baseline and all paths added.
-- [x] 4.3 RoleEnforcementTests: new `APPROVER_SCOPED_READS` classification —
+- [x] 4.3 RoleEnforcementTests: a dedicated approver-scoped-reads method —
       denied to the no-role session and the auditor, allowed to the owning
       approver and the admin, denied cross-marketplace through the bare id
       (SVC_GW_0080).
