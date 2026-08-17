@@ -720,3 +720,43 @@ cases:
       WHEN the packaging test validates it
       THEN the workflow pushes the smoke-tested image to the project's registry namespace with commit-SHA and latest tags on main and a version tag on releases, gates every publish step on push events, holds the permissions publishing and attestation require, surfaces the pushed digest in the job summary, and attests the CycloneDX SBOM against the pushed image after the push
     revision: "0.1.0"
+
+  - id: SVC_GW_0079
+    requirement_ids: ["GW_0079"]
+    title: The setup wizard composes origin-derived commands and holds show-once
+    verification: automated-test
+    description: |
+      GIVEN a registered marketplace and its detail page in a real browser
+      WHEN the user opens the setup wizard, mints a token inside it, and later closes and reopens the wizard
+      THEN the marketplace-add command and credential configuration carry the page's own origin and the marketplace's facade clone path, the minted cleartext appears in the snippets only while the wizard stays open, and after reopening the snippets carry a placeholder and no previously issued secret is displayed
+    revision: "0.1.0"
+
+  - id: SVC_GW_0080
+    requirement_ids: ["GW_0080"]
+    title: File inspection is tree-addressed, capped, binary-aware, and approver-scoped
+    verification: automated-test
+    description: |
+      GIVEN an ingested snapshot whose commit carries a text file, a file larger than the size limit and a binary file, and — in an enforcement-enabled context — a session with no role, an auditor, an approver of another marketplace, an approver of the owning marketplace and an admin
+      WHEN the file tree, each file, a path absent from the commit tree and a traversal-shaped path are requested, and the enforcement-enabled sessions attempt the reads
+      THEN the tree lists the pinned commit's paths, the text file returns its content, the oversized file returns truncated content with an explicit marker, the binary file returns metadata without text, the absent and traversal-shaped paths answer not-found, and under enforcement the reads succeed only for the owning approver and the admin
+    revision: "0.1.0"
+
+  - id: SVC_GW_0081
+    requirement_ids: ["GW_0081"]
+    title: The diff names the served baseline and the exact delta, or the absence of a baseline
+    verification: automated-test
+    description: |
+      GIVEN a marketplace with an approved, served snapshot and a later held snapshot whose commit modifies, adds and removes files, and a second marketplace serving nothing
+      WHEN each snapshot's diff is requested
+      THEN the held snapshot's diff names the served commit as its baseline and reports exactly the modified, added and removed paths with a textual diff for text files, and the unserved marketplace's diff reports no baseline with every path reported as added
+    revision: "0.1.0"
+
+  - id: SVC_GW_0082
+    requirement_ids: ["GW_0082"]
+    title: The preview pane walks a held snapshot's tree and diff in a real browser
+    verification: automated-test
+    description: |
+      GIVEN a marketplace approved and served, whose upstream then changes and is re-ingested into a held snapshot, in a real browser
+      WHEN the reviewer opens the held snapshot's preview pane, selects the skill's SKILL.md, and switches to the diff view
+      THEN the file tree lists the snapshot's paths, the SKILL.md renders as formatted text with embedded HTML shown as text rather than interpreted, and the diff view names the modified and added paths against the served baseline
+    revision: "0.1.0"
