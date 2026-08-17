@@ -62,9 +62,9 @@
 
 ## 7. Gates and evidence
 
-- [ ] 7.1 `./mvnw clean verify`
-- [ ] 7.2 `(cd src/main/frontend && pnpm e2e)`
-- [ ] 7.3 `reqstool status local -p docs/reqstool` → PASS
-- [ ] 7.4 `openspec validate --all --strict`
-- [ ] 7.5 `mkdocs build --strict`
-- [ ] 7.6 `evidence.md` with the final commit SHA.
+- [x] 7.1 `./mvnw clean verify`
+- [x] 7.2 `(cd src/main/frontend && pnpm e2e)`
+- [x] 7.3 `reqstool status local -p docs/reqstool` → PASS
+- [x] 7.4 `openspec validate --all --strict`
+- [x] 7.5 `mkdocs build --strict`
+- [x] 7.6 `evidence.md` with the final commit SHA.
