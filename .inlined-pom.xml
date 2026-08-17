@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>4.1.0</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>io.github.jimisola.skillsgateway</groupId>
+    <artifactId>skills-gateway</artifactId>
+    <!-- Version is derived from git state by the Nisse core extension (ADR 0002). -->
+    <version>0.1.0-36-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>Skills Gateway</name>
+    <description>Enterprise gateway for git-distributed AI agent skill marketplaces</description>
+    <url>https://github.com/jimisola/skills-gateway</url>
+
+    <licenses>
+        <license>
+            <name>Apache-2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <properties>
+        <java.version>25</java.version>
+        <jgit.version>7.7.1.202607240634-r</jgit.version>
+        <reqstool-annotations.version>1.0.0</reqstool-annotations.version>
+        <spotless.version>3.9.0</spotless.version>
+        <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
+        <checkstyle.version>13.10.0</checkstyle.version>
+        <native-plugin.version>1.1.9</native-plugin.version>
+        <reqstool-plugin.version>1.0.4</reqstool-plugin.version>
+        <arconia.version>0.29.0</arconia.version>
+        <cyclonedx-plugin.version>2.9.3</cyclonedx-plugin.version>
+        <springdoc.version>3.1.0</springdoc.version>
+        <scalar.version>0.4.4</scalar.version>
+        <!-- Skips the UI gate execution (typecheck/lint/vitest/tags) without skipping
+             the UI build; used by the native workflow where no browsers exist. -->
+        <skip.ui.verify>false</skip.ui.verify>
+        <frontend-plugin.version>2.0.2</frontend-plugin.version>
+        <node.version>v24.14.1</node.version>
+        <pnpm.version>11.21.0</pnpm.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.arconia</groupId>
+                <artifactId>arconia-bom</artifactId>
+                <version>${arconia.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <!-- OpenAPI document only (no Swagger UI); the reference UI is Scalar. -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
+            <version>${springdoc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.scalar.maven</groupId>
+            <artifactId>scalar</artifactId>
+            <version>${scalar.version}</version>
+        </dependency>
+
+        <!-- Boot 4 moved Flyway auto-configuration into its own module. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-flyway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Embedded git server: JGit from day 1 (ADR 0002) -->
+        <dependency>
+            <groupId>org.eclipse.jgit</groupId>
+            <artifactId>org.eclipse.jgit</artifactId>
+            <version>${jgit.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jgit</groupId>
+            <artifactId>org.eclipse.jgit.http.server</artifactId>
+            <version>${jgit.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.reqstool</groupId>
+            <artifactId>reqstool-java-annotations</artifactId>
+            <version>${reqstool-annotations.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Testcontainers via Arconia Dev Services: Postgres auto-starts in dev/test. -->
+        <dependency>
+            <groupId>io.arconia</groupId>
+            <artifactId>arconia-dev-services-postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Opt-in local observability (Spring profile "observability"): the Grafana LGTM
+             stack as a dev service plus OTLP export from the application. Both are test
+             scope on purpose — they must never reach the runtime jar, the container image
+             or the GraalVM native binary. `spring-boot:run` picks them up with
+             -Dspring-boot.run.useTestClasspath=true; see docs/manual/guides/local-development.md.
+             Disabled by default in application.yaml, so tests neither start the LGTM
+             container nor initialise the OpenTelemetry SDK. -->
+        <dependency>
+            <groupId>io.arconia</groupId>
+            <artifactId>arconia-dev-services-lgtm</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.arconia</groupId>
+            <artifactId>arconia-opentelemetry-spring-boot-starter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!-- JDK 23+ no longer runs classpath-discovered annotation processors;
+                         reqstool's processor (and its Jackson deps) must be on the processor path. -->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>io.github.reqstool</groupId>
+                            <artifactId>reqstool-java-annotations</artifactId>
+                            <version>${reqstool-annotations.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>${spotless.version}</version>
+                <configuration>
+                    <java>
+                        <palantirJavaFormat/>
+                    </java>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${checkstyle-plugin.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>${checkstyle.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <configLocation>config/checkstyle/checkstyle.xml</configLocation>
+                    <propertyExpansion>config_loc=${project.basedir}/config/checkstyle</propertyExpansion>
+                    <failOnViolation>true</failOnViolation>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.cyclonedx</groupId>
+                <artifactId>cyclonedx-maven-plugin</artifactId>
+                <version>${cyclonedx-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>makeAggregateBom</goal>
+                        </goals>
+                        <!-- Before test/package so tests and the jar both see the BOM
+                             on the classpath where the actuator sbom endpoint finds it. -->
+                        <phase>generate-resources</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <outputDirectory>${project.build.outputDirectory}/META-INF/sbom</outputDirectory>
+                    <outputName>application.cdx</outputName>
+                    <outputFormat>json</outputFormat>
+                </configuration>
+            </plugin>
+
+            <!-- Portal build (ADR 0002/0003): the UI is built and gated inside the
+                 Maven lifecycle and packaged into the jar's static resources. -->
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>${frontend-plugin.version}</version>
+                <configuration>
+                    <workingDirectory>src/main/frontend</workingDirectory>
+                    <installDirectory>src/main/frontend</installDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>install-node-and-pnpm</id>
+                        <goals>
+                            <goal>install-node-and-pnpm</goal>
+                        </goals>
+                        <configuration>
+                            <nodeVersion>${node.version}</nodeVersion>
+                            <pnpmVersion>${pnpm.version}</pnpmVersion>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>pnpm-install</id>
+                        <goals>
+                            <goal>pnpm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>install --frozen-lockfile</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>pnpm-verify</id>
+                        <goals>
+                            <goal>pnpm</goal>
+                        </goals>
+                        <phase>test</phase>
+                        <configuration>
+                            <arguments>run verify</arguments>
+                            <skip>${skip.ui.verify}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>pnpm-build</id>
+                        <goals>
+                            <goal>pnpm</goal>
+                        </goals>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                            <arguments>run build</arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-portal-bundle</id>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                            <outputDirectory>${project.build.outputDirectory}/static</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/frontend/dist</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>io.github.reqstool</groupId>
+                <artifactId>reqstool-maven-plugin</artifactId>
+                <version>${reqstool-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>assemble-and-attach-zip-artifact</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <datasetPath>${project.basedir}/docs/reqstool</datasetPath>
+                    <outputDirectory>${project.build.directory}/reqstool</outputDirectory>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- Release profile only — daily dev runs on JIT (ADR 0002). -->
+        <profile>
+            <id>native</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>${native-plugin.version}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <buildArgs>
+                                <!-- Mostly-static: everything statically linked except glibc,
+                                     so the binary runs on distroless *base* (no libz there). -->
+                                <buildArg>--static-nolibc</buildArg>
+                            </buildArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>
