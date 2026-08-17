@@ -1,0 +1,153 @@
+# Configuration for actions/labeler -- see .github/workflows/labeler.yml
+#
+# Labels map to the subsystem boundaries CLAUDE.md and ARCHITECTURE.md describe,
+# which the package layout under src/main/java/.../skillsgateway/ already
+# mirrors one-to-one. One directory glob per label is therefore enough: files
+# moving within a subsystem need no change here.
+#
+# NOTE: actions/labeler does not create labels -- every label named here must
+# already exist on the repo or the action errors. They are declared in
+# .github/settings.yml; until a settings app is installed on this org they have
+# to be created by hand or by API.
+#
+# `sync-labels: true` in the workflow means a glob here also *removes* a
+# hand-applied label when the PR no longer matches it. Anything that should stay
+# where a human put it must not be matched by any glob below.
+
+ingestion:
+  - changed-files:
+      - any-glob-to-any-file: 'src/main/java/io/github/jimisola/skillsgateway/ingestion/**'
+
+vetting:
+  - changed-files:
+      - any-glob-to-any-file: 'src/main/java/io/github/jimisola/skillsgateway/vetting/**'
+
+approval:
+  - changed-files:
+      - any-glob-to-any-file: 'src/main/java/io/github/jimisola/skillsgateway/approval/**'
+
+facade:
+  - changed-files:
+      - any-glob-to-any-file: 'src/main/java/io/github/jimisola/skillsgateway/facade/**'
+
+audit:
+  - changed-files:
+      - any-glob-to-any-file: 'src/main/java/io/github/jimisola/skillsgateway/audit/**'
+
+auth:
+  - changed-files:
+      - any-glob-to-any-file: 'src/main/java/io/github/jimisola/skillsgateway/auth/**'
+
+persistence:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/main/java/io/github/jimisola/skillsgateway/persistence/**'
+          - 'src/main/resources/db/**'
+
+retention:
+  - changed-files:
+      - any-glob-to-any-file: 'src/main/java/io/github/jimisola/skillsgateway/retention/**'
+
+storage:
+  - changed-files:
+      - any-glob-to-any-file: 'src/main/java/io/github/jimisola/skillsgateway/storage/**'
+
+admin:
+  - changed-files:
+      - any-glob-to-any-file: 'src/main/java/io/github/jimisola/skillsgateway/admin/**'
+
+api:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/main/java/io/github/jimisola/skillsgateway/api/**'
+          - 'src/main/frontend/openapi.json'
+
+webhook:
+  - changed-files:
+      - any-glob-to-any-file: 'src/main/java/io/github/jimisola/skillsgateway/webhook/**'
+
+config:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/main/java/io/github/jimisola/skillsgateway/config/**'
+          - 'src/main/resources/application*.yaml'
+          - 'config/**'
+
+portal:
+  - changed-files:
+      - any-glob-to-any-file: 'src/main/frontend/**'
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/test/**'
+          - 'src/main/frontend/**/*.test.tsx'
+          - 'src/main/frontend/**/*.spec.ts'
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file: '.github/**'
+
+deployment:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'Dockerfile'
+          - 'compose*.yaml'
+          - 'helm/**'
+
+openspec:
+  - changed-files:
+      - any-glob-to-any-file: 'openspec/**'
+
+reqstool:
+  - changed-files:
+      - any-glob-to-any-file: 'docs/reqstool/**'
+
+documentation:
+  - changed-files:
+      # Root-level *.md only, not '**/*.md'. Everything under openspec/ is
+      # markdown, so the recursive glob would tag every OpenSpec PR
+      # `documentation` as well and make the label meaningless.
+      - any-glob-to-any-file:
+          - 'docs/**'
+          - 'mkdocs.yml'
+          - '*.md'
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'pom.xml'
+          - 'src/main/frontend/package.json'
+          - 'src/main/frontend/pnpm-lock.yaml'
+          - '.mvn/**'
+  - head-branch: ['^renovate/', '^dependabot/']
+
+# The two warning labels. Both are deliberately loud, and neither is a
+# classification of what the PR is about.
+
+# CLAUDE.md names exactly these three as the trust boundaries, and holds changes
+# to them to a higher bar: adversarial and negative tests plus the old-coder
+# evidence discipline, not just happy-path coverage.
+#
+# The two ingestion files are enumerated individually -- the only place in this
+# file that names files rather than a directory. That is deliberate: the
+# registration allowlist lives in them, but the rest of ingestion/ is ordinary
+# fetch and snapshot code, and labelling the whole package a trust boundary
+# would make the label mean nothing.
+"⚠️ TRUST BOUNDARY":
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/main/java/io/github/jimisola/skillsgateway/approval/**'
+          - 'src/main/java/io/github/jimisola/skillsgateway/auth/**'
+          - 'src/main/java/io/github/jimisola/skillsgateway/facade/**'
+          - 'src/main/java/io/github/jimisola/skillsgateway/admin/AdminController.java'
+          - 'src/main/java/io/github/jimisola/skillsgateway/ingestion/ManifestPolicy.java'
+          - 'src/main/java/io/github/jimisola/skillsgateway/ingestion/ForgeMetadataService.java'
+
+# Merging a PR that touches settings.yml does not just change a file: once a
+# settings app is installed it applies to the live repository, including things
+# no diff makes obvious -- merge methods, branch protection, who may approve a
+# deployment.
+"⚠️ REPO SETTINGS":
+  - changed-files:
+      - any-glob-to-any-file: '.github/settings.yml'
