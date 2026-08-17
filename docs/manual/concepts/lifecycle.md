@@ -139,6 +139,12 @@ branch, `main`, pointing at the approved SHA.
 See the [git smart-HTTP facade reference](../reference/git-facade.md) for the
 wire protocol, authentication and the write-rejection guarantee.
 
+One more repository rides on this stage without adding one to the lifecycle:
+the [virtual catalog](../guides/virtual-catalog.md) is *derived* content —
+re-synthesized from what every published repository is serving whenever an
+approval or revocation changes that set. It introduces no new state and no new
+way in; it is a view over stage 3, never a bypass of stage 2.
+
 ## Why upstream movement is safe
 
 This is the property the whole design exists to provide.

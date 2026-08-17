@@ -102,3 +102,10 @@ a narrower meaning here.
 **Violation**
 :   The reason ingestion flagged a snapshot — for example an external plugin
     source, which is rejected fail-closed in the current scope.
+
+**Virtual catalog**
+:   The synthesized repository at `/git/catalog` vendoring the currently served
+    snapshot of every marketplace under a namespaced subdirectory, with one
+    merged manifest. Strictly derived from published content; rebuilt on every
+    approval and revocation; each revision is a parentless commit, so retracted
+    constituents are unreachable from every advertised ref.

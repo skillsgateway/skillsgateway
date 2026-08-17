@@ -487,3 +487,27 @@ requirements:
     rationale: Automation must not make ingestion less accountable than a click; an auditor must be able to read from the ledger alone which content arrived, when, and on whose or what authority.
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
+
+  - id: GW_0061
+    title: Global virtual catalog
+    significance: shall
+    description: The system shall synthesize and serve through the git facade, under a configurable reserved name, a catalog repository whose tree contains the currently served snapshot of every marketplace under a subdirectory named after that marketplace, together with one merged marketplace manifest whose plugin names are prefixed with their marketplace's name and whose plugin sources are all relative paths into those subdirectories, and shall compose the catalog exclusively from content each marketplace's published repository is serving at that moment, so that nothing held, rejected, or revoked can appear in it.
+    rationale: One URL for the whole governed estate is the largest consumer-experience win available, and deriving it strictly from what is already published means the catalog can never widen what the approval gate allows.
+    categories: ["functional-suitability", "security"]
+    revision: 0.1.0
+
+  - id: GW_0062
+    title: Catalog freshness on publication changes
+    significance: shall
+    description: The system shall regenerate the catalog when a snapshot is published by an approval and when a snapshot's published references are removed by a revocation, without operator action in either case, shall keep every earlier catalog composition unreachable from the catalog's advertised references so that retracted content stops being fetchable from the catalog as well, shall serve a catalog with an empty plugin list rather than nothing when no marketplace is serving, and shall additionally regenerate on demand, with a regeneration failure never failing the approval or revocation that triggered it.
+    rationale: A catalog that lags a retraction re-serves exactly the content the retraction removed, so freshness on unpublication is a security property and not a convenience; an empty catalog must stay distinguishable from a broken gateway.
+    categories: ["security", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_0063
+    title: Catalog provenance, audit, and the reserved name
+    significance: shall
+    description: The system shall record in each catalog revision the marketplace name and upstream commit SHA of every constituent and answer them through the API for the revision currently served, shall record fetches of the catalog through the git facade in the append-only ledger under the catalog's name like any marketplace, shall append manual catalog regenerations to the ledger with the acting identity, and shall refuse to register a marketplace under the catalog's reserved name.
+    rationale: An aggregate is only trustworthy if what exactly it contains, and who fetched it, remain answerable from the gateway's own records; the reserved name keeps the catalog's facade path from ever being claimable by a registrant.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0

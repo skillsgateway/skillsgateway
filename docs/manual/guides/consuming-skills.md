@@ -60,6 +60,13 @@ $ git config --global credential.https://skills.corp.example.username token
 
 ## 4. Point your agent at it
 
+!!! tip "One URL for everything"
+
+    Instead of adding each marketplace separately, add the
+    [virtual catalog](virtual-catalog.md) — `/git/catalog` — which aggregates
+    the currently approved snapshot of every governed marketplace, with plugin
+    names prefixed by their marketplace.
+
 === "Claude Code"
 
     ```console

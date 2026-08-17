@@ -11,6 +11,7 @@ Every setting the gateway reads, with its default and what consumes it.
 | [`skills-gateway.audit-export.*`](#audit-export) | Ledger export: the commit-settling lag, batch and page sizes. | No — all defaulted. |
 | [`skills-gateway.retention.*`](#retention) | Snapshot retention policies and the schedules that apply them. **Off by default.** | No — all defaulted. |
 | [`skills-gateway.sync.*`](#upstream-sync) | Upstream sync: the polling sweep's schedule and batch, and the inbound webhook body bound. | No — all defaulted. |
+| [`skills-gateway.catalog.*`](#virtual-catalog) | The global virtual catalog and its reserved name. | No — all defaulted. |
 | [`spring.datasource.*`](#datasource) | PostgreSQL connection. Supplied entirely by environment. | **Yes** |
 | [`spring.security.oauth2.client.*`](#oidc-login) | OIDC login for the web surface. | **Yes** |
 | [`management.endpoints.*`](#actuator) | Which actuator endpoints are exposed. | No |
@@ -397,6 +398,33 @@ skills-gateway:
 
 Modes, the webhook secret lifecycle, and the outage guarantee are described in
 [Syncing from upstream automatically](../guides/upstream-sync.md).
+
+---
+
+## Virtual catalog
+
+The synthesized one-URL catalog of the whole served estate. Java-side defaults;
+nothing appears in `application.yaml`.
+
+```yaml
+skills-gateway:
+  catalog:
+    # Whether approvals and revocations rebuild the catalog and the /api/catalog
+    # endpoints answer. Turning this off never deletes an existing catalog repo.
+    enabled: true
+
+    # The catalog's facade path (/git/{name}) and its RESERVED name: a
+    # marketplace cannot be registered under it.
+    name: catalog
+```
+
+| Property | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `skills-gateway.catalog.enabled` | boolean | `true` | Gates rebuild triggers and the API endpoints. |
+| `skills-gateway.catalog.name` | string | `catalog` | Facade path segment; reserved at registration. |
+
+Composition, freshness, and provenance are described in
+[The virtual catalog](../guides/virtual-catalog.md).
 
 ---
 

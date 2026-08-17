@@ -308,6 +308,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/catalog/rebuild": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rebuild the catalog now
+         * @description Regenerates the catalog from what every marketplace is serving right now. Approvals and revocations already do this on their own; this is the on-demand repair path, and it lands on the audit ledger with the acting identity.
+         */
+        post: operations["rebuild"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/audit/sinks": {
         parameters: {
             query?: never;
@@ -516,6 +536,26 @@ export interface paths {
          * @description Every waiver recorded for the marketplace, newest first, active and lapsed alike. A lapsed or revoked waiver is kept and returned with active=false: the record of what was once accepted, by whom and until when is part of the audit trail.
          */
         get: operations["list_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The served catalog revision
+         * @description The catalog commit the facade is serving at /git/{catalog-name}, with the marketplace and upstream commit SHA of every constituent vendored into it.
+         */
+        get: operations["catalog"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1044,6 +1084,25 @@ export interface components {
              * @example main
              */
             ref?: string;
+        };
+        /** @description The catalog revision the facade is serving */
+        CatalogInfo: {
+            /** @description Catalog commit SHA */
+            sha?: string;
+            /**
+             * Format: date-time
+             * @description When this revision was generated
+             */
+            generatedAt?: string;
+            /** @description Served marketplaces vendored into this revision */
+            constituents?: components["schemas"]["Constituent"][];
+        };
+        /** @description One marketplace inside the served catalog revision */
+        Constituent: {
+            /** @description Marketplace name; also its subdirectory in the catalog */
+            marketplace?: string;
+            /** @description Upstream commit SHA of its served snapshot */
+            sha?: string;
         };
         /** @description Audit export sink registration request */
         CreateSinkRequest: {
@@ -2084,6 +2143,35 @@ export interface operations {
             };
         };
     };
+    rebuild: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Catalog rebuilt; returns the new revision */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CatalogInfo"];
+                };
+            };
+            /** @description Catalog disabled */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CatalogInfo"];
+                };
+            };
+        };
+    };
     listSinks: {
         parameters: {
             query?: never;
@@ -2413,6 +2501,35 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["WaiverView"][];
+                };
+            };
+        };
+    };
+    catalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Served catalog revision and its constituents */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CatalogInfo"];
+                };
+            };
+            /** @description Catalog disabled, or not generated yet */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CatalogInfo"];
                 };
             };
         };
