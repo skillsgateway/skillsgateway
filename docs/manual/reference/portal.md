@@ -366,7 +366,7 @@ Inside, the per-SHA breakdown:
 | Snapshot SHA | First 12 characters, monospace; full SHA on the tooltip. |
 | Fetches | Content-transferring fetches of this SHA in the window. |
 | Identities | Distinct identities that fetched it. |
-| Last fetch | Most recent, as a localized timestamp. |
+| Last fetch | Most recent, as a raw ISO-8601 timestamp. |
 | Tip | `current` (primary badge) or `superseded` (secondary). |
 
 Empty state: "No fetches in the last {n} days. Adoption appears once content

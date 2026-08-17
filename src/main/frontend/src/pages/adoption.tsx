@@ -23,8 +23,9 @@ function shortSha(sha: string | undefined): string {
   return sha ? sha.slice(0, 12) : "—";
 }
 
+// Raw ISO-8601, per the portal-wide convention: timestamps are never localized.
 function when(value: string | undefined): string {
-  return value ? new Date(value).toLocaleString() : "—";
+  return value ?? "—";
 }
 
 function StatChip({ label, value }: { label: string; value: string | number }) {
