@@ -55,4 +55,4 @@ INFO    -  Documentation built in 0.42 seconds
 
 ## Commit
 
-`(implementation commit SHA recorded below by the archive commit)`
+`1ff94db` (implementation; the archive commit follows it and changes no code)
