@@ -80,8 +80,9 @@ codebase; the losing branch is recorded where it was a near call.
 
 4. **Three endpoints, tree-addressed, in a new `preview` package.**
    - `GET /api/snapshots/{id}/files` — every path in the pinned commit's tree
-     (path, size, binary flag), capped at 2 000 entries with an explicit
-     `truncated` marker on the listing.
+     (path and size; binary-ness is a property of reading a blob, so it is
+     reported by the file read, not paid for across the whole listing), capped
+     at 2 000 entries with an explicit `truncated` marker on the listing.
    - `GET /api/snapshots/{id}/file?path=` — one blob: metadata always
      (path, size, binary, truncated) and `text` only for non-binary content,
      cut at 128 KiB with `truncated: true`. A path with no tree entry — which

@@ -590,7 +590,7 @@ requirements:
     significance: shall
     description: The system's portal shall offer, on a marketplace's detail page, a client setup wizard that composes for that marketplace the client marketplace-add command, a git credential-helper configuration block and a personal-access-token usage snippet, deriving every URL from the browsing origin and the marketplace's facade clone path with no additional server configuration, shall let the user mint a personal access token from inside the wizard through the existing show-once token flow with the cleartext substituted into the snippets only while the wizard remains open, and shall never display the secret of any previously issued token.
     rationale: A consumer's first contact with the gateway is copy-paste, and composing the exact commands from where the browser already is removes the transcription errors a hand-assembled URL invites; holding the show-once line inside the wizard keeps convenience from becoming a second place secrets live.
-    categories: ["usability", "security"]
+    categories: ["interaction-capability", "security"]
     revision: 0.1.0
 
   - id: GW_0080
@@ -614,5 +614,5 @@ requirements:
     significance: shall
     description: The system's portal shall present, for a snapshot on the marketplace detail page, a preview pane with the snapshot's file tree, the content of a selected file — rendering Markdown, including a skill's SKILL.md and the marketplace manifest, without interpreting embedded HTML and without executing or navigating into any fetched content — explicit indications for truncated and binary files, and a diff view against the served baseline distinguishing added, modified and removed paths and stating when no baseline is served, presenting loading, empty and error states throughout.
     rationale: The vetting chain's verdicts are evidence about the content, not the content; a reviewer who can walk the actual tree and the actual delta decides on what will ship rather than on a summary — and because the pane exists to inspect hostile content, it must render inertly by construction.
-    categories: ["usability", "security"]
+    categories: ["interaction-capability", "security"]
     revision: 0.1.0

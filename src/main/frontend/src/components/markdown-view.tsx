@@ -1,17 +1,5 @@
 import { Fragment, type ReactNode } from "react";
 
-/**
- * Inert Markdown rendering for the preview pane: a small subset (headings, paragraphs, lists,
- * blockquotes, fenced and inline code, bold/italic) mapped straight to React elements.
- *
- * There is deliberately no HTML pipeline at all — no dangerouslySetInnerHTML, no sanitizer to
- * mis-configure. React escapes every text node, so HTML embedded in a hostile SKILL.md renders
- * as visible text rather than as markup, and links render as non-navigating text: this surface
- * inspects content, it never executes or follows it.
- *
- * @Requirements GW_0082
- */
-
 /** Inline spans: `code`, **bold**, *italic*, and [text](url) shown inertly as "text (url)". */
 function inline(text: string, key: number): ReactNode {
   const parts: ReactNode[] = [];
@@ -54,6 +42,17 @@ const HEADING_SIZES = [
   "text-sm font-semibold",
 ] as const;
 
+/**
+ * Inert Markdown rendering for the preview pane: a small subset (headings, paragraphs, lists,
+ * blockquotes, fenced and inline code, bold/italic) mapped straight to React elements.
+ *
+ * There is deliberately no HTML pipeline at all — no dangerouslySetInnerHTML, no sanitizer to
+ * mis-configure. React escapes every text node, so HTML embedded in a hostile SKILL.md renders
+ * as visible text rather than as markup, and links render as non-navigating text: this surface
+ * inspects content, it never executes or follows it.
+ *
+ * @Requirements GW_0082
+ */
 export function MarkdownView({ text }: { text: string }) {
   const lines = text.split("\n");
   const blocks: ReactNode[] = [];

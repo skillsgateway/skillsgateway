@@ -10,15 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MarkdownView } from "@/components/markdown-view";
 
-/**
- * Reviewer preview pane: the pinned commit's file tree, each blob as inert text, and the diff
- * against the marketplace's currently served commit. Inspection, not execution — Markdown is
- * rendered without any HTML pipeline, binary blobs are described rather than shown, and
- * truncation is stated rather than silent.
- *
- * @Requirements GW_0080 GW_0081 GW_0082
- */
-
 function FileViewer({ snapshotId, path }: { snapshotId: number; path: string }) {
   const file = useSnapshotFile(snapshotId, path);
   if (file.isLoading) return <p className="text-sm text-muted-foreground">Loading {path}…</p>;
@@ -139,6 +130,14 @@ function DiffView({ snapshotId }: { snapshotId: number }) {
   );
 }
 
+/**
+ * Reviewer preview pane: the pinned commit's file tree, each blob as inert text, and the diff
+ * against the marketplace's currently served commit. Inspection, not execution — Markdown is
+ * rendered without any HTML pipeline, binary blobs are described rather than shown, and
+ * truncation is stated rather than silent.
+ *
+ * @Requirements GW_0080, GW_0081, GW_0082
+ */
 export function SnapshotPreview({ snapshotId }: { snapshotId: number }) {
   const files = useSnapshotFiles(snapshotId);
   const [tab, setTab] = useState<"files" | "diff">("files");
