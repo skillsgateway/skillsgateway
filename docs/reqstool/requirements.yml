@@ -447,3 +447,43 @@ requirements:
     rationale: A retraction nobody can see the reason for is indistinguishable from an outage; putting the violation, its findings and the affected identities on the page that shows the snapshot is what lets a reviewer decide between waiving, rejecting and re-approving without leaving the portal.
     categories: ["interaction-capability", "security"]
     revision: 0.1.0
+
+  - id: GW_0056
+    title: Per-marketplace sync mode
+    significance: shall
+    description: The system shall record for every marketplace exactly one sync mode of on-demand, scheduled, or webhook, shall default a newly registered marketplace to on-demand, shall let an authorized operator change the mode at any time, and shall route every sync-triggered ingestion through the same quarantine pipeline as a manual one, so that a snapshot lands held or rejected and no sync mode can approve, publish, or otherwise bypass the approval gate.
+    rationale: How content arrives is an operational policy per upstream, but what happens to it once it arrives is the trust model; separating the two is what lets automation be added without widening any boundary.
+    categories: ["functional-suitability", "security"]
+    revision: 0.1.0
+
+  - id: GW_0057
+    title: Scheduled upstream polling
+    significance: shall
+    description: The system shall, on a configurable interval that an operator can disable, ingest the marketplaces whose sync mode is scheduled in bounded batches ordered by the least recently attempted first, shall stamp every attempt whether it succeeded or failed so one unreachable upstream cannot monopolize the batch order, shall continue the batch when one marketplace's ingestion fails, and shall retry a failed marketplace on a later pass.
+    rationale: An estate of many upstreams goes stale unless polling is the gateway's job; oldest-first bounded batches make the cost proportional and the coverage fair, and per-attempt stamping keeps one dead upstream from starving the rest.
+    categories: ["functional-suitability", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_0058
+    title: Webhook-triggered ingestion
+    significance: shall
+    description: The system shall expose, for a marketplace whose sync mode is webhook, an inbound endpoint that a forge push webhook can call, shall authenticate each request solely by an HMAC-SHA256 signature of the exact raw request body verified in constant time against a per-marketplace secret that the gateway generated and returned exactly once when the mode was enabled, shall treat a valid signature only as a trigger to ingest the registered upstream URL's default branch and never read a URL, ref, or commit from the request payload, shall bound the accepted body size, and shall reject a request with a missing or invalid signature, for an unknown marketplace, or for a marketplace not in webhook mode without ingesting anything.
+    rationale: A push event removes polling latency, but the endpoint is reachable without an OIDC session, so its authentication must be cryptographic and its authority must be nil — the worst a forged-but-signed request can cause is a fetch of the already-registered upstream into quarantine, which the schedule would have done anyway.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0059
+    title: Upstream outage resilience
+    significance: shall
+    description: The system shall serve the last approved snapshot through the git facade regardless of upstream health — a scheduled or webhook-triggered ingestion that fails because the upstream is unreachable shall be logged and retried later, and shall not alter any snapshot state, any published reference, or the outcome of any concurrent facade fetch.
+    rationale: The gateway exists so consumers depend on vetted copies rather than on upstream availability; automation that polls upstream more often must not couple serving to upstream uptime.
+    categories: ["reliability", "security"]
+    revision: 0.1.0
+
+  - id: GW_0060
+    title: Sync activity is audit-logged
+    significance: shall
+    description: The system shall append to the append-only audit ledger every sync mode change with the acting identity and the new mode, and every sync-triggered ingestion with the snapshot SHA and a trigger identity that distinguishes the scheduler and the webhook from a human operator, and shall emit the ordinary snapshot-ingested lifecycle event for every sync-triggered ingestion.
+    rationale: Automation must not make ingestion less accountable than a click; an auditor must be able to read from the ledger alone which content arrived, when, and on whose or what authority.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0

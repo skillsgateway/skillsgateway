@@ -7,8 +7,22 @@ CREATE TABLE marketplaces (
     forge TEXT,
     forge_project TEXT,
     description TEXT,
-    upstream_updated_at TIMESTAMPTZ
+    upstream_updated_at TIMESTAMPTZ,
+    -- How new upstream content reaches quarantine (GW_0056): an operator's click (on-demand),
+    -- the polling sweep (scheduled), or a signed forge push webhook (webhook). Only the trigger
+    -- varies — every mode lands snapshots held behind the same approval gate.
+    sync_mode TEXT NOT NULL DEFAULT 'on-demand' CHECK (sync_mode IN ('on-demand', 'scheduled', 'webhook')),
+    -- HMAC key for the inbound webhook (GW_0058). Like webhook_subscribers.secret this must stay
+    -- recoverable (HMAC verification needs the key itself, so a PAT-style hash is impossible);
+    -- it is returned exactly once by the mode change that generated it and by no read endpoint.
+    webhook_secret TEXT,
+    -- Last sync attempt, success or failure (GW_0057): stamping failures too is what keeps one
+    -- dead upstream from monopolizing the sweep's oldest-first order.
+    last_sync_at TIMESTAMPTZ
 );
+
+-- The scheduled sync sweep's only query: scheduled marketplaces, least recently attempted first.
+CREATE INDEX idx_marketplaces_sync_queue ON marketplaces (last_sync_at) WHERE sync_mode = 'scheduled';
 
 CREATE TABLE snapshots (
     id BIGSERIAL PRIMARY KEY,

@@ -29,10 +29,19 @@ public class WebhookSigner {
 
     @Requirements({"GW_0024"})
     public String sign(String secret, String body) {
+        return sign(secret, body.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Byte-exact form for inbound verification (GW_0058): the signature must be computed over the
+     * bytes that arrived, not over a decode-re-encode of them.
+     */
+    @Requirements({"GW_0058"})
+    public String sign(String secret, byte[] body) {
         try {
             Mac mac = Mac.getInstance(ALGORITHM);
             mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), ALGORITHM));
-            return "sha256=" + HexFormat.of().formatHex(mac.doFinal(body.getBytes(StandardCharsets.UTF_8)));
+            return "sha256=" + HexFormat.of().formatHex(mac.doFinal(body));
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             throw new IllegalStateException("HMAC-SHA256 unavailable", e);
         }

@@ -129,6 +129,11 @@ public class AdminController {
             @Schema(description = "Last upstream update as reported by the forge")
             Instant upstreamUpdatedAt,
 
+            @Schema(
+                    description = "How upstream content reaches quarantine (GW_0056)",
+                    allowableValues = {"on-demand", "scheduled", "webhook"})
+            String syncMode,
+
             @Schema(description = "All snapshots of this marketplace, any state")
             List<Snapshot> snapshots) {}
 
@@ -222,6 +227,7 @@ public class AdminController {
                         marketplace.forgeProject(),
                         marketplace.description(),
                         marketplace.upstreamUpdatedAt(),
+                        marketplace.syncMode(),
                         snapshotRepository.listByMarketplace(marketplace.id())))
                 .toList();
     }

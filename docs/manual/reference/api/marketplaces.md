@@ -81,6 +81,58 @@ Ingesting a commit already captured does not create a second snapshot.
 
 ---
 
+## Upstream sync
+
+Automated ingestion triggers (GW_0056–GW_0060). Modes and the secret lifecycle
+are described in [Syncing from upstream automatically](../../guides/upstream-sync.md).
+
+### `PUT /marketplaces/{name}/sync`
+
+Set how upstream content reaches quarantine: `on-demand` (default),
+`scheduled`, or `webhook`. No mode bypasses approval.
+
+```console
+$ curl -X PUT localhost:8080/api/marketplaces/acme/sync \
+    -H 'Content-Type: application/json' -d '{"mode":"webhook"}'
+```
+
+```json
+{"marketplace":{"name":"acme","syncMode":"webhook","...":"..."},
+ "webhookSecret":"9f2c...ab41"}
+```
+
+`webhookSecret` is present only when the new mode is `webhook`, and only in
+this response — setting `webhook` mode again rotates it, and leaving the mode
+discards it. The change is audit-logged as `sync-mode-changed`.
+
+| Status | Cause |
+| --- | --- |
+| 200 | Mode changed; returns the marketplace, plus the secret when entering webhook mode. |
+| 404 | Unknown marketplace. |
+| 422 | Not one of the three modes. |
+
+### `POST /hooks/{marketplace}`
+
+The inbound forge webhook — **not** under `/api`, and the only endpoint
+reachable without an OIDC session or a PAT. Authenticated solely by an
+HMAC-SHA256 signature of the exact raw request body in the GitHub-compatible
+`X-Hub-Signature-256: sha256=<hex>` header, verified in constant time against
+the marketplace's secret.
+
+The payload is ignored: a valid signature only triggers an asynchronous
+ingestion of the **registered** upstream URL's default branch — nothing in the
+body is read. The ingestion is recorded on the ledger with the actor `webhook`
+and lands `held` like any other.
+
+| Status | Cause |
+| --- | --- |
+| 202 | Signature valid; ingestion queued. |
+| 403 | Missing or invalid signature. Nothing was ingested. |
+| 404 | Unknown marketplace, or its sync mode is not `webhook`. |
+| 413 | Body exceeds `skills-gateway.sync.max-webhook-body-bytes`; rejected before verification. |
+
+---
+
 ## `GET /snapshots/{id}/content`
 
 What the snapshot declares — the review surface. Works on `held` snapshots,

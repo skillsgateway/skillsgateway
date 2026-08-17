@@ -41,6 +41,23 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Stateless anonymous chain for the inbound forge webhook (GW_0058). Authentication is not
+     * absent, it lives one layer down: the controller verifies an HMAC-SHA256 signature of the raw
+     * body against the marketplace's gateway-generated secret and rejects everything else. Keeping
+     * the check out of the filter chain also keeps it in force under dev-insecure-auth, and the
+     * controller takes no Authentication parameter (requests here are anonymous by design).
+     */
+    @Bean
+    @Order(2)
+    public SecurityFilterChain hooksChain(HttpSecurity http) throws Exception {
+        http.securityMatcher("/hooks/**")
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll());
+        return http.build();
+    }
+
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     /**
@@ -51,7 +68,7 @@ public class SecurityConfig {
      * requiring PATs. GW_0011 holds for every default-configured deployment.
      */
     @Bean
-    @Order(2)
+    @Order(3)
     @Requirements({"GW_0011"})
     public SecurityFilterChain webChain(HttpSecurity http, SkillsGatewayProperties properties) throws Exception {
         if (properties.devInsecureAuth()) {

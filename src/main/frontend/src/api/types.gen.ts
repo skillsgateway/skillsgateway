@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/api/marketplaces/{name}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Change a marketplace's sync mode
+         * @description Sets how upstream content reaches quarantine: on-demand (operator-triggered, the default), scheduled (the gateway polls upstream), or webhook (a signed forge push webhook triggers ingestion). Enabling webhook mode generates the HMAC secret and returns it exactly once — re-enabling rotates it, and no read endpoint ever returns it. No mode bypasses approval: sync-triggered snapshots land held.
+         */
+        put: operations["changeSyncMode"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/audit/sinks/{id}/cursor": {
         parameters: {
             query?: never;
@@ -18,6 +38,26 @@ export interface paths {
          */
         put: operations["setCursor"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/hooks/{marketplace}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Forge push webhook
+         * @description Trigger endpoint for a forge push webhook. Authenticated solely by an HMAC-SHA256 signature of the raw request body (GitHub-compatible X-Hub-Signature-256 header) against the secret generated when the marketplace's sync mode was set to webhook. The payload is ignored: a valid signature only causes the registered upstream URL's default branch to be ingested into a held quarantine snapshot, asynchronously.
+         */
+        post: operations["trigger"];
         delete?: never;
         options?: never;
         head?: never;
@@ -624,6 +664,50 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description Sync mode change request */
+        ChangeSyncModeRequest: {
+            /**
+             * @description The new sync mode
+             * @enum {string}
+             */
+            mode?: "on-demand" | "scheduled" | "webhook";
+        };
+        /** @description A registered upstream marketplace */
+        Marketplace: {
+            /** Format: int64 */
+            id?: number;
+            name?: string;
+            url?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** @description Detected forge (github, gitlab, bitbucket, azure-devops, gitea) or null */
+            forge?: string;
+            /** @description Project path on the forge */
+            forgeProject?: string;
+            /** @description Project description from the forge */
+            description?: string;
+            /**
+             * Format: date-time
+             * @description Last upstream update as reported by the forge
+             */
+            upstreamUpdatedAt?: string;
+            /**
+             * @description How upstream content reaches quarantine: on-demand, scheduled, or webhook. The trigger only — every mode lands snapshots held behind the approval gate.
+             * @enum {string}
+             */
+            syncMode?: "on-demand" | "scheduled" | "webhook";
+            /**
+             * Format: date-time
+             * @description Last sync attempt (success or failure), or null before the first one
+             */
+            lastSyncAt?: string;
+        };
+        /** @description The updated marketplace and, only when webhook mode was enabled, its secret */
+        SyncModeView: {
+            marketplace?: components["schemas"]["Marketplace"];
+            /** @description HMAC secret for the inbound webhook — returned exactly once, here. Setting webhook mode again rotates it. Null for the other modes. */
+            webhookSecret?: string;
+        };
         /** @description Cursor reset request */
         CursorRequest: {
             /**
@@ -960,26 +1044,6 @@ export interface components {
              * @example main
              */
             ref?: string;
-        };
-        /** @description A registered upstream marketplace */
-        Marketplace: {
-            /** Format: int64 */
-            id?: number;
-            name?: string;
-            url?: string;
-            /** Format: date-time */
-            createdAt?: string;
-            /** @description Detected forge (github, gitlab, bitbucket, azure-devops, gitea) or null */
-            forge?: string;
-            /** @description Project path on the forge */
-            forgeProject?: string;
-            /** @description Project description from the forge */
-            description?: string;
-            /**
-             * Format: date-time
-             * @description Last upstream update as reported by the forge
-             */
-            upstreamUpdatedAt?: string;
         };
         /** @description Audit export sink registration request */
         CreateSinkRequest: {
@@ -1376,6 +1440,11 @@ export interface components {
              * @description Last upstream update as reported by the forge
              */
             upstreamUpdatedAt?: string;
+            /**
+             * @description How upstream content reaches quarantine (GW_0056)
+             * @enum {string}
+             */
+            syncMode?: "on-demand" | "scheduled" | "webhook";
             /** @description All snapshots of this marketplace, any state */
             snapshots?: components["schemas"]["Snapshot"][];
         };
@@ -1389,6 +1458,50 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    changeSyncMode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeSyncModeRequest"];
+            };
+        };
+        responses: {
+            /** @description Sync mode changed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SyncModeView"];
+                };
+            };
+            /** @description Marketplace not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SyncModeView"];
+                };
+            };
+            /** @description Not a valid sync mode */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SyncModeView"];
+                };
+            };
+        };
+    };
     setCursor: {
         parameters: {
             query?: never;
@@ -1421,6 +1534,49 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["SinkView"];
                 };
+            };
+        };
+    };
+    trigger: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Hub-Signature-256"?: string;
+            };
+            path: {
+                marketplace: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Trigger accepted; ingestion queued */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid signature */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unknown marketplace, or its sync mode is not webhook */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Request body exceeds the configured bound */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
