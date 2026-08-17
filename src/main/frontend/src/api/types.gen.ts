@@ -232,6 +232,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List role grants
+         * @description Every current grant. Configuration-bootstrapped admins are not grants and do not appear here; they show up as an effective role on /api/me. Admin-only while role enforcement is enabled.
+         */
+        get: operations["list_2"];
+        put?: never;
+        /**
+         * Grant a role
+         * @description Grants admin or auditor globally, or approver scoped to one existing marketplace. Every grant lands on the append-only ledger with the acting identity. Admin-only while role enforcement is enabled; while disabled, grants are inert data a deployment stages before enabling enforcement.
+         */
+        post: operations["grant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/retention/evaluate": {
         parameters: {
             query?: never;
@@ -541,7 +565,7 @@ export interface paths {
         };
         /**
          * Current user
-         * @description Username of the authenticated browser session.
+         * @description Username of the authenticated browser session, whether role enforcement is enabled, and the session's effective roles — how the portal and CLI adapt their controls to what the caller may do.
          */
         get: operations["me"];
         put?: never;
@@ -563,7 +587,7 @@ export interface paths {
          * A marketplace's vetting waivers
          * @description Every waiver recorded for the marketplace, newest first, active and lapsed alike. A lapsed or revoked waiver is kept and returned with active=false: the record of what was once accepted, by whom and until when is part of the audit trail.
          */
-        get: operations["list_2"];
+        get: operations["list_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -707,6 +731,26 @@ export interface paths {
          * @description Marks the snapshot deleted and restorable until the end of the marketplace's restore window; its vetting state is unchanged. Approved snapshots are served by the git facade and can never be deleted.
          */
         delete: operations["softDelete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roles/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke a role grant
+         * @description Deletes the grant; the ledger keeps the history. Configuration-bootstrapped admins have no grant row, so they cannot be revoked here — by design, they are the escape hatch that survives a bad grant edit. Admin-only while role enforcement is enabled.
+         */
+        delete: operations["revoke_2"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1104,6 +1148,42 @@ export interface components {
              * @description End of the restore window; after it compaction removes the snapshot permanently
              */
             purgeAfter?: string;
+        };
+        /** @description Role grant request */
+        GrantRequest: {
+            /** @description Principal to grant the role to */
+            principal: string;
+            /**
+             * @description The role
+             * @enum {string}
+             */
+            role: "admin" | "approver" | "auditor";
+            /** @description Marketplace to scope an approver grant to; required for approver, forbidden for admin and auditor */
+            marketplace?: string;
+        };
+        /** @description A role grant */
+        RoleGrant: {
+            /**
+             * Format: int64
+             * @description Grant id
+             */
+            id?: number;
+            /** @description Principal the role is granted to */
+            principal?: string;
+            /**
+             * @description The role
+             * @enum {string}
+             */
+            role?: "admin" | "approver" | "auditor";
+            /** @description Marketplace an approver grant is scoped to; null for the global roles */
+            marketplace?: string;
+            /** @description Identity that made the grant */
+            grantedBy?: string;
+            /**
+             * Format: date-time
+             * @description When the grant was made
+             */
+            grantedAt?: string;
         };
         /** @description Outcome of a retention pass */
         PassResult: {
@@ -1534,6 +1614,25 @@ export interface components {
              * @description Ingestion time
              */
             createdAt?: string;
+        };
+        /** @description An effective role held by the current session */
+        EffectiveRole: {
+            /**
+             * @description The role
+             * @enum {string}
+             */
+            role?: "admin" | "approver" | "auditor";
+            /** @description Marketplace an approver role is scoped to; null for the global roles */
+            marketplace?: string;
+        };
+        /** @description The authenticated browser session's identity and effective roles */
+        MeView: {
+            /** @description Username of the session */
+            username?: string;
+            /** @description Whether role enforcement is enabled; false means every check passes */
+            rolesEnabled?: boolean;
+            /** @description The session's effective roles, config-bootstrapped admin included */
+            roles?: components["schemas"]["EffectiveRole"][];
         };
         /** @description A registered marketplace with its snapshots and forge metadata */
         MarketplaceView: {
@@ -2070,6 +2169,95 @@ export interface operations {
             };
         };
     };
+    list_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current grants */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RoleGrant"][];
+                };
+            };
+            /** @description Enforcement is enabled and the caller is not an admin */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RoleGrant"][];
+                };
+            };
+        };
+    };
+    grant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GrantRequest"];
+            };
+        };
+        responses: {
+            /** @description Role granted */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RoleGrant"];
+                };
+            };
+            /** @description Enforcement is enabled and the caller is not an admin */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RoleGrant"];
+                };
+            };
+            /** @description Approver grant names a marketplace that does not exist */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RoleGrant"];
+                };
+            };
+            /** @description The identical grant already exists */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RoleGrant"];
+                };
+            };
+            /** @description Missing principal, unknown role, approver grant without a marketplace, or a global grant with one */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RoleGrant"];
+                };
+            };
+        };
+    };
     evaluate: {
         parameters: {
             query?: {
@@ -2579,14 +2767,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": {
-                        [key: string]: string;
-                    };
+                    "*/*": components["schemas"]["MeView"];
                 };
             };
         };
     };
-    list_2: {
+    list_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -2813,6 +2999,40 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["Snapshot"];
                 };
+            };
+        };
+    };
+    revoke_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Grant revoked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Enforcement is enabled and the caller is not an admin */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Grant not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

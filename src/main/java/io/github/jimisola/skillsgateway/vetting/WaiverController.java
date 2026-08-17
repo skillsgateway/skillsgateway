@@ -2,6 +2,7 @@ package io.github.jimisola.skillsgateway.vetting;
 
 import io.github.jimisola.skillsgateway.persistence.Marketplace;
 import io.github.jimisola.skillsgateway.persistence.MarketplaceRepository;
+import io.github.jimisola.skillsgateway.roles.RoleService;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -33,10 +34,13 @@ public class WaiverController {
 
     private final WaiverService waiverService;
     private final MarketplaceRepository marketplaceRepository;
+    private final RoleService roleService;
 
-    public WaiverController(WaiverService waiverService, MarketplaceRepository marketplaceRepository) {
+    public WaiverController(
+            WaiverService waiverService, MarketplaceRepository marketplaceRepository, RoleService roleService) {
         this.waiverService = waiverService;
         this.marketplaceRepository = marketplaceRepository;
+        this.roleService = roleService;
     }
 
     @Schema(description = "A waiver as returned by the API, with its activity resolved as of now")
@@ -143,6 +147,7 @@ public class WaiverController {
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
     public ResponseEntity<WaiverView> create(
             @PathVariable long id, @RequestBody WaiverRequest request, Authentication authentication) {
+        roleService.requireApproverOfSnapshot(authentication, id);
         if (request == null) {
             throw new WaiverValidationException("a waiver request body is required");
         }
@@ -188,6 +193,7 @@ public class WaiverController {
     @ApiResponse(responseCode = "200", description = "Waiver revoked")
     @ApiResponse(responseCode = "404", description = "Waiver not found, or already revoked")
     public WaiverView revoke(@PathVariable long id, Authentication authentication) {
+        roleService.requireApproverOfWaiver(authentication, id);
         return waiverService
                 .revoke(id, authentication.getName())
                 .map(WaiverView::of)

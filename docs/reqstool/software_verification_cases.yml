@@ -670,3 +670,43 @@ cases:
       WHEN the ledger and the audit export are read
       THEN each facade entry carries the id of the token that authenticated it, the export rows carry the same attribution, and the tokens' creation, rotation and revocation appear with the acting identity, name and scopes
     revision: "0.1.0"
+
+  - id: SVC_GW_0068
+    requirement_ids: ["GW_0068"]
+    title: Deny-by-default walk of every mutation and privileged read, and the disabled default
+    verification: automated-test
+    description: |
+      GIVEN a gateway with role enforcement enabled and a session holding no role, and a second gateway left at the disabled default
+      WHEN the no-role session calls every REST API mutation route — the set asserted complete against the running application's own route table — and the ledger, export and operational listings, and then exercises the browsing surface and its own tokens, while on the disabled gateway a no-role session performs privileged operations
+      THEN on the enforcing gateway every mutation and privileged read is refused with an authorization error while the browsing surface and the session's own tokens still work, and on the disabled gateway everything works exactly as before enforcement existed
+    revision: "0.1.0"
+
+  - id: SVC_GW_0069
+    requirement_ids: ["GW_0069"]
+    title: An approver acts on its marketplace and is refused every other, including by id
+    verification: automated-test
+    description: |
+      GIVEN role enforcement enabled and a principal granted approver of marketplace A, with content in marketplaces A and B
+      WHEN the approver ingests, approves, rejects, re-vets and waives content of A, and then attempts the same operations against B by marketplace name and through bare snapshot and waiver ids belonging to B
+      THEN every operation on A succeeds, and every operation on B is refused with an authorization error regardless of whether the route named the marketplace or only carried an id
+    revision: "0.1.0"
+
+  - id: SVC_GW_0070
+    requirement_ids: ["GW_0070"]
+    title: An auditor reads the ledger and listings and is refused every mutation
+    verification: automated-test
+    description: |
+      GIVEN role enforcement enabled and a principal granted auditor
+      WHEN the auditor reads the ledger, the export stream, the webhook subscriber, delivery and sink listings and the retention candidates, and then attempts every REST API mutation route
+      THEN every read succeeds and every mutation is refused with an authorization error
+    revision: "0.1.0"
+
+  - id: SVC_GW_0071
+    requirement_ids: ["GW_0071"]
+    title: Grant lifecycle is admin-only, validated, audited, and cannot revoke a config admin
+    verification: automated-test
+    description: |
+      GIVEN role enforcement enabled, a configuration-bootstrapped admin, and a session with no role
+      WHEN the no-role session attempts to grant, the admin grants and revokes approver and auditor roles, an approver grant omitting its marketplace and one naming an unknown marketplace are attempted, a duplicate grant is attempted, and the session identity endpoint is read by the admin and by a granted principal
+      THEN the no-role grant is refused with an authorization error, the admin's grant and revocation succeed and each lands on the append-only ledger with actor, target, role and marketplace, the malformed and duplicate grants are refused, the configuration-bootstrapped admin holds admin with no database row an API call could revoke, and the identity endpoint reports enforcement state and each caller's effective roles
+    revision: "0.1.0"

@@ -1,7 +1,10 @@
 # Access tokens
 
 Personal access tokens are the credential git clients use against the
-[facade](../git-facade.md). They are the only part of the API scoped per user.
+[facade](../git-facade.md). They are the only part of the API scoped per user,
+and they stay owner-scoped with
+[role enforcement](../../guides/delegated-administration.md) enabled: managing
+your own tokens never requires a role.
 
 All paths are relative to `/api`.
 

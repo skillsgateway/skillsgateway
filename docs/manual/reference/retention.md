@@ -170,6 +170,10 @@ Edge cases worth knowing:
 The on-demand passes work whether or not the scheduler is enabled, which is what
 makes a policy inspectable before it is switched on.
 
+With [role enforcement](../guides/delegated-administration.md) enabled, the
+candidates preview requires **auditor** (or admin); the passes, the delete, and
+the restore require **admin**.
+
 ## Policies
 
 Configured under `skills-gateway.retention` — global `defaults` plus a

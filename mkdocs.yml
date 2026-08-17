@@ -113,6 +113,7 @@ nav:
       - Receiving lifecycle webhooks: guides/lifecycle-webhooks.md
       - Exporting the audit ledger: guides/exporting-the-audit-ledger.md
       - Reclaiming snapshot storage: guides/snapshot-retention.md
+      - Delegated administration: guides/delegated-administration.md
   - Reference:
       - Configuration: reference/configuration.md
       - REST API:
@@ -120,6 +121,7 @@ nav:
           - Marketplaces and snapshots: reference/api/marketplaces.md
           - Access tokens: reference/api/tokens.md
           - Audit: reference/api/audit.md
+          - Roles: reference/api/roles.md
       - Snapshot retention: reference/retention.md
       - Git smart-HTTP facade: reference/git-facade.md
       - Compatibility and allowlists: reference/compatibility.md

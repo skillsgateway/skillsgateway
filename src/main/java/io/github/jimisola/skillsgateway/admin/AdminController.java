@@ -13,6 +13,7 @@ import io.github.jimisola.skillsgateway.persistence.MarketplaceRepository;
 import io.github.jimisola.skillsgateway.persistence.Snapshot;
 import io.github.jimisola.skillsgateway.persistence.SnapshotNotFoundException;
 import io.github.jimisola.skillsgateway.persistence.SnapshotRepository;
+import io.github.jimisola.skillsgateway.roles.RoleService;
 import io.github.jimisola.skillsgateway.vetting.WaiverService;
 import io.github.jimisola.skillsgateway.webhook.WebhookEvent;
 import io.github.jimisola.skillsgateway.webhook.WebhookService;
@@ -61,6 +62,7 @@ public class AdminController {
     private final AdminAuditLogger auditLogger;
     private final WebhookService webhookService;
     private final WaiverService waiverService;
+    private final RoleService roleService;
 
     public AdminController(
             MarketplaceRepository marketplaceRepository,
@@ -73,7 +75,8 @@ public class AdminController {
             SnapshotContentService snapshotContentService,
             AdminAuditLogger auditLogger,
             WebhookService webhookService,
-            WaiverService waiverService) {
+            WaiverService waiverService,
+            RoleService roleService) {
         this.marketplaceRepository = marketplaceRepository;
         this.snapshotRepository = snapshotRepository;
         this.ingestionService = ingestionService;
@@ -85,6 +88,7 @@ public class AdminController {
         this.auditLogger = auditLogger;
         this.webhookService = webhookService;
         this.waiverService = waiverService;
+        this.roleService = roleService;
     }
 
     @Schema(description = "Marketplace registration request")
@@ -151,6 +155,7 @@ public class AdminController {
     @ApiResponse(responseCode = "422", description = "Invalid marketplace name")
     public ResponseEntity<Marketplace> registerMarketplace(
             @RequestBody RegisterMarketplaceRequest request, Authentication authentication) {
+        roleService.requireAdmin(authentication);
         if (request.name() == null || !MARKETPLACE_NAME.matcher(request.name()).matches()) {
             throw new ResponseStatusException(
                     HttpStatus.UNPROCESSABLE_CONTENT, "name must match " + MARKETPLACE_NAME.pattern());
@@ -253,6 +258,7 @@ public class AdminController {
     @ApiResponse(responseCode = "404", description = "Marketplace not found")
     @ApiResponse(responseCode = "502", description = "Upstream fetch failed")
     public ResponseEntity<Snapshot> ingest(@PathVariable String name, Authentication authentication) {
+        roleService.requireApprover(authentication, name);
         Marketplace marketplace = marketplaceRepository
                 .findByName(name)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -284,6 +290,7 @@ public class AdminController {
             responseCode = "409",
             description = "Snapshot is neither held nor revoked, or its effective vetting outcome is blocked")
     public Snapshot approve(@PathVariable long id, Authentication authentication) {
+        roleService.requireApproverOfSnapshot(authentication, id);
         ApprovalService.Approved approved = approvalService.approve(id, authentication.getName());
         Snapshot snapshot = approved.snapshot();
         String marketplace = marketplaceName(snapshot.marketplaceId());
@@ -308,6 +315,7 @@ public class AdminController {
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
     @ApiResponse(responseCode = "409", description = "Snapshot is neither held nor revoked")
     public Snapshot reject(@PathVariable long id, Authentication authentication) {
+        roleService.requireApproverOfSnapshot(authentication, id);
         Snapshot snapshot = approvalService.reject(id, authentication.getName());
         auditLogger.record(
                 authentication.getName(),
@@ -356,7 +364,8 @@ public class AdminController {
             description = "Append-only record of every git facade fetch: client source address, authenticated"
                     + " identity, repository, ref, commit SHA, and timestamp. Portal actions are not in this"
                     + " ledger; approvals live in snapshot provenance.")
-    public List<Map<String, Object>> audit() {
+    public List<Map<String, Object>> audit(Authentication authentication) {
+        roleService.requireAuditor(authentication);
         return fetchLogRepository.list();
     }
 

@@ -3,6 +3,12 @@
 The core API: registration, ingestion, the approval gate and provenance. All
 paths are relative to `/api`.
 
+With [role enforcement](../../guides/delegated-administration.md) enabled:
+registration and sync-mode changes require **admin**; ingest, approve, reject,
+re-vet, and waiver create/delete require **approver of the marketplace** (or
+admin) — resolved server-side from the addressed snapshot or waiver where the
+route carries an id; every `GET` on this page stays open to any session.
+
 ## Representations
 
 **Marketplace**
