@@ -121,10 +121,12 @@ nav:
           - Marketplaces and snapshots: reference/api/marketplaces.md
           - Access tokens: reference/api/tokens.md
           - Audit: reference/api/audit.md
+          - Adoption: reference/api/adoption.md
           - Roles: reference/api/roles.md
       - Snapshot retention: reference/retention.md
       - Container image: reference/container-image.md
       - Git smart-HTTP facade: reference/git-facade.md
       - Compatibility and allowlists: reference/compatibility.md
       - Admin portal: reference/portal.md
+      - Observability: reference/observability.md
       - Architecture decisions: reference/decisions.md

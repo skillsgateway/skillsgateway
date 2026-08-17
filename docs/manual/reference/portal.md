@@ -13,6 +13,7 @@ A fixed sidebar, grouped:
 | Gateway | Overview | [`/`](#overview) |
 | Gateway | Marketplaces | [`/marketplaces`](#marketplaces) |
 | Governance | Audit log | [`/audit`](#audit-log) |
+| Governance | Adoption | [`/adoption`](#adoption) |
 | Governance | Webhooks | [`/webhooks`](#webhooks) |
 | Access | Access tokens | [`/tokens`](#access-tokens) |
 | Tools | API reference | `/docs` — the Scalar API reference, not a portal route |
@@ -335,6 +336,51 @@ There is no filtering, search or paging — it is a recent-activity view rather
 than an investigation tool.
 
 Empty state: "No fetches recorded yet."
+
+---
+
+## Adoption
+
+**Route:** `/adoption` · **Heading:** Adoption
+
+The [adoption and staleness reports](api/adoption.md), read-only. Subtitle:
+"Who fetches what through the facade, aggregated from the append-only ledger,
+and which identities are not on the served tip." With
+[role enforcement](#authorization) enabled both underlying reads require the
+auditor role, so a session without it sees the page's error state.
+
+### Window and totals
+
+A **Report window** button group — 7, 30 or 90 days, default 30, the active
+choice pressed — drives `GET /api/adoption?days=`. Beside it, stat chips:
+total fetches in the window, marketplaces fetched, and stale identities.
+
+### Adoption by marketplace
+
+One row card per marketplace fetched in the window: name, a `serving` /
+`not serving` badge, and chips for fetches, identities and the last fetch.
+Inside, the per-SHA breakdown:
+
+| Column | Contents |
+| --- | --- |
+| Snapshot SHA | First 12 characters, monospace; full SHA on the tooltip. |
+| Fetches | Content-transferring fetches of this SHA in the window. |
+| Identities | Distinct identities that fetched it. |
+| Last fetch | Most recent, as a localized timestamp. |
+| Tip | `current` (primary badge) or `superseded` (secondary). |
+
+Empty state: "No fetches in the last {n} days. Adoption appears once content
+is fetched through the facade."
+
+### Stale identities
+
+The [staleness report](api/adoption.md#get-apiadoptionstaleness), window-free:
+identity, marketplace, last received SHA, the served tip it diverges from —
+or a destructive `not serving` badge when the marketplace stopped serving
+entirely — and the last fetch time. The page says what the report is: facts,
+not verdicts.
+
+Empty state: "Every identity is on the served tip."
 
 ---
 
