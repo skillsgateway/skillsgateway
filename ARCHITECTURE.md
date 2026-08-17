@@ -369,7 +369,11 @@ inward.
   upstream sync modes — on-demand, scheduled polling, and HMAC-authenticated
   forge webhooks, all landing snapshots held behind the unchanged approval
   gate (GW_0056–GW_0060); webhook payload parsing and a portal surface for
-  sync modes are deferred.
+  sync modes are deferred. *Implemented:* the global virtual catalog — one
+  synthesized facade repo aggregating the served estate, strictly derived
+  from published content (GW_0061–GW_0063); per-team catalogs, entitlements,
+  and per-plugin/skill filtering remain the rest of the virtual-marketplaces
+  item.
 - **Phase 3 — assurance & scale.** Client telemetry inventory, kill switch
   with fleet force-uninstall, signed attestations, additional tool adapters,
   Artifactory/Nexus catalog federation, OCI re-publication.

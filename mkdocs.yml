@@ -109,6 +109,7 @@ nav:
       - Waiving a vetting finding: guides/waiving-findings.md
       - Re-vetting approved content: guides/re-vetting.md
       - Consuming approved skills: guides/consuming-skills.md
+      - The virtual catalog: guides/virtual-catalog.md
       - Receiving lifecycle webhooks: guides/lifecycle-webhooks.md
       - Exporting the audit ledger: guides/exporting-the-audit-ledger.md
       - Reclaiming snapshot storage: guides/snapshot-retention.md

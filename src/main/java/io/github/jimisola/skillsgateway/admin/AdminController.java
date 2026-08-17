@@ -155,6 +155,7 @@ public class AdminController {
             throw new ResponseStatusException(
                     HttpStatus.UNPROCESSABLE_CONTENT, "name must match " + MARKETPLACE_NAME.pattern());
         }
+        requireNotReservedName(request.name());
         requireAllowlistedScheme(request.url());
         requireDefaultBranchRef(request.ref());
         if (marketplaceRepository.findByName(request.name()).isPresent()) {
@@ -195,6 +196,15 @@ public class AdminController {
         if (scheme == null || !properties.allowedUrlSchemes().contains(scheme.toLowerCase(Locale.ROOT))) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "url scheme must be one of %s".formatted(properties.allowedUrlSchemes()));
+        }
+    }
+
+    /** The virtual catalog occupies its facade path; a marketplace there would collide (GW_0063). */
+    @Requirements({"GW_0063"})
+    private void requireNotReservedName(String name) {
+        if (name.equals(properties.catalog().name())) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNPROCESSABLE_CONTENT, "'%s' is reserved for the virtual catalog".formatted(name));
         }
     }
 

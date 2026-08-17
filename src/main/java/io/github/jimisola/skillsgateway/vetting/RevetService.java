@@ -1,6 +1,7 @@
 package io.github.jimisola.skillsgateway.vetting;
 
 import io.github.jimisola.skillsgateway.admin.AdminAuditLogger;
+import io.github.jimisola.skillsgateway.catalog.CatalogService;
 import io.github.jimisola.skillsgateway.config.SkillsGatewayProperties;
 import io.github.jimisola.skillsgateway.persistence.FetchLogRepository;
 import io.github.jimisola.skillsgateway.persistence.Marketplace;
@@ -71,6 +72,7 @@ public class RevetService {
     private final GitStorage storage;
     private final AdminAuditLogger auditLogger;
     private final WebhookService webhookService;
+    private final CatalogService catalogService;
     private final SkillsGatewayProperties.Revet properties;
 
     public RevetService(
@@ -82,6 +84,7 @@ public class RevetService {
             GitStorage storage,
             AdminAuditLogger auditLogger,
             WebhookService webhookService,
+            CatalogService catalogService,
             SkillsGatewayProperties properties) {
         this.vettingService = vettingService;
         this.waiverService = waiverService;
@@ -91,6 +94,7 @@ public class RevetService {
         this.storage = storage;
         this.auditLogger = auditLogger;
         this.webhookService = webhookService;
+        this.catalogService = catalogService;
         this.properties = properties.vetting().revet();
     }
 
@@ -357,6 +361,9 @@ public class RevetService {
                     snapshot.sha(),
                     "revoked but still published: " + e.getMessage());
         }
+        // The published set just shrank; the catalog re-derives so the retracted content leaves it
+        // too (GW_0062). Never fails the revocation that triggered it.
+        catalogService.rebuildQuietly();
         webhookService.emit(
                 WebhookEvent.SNAPSHOT_REVOKED, marketplace, snapshot.id(), snapshot.sha(), Snapshot.REVOKED, actor);
         return true;

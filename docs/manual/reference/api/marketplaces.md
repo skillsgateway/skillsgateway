@@ -133,6 +133,32 @@ and lands `held` like any other.
 
 ---
 
+## Virtual catalog
+
+The synthesized one-URL catalog (GW_0061–GW_0063); see
+[The virtual catalog](../../guides/virtual-catalog.md).
+
+### `GET /catalog`
+
+The catalog revision the facade is serving at `/git/{catalog-name}`.
+
+```json
+{"sha":"a91b...","generatedAt":"...","constituents":[
+  {"marketplace":"acme","sha":"3f9c..."}]}
+```
+
+**200** · **404** catalog disabled or not generated yet.
+
+### `POST /catalog/rebuild`
+
+Regenerate now from what every marketplace is serving. Approvals and
+revocations already do this on their own; this is the on-demand repair path.
+Audit-logged as `catalog-rebuilt` with the acting identity.
+
+**200** — the new revision · **404** catalog disabled.
+
+---
+
 ## `GET /snapshots/{id}/content`
 
 What the snapshot declares — the review surface. Works on `held` snapshots,
