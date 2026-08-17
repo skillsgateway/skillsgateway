@@ -1,4 +1,4 @@
-import { GitBranch, Home, KeyRound, Moon, ScrollText, Store, Sun, Webhook, BookOpen } from "lucide-react";
+import { Home, KeyRound, Moon, ScrollText, Store, Sun, Webhook, BookOpen } from "lucide-react";
 import { useTheme } from "next-themes";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,30 @@ function breadcrumb(pathname: string): string {
   return "";
 }
 
+/**
+ * The airlock brand mark (brand/mark.svg): two gates in series over one road, a
+ * skill entering hollow (quarantined) and leaving filled (approved and served).
+ * Strokes inherit currentColor; the approved node is the accent token.
+ */
+function BrandMark({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 48 48"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="4"
+      strokeLinecap="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M16 6v11M16 31v11M32 6v11M32 31v11" />
+      <circle cx="6" cy="24" r="3.5" strokeWidth="3.5" />
+      <path d="M11.5 24h24.5" />
+      <circle cx="42" cy="24" r="5" className="fill-primary" stroke="none" />
+    </svg>
+  );
+}
+
 function ModeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
   return (
@@ -65,7 +89,7 @@ export function AppLayout() {
     <div className="flex min-h-screen bg-background text-foreground">
       <aside className="flex w-60 shrink-0 flex-col border-r bg-sidebar">
         <div className="flex items-center gap-2 px-4 py-4 font-semibold">
-          <GitBranch className="size-5 text-primary" aria-hidden />
+          <BrandMark className="size-5" />
           Skills Gateway
         </div>
         <nav aria-label="Main" className="flex-1 space-y-5 px-3 py-2">
