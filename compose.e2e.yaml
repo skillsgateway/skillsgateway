@@ -3,7 +3,7 @@
 # so Playwright exercises the real application with a real login redirect.
 services:
   postgres:
-    image: postgres:17
+    image: postgres:18
     environment:
       POSTGRES_DB: skillsgateway
       POSTGRES_USER: skillsgateway
