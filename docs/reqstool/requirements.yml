@@ -543,3 +543,35 @@ requirements:
     rationale: A principal with several tokens is several distinct credentials; an auditor tracing a leak needs to know which one fetched what, and the lifecycle entries are what let the trace end at when that credential was born, rotated, or killed.
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
+
+  - id: GW_0068
+    title: Scoped admin roles with deny-by-default enforcement
+    significance: shall
+    description: The system shall provide three delegated-administration roles for the web surface — a global admin, an approver scoped to one marketplace, and a read-only auditor, composing upward so an admin may do everything either other role may — behind a configuration switch that defaults to off with every authorization check passing, and shall, once the switch is enabled, refuse with an authorization error every REST API mutation and every audit-ledger and operational-listing read to a session holding no applicable role, while leaving the browsing surface and a session's own token management open to any authenticated session.
+    rationale: The portal's login was the only privilege there was, so delegating curation needs rights that are granted rather than implied by authentication; defaulting the switch to off means an upgrade can never lock an existing deployment out of its own gateway, and deny-by-default once enabled means a privileged endpoint added without a classification fails shut rather than open.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0069
+    title: Per-marketplace approver scoping
+    significance: shall
+    description: The system shall scope an approver grant to exactly one marketplace and accept from its holder ingestion, approval, rejection, re-vetting and waiver operations only for content of that marketplace, resolving the owning marketplace on the gateway's side from the addressed snapshot or waiver where the route carries an id rather than a marketplace name, and shall refuse the holder the same operations for any other marketplace.
+    rationale: Delegation is only containment if the boundary holds on every route; resolving the marketplace from the addressed resource rather than trusting the route shape closes the confused-deputy path where an approver of one marketplace reaches another's content through a bare snapshot or waiver id.
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0070
+    title: Auditor read-only guarantee
+    significance: shall
+    description: The system shall accept from an auditor reads of the append-only ledger, its export stream, the webhook subscriber, delivery and audit sink listings, and the retention candidates, and shall refuse an auditor every REST API mutation.
+    rationale: Compliance review needs to see everything that happened without being able to change what happens next; a read-only role that can mutate anything at all is an escalation path wearing an oversight badge.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0071
+    title: Audited role grants with configuration-bootstrapped admins
+    significance: shall
+    description: The system shall store role grants in its database and let only admins read and manage them through the API while enforcement is enabled, shall require an approver grant to name a marketplace registered at grant time and forbid admin and auditor grants from naming one, shall refuse a duplicate grant, shall append every grant and revocation to the append-only ledger with the acting identity, the target principal, the role and the marketplace, shall additionally treat principals listed in configuration as admins that no API call can revoke, and shall report a session's effective roles and whether enforcement is enabled through the session identity endpoint.
+    rationale: Who may do what must be answerable from the gateway's own records, and changing it must not need a redeploy; the configuration-listed admins are the escape hatch that survives any bad grant edit, so the API must not be able to take them away, and the identity endpoint is how the portal and CLI adapt to what the caller may do.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0

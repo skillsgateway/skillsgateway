@@ -7,10 +7,16 @@ conceptual treatment.
 
 ---
 
+With [role enforcement](../../guides/delegated-administration.md) enabled: the
+ledger and export reads and the sink listing require **auditor** (or admin);
+sink create, delete, and cursor reset require **admin**.
+
+---
+
 ## `GET /api/audit`
 
-Return the ledger. Requires an authenticated session; any authenticated session
-may read it.
+Return the ledger. Requires an authenticated session — and, with role
+enforcement enabled, the auditor role.
 
 ```console
 $ curl localhost:8080/api/audit

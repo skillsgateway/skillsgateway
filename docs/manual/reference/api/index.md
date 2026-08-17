@@ -19,9 +19,16 @@ This section documents the first. For the second see
 ## Conventions
 
 **Authentication.** Every `/api/**` endpoint requires an authenticated OIDC
-session. There is no method-level authorization — authorization is chain-level,
-so any authenticated session may call any endpoint. The single exception is
-access tokens, which are scoped to the calling principal server-side.
+session.
+
+**Authorization.** With role enforcement at its default (off), any
+authenticated session may call any endpoint. With
+`skills-gateway.roles.enabled=true`, every mutation and the audit surface
+require a role and answer **403** without one; the browsing surface stays open.
+Each endpoint's page states its requirement, and
+[Delegated administration](../../guides/delegated-administration.md) has the
+matrix. Access tokens are scoped to the calling principal server-side in either
+mode.
 
 **Unauthenticated requests** to `/api/**` receive a clean **401**, not a 302 to
 the identity provider, so an expired session surfaces as an error rather than an
@@ -42,6 +49,7 @@ consumed by the portal with a session cookie.
 | Status | Meaning |
 | --- | --- |
 | 400 | The request violated a trust-boundary rule — a disallowed URL scheme, or a non-default ref. |
+| 403 | Role enforcement is enabled and the session lacks the role the endpoint requires. |
 | 404 | No such marketplace, snapshot or token. |
 | 409 | A state conflict — a duplicate name, a decision on a snapshot that is already `approved` or `rejected`, or a re-vet of one that is not `approved`. |
 | 422 | A name failed `^[a-z0-9][a-z0-9_-]*$`. |
@@ -56,14 +64,19 @@ consumed by the portal with a session cookie.
 | [Audit](audit.md) | Read the ledger; stream it as NDJSON; register, replay and delete export sinks |
 | [Webhooks](../../guides/lifecycle-webhooks.md) | Register, list and delete subscribers; list delivery attempts |
 | [Retention](../retention.md#endpoints) | Preview candidates, evaluate, compact, soft-delete and restore snapshots |
+| [Roles](roles.md) | List, grant and revoke delegated-administration roles |
 
 ## Session
 
-`GET /api/me` returns the current principal — the portal uses it for the sidebar
-footer.
+`GET /api/me` returns the current principal, whether role enforcement is
+enabled, and the session's effective roles — a configuration-bootstrapped admin
+appears as a synthetic `admin` entry. The portal uses it for the sidebar footer
+and, with roles, to adapt its controls.
 
 ```json
-{"username": "alice@example.com"}
+{"username": "alice@example.com",
+ "rolesEnabled": true,
+ "roles": [{"role": "approver", "marketplace": "acme"}]}
 ```
 
 ## Non-API endpoints

@@ -91,6 +91,14 @@ a narrower meaning here.
     catalog's name is a valid entry. Empty means all. Out-of-scope answers are
     indistinguishable from not-found.
 
+**Role grant**
+:   One row of current state giving a principal a role — `admin` (global),
+    `approver` (scoped to one marketplace), or `auditor` (global, read-only).
+    Managed through `/api/roles`, audited on the ledger, inert until
+    `skills-gateway.roles.enabled=true`. Principals in
+    `skills-gateway.roles.admins` are admins by configuration, without a grant
+    row, and cannot be revoked through the API.
+
 **Skill**
 :   A unit of agent capability — a `SKILL.md` directory in the open Agent Skills
     format, or a component of a Claude Code plugin.

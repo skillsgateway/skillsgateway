@@ -1,6 +1,7 @@
 package io.github.jimisola.skillsgateway.catalog;
 
 import io.github.jimisola.skillsgateway.admin.AdminAuditLogger;
+import io.github.jimisola.skillsgateway.roles.RoleService;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -22,10 +23,12 @@ public class CatalogController {
 
     private final CatalogService catalogService;
     private final AdminAuditLogger auditLogger;
+    private final RoleService roleService;
 
-    public CatalogController(CatalogService catalogService, AdminAuditLogger auditLogger) {
+    public CatalogController(CatalogService catalogService, AdminAuditLogger auditLogger, RoleService roleService) {
         this.catalogService = catalogService;
         this.auditLogger = auditLogger;
+        this.roleService = roleService;
     }
 
     @GetMapping("/catalog")
@@ -62,6 +65,7 @@ public class CatalogController {
     @ApiResponse(responseCode = "200", description = "Catalog rebuilt; returns the new revision")
     @ApiResponse(responseCode = "404", description = "Catalog disabled")
     public CatalogService.CatalogInfo rebuild(Authentication authentication) {
+        roleService.requireAdmin(authentication);
         if (!catalogService.enabled()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "catalog is disabled");
         }

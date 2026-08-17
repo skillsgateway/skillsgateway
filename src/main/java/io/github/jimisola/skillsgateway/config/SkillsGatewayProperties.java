@@ -17,7 +17,8 @@ public record SkillsGatewayProperties(
         Vetting vetting,
         Sync sync,
         Catalog catalog,
-        Tokens tokens) {
+        Tokens tokens,
+        Roles roles) {
 
     public SkillsGatewayProperties {
         if (dataDir == null) {
@@ -49,6 +50,25 @@ public record SkillsGatewayProperties(
         }
         if (tokens == null) {
             tokens = new Tokens(null);
+        }
+        if (roles == null) {
+            roles = new Roles(null, null);
+        }
+    }
+
+    /**
+     * Delegated administration (GW_0068, GW_0071). {@code enabled=false} — the default — makes
+     * every authorization check pass, so an upgrade never locks anyone out; a deployment stages
+     * its grants and then opts in. {@code admins} are admins by configuration and cannot be
+     * revoked through the API — the escape hatch that survives a bad grant edit.
+     */
+    public record Roles(Boolean enabled, List<String> admins) {
+
+        public Roles {
+            if (enabled == null) {
+                enabled = false;
+            }
+            admins = admins == null ? List.of() : List.copyOf(admins);
         }
     }
 
