@@ -93,9 +93,9 @@
 
 ## 8. Gates and evidence
 
-- [ ] 8.1 `./mvnw clean verify`
-- [ ] 8.2 `(cd src/main/frontend && pnpm e2e)`
-- [ ] 8.3 `reqstool status local -p docs/reqstool` → PASS
+- [x] 8.1 `./mvnw clean verify`
+- [x] 8.2 `(cd src/main/frontend && pnpm e2e)`
+- [x] 8.3 `reqstool status local -p docs/reqstool` → PASS
 - [x] 8.4 `openspec validate --all --strict`
 - [x] 8.5 `mkdocs build --strict`
-- [ ] 8.6 Record all gates in `evidence.md` with the final commit SHA.
+- [x] 8.6 Record all gates in `evidence.md` with the final commit SHA.

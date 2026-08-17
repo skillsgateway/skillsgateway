@@ -63,4 +63,4 @@ final source state.)
 
 ## Commit
 
-`(pending)`
+`d781f26` (implementation; the archive commit follows it and changes no code)
