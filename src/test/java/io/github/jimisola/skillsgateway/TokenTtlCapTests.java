@@ -8,6 +8,7 @@ import io.github.jimisola.skillsgateway.auth.TokenService;
 import io.github.reqstool.annotations.SVCs;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestPropertySource;
@@ -22,8 +23,10 @@ class TokenTtlCapTests extends AbstractGatewayTest {
     @Test
     @SVCs({"SVC_GW_0065"})
     void a_lifetime_beyond_the_cap_is_refused_rather_than_shortened() {
-        // Within the cap: accepted, and the requested deadline is stored untouched.
-        Instant requested = Instant.now().plus(Duration.ofDays(7));
+        // Within the cap: accepted, and the requested deadline is stored untouched. Microsecond
+        // precision: TIMESTAMPTZ stores micros, and the round-trip equality must not depend on
+        // the platform clock's resolution (nanos on Linux, micros on macOS).
+        Instant requested = Instant.now().plus(Duration.ofDays(7)).truncatedTo(ChronoUnit.MICROS);
         TokenService.IssuedToken within = tokenService.create("alice", "short", List.of(), requested);
         assertThat(within.expiresAt()).isEqualTo(requested);
 

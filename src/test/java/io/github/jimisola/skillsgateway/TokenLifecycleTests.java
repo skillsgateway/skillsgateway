@@ -12,6 +12,7 @@ import io.github.jimisola.skillsgateway.persistence.FetchLogRepository;
 import io.github.reqstool.annotations.SVCs;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -103,7 +104,9 @@ class TokenLifecycleTests extends AbstractGatewayTest {
         Registered registered = registerAndIngest(uniqueName("rot"), createUpstream(DEFAULT_MANIFEST));
         approve(registered.snapshot().id());
         String name = registered.marketplace().name();
-        Instant deadline = Instant.now().plus(Duration.ofDays(7));
+        // Microsecond precision: TIMESTAMPTZ stores micros, and the round-trip equality below
+        // must not depend on the platform clock's resolution (nanos on Linux, micros on macOS).
+        Instant deadline = Instant.now().plus(Duration.ofDays(7)).truncatedTo(ChronoUnit.MICROS);
 
         TokenService.IssuedToken original = tokenService.create("alice", "rotme", List.of(name), deadline);
         assertThat(gitClone(facadeUrl(name, original.token()), newWorkDir("rota"))
