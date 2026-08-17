@@ -13,6 +13,7 @@ Every setting the gateway reads, with its default and what consumes it.
 | [`skills-gateway.sync.*`](#upstream-sync) | Upstream sync: the polling sweep's schedule and batch, and the inbound webhook body bound. | No — all defaulted. |
 | [`skills-gateway.catalog.*`](#virtual-catalog) | The global virtual catalog and its reserved name. | No — all defaulted. |
 | [`skills-gateway.tokens.*`](#access-tokens) | Access-token policy: the maximum lifetime creation accepts. | No — defaulted (unlimited). |
+| [`skills-gateway.roles.*`](#delegated-administration) | Role enforcement and the bootstrap admins. **Off by default.** | No — all defaulted. |
 | [`spring.datasource.*`](#datasource) | PostgreSQL connection. Supplied entirely by environment. | **Yes** |
 | [`spring.security.oauth2.client.*`](#oidc-login) | OIDC login for the web surface. | **Yes** |
 | [`management.endpoints.*`](#actuator) | Which actuator endpoints are exposed. | No |
@@ -450,6 +451,35 @@ skills-gateway:
 
 Scopes, expiry, and rotation are described in
 [Access tokens](api/tokens.md).
+
+---
+
+## Delegated administration
+
+Role enforcement for the web surface (GW_0068, GW_0071). Java-side defaults;
+nothing appears in `application.yaml`.
+
+```yaml
+skills-gateway:
+  roles:
+    # Off by default: every authorization check passes and an upgrade never
+    # locks anyone out. Once true, enforcement is deny-by-default: every
+    # mutation and the ledger surface need a role.
+    enabled: true
+    # Admins by configuration: effective without a grant row and unrevocable
+    # through the API — the escape hatch that survives a bad grant edit.
+    admins:
+      - admin@example.com
+```
+
+| Property | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `skills-gateway.roles.enabled` | boolean | `false` | With `false` every check passes; grants stay writable as staging data. |
+| `skills-gateway.roles.admins` | list of strings | `[]` | Principals that are admins by configuration; DB grants add to them. |
+
+The roles, the enforcement matrix, and the staging workflow are described in
+[Delegated administration](../guides/delegated-administration.md); the grants
+API in [Roles](api/roles.md).
 
 ---
 

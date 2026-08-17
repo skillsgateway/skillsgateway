@@ -377,7 +377,11 @@ inward.
   the facade, expiry decided at authentication time, rotation that cannot
   widen a grant, per-token fetch attribution on the ledger (GW_0064–GW_0067);
   team entitlements and SSO-derived short-lived credentials are deferred
-  (issues #26, #59).
+  (issue #59). *Implemented:* scoped admin roles on the web surface — global
+  admin, per-marketplace approver, read-only auditor; DB-managed audited
+  grants with configuration-bootstrapped admins, deny-by-default once
+  enabled, off by default (GW_0068–GW_0071); per-team catalog scoping and a
+  portal grants UI are deferred.
 - **Phase 3 — assurance & scale.** Client telemetry inventory, kill switch
   with fleet force-uninstall, signed attestations, additional tool adapters,
   Artifactory/Nexus catalog federation, OCI re-publication.

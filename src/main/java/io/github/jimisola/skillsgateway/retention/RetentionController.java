@@ -2,6 +2,7 @@ package io.github.jimisola.skillsgateway.retention;
 
 import io.github.jimisola.skillsgateway.persistence.Snapshot;
 import io.github.jimisola.skillsgateway.persistence.SnapshotNotFoundException;
+import io.github.jimisola.skillsgateway.roles.RoleService;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,9 +30,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class RetentionController {
 
     private final RetentionService retentionService;
+    private final RoleService roleService;
 
-    public RetentionController(RetentionService retentionService) {
+    public RetentionController(RetentionService retentionService, RoleService roleService) {
         this.retentionService = retentionService;
+        this.roleService = roleService;
     }
 
     @DeleteMapping("/snapshots/{id}")
@@ -46,6 +49,7 @@ public class RetentionController {
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
     @ApiResponse(responseCode = "409", description = "Snapshot is approved, or already deleted")
     public Snapshot softDelete(@PathVariable long id, Authentication authentication) {
+        roleService.requireAdmin(authentication);
         return retentionService.softDelete(id, RetentionService.MANUAL_REASON, authentication.getName());
     }
 
@@ -59,6 +63,7 @@ public class RetentionController {
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
     @ApiResponse(responseCode = "409", description = "Snapshot is not deleted")
     public Snapshot restore(@PathVariable long id, Authentication authentication) {
+        roleService.requireAdmin(authentication);
         return retentionService.restore(id, authentication.getName());
     }
 
@@ -71,8 +76,9 @@ public class RetentionController {
                     + " that selected it. A dry run: nothing is written.")
     @ApiResponse(responseCode = "200", description = "Candidate snapshots")
     public List<RetentionService.Candidate> candidates(
-            @RequestParam(required = false) @Parameter(description = "Restrict to one marketplace")
-                    String marketplace) {
+            @RequestParam(required = false) @Parameter(description = "Restrict to one marketplace") String marketplace,
+            Authentication authentication) {
+        roleService.requireAuditor(authentication);
         return retentionService.candidates(marketplace);
     }
 
@@ -87,6 +93,7 @@ public class RetentionController {
     public RetentionService.PassResult evaluate(
             @RequestParam(required = false) @Parameter(description = "Restrict to one marketplace") String marketplace,
             Authentication authentication) {
+        roleService.requireAdmin(authentication);
         return retentionService.evaluate(authentication.getName(), marketplace);
     }
 
@@ -99,6 +106,7 @@ public class RetentionController {
                     + " together with its pinned commit in the quarantine repository.")
     @ApiResponse(responseCode = "200", description = "Pass outcome")
     public RetentionService.PassResult compact(Authentication authentication) {
+        roleService.requireAdmin(authentication);
         return retentionService.compact(authentication.getName());
     }
 

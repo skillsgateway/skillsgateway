@@ -246,3 +246,26 @@ CREATE INDEX idx_vetting_waivers_marketplace ON vetting_waivers (marketplace_id,
 -- The sweep's only query.
 CREATE INDEX idx_vetting_waivers_expiry_sweep ON vetting_waivers (expires_at)
     WHERE expired_recorded_at IS NULL AND revoked_at IS NULL;
+
+-- Delegated administration (GW_0068..GW_0071).
+--
+-- Current state only, mirroring webhook_subscribers rather than the soft-delete pattern: a
+-- revoked grant has no future behavior to explain, and the audit ledger carries the history.
+-- Configuration-bootstrapped admins (skills-gateway.roles.admins) are deliberately NOT rows
+-- here — having no row is what makes them unrevocable through the API.
+
+CREATE TABLE role_grants (
+    id BIGSERIAL PRIMARY KEY,
+    principal TEXT NOT NULL CHECK (principal <> ''),
+    role TEXT NOT NULL CHECK (role IN ('admin', 'approver', 'auditor')),
+    -- NULL for the global roles; an approver grant names its one marketplace. The service
+    -- enforces which role carries one; the schema enforces the referenced marketplace exists.
+    marketplace_id BIGINT REFERENCES marketplaces (id) ON DELETE CASCADE,
+    granted_by TEXT NOT NULL,
+    granted_at TIMESTAMPTZ NOT NULL,
+    -- NULLS NOT DISTINCT so a duplicate global grant (marketplace_id NULL) is refused too.
+    UNIQUE NULLS NOT DISTINCT (principal, role, marketplace_id)
+);
+
+-- The authorization check's only query.
+CREATE INDEX idx_role_grants_principal ON role_grants (principal);

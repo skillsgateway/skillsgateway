@@ -176,12 +176,36 @@ ref, or a commit, and nothing on it can approve or publish. Body size is
 bounded before the HMAC is computed, and requests for marketplaces not in
 webhook mode are refused without revealing why.
 
+## 5. Roles — what an authenticated session may do
+
+Authentication says who a session is; the role model says what it may do.
+Three roles, enforced at the REST API by an explicit authorization call at the
+top of every privileged endpoint:
+
+| Role | Scope | Authority |
+| --- | --- | --- |
+| `admin` | global | Every operation, including managing grants. |
+| `approver` | one marketplace | Ingest, approve, reject, re-vet, waive — for that marketplace only. The owning marketplace is resolved from the addressed snapshot or waiver on the server side, so a bare id cannot reach another marketplace's content. |
+| `auditor` | global | Read the ledger, its export, the operational listings. No mutations. |
+
+Enforcement is **deny-by-default once enabled**: a session with no role keeps
+the browsing surface and its own tokens, and is refused everything else. It is
+**off by default** (`skills-gateway.roles.enabled=false`) so an upgrade never
+locks a deployment out of its own gateway; principals in
+`skills-gateway.roles.admins` are admins by configuration and cannot be revoked
+through the API — the escape hatch that makes enabling safe. Every grant and
+revocation is on the append-only ledger.
+
+This boundary is the web surface's only. The facade's authorization is
+[token scopes](../reference/api/tokens.md) — a different credential for a
+different surface — and roles never apply to PATs. See
+[Delegated administration](../guides/delegated-administration.md) for the
+workflow and [Roles](../reference/api/roles.md) for the grants API.
+
 ## What is not a boundary yet
 
-There is no role model in the portal. Any authenticated browser session can
-register, ingest, approve and reject. The only per-user scoping is access
-tokens: you see and revoke your own.
-
-Admin/reviewer separation is a designed future capability. Until it lands, treat
-**access to the portal** as the reviewer privilege and grant it through the
-identity provider.
+Per-team catalog scoping (which identities see which virtual marketplaces) and
+a portal UI for managing grants are future capabilities; today the grants API
+is the management surface. Where the role model is not enabled, treat **access
+to the portal** as the reviewer privilege and grant it through the identity
+provider.

@@ -3,6 +3,7 @@ package io.github.jimisola.skillsgateway.audit;
 import io.github.jimisola.skillsgateway.admin.AdminAuditLogger;
 import io.github.jimisola.skillsgateway.config.SkillsGatewayProperties;
 import io.github.jimisola.skillsgateway.persistence.AuditSink;
+import io.github.jimisola.skillsgateway.roles.RoleService;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -51,12 +52,17 @@ public class AuditController {
     private final AuditExportService exportService;
     private final SkillsGatewayProperties properties;
     private final AdminAuditLogger auditLogger;
+    private final RoleService roleService;
 
     public AuditController(
-            AuditExportService exportService, SkillsGatewayProperties properties, AdminAuditLogger auditLogger) {
+            AuditExportService exportService,
+            SkillsGatewayProperties properties,
+            AdminAuditLogger auditLogger,
+            RoleService roleService) {
         this.exportService = exportService;
         this.properties = properties;
         this.auditLogger = auditLogger;
+        this.roleService = roleService;
     }
 
     @Schema(description = "Audit export sink registration request")
@@ -119,7 +125,9 @@ public class AuditController {
     @ApiResponse(responseCode = "200", description = "The entries after the cursor, newline-delimited")
     public ResponseEntity<StreamingResponseBody> export(
             @RequestParam(required = false, defaultValue = "0") long after,
-            @RequestParam(required = false) Integer limit) {
+            @RequestParam(required = false) Integer limit,
+            Authentication authentication) {
+        roleService.requireAuditor(authentication);
         SkillsGatewayProperties.AuditExport config = properties.auditExport();
         int page = Math.clamp(limit == null ? config.defaultPageSize() : limit, 1, config.maxPageSize());
         long from = Math.max(after, 0);
@@ -145,6 +153,7 @@ public class AuditController {
     @ApiResponse(responseCode = "422", description = "Invalid sink name")
     public ResponseEntity<AuditExportService.CreatedSink> createSink(
             @RequestBody CreateSinkRequest request, Authentication authentication) {
+        roleService.requireAdmin(authentication);
         if (request.name() == null || !SINK_NAME.matcher(request.name()).matches()) {
             throw new ResponseStatusException(
                     HttpStatus.UNPROCESSABLE_CONTENT, "name must match " + SINK_NAME.pattern());
@@ -171,7 +180,8 @@ public class AuditController {
             summary = "List audit export sinks",
             description = "Every registered sink with its target, its position in the ledger, and how many"
                     + " entries it still has to receive. Signing secrets are never returned.")
-    public List<SinkView> listSinks() {
+    public List<SinkView> listSinks(Authentication authentication) {
+        roleService.requireAuditor(authentication);
         long head = exportService.ledgerHead();
         return exportService.listSinks().stream().map(sink -> view(sink, head)).toList();
     }
@@ -184,6 +194,7 @@ public class AuditController {
     @ApiResponse(responseCode = "204", description = "Sink deleted")
     @ApiResponse(responseCode = "404", description = "Sink not found")
     public ResponseEntity<Void> deleteSink(@PathVariable long id, Authentication authentication) {
+        roleService.requireAdmin(authentication);
         if (!exportService.deleteSink(id)) {
             return ResponseEntity.notFound().build();
         }
@@ -202,6 +213,7 @@ public class AuditController {
     @ApiResponse(responseCode = "404", description = "Sink not found")
     public SinkView setCursor(
             @PathVariable long id, @RequestBody CursorRequest request, Authentication authentication) {
+        roleService.requireAdmin(authentication);
         AuditSink updated = exportService
                 .resetCursor(id, request.after())
                 .orElseThrow(

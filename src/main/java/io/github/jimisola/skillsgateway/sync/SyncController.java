@@ -1,6 +1,7 @@
 package io.github.jimisola.skillsgateway.sync;
 
 import io.github.jimisola.skillsgateway.persistence.Marketplace;
+import io.github.jimisola.skillsgateway.roles.RoleService;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,9 +26,11 @@ public class SyncController {
             Set.of(Marketplace.SYNC_ON_DEMAND, Marketplace.SYNC_SCHEDULED, Marketplace.SYNC_WEBHOOK);
 
     private final SyncService syncService;
+    private final RoleService roleService;
 
-    public SyncController(SyncService syncService) {
+    public SyncController(SyncService syncService, RoleService roleService) {
         this.syncService = syncService;
+        this.roleService = roleService;
     }
 
     @Schema(description = "Sync mode change request")
@@ -61,6 +64,7 @@ public class SyncController {
     @ApiResponse(responseCode = "422", description = "Not a valid sync mode")
     public SyncModeView changeSyncMode(
             @PathVariable String name, @RequestBody ChangeSyncModeRequest request, Authentication authentication) {
+        roleService.requireAdmin(authentication);
         if (request.mode() == null || !MODES.contains(request.mode())) {
             throw new ResponseStatusException(
                     HttpStatus.UNPROCESSABLE_CONTENT, "mode must be one of %s".formatted(MODES));

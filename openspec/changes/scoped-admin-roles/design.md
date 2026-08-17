@@ -38,6 +38,12 @@ grants (needs #11's later slices), roles on PATs, denied-attempt alerting.
    Tokens stay purely owner-scoped for every session. Roles compose upward:
    admin ⊇ approver ⊇ nothing, admin ⊇ auditor.
 
+   *Implementation note (visible spec addition):* the webhook subscriber
+   listing (`GET /api/webhooks`) sat in neither enumeration above. It exposes
+   receiver target URLs — operator infrastructure, not skill content — so it
+   is classified with the delivery/sink listings as auditor-or-admin,
+   following the deny-by-default principle rather than the browsing default.
+
 3. **`enabled=false` is the default and short-circuits every check.** An
    upgrade must never lock the owner out of their own gateway; a deployment
    opts into enforcement after granting itself admin. With roles disabled the

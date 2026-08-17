@@ -22,3 +22,5 @@ data/
 # OS
 .DS_Store
 .factorypath
+.inlined-pom.xml
+.claude/worktrees/

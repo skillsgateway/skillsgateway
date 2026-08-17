@@ -4,6 +4,7 @@ import io.github.jimisola.skillsgateway.admin.AdminAuditLogger;
 import io.github.jimisola.skillsgateway.config.SkillsGatewayProperties;
 import io.github.jimisola.skillsgateway.persistence.WebhookDelivery;
 import io.github.jimisola.skillsgateway.persistence.WebhookSubscriber;
+import io.github.jimisola.skillsgateway.roles.RoleService;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -43,12 +44,17 @@ public class WebhookController {
     private final WebhookService webhookService;
     private final SkillsGatewayProperties properties;
     private final AdminAuditLogger auditLogger;
+    private final RoleService roleService;
 
     public WebhookController(
-            WebhookService webhookService, SkillsGatewayProperties properties, AdminAuditLogger auditLogger) {
+            WebhookService webhookService,
+            SkillsGatewayProperties properties,
+            AdminAuditLogger auditLogger,
+            RoleService roleService) {
         this.webhookService = webhookService;
         this.properties = properties;
         this.auditLogger = auditLogger;
+        this.roleService = roleService;
     }
 
     @Schema(description = "Webhook subscriber registration request")
@@ -96,6 +102,7 @@ public class WebhookController {
     @ApiResponse(responseCode = "422", description = "Invalid subscriber name")
     public ResponseEntity<WebhookService.CreatedSubscriber> create(
             @RequestBody CreateSubscriberRequest request, Authentication authentication) {
+        roleService.requireAdmin(authentication);
         if (request.name() == null || !SUBSCRIBER_NAME.matcher(request.name()).matches()) {
             throw new ResponseStatusException(
                     HttpStatus.UNPROCESSABLE_CONTENT, "name must match " + SUBSCRIBER_NAME.pattern());
@@ -117,7 +124,8 @@ public class WebhookController {
     @Operation(
             summary = "List webhook subscribers",
             description = "Every registered receiver with its event filter. Signing secrets are never returned.")
-    public List<SubscriberView> list() {
+    public List<SubscriberView> list(Authentication authentication) {
+        roleService.requireAuditor(authentication);
         return webhookService.listSubscribers().stream()
                 .map(WebhookController::view)
                 .toList();
@@ -131,6 +139,7 @@ public class WebhookController {
     @ApiResponse(responseCode = "204", description = "Subscriber deleted")
     @ApiResponse(responseCode = "404", description = "Subscriber not found")
     public ResponseEntity<Void> delete(@PathVariable long id, Authentication authentication) {
+        roleService.requireAdmin(authentication);
         if (!webhookService.deleteSubscriber(id)) {
             return ResponseEntity.notFound().build();
         }
@@ -146,7 +155,9 @@ public class WebhookController {
             description = "Most recent deliveries first, with state, attempt count, and the last response status"
                     + " or error — the operator's view of a failing integration.")
     public List<WebhookDelivery> deliveries(
-            @RequestParam(required = false, defaultValue = "" + DEFAULT_DELIVERY_LIMIT) int limit) {
+            @RequestParam(required = false, defaultValue = "" + DEFAULT_DELIVERY_LIMIT) int limit,
+            Authentication authentication) {
+        roleService.requireAuditor(authentication);
         return webhookService.listDeliveries(Math.clamp(limit, 1, MAX_DELIVERY_LIMIT));
     }
 

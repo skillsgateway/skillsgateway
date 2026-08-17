@@ -2,6 +2,7 @@ package io.github.jimisola.skillsgateway.vetting;
 
 import io.github.jimisola.skillsgateway.persistence.FetchLogRepository;
 import io.github.jimisola.skillsgateway.persistence.SnapshotNotFoundException;
+import io.github.jimisola.skillsgateway.roles.RoleService;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -30,9 +31,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class RevetController {
 
     private final RevetService revetService;
+    private final RoleService roleService;
 
-    public RevetController(RevetService revetService) {
+    public RevetController(RevetService revetService, RoleService roleService) {
         this.revetService = revetService;
+        this.roleService = roleService;
     }
 
     @PostMapping("/snapshots/{id}/revet")
@@ -51,6 +54,7 @@ public class RevetController {
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
     @ApiResponse(responseCode = "409", description = "The snapshot is not approved; only served content is re-vetted")
     public RevetService.RevetResult revetSnapshot(@PathVariable long id, Authentication authentication) {
+        roleService.requireApproverOfSnapshot(authentication, id);
         return revetService.revetSnapshot(id, authentication.getName());
     }
 
@@ -65,6 +69,7 @@ public class RevetController {
     @ApiResponse(responseCode = "200", description = "What the pass re-vetted and concluded")
     @ApiResponse(responseCode = "404", description = "Marketplace not found")
     public RevetService.PassResult revetMarketplace(@PathVariable String name, Authentication authentication) {
+        roleService.requireApprover(authentication, name);
         return revetService.revetMarketplace(name, authentication.getName());
     }
 
