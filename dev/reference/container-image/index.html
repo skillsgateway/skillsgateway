@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/dev/guides/local-development/">
+        <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/dev/reference/container-image/">
       
       
-        <link rel="prev" href="../../concepts/glossary/">
+        <link rel="prev" href="../retention/">
       
       
-        <link rel="next" href="../registering-a-marketplace/">
+        <link rel="next" href="../git-facade/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Local development - Skills Gateway</title>
+        <title>Container image - Skills Gateway</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#local-development" class="md-skip">
+        <a href="#container-image" class="md-skip">
           Skip to content
         </a>
       
@@ -118,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Local development
+              Container image
             
           </span>
         </div>
@@ -501,10 +501,8 @@
       
   
   
-    
   
   
-  
     
     
       
@@ -541,11 +539,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
@@ -566,7 +564,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -581,37 +579,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Local development
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../guides/local-development/" class="md-nav__link">
         
   
   
@@ -627,175 +598,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prerequisites
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#run-with-compose" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Run with Compose
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#run-from-source" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Run from source
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#database" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Database
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#authentication" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authentication
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Authentication">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#with-an-identity-provider" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        With an identity provider
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#without-one-the-escape-hatch" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Without one — the escape hatch
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#verify-it-is-up" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verify it is up
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Storage
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#observability" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Observability
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#ui-development-loop" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        UI development loop
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-gates" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The gates
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next steps
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -808,7 +610,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../registering-a-marketplace/" class="md-nav__link">
+      <a href="../../guides/registering-a-marketplace/" class="md-nav__link">
         
   
   
@@ -836,7 +638,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../upstream-sync/" class="md-nav__link">
+      <a href="../../guides/upstream-sync/" class="md-nav__link">
         
   
   
@@ -864,7 +666,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../approving-snapshots/" class="md-nav__link">
+      <a href="../../guides/approving-snapshots/" class="md-nav__link">
         
   
   
@@ -892,7 +694,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../waiving-findings/" class="md-nav__link">
+      <a href="../../guides/waiving-findings/" class="md-nav__link">
         
   
   
@@ -920,7 +722,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../re-vetting/" class="md-nav__link">
+      <a href="../../guides/re-vetting/" class="md-nav__link">
         
   
   
@@ -948,7 +750,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../consuming-skills/" class="md-nav__link">
+      <a href="../../guides/consuming-skills/" class="md-nav__link">
         
   
   
@@ -976,7 +778,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../virtual-catalog/" class="md-nav__link">
+      <a href="../../guides/virtual-catalog/" class="md-nav__link">
         
   
   
@@ -1004,7 +806,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../lifecycle-webhooks/" class="md-nav__link">
+      <a href="../../guides/lifecycle-webhooks/" class="md-nav__link">
         
   
   
@@ -1032,7 +834,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../exporting-the-audit-ledger/" class="md-nav__link">
+      <a href="../../guides/exporting-the-audit-ledger/" class="md-nav__link">
         
   
   
@@ -1060,7 +862,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../snapshot-retention/" class="md-nav__link">
+      <a href="../../guides/snapshot-retention/" class="md-nav__link">
         
   
   
@@ -1088,7 +890,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../delegated-administration/" class="md-nav__link">
+      <a href="../../guides/delegated-administration/" class="md-nav__link">
         
   
   
@@ -1120,8 +922,10 @@
       
   
   
+    
   
   
+  
     
     
       
@@ -1150,11 +954,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
@@ -1175,7 +979,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1193,7 +997,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/configuration/" class="md-nav__link">
+      <a href="../configuration/" class="md-nav__link">
         
   
   
@@ -1249,7 +1053,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../reference/api/" class="md-nav__link ">
+            <a href="../api/" class="md-nav__link ">
               
   
   
@@ -1293,7 +1097,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/marketplaces/" class="md-nav__link">
+      <a href="../api/marketplaces/" class="md-nav__link">
         
   
   
@@ -1321,7 +1125,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/tokens/" class="md-nav__link">
+      <a href="../api/tokens/" class="md-nav__link">
         
   
   
@@ -1349,7 +1153,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/audit/" class="md-nav__link">
+      <a href="../api/audit/" class="md-nav__link">
         
   
   
@@ -1377,7 +1181,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/roles/" class="md-nav__link">
+      <a href="../api/roles/" class="md-nav__link">
         
   
   
@@ -1413,7 +1217,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/retention/" class="md-nav__link">
+      <a href="../retention/" class="md-nav__link">
         
   
   
@@ -1438,10 +1242,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../reference/container-image/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Container image
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1457,6 +1288,70 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tags
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pin-by-digest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pin by digest
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pulling-while-the-package-is-private" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pulling while the package is private
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sbom-attestation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SBOM attestation
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1469,7 +1364,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/git-facade/" class="md-nav__link">
+      <a href="../git-facade/" class="md-nav__link">
         
   
   
@@ -1497,7 +1392,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/compatibility/" class="md-nav__link">
+      <a href="../compatibility/" class="md-nav__link">
         
   
   
@@ -1525,7 +1420,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/portal/" class="md-nav__link">
+      <a href="../portal/" class="md-nav__link">
         
   
   
@@ -1553,7 +1448,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/decisions/" class="md-nav__link">
+      <a href="../decisions/" class="md-nav__link">
         
   
   
@@ -1608,10 +1503,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
+  <a href="#tags" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prerequisites
+        Tags
       
     </span>
   </a>
@@ -1619,10 +1514,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#run-with-compose" class="md-nav__link">
+  <a href="#pin-by-digest" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Run with Compose
+        Pin by digest
       
     </span>
   </a>
@@ -1630,10 +1525,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#run-from-source" class="md-nav__link">
+  <a href="#pulling-while-the-package-is-private" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Run from source
+        Pulling while the package is private
       
     </span>
   </a>
@@ -1641,115 +1536,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#database" class="md-nav__link">
+  <a href="#sbom-attestation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Database
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#authentication" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authentication
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Authentication">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#with-an-identity-provider" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        With an identity provider
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#without-one-the-escape-hatch" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Without one — the escape hatch
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#verify-it-is-up" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verify it is up
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Storage
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#observability" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Observability
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#ui-development-loop" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        UI development loop
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-gates" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The gates
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next steps
+        SBOM attestation
       
     </span>
   </a>
@@ -1773,7 +1563,7 @@
 
 
   
-    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/guides/local-development.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/reference/container-image.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -1781,167 +1571,59 @@
   
 
 
-<h1 id="local-development">Local development<a class="headerlink" href="#local-development" title="Permanent link">&para;</a></h1>
-<p>Get a gateway running on your machine, with or without an identity provider.</p>
-<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
-<ul>
-<li>JDK 25 (Temurin; GraalVM CE 25 only for native builds)</li>
-<li>Docker — Testcontainers for the build, Compose for running</li>
-<li><code>git</code></li>
-</ul>
-<p>Node and pnpm are provisioned by the Maven build. You do <strong>not</strong> need them to
-build or run the gateway; they matter only for UI development loops.</p>
-<h2 id="run-with-compose">Run with Compose<a class="headerlink" href="#run-with-compose" title="Permanent link">&para;</a></h2>
-<p>The quickest path. Starts the gateway and PostgreSQL on port 8080:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>up
+<h1 id="container-image">Container image<a class="headerlink" href="#container-image" title="Permanent link">&para;</a></h1>
+<p>The gateway is published as a container image running the GraalVM native
+binary:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ghcr.io/skillsgateway/skillsgateway
 </code></pre></div>
-<h2 id="run-from-source">Run from source<a class="headerlink" href="#run-from-source" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>verify
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="gp">$ </span>java<span class="w"> </span>-jar<span class="w"> </span>target/skills-gateway-server-*.jar
-</code></pre></div>
-<p>The build packages the React portal into the jar, so the running application
-serves the portal at <code>/</code>.</p>
-<h2 id="database">Database<a class="headerlink" href="#database" title="Permanent link">&para;</a></h2>
-<p>The datasource is supplied entirely by environment — there is nothing in
-<code>application.yaml</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_URL</span><span class="o">=</span>jdbc:postgresql://localhost:5432/skillsgateway
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_USERNAME</span><span class="o">=</span>skillsgateway
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_PASSWORD</span><span class="o">=</span>skillsgateway
-</code></pre></div>
-<p>Flyway builds the schema from a single consolidated migration on startup. There
-is nothing to configure and nothing to run by hand.</p>
-<h2 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h2>
-<h3 id="with-an-identity-provider">With an identity provider<a class="headerlink" href="#with-an-identity-provider" title="Permanent link">&para;</a></h3>
-<p>Point the OIDC variables at your IdP:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_OIDC_CLIENT_ID</span><span class="o">=</span>skills-gateway
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_OIDC_CLIENT_SECRET</span><span class="o">=</span>...
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_OIDC_AUTHORIZATION_URI</span><span class="o">=</span>https://idp.example.com/authorize
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_OIDC_TOKEN_URI</span><span class="o">=</span>https://idp.example.com/token
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_OIDC_JWK_SET_URI</span><span class="o">=</span>https://idp.example.com/jwks
-</code></pre></div>
-<p>The client registration id is <code>idp</code> and must exist at build time for
-native-image, which is why the defaults are the placeholders <code>change-me</code> and
-<code>idp.invalid</code>. A gateway started without these will not complete a login.</p>
-<h3 id="without-one-the-escape-hatch">Without one — the escape hatch<a class="headerlink" href="#without-one-the-escape-hatch" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>java<span class="w"> </span>-jar<span class="w"> </span>target/skills-gateway-server-*.jar<span class="w"> </span>--skills-gateway.dev-insecure-auth<span class="o">=</span><span class="nb">true</span>
-</code></pre></div>
-<div class="admonition danger">
-<p class="admonition-title">Never outside a development loop</p>
-<p>This makes the <strong>entire web surface</strong> unauthenticated — all of <code>/api/**</code>,
-<code>/actuator/**</code> and <code>/docs</code> — and injects a synthetic principal <code>dev</code>, which
-is then what appears in every audit entry. The application logs a loud
-warning at startup.</p>
-<p>It does <strong>not</strong> affect the git facade: <code>/git/**</code> still requires a valid
-personal access token.</p>
-</div>
-<h2 id="verify-it-is-up">Verify it is up<a class="headerlink" href="#verify-it-is-up" title="Permanent link">&para;</a></h2>
-<p><code>/actuator/health</code> is the only unauthenticated endpoint:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span>localhost:8080/actuator/health
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="go">{"status":"UP"}</span>
-</code></pre></div>
-<p>Then open <a href="http://localhost:8080/">http://localhost:8080/</a> and log in.</p>
-<div class="admonition tip">
-<p class="admonition-title">Probe the bare path</p>
-<p>Use <code>/actuator/health</code> exactly. Health <em>subpaths</em> such as
-<code>/actuator/health/liveness</code> are not permitted by the security chain and
-redirect to the identity provider — which is why the Kubernetes manifests
-point both probes at the bare path.</p>
-</div>
-<h2 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">&para;</a></h2>
-<p>Git repositories live under <code>skills-gateway.data-dir</code>, which defaults to <code>data</code>
-relative to the working directory. In the container image it is <code>/data</code>.</p>
-<div class="admonition warning">
-<p class="admonition-title">The Helm default is not durable</p>
-<p>The chart mounts <code>/data</code> as an <code>emptyDir</code> unless you supply
-<code>persistence.existingClaim</code>. Losing that volume loses the quarantine and
-published repositories — everything else is rebuildable from the database
-and upstream, but approved refs are not.</p>
-</div>
-<h2 id="observability">Observability<a class="headerlink" href="#observability" title="Permanent link">&para;</a></h2>
-<p>Traces, metrics and logs can be sent to a local <strong>Grafana LGTM</strong> stack — the
-<code>grafana/otel-lgtm</code> image, which bundles an OpenTelemetry Collector with Loki
-(logs), Tempo (traces), Prometheus (metrics) and Grafana. It is provisioned as
-an <a href="https://arconia.io">Arconia</a> dev service, so there is nothing to install and
-no compose file to start.</p>
-<p>It is <strong>opt-in through the <code>observability</code> Spring profile</strong> and off in every
-other run: <code>./mvnw clean verify</code> and the e2e suite start no LGTM container and
-attempt no OTLP export, which keeps the test loop fast and the logs quiet.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>spring-boot:run<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span>-Dspring-boot.run.profiles<span class="o">=</span>observability<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span>-Dspring-boot.run.useTestClasspath<span class="o">=</span><span class="nb">true</span>
-</code></pre></div>
-<p><code>useTestClasspath</code> is required: the dev-service and OpenTelemetry dependencies
-are test scope so that they never reach the packaged jar, the container image or
-the native binary. The same flag also gives you the PostgreSQL dev service, so
-the datasource environment variables above are not needed for this run.</p>
-<p>The stack takes a moment to pull on first use. Watch the log for the Grafana
-URL, which is on a random port:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Dev Service 'lgtm' is ready — Grafana: http://localhost:&lt;port&gt;
-</code></pre></div>
-<p>Log in is not required (anonymous admin). Explore traces in <strong>Tempo</strong>, metrics
-in <strong>Prometheus</strong> and logs in <strong>Loki</strong>; all three are pre-provisioned as Grafana
-data sources by the image.</p>
+<p>Only images that passed the release workflow's smoke test are published, and
+only from push events — the weekly scheduled rebuild and manually dispatched
+runs never move a tag.</p>
+<h2 id="tags">Tags<a class="headerlink" href="#tags" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Property</th>
-<th>Default here</th>
-<th>Purpose</th>
+<th>Tag</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>arconia.dev.services.lgtm.enabled</code></td>
-<td><code>false</code>, <code>true</code> under <code>observability</code></td>
-<td>Starts the LGTM container</td>
+<td><code>sha-&lt;commit&gt;</code></td>
+<td>Every push to <code>main</code>; immutable per commit.</td>
 </tr>
 <tr>
-<td><code>arconia.otel.enabled</code></td>
-<td><code>false</code>, <code>true</code> under <code>observability</code></td>
-<td>Enables the OpenTelemetry SDK and OTLP export</td>
+<td><code>latest</code></td>
+<td>Moving tag following <code>main</code>; a convenience, not a deployment target.</td>
+</tr>
+<tr>
+<td><code>&lt;version&gt;</code> (e.g. <code>v1.2.0</code>)</td>
+<td>Release tags.</td>
 </tr>
 </tbody>
 </table>
-<p>Ports are random by default; pin them with
-<code>arconia.dev.services.lgtm.grafana-port</code> and friends if you want stable
-bookmarks. See the
-<a href="https://docs.arconia.io/arconia/latest/dev-services/lgtm/">Arconia dev services documentation</a>
-for the full property list.</p>
-<div class="admonition note">
-<p class="admonition-title">Development only</p>
-<p>The gateway ships no OpenTelemetry export in production builds. The
-<code>observability</code> profile exists for the local development loop; wiring a
-deployed gateway to a collector is a separate, not-yet-implemented concern.</p>
-</div>
-<h2 id="ui-development-loop">UI development loop<a class="headerlink" href="#ui-development-loop" title="Permanent link">&para;</a></h2>
-<p>Only needed when changing the portal:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>src/main/frontend
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="gp">$ </span>corepack<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>pnpm
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="gp">$ </span>pnpm<span class="w"> </span>install
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="gp">$ </span>pnpm<span class="w"> </span>dev<span class="w">          </span><span class="c1"># proxies /api and /actuator to localhost:8080</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="gp">$ </span>pnpm<span class="w"> </span><span class="nb">test</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="gp">$ </span>pnpm<span class="w"> </span>storybook
+<h2 id="pin-by-digest">Pin by digest<a class="headerlink" href="#pin-by-digest" title="Permanent link">&para;</a></h2>
+<p>Digest pinning is the supported consumption mode. Every publish prints the
+image digest in the workflow's job summary; deploy that, not a tag:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ghcr.io/skillsgateway/skillsgateway@sha256:…
 </code></pre></div>
-<h2 id="the-gates">The gates<a class="headerlink" href="#the-gates" title="Permanent link">&para;</a></h2>
-<p>All must pass before any pull request:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>clean<span class="w"> </span>verify<span class="w">                     </span><span class="c1"># Java + UI gates, packaged jar</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="gp">$ </span><span class="o">(</span><span class="nb">cd</span><span class="w"> </span>src/main/frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pnpm<span class="w"> </span>e2e<span class="o">)</span><span class="w">      </span><span class="c1"># real-browser e2e vs a mock OIDC IdP</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="gp">$ </span>reqstool<span class="w"> </span>status<span class="w"> </span><span class="nb">local</span><span class="w"> </span>-p<span class="w"> </span>docs/reqstool<span class="w">  </span><span class="c1"># must end "PASS"</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="gp">$ </span>openspec<span class="w"> </span>validate<span class="w"> </span>--all<span class="w"> </span>--strict
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="gp">$ </span>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict<span class="w">                   </span><span class="c1"># documentation</span>
+<p>A digest names exactly one image forever — mirrors and clusters that pin it
+cannot be moved by anything that happens to the registry afterwards.</p>
+<h2 id="pulling-while-the-package-is-private">Pulling while the package is private<a class="headerlink" href="#pulling-while-the-package-is-private" title="Permanent link">&para;</a></h2>
+<p>While the GitHub repository is private, the GHCR package is too. Pulls then
+need a token with the <code>read:packages</code> scope:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"</span><span class="nv">$GITHUB_TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>docker<span class="w"> </span>login<span class="w"> </span>ghcr.io<span class="w"> </span>-u<span class="w"> </span>&lt;user&gt;<span class="w"> </span>--password-stdin
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="gp">$ </span>docker<span class="w"> </span>pull<span class="w"> </span>ghcr.io/skillsgateway/skillsgateway@sha256:…
 </code></pre></div>
-<p>Use <code>clean</code> for the reqstool gate — incremental compilation truncates the
-generated annotation files.</p>
-<p>For the documentation gate:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="gp">$ </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>docs/requirements.txt
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="gp">$ </span>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict
+<p>Package visibility can later be made public in the GHCR package settings,
+independently of the repository's visibility.</p>
+<h2 id="sbom-attestation">SBOM attestation<a class="headerlink" href="#sbom-attestation" title="Permanent link">&para;</a></h2>
+<p>Each published image carries the build's CycloneDX SBOM as a registry
+attestation (the same SBOM the running gateway serves at <code>/actuator/sbom</code>).
+Verify what a pinned digest contains with:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>gh<span class="w"> </span>attestation<span class="w"> </span>verify<span class="w"> </span>oci://ghcr.io/skillsgateway/skillsgateway@sha256:…<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span>--owner<span class="w"> </span>skillsgateway
 </code></pre></div>
-<h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="../registering-a-marketplace/">Registering a marketplace</a></li>
-<li><a href="../approving-snapshots/">Approving and rejecting snapshots</a></li>
-<li><a href="../consuming-skills/">Consuming approved skills</a></li>
-</ul>
 
 
 
