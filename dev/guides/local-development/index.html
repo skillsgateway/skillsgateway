@@ -526,6 +526,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -830,6 +836,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../upstream-sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Syncing from upstream automatically
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../approving-snapshots/" class="md-nav__link">
         
   
@@ -942,6 +976,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../virtual-catalog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The virtual catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../lifecycle-webhooks/" class="md-nav__link">
         
   
@@ -1006,6 +1068,34 @@
     
   
     Reclaiming snapshot storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../delegated-administration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Delegated administration
   
 
     
@@ -1141,6 +1231,8 @@
       
         
       
+        
+      
     
     
     
@@ -1263,6 +1355,34 @@
     
   
     Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/roles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roles
   
 
     
@@ -1687,7 +1807,7 @@ personal access token.</p>
 <h2 id="verify-it-is-up">Verify it is up<a class="headerlink" href="#verify-it-is-up" title="Permanent link">&para;</a></h2>
 <p><code>/actuator/health</code> is the only unauthenticated endpoint:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span>localhost:8080/actuator/health
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="go">{&quot;status&quot;:&quot;UP&quot;}</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="go">{"status":"UP"}</span>
 </code></pre></div>
 <p>Then open <a href="http://localhost:8080/">http://localhost:8080/</a> and log in.</p>
 <div class="admonition tip">
@@ -1726,7 +1846,7 @@ the native binary. The same flag also gives you the PostgreSQL dev service, so
 the datasource environment variables above are not needed for this run.</p>
 <p>The stack takes a moment to pull on first use. Watch the log for the Grafana
 URL, which is on a random port:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Dev Service &#39;lgtm&#39; is ready — Grafana: http://localhost:&lt;port&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Dev Service 'lgtm' is ready — Grafana: http://localhost:&lt;port&gt;
 </code></pre></div>
 <p>Log in is not required (anonymous admin). Explore traces in <strong>Tempo</strong>, metrics
 in <strong>Prometheus</strong> and logs in <strong>Loki</strong>; all three are pre-provisioned as Grafana
@@ -1776,7 +1896,7 @@ deployed gateway to a collector is a separate, not-yet-implemented concern.</p>
 <p>All must pass before any pull request:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>clean<span class="w"> </span>verify<span class="w">                     </span><span class="c1"># Java + UI gates, packaged jar</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="gp">$ </span><span class="o">(</span><span class="nb">cd</span><span class="w"> </span>src/main/frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pnpm<span class="w"> </span>e2e<span class="o">)</span><span class="w">      </span><span class="c1"># real-browser e2e vs a mock OIDC IdP</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="gp">$ </span>reqstool<span class="w"> </span>status<span class="w"> </span><span class="nb">local</span><span class="w"> </span>-p<span class="w"> </span>docs/reqstool<span class="w">  </span><span class="c1"># must end &quot;PASS&quot;</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="gp">$ </span>reqstool<span class="w"> </span>status<span class="w"> </span><span class="nb">local</span><span class="w"> </span>-p<span class="w"> </span>docs/reqstool<span class="w">  </span><span class="c1"># must end "PASS"</span>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="gp">$ </span>openspec<span class="w"> </span>validate<span class="w"> </span>--all<span class="w"> </span>--strict
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="gp">$ </span>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict<span class="w">                   </span><span class="c1"># documentation</span>
 </code></pre></div>

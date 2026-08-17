@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://jimisola.github.io/skills-gateway/dev/concepts/vetting/">
+        <link rel="canonical" href="https://jimisola.github.io/skills-gateway/dev/guides/upstream-sync/">
       
       
-        <link rel="prev" href="../lifecycle/">
+        <link rel="prev" href="../registering-a-marketplace/">
       
       
-        <link rel="next" href="../snapshots-and-ledger/">
+        <link rel="next" href="../approving-snapshots/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Vetting — the connector chain - Skills Gateway</title>
+        <title>Syncing from upstream automatically - Skills Gateway</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#vetting-the-connector-chain" class="md-skip">
+        <a href="#syncing-from-upstream-automatically" class="md-skip">
           Skip to content
         </a>
       
@@ -118,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Vetting — the connector chain
+              Syncing from upstream automatically
             
           </span>
         </div>
@@ -290,12 +290,237 @@
       
   
   
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lifecycle — quarantine to serve
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vetting — the connector chain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/snapshots-and-ledger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Snapshots and the audit ledger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/trust-boundaries/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trust boundaries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
   
     
     
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
       
         
       
@@ -320,17 +545,17 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
             
   
   
   <span class="md-ellipsis">
     
   
-    Concepts
+    Guides
   
 
     
@@ -341,12 +566,12 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_2">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
   
-    Concepts
+    Guides
   
 
           </label>
@@ -359,14 +584,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../lifecycle/" class="md-nav__link">
+      <a href="../local-development/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Lifecycle — quarantine to serve
+    Local development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../registering-a-marketplace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registering a marketplace
   
 
     
@@ -403,7 +656,7 @@
   <span class="md-ellipsis">
     
   
-    Vetting — the connector chain
+    Syncing from upstream automatically
   
 
     
@@ -421,7 +674,7 @@
   <span class="md-ellipsis">
     
   
-    Vetting — the connector chain
+    Syncing from upstream automatically
   
 
     
@@ -447,10 +700,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#where-the-chain-sits" class="md-nav__link">
+  <a href="#changing-the-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Where the chain sits
+        Changing the mode
       
     </span>
   </a>
@@ -458,22 +711,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-connector-contract" class="md-nav__link">
+  <a href="#scheduled-polling" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The connector contract
+        Scheduled polling
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="The connector contract">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#webhook-triggered-ingestion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Webhook-triggered ingestion
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Webhook-triggered ingestion">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#verdict-states" class="md-nav__link">
+  <a href="#the-payload-is-ignored-on-purpose" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Verdict states
+        The payload is ignored, on purpose
       
     </span>
   </a>
@@ -486,10 +750,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#fail-closed-aggregation" class="md-nav__link">
+  <a href="#upstream-outages-dont-reach-consumers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fail-closed aggregation
+        Upstream outages don't reach consumers
       
     </span>
   </a>
@@ -497,121 +761,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-approval-gate" class="md-nav__link">
+  <a href="#what-lands-on-the-ledger" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The approval gate
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#waivers-accepted-risks-with-a-scope-and-an-expiry" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Waivers: accepted risks with a scope and an expiry
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Waivers: accepted risks with a scope and an expiry">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-effective-outcome" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The effective outcome
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#expiry-needs-no-scheduler" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Expiry needs no scheduler
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-built-in-connectors" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The built-in connectors
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="The built-in connectors">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#secret-scan" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        secret-scan
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#prompt-injection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        prompt-injection
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#coverage-gaps-are-reported-not-hidden" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Coverage gaps are reported, not hidden
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-lands-in-the-ledger" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What lands in the ledger
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#reading-further" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reading further
+        What lands on the ledger
       
     </span>
   </a>
@@ -634,260 +787,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../snapshots-and-ledger/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Snapshots and the audit ledger
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../trust-boundaries/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Trust boundaries
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../glossary/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Glossary
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-    
-      
-        
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
-        
-          
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Guides
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Guides
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../guides/local-development/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Local development
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../guides/registering-a-marketplace/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Registering a marketplace
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../guides/upstream-sync/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Syncing from upstream automatically
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../guides/approving-snapshots/" class="md-nav__link">
+      <a href="../approving-snapshots/" class="md-nav__link">
         
   
   
@@ -915,7 +815,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/waiving-findings/" class="md-nav__link">
+      <a href="../waiving-findings/" class="md-nav__link">
         
   
   
@@ -943,7 +843,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/re-vetting/" class="md-nav__link">
+      <a href="../re-vetting/" class="md-nav__link">
         
   
   
@@ -971,7 +871,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/consuming-skills/" class="md-nav__link">
+      <a href="../consuming-skills/" class="md-nav__link">
         
   
   
@@ -999,7 +899,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/virtual-catalog/" class="md-nav__link">
+      <a href="../virtual-catalog/" class="md-nav__link">
         
   
   
@@ -1027,7 +927,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/lifecycle-webhooks/" class="md-nav__link">
+      <a href="../lifecycle-webhooks/" class="md-nav__link">
         
   
   
@@ -1055,7 +955,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/exporting-the-audit-ledger/" class="md-nav__link">
+      <a href="../exporting-the-audit-ledger/" class="md-nav__link">
         
   
   
@@ -1083,7 +983,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/snapshot-retention/" class="md-nav__link">
+      <a href="../snapshot-retention/" class="md-nav__link">
         
   
   
@@ -1111,7 +1011,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/delegated-administration/" class="md-nav__link">
+      <a href="../delegated-administration/" class="md-nav__link">
         
   
   
@@ -1601,10 +1501,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#where-the-chain-sits" class="md-nav__link">
+  <a href="#changing-the-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Where the chain sits
+        Changing the mode
       
     </span>
   </a>
@@ -1612,22 +1512,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-connector-contract" class="md-nav__link">
+  <a href="#scheduled-polling" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The connector contract
+        Scheduled polling
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="The connector contract">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#webhook-triggered-ingestion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Webhook-triggered ingestion
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Webhook-triggered ingestion">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#verdict-states" class="md-nav__link">
+  <a href="#the-payload-is-ignored-on-purpose" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Verdict states
+        The payload is ignored, on purpose
       
     </span>
   </a>
@@ -1640,10 +1551,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#fail-closed-aggregation" class="md-nav__link">
+  <a href="#upstream-outages-dont-reach-consumers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fail-closed aggregation
+        Upstream outages don't reach consumers
       
     </span>
   </a>
@@ -1651,121 +1562,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-approval-gate" class="md-nav__link">
+  <a href="#what-lands-on-the-ledger" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The approval gate
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#waivers-accepted-risks-with-a-scope-and-an-expiry" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Waivers: accepted risks with a scope and an expiry
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Waivers: accepted risks with a scope and an expiry">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-effective-outcome" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The effective outcome
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#expiry-needs-no-scheduler" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Expiry needs no scheduler
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-built-in-connectors" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The built-in connectors
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="The built-in connectors">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#secret-scan" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        secret-scan
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#prompt-injection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        prompt-injection
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#coverage-gaps-are-reported-not-hidden" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Coverage gaps are reported, not hidden
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-lands-in-the-ledger" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What lands in the ledger
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#reading-further" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reading further
+        What lands on the ledger
       
     </span>
   </a>
@@ -1789,7 +1589,7 @@
 
 
   
-    <a href="https://github.com/jimisola/skills-gateway/edit/main/docs/manual/concepts/vetting.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/jimisola/skills-gateway/edit/main/docs/manual/guides/upstream-sync.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -1797,359 +1597,101 @@
   
 
 
-<h1 id="vetting-the-connector-chain">Vetting — the connector chain<a class="headerlink" href="#vetting-the-connector-chain" title="Permanent link">&para;</a></h1>
-<p>Every snapshot the gateway ingests is quarantined and pinned to an upstream
-commit SHA. Between that pin and the reviewer's decision the gateway runs a
-<strong>vetting chain</strong>: an ordered list of connectors, each of which looks at the
-snapshot's content and answers with a verdict. The verdicts and their findings
-are recorded against the snapshot and shown to the reviewer before any approve
-or reject decision.</p>
-<p>The gateway does not vet content itself. It orchestrates: it runs connectors,
-normalises what they answer, records it, and aggregates it into a single
-outcome that gates approval.</p>
-<h2 id="where-the-chain-sits">Where the chain sits<a class="headerlink" href="#where-the-chain-sits" title="Permanent link">&para;</a></h2>
-<pre class="mermaid"><code>flowchart TD
-    U["Upstream repository"] --&gt;|"POST /api/marketplaces/{name}/ingest"| F["Fetch into quarantine&lt;br/&gt;pin refs/snapshots/&amp;lt;sha&amp;gt;"]
-    F --&gt; M{"Manifest policy&lt;br/&gt;local sources only"}
-    M --&gt;|violation| R["snapshot: rejected&lt;br/&gt;chain does not run"]
-    M --&gt;|ok| H["snapshot: held"]
-    H --&gt; C["Vetting chain"]
-
-    subgraph C["Vetting chain — ordered, all connectors run"]
-        direction TB
-        C1["secret-scan (order 100)"] --&gt; C2["prompt-injection (order 200)"]
-    end
-
-    C --&gt; A["Aggregate verdicts&lt;br/&gt;clear iff every verdict is pass or warn"]
-    A --&gt; E["Effective outcome&lt;br/&gt;run + waivers active right now"]
-    E --&gt;|clear| RV["Reviewer sees verdicts&lt;br/&gt;Approve enabled"]
-    E --&gt;|clear with waivers| RW["Reviewer sees verdicts&lt;br/&gt;and what was accepted"]
-    E --&gt;|blocked| RB["Reviewer sees the findings&lt;br/&gt;no waiver covers"]
-    RV --&gt;|"POST /api/snapshots/{id}/approve"| P["Published repository&lt;br/&gt;refs/heads/main"]
-    RW --&gt;|"POST /api/snapshots/{id}/approve"| P
-    RB --&gt;|"POST /api/snapshots/{id}/waivers per finding"| E</code></pre>
-<p>The chain never changes the snapshot's own state. A vetted snapshot is still
-<code>held</code>; what the chain decides is whether approving it is an ordinary act or one
-that has to be justified in writing.</p>
-<p>That separation is what lets the same chain run again, later, over a snapshot
-that is already approved and served — a new run against unchanged state. What
-such a run <em>means</em> is a separate judgement, described in
-<a href="../../guides/re-vetting/">Re-vetting approved content</a>: only a connector that
-objects to the content can retract it, and a connector that merely broke never
-can.</p>
-<h2 id="the-connector-contract">The connector contract<a class="headerlink" href="#the-connector-contract" title="Permanent link">&para;</a></h2>
-<p>A connector has a stable name, a position in the chain, and one method that
-takes the snapshot and returns a verdict. What it is given is deliberately
-narrow: the snapshot's id, its marketplace, its commit SHA, and a walk over the
-files in that commit. It is not given a repository handle, so a connector cannot
-move a ref, write to quarantine, or read another marketplace's content.</p>
-<p>A verdict carries a state, an optional external report URL, and a list of
-findings. A finding has a <strong>stable rule id</strong> (<code>aws-access-key-id</code>), a severity,
-a location (normally <code>path:line</code>), and a reviewer-facing message. The rule id is
-the identity a <a href="#waivers-accepted-risks-with-a-scope-and-an-expiry">scoped waiver</a>
-is written against, so it is part of the contract rather than a display string.</p>
-<h3 id="verdict-states">Verdict states<a class="headerlink" href="#verdict-states" title="Permanent link">&para;</a></h3>
+<h1 id="syncing-from-upstream-automatically">Syncing from upstream automatically<a class="headerlink" href="#syncing-from-upstream-automatically" title="Permanent link">&para;</a></h1>
+<p>Ingestion is manual by default: content enters quarantine when an operator
+clicks <strong>Ingest</strong> or calls the API. A marketplace can instead be polled on a
+schedule, or ingest the moment its forge announces a push. The <strong>sync mode</strong> is
+per marketplace, and it only changes the <em>trigger</em> — every snapshot still lands
+<strong>held</strong> behind the same approval gate, whatever pulled it in.</p>
 <table>
 <thead>
 <tr>
-<th>State</th>
-<th>Meaning</th>
-<th>Blocks approval</th>
+<th>Mode</th>
+<th>Trigger</th>
+<th>Latency</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>PASS</code></td>
-<td>The connector found nothing.</td>
-<td>No</td>
+<td><code>on-demand</code> (default)</td>
+<td>An operator, via portal or API</td>
+<td>none — but someone has to remember</td>
 </tr>
 <tr>
-<td><code>WARN</code></td>
-<td>Something worth showing the reviewer that does not block.</td>
-<td>No</td>
+<td><code>scheduled</code></td>
+<td>The gateway's polling sweep</td>
+<td>up to one poll interval</td>
 </tr>
 <tr>
-<td><code>FAIL</code></td>
-<td>Something that blocks.</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td><code>ERROR</code></td>
-<td>The connector produced no verdict: it threw, or it exceeded its time limit.</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td><code>PENDING</code></td>
-<td>The connector was triggered and has not answered yet.</td>
-<td>Yes</td>
+<td><code>webhook</code></td>
+<td>A signed forge push webhook</td>
+<td>seconds</td>
 </tr>
 </tbody>
 </table>
-<p>A connector does not choose its state directly: it emits findings, and the
-verdict follows the worst severity present — <code>HIGH</code> or <code>CRITICAL</code> fails,
-<code>LOW</code> or <code>MEDIUM</code> warns, and <code>INFO</code> alone still passes. That way a new rule only
-has to get its severity right.</p>
-<p><code>PENDING</code> exists so that an asynchronous connector — one that is triggered over
-a webhook and answers later — fits without changing the gate. No built-in
-connector returns it today.</p>
-<h2 id="fail-closed-aggregation">Fail-closed aggregation<a class="headerlink" href="#fail-closed-aggregation" title="Permanent link">&para;</a></h2>
-<p>A chain run is <strong>clear</strong> if and only if it produced at least one verdict and
-every verdict is <code>PASS</code> or <code>WARN</code>. Everything else is <strong>blocked</strong>:</p>
-<ul>
-<li>any connector that failed;</li>
-<li>any connector that crashed or timed out — a crash is a blocked snapshot, never
-  a skipped connector;</li>
-<li>any connector that has not answered;</li>
-<li><strong>and a snapshot with no chain run at all.</strong></li>
-</ul>
-<p>That last case is the one that matters most. A snapshot ingested before the
-chain existed, or one whose run died halfway, is blocked — absence of evidence
-is not evidence of safety.</p>
-<p>All connectors run, in order; the chain does not stop at the first failure,
-because a reviewer should see everything that is wrong with a snapshot at once.</p>
-<h2 id="the-approval-gate">The approval gate<a class="headerlink" href="#the-approval-gate" title="Permanent link">&para;</a></h2>
-<p><code>POST /api/snapshots/{id}/approve</code> takes no request body. It refuses a snapshot
-whose <strong>effective</strong> outcome is blocked, with <code>409</code> and a problem document naming
-both the blocking connectors and — in <code>uncoveredFindings</code> — every blocking
-finding that no active waiver covers. That array is the reviewer's worklist: it
-is exactly the set of waivers that must exist for the approval to succeed.</p>
-<p>There is no blanket override. The only way past objecting connectors is to
-accept each blocking finding individually with a
-<a href="#waivers-accepted-risks-with-a-scope-and-an-expiry">waiver</a>.</p>
-<h2 id="waivers-accepted-risks-with-a-scope-and-an-expiry">Waivers: accepted risks with a scope and an expiry<a class="headerlink" href="#waivers-accepted-risks-with-a-scope-and-an-expiry" title="Permanent link">&para;</a></h2>
-<p>A <strong>waiver</strong> is an accepted-risk exception for <strong>one finding rule</strong>, on <strong>one
-marketplace</strong>, within <strong>one scope</strong>, until <strong>one date</strong>. All four are mandatory,
-and so are a justification and the identity accepting the risk. There is no way
-to express an unlimited waiver — <code>expires_at</code> is <code>NOT NULL</code> in the schema, and a
-past expiry is refused at creation.</p>
-<table>
-<thead>
-<tr>
-<th>Scope</th>
-<th>The scope value is</th>
-<th>It covers a finding when</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>SNAPSHOT</code></td>
-<td>the snapshot's commit SHA</td>
-<td>the finding is on that exact commit</td>
-</tr>
-<tr>
-<td><code>PATH</code></td>
-<td>a repository-relative path</td>
-<td>the finding's path is that path, or lies under it</td>
-</tr>
-</tbody>
-</table>
-<p>Scope is matched against the <strong>path part</strong> of a finding's location, never the
-line number: inserting a line above a finding moves the number, and a waiver
-that evaporates on an unrelated edit trains reviewers to re-waive without
-reading. Path matching is a prefix on a segment boundary — <code>plugins/a</code> covers
-<code>plugins/a/x.md</code> but never <code>plugins/ab.md</code> — and there is no glob syntax.</p>
-<p><code>SNAPSHOT</code> scope is the tighter of the two and is what the portal offers first:
-it dies with the SHA, so the next ingestion blocks again and the acceptance has
-to be made deliberately a second time. A <code>PATH</code> waiver survives re-ingestion,
-which is its purpose and also its cost — it covers content that does not exist
-under that path yet. That is why an expiry is mandatory rather than advisory.</p>
-<h3 id="the-effective-outcome">The effective outcome<a class="headerlink" href="#the-effective-outcome" title="Permanent link">&para;</a></h3>
-<p>The recorded chain run is never rewritten. It stays raw evidence of what the
-connectors said. What gates an approval is the <strong>effective outcome</strong>, computed
-on every read from that run plus the waivers active <em>at that instant</em>:</p>
-<ul>
-<li>a <code>PASS</code> or <code>WARN</code> verdict stays clearing — a waiver can only ever remove an
-  objection, never create one;</li>
-<li>a blocking verdict <strong>with no findings</strong> stays blocking. <code>PENDING</code> can never be
-  waived away, because there is nothing to name;</li>
-<li>a blocking verdict <strong>with</strong> findings is re-derived from the findings that are
-  left, by the same severity rule the connector's own state came from. Waive
-  every <code>HIGH</code>/<code>CRITICAL</code> finding and the verdict clears.</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th>Effective states</th>
-<th>A waiver suppressed something</th>
-<th>Outcome</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>all clearing, run non-empty</td>
-<td>no</td>
-<td><code>CLEAR</code></td>
-</tr>
-<tr>
-<td>all clearing, run non-empty</td>
-<td>yes</td>
-<td><code>CLEAR_WITH_WAIVERS</code></td>
-</tr>
-<tr>
-<td>anything else, or no run at all</td>
-<td>—</td>
-<td><code>BLOCKED</code></td>
-</tr>
-</tbody>
-</table>
-<p><code>CLEAR_WITH_WAIVERS</code> is a different word from <code>CLEAR</code> on purpose. A reviewer or
-an auditor glancing at a badge must never read an accepted risk as a clean
-chain.</p>
-<h3 id="expiry-needs-no-scheduler">Expiry needs no scheduler<a class="headerlink" href="#expiry-needs-no-scheduler" title="Permanent link">&para;</a></h3>
-<p>A waiver is active only while <code>expires_at</code> is in the future and it has not been
-revoked, and that is decided at the moment the effective outcome is computed —
-on the approve request, on the vetting API read, on the portal poll. So an
-expired waiver stops suppressing on the very next evaluation, and the snapshot's
-effective outcome reverts to <code>BLOCKED</code> with nothing having had to run in the
-background. Revoking a waiver has the same effect immediately.</p>
-<p>An hourly sweep writes a <code>waiver-expired</code> entry the first time it notices a
-lapsed waiver. It has no authority over the gate — the gate is already correct
-without it — so it only decides whether the lapse is <em>announced</em> in the ledger
-rather than merely observable in it.</p>
-<div class="admonition warning">
-<p class="admonition-title">Expiry re-closes the gate immediately; retraction waits for a re-vet</p>
-<p>A snapshot approved while a waiver was active stays published the moment that
-waiver lapses. What returns instantly is the <em>gate</em>: the snapshot reads as
-blocked again, and any future approval needs a fresh acceptance.</p>
-<p>Taking the content back is
-<a href="../../guides/re-vetting/">continuous re-vetting</a>'s job. The next re-vetting
-run over that snapshot finds the finding uncovered again and reports a
-violation — recorded and announced in the default <code>warn</code> mode, and revoking
-the snapshot under <code>enforce</code>. So under enforcement a waiver's expiry is a
-real deadline, not a reminder.</p>
+<h2 id="changing-the-mode">Changing the mode<a class="headerlink" href="#changing-the-mode" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>localhost:8080/api/marketplaces/acme/sync<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"mode":"scheduled"}'</span>
+</code></pre></div>
+<p>The change is audit-logged (<code>sync-mode-changed</code>) with your identity and the new
+mode.</p>
+<h2 id="scheduled-polling">Scheduled polling<a class="headerlink" href="#scheduled-polling" title="Permanent link">&para;</a></h2>
+<p>Marketplaces in <code>scheduled</code> mode are ingested by a background sweep — least
+recently attempted first, in bounded batches, so a large estate is covered in
+rotation rather than all at once. A failed fetch is logged, stamped, and
+retried on a later pass without stopping the rest of the batch.</p>
+<p>The interval and batch size are global settings; see
+<a href="../../reference/configuration/#upstream-sync">Configuration</a>.</p>
+<h2 id="webhook-triggered-ingestion">Webhook-triggered ingestion<a class="headerlink" href="#webhook-triggered-ingestion" title="Permanent link">&para;</a></h2>
+<p>Switching a marketplace to <code>webhook</code> mode generates an HMAC secret:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>localhost:8080/api/marketplaces/acme/sync<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"mode":"webhook"}'</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span><span class="nt">"marketplace"</span><span class="p">:{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"syncMode"</span><span class="p">:</span><span class="s2">"webhook"</span><span class="p">,</span><span class="err">...</span><span class="p">},</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w"> </span><span class="nt">"webhookSecret"</span><span class="p">:</span><span class="s2">"9f2c...64 hex chars...ab41"</span><span class="p">}</span>
+</code></pre></div>
+<div class="admonition danger">
+<p class="admonition-title">Shown exactly once</p>
+<p>The secret is returned only by this response — no read endpoint ever
+exposes it. Lost it? Set <code>webhook</code> mode again: that generates a fresh
+secret and invalidates the old one, which is also how you rotate it.</p>
 </div>
-<div class="admonition warning">
-<p class="admonition-title"><code>connector-error</code> is waivable</p>
-<p>A connector that crashed or timed out records a <code>connector-error</code> finding,
-and the uniform rule above makes it waivable like any other. That is a real
-operational need — an external scanner down for a day — but it means
-accepting "the scanner never looked at this". It is the single most
-consequential thing a reviewer can write here, and the ledger names the rule
-so it can be found.</p>
-</div>
-<h2 id="the-built-in-connectors">The built-in connectors<a class="headerlink" href="#the-built-in-connectors" title="Permanent link">&para;</a></h2>
-<p>Both connectors ship in the gateway and run in every chain.</p>
-<h3 id="secret-scan"><code>secret-scan</code><a class="headerlink" href="#secret-scan" title="Permanent link">&para;</a></h3>
-<p>Regex and entropy rules over every UTF-8 text file in the snapshot: AWS access
-key ids and secret keys, PEM private-key blocks, GitHub, Slack and Google
-tokens, JSON Web Tokens, and assignment-shaped values whose Shannon entropy is
-high enough to be a real credential rather than an identifier.</p>
-<p>Findings never echo the matched value — a finding that quoted the secret would
-put it in the ledger and the portal.</p>
-<h3 id="prompt-injection"><code>prompt-injection</code><a class="headerlink" href="#prompt-injection" title="Permanent link">&para;</a></h3>
-<p>Pattern heuristics over the snapshot's Markdown instruction content
-(<code>SKILL.md</code>, commands, agents):</p>
-<table>
-<thead>
-<tr>
-<th>Rule</th>
-<th>What it looks for</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>instruction-override</code></td>
-<td>"ignore all previous instructions" and its close relatives</td>
-</tr>
-<tr>
-<td><code>system-prompt-disclosure</code></td>
-<td>Asking the agent to reveal its prompt or instructions</td>
-</tr>
-<tr>
-<td><code>credential-path-reference</code></td>
-<td><code>~/.aws/credentials</code>, <code>~/.ssh</code>, <code>.npmrc</code>, <code>/etc/passwd</code>, …</td>
-</tr>
-<tr>
-<td><code>concealment-instruction</code></td>
-<td>Telling the agent not to tell the user or the reviewer</td>
-</tr>
-<tr>
-<td><code>pipe-to-shell</code></td>
-<td><code>curl … \| sh</code> inside instructions</td>
-</tr>
-<tr>
-<td><code>exfiltration-instruction</code></td>
-<td>Sending credentials or environment values to a host</td>
-</tr>
-<tr>
-<td><code>hidden-html-instruction</code></td>
-<td>Agent-directed text inside an HTML comment</td>
-</tr>
-<tr>
-<td><code>invisible-characters</code></td>
-<td>Zero-width, bidirectional, and Unicode-tag characters used to hide text from a human reading the diff</td>
-</tr>
-</tbody>
-</table>
-<div class="admonition warning">
-<p class="admonition-title">What a passing verdict does <em>not</em> mean</p>
-<p>These are patterns, not understanding. An attacker who paraphrases
-("disregard the guidance you were given earlier"), splits an instruction
-across files, or encodes it walks past every rule above. The same is true of
-<code>secret-scan</code>: it matches shapes, so an unshaped or wrapped credential is
-invisible to it.</p>
-<p>A <code>PASS</code> means "no known marker matched". It is triage that tells a reviewer
-where to look first — it is not a statement that the snapshot is safe, and
-reading the content is still the reviewer's job. Semantic review of skill
-instructions needs an LLM review connector, which is not part of this chain
-yet.</p>
-</div>
-<h2 id="coverage-gaps-are-reported-not-hidden">Coverage gaps are reported, not hidden<a class="headerlink" href="#coverage-gaps-are-reported-not-hidden" title="Permanent link">&para;</a></h2>
-<p>A file larger than the configured size limit, or one that is not valid UTF-8, is
-not silently skipped: the connector records an informational
-<code>file-not-scanned</code> finding naming the path. Informational findings do not change
-the verdict, but they are visible, so "the scanner did not look at this" is
-never invisible.</p>
-<h2 id="what-lands-in-the-ledger">What lands in the ledger<a class="headerlink" href="#what-lands-in-the-ledger" title="Permanent link">&para;</a></h2>
-<p>Every chain run writes to the append-only ledger: one entry per connector
-verdict (<code>vetting-verdict</code>, with <code>connector=state</code> in its detail) and one entry
-for the run outcome (<code>vetting-completed</code>).</p>
-<p>The whole waiver lifecycle lands there too:</p>
-<table>
-<thead>
-<tr>
-<th>Event</th>
-<th>Written when</th>
-<th>Detail carries</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>waiver-created</code></td>
-<td>a risk is accepted</td>
-<td>rule, scope, expiry</td>
-</tr>
-<tr>
-<td><code>waiver-applied</code></td>
-<td>a waiver lets an approval through</td>
-<td>waiver id, rule, location, approver, expiry</td>
-</tr>
-<tr>
-<td><code>waiver-revoked</code></td>
-<td>a waiver is withdrawn</td>
-<td>rule, scope</td>
-</tr>
-<tr>
-<td><code>waiver-expired</code></td>
-<td>the sweep first notices a lapse</td>
-<td>rule, scope, approver, expiry</td>
-</tr>
-</tbody>
-</table>
-<p>An auditor asking "why is a snapshot with a critical finding being served" can
-answer it from the ledger alone — including what was accepted, by whom, and
-until when.</p>
-<h2 id="reading-further">Reading further<a class="headerlink" href="#reading-further" title="Permanent link">&para;</a></h2>
+<p>Then configure the forge webhook:</p>
 <ul>
-<li><a href="../../guides/approving-snapshots/">Approving and rejecting snapshots</a> — the
-  reviewer's task, end to end.</li>
-<li><a href="../../guides/waiving-findings/">Waiving a vetting finding</a> — accepting a risk,
-  end to end.</li>
-<li><a href="../../reference/portal/#vetting">Admin portal</a> — where the verdicts appear.</li>
-<li><a href="../../reference/configuration/#vetting">Configuration</a> — the knobs.</li>
-<li><a href="../trust-boundaries/">Trust boundaries</a> — why approval is the boundary the
-  chain protects.</li>
+<li><strong>Payload URL</strong>: <code>https://skills.corp.example/hooks/acme</code></li>
+<li><strong>Content type</strong>: anything — the payload is ignored (see below)</li>
+<li><strong>Secret</strong>: the value from the response</li>
+<li><strong>Events</strong>: pushes to the default branch are the useful signal; other events
+  cause harmless redundant fetches</li>
 </ul>
+<p>GitHub, Gitea, and Forgejo sign deliveries with the compatible
+<code>X-Hub-Signature-256</code> header out of the box. Any other sender works too: sign
+the raw request body with HMAC-SHA256 and send <code>sha256=&lt;hex&gt;</code> in that header.</p>
+<h3 id="the-payload-is-ignored-on-purpose">The payload is ignored, on purpose<a class="headerlink" href="#the-payload-is-ignored-on-purpose" title="Permanent link">&para;</a></h3>
+<p>A valid signature means exactly one thing: <em>poll this marketplace now</em>. The
+gateway ingests the <strong>registered</strong> upstream URL's default branch — nothing in
+the request body (URLs, refs, commit SHAs) is ever read. The worst a
+forged-but-signed request can cause is a fetch the schedule would have done
+anyway, landing held in quarantine. The endpoint answers <code>202 Accepted</code>
+immediately and ingests in the background; the snapshot appears in the portal
+moments later.</p>
+<p>Requests with a missing or wrong signature get <code>403</code> and ingest nothing.
+Unknown marketplaces — and marketplaces not in <code>webhook</code> mode — get <code>404</code>.
+Bodies over the configured bound get <code>413</code> before the signature is even
+checked.</p>
+<h2 id="upstream-outages-dont-reach-consumers">Upstream outages don't reach consumers<a class="headerlink" href="#upstream-outages-dont-reach-consumers" title="Permanent link">&para;</a></h2>
+<p>The facade serves the last approved snapshot regardless of upstream health. A
+scheduled or webhook-triggered fetch that fails because upstream is down is
+logged and retried later; no snapshot state changes, no published ref moves,
+and a <code>git fetch</code> through the facade during the outage returns exactly what it
+returned before. Consumers depend on the gateway's vetted copies, not on
+upstream uptime — automating ingestion does not couple them back together.</p>
+<h2 id="what-lands-on-the-ledger">What lands on the ledger<a class="headerlink" href="#what-lands-on-the-ledger" title="Permanent link">&para;</a></h2>
+<p>Every sync-triggered ingestion is recorded like a manual one, with the trigger
+as the acting identity — <code>scheduler</code> or <code>webhook</code> instead of a person — and
+emits the ordinary <code>snapshot.ingested</code> lifecycle event. Mode changes are
+recorded with the operator who made them. An auditor reads which content
+arrived, when, and on whose (or what) authority from the ledger alone.</p>
 
 
 

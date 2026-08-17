@@ -524,6 +524,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -612,6 +618,34 @@
     
   
     Registering a marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/upstream-sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Syncing from upstream automatically
   
 
     
@@ -744,6 +778,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/virtual-catalog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The virtual catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/lifecycle-webhooks/" class="md-nav__link">
         
   
@@ -808,6 +870,34 @@
     
   
     Reclaiming snapshot storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/delegated-administration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Delegated administration
   
 
     
@@ -947,6 +1037,8 @@
       
         
       
+        
+      
     
     
     
@@ -1069,6 +1161,34 @@
     
   
     Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="roles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roles
   
 
     
@@ -1365,17 +1485,23 @@ reasoning.</p>
 </div>
 <h2 id="conventions">Conventions<a class="headerlink" href="#conventions" title="Permanent link">&para;</a></h2>
 <p><strong>Authentication.</strong> Every <code>/api/**</code> endpoint requires an authenticated OIDC
-session. There is no method-level authorization — authorization is chain-level,
-so any authenticated session may call any endpoint. The single exception is
-access tokens, which are scoped to the calling principal server-side.</p>
+session.</p>
+<p><strong>Authorization.</strong> With role enforcement at its default (off), any
+authenticated session may call any endpoint. With
+<code>skills-gateway.roles.enabled=true</code>, every mutation and the audit surface
+require a role and answer <strong>403</strong> without one; the browsing surface stays open.
+Each endpoint's page states its requirement, and
+<a href="../../guides/delegated-administration/">Delegated administration</a> has the
+matrix. Access tokens are scoped to the calling principal server-side in either
+mode.</p>
 <p><strong>Unauthenticated requests</strong> to <code>/api/**</code> receive a clean <strong>401</strong>, not a 302 to
 the identity provider, so an expired session surfaces as an error rather than an
 HTML login page rendered into a <code>fetch()</code>.</p>
 <p><strong>CSRF</strong> is enabled for the web surface but disabled for <code>/api/**</code>, which is
 consumed by the portal with a session cookie.</p>
 <p><strong>Errors</strong> are RFC 7807 <code>ProblemDetail</code> documents:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="s2">&quot;about:blank&quot;</span><span class="p">,</span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="s2">&quot;Bad Request&quot;</span><span class="p">,</span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="mi">400</span><span class="p">,</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w"> </span><span class="nt">&quot;detail&quot;</span><span class="p">:</span><span class="s2">&quot;url scheme must be one of [http, https]&quot;</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="s2">"about:blank"</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Bad Request"</span><span class="p">,</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">400</span><span class="p">,</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"url scheme must be one of [http, https]"</span><span class="p">}</span>
 </code></pre></div>
 <p><strong>Status codes</strong> used across the API:</p>
 <table>
@@ -1389,6 +1515,10 @@ consumed by the portal with a session cookie.</p>
 <tr>
 <td>400</td>
 <td>The request violated a trust-boundary rule — a disallowed URL scheme, or a non-default ref.</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Role enforcement is enabled and the session lacks the role the endpoint requires.</td>
 </tr>
 <tr>
 <td>404</td>
@@ -1437,12 +1567,20 @@ consumed by the portal with a session cookie.</p>
 <td><a href="../retention/#endpoints">Retention</a></td>
 <td>Preview candidates, evaluate, compact, soft-delete and restore snapshots</td>
 </tr>
+<tr>
+<td><a href="roles/">Roles</a></td>
+<td>List, grant and revoke delegated-administration roles</td>
+</tr>
 </tbody>
 </table>
 <h2 id="session">Session<a class="headerlink" href="#session" title="Permanent link">&para;</a></h2>
-<p><code>GET /api/me</code> returns the current principal — the portal uses it for the sidebar
-footer.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;alice@example.com&quot;</span><span class="p">}</span>
+<p><code>GET /api/me</code> returns the current principal, whether role enforcement is
+enabled, and the session's effective roles — a configuration-bootstrapped admin
+appears as a synthetic <code>admin</code> entry. The portal uses it for the sidebar footer
+and, with roles, to adapt its controls.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"username"</span><span class="p">:</span><span class="w"> </span><span class="s2">"alice@example.com"</span><span class="p">,</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"rolesEnabled"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w"> </span><span class="nt">"roles"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"approver"</span><span class="p">,</span><span class="w"> </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="w"> </span><span class="s2">"acme"</span><span class="p">}]}</span>
 </code></pre></div>
 <h2 id="non-api-endpoints">Non-API endpoints<a class="headerlink" href="#non-api-endpoints" title="Permanent link">&para;</a></h2>
 <table>

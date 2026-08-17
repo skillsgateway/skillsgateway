@@ -558,6 +558,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#4-the-inbound-webhook-a-forges-push-event-becomes-a-fetch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. The inbound webhook — a forge's push event becomes a fetch
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-roles-what-an-authenticated-session-may-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Roles — what an authenticated session may do
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-not-a-boundary-yet" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -620,6 +642,12 @@
   
     
     
+      
+        
+      
+        
+      
+        
       
         
       
@@ -727,6 +755,34 @@
     
   
     Registering a marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/upstream-sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Syncing from upstream automatically
   
 
     
@@ -859,6 +915,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/virtual-catalog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The virtual catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/lifecycle-webhooks/" class="md-nav__link">
         
   
@@ -923,6 +1007,34 @@
     
   
     Reclaiming snapshot storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/delegated-administration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Delegated administration
   
 
     
@@ -1058,6 +1170,8 @@
       
         
       
+        
+      
     
     
     
@@ -1180,6 +1294,34 @@
     
   
     Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/roles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roles
   
 
     
@@ -1430,6 +1572,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#4-the-inbound-webhook-a-forges-push-event-becomes-a-fetch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. The inbound webhook — a forge's push event becomes a fetch
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-roles-what-an-authenticated-session-may-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Roles — what an authenticated session may do
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-not-a-boundary-yet" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1532,6 +1696,15 @@ the web chain, and it is <strong>stateless</strong>:</p>
 <li>Tokens are <code>sgw_</code> + Base64url of 32 random bytes. Only an unsalted SHA-256 hex
   digest is stored, and the cleartext is returned exactly once. Unsalted is
   deliberate — these are high-entropy random tokens, not user-chosen passwords.</li>
+<li>A token may be <strong>scoped</strong> to named marketplaces (GW_0064) and may <strong>expire</strong>
+  (GW_0065). Both are enforced where they matter: expiry at authentication (an
+  expired token is refused exactly like a revoked one, by comparison, with no
+  sweep), scope in the facade resolver — an out-of-scope request gets the same
+  not-found a nonexistent marketplace gets, so a scoped token cannot probe what
+  else the gateway governs.</li>
+<li>Every fetch entry on the ledger names the token that authenticated it
+  (GW_0067), not just the principal: a principal with several tokens is several
+  distinct credentials.</li>
 <li>Receive-pack is disabled by construction, so there is no write path to reject
   at runtime.</li>
 </ul>
@@ -1594,13 +1767,68 @@ unauthenticated and injects a synthetic principal <code>dev</code>. It exists fo
 development, logs a loud warning at startup, and must never be set in a
 deployed environment. See <a href="../../guides/local-development/">Local development</a>.</p>
 </div>
+<h2 id="4-the-inbound-webhook-a-forges-push-event-becomes-a-fetch">4. The inbound webhook — a forge's push event becomes a fetch<a class="headerlink" href="#4-the-inbound-webhook-a-forges-push-event-becomes-a-fetch" title="Permanent link">&para;</a></h2>
+<p><code>POST /hooks/{marketplace}</code> is the one endpoint reachable without an OIDC
+session or a PAT, so its authentication is cryptographic and its authority is
+deliberately nil. Authentication: an HMAC-SHA256 signature of the exact raw
+request body (GitHub-compatible <code>X-Hub-Signature-256</code>), verified in constant
+time against a per-marketplace secret the gateway generated and returned
+exactly once. Authority: the payload is never read — a valid signature only
+triggers ingestion of the <strong>registered</strong> upstream URL's default branch, which
+lands <code>held</code> in quarantine exactly as the polling sweep would have produced.</p>
+<p>The worst a forged-but-signed request can cause is therefore a redundant fetch
+of content the gateway already governs; nothing on this path can name a URL, a
+ref, or a commit, and nothing on it can approve or publish. Body size is
+bounded before the HMAC is computed, and requests for marketplaces not in
+webhook mode are refused without revealing why.</p>
+<h2 id="5-roles-what-an-authenticated-session-may-do">5. Roles — what an authenticated session may do<a class="headerlink" href="#5-roles-what-an-authenticated-session-may-do" title="Permanent link">&para;</a></h2>
+<p>Authentication says who a session is; the role model says what it may do.
+Three roles, enforced at the REST API by an explicit authorization call at the
+top of every privileged endpoint:</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Scope</th>
+<th>Authority</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>admin</code></td>
+<td>global</td>
+<td>Every operation, including managing grants.</td>
+</tr>
+<tr>
+<td><code>approver</code></td>
+<td>one marketplace</td>
+<td>Ingest, approve, reject, re-vet, waive — for that marketplace only. The owning marketplace is resolved from the addressed snapshot or waiver on the server side, so a bare id cannot reach another marketplace's content.</td>
+</tr>
+<tr>
+<td><code>auditor</code></td>
+<td>global</td>
+<td>Read the ledger, its export, the operational listings. No mutations.</td>
+</tr>
+</tbody>
+</table>
+<p>Enforcement is <strong>deny-by-default once enabled</strong>: a session with no role keeps
+the browsing surface and its own tokens, and is refused everything else. It is
+<strong>off by default</strong> (<code>skills-gateway.roles.enabled=false</code>) so an upgrade never
+locks a deployment out of its own gateway; principals in
+<code>skills-gateway.roles.admins</code> are admins by configuration and cannot be revoked
+through the API — the escape hatch that makes enabling safe. Every grant and
+revocation is on the append-only ledger.</p>
+<p>This boundary is the web surface's only. The facade's authorization is
+<a href="../../reference/api/tokens/">token scopes</a> — a different credential for a
+different surface — and roles never apply to PATs. See
+<a href="../../guides/delegated-administration/">Delegated administration</a> for the
+workflow and <a href="../../reference/api/roles/">Roles</a> for the grants API.</p>
 <h2 id="what-is-not-a-boundary-yet">What is not a boundary yet<a class="headerlink" href="#what-is-not-a-boundary-yet" title="Permanent link">&para;</a></h2>
-<p>There is no role model in the portal. Any authenticated browser session can
-register, ingest, approve and reject. The only per-user scoping is access
-tokens: you see and revoke your own.</p>
-<p>Admin/reviewer separation is a designed future capability. Until it lands, treat
-<strong>access to the portal</strong> as the reviewer privilege and grant it through the
-identity provider.</p>
+<p>Per-team catalog scoping (which identities see which virtual marketplaces) and
+a portal UI for managing grants are future capabilities; today the grants API
+is the management surface. Where the role model is not enabled, treat <strong>access
+to the portal</strong> as the reviewer privilege and grant it through the identity
+provider.</p>
 
 
 

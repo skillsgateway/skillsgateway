@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://jimisola.github.io/skills-gateway/dev/reference/retention/">
       
       
-        <link rel="prev" href="../api/audit/">
+        <link rel="prev" href="../api/roles/">
       
       
         <link rel="next" href="../git-facade/">
@@ -524,6 +524,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -612,6 +618,34 @@
     
   
     Registering a marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/upstream-sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Syncing from upstream automatically
   
 
     
@@ -744,6 +778,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/virtual-catalog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The virtual catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/lifecycle-webhooks/" class="md-nav__link">
         
   
@@ -808,6 +870,34 @@
     
   
     Reclaiming snapshot storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/delegated-administration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Delegated administration
   
 
     
@@ -945,6 +1035,8 @@
       
         
       
+        
+      
     
     
     
@@ -1067,6 +1159,34 @@
     
   
     Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/roles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roles
   
 
     
@@ -1759,6 +1879,9 @@ is only possible before <code>purge_after</code>.</p>
 </table>
 <p>The on-demand passes work whether or not the scheduler is enabled, which is what
 makes a policy inspectable before it is switched on.</p>
+<p>With <a href="../../guides/delegated-administration/">role enforcement</a> enabled, the
+candidates preview requires <strong>auditor</strong> (or admin); the passes, the delete, and
+the restore require <strong>admin</strong>.</p>
 <h2 id="policies">Policies<a class="headerlink" href="#policies" title="Permanent link">&para;</a></h2>
 <p>Configured under <code>skills-gateway.retention</code> — global <code>defaults</code> plus a
 <code>marketplaces.&lt;name&gt;</code> override map whose unset fields fall back to the defaults.

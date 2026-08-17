@@ -536,6 +536,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -624,6 +630,34 @@
     
   
     Registering a marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/upstream-sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Syncing from upstream automatically
   
 
     
@@ -756,6 +790,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/virtual-catalog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The virtual catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/lifecycle-webhooks/" class="md-nav__link">
         
   
@@ -820,6 +882,34 @@
     
   
     Reclaiming snapshot storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/delegated-administration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Delegated administration
   
 
     
@@ -955,6 +1045,8 @@
       
         
       
+        
+      
     
     
     
@@ -1077,6 +1169,34 @@
     
   
     Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/roles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roles
   
 
     
@@ -1352,18 +1472,46 @@ timestamp.</dd>
 <dt><strong>Quarantine repository</strong></dt>
 <dd><code>{data-dir}/quarantine/{marketplace}.git</code>. Holds one immutable
 <code>refs/snapshots/{sha}</code> per ingested commit. <strong>Never served.</strong></dd>
+<dt><strong>Rotation</strong></dt>
+<dd>Replacing a token's secret while keeping its grant — name, scopes, and the
+same expiry deadline. The old token is revoked before the new one is
+issued, so a failure between the steps leaves no live secret rather than
+two.</dd>
+<dt><strong>Scope</strong> (of a token)</dt>
+<dd>The marketplace names a token may fetch through the facade; the virtual
+catalog's name is a valid entry. Empty means all. Out-of-scope answers are
+indistinguishable from not-found.</dd>
+<dt><strong>Role grant</strong></dt>
+<dd>One row of current state giving a principal a role — <code>admin</code> (global),
+<code>approver</code> (scoped to one marketplace), or <code>auditor</code> (global, read-only).
+Managed through <code>/api/roles</code>, audited on the ledger, inert until
+<code>skills-gateway.roles.enabled=true</code>. Principals in
+<code>skills-gateway.roles.admins</code> are admins by configuration, without a grant
+row, and cannot be revoked through the API.</dd>
 <dt><strong>Skill</strong></dt>
 <dd>A unit of agent capability — a <code>SKILL.md</code> directory in the open Agent Skills
 format, or a component of a Claude Code plugin.</dd>
 <dt><strong>Snapshot</strong></dt>
 <dd>One upstream commit captured at one moment, with a vetting decision
 attached. The unit of review, approval, serving and audit.</dd>
+<dt><strong>Sync mode</strong></dt>
+<dd>How new upstream content reaches quarantine for one marketplace:
+<code>on-demand</code> (an operator's explicit call, the default), <code>scheduled</code> (the
+gateway's polling sweep), or <code>webhook</code> (a signed forge push webhook). Only
+the trigger — every mode lands snapshots <code>held</code> behind the same approval
+gate.</dd>
 <dt><strong>Upload-pack</strong></dt>
 <dd>The git smart-HTTP operation that serves objects to a fetching client. The
 only git service the facade enables; receive-pack (push) is disabled.</dd>
 <dt><strong>Violation</strong></dt>
 <dd>The reason ingestion flagged a snapshot — for example an external plugin
 source, which is rejected fail-closed in the current scope.</dd>
+<dt><strong>Virtual catalog</strong></dt>
+<dd>The synthesized repository at <code>/git/catalog</code> vendoring the currently served
+snapshot of every marketplace under a namespaced subdirectory, with one
+merged manifest. Strictly derived from published content; rebuilt on every
+approval and revocation; each revision is a parentless commit, so retracted
+constituents are unreachable from every advertised ref.</dd>
 </dl>
 
 

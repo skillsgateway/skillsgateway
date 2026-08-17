@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://jimisola.github.io/skills-gateway/dev/reference/configuration/">
       
       
-        <link rel="prev" href="../../guides/snapshot-retention/">
+        <link rel="prev" href="../../guides/delegated-administration/">
       
       
         <link rel="next" href="../api/">
@@ -524,6 +524,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -612,6 +618,34 @@
     
   
     Registering a marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/upstream-sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Syncing from upstream automatically
   
 
     
@@ -744,6 +778,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/virtual-catalog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The virtual catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/lifecycle-webhooks/" class="md-nav__link">
         
   
@@ -808,6 +870,34 @@
     
   
     Reclaiming snapshot storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/delegated-administration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Delegated administration
   
 
     
@@ -1042,6 +1132,50 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#upstream-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upstream sync
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#virtual-catalog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Virtual catalog
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#access-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Access tokens
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#delegated-administration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Delegated administration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#datasource" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1116,6 +1250,8 @@
       
         
           
+        
+      
         
       
         
@@ -1246,6 +1382,34 @@
     
   
     Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/roles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roles
   
 
     
@@ -1518,6 +1682,50 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#upstream-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upstream sync
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#virtual-catalog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Virtual catalog
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#access-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Access tokens
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#delegated-administration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Delegated administration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#datasource" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1630,6 +1838,26 @@
 <td>No — all defaulted.</td>
 </tr>
 <tr>
+<td><a href="#upstream-sync"><code>skills-gateway.sync.*</code></a></td>
+<td>Upstream sync: the polling sweep's schedule and batch, and the inbound webhook body bound.</td>
+<td>No — all defaulted.</td>
+</tr>
+<tr>
+<td><a href="#virtual-catalog"><code>skills-gateway.catalog.*</code></a></td>
+<td>The global virtual catalog and its reserved name.</td>
+<td>No — all defaulted.</td>
+</tr>
+<tr>
+<td><a href="#access-tokens"><code>skills-gateway.tokens.*</code></a></td>
+<td>Access-token policy: the maximum lifetime creation accepts.</td>
+<td>No — defaulted (unlimited).</td>
+</tr>
+<tr>
+<td><a href="#delegated-administration"><code>skills-gateway.roles.*</code></a></td>
+<td>Role enforcement and the bootstrap admins. <strong>Off by default.</strong></td>
+<td>No — all defaulted.</td>
+</tr>
+<tr>
 <td><a href="#datasource"><code>spring.datasource.*</code></a></td>
 <td>PostgreSQL connection. Supplied entirely by environment.</td>
 <td><strong>Yes</strong></td>
@@ -1674,7 +1902,7 @@ omitting a whole block and omitting individual keys behave identically.</p>
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https</span>
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
 <a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">  </span><span class="c1"># DEVELOPMENT ONLY. Makes the entire web surface unauthenticated and</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">  </span><span class="c1"># injects a synthetic principal &quot;dev&quot;. Logs a warning at startup.</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">  </span><span class="c1"># injects a synthetic principal "dev". Logs a warning at startup.</span>
 <a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">  </span><span class="c1"># Does not affect the git facade, which always requires a PAT.</span>
 <a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">  </span><span class="nt">dev-insecure-auth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </code></pre></div>
@@ -1736,7 +1964,7 @@ and omitting the whole block is identical to omitting each key.</p>
 <a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span><span class="nt">max-backoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1h</span>
 <a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>
 <a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span><span class="c1"># Total attempts per delivery, first one included. Reaching it marks the</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">    </span><span class="c1"># delivery &#39;failed&#39;; it is never retried again.</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">    </span><span class="c1"># delivery 'failed'; it is never retried again.</span>
 <a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">    </span><span class="nt">max-attempts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
 <a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>
 <a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">    </span><span class="c1"># Connect and read timeout for the outbound POST. The claim lease is</span>
@@ -1905,7 +2133,7 @@ in <code>application.yaml</code>.</p>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30s</span>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">    </span><span class="c1"># Files larger than this are handed to connectors unread. They are reported</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="c1"># as an informational &#39;file-not-scanned&#39; finding, never skipped in silence.</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="c1"># as an informational 'file-not-scanned' finding, never skipped in silence.</span>
 <a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="nt">max-file-bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1048576</span>
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
 <a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">    </span><span class="c1"># How often lapsed waivers are noted in the audit ledger. This cannot open a</span>
@@ -2078,7 +2306,7 @@ passes run. Java-side defaults; nothing appears in <code>application.yaml</code>
 <a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>
 <a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">    </span><span class="c1"># The policy every marketplace inherits.</span>
 <a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">    </span><span class="nt">defaults</span><span class="p">:</span>
-<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="w">      </span><span class="c1"># A snapshot still &#39;held&#39; this long after ingestion is eligible.</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="w">      </span><span class="c1"># A snapshot still 'held' this long after ingestion is eligible.</span>
 <a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="w">      </span><span class="c1"># Zero or negative disables the criterion rather than selecting everything.</span>
 <a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="w">      </span><span class="nt">held-max-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90d</span>
 <a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>
@@ -2189,12 +2417,188 @@ it.</p>
 <p>Criteria, guards and the two passes are described in
 <a href="../retention/">Snapshot retention</a>.</p>
 <hr />
+<h2 id="upstream-sync">Upstream sync<a class="headerlink" href="#upstream-sync" title="Permanent link">&para;</a></h2>
+<p>How automated ingestion behaves for marketplaces whose sync mode is
+<code>scheduled</code> or <code>webhook</code>. Java-side defaults; nothing appears in
+<code>application.yaml</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">sync</span><span class="p">:</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="c1"># Whether the scheduled polling sweep runs. ON by default, and still safe</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="c1"># on upgrade: the sweep only touches marketplaces an operator has</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="c1"># explicitly moved to the `scheduled` sync mode, so an estate of defaults</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span><span class="c1"># (all on-demand) sees no change. The inbound webhook endpoint and the</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">    </span><span class="c1"># sync-mode endpoint work regardless.</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">    </span><span class="c1"># How often the sweep runs, and how many scheduled marketplaces one pass</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="w">    </span><span class="c1"># ingests — least recently attempted first, so a large estate is covered</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">    </span><span class="c1"># in rotation rather than all at once.</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">    </span><span class="nt">poll-interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10m</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">    </span><span class="nt">batch-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">    </span><span class="c1"># Inbound webhook bodies larger than this are rejected with 413 before the</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="w">    </span><span class="c1"># HMAC is computed, bounding the work an unauthenticated caller can cause.</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="w">    </span><span class="nt">max-webhook-body-bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1048576</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>skills-gateway.sync.enabled</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Runs the scheduled sweep. Touches only <code>scheduled</code>-mode marketplaces.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.sync.poll-interval</code></td>
+<td>duration</td>
+<td><code>10m</code></td>
+<td>Sweep schedule.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.sync.batch-size</code></td>
+<td>integer</td>
+<td><code>10</code></td>
+<td>Scheduled marketplaces ingested per pass, oldest attempt first.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.sync.max-webhook-body-bytes</code></td>
+<td>long</td>
+<td><code>1048576</code></td>
+<td>Inbound webhook body bound; larger requests get 413 unverified.</td>
+</tr>
+</tbody>
+</table>
+<p>Modes, the webhook secret lifecycle, and the outage guarantee are described in
+<a href="../../guides/upstream-sync/">Syncing from upstream automatically</a>.</p>
+<hr />
+<h2 id="virtual-catalog">Virtual catalog<a class="headerlink" href="#virtual-catalog" title="Permanent link">&para;</a></h2>
+<p>The synthesized one-URL catalog of the whole served estate. Java-side defaults;
+nothing appears in <code>application.yaml</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">catalog</span><span class="p">:</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="c1"># Whether approvals and revocations rebuild the catalog and the /api/catalog</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="c1"># endpoints answer. Turning this off never deletes an existing catalog repo.</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">    </span><span class="c1"># The catalog's facade path (/git/{name}) and its RESERVED name: a</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">    </span><span class="c1"># marketplace cannot be registered under it.</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">catalog</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>skills-gateway.catalog.enabled</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Gates rebuild triggers and the API endpoints.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.catalog.name</code></td>
+<td>string</td>
+<td><code>catalog</code></td>
+<td>Facade path segment; reserved at registration.</td>
+</tr>
+</tbody>
+</table>
+<p>Composition, freshness, and provenance are described in
+<a href="../../guides/virtual-catalog/">The virtual catalog</a>.</p>
+<hr />
+<h2 id="access-tokens">Access tokens<a class="headerlink" href="#access-tokens" title="Permanent link">&para;</a></h2>
+<p>Token policy (GW_0065). Java-side default; nothing appears in
+<code>application.yaml</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">tokens</span><span class="p">:</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="c1"># The longest lifetime creation accepts. When set, a request beyond it —</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="c1"># including one with no expiry at all — is refused with 422, never</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span><span class="c1"># silently shortened. Unset (the default) accepts tokens that never</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="c1"># expire, which is what every pre-cap deployment had.</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span><span class="nt">max-ttl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90d</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>skills-gateway.tokens.max-ttl</code></td>
+<td>duration</td>
+<td>unset (unlimited)</td>
+<td>Cap on accepted token lifetime; refusal, not clamping.</td>
+</tr>
+</tbody>
+</table>
+<p>Scopes, expiry, and rotation are described in
+<a href="../api/tokens/">Access tokens</a>.</p>
+<hr />
+<h2 id="delegated-administration">Delegated administration<a class="headerlink" href="#delegated-administration" title="Permanent link">&para;</a></h2>
+<p>Role enforcement for the web surface (GW_0068, GW_0071). Java-side defaults;
+nothing appears in <code>application.yaml</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">roles</span><span class="p">:</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="c1"># Off by default: every authorization check passes and an upgrade never</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="c1"># locks anyone out. Once true, enforcement is deny-by-default: every</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="c1"># mutation and the ledger surface need a role.</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">    </span><span class="c1"># Admins by configuration: effective without a grant row and unrevocable</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">    </span><span class="c1"># through the API — the escape hatch that survives a bad grant edit.</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">    </span><span class="nt">admins</span><span class="p">:</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin@example.com</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>skills-gateway.roles.enabled</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>With <code>false</code> every check passes; grants stay writable as staging data.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.roles.admins</code></td>
+<td>list of strings</td>
+<td><code>[]</code></td>
+<td>Principals that are admins by configuration; DB grants add to them.</td>
+</tr>
+</tbody>
+</table>
+<p>The roles, the enforcement matrix, and the staging workflow are described in
+<a href="../../guides/delegated-administration/">Delegated administration</a>; the grants
+API in <a href="../api/roles/">Roles</a>.</p>
+<hr />
 <h2 id="datasource">Datasource<a class="headerlink" href="#datasource" title="Permanent link">&para;</a></h2>
 <p>Not present in <code>application.yaml</code> at all — supplied purely by environment.
 PostgreSQL is assumed.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_URL</span><span class="o">=</span>jdbc:postgresql://postgres:5432/skillsgateway
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_USERNAME</span><span class="o">=</span>skillsgateway
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_PASSWORD</span><span class="o">=</span>skillsgateway
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_URL</span><span class="o">=</span>jdbc:postgresql://postgres:5432/skillsgateway
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_USERNAME</span><span class="o">=</span>skillsgateway
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_PASSWORD</span><span class="o">=</span>skillsgateway
 </code></pre></div>
 <p>The Helm chart exposes these as <code>postgresql.host</code> (<strong>required</strong>, no default),
 <code>postgresql.port</code> (<code>5432</code>), <code>postgresql.database</code> and <code>postgresql.username</code>
@@ -2252,11 +2656,11 @@ defaults are the placeholders below rather than being absent.</p>
 <p>Register that redirect URI with your identity provider.</p>
 <hr />
 <h2 id="actuator">Actuator<a class="headerlink" href="#actuator" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">management</span><span class="p">:</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">endpoints</span><span class="p">:</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="nt">web</span><span class="p">:</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">      </span><span class="nt">exposure</span><span class="p">:</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">        </span><span class="nt">include</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">health,sbom</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nt">management</span><span class="p">:</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">endpoints</span><span class="p">:</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="nt">web</span><span class="p">:</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">      </span><span class="nt">exposure</span><span class="p">:</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">        </span><span class="nt">include</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">health,sbom</span>
 </code></pre></div>
 <p>Only two endpoints are exposed. <code>/actuator/health</code> is the <strong>only</strong>
 unauthenticated path in the application; <code>/actuator/sbom</code> serves the CycloneDX
@@ -2269,11 +2673,11 @@ both Kubernetes probes point at the bare path.</p>
 </div>
 <hr />
 <h2 id="api-documentation">API documentation<a class="headerlink" href="#api-documentation" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">scalar</span><span class="p">:</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/docs</span><span class="w">        </span><span class="c1"># the Scalar UI</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/v3/api-docs</span><span class="w">  </span><span class="c1"># the OpenAPI document it renders</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span><span class="nt">theme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">purple</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">scalar</span><span class="p">:</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/docs</span><span class="w">        </span><span class="c1"># the Scalar UI</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/v3/api-docs</span><span class="w">  </span><span class="c1"># the OpenAPI document it renders</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span><span class="nt">theme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">purple</span>
 </code></pre></div>
 <p>Both paths sit behind the OIDC login like the rest of the web surface.</p>
 <hr />

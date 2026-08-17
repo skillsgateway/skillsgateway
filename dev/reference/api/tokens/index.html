@@ -524,6 +524,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -612,6 +618,34 @@
     
   
     Registering a marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../guides/upstream-sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Syncing from upstream automatically
   
 
     
@@ -744,6 +778,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/virtual-catalog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The virtual catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/lifecycle-webhooks/" class="md-nav__link">
         
   
@@ -808,6 +870,34 @@
     
   
     Reclaiming snapshot storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../guides/delegated-administration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Delegated administration
   
 
     
@@ -939,6 +1029,8 @@
       
         
           
+        
+      
         
       
         
@@ -1137,6 +1229,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#post-tokensidrotate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /tokens/{id}/rotate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#using-a-token" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1171,6 +1274,34 @@
     
   
     Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../roles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roles
   
 
     
@@ -1410,6 +1541,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#post-tokensidrotate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /tokens/{id}/rotate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#using-a-token" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1447,7 +1589,10 @@
 
 <h1 id="access-tokens">Access tokens<a class="headerlink" href="#access-tokens" title="Permanent link">&para;</a></h1>
 <p>Personal access tokens are the credential git clients use against the
-<a href="../../git-facade/">facade</a>. They are the only part of the API scoped per user.</p>
+<a href="../../git-facade/">facade</a>. They are the only part of the API scoped per user,
+and they stay owner-scoped with
+<a href="../../../guides/delegated-administration/">role enforcement</a> enabled: managing
+your own tokens never requires a role.</p>
 <p>All paths are relative to <code>/api</code>.</p>
 <h2 id="token-format-and-storage">Token format and storage<a class="headerlink" href="#token-format-and-storage" title="Permanent link">&para;</a></h2>
 <p><code>sgw_</code> followed by 32 random bytes from a <code>SecureRandom</code>, Base64url-encoded
@@ -1459,18 +1604,51 @@ be recovered afterwards.</p>
 <hr />
 <h2 id="post-tokens"><code>POST /tokens</code><a class="headerlink" href="#post-tokens" title="Permanent link">&para;</a></h2>
 <p>Create a token for the calling principal.</p>
-<p><strong>Body</strong> — <code>{name}</code></p>
+<p><strong>Body</strong> — <code>{name, scopes?, expiresAt?}</code></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/tokens<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">&#39;Content-Type: application/json&#39;</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;name&quot;:&quot;my-laptop&quot;}&#39;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"name":"ci-runner","scopes":["acme","catalog"],"expiresAt":"2026-12-31T00:00:00Z"}'</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="s2">&quot;my-laptop&quot;</span><span class="p">,</span><span class="nt">&quot;token&quot;</span><span class="p">:</span><span class="s2">&quot;sgw_...&quot;</span><span class="p">,</span><span class="nt">&quot;createdAt&quot;</span><span class="p">:</span><span class="s2">&quot;2026-08-15T09:00:00Z&quot;</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"ci-runner"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"2026-08-17T09:00:00Z"</span><span class="p">,</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:[</span><span class="s2">"acme"</span><span class="p">,</span><span class="s2">"catalog"</span><span class="p">],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-12-31T00:00:00Z"</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="kc">null</span><span class="p">}</span>
 </code></pre></div>
-<p><strong>201.</strong> The <code>token</code> field appears in this response and nowhere else, ever.</p>
+<p><code>scopes</code> (GW_0064) lists marketplace names the token may fetch — the
+<a href="../../../guides/virtual-catalog/">virtual catalog</a>'s name is a valid entry —
+and every entry is validated against the registered marketplaces at creation.
+Empty or omitted grants every marketplace, which is what every pre-scoping
+token meant. An out-of-scope fetch answers exactly like a marketplace that
+does not exist, so a scoped token is not a directory of what else the gateway
+governs.</p>
+<p><code>expiresAt</code> (GW_0065): an expired token fails authentication exactly like a
+revoked one, decided by comparing the stamp at authentication time — no
+background process is involved. When
+<a href="../../configuration/#access-tokens"><code>skills-gateway.tokens.max-ttl</code></a> is set,
+a request beyond the cap (including one with no expiry) is refused, never
+silently shortened.</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>201</td>
+<td>Issued. The <code>token</code> field appears in this response and nowhere else, ever.</td>
+</tr>
+<tr>
+<td>422</td>
+<td>Unknown scope, or lifetime beyond the configured cap.</td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h2 id="get-tokens"><code>GET /tokens</code><a class="headerlink" href="#get-tokens" title="Permanent link">&para;</a></h2>
 <p>List the calling principal's tokens. Never returns the hash, and never returns
 another user's tokens.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">[{</span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="s2">&quot;my-laptop&quot;</span><span class="p">,</span><span class="nt">&quot;createdAt&quot;</span><span class="p">:</span><span class="s2">&quot;...&quot;</span><span class="p">,</span><span class="nt">&quot;revokedAt&quot;</span><span class="p">:</span><span class="kc">null</span><span class="p">}]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">[{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"my-laptop"</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"revokedAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">"scopes"</span><span class="p">:[],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="kc">null</span><span class="p">}]</span>
 </code></pre></div>
 <p>A non-null <code>revokedAt</code> means the token no longer authenticates. Revoked tokens
 are retained rather than deleted, so the record of what existed survives.</p>
@@ -1498,9 +1676,41 @@ rows.</p>
 </tbody>
 </table>
 <hr />
+<h2 id="post-tokensidrotate"><code>POST /tokens/{id}/rotate</code><a class="headerlink" href="#post-tokensidrotate" title="Permanent link">&para;</a></h2>
+<p>Retire a possibly-exposed secret without renegotiating the grant (GW_0066).
+Issues a fresh secret with the <strong>identical</strong> grant — name, scopes, and the same
+expiry deadline — records which token it replaced (<code>rotatedFrom</code>), and revokes
+the old token <em>before</em> the new one is issued: a failure between the two steps
+leaves no live secret, never two.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"ci-runner"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:[</span><span class="s2">"acme"</span><span class="p">],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-12-31T00:00:00Z"</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="mi">1</span><span class="p">}</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>Rotated; the only response carrying the new cleartext.</td>
+</tr>
+<tr>
+<td>404</td>
+<td>No such token <strong>owned by the caller</strong>.</td>
+</tr>
+<tr>
+<td>409</td>
+<td>The token is revoked or expired — a dead grant is not a template for a live one; issue a new token instead.</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="using-a-token">Using a token<a class="headerlink" href="#using-a-token" title="Permanent link">&para;</a></h2>
 <p>The facade reads only the password field of HTTP Basic; the username is ignored.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>git<span class="w"> </span>ls-remote<span class="w"> </span>https://token:sgw_...@skills.corp.example/git/acme
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>git<span class="w"> </span>ls-remote<span class="w"> </span>https://token:sgw_...@skills.corp.example/git/acme
 </code></pre></div>
 <p>See <a href="../../../guides/consuming-skills/">Consuming approved skills</a> for credential
 helper setup.</p>

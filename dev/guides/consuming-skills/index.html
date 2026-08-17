@@ -16,7 +16,7 @@
         <link rel="prev" href="../re-vetting/">
       
       
-        <link rel="next" href="../lifecycle-webhooks/">
+        <link rel="next" href="../virtual-catalog/">
       
       
         
@@ -526,6 +526,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -614,6 +620,34 @@
     
   
     Registering a marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../upstream-sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Syncing from upstream automatically
   
 
     
@@ -870,6 +904,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../virtual-catalog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The virtual catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../lifecycle-webhooks/" class="md-nav__link">
         
   
@@ -934,6 +996,34 @@
     
   
     Reclaiming snapshot storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../delegated-administration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Delegated administration
   
 
     
@@ -1069,6 +1159,8 @@
       
         
       
+        
+      
     
     
     
@@ -1191,6 +1283,34 @@
     
   
     Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/roles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roles
   
 
     
@@ -1500,9 +1620,9 @@ dialog with a copy button.</p>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/tokens<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">&#39;Content-Type: application/json&#39;</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;name&quot;:&quot;my-laptop&quot;}&#39;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"name":"my-laptop"}'</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="s2">&quot;my-laptop&quot;</span><span class="p">,</span><span class="nt">&quot;token&quot;</span><span class="p">:</span><span class="s2">&quot;sgw_...&quot;</span><span class="p">,</span><span class="nt">&quot;createdAt&quot;</span><span class="p">:</span><span class="s2">&quot;...&quot;</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"my-laptop"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}</span>
 </code></pre></div>
 </div>
 </div>
@@ -1514,6 +1634,16 @@ it and create another.</p>
 </div>
 <p>Tokens are scoped to the creating principal: you only ever see and revoke your
 own.</p>
+<div class="admonition tip">
+<p class="admonition-title">Scope it, expire it, rotate it</p>
+<p>A token can be limited to named marketplaces (<code>"scopes":["acme","catalog"]</code>)
+and given an expiry (<code>"expiresAt":"..."</code>) — a leaked CI token limited to one
+marketplace is an incident contained to that marketplace, and one that dies
+on its own bounds the window a leak matters. Suspect exposure without
+wanting to reconfigure anything? <code>POST /api/tokens/{id}/rotate</code> issues a
+fresh secret with the identical grant and kills the old one in the same
+act. See <a href="../../reference/api/tokens/">Access tokens</a>.</p>
+</div>
 <h2 id="2-verify-the-remote">2. Verify the remote<a class="headerlink" href="#2-verify-the-remote" title="Permanent link">&para;</a></h2>
 <p>The username is ignored; the token goes in the password field.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>git<span class="w"> </span>ls-remote<span class="w"> </span>https://token:sgw_...@skills.corp.example/git/acme
@@ -1523,13 +1653,20 @@ own.</p>
 nothing to serve. A 401 means the token is wrong or revoked.</p>
 <h2 id="3-store-the-credential">3. Store the credential<a class="headerlink" href="#3-store-the-credential" title="Permanent link">&para;</a></h2>
 <p>So the client never prompts:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;protocol=https\nhost=skills.corp.example\nusername=token\npassword=sgw_...\n&#39;</span><span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span><span class="nb">printf</span><span class="w"> </span><span class="s1">'protocol=https\nhost=skills.corp.example\nusername=token\npassword=sgw_...\n'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="p">|</span><span class="w"> </span>git<span class="w"> </span>credential<span class="w"> </span>approve
 </code></pre></div>
 <p>Or configure the username and let your credential helper hold the secret:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>credential.https://skills.corp.example.username<span class="w"> </span>token
 </code></pre></div>
 <h2 id="4-point-your-agent-at-it">4. Point your agent at it<a class="headerlink" href="#4-point-your-agent-at-it" title="Permanent link">&para;</a></h2>
+<div class="admonition tip">
+<p class="admonition-title">One URL for everything</p>
+<p>Instead of adding each marketplace separately, add the
+<a href="../virtual-catalog/">virtual catalog</a> — <code>/git/catalog</code> — which aggregates
+the currently approved snapshot of every governed marketplace, with plugin
+names prefixed by their marketplace.</p>
+</div>
 <div class="tabbed-set tabbed-alternate" data-tabs="2:3"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><input id="__tabbed_2_3" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Claude Code</label><label for="__tabbed_2_2">Copilot / Cursor</label><label for="__tabbed_2_3">CI</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
