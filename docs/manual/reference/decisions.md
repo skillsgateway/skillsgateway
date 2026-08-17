@@ -1,7 +1,7 @@
 # Architecture decisions
 
 Architecture-level choices are recorded as ADRs in
-[`docs/decisions/`](https://github.com/jimisola/skills-gateway/tree/main/docs/decisions)
+[`docs/decisions/`](https://github.com/skillsgateway/skillsgateway/tree/main/docs/decisions)
 in the repository. This page indexes them; the linked files are authoritative.
 
 Feature-level decisions live in the relevant OpenSpec change's `design.md`
@@ -9,7 +9,7 @@ rather than here.
 
 ## Index
 
-### [ADR 0001 — Use Java for the product](https://github.com/jimisola/skills-gateway/blob/main/docs/decisions/0001-use-java-for-the-product.md)
+### [ADR 0001 — Use Java for the product](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0001-use-java-for-the-product.md)
 
 *Accepted, 2026-08-13.*
 
@@ -23,7 +23,7 @@ maturing on schedule.
 Native-image also shrinks Java's classic dynamic attack surface through
 closed-world compilation, and gives single-artifact installs.
 
-### [ADR 0002 — Toolchain and product decisions](https://github.com/jimisola/skills-gateway/blob/main/docs/decisions/0002-toolchain-and-product-decisions.md)
+### [ADR 0002 — Toolchain and product decisions](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0002-toolchain-and-product-decisions.md)
 
 *Accepted, 2026-08-13.*
 
@@ -44,7 +44,7 @@ The JGit decision is the one with teeth: Java was chosen *for* JGit, so carrying
 a temporary subprocess architecture would have paid Java's costs without its
 payoff.
 
-### [ADR 0003 — Agentic-first frontend stack](https://github.com/jimisola/skills-gateway/blob/main/docs/decisions/0003-agentic-first-frontend-stack.md)
+### [ADR 0003 — Agentic-first frontend stack](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0003-agentic-first-frontend-stack.md)
 
 *Accepted, 2026-08-13.*
 
@@ -66,12 +66,24 @@ Playwright is the agent's browser and the outer loop, asserting against
 accessibility-tree snapshots. A hand-written mock is a second API implementation
 that drifts silently, which is why the acceptance path forbids them.
 
+### [ADR 0004 — skillsgateway organization and coordinates](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0004-skillsgateway-org-and-coordinates.md)
+
+*Accepted, 2026-08-17.*
+
+One name everywhere, settled before the first published artifact: GitHub org and
+repo **skillsgateway/skillsgateway**, Maven groupId **`dev.skillsgateway`**
+(backed by the skillsgateway.dev domain), prefixed artifactIds per deliverable
+(**`skills-gateway-server`** for the gateway), and package-per-artifact Java
+roots (**`dev.skillsgateway.server`**). The container image is
+`ghcr.io/skillsgateway/skillsgateway`; the Helm chart name and reqstool URN
+stay `skills-gateway`. Amends the coordinates item of ADR 0002.
+
 ## Related
 
-- [`ARCHITECTURE.md`](https://github.com/jimisola/skills-gateway/blob/main/ARCHITECTURE.md)
+- [`ARCHITECTURE.md`](https://github.com/skillsgateway/skillsgateway/blob/main/ARCHITECTURE.md)
   — the full architectural narrative: threat model, connector-based vetting,
   two-repo promotion, observability and the phase roadmap.
-- [`docs/language-decision.md`](https://github.com/jimisola/skills-gateway/blob/main/docs/language-decision.md)
+- [`docs/language-decision.md`](https://github.com/skillsgateway/skillsgateway/blob/main/docs/language-decision.md)
   — the Java-versus-Rust comparison behind ADR 0001.
 - `docs/reqstool/` — requirements and verification cases, the single source of
   truth for requirement text.

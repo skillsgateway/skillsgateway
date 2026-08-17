@@ -23,7 +23,7 @@ $ docker compose up
 
 ```console
 $ ./mvnw verify
-$ java -jar target/skills-gateway-*.jar
+$ java -jar target/skills-gateway-server-*.jar
 ```
 
 The build packages the React portal into the jar, so the running application
@@ -64,7 +64,7 @@ native-image, which is why the defaults are the placeholders `change-me` and
 ### Without one — the escape hatch
 
 ```console
-$ java -jar target/skills-gateway-*.jar --skills-gateway.dev-insecure-auth=true
+$ java -jar target/skills-gateway-server-*.jar --skills-gateway.dev-insecure-auth=true
 ```
 
 !!! danger "Never outside a development loop"
