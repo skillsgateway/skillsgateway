@@ -95,9 +95,37 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * List your tokens
+         * @description Only the caller's own tokens, never any secret.
+         */
         get: operations["list_1"];
         put?: never;
+        /**
+         * Create a token
+         * @description Issues a personal access token for the git facade. Optionally scoped to named marketplaces (unscoped grants all) and optionally expiring; the cleartext is returned exactly once. Creation is audit-logged with the token's name and scopes.
+         */
         post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tokens/{id}/rotate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rotate a token
+         * @description Issues a fresh secret with the identical grant — name, scopes, and the same expiry deadline — and revokes the old token first, so no moment has two live secrets. Only the owner may rotate, only a live token can be rotated, and the new cleartext is returned exactly once.
+         */
+        post: operations["rotate"];
         delete?: never;
         options?: never;
         head?: never;
@@ -654,6 +682,10 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
+        /**
+         * Revoke a token
+         * @description Immediate and permanent; audit-logged.
+         */
         delete: operations["revoke_1"];
         options?: never;
         head?: never;
@@ -843,6 +875,13 @@ export interface components {
              * @example ci-runner
              */
             name?: string;
+            /** @description Marketplace names (the catalog's name is valid) the token may fetch; empty or omitted grants every marketplace */
+            scopes?: string[];
+            /**
+             * Format: date-time
+             * @description Expiry; omitted means never, unless a max lifetime is configured
+             */
+            expiresAt?: string;
         };
         /** @description A freshly issued token; the only time the cleartext is ever returned */
         IssuedToken: {
@@ -860,6 +899,18 @@ export interface components {
              * @description Creation time
              */
             createdAt?: string;
+            /** @description Marketplace scopes; empty grants every marketplace */
+            scopes?: string[];
+            /**
+             * Format: date-time
+             * @description Expiry, or null for a token that never expires
+             */
+            expiresAt?: string;
+            /**
+             * Format: int64
+             * @description The token this one replaced by rotation, or null
+             */
+            rotatedFrom?: number;
         };
         /** @description Request to accept one finding rule on a snapshot's marketplace, until an expiry */
         WaiverRequest: {
@@ -1249,6 +1300,18 @@ export interface components {
              * @description Revocation time, or null while active
              */
             revokedAt?: string;
+            /** @description Marketplace scopes; empty grants every marketplace */
+            scopes?: string[];
+            /**
+             * Format: date-time
+             * @description Expiry, or null for a token that never expires
+             */
+            expiresAt?: string;
+            /**
+             * Format: int64
+             * @description The token this one replaced by rotation, or null
+             */
+            rotatedFrom?: number;
         };
         /** @description A connector configured in the vetting chain */
         ConnectorView: {
@@ -1743,8 +1806,57 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
+            /** @description Token issued; the only response carrying the cleartext */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+            /** @description Unknown scope, or lifetime beyond the configured cap */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+        };
+    };
+    rotate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rotated; the only response carrying the new cleartext */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+            /** @description No such token of yours */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+            /** @description Token is revoked or expired; issue a new one instead */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2648,8 +2760,15 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
-            200: {
+            /** @description Revoked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No such active token of yours */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

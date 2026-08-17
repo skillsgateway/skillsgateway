@@ -630,3 +630,43 @@ cases:
       WHEN its constituents are read from the API, it is cloned through the facade, a manual regeneration is requested, and a marketplace registration under the catalog's name is attempted
       THEN the API lists exactly the marketplace-and-SHA pairs the clone contains, the clone is on the fetch ledger under the catalog's name, the manual regeneration lands on the ledger with the acting identity, and the registration is refused
     revision: "0.1.0"
+
+  - id: SVC_GW_0064
+    requirement_ids: ["GW_0064"]
+    title: Scoped tokens fetch only their marketplaces and cannot probe the rest
+    verification: automated-test
+    description: |
+      GIVEN marketplaces with approved snapshots and tokens scoped to a subset, to the catalog, and to nothing
+      WHEN each token clones in-scope and out-of-scope marketplaces through the facade
+      THEN in-scope clones succeed, an out-of-scope clone fails with the same answer as a marketplace that does not exist, the unscoped token clones everything, and creating a token naming an unknown scope is refused
+    revision: "0.1.0"
+
+  - id: SVC_GW_0065
+    requirement_ids: ["GW_0065"]
+    title: An expired token is refused at authentication with no sweep involved
+    verification: automated-test
+    description: |
+      GIVEN a token created with an expiry that then passes, and a configured maximum lifetime
+      WHEN the expired token is presented to the facade and a creation beyond the cap is requested
+      THEN the expired token is refused exactly like a revoked one with no background process having run, the over-cap creation is refused rather than shortened, and a token within the cap works until its deadline
+    revision: "0.1.0"
+
+  - id: SVC_GW_0066
+    requirement_ids: ["GW_0066"]
+    title: Rotation changes the secret and nothing else
+    verification: automated-test
+    description: |
+      GIVEN a live scoped token with an expiry
+      WHEN its owner rotates it, another principal attempts to rotate it, and a rotation of a revoked token is attempted
+      THEN the new secret authenticates with the identical name, scopes and expiry deadline and records its predecessor, the old secret is refused immediately, and the foreign and dead-token rotations are refused
+    revision: "0.1.0"
+
+  - id: SVC_GW_0067
+    requirement_ids: ["GW_0067"]
+    title: Every fetch names its token and the token lifecycle is on the ledger
+    verification: automated-test
+    description: |
+      GIVEN a principal with two tokens fetching through the facade
+      WHEN the ledger and the audit export are read
+      THEN each facade entry carries the id of the token that authenticated it, the export rows carry the same attribution, and the tokens' creation, rotation and revocation appear with the acting identity, name and scopes
+    revision: "0.1.0"
