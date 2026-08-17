@@ -28,8 +28,21 @@ public class FetchLogRepository {
     /** As {@link #append}, with the free-text qualifier the entry needs (an override reason). */
     public void append(
             String source, String principal, String marketplace, String event, String ref, String sha, String detail) {
-        jdbc.sql("INSERT INTO fetch_log (ts, source, principal, marketplace, event, ref, sha, detail)"
-                        + " VALUES (:now, :source, :principal, :marketplace, :event, :ref, :sha, :detail)")
+        append(source, principal, marketplace, event, ref, sha, detail, null);
+    }
+
+    /** As {@link #append}, attributing a facade entry to the token that authenticated it (GW_0067). */
+    public void append(
+            String source,
+            String principal,
+            String marketplace,
+            String event,
+            String ref,
+            String sha,
+            String detail,
+            Long tokenId) {
+        jdbc.sql("INSERT INTO fetch_log (ts, source, principal, marketplace, event, ref, sha, detail, token_id)"
+                        + " VALUES (:now, :source, :principal, :marketplace, :event, :ref, :sha, :detail, :tokenId)")
                 .param("now", OffsetDateTime.now())
                 .param("source", source)
                 .param("principal", principal)
@@ -38,6 +51,7 @@ public class FetchLogRepository {
                 .param("ref", ref)
                 .param("sha", sha)
                 .param("detail", detail)
+                .param("tokenId", tokenId)
                 .update();
     }
 
@@ -146,7 +160,10 @@ public class FetchLogRepository {
             String sha,
 
             @Schema(description = "Free-text qualifier, such as the reason given for a vetting override")
-            String detail) {}
+            String detail,
+
+            @Schema(description = "Id of the token that authenticated a facade entry, or null (GW_0067)")
+            Long tokenId) {}
 
     private static AuditEntry map(ResultSet rs, int rowNum) throws SQLException {
         return new AuditEntry(
@@ -160,7 +177,13 @@ public class FetchLogRepository {
                 rs.getString("event"),
                 rs.getString("ref"),
                 rs.getString("sha"),
-                rs.getString("detail"));
+                rs.getString("detail"),
+                tokenId(rs));
+    }
+
+    private static Long tokenId(ResultSet rs) throws SQLException {
+        long value = rs.getLong("token_id");
+        return rs.wasNull() ? null : value;
     }
 
     public record FetchRecord(long id, Instant ts, String source, String principal, String marketplace, String event) {}

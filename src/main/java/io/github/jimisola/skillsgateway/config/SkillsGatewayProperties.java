@@ -16,7 +16,8 @@ public record SkillsGatewayProperties(
         Retention retention,
         Vetting vetting,
         Sync sync,
-        Catalog catalog) {
+        Catalog catalog,
+        Tokens tokens) {
 
     public SkillsGatewayProperties {
         if (dataDir == null) {
@@ -46,7 +47,18 @@ public record SkillsGatewayProperties(
         if (catalog == null) {
             catalog = new Catalog(null, null);
         }
+        if (tokens == null) {
+            tokens = new Tokens(null);
+        }
     }
+
+    /**
+     * Access-token policy (GW_0065).
+     *
+     * @param maxTtl the longest lifetime creation accepts; a request beyond it is refused, never
+     *     silently clamped. Null — the default, for compatibility — accepts tokens with no expiry.
+     */
+    public record Tokens(Duration maxTtl) {}
 
     /**
      * The global virtual catalog (GW_0061–GW_0063). {@code name} is reserved: registration

@@ -21,18 +21,38 @@ be recovered afterwards.
 
 Create a token for the calling principal.
 
-**Body** — `{name}`
+**Body** — `{name, scopes?, expiresAt?}`
 
 ```console
 $ curl -X POST localhost:8080/api/tokens \
-    -H 'Content-Type: application/json' -d '{"name":"my-laptop"}'
+    -H 'Content-Type: application/json' \
+    -d '{"name":"ci-runner","scopes":["acme","catalog"],"expiresAt":"2026-12-31T00:00:00Z"}'
 ```
 
 ```json
-{"id":1,"name":"my-laptop","token":"sgw_...","createdAt":"2026-08-15T09:00:00Z"}
+{"id":1,"name":"ci-runner","token":"sgw_...","createdAt":"2026-08-17T09:00:00Z",
+ "scopes":["acme","catalog"],"expiresAt":"2026-12-31T00:00:00Z","rotatedFrom":null}
 ```
 
-**201.** The `token` field appears in this response and nowhere else, ever.
+`scopes` (GW_0064) lists marketplace names the token may fetch — the
+[virtual catalog](../../guides/virtual-catalog.md)'s name is a valid entry —
+and every entry is validated against the registered marketplaces at creation.
+Empty or omitted grants every marketplace, which is what every pre-scoping
+token meant. An out-of-scope fetch answers exactly like a marketplace that
+does not exist, so a scoped token is not a directory of what else the gateway
+governs.
+
+`expiresAt` (GW_0065): an expired token fails authentication exactly like a
+revoked one, decided by comparing the stamp at authentication time — no
+background process is involved. When
+[`skills-gateway.tokens.max-ttl`](../configuration.md#access-tokens) is set,
+a request beyond the cap (including one with no expiry) is refused, never
+silently shortened.
+
+| Status | Cause |
+| --- | --- |
+| 201 | Issued. The `token` field appears in this response and nowhere else, ever. |
+| 422 | Unknown scope, or lifetime beyond the configured cap. |
 
 ---
 
@@ -42,7 +62,8 @@ List the calling principal's tokens. Never returns the hash, and never returns
 another user's tokens.
 
 ```json
-[{"id":1,"name":"my-laptop","createdAt":"...","revokedAt":null}]
+[{"id":1,"name":"my-laptop","createdAt":"...","revokedAt":null,
+  "scopes":[],"expiresAt":null,"rotatedFrom":null}]
 ```
 
 A non-null `revokedAt` means the token no longer authenticates. Revoked tokens
@@ -61,6 +82,27 @@ rows.
 | --- | --- |
 | 204 | Revoked. |
 | 404 | No such token **owned by the caller**. Another user's token id is indistinguishable from a nonexistent one. |
+
+---
+
+## `POST /tokens/{id}/rotate`
+
+Retire a possibly-exposed secret without renegotiating the grant (GW_0066).
+Issues a fresh secret with the **identical** grant — name, scopes, and the same
+expiry deadline — records which token it replaced (`rotatedFrom`), and revokes
+the old token *before* the new one is issued: a failure between the two steps
+leaves no live secret, never two.
+
+```json
+{"id":7,"name":"ci-runner","token":"sgw_...","createdAt":"...",
+ "scopes":["acme"],"expiresAt":"2026-12-31T00:00:00Z","rotatedFrom":1}
+```
+
+| Status | Cause |
+| --- | --- |
+| 200 | Rotated; the only response carrying the new cleartext. |
+| 404 | No such token **owned by the caller**. |
+| 409 | The token is revoked or expired — a dead grant is not a template for a live one; issue a new token instead. |
 
 ---
 

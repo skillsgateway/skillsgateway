@@ -62,6 +62,7 @@ polling, batch payload, signature, replay — is in
 | `ref` | The ref involved, when there is one. |
 | `sha` | The commit involved, when there is one. |
 | `detail` | Free-text qualifier, when the entry needs one: the vetting chain outcome, a connector's verdict, or the reason a reviewer gave when overriding a blocked outcome. |
+| `tokenId` / `token_id` | Id of the token that authenticated a facade entry (GW_0067); null on admin entries and on entries older than per-token attribution. `GET /api/tokens` gives the owner the id→name mapping. |
 
 ## Events
 

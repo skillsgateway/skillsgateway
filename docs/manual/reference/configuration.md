@@ -12,6 +12,7 @@ Every setting the gateway reads, with its default and what consumes it.
 | [`skills-gateway.retention.*`](#retention) | Snapshot retention policies and the schedules that apply them. **Off by default.** | No — all defaulted. |
 | [`skills-gateway.sync.*`](#upstream-sync) | Upstream sync: the polling sweep's schedule and batch, and the inbound webhook body bound. | No — all defaulted. |
 | [`skills-gateway.catalog.*`](#virtual-catalog) | The global virtual catalog and its reserved name. | No — all defaulted. |
+| [`skills-gateway.tokens.*`](#access-tokens) | Access-token policy: the maximum lifetime creation accepts. | No — defaulted (unlimited). |
 | [`spring.datasource.*`](#datasource) | PostgreSQL connection. Supplied entirely by environment. | **Yes** |
 | [`spring.security.oauth2.client.*`](#oidc-login) | OIDC login for the web surface. | **Yes** |
 | [`management.endpoints.*`](#actuator) | Which actuator endpoints are exposed. | No |
@@ -425,6 +426,30 @@ skills-gateway:
 
 Composition, freshness, and provenance are described in
 [The virtual catalog](../guides/virtual-catalog.md).
+
+---
+
+## Access tokens
+
+Token policy (GW_0065). Java-side default; nothing appears in
+`application.yaml`.
+
+```yaml
+skills-gateway:
+  tokens:
+    # The longest lifetime creation accepts. When set, a request beyond it —
+    # including one with no expiry at all — is refused with 422, never
+    # silently shortened. Unset (the default) accepts tokens that never
+    # expire, which is what every pre-cap deployment had.
+    max-ttl: 90d
+```
+
+| Property | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `skills-gateway.tokens.max-ttl` | duration | unset (unlimited) | Cap on accepted token lifetime; refusal, not clamping. |
+
+Scopes, expiry, and rotation are described in
+[Access tokens](api/tokens.md).
 
 ---
 

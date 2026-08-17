@@ -72,7 +72,11 @@ CREATE TABLE fetch_log (
     -- Free-text qualifier for an entry that needs one: today the vetting chain outcome and
     -- the reason a reviewer gave when overriding it (GW_0043). Its own column rather than an
     -- overloaded `ref`, so the exported ledger schema stays honest for SIEM consumers.
-    detail TEXT
+    detail TEXT,
+    -- Which token authenticated a facade entry (GW_0067); NULL on admin entries and on facade
+    -- entries older than per-token attribution. Deliberately not a foreign key: the ledger is
+    -- append-only history and must outlive any token row.
+    token_id BIGINT
 );
 
 CREATE TABLE access_tokens (
@@ -81,7 +85,16 @@ CREATE TABLE access_tokens (
     name TEXT NOT NULL,
     token_hash TEXT NOT NULL UNIQUE,
     created_at TIMESTAMPTZ NOT NULL,
-    revoked_at TIMESTAMPTZ
+    revoked_at TIMESTAMPTZ,
+    -- Comma-delimited marketplace names the token may fetch (GW_0064); NULL grants every
+    -- marketplace, which is what every pre-scoping token meant. Names cannot contain the
+    -- delimiter (^[a-z0-9][a-z0-9_-]*$).
+    scopes TEXT,
+    -- Expiry is decided by comparing this to now at authentication time (GW_0065): no sweep can
+    -- be late and no scheduler outage can keep a dead token alive. NULL never expires.
+    expires_at TIMESTAMPTZ,
+    -- The token this one replaced via rotation (GW_0066): the lineage an auditor follows.
+    rotated_from BIGINT REFERENCES access_tokens (id)
 );
 
 -- Lifecycle event webhooks (GW_0023..GW_0025).

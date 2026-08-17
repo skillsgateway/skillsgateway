@@ -78,6 +78,15 @@ the web chain, and it is **stateless**:
 - Tokens are `sgw_` + Base64url of 32 random bytes. Only an unsalted SHA-256 hex
   digest is stored, and the cleartext is returned exactly once. Unsalted is
   deliberate — these are high-entropy random tokens, not user-chosen passwords.
+- A token may be **scoped** to named marketplaces (GW_0064) and may **expire**
+  (GW_0065). Both are enforced where they matter: expiry at authentication (an
+  expired token is refused exactly like a revoked one, by comparison, with no
+  sweep), scope in the facade resolver — an out-of-scope request gets the same
+  not-found a nonexistent marketplace gets, so a scoped token cannot probe what
+  else the gateway governs.
+- Every fetch entry on the ledger names the token that authenticated it
+  (GW_0067), not just the principal: a principal with several tokens is several
+  distinct credentials.
 - Receive-pack is disabled by construction, so there is no write path to reject
   at runtime.
 

@@ -92,7 +92,11 @@ class AuthTests extends AbstractGatewayTest {
         assertThat(listBody).doesNotContain(token);
         List<Map<String, Object>> entries = JsonPath.read(listBody, "$[?(@.id == " + id + ")]");
         assertThat(entries).hasSize(1);
-        assertThat(entries.get(0).keySet()).containsExactlyInAnyOrder("id", "name", "createdAt", "revokedAt");
+        // Closed enumeration on purpose: a leaked hash or secret would fail this, and any new
+        // field must be added here deliberately. scopes/expiresAt/rotatedFrom joined in GW_0064-66.
+        assertThat(entries.get(0).keySet())
+                .containsExactlyInAnyOrder(
+                        "id", "name", "createdAt", "revokedAt", "scopes", "expiresAt", "rotatedFrom");
 
         AccessToken stored = tokenService.authenticate(token).orElseThrow();
         assertThat(stored.tokenHash()).isNotEqualTo(token);
