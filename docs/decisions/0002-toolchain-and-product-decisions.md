@@ -66,7 +66,7 @@ discussion, so the scaffold and the upcoming port have one reference.
   `src/main/frontend/`, so the SPA sources sit inside the Maven source tree
   with the rest of the module's sources. The decision itself — single
   repository, Maven-orchestrated SPA build, one deployable — is unchanged.
-- **Maven coordinates:** `io.github.jimisola.skillsgateway:skills-gateway`.
+- **Maven coordinates:** `io.github.jimisola.skillsgateway:skills-gateway`. *(Amended by [ADR 0004](0004-skillsgateway-org-and-coordinates.md): now `dev.skillsgateway:skills-gateway-server`.)*
 
 ## Consequences
 

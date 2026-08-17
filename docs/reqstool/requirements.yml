@@ -4,7 +4,7 @@ metadata:
   urn: skills-gateway
   variant: microservice
   title: Skills Gateway
-  url: https://github.com/jimisola/skills-gateway
+  url: https://github.com/skillsgateway/skillsgateway
 
 requirements:
   - id: GW_0001

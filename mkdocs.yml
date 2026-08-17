@@ -17,9 +17,9 @@ site_description: >-
   Enterprise gateway for git-distributed AI agent skill marketplaces —
   quarantined ingestion, hold-until-approved vetting, a read-only git facade,
   and an append-only audit ledger.
-site_url: https://jimisola.github.io/skills-gateway/
-repo_url: https://github.com/jimisola/skills-gateway
-repo_name: jimisola/skills-gateway
+site_url: https://skillsgateway.github.io/skillsgateway/
+repo_url: https://github.com/skillsgateway/skillsgateway
+repo_name: skillsgateway/skillsgateway
 edit_uri: edit/main/docs/manual/
 copyright: Licensed under the Apache License 2.0
 

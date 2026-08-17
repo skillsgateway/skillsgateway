@@ -75,7 +75,7 @@ skill at all.
 
 The full threat model, including the designed-but-not-yet-built vetting
 connectors and risk tiers, is in
-[`ARCHITECTURE.md`](https://github.com/jimisola/skills-gateway/blob/main/ARCHITECTURE.md);
+[`ARCHITECTURE.md`](https://github.com/skillsgateway/skillsgateway/blob/main/ARCHITECTURE.md);
 the decisions behind the stack are in
 [Architecture decisions](reference/decisions.md).
 
