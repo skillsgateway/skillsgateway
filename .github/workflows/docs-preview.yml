@@ -1,0 +1,85 @@
+name: Docs preview
+
+# The rendered docs site for a PR, before it merges. docs.yml publishes the
+# site for `dev` and for releases, but both are post-merge — prose changes
+# can't be reviewed from a diff, and nothing renders them while the PR is
+# open. ci.yml already runs `mkdocs build --strict` on every PR, so the
+# link/anchor gate exists and doesn't belong here twice; this workflow only
+# packages the built site and links it from the PR.
+on:
+  pull_request:
+    paths:
+      - 'docs/manual/**'
+      - 'docs/requirements.txt'
+      - 'mkdocs.yml'
+      - '.github/workflows/docs-preview.yml'
+
+# Superseded by the next push — a preview of an older commit has no reviewer.
+# Unlike docs.yml's group, which must never cancel: nothing here is deployed.
+concurrency:
+  group: docs-preview-${{ github.event.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    name: Render the docs site
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # The PR comment below. A fork PR's token is read-only whatever this
+      # says, which is what the comment step's own guard is for.
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+
+      - name: Install the documentation toolchain
+        run: pip install -r docs/requirements.txt
+
+      - name: Build (strict)
+        run: mkdocs build --strict
+
+      # Named for the commit so a reviewer can tell which push they
+      # downloaded. The artifact is a zip of the static site; unzip and open
+      # index.html locally to browse it.
+      - name: Upload the site
+        id: upload
+        uses: actions/upload-artifact@v7
+        with:
+          name: skills-gateway-docs-pr${{ github.event.number }}-${{ github.event.pull_request.head.sha }}
+          path: site/
+          if-no-files-found: error
+          retention-days: 14
+
+      # Upserted by marker so a PR carries one comment, not one per push.
+      # Skipped on fork PRs, where the token can't write — the artifact is
+      # still on the run, reachable from the check.
+      - name: Link the preview from the PR
+        if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          URL: ${{ steps.upload.outputs.artifact-url }}
+        run: |
+          marker='<!-- docs-site-preview -->'
+          body="$marker
+          **Docs preview** for \`$(echo "$SHA" | cut -c1-7)\` — [download the rendered site](${URL})
+
+          <sub>Built with \`mkdocs build --strict\` from this PR's docs. Unzip and open \`index.html\`. Kept up to date on each push; expires after 14 days.</sub>"
+
+          id=$(gh api "repos/${REPO}/issues/${PR}/comments" --paginate \
+                 --jq '.[] | select(.body | startswith("<!-- docs-site-preview -->")) | .id' | head -1)
+
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/${REPO}/issues/comments/${id}" -f body="$body" --silent
+          else
+            gh api -X POST "repos/${REPO}/issues/${PR}/comments" -f body="$body" --silent
+          fi
