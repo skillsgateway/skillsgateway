@@ -150,6 +150,23 @@ instead of an HTML login page rendered into a `fetch()`.
     development, logs a loud warning at startup, and must never be set in a
     deployed environment. See [Local development](../guides/local-development.md).
 
+## 4. The inbound webhook — a forge's push event becomes a fetch
+
+`POST /hooks/{marketplace}` is the one endpoint reachable without an OIDC
+session or a PAT, so its authentication is cryptographic and its authority is
+deliberately nil. Authentication: an HMAC-SHA256 signature of the exact raw
+request body (GitHub-compatible `X-Hub-Signature-256`), verified in constant
+time against a per-marketplace secret the gateway generated and returned
+exactly once. Authority: the payload is never read — a valid signature only
+triggers ingestion of the **registered** upstream URL's default branch, which
+lands `held` in quarantine exactly as the polling sweep would have produced.
+
+The worst a forged-but-signed request can cause is therefore a redundant fetch
+of content the gateway already governs; nothing on this path can name a URL, a
+ref, or a commit, and nothing on it can approve or publish. Body size is
+bounded before the HMAC is computed, and requests for marketplaces not in
+webhook mode are refused without revealing why.
+
 ## What is not a boundary yet
 
 There is no role model in the portal. Any authenticated browser session can

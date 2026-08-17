@@ -44,9 +44,12 @@ path from a facade request to the quarantine tree.
 
 ## Stage 1 — ingestion
 
-Ingestion is explicit. There is no upstream watcher in the current scope:
-something outside the gateway — a cron job, a CI schedule, a forge webhook
-calling the endpoint — decides when to look for new commits.
+Ingestion has three triggers, chosen per marketplace as its **sync mode**: an
+operator's explicit call (`on-demand`, the default), the gateway's own polling
+sweep (`scheduled`), or a signed forge push webhook (`webhook`). The trigger is
+the only thing the mode changes — every path below runs identically whatever
+pulled the commit in. See
+[Syncing from upstream automatically](../guides/upstream-sync.md).
 
 It clones the upstream default branch with JGit (the gateway never shells out to
 `git`), resolves the tip commit, and writes it into quarantine as

@@ -14,7 +14,8 @@ public record SkillsGatewayProperties(
         Webhooks webhooks,
         AuditExport auditExport,
         Retention retention,
-        Vetting vetting) {
+        Vetting vetting,
+        Sync sync) {
 
     public SkillsGatewayProperties {
         if (dataDir == null) {
@@ -37,6 +38,40 @@ public record SkillsGatewayProperties(
         }
         if (vetting == null) {
             vetting = new Vetting(null, null, null, null, null);
+        }
+        if (sync == null) {
+            sync = new Sync(null, null, null, null);
+        }
+    }
+
+    /**
+     * Upstream sync (GW_0056–GW_0059). {@code enabled=true} is safe on upgrade: the sweep only
+     * touches marketplaces an operator has explicitly moved to {@code scheduled}, so a default
+     * estate (all {@code on-demand}) sees no behavior change.
+     *
+     * @param enabled whether the scheduled polling sweep runs; the inbound webhook endpoint and
+     *     the mode endpoint work either way
+     * @param pollInterval how often the sweep runs
+     * @param batchSize how many scheduled marketplaces one sweep pass ingests, least recently
+     *     attempted first
+     * @param maxWebhookBodyBytes inbound webhook bodies larger than this are rejected before the
+     *     HMAC is computed, bounding the work an unauthenticated caller can cause
+     */
+    public record Sync(Boolean enabled, Duration pollInterval, Integer batchSize, Long maxWebhookBodyBytes) {
+
+        public Sync {
+            if (enabled == null) {
+                enabled = true;
+            }
+            if (pollInterval == null) {
+                pollInterval = Duration.ofMinutes(10);
+            }
+            if (batchSize == null || batchSize <= 0) {
+                batchSize = 10;
+            }
+            if (maxWebhookBodyBytes == null || maxWebhookBodyBytes <= 0) {
+                maxWebhookBodyBytes = 1024L * 1024L;
+            }
         }
     }
 

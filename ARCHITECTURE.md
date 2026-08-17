@@ -365,7 +365,11 @@ inward.
   resolution and source rewriting, connector framework with automated vetting
   (scanners, LLM review, sandbox), risk tiers, approval workflow with
   semantic diffs, policy-as-code, catalog/portal with request flow, per-team
-  virtual marketplaces, multi-ref publication.
+  virtual marketplaces, multi-ref publication. *Implemented:* per-marketplace
+  upstream sync modes — on-demand, scheduled polling, and HMAC-authenticated
+  forge webhooks, all landing snapshots held behind the unchanged approval
+  gate (GW_0056–GW_0060); webhook payload parsing and a portal surface for
+  sync modes are deferred.
 - **Phase 3 — assurance & scale.** Client telemetry inventory, kill switch
   with fleet force-uninstall, signed attestations, additional tool adapters,
   Artifactory/Nexus catalog federation, OCI re-publication.
