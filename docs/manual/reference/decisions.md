@@ -80,7 +80,7 @@ stay `skills-gateway`. Amends the coordinates item of ADR 0002.
 
 ## Related
 
-- [`ARCHITECTURE.md`](https://github.com/skillsgateway/skillsgateway/blob/main/ARCHITECTURE.md)
+- [Architecture](../architecture.md)
   — the full architectural narrative: threat model, connector-based vetting,
   two-repo promotion, observability and the phase roadmap.
 - [`docs/language-decision.md`](https://github.com/skillsgateway/skillsgateway/blob/main/docs/language-decision.md)
@@ -91,4 +91,5 @@ stay `skills-gateway`. Amends the coordinates item of ADR 0002.
 ## Adding one
 
 New architecture-level choices get a new numbered ADR in `docs/decisions/`,
-referenced from `ARCHITECTURE.md`, and an entry on this page.
+referenced from the [architecture document](../architecture.md), and an entry
+on this page.
