@@ -25,6 +25,7 @@ export type Fetcher = components["schemas"]["Fetcher"];
 export type MarketplaceAdoption = components["schemas"]["MarketplaceAdoption"];
 export type SnapshotAdoption = components["schemas"]["SnapshotAdoption"];
 export type StaleIdentity = components["schemas"]["StaleIdentity"];
+export type Eligibility = components["schemas"]["Eligibility"];
 
 /** Same-origin download of the NDJSON ledger stream; the session cookie is the credential. */
 export const AUDIT_EXPORT_URL = "/api/audit/export";
@@ -177,6 +178,35 @@ export function useSnapshotVetting(snapshotId: number | null) {
     queryFn: () => api<VettingView>(`/api/snapshots/${snapshotId}/vetting`),
     enabled: snapshotId !== null,
   });
+}
+
+/**
+ * Whether a snapshot has cleared the configured cooling-off window, and how long is left if it
+ * has not. The server computes it per request from its own first sighting of the commit, so the
+ * portal never has to reason about upstream timestamps — or about its own clock.
+ *
+ * @Requirements GW_0073
+ */
+export function useSnapshotReleaseAge(snapshotId: number | null) {
+  return useQuery({
+    queryKey: ["snapshot-release-age", snapshotId],
+    queryFn: () => api<Eligibility>(`/api/snapshots/${snapshotId}/release-age`),
+    enabled: snapshotId !== null,
+  });
+}
+
+/**
+ * The remaining wait as a reviewer reads it — `2d 4h`, `45m`. Matches the server's own rendering
+ * of the same duration, so the disabled control and the refusal it prevents say the same thing.
+ */
+export function formatRemaining(seconds: number): string {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (days > 0) return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
+  if (hours > 0) return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+  if (minutes > 0) return `${minutes}m`;
+  return `${Math.max(0, Math.floor(seconds))}s`;
 }
 
 /**

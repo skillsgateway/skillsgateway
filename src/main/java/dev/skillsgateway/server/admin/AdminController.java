@@ -1,6 +1,8 @@
 package dev.skillsgateway.server.admin;
 
 import dev.skillsgateway.server.approval.ApprovalService;
+import dev.skillsgateway.server.approval.ReleaseAgeGate;
+import dev.skillsgateway.server.approval.SnapshotTooYoungException;
 import dev.skillsgateway.server.approval.VettingBlockedException;
 import dev.skillsgateway.server.ingestion.IngestionException;
 import dev.skillsgateway.server.ingestion.IngestionService;
@@ -238,14 +240,23 @@ public class AdminController {
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
     @ApiResponse(
             responseCode = "409",
-            description = "Snapshot is neither held nor revoked, or its effective vetting outcome is blocked")
+            description = "Snapshot is neither held nor revoked, its effective vetting outcome is blocked, or it"
+                    + " has not yet reached the configured minimum release age")
     public Snapshot approve(@PathVariable long id, Authentication authentication) {
         roleService.requireApproverOfSnapshot(authentication, id);
         ApprovalService.Approved approved = approvalService.approve(id, authentication.getName());
         Snapshot snapshot = approved.snapshot();
         String marketplace = marketplaceName(snapshot.marketplaceId());
         waiverService.recordUse(marketplace, snapshot.sha(), authentication.getName(), approved.waiversApplied());
-        auditLogger.record(authentication.getName(), marketplace, "snapshot-approved", snapshot.sha());
+        // The age at approval is on the decision's own ledger entry (GW_0073): what the cooling-off
+        // window was worth for this snapshot is only reconstructible if the entry says how long the
+        // commit had been sitting in quarantine when someone adopted it.
+        auditLogger.record(
+                authentication.getName(),
+                marketplace,
+                "snapshot-approved",
+                snapshot.sha(),
+                "ingestion-age=" + ReleaseAgeGate.format(approved.ingestionAge()));
         emit(
                 WebhookEvent.SNAPSHOT_APPROVED,
                 marketplaceName(snapshot.marketplaceId()),
@@ -307,6 +318,26 @@ public class AdminController {
                         () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "snapshot %d not found".formatted(id)));
     }
 
+    @GetMapping("/snapshots/{id}/release-age")
+    @Requirements({"GW_0073"})
+    @Tag(name = "Snapshots")
+    @Operation(
+            summary = "Minimum release age eligibility",
+            description = "Whether the snapshot has cleared the configured cooling-off window and may be"
+                    + " approved, and when it will if it has not. The age is measured from the instant the"
+                    + " gateway first ingested the commit — never from the commit's own timestamp, which whoever"
+                    + " made the commit controls — and re-ingesting the same commit does not reset it. Computed"
+                    + " on every request, so a snapshot becomes eligible with nothing having had to run in the"
+                    + " background. With the gate off (the default) every snapshot reports eligible.")
+    @ApiResponse(responseCode = "200", description = "Eligibility and the time remaining")
+    @ApiResponse(responseCode = "404", description = "Snapshot not found")
+    public ReleaseAgeGate.Eligibility releaseAge(@PathVariable long id) {
+        return approvalService
+                .releaseAge(id)
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "snapshot %d not found".formatted(id)));
+    }
+
     @GetMapping("/audit")
     @Tag(name = "Audit")
     @Operation(
@@ -359,6 +390,21 @@ public class AdminController {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
         problem.setTitle("Policy rules denied this snapshot");
         problem.setProperty("denials", e.denials());
+        return problem;
+    }
+
+    /**
+     * The cooling-off window (GW_0073). The response says which setting imposed the wait and how
+     * much of it is left, so the reader can tell the two possible answers apart: wait, or change
+     * the configuration — there is deliberately no per-approval override to reach for.
+     */
+    @ExceptionHandler(SnapshotTooYoungException.class)
+    public ProblemDetail snapshotTooYoung(SnapshotTooYoungException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+        problem.setTitle("Snapshot has not reached the minimum release age");
+        problem.setProperty("configKey", ReleaseAgeGate.CONFIG_KEY);
+        problem.setProperty("minimumReleaseAge", e.minimum().toString());
+        problem.setProperty("eligibility", e.eligibility());
         return problem;
     }
 }

@@ -135,7 +135,7 @@ already approved keeps serving.
 | --- | --- |
 | 200 | Decided. |
 | 404 | Unknown snapshot. |
-| 409 | The snapshot is neither `held` nor `revoked`, or its effective vetting outcome is blocked (see `uncoveredFindings`). |
+| 409 | The snapshot is neither `held` nor `revoked`, its effective vetting outcome is blocked (see `uncoveredFindings`), a [policy rule](policy-rules.md) denied it, or it has not yet cleared the [minimum release age](#waiting-out-the-minimum-release-age). |
 
 !!! warning "An approved snapshot cannot be re-decided"
 
@@ -145,6 +145,44 @@ already approved keeps serving.
     To move a marketplace back to earlier content, re-ingest the desired
     upstream commit and approve that snapshot. Approving an older one is not a
     rollback mechanism.
+
+## Waiting out the minimum release age
+
+If your deployment configures
+[`skills-gateway.vetting.minimum-release-age`](../reference/configuration.md#minimum-release-age),
+a snapshot cannot be approved until the gateway has been holding its commit for
+that long. The portal shows the approve control disabled and reading **Eligible
+in 2d 4h**; the API answers `409` with the setting, the current age and the time
+remaining, and `GET /api/snapshots/{id}/release-age` answers the same question
+without attempting a decision.
+
+The window exists for a threat no scanner covers: a compromised release is
+usually noticed by the wider world — often by the project's own community —
+within hours of being pushed, and it is frequently pulled again just as fast.
+Adopting a commit the moment it lands forfeits that detection entirely.
+
+Three things about it are worth knowing before it surprises you.
+
+- **Nothing has to happen for the wait to end.** The age is compared on each
+  approval request, so the snapshot becomes approvable by itself. There is no
+  queue to re-run and no state to clear.
+- **The clock is this gateway's first sighting of the commit**, not the
+  commit's date, and re-ingesting the same commit does not restart it. A
+  backdated or re-pushed commit gets no credit.
+- **There is no override.** The wait applies to a newly registered
+  marketplace's very first snapshot too. Shipping something before the window
+  elapses means changing the configuration, which is a deployment someone
+  reviews — deliberately a heavier act than clicking past a dialog.
+
+Both outcomes are on the [audit ledger](../concepts/snapshots-and-ledger.md): an
+approval that went through records how long the commit had been held
+(`snapshot-approved`, detail `ingestion-age=…`), and one the window turned away
+is its own entry (`snapshot-approval-refused`). What the wait was worth is
+therefore answerable from the ledger alone.
+
+Reviewing is unaffected: the contents, the provenance and the vetting verdicts
+are all readable during the wait, so the waivers a blocked snapshot needs can be
+recorded while the window runs down rather than after it.
 
 ## Re-approving a revoked snapshot
 

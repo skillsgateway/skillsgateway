@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.approval;
 
+import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.catalog.CatalogService;
 import dev.skillsgateway.server.observability.GatewayMetrics;
 import dev.skillsgateway.server.persistence.Marketplace;
@@ -14,6 +15,7 @@ import dev.skillsgateway.server.vetting.WaiverService;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +37,8 @@ public class ApprovalService {
     private final PolicyGate policyGate;
     private final CatalogService catalogService;
     private final GatewayMetrics metrics;
+    private final ReleaseAgeGate releaseAgeGate;
+    private final AdminAuditLogger auditLogger;
 
     public ApprovalService(
             GitStorage storage,
@@ -43,7 +47,9 @@ public class ApprovalService {
             WaiverService waiverService,
             PolicyGate policyGate,
             CatalogService catalogService,
-            GatewayMetrics metrics) {
+            GatewayMetrics metrics,
+            ReleaseAgeGate releaseAgeGate,
+            AdminAuditLogger auditLogger) {
         this.storage = storage;
         this.snapshotRepository = snapshotRepository;
         this.marketplaceRepository = marketplaceRepository;
@@ -51,13 +57,20 @@ public class ApprovalService {
         this.policyGate = policyGate;
         this.catalogService = catalogService;
         this.metrics = metrics;
+        this.releaseAgeGate = releaseAgeGate;
+        this.auditLogger = auditLogger;
     }
 
+    /** Ledger event for an approval the cooling-off window refused (GW_0073). */
+    static final String EVENT_REFUSED = "snapshot-approval-refused";
+
     /**
-     * An approved snapshot together with the waivers that were in force when the gate let it
-     * through — empty for a snapshot the chain cleared on its own merits (GW_0048).
+     * An approved snapshot, the waivers that were in force when the gate let it through — empty for
+     * a snapshot the chain cleared on its own merits (GW_0048) — and how long ago the gateway first
+     * ingested its commit, which the ledger records against the decision (GW_0073).
      */
-    public record Approved(Snapshot snapshot, List<WaiverEvaluation.Suppression> waiversApplied) {}
+    public record Approved(
+            Snapshot snapshot, List<WaiverEvaluation.Suppression> waiversApplied, Duration ingestionAge) {}
 
     /**
      * Records the decision, then copies the pinned commit to published and advances main.
@@ -79,9 +92,19 @@ public class ApprovalService {
      * the revocation must have been waived, or fixed by re-ingestion, before this can succeed — and
      * a new reviewer identity and timestamp recorded by the transition. There is no un-revoke.
      *
+     * <p>Last of the preconditions — after the vetting gate and the policy gate — is the cooling-off
+     * window (GW_0073): a snapshot whose commit the gateway first ingested less than the configured
+     * minimum release age ago is refused, however clear its verdicts and rules are. It goes last
+     * deliberately. All three refusals are disqualifying, but the other two tell a reviewer about
+     * something to do — waive these findings, or take that rule up with whoever owns it — while
+     * this one only says how long to wait, and reporting the actionable ones first is what lets
+     * that work happen <em>during</em> the window rather than after it. Rejection is not gated at
+     * all: refusing to let a reviewer say no to suspicious content quickly would invert the purpose
+     * of the window.
+     *
      * @return the decided snapshot together with the waivers that let it through
      */
-    @Requirements({"GW_0005", "GW_0041", "GW_0050"})
+    @Requirements({"GW_0005", "GW_0041", "GW_0050", "GW_0073"})
     public Approved approve(long snapshotId, String reviewer) {
         // Observation only (GW_0077): timing and outcome around the unchanged decision — a
         // vetting-blocked refusal is the observation's error and still propagates untouched.
@@ -99,6 +122,7 @@ public class ApprovalService {
                 .orElseThrow(
                         () -> new ApprovalException("marketplace %d not found".formatted(current.marketplaceId())));
         List<WaiverEvaluation.Suppression> applied = List.of();
+        Duration ingestionAge = Duration.ZERO;
         if (current.decidable()) {
             WaiverEvaluation.Effect effect = waiverService.evaluate(current);
             if (effect.blocked()) {
@@ -110,6 +134,7 @@ public class ApprovalService {
             // that matches, errors, or cannot see the facts refuses the approval, records the
             // decision on the ledger (GW_0091), and leaves the snapshot held with nothing published.
             policyGate.enforce(current, marketplace, reviewer);
+            ingestionAge = requireReleaseAge(current, marketplace, reviewer);
         }
         Snapshot decided = snapshotRepository.decide(snapshotId, Snapshot.APPROVED, reviewer);
         String sha = decided.sha();
@@ -129,7 +154,40 @@ public class ApprovalService {
         // The published set just grew; the catalog re-derives from it (GW_0062). Never fails the
         // approval that triggered it.
         catalogService.rebuildQuietly();
-        return new Approved(decided, applied);
+        return new Approved(decided, applied, ingestionAge);
+    }
+
+    /**
+     * The cooling-off window (GW_0073), with the refusal appended to the ledger before it is
+     * raised. A blocked approval that left no trace would make the control unauditable: from the
+     * ledger alone one could not tell a window that was never tested from one that turned an
+     * attempt away, which is precisely the event worth seeing twice in a row.
+     *
+     * @return how long ago the commit was first ingested, for the ledger entry of the decision
+     */
+    private Duration requireReleaseAge(Snapshot snapshot, Marketplace marketplace, String reviewer) {
+        try {
+            return releaseAgeGate.require(snapshot);
+        } catch (SnapshotTooYoungException tooYoung) {
+            auditLogger.record(
+                    reviewer,
+                    marketplace.name(),
+                    EVENT_REFUSED,
+                    snapshot.sha(),
+                    "minimum-release-age: age=%s, remaining=%s"
+                            .formatted(
+                                    ReleaseAgeGate.format(Duration.ofSeconds(
+                                            tooYoung.eligibility().ageSeconds())),
+                                    ReleaseAgeGate.format(Duration.ofSeconds(
+                                            tooYoung.eligibility().remainingSeconds()))));
+            throw tooYoung;
+        }
+    }
+
+    /** Whether the snapshot has cleared the cooling-off window, and when it will if it has not. */
+    @Requirements({"GW_0073"})
+    public Optional<ReleaseAgeGate.Eligibility> releaseAge(long snapshotId) {
+        return snapshotRepository.findById(snapshotId).map(releaseAgeGate::evaluate);
     }
 
     public Snapshot reject(long snapshotId, String reviewer) {

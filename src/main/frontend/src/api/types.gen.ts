@@ -584,6 +584,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/snapshots/{id}/release-age": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Minimum release age eligibility
+         * @description Whether the snapshot has cleared the configured cooling-off window and may be approved, and when it will if it has not. The age is measured from the instant the gateway first ingested the commit — never from the commit's own timestamp, which whoever made the commit controls — and re-ingesting the same commit does not reset it. Computed on every request, so a snapshot becomes eligible with nothing having had to run in the background. With the gate off (the default) every snapshot reports eligible.
+         */
+        get: operations["releaseAge"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/snapshots/{id}/provenance": {
         parameters: {
             query?: never;
@@ -1893,6 +1913,41 @@ export interface components {
             /** @description The connectors configured in the chain, in the order they run */
             connectors?: components["schemas"]["ConnectorView"][];
         };
+        /** @description Whether a snapshot has cleared the minimum release age, and when it will if not */
+        Eligibility: {
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            snapshotId?: number;
+            /** @description Whether the snapshot may be approved now; always true when the gate is off */
+            eligible?: boolean;
+            /**
+             * Format: date-time
+             * @description When the gateway first ingested this commit — the age is measured from here, never from the commit's own timestamp
+             */
+            firstIngestedAt?: string;
+            /**
+             * Format: date-time
+             * @description The instant the snapshot becomes approvable; equal to firstIngestedAt when the gate is off
+             */
+            eligibleAt?: string;
+            /**
+             * Format: int64
+             * @description How long ago the gateway first ingested this commit, in seconds
+             */
+            ageSeconds?: number;
+            /**
+             * Format: int64
+             * @description Seconds still to wait; zero when eligible
+             */
+            remainingSeconds?: number;
+            /**
+             * Format: int64
+             * @description The configured minimum release age in seconds; zero when the gate is off
+             */
+            minimumReleaseAgeSeconds?: number;
+        };
         /** @description Provenance of a snapshot: what was served, from where, and who approved it */
         Provenance: {
             /** Format: int64 */
@@ -2732,7 +2787,7 @@ export interface operations {
                     "*/*": components["schemas"]["Snapshot"];
                 };
             };
-            /** @description Snapshot is neither held nor revoked, or its effective vetting outcome is blocked */
+            /** @description Snapshot is neither held nor revoked, its effective vetting outcome is blocked, or it has not yet reached the configured minimum release age */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -3350,6 +3405,37 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["VettingView"];
+                };
+            };
+        };
+    };
+    releaseAge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Eligibility and the time remaining */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Eligibility"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Eligibility"];
                 };
             };
         };

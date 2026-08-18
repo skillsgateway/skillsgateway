@@ -721,7 +721,17 @@ cases:
       THEN the workflow pushes the smoke-tested image to the project's registry namespace with commit-SHA and latest tags on main and a version tag on releases, gates every publish step on push events, holds the permissions publishing and attestation require, surfaces the pushed digest in the job summary, and attests the CycloneDX SBOM against the pushed image after the push
     revision: "0.1.0"
 
-  # SVC_GW_0073 and SVC_GW_0074 are reserved by an in-flight change on another branch.
+  - id: SVC_GW_0073
+    requirement_ids: ["GW_0073"]
+    title: A snapshot younger than the configured age is unapprovable, on the gateway's own clock
+    verification: automated-test
+    description: |
+      GIVEN a gateway configured with a non-zero minimum release age, a second gateway left at the zero default, and the eligibility rule evaluated directly at the boundary instant
+      WHEN a snapshot ingested moments ago is approved, one whose first ingestion is older than the configured age is approved, a snapshot pinned to a commit whose committer date is far older than the configured age but ingested moments ago is approved, the same commit is ingested a second time after its first sighting has aged, a rejection and a revoked snapshot's paths are exercised, and the same operations are performed on the gateway left at the default
+      THEN the young snapshot is refused with a conflict naming the setting, its age and the time remaining while nothing is published and the refusal is on the append-only ledger, the aged snapshot is approved with its age on the ledger, the backdated commit is refused exactly as the young one, re-ingestion leaves the first-sighting instant and therefore the eligibility untouched, rejection is never gated by age, the eligibility report agrees with the gate and is eligible exactly at the boundary instant and not one moment before, and on the default gateway every approval succeeds as it did before the setting existed
+    revision: "0.1.0"
+
+  # SVC_GW_0074 is reserved by an in-flight change on another branch.
 
   - id: SVC_GW_0075
     requirement_ids: ["GW_0075"]

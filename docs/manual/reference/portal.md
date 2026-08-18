@@ -139,6 +139,15 @@ fires immediately and toasts *Snapshot {id} rejected*.
 **Approve** opens the review dialog rather than acting immediately — approve is
 the moment content becomes reachable by clients, so the verdicts come first.
 
+While a snapshot is inside the configured
+[minimum release age](configuration.md#minimum-release-age), the approve control
+is disabled and reads **Eligible in {remaining}** — from
+`GET /api/snapshots/{id}/release-age`, so the portal never computes the deadline
+from the browser's clock. **Reject** stays enabled: rejection is never age-gated.
+With the gate off (the default) the control reads **Approve** as before, and a
+snapshot whose eligibility has not been fetched yet is never disabled on
+suspicion — the server is the gate.
+
 #### Approve dialog
 
 Titled *Approve snapshot {id}*, it renders the [vetting report](#vetting) for
@@ -147,6 +156,10 @@ disabled for as long as the effective outcome is `BLOCKED`; there is no field to
 type past it. The way to enable it is to waive each blocking finding from the
 report itself. The server enforces the same rule independently, with `409`, so
 the disabled button mirrors policy rather than replacing it.
+
+The dialog is also shut by the minimum release age, and says so in its own note:
+that one has no way past it in the portal at all, and needs none — it opens by
+itself at the stated time.
 
 Confirming calls `POST /api/snapshots/{id}/approve` with no body and toasts
 *Snapshot {id} approved*.
