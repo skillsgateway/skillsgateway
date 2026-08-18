@@ -1,3 +1,7 @@
+import { execFileSync } from "node:child_process";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 
 /**
@@ -330,4 +334,55 @@ test("a_revoked_snapshot_shows_its_violation_and_who_had_already_fetched_it", as
   // A revoked snapshot is not re-vetted again — it is not being served — and the way back is a
   // fresh decision on the marketplaces page.
   await expect(page.getByRole("button", { name: /^Re-vet snapshot \d+/ })).toHaveCount(0);
+});
+
+/**
+ * @SVCs SVC_GW_0078
+ */
+test("adoption_page_shows_a_real_facade_fetch_and_its_identity", async ({ page }) => {
+  await login(page, "alice");
+
+  // A marketplace with served content: register, ingest, approve.
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Marketplaces" })
+    .click();
+  const name = uniqueName("adopt");
+  await page.getByRole("button", { name: "Register marketplace" }).click();
+  await page.getByLabel("Name").fill(name);
+  await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
+  await page.getByRole("button", { name: "Register", exact: true }).click();
+  await page.getByRole("button", { name: `Ingest ${name}` }).click();
+  const card = page.locator("[data-slot=card]").filter({ hasText: name });
+  await expect(card.getByText("held", { exact: true })).toBeVisible();
+  await card.getByRole("button", { name: /Approve snapshot \d+/ }).click();
+  await page.getByRole("button", { name: /Confirm approval of snapshot \d+/ }).click();
+  await expect(card.getByText("approved", { exact: true })).toBeVisible();
+
+  // A PAT minted in the portal, then a real `git clone` through the facade with it.
+  await page.getByRole("link", { name: "Access tokens" }).click();
+  const tokenName = uniqueName("adopttoken");
+  await page.getByLabel("Token name").fill(tokenName);
+  await page.getByRole("button", { name: "Create token" }).click();
+  const pat = await page.getByTestId("token-cleartext").textContent();
+  expect(pat).toBeTruthy();
+  await page.getByRole("button", { name: "Done" }).click();
+
+  const base = new URL(process.env.E2E_BASE_URL ?? "http://localhost:8081");
+  const cloneUrl = `http://token:${pat}@${base.host}/git/${name}`;
+  const dest = mkdtempSync(join(tmpdir(), "e2e-adoption-clone-"));
+  execFileSync("git", ["clone", cloneUrl, dest], {
+    env: { ...process.env, GIT_TERMINAL_PROMPT: "0", GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_SYSTEM: "/dev/null" },
+    stdio: "pipe",
+  });
+
+  // The fetch is on the Adoption page: the marketplace's card with its identity counted.
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Adoption" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Adoption" })).toBeVisible();
+  const adoptionCard = page.getByText(name, { exact: true }).first();
+  await expect(adoptionCard).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  // alice fetched once: the card carries one fetch by one identity, on the served tip.
+  const row = page.getByRole("row", { name: /current/ }).filter({ has: page.locator("td") });
+  await expect(row.first()).toBeVisible();
 });

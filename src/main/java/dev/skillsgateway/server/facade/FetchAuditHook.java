@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.facade;
 
+import dev.skillsgateway.server.observability.GatewayMetrics;
 import dev.skillsgateway.server.persistence.AccessToken;
 import dev.skillsgateway.server.persistence.FetchLogRepository;
 import io.github.reqstool.annotations.Requirements;
@@ -12,9 +13,11 @@ import org.springframework.stereotype.Component;
 public class FetchAuditHook {
 
     private final FetchLogRepository fetchLogRepository;
+    private final GatewayMetrics metrics;
 
-    public FetchAuditHook(FetchLogRepository fetchLogRepository) {
+    public FetchAuditHook(FetchLogRepository fetchLogRepository, GatewayMetrics metrics) {
         this.fetchLogRepository = fetchLogRepository;
+        this.metrics = metrics;
     }
 
     /**
@@ -27,6 +30,9 @@ public class FetchAuditHook {
         AccessToken token = currentToken();
         fetchLogRepository.append(
                 source, principal, marketplace, event, ref, sha, null, token == null ? null : token.id());
+        // Counter only (GW_0077), tagged by the closed event vocabulary — never by marketplace,
+        // SHA or principal; those dimensions live in the ledger and the adoption API.
+        metrics.facadeFetch(event);
     }
 
     /** Name of the authenticated principal, or {@code null} when absent or anonymous. */
