@@ -761,6 +761,7 @@ cases:
       GIVEN a marketplace approved in the portal and cloned through the facade with a token minted in the portal
       WHEN the operator opens the Adoption page
       THEN the marketplace's fetch appears in the adoption report with the fetching identity counted, and the page presented its loading-to-loaded transition without an error state
+    revision: "0.1.0"
 
   - id: SVC_GW_0079
     requirement_ids: ["GW_0079"]
