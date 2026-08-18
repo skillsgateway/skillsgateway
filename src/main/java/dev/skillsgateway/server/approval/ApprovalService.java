@@ -7,6 +7,7 @@ import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotNotFoundException;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
+import dev.skillsgateway.server.policy.PolicyGate;
 import dev.skillsgateway.server.storage.GitStorage;
 import dev.skillsgateway.server.vetting.WaiverEvaluation;
 import dev.skillsgateway.server.vetting.WaiverService;
@@ -31,6 +32,7 @@ public class ApprovalService {
     private final SnapshotRepository snapshotRepository;
     private final MarketplaceRepository marketplaceRepository;
     private final WaiverService waiverService;
+    private final PolicyGate policyGate;
     private final CatalogService catalogService;
     private final GatewayMetrics metrics;
 
@@ -39,12 +41,14 @@ public class ApprovalService {
             SnapshotRepository snapshotRepository,
             MarketplaceRepository marketplaceRepository,
             WaiverService waiverService,
+            PolicyGate policyGate,
             CatalogService catalogService,
             GatewayMetrics metrics) {
         this.storage = storage;
         this.snapshotRepository = snapshotRepository;
         this.marketplaceRepository = marketplaceRepository;
         this.waiverService = waiverService;
+        this.policyGate = policyGate;
         this.catalogService = catalogService;
         this.metrics = metrics;
     }
@@ -90,6 +94,10 @@ public class ApprovalService {
         // be wrong.
         Snapshot current =
                 snapshotRepository.findById(snapshotId).orElseThrow(() -> new SnapshotNotFoundException(snapshotId));
+        Marketplace marketplace = marketplaceRepository
+                .findById(current.marketplaceId())
+                .orElseThrow(
+                        () -> new ApprovalException("marketplace %d not found".formatted(current.marketplaceId())));
         List<WaiverEvaluation.Suppression> applied = List.of();
         if (current.decidable()) {
             WaiverEvaluation.Effect effect = waiverService.evaluate(current);
@@ -97,12 +105,13 @@ public class ApprovalService {
                 throw new VettingBlockedException(snapshotId, effect.blockingConnectors(), effect.uncovered());
             }
             applied = effect.suppressions();
+            // The policy gate (GW_0090) comes after vetting and before the state transition: every
+            // enabled deny rule is evaluated over facts built at this instant, fail-closed — a rule
+            // that matches, errors, or cannot see the facts refuses the approval, records the
+            // decision on the ledger (GW_0091), and leaves the snapshot held with nothing published.
+            policyGate.enforce(current, marketplace, reviewer);
         }
         Snapshot decided = snapshotRepository.decide(snapshotId, Snapshot.APPROVED, reviewer);
-        Marketplace marketplace = marketplaceRepository
-                .findById(decided.marketplaceId())
-                .orElseThrow(
-                        () -> new ApprovalException("marketplace %d not found".formatted(decided.marketplaceId())));
         String sha = decided.sha();
         try (Repository quarantine = storage.quarantine(marketplace.name());
                 Repository published = storage.published(marketplace.name());

@@ -698,3 +698,35 @@ requirements:
     rationale: The filter is a membership test against a closed vocabulary the server owns and already rejects violations of, so the cost of a text box is not a wrong filter but an unusable form — the vocabulary can only be learned by guessing and reading the refusal, which is precisely the interaction the portal's disabled-until-valid rule exists to forbid. Serving the vocabulary lets the client mirror the server exactly, keeps the portal correct as the event set grows, and keeps the export event out of lifecycle subscriptions by construction rather than by comment.
     categories: ["functional-suitability", "interaction-capability"]
     revision: 0.1.0
+
+  - id: GW_0089
+    title: CEL policy deny rules as managed, declarable estate objects
+    significance: shall
+    description: The system shall manage named policy deny rules — each a name, a description, a CEL expression and an enabled flag — through an administrative API restricted to admins for mutation and to auditors and admins for reading, shall parse and type-check every submitted expression against the documented evaluation variables and refuse with a validation error any expression that does not compile to a boolean so that a non-compiling expression is never stored, shall refuse a duplicate rule name, shall append every rule creation, update and deletion to the append-only ledger with the acting identity, and shall accept declared policy rules in the declarative estate configuration reconciled additively and idempotently through the same validated, audited path as the API with a non-compiling declared expression isolated as an entry failure.
+    rationale: A prohibition that lives in reviewers' heads is enforced unevenly and leaves no record, so rules must be data with an audited lifecycle; compiling at write time moves the failure to the operator who can fix it instead of the reviewer who cannot, and joining the declarative estate keeps a GitOps deployment able to define its whole policy surface as code without weakening the additive-only reconciliation contract.
+    categories: ["security", "flexibility"]
+    revision: 0.1.0
+
+  - id: GW_0090
+    title: Fail-closed CEL policy gate at approval
+    significance: shall
+    description: The system shall evaluate every enabled policy rule at the moment an approval is requested — after the vetting gate and before any state transition — over the snapshot's facts comprising its metadata, its file inventory, and its plugin and skill inventory including each skill's declared tools parsed from SKILL.md frontmatter, shall refuse the approval when any enabled rule evaluates to true, when any enabled rule fails to evaluate, or when the facts cannot be built — including malformed skill frontmatter and a file inventory exceeding its bound — naming every deciding rule in the refusal, shall leave a refused snapshot held and publish nothing, shall never let a disabled rule decide, and shall bound evaluation so that no expression or content can make the gate run unbounded.
+    rationale: A deny rule is a standing organizational decision, so it must gate the decision moment itself rather than only content ingested after the rule existed; every error path must deny because an attacker who can provoke an evaluation error — hostile frontmatter, hostile content shape — would otherwise be switching the rule off, which is precisely the fail-open this gate exists to prevent, and the deliberate cost that a broken rule blocks approvals until fixed or disabled is made bearable by naming the rule in the refusal.
+    categories: ["security", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_0091
+    title: Policy decisions recorded in provenance
+    significance: shall
+    description: The system shall append, for every approval refused by the policy gate, one entry per deciding rule to the append-only ledger naming the rule, the snapshot's commit SHA, the marketplace, the acting reviewer, and whether the rule matched or failed to evaluate, so that an auditor can answer from the ledger alone why an approval was refused and which rule decided it.
+    rationale: Rules that decide invisibly cannot be audited, contested or tuned; the append-only ledger is the product's single provenance surface, and recording the deciding rule with its outcome distinguishes a policy match from a broken rule — the difference between "this content is prohibited" and "this rule needs fixing".
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0092
+    title: Read-only policy rule playground
+    significance: shall
+    description: The system shall evaluate, for callers permitted to approve the named snapshot, an arbitrary submitted CEL expression against a real snapshot's facts and answer whether it matched or why it failed to compile or evaluate, shall persist nothing, append nothing to the ledger and change no snapshot, rule or served state in doing so — on success and on every error path alike — and shall never echo snapshot content in the answer beyond the match outcome and the error description.
+    rationale: The safe way to author an enforcing expression is to test it against the content it will judge before it can block anything, and the playground can only be trusted for that if it is provably inert — a playground that wrote state or leaked quarantined content would be a second, unaudited surface into the very content the gate quarantines.
+    categories: ["security", "interaction-capability"]
+    revision: 0.1.0

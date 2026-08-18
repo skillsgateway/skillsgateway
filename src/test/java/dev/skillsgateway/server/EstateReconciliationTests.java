@@ -12,6 +12,7 @@ import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredAuditSink;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredGrant;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredMarketplace;
+import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredPolicyRule;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredWebhook;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.Estate;
 import dev.skillsgateway.server.estate.EstateReconciler;
@@ -21,6 +22,8 @@ import dev.skillsgateway.server.persistence.AuditSinkRepository;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.WebhookSubscriber;
 import dev.skillsgateway.server.persistence.WebhookSubscriberRepository;
+import dev.skillsgateway.server.policy.PolicyRule;
+import dev.skillsgateway.server.policy.PolicyRuleService;
 import dev.skillsgateway.server.roles.RoleGrant;
 import dev.skillsgateway.server.roles.RoleGrantRepository;
 import dev.skillsgateway.server.roles.RoleService;
@@ -61,7 +64,11 @@ import org.springframework.test.context.TestPropertySource;
             "skills-gateway.estate.audit-sinks[0].name=estate-siem",
             "skills-gateway.estate.audit-sinks[0].url=https://siem.invalid/ingest",
             "skills-gateway.estate.audit-sinks[0].secret=sink-secret-0123456789abcdef",
-            "skills-gateway.estate.audit-sinks[0].batch-size=100"
+            "skills-gateway.estate.audit-sinks[0].batch-size=100",
+            "skills-gateway.estate.policy-rules[0].name=estate-no-shell",
+            "skills-gateway.estate.policy-rules[0].description=deny skills declaring shell tools",
+            "skills-gateway.estate.policy-rules[0].expression=skills.exists(s, s.tools.exists(t,"
+                    + " t.startsWith(\"Bash\"))) && snapshot.marketplace == \"estate-alpha\""
         })
 class EstateReconciliationTests extends AbstractGatewayTest {
 
@@ -88,6 +95,9 @@ class EstateReconciliationTests extends AbstractGatewayTest {
 
     @Autowired
     private AuditSinkRepository sinkRepository;
+
+    @Autowired
+    private PolicyRuleService policyRuleService;
 
     @Test
     @SVCs({"SVC_GW_0083"})
@@ -125,6 +135,14 @@ class EstateReconciliationTests extends AbstractGatewayTest {
                         .isEqualTo("principal=estate-approver role=approver"));
         assertThat(ledger("webhook-subscriber-created", EstateReconciler.ACTOR)).isNotEmpty();
         assertThat(ledger("audit-sink-created", EstateReconciler.ACTOR)).isNotEmpty();
+
+        // The declared policy rule was created through the compiled, audited path and is enabled.
+        PolicyRule declaredRule = policyRuleService.find("estate-no-shell").orElseThrow();
+        assertThat(declaredRule.enabled()).isTrue();
+        assertThat(declaredRule.createdBy()).isEqualTo(EstateReconciler.ACTOR);
+        assertThat(ledger("policy-rule-created", EstateReconciler.ACTOR))
+                .anySatisfy(
+                        entry -> assertThat(String.valueOf(entry.get("detail"))).contains("rule=estate-no-shell"));
         // (The startup run's own report — trigger and counts — is asserted in
         // EstateStartupFailureTests, whose context runs nothing after startup; here later tests
         // legitimately overwrite the in-memory last run.)
@@ -143,7 +161,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
         assertThat(report.created()).isZero();
         assertThat(report.updated()).isZero();
         assertThat(report.failed()).isZero();
-        assertThat(report.unchanged()).isEqualTo(5);
+        assertThat(report.unchanged()).isEqualTo(6);
         assertThat(fetchLogRepository.maxId())
                 .as("a no-op reconcile appends nothing to the ledger")
                 .isEqualTo(ledgerHead);
@@ -189,6 +207,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
                         new DeclaredMarketplace(drift, "https://example.invalid/other.git", null),
                         new DeclaredMarketplace("estate-webhookmode", "https://example.invalid/wh.git", "webhook"),
                         new DeclaredMarketplace(fresh, "https://example.invalid/fresh.git", "scheduled")),
+                null,
                 null,
                 null,
                 null);
@@ -243,6 +262,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
                         new DeclaredGrant("estate-late", "approver", apiSide),
                         new DeclaredGrant("estate-orphan", "approver", "estate-no-such-marketplace")),
                 null,
+                null,
                 null);
 
         EstateReconciliation report = reconciler.reconcile(estate, "api");
@@ -266,7 +286,8 @@ class EstateReconciliationTests extends AbstractGatewayTest {
                 null,
                 null,
                 List.of(new DeclaredWebhook("estate-rotate", "https://rotate.invalid/hook", null, first)),
-                List.of(new DeclaredAuditSink("estate-rotate-sink", "https://rotate.invalid/sink", first, 5L, 100)));
+                List.of(new DeclaredAuditSink("estate-rotate-sink", "https://rotate.invalid/sink", first, 5L, 100)),
+                null);
         reconciler.reconcile(v1, "api");
         WebhookSubscriber hook =
                 subscriberRepository.findByName("estate-rotate").orElseThrow();
@@ -279,7 +300,8 @@ class EstateReconciliationTests extends AbstractGatewayTest {
                 null,
                 null,
                 List.of(new DeclaredWebhook("estate-rotate", "https://rotate.invalid/hook", null, second)),
-                List.of(new DeclaredAuditSink("estate-rotate-sink", "https://rotate.invalid/sink", second, 999L, 200)));
+                List.of(new DeclaredAuditSink("estate-rotate-sink", "https://rotate.invalid/sink", second, 999L, 200)),
+                null);
         EstateReconciliation rotated = reconciler.reconcile(v2, "api");
         assertThat(rotated.updated()).isEqualTo(2);
         assertThat(subscriberRepository
@@ -313,7 +335,8 @@ class EstateReconciliationTests extends AbstractGatewayTest {
                 List.of(
                         new DeclaredWebhook("estate-weak", "https://rotate.invalid/hook", null, " "),
                         new DeclaredWebhook("estate-short", "https://rotate.invalid/hook", null, "tooshort")),
-                List.of(new DeclaredAuditSink("estate-weak-sink", "https://rotate.invalid/sink", "short", null, null)));
+                List.of(new DeclaredAuditSink("estate-weak-sink", "https://rotate.invalid/sink", "short", null, null)),
+                null);
         EstateReconciliation refused = reconciler.reconcile(weak, "api");
         assertThat(refused.failed()).isEqualTo(3);
         assertThat(subscriberRepository.findByName("estate-weak")).isEmpty();
@@ -342,6 +365,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
                         new DeclaredMarketplace(good, "https://example.invalid/good.git", null)),
                 null,
                 null,
+                null,
                 null);
         EstateReconciliation report = reconciler.reconcile(estate, "api");
         assertThat(report.failed()).isEqualTo(1);
@@ -359,6 +383,56 @@ class EstateReconciliationTests extends AbstractGatewayTest {
         mockMvc.perform(get("/api/estate").with(mallory)).andExpect(status().isForbidden());
         mockMvc.perform(post("/api/estate/reconcile").with(auditor)).andExpect(status().isForbidden());
         mockMvc.perform(post("/api/estate/reconcile").with(mallory)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @SVCs({"SVC_GW_0089"})
+    void declared_policy_rules_reconcile_through_the_compiled_audited_path() {
+        String fresh = uniqueName("estate-rule");
+        String broken = uniqueName("estate-rule-broken");
+        Estate estate = new Estate(
+                null,
+                null,
+                null,
+                null,
+                List.of(
+                        new DeclaredPolicyRule(fresh, "fixture", "snapshot.marketplace == \"nowhere\"", null),
+                        new DeclaredPolicyRule(broken, "fixture", "skills.exists(s,", null)));
+
+        EstateReconciliation report = reconciler.reconcile(estate, "api");
+        assertThat(actionOf(report, fresh)).isEqualTo("created");
+        assertThat(actionOf(report, broken)).isEqualTo("failed");
+        assertThat(entryOf(report, broken).detail()).contains("compile");
+        assertThat(policyRuleService.find(fresh)).isPresent();
+        assertThat(policyRuleService.find(broken))
+                .as("a non-compiling declared expression is never stored")
+                .isEmpty();
+
+        // Converged: the identical declaration writes nothing.
+        Estate converged = new Estate(
+                null,
+                null,
+                null,
+                null,
+                List.of(new DeclaredPolicyRule(fresh, "fixture", "snapshot.marketplace == \"nowhere\"", null)));
+        EstateReconciliation again = reconciler.reconcile(converged, "api");
+        assertThat(actionOf(again, fresh)).isEqualTo("unchanged");
+
+        // Drift converges through the audited update path.
+        Estate drifted = new Estate(
+                null,
+                null,
+                null,
+                null,
+                List.of(new DeclaredPolicyRule(fresh, "fixture", "snapshot.marketplace == \"elsewhere\"", false)));
+        EstateReconciliation updated = reconciler.reconcile(drifted, "api");
+        assertThat(actionOf(updated, fresh)).isEqualTo("updated");
+        PolicyRule stored = policyRuleService.find(fresh).orElseThrow();
+        assertThat(stored.expression()).isEqualTo("snapshot.marketplace == \"elsewhere\"");
+        assertThat(stored.enabled()).isFalse();
+        assertThat(ledger("policy-rule-updated", EstateReconciler.ACTOR))
+                .anySatisfy(
+                        entry -> assertThat(String.valueOf(entry.get("detail"))).contains("rule=" + fresh));
     }
 
     // ---------------------------------------------------------------- helpers

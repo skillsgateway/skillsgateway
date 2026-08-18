@@ -6,6 +6,7 @@ import dev.skillsgateway.server.audit.AuditExportService;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredAuditSink;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredGrant;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredMarketplace;
+import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredPolicyRule;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredWebhook;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.Estate;
 import dev.skillsgateway.server.estate.EstateReconciliation.Entry;
@@ -14,6 +15,8 @@ import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.WebhookSubscriber;
 import dev.skillsgateway.server.persistence.WebhookSubscriberRepository;
+import dev.skillsgateway.server.policy.PolicyRule;
+import dev.skillsgateway.server.policy.PolicyRuleService;
 import dev.skillsgateway.server.roles.RoleService;
 import dev.skillsgateway.server.sync.SyncService;
 import dev.skillsgateway.server.webhook.WebhookService;
@@ -61,6 +64,7 @@ public class EstateReconciler {
     private final WebhookService webhookService;
     private final WebhookSubscriberRepository subscriberRepository;
     private final AuditExportService auditExportService;
+    private final PolicyRuleService policyRuleService;
     private final AdminAuditLogger auditLogger;
     private final AtomicReference<EstateReconciliation> lastRun = new AtomicReference<>();
 
@@ -72,6 +76,7 @@ public class EstateReconciler {
             WebhookService webhookService,
             WebhookSubscriberRepository subscriberRepository,
             AuditExportService auditExportService,
+            PolicyRuleService policyRuleService,
             AdminAuditLogger auditLogger) {
         this.registrationService = registrationService;
         this.marketplaceRepository = marketplaceRepository;
@@ -80,6 +85,7 @@ public class EstateReconciler {
         this.webhookService = webhookService;
         this.subscriberRepository = subscriberRepository;
         this.auditExportService = auditExportService;
+        this.policyRuleService = policyRuleService;
         this.auditLogger = auditLogger;
     }
 
@@ -107,6 +113,9 @@ public class EstateReconciler {
         }
         for (DeclaredAuditSink declared : estate.auditSinks()) {
             entries.add(isolated("audit-sink", declared.name(), () -> reconcileSink(declared)));
+        }
+        for (DeclaredPolicyRule declared : estate.policyRules()) {
+            entries.add(isolated("policy-rule", declared.name(), () -> reconcilePolicyRule(declared)));
         }
         EstateReconciliation run = EstateReconciliation.of(trigger, entries);
         lastRun.set(run);
@@ -292,6 +301,38 @@ public class EstateReconciler {
         String detail = "changed=" + String.join(",", changes);
         auditLogger.record(ACTOR, NO_MARKETPLACE, "audit-sink-updated", null, detail);
         return Entry.updated("audit-sink", declared.name(), detail);
+    }
+
+    /**
+     * A declared policy rule goes through the same compiled, audited lifecycle path as the policy
+     * API (GW_0089): an expression that does not compile to a boolean is an isolated entry
+     * failure, an identical stored rule converges with zero writes, and drift in expression,
+     * description or the enabled flag is an update through the service — never a direct write.
+     */
+    @Requirements({"GW_0089"})
+    private Entry reconcilePolicyRule(DeclaredPolicyRule declared) {
+        boolean enabled = declared.enabled() == null || declared.enabled();
+        Optional<PolicyRule> existing = policyRuleService.find(declared.name());
+        if (existing.isEmpty()) {
+            policyRuleService.create(declared.name(), declared.description(), declared.expression(), enabled, ACTOR);
+            return Entry.created("policy-rule", declared.name(), null);
+        }
+        PolicyRule stored = existing.get();
+        List<String> changes = new ArrayList<>();
+        if (!Objects.equals(stored.expression(), declared.expression())) {
+            changes.add("expression");
+        }
+        if (!Objects.equals(stored.description(), declared.description())) {
+            changes.add("description");
+        }
+        if (stored.enabled() != enabled) {
+            changes.add("enabled");
+        }
+        if (changes.isEmpty()) {
+            return Entry.unchanged("policy-rule", declared.name());
+        }
+        policyRuleService.update(declared.name(), declared.description(), declared.expression(), enabled, ACTOR);
+        return Entry.updated("policy-rule", declared.name(), "changed=" + String.join(",", changes));
     }
 
     /** A blank or trivially short HMAC key would silently weaken every signature (GW_0086). */

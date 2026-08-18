@@ -37,7 +37,7 @@ public record EstateReconciliation(
     public record Entry(
             @Schema(
                     description = "The kind of declared object",
-                    allowableValues = {"marketplace", "grant", "webhook", "audit-sink"})
+                    allowableValues = {"marketplace", "grant", "webhook", "audit-sink", "policy-rule"})
             String kind,
 
             @Schema(description = "The declared name (for a grant: principal/role/marketplace)")

@@ -80,6 +80,14 @@ a narrower meaning here.
 :   The credential git clients authenticate with — `sgw_` plus 32 random bytes,
     stored only as a SHA-256 digest, shown exactly once.
 
+**Policy rule**
+:   A named [CEL deny expression](../guides/policy-rules.md) over a snapshot's
+    facts, compiled to a boolean at write time and evaluated fail-closed at
+    approval time. A matching or erroring enabled rule refuses the approval;
+    the deciding rule lands on the ledger as `policy-denied`. There is no
+    per-snapshot override — the exception path is editing or disabling the
+    rule, audited.
+
 **Provenance**
 :   The record of where a snapshot came from and who decided on it: marketplace,
     upstream URL, upstream SHA, state, ingestion time, deciding principal and

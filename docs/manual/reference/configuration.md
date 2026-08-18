@@ -486,8 +486,9 @@ API in [Roles](api/roles.md).
 
 ## Declarative estate
 
-The estate defined as configuration (GW_0083–GW_0087): marketplaces, role
-grants, webhook subscribers and audit export sinks, reconciled at startup —
+The estate defined as configuration (GW_0083–GW_0087, GW_0089): marketplaces,
+role grants, webhook subscribers, audit export sinks and policy deny rules,
+reconciled at startup —
 after schema migration, before the web surface serves — and on demand via
 [`POST /api/estate/reconcile`](api/estate.md). Empty by default; an empty
 declaration reconciles nothing.
@@ -545,6 +546,15 @@ skills-gateway:
         secret: ${SGW_ESTATE_SIEM_SECRET}
         after: 0          # cursor seed — applied at creation ONLY
         batch-size: 500
+
+    # CEL policy deny rules, through the same compiled, audited path as
+    # POST /api/policy/rules: an expression that does not compile to a
+    # boolean is an isolated entry failure, never a stored rule.
+    policy-rules:
+      - name: no-shell-tools
+        description: deny skills declaring shell tools
+        expression: 'skills.exists(s, s.tools.exists(t, t.startsWith("Bash")))'
+        # enabled defaults to true: a declared rule is declared to enforce
 ```
 
 | Property | Type | Default | Notes |
@@ -559,6 +569,10 @@ skills-gateway:
 | `skills-gateway.estate.audit-sinks` | list | `[]` | Each entry: `name`, `url`, `secret`, optional `after`, optional `batch-size`. |
 | `skills-gateway.estate.audit-sinks[].after` | long | `0` | Seeds the ledger cursor **at creation only**; never re-applied to an existing sink. |
 | `skills-gateway.estate.audit-sinks[].batch-size` | int | audit-export default | Converged when set; unset never touches the stored value. |
+| `skills-gateway.estate.policy-rules` | list | `[]` | Each entry: `name`, optional `description`, `expression`, optional `enabled`. See [Policy deny rules](../guides/policy-rules.md). |
+| `skills-gateway.estate.policy-rules[].name` | string | — | Same rules as the API: `^[a-z0-9][a-z0-9_-]*$`, at most 100 characters. |
+| `skills-gateway.estate.policy-rules[].expression` | string | — | CEL over the policy variables; compiled to a boolean at reconcile time — a non-compiling expression is an isolated entry failure. |
+| `skills-gateway.estate.policy-rules[].enabled` | boolean | `true` | Enabled rules gate every approval fail-closed; description, expression and this flag are converged on drift. |
 
 !!! warning "Declared secrets are sensitive property values"
 
