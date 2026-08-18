@@ -55,6 +55,12 @@ generated annotation files.
 - Risk-scaled enforcement: changes touching trust boundaries (facade auth,
   `ApprovalService`, registration allowlist) require adversarial/negative tests
   and the `.claude/skills/old-coder` discipline, not just happy-path coverage.
+- Declarative estate configuration (#65) and IdP group-to-role mapping (#66)
+  are continuous obligations, not one-shot features: any change that adds
+  API-managed runtime state (a new estate object type, a new grantable role)
+  must extend `skills-gateway.estate.*` — and keep group-mapping compatibility
+  — **in the same PR**, or state in its design why the object is deliberately
+  API-only (as PATs are).
 - Conventional Commits with DCO sign-off (`git commit -s`); branches
   `<type>/<kebab-description>`; PR titles are conventional commits (squash).
 - Work on branches, open PRs; merging is done manually by the owner.
