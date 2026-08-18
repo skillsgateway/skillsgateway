@@ -352,6 +352,9 @@ export const handlers = [
   http.get("/api/audit/sinks", () => HttpResponse.json<Schemas["SinkView"][]>([auditSink])),
   http.post("/api/audit/sinks", () => HttpResponse.json(createdAuditSink, { status: 201 })),
   http.get("/api/webhooks", () => HttpResponse.json<Schemas["SubscriberView"][]>([subscriber])),
+  http.get("/api/webhooks/events", () =>
+    HttpResponse.json(["snapshot.ingested", "snapshot.approved", "snapshot.rejected", "snapshot.revoked"]),
+  ),
   http.get("/api/webhooks/deliveries", () => HttpResponse.json<Schemas["WebhookDelivery"][]>([delivery])),
   http.post("/api/webhooks", () => HttpResponse.json(createdSubscriber, { status: 201 })),
 ];

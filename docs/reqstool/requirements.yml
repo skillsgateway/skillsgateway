@@ -690,3 +690,11 @@ requirements:
     rationale: A gateway's job is serving already-approved content, so a typo in a declaration must never take a working estate down in a crash loop — but a declaration that cannot converge is drift an operator has to see, so the failure is loud on every run in the ledger and the report rather than swallowed; the trigger is an administrative mutation like any other and is gated and recorded as one.
     categories: ["reliability", "security"]
     revision: 0.1.0
+
+  - id: GW_0088
+    title: Served webhook event registry
+    significance: shall
+    description: The system shall answer, read-only and without recording anything, the registry of snapshot lifecycle event names a webhook subscriber may filter on — exactly the set the dispatcher can emit, excluding the audit export event that only an export sink provisions — restricted to callers permitted to read webhook administration, and the system's portal shall compose a subscriber's event filter by selection from that served registry rather than free text, offering selection of every event at once and a type-ahead narrowing of the list, submitting the existing wire format unchanged, and shall mark a stored filter naming an event the registry does not contain.
+    rationale: The filter is a membership test against a closed vocabulary the server owns and already rejects violations of, so the cost of a text box is not a wrong filter but an unusable form — the vocabulary can only be learned by guessing and reading the refusal, which is precisely the interaction the portal's disabled-until-valid rule exists to forbid. Serving the vocabulary lets the client mirror the server exactly, keeps the portal correct as the event set grows, and keeps the export event out of lifecycle subscriptions by construction rather than by comment.
+    categories: ["functional-suitability", "interaction-capability"]
+    revision: 0.1.0

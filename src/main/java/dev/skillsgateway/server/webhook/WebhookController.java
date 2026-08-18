@@ -106,6 +106,24 @@ public class WebhookController {
                 .toList();
     }
 
+    /**
+     * The filter vocabulary, served so the portal can offer it instead of asking an operator to
+     * spell it. {@link WebhookEvent#AUDIT_EXPORT} is absent by construction: it is not in
+     * {@code ALL}, and subscribing to it is not how an export sink is provisioned.
+     */
+    @GetMapping("/events")
+    @Requirements({"GW_0088"})
+    @Tag(name = "Webhooks")
+    @Operation(
+            summary = "List the subscribable lifecycle events",
+            description = "Every snapshot lifecycle event a subscriber may filter on. Read-only, records"
+                    + " nothing. The audit export event is not subscribable and never appears here.")
+    @ApiResponse(responseCode = "200", description = "The event registry")
+    public List<String> events(Authentication authentication) {
+        roleService.requireAuditor(authentication);
+        return WebhookEvent.ALL;
+    }
+
     @DeleteMapping("/{id}")
     @Tag(name = "Webhooks")
     @Operation(
