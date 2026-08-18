@@ -1602,6 +1602,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#preview-pane" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Preview pane
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set-up-a-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Set up a client
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#vetting" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2055,6 +2077,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#preview-pane" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Preview pane
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set-up-a-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Set up a client
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#vetting" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2358,10 +2402,15 @@ identity provider.</p>
 <li>Timestamps render as raw ISO-8601 strings.</li>
 </ul>
 <h2 id="authorization">Authorization<a class="headerlink" href="#authorization" title="Permanent link">&para;</a></h2>
-<p>There is <strong>no role model</strong>. Any authenticated session can register
-marketplaces, ingest, approve and reject.</p>
-<p>The single exception is access tokens, which are scoped per principal
-server-side: you only ever see and revoke your own.</p>
+<p>With role enforcement at its default (off), any authenticated session can
+register marketplaces, ingest, approve and reject. With
+<code>skills-gateway.roles.enabled=true</code> the server refuses mutations, the audit
+surface and the <a href="#preview-pane">snapshot preview reads</a> to sessions without an
+applicable role — see
+<a href="../../guides/delegated-administration/">Delegated administration</a>; the portal
+surfaces those refusals as errors rather than hiding controls.</p>
+<p>Access tokens are scoped per principal server-side regardless: you only ever
+see and revoke your own.</p>
 <hr />
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
 <p><strong>Route:</strong> <code>/</code> · <strong>Heading:</strong> Gateway Overview</p>
@@ -2524,6 +2573,46 @@ one block per declared plugin: name, <code>source</code>, optional description, 
 badge per skill found under it. Plugins with no skills show "no skills found".</p>
 <p>This is the review surface, and it works on <code>held</code> snapshots — inspecting a
 snapshot must not require serving it.</p>
+<h3 id="preview-pane">Preview pane<a class="headerlink" href="#preview-pane" title="Permanent link">&para;</a></h3>
+<p>The <strong>Preview files</strong> toggle on each snapshot card opens the reviewer preview
+pane: the pinned commit's actual content, not a summary of it.</p>
+<ul>
+<li><strong>Files</strong>: a scrollable file tree (path and size, from
+  <code>GET /api/snapshots/{id}/files</code>) beside a viewer for the selected file
+  (<code>GET /api/snapshots/{id}/file?path=</code>). A skill's <code>SKILL.md</code> is opened
+  automatically. Markdown renders inertly — there is no HTML pipeline at all,
+  so HTML embedded in a hostile file appears as visible text and links are
+  shown but never navigable. Other text renders preformatted; a binary file is
+  described ("Binary file (N bytes) — content is not rendered."); a file over
+  the size cap says it is truncated and shows the first part.</li>
+<li><strong>Diff vs served</strong>: the delta against the marketplace's currently served
+  commit (<code>GET /api/snapshots/{id}/diff</code>) — one row per added, modified or
+  removed path, each expandable to its unified text diff. When nothing is
+  served the pane says so: there is no baseline, and approving the snapshot
+  serves all of it.</li>
+</ul>
+<p>This is inspection, not execution: nothing fetched here is ever run, followed
+or injected as markup, and the pane changes nothing about what the facade
+serves. While role enforcement is enabled these reads are privileged — admin
+or an approver of this marketplace — so the pane shows an error to a session
+holding neither.</p>
+<h3 id="set-up-a-client">Set up a client<a class="headerlink" href="#set-up-a-client" title="Permanent link">&para;</a></h3>
+<p>The page header carries a <strong>Set up a client</strong> button opening a wizard that
+composes, for this marketplace, everything a consumer needs — every URL derived
+from the address the browser is already on:</p>
+<ol>
+<li><strong>Personal access token</strong> — the same show-once creation flow as the
+   <a href="#access-tokens">Access tokens</a> page (name required before the control
+   enables). A token minted here is filled into the snippets below <strong>only while
+   the wizard stays open</strong>; closing the wizard drops it, and no previously
+   issued token's value is ever shown.</li>
+<li><strong>Store the credential</strong> — a <code>git credential approve</code> line for this host.</li>
+<li><strong>Add the marketplace to Claude Code</strong> —
+   <code>claude plugin marketplace add {origin}/git/{name}</code>.</li>
+<li><strong>Clone directly</strong> — the CI-shaped <code>git clone</code> URL with the token inline.</li>
+</ol>
+<p>Each snippet has a copy button. Until a token is minted the snippets carry the
+<code>&lt;YOUR_TOKEN&gt;</code> placeholder.</p>
 <h3 id="vetting">Vetting<a class="headerlink" href="#vetting" title="Permanent link">&para;</a></h3>
 <p>Each snapshot card carries a <strong>Vetting</strong> section fed by
 <code>GET /api/snapshots/{id}/vetting</code>, above the contents toggle and always visible

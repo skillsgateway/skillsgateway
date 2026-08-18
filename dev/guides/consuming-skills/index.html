@@ -1725,6 +1725,15 @@
 <h1 id="consuming-approved-skills">Consuming approved skills<a class="headerlink" href="#consuming-approved-skills" title="Permanent link">&para;</a></h1>
 <p>The facade is an ordinary read-only git remote, so clients need no
 modification — only a credential and a URL.</p>
+<div class="admonition tip">
+<p class="admonition-title">The wizard does steps 1–4 for you</p>
+<p>On a marketplace's detail page in the portal, <strong>Set up a client</strong> composes
+the exact commands below for that marketplace — token creation (show-once,
+as always), the credential line, the <code>claude plugin marketplace add</code>
+command, and the clone URL — each with a copy button. The rest of this
+guide is the same procedure by hand. See
+<a href="../../reference/portal/#set-up-a-client">the portal reference</a>.</p>
+</div>
 <h2 id="1-create-a-personal-access-token">1. Create a personal access token<a class="headerlink" href="#1-create-a-personal-access-token" title="Permanent link">&para;</a></h2>
 <p>Git clients authenticate with PATs, not with your portal session.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Portal</label><label for="__tabbed_1_2">API</label></div>

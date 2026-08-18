@@ -765,6 +765,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#the-content-itself" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The content itself
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#contents" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1683,6 +1694,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#the-content-itself" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The content itself
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#contents" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1830,7 +1852,21 @@ the sophistication of the vetting; it comes from the fact that <strong>nothing i
 served until someone decides</strong>, and that the decision is recorded against an
 immutable SHA.</p>
 <h2 id="reviewing">Reviewing<a class="headerlink" href="#reviewing" title="Permanent link">&para;</a></h2>
-<p>A held snapshot gives you three things.</p>
+<p>A held snapshot gives you four things.</p>
+<h3 id="the-content-itself">The content itself<a class="headerlink" href="#the-content-itself" title="Permanent link">&para;</a></h3>
+<p>The <strong>Preview files</strong> toggle on the marketplace detail page opens the pinned
+commit's actual file tree, each file rendered inertly (Markdown without any
+HTML interpretation, binary files described rather than shown), and — the part
+that usually decides a successor snapshot — <strong>Diff vs served</strong>: exactly which
+paths were added, modified or removed against the commit consumers are
+currently receiving, with per-file text diffs. A snapshot of a marketplace
+serving nothing shows every path as new: approving it serves all of it.</p>
+<p>The same reads exist on the API (<code>GET /api/snapshots/{id}/files</code>, <code>.../file</code>,
+<code>.../diff</code> — see
+<a href="../../reference/api/marketplaces/#snapshot-preview">the API reference</a>). With
+<a href="../delegated-administration/">role enforcement</a> enabled they require admin or
+an approver grant for the marketplace, because they return held quarantine
+content.</p>
 <h3 id="contents">Contents<a class="headerlink" href="#contents" title="Permanent link">&para;</a></h3>
 <p><code>GET /api/snapshots/{id}/content</code> enumerates what the snapshot declares — each
 plugin with its name, <code>source</code> and description, and the skills found under each.
