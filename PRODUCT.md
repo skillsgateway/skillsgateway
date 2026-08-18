@@ -98,8 +98,12 @@ Constraints that bind design work:
 
 ## Brand Commitments
 
-- Product name: **Skills Gateway**. Sidebar mark is a `GitBranch` glyph in the
-  accent colour; there is no logo asset.
+- Product name: **Skills Gateway**. The brand mark is the **airlock** — two
+  gates in series over one road, a skill entering hollow (quarantined) and
+  leaving filled (approved and served). Originals live in `brand/` (`mark.svg`,
+  `favicon.svg`, `avatar.svg`); the sidebar renders the mark with
+  `currentColor` strokes and the accent-token approved node, and the docs site
+  uses it as header logo and favicon.
 - Voice: plain, factual, unhedged. Screens state what the system did and what it
   will refuse to do. No exclamation, no reassurance, no persuasion — this audience
   distrusts a security tool that sounds enthusiastic.
