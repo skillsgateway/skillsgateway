@@ -12,6 +12,7 @@ import com.sun.net.httpserver.HttpServer;
 import dev.skillsgateway.server.persistence.WebhookDelivery;
 import dev.skillsgateway.server.persistence.WebhookDeliveryRepository;
 import dev.skillsgateway.server.webhook.WebhookDispatcher;
+import dev.skillsgateway.server.webhook.WebhookEvent;
 import dev.skillsgateway.server.webhook.WebhookService;
 import dev.skillsgateway.server.webhook.WebhookSigner;
 import io.github.reqstool.annotations.SVCs;
@@ -95,6 +96,29 @@ class WebhookTests extends AbstractGatewayTest {
             secretOut.append((String) JsonPath.read(body, "$.secret"));
         }
         return ((Number) JsonPath.read(body, "$.id")).longValue();
+    }
+
+    /**
+     * The registry is what the portal offers instead of a text box, so what it omits matters as
+     * much as what it lists: {@code audit.export} is provisioned by creating an export sink, and a
+     * lifecycle subscriber must never be able to pick it out of a list and receive ledger content.
+     */
+    @Test
+    @SVCs({"SVC_GW_0088"})
+    void the_event_registry_lists_every_dispatchable_event_and_never_the_export_event() throws Exception {
+        String body = mockMvc.perform(get("/api/webhooks/events").with(oidcLogin()))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        List<String> served = JsonPath.read(body, "$");
+
+        assertThat(served).containsExactlyElementsOf(WebhookEvent.ALL);
+        assertThat(served).doesNotContain(WebhookEvent.AUDIT_EXPORT);
+        // Every event the dispatcher can emit is offerable: a filter cannot be composed for an
+        // event the registry hides, so a gap here is an event no subscriber could ever select.
+        assertThat(served).contains("snapshot.ingested", "snapshot.approved", "snapshot.revoked");
     }
 
     @Test
