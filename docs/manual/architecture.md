@@ -302,8 +302,13 @@ not one mechanism.
   and ad-hoc `marketplace add` is blocked client-side; `blockedMarketplaces`
   adds owner-wildcard denylisting; `extraKnownMarketplaces` +
   `enabledPlugins` pre-register the gateway and force-install the approved
-  set fleet-wide. Distribute via MDM. (Copilot/Cursor lack an equivalent hard
-  switch — for them, egress policy carries the load.)
+  set fleet-wide. Distribute via MDM. Cursor now offers an equivalent posture
+  (a public-marketplace allowlist — empty disables the public marketplace —
+  plus a curated team marketplace and Enterprise-plan network allowlists);
+  Copilot CLI still lacks a skills/marketplace restriction (its enterprise
+  allowlist covers MCP servers only) — there, egress policy carries the load.
+  Per-client settings and vendor links:
+  [making the gateway the only door](guides/client-enforcement.md).
 - **CI as a backstop.** Pipelines resolve skills only through the gateway;
   builds referencing unapproved sources fail. Catches what laptop-level
   controls miss before anything ships.
@@ -395,10 +400,14 @@ inward.
 
 ## 14. Open questions
 
-1. **Client enforcement gap — partially closed.** Claude Code has the hard
-   switch (`strictKnownMarketplaces` in managed settings). Copilot and Cursor
-   do not yet; for those, egress policy carries the load. The enterprise ask
-   to press those vendors on is an equivalent managed allowlist.
+1. **Client enforcement gap — mostly closed.** Claude Code has the hard
+   switch (`strictKnownMarketplaces` in managed settings), and Cursor now has
+   an equivalent (public-marketplace allowlist plus team marketplace and
+   network allowlists). Copilot CLI does not yet — its enterprise allowlist
+   governs MCP servers, not skill sources — so for Copilot, egress policy
+   carries the load. The enterprise ask to press that vendor on is an
+   equivalent managed allowlist for skill repositories. See
+   [making the gateway the only door](guides/client-enforcement.md).
 2. **LLM review confidence.** Semantic scanning of prose will have false
    negatives; adversaries will optimize against it. It must gate *triage
    priority*, not substitute for tier-appropriate human review.
