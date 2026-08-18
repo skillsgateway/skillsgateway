@@ -18,6 +18,7 @@ import {
   type WaiverScope,
   type WaiverSuppression,
 } from "@/api/queries";
+import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -216,7 +217,7 @@ function FindingRow({
         {waived ? (
           <Badge variant="secondary">
             waived by {suppression.approvedBy} until{" "}
-            {suppression.expiresAt?.slice(0, 10) ?? "—"}
+            <Timestamp value={suppression.expiresAt} dayOnly />
           </Badge>
         ) : high && !waiving ? (
           <Button
@@ -302,7 +303,7 @@ function WaiverList({ waivers }: { waivers: Waiver[] }) {
             </span>
             <span className="text-muted-foreground">{waiver.justification}</span>
             <span className="text-xs text-muted-foreground">
-              — {waiver.approvedBy}, until {waiver.expiresAt?.slice(0, 10) ?? "—"}
+              — {waiver.approvedBy}, until <Timestamp value={waiver.expiresAt} dayOnly />
             </span>
             {waiver.active ? (
               <Button

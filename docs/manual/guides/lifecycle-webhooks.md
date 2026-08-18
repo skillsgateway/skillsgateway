@@ -44,7 +44,8 @@ require **auditor** (or admin).
 
 === "Portal"
 
-    **Webhooks** → fill in **Subscriber name**, **Target URL** and **Events** →
+    **Webhooks** → fill in **Subscriber name** and **Target URL**, tick the **Events**
+    to receive (all of them by default; the box above the list narrows it) →
     **Add subscriber**. The signing secret appears in a dialog with a copy
     button.
 
@@ -67,7 +68,7 @@ require **auditor** (or admin).
 | --- | --- |
 | `name` | `^[a-z0-9][a-z0-9_-]*$`, unique. A bad name is **422**, a duplicate is **409**. |
 | `url` | The scheme must be on `skills-gateway.allowed-url-schemes`. Unparseable or scheme-less URLs are rejected — the check fails closed. **400**. |
-| `events` | Comma-delimited event names, or `*` for every event. Blank means `*`. An unknown name is **400**, not silently dropped. |
+| `events` | Comma-delimited event names, or `*` for every event. Blank means `*`. An unknown name is **400**, not silently dropped. `GET /api/webhooks/events` answers the names this gateway accepts. |
 
 The filter is exact-match per name: `*` is the only wildcard, and
 `snapshot.*` is not a valid filter. A subscriber only ever receives events its

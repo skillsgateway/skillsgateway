@@ -1,3 +1,4 @@
+import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
 import type { Snapshot } from "@/api/queries";
 
@@ -42,7 +43,7 @@ export function RevocationNote({ snapshot }: { snapshot: Snapshot }) {
   return (
     <span className="text-xs text-muted-foreground">
       revoked by {snapshot.revokedBy ?? "the gateway"}
-      {snapshot.revokedAt ? ` on ${snapshot.revokedAt}` : ""}
+      {snapshot.revokedAt ? <> on <Timestamp value={snapshot.revokedAt} /></> : null}
     </span>
   );
 }
