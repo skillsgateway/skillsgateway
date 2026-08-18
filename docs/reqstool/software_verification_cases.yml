@@ -720,3 +720,53 @@ cases:
       WHEN the packaging test validates it
       THEN the workflow pushes the smoke-tested image to the project's registry namespace with commit-SHA and latest tags on main and a version tag on releases, gates every publish step on push events, holds the permissions publishing and attestation require, surfaces the pushed digest in the job summary, and attests the CycloneDX SBOM against the pushed image after the push
     revision: "0.1.0"
+
+  - id: SVC_GW_0083
+    requirement_ids: ["GW_0083"]
+    title: Startup reconciliation converges the declared estate additively and idempotently
+    verification: automated-test
+    description: |
+      GIVEN a gateway configured with a declared estate of marketplaces, role grants, a webhook subscriber and an audit sink, plus objects created through the API that the declaration does not mention
+      WHEN the application starts and a further reconciliation is then run against the unchanged declaration
+      THEN the declared objects exist as if created through the API with every applied change on the ledger under its API event name and the reconciler actor, the undeclared API-created objects are untouched, and the second reconciliation performs no writes and appends nothing to the ledger
+    revision: "0.1.0"
+
+  - id: SVC_GW_0084
+    requirement_ids: ["GW_0084"]
+    title: Declared marketplaces face the same registration gate as the API
+    verification: automated-test
+    description: |
+      GIVEN declarations containing a marketplace with a disallowed URL scheme, one under the reserved catalog name, one whose declared URL differs from its registered URL, one declaring webhook sync mode, and a valid one declaring scheduled sync
+      WHEN reconciliation runs
+      THEN the invalid entries each fail with a ledger record and create or change nothing, the registered marketplace keeps its stored URL, and the valid entry is registered with its sync mode applied through the audited sync-mode path
+    revision: "0.1.0"
+
+  - id: SVC_GW_0085
+    requirement_ids: ["GW_0085"]
+    title: Declared grants reconcile through the audited grant path
+    verification: automated-test
+    description: |
+      GIVEN a declaration granting an approver on a marketplace declared in the same configuration, an auditor globally, and an approver on a marketplace that does not exist, alongside an API-created grant the declaration does not mention
+      WHEN reconciliation runs
+      THEN the valid grants exist and take effect under role enforcement with ledger entries naming the reconciler actor, the grant for the unknown marketplace fails as an isolated entry, the API-created grant survives, and re-running the reconciliation grants nothing twice
+    revision: "0.1.0"
+
+  - id: SVC_GW_0086
+    requirement_ids: ["GW_0086"]
+    title: Declared receiver secrets are write-only, rotated idempotently, floored in length
+    verification: automated-test
+    description: |
+      GIVEN a declared webhook subscriber and audit sink with operator-supplied secrets, then the same declaration with one secret value changed, and declarations carrying a blank and a too-short secret
+      WHEN reconciliation runs after each state
+      THEN the stored secrets match the declaration with the sink's cursor set only at creation, the changed value rotates the stored secret with a ledger record that does not contain it, the unchanged values cause no write, the blank and too-short secrets each fail as isolated entries, and no secret value appears in the reconciliation report or on the ledger
+    revision: "0.1.0"
+
+  - id: SVC_GW_0087
+    requirement_ids: ["GW_0087"]
+    title: A failing entry is loud but never fatal, and the report is answerable
+    verification: automated-test
+    description: |
+      GIVEN a gateway whose declared estate contains one invalid entry among valid ones
+      WHEN the application starts and the report endpoint and reconcile trigger are then exercised under role enforcement
+      THEN the application serves with the valid entries applied, the invalid entry is on the ledger and in the report with its reason, the report endpoint answers auditors and admins and refuses sessions with no role, and the trigger endpoint refuses non-admins and records each admin trigger on the ledger with the acting identity
+    revision: "0.1.0"

@@ -584,3 +584,43 @@ requirements:
     categories: ["security", "flexibility"]
     implementation: configuration
     revision: 0.1.0
+
+  - id: GW_0083
+    title: Declarative estate reconciliation
+    significance: shall
+    description: The system shall accept a declarative configuration block naming marketplaces, role grants, webhook subscribers and audit export sinks, shall reconcile the running estate to that declaration at application startup — after schema migration and before the web surface serves requests — and on demand through an administrative endpoint, shall apply only the differences between declared and actual state so that reconciling a converged estate performs no writes and appends nothing to the ledger, shall never delete, deregister or revoke an object absent from the declaration, and shall append every applied change to the append-only ledger under the same event name as its API equivalent, attributed to a distinct reconciler actor identity.
+    rationale: A deployment defined entirely as code needs the estate to be part of that code, and a reconciler that converges rather than replays keeps the ledger meaningful — an operator reading it can tell declarative changes from interactive ones by actor, and a boot of an already-converged estate leaves no noise for export sinks to re-deliver; never touching undeclared objects means a lost configuration line can never retract content teams depend on.
+    categories: ["security", "flexibility"]
+    revision: 0.1.0
+
+  - id: GW_0084
+    title: Declared marketplaces pass the registration trust boundary
+    significance: shall
+    description: The system shall register a declared marketplace through the same validation as the administrative API — the marketplace name rules, the reserved catalog name, and the URL scheme allowlist — with the ingested ref remaining the gateway's decision because the declaration cannot express one, shall accept a declared sync mode of on-demand or scheduled applied through the same audited path as the API and refuse webhook mode as an entry failure, shall leave the stored sync mode untouched when the declaration omits one, and shall treat a declared marketplace whose stored upstream URL differs from the declared URL as a reconciliation failure rather than an update.
+    rationale: Registration is the trust boundary and a second copy of it would drift into a hole, so the declaration must be another caller of the same gate; webhook sync mode is excluded because its inbound HMAC secret is generated and shown exactly once, which has no declarative form; and refusing URL drift keeps a configuration edit from swapping the supply chain underneath already-approved snapshots — a power the API itself deliberately does not have.
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0085
+    title: Declared role grants through the audited grant path
+    significance: shall
+    description: The system shall apply declared role grants through the same validation and the same audited path as the grants API — the role vocabulary, approver grants scoped to exactly one marketplace that exists at reconcile time whether declared in the same configuration or registered through the API, and global roles forbidding one — shall treat a grant whose marketplace does not exist as an isolated entry failure, and shall never revoke a grant absent from the declaration.
+    rationale: Grants decide who may approve what, so the declarative path must be the audited path or the ledger stops answering who granted what; accepting API-registered marketplaces keeps adoption incremental instead of demanding the whole estate move to configuration at once, and additive-only means a trimmed declaration can never strip a working deployment of its administrators.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0086
+    title: Operator-supplied secrets for declared receivers
+    significance: shall
+    description: The system shall require a declared webhook subscriber or audit export sink to carry an operator-supplied signing secret, refusing a blank secret or one shorter than sixteen characters as an entry failure, shall never write a declared secret value to the log, the ledger, the reconciliation report or any API response, shall update the stored secret idempotently when the declared value changes — recording the rotation on the ledger without the value and making no write when the value is unchanged — and shall set an audit sink's ledger cursor only at creation, never on a later reconciliation.
+    rationale: The API generates receiver secrets and shows them once, which has no declarative form, so the declarative form inverts the direction — the operator supplies the secret by reference and the gateway must treat it as write-only; the length floor keeps a typo from silently weakening every delivery signature, and leaving the cursor alone keeps a redeploy from re-delivering the entire ledger to a sink that had already caught up.
+    categories: ["security", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_0087
+    title: Reconciliation failure isolation and reporting
+    significance: shall
+    description: The system shall start and serve even when a declared entry fails validation, shall continue reconciling the remaining entries when one fails, shall report each failed entry with its reason in the application log and as an entry on the append-only ledger for every reconciliation run in which it fails, shall answer the most recent reconciliation report — per entry, what was created, updated, unchanged or failed and why — through the API to auditors and admins, and shall restrict the on-demand reconciliation trigger to admins under role enforcement, recording each trigger on the ledger with the acting identity.
+    rationale: A gateway's job is serving already-approved content, so a typo in a declaration must never take a working estate down in a crash loop — but a declaration that cannot converge is drift an operator has to see, so the failure is loud on every run in the ledger and the report rather than swallowed; the trigger is an administrative mutation like any other and is gated and recorded as one.
+    categories: ["reliability", "security"]
+    revision: 0.1.0
