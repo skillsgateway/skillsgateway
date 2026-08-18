@@ -119,6 +119,7 @@ nav:
       - Reclaiming snapshot storage: guides/snapshot-retention.md
       - Delegated administration: guides/delegated-administration.md
       - Declarative estate configuration: guides/declarative-estate.md
+      - Policy deny rules: guides/policy-rules.md
   - Reference:
       - Configuration: reference/configuration.md
       - REST API:
@@ -129,6 +130,7 @@ nav:
           - Adoption: reference/api/adoption.md
           - Roles: reference/api/roles.md
           - Estate: reference/api/estate.md
+          - Policy: reference/api/policy.md
       - Snapshot retention: reference/retention.md
       - Container image: reference/container-image.md
       - Git smart-HTTP facade: reference/git-facade.md

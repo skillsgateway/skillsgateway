@@ -162,10 +162,15 @@ flowchart LR
   Results are normalized and attached to the snapshot forever. One analysis
   stays built-in because tiering depends on it: *manifest analysis* —
   enumerating registered hooks, MCP servers, commands, and agents (§6).
-- **Policy engine.** Policy-as-code (OPA-style) consuming the normalized
-  connector verdicts: which connectors are required per tier, auto-approval
-  conditions, license allowlists, org/team scoping, mandatory reviewers for
-  T2. Versioned in git like any other policy.
+- **Policy engine.** Policy-as-code consuming snapshot facts and the
+  normalized connector verdicts. The engine is embedded CEL (ADR 0006), and
+  its first slice ships: [deny rules](guides/policy-rules.md) evaluated
+  fail-closed at approval time, with a playground and ledger provenance.
+  The rest of the sketch — which connectors are required per tier,
+  auto-approval conditions, license allowlists, org/team scoping, mandatory
+  reviewers for T2 — attaches to the same engine if and when those are
+  decided (auto-approval deliberately parked: it would delegate the human
+  gate, a product decision, not a feature).
 - **Publisher.** Composes virtual marketplaces per audience (org-wide, per
   team, pilot ring) from approved snapshots — exactly Artifactory's
   local + remote + virtual model. Generates `marketplace.json` with **every

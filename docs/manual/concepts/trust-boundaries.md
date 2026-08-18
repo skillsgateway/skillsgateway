@@ -149,6 +149,13 @@ refs and moves the snapshot to `revoked`. That path never publishes — it only
 unpublishes — so `ApprovalService` remains the sole publisher, and a revoked
 snapshot returns to being served only by going back through it.
 
+Two gates precede every publication, inside that single publisher and before
+any state transition: the fail-closed [vetting gate](vetting.md) (evidence
+about the content, waivable finding by finding), then the fail-closed
+[policy gate](../guides/policy-rules.md) (standing organizational deny rules,
+not waivable — the exception path is editing the rule, audited). A refusal by
+either leaves the snapshot held and publishes nothing.
+
 ## The web surface
 
 Everything that is not `/git/**` is the web chain: OIDC authorization-code login

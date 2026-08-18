@@ -91,6 +91,18 @@ re-publication/federation, an operator-independent audit demand,
 cross-gateway promotion, and consumer-side verification tooling — any one of
 which reopens the decision.
 
+### [ADR 0006 — Embedded CEL for policy rules, not an OPA sidecar](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0006-embedded-cel-for-policy-rules.md)
+
+*Accepted, 2026-08-18.*
+
+Policy deny rules are **embedded cel-java expressions** — compiled to a
+boolean at write time, evaluated fail-closed inside the approval gate — rather
+than an OPA/Rego sidecar: no second deployment unit, no network hop inside the
+gate, and CEL's non-Turing-complete, terminating semantics are the right blast
+radius for user-authored rules and a playground pointed at real snapshots.
+Scope is deny-only on purpose; auto-approval would delegate the human gate and
+stays parked as a product decision.
+
 ## Related
 
 - [Architecture](../architecture.md)

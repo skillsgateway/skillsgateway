@@ -67,6 +67,7 @@ consumed by the portal with a session cookie.
 | [Retention](../retention.md#endpoints) | Preview candidates, evaluate, compact, soft-delete and restore snapshots |
 | [Roles](roles.md) | List, grant and revoke delegated-administration roles |
 | [Estate](estate.md) | Read the last declarative-estate reconciliation report; trigger a reconcile |
+| [Policy](policy.md) | Create, list, update and delete CEL deny rules; test expressions in the playground |
 
 ## Session
 
