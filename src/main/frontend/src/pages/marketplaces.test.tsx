@@ -1,8 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { MemoryRouter } from "react-router-dom";
 import { expect, test } from "vitest";
+import { tooYoung } from "@/test/msw-handlers";
+import { server } from "@/test/msw-server";
 import { MarketplacesPage } from "./marketplaces";
 
 function renderPage() {
@@ -22,6 +25,38 @@ test("lists_registered_marketplaces_with_held_snapshots", async () => {
   expect(screen.getByText("held")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Approve snapshot 1" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Reject snapshot 1" })).toBeInTheDocument();
+});
+
+/**
+ * The cooling-off window (GW_0073) as a reviewer meets it: the control is shut and says when it
+ * opens, rather than opening a dialog that would only refuse. Nothing in the portal can shorten
+ * the wait — that is the point of the control — so the copy says what happens instead of offering
+ * a way past it.
+ *
+ * Untagged on purpose: SVC_GW_0073 is verified by the Java suite, and only Playwright results are
+ * matched back to SVC ids (vitest classnames are not normalised to the tag FQN style). Tagging it
+ * here would register a verification the traceability gate could never see pass.
+ */
+test("approve_is_disabled_with_the_remaining_time_inside_the_cooling_off_window", async () => {
+  server.use(http.get("/api/snapshots/:id/release-age", () => HttpResponse.json(tooYoung)));
+  renderPage();
+
+  const approve = await screen.findByRole("button", { name: "Approve snapshot 1" });
+  await waitFor(() => expect(approve).toHaveTextContent("Eligible in 2d 4h"));
+  expect(approve).toBeDisabled();
+  // Rejecting is never age-gated: suspicious content must be refusable at once.
+  expect(screen.getByRole("button", { name: "Reject snapshot 1" })).toBeEnabled();
+});
+
+test("approve_is_offered_normally_once_the_window_has_passed", async () => {
+  renderPage();
+
+  const approve = await screen.findByRole("button", { name: "Approve snapshot 1" });
+  // Never shut merely because the answer has not arrived: the server is the gate, and a portal
+  // that guessed "not eligible" while loading would block every approval on a slow request.
+  expect(approve).toBeEnabled();
+  await waitFor(() => expect(approve).toHaveTextContent("Approve"));
+  expect(approve).toBeEnabled();
 });
 
 test("register_is_disabled_until_the_name_and_url_are_valid", async () => {

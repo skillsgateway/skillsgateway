@@ -196,6 +196,10 @@ skills-gateway:
     # outcome is next computed, whether or not this sweep has run.
     waiver-sweep-interval: 1h
     waiver-sweep-batch-size: 200
+
+    # The cooling-off window: how long a commit must have been in quarantine
+    # before it can be approved. 0 — the default — is no window at all.
+    minimum-release-age: 0s
 ```
 
 | Property | Type | Default | Notes |
@@ -204,6 +208,36 @@ skills-gateway:
 | `skills-gateway.vetting.max-file-bytes` | integer | `1048576` | Zero or negative falls back to the default. |
 | `skills-gateway.vetting.waiver-sweep-interval` | duration | `1h` | How often `waiver-expired` ledger entries are written. Has no effect on the gate. |
 | `skills-gateway.vetting.waiver-sweep-batch-size` | integer | `200` | Lapsed waivers recorded per pass. |
+| `skills-gateway.vetting.minimum-release-age` | duration | `0s` | How long the gateway must have held a commit before it may be approved. `0` disables the gate. |
+
+### Minimum release age
+
+The gate refuses `POST /api/snapshots/{id}/approve` with `409` while the
+snapshot is younger than this, and the problem document names the setting, the
+snapshot's current age and the time remaining. Nothing has to run for the wait
+to end: the age is compared at the instant of each approval request, exactly as
+waiver expiry is, so a snapshot becomes approvable on its own.
+
+!!! warning "The clock is the gateway's first sighting, not the commit's date"
+
+    The name mirrors Renovate's, but what is measured is **ingestion age**: the
+    instant *this gateway* first ingested that commit, recorded when the
+    snapshot row was created. The commit's own author and committer dates are
+    never read — they are written by whoever made the commit, so a control that
+    trusted them could be defeated by backdating one.
+
+    Re-ingesting the same commit does not restart the clock: ingestion
+    recognises the SHA and keeps the existing snapshot, so a re-push cannot
+    reset the window either.
+
+The rejection path is not gated — suspicious content can always be refused at
+once — and neither is anything about serving already-approved content.
+
+There is deliberately **no exemption and no per-approval override**, including
+for the first snapshot of a newly registered marketplace: an exemption is a
+special case an attacker can arrange to land in. Getting an urgent fix out
+before the window elapses means changing this setting, which is a deployment
+someone reviews.
 
 !!! note "There is no switch that turns vetting off"
 

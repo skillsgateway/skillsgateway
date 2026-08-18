@@ -41,7 +41,7 @@ public record SkillsGatewayProperties(
             retention = new Retention(null, null, null, null, null, null);
         }
         if (vetting == null) {
-            vetting = new Vetting(null, null, null, null, null);
+            vetting = new Vetting(null, null, null, null, null, null);
         }
         if (sync == null) {
             sync = new Sync(null, null, null, null);
@@ -233,6 +233,11 @@ public record SkillsGatewayProperties(
      *     outcome is next computed, whether or not the sweep has run, so the interval only decides
      *     how promptly the lapse is announced.
      * @param waiverSweepBatchSize how many lapsed waivers one sweep pass records
+     * @param minimumReleaseAge the cooling-off window a snapshot must clear before it can be
+     *     approved (GW_0073), measured from the instant the gateway first ingested its commit.
+     *     Zero — the default — disables the gate entirely, so an upgrade changes nothing. Like
+     *     waiver expiry this is a comparison made per approval request, not a scheduled state, so
+     *     the wait clears itself and no sweep can be late.
      * @param revet continuous re-vetting of approved content (GW_0049-GW_0054)
      */
     public record Vetting(
@@ -240,9 +245,13 @@ public record SkillsGatewayProperties(
             Long maxFileBytes,
             Duration waiverSweepInterval,
             Integer waiverSweepBatchSize,
+            Duration minimumReleaseAge,
             Revet revet) {
 
         public Vetting {
+            if (minimumReleaseAge == null || minimumReleaseAge.isNegative()) {
+                minimumReleaseAge = Duration.ZERO;
+            }
             if (timeout == null) {
                 timeout = Duration.ofSeconds(30);
             }

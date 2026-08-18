@@ -5,11 +5,13 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
 import {
+  formatRemaining,
   useDecideSnapshot,
   useIngest,
   useMarketplaces,
   useProvenance,
   useRegisterMarketplace,
+  useSnapshotReleaseAge,
   useSnapshotVetting,
   type MarketplaceView,
   type Snapshot,
@@ -188,12 +190,19 @@ function ProvenanceDialog({ snapshotId, onClose }: { snapshotId: number; onClose
  * past it is to accept each blocking finding with a scoped, expiring waiver, recorded from the
  * finding itself in the report below. The server enforces the same rule independently.
  *
- * @Requirements GW_0042, GW_0047
+ * The cooling-off window is the second reason the confirm button can be shut, and it reads
+ * differently on purpose: nothing here can open it, and nothing has to — it opens by itself at the
+ * stated time. The server enforces both independently.
+ *
+ * @Requirements GW_0042, GW_0047, GW_0073
  */
 function ApproveDialog({ snapshotId, onClose }: { snapshotId: number; onClose: () => void }) {
   const vetting = useSnapshotVetting(snapshotId);
+  const releaseAge = useSnapshotReleaseAge(snapshotId);
   const decide = useDecideSnapshot();
   const blocked = vetting.data?.outcome === "BLOCKED" || vetting.data?.outcome === undefined;
+  const tooYoung = releaseAge.data?.eligible === false;
+  const remaining = formatRemaining(releaseAge.data?.remainingSeconds ?? 0);
 
   return (
     <Dialog open onOpenChange={(open) => (open ? undefined : onClose())}>
@@ -214,9 +223,17 @@ function ApproveDialog({ snapshotId, onClose }: { snapshotId: number; onClose: (
             the audit ledger with your identity.
           </p>
         ) : null}
+        {tooYoung ? (
+          <p className="text-xs text-muted-foreground">
+            This snapshot is inside the cooling-off window: the gateway first ingested its commit
+            less than the configured minimum release age ago. It becomes approvable in {remaining},
+            with nothing to do in the meantime. The age is counted from the gateway's own first
+            sighting, not from the commit's timestamp.
+          </p>
+        ) : null}
         <DialogFooter>
           <Button
-            disabled={decide.isPending || blocked}
+            disabled={decide.isPending || blocked || tooYoung}
             aria-label={`Confirm approval of snapshot ${snapshotId}`}
             onClick={() =>
               decide.mutate(
@@ -254,6 +271,11 @@ function SnapshotRow({ snapshot, onProvenance }: { snapshot: Snapshot; onProvena
   // A revoked snapshot is decidable again: the retraction was made without a person, so a person
   // has to be able to answer it — by re-approving behind the same gate, or by rejecting for good.
   const decidable = snapshot.state === "held" || snapshot.state === "revoked";
+  // Asked only for a snapshot someone could decide on, and only about approval: rejecting is never
+  // gated by age.
+  const releaseAge = useSnapshotReleaseAge(decidable ? id : null);
+  const tooYoung = releaseAge.data?.eligible === false;
+  const remaining = formatRemaining(releaseAge.data?.remainingSeconds ?? 0);
   const act = (decision: "reject") =>
     decide.mutate(
       { id, decision },
@@ -277,10 +299,19 @@ function SnapshotRow({ snapshot, onProvenance }: { snapshot: Snapshot; onProvena
             <Button
               size="sm"
               onClick={() => setApproving(true)}
-              disabled={decide.isPending}
+              disabled={decide.isPending || tooYoung}
               aria-label={`Approve snapshot ${id}`}
+              title={
+                tooYoung
+                  ? `Inside the minimum release age; eligible in ${remaining}`
+                  : undefined
+              }
             >
-              {snapshot.state === "revoked" ? "Re-approve" : "Approve"}
+              {tooYoung
+                ? `Eligible in ${remaining}`
+                : snapshot.state === "revoked"
+                  ? "Re-approve"
+                  : "Approve"}
             </Button>
             <Button
               size="sm"

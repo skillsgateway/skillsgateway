@@ -218,6 +218,15 @@ old one did. Tier-0 diffs that stay tier-0 and scan clean can auto-promote on
 a configurable delay (a cooling-off window also defeats
 push-then-quickly-revert attacks).
 
+Implemented today (GW_0073): a global
+`skills-gateway.vetting.minimum-release-age` (default `0`, off) that the manual
+approval gate enforces — a snapshot whose commit this gateway first ingested
+less than that long ago is refused, whatever its verdicts say. The age is taken
+from the gateway's own first sighting, never from the commit's timestamp, and it
+is compared at each approval request rather than tracked, so the wait clears
+itself. This is the window any future auto-promotion is conditioned on;
+per-marketplace and per-tier ages ride on the policy rules.
+
 **Recall (kill switch):** marking a snapshot revoked (a) removes it from every
 virtual marketplace, (b) makes the façade refuse its mirror refs, (c) produces
 the blast-radius report from the ledger (every identity that ever fetched it),

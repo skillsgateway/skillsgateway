@@ -110,6 +110,21 @@ There is no blanket override. The only way past objecting connectors is to
 accept each blocking finding individually with a
 [waiver](#waivers-accepted-risks-with-a-scope-and-an-expiry).
 
+### Not a connector: the minimum release age
+
+The same gate carries one precondition the chain has nothing to do with. When
+[`minimum-release-age`](../reference/configuration.md#minimum-release-age) is
+configured, a snapshot the gateway ingested less than that long ago cannot be
+approved however clear its verdicts are — a cooling-off window that gives the
+world time to notice a compromised release before this gateway adopts it.
+
+It is deliberately not a connector. A verdict is evidence about content at the
+moment it was gathered; "too young" is a fact about now. Recorded as a failing
+verdict it would keep blocking after the age had passed, until some later
+re-vetting run happened to replace it. Checked at the approval request instead,
+it clears itself and leaves nothing behind — the same reasoning that makes
+waiver expiry a comparison rather than a state.
+
 ## Waivers: accepted risks with a scope and an expiry
 
 A **waiver** is an accepted-risk exception for **one finding rule**, on **one

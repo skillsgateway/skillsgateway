@@ -450,11 +450,28 @@ is refused, and the problem document carries both `blockingConnectors` and
 the approval succeeds. Every waiver that was in force is appended to the audit
 ledger as `waiver-applied`.
 
+A snapshot inside the configured
+[minimum release age](../configuration.md#minimum-release-age) is refused by the
+same status with a different problem document — one nothing in the API can
+unblock, because it clears itself:
+
+```json
+{"status":409,"title":"Snapshot has not reached the minimum release age",
+ "detail":"snapshot 12 cannot be approved yet: …",
+ "configKey":"skills-gateway.vetting.minimum-release-age",
+ "minimumReleaseAge":"PT72H",
+ "eligibility":{"snapshotId":12,"eligible":false,
+                "firstIngestedAt":"2026-08-16T09:00:00Z",
+                "eligibleAt":"2026-08-19T09:00:00Z",
+                "ageSeconds":57600,"remainingSeconds":187200,
+                "minimumReleaseAgeSeconds":259200}}
+```
+
 | Status | Cause |
 | --- | --- |
 | 200 | Approved; returns the snapshot with `decidedBy` and `decidedAt`. |
 | 404 | Unknown snapshot. |
-| 409 | The snapshot is neither `held` nor `revoked`, or its effective vetting outcome is blocked. |
+| 409 | The snapshot is neither `held` nor `revoked`, its effective vetting outcome is blocked, a [policy rule](policy.md) denied it, or it has not reached the minimum release age. |
 
 A `revoked` snapshot is approved through this same endpoint and no other — there
 is no un-revoke. The gate is unchanged, so the finding that revoked it must be
@@ -470,13 +487,44 @@ revocation marks.
 
 ---
 
+## `GET /snapshots/{id}/release-age`
+
+Whether the snapshot has cleared the
+[minimum release age](../configuration.md#minimum-release-age), and when it will
+if it has not. This is the same computation the approve endpoint gates on, so
+the two can never disagree.
+
+```json
+{"snapshotId":12,"eligible":false,
+ "firstIngestedAt":"2026-08-16T09:00:00Z","eligibleAt":"2026-08-19T09:00:00Z",
+ "ageSeconds":57600,"remainingSeconds":187200,"minimumReleaseAgeSeconds":259200}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `eligible` | Whether the snapshot may be approved now. Always `true` when the gate is off. |
+| `firstIngestedAt` | When this gateway first ingested the commit. The age is counted from here — never from the commit's own timestamp. |
+| `eligibleAt` | The instant it becomes approvable; equal to `firstIngestedAt` when the gate is off. |
+| `ageSeconds` | How long ago the gateway first ingested the commit. |
+| `remainingSeconds` | How much of the window is left; `0` when eligible. |
+| `minimumReleaseAgeSeconds` | The configured window; `0` when the gate is off. |
+
+| Status | Cause |
+| --- | --- |
+| 200 | The eligibility record above. |
+| 404 | Unknown snapshot. |
+
+---
+
 ## `POST /snapshots/{id}/reject`
 
 Mark the snapshot `rejected`. No repository is touched; whatever was already
 approved keeps serving. This is also the terminal answer to a `revoked`
 snapshot nobody intends to waive.
 
-Same status codes as approve.
+Same status codes as approve, without its two refusals: neither the vetting
+outcome nor the minimum release age gates a rejection. Saying no to suspicious
+content is never something to wait for.
 
 !!! warning "An approved snapshot cannot be re-decided"
 

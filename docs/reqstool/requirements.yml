@@ -585,7 +585,15 @@ requirements:
     implementation: configuration
     revision: 0.1.0
 
-  # GW_0073 and GW_0074 are reserved by an in-flight change on another branch.
+  - id: GW_0073
+    title: Minimum release age before approval
+    significance: shall
+    description: The system shall let an operator configure a global minimum age a snapshot must reach before it can be approved, shall measure that age from the instant the gateway itself first ingested the snapshot's commit and never from any timestamp the upstream commit carries, shall keep that instant unchanged when the same commit is ingested again, shall evaluate the age at the instant of each approval request with no scheduled process involved, shall refuse an approval of a snapshot that has not reached the configured age with a conflict naming the configured setting, the snapshot's current age and the time remaining, shall report the same eligibility and remaining time for a snapshot on request so a reviewer sees it before deciding, shall record the snapshot's age on every approval it allows and the refusal on every one it blocks in the append-only ledger, and shall apply no age gate at all when the setting is zero, which is the default.
+    rationale: A compromised release is usually noticed by the wider world within hours of being published, so adopting a commit the moment it lands forfeits the cheapest detection window there is and leaves the push-then-quickly-revert attack unanswered; taking the age from the gateway's own first sighting puts the control out of reach of an attacker who can backdate a commit, and evaluating it per request means the wait clears itself with no scheduler that can be late and no state that can be left behind.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  # GW_0074 is reserved by an in-flight change on another branch.
 
   - id: GW_0075
     title: Adoption reporting from the fetch ledger
