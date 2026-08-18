@@ -29,6 +29,8 @@ docs_dir: docs/manual
 
 theme:
   name: material
+  logo: assets/logo.svg
+  favicon: assets/favicon.svg
   icon:
     repo: fontawesome/brands/github
   features:
@@ -95,6 +97,7 @@ extra:
 
 nav:
   - Home: index.md
+  - Architecture: architecture.md
   - Concepts:
       - Lifecycle — quarantine to serve: concepts/lifecycle.md
       - Vetting — the connector chain: concepts/vetting.md
@@ -122,6 +125,7 @@ nav:
           - Marketplaces and snapshots: reference/api/marketplaces.md
           - Access tokens: reference/api/tokens.md
           - Audit: reference/api/audit.md
+          - Adoption: reference/api/adoption.md
           - Roles: reference/api/roles.md
           - Estate: reference/api/estate.md
       - Snapshot retention: reference/retention.md
@@ -129,4 +133,5 @@ nav:
       - Git smart-HTTP facade: reference/git-facade.md
       - Compatibility and allowlists: reference/compatibility.md
       - Admin portal: reference/portal.md
+      - Observability: reference/observability.md
       - Architecture decisions: reference/decisions.md

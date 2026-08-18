@@ -5,7 +5,7 @@
 <!--
 Written by `/impeccable init` against an existing codebase, without an interactive
 product interview: the session that produced it ran unattended. Every fact below is
-grounded in this repository (`ARCHITECTURE.md`, `docs/manual/`, `docs/decisions/`,
+grounded in this repository (`docs/manual/architecture.md`, `docs/manual/`, `docs/decisions/`,
 `docs/reqstool/`, and the code itself) or in the written brief that commissioned it.
 Nothing here is invented. Where the repository does not answer a question, the
 section says so rather than filling the gap.
@@ -98,8 +98,12 @@ Constraints that bind design work:
 
 ## Brand Commitments
 
-- Product name: **Skills Gateway**. Sidebar mark is a `GitBranch` glyph in the
-  accent colour; there is no logo asset.
+- Product name: **Skills Gateway**. The brand mark is the **airlock** — two
+  gates in series over one road, a skill entering hollow (quarantined) and
+  leaving filled (approved and served). Originals live in `brand/` (`mark.svg`,
+  `favicon.svg`, `avatar.svg`); the sidebar renders the mark with
+  `currentColor` strokes and the accent-token approved node, and the docs site
+  uses it as header logo and favicon.
 - Voice: plain, factual, unhedged. Screens state what the system did and what it
   will refuse to do. No exclamation, no reassurance, no persuasion — this audience
   distrusts a security tool that sounds enthusiastic.
@@ -109,7 +113,7 @@ Constraints that bind design work:
 
 ## Evidence on Hand
 
-- `ARCHITECTURE.md` and `docs/decisions/` (ADRs) — the system model and the decided
+- `docs/manual/architecture.md` and `docs/decisions/` (ADRs) — the system model and the decided
   stack, including ADR 0003, which decides the frontend stack and its verification
   harness.
 - `docs/reqstool/` — requirements and software verification cases (`GW_*`,

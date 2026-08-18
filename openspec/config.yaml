@@ -3,7 +3,7 @@ schema: spec-driven
 context: |
   Skills Gateway: an enterprise gateway for git-distributed AI agent skill
   marketplaces (Claude Code plugins, Copilot, Cursor). Canonical design:
-  ARCHITECTURE.md in the repo root; decisions in docs/decisions/ (ADRs).
+  docs/manual/architecture.md; decisions in docs/decisions/ (ADRs).
   Tech stack: Java 25+, Spring Boot 4, Maven (wrapper, Nisse git-based
   versioning), JGit from day 1 (embedded upload-pack; no subprocess git),
   JdbcClient + Flyway + PostgreSQL (no JPA), GraalVM native-image as a

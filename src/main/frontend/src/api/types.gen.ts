@@ -516,6 +516,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/snapshots/{id}/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * File tree of the pinned commit
+         * @description Every path in exactly the commit the snapshot pins, resolved through the quarantine repository's object store, capped at 2000 entries with an explicit marker when cut. Privileged while role enforcement is enabled: admin or an approver of the snapshot's marketplace.
+         */
+        get: operations["files"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One file of the pinned commit
+         * @description One blob addressed strictly within the pinned commit's tree — a path the tree does not contain, traversal shapes included, is not found. Text is returned for rendering only, cut at 128 KiB with an explicit truncation marker; a blob detected as binary returns metadata without text. Privileged while role enforcement is enabled.
+         */
+        get: operations["file"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/snapshots/{id}/fetchers": {
         parameters: {
             query?: never;
@@ -528,6 +568,26 @@ export interface paths {
          * @description Every authenticated identity that received this snapshot's content through the git facade, with how many times and when it last did — the blast radius of a retroactive violation, answered from the append-only fetch ledger. Only pack transfers count: a ref advertisement means the client asked, not that it received anything.
          */
         get: operations["fetchers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Diff against the currently served commit
+         * @description Added, modified and removed paths between the pinned commit and the marketplace's currently served commit (the published repository's served tip), with a unified text diff per non-binary entry under the same size caps as file reads. When the marketplace serves nothing the baseline is null and every path is reported as added. Privileged while role enforcement is enabled.
+         */
+        get: operations["diff"];
         put?: never;
         post?: never;
         delete?: never;
@@ -688,6 +748,46 @@ export interface paths {
          * @description Newline-delimited JSON, one ledger entry per line in ascending ledger sequence, for ingestion by an external SIEM. Poll incrementally by passing the sequence from the X-Skills-Gateway-Audit-Cursor response header back as 'after'; an empty body means the consumer is caught up. Entries younger than the commit-settling lag are withheld so a cursor can never step over an in-flight append.
          */
         get: operations["export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/adoption": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Adoption report over the fetch ledger
+         * @description Per marketplace: content-transferring fetches in the window, distinct fetching identities, the most recent fetch, and the per-snapshot-SHA breakdown with each SHA marked current against the served tip. Attribution is by authenticated identity as the ledger records it — the gateway has no team concept. Out-of-range windows are clamped to 1..365 days.
+         */
+        get: operations["adoption"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/adoption/staleness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Identities not on the served tip
+         * @description Every identity whose most recent content-transferring fetch of a marketplace received a SHA that is not the currently served tip. A null servedSha means the marketplace stopped serving entirely (revoked or unpublished) — the identity holds retracted content. The report states facts, not verdicts: an identity may be pinned to an old SHA on purpose.
+         */
+        get: operations["staleness"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1651,6 +1751,83 @@ export interface components {
             /** @description Identity that revoked it, or null */
             revokedBy?: string;
         };
+        /** @description The file tree of exactly the commit the snapshot pins */
+        FileTree: {
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            snapshotId?: number;
+            /** @description Pinned commit SHA */
+            sha?: string;
+            /** @description Paths in the pinned commit's tree */
+            entries?: components["schemas"]["TreeEntry"][];
+            /** @description True when the listing was cut at the tree-size limit */
+            truncated?: boolean;
+        };
+        /** @description One path in the pinned commit's tree */
+        TreeEntry: {
+            /** @description Path within the snapshot */
+            path?: string;
+            /**
+             * Format: int64
+             * @description Blob size in bytes
+             */
+            size?: number;
+        };
+        /** @description One blob of the pinned commit, as text for rendering only */
+        FileContent: {
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            snapshotId?: number;
+            /** @description Path within the snapshot */
+            path?: string;
+            /**
+             * Format: int64
+             * @description Full blob size in bytes
+             */
+            size?: number;
+            /** @description True for a blob detected as binary; such a blob carries no text */
+            binary?: boolean;
+            /** @description True when the text was cut at the per-file size limit */
+            truncated?: boolean;
+            /** @description Blob content as UTF-8 text, or null for a binary blob */
+            text?: string;
+        };
+        /** @description One changed path between the served baseline and the pinned commit */
+        DiffEntryView: {
+            /** @description Path within the snapshot */
+            path?: string;
+            /**
+             * @description How the path changed relative to the served baseline
+             * @enum {string}
+             */
+            type?: "added" | "modified" | "removed";
+            /** @description True when either side is binary; such an entry carries no diff text */
+            binary?: boolean;
+            /** @description True when the diff text was cut at the per-file size limit */
+            truncated?: boolean;
+            /** @description Unified text diff, or null for a binary entry or when no baseline is served */
+            diff?: string;
+        };
+        /** @description The snapshot's delta against the marketplace's currently served commit */
+        SnapshotDiff: {
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            snapshotId?: number;
+            /** @description Pinned commit SHA */
+            sha?: string;
+            /** @description The served commit the diff is against, or null when nothing is served */
+            baselineSha?: string;
+            /** @description Changed paths; with no baseline, every path of the snapshot, all added */
+            entries?: components["schemas"]["DiffEntryView"][];
+            /** @description True when the entry list was cut at the diff-size limit */
+            truncated?: boolean;
+        };
         /** @description A plugin declared by the marketplace manifest */
         PluginContent: {
             /** @description Plugin name from the manifest */
@@ -1762,6 +1939,68 @@ export interface components {
             snapshots?: components["schemas"]["Snapshot"][];
         };
         StreamingResponseBody: unknown;
+        /** @description Adoption of one marketplace over the report window */
+        MarketplaceAdoption: {
+            /** @description Marketplace name as the ledger records it */
+            marketplace?: string;
+            /** @description Currently served tip, or null when the marketplace is not serving */
+            servedSha?: string;
+            /**
+             * Format: int64
+             * @description Content-transferring fetches in the window
+             */
+            fetches?: number;
+            /**
+             * Format: int64
+             * @description Distinct identities that fetched in the window
+             */
+            identities?: number;
+            /**
+             * Format: date-time
+             * @description Most recent fetch in the window
+             */
+            lastFetch?: string;
+            /** @description Per-snapshot-SHA breakdown, most recently fetched first */
+            snapshots?: components["schemas"]["SnapshotAdoption"][];
+        };
+        /** @description Adoption of one snapshot SHA over the report window */
+        SnapshotAdoption: {
+            /** @description Upstream commit SHA that was fetched */
+            sha?: string;
+            /**
+             * Format: int64
+             * @description Content-transferring fetches of this SHA in the window
+             */
+            fetches?: number;
+            /**
+             * Format: int64
+             * @description Distinct identities that fetched this SHA in the window
+             */
+            identities?: number;
+            /**
+             * Format: date-time
+             * @description Most recent of those fetches
+             */
+            lastFetch?: string;
+            /** @description Whether this SHA is the currently served tip */
+            current?: boolean;
+        };
+        /** @description An identity whose most recent fetch is not the currently served tip */
+        StaleIdentity: {
+            /** @description Authenticated identity that fetched */
+            principal?: string;
+            /** @description Marketplace the fetch was of */
+            marketplace?: string;
+            /** @description SHA the identity last received */
+            sha?: string;
+            /**
+             * Format: date-time
+             * @description When it last received it
+             */
+            lastFetch?: string;
+            /** @description Currently served tip it diverges from, or null when the marketplace is no longer serving */
+            servedSha?: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -2788,6 +3027,88 @@ export interface operations {
             };
         };
     };
+    files: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paths and sizes of the pinned commit's tree */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FileTree"];
+                };
+            };
+            /** @description Role enforcement is enabled and the session holds no applicable role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FileTree"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FileTree"];
+                };
+            };
+        };
+    };
+    file: {
+        parameters: {
+            query: {
+                path: string;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Blob metadata, and its text unless binary */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FileContent"];
+                };
+            };
+            /** @description Role enforcement is enabled and the session holds no applicable role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FileContent"];
+                };
+            };
+            /** @description Snapshot not found, or the path is not in the pinned tree */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FileContent"];
+                };
+            };
+        };
+    };
     fetchers: {
         parameters: {
             query?: never;
@@ -2815,6 +3136,46 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["Fetcher"][];
+                };
+            };
+        };
+    };
+    diff: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The delta a reviewer decides */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SnapshotDiff"];
+                };
+            };
+            /** @description Role enforcement is enabled and the session holds no applicable role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SnapshotDiff"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SnapshotDiff"];
                 };
             };
         };
@@ -3023,6 +3384,49 @@ export interface operations {
                 };
                 content: {
                     "application/x-ndjson": components["schemas"]["StreamingResponseBody"];
+                };
+            };
+        };
+    };
+    adoption: {
+        parameters: {
+            query?: {
+                /** @description Report window in days, default 30, clamped to 1..365 */
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The adoption report, one entry per fetched marketplace */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MarketplaceAdoption"][];
+                };
+            };
+        };
+    };
+    staleness: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The stale identities, window-free */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["StaleIdentity"][];
                 };
             };
         };

@@ -69,7 +69,7 @@ build warning under `--strict`.
   different clients), not to hide detail.
 - Internal links are relative Markdown links to the `.md` file
   (`../reference/portal.md#audit-log`). `--strict` verifies them.
-- Links to repository files that are outside the site (ADRs, `ARCHITECTURE.md`)
+- Links to repository files that are outside the site (ADRs, `docs/reqstool/`)
   must be absolute GitHub URLs, since they are not part of `docs_dir`.
 
 ## Diagrams
