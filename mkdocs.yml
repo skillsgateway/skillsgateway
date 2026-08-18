@@ -117,6 +117,7 @@ nav:
       - Exporting the audit ledger: guides/exporting-the-audit-ledger.md
       - Reclaiming snapshot storage: guides/snapshot-retention.md
       - Delegated administration: guides/delegated-administration.md
+      - Declarative estate configuration: guides/declarative-estate.md
   - Reference:
       - Configuration: reference/configuration.md
       - REST API:
@@ -126,6 +127,7 @@ nav:
           - Audit: reference/api/audit.md
           - Adoption: reference/api/adoption.md
           - Roles: reference/api/roles.md
+          - Estate: reference/api/estate.md
       - Snapshot retention: reference/retention.md
       - Container image: reference/container-image.md
       - Git smart-HTTP facade: reference/git-facade.md

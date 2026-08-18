@@ -14,6 +14,7 @@ Every setting the gateway reads, with its default and what consumes it.
 | [`skills-gateway.catalog.*`](#virtual-catalog) | The global virtual catalog and its reserved name. | No — all defaulted. |
 | [`skills-gateway.tokens.*`](#access-tokens) | Access-token policy: the maximum lifetime creation accepts. | No — defaulted (unlimited). |
 | [`skills-gateway.roles.*`](#delegated-administration) | Role enforcement and the bootstrap admins. **Off by default.** | No — all defaulted. |
+| [`skills-gateway.estate.*`](#declarative-estate) | The declared estate: marketplaces, role grants, webhook subscribers, audit sinks — reconciled at startup and on demand. **Empty by default.** | No — empty by default. |
 | [`spring.datasource.*`](#datasource) | PostgreSQL connection. Supplied entirely by environment. | **Yes** |
 | [`spring.security.oauth2.client.*`](#oidc-login) | OIDC login for the web surface. | **Yes** |
 | [`management.endpoints.*`](#actuator) | Which actuator endpoints are exposed. | No |
@@ -480,6 +481,98 @@ skills-gateway:
 The roles, the enforcement matrix, and the staging workflow are described in
 [Delegated administration](../guides/delegated-administration.md); the grants
 API in [Roles](api/roles.md).
+
+---
+
+## Declarative estate
+
+The estate defined as configuration (GW_0083–GW_0087): marketplaces, role
+grants, webhook subscribers and audit export sinks, reconciled at startup —
+after schema migration, before the web surface serves — and on demand via
+[`POST /api/estate/reconcile`](api/estate.md). Empty by default; an empty
+declaration reconciles nothing.
+
+Reconciliation is **additive and idempotent**. A declared object is created if
+missing and converged if drifted; an object absent from the declaration is
+**never** deleted, deregistered or revoked — removing a line from this block
+retracts nothing. A converged estate reconciles with zero writes and zero
+ledger entries; every applied change lands on the append-only ledger under the
+same event name as its API equivalent, attributed to the actor
+`config-reconciler`. An entry that fails validation is skipped and reported —
+in the log at ERROR, on the ledger as `estate-reconciliation-failed`, and in
+the [reconciliation report](api/estate.md) — and never prevents startup or the
+other entries.
+
+```yaml
+skills-gateway:
+  estate:
+    # Registered through the exact same gate as POST /api/marketplaces:
+    # name rules, the reserved catalog name, the URL scheme allowlist.
+    # There is no ref key — the ingested ref is always the gateway's
+    # decision (the upstream default branch).
+    marketplaces:
+      - name: corp-marketplace
+        url: https://github.com/acme/skills-marketplace.git
+        # on-demand or scheduled; applied through the same audited path as
+        # PUT /api/marketplaces/{name}/sync. Omit to leave the stored mode
+        # alone. webhook mode is refused: its inbound HMAC secret is
+        # generated and shown once, which has no declarative form.
+        sync-mode: scheduled
+
+    # The exact shape of POST /api/roles: approver grants name one
+    # marketplace that must exist at reconcile time (declared above, or
+    # registered through the API); admin and auditor grants must not.
+    grants:
+      - principal: alice@example.com
+        role: approver
+        marketplace: corp-marketplace
+      - principal: audit@example.com
+        role: auditor
+
+    # Webhook subscribers with an OPERATOR-SUPPLIED signing secret — the
+    # inversion of the API's generated show-once secret. Reference an
+    # environment variable; never inline a literal in a committed file.
+    webhooks:
+      - name: ci-bot
+        url: https://ci.example.com/hooks/skills-gateway
+        events: snapshot.approved,snapshot.rejected   # omit for all events
+        secret: ${SGW_ESTATE_CI_BOT_SECRET}
+
+    # Audit export sinks; same secret contract as webhooks.
+    audit-sinks:
+      - name: siem
+        url: https://siem.example.com/ingest/skills-gateway
+        secret: ${SGW_ESTATE_SIEM_SECRET}
+        after: 0          # cursor seed — applied at creation ONLY
+        batch-size: 500
+```
+
+| Property | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `skills-gateway.estate.marketplaces` | list | `[]` | Each entry: `name`, `url`, optional `sync-mode` (`on-demand`/`scheduled`). |
+| `skills-gateway.estate.marketplaces[].name` | string | — | Same rules as the API: `^[a-z0-9][a-z0-9_-]*$`, catalog name reserved. |
+| `skills-gateway.estate.marketplaces[].url` | string | — | Scheme must be allowlisted. Immutable once registered: a differing declared URL is a reconciliation failure, never an update. |
+| `skills-gateway.estate.marketplaces[].sync-mode` | string | unset (not managed) | `on-demand` or `scheduled`; `webhook` is refused. Unset never touches the stored mode. |
+| `skills-gateway.estate.grants` | list | `[]` | Each entry: `principal`, `role` (`admin`/`approver`/`auditor`), `marketplace` (required for approver, forbidden otherwise). |
+| `skills-gateway.estate.webhooks` | list | `[]` | Each entry: `name`, `url`, optional `events`, `secret`. |
+| `skills-gateway.estate.webhooks[].secret` | string | — | Operator-supplied, minimum 16 characters, write-only. A changed value rotates the stored secret idempotently. |
+| `skills-gateway.estate.audit-sinks` | list | `[]` | Each entry: `name`, `url`, `secret`, optional `after`, optional `batch-size`. |
+| `skills-gateway.estate.audit-sinks[].after` | long | `0` | Seeds the ledger cursor **at creation only**; never re-applied to an existing sink. |
+| `skills-gateway.estate.audit-sinks[].batch-size` | int | audit-export default | Converged when set; unset never touches the stored value. |
+
+!!! warning "Declared secrets are sensitive property values"
+
+    The gateway treats a declared secret as write-only — it never appears in
+    the log, the ledger, the reconciliation report, or any API response — but
+    it cannot control where the *configuration* lives. Supply secrets by
+    environment-variable reference (`${VAR}`) from a secret store; a literal in
+    a committed values file is a leaked credential. A blank or shorter-than-16
+    secret is refused as a reconciliation failure.
+
+Personal access tokens are deliberately not declarable: they are user-owned
+credentials, API-only by design. The GitOps workflow is described in
+[Declarative estate configuration](../guides/declarative-estate.md); the
+report and trigger endpoints in [Estate](api/estate.md).
 
 ---
 

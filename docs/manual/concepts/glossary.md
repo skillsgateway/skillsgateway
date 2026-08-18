@@ -44,6 +44,19 @@ a narrower meaning here.
 :   The read-only git smart-HTTP server at `/git/**`. The only surface end users
     touch. Authenticated by PAT only; writes impossible by construction.
 
+**Estate**
+:   Everything the gateway governs that is created at runtime rather than
+    coded: marketplaces, role grants, webhook subscribers, audit sinks. The
+    estate can be managed interactively through the API, declared in
+    configuration (`skills-gateway.estate.*`), or both.
+
+**Estate reconciliation**
+:   Converging the running estate to the declared one, at startup and on
+    demand: additive (nothing absent from the declaration is ever removed),
+    idempotent (a converged estate reconciles with zero writes and zero ledger
+    entries), audited under the actor `config-reconciler`, and failure-isolated
+    (an invalid entry is reported, never fatal).
+
 **Held**
 :   The state every snapshot starts in. Stored, inspectable, and serving
     nothing.
