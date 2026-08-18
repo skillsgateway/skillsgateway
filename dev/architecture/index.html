@@ -1,0 +1,2470 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Enterprise gateway for git-distributed AI agent skill marketplaces — quarantined ingestion, hold-until-approved vetting, a read-only git facade, and an append-only audit ledger.">
+      
+      
+      
+        <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/dev/architecture/">
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../concepts/lifecycle/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Architecture - Skills Gateway</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#architecture" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Skills Gateway" class="md-header__button md-logo" aria-label="Skills Gateway" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Skills Gateway
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Architecture
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/skillsgateway/skillsgateway" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    skillsgateway/skillsgateway
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Skills Gateway" class="md-nav__button md-logo" aria-label="Skills Gateway" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    Skills Gateway
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/skillsgateway/skillsgateway" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    skillsgateway/skillsgateway
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-gap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The gap
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-why-skills-are-a-real-attack-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Why skills are a real attack surface
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-design-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Design principles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-system-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. System architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. System architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-lifecycle-of-a-skill" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Lifecycle of a skill
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Lifecycle of a skill">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#refs-serving-more-than-main" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Refs: serving more than main
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-risk-tiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Risk tiers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-versioning-and-provenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Versioning and provenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-enforcement-making-it-the-only-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Enforcement — making it the only path
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Observability
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-what-stays-in-artifactorynexus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. What stays in Artifactory/Nexus
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-multi-tool-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Multi-tool support
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-deployment-shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Deployment shape
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-roadmap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Roadmap
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. Open questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lifecycle — quarantine to serve
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vetting — the connector chain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/snapshots-and-ledger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Snapshots and the audit ledger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/trust-boundaries/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trust boundaries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/local-development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/registering-a-marketplace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registering a marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/upstream-sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Syncing from upstream automatically
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/approving-snapshots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Approving and rejecting snapshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/waiving-findings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Waiving a vetting finding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/re-vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Re-vetting approved content
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/consuming-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consuming approved skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/virtual-catalog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The virtual catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/lifecycle-webhooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Receiving lifecycle webhooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/exporting-the-audit-ledger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exporting the audit ledger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/snapshot-retention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reclaiming snapshot storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/delegated-administration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Delegated administration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../reference/api/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    REST API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/api/marketplaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Marketplaces and snapshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/api/tokens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Access tokens
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/api/audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/api/adoption/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adoption
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/api/roles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/retention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Snapshot retention
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/container-image/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Container image
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/git-facade/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Git smart-HTTP facade
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compatibility and allowlists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/portal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Admin portal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/observability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-gap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The gap
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-why-skills-are-a-real-attack-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Why skills are a real attack surface
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-design-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Design principles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-system-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. System architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. System architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-lifecycle-of-a-skill" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Lifecycle of a skill
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Lifecycle of a skill">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#refs-serving-more-than-main" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Refs: serving more than main
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-risk-tiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Risk tiers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-versioning-and-provenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Versioning and provenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-enforcement-making-it-the-only-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Enforcement — making it the only path
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Observability
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-what-stays-in-artifactorynexus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. What stays in Artifactory/Nexus
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-multi-tool-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Multi-tool support
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-deployment-shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Deployment shape
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-roadmap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Roadmap
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. Open questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/architecture.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h1>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This is the system design document — it records the threat model, the
+decided architecture, the roadmap, and the open questions, including parts
+that are not implemented yet. For what the code does today, see the
+<a href="../concepts/lifecycle/">concepts</a> and <a href="../reference/configuration/">reference</a>
+sections; implementation notes below are marked as such.</p>
+</div>
+<p><strong>Status:</strong> Draft proposal · <strong>Date:</strong> 2026-08-13</p>
+<p>An enterprise gateway for git-distributed AI agent skills and skill
+marketplaces (Claude Code, GitHub Copilot, Cursor, …) — the missing analogue of
+Artifactory/Nexus for the part of the skills ecosystem that never touches a
+package manager.</p>
+<hr />
+<h2 id="1-the-gap">1. The gap<a class="headerlink" href="#1-the-gap" title="Permanent link">&para;</a></h2>
+<p>Agent skills reach developer machines through two distribution channels today:</p>
+<ol>
+<li>
+<p><strong>Package-manager distribution</strong> (npm, PyPI, OCI). Already governable: point
+   the client at an Artifactory/Nexus remote+virtual repository and you get
+   proxying, caching, scanning (Xray etc.), immutable versions, and audit logs
+   for free. <strong>This is a solved problem — the gateway should not rebuild it.</strong></p>
+</li>
+<li>
+<p><strong>Git distribution.</strong> Claude Code plugin <em>marketplaces</em> are git repositories
+   containing a <code>.claude-plugin/marketplace.json</code>; installing a plugin performs
+   a <code>git clone</code> from GitHub (or wherever the source points). The open Agent
+   Skills format (<code>SKILL.md</code>) adopted by Copilot and Cursor follows the same
+   pattern: "point your tool at this repo/folder." There is <strong>no proxy point,
+   no immutable versioning, no scanning hook, no inventory</strong> — every developer
+   laptop clones straight from the public internet.</p>
+</li>
+</ol>
+<p>JFrog's <em>Agent Skills Registry</em> framing correctly identifies skills as a
+governed-artifact problem, but assumes registry-style (package) distribution
+and explicitly leaves the git-marketplace channel unaddressed. That channel is
+where the ecosystem's growth actually is (community marketplaces, vendor
+marketplaces, internal repos), and it is the channel Security currently cannot
+see.</p>
+<p><strong>Skills Gateway is the choke point for channel 2, federated with the existing
+repository manager that already covers channel 1.</strong></p>
+<h2 id="2-why-skills-are-a-real-attack-surface">2. Why skills are a real attack surface<a class="headerlink" href="#2-why-skills-are-a-real-attack-surface" title="Permanent link">&para;</a></h2>
+<p>Skills are not configuration files. Threat model, specific to how these
+artifacts actually work:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Threat</th>
+<th>Mechanism</th>
+<th>Covered by existing tooling?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T1</td>
+<td>Malicious instructions</td>
+<td><code>SKILL.md</code>, slash commands, and agent definitions are <em>prose that executes</em> with the agent's privileges — prompt injection, "also exfiltrate <code>~/.aws/credentials</code> to…", instructions that weaken future reviews</td>
+<td>No — SAST does not parse prose</td>
+</tr>
+<tr>
+<td>T2</td>
+<td>Auto-executing code</td>
+<td>Claude Code plugins can register <strong>hooks</strong> (shell commands that fire automatically on events) and <strong>MCP servers</strong> (long-lived processes). Installing a plugin can mean arbitrary code execution without the user ever invoking a skill</td>
+<td>Partially (generic malware scanning, if the code ever passes through a scanner — which git cloning skips)</td>
+</tr>
+<tr>
+<td>T3</td>
+<td>Rug pulls</td>
+<td>Git refs are mutable. A marketplace reviewed on Monday can serve different content Tuesday at the same URL — <code>marketplace update</code> happily pulls it</td>
+<td>No — this is exactly what pinned, immutable registry versions exist to prevent, and git distribution has none</td>
+</tr>
+<tr>
+<td>T4</td>
+<td>Transitive sources</td>
+<td><code>marketplace.json</code> plugin entries may point at <em>other</em> arbitrary git repositories. Vetting the marketplace repo does not vet what an install actually clones</td>
+<td>No</td>
+</tr>
+<tr>
+<td>T5</td>
+<td>Typosquatting / lookalikes</td>
+<td>No namespace authority in the git world; <code>owner/claude-skills</code> vs <code>0wner/claude-skills</code></td>
+<td>No</td>
+</tr>
+<tr>
+<td>T6</td>
+<td>Inventory blindness</td>
+<td>When a community skill is disclosed as malicious, no one can answer "which of our 4,000 developers has it installed, at which version?"</td>
+<td>No</td>
+</tr>
+<tr>
+<td>T7</td>
+<td>License / compliance</td>
+<td>Skills embed third-party content and code with licenses nobody recorded</td>
+<td>Partially</td>
+</tr>
+</tbody>
+</table>
+<p>T1–T4 are the ones no current product addresses; T3+T4 together are the reason
+naive mirroring is insufficient.</p>
+<h2 id="3-design-principles">3. Design principles<a class="headerlink" href="#3-design-principles" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Be the only door.</strong> Governance that depends on developers voluntarily
+   using the right URL is documentation, not control. The gateway is enforced
+   by network egress policy and fleet-managed client settings, and made
+   <em>preferable</em> by being faster and easier than going direct.</li>
+<li><strong>Speak the client's native protocols.</strong> Claude Code fetches marketplaces
+   over git smart-HTTP and raw HTTPS. The gateway presents itself as exactly
+   that — a read-only git server — so clients need <strong>zero modification</strong>:
+   <code>claude plugin marketplace add https://skills.corp.example/m/approved</code>.</li>
+<li><strong>Layer immutability over mutable git.</strong> Every approved artifact is pinned
+   to an upstream commit SHA and republished as an immutable, content-addressed
+   snapshot. Published refs only ever move forward through the approval
+   pipeline, never because upstream moved.</li>
+<li><strong>Rewrite, don't just mirror.</strong> Ingestion resolves every transitive plugin
+   source, mirrors it, and rewrites <code>marketplace.json</code> so <strong>every URL a client
+   will ever dereference resolves inside the gateway</strong> (kills T3/T4).</li>
+<li><strong>Risk-tiered friction.</strong> A markdown-only skill and a plugin that registers
+   shell hooks are different animals; review effort must match (see §6), or
+   admins drown and users route around the system.</li>
+<li><strong>Complement the existing repository manager.</strong> npm/OCI-packaged skills stay
+   in Artifactory/Nexus. The gateway federates its catalog with it so users get
+   one search plane, and Security gets one policy conversation.</li>
+</ol>
+<h2 id="4-system-architecture">4. System architecture<a class="headerlink" href="#4-system-architecture" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart LR
+    subgraph Upstream["Public / vendor upstreams"]
+        GH["GitHub marketplaces\n+ transitive plugin repos"]
+    end
+
+    subgraph GW["Skills Gateway"]
+        ING["Ingestion\nwatch · fetch · resolve\ntransitive sources"]
+        SCAN["Vetting orchestrator\ntrigger → connectors →\nverdict callbacks"]
+        CONN["Connectors\nscanners · LLM review ·\nsandbox · human approval"]
+        POL["Policy engine\ntiers · licenses ·\nallow/deny · approvals"]
+        PUB["Publisher\ncomposes virtual\nmarketplaces, rewrites\nsources, pins SHAs"]
+        FAC["Git façade\nread-only smart-HTTP\n+ raw HTTPS"]
+        CAT["Catalog &amp; portal\nsearch · request ·\nownership · trust"]
+        LED["Audit ledger\nfetch logs · inventory ·\nkill switch"]
+        OBJ[("Content-addressed\nstore + metadata DB")]
+    end
+
+    subgraph Clients["Developers &amp; CI"]
+        CC["Claude Code"]
+        CP["Copilot / Cursor"]
+        CI["CI pipelines"]
+    end
+
+    ART["Artifactory / Nexus\n(npm / OCI skills)"]
+
+    GH --&gt; ING --&gt; SCAN --&gt; POL --&gt; PUB --&gt; FAC
+    SCAN &lt;--&gt; CONN
+    ING --&gt; OBJ
+    PUB --&gt; OBJ
+    FAC --&gt; CC &amp; CP &amp; CI
+    CC &amp; CP &amp; CI -.-&gt;|"fetch events"| LED
+    CAT --- POL
+    CAT -.-&gt;|"federated search"| ART
+    Clients -.-&gt;|"direct egress to\nupstreams: blocked"| GH</code></pre>
+<h3 id="components">Components<a class="headerlink" href="#components" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Git façade.</strong> A read-only git smart-HTTP server serving (a) generated
+  <em>virtual marketplaces</em> and (b) mirrored, pinned plugin repos, at stable
+  internal URLs. Authenticated via SSO-issued tokens (standard git credential
+  helper flow). This is the only surface end users ever talk to.</li>
+<li><strong>Ingestion.</strong> Watches registered upstreams for new commits/tags, fetches the
+  marketplace repo, parses the manifest, <strong>recursively resolves every plugin
+  source</strong> (relative paths, external git URLs, GitHub refs), and snapshots the
+  whole closure into content-addressed storage keyed by commit SHA.
+  <strong>MVP scope: local sources only</strong> — plugins must live inside the marketplace
+  repo as relative paths; every external source type (<code>github</code>, <code>url</code>,
+  <code>git-subdir</code>, <code>npm</code>, <code>archive</code>) is rejected fail-closed at ingestion. This
+  removes transitive resolution and source rewriting from the MVP entirely
+  (relative sources resolve inside the served snapshot by themselves); the
+  closure/rewrite machinery arrives with external-source support in Phase 2.</li>
+<li><strong>Vetting orchestrator (connector-based).</strong> The gateway does not vet
+  content itself — it orchestrates. Per snapshot it emits a vetting trigger
+  (webhook/queue event carrying snapshot metadata and a fetch URL for the
+  content), fans it out to the configured connectors, and receives
+  asynchronous result callbacks. A connector is anything that can take the
+  trigger and eventually answer
+  <code>{connector, snapshot, verdict, report-url, findings[]}</code>:</li>
+<li><em>Scanners:</em> JFrog Xray or similar, malware signatures, dependency and
+    secret scanning, license checks, obfuscation/invisible-Unicode detection
+    in markdown.</li>
+<li><em>LLM semantic review:</em> reads <code>SKILL.md</code>/commands/agents for
+    malicious-instruction payloads (T1) — does this instruct the agent to
+    access credentials, make network calls, modify files outside its stated
+    purpose, alter its own review process? A triage signal, not a verdict.</li>
+<li><em>Sandbox runners:</em> execute bundled scripts and hooks in an instrumented
+    sandbox; record file, network, and process behavior (T1/T2 tiers).</li>
+<li><em>Human processes:</em> a Jira ticket, a review queue — the MVP "connector" is
+    simply an approve button in the portal.</li>
+</ul>
+<p>Results are normalized and attached to the snapshot forever. One analysis
+  stays built-in because tiering depends on it: <em>manifest analysis</em> —
+  enumerating registered hooks, MCP servers, commands, and agents (§6).
+- <strong>Policy engine.</strong> Policy-as-code (OPA-style) consuming the normalized
+  connector verdicts: which connectors are required per tier, auto-approval
+  conditions, license allowlists, org/team scoping, mandatory reviewers for
+  T2. Versioned in git like any other policy.
+- <strong>Publisher.</strong> Composes virtual marketplaces per audience (org-wide, per
+  team, pilot ring) from approved snapshots — exactly Artifactory's
+  local + remote + virtual model. Generates <code>marketplace.json</code> with <strong>every
+  source rewritten</strong> to façade URLs and pinned with an explicit commit <code>sha</code>
+  (plugin source entries support <code>ref</code> and 40-char <code>sha</code> pinning; when both
+  are set the <code>sha</code> wins) — so the pin is enforced by the client's own git
+  fetch, not just by gateway behavior.
+- <strong>Catalog &amp; portal.</strong> Search across gateway <em>and</em> federated Artifactory/Nexus
+  skills; per-skill page with scan history, tier, owner, install count, trust
+  signals; "request this upstream skill" button feeding the approval queue.
+- <strong>Audit ledger.</strong> Append-only record of every fetch (who, what, which SHA,
+  when), every approval (who, what diff, which scan report), every recall.
+  Streams to the SIEM.</p>
+<h2 id="5-lifecycle-of-a-skill">5. Lifecycle of a skill<a class="headerlink" href="#5-lifecycle-of-a-skill" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>sequenceDiagram
+    actor Dev as Developer
+    participant Portal as Catalog/Portal
+    participant Ing as Ingestion
+    participant Vet as Vetting connectors
+    participant Rev as Reviewer (tiered)
+    participant Pub as Publisher
+    participant Fac as Git façade
+
+    Dev-&gt;&gt;Portal: request upstream skill X
+    Portal-&gt;&gt;Ing: register upstream
+    Ing-&gt;&gt;Ing: fetch @ SHA abc123, resolve transitive sources
+    Ing-&gt;&gt;Vet: snapshot → vetting trigger
+    Vet-&gt;&gt;Rev: verdict callbacks + computed tier (T0 may auto-approve)
+    Rev-&gt;&gt;Pub: approve X @ abc123
+    Pub-&gt;&gt;Fac: republish marketplace with X pinned
+    Dev-&gt;&gt;Fac: claude plugin install X (from corp marketplace)
+
+    Note over Ing,Pub: Later: upstream pushes new commit
+    Ing-&gt;&gt;Vet: new snapshot @ def456 — held, NOT served
+    Vet-&gt;&gt;Rev: diff vs approved (semantic diff of SKILL.md,&lt;br/&gt;new hooks/MCP flagged)
+    Rev-&gt;&gt;Pub: promote def456 (or reject; abc123 keeps serving)</code></pre>
+<p>The held-update behavior is the rug-pull defense: upstream movement never
+changes what clients receive until the new snapshot passes the same gate the
+old one did. Tier-0 diffs that stay tier-0 and scan clean can auto-promote on
+a configurable delay (a cooling-off window also defeats
+push-then-quickly-revert attacks).</p>
+<p><strong>Recall (kill switch):</strong> marking a snapshot revoked (a) removes it from every
+virtual marketplace, (b) makes the façade refuse its mirror refs, (c) produces
+the blast-radius report from the ledger (every identity that ever fetched it),
+and (d) optionally pushes a fleet-managed settings change to force uninstall.</p>
+<p>Implemented today (GW_0049–GW_0055): a <code>revoked</code> snapshot state, removal of both
+published refs (<code>refs/heads/main</code> when it is still the tip, and the advertised
+<code>refs/snapshots/&lt;sha&gt;</code>), and the blast-radius report from the fetch ledger at
+<code>GET /api/snapshots/{id}/fetchers</code>. What triggers the recall is <strong>continuous
+re-vetting</strong> — the chain re-run over approved content on a schedule — rather
+than only a human pressing a button, so an acceptance that expired or a
+connector rule that landed retracts content without waiting to be noticed.
+Two limits are deliberate:</p>
+<ul>
+<li>Enforcement is <strong>opt-in</strong> (<code>skills-gateway.vetting.revet.mode</code>, default
+  <code>warn</code>). Retracting content teams already depend on must never begin because
+  of an upgrade.</li>
+<li>A run that blocks only because a connector <strong>errored</strong> never revokes. An error
+  is evidence about the scanner, not the content, and fail-closed there would
+  let one connector outage revoke an estate. Fail-closed still governs every
+  path that <em>publishes</em>.</li>
+</ul>
+<p>(d) — fleet force-uninstall — remains Phase 3.</p>
+<h3 id="refs-serving-more-than-main">Refs: serving more than <code>main</code><a class="headerlink" href="#refs-serving-more-than-main" title="Permanent link">&para;</a></h3>
+<p>Consumers can pin a branch or tag when adding a marketplace
+(<code>marketplace add &lt;url&gt;#release-1.x</code>), and users legitimately need release
+branches, not only the default branch. The gateway handles this by making
+<strong>promotion per-(upstream, ref)</strong>:</p>
+<ul>
+<li>Each ref an audience needs (<code>main</code>, <code>release/1.x</code>, a tag) is registered and
+  vetted as its own line. The published repo carries one branch per vetted
+  ref, each advancing independently through the same held-update gate.</li>
+<li>Unvetted refs simply do not exist on the façade — the published repo
+  contains only promoted refs and their objects, so <code>#experimental</code> fails
+  closed, ideally with a pointer to "request vetting of this ref" in the
+  portal.</li>
+<li>The security boundary is unchanged regardless of which ref a user tracks:
+  the plugins inside the generated <code>marketplace.json</code> are still pinned by
+  commit <code>sha</code>.</li>
+<li><strong>MVP scope: default branch only.</strong> Additional refs are a registration
+  feature, not an architecture change — the first portal feature after the
+  MVP.</li>
+</ul>
+<h2 id="6-risk-tiers">6. Risk tiers<a class="headerlink" href="#6-risk-tiers" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Contents</th>
+<th>Review</th>
+<th>Update policy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>T0</strong></td>
+<td><code>SKILL.md</code> + reference docs only. No scripts, no hooks, no MCP servers</td>
+<td>Automated scans + LLM review; auto-approve on clean</td>
+<td>Auto-promote after cooling-off window</td>
+</tr>
+<tr>
+<td><strong>T1</strong></td>
+<td>Skills bundling scripts/executables the agent may run</td>
+<td>T0 checks + sandbox run + human spot-check</td>
+<td>Human-approved diff</td>
+</tr>
+<tr>
+<td><strong>T2</strong></td>
+<td>Plugins registering hooks, MCP servers, or commands that execute code on install/events</td>
+<td>Full security review, named internal owner required</td>
+<td>Mandatory re-review of every diff</td>
+</tr>
+</tbody>
+</table>
+<p>A snapshot's tier is computed by manifest analysis, never self-declared. A T0
+skill that grows a <code>scripts/</code> directory in an update is automatically re-tiered
+— that transition is itself a review trigger.</p>
+<h2 id="7-versioning-and-provenance">7. Versioning and provenance<a class="headerlink" href="#7-versioning-and-provenance" title="Permanent link">&para;</a></h2>
+<p>Git gives you refs; enterprises need coordinates. Every published plugin gets
+an immutable coordinate:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>skill-name@1.4.0+gw.7
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>   └─ upstream: github.com/acme/skills @ 3f9c2ab…
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>   └─ scan report: sha256:…    approved-by: jdoe    2026-08-13
+</code></pre></div>
+<p>The <code>+gw.N</code> counter increments per republication of the same upstream version
+(e.g. re-scan, metadata fix), so "what exactly ran" is always answerable — the
+compliance question (T6/JFrog's "which version executed") reduces to a ledger
+lookup. Snapshots are content-addressed; the façade's published branches are
+append-only. Phase 3 adds signed in-toto/Sigstore attestations binding
+upstream SHA → scan → approval → published artifact.</p>
+<h2 id="8-enforcement-making-it-the-only-path">8. Enforcement — making it the only path<a class="headerlink" href="#8-enforcement-making-it-the-only-path" title="Permanent link">&para;</a></h2>
+<p>Honest assessment: this is the weakest layer today, so it is defense in depth,
+not one mechanism.</p>
+<ul>
+<li><strong>Network egress.</strong> Block direct git/HTTPS access from developer machines and
+  CI to known marketplace hosts for agent tooling (at minimum: alert on it).
+  Blocked attempts are themselves a useful signal → SIEM.</li>
+<li><strong>Fleet-managed client settings.</strong> Claude Code's managed settings support
+  this directly today: <code>strictKnownMarketplaces</code> (managed-only) restricts users
+  to an explicit marketplace allowlist — set it to the gateway's marketplaces
+  and ad-hoc <code>marketplace add</code> is blocked client-side; <code>blockedMarketplaces</code>
+  adds owner-wildcard denylisting; <code>extraKnownMarketplaces</code> +
+  <code>enabledPlugins</code> pre-register the gateway and force-install the approved
+  set fleet-wide. Distribute via MDM. (Copilot/Cursor lack an equivalent hard
+  switch — for them, egress policy carries the load.)</li>
+<li><strong>CI as a backstop.</strong> Pipelines resolve skills only through the gateway;
+  builds referencing unapproved sources fail. Catches what laptop-level
+  controls miss before anything ships.</li>
+<li><strong>Carrot.</strong> The gateway is <em>faster</em> (LAN cache), <em>simpler</em> (one URL,
+  pre-approved catalog, no security tickets), and works in restricted networks.
+  Making the paved road genuinely better is half of enforcement.</li>
+</ul>
+<h2 id="9-observability">9. Observability<a class="headerlink" href="#9-observability" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Fetch-level audit:</strong> every façade access logged <code>{identity, marketplace,
+  plugin, SHA, client UA, timestamp}</code> → SIEM. This alone answers T6.</li>
+<li><strong>Install inventory:</strong> derived from fetch logs, optionally enriched with
+  client OTel telemetry (Claude Code exports usage metrics) for
+  <em>invocation</em>-level data — not just who has a skill, but who actually uses it.</li>
+<li><strong>Blast radius as a query:</strong> "all identities that fetched
+  <code>skill-x@*</code> in the last 90 days" is one ledger query, feeding recall (§5).</li>
+<li><strong>Drift &amp; threat-intel:</strong> dashboards for upstream-moved-but-held snapshots,
+  stale installed versions, egress-block events; advisory feeds (malicious
+  skill/package disclosures) matched against inventory automatically.</li>
+</ul>
+<h2 id="10-what-stays-in-artifactorynexus">10. What stays in Artifactory/Nexus<a class="headerlink" href="#10-what-stays-in-artifactorynexus" title="Permanent link">&para;</a></h2>
+<p>npm- and OCI-packaged skills continue to flow through the existing repository
+manager — remote repos for upstream registries, virtual repos per audience,
+Xray-class scanning. The gateway federates: its catalog indexes both planes so
+end users search once, and policy definitions (licenses, deny lists) are shared
+where formats allow. A later phase can <em>re-publish</em> approved git-skill
+snapshots as OCI artifacts internally — provenance-native storage — while the
+git façade remains for client compatibility.</p>
+<h2 id="11-multi-tool-support">11. Multi-tool support<a class="headerlink" href="#11-multi-tool-support" title="Permanent link">&para;</a></h2>
+<p>The core pipeline (ingest → scan → approve → publish pinned) is
+format-agnostic; tool specifics live in <strong>adapters</strong>:</p>
+<ul>
+<li><strong>Claude Code adapter:</strong> parses <code>.claude-plugin/marketplace.json</code>, resolves
+  plugin sources, understands hooks/MCP/commands/agents for tiering, emits
+  rewritten marketplaces. (First and most complete, since the marketplace
+  mechanism is furthest along.)</li>
+<li><strong>Plain skills-repo adapter:</strong> any repo of <code>SKILL.md</code> directories (the open
+  Agent Skills format) — covers Copilot/Cursor consumption of skill folders.</li>
+<li>Future adapters as vendors formalize their distribution (Copilot policy
+  currently governs <em>enablement</em> org-wide but not <em>content</em> vetting of
+  arbitrary skill repos — same gap, same gateway).</li>
+</ul>
+<h2 id="12-deployment-shape">12. Deployment shape<a class="headerlink" href="#12-deployment-shape" title="Permanent link">&para;</a></h2>
+<p>Stateless services (façade, ingestion, vetting orchestrator, publisher,
+portal) in front of Postgres (metadata, ledger) and object storage
+(content-addressed snapshots; façade serves generated packfiles/bare repos).
+OIDC SSO for humans, token auth for CI, SCIM for team scoping. Vetting
+connectors run outside the gateway and talk to it over the trigger/callback
+contract; sandbox connectors use isolated ephemeral runners. Air-gap friendly by construction: ingestion is the only
+component needing internet egress, and can run in a DMZ with one-way promotion
+inward.</p>
+<h2 id="13-roadmap">13. Roadmap<a class="headerlink" href="#13-roadmap" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Phase 1 — visibility &amp; choke point (MVP).</strong> Git façade + ingestion of
+  <strong>local-source-only</strong> marketplaces (external plugin sources rejected
+  fail-closed) + manual allowlist + one curated org marketplace + fetch audit
+  log. Default branch only; vetting is the manual-approval connector (an
+  approve button). Even this closes T3/T4/T6 — T4 by rejection rather than
+  rewriting — and gives Security eyes.</li>
+<li><strong>Phase 2 — governance.</strong> External plugin sources with transitive
+  resolution and source rewriting, connector framework with automated vetting
+  (scanners, LLM review, sandbox), risk tiers, approval workflow with
+  semantic diffs, policy-as-code, catalog/portal with request flow, per-team
+  virtual marketplaces, multi-ref publication. <em>Implemented:</em> per-marketplace
+  upstream sync modes — on-demand, scheduled polling, and HMAC-authenticated
+  forge webhooks, all landing snapshots held behind the unchanged approval
+  gate (GW_0056–GW_0060); webhook payload parsing and a portal surface for
+  sync modes are deferred. <em>Implemented:</em> the global virtual catalog — one
+  synthesized facade repo aggregating the served estate, strictly derived
+  from published content (GW_0061–GW_0063); per-team catalogs, entitlements,
+  and per-plugin/skill filtering remain the rest of the virtual-marketplaces
+  item. <em>Implemented:</em> token lifecycle — marketplace-scoped PATs enforced at
+  the facade, expiry decided at authentication time, rotation that cannot
+  widen a grant, per-token fetch attribution on the ledger (GW_0064–GW_0067);
+  team entitlements and SSO-derived short-lived credentials are deferred
+  (issue #59). <em>Implemented:</em> scoped admin roles on the web surface — global
+  admin, per-marketplace approver, read-only auditor; DB-managed audited
+  grants with configuration-bootstrapped admins, deny-by-default once
+  enabled, off by default (GW_0068–GW_0071); per-team catalog scoping and a
+  portal grants UI are deferred.</li>
+<li><strong>Phase 3 — assurance &amp; scale.</strong> Client telemetry inventory, kill switch
+  with fleet force-uninstall, signed attestations, additional tool adapters,
+  Artifactory/Nexus catalog federation, OCI re-publication.</li>
+</ul>
+<h2 id="14-open-questions">14. Open questions<a class="headerlink" href="#14-open-questions" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Client enforcement gap — partially closed.</strong> Claude Code has the hard
+   switch (<code>strictKnownMarketplaces</code> in managed settings). Copilot and Cursor
+   do not yet; for those, egress policy carries the load. The enterprise ask
+   to press those vendors on is an equivalent managed allowlist.</li>
+<li><strong>LLM review confidence.</strong> Semantic scanning of prose will have false
+   negatives; adversaries will optimize against it. It must gate <em>triage
+   priority</em>, not substitute for tier-appropriate human review.
+   Designated tooling for when this connector is built: <strong>promptfoo</strong>
+   (promptfoo.dev) as its eval + red-team harness — a CI-run corpus of
+   known-malicious/benign skills asserting detection (prompt changes that
+   degrade detection fail the build), plus adversarial injection
+   generation against the reviewer prompt.</li>
+<li><strong>Format churn.</strong> Marketplace/manifest formats are young and moving;
+   adapters must be versioned and the ingestion contract conservative
+   (unknown manifest constructs → quarantine, not pass-through).</li>
+<li><strong>Ownership.</strong> Curation sits naturally with the platform team, policy with
+   Security — the approval-queue SLA (especially T0 auto-approval) is what
+   keeps developers on the paved road. Decide this before the MVP ships.</li>
+<li><strong>Authn/authz — deferred by design.</strong> MVP serves anonymous read on the
+   internal network (fetch logs degrade to IP-level; log source IPs from day
+   one). Later: token auth over the standard git credential-helper flow (no
+   client changes), OIDC for humans, SCIM for teams. Authz is then mostly
+   <em>visibility scoping</em> — which identities/teams see which virtual
+   marketplaces — plus admin/reviewer roles in the portal; it layers on
+   without changing the façade contract.</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Licensed under the Apache License 2.0
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "navigation.top", "navigation.indexes", "content.code.copy", "content.action.edit", "search.highlight", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "dev", "provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
