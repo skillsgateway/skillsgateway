@@ -1883,7 +1883,8 @@ require <strong>auditor</strong> (or admin).</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Portal</label><label for="__tabbed_1_2">API</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<p><strong>Webhooks</strong> → fill in <strong>Subscriber name</strong>, <strong>Target URL</strong> and <strong>Events</strong> →
+<p><strong>Webhooks</strong> → fill in <strong>Subscriber name</strong> and <strong>Target URL</strong>, tick the <strong>Events</strong>
+to receive (all of them by default; the box above the list narrows it) →
 <strong>Add subscriber</strong>. The signing secret appears in a dialog with a copy
 button.</p>
 </div>
@@ -1918,7 +1919,7 @@ button.</p>
 </tr>
 <tr>
 <td><code>events</code></td>
-<td>Comma-delimited event names, or <code>*</code> for every event. Blank means <code>*</code>. An unknown name is <strong>400</strong>, not silently dropped.</td>
+<td>Comma-delimited event names, or <code>*</code> for every event. Blank means <code>*</code>. An unknown name is <strong>400</strong>, not silently dropped. <code>GET /api/webhooks/events</code> answers the names this gateway accepts.</td>
 </tr>
 </tbody>
 </table>

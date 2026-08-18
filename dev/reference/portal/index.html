@@ -2485,8 +2485,7 @@ identity provider.</p>
   a muted hint beneath the form (bound to the fields with <code>aria-describedby</code>)
   states what it is waiting for. The client rules mirror the server's; whitespace
   never counts as a value. Rules the client cannot know — the URL scheme
-  allowlist, the webhook event registry — stay server-side and surface as an
-  error toast.</li>
+  allowlist — stay server-side and surface as an error toast.</li>
 <li>Every list renders a bare "Loading…" and, on failure, an error paragraph with
   <code>role="alert"</code>.</li>
 <li>Timestamps render as raw ISO-8601 strings.</li>
@@ -2921,13 +2920,17 @@ not verdicts.</p>
 <p>"Snapshot lifecycle events are POSTed to each subscriber that filters for them,
 signed with HMAC-SHA256 and retried with backoff until delivered."</p>
 <h3 id="add-subscriber">Add subscriber<a class="headerlink" href="#add-subscriber" title="Permanent link">&para;</a></h3>
-<p>An inline form with <strong>Subscriber name</strong>, <strong>Target URL</strong> and <strong>Events</strong> — the
-last defaults to <code>*</code> and is placeholder-hinted with
-<code>snapshot.approved,snapshot.rejected</code>. <strong>Add subscriber</strong> stays disabled until the
-name matches <code>^[a-z0-9][a-z0-9_-]*$</code> and the target URL parses with a scheme;
-only then is <code>POST /api/webhooks</code> called. Everything else — the scheme allowlist
-and the set of known event names — is enforced server-side and surfaces as an
-error toast.</p>
+<p>An inline form with <strong>Subscriber name</strong>, <strong>Target URL</strong> and <strong>Events</strong>. Events is
+a checkbox list built from <code>GET /api/webhooks/events</code>, so the portal offers exactly
+the names this gateway emits rather than asking for them: <strong>All events</strong> ticks or
+clears every one, and the box above the list narrows what is shown without
+changing what is selected. Every event is ticked by default, and that state submits
+<code>*</code> rather than an enumeration — so a subscriber registered today also receives
+events added to the gateway later.</p>
+<p><strong>Add subscriber</strong> stays disabled until the name matches <code>^[a-z0-9][a-z0-9_-]*$</code>,
+the target URL parses with a scheme, and at least one event is ticked; only then is
+<code>POST /api/webhooks</code> called. The scheme allowlist remains server-side and surfaces
+as an error toast.</p>
 <p>The response opens a show-once dialog — "This signing secret is shown exactly
 once — copy it now." — with the <code>whsec_…</code> value in a code block and a clipboard
 button that flips to a checkmark for two seconds, the same pattern as
@@ -2951,7 +2954,7 @@ button that flips to a checkmark for two seconds, the same pattern as
 </tr>
 <tr>
 <td>Events</td>
-<td>The filter, rendered as a chip; <code>*</code> displays as "all events".</td>
+<td>The filter, rendered as a chip; <code>*</code> displays as "all events". A name absent from the served registry is flagged with an <strong>unknown event</strong> badge, whose tooltip names it.</td>
 </tr>
 <tr>
 <td>Status</td>
