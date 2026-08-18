@@ -2656,6 +2656,14 @@ same gate. <strong>Reject</strong>
 fires immediately and toasts <em>Snapshot {id} rejected</em>.</p>
 <p><strong>Approve</strong> opens the review dialog rather than acting immediately — approve is
 the moment content becomes reachable by clients, so the verdicts come first.</p>
+<p>While a snapshot is inside the configured
+<a href="../configuration/#minimum-release-age">minimum release age</a>, the approve control
+is disabled and reads <strong>Eligible in {remaining}</strong> — from
+<code>GET /api/snapshots/{id}/release-age</code>, so the portal never computes the deadline
+from the browser's clock. <strong>Reject</strong> stays enabled: rejection is never age-gated.
+With the gate off (the default) the control reads <strong>Approve</strong> as before, and a
+snapshot whose eligibility has not been fetched yet is never disabled on
+suspicion — the server is the gate.</p>
 <h4 id="approve-dialog">Approve dialog<a class="headerlink" href="#approve-dialog" title="Permanent link">&para;</a></h4>
 <p>Titled <em>Approve snapshot {id}</em>, it renders the <a href="#vetting">vetting report</a> for
 the snapshot. The confirm control (<em>Confirm approval of snapshot {id}</em>) is
@@ -2663,6 +2671,9 @@ disabled for as long as the effective outcome is <code>BLOCKED</code>; there is 
 type past it. The way to enable it is to waive each blocking finding from the
 report itself. The server enforces the same rule independently, with <code>409</code>, so
 the disabled button mirrors policy rather than replacing it.</p>
+<p>The dialog is also shut by the minimum release age, and says so in its own note:
+that one has no way past it in the portal at all, and needs none — it opens by
+itself at the stated time.</p>
 <p>Confirming calls <code>POST /api/snapshots/{id}/approve</code> with no body and toasts
 <em>Snapshot {id} approved</em>.</p>
 <h4 id="waiving-a-finding">Waiving a finding<a class="headerlink" href="#waiving-a-finding" title="Permanent link">&para;</a></h4>

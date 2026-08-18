@@ -853,6 +853,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#waiting-out-the-minimum-release-age" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waiting out the minimum release age
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#re-approving-a-revoked-snapshot" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1926,6 +1937,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#waiting-out-the-minimum-release-age" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waiting out the minimum release age
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#re-approving-a-revoked-snapshot" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2115,7 +2137,7 @@ already approved keeps serving.</p>
 </tr>
 <tr>
 <td>409</td>
-<td>The snapshot is neither <code>held</code> nor <code>revoked</code>, or its effective vetting outcome is blocked (see <code>uncoveredFindings</code>).</td>
+<td>The snapshot is neither <code>held</code> nor <code>revoked</code>, its effective vetting outcome is blocked (see <code>uncoveredFindings</code>), a <a href="../policy-rules/">policy rule</a> denied it, or it has not yet cleared the <a href="#waiting-out-the-minimum-release-age">minimum release age</a>.</td>
 </tr>
 </tbody>
 </table>
@@ -2127,6 +2149,39 @@ already approved keeps serving.</p>
 upstream commit and approve that snapshot. Approving an older one is not a
 rollback mechanism.</p>
 </div>
+<h2 id="waiting-out-the-minimum-release-age">Waiting out the minimum release age<a class="headerlink" href="#waiting-out-the-minimum-release-age" title="Permanent link">&para;</a></h2>
+<p>If your deployment configures
+<a href="../../reference/configuration/#minimum-release-age"><code>skills-gateway.vetting.minimum-release-age</code></a>,
+a snapshot cannot be approved until the gateway has been holding its commit for
+that long. The portal shows the approve control disabled and reading <strong>Eligible
+in 2d 4h</strong>; the API answers <code>409</code> with the setting, the current age and the time
+remaining, and <code>GET /api/snapshots/{id}/release-age</code> answers the same question
+without attempting a decision.</p>
+<p>The window exists for a threat no scanner covers: a compromised release is
+usually noticed by the wider world — often by the project's own community —
+within hours of being pushed, and it is frequently pulled again just as fast.
+Adopting a commit the moment it lands forfeits that detection entirely.</p>
+<p>Three things about it are worth knowing before it surprises you.</p>
+<ul>
+<li><strong>Nothing has to happen for the wait to end.</strong> The age is compared on each
+  approval request, so the snapshot becomes approvable by itself. There is no
+  queue to re-run and no state to clear.</li>
+<li><strong>The clock is this gateway's first sighting of the commit</strong>, not the
+  commit's date, and re-ingesting the same commit does not restart it. A
+  backdated or re-pushed commit gets no credit.</li>
+<li><strong>There is no override.</strong> The wait applies to a newly registered
+  marketplace's very first snapshot too. Shipping something before the window
+  elapses means changing the configuration, which is a deployment someone
+  reviews — deliberately a heavier act than clicking past a dialog.</li>
+</ul>
+<p>Both outcomes are on the <a href="../../concepts/snapshots-and-ledger/">audit ledger</a>: an
+approval that went through records how long the commit had been held
+(<code>snapshot-approved</code>, detail <code>ingestion-age=…</code>), and one the window turned away
+is its own entry (<code>snapshot-approval-refused</code>). What the wait was worth is
+therefore answerable from the ledger alone.</p>
+<p>Reviewing is unaffected: the contents, the provenance and the vetting verdicts
+are all readable during the wait, so the waivers a blocked snapshot needs can be
+recorded while the window runs down rather than after it.</p>
 <h2 id="re-approving-a-revoked-snapshot">Re-approving a revoked snapshot<a class="headerlink" href="#re-approving-a-revoked-snapshot" title="Permanent link">&para;</a></h2>
 <p>A snapshot that <a href="../re-vetting/">continuous re-vetting</a> revoked is decidable
 again, and the route back is this same <strong>Approve</strong> — deliberately, because a

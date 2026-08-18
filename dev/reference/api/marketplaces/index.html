@@ -1587,6 +1587,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#get-snapshotsidrelease-age" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /snapshots/{id}/release-age
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#post-snapshotsidreject" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2328,6 +2339,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#get-snapshotsidrelease-age" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /snapshots/{id}/release-age
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#post-snapshotsidreject" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2951,6 +2973,20 @@ is refused, and the problem document carries both <code>blockingConnectors</code
 <p><code>uncoveredFindings</code> is the complete worklist: record a waiver for each entry and
 the approval succeeds. Every waiver that was in force is appended to the audit
 ledger as <code>waiver-applied</code>.</p>
+<p>A snapshot inside the configured
+<a href="../../configuration/#minimum-release-age">minimum release age</a> is refused by the
+same status with a different problem document — one nothing in the API can
+unblock, because it clears itself:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">409</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Snapshot has not reached the minimum release age"</span><span class="p">,</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"snapshot 12 cannot be approved yet: …"</span><span class="p">,</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w"> </span><span class="nt">"configKey"</span><span class="p">:</span><span class="s2">"skills-gateway.vetting.minimum-release-age"</span><span class="p">,</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w"> </span><span class="nt">"minimumReleaseAge"</span><span class="p">:</span><span class="s2">"PT72H"</span><span class="p">,</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w"> </span><span class="nt">"eligibility"</span><span class="p">:{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"eligible"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="w">                </span><span class="nt">"firstIngestedAt"</span><span class="p">:</span><span class="s2">"2026-08-16T09:00:00Z"</span><span class="p">,</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="w">                </span><span class="nt">"eligibleAt"</span><span class="p">:</span><span class="s2">"2026-08-19T09:00:00Z"</span><span class="p">,</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="w">                </span><span class="nt">"ageSeconds"</span><span class="p">:</span><span class="mi">57600</span><span class="p">,</span><span class="nt">"remainingSeconds"</span><span class="p">:</span><span class="mi">187200</span><span class="p">,</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="w">                </span><span class="nt">"minimumReleaseAgeSeconds"</span><span class="p">:</span><span class="mi">259200</span><span class="p">}}</span>
+</code></pre></div>
 <table>
 <thead>
 <tr>
@@ -2969,7 +3005,7 @@ ledger as <code>waiver-applied</code>.</p>
 </tr>
 <tr>
 <td>409</td>
-<td>The snapshot is neither <code>held</code> nor <code>revoked</code>, or its effective vetting outcome is blocked.</td>
+<td>The snapshot is neither <code>held</code> nor <code>revoked</code>, its effective vetting outcome is blocked, a <a href="../policy/">policy rule</a> denied it, or it has not reached the minimum release age.</td>
 </tr>
 </tbody>
 </table>
@@ -2985,11 +3021,75 @@ approval does. The difference is that the ledger says which risk was
 accepted, by whom, and until when.</p>
 </div>
 <hr />
+<h2 id="get-snapshotsidrelease-age"><code>GET /snapshots/{id}/release-age</code><a class="headerlink" href="#get-snapshotsidrelease-age" title="Permanent link">&para;</a></h2>
+<p>Whether the snapshot has cleared the
+<a href="../../configuration/#minimum-release-age">minimum release age</a>, and when it will
+if it has not. This is the same computation the approve endpoint gates on, so
+the two can never disagree.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"eligible"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w"> </span><span class="nt">"firstIngestedAt"</span><span class="p">:</span><span class="s2">"2026-08-16T09:00:00Z"</span><span class="p">,</span><span class="nt">"eligibleAt"</span><span class="p">:</span><span class="s2">"2026-08-19T09:00:00Z"</span><span class="p">,</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w"> </span><span class="nt">"ageSeconds"</span><span class="p">:</span><span class="mi">57600</span><span class="p">,</span><span class="nt">"remainingSeconds"</span><span class="p">:</span><span class="mi">187200</span><span class="p">,</span><span class="nt">"minimumReleaseAgeSeconds"</span><span class="p">:</span><span class="mi">259200</span><span class="p">}</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>eligible</code></td>
+<td>Whether the snapshot may be approved now. Always <code>true</code> when the gate is off.</td>
+</tr>
+<tr>
+<td><code>firstIngestedAt</code></td>
+<td>When this gateway first ingested the commit. The age is counted from here — never from the commit's own timestamp.</td>
+</tr>
+<tr>
+<td><code>eligibleAt</code></td>
+<td>The instant it becomes approvable; equal to <code>firstIngestedAt</code> when the gate is off.</td>
+</tr>
+<tr>
+<td><code>ageSeconds</code></td>
+<td>How long ago the gateway first ingested the commit.</td>
+</tr>
+<tr>
+<td><code>remainingSeconds</code></td>
+<td>How much of the window is left; <code>0</code> when eligible.</td>
+</tr>
+<tr>
+<td><code>minimumReleaseAgeSeconds</code></td>
+<td>The configured window; <code>0</code> when the gate is off.</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>The eligibility record above.</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Unknown snapshot.</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="post-snapshotsidreject"><code>POST /snapshots/{id}/reject</code><a class="headerlink" href="#post-snapshotsidreject" title="Permanent link">&para;</a></h2>
 <p>Mark the snapshot <code>rejected</code>. No repository is touched; whatever was already
 approved keeps serving. This is also the terminal answer to a <code>revoked</code>
 snapshot nobody intends to waive.</p>
-<p>Same status codes as approve.</p>
+<p>Same status codes as approve, without its two refusals: neither the vetting
+outcome nor the minimum release age gates a rejection. Saying no to suspicious
+content is never something to wait for.</p>
 <div class="admonition warning">
 <p class="admonition-title">An approved snapshot cannot be re-decided</p>
 <p>Both endpoints return 409 for a snapshot that is <code>approved</code> or <code>rejected</code>.
@@ -2999,10 +3099,10 @@ the gateway makes, not a caller.</p>
 <hr />
 <h2 id="get-snapshotsidprovenance"><code>GET /snapshots/{id}/provenance</code><a class="headerlink" href="#get-snapshotsidprovenance" title="Permanent link">&para;</a></h2>
 <p>Where the snapshot came from and who decided on it.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w"> </span><span class="nt">"upstreamUrl"</span><span class="p">:</span><span class="s2">"https://github.com/acme/skills.git"</span><span class="p">,</span><span class="nt">"upstreamSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w"> </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"approved"</span><span class="p">,</span><span class="nt">"violation"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"ingestedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w"> </span><span class="nt">"decidedBy"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span><span class="nt">"decidedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w"> </span><span class="nt">"upstreamUrl"</span><span class="p">:</span><span class="s2">"https://github.com/acme/skills.git"</span><span class="p">,</span><span class="nt">"upstreamSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w"> </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"approved"</span><span class="p">,</span><span class="nt">"violation"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"ingestedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w"> </span><span class="nt">"decidedBy"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span><span class="nt">"decidedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}</span>
 </code></pre></div>
 <p><strong>200</strong> · <strong>404</strong> unknown snapshot.</p>
 <p>Every action on this page also appends an entry to the

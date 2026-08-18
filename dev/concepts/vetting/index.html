@@ -530,6 +530,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="The approval gate">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#not-a-connector-the-minimum-release-age" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not a connector: the minimum release age
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1924,6 +1941,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="The approval gate">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#not-a-connector-the-minimum-release-age" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not a connector: the minimum release age
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2181,6 +2215,18 @@ is exactly the set of waivers that must exist for the approval to succeed.</p>
 <p>There is no blanket override. The only way past objecting connectors is to
 accept each blocking finding individually with a
 <a href="#waivers-accepted-risks-with-a-scope-and-an-expiry">waiver</a>.</p>
+<h3 id="not-a-connector-the-minimum-release-age">Not a connector: the minimum release age<a class="headerlink" href="#not-a-connector-the-minimum-release-age" title="Permanent link">&para;</a></h3>
+<p>The same gate carries one precondition the chain has nothing to do with. When
+<a href="../../reference/configuration/#minimum-release-age"><code>minimum-release-age</code></a> is
+configured, a snapshot the gateway ingested less than that long ago cannot be
+approved however clear its verdicts are — a cooling-off window that gives the
+world time to notice a compromised release before this gateway adopts it.</p>
+<p>It is deliberately not a connector. A verdict is evidence about content at the
+moment it was gathered; "too young" is a fact about now. Recorded as a failing
+verdict it would keep blocking after the age had passed, until some later
+re-vetting run happened to replace it. Checked at the approval request instead,
+it clears itself and leaves nothing behind — the same reasoning that makes
+waiver expiry a comparison rather than a state.</p>
 <h2 id="waivers-accepted-risks-with-a-scope-and-an-expiry">Waivers: accepted risks with a scope and an expiry<a class="headerlink" href="#waivers-accepted-risks-with-a-scope-and-an-expiry" title="Permanent link">&para;</a></h2>
 <p>A <strong>waiver</strong> is an accepted-risk exception for <strong>one finding rule</strong>, on <strong>one
 marketplace</strong>, within <strong>one scope</strong>, until <strong>one date</strong>. All four are mandatory,

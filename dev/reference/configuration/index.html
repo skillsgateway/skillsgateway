@@ -1226,6 +1226,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Vetting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#minimum-release-age" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimum release age
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1933,6 +1950,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Vetting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#minimum-release-age" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimum release age
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2433,6 +2467,10 @@ in <code>application.yaml</code>.</p>
 <a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">    </span><span class="c1"># outcome is next computed, whether or not this sweep has run.</span>
 <a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">    </span><span class="nt">waiver-sweep-interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1h</span>
 <a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">    </span><span class="nt">waiver-sweep-batch-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">200</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">    </span><span class="c1"># The cooling-off window: how long a commit must have been in quarantine</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">    </span><span class="c1"># before it can be approved. 0 — the default — is no window at all.</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">    </span><span class="nt">minimum-release-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
 </code></pre></div>
 <table>
 <thead>
@@ -2468,8 +2506,38 @@ in <code>application.yaml</code>.</p>
 <td><code>200</code></td>
 <td>Lapsed waivers recorded per pass.</td>
 </tr>
+<tr>
+<td><code>skills-gateway.vetting.minimum-release-age</code></td>
+<td>duration</td>
+<td><code>0s</code></td>
+<td>How long the gateway must have held a commit before it may be approved. <code>0</code> disables the gate.</td>
+</tr>
 </tbody>
 </table>
+<h3 id="minimum-release-age">Minimum release age<a class="headerlink" href="#minimum-release-age" title="Permanent link">&para;</a></h3>
+<p>The gate refuses <code>POST /api/snapshots/{id}/approve</code> with <code>409</code> while the
+snapshot is younger than this, and the problem document names the setting, the
+snapshot's current age and the time remaining. Nothing has to run for the wait
+to end: the age is compared at the instant of each approval request, exactly as
+waiver expiry is, so a snapshot becomes approvable on its own.</p>
+<div class="admonition warning">
+<p class="admonition-title">The clock is the gateway's first sighting, not the commit's date</p>
+<p>The name mirrors Renovate's, but what is measured is <strong>ingestion age</strong>: the
+instant <em>this gateway</em> first ingested that commit, recorded when the
+snapshot row was created. The commit's own author and committer dates are
+never read — they are written by whoever made the commit, so a control that
+trusted them could be defeated by backdating one.</p>
+<p>Re-ingesting the same commit does not restart the clock: ingestion
+recognises the SHA and keeps the existing snapshot, so a re-push cannot
+reset the window either.</p>
+</div>
+<p>The rejection path is not gated — suspicious content can always be refused at
+once — and neither is anything about serving already-approved content.</p>
+<p>There is deliberately <strong>no exemption and no per-approval override</strong>, including
+for the first snapshot of a newly registered marketplace: an exemption is a
+special case an attacker can arrange to land in. Getting an urgent fix out
+before the window elapses means changing this setting, which is a deployment
+someone reviews.</p>
 <div class="admonition note">
 <p class="admonition-title">There is no switch that turns vetting off</p>
 <p>Deliberately. A snapshot with no chain run is blocked either way, so a kill
