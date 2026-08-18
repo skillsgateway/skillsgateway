@@ -36,6 +36,25 @@
    evidence, and the archived change. PRs are merged manually by the
    maintainer.
 
+## Repository settings and labels
+
+Repository settings are not configured by clicking through the GitHub UI, and
+they are **not** in this repo. They live as code in the private admin repo
+`skillsgateway/.github-private` and are applied by
+[`github/safe-settings`](https://github.com/github/safe-settings) — merge
+methods, the label set, the `protect-main` ruleset, and the deployment
+environments. This repo previously carried `.github/settings.yml` for the same
+purpose; it was retired in favour of that single source (issue #23).
+
+Two consequences worth knowing before you open a PR:
+
+- **`main` is protected.** A PR needs the three CI checks (`Build & gates`,
+  `Portal e2e`, `Traceability & spec gates`) green, one approving review, and
+  all review threads resolved. Force-pushes and branch deletion are blocked.
+- **Labels are declarative.** `.github/labeler.yml` may only reference labels
+  declared in the admin repo; a label that exists on the repo but not there is
+  deleted on the next sync. Adding a label means a PR against that repo.
+
 ## Gates — all must pass
 
 ```bash
