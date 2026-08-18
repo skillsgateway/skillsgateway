@@ -593,7 +593,10 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  # GW_0074 is reserved by an in-flight change on another branch.
+  # GW_0074 is deliberately unused. It was reserved alongside GW_0073 while the
+  # minimum-release-age change was in flight; that change shipped needing only
+  # GW_0073, so the id is retired rather than recycled — renumbering would
+  # silently move an id that archived changes already refer to.
 
   - id: GW_0075
     title: Adoption reporting from the fetch ledger
