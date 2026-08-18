@@ -346,6 +346,15 @@ export function useWebhookSubscribers() {
   });
 }
 
+/** The server-owned filter vocabulary; the portal never hardcodes event names. */
+export function useWebhookEvents() {
+  return useQuery({
+    queryKey: ["webhook-events"],
+    queryFn: () => api<string[]>("/api/webhooks/events"),
+    staleTime: Infinity,
+  });
+}
+
 export function useWebhookDeliveries() {
   return useQuery({
     queryKey: ["webhook-deliveries"],

@@ -41,8 +41,7 @@ carries a breadcrumb and a dark-mode toggle.
   a muted hint beneath the form (bound to the fields with `aria-describedby`)
   states what it is waiting for. The client rules mirror the server's; whitespace
   never counts as a value. Rules the client cannot know — the URL scheme
-  allowlist, the webhook event registry — stay server-side and surface as an
-  error toast.
+  allowlist — stay server-side and surface as an error toast.
 - Every list renders a bare "Loading…" and, on failure, an error paragraph with
   `role="alert"`.
 - Timestamps render as raw ISO-8601 strings.
@@ -442,13 +441,18 @@ signed with HMAC-SHA256 and retried with backoff until delivered."
 
 ### Add subscriber
 
-An inline form with **Subscriber name**, **Target URL** and **Events** — the
-last defaults to `*` and is placeholder-hinted with
-`snapshot.approved,snapshot.rejected`. **Add subscriber** stays disabled until the
-name matches `^[a-z0-9][a-z0-9_-]*$` and the target URL parses with a scheme;
-only then is `POST /api/webhooks` called. Everything else — the scheme allowlist
-and the set of known event names — is enforced server-side and surfaces as an
-error toast.
+An inline form with **Subscriber name**, **Target URL** and **Events**. Events is
+a checkbox list built from `GET /api/webhooks/events`, so the portal offers exactly
+the names this gateway emits rather than asking for them: **All events** ticks or
+clears every one, and the box above the list narrows what is shown without
+changing what is selected. Every event is ticked by default, and that state submits
+`*` rather than an enumeration — so a subscriber registered today also receives
+events added to the gateway later.
+
+**Add subscriber** stays disabled until the name matches `^[a-z0-9][a-z0-9_-]*$`,
+the target URL parses with a scheme, and at least one event is ticked; only then is
+`POST /api/webhooks` called. The scheme allowlist remains server-side and surfaces
+as an error toast.
 
 The response opens a show-once dialog — "This signing secret is shown exactly
 once — copy it now." — with the `whsec_…` value in a code block and a clipboard
@@ -461,7 +465,7 @@ button that flips to a checkmark for two seconds, the same pattern as
 | --- | --- |
 | Name | The subscriber name. |
 | Target URL | The registered endpoint. |
-| Events | The filter, rendered as a chip; `*` displays as "all events". |
+| Events | The filter, rendered as a chip; `*` displays as "all events". A name absent from the served registry is flagged with an **unknown event** badge, whose tooltip names it. |
 | Status | `enabled` (primary badge) or `disabled` (secondary). |
 | Actions | **Delete**, which fires immediately. |
 

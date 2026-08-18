@@ -852,3 +852,13 @@ cases:
       WHEN the application starts and the report endpoint and reconcile trigger are then exercised under role enforcement
       THEN the application serves with the valid entries applied, the invalid entry is on the ledger and in the report with its reason, the report endpoint answers auditors and admins and refuses sessions with no role, and the trigger endpoint refuses non-admins and records each admin trigger on the ledger with the acting identity
     revision: "0.1.0"
+
+  - id: SVC_GW_0088
+    requirement_ids: ["GW_0088"]
+    title: The registry is served, excludes the export event, and the portal composes a filter from it
+    verification: automated-test
+    description: |
+      GIVEN a gateway with the lifecycle event registry and — in an enforcement-enabled context — a session with no role and an auditor session
+      WHEN the event registry is requested, and an operator registers a subscriber in the portal by selecting events, selecting all of them, and narrowing the list by typing
+      THEN the response lists every event the dispatcher can emit and does not contain the audit export event, the read is refused below auditor and allowed for the auditor, the type-ahead narrows the offered list, selecting every event submits the wildcard filter and a partial selection submits the comma-delimited names, and a stored filter naming an event absent from the registry is marked as unknown
+    revision: "0.1.0"
