@@ -55,6 +55,22 @@ public class WebhookSubscriberRepository {
                 .optional();
     }
 
+    /**
+     * Converges a subscriber's target, secret and filter to a declared state (GW_0086). The caller
+     * — the estate reconciler — has already diffed, so a call here is always a real change; the
+     * secret value never appears anywhere but this parameter and the stored row.
+     */
+    public Optional<WebhookSubscriber> update(long id, String url, String secret, String events) {
+        return jdbc.sql("UPDATE webhook_subscribers SET url = :url, secret = :secret, events = :events"
+                        + " WHERE id = :id RETURNING *")
+                .param("url", url)
+                .param("secret", secret)
+                .param("events", events)
+                .param("id", id)
+                .query(WebhookSubscriberRepository::map)
+                .optional();
+    }
+
     public boolean delete(long id) {
         return jdbc.sql("DELETE FROM webhook_subscribers WHERE id = :id")
                         .param("id", id)

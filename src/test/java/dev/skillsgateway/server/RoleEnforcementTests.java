@@ -66,6 +66,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             "PUT /api/audit/sinks/{id}/cursor",
             "POST /api/roles",
             "DELETE /api/roles/{id}",
+            "POST /api/estate/reconcile",
             "POST /api/marketplaces/{name}/ingest",
             "POST /api/snapshots/{id}/approve",
             "POST /api/snapshots/{id}/reject",
@@ -88,7 +89,8 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             "GET /api/webhooks",
             "GET /api/webhooks/deliveries",
             "GET /api/retention/candidates",
-            "GET /api/roles");
+            "GET /api/roles",
+            "GET /api/estate");
 
     @Test
     @SVCs({"SVC_GW_0068"})

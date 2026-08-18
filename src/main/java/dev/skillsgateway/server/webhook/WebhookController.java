@@ -1,7 +1,6 @@
 package dev.skillsgateway.server.webhook;
 
 import dev.skillsgateway.server.admin.AdminAuditLogger;
-import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.persistence.WebhookDelivery;
 import dev.skillsgateway.server.persistence.WebhookSubscriber;
 import dev.skillsgateway.server.roles.RoleService;
@@ -10,12 +9,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.List;
-import java.util.Locale;
-import java.util.regex.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -27,13 +22,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/webhooks")
 public class WebhookController {
-
-    private static final Pattern SUBSCRIBER_NAME = Pattern.compile("^[a-z0-9][a-z0-9_-]*$");
 
     /** Webhook administration is not tied to a marketplace; the ledger column is NOT NULL. */
     private static final String NO_MARKETPLACE = "-";
@@ -42,17 +34,11 @@ public class WebhookController {
     private static final int MAX_DELIVERY_LIMIT = 500;
 
     private final WebhookService webhookService;
-    private final SkillsGatewayProperties properties;
     private final AdminAuditLogger auditLogger;
     private final RoleService roleService;
 
-    public WebhookController(
-            WebhookService webhookService,
-            SkillsGatewayProperties properties,
-            AdminAuditLogger auditLogger,
-            RoleService roleService) {
+    public WebhookController(WebhookService webhookService, AdminAuditLogger auditLogger, RoleService roleService) {
         this.webhookService = webhookService;
-        this.properties = properties;
         this.auditLogger = auditLogger;
         this.roleService = roleService;
     }
@@ -103,19 +89,8 @@ public class WebhookController {
     public ResponseEntity<WebhookService.CreatedSubscriber> create(
             @RequestBody CreateSubscriberRequest request, Authentication authentication) {
         roleService.requireAdmin(authentication);
-        if (request.name() == null || !SUBSCRIBER_NAME.matcher(request.name()).matches()) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNPROCESSABLE_CONTENT, "name must match " + SUBSCRIBER_NAME.pattern());
-        }
-        requireAllowlistedScheme(request.url());
-        String events = normalizeEvents(request.events());
-        if (webhookService.findSubscriber(request.name()).isPresent()) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT, "subscriber '%s' already exists".formatted(request.name()));
-        }
-        WebhookService.CreatedSubscriber created =
-                webhookService.createSubscriber(request.name(), request.url(), events);
-        auditLogger.record(authentication.getName(), NO_MARKETPLACE, "webhook-subscriber-created", null);
+        WebhookService.CreatedSubscriber created = webhookService.register(
+                request.name(), request.url(), request.events(), null, authentication.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -159,44 +134,6 @@ public class WebhookController {
             Authentication authentication) {
         roleService.requireAuditor(authentication);
         return webhookService.listDeliveries(Math.clamp(limit, 1, MAX_DELIVERY_LIMIT));
-    }
-
-    /** Fails closed, exactly like marketplace registration (GW_0016). */
-    private void requireAllowlistedScheme(String url) {
-        String scheme = null;
-        if (url != null) {
-            try {
-                scheme = new URI(url).getScheme();
-            } catch (URISyntaxException e) {
-                scheme = null;
-            }
-        }
-        if (scheme == null || !properties.allowedUrlSchemes().contains(scheme.toLowerCase(Locale.ROOT))) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "url scheme must be one of %s".formatted(properties.allowedUrlSchemes()));
-        }
-    }
-
-    /** Blank filter means every event; unknown event names are rejected instead of silently ignored. */
-    private static String normalizeEvents(String events) {
-        if (events == null || events.isBlank()) {
-            return WebhookSubscriber.ALL_EVENTS;
-        }
-        List<String> requested = List.of(events.split(",")).stream()
-                .map(String::trim)
-                .filter(e -> !e.isEmpty())
-                .toList();
-        if (requested.isEmpty()) {
-            return WebhookSubscriber.ALL_EVENTS;
-        }
-        for (String event : requested) {
-            if (!WebhookSubscriber.ALL_EVENTS.equals(event) && !WebhookEvent.ALL.contains(event)) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "unknown event '%s'; known events: %s".formatted(event, WebhookEvent.ALL));
-            }
-        }
-        return String.join(",", requested);
     }
 
     private static SubscriberView view(WebhookSubscriber subscriber) {
