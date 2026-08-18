@@ -27,3 +27,9 @@ The system SHALL implement GW_0026.
 #### Scenario: SVC_GW_0026
 The system SHALL pass SVC_GW_0026.
 
+
+### Requirement: GW_0088
+The system SHALL implement GW_0088.
+
+#### Scenario: SVC_GW_0088
+The system SHALL pass SVC_GW_0088.
