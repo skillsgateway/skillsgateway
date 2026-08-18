@@ -84,6 +84,6 @@ discussion, so the scaffold and the upcoming port have one reference.
 - Next change: `port-gateway-to-java` — JGit-based ingestion/approval/façade
   against the existing GW_*/SVC_GW_* contract, auth requirements GW_0011+,
   and a storage seam JGit-DFS can implement later (local disk in v1,
-  object-storage-as-truth on the roadmap; see ARCHITECTURE.md §12).
+  object-storage-as-truth on the roadmap; see docs/manual/architecture.md §12).
 - The Python prototype is archived with full history in the sibling
   `skills-gateway-python-mvp` repository.

@@ -39,41 +39,18 @@ are no releases or tags yet, and interfaces may still change.
   stated criteria, with a restore window, and never touching served content.
 - **An admin portal.** React/Vite, bundled into the jar, behind OIDC login.
 
-## Build and run locally
+## Run it
 
-Five gates must pass before any PR; CI enforces the same set:
-
-```bash
-./mvnw clean verify                          # Java + portal gates, packaged jar (needs Docker)
-(cd src/main/frontend && pnpm e2e)           # portal e2e: real browser + mock OIDC login
-reqstool status local -p docs/reqstool       # traceability gate (after the two above)
-openspec validate --all --strict             # spec-driven change workflow
-mkdocs build --strict                        # docs site (pip install -r docs/requirements.txt)
-```
-
-`clean` matters for the reqstool gate: incremental compilation truncates the
-generated annotation files.
-
-Building and running the packaged artifacts:
+Runtime requirements: **PostgreSQL 18** (every provisioning path in the repo —
+compose, e2e infrastructure, CI, and the Arconia/Testcontainers dev services —
+runs 18) and an **OIDC identity provider** for the web surface. `compose.yaml`
+brings its own PostgreSQL; the Helm chart expects you to bring both.
 
 ```bash
 ./mvnw -Pnative -DskipTests native:compile   # GraalVM native binary (needs GraalVM CE 25)
 docker build -t skills-gateway:local .       # OCI image from the native binary
 docker compose up                            # gateway + PostgreSQL on :8080 (compose.yaml)
 ```
-
-The admin portal (React/Vite, `src/main/frontend/`) is **built by the Maven build** — the
-frontend-maven-plugin provisions node/pnpm, runs the UI gates, and packages the
-bundle into the jar, served at `/` behind the OIDC login. You never need pnpm to
-build or run the gateway. The `cd src/main/frontend && pnpm …` commands exist only for UI
-development loops (`pnpm dev` proxies `/api` to a running gateway, `pnpm test`,
-`pnpm storybook`) and for the e2e suite (`pnpm e2e`), which is deliberately
-outside `mvnw verify`.
-
-Contributions: see [CONTRIBUTING.md](CONTRIBUTING.md). The workflow is
-evidence-first — each OpenSpec change records its gate runs in an `evidence.md`,
-and the PR body carries an **Evidence** section, so the review target is the
-evidence rather than every diff line.
 
 The API is documented with springdoc: `/v3/api-docs` (OpenAPI 3), rendered by
 the bundled Scalar UI at `/docs`, behind the OIDC login like the rest of the web
@@ -83,8 +60,13 @@ locally; `/actuator/health` is available unauthenticated.
 Kubernetes deployment: `helm/skills-gateway` (bring your own PostgreSQL and
 OIDC provider — see `values.yaml`).
 
-Dependency updates are automated with Renovate (`renovate.json`); enable the
-Renovate GitHub App on the repository for it to take effect.
+## Contributing
+
+Everything about building from source, the five quality gates, and the
+evidence-first workflow lives in [CONTRIBUTING.md](CONTRIBUTING.md): each
+OpenSpec change records its gate runs in an `evidence.md`, and the PR body
+carries an **Evidence** section, so the review target is the evidence rather
+than every diff line.
 
 ## Documentation
 
@@ -103,8 +85,9 @@ mkdocs build --strict
 
 In the repository:
 
-- `ARCHITECTURE.md` — the full architecture (threat model, connector-based
-  vetting, two-repo promotion, git façade, observability, roadmap)
+- `docs/manual/architecture.md` — the full architecture (threat model,
+  connector-based vetting, two-repo promotion, git façade, observability,
+  roadmap), published as part of the docs site
 - `docs/decisions/` — ADRs (language, toolchain, frontend stack and its
   verification harness)
 - `docs/reqstool/` — requirements and verification cases
