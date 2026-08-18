@@ -78,7 +78,7 @@ spec/proposal wording fixes, and the archive move — no source changes).
 [INFO] Spotless.Java is keeping 142 files clean - 0 needs changes to be clean, 142 were already clean, 0 were skipped
 [INFO] You have 0 Checkstyle violations.
 [INFO] BUILD SUCCESS
-[INFO] Total time:  59.269 s
+[INFO] Total time:  53.366 s
 ```
 
 Surefire aggregate (68 test classes): `total=117 failures=0 errors=0
@@ -90,10 +90,10 @@ skipped=0`. UI gate ran inside verify (fresh
 Real jar + mock OIDC IdP (compose.e2e.yaml):
 
 ```
-  11 passed (25.0s)
+  11 passed (24.4s)
 normalized classnames in .../src/main/frontend/test-results/playwright-junit.xml
-E2E_EXIT=0
 ```
+(exit code 0)
 
 ### `reqstool status local -p docs/reqstool`
 
@@ -113,12 +113,12 @@ Totals: 23 passed, 0 failed (23 items)
 ### `mkdocs build --strict`
 
 ```
-INFO    -  Documentation built in 0.52 seconds
+INFO    -  Documentation built in 0.54 seconds
 ```
 
 ## Source state
 
 Commit SHA of the gated source state:
-`1cae75cfe7f3e50f1b8027b7851e3572865a1db5` (the last code commit; commits
-after it are this report, the tasks checklist, spec/proposal wording fixes,
-and the archive move — no source changes).
+`a950d63d1d7d0ffad04a86e5c48b613198ad575b` (includes every source change and
+the ADR-number comment fix in pom.xml; commits after it are this report's
+result fill-in and the archive move — no source changes).
