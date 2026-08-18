@@ -794,6 +794,8 @@
       
         
       
+        
+      
     
     
     
@@ -1231,6 +1233,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/policy-rules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy deny rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1349,6 +1379,8 @@
       
         
           
+        
+      
         
       
         
@@ -1569,6 +1601,34 @@
     
   
     Estate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/api/policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy
   
 
     
@@ -2230,10 +2290,15 @@ naive mirroring is insufficient.</p>
 <p>Results are normalized and attached to the snapshot forever. One analysis
   stays built-in because tiering depends on it: <em>manifest analysis</em> —
   enumerating registered hooks, MCP servers, commands, and agents (§6).
-- <strong>Policy engine.</strong> Policy-as-code (OPA-style) consuming the normalized
-  connector verdicts: which connectors are required per tier, auto-approval
-  conditions, license allowlists, org/team scoping, mandatory reviewers for
-  T2. Versioned in git like any other policy.
+- <strong>Policy engine.</strong> Policy-as-code consuming snapshot facts and the
+  normalized connector verdicts. The engine is embedded CEL (ADR 0006), and
+  its first slice ships: <a href="../guides/policy-rules/">deny rules</a> evaluated
+  fail-closed at approval time, with a playground and ledger provenance.
+  The rest of the sketch — which connectors are required per tier,
+  auto-approval conditions, license allowlists, org/team scoping, mandatory
+  reviewers for T2 — attaches to the same engine if and when those are
+  decided (auto-approval deliberately parked: it would delegate the human
+  gate, a product decision, not a feature).
 - <strong>Publisher.</strong> Composes virtual marketplaces per audience (org-wide, per
   team, pilot ring) from approved snapshots — exactly Artifactory's
   local + remote + virtual model. Generates <code>marketplace.json</code> with <strong>every

@@ -557,6 +557,8 @@
       
         
       
+        
+      
     
     
     
@@ -994,6 +996,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/policy-rules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy deny rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1114,6 +1144,8 @@
       
         
           
+        
+      
         
       
         
@@ -1334,6 +1366,34 @@
     
   
     Estate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy
   
 
     
@@ -1656,6 +1716,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#adr-0006-embedded-cel-for-policy-rules-not-an-opa-sidecar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0006 — Embedded CEL for policy rules, not an OPA sidecar
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1786,6 +1857,17 @@
     <span class="md-ellipsis">
       
         ADR 0005 — Signed provenance stays in Phase 3, with named pull-forward triggers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-0006-embedded-cel-for-policy-rules-not-an-opa-sidecar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0006 — Embedded CEL for policy rules, not an OPA sidecar
       
     </span>
   </a>
@@ -1971,6 +2053,15 @@ verification happens outside it. Four pull-forward triggers are named — OCI
 re-publication/federation, an operator-independent audit demand,
 cross-gateway promotion, and consumer-side verification tooling — any one of
 which reopens the decision.</p>
+<h3 id="adr-0006-embedded-cel-for-policy-rules-not-an-opa-sidecar"><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0006-embedded-cel-for-policy-rules.md">ADR 0006 — Embedded CEL for policy rules, not an OPA sidecar</a><a class="headerlink" href="#adr-0006-embedded-cel-for-policy-rules-not-an-opa-sidecar" title="Permanent link">&para;</a></h3>
+<p><em>Accepted, 2026-08-18.</em></p>
+<p>Policy deny rules are <strong>embedded cel-java expressions</strong> — compiled to a
+boolean at write time, evaluated fail-closed inside the approval gate — rather
+than an OPA/Rego sidecar: no second deployment unit, no network hop inside the
+gate, and CEL's non-Turing-complete, terminating semantics are the right blast
+radius for user-authored rules and a playground pointed at real snapshots.
+Scope is deny-only on purpose; auto-approval would delegate the human gate and
+stays parked as a product decision.</p>
 <h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../architecture/">Architecture</a>

@@ -696,6 +696,8 @@
       
         
       
+        
+      
     
     
     
@@ -1133,6 +1135,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/policy-rules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy deny rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1251,6 +1281,8 @@
       
         
           
+        
+      
         
       
         
@@ -1471,6 +1503,34 @@
     
   
     Estate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy
   
 
     
@@ -1964,6 +2024,17 @@ ref only ever advances through a deliberate, recorded decision.</p>
 refs and moves the snapshot to <code>revoked</code>. That path never publishes — it only
 unpublishes — so <code>ApprovalService</code> remains the sole publisher, and a revoked
 snapshot returns to being served only by going back through it.</p>
+<p>Two gates precede every publication, inside that single publisher and before
+any state transition: the fail-closed <a href="../vetting/">vetting gate</a> (evidence
+about the content, waivable finding by finding), then the fail-closed
+<a href="../../guides/policy-rules/">policy gate</a> (standing organizational deny rules,
+not waivable — the exception path is editing the rule, audited). A refusal by
+either leaves the snapshot held and publishes nothing.</p>
+<p>Both gates only ever <em>close</em>: neither can approve. Policy rules in particular
+cannot auto-approve, because that would delegate the human decision this
+boundary exists to guarantee to an expression — a trust-model change, decided
+deliberately or not at all (ADR 0006 in
+<a href="../../reference/decisions/">Architecture decisions</a>).</p>
 <h2 id="the-web-surface">The web surface<a class="headerlink" href="#the-web-surface" title="Permanent link">&para;</a></h2>
 <p>Everything that is not <code>/git/**</code> is the web chain: OIDC authorization-code login
 only, with the application acting as its own BFF. The browser never holds a

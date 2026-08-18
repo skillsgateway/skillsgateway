@@ -571,6 +571,8 @@
       
         
       
+        
+      
     
     
     
@@ -1008,6 +1010,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/policy-rules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy deny rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1126,6 +1156,8 @@
       
         
           
+        
+      
         
       
         
@@ -1346,6 +1378,34 @@
     
   
     Estate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy
   
 
     
@@ -1678,6 +1738,13 @@ the portal, the API and the facade URL.</dd>
 <dt><strong>PAT</strong> (personal access token)</dt>
 <dd>The credential git clients authenticate with — <code>sgw_</code> plus 32 random bytes,
 stored only as a SHA-256 digest, shown exactly once.</dd>
+<dt><strong>Policy rule</strong></dt>
+<dd>A named <a href="../../guides/policy-rules/">CEL deny expression</a> over a snapshot's
+facts, compiled to a boolean at write time and evaluated fail-closed at
+approval time. A matching or erroring enabled rule refuses the approval;
+the deciding rule lands on the ledger as <code>policy-denied</code>. There is no
+per-snapshot override — the exception path is editing or disabling the
+rule, audited.</dd>
 <dt><strong>Provenance</strong></dt>
 <dd>The record of where a snapshot came from and who decided on it: marketplace,
 upstream URL, upstream SHA, state, ingestion time, deciding principal and
