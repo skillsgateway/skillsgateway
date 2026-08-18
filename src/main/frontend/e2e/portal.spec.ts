@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 /**
  * Real-browser acceptance: unmodified gateway + PostgreSQL + mock OIDC IdP
@@ -209,6 +209,41 @@ async function registerTainted(page: Page, prefix: string) {
 }
 
 /**
+ * Waive every blocking finding named in the review dialog, one waiver round-trip
+ * at a time. Each waiver POST re-renders the dialog and detaches its buttons, so
+ * the buttons are re-queried fresh on every iteration and the loop only advances
+ * once the previous round-trip has visibly removed a finding — resolving an
+ * attribute on an element held across the mutation is exactly the race that made
+ * this idiom flaky (#68).
+ */
+async function waiveAllFindings(dialog: Locator) {
+  const waiveButtons = dialog.getByRole("button", { name: /^Waive finding / });
+  // The findings load asynchronously after the dialog opens; both callers use a
+  // tainted fixture, so an empty list here means "not loaded yet", never "clean".
+  await expect(waiveButtons.first()).toBeVisible();
+  for (let i = 0; i < 10; i++) {
+    const remaining = await waiveButtons.count();
+    if (remaining === 0) break;
+    const label = await waiveButtons.first().getAttribute("aria-label");
+    if (label === null) {
+      throw new Error("Waive button has no aria-label; cannot name the finding to waive");
+    }
+    const rule = label.replace("Waive finding ", "");
+    await waiveButtons.first().click();
+    await dialog.getByLabel("Justification").first().fill("accepted for the pilot ring");
+    await dialog.getByRole("button", { name: `Record waiver for ${rule}` }).click();
+    // The finding is now shown as accepted rather than blocking.
+    await expect(dialog.getByText(/waived by alice until/).first()).toBeVisible();
+    // Wait for the round-trip to land — the blocking-finding count must actually
+    // drop — before re-querying, instead of racing the dialog's re-render.
+    await expect
+      .poll(async () => waiveButtons.count(), { timeout: 15_000 })
+      .toBeLessThan(remaining);
+  }
+  await expect(waiveButtons).toHaveCount(0);
+}
+
+/**
  * @SVCs SVC_GW_0042
  */
 test("vetting_verdicts_are_shown_and_a_blocked_snapshot_cannot_be_approved", async ({ page }) => {
@@ -246,16 +281,7 @@ test("a_finding_is_waived_from_the_review_surface_and_the_waiver_is_listed", asy
   const confirm = dialog.getByRole("button", { name: /Confirm approval of snapshot \d+/ });
   await expect(confirm).toBeDisabled();
 
-  for (let i = 0; i < 10; i++) {
-    const waive = dialog.getByRole("button", { name: /^Waive finding / }).first();
-    if ((await waive.count()) === 0) break;
-    const rule = (await waive.getAttribute("aria-label"))!.replace("Waive finding ", "");
-    await waive.click();
-    await dialog.getByLabel("Justification").first().fill("accepted for the pilot ring");
-    await dialog.getByRole("button", { name: `Record waiver for ${rule}` }).click();
-    // The finding is now shown as accepted rather than blocking.
-    await expect(dialog.getByText(new RegExp(`waived by alice until`)).first()).toBeVisible();
-  }
+  await waiveAllFindings(dialog);
 
   // Cleared, but visibly by an acceptance rather than by a clean chain.
   await expect(dialog.getByText("vetting clear with waivers")).toBeVisible();
@@ -285,15 +311,7 @@ test("a_revoked_snapshot_shows_its_violation_and_who_had_already_fetched_it", as
   await card.getByRole("button", { name: /Approve snapshot \d+/ }).click();
   const dialog = page.getByRole("dialog");
   const confirm = dialog.getByRole("button", { name: /Confirm approval of snapshot \d+/ });
-  for (let i = 0; i < 10; i++) {
-    const waive = dialog.getByRole("button", { name: /^Waive finding / }).first();
-    if ((await waive.count()) === 0) break;
-    const rule = (await waive.getAttribute("aria-label"))!.replace("Waive finding ", "");
-    await waive.click();
-    await dialog.getByLabel("Justification").first().fill("accepted for the pilot ring");
-    await dialog.getByRole("button", { name: `Record waiver for ${rule}` }).click();
-    await expect(dialog.getByText(/waived by alice until/).first()).toBeVisible();
-  }
+  await waiveAllFindings(dialog);
   await expect(confirm).toBeEnabled();
   await confirm.click();
   await expect(card.getByText("approved", { exact: true })).toBeVisible();
