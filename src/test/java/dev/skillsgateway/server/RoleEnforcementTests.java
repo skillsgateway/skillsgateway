@@ -73,7 +73,12 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             "POST /api/snapshots/{id}/revet",
             "POST /api/marketplaces/{name}/revet",
             "POST /api/snapshots/{id}/waivers",
-            "DELETE /api/waivers/{id}");
+            "DELETE /api/waivers/{id}",
+            "POST /api/policy/rules",
+            "PUT /api/policy/rules/{name}",
+            "DELETE /api/policy/rules/{name}",
+            // Read-only by contract, but a POST and approver-gated: it walks as a mutation.
+            "POST /api/policy/playground");
 
     /** Owner-scoped by design (GW_0068): a session's own tokens need no role. */
     private static final Set<String> OWNER_SCOPED_MUTATIONS =
@@ -91,7 +96,8 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             "GET /api/webhooks/deliveries",
             "GET /api/retention/candidates",
             "GET /api/roles",
-            "GET /api/estate");
+            "GET /api/estate",
+            "GET /api/policy/rules");
 
     @Test
     @SVCs({"SVC_GW_0068"})
@@ -301,6 +307,63 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                         .with(frank))
                 .andExpect(status().isForbidden());
         mockMvc.perform(get("/api/snapshots/{id}/diff", onB).with(frank)).andExpect(status().isForbidden());
+    }
+
+    /**
+     * The playground evaluates real quarantine-backed facts, so it is scoped exactly like the
+     * approval it rehearses (GW_0092): the owning approver and the admin may test expressions,
+     * a foreign approver reached through the bare snapshot id is refused, and rule management
+     * stays admin-only while the listing answers auditors (GW_0089).
+     */
+    @Test
+    @SVCs({"SVC_GW_0089", "SVC_GW_0092"})
+    void the_playground_is_approver_scoped_and_rule_management_admin_only() throws Exception {
+        var root = oidcLogin().idToken(token -> token.subject("root"));
+        String henryName = "henry-" + uniqueName("p");
+        var henry = oidcLogin().idToken(token -> token.subject(henryName));
+        String ivyName = "ivy-" + uniqueName("p");
+        var ivy = oidcLogin().idToken(token -> token.subject(ivyName));
+
+        String nameA = uniqueName("policy-a");
+        Registered a = registerAndIngest(nameA, createUpstream(DEFAULT_MANIFEST));
+        Registered b = registerAndIngest(uniqueName("policy-b"), createUpstream(DEFAULT_MANIFEST));
+        grant(root, henryName, "approver", nameA);
+        grant(root, ivyName, "auditor", null);
+
+        String playground = "{\"snapshotId\": %d, \"expression\": \"true\"}"
+                .formatted(a.snapshot().id());
+        mockMvc.perform(post("/api/policy/playground")
+                        .with(henry)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(playground))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.matched").value(true));
+        mockMvc.perform(post("/api/policy/playground")
+                        .with(root)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(playground))
+                .andExpect(status().isOk());
+        // The auditor reads listings, never quarantine-backed facts; the foreign snapshot is
+        // refused through its bare id exactly like the approval it rehearses.
+        mockMvc.perform(post("/api/policy/playground")
+                        .with(ivy)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(playground))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/policy/playground")
+                        .with(henry)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"snapshotId\": %d, \"expression\": \"true\"}"
+                                .formatted(b.snapshot().id())))
+                .andExpect(status().isForbidden());
+
+        // Rule management is admin-only; the listing answers the auditor.
+        mockMvc.perform(post("/api/policy/rules")
+                        .with(henry)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\": \"walk-rule\", \"expression\": \"true\"}"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/policy/rules").with(ivy)).andExpect(status().isOk());
     }
 
     @Test

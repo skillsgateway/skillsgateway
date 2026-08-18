@@ -56,7 +56,7 @@ public record SkillsGatewayProperties(
             roles = new Roles(null, null);
         }
         if (estate == null) {
-            estate = new Estate(null, null, null, null);
+            estate = new Estate(null, null, null, null, null);
         }
     }
 
@@ -74,17 +74,23 @@ public record SkillsGatewayProperties(
             List<DeclaredMarketplace> marketplaces,
             List<DeclaredGrant> grants,
             List<DeclaredWebhook> webhooks,
-            List<DeclaredAuditSink> auditSinks) {
+            List<DeclaredAuditSink> auditSinks,
+            List<DeclaredPolicyRule> policyRules) {
 
         public Estate {
             marketplaces = marketplaces == null ? List.of() : List.copyOf(marketplaces);
             grants = grants == null ? List.of() : List.copyOf(grants);
             webhooks = webhooks == null ? List.of() : List.copyOf(webhooks);
             auditSinks = auditSinks == null ? List.of() : List.copyOf(auditSinks);
+            policyRules = policyRules == null ? List.of() : List.copyOf(policyRules);
         }
 
         public boolean isEmpty() {
-            return marketplaces.isEmpty() && grants.isEmpty() && webhooks.isEmpty() && auditSinks.isEmpty();
+            return marketplaces.isEmpty()
+                    && grants.isEmpty()
+                    && webhooks.isEmpty()
+                    && auditSinks.isEmpty()
+                    && policyRules.isEmpty();
         }
     }
 
@@ -126,6 +132,16 @@ public record SkillsGatewayProperties(
      * @param batchSize maximum ledger entries per batch; null uses the audit-export default
      */
     public record DeclaredAuditSink(String name, String url, String secret, Long after, Integer batchSize) {}
+
+    /**
+     * A declared CEL policy deny rule (GW_0089), reconciled through the same compiled, audited
+     * path as the policy API: an expression that does not compile to a boolean is an isolated
+     * entry failure, never a stored rule.
+     *
+     * @param enabled whether the rule gates approvals; null means enabled — a declared rule is
+     *     declared to enforce
+     */
+    public record DeclaredPolicyRule(String name, String description, String expression, Boolean enabled) {}
 
     /**
      * Delegated administration (GW_0068, GW_0071). {@code enabled=false} — the default — makes
