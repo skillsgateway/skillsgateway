@@ -741,3 +741,27 @@ requirements:
     rationale: The safe way to author an enforcing expression is to test it against the content it will judge before it can block anything, and the playground can only be trusted for that if it is provably inert — a playground that wrote state or leaked quarantined content would be a second, unaudited surface into the very content the gate quarantines.
     categories: ["security", "interaction-capability"]
     revision: 0.1.0
+
+  - id: GW_0093
+    title: Deterministic license detection at ingestion
+    significance: shall
+    description: The system shall provide a built-in vetting connector that detects, over the quarantined content pinned to the snapshot's commit SHA, the licenses the snapshot declares — identifying license and copying files anywhere in the tree by a fixed fingerprint table of SPDX license identifiers, honoring an SPDX-License-Identifier tag inside such a file, and reading the license metadata fields of the marketplace manifest — recording every identified license as a finding located at its source, recording a license source that matches no known identifier as an unknown-license finding, and recording a snapshot carrying no license information at all as a missing-license finding, with detection deterministic so that the same content under the same connector version always yields the same findings.
+    rationale: A reviewer deciding on third-party content is also deciding on its legal terms, and license files are mechanically identifiable; exact identifier matching keeps the evidence reproducible and comparable between runs, and naming the unknown and missing states explicitly turns the matcher's honest limits into reviewable findings instead of silent gaps.
+    categories: ["functional-suitability", "security"]
+    revision: 0.1.0
+
+  - id: GW_0094
+    title: License allow and ban lists through the standard vetting path
+    significance: shall
+    description: The system shall evaluate every detected license against an organisation-level configured ban list and allow list of SPDX identifiers, producing a blocking finding for a license on the ban list, and — when a non-empty allow list is configured — a blocking finding for an identified license absent from it and for an unknown or missing license, while with neither list configured recording identified licenses informationally and unknown or missing licenses as non-blocking warnings; every such finding shall flow through the standard vetting chain, so that it aggregates fail-closed, gates approval, is acceptable only by a scoped expiring waiver on its rule identifier, is re-examined by continuous re-vetting, and lands on the append-only ledger like any other verdict, and the connector's recorded version shall reflect the policy in force so a changed list is attributable in the chain identity.
+    rationale: A license policy that bypasses the vetting chain would need its own gate, acceptance and audit trail and would inevitably drift from them; riding the standard path makes a banned license exactly as loud, as waivable and as auditable as a planted credential, defaults that only warn keep an upgrade from blocking a working estate, and stamping the policy into the connector version answers whether the content or the policy changed.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0095
+    title: Per-snapshot license report endpoint
+    significance: shall
+    description: The system shall answer, for any snapshot over an authenticated HTTP endpoint, a license report computed deterministically from the content pinned to the snapshot's commit SHA — each detected license with its SPDX identifier or its unknown state, the file path or manifest field it came from, and its evaluation under the license policy currently configured — and shall answer not-found for a snapshot that does not exist.
+    rationale: License questions are supply-chain questions and belong on the same read surface as the snapshot content inventory and the gateway's own SBOM; computing the report from the pinned content keeps it answerable for every snapshot regardless of when the connector was introduced and keeps the read a report of current policy truth while recorded chain runs remain the historical evidence.
+    categories: ["functional-suitability", "security"]
+    revision: 0.1.0
