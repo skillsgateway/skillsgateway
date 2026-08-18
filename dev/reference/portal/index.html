@@ -16,7 +16,7 @@
         <link rel="prev" href="../compatibility/">
       
       
-        <link rel="next" href="../decisions/">
+        <link rel="next" href="../observability/">
       
       
         
@@ -945,6 +945,8 @@
       
         
       
+        
+      
     
     
     
@@ -1029,6 +1031,8 @@
       
         
           
+        
+      
         
       
         
@@ -1161,6 +1165,34 @@
     
   
     Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adoption/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adoption
   
 
     
@@ -1633,6 +1665,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#adoption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adoption
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adoption">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#window-and-totals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Window and totals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adoption-by-marketplace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adoption by marketplace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stale-identities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stale identities
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#webhooks" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1697,6 +1779,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../observability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2008,6 +2118,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#adoption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adoption
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adoption">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#window-and-totals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Window and totals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adoption-by-marketplace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adoption by marketplace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stale-identities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stale identities
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#webhooks" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2122,6 +2282,11 @@ session cookie is its only credential.</p>
 <td>Governance</td>
 <td>Audit log</td>
 <td><a href="#audit-log"><code>/audit</code></a></td>
+</tr>
+<tr>
+<td>Governance</td>
+<td>Adoption</td>
+<td><a href="#adoption"><code>/adoption</code></a></td>
 </tr>
 <tr>
 <td>Governance</td>
@@ -2491,6 +2656,61 @@ practice those columns are <code>id</code>, <code>ts</code>, <code>source</code>
 <p>There is no filtering, search or paging — it is a recent-activity view rather
 than an investigation tool.</p>
 <p>Empty state: "No fetches recorded yet."</p>
+<hr />
+<h2 id="adoption">Adoption<a class="headerlink" href="#adoption" title="Permanent link">&para;</a></h2>
+<p><strong>Route:</strong> <code>/adoption</code> · <strong>Heading:</strong> Adoption</p>
+<p>The <a href="../api/adoption/">adoption and staleness reports</a>, read-only. Subtitle:
+"Who fetches what through the facade, aggregated from the append-only ledger,
+and which identities are not on the served tip." With
+<a href="#authorization">role enforcement</a> enabled both underlying reads require the
+auditor role, so a session without it sees the page's error state.</p>
+<h3 id="window-and-totals">Window and totals<a class="headerlink" href="#window-and-totals" title="Permanent link">&para;</a></h3>
+<p>A <strong>Report window</strong> button group — 7, 30 or 90 days, default 30, the active
+choice pressed — drives <code>GET /api/adoption?days=</code>. Beside it, stat chips:
+total fetches in the window, marketplaces fetched, and stale identities.</p>
+<h3 id="adoption-by-marketplace">Adoption by marketplace<a class="headerlink" href="#adoption-by-marketplace" title="Permanent link">&para;</a></h3>
+<p>One row card per marketplace fetched in the window: name, a <code>serving</code> /
+<code>not serving</code> badge, and chips for fetches, identities and the last fetch.
+Inside, the per-SHA breakdown:</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Snapshot SHA</td>
+<td>First 12 characters, monospace; full SHA on the tooltip.</td>
+</tr>
+<tr>
+<td>Fetches</td>
+<td>Content-transferring fetches of this SHA in the window.</td>
+</tr>
+<tr>
+<td>Identities</td>
+<td>Distinct identities that fetched it.</td>
+</tr>
+<tr>
+<td>Last fetch</td>
+<td>Most recent, as a raw ISO-8601 timestamp.</td>
+</tr>
+<tr>
+<td>Tip</td>
+<td><code>current</code> (primary badge) or <code>superseded</code> (secondary).</td>
+</tr>
+</tbody>
+</table>
+<p>Empty state: "No fetches in the last {n} days. Adoption appears once content
+is fetched through the facade."</p>
+<h3 id="stale-identities">Stale identities<a class="headerlink" href="#stale-identities" title="Permanent link">&para;</a></h3>
+<p>The <a href="../api/adoption/#get-apiadoptionstaleness">staleness report</a>, window-free:
+identity, marketplace, last received SHA, the served tip it diverges from —
+or a destructive <code>not serving</code> badge when the marketplace stopped serving
+entirely — and the last fetch time. The page says what the report is: facts,
+not verdicts.</p>
+<p>Empty state: "Every identity is on the served tip."</p>
 <hr />
 <h2 id="webhooks">Webhooks<a class="headerlink" href="#webhooks" title="Permanent link">&para;</a></h2>
 <p><strong>Route:</strong> <code>/webhooks</code> · <strong>Heading:</strong> Webhooks</p>
