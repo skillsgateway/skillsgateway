@@ -1,6 +1,8 @@
 package dev.skillsgateway.server.roles;
 
+import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
+import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
 import dev.skillsgateway.server.vetting.WaiverRepository;
@@ -9,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -37,23 +40,83 @@ public class RoleService {
             @Schema(description = "Marketplace an approver role is scoped to; null for the global roles")
             String marketplace) {}
 
+    private static final Set<String> ROLES = Set.of(RoleGrant.ADMIN, RoleGrant.APPROVER, RoleGrant.AUDITOR);
+
+    /** Grant administration is not itself tied to a marketplace; the ledger column is NOT NULL. */
+    private static final String NO_MARKETPLACE = "-";
+
     private final SkillsGatewayProperties properties;
     private final RoleGrantRepository roleGrantRepository;
     private final SnapshotRepository snapshotRepository;
     private final MarketplaceRepository marketplaceRepository;
     private final WaiverRepository waiverRepository;
+    private final AdminAuditLogger auditLogger;
 
     public RoleService(
             SkillsGatewayProperties properties,
             RoleGrantRepository roleGrantRepository,
             SnapshotRepository snapshotRepository,
             MarketplaceRepository marketplaceRepository,
-            WaiverRepository waiverRepository) {
+            WaiverRepository waiverRepository,
+            AdminAuditLogger auditLogger) {
         this.properties = properties;
         this.roleGrantRepository = roleGrantRepository;
         this.snapshotRepository = snapshotRepository;
         this.marketplaceRepository = marketplaceRepository;
         this.waiverRepository = waiverRepository;
+        this.auditLogger = auditLogger;
+    }
+
+    /**
+     * The one grant path (GW_0071, GW_0085): validates, inserts, and appends the ledger entry with
+     * the acting identity — whether the caller is the grants API or the estate reconciler. Statuses
+     * match the API contract; a non-HTTP caller reports the reason instead.
+     */
+    @Requirements({"GW_0071"})
+    public RoleGrant grant(String principal, String role, String marketplace, String actor) {
+        if (principal == null || principal.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, "a principal is required");
+        }
+        if (role == null || !ROLES.contains(role)) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNPROCESSABLE_CONTENT, "role must be one of %s".formatted(ROLES));
+        }
+        Long marketplaceId = resolveScope(role, marketplace);
+        RoleGrant grant = roleGrantRepository
+                .insert(principal, role, marketplaceId, actor)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.CONFLICT, "that grant already exists for '%s'".formatted(principal)));
+        auditLogger.record(
+                actor,
+                grant.marketplace() == null ? NO_MARKETPLACE : grant.marketplace(),
+                "role-granted",
+                null,
+                "principal=%s role=%s".formatted(grant.principal(), grant.role()));
+        return grant;
+    }
+
+    /** An approver grant is scoped to one existing marketplace; the global roles must not be. */
+    @Requirements({"GW_0071"})
+    private Long resolveScope(String role, String marketplace) {
+        boolean approver = RoleGrant.APPROVER.equals(role);
+        boolean scoped = marketplace != null && !marketplace.isBlank();
+        if (approver && !scoped) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNPROCESSABLE_CONTENT, "an approver grant is scoped to one marketplace");
+        }
+        if (!approver && scoped) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNPROCESSABLE_CONTENT,
+                    "a %s grant is global and cannot name a marketplace".formatted(role));
+        }
+        if (!approver) {
+            return null;
+        }
+        return marketplaceRepository
+                .findByName(marketplace)
+                .map(Marketplace::id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "marketplace '%s' not found".formatted(marketplace)));
     }
 
     public boolean enabled() {

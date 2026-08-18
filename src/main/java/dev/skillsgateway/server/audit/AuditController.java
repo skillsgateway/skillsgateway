@@ -9,12 +9,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.List;
-import java.util.Locale;
-import java.util.regex.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -38,8 +34,6 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 @RestController
 @RequestMapping("/api/audit")
 public class AuditController {
-
-    private static final Pattern SINK_NAME = Pattern.compile("^[a-z0-9][a-z0-9_-]*$");
 
     /** Audit export administration is not tied to a marketplace; the ledger column is NOT NULL. */
     private static final String NO_MARKETPLACE = "-";
@@ -154,23 +148,8 @@ public class AuditController {
     public ResponseEntity<AuditExportService.CreatedSink> createSink(
             @RequestBody CreateSinkRequest request, Authentication authentication) {
         roleService.requireAdmin(authentication);
-        if (request.name() == null || !SINK_NAME.matcher(request.name()).matches()) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNPROCESSABLE_CONTENT, "name must match " + SINK_NAME.pattern());
-        }
-        requireAllowlistedScheme(request.url());
-        if (exportService.findSinkByName(request.name()).isPresent()
-                || exportService.channelNameTaken(request.name())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT, "sink '%s' already exists".formatted(request.name()));
-        }
-        int batchSize = Math.clamp(
-                request.batchSize() == null ? properties.auditExport().batchSize() : request.batchSize(),
-                1,
-                properties.auditExport().maxPageSize());
-        AuditExportService.CreatedSink created = exportService.createWebhookSink(
-                request.name(), request.url(), request.after() == null ? 0 : request.after(), batchSize);
-        auditLogger.record(authentication.getName(), NO_MARKETPLACE, "audit-sink-created", null);
+        AuditExportService.CreatedSink created = exportService.registerSink(
+                request.name(), request.url(), request.after(), request.batchSize(), null, authentication.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -234,21 +213,5 @@ public class AuditController {
                 sink.batchSize(),
                 sink.enabled(),
                 sink.createdAt());
-    }
-
-    /** Fails closed, exactly like marketplace and webhook subscriber registration. */
-    private void requireAllowlistedScheme(String url) {
-        String scheme = null;
-        if (url != null) {
-            try {
-                scheme = new URI(url).getScheme();
-            } catch (URISyntaxException e) {
-                scheme = null;
-            }
-        }
-        if (scheme == null || !properties.allowedUrlSchemes().contains(scheme.toLowerCase(Locale.ROOT))) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "url scheme must be one of %s".formatted(properties.allowedUrlSchemes()));
-        }
     }
 }
