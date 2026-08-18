@@ -4,6 +4,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { AppLayout } from "@/components/app-layout";
+import { AdoptionPage } from "@/pages/adoption";
 import { AuditPage } from "@/pages/audit";
 import { MarketplaceDetailPage } from "@/pages/marketplace-detail";
 import { MarketplacesPage } from "@/pages/marketplaces";
@@ -26,6 +27,7 @@ const router = createBrowserRouter([
       { path: "/marketplaces", element: <MarketplacesPage /> },
       { path: "/marketplaces/:name", element: <MarketplaceDetailPage /> },
       { path: "/audit", element: <AuditPage /> },
+      { path: "/adoption", element: <AdoptionPage /> },
       { path: "/tokens", element: <TokensPage /> },
       { path: "/webhooks", element: <WebhooksPage /> },
     ],

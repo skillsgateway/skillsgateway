@@ -97,6 +97,72 @@ public class FetchLogRepository {
             Instant lastFetch) {}
 
     /**
+     * The adoption report's per-snapshot rows (GW_0075): content-transferring fetches since the
+     * window start, grouped by (marketplace, sha). Only {@code upload-pack} entries count, for the
+     * same reason {@link #fetchersOf(String)} gives: a ref advertisement is not a delivery.
+     */
+    public List<ShaAdoption> adoptionSince(Instant since) {
+        return jdbc.sql("SELECT marketplace, sha, COUNT(*) AS fetches, COUNT(DISTINCT principal) AS identities,"
+                        + " MAX(ts) AS last_fetch FROM fetch_log"
+                        + " WHERE event = 'upload-pack' AND sha IS NOT NULL AND ts >= :since"
+                        + " GROUP BY marketplace, sha ORDER BY marketplace, MAX(ts) DESC")
+                .param("since", since.atOffset(ZoneOffset.UTC))
+                .query((rs, rowNum) -> new ShaAdoption(
+                        rs.getString("marketplace"),
+                        rs.getString("sha"),
+                        rs.getLong("fetches"),
+                        rs.getLong("identities"),
+                        MarketplaceRepository.instant(rs, "last_fetch")))
+                .list();
+    }
+
+    /**
+     * The same window aggregated per marketplace (GW_0075). Its own query rather than a sum over
+     * {@link #adoptionSince(Instant)}: an identity that fetched two SHAs of one marketplace is one
+     * identity, which no summation over per-SHA rows can know.
+     */
+    public List<MarketplaceFetches> marketplaceAdoptionSince(Instant since) {
+        return jdbc.sql("SELECT marketplace, COUNT(*) AS fetches, COUNT(DISTINCT principal) AS identities,"
+                        + " MAX(ts) AS last_fetch FROM fetch_log"
+                        + " WHERE event = 'upload-pack' AND sha IS NOT NULL AND ts >= :since"
+                        + " GROUP BY marketplace ORDER BY marketplace")
+                .param("since", since.atOffset(ZoneOffset.UTC))
+                .query((rs, rowNum) -> new MarketplaceFetches(
+                        rs.getString("marketplace"),
+                        rs.getLong("fetches"),
+                        rs.getLong("identities"),
+                        MarketplaceRepository.instant(rs, "last_fetch")))
+                .list();
+    }
+
+    /**
+     * Each identity's most recent content-transferring fetch per marketplace (GW_0076) — the row
+     * staleness compares against the served tip. Window-free on purpose: staleness is a property
+     * of an identity's latest state, not of a reporting period.
+     */
+    public List<LatestFetch> latestFetchPerIdentity() {
+        return jdbc.sql("SELECT DISTINCT ON (principal, marketplace) principal, marketplace, sha, ts"
+                        + " FROM fetch_log"
+                        + " WHERE event = 'upload-pack' AND principal IS NOT NULL AND sha IS NOT NULL"
+                        + " ORDER BY principal, marketplace, id DESC")
+                .query((rs, rowNum) -> new LatestFetch(
+                        rs.getString("principal"),
+                        rs.getString("marketplace"),
+                        rs.getString("sha"),
+                        MarketplaceRepository.instant(rs, "ts")))
+                .list();
+    }
+
+    /** One (marketplace, sha) adoption aggregate over the report window. */
+    public record ShaAdoption(String marketplace, String sha, long fetches, long identities, Instant lastFetch) {}
+
+    /** One marketplace's adoption aggregate over the report window. */
+    public record MarketplaceFetches(String marketplace, long fetches, long identities, Instant lastFetch) {}
+
+    /** One identity's most recent content-transferring fetch of one marketplace. */
+    public record LatestFetch(String principal, String marketplace, String sha, Instant lastFetch) {}
+
+    /**
      * The page of ledger entries an export consumer sees next: everything after its cursor, in
      * ledger order, bounded by {@code limit} (GW_0027, GW_0028).
      *

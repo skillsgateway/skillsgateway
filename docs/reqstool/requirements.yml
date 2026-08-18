@@ -584,3 +584,37 @@ requirements:
     categories: ["security", "flexibility"]
     implementation: configuration
     revision: 0.1.0
+
+  # GW_0073 and GW_0074 are reserved by an in-flight change on another branch.
+
+  - id: GW_0075
+    title: Adoption reporting from the fetch ledger
+    significance: shall
+    description: The system shall answer, from the append-only fetch ledger alone and without recording anything new, an adoption report aggregating the facade fetches of a caller-chosen bounded time window into, per marketplace, the number of content-transferring fetches, the number of distinct fetching identities, the time of the most recent fetch, and a per-snapshot-SHA breakdown carrying the same measures with each SHA marked as the currently served tip or not, counting only entries that transferred content and attributing by the authenticated identity the ledger records, and shall restrict the report to callers permitted to read the ledger.
+    rationale: The ledger has held the answer to "who runs what, and how much" since the first fetch; aggregating it read-only turns compliance data into an operator dashboard without touching what is recorded, and gating it like the ledger keeps identity enumeration inside the same authorization boundary. The gateway has no team concept — identity-to-team mapping is the identity provider's knowledge — so attribution is by identity and token, deliberately.
+    categories: ["functional-suitability", "security"]
+    revision: 0.1.0
+
+  - id: GW_0076
+    title: Staleness reporting against the served tip
+    significance: shall
+    description: The system shall report, from the append-only fetch ledger and the published repositories' currently served references, every identity whose most recent content-transferring fetch of a marketplace received a commit SHA that is not that marketplace's currently served tip, including — with an absent tip — identities whose most recent fetch is of a marketplace that is no longer serving at all, each entry carrying the identity, the marketplace, the SHA last received, when it was received, and the served tip it diverges from, and shall restrict the report to callers permitted to read the ledger.
+    rationale: A consumer pinned to a superseded or retracted snapshot is running exactly the content a later approval or revocation moved away from, and the served reference the facade answers from is the only tip the report can never disagree with; naming the identities is what makes a retraction actionable, which is why the read is gated like the ledger itself.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0077
+    title: Always-recorded gateway metrics and observations
+    significance: shall
+    description: The system shall record, through its metrics and observation registries and regardless of whether telemetry export is enabled, an ingestion timing observation tagged with its outcome, an approval-decision observation tagged with the decision taken, and a facade fetch counter tagged with the fetch event kind, all named under the skills_gateway prefix and carrying only fixed-vocabulary tags, so that enabling OpenTelemetry export in a deployment publishes them without any code or configuration change to the gateway itself, and shall not attempt any telemetry export unless a deployment explicitly enables it.
+    rationale: Instrumentation that must be added at incident time is instrumentation that is missing at incident time — recording always and exporting opt-in gives every deployment the same numbers the moment it turns on a collector, while fixed-vocabulary tags keep an estate of any size from exploding a time-series backend, and the export default keeps builds and tests free of OTLP attempts.
+    categories: ["functional-suitability", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_0078
+    title: Adoption page in the admin portal
+    significance: shall
+    description: The system's admin portal shall present, on a page of its own, the adoption report — the windowed per-marketplace fetch measures with their per-snapshot-SHA breakdown, over a caller-selectable window — and the staleness report of identities not on the served tip, each with explicit loading, empty and error states, so that an operator can read both without leaving the portal.
+    rationale: The reports exist to be acted on by the operator already working in the portal; a dashboard that requires the API is a dashboard the retraction decision is made without.
+    categories: ["functional-suitability", "interaction-capability"]
+    revision: 0.1.0
