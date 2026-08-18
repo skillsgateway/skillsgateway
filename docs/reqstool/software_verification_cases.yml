@@ -762,3 +762,93 @@ cases:
       WHEN the operator opens the Adoption page
       THEN the marketplace's fetch appears in the adoption report with the fetching identity counted, and the page presented its loading-to-loaded transition without an error state
     revision: "0.1.0"
+
+  - id: SVC_GW_0079
+    requirement_ids: ["GW_0079"]
+    title: The setup wizard composes origin-derived commands and holds show-once
+    verification: automated-test
+    description: |
+      GIVEN a registered marketplace and its detail page in a real browser
+      WHEN the user opens the setup wizard, mints a token inside it, and later closes and reopens the wizard
+      THEN the marketplace-add command and credential configuration carry the page's own origin and the marketplace's facade clone path, the minted cleartext appears in the snippets only while the wizard stays open, and after reopening the snippets carry a placeholder and no previously issued secret is displayed
+    revision: "0.1.0"
+
+  - id: SVC_GW_0080
+    requirement_ids: ["GW_0080"]
+    title: File inspection is tree-addressed, capped, binary-aware, and approver-scoped
+    verification: automated-test
+    description: |
+      GIVEN an ingested snapshot whose commit carries a text file, a file larger than the size limit and a binary file, and — in an enforcement-enabled context — a session with no role, an auditor, an approver of another marketplace, an approver of the owning marketplace and an admin
+      WHEN the file tree, each file, a path absent from the commit tree and a traversal-shaped path are requested, and the enforcement-enabled sessions attempt the reads
+      THEN the tree lists the pinned commit's paths, the text file returns its content, the oversized file returns truncated content with an explicit marker, the binary file returns metadata without text, the absent and traversal-shaped paths answer not-found, and under enforcement the reads succeed only for the owning approver and the admin
+    revision: "0.1.0"
+
+  - id: SVC_GW_0081
+    requirement_ids: ["GW_0081"]
+    title: The diff names the served baseline and the exact delta, or the absence of a baseline
+    verification: automated-test
+    description: |
+      GIVEN a marketplace with an approved, served snapshot and a later held snapshot whose commit modifies, adds and removes files, and a second marketplace serving nothing
+      WHEN each snapshot's diff is requested
+      THEN the held snapshot's diff names the served commit as its baseline and reports exactly the modified, added and removed paths with a textual diff for text files, and the unserved marketplace's diff reports no baseline with every path reported as added
+    revision: "0.1.0"
+
+  - id: SVC_GW_0082
+    requirement_ids: ["GW_0082"]
+    title: The preview pane walks a held snapshot's tree and diff in a real browser
+    verification: automated-test
+    description: |
+      GIVEN a marketplace approved and served, whose upstream then changes and is re-ingested into a held snapshot, in a real browser
+      WHEN the reviewer opens the held snapshot's preview pane, selects the skill's SKILL.md, and switches to the diff view
+      THEN the file tree lists the snapshot's paths, the SKILL.md renders as formatted text with embedded HTML shown as text rather than interpreted, and the diff view names the modified and added paths against the served baseline
+    revision: "0.1.0"
+
+  - id: SVC_GW_0083
+    requirement_ids: ["GW_0083"]
+    title: Startup reconciliation converges the declared estate additively and idempotently
+    verification: automated-test
+    description: |
+      GIVEN a gateway configured with a declared estate of marketplaces, role grants, a webhook subscriber and an audit sink, plus objects created through the API that the declaration does not mention
+      WHEN the application starts and a further reconciliation is then run against the unchanged declaration
+      THEN the declared objects exist as if created through the API with every applied change on the ledger under its API event name and the reconciler actor, the undeclared API-created objects are untouched, and the second reconciliation performs no writes and appends nothing to the ledger
+    revision: "0.1.0"
+
+  - id: SVC_GW_0084
+    requirement_ids: ["GW_0084"]
+    title: Declared marketplaces face the same registration gate as the API
+    verification: automated-test
+    description: |
+      GIVEN declarations containing a marketplace with a disallowed URL scheme, one under the reserved catalog name, one whose declared URL differs from its registered URL, one declaring webhook sync mode, and a valid one declaring scheduled sync
+      WHEN reconciliation runs
+      THEN the invalid entries each fail with a ledger record and create or change nothing, the registered marketplace keeps its stored URL, and the valid entry is registered with its sync mode applied through the audited sync-mode path
+    revision: "0.1.0"
+
+  - id: SVC_GW_0085
+    requirement_ids: ["GW_0085"]
+    title: Declared grants reconcile through the audited grant path
+    verification: automated-test
+    description: |
+      GIVEN a declaration granting an approver on a marketplace declared in the same configuration, an auditor globally, and an approver on a marketplace that does not exist, alongside an API-created grant the declaration does not mention
+      WHEN reconciliation runs
+      THEN the valid grants exist and take effect under role enforcement with ledger entries naming the reconciler actor, the grant for the unknown marketplace fails as an isolated entry, the API-created grant survives, and re-running the reconciliation grants nothing twice
+    revision: "0.1.0"
+
+  - id: SVC_GW_0086
+    requirement_ids: ["GW_0086"]
+    title: Declared receiver secrets are write-only, rotated idempotently, floored in length
+    verification: automated-test
+    description: |
+      GIVEN a declared webhook subscriber and audit sink with operator-supplied secrets, then the same declaration with one secret value changed, and declarations carrying a blank and a too-short secret
+      WHEN reconciliation runs after each state
+      THEN the stored secrets match the declaration with the sink's cursor set only at creation, the changed value rotates the stored secret with a ledger record that does not contain it, the unchanged values cause no write, the blank and too-short secrets each fail as isolated entries, and no secret value appears in the reconciliation report or on the ledger
+    revision: "0.1.0"
+
+  - id: SVC_GW_0087
+    requirement_ids: ["GW_0087"]
+    title: A failing entry is loud but never fatal, and the report is answerable
+    verification: automated-test
+    description: |
+      GIVEN a gateway whose declared estate contains one invalid entry among valid ones
+      WHEN the application starts and the report endpoint and reconcile trigger are then exercised under role enforcement
+      THEN the application serves with the valid entries applied, the invalid entry is on the ledger and in the report with its reason, the report endpoint answers auditors and admins and refuses sessions with no role, and the trigger endpoint refuses non-admins and records each admin trigger on the ledger with the acting identity
+    revision: "0.1.0"

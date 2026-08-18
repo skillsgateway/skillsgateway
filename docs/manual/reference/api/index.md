@@ -66,6 +66,7 @@ consumed by the portal with a session cookie.
 | [Webhooks](../../guides/lifecycle-webhooks.md) | Register, list and delete subscribers; list delivery attempts |
 | [Retention](../retention.md#endpoints) | Preview candidates, evaluate, compact, soft-delete and restore snapshots |
 | [Roles](roles.md) | List, grant and revoke delegated-administration roles |
+| [Estate](estate.md) | Read the last declarative-estate reconciliation report; trigger a reconcile |
 
 ## Session
 

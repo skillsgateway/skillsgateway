@@ -18,7 +18,8 @@ public record SkillsGatewayProperties(
         Sync sync,
         Catalog catalog,
         Tokens tokens,
-        Roles roles) {
+        Roles roles,
+        Estate estate) {
 
     public SkillsGatewayProperties {
         if (dataDir == null) {
@@ -54,7 +55,77 @@ public record SkillsGatewayProperties(
         if (roles == null) {
             roles = new Roles(null, null);
         }
+        if (estate == null) {
+            estate = new Estate(null, null, null, null);
+        }
     }
+
+    /**
+     * The declarative estate (GW_0083–GW_0087): marketplaces, role grants, webhook subscribers and
+     * audit export sinks defined as configuration and reconciled — additively, idempotently — at
+     * startup and on demand. Everything here defaults to empty, and an empty declaration reconciles
+     * nothing, so the block's absence is exactly today's behavior.
+     *
+     * <p>Personal access tokens are deliberately absent: they are user-owned credentials, API-only
+     * by design. So is a prune/authoritative mode: an object missing from this declaration is never
+     * deleted, deregistered or revoked by reconciliation.
+     */
+    public record Estate(
+            List<DeclaredMarketplace> marketplaces,
+            List<DeclaredGrant> grants,
+            List<DeclaredWebhook> webhooks,
+            List<DeclaredAuditSink> auditSinks) {
+
+        public Estate {
+            marketplaces = marketplaces == null ? List.of() : List.copyOf(marketplaces);
+            grants = grants == null ? List.of() : List.copyOf(grants);
+            webhooks = webhooks == null ? List.of() : List.copyOf(webhooks);
+            auditSinks = auditSinks == null ? List.of() : List.copyOf(auditSinks);
+        }
+
+        public boolean isEmpty() {
+            return marketplaces.isEmpty() && grants.isEmpty() && webhooks.isEmpty() && auditSinks.isEmpty();
+        }
+    }
+
+    /**
+     * A declared marketplace (GW_0084). There is deliberately no ref field: the ingested ref is the
+     * gateway's decision (GW_0017), so the declaration cannot express one.
+     *
+     * @param name gateway-local marketplace name, same rules as the API
+     * @param url upstream clone URL; its scheme must be on the allowlist, and once registered it is
+     *     immutable — a differing declared URL is a reconciliation failure, never an update
+     * @param syncMode {@code on-demand} or {@code scheduled}; {@code webhook} is refused (its inbound
+     *     HMAC secret is gateway-generated show-once, which has no declarative form). Null means the
+     *     stored mode is not managed and never touched.
+     */
+    public record DeclaredMarketplace(String name, String url, String syncMode) {}
+
+    /**
+     * A declared role grant (GW_0085), the exact shape of the grants API: approver grants name one
+     * marketplace that must exist at reconcile time (declared here or API-registered); admin and
+     * auditor grants must not name one.
+     */
+    public record DeclaredGrant(String principal, String role, String marketplace) {}
+
+    /**
+     * A declared webhook subscriber (GW_0086). The signing secret is operator-supplied — reference
+     * an environment variable ({@code ${...}}) rather than inlining a literal — and write-only:
+     * never logged, never audited, never answered by any API. Changing the referenced value rotates
+     * the stored secret idempotently.
+     *
+     * @param events comma-delimited event filter, or null/blank for every event
+     */
+    public record DeclaredWebhook(String name, String url, String events, String secret) {}
+
+    /**
+     * A declared audit export sink (GW_0086); the secret contract is {@link DeclaredWebhook}'s.
+     *
+     * @param after ledger sequence the sink starts after — applied at creation only; the cursor is
+     *     runtime progress and is never touched by a later reconciliation
+     * @param batchSize maximum ledger entries per batch; null uses the audit-export default
+     */
+    public record DeclaredAuditSink(String name, String url, String secret, Long after, Integer batchSize) {}
 
     /**
      * Delegated administration (GW_0068, GW_0071). {@code enabled=false} — the default — makes

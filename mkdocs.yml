@@ -112,11 +112,13 @@ nav:
       - Waiving a vetting finding: guides/waiving-findings.md
       - Re-vetting approved content: guides/re-vetting.md
       - Consuming approved skills: guides/consuming-skills.md
+      - Making the gateway the only door: guides/client-enforcement.md
       - The virtual catalog: guides/virtual-catalog.md
       - Receiving lifecycle webhooks: guides/lifecycle-webhooks.md
       - Exporting the audit ledger: guides/exporting-the-audit-ledger.md
       - Reclaiming snapshot storage: guides/snapshot-retention.md
       - Delegated administration: guides/delegated-administration.md
+      - Declarative estate configuration: guides/declarative-estate.md
   - Reference:
       - Configuration: reference/configuration.md
       - REST API:
@@ -126,6 +128,7 @@ nav:
           - Audit: reference/api/audit.md
           - Adoption: reference/api/adoption.md
           - Roles: reference/api/roles.md
+          - Estate: reference/api/estate.md
       - Snapshot retention: reference/retention.md
       - Container image: reference/container-image.md
       - Git smart-HTTP facade: reference/git-facade.md

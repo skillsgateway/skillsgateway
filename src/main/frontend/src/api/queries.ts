@@ -217,6 +217,41 @@ export function useSnapshotContent(snapshotId: number | null) {
   });
 }
 
+export type SnapshotFileTree = components["schemas"]["FileTree"];
+export type SnapshotFileContent = components["schemas"]["FileContent"];
+export type SnapshotDiff = components["schemas"]["SnapshotDiff"];
+export type SnapshotDiffEntry = components["schemas"]["DiffEntryView"];
+
+/** The pinned commit's file tree — the reviewer's map of what the snapshot actually ships. */
+export function useSnapshotFiles(snapshotId: number | null) {
+  return useQuery({
+    queryKey: ["snapshot-files", snapshotId],
+    queryFn: () => api<SnapshotFileTree>(`/api/snapshots/${snapshotId}/files`),
+    enabled: snapshotId !== null,
+  });
+}
+
+/** One blob of the pinned commit, as inert text (or metadata only, for a binary blob). */
+export function useSnapshotFile(snapshotId: number | null, path: string | null) {
+  return useQuery({
+    queryKey: ["snapshot-file", snapshotId, path],
+    queryFn: () =>
+      api<SnapshotFileContent>(
+        `/api/snapshots/${snapshotId}/file?path=${encodeURIComponent(path ?? "")}`,
+      ),
+    enabled: snapshotId !== null && path !== null,
+  });
+}
+
+/** The delta against the marketplace's currently served commit; null baseline = nothing served. */
+export function useSnapshotDiff(snapshotId: number | null) {
+  return useQuery({
+    queryKey: ["snapshot-diff", snapshotId],
+    queryFn: () => api<SnapshotDiff>(`/api/snapshots/${snapshotId}/diff`),
+    enabled: snapshotId !== null,
+  });
+}
+
 /**
  * The adoption report over the fetch ledger: per marketplace, the window's fetches, distinct
  * identities and per-SHA breakdown. The window is part of the key so switching it refetches.

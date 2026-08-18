@@ -49,11 +49,16 @@ carries a breadcrumb and a dark-mode toggle.
 
 ## Authorization
 
-There is **no role model**. Any authenticated session can register
-marketplaces, ingest, approve and reject.
+With role enforcement at its default (off), any authenticated session can
+register marketplaces, ingest, approve and reject. With
+`skills-gateway.roles.enabled=true` the server refuses mutations, the audit
+surface and the [snapshot preview reads](#preview-pane) to sessions without an
+applicable role — see
+[Delegated administration](../guides/delegated-administration.md); the portal
+surfaces those refusals as errors rather than hiding controls.
 
-The single exception is access tokens, which are scoped per principal
-server-side: you only ever see and revoke your own.
+Access tokens are scoped per principal server-side regardless: you only ever
+see and revoke your own.
 
 ---
 
@@ -204,6 +209,50 @@ badge per skill found under it. Plugins with no skills show "no skills found".
 
 This is the review surface, and it works on `held` snapshots — inspecting a
 snapshot must not require serving it.
+
+### Preview pane
+
+The **Preview files** toggle on each snapshot card opens the reviewer preview
+pane: the pinned commit's actual content, not a summary of it.
+
+- **Files**: a scrollable file tree (path and size, from
+  `GET /api/snapshots/{id}/files`) beside a viewer for the selected file
+  (`GET /api/snapshots/{id}/file?path=`). A skill's `SKILL.md` is opened
+  automatically. Markdown renders inertly — there is no HTML pipeline at all,
+  so HTML embedded in a hostile file appears as visible text and links are
+  shown but never navigable. Other text renders preformatted; a binary file is
+  described ("Binary file (N bytes) — content is not rendered."); a file over
+  the size cap says it is truncated and shows the first part.
+- **Diff vs served**: the delta against the marketplace's currently served
+  commit (`GET /api/snapshots/{id}/diff`) — one row per added, modified or
+  removed path, each expandable to its unified text diff. When nothing is
+  served the pane says so: there is no baseline, and approving the snapshot
+  serves all of it.
+
+This is inspection, not execution: nothing fetched here is ever run, followed
+or injected as markup, and the pane changes nothing about what the facade
+serves. While role enforcement is enabled these reads are privileged — admin
+or an approver of this marketplace — so the pane shows an error to a session
+holding neither.
+
+### Set up a client
+
+The page header carries a **Set up a client** button opening a wizard that
+composes, for this marketplace, everything a consumer needs — every URL derived
+from the address the browser is already on:
+
+1. **Personal access token** — the same show-once creation flow as the
+   [Access tokens](#access-tokens) page (name required before the control
+   enables). A token minted here is filled into the snippets below **only while
+   the wizard stays open**; closing the wizard drops it, and no previously
+   issued token's value is ever shown.
+2. **Store the credential** — a `git credential approve` line for this host.
+3. **Add the marketplace to Claude Code** —
+   `claude plugin marketplace add {origin}/git/{name}`.
+4. **Clone directly** — the CI-shaped `git clone` URL with the token inline.
+
+Each snippet has a copy button. Until a token is minted the snippets carry the
+`<YOUR_TOKEN>` placeholder.
 
 ### Vetting
 

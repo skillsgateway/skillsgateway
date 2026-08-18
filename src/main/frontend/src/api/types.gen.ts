@@ -360,6 +360,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/estate/reconcile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reconcile the declared estate now
+         * @description Runs the same additive, idempotent reconciliation as startup against the current declaration and returns its report. A converged estate reconciles with zero writes and zero ledger entries; the trigger itself is an administrative action and is always recorded with the acting identity. Admin-only while role enforcement is enabled.
+         */
+        post: operations["reconcile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/catalog/rebuild": {
         parameters: {
             query?: never;
@@ -496,6 +516,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/snapshots/{id}/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * File tree of the pinned commit
+         * @description Every path in exactly the commit the snapshot pins, resolved through the quarantine repository's object store, capped at 2000 entries with an explicit marker when cut. Privileged while role enforcement is enabled: admin or an approver of the snapshot's marketplace.
+         */
+        get: operations["files"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One file of the pinned commit
+         * @description One blob addressed strictly within the pinned commit's tree — a path the tree does not contain, traversal shapes included, is not found. Text is returned for rendering only, cut at 128 KiB with an explicit truncation marker; a blob detected as binary returns metadata without text. Privileged while role enforcement is enabled.
+         */
+        get: operations["file"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/snapshots/{id}/fetchers": {
         parameters: {
             query?: never;
@@ -508,6 +568,26 @@ export interface paths {
          * @description Every authenticated identity that received this snapshot's content through the git facade, with how many times and when it last did — the blast radius of a retroactive violation, answered from the append-only fetch ledger. Only pack transfers count: a ref advertisement means the client asked, not that it received anything.
          */
         get: operations["fetchers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Diff against the currently served commit
+         * @description Added, modified and removed paths between the pinned commit and the marketplace's currently served commit (the published repository's served tip), with a unified text diff per non-binary entry under the same size caps as file reads. When the marketplace serves nothing the baseline is null and every path is reported as added. Privileged while role enforcement is enabled.
+         */
+        get: operations["diff"];
         put?: never;
         post?: never;
         delete?: never;
@@ -588,6 +668,26 @@ export interface paths {
          * @description Every waiver recorded for the marketplace, newest first, active and lapsed alike. A lapsed or revoked waiver is kept and returned with active=false: the record of what was once accepted, by whom and until when is part of the audit trail.
          */
         get: operations["list_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/estate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Last estate reconciliation report
+         * @description The most recent reconciliation run — per declared entry, what was created, updated, unchanged, or failed and why. The report is held in memory; after a restart the startup run repopulates it. Secret values never appear. Auditor or admin while role enforcement is enabled, because failure reasons expose operator infrastructure.
+         */
+        get: operations["lastRun"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1256,6 +1356,58 @@ export interface components {
              */
             ref?: string;
         };
+        /** @description One declared entry's reconciliation outcome */
+        Entry: {
+            /**
+             * @description The kind of declared object
+             * @enum {string}
+             */
+            kind?: "marketplace" | "grant" | "webhook" | "audit-sink";
+            /** @description The declared name (for a grant: principal/role/marketplace) */
+            name?: string;
+            /**
+             * @description What the reconciler did
+             * @enum {string}
+             */
+            action?: "created" | "updated" | "unchanged" | "failed";
+            /** @description What changed, or why the entry failed; never a secret value */
+            detail?: string;
+        };
+        /** @description The outcome of one estate reconciliation run */
+        EstateReconciliation: {
+            /**
+             * Format: date-time
+             * @description When the run happened
+             */
+            ranAt?: string;
+            /**
+             * @description What started the run
+             * @enum {string}
+             */
+            trigger?: "startup" | "api";
+            /** @description Per declared entry, what happened */
+            entries?: components["schemas"]["Entry"][];
+            /**
+             * Format: int32
+             * @description Entries created
+             */
+            created?: number;
+            /**
+             * Format: int32
+             * @description Entries updated to match the declaration
+             */
+            updated?: number;
+            /**
+             * Format: int32
+             * @description Entries already converged; nothing was written
+             */
+            unchanged?: number;
+            /**
+             * Format: int32
+             * @description Entries that failed validation and were skipped
+             */
+            failed?: number;
+        };
         /** @description The catalog revision the facade is serving */
         CatalogInfo: {
             /** @description Catalog commit SHA */
@@ -1598,6 +1750,83 @@ export interface components {
             revokedAt?: string;
             /** @description Identity that revoked it, or null */
             revokedBy?: string;
+        };
+        /** @description The file tree of exactly the commit the snapshot pins */
+        FileTree: {
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            snapshotId?: number;
+            /** @description Pinned commit SHA */
+            sha?: string;
+            /** @description Paths in the pinned commit's tree */
+            entries?: components["schemas"]["TreeEntry"][];
+            /** @description True when the listing was cut at the tree-size limit */
+            truncated?: boolean;
+        };
+        /** @description One path in the pinned commit's tree */
+        TreeEntry: {
+            /** @description Path within the snapshot */
+            path?: string;
+            /**
+             * Format: int64
+             * @description Blob size in bytes
+             */
+            size?: number;
+        };
+        /** @description One blob of the pinned commit, as text for rendering only */
+        FileContent: {
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            snapshotId?: number;
+            /** @description Path within the snapshot */
+            path?: string;
+            /**
+             * Format: int64
+             * @description Full blob size in bytes
+             */
+            size?: number;
+            /** @description True for a blob detected as binary; such a blob carries no text */
+            binary?: boolean;
+            /** @description True when the text was cut at the per-file size limit */
+            truncated?: boolean;
+            /** @description Blob content as UTF-8 text, or null for a binary blob */
+            text?: string;
+        };
+        /** @description One changed path between the served baseline and the pinned commit */
+        DiffEntryView: {
+            /** @description Path within the snapshot */
+            path?: string;
+            /**
+             * @description How the path changed relative to the served baseline
+             * @enum {string}
+             */
+            type?: "added" | "modified" | "removed";
+            /** @description True when either side is binary; such an entry carries no diff text */
+            binary?: boolean;
+            /** @description True when the diff text was cut at the per-file size limit */
+            truncated?: boolean;
+            /** @description Unified text diff, or null for a binary entry or when no baseline is served */
+            diff?: string;
+        };
+        /** @description The snapshot's delta against the marketplace's currently served commit */
+        SnapshotDiff: {
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            snapshotId?: number;
+            /** @description Pinned commit SHA */
+            sha?: string;
+            /** @description The served commit the diff is against, or null when nothing is served */
+            baselineSha?: string;
+            /** @description Changed paths; with no baseline, every path of the snapshot, all added */
+            entries?: components["schemas"]["DiffEntryView"][];
+            /** @description True when the entry list was cut at the diff-size limit */
+            truncated?: boolean;
         };
         /** @description A plugin declared by the marketplace manifest */
         PluginContent: {
@@ -2545,6 +2774,35 @@ export interface operations {
             };
         };
     };
+    reconcile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The run's report */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EstateReconciliation"];
+                };
+            };
+            /** @description Enforcement is enabled and the caller is not an admin */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EstateReconciliation"];
+                };
+            };
+        };
+    };
     rebuild: {
         parameters: {
             query?: never;
@@ -2769,6 +3027,88 @@ export interface operations {
             };
         };
     };
+    files: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paths and sizes of the pinned commit's tree */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FileTree"];
+                };
+            };
+            /** @description Role enforcement is enabled and the session holds no applicable role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FileTree"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FileTree"];
+                };
+            };
+        };
+    };
+    file: {
+        parameters: {
+            query: {
+                path: string;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Blob metadata, and its text unless binary */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FileContent"];
+                };
+            };
+            /** @description Role enforcement is enabled and the session holds no applicable role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FileContent"];
+                };
+            };
+            /** @description Snapshot not found, or the path is not in the pinned tree */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FileContent"];
+                };
+            };
+        };
+    };
     fetchers: {
         parameters: {
             query?: never;
@@ -2796,6 +3136,46 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["Fetcher"][];
+                };
+            };
+        };
+    };
+    diff: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The delta a reviewer decides */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SnapshotDiff"];
+                };
+            };
+            /** @description Role enforcement is enabled and the session holds no applicable role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SnapshotDiff"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SnapshotDiff"];
                 };
             };
         };
@@ -2901,6 +3281,35 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["WaiverView"][];
+                };
+            };
+        };
+    };
+    lastRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The last reconciliation report */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EstateReconciliation"];
+                };
+            };
+            /** @description No reconciliation has run */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EstateReconciliation"];
                 };
             };
         };

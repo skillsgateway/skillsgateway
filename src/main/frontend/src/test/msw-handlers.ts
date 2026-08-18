@@ -207,6 +207,50 @@ export const waivedVetting: Schemas["VettingView"] = {
   ],
 };
 
+export const fileTree: Schemas["FileTree"] = {
+  snapshotId: 1,
+  sha: heldSnapshot.sha,
+  truncated: false,
+  entries: [
+    { path: ".claude-plugin/marketplace.json", size: 180 },
+    { path: "plugins/hello/skills/hello/SKILL.md", size: 120 },
+    { path: "data/huge.txt", size: 900000 },
+    { path: "assets/logo.bin", size: 4096 },
+  ],
+};
+
+/** Hostile-shaped SKILL.md: the embedded HTML must render as text, never as markup. */
+export const skillMarkdown =
+  "# Hello skill\n\nA test skill that says hello.\n\n<img src=x onerror=alert(1)>\n\n```console\n$ echo hi\n```\n";
+
+export const snapshotDiff: Schemas["SnapshotDiff"] = {
+  snapshotId: 1,
+  sha: heldSnapshot.sha,
+  baselineSha: "1111222233334444555566667777888899990000",
+  truncated: false,
+  entries: [
+    {
+      path: "plugins/hello/skills/hello/SKILL.md",
+      type: "modified",
+      binary: false,
+      truncated: false,
+      diff: "--- a/plugins/hello/skills/hello/SKILL.md\n+++ b/plugins/hello/skills/hello/SKILL.md\n@@ -1 +1 @@\n-old instruction\n+new instruction\n",
+    },
+    { path: "docs/NEW.md", type: "added", binary: false, truncated: false, diff: "+# Brand new\n" },
+    { path: "docs/OLD.md", type: "removed", binary: false, truncated: false, diff: "-# Old\n" },
+  ],
+};
+
+function fileContent(path: string): Schemas["FileContent"] {
+  if (path.endsWith(".bin")) {
+    return { snapshotId: 1, path, size: 4096, binary: true, truncated: false };
+  }
+  if (path === "data/huge.txt") {
+    return { snapshotId: 1, path, size: 900000, binary: false, truncated: true, text: "first part only" };
+  }
+  return { snapshotId: 1, path, size: 120, binary: false, truncated: false, text: skillMarkdown };
+}
+
 /** Adoption over the window: one serving marketplace, its tip plus a superseded SHA. */
 export const adoptionEntry: Schemas["MarketplaceAdoption"] = {
   marketplace: "corp-marketplace",
@@ -297,6 +341,11 @@ export const handlers = [
     }),
   ),
   http.get("/api/snapshots/:id/fetchers", () => HttpResponse.json(fetchers)),
+  http.get("/api/snapshots/:id/files", () => HttpResponse.json(fileTree)),
+  http.get("/api/snapshots/:id/file", ({ request }) =>
+    HttpResponse.json(fileContent(new URL(request.url).searchParams.get("path") ?? "")),
+  ),
+  http.get("/api/snapshots/:id/diff", () => HttpResponse.json(snapshotDiff)),
   http.get("/api/tokens", () => HttpResponse.json<Schemas["TokenView"][]>([])),
   http.post("/api/tokens", () => HttpResponse.json(issuedToken, { status: 201 })),
   http.get("/api/audit", () => HttpResponse.json([])),
