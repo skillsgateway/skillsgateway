@@ -32,6 +32,7 @@
         <java.version>25</java.version>
         <jgit.version>7.7.1.202607240634-r</jgit.version>
         <reqstool-annotations.version>1.0.0</reqstool-annotations.version>
+        <cel.version>0.10.1</cel.version>
         <spotless.version>3.9.0</spotless.version>
         <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
         <checkstyle.version>13.10.0</checkstyle.version>
@@ -133,6 +134,14 @@
             <groupId>io.github.reqstool</groupId>
             <artifactId>reqstool-java-annotations</artifactId>
             <version>${reqstool-annotations.version}</version>
+        </dependency>
+
+        <!-- Embedded CEL evaluator for policy deny rules (ADR 0006): non-Turing-complete,
+             terminating expressions over snapshot facts; never an OPA sidecar. -->
+        <dependency>
+            <groupId>dev.cel</groupId>
+            <artifactId>cel</artifactId>
+            <version>${cel.version}</version>
         </dependency>
 
         <dependency>

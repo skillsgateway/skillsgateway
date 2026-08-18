@@ -11,6 +11,7 @@ import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotNotFoundException;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
+import dev.skillsgateway.server.policy.PolicyDeniedException;
 import dev.skillsgateway.server.roles.RoleService;
 import dev.skillsgateway.server.vetting.WaiverService;
 import dev.skillsgateway.server.webhook.WebhookEvent;
@@ -344,6 +345,20 @@ public class AdminController {
         problem.setTitle("Vetting chain blocked this snapshot");
         problem.setProperty("blockingConnectors", e.blockingConnectors());
         problem.setProperty("uncoveredFindings", e.uncoveredFindings());
+        return problem;
+    }
+
+    /**
+     * Fail-closed policy gate (GW_0090). The response names every deciding rule with its outcome
+     * — {@code matched}, or {@code error: ...} for a rule that could not evaluate — because the
+     * remedy differs: a matched rule means the content is prohibited; an erroring rule means an
+     * admin fixes or disables the rule.
+     */
+    @ExceptionHandler(PolicyDeniedException.class)
+    public ProblemDetail policyDenied(PolicyDeniedException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+        problem.setTitle("Policy rules denied this snapshot");
+        problem.setProperty("denials", e.denials());
         return problem;
     }
 }

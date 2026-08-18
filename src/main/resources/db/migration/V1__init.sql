@@ -275,3 +275,25 @@ CREATE TABLE role_grants (
 
 -- The authorization check's only query.
 CREATE INDEX idx_role_grants_principal ON role_grants (principal);
+
+-- CEL policy deny rules (GW_0089..GW_0091).
+--
+-- A rule is an organizational prohibition as data: a CEL expression over a snapshot's facts,
+-- evaluated fail-closed at the moment of approval. The expression is compiled (parsed and
+-- type-checked to boolean) before a row may exist, so a stored expression is a valid one;
+-- the gate still refuses rather than skips if that invariant is ever violated.
+
+CREATE TABLE policy_rules (
+    id BIGSERIAL PRIMARY KEY,
+    -- The identity a denial names on the ledger and in the refusal.
+    name TEXT NOT NULL UNIQUE CHECK (name <> ''),
+    description TEXT,
+    expression TEXT NOT NULL CHECK (expression <> ''),
+    -- Disabling is the audited off-switch: the exception path for a deny rule is editing the
+    -- rule, never waiving one snapshot past it.
+    enabled BOOLEAN NOT NULL,
+    created_by TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_by TEXT,
+    updated_at TIMESTAMPTZ
+);

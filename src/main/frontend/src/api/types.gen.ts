@@ -4,6 +4,30 @@
  */
 
 export interface paths {
+    "/api/policy/rules/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update a policy rule
+         * @description Replaces a rule's description, expression and enabled flag. The new expression is compiled first; an expression that does not compile is refused and the stored rule is unchanged. Disabling a rule is the audited off-switch — there is no per-snapshot waiver of a policy denial.
+         */
+        put: operations["update"];
+        post?: never;
+        /**
+         * Delete a policy rule
+         * @description Removes the rule; the deletion lands on the audit ledger. Past denials it decided stay on the append-only ledger.
+         */
+        delete: operations["delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/marketplaces/{name}/sync": {
         parameters: {
             query?: never;
@@ -290,6 +314,50 @@ export interface paths {
          * @description Permanently removes every soft-deleted snapshot whose restore window has elapsed, together with its pinned commit in the quarantine repository.
          */
         post: operations["compact"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/policy/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List policy rules
+         * @description Every stored rule, enabled or not, with its expression and attribution.
+         */
+        get: operations["list_3"];
+        put?: never;
+        /**
+         * Create a policy deny rule
+         * @description Stores a named CEL deny rule after compiling it — parsing and type-checking to a boolean over the documented variables (snapshot, files, plugins, skills). An expression that does not compile is refused and never stored. Enabled rules are evaluated fail-closed at every approval; a matching or erroring rule refuses it. The creation lands on the audit ledger.
+         */
+        post: operations["create_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/policy/playground": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test an expression against a real snapshot
+         * @description Compiles and evaluates any CEL expression over a real snapshot's facts — held, approved or revoked — and answers matched or the error. Read-only by contract: nothing is stored, nothing lands on the ledger, no state changes; the answer never carries snapshot content. This is how a rule is tested before it is enforced. Requires permission to approve the named snapshot.
+         */
+        post: operations["playground"];
         delete?: never;
         options?: never;
         head?: never;
@@ -687,7 +755,7 @@ export interface paths {
          * A marketplace's vetting waivers
          * @description Every waiver recorded for the marketplace, newest first, active and lapsed alike. A lapsed or revoked waiver is kept and returned with active=false: the record of what was once accepted, by whom and until when is part of the audit trail.
          */
-        get: operations["list_3"];
+        get: operations["list_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -830,7 +898,7 @@ export interface paths {
          * Delete a webhook subscriber
          * @description Removes the subscriber and its delivery history; no further events are queued for it.
          */
-        delete: operations["delete"];
+        delete: operations["delete_1"];
         options?: never;
         head?: never;
         patch?: never;
@@ -940,6 +1008,45 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description Policy rule update request; the name is the path */
+        UpdateRuleRequest: {
+            /** @description What the rule prohibits */
+            description?: string;
+            /** @description CEL expression; must compile to a boolean */
+            expression?: string;
+            /** @description Whether the rule gates approvals; omitted means enabled */
+            enabled?: boolean;
+        };
+        /** @description A CEL policy deny rule, evaluated fail-closed at approval time */
+        PolicyRule: {
+            /**
+             * Format: int64
+             * @description Rule id
+             */
+            id?: number;
+            /** @description Rule name: the identity a denial carries on the ledger and in the refusal */
+            name?: string;
+            /** @description What the rule prohibits, for reviewers reading a refusal */
+            description?: string;
+            /** @description CEL expression over the policy variables, compiled to a boolean at write time */
+            expression?: string;
+            /** @description Only enabled rules gate approvals; disabling is the audited off-switch */
+            enabled?: boolean;
+            /** @description Identity that created the rule */
+            createdBy?: string;
+            /**
+             * Format: date-time
+             * @description Creation time
+             */
+            createdAt?: string;
+            /** @description Identity of the last update, or null */
+            updatedBy?: string;
+            /**
+             * Format: date-time
+             * @description Time of the last update, or null
+             */
+            updatedAt?: string;
+        };
         /** @description Sync mode change request */
         ChangeSyncModeRequest: {
             /**
@@ -1358,6 +1465,43 @@ export interface components {
              */
             acted?: number;
         };
+        /** @description Policy rule creation request */
+        CreateRuleRequest: {
+            /**
+             * @description Rule name; the identity a denial carries
+             * @example no-shell-tools
+             */
+            name?: string;
+            /** @description What the rule prohibits, for reviewers reading a refusal */
+            description?: string;
+            /**
+             * @description CEL expression over the policy variables; must compile to a boolean
+             * @example skills.exists(s, s.tools.exists(t, t.startsWith("Bash")))
+             */
+            expression?: string;
+            /** @description Whether the rule gates approvals; omitted means enabled */
+            enabled?: boolean;
+        };
+        /** @description Playground evaluation request */
+        PlaygroundRequest: {
+            /**
+             * Format: int64
+             * @description The real snapshot to evaluate against
+             */
+            snapshotId?: number;
+            /**
+             * @description CEL expression to test; it is compiled and evaluated but never stored
+             * @example skills.exists(s, s.tools.exists(t, t.startsWith("Bash")))
+             */
+            expression?: string;
+        };
+        /** @description Playground answer: what the expression said, or why it could not say anything */
+        PlaygroundResult: {
+            /** @description Whether the expression matched; absent when it errored */
+            matched?: boolean;
+            /** @description The compile or evaluation error; absent when the expression answered */
+            error?: string;
+        };
         /** @description Marketplace registration request */
         RegisterMarketplaceRequest: {
             /**
@@ -1382,7 +1526,7 @@ export interface components {
              * @description The kind of declared object
              * @enum {string}
              */
-            kind?: "marketplace" | "grant" | "webhook" | "audit-sink";
+            kind?: "marketplace" | "grant" | "webhook" | "audit-sink" | "policy-rule";
             /** @description The declared name (for a grant: principal/role/marketplace) */
             name?: string;
             /**
@@ -2030,6 +2174,85 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRuleRequest"];
+            };
+        };
+        responses: {
+            /** @description Rule updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PolicyRule"];
+                };
+            };
+            /** @description No rule of that name */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PolicyRule"];
+                };
+            };
+            /** @description An expression that does not compile */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PolicyRule"];
+                };
+            };
+        };
+    };
+    delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rule deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description No rule of that name */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: string;
+                    };
+                };
+            };
+        };
+    };
     changeSyncMode: {
         parameters: {
             query?: never;
@@ -2648,6 +2871,101 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PassResult"];
+                };
+            };
+        };
+    };
+    list_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description All policy rules */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PolicyRule"][];
+                };
+            };
+        };
+    };
+    create_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRuleRequest"];
+            };
+        };
+        responses: {
+            /** @description Rule created and, if enabled, in force immediately */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PolicyRule"];
+                };
+            };
+            /** @description A rule of that name exists */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PolicyRule"];
+                };
+            };
+            /** @description Malformed name, or an expression that does not compile */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PolicyRule"];
+                };
+            };
+        };
+    };
+    playground: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlaygroundRequest"];
+            };
+        };
+        responses: {
+            /** @description The expression's answer, or its error */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PlaygroundResult"];
+                };
+            };
+            /** @description No such snapshot */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PlaygroundResult"];
                 };
             };
         };
@@ -3294,7 +3612,7 @@ export interface operations {
             };
         };
     };
-    list_3: {
+    list_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -3471,7 +3789,7 @@ export interface operations {
             };
         };
     };
-    delete: {
+    delete_1: {
         parameters: {
             query?: never;
             header?: never;
