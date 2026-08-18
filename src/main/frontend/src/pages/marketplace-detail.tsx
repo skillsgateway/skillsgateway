@@ -16,6 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { RevocationNote, SnapshotStateBadge } from "@/components/snapshot-state";
+import { SetupWizard } from "@/components/setup-wizard";
+import { SnapshotPreview } from "@/components/snapshot-preview";
 import { VettingReport } from "@/components/vetting-report";
 
 /**
@@ -208,6 +210,8 @@ export function MarketplaceDetailPage() {
   const { name } = useParams<{ name: string }>();
   const marketplaces = useMarketplaces();
   const [openSnapshot, setOpenSnapshot] = useState<number | null>(null);
+  const [openPreview, setOpenPreview] = useState<number | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const marketplace = marketplaces.data?.find((m) => m.name === name);
 
   if (marketplaces.isLoading) return <p>Loading…</p>;
@@ -239,7 +243,14 @@ export function MarketplaceDetailPage() {
           <h1 className="text-2xl font-semibold">{marketplace.name}</h1>
           <p className="break-all text-sm text-muted-foreground">{marketplace.url}</p>
         </div>
+        <Button className="ml-auto" onClick={() => setWizardOpen(true)}>
+          Set up a client
+        </Button>
       </div>
+      {/* Unmounted when closed: a token minted inside lives only while the wizard is open. */}
+      {wizardOpen ? (
+        <SetupWizard marketplace={marketplace.name ?? ""} onClose={() => setWizardOpen(false)} />
+      ) : null}
 
       <Card>
         <CardHeader>
@@ -270,6 +281,7 @@ export function MarketplaceDetailPage() {
           snapshots.map((snapshot) => {
             const id = snapshot.id ?? 0;
             const open = openSnapshot === id;
+            const preview = openPreview === id;
             return (
               <Card key={id}>
                 <CardContent className="space-y-3 py-4">
@@ -292,6 +304,14 @@ export function MarketplaceDetailPage() {
                     >
                       {open ? "Hide contents" : "Show contents"}
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      aria-label={`${preview ? "Hide" : "Preview"} files of snapshot ${id}`}
+                      onClick={() => setOpenPreview(preview ? null : id)}
+                    >
+                      {preview ? "Hide preview" : "Preview files"}
+                    </Button>
                   </div>
                   {snapshot.violation ? (
                     <p className="text-sm text-destructive">{snapshot.violation}</p>
@@ -303,6 +323,12 @@ export function MarketplaceDetailPage() {
                     <>
                       <Separator />
                       <SnapshotContentView snapshotId={id} />
+                    </>
+                  ) : null}
+                  {preview ? (
+                    <>
+                      <Separator />
+                      <SnapshotPreview snapshotId={id} />
                     </>
                   ) : null}
                 </CardContent>

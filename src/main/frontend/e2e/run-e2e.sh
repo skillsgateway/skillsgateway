@@ -17,12 +17,15 @@ UPSTREAM_DIR="$(mktemp -d "${TMPDIR:-/tmp}/e2e-upstream.XXXXXX")"
 # A second fixture whose skill instructions carry planted prompt-injection markers, so the
 # vetting chain blocks it and the portal has a blocked snapshot to review.
 TAINTED_DIR="$(mktemp -d "${TMPDIR:-/tmp}/e2e-tainted.XXXXXX")"
+# A third fixture the preview spec advances mid-test: approved at one commit, then modified and
+# re-ingested, so the reviewer pane has a real held-vs-served delta to show.
+PREVIEW_DIR="$(mktemp -d "${TMPDIR:-/tmp}/e2e-preview.XXXXXX")"
 GATEWAY_PID=""
 
 cleanup() {
   [[ -n "$GATEWAY_PID" ]] && kill "$GATEWAY_PID" 2>/dev/null || true
   $COMPOSE down -v >/dev/null 2>&1 || true
-  rm -rf "$UPSTREAM_DIR" "$TAINTED_DIR"
+  rm -rf "$UPSTREAM_DIR" "$TAINTED_DIR" "$PREVIEW_DIR"
 }
 trap cleanup EXIT
 
@@ -67,6 +70,23 @@ git -C "$TAINTED_DIR" add -A
 git -C "$TAINTED_DIR" -c user.name=e2e -c user.email=e2e@example.com \
   -c commit.gpgsign=false commit -q -m "e2e tainted marketplace fixture"
 
+# Preview fixture: same clean shape as the main upstream; the spec itself commits the change.
+git init -q -b main "$PREVIEW_DIR"
+mkdir -p "$PREVIEW_DIR/.claude-plugin" "$PREVIEW_DIR/plugins/hello/skills/hello"
+cat > "$PREVIEW_DIR/.claude-plugin/marketplace.json" <<'EOF2'
+{
+  "name": "e2e-preview-marketplace",
+  "owner": {"name": "E2E"},
+  "plugins": [
+    {"name": "hello", "source": "./plugins/hello", "description": "e2e preview"}
+  ]
+}
+EOF2
+printf '# Hello skill\n\nA test skill that says hello.\n' > "$PREVIEW_DIR/plugins/hello/skills/hello/SKILL.md"
+git -C "$PREVIEW_DIR" add -A
+git -C "$PREVIEW_DIR" -c user.name=e2e -c user.email=e2e@example.com \
+  -c commit.gpgsign=false commit -q -m "e2e preview marketplace fixture"
+
 $COMPOSE up -d --wait
 
 GATEWAY_PORT="${E2E_GATEWAY_PORT:-8081}"
@@ -105,6 +125,7 @@ curl -fsS "http://localhost:$GATEWAY_PORT/actuator/health" | grep -q '"UP"' || {
 set +e
 E2E_BASE_URL="http://localhost:$GATEWAY_PORT" E2E_UPSTREAM_URL="file://$UPSTREAM_DIR" \
   E2E_TAINTED_UPSTREAM_URL="file://$TAINTED_DIR" \
+  E2E_PREVIEW_UPSTREAM_URL="file://$PREVIEW_DIR" E2E_PREVIEW_UPSTREAM_DIR="$PREVIEW_DIR" \
   pnpm --dir "$UI_DIR" exec playwright test "$@"
 RC=$?
 set -e

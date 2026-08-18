@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
@@ -385,4 +385,131 @@ test("adoption_page_shows_a_real_facade_fetch_and_its_identity", async ({ page }
   // alice fetched once: the card carries one fetch by one identity, on the served tip.
   const row = page.getByRole("row", { name: /current/ }).filter({ has: page.locator("td") });
   await expect(row.first()).toBeVisible();
+});
+
+/**
+ * The setup wizard composes everything a client needs from the page's own origin, and holds the
+ * show-once line: a token minted inside it fills the snippets only while the wizard is open.
+ *
+ * @SVCs SVC_GW_0079
+ */
+test("setup_wizard_composes_origin_derived_commands_and_holds_show_once", async ({ page }) => {
+  await login(page, "alice");
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Marketplaces" })
+    .click();
+  const name = uniqueName("wizard");
+  await page.getByRole("button", { name: "Register marketplace" }).click();
+  await page.getByLabel("Name").fill(name);
+  await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
+  await page.getByRole("button", { name: "Register", exact: true }).click();
+  await page.getByRole("link", { name, exact: true }).click();
+
+  await page.getByRole("button", { name: "Set up a client" }).click();
+  const origin = new URL(page.url()).origin;
+  await expect(page.getByTestId("wizard-add-command")).toHaveText(
+    `claude plugin marketplace add ${origin}/git/${name}`,
+  );
+  await expect(page.getByTestId("wizard-credential-config")).toContainText(new URL(origin).host);
+  // No token yet: the snippets carry a placeholder, never a secret.
+  await expect(page.getByTestId("wizard-clone-command")).toContainText("<YOUR_TOKEN>");
+
+  // Minting goes through the same show-once flow as the tokens page.
+  await expect(page.getByRole("button", { name: "Create token" })).toBeDisabled();
+  await page.getByLabel("Token name").fill(uniqueName("wiz"));
+  await page.getByRole("button", { name: "Create token" }).click();
+  await expect(page.getByText("Token created", { exact: false })).toBeVisible();
+  const clone = await page.getByTestId("wizard-clone-command").textContent();
+  const token = /token:([^@]+)@/.exec(clone ?? "")?.[1];
+  expect(token).toBeTruthy();
+  expect(token).not.toBe("<YOUR_TOKEN>");
+
+  // Close and reopen: the secret is gone with the wizard; nothing re-displays it.
+  await page.getByRole("button", { name: "Done" }).click();
+  await page.getByRole("button", { name: "Set up a client" }).click();
+  await expect(page.getByTestId("wizard-clone-command")).toContainText("<YOUR_TOKEN>");
+  await expect(page.getByText(token ?? "__never__")).toHaveCount(0);
+});
+
+/**
+ * The reviewer preview pane on a real held-vs-served delta: approve one commit, advance the
+ * upstream fixture (modify the skill, add a file), re-ingest, and inspect the held snapshot —
+ * tree, inertly rendered SKILL.md, and the diff naming the served baseline's changes.
+ *
+ * @SVCs SVC_GW_0082
+ */
+test("preview_pane_shows_tree_inert_skill_md_and_diff_vs_served", async ({ page }) => {
+  const upstream = process.env.E2E_PREVIEW_UPSTREAM_DIR;
+  test.skip(!upstream, "E2E_PREVIEW_UPSTREAM_DIR not provided by run-e2e.sh");
+
+  await login(page, "alice");
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Marketplaces" })
+    .click();
+  const name = uniqueName("preview");
+  await page.getByRole("button", { name: "Register marketplace" }).click();
+  await page.getByLabel("Name").fill(name);
+  await page
+    .getByLabel("Clone URL")
+    .fill(process.env.E2E_PREVIEW_UPSTREAM_URL ?? `file://${upstream}`);
+  await page.getByRole("button", { name: "Register", exact: true }).click();
+  const card = page.locator("[data-slot=card]").filter({ hasText: name });
+  await page.getByRole("button", { name: `Ingest ${name}` }).click();
+  await expect(card.getByText("held", { exact: true })).toBeVisible();
+  await card.getByRole("button", { name: /Approve snapshot \d+/ }).click();
+  await page.getByRole("button", { name: /Confirm approval of snapshot \d+/ }).click();
+  await expect(card.getByText("approved", { exact: true })).toBeVisible();
+
+  // Advance the upstream the way its owner would: a real commit with git (host-config isolated,
+  // exactly like run-e2e.sh builds the fixtures).
+  const git = (...args: string[]) =>
+    execFileSync("git", ["-C", upstream!, ...args], {
+      env: {
+        ...process.env,
+        GIT_CONFIG_GLOBAL: "/dev/null",
+        GIT_CONFIG_SYSTEM: "/dev/null",
+        GIT_AUTHOR_NAME: "e2e",
+        GIT_AUTHOR_EMAIL: "e2e@example.com",
+        GIT_COMMITTER_NAME: "e2e",
+        GIT_COMMITTER_EMAIL: "e2e@example.com",
+      },
+    });
+  writeFileSync(
+    join(upstream!, "plugins/hello/skills/hello/SKILL.md"),
+    "# Hello skill\n\nNow with a changed instruction.\n\n<img src=x onerror=alert(1)>\n",
+  );
+  writeFileSync(join(upstream!, "docs-NEW.md"), "# Brand new file\n");
+  git("add", "-A");
+  git("-c", "commit.gpgsign=false", "commit", "-q", "-m", "e2e preview delta");
+
+  // A second ingest pins the new commit as a held snapshot beside the served one.
+  await page.getByRole("button", { name: `Ingest ${name}` }).click();
+  await expect(card.getByText("held", { exact: true })).toBeVisible();
+
+  await page.getByRole("link", { name, exact: true }).click();
+  // The held snapshot is the newest: its card is the one whose preview we open.
+  const heldCard = page.locator("[data-slot=card]").filter({ hasText: "held" }).last();
+  await heldCard.getByRole("button", { name: /Preview files of snapshot \d+/ }).click();
+  const preview = page.getByRole("region", { name: /Preview of snapshot \d+/ });
+  await expect(preview).toBeVisible();
+
+  // The tree lists the pinned commit's paths, and SKILL.md is quick-opened, rendered inertly:
+  // the hostile embedded HTML is visible as text and never becomes an element.
+  await expect(preview.getByText(".claude-plugin/marketplace.json")).toBeVisible();
+  await expect(preview.getByRole("heading", { name: "Hello skill" })).toBeVisible();
+  await expect(preview.getByText("<img src=x onerror=alert(1)>")).toBeVisible();
+
+  // The diff names exactly what moved against the served baseline.
+  await preview.getByRole("button", { name: /Diff of snapshot \d+ vs served/ }).click();
+  await expect(preview.getByText(/Against served commit/)).toBeVisible();
+  await expect(preview.getByText("modified", { exact: true })).toBeVisible();
+  await expect(preview.getByText("plugins/hello/skills/hello/SKILL.md")).toBeVisible();
+  await expect(preview.getByText("added", { exact: true })).toBeVisible();
+  await expect(preview.getByText("docs-NEW.md")).toBeVisible();
+  await preview
+    .getByRole("button", { name: "Show diff of plugins/hello/skills/hello/SKILL.md" })
+    .click();
+  await expect(preview.getByText("+Now with a changed instruction.")).toBeVisible();
 });

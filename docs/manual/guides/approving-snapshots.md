@@ -10,7 +10,24 @@ immutable SHA.
 
 ## Reviewing
 
-A held snapshot gives you three things.
+A held snapshot gives you four things.
+
+### The content itself
+
+The **Preview files** toggle on the marketplace detail page opens the pinned
+commit's actual file tree, each file rendered inertly (Markdown without any
+HTML interpretation, binary files described rather than shown), and — the part
+that usually decides a successor snapshot — **Diff vs served**: exactly which
+paths were added, modified or removed against the commit consumers are
+currently receiving, with per-file text diffs. A snapshot of a marketplace
+serving nothing shows every path as new: approving it serves all of it.
+
+The same reads exist on the API (`GET /api/snapshots/{id}/files`, `.../file`,
+`.../diff` — see
+[the API reference](../reference/api/marketplaces.md#snapshot-preview)). With
+[role enforcement](delegated-administration.md) enabled they require admin or
+an approver grant for the marketplace, because they return held quarantine
+content.
 
 ### Contents
 

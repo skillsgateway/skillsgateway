@@ -248,6 +248,58 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         }
     }
 
+    /**
+     * The snapshot preview reads return raw held quarantine content — a step beyond the open
+     * metadata reads — so they are approver-scoped (GW_0080): denied to a no-role session and to
+     * an auditor, allowed to the owning approver and to an admin, and denied cross-marketplace
+     * through a bare snapshot id exactly like the approver mutations (GW_0069's resolver).
+     */
+    @Test
+    @SVCs({"SVC_GW_0080"})
+    void preview_reads_are_denied_without_an_approver_grant_for_the_owning_marketplace() throws Exception {
+        var root = oidcLogin().idToken(token -> token.subject("root"));
+        var mallory = oidcLogin().idToken(token -> token.subject("mallory"));
+        String frankName = "frank-" + uniqueName("p");
+        var frank = oidcLogin().idToken(token -> token.subject(frankName));
+        String graceName = "grace-" + uniqueName("p");
+        var grace = oidcLogin().idToken(token -> token.subject(graceName));
+
+        String nameA = uniqueName("preview-a");
+        Registered a = registerAndIngest(nameA, createUpstream(DEFAULT_MANIFEST));
+        Registered b = registerAndIngest(uniqueName("preview-b"), createUpstream(DEFAULT_MANIFEST));
+        grant(root, frankName, "approver", nameA);
+        grant(root, graceName, "auditor", null);
+
+        long onA = a.snapshot().id();
+        long onB = b.snapshot().id();
+        // No role, and read-only auditor: refused — the auditor's charter is the ledger and the
+        // listings (GW_0070), not held content.
+        for (var session : List.of(mallory, grace)) {
+            mockMvc.perform(get("/api/snapshots/{id}/files", onA).with(session)).andExpect(status().isForbidden());
+            mockMvc.perform(get("/api/snapshots/{id}/file", onA)
+                            .param("path", MANIFEST_PATH)
+                            .with(session))
+                    .andExpect(status().isForbidden());
+            mockMvc.perform(get("/api/snapshots/{id}/diff", onA).with(session)).andExpect(status().isForbidden());
+        }
+        // The owning approver and the admin read; the same approver is refused another
+        // marketplace's snapshot through its bare id.
+        for (var session : List.of(frank, root)) {
+            mockMvc.perform(get("/api/snapshots/{id}/files", onA).with(session)).andExpect(status().isOk());
+            mockMvc.perform(get("/api/snapshots/{id}/file", onA)
+                            .param("path", MANIFEST_PATH)
+                            .with(session))
+                    .andExpect(status().isOk());
+            mockMvc.perform(get("/api/snapshots/{id}/diff", onA).with(session)).andExpect(status().isOk());
+        }
+        mockMvc.perform(get("/api/snapshots/{id}/files", onB).with(frank)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/snapshots/{id}/file", onB)
+                        .param("path", MANIFEST_PATH)
+                        .with(frank))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/snapshots/{id}/diff", onB).with(frank)).andExpect(status().isForbidden());
+    }
+
     @Test
     @SVCs({"SVC_GW_0071"})
     void grants_are_admin_only_validated_audited_and_cannot_revoke_a_config_admin() throws Exception {

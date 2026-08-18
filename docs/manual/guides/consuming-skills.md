@@ -3,6 +3,15 @@
 The facade is an ordinary read-only git remote, so clients need no
 modification — only a credential and a URL.
 
+!!! tip "The wizard does steps 1–4 for you"
+
+    On a marketplace's detail page in the portal, **Set up a client** composes
+    the exact commands below for that marketplace — token creation (show-once,
+    as always), the credential line, the `claude plugin marketplace add`
+    command, and the clone URL — each with a copy button. The rest of this
+    guide is the same procedure by hand. See
+    [the portal reference](../reference/portal.md#set-up-a-client).
+
 ## 1. Create a personal access token
 
 Git clients authenticate with PATs, not with your portal session.
