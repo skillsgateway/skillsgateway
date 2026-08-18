@@ -1,0 +1,26 @@
+# Single-file rendering of the docs site, used only by the docs-preview
+# workflow: the print-site plugin concatenates every page into one
+# print_page, which the workflow inlines into a self-contained HTML file a
+# reviewer opens with one click — Mermaid diagrams still render, because
+# unlike a PDF export the page keeps its JavaScript.
+#
+# This config inherits everything from mkdocs.yml; only `plugins` is
+# overridden (INHERIT replaces the key wholesale), re-declaring search and
+# appending print-site, which must be last.
+#
+#   mkdocs build -f mkdocs-print.yml -d site-print
+#
+# Not part of the gates: `mkdocs build --strict` on mkdocs.yml stays the
+# fifth gate, unchanged.
+
+INHERIT: mkdocs.yml
+
+plugins:
+  - search
+  - print-site:
+      add_to_navigation: false
+      print_page_title: Skills Gateway — full documentation
+      add_full_urls: false
+      enumerate_headings: false
+      add_cover_page: true
+      include_css: true
