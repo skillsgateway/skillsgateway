@@ -62,6 +62,7 @@ consumed by the portal with a session cookie.
 | [Marketplaces and snapshots](marketplaces.md) | Register, list, ingest, inspect contents, vetting, waivers, re-vet, fetchers, approve, reject, provenance |
 | [Access tokens](tokens.md) | Create, list, revoke |
 | [Audit](audit.md) | Read the ledger; stream it as NDJSON; register, replay and delete export sinks |
+| [Adoption](adoption.md) | Windowed adoption report per marketplace and SHA; identities not on the served tip |
 | [Webhooks](../../guides/lifecycle-webhooks.md) | Register, list and delete subscribers; list delivery attempts |
 | [Retention](../retention.md#endpoints) | Preview candidates, evaluate, compact, soft-delete and restore snapshots |
 | [Roles](roles.md) | List, grant and revoke delegated-administration roles |
@@ -87,4 +88,4 @@ and, with roles, to adapt its controls.
 | `/actuator/sbom` | CycloneDX SBOM. Authenticated. |
 | `/v3/api-docs`, `/docs` | OpenAPI document and Scalar UI. Authenticated. |
 | `/oauth2/authorization/idp`, `/login/oauth2/code/idp` | OIDC login and callback. |
-| `/`, `/marketplaces`, `/marketplaces/{name}`, `/audit`, `/tokens`, `/webhooks` | Forwarded to the single-page application. |
+| `/`, `/marketplaces`, `/marketplaces/{name}`, `/audit`, `/adoption`, `/tokens`, `/webhooks` | Forwarded to the single-page application. |

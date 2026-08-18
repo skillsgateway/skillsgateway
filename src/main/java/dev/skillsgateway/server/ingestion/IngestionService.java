@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.ingestion;
 
+import dev.skillsgateway.server.observability.GatewayMetrics;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
@@ -47,10 +48,17 @@ public class IngestionService {
      */
     private final ConcurrentHashMap<Long, ReentrantLock> ingestLocks = new ConcurrentHashMap<>();
 
-    public IngestionService(GitStorage storage, SnapshotRepository snapshotRepository, VettingService vettingService) {
+    private final GatewayMetrics metrics;
+
+    public IngestionService(
+            GitStorage storage,
+            SnapshotRepository snapshotRepository,
+            VettingService vettingService,
+            GatewayMetrics metrics) {
         this.storage = storage;
         this.snapshotRepository = snapshotRepository;
         this.vettingService = vettingService;
+        this.metrics = metrics;
     }
 
     /**
@@ -63,7 +71,8 @@ public class IngestionService {
         ReentrantLock lock = ingestLocks.computeIfAbsent(marketplace.id(), id -> new ReentrantLock());
         lock.lock();
         try {
-            return ingestLocked(marketplace);
+            // Observation only (GW_0077): timing and outcome around the unchanged ingestion.
+            return metrics.observeIngestion(() -> ingestLocked(marketplace));
         } finally {
             lock.unlock();
         }

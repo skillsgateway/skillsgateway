@@ -79,6 +79,12 @@ CREATE TABLE fetch_log (
     token_id BIGINT
 );
 
+-- The staleness read's query (GW_0076): the latest content-transferring fetch per
+-- (principal, marketplace). Partial on upload-pack because only a pack send means the identity
+-- received the content — info-refs fires on every `git fetch` whether or not anything transfers.
+CREATE INDEX idx_fetch_log_adoption ON fetch_log (principal, marketplace, id DESC)
+    WHERE event = 'upload-pack';
+
 CREATE TABLE access_tokens (
     id BIGSERIAL PRIMARY KEY,
     principal TEXT NOT NULL,
