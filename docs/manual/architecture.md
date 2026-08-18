@@ -286,7 +286,9 @@ The `+gw.N` counter increments per republication of the same upstream version
 compliance question (T6/JFrog's "which version executed") reduces to a ledger
 lookup. Snapshots are content-addressed; the façade's published branches are
 append-only. Phase 3 adds signed in-toto/Sigstore attestations binding
-upstream SHA → scan → approval → published artifact.
+upstream SHA → scan → approval → published artifact — a deferral decided, with
+named pull-forward triggers, in
+[ADR 0005](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0005-signed-provenance-stays-phase-3.md).
 
 ## 8. Enforcement — making it the only path
 
