@@ -78,6 +78,19 @@ roots (**`dev.skillsgateway.server`**). The container image is
 `ghcr.io/skillsgateway/skillsgateway`; the Helm chart name and reqstool URN
 stay `skills-gateway`. Amends the coordinates item of ADR 0002.
 
+### [ADR 0005 — Signed provenance stays in Phase 3, with named pull-forward triggers](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0005-signed-provenance-stays-phase-3.md)
+
+*Proposed, 2026-08-18.*
+
+Signed in-toto/Sigstore attestations remain a Phase-3 item. The recorded
+provenance chain (content-addressed snapshots + vetting verdicts + approval
+records + append-only ledger) already binds upstream SHA → scan → approval →
+published artifact inside one trust domain; signing pays off only when
+verification happens outside it. Four pull-forward triggers are named — OCI
+re-publication/federation, an operator-independent audit demand,
+cross-gateway promotion, and consumer-side verification tooling — any one of
+which reopens the decision.
+
 ## Related
 
 - [Architecture](../architecture.md)
