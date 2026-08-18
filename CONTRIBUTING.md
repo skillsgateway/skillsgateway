@@ -47,7 +47,10 @@ mkdocs build --strict                   # docs site (pip install -r docs/require
 ```
 
 CI enforces the same gates per PR (`.github/workflows/ci.yml`) plus a native
-image build on main (`native.yml`).
+image build on main (`native.yml`). For speed, CI splits them across parallel
+jobs: build + unit gates and the portal e2e run concurrently (the e2e job
+packages its own jar with `-DskipTests -Dskip.ui.verify=true`), and a third
+job joins both jobs' junit results for the reqstool and OpenSpec gates.
 
 `clean` matters for the reqstool gate: incremental compilation truncates the
 generated annotation files.

@@ -31,7 +31,11 @@
 #
 # NOT HERE, because the repo is private on a free org and the API rejects them
 # -- see issue #23: rulesets/branch protection, deployment environments,
-# `allow_auto_merge`, code scanning, secret scanning, GitHub Pages.
+# `allow_auto_merge`, code scanning, secret scanning, GitHub Pages. The one
+# exception: the wanted required-status-checks state is recorded below as a
+# commented-out `branches:` block, so the check names stay in review when CI
+# jobs are renamed -- it must stay commented until the plan allows it, or an
+# installed settings app would fail applying it.
 
 repository:
   has_issues: true
@@ -57,6 +61,28 @@ repository:
 
   delete_branch_on_merge: true
   allow_update_branch: true
+
+# Wanted state, NOT applied -- plan-gated (issue #23): branch protection is
+# rejected on a private repo in a free org, so this stays commented out until
+# the repo goes public or the org upgrades. Recorded here so a CI job rename
+# has to update this list in the same review. The contexts are the CI job
+# names from .github/workflows/ci.yml; all three must be required -- "Build &
+# gates" alone would let a red e2e or traceability gate merge. The review
+# policy (approvals, stale-review dismissal) is a separate undecided baseline,
+# tracked in issue #23 -- do not fold it in here without deciding it there.
+#
+# branches:
+#   - name: main
+#     protection:
+#       required_status_checks:
+#         strict: false
+#         contexts:
+#           - "Build & gates"
+#           - "Portal e2e"
+#           - "Traceability & spec gates"
+#       enforce_admins: null
+#       required_pull_request_reviews: null
+#       restrictions: null
 
 # Referenced by .github/labeler.yml, which applies them by changed path.
 # actions/labeler does NOT create labels -- it errors on any that do not exist,
