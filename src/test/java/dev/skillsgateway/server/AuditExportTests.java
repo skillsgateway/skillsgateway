@@ -42,12 +42,20 @@ class AuditExportTests extends AbstractGatewayTest {
     /**
      * The export is a streaming response, so MockMvc needs the async dispatch to see the body;
      * the cursor header is on the response either way.
+     *
+     * <p>{@code asyncStarted()} only asserts that async processing began — the streaming body may
+     * still be written from the MVC async thread. Dispatching at that point re-enters the filter
+     * chain on the test thread while the async thread is mutating the same unsynchronized
+     * {@code MockHttpServletResponse}, which intermittently throws
+     * {@code ConcurrentModificationException}. {@code getAsyncResult()} blocks until the streaming
+     * body has completed, so the dispatch is safe.
      */
     private Page export(long after, Integer limit) throws Exception {
         String uri = "/api/audit/export?after=" + after + (limit == null ? "" : "&limit=" + limit);
         MvcResult started = mockMvc.perform(get(uri).with(oidcLogin()))
                 .andExpect(request().asyncStarted())
                 .andReturn();
+        started.getAsyncResult();
         MvcResult finished = mockMvc.perform(MockMvcRequestBuilders.asyncDispatch(started))
                 .andExpect(status().isOk())
                 .andReturn();
