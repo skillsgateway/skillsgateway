@@ -7,8 +7,9 @@
 #
 # NOTE: actions/labeler does not create labels -- every label named here must
 # already exist on the repo or the action errors. They are declared in
-# .github/settings.yml; until a settings app is installed on this org they have
-# to be created by hand or by API.
+# safe-settings/settings.yml in the private admin repo skillsgateway/.github-private
+# (see issue #23), which is also the only place they may be added or renamed:
+# safe-settings deletes any label that is not listed there.
 #
 # `sync-labels: true` in the workflow means a glob here also *removes* a
 # hand-applied label when the PR no longer matches it. Anything that should stay
@@ -144,10 +145,6 @@ dependencies:
           - 'src/main/java/io/github/jimisola/skillsgateway/ingestion/ManifestPolicy.java'
           - 'src/main/java/io/github/jimisola/skillsgateway/ingestion/ForgeMetadataService.java'
 
-# Merging a PR that touches settings.yml does not just change a file: once a
-# settings app is installed it applies to the live repository, including things
-# no diff makes obvious -- merge methods, branch protection, who may approve a
-# deployment.
-"⚠️ REPO SETTINGS":
-  - changed-files:
-      - any-glob-to-any-file: '.github/settings.yml'
+# The "⚠️ REPO SETTINGS" rule was removed with .github/settings.yml (issue #23):
+# repository settings now live in skillsgateway/.github-private, so no diff in
+# this repo can change them and there is nothing here left to warn about.
