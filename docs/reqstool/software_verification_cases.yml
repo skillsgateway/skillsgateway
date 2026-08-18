@@ -862,3 +862,43 @@ cases:
       WHEN the event registry is requested, and an operator registers a subscriber in the portal by selecting events, selecting all of them, and narrowing the list by typing
       THEN the response lists every event the dispatcher can emit and does not contain the audit export event, the read is refused below auditor and allowed for the auditor, the type-ahead narrows the offered list, selecting every event submits the wildcard filter and a partial selection submits the comma-delimited names, and a stored filter naming an event absent from the registry is marked as unknown
     revision: "0.1.0"
+
+  - id: SVC_GW_0089
+    requirement_ids: ["GW_0089"]
+    title: Rule lifecycle is compiled, gated, audited, and declarable
+    verification: automated-test
+    description: |
+      GIVEN an admin session, sessions below admin under role enforcement, and a declared estate containing a valid rule, an identical already-stored rule, and a rule whose expression does not compile
+      WHEN rules are created, listed, updated and deleted through the API with valid, syntactically invalid, non-boolean and duplicate-named expressions, and reconciliation runs
+      THEN valid mutations succeed with a ledger entry each and reads answer auditors and admins, invalid and non-boolean expressions are refused with a validation error and are not stored, a duplicate name is refused as a conflict, mutations and reads below their required role are refused, the valid declared rule is created and enforced, the identical declared rule reconciles with zero writes, and the non-compiling declared rule fails as an isolated entry without blocking the others
+    revision: "0.1.0"
+
+  - id: SVC_GW_0090
+    requirement_ids: ["GW_0090"]
+    title: The policy gate denies on match and on every error path, publishing nothing
+    verification: automated-test
+    description: |
+      GIVEN held snapshots whose content includes skills declaring shell tools, a skill with malformed SKILL.md frontmatter, and enabled rules that match, do not match, are disabled, error at runtime, and contain a comprehension bomb
+      WHEN approval is requested for each snapshot
+      THEN a matching rule refuses the approval with a conflict naming the rule, the snapshot stays held and the marketplace's served tip is unchanged, a non-matching enabled rule and a disabled matching rule do not refuse, a rule that errors at runtime refuses naming the rule, the comprehension bomb refuses within the evaluation bound rather than hanging, malformed frontmatter refuses under a tools rule, and with no deciding rule the approval succeeds and is served
+    revision: "0.1.0"
+
+  - id: SVC_GW_0091
+    requirement_ids: ["GW_0091"]
+    title: Every deciding rule lands on the ledger with its outcome
+    verification: automated-test
+    description: |
+      GIVEN a held snapshot and two enabled rules of which one matches and one errors at evaluation
+      WHEN approval is requested and refused
+      THEN the ledger carries one policy-denied entry per deciding rule naming the rule, the snapshot SHA, the marketplace and the acting reviewer, the matched rule's entry records a match and the erroring rule's entry records the evaluation failure, and no snapshot-approved entry is written
+    revision: "0.1.0"
+
+  - id: SVC_GW_0092
+    requirement_ids: ["GW_0092"]
+    title: The playground evaluates real snapshots and is provably inert
+    verification: automated-test
+    description: |
+      GIVEN a held snapshot with skills content, an approver of its marketplace and — under role enforcement — a session that cannot approve it
+      WHEN expressions that match, do not match, fail to compile and fail to evaluate are submitted to the playground, and the unauthorized session submits one
+      THEN the answers report matched, not matched, the compile error and the evaluation error respectively without echoing snapshot content, the unauthorized session is refused, and after all calls the ledger row count, the rule set, the snapshot state and the marketplace's served state are exactly what they were before
+    revision: "0.1.0"
