@@ -720,3 +720,45 @@ cases:
       WHEN the packaging test validates it
       THEN the workflow pushes the smoke-tested image to the project's registry namespace with commit-SHA and latest tags on main and a version tag on releases, gates every publish step on push events, holds the permissions publishing and attestation require, surfaces the pushed digest in the job summary, and attests the CycloneDX SBOM against the pushed image after the push
     revision: "0.1.0"
+
+  # SVC_GW_0073 and SVC_GW_0074 are reserved by an in-flight change on another branch.
+
+  - id: SVC_GW_0075
+    requirement_ids: ["GW_0075"]
+    title: The adoption report aggregates the windowed ledger per marketplace, SHA and identity
+    verification: automated-test
+    description: |
+      GIVEN two approved marketplaces fetched through the facade by two distinct identities, and a ledger entry planted older than the report window
+      WHEN the adoption report is read for that window
+      THEN each marketplace carries its content-transferring fetch count, its distinct identity count and its most recent fetch time, the per-SHA breakdown marks the served tip as current, the too-old entry is not counted at the narrow window and is counted at the wide one, and the deny-by-default authorization walk classifies both adoption reads as privileged like the ledger itself
+    revision: "0.1.0"
+
+  - id: SVC_GW_0076
+    requirement_ids: ["GW_0076"]
+    title: Staleness names exactly the identities not on the served tip, retracted content included
+    verification: automated-test
+    description: |
+      GIVEN one identity that fetched a snapshot later superseded by a newer approval and another identity that fetched the new tip
+      WHEN the staleness report is read, and read again after the marketplace stops serving entirely
+      THEN the first report names only the superseded identity with its last-received SHA and the served tip it diverges from, and the second names every holder of the retracted content with an absent served tip
+    revision: "0.1.0"
+
+  - id: SVC_GW_0077
+    requirement_ids: ["GW_0077"]
+    title: The skills_gateway metrics are recorded with export left at its disabled default
+    verification: automated-test
+    description: |
+      GIVEN a gateway running with telemetry export at its disabled default
+      WHEN a snapshot is ingested, one snapshot is approved and another rejected, and content is fetched through the facade
+      THEN the meter registry carries the ingestion timing observation tagged with its outcome, the approval observation tagged per decision, and the facade fetch counter tagged per event kind, all under the skills_gateway prefix, and an approval the vetting gate blocks still surfaces its refusal unchanged
+    revision: "0.1.0"
+
+  - id: SVC_GW_0078
+    requirement_ids: ["GW_0078"]
+    title: The portal adoption page shows a real facade fetch and its identity
+    verification: automated-test
+    description: |
+      GIVEN a marketplace approved in the portal and cloned through the facade with a token minted in the portal
+      WHEN the operator opens the Adoption page
+      THEN the marketplace's fetch appears in the adoption report with the fetching identity counted, and the page presented its loading-to-loaded transition without an error state
+    revision: "0.1.0"
