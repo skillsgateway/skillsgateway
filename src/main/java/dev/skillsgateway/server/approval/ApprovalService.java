@@ -1,6 +1,7 @@
 package dev.skillsgateway.server.approval;
 
 import dev.skillsgateway.server.catalog.CatalogService;
+import dev.skillsgateway.server.observability.GatewayMetrics;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.Snapshot;
@@ -31,18 +32,21 @@ public class ApprovalService {
     private final MarketplaceRepository marketplaceRepository;
     private final WaiverService waiverService;
     private final CatalogService catalogService;
+    private final GatewayMetrics metrics;
 
     public ApprovalService(
             GitStorage storage,
             SnapshotRepository snapshotRepository,
             MarketplaceRepository marketplaceRepository,
             WaiverService waiverService,
-            CatalogService catalogService) {
+            CatalogService catalogService,
+            GatewayMetrics metrics) {
         this.storage = storage;
         this.snapshotRepository = snapshotRepository;
         this.marketplaceRepository = marketplaceRepository;
         this.waiverService = waiverService;
         this.catalogService = catalogService;
+        this.metrics = metrics;
     }
 
     /**
@@ -75,6 +79,12 @@ public class ApprovalService {
      */
     @Requirements({"GW_0005", "GW_0041", "GW_0050"})
     public Approved approve(long snapshotId, String reviewer) {
+        // Observation only (GW_0077): timing and outcome around the unchanged decision — a
+        // vetting-blocked refusal is the observation's error and still propagates untouched.
+        return metrics.observeApproval("approve", () -> doApprove(snapshotId, reviewer));
+    }
+
+    private Approved doApprove(long snapshotId, String reviewer) {
         // The state machine comes first: a snapshot that is neither held nor revoked is unapprovable
         // for a reason that has nothing to do with vetting, and saying "vetting blocked it" would
         // be wrong.
@@ -114,7 +124,8 @@ public class ApprovalService {
     }
 
     public Snapshot reject(long snapshotId, String reviewer) {
-        return snapshotRepository.decide(snapshotId, Snapshot.REJECTED, reviewer);
+        return metrics.observeApproval(
+                "reject", () -> snapshotRepository.decide(snapshotId, Snapshot.REJECTED, reviewer));
     }
 
     @Requirements({"GW_0009"})
