@@ -2,6 +2,7 @@ import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCreateToken, useRevokeToken, useTokens, type IssuedToken } from "@/api/queries";
+import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -152,7 +153,7 @@ export function TokensPage() {
             {tokens.data.map((token) => (
               <TableRow key={token.id}>
                 <TableCell>{token.name}</TableCell>
-                <TableCell>{token.createdAt}</TableCell>
+                <TableCell><Timestamp value={token.createdAt} /></TableCell>
                 <TableCell>
                   {token.revokedAt ? <Badge variant="destructive">revoked</Badge> : <Badge>active</Badge>}
                 </TableCell>

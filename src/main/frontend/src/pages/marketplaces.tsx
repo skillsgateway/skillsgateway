@@ -14,6 +14,7 @@ import {
   type MarketplaceView,
   type Snapshot,
 } from "@/api/queries";
+import { Timestamp } from "@/components/timestamp";
 import { OutcomeBadge, VettingReport } from "@/components/vetting-report";
 import { GATEWAY_NAME, GATEWAY_NAME_HINT } from "@/lib/form-rules";
 import { SnapshotStateBadge } from "@/components/snapshot-state";
@@ -169,11 +170,11 @@ function ProvenanceDialog({ snapshotId, onClose }: { snapshotId: number; onClose
             <dt className="font-medium">State</dt>
             <dd>{p.state}</dd>
             <dt className="font-medium">Ingested</dt>
-            <dd>{p.ingestedAt}</dd>
+            <dd><Timestamp value={p.ingestedAt} /></dd>
             <dt className="font-medium">Decided by</dt>
             <dd>{p.decidedBy ?? "—"}</dd>
             <dt className="font-medium">Decided at</dt>
-            <dd>{p.decidedAt ?? "—"}</dd>
+            <dd><Timestamp value={p.decidedAt} /></dd>
           </dl>
         ) : null}
       </DialogContent>
@@ -318,7 +319,7 @@ function MarketplaceCard({ marketplace }: { marketplace: MarketplaceView }) {
             {marketplace.url}
             {marketplace.description ? <span className="block">{marketplace.description}</span> : null}
             {marketplace.upstreamUpdatedAt ? (
-              <span className="block text-xs">upstream updated {marketplace.upstreamUpdatedAt}</span>
+              <span className="block text-xs">upstream updated <Timestamp value={marketplace.upstreamUpdatedAt} /></span>
             ) : null}
           </CardDescription>
         </div>
