@@ -135,6 +135,14 @@ public class WebhookService {
         return created;
     }
 
+    /**
+     * The target-URL gate for callers that converge an existing subscriber in place (the estate
+     * reconciler): an updated target faces the same allowlist as a created one (GW_0086).
+     */
+    public void validateTarget(String url) {
+        requireAllowlistedScheme(url);
+    }
+
     /** Fails closed, exactly like marketplace registration (GW_0016). */
     private void requireAllowlistedScheme(String url) {
         String scheme = null;

@@ -184,6 +184,11 @@ public class AuditExportService {
         return created;
     }
 
+    /** Converges a sink's batch size to a declared value (GW_0086); the clamp matches creation. */
+    public Optional<AuditSink> updateSinkBatchSize(long id, int batchSize) {
+        return sinkRepository.updateBatchSize(id, Math.clamp(batchSize, 1, properties.maxPageSize()));
+    }
+
     /** Fails closed, exactly like marketplace and webhook subscriber registration. */
     private void requireAllowlistedScheme(String url) {
         String scheme = null;

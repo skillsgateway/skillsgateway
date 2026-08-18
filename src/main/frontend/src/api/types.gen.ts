@@ -360,6 +360,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/estate/reconcile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reconcile the declared estate now
+         * @description Runs the same additive, idempotent reconciliation as startup against the current declaration and returns its report. A converged estate reconciles with zero writes and zero ledger entries; the trigger itself is an administrative action and is always recorded with the acting identity. Admin-only while role enforcement is enabled.
+         */
+        post: operations["reconcile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/catalog/rebuild": {
         parameters: {
             query?: never;
@@ -588,6 +608,26 @@ export interface paths {
          * @description Every waiver recorded for the marketplace, newest first, active and lapsed alike. A lapsed or revoked waiver is kept and returned with active=false: the record of what was once accepted, by whom and until when is part of the audit trail.
          */
         get: operations["list_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/estate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Last estate reconciliation report
+         * @description The most recent reconciliation run — per declared entry, what was created, updated, unchanged, or failed and why. The report is held in memory; after a restart the startup run repopulates it. Secret values never appear. Auditor or admin while role enforcement is enabled, because failure reasons expose operator infrastructure.
+         */
+        get: operations["lastRun"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1215,6 +1255,58 @@ export interface components {
              * @example main
              */
             ref?: string;
+        };
+        /** @description One declared entry's reconciliation outcome */
+        Entry: {
+            /**
+             * @description The kind of declared object
+             * @enum {string}
+             */
+            kind?: "marketplace" | "grant" | "webhook" | "audit-sink";
+            /** @description The declared name (for a grant: principal/role/marketplace) */
+            name?: string;
+            /**
+             * @description What the reconciler did
+             * @enum {string}
+             */
+            action?: "created" | "updated" | "unchanged" | "failed";
+            /** @description What changed, or why the entry failed; never a secret value */
+            detail?: string;
+        };
+        /** @description The outcome of one estate reconciliation run */
+        EstateReconciliation: {
+            /**
+             * Format: date-time
+             * @description When the run happened
+             */
+            ranAt?: string;
+            /**
+             * @description What started the run
+             * @enum {string}
+             */
+            trigger?: "startup" | "api";
+            /** @description Per declared entry, what happened */
+            entries?: components["schemas"]["Entry"][];
+            /**
+             * Format: int32
+             * @description Entries created
+             */
+            created?: number;
+            /**
+             * Format: int32
+             * @description Entries updated to match the declaration
+             */
+            updated?: number;
+            /**
+             * Format: int32
+             * @description Entries already converged; nothing was written
+             */
+            unchanged?: number;
+            /**
+             * Format: int32
+             * @description Entries that failed validation and were skipped
+             */
+            failed?: number;
         };
         /** @description The catalog revision the facade is serving */
         CatalogInfo: {
@@ -2443,6 +2535,35 @@ export interface operations {
             };
         };
     };
+    reconcile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The run's report */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EstateReconciliation"];
+                };
+            };
+            /** @description Enforcement is enabled and the caller is not an admin */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EstateReconciliation"];
+                };
+            };
+        };
+    };
     rebuild: {
         parameters: {
             query?: never;
@@ -2799,6 +2920,35 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["WaiverView"][];
+                };
+            };
+        };
+    };
+    lastRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The last reconciliation report */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EstateReconciliation"];
+                };
+            };
+            /** @description No reconciliation has run */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EstateReconciliation"];
                 };
             };
         };
