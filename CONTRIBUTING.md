@@ -49,6 +49,28 @@ mkdocs build --strict                   # docs site (pip install -r docs/require
 CI enforces the same gates per PR (`.github/workflows/ci.yml`) plus a native
 image build on main (`native.yml`).
 
+`clean` matters for the reqstool gate: incremental compilation truncates the
+generated annotation files.
+
+## Building and running the packaged artifacts
+
+```bash
+./mvnw -Pnative -DskipTests native:compile   # GraalVM native binary (needs GraalVM CE 25)
+docker build -t skills-gateway:local .       # OCI image from the native binary
+docker compose up                            # gateway + PostgreSQL on :8080 (compose.yaml)
+```
+
+The admin portal (React/Vite, `src/main/frontend/`) is **built by the Maven
+build** — the frontend-maven-plugin provisions node/pnpm, runs the UI gates,
+and packages the bundle into the jar, served at `/` behind the OIDC login. You
+never need pnpm to build or run the gateway. The `cd src/main/frontend &&
+pnpm …` commands exist only for UI development loops (`pnpm dev` proxies
+`/api` to a running gateway, `pnpm test`, `pnpm storybook`) and for the e2e
+suite (`pnpm e2e`), which is deliberately outside `mvnw verify`.
+
+Dependency updates are automated with Renovate (`renovate.json`); enable the
+Renovate GitHub App on the repository for it to take effect.
+
 ## Commits
 
 - [Conventional Commits](https://www.conventionalcommits.org/):
@@ -63,7 +85,8 @@ image build on main (`native.yml`).
 See `.claude/skills/code-conventions/SKILL.md` (build, Java/TS style,
 traceability), `.claude/skills/design-conventions/SKILL.md` (portal UI), and
 `.claude/skills/documentation/SKILL.md` (docs structure, Markdown and Mermaid
-conventions). Architecture context: `ARCHITECTURE.md` and `docs/decisions/`.
+conventions). Architecture context: `docs/manual/architecture.md` and
+`docs/decisions/`.
 
 ## Documentation
 
