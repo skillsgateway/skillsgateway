@@ -45,10 +45,9 @@ For local work the `observability` profile starts a Grafana LGTM dev container
 (collector, Loki, Tempo, Prometheus, Grafana) and enables export to it:
 
 ```console
-$ ./mvnw spring-boot:run -Dspring-boot.run.profiles=observability \
-                         -Dspring-boot.run.useTestClasspath=true
+$ ./mvnw spring-boot:run -Dspring-boot.run.profiles=observability
 ```
 
-The Grafana URL is logged at startup. The supporting dependencies are test
-scope: nothing of the dev stack is reachable from the packaged jar, the
-container image or the native binary.
+The Grafana URL is logged at startup. The supporting dependencies are optional,
+and test scope again under the `native` profile: nothing of the dev stack is
+reachable from the packaged jar, the container image or the native binary.
