@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/dev/reference/configuration/">
       
       
-        <link rel="prev" href="../../guides/delegated-administration/">
+        <link rel="prev" href="../../guides/declarative-estate/">
       
       
         <link rel="next" href="../api/">
@@ -555,6 +555,8 @@
       
         
       
+        
+      
     
     
     
@@ -936,6 +938,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/declarative-estate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Declarative estate configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1205,6 +1235,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#declarative-estate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Declarative estate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#datasource" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1279,6 +1320,8 @@
       
         
           
+        
+      
         
       
         
@@ -1469,6 +1512,34 @@
     
   
     Roles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/estate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Estate
   
 
     
@@ -1841,6 +1912,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#declarative-estate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Declarative estate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#datasource" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1971,6 +2053,11 @@
 <td><a href="#delegated-administration"><code>skills-gateway.roles.*</code></a></td>
 <td>Role enforcement and the bootstrap admins. <strong>Off by default.</strong></td>
 <td>No — all defaulted.</td>
+</tr>
+<tr>
+<td><a href="#declarative-estate"><code>skills-gateway.estate.*</code></a></td>
+<td>The declared estate: marketplaces, role grants, webhook subscribers, audit sinks — reconciled at startup and on demand. <strong>Empty by default.</strong></td>
+<td>No — empty by default.</td>
 </tr>
 <tr>
 <td><a href="#datasource"><code>spring.datasource.*</code></a></td>
@@ -2708,12 +2795,156 @@ nothing appears in <code>application.yaml</code>.</p>
 <a href="../../guides/delegated-administration/">Delegated administration</a>; the grants
 API in <a href="../api/roles/">Roles</a>.</p>
 <hr />
+<h2 id="declarative-estate">Declarative estate<a class="headerlink" href="#declarative-estate" title="Permanent link">&para;</a></h2>
+<p>The estate defined as configuration (GW_0083–GW_0087): marketplaces, role
+grants, webhook subscribers and audit export sinks, reconciled at startup —
+after schema migration, before the web surface serves — and on demand via
+<a href="../api/estate/"><code>POST /api/estate/reconcile</code></a>. Empty by default; an empty
+declaration reconciles nothing.</p>
+<p>Reconciliation is <strong>additive and idempotent</strong>. A declared object is created if
+missing and converged if drifted; an object absent from the declaration is
+<strong>never</strong> deleted, deregistered or revoked — removing a line from this block
+retracts nothing. A converged estate reconciles with zero writes and zero
+ledger entries; every applied change lands on the append-only ledger under the
+same event name as its API equivalent, attributed to the actor
+<code>config-reconciler</code>. An entry that fails validation is skipped and reported —
+in the log at ERROR, on the ledger as <code>estate-reconciliation-failed</code>, and in
+the <a href="../api/estate/">reconciliation report</a> — and never prevents startup or the
+other entries.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">estate</span><span class="p">:</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="c1"># Registered through the exact same gate as POST /api/marketplaces:</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="c1"># name rules, the reserved catalog name, the URL scheme allowlist.</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span><span class="c1"># There is no ref key — the ingested ref is always the gateway's</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">    </span><span class="c1"># decision (the upstream default branch).</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">    </span><span class="nt">marketplaces</span><span class="p">:</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">corp-marketplace</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/acme/skills-marketplace.git</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="w">        </span><span class="c1"># on-demand or scheduled; applied through the same audited path as</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="w">        </span><span class="c1"># PUT /api/marketplaces/{name}/sync. Omit to leave the stored mode</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">        </span><span class="c1"># alone. webhook mode is refused: its inbound HMAC secret is</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="w">        </span><span class="c1"># generated and shown once, which has no declarative form.</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="w">        </span><span class="nt">sync-mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">scheduled</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="w">    </span><span class="c1"># The exact shape of POST /api/roles: approver grants name one</span>
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="w">    </span><span class="c1"># marketplace that must exist at reconcile time (declared above, or</span>
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="w">    </span><span class="c1"># registered through the API); admin and auditor grants must not.</span>
+<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a><span class="w">    </span><span class="nt">grants</span><span class="p">:</span>
+<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">principal</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">alice@example.com</span>
+<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">approver</span>
+<a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a><span class="w">        </span><span class="nt">marketplace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">corp-marketplace</span>
+<a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">principal</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">audit@example.com</span>
+<a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auditor</span>
+<a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a>
+<a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a><span class="w">    </span><span class="c1"># Webhook subscribers with an OPERATOR-SUPPLIED signing secret — the</span>
+<a id="__codelineno-10-27" name="__codelineno-10-27" href="#__codelineno-10-27"></a><span class="w">    </span><span class="c1"># inversion of the API's generated show-once secret. Reference an</span>
+<a id="__codelineno-10-28" name="__codelineno-10-28" href="#__codelineno-10-28"></a><span class="w">    </span><span class="c1"># environment variable; never inline a literal in a committed file.</span>
+<a id="__codelineno-10-29" name="__codelineno-10-29" href="#__codelineno-10-29"></a><span class="w">    </span><span class="nt">webhooks</span><span class="p">:</span>
+<a id="__codelineno-10-30" name="__codelineno-10-30" href="#__codelineno-10-30"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ci-bot</span>
+<a id="__codelineno-10-31" name="__codelineno-10-31" href="#__codelineno-10-31"></a><span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://ci.example.com/hooks/skills-gateway</span>
+<a id="__codelineno-10-32" name="__codelineno-10-32" href="#__codelineno-10-32"></a><span class="w">        </span><span class="nt">events</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">snapshot.approved,snapshot.rejected</span><span class="w">   </span><span class="c1"># omit for all events</span>
+<a id="__codelineno-10-33" name="__codelineno-10-33" href="#__codelineno-10-33"></a><span class="w">        </span><span class="nt">secret</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${SGW_ESTATE_CI_BOT_SECRET}</span>
+<a id="__codelineno-10-34" name="__codelineno-10-34" href="#__codelineno-10-34"></a>
+<a id="__codelineno-10-35" name="__codelineno-10-35" href="#__codelineno-10-35"></a><span class="w">    </span><span class="c1"># Audit export sinks; same secret contract as webhooks.</span>
+<a id="__codelineno-10-36" name="__codelineno-10-36" href="#__codelineno-10-36"></a><span class="w">    </span><span class="nt">audit-sinks</span><span class="p">:</span>
+<a id="__codelineno-10-37" name="__codelineno-10-37" href="#__codelineno-10-37"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">siem</span>
+<a id="__codelineno-10-38" name="__codelineno-10-38" href="#__codelineno-10-38"></a><span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://siem.example.com/ingest/skills-gateway</span>
+<a id="__codelineno-10-39" name="__codelineno-10-39" href="#__codelineno-10-39"></a><span class="w">        </span><span class="nt">secret</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${SGW_ESTATE_SIEM_SECRET}</span>
+<a id="__codelineno-10-40" name="__codelineno-10-40" href="#__codelineno-10-40"></a><span class="w">        </span><span class="nt">after</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">          </span><span class="c1"># cursor seed — applied at creation ONLY</span>
+<a id="__codelineno-10-41" name="__codelineno-10-41" href="#__codelineno-10-41"></a><span class="w">        </span><span class="nt">batch-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>skills-gateway.estate.marketplaces</code></td>
+<td>list</td>
+<td><code>[]</code></td>
+<td>Each entry: <code>name</code>, <code>url</code>, optional <code>sync-mode</code> (<code>on-demand</code>/<code>scheduled</code>).</td>
+</tr>
+<tr>
+<td><code>skills-gateway.estate.marketplaces[].name</code></td>
+<td>string</td>
+<td>—</td>
+<td>Same rules as the API: <code>^[a-z0-9][a-z0-9_-]*$</code>, catalog name reserved.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.estate.marketplaces[].url</code></td>
+<td>string</td>
+<td>—</td>
+<td>Scheme must be allowlisted. Immutable once registered: a differing declared URL is a reconciliation failure, never an update.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.estate.marketplaces[].sync-mode</code></td>
+<td>string</td>
+<td>unset (not managed)</td>
+<td><code>on-demand</code> or <code>scheduled</code>; <code>webhook</code> is refused. Unset never touches the stored mode.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.estate.grants</code></td>
+<td>list</td>
+<td><code>[]</code></td>
+<td>Each entry: <code>principal</code>, <code>role</code> (<code>admin</code>/<code>approver</code>/<code>auditor</code>), <code>marketplace</code> (required for approver, forbidden otherwise).</td>
+</tr>
+<tr>
+<td><code>skills-gateway.estate.webhooks</code></td>
+<td>list</td>
+<td><code>[]</code></td>
+<td>Each entry: <code>name</code>, <code>url</code>, optional <code>events</code>, <code>secret</code>.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.estate.webhooks[].secret</code></td>
+<td>string</td>
+<td>—</td>
+<td>Operator-supplied, minimum 16 characters, write-only. A changed value rotates the stored secret idempotently.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.estate.audit-sinks</code></td>
+<td>list</td>
+<td><code>[]</code></td>
+<td>Each entry: <code>name</code>, <code>url</code>, <code>secret</code>, optional <code>after</code>, optional <code>batch-size</code>.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.estate.audit-sinks[].after</code></td>
+<td>long</td>
+<td><code>0</code></td>
+<td>Seeds the ledger cursor <strong>at creation only</strong>; never re-applied to an existing sink.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.estate.audit-sinks[].batch-size</code></td>
+<td>int</td>
+<td>audit-export default</td>
+<td>Converged when set; unset never touches the stored value.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title">Declared secrets are sensitive property values</p>
+<p>The gateway treats a declared secret as write-only — it never appears in
+the log, the ledger, the reconciliation report, or any API response — but
+it cannot control where the <em>configuration</em> lives. Supply secrets by
+environment-variable reference (<code>${VAR}</code>) from a secret store; a literal in
+a committed values file is a leaked credential. A blank or shorter-than-16
+secret is refused as a reconciliation failure.</p>
+</div>
+<p>Personal access tokens are deliberately not declarable: they are user-owned
+credentials, API-only by design. The GitOps workflow is described in
+<a href="../../guides/declarative-estate/">Declarative estate configuration</a>; the
+report and trigger endpoints in <a href="../api/estate/">Estate</a>.</p>
+<hr />
 <h2 id="datasource">Datasource<a class="headerlink" href="#datasource" title="Permanent link">&para;</a></h2>
 <p>Not present in <code>application.yaml</code> at all — supplied purely by environment.
 PostgreSQL is assumed.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_URL</span><span class="o">=</span>jdbc:postgresql://postgres:5432/skillsgateway
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_USERNAME</span><span class="o">=</span>skillsgateway
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_PASSWORD</span><span class="o">=</span>skillsgateway
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_URL</span><span class="o">=</span>jdbc:postgresql://postgres:5432/skillsgateway
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_USERNAME</span><span class="o">=</span>skillsgateway
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_PASSWORD</span><span class="o">=</span>skillsgateway
 </code></pre></div>
 <p>The Helm chart exposes these as <code>postgresql.host</code> (<strong>required</strong>, no default),
 <code>postgresql.port</code> (<code>5432</code>), <code>postgresql.database</code> and <code>postgresql.username</code>
@@ -2771,11 +3002,11 @@ defaults are the placeholders below rather than being absent.</p>
 <p>Register that redirect URI with your identity provider.</p>
 <hr />
 <h2 id="actuator">Actuator<a class="headerlink" href="#actuator" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nt">management</span><span class="p">:</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">endpoints</span><span class="p">:</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="nt">web</span><span class="p">:</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">      </span><span class="nt">exposure</span><span class="p">:</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">        </span><span class="nt">include</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">health,sbom</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">management</span><span class="p">:</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">endpoints</span><span class="p">:</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span><span class="nt">web</span><span class="p">:</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">      </span><span class="nt">exposure</span><span class="p">:</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">        </span><span class="nt">include</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">health,sbom</span>
 </code></pre></div>
 <p>Only two endpoints are exposed. <code>/actuator/health</code> is the <strong>only</strong>
 unauthenticated path in the application; <code>/actuator/sbom</code> serves the CycloneDX
@@ -2788,11 +3019,11 @@ both Kubernetes probes point at the bare path.</p>
 </div>
 <hr />
 <h2 id="api-documentation">API documentation<a class="headerlink" href="#api-documentation" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">scalar</span><span class="p">:</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/docs</span><span class="w">        </span><span class="c1"># the Scalar UI</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/v3/api-docs</span><span class="w">  </span><span class="c1"># the OpenAPI document it renders</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span><span class="nt">theme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">purple</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">scalar</span><span class="p">:</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/docs</span><span class="w">        </span><span class="c1"># the Scalar UI</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/v3/api-docs</span><span class="w">  </span><span class="c1"># the OpenAPI document it renders</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span><span class="nt">theme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">purple</span>
 </code></pre></div>
 <p>Both paths sit behind the OIDC login like the rest of the web surface.</p>
 <hr />

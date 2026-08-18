@@ -692,6 +692,8 @@
       
         
       
+        
+      
     
     
     
@@ -1073,6 +1075,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/declarative-estate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Declarative estate configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1191,6 +1221,8 @@
       
         
           
+        
+      
         
       
         
@@ -1381,6 +1413,34 @@
     
   
     Roles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/estate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Estate
   
 
     
@@ -1798,6 +1858,13 @@ publication is a designed future feature and will arrive as promotion per
 is also what makes them safe as path segments on the facade.</p>
 <p>See <a href="../../reference/compatibility/">Compatibility and allowlists</a> for the full
 matrix.</p>
+<p><strong>Declared marketplaces enter through the same gate.</strong> The
+<a href="../../reference/configuration/#declarative-estate">declarative estate block</a>
+is a second <em>caller</em> of this boundary, never a second implementation: a
+declared marketplace faces the same name rules, reserved name and scheme
+allowlist as an API registration, has no ref key to declare, and a failing
+entry is reported rather than registered. Reconciliation is additive — the
+declaration can create and converge, never deregister.</p>
 <h2 id="2-the-facade-an-anonymous-network-peer-becomes-a-reader">2. The facade — an anonymous network peer becomes a reader<a class="headerlink" href="#2-the-facade-an-anonymous-network-peer-becomes-a-reader" title="Permanent link">&para;</a></h2>
 <p><code>/git/**</code> is served by its own Spring Security filter chain, ordered ahead of
 the web chain, and it is <strong>stateless</strong>:</p>

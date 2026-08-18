@@ -567,6 +567,8 @@
       
         
       
+        
+      
     
     
     
@@ -948,6 +950,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/declarative-estate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Declarative estate configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1066,6 +1096,8 @@
       
         
           
+        
+      
         
       
         
@@ -1256,6 +1288,34 @@
     
   
     Roles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/estate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Estate
   
 
     
@@ -1559,6 +1619,17 @@ browser holds only a session cookie.</dd>
 <dt><strong>Facade</strong></dt>
 <dd>The read-only git smart-HTTP server at <code>/git/**</code>. The only surface end users
 touch. Authenticated by PAT only; writes impossible by construction.</dd>
+<dt><strong>Estate</strong></dt>
+<dd>Everything the gateway governs that is created at runtime rather than
+coded: marketplaces, role grants, webhook subscribers, audit sinks. The
+estate can be managed interactively through the API, declared in
+configuration (<code>skills-gateway.estate.*</code>), or both.</dd>
+<dt><strong>Estate reconciliation</strong></dt>
+<dd>Converging the running estate to the declared one, at startup and on
+demand: additive (nothing absent from the declaration is ever removed),
+idempotent (a converged estate reconciles with zero writes and zero ledger
+entries), audited under the actor <code>config-reconciler</code>, and failure-isolated
+(an invalid entry is reported, never fatal).</dd>
 <dt><strong>Held</strong></dt>
 <dd>The state every snapshot starts in. Stored, inspectable, and serving
 nothing.</dd>
