@@ -7,6 +7,20 @@ is refused; the snapshot stays held and nothing is published. Rules tighten
 the human approval gate — they never open it: there is no auto-approval, and a
 policy denial has no per-snapshot override.
 
+!!! note "Why can't rules auto-approve?"
+
+    Deliberately. The gateway's core guarantee is that **nothing is served
+    that a person did not approve** — auto-approval ("docs-only change from a
+    trusted publisher") would delegate that gate to an expression, which is a
+    change to the trust model, not a feature. So rules can only *tighten* the
+    human gate: a rule can refuse an approval, never grant one. The fuller
+    rationale is in ADR 0006 (see
+    [Architecture decisions](../reference/decisions.md#adr-0006-embedded-cel-for-policy-rules-not-an-opa-sidecar))
+    and [Trust boundaries](../concepts/trust-boundaries.md#3-approval-held-content-becomes-served-content);
+    if delegated approval is ever wanted, it will be decided there first —
+    the engine, the playground and the provenance recording carry over
+    unchanged.
+
 Rules are managed through the [policy API](../reference/api/policy.md)
 (admin-only mutations, auditor-or-admin reads) or declared in the
 [estate configuration](../reference/configuration.md#declarative-estate). An

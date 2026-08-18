@@ -156,6 +156,12 @@ about the content, waivable finding by finding), then the fail-closed
 not waivable — the exception path is editing the rule, audited). A refusal by
 either leaves the snapshot held and publishes nothing.
 
+Both gates only ever *close*: neither can approve. Policy rules in particular
+cannot auto-approve, because that would delegate the human decision this
+boundary exists to guarantee to an expression — a trust-model change, decided
+deliberately or not at all (ADR 0006 in
+[Architecture decisions](../reference/decisions.md)).
+
 ## The web surface
 
 Everything that is not `/git/**` is the web chain: OIDC authorization-code login
