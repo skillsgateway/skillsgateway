@@ -145,28 +145,30 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Dev/test-only, the Maven way: Maven has no environment-oriented scope, so
+             `optional` is what keeps these off a consumer's classpath and out of the
+             packaged jar (spring-boot:repackage defaults includeOptional=false). Plain
+             `spring-boot:run` still sees them, which is how the dev services start
+             without -Dspring-boot.run.useTestClasspath=true. -->
         <!-- Testcontainers via Arconia Dev Services: Postgres auto-starts in dev/test. -->
         <dependency>
             <groupId>io.arconia</groupId>
             <artifactId>arconia-dev-services-postgresql</artifactId>
-            <scope>test</scope>
+            <optional>true</optional>
         </dependency>
         <!-- Opt-in local observability (Spring profile "observability"): the Grafana LGTM
-             stack as a dev service plus OTLP export from the application. Both are test
-             scope on purpose — they must never reach the runtime jar, the container image
-             or the GraalVM native binary. `spring-boot:run` picks them up with
-             -Dspring-boot.run.useTestClasspath=true; see docs/manual/guides/local-development.md.
-             Disabled by default in application.yaml, so tests neither start the LGTM
-             container nor initialise the OpenTelemetry SDK. -->
+             stack as a dev service plus OTLP export from the application. Disabled by
+             default in application.yaml, so tests neither start the LGTM container nor
+             initialise the OpenTelemetry SDK. -->
         <dependency>
             <groupId>io.arconia</groupId>
             <artifactId>arconia-dev-services-lgtm</artifactId>
-            <scope>test</scope>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>io.arconia</groupId>
             <artifactId>arconia-opentelemetry-spring-boot-starter</artifactId>
-            <scope>test</scope>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 
@@ -299,12 +301,15 @@
                             <skip>${skip.ui.verify}</skip>
                         </configuration>
                     </execution>
+                    <!-- process-classes, not prepare-package: spring-boot:run forks the
+                         lifecycle only as far as test-compile, so a bundle built at
+                         packaging time would leave the dev run serving a whitelabel page. -->
                     <execution>
                         <id>pnpm-build</id>
                         <goals>
                             <goal>pnpm</goal>
                         </goals>
-                        <phase>prepare-package</phase>
+                        <phase>process-classes</phase>
                         <configuration>
                             <arguments>run build</arguments>
                         </configuration>
@@ -320,7 +325,9 @@
                         <goals>
                             <goal>copy-resources</goal>
                         </goals>
-                        <phase>prepare-package</phase>
+                        <!-- Same phase as pnpm-build, declared after it so it copies what
+                             that execution just produced. -->
+                        <phase>process-classes</phase>
                         <configuration>
                             <outputDirectory>${project.build.outputDirectory}/static</outputDirectory>
                             <resources>
@@ -356,6 +363,27 @@
         <!-- Release profile only — daily dev runs on JIT (ADR 0002). -->
         <profile>
             <id>native</id>
+            <!-- native-image compiles from this project's own runtime classpath, which
+                 `optional` does not narrow — left alone it links Testcontainers and the
+                 dev services into the binary. Test scope here keeps them out; verify with
+                 `strings target/skills-gateway-server | grep -c org.testcontainers`. -->
+            <dependencies>
+                <dependency>
+                    <groupId>io.arconia</groupId>
+                    <artifactId>arconia-dev-services-postgresql</artifactId>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>io.arconia</groupId>
+                    <artifactId>arconia-dev-services-lgtm</artifactId>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>io.arconia</groupId>
+                    <artifactId>arconia-opentelemetry-spring-boot-starter</artifactId>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
             <build>
                 <plugins>
                     <plugin>
