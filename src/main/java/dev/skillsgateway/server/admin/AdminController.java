@@ -2,8 +2,6 @@ package dev.skillsgateway.server.admin;
 
 import dev.skillsgateway.server.approval.ApprovalService;
 import dev.skillsgateway.server.approval.VettingBlockedException;
-import dev.skillsgateway.server.config.SkillsGatewayProperties;
-import dev.skillsgateway.server.ingestion.ForgeMetadataService;
 import dev.skillsgateway.server.ingestion.IngestionException;
 import dev.skillsgateway.server.ingestion.IngestionService;
 import dev.skillsgateway.server.ingestion.SnapshotContentService;
@@ -22,13 +20,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.regex.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -46,18 +40,15 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/api")
 public class AdminController {
 
-    private static final Pattern MARKETPLACE_NAME = Pattern.compile("^[a-z0-9][a-z0-9_-]*$");
-
     /** The gateway ingests only the upstream default branch; this is not consumer-selectable. */
     private static final String DEFAULT_BRANCH = "main";
 
+    private final MarketplaceRegistrationService registrationService;
     private final MarketplaceRepository marketplaceRepository;
     private final SnapshotRepository snapshotRepository;
     private final IngestionService ingestionService;
     private final ApprovalService approvalService;
     private final FetchLogRepository fetchLogRepository;
-    private final SkillsGatewayProperties properties;
-    private final ForgeMetadataService forgeMetadataService;
     private final SnapshotContentService snapshotContentService;
     private final AdminAuditLogger auditLogger;
     private final WebhookService webhookService;
@@ -65,25 +56,23 @@ public class AdminController {
     private final RoleService roleService;
 
     public AdminController(
+            MarketplaceRegistrationService registrationService,
             MarketplaceRepository marketplaceRepository,
             SnapshotRepository snapshotRepository,
             IngestionService ingestionService,
             ApprovalService approvalService,
             FetchLogRepository fetchLogRepository,
-            SkillsGatewayProperties properties,
-            ForgeMetadataService forgeMetadataService,
             SnapshotContentService snapshotContentService,
             AdminAuditLogger auditLogger,
             WebhookService webhookService,
             WaiverService waiverService,
             RoleService roleService) {
+        this.registrationService = registrationService;
         this.marketplaceRepository = marketplaceRepository;
         this.snapshotRepository = snapshotRepository;
         this.ingestionService = ingestionService;
         this.approvalService = approvalService;
         this.fetchLogRepository = fetchLogRepository;
-        this.properties = properties;
-        this.forgeMetadataService = forgeMetadataService;
         this.snapshotContentService = snapshotContentService;
         this.auditLogger = auditLogger;
         this.webhookService = webhookService;
@@ -156,22 +145,8 @@ public class AdminController {
     public ResponseEntity<Marketplace> registerMarketplace(
             @RequestBody RegisterMarketplaceRequest request, Authentication authentication) {
         roleService.requireAdmin(authentication);
-        if (request.name() == null || !MARKETPLACE_NAME.matcher(request.name()).matches()) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNPROCESSABLE_CONTENT, "name must match " + MARKETPLACE_NAME.pattern());
-        }
-        requireNotReservedName(request.name());
-        requireAllowlistedScheme(request.url());
         requireDefaultBranchRef(request.ref());
-        if (marketplaceRepository.findByName(request.name()).isPresent()) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT, "marketplace '%s' already exists".formatted(request.name()));
-        }
-        Marketplace marketplace = marketplaceRepository.register(
-                request.name(),
-                request.url(),
-                forgeMetadataService.resolve(request.url()).orElse(null));
-        auditLogger.record(authentication.getName(), marketplace.name(), "marketplace-registered", null);
+        Marketplace marketplace = registrationService.register(request.name(), request.url(), authentication.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(marketplace);
     }
 
@@ -185,32 +160,6 @@ public class AdminController {
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
     public SnapshotContentService.SnapshotContent snapshotContent(@PathVariable long id) {
         return snapshotContentService.content(id);
-    }
-
-    /** Fails closed: scheme-less and unparseable URLs are rejected along with non-allowlisted schemes. */
-    @Requirements({"GW_0016"})
-    private void requireAllowlistedScheme(String url) {
-        String scheme = null;
-        if (url != null) {
-            try {
-                scheme = new URI(url).getScheme();
-            } catch (URISyntaxException e) {
-                scheme = null;
-            }
-        }
-        if (scheme == null || !properties.allowedUrlSchemes().contains(scheme.toLowerCase(Locale.ROOT))) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "url scheme must be one of %s".formatted(properties.allowedUrlSchemes()));
-        }
-    }
-
-    /** The virtual catalog occupies its facade path; a marketplace there would collide (GW_0063). */
-    @Requirements({"GW_0063"})
-    private void requireNotReservedName(String name) {
-        if (name.equals(properties.catalog().name())) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNPROCESSABLE_CONTENT, "'%s' is reserved for the virtual catalog".formatted(name));
-        }
     }
 
     /** The ingested ref is the gateway's decision (upstream default branch), never the consumer's. */
