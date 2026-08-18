@@ -30,7 +30,7 @@ OPA sidecar; per-marketplace rule scoping as a first-class field
 
 ## Decisions
 
-1. **Embedded cel-java, not an OPA sidecar (ADR 0004).** `dev.cel:cel` is a
+1. **Embedded cel-java, not an OPA sidecar (ADR 0006).** `dev.cel:cel` is a
    library: no new deployment unit, no network hop inside the approval path,
    native-image-friendlier than a sidecar contract. CEL is non-Turing-complete
    and terminating by design, which is exactly the right shape for an

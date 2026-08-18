@@ -62,7 +62,7 @@ unchanged if auto-approval is ever decided.
   later); per-marketplace rule scoping (expressions can test
   `snapshot.marketplace` today); portal UI for rules and playground (the
   REST API and docs are the v1 surface; the portal grows a page when the
-  rule set warrants one); an OPA sidecar (ADR 0004 records why embedded
+  rule set warrants one); an OPA sidecar (ADR 0006 records why embedded
   cel-java).
 
 ## Capabilities
@@ -84,12 +84,13 @@ unchanged if auto-approval is ever decided.
 
 - **Schema**: new `policy_rules` table folded into `V1__init.sql`.
 - **Backend**: new `policy` package (`PolicyRule`, `PolicyRuleRepository`,
-  `CelPolicy` — pure compile/evaluate core, `SnapshotFacts` — inventory
-  builder with SKILL.md frontmatter parsing, `PolicyRuleService`,
+  `CelPolicy` — pure compile/evaluate core, `SnapshotFactsService` +
+  `SkillFrontmatter` — inventory builder with SKILL.md frontmatter parsing,
+  `PolicyRuleService`,
   `PolicyGate`, `PolicyController`, `PolicyDeniedException`);
   `ApprovalService` gains the policy gate; `SkillsGatewayProperties.Estate`
   gains `policyRules`; `EstateReconciler` gains the `policy-rule` kind.
-- **Dependency**: `dev.cel:cel` (embedded CEL evaluator, ADR 0004). Its
+- **Dependency**: `dev.cel:cel` (embedded CEL evaluator, ADR 0006). Its
   protobuf runtime needs a GraalVM reachability check on the native release
   path — flagged in design.md as a known limit; the native profile is not
   part of the PR gates.
@@ -101,6 +102,6 @@ unchanged if auto-approval is ever decided.
   tests (hostile expressions, hostile content, bypass and mutation
   attempts) mandatory.
 - **Docs**: new `guides/policy-rules.md` and `reference/api/policy.md`;
-  `reference/configuration.md` estate block; ADR 0004 + architecture.md
+  `reference/configuration.md` estate block; ADR 0006 + architecture.md
   policy-engine note; glossary.
 - **Traceability**: GW_0089–GW_0092 + SVC_GW_0089–SVC_GW_0092.

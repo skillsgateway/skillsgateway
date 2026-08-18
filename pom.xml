@@ -136,7 +136,7 @@
             <version>${reqstool-annotations.version}</version>
         </dependency>
 
-        <!-- Embedded CEL evaluator for policy deny rules (ADR 0004): non-Turing-complete,
+        <!-- Embedded CEL evaluator for policy deny rules (ADR 0006): non-Turing-complete,
              terminating expressions over snapshot facts; never an OPA sidecar. -->
         <dependency>
             <groupId>dev.cel</groupId>
