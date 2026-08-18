@@ -1,0 +1,103 @@
+name: Docs preview
+
+# The rendered docs for a PR, before they merge: one self-contained HTML file
+# of the whole site, linked from the PR. docs.yml publishes the site for
+# `dev` and for releases, but both are post-merge — prose changes can't be
+# reviewed from a diff. ci.yml already runs `mkdocs build --strict` on every
+# PR, so the link/anchor gate exists and doesn't belong here twice.
+#
+# HTML rather than PDF because the docs lean on client-rendered Mermaid
+# diagrams, which a PDF export would lose. Nothing is deployed and nothing
+# persists: the artifact expires after 14 days.
+on:
+  pull_request:
+    paths:
+      - 'docs/manual/**'
+      - 'docs/requirements.txt'
+      - 'mkdocs.yml'
+      - 'mkdocs-print.yml'
+      - '.github/workflows/docs-preview.yml'
+
+# Superseded by the next push — a preview of an older commit has no reviewer.
+# Unlike docs.yml's group, which must never cancel: nothing here is deployed.
+concurrency:
+  group: docs-preview-${{ github.event.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    name: Render the single-file docs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # The comment below. A fork PR's token is read-only whatever this says,
+      # which is what the comment step's own guard is for.
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+
+      - name: Install the documentation toolchain
+        run: pip install -r docs/requirements.txt htmlark
+
+      # The same gate contributors run locally, then the single-file cut:
+      # print-site (mkdocs-print.yml) concatenates the pages into one
+      # document, htmlark inlines every asset as data: URIs. Named for the
+      # commit so a reviewer can tell which push they downloaded.
+      - name: Render the single-file site
+        id: render
+        env:
+          PR: ${{ github.event.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          mkdocs build --strict
+          mkdocs build -f mkdocs-print.yml -d site-print
+          sed 's|\.\./|./|g' site-print/print_page/index.html > site-print/print-flat.html
+          name="skills-gateway-docs-pr${PR}-$(echo "$SHA" | cut -c1-7).html"
+          (cd site-print && python -m htmlark print-flat.html -o "../$name")
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      # archive: false uploads the file raw instead of zipping it, so the
+      # download opens straight in a browser. It takes the artifact name
+      # from the filename and allows exactly one file.
+      - name: Upload the single-file site
+        id: upload
+        uses: actions/upload-artifact@v7
+        with:
+          path: ${{ steps.render.outputs.name }}
+          archive: false
+          if-no-files-found: error
+          retention-days: 14
+
+      # Upserted by marker so a PR carries one comment, not one per push.
+      # Skipped on fork PRs, where the token can't write — the artifact is
+      # still on the run, reachable from the check.
+      - name: Link the preview from the PR
+        if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          URL: ${{ steps.upload.outputs.artifact-url }}
+        run: |
+          marker='<!-- docs-site-preview -->'
+          body="$marker
+          **Docs preview** for \`$(echo "$SHA" | cut -c1-7)\` — [open the single-file HTML](${URL})
+
+          <sub>The whole docs site as one self-contained HTML file, rendered from this PR. Updated on each push; expires after 14 days.</sub>"
+
+          id=$(gh api "repos/${REPO}/issues/${PR}/comments" --paginate \
+                 --jq '.[] | select(.body | startswith("<!-- docs-site-preview -->")) | .id' | head -1)
+
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/${REPO}/issues/comments/${id}" -f body="$body" --silent
+          else
+            gh api -X POST "repos/${REPO}/issues/${PR}/comments" -f body="$body" --silent
+          fi
