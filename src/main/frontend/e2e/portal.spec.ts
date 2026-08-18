@@ -21,7 +21,11 @@ async function login(page: Page, username: string) {
 }
 
 function uniqueName(prefix: string) {
-  return `${prefix}${Date.now().toString(36)}`;
+  // A millisecond timestamp alone collides when parallel workers (CI shards,
+  // --repeat-each) register in the same tick — the duplicate-name 500 then
+  // leaves the register dialog open and the test times out on the Ingest
+  // button. A random suffix keeps the name unique across workers.
+  return `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 }
 
 /**
@@ -211,34 +215,59 @@ async function registerTainted(page: Page, prefix: string) {
 /**
  * Waive every blocking finding named in the review dialog, one waiver round-trip
  * at a time. Each waiver POST re-renders the dialog and detaches its buttons, so
- * the buttons are re-queried fresh on every iteration and the loop only advances
- * once the previous round-trip has visibly removed a finding — resolving an
- * attribute on an element held across the mutation is exactly the race that made
- * this idiom flaky (#68).
+ * nothing here holds an element across the mutation — and, crucially, nothing
+ * does a bare `.first().getAttribute(...)`: that call AUTO-WAITS for a matching
+ * element, so on a slow runner it hangs for the full test timeout when the
+ * re-render lands between counting the buttons and reading the label (#68).
+ * Instead each iteration reads all labels in one atomic, non-waiting DOM pass
+ * (`evaluateAll` returns [] when none remain), acts on a button addressed by
+ * that label, and only advances once a web-first assertion has seen the waived
+ * finding's own button disappear.
  */
 async function waiveAllFindings(dialog: Locator) {
   const waiveButtons = dialog.getByRole("button", { name: /^Waive finding / });
+  // A finding shown as accepted rather than blocking. The badge appears only when
+  // the waiver POST's refetch has committed, which makes its count the loop's
+  // settle signal: a waive button is HIDDEN while its inline form is open and
+  // briefly REAPPEARS between the form closing and the refetch landing, so
+  // "the button is gone" can be observed mid-flight and is NOT a safe signal.
+  const waivedBadges = dialog.getByText(/waived by alice until/);
   // The findings load asynchronously after the dialog opens; both callers use a
   // tainted fixture, so an empty list here means "not loaded yet", never "clean".
   await expect(waiveButtons.first()).toBeVisible();
   for (let i = 0; i < 10; i++) {
-    const remaining = await waiveButtons.count();
-    if (remaining === 0) break;
-    const label = await waiveButtons.first().getAttribute("aria-label");
-    if (label === null) {
+    // The previous round-trip has fully landed (badge-count poll below), so this
+    // atomic, non-waiting snapshot reads a settled DOM — never a bare
+    // `.first().getAttribute(...)`, which auto-waits and hangs on slow runners
+    // when a re-render lands between counting and reading (#68).
+    const labels = await waiveButtons.evaluateAll((els) =>
+      els.map((el) => el.getAttribute("aria-label")),
+    );
+    if (labels.length === 0) break;
+    const label = labels[0];
+    if (label == null) {
       throw new Error("Waive button has no aria-label; cannot name the finding to waive");
     }
     const rule = label.replace("Waive finding ", "");
-    await waiveButtons.first().click();
-    await dialog.getByLabel("Justification").first().fill("accepted for the pilot ring");
+    const waivedBefore = await waivedBadges.count();
+    const justification = dialog.getByLabel("Justification").first();
+    // Open the inline waive form. A stray re-render can still detach or move the
+    // button mid-click, so the click is guarded (skipped once the form is open)
+    // and retried until the form has actually appeared.
+    await expect(async () => {
+      if (!(await justification.isVisible())) {
+        await dialog.getByRole("button", { name: label, exact: true }).click({ timeout: 2_000 });
+      }
+      await expect(justification).toBeVisible({ timeout: 1_000 });
+    }).toPass({ timeout: 15_000 });
+    await justification.fill("accepted for the pilot ring");
     await dialog.getByRole("button", { name: `Record waiver for ${rule}` }).click();
-    // The finding is now shown as accepted rather than blocking.
-    await expect(dialog.getByText(/waived by alice until/).first()).toBeVisible();
-    // Wait for the round-trip to land — the blocking-finding count must actually
-    // drop — before re-querying, instead of racing the dialog's re-render.
+    // The round-trip is complete only when the refetch commits and at least one
+    // more finding is shown as accepted rather than blocking (a snapshot-scope
+    // waiver may suppress several findings of the same rule at once).
     await expect
-      .poll(async () => waiveButtons.count(), { timeout: 15_000 })
-      .toBeLessThan(remaining);
+      .poll(async () => waivedBadges.count(), { timeout: 15_000 })
+      .toBeGreaterThan(waivedBefore);
   }
   await expect(waiveButtons).toHaveCount(0);
 }
