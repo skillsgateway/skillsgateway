@@ -11,6 +11,7 @@ import {
   useSoftDeleteSnapshot,
   type Snapshot,
 } from "@/api/queries";
+import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,7 +39,7 @@ function RetentionControls({ snapshot }: { snapshot: Snapshot }) {
       <>
         <Badge variant="destructive">deleted</Badge>
         <span className="text-xs text-muted-foreground">
-          restorable until {snapshot.purgeAfter ?? "—"}
+          restorable until <Timestamp value={snapshot.purgeAfter} dayOnly />
         </span>
         <Button
           size="sm"
@@ -266,9 +267,9 @@ export function MarketplaceDetailPage() {
             <dt className="font-medium">Description</dt>
             <dd>{marketplace.description ?? "—"}</dd>
             <dt className="font-medium">Last upstream update</dt>
-            <dd>{marketplace.upstreamUpdatedAt ?? "—"}</dd>
+            <dd><Timestamp value={marketplace.upstreamUpdatedAt} /></dd>
             <dt className="font-medium">Registered</dt>
-            <dd>{marketplace.createdAt}</dd>
+            <dd><Timestamp value={marketplace.createdAt} /></dd>
           </dl>
         </CardContent>
       </Card>

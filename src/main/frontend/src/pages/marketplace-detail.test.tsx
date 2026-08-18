@@ -20,7 +20,12 @@ function renderPage() {
 test("deleted_snapshot_shows_its_restore_deadline_and_control", async () => {
   renderPage();
   expect(await screen.findByText("deleted")).toBeInTheDocument();
-  expect(screen.getByText(/restorable until 2026-08-28/)).toBeInTheDocument();
+  // The deadline reads as a formatted date, but the exact instant stays machine-readable
+  // on the <time> element — the audit trail must survive the presentation change.
+  const deadline = screen.getByTitle(/2026-08-28T11:00:00Z/);
+  expect(deadline).toHaveAttribute("datetime", "2026-08-28T11:00:00Z");
+  expect(deadline.textContent).not.toBe("2026-08-28T11:00:00Z");
+  expect(deadline.closest("span")).toHaveTextContent(/restorable until/);
   expect(screen.getByRole("button", { name: "Restore snapshot 2" })).toBeInTheDocument();
   // A live snapshot offers the delete control instead.
   expect(screen.getByRole("button", { name: "Delete snapshot 1" })).toBeInTheDocument();

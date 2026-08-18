@@ -10,6 +10,7 @@ import {
   type CreatedSubscriber,
 } from "@/api/queries";
 import { GATEWAY_NAME_HINT, isAbsoluteUrl, isValidGatewayName } from "@/lib/form-rules";
+import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -378,7 +379,7 @@ export function WebhooksPage() {
                   <TableCell className="break-all text-sm text-muted-foreground">
                     {delivery.lastStatus ?? delivery.lastError ?? "—"}
                   </TableCell>
-                  <TableCell>{delivery.createdAt}</TableCell>
+                  <TableCell><Timestamp value={delivery.createdAt} /></TableCell>
                 </TableRow>
               ))}
             </TableBody>

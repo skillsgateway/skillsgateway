@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Store } from "lucide-react";
 import { useState } from "react";
 import {
@@ -6,6 +7,7 @@ import {
   type MarketplaceAdoption,
   type StaleIdentity,
 } from "@/api/queries";
+import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,12 +25,8 @@ function shortSha(sha: string | undefined): string {
   return sha ? sha.slice(0, 12) : "—";
 }
 
-// Raw ISO-8601, per the portal-wide convention: timestamps are never localized.
-function when(value: string | undefined): string {
-  return value ?? "—";
-}
 
-function StatChip({ label, value }: { label: string; value: string | number }) {
+function StatChip({ label, value }: { label: string; value: ReactNode }) {
   return (
     <span className="rounded-md border bg-muted px-2 py-0.5 text-xs">
       <span className="font-semibold">{value}</span> {label}
@@ -56,7 +54,7 @@ export function AdoptionMarketplaceCard({ entry }: { entry: MarketplaceAdoption 
         <span className="ml-auto flex flex-wrap gap-2">
           <StatChip value={entry.fetches ?? 0} label="fetches" />
           <StatChip value={entry.identities ?? 0} label="identities" />
-          <StatChip value={when(entry.lastFetch)} label="last fetch" />
+          <StatChip value={<Timestamp value={entry.lastFetch} />} label="last fetch" />
         </span>
       </div>
       {entry.snapshots && entry.snapshots.length > 0 ? (
@@ -78,7 +76,7 @@ export function AdoptionMarketplaceCard({ entry }: { entry: MarketplaceAdoption 
                 </TableCell>
                 <TableCell>{snapshot.fetches}</TableCell>
                 <TableCell>{snapshot.identities}</TableCell>
-                <TableCell className="text-xs">{when(snapshot.lastFetch)}</TableCell>
+                <TableCell className="text-xs"><Timestamp value={snapshot.lastFetch} /></TableCell>
                 <TableCell>
                   {snapshot.current ? (
                     <Badge>current</Badge>
@@ -129,7 +127,7 @@ export function StalenessTable({ entries }: { entries: StaleIdentity[] }) {
                 <Badge variant="destructive">not serving</Badge>
               )}
             </TableCell>
-            <TableCell className="text-xs">{when(entry.lastFetch)}</TableCell>
+            <TableCell className="text-xs"><Timestamp value={entry.lastFetch} /></TableCell>
           </TableRow>
         ))}
       </TableBody>
