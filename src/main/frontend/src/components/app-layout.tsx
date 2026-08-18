@@ -65,7 +65,9 @@ function BrandMark({ className }: { className?: string }) {
       className={className}
       aria-hidden
     >
-      <path d="M16 6v11M16 31v11M32 6v11M32 31v11" />
+      <path d="M16 6v11M16 31v11" />
+      {/* The approving gate carries the accent, like the served node it hands off to. */}
+      <path d="M32 6v11M32 31v11" className="stroke-primary" />
       <circle cx="6" cy="24" r="3.5" strokeWidth="3.5" />
       <path d="M11.5 24h24.5" />
       <circle cx="42" cy="24" r="5" className="fill-primary" stroke="none" />
