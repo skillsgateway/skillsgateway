@@ -1,13 +1,13 @@
 ---
 name: architecture
-description: Skills Gateway system architecture — quarantine/approve/serve model, threat model, capabilities, and where decisions live (ARCHITECTURE.md, ADRs). Load before designing features, changing trust boundaries, or answering "why is it built this way".
+description: Skills Gateway system architecture — quarantine/approve/serve model, threat model, capabilities, and where decisions live (docs/manual/architecture.md, ADRs). Load before designing features, changing trust boundaries, or answering "why is it built this way".
 ---
 
 # Architecture
 
 Read these sources rather than reasoning from memory; they are canonical:
 
-- `ARCHITECTURE.md` — full architecture: threat model (T1–T6), connector-based
+- `docs/manual/architecture.md` — full architecture: threat model (T1–T6), connector-based
   vetting, two-repo promotion (quarantine → published), git facade,
   observability, roadmap (§14 has the phase plan; §14.2 the vetting connectors).
 - `docs/decisions/0001-use-java-for-the-product.md` — why Java.
@@ -30,5 +30,5 @@ Read these sources rather than reasoning from memory; they are canonical:
 ## New decisions
 
 Architecture-level choices get a new ADR in `docs/decisions/` (next number),
-referenced from ARCHITECTURE.md. Feature-level decisions go in the OpenSpec
+referenced from docs/manual/architecture.md. Feature-level decisions go in the OpenSpec
 change's `design.md`.
