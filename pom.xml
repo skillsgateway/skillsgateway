@@ -363,6 +363,27 @@
         <!-- Release profile only — daily dev runs on JIT (ADR 0002). -->
         <profile>
             <id>native</id>
+            <!-- native-image compiles from this project's own runtime classpath, which
+                 `optional` does not narrow — left alone it links Testcontainers and the
+                 dev services into the binary. Test scope here keeps them out; verify with
+                 `strings target/skills-gateway-server | grep -c org.testcontainers`. -->
+            <dependencies>
+                <dependency>
+                    <groupId>io.arconia</groupId>
+                    <artifactId>arconia-dev-services-postgresql</artifactId>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>io.arconia</groupId>
+                    <artifactId>arconia-dev-services-lgtm</artifactId>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>io.arconia</groupId>
+                    <artifactId>arconia-opentelemetry-spring-boot-starter</artifactId>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
             <build>
                 <plugins>
                     <plugin>
