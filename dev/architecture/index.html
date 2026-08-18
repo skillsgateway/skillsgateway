@@ -792,6 +792,8 @@
       
         
       
+        
+      
     
     
     
@@ -1020,6 +1022,34 @@
     
   
     Consuming approved skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/client-enforcement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Making the gateway the only door
   
 
     
@@ -2347,8 +2377,13 @@ not one mechanism.</p>
   and ad-hoc <code>marketplace add</code> is blocked client-side; <code>blockedMarketplaces</code>
   adds owner-wildcard denylisting; <code>extraKnownMarketplaces</code> +
   <code>enabledPlugins</code> pre-register the gateway and force-install the approved
-  set fleet-wide. Distribute via MDM. (Copilot/Cursor lack an equivalent hard
-  switch — for them, egress policy carries the load.)</li>
+  set fleet-wide. Distribute via MDM. Cursor now offers an equivalent posture
+  (a public-marketplace allowlist — empty disables the public marketplace —
+  plus a curated team marketplace and Enterprise-plan network allowlists);
+  Copilot CLI still lacks a skills/marketplace restriction (its enterprise
+  allowlist covers MCP servers only) — there, egress policy carries the load.
+  Per-client settings and vendor links:
+  <a href="../guides/client-enforcement/">making the gateway the only door</a>.</li>
 <li><strong>CI as a backstop.</strong> Pipelines resolve skills only through the gateway;
   builds referencing unapproved sources fail. Catches what laptop-level
   controls miss before anything ships.</li>
@@ -2435,10 +2470,14 @@ inward.</p>
 </ul>
 <h2 id="14-open-questions">14. Open questions<a class="headerlink" href="#14-open-questions" title="Permanent link">&para;</a></h2>
 <ol>
-<li><strong>Client enforcement gap — partially closed.</strong> Claude Code has the hard
-   switch (<code>strictKnownMarketplaces</code> in managed settings). Copilot and Cursor
-   do not yet; for those, egress policy carries the load. The enterprise ask
-   to press those vendors on is an equivalent managed allowlist.</li>
+<li><strong>Client enforcement gap — mostly closed.</strong> Claude Code has the hard
+   switch (<code>strictKnownMarketplaces</code> in managed settings), and Cursor now has
+   an equivalent (public-marketplace allowlist plus team marketplace and
+   network allowlists). Copilot CLI does not yet — its enterprise allowlist
+   governs MCP servers, not skill sources — so for Copilot, egress policy
+   carries the load. The enterprise ask to press that vendor on is an
+   equivalent managed allowlist for skill repositories. See
+   <a href="../guides/client-enforcement/">making the gateway the only door</a>.</li>
 <li><strong>LLM review confidence.</strong> Semantic scanning of prose will have false
    negatives; adversaries will optimize against it. It must gate <em>triage
    priority</em>, not substitute for tier-appropriate human review.

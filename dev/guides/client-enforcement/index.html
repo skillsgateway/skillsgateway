@@ -10,31 +10,31 @@
       
       
       
-        <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/dev/reference/api/tokens/">
+        <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/dev/guides/client-enforcement/">
       
       
-        <link rel="prev" href="../marketplaces/">
+        <link rel="prev" href="../consuming-skills/">
       
       
-        <link rel="next" href="../audit/">
+        <link rel="next" href="../virtual-catalog/">
       
       
         
       
       
-      <link rel="icon" href="../../../assets/favicon.svg">
+      <link rel="icon" href="../../assets/favicon.svg">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>Access tokens - Skills Gateway</title>
+        <title>Making the gateway the only door - Skills Gateway</title>
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,7 +53,7 @@
       
     
     
-    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#access-tokens" class="md-skip">
+        <a href="#making-the-gateway-the-only-door" class="md-skip">
           Skip to content
         </a>
       
@@ -98,9 +98,9 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../../.." title="Skills Gateway" class="md-header__button md-logo" aria-label="Skills Gateway" data-md-component="logo">
+    <a href="../.." title="Skills Gateway" class="md-header__button md-logo" aria-label="Skills Gateway" data-md-component="logo">
       
-  <img src="../../../assets/logo.svg" alt="logo">
+  <img src="../../assets/logo.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -117,7 +117,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Access tokens
+              Making the gateway the only door
             
           </span>
         </div>
@@ -235,9 +235,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../../.." title="Skills Gateway" class="md-nav__button md-logo" aria-label="Skills Gateway" data-md-component="logo">
+    <a href="../.." title="Skills Gateway" class="md-nav__button md-logo" aria-label="Skills Gateway" data-md-component="logo">
       
-  <img src="../../../assets/logo.svg" alt="logo">
+  <img src="../../assets/logo.svg" alt="logo">
 
     </a>
     Skills Gateway
@@ -264,7 +264,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../.." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -291,7 +291,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/" class="md-nav__link">
+      <a href="../../architecture/" class="md-nav__link">
         
   
   
@@ -382,7 +382,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../concepts/lifecycle/" class="md-nav__link">
+      <a href="../../concepts/lifecycle/" class="md-nav__link">
         
   
   
@@ -410,7 +410,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../concepts/vetting/" class="md-nav__link">
+      <a href="../../concepts/vetting/" class="md-nav__link">
         
   
   
@@ -438,7 +438,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../concepts/snapshots-and-ledger/" class="md-nav__link">
+      <a href="../../concepts/snapshots-and-ledger/" class="md-nav__link">
         
   
   
@@ -466,7 +466,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../concepts/trust-boundaries/" class="md-nav__link">
+      <a href="../../concepts/trust-boundaries/" class="md-nav__link">
         
   
   
@@ -494,7 +494,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../concepts/glossary/" class="md-nav__link">
+      <a href="../../concepts/glossary/" class="md-nav__link">
         
   
   
@@ -526,6 +526,8 @@
       
   
   
+    
+  
   
   
     
@@ -540,479 +542,6 @@
         
       
         
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-    
-      
-        
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Guides
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Guides
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../guides/local-development/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Local development
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../guides/registering-a-marketplace/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Registering a marketplace
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../guides/upstream-sync/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Syncing from upstream automatically
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../guides/approving-snapshots/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Approving and rejecting snapshots
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../guides/waiving-findings/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Waiving a vetting finding
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../guides/re-vetting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Re-vetting approved content
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../guides/consuming-skills/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Consuming approved skills
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../guides/client-enforcement/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Making the gateway the only door
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../guides/virtual-catalog/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    The virtual catalog
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../guides/lifecycle-webhooks/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Receiving lifecycle webhooks
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../guides/exporting-the-audit-ledger/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Exporting the audit ledger
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../guides/snapshot-retention/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Reclaiming snapshot storage
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../guides/delegated-administration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Delegated administration
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../guides/declarative-estate/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Declarative estate configuration
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-    
-  
-  
-  
-    
-    
       
         
       
@@ -1045,17 +574,17 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
   <span class="md-ellipsis">
     
   
-    Reference
+    Guides
   
 
     
@@ -1066,12 +595,12 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_5">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
   
-    Reference
+    Guides
   
 
           </label>
@@ -1084,14 +613,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/" class="md-nav__link">
+      <a href="../local-development/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Configuration
+    Local development
   
 
     
@@ -1109,51 +638,17 @@
                 
   
   
-    
   
   
-  
-    
-    
-      
+    <li class="md-nav__item">
+      <a href="../registering-a-marketplace/" class="md-nav__link">
         
-          
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-    
-      
-    
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" checked>
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../" class="md-nav__link ">
-              
   
   
   <span class="md-ellipsis">
     
   
-    REST API
+    Registering a marketplace
   
 
     
@@ -1161,26 +656,10 @@
   
   
 
-            </a>
-            
-              
-              <label class="md-nav__link " for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_5_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    REST API
+      </a>
+    </li>
   
 
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
               
             
               
@@ -1190,14 +669,126 @@
   
   
     <li class="md-nav__item">
-      <a href="../marketplaces/" class="md-nav__link">
+      <a href="../upstream-sync/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Marketplaces and snapshots
+    Syncing from upstream automatically
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../approving-snapshots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Approving and rejecting snapshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../waiving-findings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Waiving a vetting finding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../re-vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Re-vetting approved content
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../consuming-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consuming approved skills
   
 
     
@@ -1234,7 +825,7 @@
   <span class="md-ellipsis">
     
   
-    Access tokens
+    Making the gateway the only door
   
 
     
@@ -1252,7 +843,7 @@
   <span class="md-ellipsis">
     
   
-    Access tokens
+    Making the gateway the only door
   
 
     
@@ -1278,10 +869,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#token-format-and-storage" class="md-nav__link">
+  <a href="#claude-code" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Token format and storage
+        Claude Code
       
     </span>
   </a>
@@ -1289,10 +880,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#post-tokens" class="md-nav__link">
+  <a href="#cursor" class="md-nav__link">
     <span class="md-ellipsis">
       
-        POST /tokens
+        Cursor
       
     </span>
   </a>
@@ -1300,10 +891,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#get-tokens" class="md-nav__link">
+  <a href="#github-copilot-cli" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /tokens
+        GitHub Copilot CLI
       
     </span>
   </a>
@@ -1311,32 +902,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#delete-tokensid" class="md-nav__link">
+  <a href="#network-egress-and-ci" class="md-nav__link">
     <span class="md-ellipsis">
       
-        DELETE /tokens/{id}
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#post-tokensidrotate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        POST /tokens/{id}/rotate
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#using-a-token" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using a token
+        Network egress and CI
       
     </span>
   </a>
@@ -1359,7 +928,414 @@
   
   
     <li class="md-nav__item">
-      <a href="../audit/" class="md-nav__link">
+      <a href="../virtual-catalog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The virtual catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lifecycle-webhooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Receiving lifecycle webhooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../exporting-the-audit-ledger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exporting the audit ledger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../snapshot-retention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reclaiming snapshot storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../delegated-administration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Delegated administration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../declarative-estate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Declarative estate configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/api/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    REST API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/marketplaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Marketplaces and snapshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/tokens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Access tokens
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/audit/" class="md-nav__link">
         
   
   
@@ -1387,7 +1363,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adoption/" class="md-nav__link">
+      <a href="../../reference/api/adoption/" class="md-nav__link">
         
   
   
@@ -1415,7 +1391,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../roles/" class="md-nav__link">
+      <a href="../../reference/api/roles/" class="md-nav__link">
         
   
   
@@ -1443,7 +1419,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../estate/" class="md-nav__link">
+      <a href="../../reference/api/estate/" class="md-nav__link">
         
   
   
@@ -1479,7 +1455,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../retention/" class="md-nav__link">
+      <a href="../../reference/retention/" class="md-nav__link">
         
   
   
@@ -1507,7 +1483,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../container-image/" class="md-nav__link">
+      <a href="../../reference/container-image/" class="md-nav__link">
         
   
   
@@ -1535,7 +1511,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../git-facade/" class="md-nav__link">
+      <a href="../../reference/git-facade/" class="md-nav__link">
         
   
   
@@ -1563,7 +1539,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../compatibility/" class="md-nav__link">
+      <a href="../../reference/compatibility/" class="md-nav__link">
         
   
   
@@ -1591,7 +1567,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../portal/" class="md-nav__link">
+      <a href="../../reference/portal/" class="md-nav__link">
         
   
   
@@ -1619,7 +1595,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../observability/" class="md-nav__link">
+      <a href="../../reference/observability/" class="md-nav__link">
         
   
   
@@ -1647,7 +1623,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../decisions/" class="md-nav__link">
+      <a href="../../reference/decisions/" class="md-nav__link">
         
   
   
@@ -1702,10 +1678,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#token-format-and-storage" class="md-nav__link">
+  <a href="#claude-code" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Token format and storage
+        Claude Code
       
     </span>
   </a>
@@ -1713,10 +1689,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#post-tokens" class="md-nav__link">
+  <a href="#cursor" class="md-nav__link">
     <span class="md-ellipsis">
       
-        POST /tokens
+        Cursor
       
     </span>
   </a>
@@ -1724,10 +1700,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#get-tokens" class="md-nav__link">
+  <a href="#github-copilot-cli" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /tokens
+        GitHub Copilot CLI
       
     </span>
   </a>
@@ -1735,32 +1711,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#delete-tokensid" class="md-nav__link">
+  <a href="#network-egress-and-ci" class="md-nav__link">
     <span class="md-ellipsis">
       
-        DELETE /tokens/{id}
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#post-tokensidrotate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        POST /tokens/{id}/rotate
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#using-a-token" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using a token
+        Network egress and CI
       
     </span>
   </a>
@@ -1784,7 +1738,7 @@
 
 
   
-    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/reference/api/tokens.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/guides/client-enforcement.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -1792,138 +1746,93 @@
   
 
 
-<h1 id="access-tokens">Access tokens<a class="headerlink" href="#access-tokens" title="Permanent link">&para;</a></h1>
-<p>Personal access tokens are the credential git clients use against the
-<a href="../../git-facade/">facade</a>. They are the only part of the API scoped per user,
-and they stay owner-scoped with
-<a href="../../../guides/delegated-administration/">role enforcement</a> enabled: managing
-your own tokens never requires a role.</p>
-<p>All paths are relative to <code>/api</code>.</p>
-<h2 id="token-format-and-storage">Token format and storage<a class="headerlink" href="#token-format-and-storage" title="Permanent link">&para;</a></h2>
-<p><code>sgw_</code> followed by 32 random bytes from a <code>SecureRandom</code>, Base64url-encoded
-without padding.</p>
-<p>The gateway stores <strong>only an unsalted SHA-256 hex digest</strong>. This is deliberate:
-these are high-entropy random tokens, not user-chosen passwords, so key
-stretching would buy nothing. The cleartext is returned exactly once and cannot
-be recovered afterwards.</p>
-<hr />
-<h2 id="post-tokens"><code>POST /tokens</code><a class="headerlink" href="#post-tokens" title="Permanent link">&para;</a></h2>
-<p>Create a token for the calling principal.</p>
-<p><strong>Body</strong> — <code>{name, scopes?, expiresAt?}</code></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/tokens<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"name":"ci-runner","scopes":["acme","catalog"],"expiresAt":"2026-12-31T00:00:00Z"}'</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"ci-runner"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"2026-08-17T09:00:00Z"</span><span class="p">,</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:[</span><span class="s2">"acme"</span><span class="p">,</span><span class="s2">"catalog"</span><span class="p">],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-12-31T00:00:00Z"</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="kc">null</span><span class="p">}</span>
-</code></pre></div>
-<p><code>scopes</code> (GW_0064) lists marketplace names the token may fetch — the
-<a href="../../../guides/virtual-catalog/">virtual catalog</a>'s name is a valid entry —
-and every entry is validated against the registered marketplaces at creation.
-Empty or omitted grants every marketplace, which is what every pre-scoping
-token meant. An out-of-scope fetch answers exactly like a marketplace that
-does not exist, so a scoped token is not a directory of what else the gateway
-governs.</p>
-<p><code>expiresAt</code> (GW_0065): an expired token fails authentication exactly like a
-revoked one, decided by comparing the stamp at authentication time — no
-background process is involved. When
-<a href="../../configuration/#access-tokens"><code>skills-gateway.tokens.max-ttl</code></a> is set,
-a request beyond the cap (including one with no expiry) is refused, never
-silently shortened.</p>
-<table>
-<thead>
-<tr>
-<th>Status</th>
-<th>Cause</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>201</td>
-<td>Issued. The <code>token</code> field appears in this response and nowhere else, ever.</td>
-</tr>
-<tr>
-<td>422</td>
-<td>Unknown scope, or lifetime beyond the configured cap.</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="get-tokens"><code>GET /tokens</code><a class="headerlink" href="#get-tokens" title="Permanent link">&para;</a></h2>
-<p>List the calling principal's tokens. Never returns the hash, and never returns
-another user's tokens.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">[{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"my-laptop"</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"revokedAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">"scopes"</span><span class="p">:[],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="kc">null</span><span class="p">}]</span>
-</code></pre></div>
-<p>A non-null <code>revokedAt</code> means the token no longer authenticates. Revoked tokens
-are retained rather than deleted, so the record of what existed survives.</p>
-<p><strong>200.</strong></p>
-<hr />
-<h2 id="delete-tokensid"><code>DELETE /tokens/{id}</code><a class="headerlink" href="#delete-tokensid" title="Permanent link">&para;</a></h2>
-<p>Revoke a token. Takes effect immediately — the facade's lookup excludes revoked
-rows.</p>
-<table>
-<thead>
-<tr>
-<th>Status</th>
-<th>Cause</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>204</td>
-<td>Revoked.</td>
-</tr>
-<tr>
-<td>404</td>
-<td>No such token <strong>owned by the caller</strong>. Another user's token id is indistinguishable from a nonexistent one.</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="post-tokensidrotate"><code>POST /tokens/{id}/rotate</code><a class="headerlink" href="#post-tokensidrotate" title="Permanent link">&para;</a></h2>
-<p>Retire a possibly-exposed secret without renegotiating the grant (GW_0066).
-Issues a fresh secret with the <strong>identical</strong> grant — name, scopes, and the same
-expiry deadline — records which token it replaced (<code>rotatedFrom</code>), and revokes
-the old token <em>before</em> the new one is issued: a failure between the two steps
-leaves no live secret, never two.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"ci-runner"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:[</span><span class="s2">"acme"</span><span class="p">],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-12-31T00:00:00Z"</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="mi">1</span><span class="p">}</span>
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Status</th>
-<th>Cause</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>200</td>
-<td>Rotated; the only response carrying the new cleartext.</td>
-</tr>
-<tr>
-<td>404</td>
-<td>No such token <strong>owned by the caller</strong>.</td>
-</tr>
-<tr>
-<td>409</td>
-<td>The token is revoked or expired — a dead grant is not a template for a live one; issue a new token instead.</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="using-a-token">Using a token<a class="headerlink" href="#using-a-token" title="Permanent link">&para;</a></h2>
-<p>The facade reads only the password field of HTTP Basic; the username is ignored.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>git<span class="w"> </span>ls-remote<span class="w"> </span>https://token:sgw_...@skills.corp.example/git/acme
-</code></pre></div>
-<p>See <a href="../../../guides/consuming-skills/">Consuming approved skills</a> for credential
-helper setup.</p>
-<div class="admonition tip">
-<p class="admonition-title">One token per consumer</p>
-<p>Issue a separate token per laptop and per pipeline. Revocation is then
-surgical, and ledger entries attribute fetches to something meaningful.</p>
+<h1 id="making-the-gateway-the-only-door">Making the gateway the only door<a class="headerlink" href="#making-the-gateway-the-only-door" title="Permanent link">&para;</a></h1>
+<p>The gateway can only govern what clients fetch <em>through it</em>. Nothing on the
+server side stops a developer from adding an upstream marketplace directly —
+that half of the control lives in client configuration, network policy, and
+CI. This guide collects the recommended settings per client, with pointers to
+each vendor's own documentation. It is defense in depth: apply what your
+fleet management supports, and treat none of it as the sole control
+(see <a href="../../architecture/#8-enforcement-making-it-the-only-path">architecture §8</a>).</p>
+<div class="admonition warning">
+<p class="admonition-title">Vendor-controlled and time-sensitive</p>
+<p>Every setting on this page is implemented by the client vendor, not by the
+gateway, and behavior changes with client releases. Verify current
+behavior with your vendor account team before relying on any of these as a
+hard control — in particular, confirm in writing how managed settings
+behave for the client builds your fleet actually runs (desktop, terminal
+CLI, and IDE surfaces have differed historically).</p>
 </div>
+<h2 id="claude-code">Claude Code<a class="headerlink" href="#claude-code" title="Permanent link">&para;</a></h2>
+<p>Claude Code supports fleet-managed settings distributed via MDM that users
+cannot override. The relevant keys
+(<a href="https://code.claude.com/docs/en/settings">managed settings documentation</a>):</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>strictKnownMarketplaces</code></td>
+<td>Restricts <code>claude plugin marketplace add</code> to an explicit allowlist — set it to the gateway's marketplace URLs and ad-hoc additions are blocked client-side</td>
+</tr>
+<tr>
+<td><code>blockedMarketplaces</code></td>
+<td>Denylist with owner wildcards, for blocking known-bad sources even where the strict allowlist is not used</td>
+</tr>
+<tr>
+<td><code>extraKnownMarketplaces</code> + <code>enabledPlugins</code></td>
+<td>Pre-registers the gateway's marketplaces and installs the approved set fleet-wide</td>
+</tr>
+</tbody>
+</table>
+<p>A minimal managed-settings fragment pointing a fleet at the gateway:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">"strictKnownMarketplaces"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="s2">"https://skills.example.corp/git/catalog"</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">}</span>
+</code></pre></div>
+<p>Pointing the allowlist at the <a href="../virtual-catalog/">virtual catalog</a> keeps it
+stable: newly approved marketplaces appear inside the catalog without a fleet
+configuration change.</p>
+<h2 id="cursor">Cursor<a class="headerlink" href="#cursor" title="Permanent link">&para;</a></h2>
+<p>Cursor's enterprise controls offer an equivalent posture
+(<a href="https://cursor.com/docs/plugins">plugins documentation</a>):</p>
+<ul>
+<li><strong>Public Marketplace Allowlist</strong> — restricts which public-marketplace
+  plugins members may use; an empty allowlist disables the public marketplace
+  for the organization.</li>
+<li><strong>Team marketplace</strong> — the curated internal channel; approved content is
+  distributed through it instead of public sources, with access scoped by
+  Organization Groups.</li>
+<li><strong>Network allowlists</strong> (Enterprise plan) — org-wide egress policy applied
+  to agent sandbox sessions, which can be scoped to the gateway host.</li>
+</ul>
+<h2 id="github-copilot-cli">GitHub Copilot CLI<a class="headerlink" href="#github-copilot-cli" title="Permanent link">&para;</a></h2>
+<p>Copilot's enterprise controls cover MCP servers, not skill sources: an
+<a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/how-tos/administer-copilot/manage-mcp-usage/configure-enterprise-allowlist">MCP server allowlist</a>
+in the enterprise <code>managed-settings.json</code> and a
+<a href="https://docs.github.com/en/copilot/how-tos/administer-copilot/manage-mcp-usage/configure-mcp-server-access">registry-only MCP policy</a>
+that applies to
+<a href="https://docs.github.com/en/copilot/how-tos/copilot-cli/administer-copilot-cli-for-your-enterprise">Copilot CLI</a>.
+There is currently no setting restricting which skill repositories or
+marketplaces a Copilot CLI user can add — for skills distribution, network
+egress policy carries the load.</p>
+<h2 id="network-egress-and-ci">Network egress and CI<a class="headerlink" href="#network-egress-and-ci" title="Permanent link">&para;</a></h2>
+<p>Client settings only reach managed machines. Two backstops apply regardless
+of client:</p>
+<ul>
+<li><strong>Egress policy</strong> — block (or at minimum alert on) direct git/HTTPS access
+  from developer machines and CI to known marketplace hosts. Blocked attempts
+  are themselves a signal worth forwarding to the SIEM.</li>
+<li><strong>CI as a backstop</strong> — pipelines resolve skills only through the gateway;
+  builds referencing unapproved sources fail. This catches what laptop-level
+  controls miss before anything ships.</li>
+</ul>
 
 
 
@@ -1983,10 +1892,10 @@ surgical, and ledger entries attribute fetches to something meaningful.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "navigation.top", "navigation.indexes", "content.code.copy", "content.action.edit", "search.highlight", "search.suggest", "toc.follow"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "dev", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "navigation.top", "navigation.indexes", "content.code.copy", "content.action.edit", "search.highlight", "search.suggest", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "dev", "provider": "mike"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
