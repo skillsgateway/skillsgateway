@@ -46,6 +46,32 @@ export const revokedSnapshot: Schemas["Snapshot"] = {
   revokedBy: "revet-policy",
 };
 
+/**
+ * The default answer of the cooling-off gate: eligible, which is what every deployment sees until
+ * an operator configures a minimum release age (GW_0073). Tests that need the window shut override
+ * this handler with {@link tooYoung}.
+ */
+export const eligible: Schemas["Eligibility"] = {
+  snapshotId: 1,
+  eligible: true,
+  firstIngestedAt: "2026-08-14T10:00:00Z",
+  eligibleAt: "2026-08-14T10:00:00Z",
+  ageSeconds: 900000,
+  remainingSeconds: 0,
+  minimumReleaseAgeSeconds: 0,
+};
+
+/** Inside the window: 2d 4h still to wait on a 3d minimum. */
+export const tooYoung: Schemas["Eligibility"] = {
+  snapshotId: 1,
+  eligible: false,
+  firstIngestedAt: "2026-08-14T10:00:00Z",
+  eligibleAt: "2026-08-17T10:00:00Z",
+  ageSeconds: 57600,
+  remainingSeconds: 187200,
+  minimumReleaseAgeSeconds: 259200,
+};
+
 export const fetchers: Schemas["Fetcher"][] = [
   { principal: "team-payments", fetches: 12, lastFetch: "2026-08-14T22:10:00Z" },
   { principal: "ci-runner", fetches: 3, lastFetch: "2026-08-13T06:00:00Z" },
@@ -340,6 +366,7 @@ export const handlers = [
       affected: [],
     }),
   ),
+  http.get("/api/snapshots/:id/release-age", () => HttpResponse.json(eligible)),
   http.get("/api/snapshots/:id/fetchers", () => HttpResponse.json(fetchers)),
   http.get("/api/snapshots/:id/files", () => HttpResponse.json(fileTree)),
   http.get("/api/snapshots/:id/file", ({ request }) =>
