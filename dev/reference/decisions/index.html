@@ -1645,6 +1645,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#adr-0005-signed-provenance-stays-in-phase-3-with-named-pull-forward-triggers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0005 — Signed provenance stays in Phase 3, with named pull-forward triggers
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1764,6 +1775,17 @@
     <span class="md-ellipsis">
       
         ADR 0004 — skillsgateway organization and coordinates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-0005-signed-provenance-stays-in-phase-3-with-named-pull-forward-triggers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0005 — Signed provenance stays in Phase 3, with named pull-forward triggers
       
     </span>
   </a>
@@ -1939,6 +1961,16 @@ repo <strong>skillsgateway/skillsgateway</strong>, Maven groupId <strong><code>d
 roots (<strong><code>dev.skillsgateway.server</code></strong>). The container image is
 <code>ghcr.io/skillsgateway/skillsgateway</code>; the Helm chart name and reqstool URN
 stay <code>skills-gateway</code>. Amends the coordinates item of ADR 0002.</p>
+<h3 id="adr-0005-signed-provenance-stays-in-phase-3-with-named-pull-forward-triggers"><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0005-signed-provenance-stays-phase-3.md">ADR 0005 — Signed provenance stays in Phase 3, with named pull-forward triggers</a><a class="headerlink" href="#adr-0005-signed-provenance-stays-in-phase-3-with-named-pull-forward-triggers" title="Permanent link">&para;</a></h3>
+<p><em>Proposed, 2026-08-18.</em></p>
+<p>Signed in-toto/Sigstore attestations remain a Phase-3 item. The recorded
+provenance chain (content-addressed snapshots + vetting verdicts + approval
+records + append-only ledger) already binds upstream SHA → scan → approval →
+published artifact inside one trust domain; signing pays off only when
+verification happens outside it. Four pull-forward triggers are named — OCI
+re-publication/federation, an operator-independent audit demand,
+cross-gateway promotion, and consumer-side verification tooling — any one of
+which reopens the decision.</p>
 <h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../architecture/">Architecture</a>

@@ -2363,7 +2363,9 @@ an immutable coordinate:</p>
 compliance question (T6/JFrog's "which version executed") reduces to a ledger
 lookup. Snapshots are content-addressed; the façade's published branches are
 append-only. Phase 3 adds signed in-toto/Sigstore attestations binding
-upstream SHA → scan → approval → published artifact.</p>
+upstream SHA → scan → approval → published artifact — a deferral decided, with
+named pull-forward triggers, in
+<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0005-signed-provenance-stays-phase-3.md">ADR 0005</a>.</p>
 <h2 id="8-enforcement-making-it-the-only-path">8. Enforcement — making it the only path<a class="headerlink" href="#8-enforcement-making-it-the-only-path" title="Permanent link">&para;</a></h2>
 <p>Honest assessment: this is the weakest layer today, so it is defense in depth,
 not one mechanism.</p>
