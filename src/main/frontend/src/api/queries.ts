@@ -22,6 +22,9 @@ export type WaiverScope = NonNullable<Waiver["scope"]>;
 export type CreatedSink = components["schemas"]["CreatedSink"];
 export type RevetResult = components["schemas"]["RevetResult"];
 export type Fetcher = components["schemas"]["Fetcher"];
+export type MarketplaceAdoption = components["schemas"]["MarketplaceAdoption"];
+export type SnapshotAdoption = components["schemas"]["SnapshotAdoption"];
+export type StaleIdentity = components["schemas"]["StaleIdentity"];
 
 /** Same-origin download of the NDJSON ledger stream; the session cookie is the credential. */
 export const AUDIT_EXPORT_URL = "/api/audit/export";
@@ -246,6 +249,25 @@ export function useSnapshotDiff(snapshotId: number | null) {
     queryKey: ["snapshot-diff", snapshotId],
     queryFn: () => api<SnapshotDiff>(`/api/snapshots/${snapshotId}/diff`),
     enabled: snapshotId !== null,
+  });
+}
+
+/**
+ * The adoption report over the fetch ledger: per marketplace, the window's fetches, distinct
+ * identities and per-SHA breakdown. The window is part of the key so switching it refetches.
+ */
+export function useAdoption(days: number) {
+  return useQuery({
+    queryKey: ["adoption", days],
+    queryFn: () => api<MarketplaceAdoption[]>(`/api/adoption?days=${days}`),
+  });
+}
+
+/** Identities whose most recent fetch is not the served tip — window-free by design. */
+export function useStaleness() {
+  return useQuery({
+    queryKey: ["adoption-staleness"],
+    queryFn: () => api<StaleIdentity[]>("/api/adoption/staleness"),
   });
 }
 

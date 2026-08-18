@@ -716,6 +716,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/adoption": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Adoption report over the fetch ledger
+         * @description Per marketplace: content-transferring fetches in the window, distinct fetching identities, the most recent fetch, and the per-snapshot-SHA breakdown with each SHA marked current against the served tip. Attribution is by authenticated identity as the ledger records it — the gateway has no team concept. Out-of-range windows are clamped to 1..365 days.
+         */
+        get: operations["adoption"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/adoption/staleness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Identities not on the served tip
+         * @description Every identity whose most recent content-transferring fetch of a marketplace received a SHA that is not the currently served tip. A null servedSha means the marketplace stopped serving entirely (revoked or unpublished) — the identity holds retracted content. The report states facts, not verdicts: an identity may be pinned to an old SHA on purpose.
+         */
+        get: operations["staleness"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/webhooks/{id}": {
         parameters: {
             query?: never;
@@ -1807,6 +1847,68 @@ export interface components {
             snapshots?: components["schemas"]["Snapshot"][];
         };
         StreamingResponseBody: unknown;
+        /** @description Adoption of one marketplace over the report window */
+        MarketplaceAdoption: {
+            /** @description Marketplace name as the ledger records it */
+            marketplace?: string;
+            /** @description Currently served tip, or null when the marketplace is not serving */
+            servedSha?: string;
+            /**
+             * Format: int64
+             * @description Content-transferring fetches in the window
+             */
+            fetches?: number;
+            /**
+             * Format: int64
+             * @description Distinct identities that fetched in the window
+             */
+            identities?: number;
+            /**
+             * Format: date-time
+             * @description Most recent fetch in the window
+             */
+            lastFetch?: string;
+            /** @description Per-snapshot-SHA breakdown, most recently fetched first */
+            snapshots?: components["schemas"]["SnapshotAdoption"][];
+        };
+        /** @description Adoption of one snapshot SHA over the report window */
+        SnapshotAdoption: {
+            /** @description Upstream commit SHA that was fetched */
+            sha?: string;
+            /**
+             * Format: int64
+             * @description Content-transferring fetches of this SHA in the window
+             */
+            fetches?: number;
+            /**
+             * Format: int64
+             * @description Distinct identities that fetched this SHA in the window
+             */
+            identities?: number;
+            /**
+             * Format: date-time
+             * @description Most recent of those fetches
+             */
+            lastFetch?: string;
+            /** @description Whether this SHA is the currently served tip */
+            current?: boolean;
+        };
+        /** @description An identity whose most recent fetch is not the currently served tip */
+        StaleIdentity: {
+            /** @description Authenticated identity that fetched */
+            principal?: string;
+            /** @description Marketplace the fetch was of */
+            marketplace?: string;
+            /** @description SHA the identity last received */
+            sha?: string;
+            /**
+             * Format: date-time
+             * @description When it last received it
+             */
+            lastFetch?: string;
+            /** @description Currently served tip it diverges from, or null when the marketplace is no longer serving */
+            servedSha?: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -3132,6 +3234,49 @@ export interface operations {
                 };
                 content: {
                     "application/x-ndjson": components["schemas"]["StreamingResponseBody"];
+                };
+            };
+        };
+    };
+    adoption: {
+        parameters: {
+            query?: {
+                /** @description Report window in days, default 30, clamped to 1..365 */
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The adoption report, one entry per fetched marketplace */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MarketplaceAdoption"][];
+                };
+            };
+        };
+    };
+    staleness: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The stale identities, window-free */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["StaleIdentity"][];
                 };
             };
         };
