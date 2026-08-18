@@ -45,7 +45,11 @@ carries a breadcrumb and a dark-mode toggle.
   error toast.
 - Every list renders a bare "Loading…" and, on failure, an error paragraph with
   `role="alert"`.
-- Timestamps render as raw ISO-8601 strings.
+- Timestamps render in the reader's own locale and time zone. The exact
+  instant is never lost: it stays in the `<time datetime>` attribute and on
+  the hover tooltip, so an auditor can always recover the recorded value. A
+  timestamp the portal cannot parse is shown verbatim rather than hidden, and
+  an absent one renders as an em dash.
 
 ## Authorization
 
@@ -415,7 +419,7 @@ Inside, the per-SHA breakdown:
 | Snapshot SHA | First 12 characters, monospace; full SHA on the tooltip. |
 | Fetches | Content-transferring fetches of this SHA in the window. |
 | Identities | Distinct identities that fetched it. |
-| Last fetch | Most recent, as a raw ISO-8601 timestamp. |
+| Last fetch | Most recent, in the reader's locale; the ISO-8601 instant on the tooltip. |
 | Tip | `current` (primary badge) or `superseded` (secondary). |
 
 Empty state: "No fetches in the last {n} days. Adoption appears once content
