@@ -76,6 +76,10 @@ import org.springframework.context.annotation.Configuration;
                     description = "Personal access tokens for git clients: hashed at rest, cleartext shown exactly"
                             + " once, revocable at any time."),
             @Tag(name = "Session", description = "Identity of the authenticated browser session."),
+            @Tag(
+                    name = "Policy",
+                    description = "CEL deny rules evaluated fail-closed at approval time, and the read-only"
+                            + " playground that tests an expression against a real snapshot before it is enforced."),
         })
 @Configuration(proxyBeanMethods = false)
 public class OpenAPI {}
