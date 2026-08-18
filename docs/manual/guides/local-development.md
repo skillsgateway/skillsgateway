@@ -21,6 +21,18 @@ $ docker compose up
 
 ## Run from source
 
+The development loop. Nothing to configure — the PostgreSQL dev service starts
+with the application, so none of the datasource variables below are needed:
+
+```console
+$ ./mvnw spring-boot:run
+```
+
+The portal is built into `target/classes/static` before the application starts,
+so this serves the portal at `/` as well as the API.
+
+To run what actually ships instead:
+
 ```console
 $ ./mvnw verify
 $ java -jar target/skills-gateway-server-*.jar
@@ -28,6 +40,16 @@ $ java -jar target/skills-gateway-server-*.jar
 
 The build packages the React portal into the jar, so the running application
 serves the portal at `/`.
+
+!!! note "Why the dev services are not in the jar"
+
+    The Arconia dev services and the OpenTelemetry starter are declared
+    `<optional>true</optional>`. Spring Boot's `repackage` leaves optional
+    dependencies out of the jar, and the `native` profile pins them to test
+    scope, so they reach neither the jar, the container image nor the native
+    binary — while `spring-boot:run` still sees them. Maven has no
+    environment-oriented scope, so this is the closest equivalent to Gradle's
+    `testAndDevelopmentOnly`.
 
 ## Database
 
@@ -64,6 +86,7 @@ native-image, which is why the defaults are the placeholders `change-me` and
 ### Without one — the escape hatch
 
 ```console
+$ ./mvnw spring-boot:run -Dspring-boot.run.arguments=--skills-gateway.dev-insecure-auth=true
 $ java -jar target/skills-gateway-server-*.jar --skills-gateway.dev-insecure-auth=true
 ```
 
@@ -120,15 +143,8 @@ other run: `./mvnw clean verify` and the e2e suite start no LGTM container and
 attempt no OTLP export, which keeps the test loop fast and the logs quiet.
 
 ```console
-$ ./mvnw spring-boot:run \
-    -Dspring-boot.run.profiles=observability \
-    -Dspring-boot.run.useTestClasspath=true
+$ ./mvnw spring-boot:run -Dspring-boot.run.profiles=observability
 ```
-
-`useTestClasspath` is required: the dev-service and OpenTelemetry dependencies
-are test scope so that they never reach the packaged jar, the container image or
-the native binary. The same flag also gives you the PostgreSQL dev service, so
-the datasource environment variables above are not needed for this run.
 
 The stack takes a moment to pull on first use. Watch the log for the Grafana
 URL, which is on a random port:
