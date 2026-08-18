@@ -1,10 +1,16 @@
 package dev.skillsgateway.server.vetting;
 
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
+import dev.skillsgateway.server.ingestion.IngestionException;
+import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
+import dev.skillsgateway.server.persistence.Snapshot;
+import dev.skillsgateway.server.persistence.SnapshotNotFoundException;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
 import dev.skillsgateway.server.storage.GitStorage;
+import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.io.IOException;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -35,29 +41,14 @@ public class LicenseReportService {
         this.properties = properties;
     }
 
-    /** How a detection stands under the configured policy. */
-    @Schema(description = "How a detected license stands under the configured allow/ban policy")
-    public enum Evaluation {
-
-        /** Identified, not banned, and permitted by the allow list (or no allow list configured). */
-        OK,
-
-        /** Identified and on the configured ban list. */
-        BANNED,
-
-        /** Identified, but a non-empty allow list is configured and does not contain it. */
-        NOT_ALLOWED,
-
-        /** The source identifies no known license; blocking when an allow list is configured. */
-        UNKNOWN
-    }
-
     @Schema(description = "One detected license and its standing under the configured policy")
     public record LicenseView(
             @Schema(description = "SPDX id, or null for the unknown-license state", example = "Apache-2.0")
             String spdxId,
 
-            @Schema(description = "Where it was detected", allowableValues = {"file", "manifest"})
+            @Schema(
+                    description = "Where it was detected",
+                    allowableValues = {"file", "manifest"})
             String source,
 
             @Schema(description = "File path, or <manifest path>#<field> for manifest metadata")
@@ -67,12 +58,14 @@ public class LicenseReportService {
             String declared,
 
             @Schema(description = "Standing under the configured allow/ban policy")
-            Evaluation evaluation) {}
+            LicenseEvaluation evaluation) {}
 
     @Schema(description = "The licenses a snapshot declares, evaluated under the configured policy")
     public record LicenseReport(
             @Schema(description = "Snapshot id") long snapshotId,
-            @Schema(description = "Upstream commit SHA the detection ran over") String sha,
+
+            @Schema(description = "Upstream commit SHA the detection ran over")
+            String sha,
 
             @Schema(description = "Every detection; empty means the snapshot carries no license information")
             List<LicenseView> licenses,
@@ -83,7 +76,33 @@ public class LicenseReportService {
             @Schema(description = "The configured ban list (SPDX ids)")
             List<String> banned) {}
 
+    @Requirements({"GW_0091"})
     public LicenseReport report(long snapshotId) {
-        throw new UnsupportedOperationException("not implemented");
+        Snapshot snapshot =
+                snapshotRepository.findById(snapshotId).orElseThrow(() -> new SnapshotNotFoundException(snapshotId));
+        Marketplace marketplace = marketplaceRepository
+                .findById(snapshot.marketplaceId())
+                .orElseThrow(() -> new SnapshotNotFoundException(snapshotId));
+        SkillsGatewayProperties.License config = properties.vetting().license();
+        LicensePolicy policy = new LicensePolicy(config);
+        try (QuarantineSnapshot content = new QuarantineSnapshot(
+                snapshot.id(),
+                marketplace.name(),
+                snapshot.sha(),
+                properties.vetting().maxFileBytes(),
+                storage.quarantine(marketplace.name()))) {
+            List<LicenseView> licenses = LicenseDetector.detect(content).stream()
+                    .map(detection -> new LicenseView(
+                            detection.spdxId(),
+                            detection.source() == LicenseDetector.Source.FILE ? "file" : "manifest",
+                            detection.location(),
+                            detection.declared(),
+                            policy.evaluate(detection)))
+                    .toList();
+            return new LicenseReport(snapshot.id(), snapshot.sha(), licenses, config.allowed(), config.banned());
+        } catch (IOException e) {
+            throw new IngestionException(
+                    "cannot read licenses of snapshot %d (%s)".formatted(snapshotId, snapshot.sha()), e);
+        }
     }
 }

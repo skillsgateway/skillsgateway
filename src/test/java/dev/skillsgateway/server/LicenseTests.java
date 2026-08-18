@@ -69,7 +69,8 @@ class LicenseTests extends AbstractGatewayTest {
         assertThat(messageOf(detections, ".claude-plugin/marketplace.json#plugins[hello].license"))
                 .contains("ISC");
         // Detection is recorded, not judged: identified licenses are informational under defaults.
-        assertThat(detections).allSatisfy(finding -> assertThat(finding.severity()).isEqualTo(Severity.INFO));
+        assertThat(detections)
+                .allSatisfy(finding -> assertThat(finding.severity()).isEqualTo(Severity.INFO));
         assertThat(verdictOf(registered.snapshot().id(), "license-scan").state())
                 .isEqualTo(VerdictState.PASS);
 

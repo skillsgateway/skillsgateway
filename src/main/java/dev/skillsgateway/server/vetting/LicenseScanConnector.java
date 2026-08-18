@@ -1,6 +1,8 @@
 package dev.skillsgateway.server.vetting;
 
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
+import io.github.reqstool.annotations.Requirements;
+import java.io.IOException;
 import org.springframework.stereotype.Component;
 
 /**
@@ -18,10 +20,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class LicenseScanConnector implements VettingConnector {
 
-    private final SkillsGatewayProperties.License policy;
+    private final LicensePolicy policy;
 
     public LicenseScanConnector(SkillsGatewayProperties properties) {
-        this.policy = properties.vetting().license();
+        this.policy = new LicensePolicy(properties.vetting().license());
     }
 
     @Override
@@ -40,8 +42,9 @@ public class LicenseScanConnector implements VettingConnector {
      * attributable to the policy rather than guessed at.
      */
     @Override
+    @Requirements({"GW_0090"})
     public String version() {
-        throw new UnsupportedOperationException("not implemented");
+        return LicenseDetector.VERSION + "+policy-" + policy.digest();
     }
 
     @Override
@@ -52,7 +55,13 @@ public class LicenseScanConnector implements VettingConnector {
     }
 
     @Override
+    @Requirements({"GW_0089", "GW_0090"})
     public Verdict vet(SnapshotUnderVetting snapshot) {
-        throw new UnsupportedOperationException("not implemented");
+        try {
+            return Verdict.of(policy.findings(LicenseDetector.detect(snapshot)));
+        } catch (IOException e) {
+            // Reading the snapshot failed midway; the chain records this as an error, which blocks.
+            throw new IllegalStateException("cannot read snapshot content", e);
+        }
     }
 }

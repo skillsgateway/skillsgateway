@@ -84,17 +84,14 @@ class LicensePolicyTests extends AbstractGatewayTest {
         String defaultVersion = new LicenseScanConnector(new SkillsGatewayProperties(
                         null, null, null, null, null, null, null, null, null, null, null, null))
                 .version();
-        String configuredVersion = run.chain()
-                .lines()
-                .findFirst()
-                .orElseThrow()
-                .replaceAll(".*license-scan@([^,]*).*", "$1");
+        String configuredVersion =
+                run.chain().lines().findFirst().orElseThrow().replaceAll(".*license-scan@([^,]*).*", "$1");
         assertThat(configuredVersion).isNotEqualTo(defaultVersion);
 
         // And on the ledger, like every other verdict.
         assertThat(fetchLogRepository.list())
-                .filteredOn(entry -> name.equals(entry.get("marketplace"))
-                        && "vetting-verdict".equals(entry.get("event")))
+                .filteredOn(
+                        entry -> name.equals(entry.get("marketplace")) && "vetting-verdict".equals(entry.get("event")))
                 .extracting(entry -> String.valueOf(entry.get("detail")))
                 .contains("license-scan=fail");
 
@@ -140,8 +137,7 @@ class LicensePolicyTests extends AbstractGatewayTest {
     @SVCs({"SVC_GW_0095"})
     void theLicenseEndpointMarksTheBannedLicenseUnderTheConfiguredPolicy() throws Exception {
         Registered registered = registerAndIngest(
-                uniqueName("licbanapi"),
-                createUpstream(DEFAULT_MANIFEST, Map.of("LICENSE", LicenseFixtures.AGPL_3_0)));
+                uniqueName("licbanapi"), createUpstream(DEFAULT_MANIFEST, Map.of("LICENSE", LicenseFixtures.AGPL_3_0)));
 
         String body = mockMvc.perform(get("/api/snapshots/%d/licenses"
                                 .formatted(registered.snapshot().id()))

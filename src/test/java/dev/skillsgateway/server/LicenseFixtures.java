@@ -8,8 +8,7 @@ final class LicenseFixtures {
 
     private LicenseFixtures() {}
 
-    static final String MANIFEST_WITH_LICENSES =
-            """
+    static final String MANIFEST_WITH_LICENSES = """
             {
               "name": "test-marketplace",
               "owner": {"name": "Test"},
@@ -20,8 +19,7 @@ final class LicenseFixtures {
             }
             """;
 
-    static final String MIT =
-            """
+    static final String MIT = """
             MIT License
 
             Copyright (c) 2026 Test
@@ -35,8 +33,7 @@ final class LicenseFixtures {
             THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
             """;
 
-    static final String APACHE_2_0 =
-            """
+    static final String APACHE_2_0 = """
                                              Apache License
                                        Version 2.0, January 2004
                                     http://www.apache.org/licenses/
@@ -49,8 +46,7 @@ final class LicenseFixtures {
                   and distribution as defined by Sections 1 through 9 of this document.
             """;
 
-    static final String GPL_3_0 =
-            """
+    static final String GPL_3_0 = """
                                 GNU GENERAL PUBLIC LICENSE
                                    Version 3, 29 June 2007
 
@@ -59,8 +55,7 @@ final class LicenseFixtures {
              of this license document, but changing it is not allowed.
             """;
 
-    static final String AGPL_3_0 =
-            """
+    static final String AGPL_3_0 = """
                                 GNU AFFERO GENERAL PUBLIC LICENSE
                                    Version 3, 19 November 2007
 
@@ -77,8 +72,7 @@ final class LicenseFixtures {
             """;
 
     /** License-shaped prose that matches no known fingerprint: the unknown-license state. */
-    static final String UNRECOGNIZABLE =
-            """
+    static final String UNRECOGNIZABLE = """
             HOUSE LICENSE
 
             You may use this software on Tuesdays, provided the moon is waxing and the
