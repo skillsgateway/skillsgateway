@@ -59,7 +59,7 @@ consumed by the portal with a session cookie.
 
 | Area | Endpoints |
 | --- | --- |
-| [Marketplaces and snapshots](marketplaces.md) | Register, list, ingest, inspect contents, vetting, waivers, re-vet, fetchers, approve, reject, provenance |
+| [Marketplaces and snapshots](marketplaces.md) | Register, list, ingest, inspect contents, licenses, vetting, waivers, re-vet, fetchers, approve, reject, provenance |
 | [Access tokens](tokens.md) | Create, list, revoke |
 | [Audit](audit.md) | Read the ledger; stream it as NDJSON; register, replay and delete export sinks |
 | [Adoption](adoption.md) | Windowed adoption report per marketplace and SHA; identities not on the served tip |

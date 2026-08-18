@@ -181,6 +181,44 @@ because reviewing must not require serving.
 
 ---
 
+## `GET /snapshots/{id}/licenses`
+
+The licenses the snapshot declares, each with its standing under the
+[configured allow/ban policy](../configuration.md#vetting). Detection is
+deterministic — SPDX ids resolved from license/copying files anywhere in the
+tree, `SPDX-License-Identifier` tags inside them, and the marketplace
+manifest's `license` metadata fields — and runs over the content pinned to the
+snapshot's commit SHA, so the report exists for every snapshot, `held`
+included.
+
+```json
+{"snapshotId":42,"sha":"3f9c2ab...",
+ "licenses":[
+   {"spdxId":"MIT","source":"file","location":"LICENSE",
+    "declared":null,"evaluation":"OK"},
+   {"spdxId":null,"source":"file","location":"plugins/acme-tools/COPYING",
+    "declared":null,"evaluation":"UNKNOWN"},
+   {"spdxId":"ISC","source":"manifest",
+    "location":".claude-plugin/marketplace.json#plugins[acme-tools].license",
+    "declared":"ISC","evaluation":"OK"}],
+ "allowed":["MIT","Apache-2.0"],"banned":["AGPL-3.0"]}
+```
+
+A `spdxId` of `null` is the **unknown license** state — the source identified
+no known license. An empty `licenses` array means the snapshot carries no
+license information at all. `evaluation` is one of `OK`, `BANNED`,
+`NOT_ALLOWED`, `UNKNOWN`.
+
+This read reports **current policy truth**: it is recomputed under the
+configuration in force, complementing the gateway's own
+[SBOM endpoint](index.md#non-api-endpoints) (`/actuator/sbom`) and the content
+inventory above as the supply-chain read surface. The evidence the approval gate acted on is the
+recorded vetting run, not this report.
+
+**200** · **404** unknown snapshot.
+
+---
+
 ## Snapshot preview
 
 Read-only inspection of a snapshot's pinned content: the file tree, individual
