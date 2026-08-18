@@ -18,3 +18,9 @@ The system SHALL implement GW_0019.
 
 #### Scenario: SVC_GW_0019
 The system SHALL pass SVC_GW_0019.
+
+### Requirement: GW_0079
+The system SHALL implement GW_0079.
+
+#### Scenario: SVC_GW_0079
+The system SHALL pass SVC_GW_0079.

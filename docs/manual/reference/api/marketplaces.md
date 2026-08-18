@@ -181,6 +181,73 @@ because reviewing must not require serving.
 
 ---
 
+## Snapshot preview
+
+Read-only inspection of a snapshot's pinned content: the file tree, individual
+files, and the diff against what the marketplace currently serves. Everything
+resolves through the quarantine repository's object store at the pinned commit
+— paths are matched against tree entries only, so a path the commit does not
+contain (traversal shapes included) is simply not found. Works on `held`
+snapshots: inspecting content must not require serving it.
+
+These reads return raw held content, so unlike the metadata reads above they
+are **privileged while role enforcement is enabled**
+(`skills-gateway.roles.enabled=true`): an admin, or an approver of the
+snapshot's marketplace. Everyone else gets **403**. With enforcement at its
+default (off) they are open to any authenticated session.
+
+### `GET /snapshots/{id}/files`
+
+Every path in the pinned commit's tree, with blob sizes. The listing is capped
+at 2000 entries; `"truncated": true` says it was cut.
+
+```json
+{"snapshotId":42,"sha":"3f9c2ab...","truncated":false,
+ "entries":[{"path":".claude-plugin/marketplace.json","size":180},
+            {"path":"plugins/acme-tools/skills/deploy/SKILL.md","size":841}]}
+```
+
+**200** · **403** enforcement enabled, no applicable role · **404** unknown
+snapshot.
+
+### `GET /snapshots/{id}/file?path={path}`
+
+One blob, as text for rendering only. Content is cut at 128 KiB with
+`"truncated": true` and the full `size` still reported; a blob detected as
+binary returns metadata with no `text` at all.
+
+```json
+{"snapshotId":42,"path":"plugins/acme-tools/skills/deploy/SKILL.md",
+ "size":841,"binary":false,"truncated":false,"text":"# Deploy\n..."}
+```
+
+**200** · **403** enforcement enabled, no applicable role · **404** unknown
+snapshot, or the path is not in the pinned tree.
+
+### `GET /snapshots/{id}/diff`
+
+The delta a reviewer decides: added, modified and removed paths between the
+pinned commit and the marketplace's currently served commit (the published
+repository's served tip — the same commit a `git fetch` returns), with a
+unified text diff per non-binary entry under the same 128 KiB cap. The entry
+list is capped at 500 with a `truncated` marker.
+
+When the marketplace serves nothing — never approved, or its content was
+revoked or unpublished — `baselineSha` is `null` and every path is reported as
+`added`, without diff text: approving the snapshot would serve all of it.
+
+```json
+{"snapshotId":43,"sha":"9d41f00...","baselineSha":"3f9c2ab...","truncated":false,
+ "entries":[{"path":"plugins/acme-tools/skills/deploy/SKILL.md","type":"modified",
+             "binary":false,"truncated":false,
+             "diff":"--- a/...\n+++ b/...\n@@ -1 +1 @@\n-old\n+new\n"}]}
+```
+
+**200** · **403** enforcement enabled, no applicable role · **404** unknown
+snapshot.
+
+---
+
 ## `GET /snapshots/{id}/vetting`
 
 The snapshot's latest vetting chain run: each connector's verdict in chain
