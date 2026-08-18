@@ -64,6 +64,14 @@ is also what makes them safe as path segments on the facade.
 See [Compatibility and allowlists](../reference/compatibility.md) for the full
 matrix.
 
+**Declared marketplaces enter through the same gate.** The
+[declarative estate block](../reference/configuration.md#declarative-estate)
+is a second *caller* of this boundary, never a second implementation: a
+declared marketplace faces the same name rules, reserved name and scheme
+allowlist as an API registration, has no ref key to declare, and a failing
+entry is reported rather than registered. Reconciliation is additive — the
+declaration can create and converge, never deregister.
+
 ## 2. The facade — an anonymous network peer becomes a reader
 
 `/git/**` is served by its own Spring Security filter chain, ordered ahead of

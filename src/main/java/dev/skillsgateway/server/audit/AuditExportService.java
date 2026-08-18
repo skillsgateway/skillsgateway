@@ -2,6 +2,7 @@ package dev.skillsgateway.server.audit;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.persistence.AuditSink;
 import dev.skillsgateway.server.persistence.AuditSinkRepository;
@@ -15,13 +16,19 @@ import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Cursor-based export of the append-only ledger to registered sinks.
@@ -43,11 +50,18 @@ public class AuditExportService {
     /** Exported payloads are plain text and numbers, so no java.time modules are involved. */
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    public static final Pattern SINK_NAME = Pattern.compile("^[a-z0-9][a-z0-9_-]*$");
+
+    /** Audit export administration is not tied to a marketplace; the ledger column is NOT NULL. */
+    private static final String NO_MARKETPLACE = "-";
+
     private final FetchLogRepository fetchLogRepository;
     private final AuditSinkRepository sinkRepository;
     private final WebhookDeliveryRepository deliveryRepository;
     private final WebhookSubscriberRepository subscriberRepository;
     private final WebhookService webhookService;
+    private final AdminAuditLogger auditLogger;
+    private final List<String> allowedUrlSchemes;
     private final SkillsGatewayProperties.AuditExport properties;
 
     public AuditExportService(
@@ -56,12 +70,15 @@ public class AuditExportService {
             WebhookDeliveryRepository deliveryRepository,
             WebhookSubscriberRepository subscriberRepository,
             WebhookService webhookService,
+            AdminAuditLogger auditLogger,
             SkillsGatewayProperties properties) {
         this.fetchLogRepository = fetchLogRepository;
         this.sinkRepository = sinkRepository;
         this.deliveryRepository = deliveryRepository;
         this.subscriberRepository = subscriberRepository;
         this.webhookService = webhookService;
+        this.auditLogger = auditLogger;
+        this.allowedUrlSchemes = properties.allowedUrlSchemes();
         this.properties = properties.auditExport();
     }
 
@@ -116,8 +133,18 @@ public class AuditExportService {
      */
     @Requirements({"GW_0028"})
     public CreatedSink createWebhookSink(String name, String url, long cursorPosition, int batchSize) {
+        return createWebhookSink(name, url, cursorPosition, batchSize, null);
+    }
+
+    /**
+     * As {@link #createWebhookSink(String, String, long, int)}, with an operator-supplied signing
+     * secret when the caller is the estate reconciler (GW_0086); null generates one, as the API
+     * always does.
+     */
+    @Requirements({"GW_0028"})
+    public CreatedSink createWebhookSink(String name, String url, long cursorPosition, int batchSize, String secret) {
         WebhookService.CreatedSubscriber subscriber =
-                webhookService.createSubscriber(name, url, WebhookEvent.AUDIT_EXPORT);
+                webhookService.createSubscriber(name, url, WebhookEvent.AUDIT_EXPORT, secret);
         AuditSink sink =
                 sinkRepository.create(name, AuditSink.WEBHOOK, subscriber.id(), Math.max(cursorPosition, 0), batchSize);
         return new CreatedSink(
@@ -129,6 +156,53 @@ public class AuditExportService {
                 sink.batchSize(),
                 subscriber.secret(),
                 sink.createdAt());
+    }
+
+    /**
+     * The one sink registration path (GW_0028, GW_0086): validates the name, the target URL scheme
+     * against the allowlist and the cross-namespace duplicate (a sink's delivery channel is a
+     * webhook subscriber, so the two name spaces are one), clamps the batch size, registers, and
+     * appends the ledger entry with the acting identity — whether the caller is the audit API
+     * (null secret, generated show-once) or the estate reconciler (operator-supplied secret).
+     * Statuses match the API contract; a non-HTTP caller reports the reason instead.
+     */
+    @Requirements({"GW_0028"})
+    public CreatedSink registerSink(
+            String name, String url, Long after, Integer batchSize, String secret, String actor) {
+        if (name == null || !SINK_NAME.matcher(name).matches()) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNPROCESSABLE_CONTENT, "name must match " + SINK_NAME.pattern());
+        }
+        requireAllowlistedScheme(url);
+        if (findSinkByName(name).isPresent() || channelNameTaken(name)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "sink '%s' already exists".formatted(name));
+        }
+        int clampedBatchSize =
+                Math.clamp(batchSize == null ? properties.batchSize() : batchSize, 1, properties.maxPageSize());
+        CreatedSink created = createWebhookSink(name, url, after == null ? 0 : after, clampedBatchSize, secret);
+        auditLogger.record(actor, NO_MARKETPLACE, "audit-sink-created", null);
+        return created;
+    }
+
+    /** Converges a sink's batch size to a declared value (GW_0086); the clamp matches creation. */
+    public Optional<AuditSink> updateSinkBatchSize(long id, int batchSize) {
+        return sinkRepository.updateBatchSize(id, Math.clamp(batchSize, 1, properties.maxPageSize()));
+    }
+
+    /** Fails closed, exactly like marketplace and webhook subscriber registration. */
+    private void requireAllowlistedScheme(String url) {
+        String scheme = null;
+        if (url != null) {
+            try {
+                scheme = new URI(url).getScheme();
+            } catch (URISyntaxException e) {
+                scheme = null;
+            }
+        }
+        if (scheme == null || !allowedUrlSchemes.contains(scheme.toLowerCase(Locale.ROOT))) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "url scheme must be one of %s".formatted(allowedUrlSchemes));
+        }
     }
 
     public List<AuditSink> listSinks() {
