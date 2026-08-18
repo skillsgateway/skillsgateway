@@ -72,6 +72,17 @@ public class AuditSinkRepository {
                 .optional();
     }
 
+    /** Converges a sink's batch size to a declared state (GW_0086); the cursor is never touched here. */
+    public Optional<AuditSink> updateBatchSize(long id, int batchSize) {
+        return jdbc.sql("UPDATE audit_sinks SET batch_size = :batchSize, updated_at = :now"
+                        + " WHERE id = :id RETURNING *")
+                .param("batchSize", batchSize)
+                .param("now", OffsetDateTime.now())
+                .param("id", id)
+                .query(AuditSinkRepository::map)
+                .optional();
+    }
+
     public boolean delete(long id) {
         return jdbc.sql("DELETE FROM audit_sinks WHERE id = :id")
                         .param("id", id)
