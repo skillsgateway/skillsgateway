@@ -1784,12 +1784,11 @@ along.</p>
 <h2 id="local-stack">Local stack<a class="headerlink" href="#local-stack" title="Permanent link">&para;</a></h2>
 <p>For local work the <code>observability</code> profile starts a Grafana LGTM dev container
 (collector, Loki, Tempo, Prometheus, Grafana) and enables export to it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>spring-boot:run<span class="w"> </span>-Dspring-boot.run.profiles<span class="o">=</span>observability<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">                         </span>-Dspring-boot.run.useTestClasspath<span class="o">=</span><span class="nb">true</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>spring-boot:run<span class="w"> </span>-Dspring-boot.run.profiles<span class="o">=</span>observability
 </code></pre></div>
-<p>The Grafana URL is logged at startup. The supporting dependencies are test
-scope: nothing of the dev stack is reachable from the packaged jar, the
-container image or the native binary.</p>
+<p>The Grafana URL is logged at startup. The supporting dependencies are optional,
+and test scope again under the <code>native</code> profile: nothing of the dev stack is
+reachable from the packaged jar, the container image or the native binary.</p>
 
 
 
