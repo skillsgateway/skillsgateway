@@ -42,11 +42,6 @@ public class ReleaseAgeGate {
         return minimum;
     }
 
-    /** Whether any age is required at all. Zero — the default — means an upgrade changes nothing. */
-    public boolean enabled() {
-        return !minimum.isZero() && !minimum.isNegative();
-    }
-
     /**
      * Whether the snapshot may be approved now, and when it may be if not. Evaluated against the
      * current instant on every call: nothing is cached, so the answer changes on its own the moment

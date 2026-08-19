@@ -128,6 +128,11 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                 .andExpect(status().isOk());
         mockMvc.perform(get("/api/snapshots/{id}/fetchers", snapshotId).with(mallory))
                 .andExpect(status().isOk());
+        // Eligibility is a read of the same browsing surface, not a step toward approving: it
+        // reports whether the cooling-off window has passed, and approve itself stays role-gated
+        // above. Asserted here so that stays a decision rather than an omission.
+        mockMvc.perform(get("/api/snapshots/{id}/release-age", snapshotId).with(mallory))
+                .andExpect(status().isOk());
         mockMvc.perform(get(
                                 "/api/marketplaces/{name}/waivers",
                                 fixture.marketplace().name())

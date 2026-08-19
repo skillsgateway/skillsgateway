@@ -731,7 +731,8 @@ cases:
       THEN the young snapshot is refused with a conflict naming the setting, its age and the time remaining while nothing is published and the refusal is on the append-only ledger, the aged snapshot is approved with its age on the ledger, the backdated commit is refused exactly as the young one, re-ingestion leaves the first-sighting instant and therefore the eligibility untouched, rejection is never gated by age, the eligibility report agrees with the gate and is eligible exactly at the boundary instant and not one moment before, and on the default gateway every approval succeeds as it did before the setting existed
     revision: "0.1.0"
 
-  # SVC_GW_0074 is reserved by an in-flight change on another branch.
+  # SVC_GW_0074 is deliberately unused — see the matching note on GW_0074 in
+  # requirements.yml. The id is retired, not awaiting a change.
 
   - id: SVC_GW_0075
     requirement_ids: ["GW_0075"]
