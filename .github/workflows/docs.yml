@@ -46,7 +46,20 @@ jobs:
       # version in place; `dev` is the site default until a release exists.
       - name: Deploy dev docs
         if: github.ref == 'refs/heads/main'
-        run: mike deploy --push --update-aliases dev
+        run: |
+          mike deploy --push --update-aliases dev
+          # `mike set-default` writes the root index.html that redirects `/` to
+          # a version. Without it the site root is a 404 -- which is exactly
+          # what https://skillsgateway.github.io/skillsgateway/ served, because
+          # set-default only ran on a `v*` tag and no tag exists yet, while
+          # mkdocs.yml `site_url` and the repo homepage both point at the root.
+          # Once a release exists `stable` owns the default (set below); until
+          # then `dev` does, which is what the comment above always claimed.
+          if mike list 2>/dev/null | grep -q 'stable'; then
+            echo "stable exists; leaving the default where the release step put it"
+          else
+            mike set-default --push dev
+          fi
 
       # A `v*` tag publishes that release as its own version and points the
       # `stable` alias at it. `--update-aliases` moves `stable` off whatever

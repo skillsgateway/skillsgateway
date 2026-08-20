@@ -39,6 +39,12 @@ export default defineConfig({
         browser: {
           enabled: true,
           headless: true,
+          // The default is 30s, which a CI runner busy with the rest of
+          // `mvnw verify` has twice failed to meet -- "Failed to connect to the
+          // browser session ... within the timeout", with every test that did
+          // run passing. Waiting longer costs nothing when the browser starts
+          // promptly, which is every local run.
+          connectTimeout: 120_000,
           provider: playwright({}),
           instances: [{
             browser: 'chromium'
