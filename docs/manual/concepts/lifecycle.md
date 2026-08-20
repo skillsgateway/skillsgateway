@@ -6,27 +6,15 @@ physically lives in a different git repository from published content.
 
 This page is the product. Everything else is detail around it.
 
-```mermaid
-flowchart TD
-    A["Upstream pushes a commit"] --> B["Ingest<br/>POST /api/marketplaces/{name}/ingest"]
-    B --> C{"Ingestion accepts?"}
-    C -->|"external source,<br/>disallowed scheme"| D["Rejected fail-closed<br/>violation recorded"]
-    C -->|ok| E["Snapshot: held<br/>refs/snapshots/{sha} in quarantine"]
-    E --> V["Vetting chain runs<br/>verdict per connector"]
-    V --> F["Reviewer inspects<br/>verdicts + contents + provenance"]
-    F -->|reject| G["state: rejected<br/>previous approval keeps serving"]
-    F -->|approve| H["ApprovalService publishes<br/>refs/heads/main → sha"]
-    H --> I["Clients fetch the new SHA"]
-    H --> R["Re-vetting sweep<br/>runs the chain again, later"]
-    R -->|"violation, enforce mode"| X["state: revoked<br/>published refs removed"]
-    X -->|"fresh approve decision"| H
-    R -.-> L
-    X -.-> L
-    V -.-> L[("Audit ledger")]
-    E -.-> L
-    G -.-> L
-    H -.-> L
-```
+<!-- Diagram source of truth: docs/diagrams/lifecycle.mmd (Mermaid).
+     The SVG pair below is generated from it with the diagram-design system —
+     regenerate via .claude/skills/docs-diagrams whenever the .mmd changes. -->
+<div class="dd-diagram dd-light">
+--8<-- "docs/manual/assets/diagrams/lifecycle-light.svg"
+</div>
+<div class="dd-diagram dd-dark">
+--8<-- "docs/manual/assets/diagrams/lifecycle-dark.svg"
+</div>
 
 ## The two repositories
 

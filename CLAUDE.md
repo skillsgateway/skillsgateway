@@ -14,6 +14,7 @@ Load these before working in their areas:
 - `.claude/skills/code-conventions` — build, gates, Java/TS conventions, traceability annotations
 - `.claude/skills/design-conventions` — portal design system and UI verification rules
 - `.claude/skills/documentation` — MkDocs site structure, Markdown/Mermaid conventions, docs-in-same-PR rule
+- `.claude/skills/docs-diagrams` — headline docs diagrams: Mermaid SSOT in `docs/diagrams/`, generated diagram-design SVG pairs, the Skills Gateway skin
 - `.claude/skills/impeccable` — design harness (`/impeccable audit|harden|critique`) run on any PR touching a portal page; `PRODUCT.md` and `DESIGN.md` at the root are its context, and design-conventions outranks it
 - `.claude/skills/old-coder` — evidence-first discipline for high-assurance work:
   changes touching trust boundaries (facade auth, `ApprovalService`, registration
