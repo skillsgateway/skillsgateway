@@ -103,6 +103,7 @@ nav:
       - Vetting — the connector chain: concepts/vetting.md
       - Snapshots and the audit ledger: concepts/snapshots-and-ledger.md
       - Trust boundaries: concepts/trust-boundaries.md
+      - Related work: concepts/related-work.md
       - Glossary: concepts/glossary.md
   - Guides:
       - Local development: guides/local-development.md
