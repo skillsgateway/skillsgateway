@@ -151,6 +151,27 @@ jobs:
             src/main/frontend/playwright-report
           if-no-files-found: ignore
 
+  docs:
+    name: Documentation (strict)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: docs/requirements.txt
+
+      - name: Install the documentation toolchain
+        run: pip install -r docs/requirements.txt
+
+      # The same gate contributors run locally, and the same one docs.yml runs
+      # before publishing -- but that one only runs after a merge, so a broken
+      # internal link used to reach main before anything complained.
+      - name: Build (strict)
+        run: mkdocs build --strict
+
   traceability:
     name: Traceability & spec gates
     runs-on: ubuntu-latest
