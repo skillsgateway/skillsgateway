@@ -1,0 +1,23 @@
+name: Semantic PR
+
+# The PR title is not cosmetic here: this repository squash-merges with
+# `squash_merge_commit_title: PR_TITLE`, so the title *becomes* the commit
+# subject on main. Until this workflow existed, that string was the one part of
+# a squash commit nothing validated. See skillsgateway/skillsgateway#73.
+#
+# The allowed type list lives in the reusable workflow, so every repository in
+# the org accepts the same set.
+
+on:
+  pull_request:
+    # `edited` matters: a title fixed after a red check has to re-run, or the
+    # check stays red on a PR that is now correct.
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  semantic-pr:
+    uses: skillsgateway/.github/.github/workflows/common-check-semantic-pr.yml@main
