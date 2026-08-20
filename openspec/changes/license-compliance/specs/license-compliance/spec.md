@@ -11,20 +11,20 @@ content inventory surfaces.
 
 ## ADDED Requirements
 
-### Requirement: GW_0089
-The system SHALL implement GW_0089.
+### Requirement: GW_0093
+The system SHALL implement GW_0093.
 
-#### Scenario: SVC_GW_0089
-The system SHALL pass SVC_GW_0089.
+#### Scenario: SVC_GW_0093
+The system SHALL pass SVC_GW_0093.
 
-### Requirement: GW_0090
-The system SHALL implement GW_0090.
+### Requirement: GW_0094
+The system SHALL implement GW_0094.
 
-#### Scenario: SVC_GW_0090
-The system SHALL pass SVC_GW_0090.
+#### Scenario: SVC_GW_0094
+The system SHALL pass SVC_GW_0094.
 
-### Requirement: GW_0091
-The system SHALL implement GW_0091.
+### Requirement: GW_0095
+The system SHALL implement GW_0095.
 
-#### Scenario: SVC_GW_0091
-The system SHALL pass SVC_GW_0091.
+#### Scenario: SVC_GW_0095
+The system SHALL pass SVC_GW_0095.

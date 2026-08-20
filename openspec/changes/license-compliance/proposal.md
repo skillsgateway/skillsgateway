@@ -58,7 +58,7 @@ approved unnoticed.
 - `license-compliance`: deterministic license detection at ingestion, the
   configured allow/ban policy evaluated through the standard vetting chain,
   unknown/missing license as detectable states, and the per-snapshot license
-  report endpoint (GW_0089–GW_0091).
+  report endpoint (GW_0093–GW_0095).
 
 ### Modified Capabilities
 
@@ -70,7 +70,7 @@ changes no existing requirement.
 
 - New: `LicenseScanConnector`, `LicenseDetector`, license policy properties
   under `skills-gateway.vetting.license.*`, license report service and
-  endpoint, reqstool requirements GW_0089–GW_0091 with SVC_GW_0089–0091.
+  endpoint, reqstool requirements GW_0093–GW_0095 with SVC_GW_0093–0091.
 - Touched: `SkillsGatewayProperties.Vetting` (new nested `License` record),
   `AdminController` (new read endpoint), `VettingTests` (a chain-position
   assertion that hard-codes two connectors becomes derived — no assertion is
