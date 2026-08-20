@@ -89,8 +89,8 @@ final class LicensePolicy {
                             failClosed,
                             detection.location(),
                             "no known license could be identified here%s".formatted(declaredSuffix(detection))));
-                case OK -> {
-                    // Identified and permitted: the license-detected record above is the answer.
+                default -> {
+                    // OK: identified and permitted — the license-detected record above is the answer.
                 }
             }
         }
