@@ -9,6 +9,13 @@
   currently pinned version) and OpenSpec CLI (`npm i -g @fission-ai/openspec`)
 - Node/pnpm are provisioned by the Maven build; for UI development enable
   corepack (`corepack enable pnpm`)
+- The vendored Impeccable design skill needs its own detector dependencies:
+  `npm --prefix .claude/skills/impeccable install`. Without them the detector
+  silently falls back to regex matching — computed contrast, CSS custom
+  properties and selector matching are not evaluated, so a clean report and a
+  broken detector look identical. A `SessionStart` hook warns when they are
+  missing; `node .claude/scripts/check-impeccable-detector.mjs --fix` installs
+  them.
 
 ## Workflow
 

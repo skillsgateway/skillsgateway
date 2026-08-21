@@ -1,0 +1,13 @@
+{
+  "name": "impeccable-skill-deps",
+  "private": true,
+  "description": "Runtime dependencies for the vendored Impeccable detector. Node resolves the detector's bare imports by walking up from scripts/detector/engines/, so this directory is where they have to live -- src/main/frontend/node_modules is on a different branch of the tree and cannot satisfy them. Without these the detector silently falls back to regex matching: no computed contrast, no custom properties, no selector matching. Versions track the published `impeccable` package's own dependencies.",
+  "dependencies": {
+    "css-select": "^7.0.0",
+    "css-tree": "^3.2.1",
+    "domutils": "^4.0.2",
+    "fflate": "^0.8.3",
+    "htmlparser2": "^12.0.0",
+    "marked": "^18.0.5"
+  }
+}

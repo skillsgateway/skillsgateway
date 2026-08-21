@@ -24,3 +24,7 @@ data/
 .factorypath
 .inlined-pom.xml
 .claude/worktrees/
+
+# Impeccable: per-developer hook consent and private detector ignores.
+# The shared .impeccable/config.json is committed.
+.impeccable/config.local.json
