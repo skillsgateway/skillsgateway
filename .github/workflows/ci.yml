@@ -172,6 +172,11 @@ jobs:
       - name: Build (strict)
         run: mkdocs build --strict
 
+      # Generated headline diagrams must match their Mermaid sources: an .mmd
+      # edited without regenerating its SVG pair fails here, not on the site.
+      - name: Diagram manifest in sync
+        run: python3 docs/diagrams/verify.py
+
   traceability:
     name: Traceability & spec gates
     runs-on: ubuntu-latest

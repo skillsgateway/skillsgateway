@@ -1,0 +1,19 @@
+# Mapping between Mermaid diagram sources (the SSOT, this directory) and the
+# generated diagram-design SVG pairs the docs site embeds. Owned by the
+# .claude/skills/docs-diagrams workflow.
+#
+# source-sha256 is the hash of the .mmd the SVGs were last generated from.
+# Verify (or refresh after regenerating) with:
+#
+#   python3 docs/diagrams/verify.py            # check — fails on drift
+#   python3 docs/diagrams/verify.py --update   # refresh hashes after regen
+#
+diagrams:
+  - name: lifecycle
+    source: docs/diagrams/lifecycle.mmd
+    source-sha256: 04433f76da694a0aa1f318f31c0217e18b07b6174e4dbb9a82418883e520f3ed
+    outputs:
+      light: docs/manual/assets/diagrams/lifecycle-light.svg
+      dark: docs/manual/assets/diagrams/lifecycle-dark.svg
+    embedded-in:
+      - docs/manual/concepts/lifecycle.md

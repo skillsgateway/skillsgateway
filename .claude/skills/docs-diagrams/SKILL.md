@@ -11,6 +11,11 @@ system, generated from Mermaid sources. The split:
 
 - **`docs/diagrams/*.mmd`** — the source of truth. Diffable, reviewed in PRs,
   outside `docs_dir` so MkDocs never publishes it.
+- **`docs/diagrams/manifest.yml`** — the mapping: each source, its SVG pair,
+  the pages embedding it, and the source's sha256 at generation time.
+  `python3 docs/diagrams/verify.py` checks it (CI runs it in the
+  `Documentation (strict)` job, so a drifted `.mmd` fails the PR);
+  `--update` refreshes the hash after a regeneration.
 - **`docs/manual/assets/diagrams/<name>-light.svg` + `<name>-dark.svg`** —
   generated build products. Never hand-edit beyond regeneration.
 - The embedding page inlines both via `pymdownx.snippets` inside
@@ -46,7 +51,9 @@ change a generated SVG's content without changing its `.mmd` first.
    `aria-labelledby` per the upstream accessible-SVG contract.
 5. Verify: upstream `scripts/self_check.py` and `verify-geometry.py` must both
    pass; then `mkdocs build --strict`.
-6. Report the fidelity ledger (merges/collapses/drops vs the `.mmd`) in the PR.
+6. Refresh the manifest: `python3 docs/diagrams/verify.py --update`, then a
+   plain `verify.py` run must print OK.
+7. Report the fidelity ledger (merges/collapses/drops vs the `.mmd`) in the PR.
 
 ## Skills Gateway skin
 
@@ -84,7 +91,9 @@ House conventions on top of the upstream system:
 
 ## Adding a new headline diagram
 
-Add `docs/diagrams/<name>.mmd`, generate the pair, embed with:
+Add `docs/diagrams/<name>.mmd`, generate the pair, add the entry to
+`docs/diagrams/manifest.yml` (verify.py `--update` fills the hash), and embed
+with:
 
 ```html
 <!-- Diagram source of truth: docs/diagrams/<name>.mmd (Mermaid). -->
