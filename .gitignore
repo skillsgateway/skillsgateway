@@ -25,6 +25,9 @@ data/
 .inlined-pom.xml
 .claude/worktrees/
 
-# Impeccable: per-developer hook consent and private detector ignores.
-# The shared .impeccable/config.json is committed.
-.impeccable/config.local.json
+# Impeccable: per-developer overrides and the hook's dedup cache. The shared
+# .impeccable/config.json is committed. Anchored with **/ because the design
+# sidecar convention puts an .impeccable/ next to any nested DESIGN.md, and a
+# pattern containing a slash otherwise matches only the repository root.
+**/.impeccable/config.local.json
+**/.impeccable/hook.cache.json
