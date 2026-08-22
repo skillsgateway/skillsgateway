@@ -2,5 +2,17 @@
   "enabledPlugins": {
     "reqstool@reqstool-ai": true,
     "reqstool-openspec@reqstool-ai": true
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/scripts/check-impeccable-detector.mjs"
+          }
+        ]
+      }
+    ]
   }
 }
