@@ -121,11 +121,16 @@ jobs:
       - name: Export image
         run: docker save skills-gateway:ci | gzip > skills-gateway-image.tar.gz
 
+      # Development-path artifacts. Actions storage is free on a public repo, so
+      # these are trimmed for tidiness rather than cost -- the image is only ever
+      # wanted while investigating the run that produced it. Release artifacts,
+      # once the release flow exists, keep the default retention.
       - name: Upload image artifact
         uses: actions/upload-artifact@v7
         with:
           name: skills-gateway-native-image
           path: skills-gateway-image.tar.gz
+          retention-days: 7
 
       - name: Upload native-build SBOM
         uses: actions/upload-artifact@v7
@@ -133,3 +138,4 @@ jobs:
           name: sbom-cyclonedx-native
           path: target/classes/META-INF/sbom/application.cdx.json
           if-no-files-found: error
+          retention-days: 30

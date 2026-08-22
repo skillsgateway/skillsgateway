@@ -10,6 +10,7 @@ description: Skills Gateway build commands, quality gates, Java and TypeScript c
 ```bash
 ./mvnw clean verify                     # everything: Java tests (Arconia/Testcontainers PostgreSQL),
                                         # Spotless, Checkstyle, CycloneDX SBOM, UI gates, packaged jar
+(cd src/main/frontend && pnpm test:stories)  # Storybook story tests in real chromium (axe-as-error)
 (cd src/main/frontend && pnpm e2e)    # Playwright vs the real jar + mock OIDC IdP (compose.e2e.yaml)
 reqstool status local -p docs/reqstool  # must end "N/N complete · PASS" (run after the two above)
 openspec validate --all --strict
@@ -39,8 +40,11 @@ openspec validate --all --strict
 
 ## TypeScript / UI (`src/main/frontend/`)
 
-- Strict TS, oxlint, vitest (+ Storybook story tests with axe-as-error),
-  Playwright e2e. `pnpm verify` runs the whole UI gate.
+- Strict TS, oxlint, vitest (jsdom `unit` project), Storybook story tests
+  with axe-as-error (browser `storybook` project, `pnpm test:stories`),
+  Playwright e2e. `pnpm verify` runs the jsdom UI gate; the story and e2e
+  suites run outside `mvnw verify` — as their own commands locally and their
+  own CI jobs (#103).
 - API types are GENERATED: `src/main/frontend/openapi.json` → `src/api/types.gen.ts`
   (`pnpm exec openapi-typescript openapi.json -o src/api/types.gen.ts`).
   Regenerate after backend API changes (snapshot comes from
