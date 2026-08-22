@@ -626,6 +626,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#license-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        license-scan
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -831,6 +842,8 @@
       
         
       
+        
+      
     
     
     
@@ -1003,6 +1016,34 @@
     
   
     Waiving a vetting finding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/license-compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    License compliance for skills
   
 
     
@@ -2065,6 +2106,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#license-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        license-scan
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2148,7 +2200,7 @@ outcome that gates approval.</p>
 
     subgraph C["Vetting chain — ordered, all connectors run"]
         direction TB
-        C1["secret-scan (order 100)"] --&gt; C2["prompt-injection (order 200)"]
+        C1["secret-scan (order 100)"] --&gt; C2["prompt-injection (order 200)"] --&gt; C3["license-scan (order 300)"]
     end
 
     C --&gt; A["Aggregate verdicts&lt;br/&gt;clear iff every verdict is pass or warn"]
@@ -2371,7 +2423,7 @@ consequential thing a reviewer can write here, and the ledger names the rule
 so it can be found.</p>
 </div>
 <h2 id="the-built-in-connectors">The built-in connectors<a class="headerlink" href="#the-built-in-connectors" title="Permanent link">&para;</a></h2>
-<p>Both connectors ship in the gateway and run in every chain.</p>
+<p>All three connectors ship in the gateway and run in every chain.</p>
 <h3 id="secret-scan"><code>secret-scan</code><a class="headerlink" href="#secret-scan" title="Permanent link">&para;</a></h3>
 <p>Regex and entropy rules over every UTF-8 text file in the snapshot: AWS access
 key ids and secret keys, PEM private-key blocks, GitHub, Slack and Google
@@ -2424,6 +2476,56 @@ put it in the ledger and the portal.</p>
 </tr>
 </tbody>
 </table>
+<h3 id="license-scan"><code>license-scan</code><a class="headerlink" href="#license-scan" title="Permanent link">&para;</a></h3>
+<p>Deterministic license detection over the pinned content, evaluated against the
+<a href="../../reference/configuration/#vetting">configured allow/ban lists</a>: SPDX ids
+resolved from license/copying files anywhere in the tree,
+<code>SPDX-License-Identifier</code> tags inside them, and the marketplace manifest's
+<code>license</code> metadata fields. Exact fingerprint matching only — no scoring:</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>What it means</th>
+<th>Blocks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>license-detected</code></td>
+<td>A license was identified (always recorded, informational)</td>
+<td>never</td>
+</tr>
+<tr>
+<td><code>license-banned</code></td>
+<td>The license is on the configured ban list</td>
+<td>always</td>
+</tr>
+<tr>
+<td><code>license-not-allowed</code></td>
+<td>An allow list is configured and does not contain it</td>
+<td>always</td>
+</tr>
+<tr>
+<td><code>license-unknown</code></td>
+<td>The source identifies no known license — a first-class state, never a guess</td>
+<td>only when an allow list is configured; warns otherwise</td>
+</tr>
+<tr>
+<td><code>license-missing</code></td>
+<td>The snapshot carries no license information at all</td>
+<td>only when an allow list is configured; warns otherwise</td>
+</tr>
+</tbody>
+</table>
+<p>With neither list configured — the default — nothing blocks: detection is
+recorded, and unknown or missing licenses warn so a reviewer sees them without
+any estate being blocked by an upgrade. The connector's recorded version
+carries a digest of the policy in force, so a changed list is visible in every
+run's chain identity. The task-shaped walkthrough is
+<a href="../../guides/license-compliance/">License compliance for skills</a>; the same
+detection is readable per snapshot at
+<a href="../../reference/api/marketplaces/#get-snapshotsidlicenses"><code>GET /api/snapshots/{id}/licenses</code></a>.</p>
 <div class="admonition warning">
 <p class="admonition-title">What a passing verdict does <em>not</em> mean</p>
 <p>These are patterns, not understanding. An attacker who paraphrases
