@@ -74,8 +74,15 @@ build warning under `--strict`.
 
 ## Diagrams
 
-Mermaid renders natively through `pymdownx.superfences`. There is no external
-renderer and no image checked in.
+Mermaid renders natively through `pymdownx.superfences`; that is the default
+for every diagram. There is no external renderer.
+
+**Exception — headline diagrams.** A diagram that carries a page's thesis
+(currently the lifecycle flowchart) is rendered as a checked-in SVG pair
+generated from a Mermaid source in `docs/diagrams/*.mmd`. That workflow —
+sources, skin, regeneration, embedding — is owned by
+`.claude/skills/docs-diagrams`; load it before touching any `.mmd`, any
+`assets/diagrams/*.svg`, or a page containing a `dd-diagram` block.
 
 ````markdown
 ```mermaid
