@@ -32,31 +32,8 @@ jobs:
           path: src/main/frontend/node
           key: fmp-node-${{ runner.os }}-${{ hashFiles('pom.xml') }}
 
-      - name: Cache Playwright browsers
-        id: playwright-cache
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('src/main/frontend/pnpm-lock.yaml') }}
-
-      # Storybook story tests (inside mvnw verify) run in real chromium, so the
-      # browser must exist before the Maven build.
-      - name: Install UI dependencies
-        working-directory: src/main/frontend
-        run: |
-          corepack enable pnpm
-          pnpm install --frozen-lockfile
-
-      - name: Install Playwright chromium
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        working-directory: src/main/frontend
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Install Playwright OS dependencies
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        working-directory: src/main/frontend
-        run: pnpm exec playwright install-deps chromium
-
+      # Storybook story tests run in their own job (#103), so this job needs
+      # no browser: mvnw verify runs only the jsdom `unit` vitest project.
       - name: Build and test (Java + UI gates, packaged jar)
         run: ./mvnw --batch-mode verify
 
@@ -77,6 +54,52 @@ jobs:
           name: sbom-cyclonedx
           path: target/classes/META-INF/sbom/application.cdx.json
           if-no-files-found: error
+
+  # Storybook story tests need a real chromium plus a Vite dev server; run
+  # inside `mvnw verify` they intermittently starved on the shared 2-core
+  # runner (#103). A dedicated job removes the contention. Stories carry no
+  # reqstool annotations, so the traceability job does not consume this job's
+  # results.
+  stories:
+    name: Storybook tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('src/main/frontend/pnpm-lock.yaml') }}
+
+      - name: Install UI dependencies
+        working-directory: src/main/frontend
+        run: |
+          corepack enable pnpm
+          pnpm install --frozen-lockfile
+
+      - name: Install Playwright chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        working-directory: src/main/frontend
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Install Playwright OS dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        working-directory: src/main/frontend
+        run: pnpm exec playwright install-deps chromium
+
+      - name: Storybook story tests (real chromium)
+        working-directory: src/main/frontend
+        run: pnpm test:stories
+
+      - name: Upload story test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: stories-artifacts
+          path: src/main/frontend/test-results
+          if-no-files-found: ignore
 
   e2e:
     name: Portal e2e

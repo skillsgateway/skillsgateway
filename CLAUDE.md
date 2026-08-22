@@ -26,6 +26,7 @@ Load these before working in their areas:
 
 ```bash
 ./mvnw clean verify                     # Java + UI gates + packaged jar (needs Docker)
+(cd src/main/frontend && pnpm test:stories)  # Storybook story tests in real chromium
 (cd src/main/frontend && pnpm e2e)    # real-browser e2e vs mock OIDC IdP (needs Docker)
 reqstool status local -p docs/reqstool  # requirements traceability — must end "PASS"
 openspec validate --all --strict
