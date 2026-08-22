@@ -2,7 +2,7 @@ package dev.skillsgateway.server.vetting;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-/** How one detected license stands under the configured allow/ban policy (GW_0090). */
+/** How one detected license stands under the configured allow/ban policy (GW_0094). */
 @Schema(description = "How a detected license stands under the configured allow/ban policy")
 public enum LicenseEvaluation {
 

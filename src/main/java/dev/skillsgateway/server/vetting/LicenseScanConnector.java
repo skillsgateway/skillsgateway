@@ -42,7 +42,7 @@ public class LicenseScanConnector implements VettingConnector {
      * attributable to the policy rather than guessed at.
      */
     @Override
-    @Requirements({"GW_0090"})
+    @Requirements({"GW_0094"})
     public String version() {
         return LicenseDetector.VERSION + "+policy-" + policy.digest();
     }
@@ -55,7 +55,7 @@ public class LicenseScanConnector implements VettingConnector {
     }
 
     @Override
-    @Requirements({"GW_0089", "GW_0090"})
+    @Requirements({"GW_0093", "GW_0094"})
     public Verdict vet(SnapshotUnderVetting snapshot) {
         try {
             return Verdict.of(policy.findings(LicenseDetector.detect(snapshot)));

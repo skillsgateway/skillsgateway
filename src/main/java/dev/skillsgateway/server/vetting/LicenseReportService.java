@@ -76,7 +76,7 @@ public class LicenseReportService {
             @Schema(description = "The configured ban list (SPDX ids)")
             List<String> banned) {}
 
-    @Requirements({"GW_0091"})
+    @Requirements({"GW_0095"})
     public LicenseReport report(long snapshotId) {
         Snapshot snapshot =
                 snapshotRepository.findById(snapshotId).orElseThrow(() -> new SnapshotNotFoundException(snapshotId));

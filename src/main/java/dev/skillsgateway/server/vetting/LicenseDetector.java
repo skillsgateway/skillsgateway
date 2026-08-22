@@ -2,6 +2,7 @@ package dev.skillsgateway.server.vetting;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -90,7 +91,7 @@ final class LicenseDetector {
     }
 
     /** Every license detection in the snapshot, in tree order; empty means no license information. */
-    @io.github.reqstool.annotations.Requirements({"GW_0089"})
+    @Requirements({"GW_0093"})
     static List<Detection> detect(SnapshotUnderVetting snapshot) throws IOException {
         List<Detection> detections = new ArrayList<>();
         snapshot.walk((path, content) -> {
