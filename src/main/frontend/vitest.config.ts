@@ -15,12 +15,17 @@ export default defineConfig({
     }
   },
   test: {
-    reporters: ["default", ["junit", {
-      outputFile: "test-results/vitest-junit.xml"
-    }]],
+    reporters: ["default", "junit"],
+    // Top-level (not in the junit reporter's options) so `pnpm test:stories`
+    // can redirect its report with --outputFile.junit and never clobber the
+    // unit report that the traceability gate consumes.
+    outputFile: {
+      junit: "test-results/vitest-junit.xml"
+    },
     projects: [{
       extends: true,
       test: {
+        name: 'unit',
         environment: "jsdom",
         setupFiles: ["./src/test/setup.ts"],
         include: ["src/**/*.test.{ts,tsx}"],
@@ -39,11 +44,9 @@ export default defineConfig({
         browser: {
           enabled: true,
           headless: true,
-          // The default is 30s, which a CI runner busy with the rest of
-          // `mvnw verify` has twice failed to meet -- "Failed to connect to the
-          // browser session ... within the timeout", with every test that did
-          // run passing. Waiting longer costs nothing when the browser starts
-          // promptly, which is every local run.
+          // Raised from the 30s default while this project still ran inside
+          // `mvnw verify` on a starved CI runner (#103); kept because waiting
+          // longer costs nothing when the browser starts promptly.
           connectTimeout: 120_000,
           provider: playwright({}),
           instances: [{

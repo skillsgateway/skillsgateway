@@ -55,9 +55,9 @@ purpose; it was retired in favour of that single source (issue #23).
 
 Two consequences worth knowing before you open a PR:
 
-- **`main` is protected.** A PR needs the three CI checks (`Build & gates`,
-  `Portal e2e`, `Traceability & spec gates`) green, one approving review, and
-  all review threads resolved. Force-pushes and branch deletion are blocked.
+- **`main` is protected.** A PR needs the required CI checks (`Build & gates`,
+  `Storybook tests`, `Portal e2e`, `Traceability & spec gates`) green, one
+  approving review, and all review threads resolved. Force-pushes and branch deletion are blocked.
 - **Labels are declarative.** `.github/labeler.yml` may only reference labels
   declared in the admin repo; a label that exists on the repo but not there is
   deleted on the next sync. Adding a label means a PR against that repo.
@@ -66,6 +66,7 @@ Two consequences worth knowing before you open a PR:
 
 ```bash
 ./mvnw clean verify                     # Java + UI gates + packaged jar
+(cd src/main/frontend && pnpm test:stories)  # Storybook story tests in real chromium
 (cd src/main/frontend && pnpm e2e)    # real-browser e2e (compose.e2e.yaml)
 reqstool status local -p docs/reqstool  # must end "PASS"
 openspec validate --all --strict
@@ -74,9 +75,12 @@ mkdocs build --strict                   # docs site (pip install -r docs/require
 
 CI enforces the same gates per PR (`.github/workflows/ci.yml`) plus a native
 image build on main (`native.yml`). For speed, CI splits them across parallel
-jobs: build + unit gates and the portal e2e run concurrently (the e2e job
-packages its own jar with `-DskipTests -Dskip.ui.verify=true`), and a third
-job joins both jobs' junit results for the reqstool and OpenSpec gates.
+jobs: build + unit gates, the Storybook story tests, and the portal e2e run
+concurrently (the e2e job packages its own jar with `-DskipTests
+-Dskip.ui.verify=true`; the story tests get their own runner because a real
+chromium starves when it shares two cores with the Java build, #103), and a
+final job joins the gates and e2e jobs' junit results for the reqstool and
+OpenSpec gates.
 
 `clean` matters for the reqstool gate: incremental compilation truncates the
 generated annotation files.
@@ -94,8 +98,9 @@ build** — the frontend-maven-plugin provisions node/pnpm, runs the UI gates,
 and packages the bundle into the jar, served at `/` behind the OIDC login. You
 never need pnpm to build or run the gateway. The `cd src/main/frontend &&
 pnpm …` commands exist only for UI development loops (`pnpm dev` proxies
-`/api` to a running gateway, `pnpm test`, `pnpm storybook`) and for the e2e
-suite (`pnpm e2e`), which is deliberately outside `mvnw verify`.
+`/api` to a running gateway, `pnpm test`, `pnpm storybook`) and for the two
+real-browser suites — Storybook story tests (`pnpm test:stories`) and e2e
+(`pnpm e2e`) — which are deliberately outside `mvnw verify`.
 
 Dependency updates are automated with Renovate (`renovate.json`); enable the
 Renovate GitHub App on the repository for it to take effect.
