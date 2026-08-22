@@ -1,0 +1,30 @@
+// Extends the shared @skillsgateway preset; only repository-specific rules
+// belong here. The preset silently drops labels that do not exist on this
+// repository -- bot-renovate*, renovate-version-* and security are declared in
+// the skillsgateway/.github-private safe-settings repository.
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+
+  extends: ["github>skillsgateway/.github//.github/renovate.json5"],
+
+  // Kept from the pre-preset config: the preset adds bot-renovate, addLabels
+  // appends rather than replaces.
+  addLabels: ["dependencies"],
+
+  // frontend-maven-plugin pins node and pnpm in pom.xml; the wrapper manager
+  // keeps ./mvnw itself current.
+  "maven-wrapper": {
+    enabled: true,
+  },
+
+  packageRules: [
+    {
+      description: "Group Spring Boot and the Boot-aligned Arconia BOM",
+      groupName: "spring boot",
+      matchPackageNames: [
+        "org.springframework.boot{/,}**",
+        "io.arconia{/,}**",
+      ],
+    },
+  ],
+}
