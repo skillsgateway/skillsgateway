@@ -4,8 +4,8 @@
 
 The native workflow builds the distroless container image and smoke-tests it, but
 never publishes it — downstream platforms that consume images by digest and mirror
-them into their own registry (e.g. internal-platform, whose
-invariant is ECR-mirrored images pinned by `sha256:…` digest) have nothing to pull
+them into their own registry (whose invariant is mirrored images pinned by
+`sha256:…` digest) have nothing to pull
 (issue #67). Publication is the missing last step of GW_0015's container
 distribution story.
 
@@ -22,7 +22,7 @@ distribution story.
 - Only images that passed the in-workflow smoke test are pushed; PR builds and
   scheduled runs never publish.
 - The repository is currently private, so the GHCR package created by the first
-  push is private too: consumers (including the internal-platform mirror)
+  push is private too: consumers (including the downstream mirror)
   pull with a token holding `read:packages`. Package visibility can later be
   made public in GHCR package settings independently of the repo; the docs state
   both modes.

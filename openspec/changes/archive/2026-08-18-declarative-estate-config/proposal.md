@@ -10,8 +10,8 @@ vetting, sync, catalog, token policy, role enforcement — but the estate itself
 audit sinks) is API-only runtime state. A pure GitOps deployment, where the
 whole service is defined in a repository and applied by a pipeline, cannot
 exist: someone has to click or curl the estate into being after every fresh
-environment. The driver is deploying under `
-internal-platform`, where every service is fully defined as code.
+environment. The driver is deploying into a platform where every service is
+fully defined as code.
 
 ## What Changes
 

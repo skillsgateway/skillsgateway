@@ -6,7 +6,7 @@
 distroless image (`docker build -t skills-gateway:ci .`), smoke-tests it against
 a real Postgres, lints the Helm chart, and uploads the image as a tarball
 artifact plus the CycloneDX SBOM. Nothing is pushed to a registry. The
-internal-platform consumes images by immutable digest mirrored into ECR, so
+The consuming platform takes images by immutable digest mirrored into its own registry, so
 a pullable, digest-addressable image is the missing handoff (issue #67, their
 Q53). The repo is private, so the GHCR package will start private.
 
