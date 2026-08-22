@@ -11,7 +11,7 @@
 
 An enterprise gateway for git-distributed AI agent skills and skill
 marketplaces (Claude Code, GitHub Copilot, Cursor, …) — the missing analogue of
-Artifactory/Nexus for the part of the skills ecosystem that never touches a
+a repository manager for the part of the skills ecosystem that never touches a
 package manager.
 
 ---
@@ -21,8 +21,8 @@ package manager.
 Agent skills reach developer machines through two distribution channels today:
 
 1. **Package-manager distribution** (npm, PyPI, OCI). Already governable: point
-   the client at an Artifactory/Nexus remote+virtual repository and you get
-   proxying, caching, scanning (Xray etc.), immutable versions, and audit logs
+   the client at a repository manager's remote+virtual repository and you get
+   proxying, caching, artifact scanning, immutable versions, and audit logs
    for free. **This is a solved problem — the gateway should not rebuild it.**
 
 2. **Git distribution.** Claude Code plugin *marketplaces* are git repositories
@@ -33,15 +33,47 @@ Agent skills reach developer machines through two distribution channels today:
    no immutable versioning, no scanning hook, no inventory** — every developer
    laptop clones straight from the public internet.
 
-JFrog's *Agent Skills Registry* framing correctly identifies skills as a
-governed-artifact problem, but assumes registry-style (package) distribution
-and explicitly leaves the git-marketplace channel unaddressed. That channel is
+Registry-style governance products are starting to treat skills as a
+governed-artifact problem, which is the right framing — but that framing
+assumes package distribution and so reaches only channel 1. Channel 2 is
 where the ecosystem's growth actually is (community marketplaces, vendor
 marketplaces, internal repos), and it is the channel Security currently cannot
 see.
 
 **Skills Gateway is the choke point for channel 2, federated with the existing
 repository manager that already covers channel 1.**
+
+### Related work
+
+Two projects have begun to address channel 2, and both stop at the registry
+layer rather than the serving layer — which is the distinction this design
+turns on.
+
+- **LiteLLM Skills Gateway**
+  ([docs](https://docs.litellm.ai/docs/skills_gateway)) — a registry and
+  discovery plane for Claude Code skills. Teams register a skill
+  with a `github`, `url`, or `git-subdir` source, an admin toggles it public,
+  and the proxy serves a `marketplace.json` at
+  `GET /claude-code/marketplace.json` that clients add as a marketplace.
+  This solves inventory and discovery, and its "make public" toggle is a
+  genuine approval gate. What the documentation describes is a manifest of
+  *upstream* sources: no snapshot of the content, no commit-SHA pin, and no
+  scanning hook. Clients therefore still dereference the upstream URL, so
+  mutable refs (T3) and transitive plugin sources (T4) remain live, and the
+  proxy is not on the fetch path where an audit ledger or an egress control
+  could sit.
+- **agentgateway** ([issue #3094](https://github.com/agentgateway/agentgateway/issues/3094))
+  — an open feature request for skill discovery across multi-agent systems.
+  It is explicitly a *metadata and discovery* proposal: skills stay wherever
+  they live (filesystem, git, private registry) under their creators'
+  ownership, and the gateway indexes them. Distributed ownership is a stated
+  goal rather than an omission, so governance of the artifact itself is out of
+  scope by design.
+
+Both confirm the demand and neither occupies the choke point. Indexing
+upstream URLs makes the estate *visible*; only re-serving pinned, rewritten
+content makes it *governable*. That is the difference between principle 1
+("be the only door") and a catalog.
 
 ## 2. Why skills are a real attack surface
 
@@ -81,9 +113,9 @@ naive mirroring is insufficient.
 5. **Risk-tiered friction.** A markdown-only skill and a plugin that registers
    shell hooks are different animals; review effort must match (see §6), or
    admins drown and users route around the system.
-6. **Complement the existing repository manager.** npm/OCI-packaged skills stay
-   in Artifactory/Nexus. The gateway federates its catalog with it so users get
-   one search plane, and Security gets one policy conversation.
+6. **Complement the existing repository manager.** npm/OCI-packaged skills
+   stay there. The gateway federates its catalog with it so users get one
+   search plane, and Security gets one policy conversation.
 
 ## 4. System architecture
 
@@ -111,7 +143,7 @@ flowchart LR
         CI["CI pipelines"]
     end
 
-    ART["Artifactory / Nexus\n(npm / OCI skills)"]
+    ART["Repository manager\n(npm / OCI skills)"]
 
     GH --> ING --> SCAN --> POL --> PUB --> FAC
     SCAN <--> CONN
@@ -147,9 +179,9 @@ flowchart LR
   asynchronous result callbacks. A connector is anything that can take the
   trigger and eventually answer
   `{connector, snapshot, verdict, report-url, findings[]}`:
-  - *Scanners:* JFrog Xray or similar, malware signatures, dependency and
-    secret scanning, license checks, obfuscation/invisible-Unicode detection
-    in markdown.
+  - *Scanners:* artifact and vulnerability scanners, malware signatures,
+    dependency and secret scanning, license checks,
+    obfuscation/invisible-Unicode detection in markdown.
   - *LLM semantic review:* reads `SKILL.md`/commands/agents for
     malicious-instruction payloads (T1) — does this instruct the agent to
     access credentials, make network calls, modify files outside its stated
@@ -172,14 +204,14 @@ flowchart LR
   decided (auto-approval deliberately parked: it would delegate the human
   gate, a product decision, not a feature).
 - **Publisher.** Composes virtual marketplaces per audience (org-wide, per
-  team, pilot ring) from approved snapshots — exactly Artifactory's
-  local + remote + virtual model. Generates `marketplace.json` with **every
+  team, pilot ring) from approved snapshots — exactly the repository
+  manager's local + remote + virtual model. Generates `marketplace.json` with **every
   source rewritten** to façade URLs and pinned with an explicit commit `sha`
   (plugin source entries support `ref` and 40-char `sha` pinning; when both
   are set the `sha` wins) — so the pin is enforced by the client's own git
   fetch, not just by gateway behavior.
-- **Catalog & portal.** Search across gateway *and* federated Artifactory/Nexus
-  skills; per-skill page with scan history, tier, owner, install count, trust
+- **Catalog & portal.** Search across gateway *and* federated
+  repository-manager skills; per-skill page with scan history, tier, owner, install count, trust
   signals; "request this upstream skill" button feeding the approval queue.
 - **Audit ledger.** Append-only record of every fetch (who, what, which SHA,
   when), every approval (who, what diff, which scan report), every recall.
@@ -297,7 +329,7 @@ skill-name@1.4.0+gw.7
 
 The `+gw.N` counter increments per republication of the same upstream version
 (e.g. re-scan, metadata fix), so "what exactly ran" is always answerable — the
-compliance question (T6/JFrog's "which version executed") reduces to a ledger
+compliance question (T6, "which version executed") reduces to a ledger
 lookup. Snapshots are content-addressed; the façade's published branches are
 append-only. Phase 3 adds signed in-toto/Sigstore attestations binding
 upstream SHA → scan → approval → published artifact — a deferral decided, with
@@ -345,11 +377,11 @@ not one mechanism.
   stale installed versions, egress-block events; advisory feeds (malicious
   skill/package disclosures) matched against inventory automatically.
 
-## 10. What stays in Artifactory/Nexus
+## 10. What stays in the repository manager
 
 npm- and OCI-packaged skills continue to flow through the existing repository
 manager — remote repos for upstream registries, virtual repos per audience,
-Xray-class scanning. The gateway federates: its catalog indexes both planes so
+artifact scanning. The gateway federates: its catalog indexes both planes so
 end users search once, and policy definitions (licenses, deny lists) are shared
 where formats allow. A later phase can *re-publish* approved git-skill
 snapshots as OCI artifacts internally — provenance-native storage — while the
@@ -412,7 +444,7 @@ inward.
   portal grants UI are deferred.
 - **Phase 3 — assurance & scale.** Client telemetry inventory, kill switch
   with fleet force-uninstall, signed attestations, additional tool adapters,
-  Artifactory/Nexus catalog federation, OCI re-publication.
+  repository-manager catalog federation, OCI re-publication.
 
 ## 14. Open questions
 
