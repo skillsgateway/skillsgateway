@@ -182,8 +182,9 @@ Only needed when changing the portal:
 $ cd src/main/frontend
 $ corepack enable pnpm
 $ pnpm install
-$ pnpm dev          # proxies /api and /actuator to localhost:8080
-$ pnpm test
+$ pnpm dev           # proxies /api and /actuator to localhost:8080
+$ pnpm test          # jsdom unit tests
+$ pnpm test:stories  # Storybook story tests in real chromium
 $ pnpm storybook
 ```
 
@@ -192,11 +193,12 @@ $ pnpm storybook
 All must pass before any pull request:
 
 ```console
-$ ./mvnw clean verify                     # Java + UI gates, packaged jar
-$ (cd src/main/frontend && pnpm e2e)      # real-browser e2e vs a mock OIDC IdP
-$ reqstool status local -p docs/reqstool  # must end "PASS"
+$ ./mvnw clean verify                          # Java + UI gates, packaged jar
+$ (cd src/main/frontend && pnpm test:stories)  # Storybook story tests in real chromium
+$ (cd src/main/frontend && pnpm e2e)           # real-browser e2e vs a mock OIDC IdP
+$ reqstool status local -p docs/reqstool       # must end "PASS"
 $ openspec validate --all --strict
-$ mkdocs build --strict                   # documentation
+$ mkdocs build --strict                        # documentation
 ```
 
 Use `clean` for the reqstool gate — incremental compilation truncates the
