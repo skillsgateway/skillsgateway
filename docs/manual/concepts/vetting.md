@@ -23,7 +23,7 @@ flowchart TD
 
     subgraph C["Vetting chain — ordered, all connectors run"]
         direction TB
-        C1["secret-scan (order 100)"] --> C2["prompt-injection (order 200)"]
+        C1["secret-scan (order 100)"] --> C2["prompt-injection (order 200)"] --> C3["license-scan (order 300)"]
     end
 
     C --> A["Aggregate verdicts<br/>clear iff every verdict is pass or warn"]
@@ -212,7 +212,7 @@ rather than merely observable in it.
 
 ## The built-in connectors
 
-Both connectors ship in the gateway and run in every chain.
+All three connectors ship in the gateway and run in every chain.
 
 ### `secret-scan`
 
@@ -239,6 +239,31 @@ Pattern heuristics over the snapshot's Markdown instruction content
 | `exfiltration-instruction` | Sending credentials or environment values to a host |
 | `hidden-html-instruction` | Agent-directed text inside an HTML comment |
 | `invisible-characters` | Zero-width, bidirectional, and Unicode-tag characters used to hide text from a human reading the diff |
+
+### `license-scan`
+
+Deterministic license detection over the pinned content, evaluated against the
+[configured allow/ban lists](../reference/configuration.md#vetting): SPDX ids
+resolved from license/copying files anywhere in the tree,
+`SPDX-License-Identifier` tags inside them, and the marketplace manifest's
+`license` metadata fields. Exact fingerprint matching only — no scoring:
+
+| Rule | What it means | Blocks |
+| --- | --- | --- |
+| `license-detected` | A license was identified (always recorded, informational) | never |
+| `license-banned` | The license is on the configured ban list | always |
+| `license-not-allowed` | An allow list is configured and does not contain it | always |
+| `license-unknown` | The source identifies no known license — a first-class state, never a guess | only when an allow list is configured; warns otherwise |
+| `license-missing` | The snapshot carries no license information at all | only when an allow list is configured; warns otherwise |
+
+With neither list configured — the default — nothing blocks: detection is
+recorded, and unknown or missing licenses warn so a reviewer sees them without
+any estate being blocked by an upgrade. The connector's recorded version
+carries a digest of the policy in force, so a changed list is visible in every
+run's chain identity. The task-shaped walkthrough is
+[License compliance for skills](../guides/license-compliance.md); the same
+detection is readable per snapshot at
+[`GET /api/snapshots/{id}/licenses`](../reference/api/marketplaces.md#get-snapshotsidlicenses).
 
 !!! warning "What a passing verdict does *not* mean"
 

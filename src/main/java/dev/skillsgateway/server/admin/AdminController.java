@@ -15,6 +15,7 @@ import dev.skillsgateway.server.persistence.SnapshotNotFoundException;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
 import dev.skillsgateway.server.policy.PolicyDeniedException;
 import dev.skillsgateway.server.roles.RoleService;
+import dev.skillsgateway.server.vetting.LicenseReportService;
 import dev.skillsgateway.server.vetting.WaiverService;
 import dev.skillsgateway.server.webhook.WebhookEvent;
 import dev.skillsgateway.server.webhook.WebhookService;
@@ -53,6 +54,7 @@ public class AdminController {
     private final ApprovalService approvalService;
     private final FetchLogRepository fetchLogRepository;
     private final SnapshotContentService snapshotContentService;
+    private final LicenseReportService licenseReportService;
     private final AdminAuditLogger auditLogger;
     private final WebhookService webhookService;
     private final WaiverService waiverService;
@@ -66,6 +68,7 @@ public class AdminController {
             ApprovalService approvalService,
             FetchLogRepository fetchLogRepository,
             SnapshotContentService snapshotContentService,
+            LicenseReportService licenseReportService,
             AdminAuditLogger auditLogger,
             WebhookService webhookService,
             WaiverService waiverService,
@@ -77,6 +80,7 @@ public class AdminController {
         this.approvalService = approvalService;
         this.fetchLogRepository = fetchLogRepository;
         this.snapshotContentService = snapshotContentService;
+        this.licenseReportService = licenseReportService;
         this.auditLogger = auditLogger;
         this.webhookService = webhookService;
         this.waiverService = waiverService;
@@ -163,6 +167,24 @@ public class AdminController {
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
     public SnapshotContentService.SnapshotContent snapshotContent(@PathVariable long id) {
         return snapshotContentService.content(id);
+    }
+
+    @GetMapping("/snapshots/{id}/licenses")
+    @Requirements({"GW_0095"})
+    @Tag(name = "Snapshots")
+    @Operation(
+            summary = "Snapshot license report",
+            description = "The licenses the snapshot declares — detected deterministically from license/copying"
+                    + " files and marketplace-manifest metadata over the content pinned to the snapshot's commit"
+                    + " SHA — each with its SPDX id (or its unknown state) and its standing under the license"
+                    + " allow/ban policy currently configured. Computed from the pinned content and the current"
+                    + " configuration: the historical evidence the approval gate read lives in the recorded"
+                    + " vetting runs. Complements the snapshot content inventory and the gateway's own SBOM"
+                    + " endpoint as the supply-chain read surface.")
+    @ApiResponse(responseCode = "200", description = "Detected licenses and their policy evaluation")
+    @ApiResponse(responseCode = "404", description = "Snapshot not found")
+    public LicenseReportService.LicenseReport snapshotLicenses(@PathVariable long id) {
+        return licenseReportService.report(id);
     }
 
     /** The ingested ref is the gateway's decision (upstream default branch), never the consumer's. */

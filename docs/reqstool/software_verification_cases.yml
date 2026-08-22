@@ -883,7 +883,6 @@ cases:
       WHEN rules are created, listed, updated and deleted through the API with valid, syntactically invalid, non-boolean and duplicate-named expressions, and reconciliation runs
       THEN valid mutations succeed with a ledger entry each and reads answer auditors and admins, invalid and non-boolean expressions are refused with a validation error and are not stored, a duplicate name is refused as a conflict, mutations and reads below their required role are refused, the valid declared rule is created and enforced, the identical declared rule reconciles with zero writes, and the non-compiling declared rule fails as an isolated entry without blocking the others
     revision: "0.1.0"
-
   - id: SVC_GW_0090
     requirement_ids: ["GW_0090"]
     title: The policy gate denies on match and on every error path, publishing nothing
@@ -893,7 +892,6 @@ cases:
       WHEN approval is requested for each snapshot
       THEN a matching rule refuses the approval with a conflict naming the rule, the snapshot stays held and the marketplace's served tip is unchanged, a non-matching enabled rule and a disabled matching rule do not refuse, a rule that errors at runtime refuses naming the rule, the comprehension bomb refuses within the evaluation bound rather than hanging, malformed frontmatter refuses under a tools rule, and with no deciding rule the approval succeeds and is served
     revision: "0.1.0"
-
   - id: SVC_GW_0091
     requirement_ids: ["GW_0091"]
     title: Every deciding rule lands on the ledger with its outcome
@@ -903,7 +901,6 @@ cases:
       WHEN approval is requested and refused
       THEN the ledger carries one policy-denied entry per deciding rule naming the rule, the snapshot SHA, the marketplace and the acting reviewer, the matched rule's entry records a match and the erroring rule's entry records the evaluation failure, and no snapshot-approved entry is written
     revision: "0.1.0"
-
   - id: SVC_GW_0092
     requirement_ids: ["GW_0092"]
     title: The playground evaluates real snapshots and is provably inert
@@ -912,4 +909,31 @@ cases:
       GIVEN a held snapshot with skills content, an approver of its marketplace and — under role enforcement — a session that cannot approve it
       WHEN expressions that match, do not match, fail to compile and fail to evaluate are submitted to the playground, and the unauthorized session submits one
       THEN the answers report matched, not matched, the compile error and the evaluation error respectively without echoing snapshot content, the unauthorized session is refused, and after all calls the ledger row count, the rule set, the snapshot state and the marketplace's served state are exactly what they were before
+    revision: "0.1.0"
+  - id: SVC_GW_0093
+    requirement_ids: ["GW_0093"]
+    title: License detection is deterministic and names unknown and missing states
+    verification: automated-test
+    description: |
+      GIVEN snapshots carrying an MIT license file, an Apache-2.0 COPYING file, a license file whose only identification is an SPDX-License-Identifier tag, a manifest declaring a plugin license, a license file of unrecognizable text, and no license information at all
+      WHEN each snapshot is ingested and the license connector's verdict is read
+      THEN each identified license is a finding naming its SPDX identifier and located at its file path or manifest field, the unrecognizable file yields an unknown-license finding at its path, the snapshot without license information yields a missing-license finding, and re-running the chain over the same content yields the same findings
+    revision: "0.1.0"
+  - id: SVC_GW_0094
+    requirement_ids: ["GW_0094"]
+    title: Ban and allow lists block through the ordinary gate, defaults only warn
+    verification: automated-test
+    description: |
+      GIVEN a gateway with default license configuration, one with a ban list naming a license a fixture carries, and one with a non-empty allow list the fixtures variously satisfy, miss, or defeat with unknown or missing licenses
+      WHEN the fixtures are ingested and approval is attempted
+      THEN under defaults identified licenses are informational and unknown or missing ones warn without blocking approval, the banned license and the allow-list misses each block approval naming their finding through the standard vetting-blocked refusal, a scoped expiring waiver on the finding's rule identifier is what lets the approval through, the verdicts are on the append-only ledger, and the recorded chain identity reflects the policy in force
+    revision: "0.1.0"
+  - id: SVC_GW_0095
+    requirement_ids: ["GW_0095"]
+    title: The licenses endpoint reports detections with their policy evaluation
+    verification: automated-test
+    description: |
+      GIVEN a snapshot carrying an identified license, an unknown license file and a manifest license, under a configured ban list naming one of them
+      WHEN its license report endpoint is requested, and a report is requested for a snapshot id that does not exist
+      THEN the response lists each detection with its SPDX identifier or unknown state, its file path or manifest field source, and its evaluation under the configured policy including the banned entry marked as banned, and the unknown snapshot id answers not-found
     revision: "0.1.0"

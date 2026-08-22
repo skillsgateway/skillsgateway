@@ -93,9 +93,13 @@ class VettingTests extends AbstractGatewayTest {
                 .containsExactlyElementsOf(vettingService.connectors().stream()
                         .map(VettingConnector::name)
                         .toList());
+        // Positions are dense and zero-based over the configured chain, whatever its size.
         assertThat(run.verdicts())
                 .extracting(VettingRepository.VerdictView::position)
-                .containsExactly(0, 1);
+                .containsExactlyElementsOf(java.util.stream.IntStream.range(
+                                0, vettingService.connectors().size())
+                        .boxed()
+                        .toList());
         // Clean content: the chain clears, and every verdict carries its (empty) finding list.
         assertThat(run.outcome()).isEqualTo(VettingChain.Outcome.CLEAR);
         assertThat(run.verdicts())

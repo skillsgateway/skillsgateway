@@ -200,6 +200,18 @@ skills-gateway:
     # The cooling-off window: how long a commit must have been in quarantine
     # before it can be approved. 0 — the default — is no window at all.
     minimum-release-age: 0s
+
+    # The organisation-level license policy, evaluated by the built-in
+    # license-scan connector. Both lists default to empty, under which
+    # identified licenses are informational and an unknown or missing license
+    # only warns — an upgrade blocks nothing.
+    license:
+      # SPDX ids. Once non-empty, any license not on the list — and any
+      # unknown or missing license — is a blocking finding.
+      allowed: [MIT, Apache-2.0, BSD-3-Clause]
+      # SPDX ids whose detection is a blocking finding. Checked before the
+      # allow list: a license on both is reported as banned.
+      banned: [AGPL-3.0]
 ```
 
 | Property | Type | Default | Notes |
@@ -209,6 +221,8 @@ skills-gateway:
 | `skills-gateway.vetting.waiver-sweep-interval` | duration | `1h` | How often `waiver-expired` ledger entries are written. Has no effect on the gate. |
 | `skills-gateway.vetting.waiver-sweep-batch-size` | integer | `200` | Lapsed waivers recorded per pass. |
 | `skills-gateway.vetting.minimum-release-age` | duration | `0s` | How long the gateway must have held a commit before it may be approved. `0` disables the gate. |
+| `skills-gateway.vetting.license.allowed` | string list | empty | SPDX ids, case-insensitive. Empty means no allow list is enforced. |
+| `skills-gateway.vetting.license.banned` | string list | empty | SPDX ids, case-insensitive. Evaluated before the allow list. |
 
 ### Minimum release age
 
@@ -238,6 +252,15 @@ for the first snapshot of a newly registered marketplace: an exemption is a
 special case an attacker can arrange to land in. Getting an urgent fix out
 before the window elapses means changing this setting, which is a deployment
 someone reviews.
+
+!!! note "The license policy is configuration on purpose"
+
+    Vetting policy must be attributable per chain run: the `license-scan`
+    connector stamps a digest of these lists into its recorded version, so a
+    changed answer about unchanged content can be traced to the policy change
+    that caused it. That is why the lists change by deploy, not by API — see
+    [License compliance for skills](../guides/license-compliance.md). After
+    changing them, trigger a re-vet to turn the new policy into fresh evidence.
 
 !!! note "There is no switch that turns vetting off"
 

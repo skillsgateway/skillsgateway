@@ -624,6 +624,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/snapshots/{id}/licenses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Snapshot license report
+         * @description The licenses the snapshot declares — detected deterministically from license/copying files and marketplace-manifest metadata over the content pinned to the snapshot's commit SHA — each with its SPDX id (or its unknown state) and its standing under the license allow/ban policy currently configured. Computed from the pinned content and the current configuration: the historical evidence the approval gate read lives in the recorded vetting runs. Complements the snapshot content inventory and the gateway's own SBOM endpoint as the supply-chain read surface.
+         */
+        get: operations["snapshotLicenses"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/snapshots/{id}/files": {
         parameters: {
             query?: never;
@@ -1969,6 +1989,44 @@ export interface components {
             revokedAt?: string;
             /** @description Identity that revoked it, or null */
             revokedBy?: string;
+        };
+        /** @description The licenses a snapshot declares, evaluated under the configured policy */
+        LicenseReport: {
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            snapshotId?: number;
+            /** @description Upstream commit SHA the detection ran over */
+            sha?: string;
+            /** @description Every detection; empty means the snapshot carries no license information */
+            licenses?: components["schemas"]["LicenseView"][];
+            /** @description The configured allow list (SPDX ids); empty means not configured */
+            allowed?: string[];
+            /** @description The configured ban list (SPDX ids) */
+            banned?: string[];
+        };
+        /** @description One detected license and its standing under the configured policy */
+        LicenseView: {
+            /**
+             * @description SPDX id, or null for the unknown-license state
+             * @example Apache-2.0
+             */
+            spdxId?: string;
+            /**
+             * @description Where it was detected
+             * @enum {string}
+             */
+            source?: "file" | "manifest";
+            /** @description File path, or <manifest path>#<field> for manifest metadata */
+            location?: string;
+            /** @description Raw declared value for manifest metadata; null for files */
+            declared?: string;
+            /**
+             * @description Standing under the configured allow/ban policy
+             * @enum {string}
+             */
+            evaluation?: "OK" | "BANNED" | "NOT_ALLOWED" | "UNKNOWN";
         };
         /** @description The file tree of exactly the commit the snapshot pins */
         FileTree: {
@@ -3467,6 +3525,37 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["Provenance"];
+                };
+            };
+        };
+    };
+    snapshotLicenses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Detected licenses and their policy evaluation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LicenseReport"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LicenseReport"];
                 };
             };
         };
