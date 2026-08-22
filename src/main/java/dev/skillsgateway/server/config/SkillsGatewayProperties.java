@@ -41,7 +41,7 @@ public record SkillsGatewayProperties(
             retention = new Retention(null, null, null, null, null, null);
         }
         if (vetting == null) {
-            vetting = new Vetting(null, null, null, null, null, null);
+            vetting = new Vetting(null, null, null, null, null, null, null);
         }
         if (sync == null) {
             sync = new Sync(null, null, null, null);
@@ -239,6 +239,7 @@ public record SkillsGatewayProperties(
      *     waiver expiry this is a comparison made per approval request, not a scheduled state, so
      *     the wait clears itself and no sweep can be late.
      * @param revet continuous re-vetting of approved content (GW_0049-GW_0054)
+     * @param license the org-level license policy (GW_0094)
      */
     public record Vetting(
             Duration timeout,
@@ -246,7 +247,8 @@ public record SkillsGatewayProperties(
             Duration waiverSweepInterval,
             Integer waiverSweepBatchSize,
             Duration minimumReleaseAge,
-            Revet revet) {
+            Revet revet,
+            License license) {
 
         public Vetting {
             if (minimumReleaseAge == null || minimumReleaseAge.isNegative()) {
@@ -267,6 +269,35 @@ public record SkillsGatewayProperties(
             if (revet == null) {
                 revet = new Revet(null, null, null, null, null);
             }
+            if (license == null) {
+                license = new License(null, null);
+            }
+        }
+    }
+
+    /**
+     * The organisation-level license policy (GW_0094), evaluated by the built-in license-scan
+     * vetting connector and reported by the per-snapshot license endpoint (GW_0095).
+     *
+     * <p>Deliberately configuration rather than API-managed runtime state: vetting policy must be
+     * attributable per chain run (GW_0049), and a policy that changes only by deploy — its digest
+     * stamped into the connector's recorded version — keeps every run's chain identity naming the
+     * policy it ran under. Both lists default to empty, under which identified licenses are
+     * informational and unknown or missing licenses only warn, so an upgrade blocks nothing.
+     *
+     * @param allowed SPDX ids; when non-empty, any license not on it — and any unknown or missing
+     *     license — is a blocking finding
+     * @param banned SPDX ids whose detection is a blocking finding; checked before the allow list
+     */
+    public record License(List<String> allowed, List<String> banned) {
+
+        public License {
+            allowed = allowed == null ? List.of() : List.copyOf(allowed);
+            banned = banned == null ? List.of() : List.copyOf(banned);
+        }
+
+        public boolean allowListConfigured() {
+            return !allowed.isEmpty();
         }
     }
 
