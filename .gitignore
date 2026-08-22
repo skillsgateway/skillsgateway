@@ -24,6 +24,9 @@ data/
 .factorypath
 .inlined-pom.xml
 .claude/worktrees/
+# Per-machine Claude Code settings (hooks, permissions). Ignored here rather
+# than relying on a personal global gitignore, which no other checkout has.
+.claude/settings.local.json
 
 # Impeccable: per-developer overrides and the hook's dedup cache. The shared
 # .impeccable/config.json is committed. Anchored with **/ because the design
