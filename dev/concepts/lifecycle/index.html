@@ -53,6 +53,8 @@
       
     
     
+      <link rel="stylesheet" href="../../assets/extra.css">
+    
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
@@ -1897,25 +1899,298 @@
 stages are separated by <strong>storage</strong>, not by a flag on a row: quarantined content
 physically lives in a different git repository from published content.</p>
 <p>This page is the product. Everything else is detail around it.</p>
-<pre class="mermaid"><code>flowchart TD
-    A["Upstream pushes a commit"] --&gt; B["Ingest&lt;br/&gt;POST /api/marketplaces/{name}/ingest"]
-    B --&gt; C{"Ingestion accepts?"}
-    C --&gt;|"external source,&lt;br/&gt;disallowed scheme"| D["Rejected fail-closed&lt;br/&gt;violation recorded"]
-    C --&gt;|ok| E["Snapshot: held&lt;br/&gt;refs/snapshots/{sha} in quarantine"]
-    E --&gt; V["Vetting chain runs&lt;br/&gt;verdict per connector"]
-    V --&gt; F["Reviewer inspects&lt;br/&gt;verdicts + contents + provenance"]
-    F --&gt;|reject| G["state: rejected&lt;br/&gt;previous approval keeps serving"]
-    F --&gt;|approve| H["ApprovalService publishes&lt;br/&gt;refs/heads/main → sha"]
-    H --&gt; I["Clients fetch the new SHA"]
-    H --&gt; R["Re-vetting sweep&lt;br/&gt;runs the chain again, later"]
-    R --&gt;|"violation, enforce mode"| X["state: revoked&lt;br/&gt;published refs removed"]
-    X --&gt;|"fresh approve decision"| H
-    R -.-&gt; L
-    X -.-&gt; L
-    V -.-&gt; L[("Audit ledger")]
-    E -.-&gt; L
-    G -.-&gt; L
-    H -.-&gt; L</code></pre>
+<!-- Diagram source of truth: docs/diagrams/lifecycle.mmd (Mermaid).
+     The SVG pair below is generated from it with the diagram-design system —
+     regenerate via .claude/skills/docs-diagrams whenever the .mmd changes. -->
+<div class="dd-diagram dd-light">
+<svg viewBox="0 0 960 1000" role="img" aria-labelledby="lifecycle-light-title lifecycle-light-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="lifecycle-light-title">Skills Gateway snapshot lifecycle</title>
+    <desc id="lifecycle-light-desc">Flowchart of the quarantine-to-serve lifecycle: an upstream commit is ingested into a quarantined snapshot, vetted by the connector chain, decided by a reviewer, and only the ApprovalService publishes it across the trust boundary to the read-only facade; re-vetting can later revoke it, and every transition lands on the append-only audit ledger.</desc>
+    <defs>
+      <marker id="arr-light" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#5c576e"/>
+      </marker>
+      <marker id="arr-accent-light" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#7c3aed"/>
+      </marker>
+    </defs>
+    <style>.ddl-node-name { font-family: 'Geist', system-ui, sans-serif; font-size: 12px; font-weight: 600; fill: #26222f; }
+    .ddl-sub { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 9px; fill: #5c576e; }
+    .ddl-tag { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 7px; letter-spacing: 0.08em; fill: #5c576e; }
+    .ddl-zone-label { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 8px; font-weight: 500; letter-spacing: 0.16em; fill: #837d94; }
+    .ddl-arrow-label { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 8px; letter-spacing: 0.06em; fill: #837d94; }
+    .ddl-annotation { font-family: 'Instrument Serif', Georgia, serif; font-style: italic; font-size: 14px; fill: #5c576e; }
+    .ddl-legend { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 8px; letter-spacing: 0.1em; fill: #5c576e; }</style>
+    <rect x="0" y="0" width="960" height="1000" rx="8" fill="#f7f5fa"/>
+
+
+    <!-- zones (painted first) -->
+    <rect x="160" y="224" width="320" height="360" rx="8" fill="rgba(124,58,237,0.08)" stroke="rgba(124,58,237,0.5)" stroke-width="1" stroke-dasharray="4,4"/>
+    <text x="176" y="246" class="ddl-zone-label">QUARANTINE · NEVER SERVED</text>
+    <rect x="160" y="708" width="320" height="124" rx="8" fill="rgba(38,34,47,0.02)" stroke="#c9c4d6" stroke-width="0.8"/>
+    <text x="176" y="730" class="ddl-zone-label">SERVED · READ-ONLY GIT FACADE</text>
+
+    <!-- arrows (before boxes) -->
+    <line x1="320" y1="68" x2="320" y2="112" stroke="#5c576e" stroke-width="1" marker-end="url(#arr-light)"/>
+    <line x1="440" y1="144" x2="560" y2="144" stroke="#5c576e" stroke-width="1" marker-end="url(#arr-light)"/>
+    <rect x="464" y="124" width="76" height="12" rx="2" fill="#f7f5fa"/>
+    <text x="502" y="133" class="ddl-arrow-label" text-anchor="middle">DISALLOWED</text>
+    <line x1="320" y1="176" x2="320" y2="260" stroke="#5c576e" stroke-width="1" marker-end="url(#arr-light)"/>
+    <rect x="332" y="196" width="24" height="12" rx="2" fill="#f7f5fa"/>
+    <text x="344" y="205" class="ddl-arrow-label" text-anchor="middle">OK</text>
+    <line x1="320" y1="316" x2="320" y2="356" stroke="#5c576e" stroke-width="1" marker-end="url(#arr-light)"/>
+    <line x1="320" y1="412" x2="320" y2="452" stroke="#5c576e" stroke-width="1" marker-end="url(#arr-light)"/>
+    <line x1="408" y1="500" x2="560" y2="500" stroke="#5c576e" stroke-width="1" marker-end="url(#arr-light)"/>
+    <rect x="452" y="480" width="64" height="12" rx="2" fill="#f7f5fa"/>
+    <text x="484" y="489" class="ddl-arrow-label" text-anchor="middle">REJECT</text>
+    <line x1="320" y1="548" x2="320" y2="600" stroke="#7c3aed" stroke-width="1.2" marker-end="url(#arr-accent-light)"/>
+    <rect x="332" y="564" width="64" height="12" rx="2" fill="#f7f5fa"/>
+    <text x="364" y="573" class="ddl-arrow-label" text-anchor="middle" fill="#7c3aed">APPROVE</text>
+    <line x1="320" y1="664" x2="320" y2="744" stroke="#5c576e" stroke-width="1" marker-end="url(#arr-light)"/>
+    <line x1="440" y1="620" x2="560" y2="620" stroke="#5c576e" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arr-light)"/>
+    <line x1="672" y1="664" x2="672" y2="744" stroke="#5c576e" stroke-width="1" marker-end="url(#arr-light)"/>
+    <rect x="680" y="696" width="72" height="12" rx="2" fill="#f7f5fa"/>
+    <text x="716" y="705" class="ddl-arrow-label" text-anchor="start">VIOLATION</text>
+    <path d="M 560,768 L 504,768 Q 496,768 496,760 L 496,656 Q 496,648 488,648 L 440,648"
+          fill="none" stroke="#5c576e" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arr-light)"/>
+    <rect x="404" y="700" width="84" height="12" rx="2" fill="#f7f5fa"/>
+    <text x="446" y="709" class="ddl-arrow-label" text-anchor="middle">RE-APPROVE</text>
+
+    <!-- start: upstream (external) -->
+    <rect x="200" y="24" width="240" height="44" rx="22" fill="#f7f5fa"/>
+    <rect x="200" y="24" width="240" height="44" rx="22" fill="rgba(38,34,47,0.03)" stroke="rgba(38,34,47,0.30)" stroke-width="1"/>
+    <text x="320" y="50" class="ddl-node-name" text-anchor="middle">Upstream pushes a commit</text>
+
+    <!-- ingest -->
+    <rect x="200" y="112" width="240" height="64" rx="6" fill="#f7f5fa"/>
+    <rect x="200" y="112" width="240" height="64" rx="6" fill="#ffffff" stroke="#26222f" stroke-width="1"/>
+    <text x="320" y="140" class="ddl-node-name" text-anchor="middle">Ingest</text>
+    <text x="320" y="156" class="ddl-sub" text-anchor="middle">POST /api/marketplaces/{name}/ingest</text>
+
+    <!-- refused chip -->
+    <rect x="560" y="120" width="224" height="48" rx="6" fill="#f7f5fa"/>
+    <rect x="560" y="120" width="224" height="48" rx="6" fill="rgba(38,34,47,0.03)" stroke="rgba(38,34,47,0.30)" stroke-width="1"/>
+    <text x="672" y="140" class="ddl-node-name" text-anchor="middle">Refused fail-closed</text>
+    <text x="672" y="156" class="ddl-sub" text-anchor="middle">violation on the ledger</text>
+
+    <!-- held snapshot (store) -->
+    <rect x="200" y="260" width="240" height="56" rx="6" fill="#f7f5fa"/>
+    <rect x="200" y="260" width="240" height="56" rx="6" fill="rgba(38,34,47,0.05)" stroke="#5c576e" stroke-width="1"/>
+    <text x="320" y="284" class="ddl-node-name" text-anchor="middle">Snapshot held</text>
+    <text x="320" y="300" class="ddl-sub" text-anchor="middle">refs/snapshots/{sha}</text>
+
+    <!-- vetting chain -->
+    <rect x="200" y="356" width="240" height="56" rx="6" fill="#f7f5fa"/>
+    <rect x="200" y="356" width="240" height="56" rx="6" fill="#ffffff" stroke="#26222f" stroke-width="1"/>
+    <text x="320" y="380" class="ddl-node-name" text-anchor="middle">Vetting chain</text>
+    <text x="320" y="396" class="ddl-sub" text-anchor="middle">one verdict per connector</text>
+
+    <!-- reviewer decision diamond -->
+    <polygon points="320,452 408,500 320,548 232,500" fill="#f7f5fa"/>
+    <polygon points="320,452 408,500 320,548 232,500" fill="#ffffff" stroke="#26222f" stroke-width="1"/>
+    <text x="320" y="496" class="ddl-node-name" text-anchor="middle">Approve?</text>
+    <text x="320" y="512" class="ddl-sub" text-anchor="middle">reviewer inspects evidence</text>
+
+    <!-- rejected chip -->
+    <rect x="560" y="476" width="224" height="48" rx="6" fill="#f7f5fa"/>
+    <rect x="560" y="476" width="224" height="48" rx="6" fill="rgba(38,34,47,0.03)" stroke="rgba(38,34,47,0.30)" stroke-width="1"/>
+    <text x="672" y="496" class="ddl-node-name" text-anchor="middle">Rejected</text>
+    <text x="672" y="512" class="ddl-sub" text-anchor="middle">prior approval keeps serving</text>
+
+    <!-- ApprovalService (focal) -->
+    <rect x="200" y="600" width="240" height="64" rx="6" fill="#f7f5fa"/>
+    <rect x="200" y="600" width="240" height="64" rx="6" fill="rgba(124,58,237,0.08)" stroke="#7c3aed" stroke-width="1.2"/>
+    <rect x="208" y="608" width="32" height="12" rx="2" fill="transparent" stroke="rgba(124,58,237,0.5)" stroke-width="0.8"/>
+    <text x="224" y="617" class="ddl-tag" text-anchor="middle" fill="#7c3aed">GATE</text>
+    <text x="320" y="636" class="ddl-node-name" text-anchor="middle">ApprovalService publishes</text>
+    <text x="320" y="652" class="ddl-sub" text-anchor="middle">refs/heads/main → {sha}</text>
+
+    <!-- clients -->
+    <rect x="200" y="744" width="240" height="56" rx="6" fill="#f7f5fa"/>
+    <rect x="200" y="744" width="240" height="56" rx="6" fill="#ffffff" stroke="#26222f" stroke-width="1"/>
+    <text x="320" y="768" class="ddl-node-name" text-anchor="middle">Clients fetch the new SHA</text>
+    <text x="320" y="784" class="ddl-sub" text-anchor="middle">git clone /git/{name}</text>
+
+    <!-- re-vetting sweep (async) -->
+    <rect x="560" y="600" width="224" height="64" rx="6" fill="#f7f5fa"/>
+    <rect x="560" y="600" width="224" height="64" rx="6" fill="rgba(38,34,47,0.02)" stroke="#26222f" stroke-opacity="0.2" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="672" y="628" class="ddl-node-name" text-anchor="middle">Re-vetting sweep</text>
+    <text x="672" y="644" class="ddl-sub" text-anchor="middle">chain runs again, later</text>
+
+    <!-- revoked chip -->
+    <rect x="560" y="744" width="224" height="48" rx="6" fill="#f7f5fa"/>
+    <rect x="560" y="744" width="224" height="48" rx="6" fill="rgba(38,34,47,0.03)" stroke="rgba(38,34,47,0.30)" stroke-width="1"/>
+    <text x="672" y="764" class="ddl-node-name" text-anchor="middle">Revoked</text>
+    <text x="672" y="780" class="ddl-sub" text-anchor="middle">published refs removed</text>
+
+    <!-- ledger bar (store) -->
+    <text x="784" y="856" class="ddl-annotation" text-anchor="end">every transition above is appended here</text>
+    <rect x="160" y="872" width="624" height="48" rx="6" fill="#f7f5fa"/>
+    <rect x="160" y="872" width="624" height="48" rx="6" fill="rgba(38,34,47,0.05)" stroke="#5c576e" stroke-width="1"/>
+    <rect x="176" y="880" width="48" height="12" rx="2" fill="transparent" stroke="#5c576e" stroke-width="0.8"/>
+    <text x="200" y="889" class="ddl-tag" text-anchor="middle">LEDGER</text>
+    <text x="472" y="892" class="ddl-node-name" text-anchor="middle">Append-only audit ledger</text>
+    <text x="472" y="908" class="ddl-sub" text-anchor="middle">actor · marketplace · commit SHA, for every step</text>
+
+    <!-- legend -->
+    <line x1="160" y1="948" x2="784" y2="948" stroke="rgba(38,34,47,0.12)" stroke-width="0.8"/>
+    <text x="160" y="970" class="ddl-legend">LEGEND</text>
+    <rect x="240" y="958" width="12" height="12" rx="2" fill="rgba(124,58,237,0.08)" stroke="#7c3aed" stroke-width="1"/>
+    <text x="260" y="968" class="ddl-legend">publish gate</text>
+    <rect x="368" y="958" width="12" height="12" rx="2" fill="rgba(124,58,237,0.08)" stroke="rgba(124,58,237,0.5)" stroke-width="1" stroke-dasharray="3,3"/>
+    <text x="388" y="968" class="ddl-legend">trust boundary</text>
+    <line x1="504" y1="964" x2="528" y2="964" stroke="#5c576e" stroke-width="1" stroke-dasharray="5,4"/>
+    <text x="536" y="968" class="ddl-legend">asynchronous</text>
+    <rect x="648" y="958" width="12" height="12" rx="2" fill="rgba(38,34,47,0.05)" stroke="#5c576e" stroke-width="1"/>
+    <text x="668" y="968" class="ddl-legend">pinned storage</text>
+  </svg>
+
+</div>
+<div class="dd-diagram dd-dark">
+<svg viewBox="0 0 960 1000" role="img" aria-labelledby="lifecycle-dark-title lifecycle-dark-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="lifecycle-dark-title">Skills Gateway snapshot lifecycle</title>
+    <desc id="lifecycle-dark-desc">Flowchart of the quarantine-to-serve lifecycle: an upstream commit is ingested into a quarantined snapshot, vetted by the connector chain, decided by a reviewer, and only the ApprovalService publishes it across the trust boundary to the read-only facade; re-vetting can later revoke it, and every transition lands on the append-only audit ledger.</desc>
+    <defs>
+      <marker id="arr-dark" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#b3acc6"/>
+      </marker>
+      <marker id="arr-accent-dark" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#a78bfa"/>
+      </marker>
+    </defs>
+    <style>.ddd-node-name { font-family: 'Geist', system-ui, sans-serif; font-size: 12px; font-weight: 600; fill: #f1eef8; }
+    .ddd-sub { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 9px; fill: #b3acc6; }
+    .ddd-tag { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 7px; letter-spacing: 0.08em; fill: #b3acc6; }
+    .ddd-zone-label { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 8px; font-weight: 500; letter-spacing: 0.16em; fill: #8d86a1; }
+    .ddd-arrow-label { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 8px; letter-spacing: 0.06em; fill: #8d86a1; }
+    .ddd-annotation { font-family: 'Instrument Serif', Georgia, serif; font-style: italic; font-size: 14px; fill: #b3acc6; }
+    .ddd-legend { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 8px; letter-spacing: 0.1em; fill: #b3acc6; }</style>
+    <rect x="0" y="0" width="960" height="1000" rx="8" fill="#201c2a"/>
+
+
+    <!-- zones (painted first) -->
+    <rect x="160" y="224" width="320" height="360" rx="8" fill="rgba(167,139,250,0.10)" stroke="rgba(167,139,250,0.5)" stroke-width="1" stroke-dasharray="4,4"/>
+    <text x="176" y="246" class="ddd-zone-label">QUARANTINE · NEVER SERVED</text>
+    <rect x="160" y="708" width="320" height="124" rx="8" fill="rgba(241,238,248,0.02)" stroke="rgba(241,238,248,0.24)" stroke-width="0.8"/>
+    <text x="176" y="730" class="ddd-zone-label">SERVED · READ-ONLY GIT FACADE</text>
+
+    <!-- arrows (before boxes) -->
+    <line x1="320" y1="68" x2="320" y2="112" stroke="#b3acc6" stroke-width="1" marker-end="url(#arr-dark)"/>
+    <line x1="440" y1="144" x2="560" y2="144" stroke="#b3acc6" stroke-width="1" marker-end="url(#arr-dark)"/>
+    <rect x="464" y="124" width="76" height="12" rx="2" fill="#201c2a"/>
+    <text x="502" y="133" class="ddd-arrow-label" text-anchor="middle">DISALLOWED</text>
+    <line x1="320" y1="176" x2="320" y2="260" stroke="#b3acc6" stroke-width="1" marker-end="url(#arr-dark)"/>
+    <rect x="332" y="196" width="24" height="12" rx="2" fill="#201c2a"/>
+    <text x="344" y="205" class="ddd-arrow-label" text-anchor="middle">OK</text>
+    <line x1="320" y1="316" x2="320" y2="356" stroke="#b3acc6" stroke-width="1" marker-end="url(#arr-dark)"/>
+    <line x1="320" y1="412" x2="320" y2="452" stroke="#b3acc6" stroke-width="1" marker-end="url(#arr-dark)"/>
+    <line x1="408" y1="500" x2="560" y2="500" stroke="#b3acc6" stroke-width="1" marker-end="url(#arr-dark)"/>
+    <rect x="452" y="480" width="64" height="12" rx="2" fill="#201c2a"/>
+    <text x="484" y="489" class="ddd-arrow-label" text-anchor="middle">REJECT</text>
+    <line x1="320" y1="548" x2="320" y2="600" stroke="#a78bfa" stroke-width="1.2" marker-end="url(#arr-accent-dark)"/>
+    <rect x="332" y="564" width="64" height="12" rx="2" fill="#201c2a"/>
+    <text x="364" y="573" class="ddd-arrow-label" text-anchor="middle" fill="#a78bfa">APPROVE</text>
+    <line x1="320" y1="664" x2="320" y2="744" stroke="#b3acc6" stroke-width="1" marker-end="url(#arr-dark)"/>
+    <line x1="440" y1="620" x2="560" y2="620" stroke="#b3acc6" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arr-dark)"/>
+    <line x1="672" y1="664" x2="672" y2="744" stroke="#b3acc6" stroke-width="1" marker-end="url(#arr-dark)"/>
+    <rect x="680" y="696" width="72" height="12" rx="2" fill="#201c2a"/>
+    <text x="716" y="705" class="ddd-arrow-label" text-anchor="start">VIOLATION</text>
+    <path d="M 560,768 L 504,768 Q 496,768 496,760 L 496,656 Q 496,648 488,648 L 440,648"
+          fill="none" stroke="#b3acc6" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arr-dark)"/>
+    <rect x="404" y="700" width="84" height="12" rx="2" fill="#201c2a"/>
+    <text x="446" y="709" class="ddd-arrow-label" text-anchor="middle">RE-APPROVE</text>
+
+    <!-- start: upstream (external) -->
+    <rect x="200" y="24" width="240" height="44" rx="22" fill="#201c2a"/>
+    <rect x="200" y="24" width="240" height="44" rx="22" fill="rgba(241,238,248,0.03)" stroke="rgba(241,238,248,0.30)" stroke-width="1"/>
+    <text x="320" y="50" class="ddd-node-name" text-anchor="middle">Upstream pushes a commit</text>
+
+    <!-- ingest -->
+    <rect x="200" y="112" width="240" height="64" rx="6" fill="#201c2a"/>
+    <rect x="200" y="112" width="240" height="64" rx="6" fill="#2c2739" stroke="#f1eef8" stroke-width="1"/>
+    <text x="320" y="140" class="ddd-node-name" text-anchor="middle">Ingest</text>
+    <text x="320" y="156" class="ddd-sub" text-anchor="middle">POST /api/marketplaces/{name}/ingest</text>
+
+    <!-- refused chip -->
+    <rect x="560" y="120" width="224" height="48" rx="6" fill="#201c2a"/>
+    <rect x="560" y="120" width="224" height="48" rx="6" fill="rgba(241,238,248,0.03)" stroke="rgba(241,238,248,0.30)" stroke-width="1"/>
+    <text x="672" y="140" class="ddd-node-name" text-anchor="middle">Refused fail-closed</text>
+    <text x="672" y="156" class="ddd-sub" text-anchor="middle">violation on the ledger</text>
+
+    <!-- held snapshot (store) -->
+    <rect x="200" y="260" width="240" height="56" rx="6" fill="#201c2a"/>
+    <rect x="200" y="260" width="240" height="56" rx="6" fill="rgba(241,238,248,0.06)" stroke="#b3acc6" stroke-width="1"/>
+    <text x="320" y="284" class="ddd-node-name" text-anchor="middle">Snapshot held</text>
+    <text x="320" y="300" class="ddd-sub" text-anchor="middle">refs/snapshots/{sha}</text>
+
+    <!-- vetting chain -->
+    <rect x="200" y="356" width="240" height="56" rx="6" fill="#201c2a"/>
+    <rect x="200" y="356" width="240" height="56" rx="6" fill="#2c2739" stroke="#f1eef8" stroke-width="1"/>
+    <text x="320" y="380" class="ddd-node-name" text-anchor="middle">Vetting chain</text>
+    <text x="320" y="396" class="ddd-sub" text-anchor="middle">one verdict per connector</text>
+
+    <!-- reviewer decision diamond -->
+    <polygon points="320,452 408,500 320,548 232,500" fill="#201c2a"/>
+    <polygon points="320,452 408,500 320,548 232,500" fill="#2c2739" stroke="#f1eef8" stroke-width="1"/>
+    <text x="320" y="496" class="ddd-node-name" text-anchor="middle">Approve?</text>
+    <text x="320" y="512" class="ddd-sub" text-anchor="middle">reviewer inspects evidence</text>
+
+    <!-- rejected chip -->
+    <rect x="560" y="476" width="224" height="48" rx="6" fill="#201c2a"/>
+    <rect x="560" y="476" width="224" height="48" rx="6" fill="rgba(241,238,248,0.03)" stroke="rgba(241,238,248,0.30)" stroke-width="1"/>
+    <text x="672" y="496" class="ddd-node-name" text-anchor="middle">Rejected</text>
+    <text x="672" y="512" class="ddd-sub" text-anchor="middle">prior approval keeps serving</text>
+
+    <!-- ApprovalService (focal) -->
+    <rect x="200" y="600" width="240" height="64" rx="6" fill="#201c2a"/>
+    <rect x="200" y="600" width="240" height="64" rx="6" fill="rgba(167,139,250,0.10)" stroke="#a78bfa" stroke-width="1.2"/>
+    <rect x="208" y="608" width="32" height="12" rx="2" fill="transparent" stroke="rgba(167,139,250,0.5)" stroke-width="0.8"/>
+    <text x="224" y="617" class="ddd-tag" text-anchor="middle" fill="#a78bfa">GATE</text>
+    <text x="320" y="636" class="ddd-node-name" text-anchor="middle">ApprovalService publishes</text>
+    <text x="320" y="652" class="ddd-sub" text-anchor="middle">refs/heads/main → {sha}</text>
+
+    <!-- clients -->
+    <rect x="200" y="744" width="240" height="56" rx="6" fill="#201c2a"/>
+    <rect x="200" y="744" width="240" height="56" rx="6" fill="#2c2739" stroke="#f1eef8" stroke-width="1"/>
+    <text x="320" y="768" class="ddd-node-name" text-anchor="middle">Clients fetch the new SHA</text>
+    <text x="320" y="784" class="ddd-sub" text-anchor="middle">git clone /git/{name}</text>
+
+    <!-- re-vetting sweep (async) -->
+    <rect x="560" y="600" width="224" height="64" rx="6" fill="#201c2a"/>
+    <rect x="560" y="600" width="224" height="64" rx="6" fill="rgba(241,238,248,0.02)" stroke="#f1eef8" stroke-opacity="0.2" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="672" y="628" class="ddd-node-name" text-anchor="middle">Re-vetting sweep</text>
+    <text x="672" y="644" class="ddd-sub" text-anchor="middle">chain runs again, later</text>
+
+    <!-- revoked chip -->
+    <rect x="560" y="744" width="224" height="48" rx="6" fill="#201c2a"/>
+    <rect x="560" y="744" width="224" height="48" rx="6" fill="rgba(241,238,248,0.03)" stroke="rgba(241,238,248,0.30)" stroke-width="1"/>
+    <text x="672" y="764" class="ddd-node-name" text-anchor="middle">Revoked</text>
+    <text x="672" y="780" class="ddd-sub" text-anchor="middle">published refs removed</text>
+
+    <!-- ledger bar (store) -->
+    <text x="784" y="856" class="ddd-annotation" text-anchor="end">every transition above is appended here</text>
+    <rect x="160" y="872" width="624" height="48" rx="6" fill="#201c2a"/>
+    <rect x="160" y="872" width="624" height="48" rx="6" fill="rgba(241,238,248,0.06)" stroke="#b3acc6" stroke-width="1"/>
+    <rect x="176" y="880" width="48" height="12" rx="2" fill="transparent" stroke="#b3acc6" stroke-width="0.8"/>
+    <text x="200" y="889" class="ddd-tag" text-anchor="middle">LEDGER</text>
+    <text x="472" y="892" class="ddd-node-name" text-anchor="middle">Append-only audit ledger</text>
+    <text x="472" y="908" class="ddd-sub" text-anchor="middle">actor · marketplace · commit SHA, for every step</text>
+
+    <!-- legend -->
+    <line x1="160" y1="948" x2="784" y2="948" stroke="rgba(241,238,248,0.12)" stroke-width="0.8"/>
+    <text x="160" y="970" class="ddd-legend">LEGEND</text>
+    <rect x="240" y="958" width="12" height="12" rx="2" fill="rgba(167,139,250,0.10)" stroke="#a78bfa" stroke-width="1"/>
+    <text x="260" y="968" class="ddd-legend">publish gate</text>
+    <rect x="368" y="958" width="12" height="12" rx="2" fill="rgba(167,139,250,0.10)" stroke="rgba(167,139,250,0.5)" stroke-width="1" stroke-dasharray="3,3"/>
+    <text x="388" y="968" class="ddd-legend">trust boundary</text>
+    <line x1="504" y1="964" x2="528" y2="964" stroke="#b3acc6" stroke-width="1" stroke-dasharray="5,4"/>
+    <text x="536" y="968" class="ddd-legend">asynchronous</text>
+    <rect x="648" y="958" width="12" height="12" rx="2" fill="rgba(241,238,248,0.06)" stroke="#b3acc6" stroke-width="1"/>
+    <text x="668" y="968" class="ddd-legend">pinned storage</text>
+  </svg>
+
+</div>
+
 <h2 id="the-two-repositories">The two repositories<a class="headerlink" href="#the-two-repositories" title="Permanent link">&para;</a></h2>
 <p>The gateway maintains two bare git repositories per marketplace under
 <code>skills-gateway.data-dir</code>:</p>
