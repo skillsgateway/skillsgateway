@@ -70,7 +70,7 @@ holding:
 
 | Trigger | Why it flips the decision |
 | --- | --- |
-| **OCI re-publication or Artifactory/Nexus federation ships** (Phase 3 roadmap items) | Artifacts leave the gateway's serving path — the artifact must carry its own proof |
+| **OCI re-publication or repository-manager federation ships** (Phase 3 roadmap items) | Artifacts leave the gateway's serving path — the artifact must carry its own proof |
 | **An auditor or regulator requires operator-independent evidence** (e.g. a DORA/ICT examination asks "prove your own DB wasn't altered") | Recorded provenance inside the operator's trust domain no longer satisfies the examiner |
 | **Multi-instance or air-gapped promotion between gateways** | Promotion between trust domains is exactly an attestation handoff |
 | **A consumer-side verification tool materializes** (clients or CI verifying SLSA/in-toto bundles for skills) | The verification side exists, so the signing side has a consumer |
