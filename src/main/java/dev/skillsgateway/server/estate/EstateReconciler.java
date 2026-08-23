@@ -183,16 +183,26 @@ public class EstateReconciler {
         }
         Optional<Marketplace> existing = marketplaceRepository.findByName(declared.name());
         if (existing.isEmpty()) {
-            registrationService.register(declared.name(), declared.url(), ACTOR);
+            registrationService.register(
+                    declared.name(), declared.url(), declared.origin(), declared.pushPolicy(), ACTOR);
             if (mode != null && !Marketplace.SYNC_ON_DEMAND.equals(mode)) {
                 syncService.changeMode(declared.name(), mode, ACTOR);
             }
             return Entry.created("marketplace", declared.name(), null);
         }
         Marketplace stored = existing.get();
-        if (!stored.url().equals(declared.url())) {
+        // Null-safe on both sides: a hosted marketplace has no url at all (GW_0101), and declaring
+        // one for it — or dropping the one an upstream marketplace was registered with — is the
+        // same supply-chain swap the immutability rule exists to refuse.
+        if (!Objects.equals(stored.url(), declared.url())) {
             throw validationFailure("declared url differs from the registered upstream; a marketplace URL is immutable"
                     + " because changing it would swap the supply chain under approved snapshots");
+        }
+        String declaredOrigin = declared.origin() == null ? Marketplace.ORIGIN_UPSTREAM : declared.origin();
+        if (!declaredOrigin.equals(stored.origin())) {
+            throw validationFailure("declared origin '%s' differs from the registered '%s'; where a marketplace's"
+                            .formatted(declaredOrigin, stored.origin())
+                    + " content comes from is immutable for the same reason its url is");
         }
         if (mode != null && !mode.equals(stored.syncMode())) {
             syncService.changeMode(declared.name(), mode, ACTOR);

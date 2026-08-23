@@ -137,7 +137,9 @@ a narrower meaning here.
 
 **Upload-pack**
 :   The git smart-HTTP operation that serves objects to a fetching client. The
-    only git service the facade enables; receive-pack (push) is disabled.
+    only git service the *facade* enables; receive-pack (push) is disabled
+    there. The separate publish endpoint enables both, for hosted marketplaces
+    only.
 
 **Violation**
 :   The reason ingestion flagged a snapshot — for example an external plugin

@@ -20,12 +20,26 @@ public class FilesystemGitStorage implements GitStorage {
 
     private final Path quarantineDir;
     private final Path publishedDir;
+    private final Path hostedDir;
 
     public FilesystemGitStorage(SkillsGatewayProperties properties) throws IOException {
         this.quarantineDir = properties.dataDir().resolve("quarantine");
         this.publishedDir = properties.dataDir().resolve("published");
+        this.hostedDir = properties.dataDir().resolve("hosted");
         Files.createDirectories(quarantineDir);
         Files.createDirectories(publishedDir);
+        Files.createDirectories(hostedDir);
+    }
+
+    @Override
+    public Repository hosted(String marketplace) throws IOException {
+        return openOrCreate(hostedDir.resolve(marketplace + ".git"));
+    }
+
+    @Override
+    public Optional<Repository> hostedIfPresent(String marketplace) throws IOException {
+        Path path = hostedDir.resolve(marketplace + ".git");
+        return Files.isDirectory(path) ? Optional.of(open(path)) : Optional.empty();
     }
 
     @Override

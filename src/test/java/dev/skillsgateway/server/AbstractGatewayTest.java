@@ -244,6 +244,12 @@ abstract class AbstractGatewayTest {
         return "http://" + credentials + "127.0.0.1:" + port + "/git/" + marketplace;
     }
 
+    /** Publish endpoint URL for a hosted marketplace (GW_0102); a null PAT gives no credentials. */
+    protected String publishUrl(String marketplace, String pat) {
+        String credentials = pat == null ? "" : "token:" + pat + "@";
+        return "http://" + credentials + "127.0.0.1:" + port + "/publish/" + marketplace;
+    }
+
     protected record GitResult(int exitCode, String output) {}
 
     protected GitResult gitClone(String url, Path dest) throws IOException, InterruptedException {

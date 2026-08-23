@@ -445,6 +445,12 @@ inward.
   mapping, with truncated claims made visible and an enforceable expected
   ID-token issuer (GW_0098–GW_0100); per-team catalog scoping and a
   portal grants UI are deferred.
+- *Implemented:* first-party hosting — a marketplace the gateway hosts itself,
+  published to by authenticated git push on a separate endpoint into a separate
+  origin repository under a push scope no existing token holds, with one
+  lineage, forward-only by default, and the same quarantine, vetting and
+  approval gate as fetched content (GW_0101–GW_0103, ADR 0007); auto-approval
+  for trusted internal publishers stays parked per ADR 0006.
 - **Phase 3 — assurance & scale.** Client telemetry inventory, kill switch
   with fleet force-uninstall, signed attestations, additional tool adapters,
   repository-manager catalog federation, OCI re-publication.

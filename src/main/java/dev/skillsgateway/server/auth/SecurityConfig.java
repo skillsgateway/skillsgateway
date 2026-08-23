@@ -45,6 +45,26 @@ public class SecurityConfig {
     }
 
     /**
+     * The publication chain (GW_0102): the only write path the gateway has, and a sibling of the
+     * read-only facade chain rather than a mode on it. Same credential kind — PATs, stateless, no
+     * session — but authorization is the token's push scope, which no token holds by default and
+     * none can hold for every marketplace.
+     */
+    @Bean
+    @Order(2)
+    @Requirements({"GW_0102"})
+    public SecurityFilterChain publishChain(HttpSecurity http, PatAuthenticationProvider patAuthenticationProvider)
+            throws Exception {
+        http.securityMatcher("/publish/**")
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationManager(new ProviderManager(patAuthenticationProvider))
+                .httpBasic(Customizer.withDefaults())
+                .authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated());
+        return http.build();
+    }
+
+    /**
      * Stateless anonymous chain for the inbound forge webhook (GW_0058). Authentication is not
      * absent, it lives one layer down: the controller verifies an HMAC-SHA256 signature of the raw
      * body against the marketplace's gateway-generated secret and rejects everything else. Keeping
@@ -52,7 +72,7 @@ public class SecurityConfig {
      * controller takes no Authentication parameter (requests here are anonymous by design).
      */
     @Bean
-    @Order(2)
+    @Order(3)
     public SecurityFilterChain hooksChain(HttpSecurity http) throws Exception {
         http.securityMatcher("/hooks/**")
                 .csrf(csrf -> csrf.disable())
@@ -90,7 +110,7 @@ public class SecurityConfig {
      * requiring PATs. GW_0011 holds for every default-configured deployment.
      */
     @Bean
-    @Order(3)
+    @Order(4)
     @Requirements({"GW_0011"})
     public SecurityFilterChain webChain(HttpSecurity http, SkillsGatewayProperties properties) throws Exception {
         if (properties.devInsecureAuth()) {

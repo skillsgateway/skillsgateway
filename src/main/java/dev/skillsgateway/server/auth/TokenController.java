@@ -48,7 +48,12 @@ public class TokenController {
             List<String> scopes,
 
             @Schema(description = "Expiry; omitted means never, unless a max lifetime is configured")
-            Instant expiresAt) {}
+            Instant expiresAt,
+
+            @Schema(
+                    description = "Hosted marketplace names the token may PUBLISH to. Unlike fetch scopes,"
+                            + " omitting these grants none: there is no every-marketplace push scope.")
+            List<String> pushScopes) {}
 
     /** Never exposes the stored hash. */
     @Schema(description = "A token without its secret; the cleartext is only returned at creation")
@@ -67,7 +72,10 @@ public class TokenController {
             Instant expiresAt,
 
             @Schema(description = "The token this one replaced by rotation, or null")
-            Long rotatedFrom) {}
+            Long rotatedFrom,
+
+            @Schema(description = "Hosted marketplaces this token may publish to; empty grants none")
+            List<String> pushScopes) {}
 
     @PostMapping
     @Requirements({"GW_0067"})
@@ -76,7 +84,9 @@ public class TokenController {
             summary = "Create a token",
             description = "Issues a personal access token for the git facade. Optionally scoped to named"
                     + " marketplaces (unscoped grants all) and optionally expiring; the cleartext is returned"
-                    + " exactly once. Creation is audit-logged with the token's name and scopes.")
+                    + " exactly once. Push scopes are separate and grant nothing by default: they name the"
+                    + " hosted marketplaces the token may publish to. Creation is audit-logged with the"
+                    + " token's name and both kinds of scope.")
     @ApiResponse(responseCode = "201", description = "Token issued; the only response carrying the cleartext")
     @ApiResponse(responseCode = "422", description = "Unknown scope, or lifetime beyond the configured cap")
     public ResponseEntity<TokenService.IssuedToken> create(
@@ -85,8 +95,9 @@ public class TokenController {
                 authentication.getName(),
                 request.name(),
                 request.scopes() == null ? List.of() : request.scopes(),
-                request.expiresAt());
-        audit(authentication, "token-created", issued.id(), issued.name(), issued.scopes());
+                request.expiresAt(),
+                request.pushScopes() == null ? List.of() : request.pushScopes());
+        audit(authentication, "token-created", issued.id(), issued.name(), issued.scopes(), issued.pushScopes());
         return ResponseEntity.status(HttpStatus.CREATED).body(issued);
     }
 
@@ -146,7 +157,19 @@ public class TokenController {
 
     /** Lifecycle entries carry the token's identity, name and scopes (GW_0067). */
     private void audit(Authentication authentication, String event, long tokenId, String name, List<String> scopes) {
-        String detail = "token %d '%s' scopes=%s".formatted(tokenId, name, scopes.isEmpty() ? "all" : scopes);
+        audit(authentication, event, tokenId, name, scopes, List.of());
+    }
+
+    private void audit(
+            Authentication authentication,
+            String event,
+            long tokenId,
+            String name,
+            List<String> scopes,
+            List<String> pushScopes) {
+        String detail = "token %d '%s' scopes=%s push=%s"
+                .formatted(
+                        tokenId, name, scopes.isEmpty() ? "all" : scopes, pushScopes.isEmpty() ? "none" : pushScopes);
         auditLogger.record(authentication.getName(), NO_MARKETPLACE, event, null, detail);
     }
 
@@ -158,7 +181,8 @@ public class TokenController {
                 token.revokedAt(),
                 token.scopeList(),
                 token.expiresAt(),
-                token.rotatedFrom());
+                token.rotatedFrom(),
+                token.pushScopeList());
     }
 
     @ExceptionHandler(TokenService.InvalidTokenRequestException.class)

@@ -80,7 +80,7 @@ public class IngestionService {
 
     private Snapshot ingestLocked(Marketplace marketplace) {
         try (Repository repo = storage.quarantine(marketplace.name())) {
-            ObjectId sha = fetchUpstreamHead(repo, marketplace.url());
+            ObjectId sha = fetchIncoming(repo, marketplace);
             RefUpdate pin = repo.updateRef("refs/snapshots/" + sha.name());
             pin.setNewObjectId(sha);
             pin.forceUpdate();
@@ -111,6 +111,41 @@ public class IngestionService {
         } catch (IOException | GitAPIException e) {
             throw new IngestionException("ingestion failed for marketplace '%s'".formatted(marketplace.name()), e);
         }
+    }
+
+    /**
+     * Where the incoming commit comes from — the only thing that differs between an upstream
+     * marketplace and a gateway-hosted one (GW_0103). A hosted marketplace's source is its own
+     * origin repository, fetched by filesystem path with the same JGit fetch, so everything from
+     * the snapshot pin down is literally the same code and pushed content faces the same manifest
+     * validation, the same vetting chain and the same approval gate as fetched content.
+     */
+    @Requirements({"GW_0103"})
+    private ObjectId fetchIncoming(Repository repo, Marketplace marketplace) throws GitAPIException, IOException {
+        if (!marketplace.hosted()) {
+            return fetchUpstreamHead(repo, marketplace.url());
+        }
+        try (Repository origin = storage.hosted(marketplace.name())) {
+            if (origin.resolve(Marketplace.LINEAGE_REF) == null) {
+                throw new RepositoryNotFoundException(
+                        "'%s' has not been published to yet".formatted(marketplace.name()));
+            }
+            return fetchHostedLineage(repo, origin.getDirectory().getAbsolutePath());
+        }
+    }
+
+    private static ObjectId fetchHostedLineage(Repository repo, String originPath) throws GitAPIException, IOException {
+        try (Git git = new Git(repo)) {
+            git.fetch()
+                    .setRemote(originPath)
+                    .setRefSpecs(new RefSpec("+" + Marketplace.LINEAGE_REF + ":" + INCOMING_REF))
+                    .call();
+        }
+        ObjectId sha = repo.resolve(INCOMING_REF);
+        if (sha == null) {
+            throw new RepositoryNotFoundException("the origin repository produced no commit");
+        }
+        return sha;
     }
 
     private static ObjectId fetchUpstreamHead(Repository repo, String url) throws GitAPIException, IOException {

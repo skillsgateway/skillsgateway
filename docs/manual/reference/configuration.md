@@ -605,6 +605,12 @@ skills-gateway:
         # alone. webhook mode is refused: its inbound HMAC secret is
         # generated and shown once, which has no declarative form.
         sync-mode: scheduled
+      # A gateway-hosted marketplace declares no url and is published to by
+      # pushing (GW_0101). Its sync mode is fixed at on-demand: the push is
+      # its ingestion trigger. push-policy defaults to append-only.
+      - name: platform-skills
+        origin: hosted
+        push-policy: append-only
 
     # The exact shape of POST /api/roles: approver grants name one
     # marketplace that must exist at reconcile time (declared above, or

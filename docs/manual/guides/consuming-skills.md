@@ -110,8 +110,11 @@ $ git config --global credential.https://skills.corp.example.username token
 ## What clients see
 
 Exactly one branch, `main`, at the approved SHA. Unapproved snapshots do not
-exist on this remote, and pushing is impossible — receive-pack is disabled by
-construction, so `git push` gets a "service not enabled" rejection.
+exist on this remote, and pushing here is impossible — receive-pack is disabled
+by construction on the facade, so `git push` gets a "service not enabled"
+rejection. (Publishing to a marketplace the gateway hosts is a different
+endpoint and a different credential; see
+[Publishing first-party skills](publishing-first-party-skills.md).)
 
 The served SHA changes only when a reviewer approves a new snapshot. Upstream
 movement alone never changes what you receive.

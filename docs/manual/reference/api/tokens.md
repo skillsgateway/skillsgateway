@@ -24,7 +24,7 @@ be recovered afterwards.
 
 Create a token for the calling principal.
 
-**Body** — `{name, scopes?, expiresAt?}`
+**Body** — `{name, scopes?, expiresAt?, pushScopes?}`
 
 ```console
 $ curl -X POST localhost:8080/api/tokens \
@@ -34,7 +34,8 @@ $ curl -X POST localhost:8080/api/tokens \
 
 ```json
 {"id":1,"name":"ci-runner","token":"sgw_...","createdAt":"2026-08-17T09:00:00Z",
- "scopes":["acme","catalog"],"expiresAt":"2026-12-31T00:00:00Z","rotatedFrom":null}
+ "scopes":["acme","catalog"],"expiresAt":"2026-12-31T00:00:00Z","rotatedFrom":null,
+ "pushScopes":[]}
 ```
 
 `scopes` (GW_0064) lists marketplace names the token may fetch — the
@@ -44,6 +45,15 @@ Empty or omitted grants every marketplace, which is what every pre-scoping
 token meant. An out-of-scope fetch answers exactly like a marketplace that
 does not exist, so a scoped token is not a directory of what else the gateway
 governs.
+
+`pushScopes` (GW_0102) lists **hosted** marketplaces the token may publish to
+through [`/publish/{name}`](../../guides/publishing-first-party-skills.md), and
+is a different grant from `scopes` in the one way that matters: omitting it
+grants **none**, not all. There is no every-marketplace push scope, so no token
+issued before publication existed can write anything and none can be granted
+publication to everything by forgetting a field. Entries are validated against
+the registered hosted marketplaces at creation. An out-of-scope push answers
+exactly like a marketplace that does not exist, as an out-of-scope fetch does.
 
 `expiresAt` (GW_0065): an expired token fails authentication exactly like a
 revoked one, decided by comparing the stamp at authentication time — no
@@ -91,7 +101,8 @@ rows.
 ## `POST /tokens/{id}/rotate`
 
 Retire a possibly-exposed secret without renegotiating the grant (GW_0066).
-Issues a fresh secret with the **identical** grant — name, scopes, and the same
+Issues a fresh secret with the **identical** grant — name, scopes (fetch and
+push alike), and the same
 expiry deadline — records which token it replaced (`rotatedFrom`), and revokes
 the old token *before* the new one is issued: a failure between the two steps
 leaves no live secret, never two.

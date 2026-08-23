@@ -127,7 +127,7 @@ export interface paths {
         put?: never;
         /**
          * Create a token
-         * @description Issues a personal access token for the git facade. Optionally scoped to named marketplaces (unscoped grants all) and optionally expiring; the cleartext is returned exactly once. Creation is audit-logged with the token's name and scopes.
+         * @description Issues a personal access token for the git facade. Optionally scoped to named marketplaces (unscoped grants all) and optionally expiring; the cleartext is returned exactly once. Push scopes are separate and grant nothing by default: they name the hosted marketplaces the token may publish to. Creation is audit-logged with the token's name and both kinds of scope.
          */
         post: operations["create_1"];
         delete?: never;
@@ -379,7 +379,7 @@ export interface paths {
         put?: never;
         /**
          * Register a marketplace
-         * @description Registers an upstream git skill marketplace by clone URL. The URL scheme must be on the configured allowlist (default http/https). The ingested ref is set by the gateway (the upstream default branch) and cannot be overridden; a request supplying any other ref is rejected.
+         * @description Registers a git skill marketplace. An upstream marketplace (the default) names a clone URL whose scheme must be on the configured allowlist (default http/https); the ingested ref is set by the gateway (the upstream default branch) and cannot be overridden. A hosted marketplace takes no URL at all and is published to by pushing to /publish/{name}.
          */
         post: operations["registerMarketplace"];
         delete?: never;
@@ -1095,14 +1095,25 @@ export interface components {
              */
             mode?: "on-demand" | "scheduled" | "webhook";
         };
-        /** @description A registered upstream marketplace */
+        /** @description A registered marketplace, fetched from an upstream or hosted by the gateway */
         Marketplace: {
             /** Format: int64 */
             id?: number;
             name?: string;
+            /** @description Upstream clone URL; null for a gateway-hosted marketplace */
             url?: string;
             /** Format: date-time */
             createdAt?: string;
+            /**
+             * @description Where the content comes from: fetched from an upstream clone URL, or pushed by the organisation into a gateway-owned origin repository
+             * @enum {string}
+             */
+            origin?: "upstream" | "hosted";
+            /**
+             * @description Whether a hosted marketplace's publisher may rewrite its lineage; meaningless for an upstream marketplace
+             * @enum {string}
+             */
+            pushPolicy?: "append-only" | "allow-rewrite";
             /** @description Detected forge (github, gitlab, bitbucket, azure-devops, gitea) or null */
             forge?: string;
             /** @description Project path on the forge */
@@ -1233,6 +1244,8 @@ export interface components {
              * @description Expiry; omitted means never, unless a max lifetime is configured
              */
             expiresAt?: string;
+            /** @description Hosted marketplace names the token may PUBLISH to. Unlike fetch scopes, omitting these grants none: there is no every-marketplace push scope. */
+            pushScopes?: string[];
         };
         /** @description A freshly issued token; the only time the cleartext is ever returned */
         IssuedToken: {
@@ -1262,6 +1275,8 @@ export interface components {
              * @description The token this one replaced by rotation, or null
              */
             rotatedFrom?: number;
+            /** @description Hosted marketplaces this token may publish to; empty grants none */
+            pushScopes?: string[];
         };
         /** @description Request to accept one finding rule on a snapshot's marketplace, until an expiry */
         WaiverRequest: {
@@ -1555,6 +1570,17 @@ export interface components {
              */
             url?: string;
             /**
+             * @description Where the content comes from: 'upstream' (the default) fetches the clone URL; 'hosted' takes no URL and gives the marketplace a gateway-owned origin repository that publishers push to
+             * @example upstream
+             * @enum {string}
+             */
+            origin?: "upstream" | "hosted";
+            /**
+             * @description For a hosted marketplace, whether its publisher may rewrite the lineage. Defaults to append-only, which refuses a non-fast-forward push.
+             * @enum {string}
+             */
+            pushPolicy?: "append-only" | "allow-rewrite";
+            /**
              * @description Must be omitted or equal the upstream default branch; the ingested ref is the gateway's decision, never the consumer's (GW_0017)
              * @example main
              */
@@ -1788,6 +1814,8 @@ export interface components {
              * @description The token this one replaced by rotation, or null
              */
             rotatedFrom?: number;
+            /** @description Hosted marketplaces this token may publish to; empty grants none */
+            pushScopes?: string[];
         };
         /** @description A connector configured in the vetting chain */
         ConnectorView: {
@@ -2196,13 +2224,25 @@ export interface components {
             id?: number;
             /** @description Gateway-local name (also the facade clone path) */
             name?: string;
-            /** @description Upstream clone URL */
+            /** @description Upstream clone URL; null for a gateway-hosted marketplace */
             url?: string;
             /**
              * Format: date-time
              * @description Registration time
              */
             createdAt?: string;
+            /**
+             * @description Where the content comes from
+             * @enum {string}
+             */
+            origin?: "upstream" | "hosted";
+            /**
+             * @description Whether a hosted marketplace's publisher may rewrite its lineage
+             * @enum {string}
+             */
+            pushPolicy?: "append-only" | "allow-rewrite";
+            /** @description Path publishers push a hosted marketplace to; null for an upstream one */
+            publishPath?: string;
             /** @description Detected forge (github, gitlab, bitbucket, azure-devops, gitea) or null */
             forge?: string;
             /** @description Project path on the forge, e.g. acme/skills */

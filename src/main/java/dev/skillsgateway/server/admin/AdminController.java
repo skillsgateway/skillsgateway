@@ -102,6 +102,20 @@ public class AdminController {
             String url,
 
             @Schema(
+                    description = "Where the content comes from: 'upstream' (the default) fetches the clone URL;"
+                            + " 'hosted' takes no URL and gives the marketplace a gateway-owned origin repository"
+                            + " that publishers push to",
+                    allowableValues = {"upstream", "hosted"},
+                    example = "upstream")
+            String origin,
+
+            @Schema(
+                    description = "For a hosted marketplace, whether its publisher may rewrite the lineage."
+                            + " Defaults to append-only, which refuses a non-fast-forward push.",
+                    allowableValues = {"append-only", "allow-rewrite"})
+            String pushPolicy,
+
+            @Schema(
                     description = "Must be omitted or equal the upstream default branch; the ingested ref"
                             + " is the gateway's decision, never the consumer's (GW_0017)",
                     example = "main")
@@ -114,8 +128,23 @@ public class AdminController {
             @Schema(description = "Gateway-local name (also the facade clone path)")
             String name,
 
-            @Schema(description = "Upstream clone URL") String url,
+            @Schema(description = "Upstream clone URL; null for a gateway-hosted marketplace")
+            String url,
+
             @Schema(description = "Registration time") Instant createdAt,
+
+            @Schema(
+                    description = "Where the content comes from",
+                    allowableValues = {"upstream", "hosted"})
+            String origin,
+
+            @Schema(
+                    description = "Whether a hosted marketplace's publisher may rewrite its lineage",
+                    allowableValues = {"append-only", "allow-rewrite"})
+            String pushPolicy,
+
+            @Schema(description = "Path publishers push a hosted marketplace to; null for an upstream one")
+            String publishPath,
 
             @Schema(description = "Detected forge (github, gitlab, bitbucket, azure-devops, gitea) or null")
             String forge,
@@ -141,10 +170,10 @@ public class AdminController {
     @Tag(name = "Marketplaces")
     @Operation(
             summary = "Register a marketplace",
-            description = "Registers an upstream git skill marketplace by clone URL. The URL scheme must be on the"
-                    + " configured allowlist (default http/https). The ingested ref is set by the gateway (the"
-                    + " upstream default branch) and cannot be overridden; a request supplying any other ref is"
-                    + " rejected.")
+            description = "Registers a git skill marketplace. An upstream marketplace (the default) names a clone"
+                    + " URL whose scheme must be on the configured allowlist (default http/https); the ingested"
+                    + " ref is set by the gateway (the upstream default branch) and cannot be overridden. A hosted"
+                    + " marketplace takes no URL at all and is published to by pushing to /publish/{name}.")
     @ApiResponse(responseCode = "201", description = "Marketplace registered")
     @ApiResponse(responseCode = "400", description = "Disallowed URL scheme, or a ref other than the default branch")
     @ApiResponse(responseCode = "409", description = "A marketplace with that name already exists")
@@ -153,7 +182,8 @@ public class AdminController {
             @RequestBody RegisterMarketplaceRequest request, Authentication authentication) {
         roleService.requireAdmin(authentication);
         requireDefaultBranchRef(request.ref());
-        Marketplace marketplace = registrationService.register(request.name(), request.url(), authentication.getName());
+        Marketplace marketplace = registrationService.register(
+                request.name(), request.url(), request.origin(), request.pushPolicy(), authentication.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(marketplace);
     }
 
@@ -212,6 +242,9 @@ public class AdminController {
                         marketplace.name(),
                         marketplace.url(),
                         marketplace.createdAt(),
+                        marketplace.origin(),
+                        marketplace.pushPolicy(),
+                        marketplace.hosted() ? "/publish/" + marketplace.name() : null,
                         marketplace.forge(),
                         marketplace.forgeProject(),
                         marketplace.description(),

@@ -111,6 +111,7 @@ nav:
   - Guides:
       - Local development: guides/local-development.md
       - Registering a marketplace: guides/registering-a-marketplace.md
+      - Publishing first-party skills: guides/publishing-first-party-skills.md
       - Syncing from upstream automatically: guides/upstream-sync.md
       - Approving and rejecting snapshots: guides/approving-snapshots.md
       - Waiving a vetting finding: guides/waiving-findings.md
