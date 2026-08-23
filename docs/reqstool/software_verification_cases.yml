@@ -1004,3 +1004,36 @@ cases:
       WHEN a session credential is requested, one is requested while supplying a lifetime of the caller's own, one narrowed to a single marketplace is used against another, one is used to push to the hosted marketplace, one is rotated, an ordinary access token is created alongside, and a credential from a gateway whose configured lifetime has already elapsed is presented
       THEN every session credential expires at the configured lifetime regardless of what the caller asked for, none may publish, a narrowed one is refused the marketplace it does not name, the rotated one keeps both its deadline and its session-derived mark, the session credentials are reported as session-derived while the ordinary token is not, and the elapsed one fails authentication by comparison at use rather than by any scheduled process
     revision: "0.1.0"
+
+  - id: SVC_GW_0105
+    requirement_ids: ["GW_0105"]
+    title: The served contract declares the build's version
+    verification: automated-test
+    description: |
+      GIVEN a gateway built from a working tree whose version is derived from git state
+      WHEN the API contract document is served
+      THEN the version it declares is that build's version, and not a fixed literal
+    revision: "0.1.0"
+
+  - id: SVC_GW_0106
+    requirement_ids: ["GW_0106"]
+    title: The published contract matches the served contract
+    verification: automated-test
+    description: |
+      GIVEN the API contract document published in the repository
+      WHEN the build compares it against the document the application serves
+      THEN the two are identical apart from the declared release version
+      AND a divergence fails the build, naming the command that regenerates the published copy
+    revision: "0.1.0"
+
+  - id: SVC_GW_0107
+    requirement_ids: ["GW_0107"]
+    title: Breaking contract changes are refused unless declared
+    verification: automated-test
+    description: |
+      GIVEN a proposed change and the contract that change branched from
+      WHEN the change removes or narrows part of that contract
+      THEN it is refused unless it is both marked as a deliberate break and declared
+      as breaking by the commit that ships it
+      AND the refusal states what a deliberate breaking change is required to do instead
+    revision: "0.1.0"

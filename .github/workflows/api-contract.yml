@@ -1,0 +1,89 @@
+name: API contract
+
+# Within a major, changes to /api/** are additive. A breaking change moves the
+# path prefix AND ships as a major — see docs/manual/reference/compatibility.md.
+# This workflow enforces the half a machine can enforce: it detects a break, and
+# refuses one that the shipping commit does not declare. Nothing can check that
+# the prefix *should* have moved; that stays with review.
+
+on:
+  pull_request:
+    # `edited` matters here for the same reason as in check-semantic-pr.yml: this
+    # check reads the PR title, so a title fixed after a red check has to re-run.
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  breaking-changes:
+    name: Breaking change detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The baseline is resolved with git merge-base, which needs history.
+          fetch-depth: 0
+
+      - name: Resolve the contract this branch forked from
+        run: |
+          fork=$(git merge-base "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}")
+          echo "Baseline: $fork"
+          # The fork point, not the tip of the base branch: a PR is answerable for
+          # what it changed, not for what merged underneath it since it branched.
+          git show "$fork:src/main/frontend/openapi.json" > baseline-openapi.json
+
+      - id: oasdiff
+        name: Diff the contract
+        continue-on-error: true
+        uses: oasdiff/oasdiff-action/breaking@v0.1.13
+        with:
+          base: baseline-openapi.json
+          revision: src/main/frontend/openapi.json
+          fail-on: ERR
+          # Do not upload the contract to oasdiff.com. Detection and the inline
+          # annotations are unaffected; this only declines to send the document
+          # to a third party.
+          review: false
+
+      - name: The break must be deliberate, and the commit must say so
+        env:
+          # A breaking diff makes the step above fail; that is the signal, not an error.
+          BREAKING: ${{ steps.oasdiff.outcome == 'failure' }}
+          LABELLED: ${{ contains(github.event.pull_request.labels.*.name, '⚠️ BREAKING CONTRACT') }}
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if [ "$BREAKING" != "true" ]; then
+            echo "The contract change is additive." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          # `feat!:`, `fix(scope)!:` — or the long form spelled out in the title.
+          declared=false
+          if printf '%s' "$TITLE" | grep -qE '^[a-z]+(\([^)]*\))?!:' \
+            || printf '%s' "$TITLE" | grep -q 'BREAKING CHANGE'; then
+            declared=true
+          fi
+
+          if [ "$LABELLED" != "true" ]; then
+            {
+              echo "## This change breaks the API contract"
+              echo
+              echo "Breaking is allowed — it is not free. Either:"
+              echo
+              echo "- **Keep the old surface.** Adding \`/api/v2\` while \`/api/v1\` stays is purely"
+              echo "  additive and needs nothing from you. Deprecate, then remove in a later release."
+              echo "- **Or break deliberately.** Label this PR \`⚠️ BREAKING CONTRACT\` and declare it"
+              echo "  in the title (\`feat!:\` / \`fix(scope)!:\`), so the release that ships it goes"
+              echo "  up a major."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::Breaking contract change without the ⚠️ BREAKING CONTRACT label. See the job summary."
+            exit 1
+          fi
+
+          if [ "$declared" != "true" ]; then
+            echo "::error::Labelled ⚠️ BREAKING CONTRACT, but the title does not declare a breaking change. The title becomes the squash commit subject and drives the version — write it as 'type!: ...' or include 'BREAKING CHANGE'."
+            exit 1
+          fi
+
+          echo "Breaking change, declared and labelled. Ships as a major." >> "$GITHUB_STEP_SUMMARY"

@@ -37,6 +37,11 @@ HTML login page rendered into a `fetch()`.
 **CSRF** is enabled for the web surface but disabled for `/api/**`, which is
 consumed by the portal with a session cookie.
 
+**Compatibility.** Within a major, this surface only grows; a breaking change
+moves the path prefix and ships as a major. See
+[The API contract](../compatibility.md#the-api-contract) for what counts as
+breaking and how it is enforced.
+
 **Errors** are RFC 7807 `ProblemDetail` documents:
 
 ```json

@@ -821,3 +821,29 @@ requirements:
     rationale: A human who has just proved who they are to the identity provider should not have to create a second, standing credential that outlives the session, the laptop and the employment in order to fetch — that duplication is the whole argument for serving content from somewhere else instead of the gateway; making the lifetime the gateway's decision is what separates this from a personal access token requested through a different path, and marking the origin is what lets an auditor tell a credential minted moments after an SSO login from one provisioned months ago.
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
+
+  - id: GW_0105
+    title: Contract document declares the release it describes
+    significance: shall
+    description: The system shall declare, in the API contract document it serves, the version of the release that document describes, derived from the build rather than maintained by hand.
+    rationale: A document whose declared version never changes tells a consumer nothing about which release they are reading, and leaves the one string that identifies the interface to be remembered by whoever last edited it. Deriving it from the build is also what makes "this change removes something" and "the version went up a major" two facts that can be checked against each other rather than two independent acts of good intent.
+    categories: ["functional-suitability", "maintainability"]
+    revision: 0.1.0
+
+  - id: GW_0106
+    title: Published contract matches the served contract
+    significance: shall
+    description: The system shall keep the API contract document published in its repository identical to the document the running application serves, apart from the release version that document declares, and shall fail its own build when the two diverge.
+    rationale: The published copy is what client types and request mocks are generated from and what a compatibility check diffs against, yet nothing regenerates it automatically. When it drifts, generated clients describe an interface the gateway no longer has, and any check built on it keeps reporting success while comparing a document nobody serves — a gate that is green precisely because it has stopped measuring anything.
+    categories: ["maintainability", "functional-suitability"]
+    implementation: configuration
+    revision: 0.1.0
+
+  - id: GW_0107
+    title: Breaking contract changes are detected and declared
+    significance: shall
+    description: The system's change process shall compare every proposed change to the API contract against the contract that change branched from, shall refuse a change that removes or narrows what the contract already offered unless that change is both explicitly marked as a deliberate break and declared as breaking by the commit that ships it, and shall state in the refusal what a deliberate breaking change is required to do instead.
+    rationale: A rule that changes within a major are additive is worth exactly what its enforcement is worth, and until the first release there is no deployed client to make breaking it expensive — which is why the check is cheap to add now. A refusal that only refuses teaches nobody, so it has to name the escape; and requiring the shipping commit to declare the break is what carries it into the version a consumer eventually sees, rather than leaving the two to agree by coincidence.
+    categories: ["maintainability", "functional-suitability"]
+    implementation: configuration
+    revision: 0.1.0

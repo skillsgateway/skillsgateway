@@ -46,6 +46,9 @@ generated annotation files.
   requirement text anywhere else; code carries `@Requirements`/`@SVCs`
   annotations (Java) or JSDoc tags (TypeScript).
 - Never weaken or delete an existing SVC test to make a change pass.
+- The API contract is additive within a major; a breaking change moves the path
+  prefix **and** ships as a major, and CI refuses one that the PR title does not
+  declare. See `docs/manual/reference/compatibility.md` — "The API contract".
 - Documentation lives in `docs/manual/` (MkDocs Material). Any change to
   behavior, the REST API, configuration, or the portal updates the affected
   pages **in the same PR**.
