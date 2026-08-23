@@ -80,10 +80,10 @@
 - [x] 6.2 `(cd src/main/frontend && pnpm test:stories)` and `pnpm e2e`.
 - [x] 6.3 `reqstool status local -p docs/reqstool` ends `PASS`.
 - [x] 6.4 `openspec validate --all --strict` and `mkdocs build --strict`.
-- [ ] 6.5 Verify the gate on the PR itself: it must be green on this
+- [x] 6.5 Verify the gate on the PR itself: it must be green on this
       (non-breaking) change, and a scratch commit that deletes an endpoint must
       turn it red. Do not trust an unexercised gate.
-- [ ] 6.6 Write `openspec/changes/add-api-compatibility-gates/evidence.md` — the
+- [x] 6.6 Write `openspec/changes/add-api-compatibility-gates/evidence.md` — the
       commands and pasted result tails of one fresh run after the last edit, plus
       the commit SHA.
 - [ ] 6.7 Open the PR with an Evidence section; archive the change as the final
