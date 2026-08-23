@@ -1575,7 +1575,7 @@
         },
         "type": "object"
       },
-      "StreamingResponseBody": { },
+      "StreamingResponseBody": {},
       "SubscriberView": {
         "description": "A webhook subscriber without its signing secret",
         "properties": {
@@ -2137,7 +2137,7 @@
               "*/*": {
                 "schema": {
                   "items": {
-                    "additionalProperties": { },
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   "type": "array"
@@ -4014,71 +4014,6 @@
         "summary": "Accept a vetting finding on this snapshot's marketplace",
         "tags": [
           "Vetting"
-        ]
-      }
-    },
-    "/api/tokens": {
-      "get": {
-        "description": "Only the caller's own tokens, never any secret.",
-        "operationId": "list_1",
-        "responses": {
-          "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/TokenView"
-                  },
-                  "type": "array"
-                }
-              }
-            },
-            "description": "OK"
-          }
-        },
-        "summary": "List your tokens",
-        "tags": [
-          "Tokens"
-        ]
-      },
-      "post": {
-        "description": "Issues a personal access token for the git facade. Optionally scoped to named marketplaces (unscoped grants all) and optionally expiring; the cleartext is returned exactly once. Push scopes are separate and grant nothing by default: they name the hosted marketplaces the token may publish to. Creation is audit-logged with the token's name and both kinds of scope.",
-        "operationId": "create_1",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateTokenRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/IssuedToken"
-                }
-              }
-            },
-            "description": "Token issued; the only response carrying the cleartext"
-          },
-          "422": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/IssuedToken"
-                }
-              }
-            },
-            "description": "Unknown scope, or lifetime beyond the configured cap"
-          }
-        },
-        "summary": "Create a token",
-        "tags": [
-          "Tokens"
         ]
       }
     },
