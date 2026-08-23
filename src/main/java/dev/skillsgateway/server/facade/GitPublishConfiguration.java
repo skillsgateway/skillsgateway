@@ -74,6 +74,11 @@ public class GitPublishConfiguration {
     Repository resolveOrigin(HttpServletRequest request, String name)
             throws RepositoryNotFoundException, ServiceMayNotContinueException {
         String marketplace = name.endsWith(".git") ? name.substring(0, name.length() - 4) : name;
+        // A cheap pre-filter that also blocks traversal before any path is built. It is redundant
+        // with the scope check below — a name that fails this pattern can never be an issued push
+        // scope, because push scopes are validated against registered marketplaces and
+        // registration enforces the same pattern — and it is kept because relying on that
+        // invariant from another class is not how a path should be assembled.
         if (!MARKETPLACE_NAME.matcher(marketplace).matches()) {
             throw new RepositoryNotFoundException(name);
         }
@@ -100,9 +105,9 @@ public class GitPublishConfiguration {
         receivePack.setRefLogIdent(pushHook.identityOf(auditHook.currentPrincipal()));
         receivePack.setPreReceiveHook(pushHook);
         receivePack.setPostReceiveHook(pushHook);
-        // A publisher pushes content, never a repository's shape: no ref deletion, no
-        // non-fast-forward except where the marketplace's policy allows it (both enforced in the
-        // hook, which knows the marketplace), and never an atomic-less partial application.
+        // A publisher pushes content, never a repository's shape. Deletion is refused here and
+        // again in the hook: this line is the one JGit consults first, the hook's check is what
+        // holds if this line is ever removed, and a trust boundary is the right place for both.
         receivePack.setAllowDeletes(false);
         receivePack.setAtomic(true);
         return receivePack;

@@ -116,11 +116,35 @@ class HostedPushTests extends AbstractGatewayTest {
             assertThat(result.exitCode()).as("push to '%s'", target).isNotZero();
         }
 
-        // An upstream marketplace is not publishable either, however scoped the token.
+        // An upstream marketplace is not publishable either, however scoped the token — and it
+        // stays unpublishable even when an origin repository for that name happens to exist on
+        // disk, which is the only case that tells the origin check apart from "no such repo".
         String upstream = uniqueName("upstreamtarget");
         marketplaceRepository.register(upstream, "https://example.com/x.git");
+        try (Repository stray = storage.hosted(upstream)) {
+            assertThat(stray.getDirectory()).exists();
+        }
         GitResult result = git(working, "push", publishUrl(upstream, token), "main");
-        assertThat(result.exitCode()).isNotZero();
+        assertThat(result.exitCode())
+                .as("an upstream marketplace is never a publish target")
+                .isNotZero();
+    }
+
+    @Test
+    @SVCs({"SVC_GW_0102"})
+    void the_receive_pack_itself_refuses_deletions_and_the_hook_refuses_them_again() throws Exception {
+        // Deletion is guarded twice on purpose: the ReceivePack is configured to disallow it, and
+        // the hook refuses it independently. This asserts the hook alone holds, so neither guard
+        // is load-bearing by itself.
+        String name = registerHosted(uniqueName("doubleguard"), Marketplace.PUSH_APPEND_ONLY);
+        Path working = publisherWorkingCopy();
+        String url = publishUrl(name, pushToken(name));
+        assertThat(git(working, "push", url, "main").exitCode()).isZero();
+
+        assertThat(git(working, "push", url, "--delete", "main").exitCode()).isNotZero();
+        try (Repository origin = storage.hosted(name)) {
+            assertThat(origin.resolve(Marketplace.LINEAGE_REF)).isNotNull();
+        }
     }
 
     @Test

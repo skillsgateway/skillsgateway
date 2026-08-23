@@ -44,8 +44,9 @@ public class MarketplaceRepository {
                         + " RETURNING *")
                 .param("name", name)
                 .param("url", url)
-                .param("origin", origin)
-                .param("pushPolicy", pushPolicy)
+                .param("origin", origin == null ? Marketplace.ORIGIN_UPSTREAM : origin)
+                // The column's DEFAULT applies only to an omitted value, not to an explicit null.
+                .param("pushPolicy", pushPolicy == null ? Marketplace.PUSH_APPEND_ONLY : pushPolicy)
                 .param("now", OffsetDateTime.now())
                 .param("forge", metadata == null ? null : metadata.forge())
                 .param("forgeProject", metadata == null ? null : metadata.project())
