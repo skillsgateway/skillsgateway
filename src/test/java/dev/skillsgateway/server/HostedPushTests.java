@@ -1,6 +1,7 @@
 package dev.skillsgateway.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.skillsgateway.server.auth.TokenService;
 import dev.skillsgateway.server.persistence.Marketplace;
@@ -128,6 +129,25 @@ class HostedPushTests extends AbstractGatewayTest {
         assertThat(result.exitCode())
                 .as("an upstream marketplace is never a publish target")
                 .isNotZero();
+    }
+
+    @Test
+    @SVCs({"SVC_GW_0102"})
+    void a_push_scope_can_only_ever_name_a_hosted_marketplace() {
+        // This is the guard that makes "an upstream marketplace is not a publish target" true:
+        // a token cannot be issued with a push scope naming one, so the resolver's own origin
+        // check is defence in depth against this invariant being broken, not the invariant.
+        String upstream = uniqueName("notpublishable");
+        marketplaceRepository.register(upstream, "https://example.com/x.git");
+
+        assertThatThrownBy(() -> pushToken(upstream))
+                .isInstanceOf(TokenService.InvalidTokenRequestException.class)
+                .hasMessageContaining(upstream);
+
+        // The catalog is generated, so it is not publishable either, nor is an unknown name.
+        assertThatThrownBy(() -> pushToken("catalog")).isInstanceOf(TokenService.InvalidTokenRequestException.class);
+        assertThatThrownBy(() -> pushToken("no-such-marketplace"))
+                .isInstanceOf(TokenService.InvalidTokenRequestException.class);
     }
 
     @Test
