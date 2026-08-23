@@ -2,3 +2,7 @@ allowBuilds:
   msw: true
   esbuild: true
   "@tailwindcss/oxide": true
+# Pinned to the exact version: 0.3.0 was taken before pnpm's release-age window
+# had elapsed, to close three js-yaml advisories.
+minimumReleaseAgeExclude:
+  - '@reqstool/reqstool-typescript-tags@0.3.0'
