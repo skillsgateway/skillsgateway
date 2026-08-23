@@ -26,8 +26,9 @@ $ curl localhost:8080/api/roles
   "grantedBy":"admin@example.com","grantedAt":"2026-08-17T09:01:00Z"}]
 ```
 
-Configuration-bootstrapped admins are not grants and do not appear here; they
-show as an effective role on [`/api/me`](index.md#session).
+Configuration-bootstrapped admins and roles derived from identity-provider
+claims are not grants and do not appear here; they show as effective roles with
+source `config` and `claim` on [`/api/me`](index.md#session).
 
 | Status | Meaning |
 | --- | --- |

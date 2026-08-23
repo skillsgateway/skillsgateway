@@ -79,6 +79,28 @@ Every grant and revocation lands on the
 `role-revoked` with the acting identity, the target principal, the role, and
 the marketplace.
 
+## Grants, or groups?
+
+Grants are not the only source of a role. A session's effective roles are the
+union of three:
+
+| Source | `/api/me` reports | Managed by |
+| --- | --- | --- |
+| `skills-gateway.roles.admins` | `config` | Whoever controls deployment. Unrevocable through the API. |
+| A row in the grants API | `grant` | Admins, at runtime, audited on the ledger. |
+| An identity-provider claim | `claim` | Your directory, through `skills-gateway.roles.mappings`. |
+
+Prefer **groups** wherever your identity provider already governs membership:
+the joiner/mover/leaver process you already have then governs gateway access
+too, and there is no second list to keep in step. Reach for a **grant** when
+the person is not in a group that fits, when you want the change audited on the
+ledger with an acting identity, or when the role must survive the person
+leaving the group. Keep at least one **configuration admin** either way — it is
+the one source that no directory outage and no bad mapping can take away.
+
+Setting the mappings up, including a worked Microsoft Entra ID walkthrough, is
+in [Identity providers](identity-providers.md).
+
 ## Locked out anyway?
 
 Set `skills-gateway.roles.enabled=false` and restart: every check passes again,
@@ -86,8 +108,8 @@ grants intact. Fix the grants (or the `admins` list) and re-enable.
 
 ## What this is not
 
-- No portal UI for managing grants yet — the API (and the coming CLI) is the
-  management surface.
+- No portal UI for managing grants or claim mappings yet — the API (and the
+  coming CLI) is the management surface for grants; mappings are configuration.
 - No roles on personal access tokens: the facade's authorization is
   [token scopes](../reference/api/tokens.md).
 - No per-team catalog scoping yet; approver scope is the marketplace.

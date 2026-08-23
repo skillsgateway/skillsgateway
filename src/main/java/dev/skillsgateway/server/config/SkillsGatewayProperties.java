@@ -19,6 +19,7 @@ public record SkillsGatewayProperties(
         Catalog catalog,
         Tokens tokens,
         Roles roles,
+        Oidc oidc,
         Estate estate) {
 
     public SkillsGatewayProperties {
@@ -53,7 +54,10 @@ public record SkillsGatewayProperties(
             tokens = new Tokens(null);
         }
         if (roles == null) {
-            roles = new Roles(null, null);
+            roles = new Roles(null, null, null, null);
+        }
+        if (oidc == null) {
+            oidc = new Oidc(null);
         }
         if (estate == null) {
             estate = new Estate(null, null, null, null, null);
@@ -149,15 +153,43 @@ public record SkillsGatewayProperties(
      * its grants and then opts in. {@code admins} are admins by configuration and cannot be
      * revoked through the API — the escape hatch that survives a bad grant edit.
      */
-    public record Roles(Boolean enabled, List<String> admins) {
+    public record Roles(Boolean enabled, List<String> admins, String claim, List<ClaimMapping> mappings) {
+
+        /** The claim an enterprise directory most often carries group membership in. */
+        public static final String DEFAULT_CLAIM = "groups";
 
         public Roles {
             if (enabled == null) {
                 enabled = false;
             }
             admins = admins == null ? List.of() : List.copyOf(admins);
+            if (claim == null || claim.isBlank()) {
+                claim = DEFAULT_CLAIM;
+            }
+            mappings = mappings == null ? List.of() : List.copyOf(mappings);
         }
     }
+
+    /**
+     * One identity-provider claim value granting one role (GW_0098). The value is the provider's
+     * own — a group object id, an app-role value — so it is matched exactly and never by
+     * convention; an {@code approver} mapping names the marketplace it is scoped to and the global
+     * roles name none, which {@code ClaimRoleMapper} refuses to start without.
+     *
+     * <p>The named marketplace need not exist yet: registration may come later, including from
+     * {@link Estate}, and until then the mapping simply matches nothing.
+     */
+    public record ClaimMapping(String claimValue, String role, String marketplace) {}
+
+    /**
+     * Browser-login integrity beyond what the client registration expresses (GW_0100).
+     *
+     * @param issuer the ID-token issuer to require. Null — the default, for compatibility — runs
+     *     Spring Security's own checks only, which compare no issuer at all when the registration
+     *     carries none; the gateway warns at startup while that is the case. Where one
+     *     authorization endpoint serves many tenants, this is the tenant boundary.
+     */
+    public record Oidc(String issuer) {}
 
     /**
      * Access-token policy (GW_0065).

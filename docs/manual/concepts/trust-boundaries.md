@@ -217,16 +217,34 @@ locks a deployment out of its own gateway; principals in
 through the API — the escape hatch that makes enabling safe. Every grant and
 revocation is on the append-only ledger.
 
+A role can come from three places, and the union is what a session holds: the
+`skills-gateway.roles.admins` list, a grant row, or a **claim** of the identity
+provider's token mapped by `skills-gateway.roles.mappings`. Claim mapping moves
+part of this boundary into the directory — deliberately, because that is where
+membership is already governed — under three rules that keep it from widening
+it. Values are matched exactly, so a mapping cannot grant by resemblance. A
+malformed mapping refuses startup, so a typo cannot quietly grant nothing.
+And claims are read only from a session established through the identity
+provider: a PAT, the `dev-insecure-auth` principal and the anonymous webhook
+request carry no claims and derive no role, whatever authorities they hold.
+
+The identity token's own integrity is part of this: the gateway configures its
+provider endpoints explicitly rather than by discovery, so it compares the
+token's issuer only when `skills-gateway.oidc.issuer` names one. Where a single
+authorization endpoint serves many tenants, that comparison *is* the tenant
+boundary — every tenant's tokens verify against the same keys.
+
 This boundary is the web surface's only. The facade's authorization is
 [token scopes](../reference/api/tokens.md) — a different credential for a
 different surface — and roles never apply to PATs. See
 [Delegated administration](../guides/delegated-administration.md) for the
-workflow and [Roles](../reference/api/roles.md) for the grants API.
+workflow, [Identity providers](../guides/identity-providers.md) for claim
+mapping, and [Roles](../reference/api/roles.md) for the grants API.
 
 ## What is not a boundary yet
 
 Per-team catalog scoping (which identities see which virtual marketplaces) and
 a portal UI for managing grants are future capabilities; today the grants API
-is the management surface. Where the role model is not enabled, treat **access
+and the claim mappings are the management surface. Where the role model is not enabled, treat **access
 to the portal** as the reviewer privilege and grant it through the identity
 provider.

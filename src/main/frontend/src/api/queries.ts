@@ -26,6 +26,8 @@ export type MarketplaceAdoption = components["schemas"]["MarketplaceAdoption"];
 export type SnapshotAdoption = components["schemas"]["SnapshotAdoption"];
 export type StaleIdentity = components["schemas"]["StaleIdentity"];
 export type Eligibility = components["schemas"]["Eligibility"];
+export type MeView = components["schemas"]["MeView"];
+export type EffectiveRole = components["schemas"]["EffectiveRole"];
 
 /** Same-origin download of the NDJSON ledger stream; the session cookie is the credential. */
 export const AUDIT_EXPORT_URL = "/api/audit/export";
@@ -33,7 +35,7 @@ export const AUDIT_EXPORT_URL = "/api/audit/export";
 export function useMe() {
   return useQuery({
     queryKey: ["me"],
-    queryFn: () => api<{ username: string }>("/api/me"),
+    queryFn: () => api<MeView>("/api/me"),
     staleTime: Infinity,
   });
 }

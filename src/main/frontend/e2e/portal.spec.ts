@@ -560,3 +560,25 @@ test("preview_pane_shows_tree_inert_skill_md_and_diff_vs_served", async ({ page 
     .click();
   await expect(preview.getByText("+Now with a changed instruction.")).toBeVisible();
 });
+
+/**
+ * The mock identity provider puts a group claim in every token, and the gateway
+ * runs with role enforcement on and that group as its only admin mapping — so
+ * every test above already depends on this path. Here it is named: the session
+ * holds admin, and its source is the claim rather than a grant row.
+ *
+ * @SVCs SVC_GW_0098
+ */
+test("the_session_holds_an_admin_role_derived_from_the_identity_providers_group_claim", async ({
+  page,
+}) => {
+  await login(page, "alice");
+
+  const me = await page.request.get("/api/me");
+  expect(me.ok()).toBeTruthy();
+  const body = await me.json();
+
+  expect(body.rolesEnabled).toBe(true);
+  expect(body.claimsTruncated).toBe(false);
+  expect(body.roles).toContainEqual({ role: "admin", marketplace: null, source: "claim" });
+});

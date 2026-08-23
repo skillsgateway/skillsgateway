@@ -72,15 +72,28 @@ consumed by the portal with a session cookie.
 ## Session
 
 `GET /api/me` returns the current principal, whether role enforcement is
-enabled, and the session's effective roles — a configuration-bootstrapped admin
-appears as a synthetic `admin` entry. The portal uses it for the sidebar footer
-and, with roles, to adapt its controls.
+enabled, the session's effective roles with the **source** of each, and whether
+the identity provider truncated the membership claim. The portal uses it for
+the sidebar footer and, with roles, to adapt its controls.
 
 ```json
 {"username": "alice@example.com",
  "rolesEnabled": true,
- "roles": [{"role": "approver", "marketplace": "acme"}]}
+ "roles": [{"role": "approver", "marketplace": "acme", "source": "grant"},
+           {"role": "auditor", "marketplace": null, "source": "claim"}],
+ "claimsTruncated": false}
 ```
+
+| `source` | Where the role came from |
+| --- | --- |
+| `config` | `skills-gateway.roles.admins`. No grant row; unrevocable through the API. |
+| `grant` | A row in [the grants API](roles.md). |
+| `claim` | An identity-provider claim value mapped by `skills-gateway.roles.mappings`. |
+
+The same role and marketplace is reported once, attributed to the most durable
+source that produced it. `claimsTruncated: true` means the provider dropped the
+membership claim rather than the session having none — the roles listed are
+then incomplete; see [Identity providers](../../guides/identity-providers.md).
 
 ## Non-API endpoints
 

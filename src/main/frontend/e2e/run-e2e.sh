@@ -92,6 +92,9 @@ $COMPOSE up -d --wait
 GATEWAY_PORT="${E2E_GATEWAY_PORT:-8081}"
 mkdir -p "$UI_DIR/test-results"
 DATA_DIR="$(mktemp -d "${TMPDIR:-/tmp}/e2e-data.XXXXXX")"
+# Role enforcement is ON and the only admin is the group the mock IdP puts in every token, so the
+# whole suite passes only if claim-to-role mapping works end to end through a real login (GW_0098).
+#
 # Re-vetting: the scheduled sweep is off, so no background pass can revoke a fixture out from
 # under a running test — but the mode is ENFORCE, because the acceptance suite has to see the
 # retraction a deployment that opts in would see, not the warn-mode default that changes nothing.
@@ -108,6 +111,10 @@ SKILLSGATEWAY_DATADIR="$DATA_DIR" \
 SKILLSGATEWAY_ALLOWEDURLSCHEMES="http,https,file" \
 SKILLSGATEWAY_VETTING_REVET_ENABLED=false \
 SKILLSGATEWAY_VETTING_REVET_MODE=enforce \
+SKILLSGATEWAY_ROLES_ENABLED=true \
+SKILLSGATEWAY_ROLES_CLAIM=groups \
+SKILLSGATEWAY_ROLES_MAPPINGS_0_CLAIMVALUE=sg-gateway-admins \
+SKILLSGATEWAY_ROLES_MAPPINGS_0_ROLE=admin \
 java -jar "$JAR" > "$UI_DIR/test-results/gateway-e2e.log" 2>&1 &
 GATEWAY_PID=$!
 

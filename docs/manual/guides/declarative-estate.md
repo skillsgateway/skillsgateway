@@ -136,6 +136,15 @@ Personal access tokens are user-owned credentials and stay API-only by
 design. Deregistration, snapshot approval, waivers — everything that retracts
 or publishes content — stays interactive and audited.
 
+Identity-provider role mappings (`skills-gateway.roles.mappings`) are
+deliberately **not** an estate object either, for the opposite reason: they are
+already pure configuration. No endpoint creates or deletes them, there is no
+row to converge, and removing one takes effect on the next request. They sit
+next to `skills-gateway.roles.admins` — see
+[Identity providers](identity-providers.md). `estate.grants` remains the way to
+declare grant *rows*, and it keeps writing them even for a principal who
+already holds the same role through a group.
+
 Objects created through the API and absent from the declaration are legitimate
 state, not drift to be corrected: reconciliation never touches them. The
 ledger's actor column is the drift report — everything not from
