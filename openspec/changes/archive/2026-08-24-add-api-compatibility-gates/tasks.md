@@ -86,5 +86,5 @@
 - [x] 6.6 Write `openspec/changes/add-api-compatibility-gates/evidence.md` — the
       commands and pasted result tails of one fresh run after the last edit, plus
       the commit SHA.
-- [ ] 6.7 Open the PR with an Evidence section; archive the change as the final
+- [x] 6.7 Open the PR with an Evidence section; archive the change as the final
       commit (`/opsx:archive`).
