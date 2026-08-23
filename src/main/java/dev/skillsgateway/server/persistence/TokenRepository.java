@@ -39,13 +39,27 @@ public class TokenRepository {
             Instant expiresAt,
             Long rotatedFrom,
             String pushScopes) {
+        return create(principal, name, tokenHash, scopes, expiresAt, rotatedFrom, pushScopes, false);
+    }
+
+    @Requirements({"GW_0064", "GW_0065", "GW_0102", "GW_0104"})
+    public AccessToken create(
+            String principal,
+            String name,
+            String tokenHash,
+            String scopes,
+            Instant expiresAt,
+            Long rotatedFrom,
+            String pushScopes,
+            boolean sessionDerived) {
         return jdbc.sql("INSERT INTO access_tokens"
                         + " (principal, name, token_hash, created_at, scopes, expires_at, rotated_from,"
-                        + " push_scopes)"
+                        + " push_scopes, session_derived)"
                         + " VALUES (:principal, :name, :hash, :now, :scopes, :expiresAt, :rotatedFrom,"
-                        + " :pushScopes)"
+                        + " :pushScopes, :sessionDerived)"
                         + " RETURNING *")
                 .param("pushScopes", pushScopes)
+                .param("sessionDerived", sessionDerived)
                 .param("principal", principal)
                 .param("name", name)
                 .param("hash", tokenHash)
@@ -109,6 +123,7 @@ public class TokenRepository {
                 rs.getString("scopes"),
                 MarketplaceRepository.instant(rs, "expires_at"),
                 rotatedFrom,
-                rs.getString("push_scopes"));
+                rs.getString("push_scopes"),
+                rs.getBoolean("session_derived"));
     }
 }

@@ -501,14 +501,21 @@ skills-gateway:
     # silently shortened. Unset (the default) accepts tokens that never
     # expire, which is what every pre-cap deployment had.
     max-ttl: 90d
+    # What a session-derived credential is GRANTED (GW_0104), as opposed to
+    # what a holder may ask for. Not derived from max-ttl on purpose: a
+    # deployment may allow year-long CI tokens and still want a credential
+    # minted from a browser session to die at the end of the working day.
+    session-ttl: 8h
 ```
 
 | Property | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `skills-gateway.tokens.max-ttl` | duration | unset (unlimited) | Cap on accepted token lifetime; refusal, not clamping. |
+| `skills-gateway.tokens.session-ttl` | duration | `8h` | Lifetime granted to a session-derived credential. The caller cannot influence it. |
 
 Scopes, expiry, and rotation are described in
-[Access tokens](api/tokens.md).
+[Access tokens](api/tokens.md); session-derived credentials in
+[Consuming skills](../guides/consuming-skills.md).
 
 ---
 

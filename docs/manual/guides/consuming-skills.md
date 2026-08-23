@@ -12,7 +12,45 @@ modification — only a credential and a URL.
     guide is the same procedure by hand. See
     [the portal reference](../reference/portal.md#set-up-a-client).
 
-## 1. Create a personal access token
+## 1. Get a credential
+
+Git clients authenticate with a token, not with your portal session cookie.
+There are two kinds, and for a human at a keyboard the first is the better
+default.
+
+### A session credential (recommended for people)
+
+If you are already logged in to the portal, mint a credential from that session
+instead of creating a standing token:
+
+```console
+$ curl -X POST localhost:8080/api/tokens/session \
+    -H 'Content-Type: application/json' -d '{"name":"my-laptop"}'
+```
+
+```json
+{"id":1,"name":"my-laptop","token":"sgw_...","expiresAt":"2026-08-23T17:00:00Z",
+ "sessionDerived":true,"pushScopes":[]}
+```
+
+The gateway sets the lifetime —
+[`skills-gateway.tokens.session-ttl`](../reference/configuration.md#access-tokens),
+8 hours by default — and you cannot ask for longer. That is the entire
+difference between this and a personal access token: a credential whose life
+the holder chooses is a standing credential wearing a different name. It also
+carries no publication authority, and it is marked `sessionDerived` wherever it
+appears, so the [audit ledger](../concepts/snapshots-and-ledger.md) distinguishes
+"a fetch by a credential minted moments after an SSO login" from "a fetch by a
+token provisioned months ago".
+
+!!! warning "The timer is the control, not your session"
+
+    A session credential is **not** revoked when you log out or close the
+    browser — the gateway does not track session lifetime. It dies when its
+    expiry passes, and until then it is a bearer token like any other. What it
+    buys is a bounded window and an attributable origin, not immunity.
+
+### A personal access token (for CI, and anything without a browser)
 
 Git clients authenticate with PATs, not with your portal session.
 

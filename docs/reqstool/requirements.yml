@@ -813,3 +813,11 @@ requirements:
     rationale: The value of first-party hosting is that it removes a redundant system, not that it removes review; content the organisation wrote is exactly as capable of carrying a planted credential or a prompt injection as content it did not, and a publisher who could also serve would make the approval gate optional.
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
+
+  - id: GW_0104
+    title: Session-derived short-lived git credentials
+    significance: shall
+    description: The system shall issue, to a principal holding an authenticated browser session, a git facade credential whose lifetime the gateway sets from configuration and which the requester can neither choose nor extend, shall grant such a credential no publication authority whatsoever, shall let it be narrowed to named marketplaces exactly as any other credential, shall record and report that the credential was derived from a session so it is distinguishable everywhere a credential appears including the append-only ledger, and shall carry both that mark and the unchanged expiry deadline through a rotation.
+    rationale: A human who has just proved who they are to the identity provider should not have to create a second, standing credential that outlives the session, the laptop and the employment in order to fetch — that duplication is the whole argument for serving content from somewhere else instead of the gateway; making the lifetime the gateway's decision is what separates this from a personal access token requested through a different path, and marking the origin is what lets an auditor tell a credential minted moments after an SSO login from one provisioned months ago.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0

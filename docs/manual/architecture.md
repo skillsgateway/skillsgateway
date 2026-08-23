@@ -436,8 +436,12 @@ inward.
   item. *Implemented:* token lifecycle — marketplace-scoped PATs enforced at
   the facade, expiry decided at authentication time, rotation that cannot
   widen a grant, per-token fetch attribution on the ledger (GW_0064–GW_0067);
-  team entitlements and SSO-derived short-lived credentials are deferred
-  (issue #59). *Implemented:* scoped admin roles on the web surface — global
+  team entitlements are deferred. SSO-derived short-lived credentials are
+  *implemented* (GW_0104): a git credential minted from a browser session with
+  a gateway-set lifetime the holder cannot extend, no publication authority,
+  and a session-derived mark on the ledger — the identity half of ADR 0008,
+  which declined serving from an external forge and keeps the audited facade
+  canonical. The forge mirror for browsing is sequenced after it. *Implemented:* scoped admin roles on the web surface — global
   admin, per-marketplace approver, read-only auditor; DB-managed audited
   grants with configuration-bootstrapped admins, deny-by-default once
   enabled, off by default (GW_0068–GW_0071), and roles derived from the

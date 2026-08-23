@@ -55,6 +55,10 @@ publication to everything by forgetting a field. Entries are validated against
 the registered hosted marketplaces at creation. An out-of-scope push answers
 exactly like a marketplace that does not exist, as an out-of-scope fetch does.
 
+`sessionDerived` on a returned token says the credential came from
+[`POST /api/tokens/session`](#post-apitokenssession) rather than from a
+deliberate provisioning.
+
 `expiresAt` (GW_0065): an expired token fails authentication exactly like a
 revoked one, decided by comparing the stamp at authentication time — no
 background process is involved. When
@@ -135,3 +139,55 @@ helper setup.
 
     Issue a separate token per laptop and per pipeline. Revocation is then
     surgical, and ledger entries attribute fetches to something meaningful.
+
+---
+
+## `POST /api/tokens/session`
+
+Mint a short-lived git credential from the calling principal's browser session
+(GW_0104). The identity half of
+[ADR 0008](../decisions.md): a human who has just proved who they are should
+not have to create a second, standing credential in order to fetch.
+
+**Body** — `{name, scopes?}`
+
+There is deliberately **no** lifetime field. The gateway grants
+[`skills-gateway.tokens.session-ttl`](../configuration.md#access-tokens)
+(8 hours by default) and a caller who sends `expiresAt` anyway does not get it —
+a credential whose life the holder chooses is a personal access token reached
+through another URL.
+
+```console
+$ curl -X POST localhost:8080/api/tokens/session \
+    -H 'Content-Type: application/json' -d '{"name":"my-laptop"}'
+```
+
+```json
+{"id":9,"name":"my-laptop","token":"sgw_...","createdAt":"2026-08-23T09:00:00Z",
+ "scopes":[],"expiresAt":"2026-08-23T17:00:00Z","rotatedFrom":null,
+ "pushScopes":[],"sessionDerived":true}
+```
+
+| | Session credential | Personal access token |
+| --- | --- | --- |
+| Lifetime | the gateway's, not negotiable | the caller's, capped by `max-ttl` |
+| Publication | never | `pushScopes` if granted |
+| Marked on the ledger | yes, `session-derived` | no |
+| Survives having no browser | no — it is minted from a session | yes |
+
+`scopes` narrows it to named marketplaces exactly as for any token. Rotation
+(`POST /api/tokens/{id}/rotate`) keeps both the expiry deadline and the
+session-derived mark, so it can neither extend the credential nor launder it
+into a standing one.
+
+!!! warning "Not tied to the session's end"
+
+    It is revoked by its timer, by `DELETE /api/tokens/{id}`, or not at all —
+    logging out does not kill it, because the gateway does not track session
+    lifetime.
+
+| Status | Cause |
+| --- | --- |
+| 201 | Issued; the only response carrying the cleartext. |
+| 401 | No authenticated session. |
+| 422 | Unknown scope. |

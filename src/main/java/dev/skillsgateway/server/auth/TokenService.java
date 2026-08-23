@@ -58,7 +58,10 @@ public class TokenService {
             Long rotatedFrom,
 
             @Schema(description = "Hosted marketplaces this token may publish to; empty grants none")
-            List<String> pushScopes) {}
+            List<String> pushScopes,
+
+            @Schema(description = "Whether this credential was derived from a browser session (GW_0104)")
+            boolean sessionDerived) {}
 
     /** A scope or lifetime the policy refuses; surfaces as 422. */
     public static class InvalidTokenRequestException extends RuntimeException {
@@ -110,6 +113,22 @@ public class TokenService {
         return issued(stored, secret);
     }
 
+    /**
+     * A git credential derived from the caller's browser session (GW_0104). The lifetime is the
+     * gateway's, taken from configuration: there is no parameter for it, because a credential
+     * whose life the holder can choose is a personal access token reached through another URL.
+     * No push scopes, ever — publishing is done with something somebody provisioned on purpose.
+     */
+    @Requirements({"GW_0104"})
+    public IssuedToken createSessionCredential(String principal, String name, List<String> scopes) {
+        String storedScopes = validateScopes(scopes);
+        Instant expiresAt = Instant.now().plus(properties.tokens().sessionTtl());
+        String secret = newSecret();
+        AccessToken stored =
+                tokenRepository.create(principal, name, sha256Hex(secret), storedScopes, expiresAt, null, null, true);
+        return issued(stored, secret);
+    }
+
     private String newSecret() {
         byte[] bytes = new byte[32];
         random.nextBytes(bytes);
@@ -148,8 +167,11 @@ public class TokenService {
                 old.scopes(),
                 old.expiresAt(),
                 id,
-                // Rotation changes the secret and nothing else (GW_0066), push scopes included.
-                old.pushScopes());
+                // Rotation changes the secret and nothing else (GW_0066): push scopes, the expiry
+                // deadline, and the session-derived mark all carry over — so a rotation can
+                // neither widen a grant nor launder a session credential into a standing one.
+                old.pushScopes(),
+                old.sessionDerived());
         return Optional.of(issued(stored, secret));
     }
 
@@ -216,7 +238,8 @@ public class TokenService {
                 stored.scopeList(),
                 stored.expiresAt(),
                 stored.rotatedFrom(),
-                stored.pushScopeList());
+                stored.pushScopeList(),
+                stored.sessionDerived());
     }
 
     static String sha256Hex(String value) {

@@ -75,7 +75,46 @@ public class TokenController {
             Long rotatedFrom,
 
             @Schema(description = "Hosted marketplaces this token may publish to; empty grants none")
-            List<String> pushScopes) {}
+            List<String> pushScopes,
+
+            @Schema(
+                    description = "Whether the credential was derived from a browser session rather than"
+                            + " deliberately provisioned; its lifetime was the gateway's to set")
+            boolean sessionDerived) {}
+
+    @Schema(description = "Session credential request: the lifetime is the gateway's, so there is no field for it")
+    public record SessionCredentialRequest(
+            @Schema(description = "Human-readable name", example = "laptop")
+            String name,
+
+            @Schema(
+                    description = "Marketplace names to narrow the credential to; empty or omitted grants"
+                            + " every marketplace, as for any fetch scope")
+            List<String> scopes) {}
+
+    @PostMapping("/session")
+    @Requirements({"GW_0104"})
+    @Tag(name = "Tokens")
+    @Operation(
+            summary = "Mint a git credential from this session",
+            description = "Issues a short-lived facade credential to the principal of the current browser"
+                    + " session. Its lifetime is set by the gateway"
+                    + " (`skills-gateway.tokens.session-ttl`) and cannot be chosen or extended by the"
+                    + " caller — which is the whole difference between this and a personal access token."
+                    + " It carries no publication authority, and is marked session-derived wherever it"
+                    + " appears, including on the audit ledger. It is NOT revoked when the session ends:"
+                    + " the lifetime is the control.")
+    @ApiResponse(responseCode = "201", description = "Credential issued; the only response carrying the cleartext")
+    @ApiResponse(responseCode = "422", description = "Unknown scope")
+    public ResponseEntity<TokenService.IssuedToken> createSessionCredential(
+            @RequestBody SessionCredentialRequest request, Authentication authentication) {
+        TokenService.IssuedToken issued = tokenService.createSessionCredential(
+                authentication.getName(),
+                request == null ? null : request.name(),
+                request == null || request.scopes() == null ? List.of() : request.scopes());
+        auditSession(authentication, issued);
+        return ResponseEntity.status(HttpStatus.CREATED).body(issued);
+    }
 
     @PostMapping
     @Requirements({"GW_0067"})
@@ -155,6 +194,18 @@ public class TokenController {
         return ResponseEntity.noContent().build();
     }
 
+    /** A session credential's ledger entry says so: the origin is what an auditor needs. */
+    @Requirements({"GW_0104"})
+    private void auditSession(Authentication authentication, TokenService.IssuedToken issued) {
+        String detail = "token %d '%s' scopes=%s session-derived expires=%s"
+                .formatted(
+                        issued.id(),
+                        issued.name(),
+                        issued.scopes().isEmpty() ? "all" : issued.scopes(),
+                        issued.expiresAt());
+        auditLogger.record(authentication.getName(), NO_MARKETPLACE, "token-created", null, detail);
+    }
+
     /** Lifecycle entries carry the token's identity, name and scopes (GW_0067). */
     private void audit(Authentication authentication, String event, long tokenId, String name, List<String> scopes) {
         audit(authentication, event, tokenId, name, scopes, List.of());
@@ -182,7 +233,8 @@ public class TokenController {
                 token.scopeList(),
                 token.expiresAt(),
                 token.rotatedFrom(),
-                token.pushScopeList());
+                token.pushScopeList(),
+                token.sessionDerived());
     }
 
     @ExceptionHandler(TokenService.InvalidTokenRequestException.class)
