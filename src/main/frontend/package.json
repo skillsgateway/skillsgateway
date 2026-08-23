@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
-    "@reqstool/reqstool-typescript-tags": "^0.2.1",
+    "@reqstool/reqstool-typescript-tags": "^0.3.0",
     "@storybook/addon-a11y": "^10.5.7",
     "@storybook/addon-vitest": "10.5.7",
     "@storybook/react-vite": "10.5.7",
