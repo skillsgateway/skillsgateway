@@ -595,6 +595,8 @@
       
         
       
+        
+      
     
     
     
@@ -1039,6 +1041,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/identity-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Identity providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/declarative-estate/" class="md-nav__link">
         
   
@@ -1403,6 +1433,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="OIDC login">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#expected-issuer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected issuer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2127,6 +2174,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="OIDC login">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#expected-issuer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected issuer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -3019,6 +3083,18 @@ nothing appears in <code>application.yaml</code>.</p>
 <a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">    </span><span class="c1"># through the API — the escape hatch that survives a bad grant edit.</span>
 <a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">    </span><span class="nt">admins</span><span class="p">:</span>
 <a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin@example.com</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">    </span><span class="c1"># Roles from the identity provider's own claims (GW_0098). The claim name</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="w">    </span><span class="c1"># and every value are yours: on a shared app registration the values are</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">    </span><span class="c1"># the organisation's group ids or app-role values, not gateway role names.</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="w">    </span><span class="nt">claim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">groups</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="w">    </span><span class="nt">mappings</span><span class="p">:</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8f1c0a2e-0000-0000-0000-000000000000</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin</span>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gateway-approvers-acme</span>
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">approver</span>
+<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="w">        </span><span class="nt">marketplace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">acme</span>
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">security-auditors</span>
+<a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auditor</span>
 </code></pre></div>
 <table>
 <thead>
@@ -3042,11 +3118,36 @@ nothing appears in <code>application.yaml</code>.</p>
 <td><code>[]</code></td>
 <td>Principals that are admins by configuration; DB grants add to them.</td>
 </tr>
+<tr>
+<td><code>skills-gateway.roles.claim</code></td>
+<td>string</td>
+<td><code>groups</code></td>
+<td>Claim carrying membership. A dotted path walks nested claims (<code>realm_access.roles</code>).</td>
+</tr>
+<tr>
+<td><code>skills-gateway.roles.mappings</code></td>
+<td>list</td>
+<td><code>[]</code></td>
+<td>Claim value → role. <code>approver</code> names a marketplace; <code>admin</code> and <code>auditor</code> must not.</td>
+</tr>
 </tbody>
 </table>
+<p>Claim values are matched <strong>exactly</strong>, after trimming surrounding whitespace: no
+prefix, glob or case-insensitive matching, because a looser match can only ever
+widen who is privileged. The claim may be a list of strings or a single string;
+a delimited string is one value and is never split. A malformed mapping — an
+unknown role, a blank value, an unscoped <code>approver</code>, a scoped global role —
+refuses startup rather than silently granting nothing. A mapping may name a
+marketplace that is not registered yet; until it is, the mapping matches
+nothing.</p>
+<p>Claims are read only from a browser session established through the identity
+provider. A personal access token on the git facade, the <code>dev-insecure-auth</code>
+principal and the anonymous webhook request carry no claims and derive no role,
+whatever authorities they hold.</p>
 <p>The roles, the enforcement matrix, and the staging workflow are described in
-<a href="../../guides/delegated-administration/">Delegated administration</a>; the grants
-API in <a href="../api/roles/">Roles</a>.</p>
+<a href="../../guides/delegated-administration/">Delegated administration</a>; the mapping
+walkthrough in <a href="../../guides/identity-providers/">Identity providers</a>; the
+grants API in <a href="../api/roles/">Roles</a>.</p>
 <hr />
 <h2 id="declarative-estate">Declarative estate<a class="headerlink" href="#declarative-estate" title="Permanent link">&para;</a></h2>
 <p>The estate defined as configuration (GW_0083–GW_0087, GW_0089): marketplaces,
@@ -3282,11 +3383,52 @@ defaults are the placeholders below rather than being absent.</p>
 <td><code>SGW_OIDC_JWK_SET_URI</code></td>
 <td><code>https://idp.invalid/jwks</code></td>
 </tr>
+<tr>
+<td><code>…client.provider.idp.user-name-attribute</code></td>
+<td><code>SGW_OIDC_USER_NAME_ATTRIBUTE</code></td>
+<td><code>sub</code></td>
+</tr>
+<tr>
+<td><code>…client.registration.idp.scope</code></td>
+<td><code>SGW_OIDC_SCOPE</code></td>
+<td><code>openid</code></td>
+</tr>
 </tbody>
 </table>
-<p>Fixed, not intended for override: scope <code>openid</code>, grant type
-<code>authorization_code</code>, redirect URI <code>{baseUrl}/login/oauth2/code/idp</code>.</p>
-<p>Register that redirect URI with your identity provider.</p>
+<p><code>user-name-attribute</code> decides what the principal is called everywhere else —
+grants, <code>roles.admins</code>, and every ledger row. On an app registration shared
+between services, <code>sub</code> is an opaque per-application identifier, so set this to
+a readable claim such as <code>preferred_username</code> there. Widen <code>SGW_OIDC_SCOPE</code>
+when your provider needs a scope before it will emit group or role claims.</p>
+<p>Fixed, not intended for override: grant type <code>authorization_code</code>, redirect URI
+<code>{baseUrl}/login/oauth2/code/idp</code>. Register that redirect URI with your
+identity provider.</p>
+<h3 id="expected-issuer">Expected issuer<a class="headerlink" href="#expected-issuer" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>skills-gateway.oidc.issuer</code></td>
+<td>string</td>
+<td><em>(unset)</em></td>
+<td>ID-token issuer to require. Unset means the issuer is not compared at all.</td>
+</tr>
+</tbody>
+</table>
+<p>The gateway configures its provider endpoints explicitly rather than by issuer
+discovery, and Spring Security compares an ID token's <code>iss</code> only when the
+registration carries an issuer — so with this unset, nothing checks it. That
+matters most where one authorization endpoint serves many tenants: every
+tenant's tokens verify against the same signing keys, so the issuer is the only
+thing that says which organisation the person logging in belongs to. The
+gateway logs a warning at startup while it is unset.</p>
 <hr />
 <h2 id="actuator">Actuator<a class="headerlink" href="#actuator" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">management</span><span class="p">:</span>

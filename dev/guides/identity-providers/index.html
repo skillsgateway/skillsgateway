@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/dev/guides/upstream-sync/">
+        <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/dev/guides/identity-providers/">
       
       
-        <link rel="prev" href="../registering-a-marketplace/">
+        <link rel="prev" href="../delegated-administration/">
       
       
-        <link rel="next" href="../approving-snapshots/">
+        <link rel="next" href="../declarative-estate/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Syncing from upstream automatically - Skills Gateway</title>
+        <title>Identity providers - Skills Gateway</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#syncing-from-upstream-automatically" class="md-skip">
+        <a href="#identity-providers" class="md-skip">
           Skip to content
         </a>
       
@@ -119,7 +119,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Syncing from upstream automatically
+              Identity providers
             
           </span>
         </div>
@@ -704,37 +704,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Syncing from upstream automatically
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../upstream-sync/" class="md-nav__link">
         
   
   
@@ -750,98 +723,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#changing-the-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Changing the mode
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#scheduled-polling" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Scheduled polling
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#webhook-triggered-ingestion" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Webhook-triggered ingestion
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Webhook-triggered ingestion">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-payload-is-ignored-on-purpose" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The payload is ignored, on purpose
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#upstream-outages-dont-reach-consumers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Upstream outages don't reach consumers
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-lands-on-the-ledger" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What lands on the ledger
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1159,10 +1040,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../identity-providers/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Identity providers
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1178,6 +1086,181 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-the-gateway-needs-from-any-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the gateway needs from any provider
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#groups-instead-of-grants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Groups instead of grants
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Groups instead of grants">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dry-run-before-you-enforce" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dry-run before you enforce
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nested-claims" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nested claims
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-the-group-claim-goes-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When the group claim goes missing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-claims-never-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What claims never do
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#microsoft-entra-id" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Microsoft Entra ID
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Microsoft Entra ID">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-the-app-registration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The app registration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-the-principal-claim" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. The principal claim
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-which-claim-to-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Which claim to map
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Verify
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#locked-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Locked out?
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1858,10 +1941,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#changing-the-mode" class="md-nav__link">
+  <a href="#what-the-gateway-needs-from-any-provider" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Changing the mode
+        What the gateway needs from any provider
       
     </span>
   </a>
@@ -1869,33 +1952,55 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#scheduled-polling" class="md-nav__link">
+  <a href="#groups-instead-of-grants" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Scheduled polling
+        Groups instead of grants
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#webhook-triggered-ingestion" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Webhook-triggered ingestion
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Webhook-triggered ingestion">
+    <nav class="md-nav" aria-label="Groups instead of grants">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#the-payload-is-ignored-on-purpose" class="md-nav__link">
+  <a href="#dry-run-before-you-enforce" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The payload is ignored, on purpose
+        Dry-run before you enforce
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nested-claims" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nested claims
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-the-group-claim-goes-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When the group claim goes missing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-claims-never-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What claims never do
       
     </span>
   </a>
@@ -1908,21 +2013,82 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#upstream-outages-dont-reach-consumers" class="md-nav__link">
+  <a href="#microsoft-entra-id" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Upstream outages don't reach consumers
+        Microsoft Entra ID
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Microsoft Entra ID">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-the-app-registration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The app registration
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#what-lands-on-the-ledger" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#2-endpoints" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What lands on the ledger
+        2. Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-the-principal-claim" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. The principal claim
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-which-claim-to-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Which claim to map
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Verify
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#locked-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Locked out?
       
     </span>
   </a>
@@ -1946,7 +2112,7 @@
 
 
   
-    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/guides/upstream-sync.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/guides/identity-providers.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -1954,101 +2120,230 @@
   
 
 
-<h1 id="syncing-from-upstream-automatically">Syncing from upstream automatically<a class="headerlink" href="#syncing-from-upstream-automatically" title="Permanent link">&para;</a></h1>
-<p>Ingestion is manual by default: content enters quarantine when an operator
-clicks <strong>Ingest</strong> or calls the API. A marketplace can instead be polled on a
-schedule, or ingest the moment its forge announces a push. The <strong>sync mode</strong> is
-per marketplace, and it only changes the <em>trigger</em> — every snapshot still lands
-<strong>held</strong> behind the same approval gate, whatever pulled it in.</p>
+<h1 id="identity-providers">Identity providers<a class="headerlink" href="#identity-providers" title="Permanent link">&para;</a></h1>
+<p>The gateway's web surface is OIDC-only (<a href="../../reference/decisions/">ADR 0002</a>),
+and it is its own BFF: the browser holds a session cookie, never a token. This
+guide connects it to an enterprise identity provider and — the part that
+removes most of the day-to-day administration — turns the provider's <strong>groups</strong>
+into gateway roles, so nobody has to keep grant rows in step with who joined
+which team.</p>
+<h2 id="what-the-gateway-needs-from-any-provider">What the gateway needs from any provider<a class="headerlink" href="#what-the-gateway-needs-from-any-provider" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Mode</th>
-<th>Trigger</th>
-<th>Latency</th>
+<th>Setting</th>
+<th>Environment variable</th>
+<th>What it is</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>on-demand</code> (default)</td>
-<td>An operator, via portal or API</td>
-<td>none — but someone has to remember</td>
+<td>Client id</td>
+<td><code>SGW_OIDC_CLIENT_ID</code></td>
+<td>The application registration's id.</td>
 </tr>
 <tr>
-<td><code>scheduled</code></td>
-<td>The gateway's polling sweep</td>
-<td>up to one poll interval</td>
+<td>Client secret</td>
+<td><code>SGW_OIDC_CLIENT_SECRET</code></td>
+<td>Injected as a secret; never in configuration files.</td>
 </tr>
 <tr>
-<td><code>webhook</code></td>
-<td>A signed forge push webhook</td>
-<td>seconds</td>
+<td>Authorization endpoint</td>
+<td><code>SGW_OIDC_AUTHORIZATION_URI</code></td>
+<td>Where the browser is sent to log in.</td>
+</tr>
+<tr>
+<td>Token endpoint</td>
+<td><code>SGW_OIDC_TOKEN_URI</code></td>
+<td>Where the gateway redeems the code.</td>
+</tr>
+<tr>
+<td>JWKS endpoint</td>
+<td><code>SGW_OIDC_JWK_SET_URI</code></td>
+<td>Keys the ID token is verified with.</td>
+</tr>
+<tr>
+<td>Principal claim</td>
+<td><code>SGW_OIDC_USER_NAME_ATTRIBUTE</code></td>
+<td>Which claim names the user. Default <code>sub</code>.</td>
+</tr>
+<tr>
+<td>Scopes</td>
+<td><code>SGW_OIDC_SCOPE</code></td>
+<td>Default <code>openid</code>. Widen if a scope is needed for group claims.</td>
+</tr>
+<tr>
+<td>Expected issuer</td>
+<td><code>SKILLSGATEWAY_OIDC_ISSUER</code></td>
+<td>The <code>iss</code> every ID token must carry.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="changing-the-mode">Changing the mode<a class="headerlink" href="#changing-the-mode" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>localhost:8080/api/marketplaces/acme/sync<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"mode":"scheduled"}'</span>
+<p>The redirect URI to register is:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>https://&lt;your-gateway-host&gt;/login/oauth2/code/idp
 </code></pre></div>
-<p>The change is audit-logged (<code>sync-mode-changed</code>) with your identity and the new
-mode.</p>
-<h2 id="scheduled-polling">Scheduled polling<a class="headerlink" href="#scheduled-polling" title="Permanent link">&para;</a></h2>
-<p>Marketplaces in <code>scheduled</code> mode are ingested by a background sweep — least
-recently attempted first, in bounded batches, so a large estate is covered in
-rotation rather than all at once. A failed fetch is logged, stamped, and
-retried on a later pass without stopping the rest of the batch.</p>
-<p>The interval and batch size are global settings; see
-<a href="../../reference/configuration/#upstream-sync">Configuration</a>.</p>
-<h2 id="webhook-triggered-ingestion">Webhook-triggered ingestion<a class="headerlink" href="#webhook-triggered-ingestion" title="Permanent link">&para;</a></h2>
-<p>Switching a marketplace to <code>webhook</code> mode generates an HMAC secret:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>localhost:8080/api/marketplaces/acme/sync<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"mode":"webhook"}'</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span><span class="nt">"marketplace"</span><span class="p">:{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"syncMode"</span><span class="p">:</span><span class="s2">"webhook"</span><span class="p">,</span><span class="err">...</span><span class="p">},</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w"> </span><span class="nt">"webhookSecret"</span><span class="p">:</span><span class="s2">"9f2c...64 hex chars...ab41"</span><span class="p">}</span>
-</code></pre></div>
-<div class="admonition danger">
-<p class="admonition-title">Shown exactly once</p>
-<p>The secret is returned only by this response — no read endpoint ever
-exposes it. Lost it? Set <code>webhook</code> mode again: that generates a fresh
-secret and invalidates the old one, which is also how you rotate it.</p>
+<div class="admonition warning">
+<p class="admonition-title">Pin the issuer</p>
+<p>The gateway configures its endpoints explicitly rather than by issuer
+discovery, and Spring Security compares an ID token's <code>iss</code> only when an
+issuer is configured. Leave <code>skills-gateway.oidc.issuer</code> unset and nothing
+checks it — which, on an authorization endpoint that serves many tenants,
+means a token minted for another organisation verifies against the same
+keys and looks exactly like yours. The gateway warns at startup while this
+is unset.</p>
 </div>
-<p>Then configure the forge webhook:</p>
+<h2 id="groups-instead-of-grants">Groups instead of grants<a class="headerlink" href="#groups-instead-of-grants" title="Permanent link">&para;</a></h2>
+<p>Role enforcement (see <a href="../delegated-administration/">Delegated administration</a>)
+knows three roles and, by default, two sources of them: the
+<code>skills-gateway.roles.admins</code> list and rows in the grants API. A third source
+is the provider's own claims:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">roles</span><span class="p">:</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="nt">admins</span><span class="p">:</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">break-glass@example.com</span><span class="w">     </span><span class="c1"># keep this; see below</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">claim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">groups</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="nt">mappings</span><span class="p">:</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8f1c0a2e-0000-0000-0000-000000000000</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gateway-approvers-acme</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">approver</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">        </span><span class="nt">marketplace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">acme</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">security-auditors</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auditor</span>
+</code></pre></div>
+<p>A session's effective roles are the <strong>union</strong> of all three sources. Everything
+else about the role model is unchanged: enforcement is still deny-by-default
+once enabled, an approver is still confined to one marketplace including
+through bare snapshot and waiver ids, and an auditor still cannot mutate
+anything.</p>
+<p>Three properties of the matching are worth knowing before you write mappings:</p>
 <ul>
-<li><strong>Payload URL</strong>: <code>https://skills.corp.example/hooks/acme</code></li>
-<li><strong>Content type</strong>: anything — the payload is ignored (see below)</li>
-<li><strong>Secret</strong>: the value from the response</li>
-<li><strong>Events</strong>: pushes to the default branch are the useful signal; other events
-  cause harmless redundant fetches</li>
+<li><strong><code>claim-value</code> is the provider's string, not a gateway role name.</strong> On an
+  app registration shared with other services the group ids and app-role values
+  belong to the organisation, so there is no convention to lean on — you state
+  the mapping.</li>
+<li><strong>The match is exact</strong>, after trimming surrounding whitespace. No prefixes,
+  no globs, no case folding: a looser match could only ever widen who is
+  privileged.</li>
+<li><strong>A malformed mapping refuses startup.</strong> An unknown role, a blank value, an
+  <code>approver</code> with no marketplace or an <code>admin</code>/<code>auditor</code> with one — the
+  application does not come up. A typo that quietly grants nothing is exactly
+  the failure this avoids. Naming a marketplace that does not exist <em>yet</em> is
+  fine: the mapping matches nothing until it is registered.</li>
 </ul>
-<p>GitHub, Gitea, and Forgejo sign deliveries with the compatible
-<code>X-Hub-Signature-256</code> header out of the box. Any other sender works too: sign
-the raw request body with HMAC-SHA256 and send <code>sha256=&lt;hex&gt;</code> in that header.</p>
-<h3 id="the-payload-is-ignored-on-purpose">The payload is ignored, on purpose<a class="headerlink" href="#the-payload-is-ignored-on-purpose" title="Permanent link">&para;</a></h3>
-<p>A valid signature means exactly one thing: <em>poll this marketplace now</em>. The
-gateway ingests the <strong>registered</strong> upstream URL's default branch — nothing in
-the request body (URLs, refs, commit SHAs) is ever read. The worst a
-forged-but-signed request can cause is a fetch the schedule would have done
-anyway, landing held in quarantine. The endpoint answers <code>202 Accepted</code>
-immediately and ingests in the background; the snapshot appears in the portal
-moments later.</p>
-<p>Requests with a missing or wrong signature get <code>403</code> and ingest nothing.
-Unknown marketplaces — and marketplaces not in <code>webhook</code> mode — get <code>404</code>.
-Bodies over the configured bound get <code>413</code> before the signature is even
-checked.</p>
-<h2 id="upstream-outages-dont-reach-consumers">Upstream outages don't reach consumers<a class="headerlink" href="#upstream-outages-dont-reach-consumers" title="Permanent link">&para;</a></h2>
-<p>The facade serves the last approved snapshot regardless of upstream health. A
-scheduled or webhook-triggered fetch that fails because upstream is down is
-logged and retried later; no snapshot state changes, no published ref moves,
-and a <code>git fetch</code> through the facade during the outage returns exactly what it
-returned before. Consumers depend on the gateway's vetted copies, not on
-upstream uptime — automating ingestion does not couple them back together.</p>
-<h2 id="what-lands-on-the-ledger">What lands on the ledger<a class="headerlink" href="#what-lands-on-the-ledger" title="Permanent link">&para;</a></h2>
-<p>Every sync-triggered ingestion is recorded like a manual one, with the trigger
-as the acting identity — <code>scheduler</code> or <code>webhook</code> instead of a person — and
-emits the ordinary <code>snapshot.ingested</code> lifecycle event. Mode changes are
-recorded with the operator who made them. An auditor reads which content
-arrived, when, and on whose (or what) authority from the ledger alone.</p>
+<p><code>GET /api/me</code> reports the source of every effective role — <code>config</code>, <code>grant</code> or
+<code>claim</code> — so "why does this person have admin" is answerable from the session
+endpoint.</p>
+<div class="admonition tip">
+<p class="admonition-title">Keep one configuration admin</p>
+<p><code>skills-gateway.roles.admins</code> needs no group, no token and no directory. It
+is what gets you back in when a group is renamed, a claim stops being
+emitted, or a mapping is wrong.</p>
+</div>
+<h3 id="dry-run-before-you-enforce">Dry-run before you enforce<a class="headerlink" href="#dry-run-before-you-enforce" title="Permanent link">&para;</a></h3>
+<p>Configure the mappings while <code>skills-gateway.roles.enabled</code> is still <code>false</code>.
+Nothing is enforced, but <code>/api/me</code> already reports what each session <em>would</em>
+hold — so you can confirm the claim arrives and the values match before the
+switch flips.</p>
+<h3 id="nested-claims">Nested claims<a class="headerlink" href="#nested-claims" title="Permanent link">&para;</a></h3>
+<p>Some providers nest membership. A dotted <code>claim</code> walks the path:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">roles</span><span class="p">:</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">claim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">realm_access.roles</span>
+</code></pre></div>
+<p>The claim may be a list of strings or a single string. A delimited string is
+treated as <strong>one</strong> value and is never split — inventing a delimiter would be
+guessing at what the provider meant.</p>
+<h3 id="when-the-group-claim-goes-missing">When the group claim goes missing<a class="headerlink" href="#when-the-group-claim-goes-missing" title="Permanent link">&para;</a></h3>
+<p>Providers cap how many groups a token may carry. Past the cap, some drop the
+claim entirely and set a marker instead — leaving a user who can see their own
+membership wondering why the gateway refuses them.</p>
+<p>The gateway detects that: <code>GET /api/me</code> reports <code>claimsTruncated: true</code>, and the
+startup log says so too. It is deliberately distinguished from a session that
+simply has no memberships. The fix is on the provider's side — emit application
+roles instead of raw groups, or restrict the claim to the groups assigned to
+this application — not on the gateway's.</p>
+<h3 id="what-claims-never-do">What claims never do<a class="headerlink" href="#what-claims-never-do" title="Permanent link">&para;</a></h3>
+<p>Claims are read only from a browser session established through the identity
+provider. A <a href="../../reference/api/tokens/">personal access token</a> on the git
+facade, the <code>dev-insecure-auth</code> principal, and the anonymous inbound webhook
+carry no claims and derive no role, whatever authorities they hold. The
+facade's authorization remains token scopes; that is a different credential for
+a different surface.</p>
+<h2 id="microsoft-entra-id">Microsoft Entra ID<a class="headerlink" href="#microsoft-entra-id" title="Permanent link">&para;</a></h2>
+<p>A worked example. Substitute your tenant id for <code>&lt;tenant&gt;</code>.</p>
+<h3 id="1-the-app-registration">1. The app registration<a class="headerlink" href="#1-the-app-registration" title="Permanent link">&para;</a></h3>
+<p>If your platform already has <strong>one shared registration</strong> for several services,
+you are adding to it, not creating one:</p>
+<ol>
+<li>Add the redirect URI <code>https://&lt;gateway-host&gt;/login/oauth2/code/idp</code> under
+   <strong>Web</strong> — logins fail until this exists.</li>
+<li>Mint a client secret scoped to this service. Put its value in your secret
+   store and inject it as <code>SGW_OIDC_CLIENT_SECRET</code>; it never belongs in a
+   values file or a repository.</li>
+<li>Under <strong>Token configuration</strong>, add the <strong>groups claim</strong> — or, better, define
+   <strong>app roles</strong> and assign groups to them, which is what avoids the overage
+   problem below.</li>
+</ol>
+<h3 id="2-endpoints">2. Endpoints<a class="headerlink" href="#2-endpoints" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">SGW_OIDC_CLIENT_ID</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;application (client) id&gt;</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nt">SGW_OIDC_CLIENT_SECRET</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;from your secret store&gt;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nt">SGW_OIDC_AUTHORIZATION_URI</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://login.microsoftonline.com/&lt;tenant&gt;/oauth2/v2.0/authorize</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="nt">SGW_OIDC_TOKEN_URI</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://login.microsoftonline.com/&lt;tenant&gt;/oauth2/v2.0/token</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="nt">SGW_OIDC_JWK_SET_URI</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://login.microsoftonline.com/&lt;tenant&gt;/discovery/v2.0/keys</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="nt">SGW_OIDC_USER_NAME_ATTRIBUTE</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">preferred_username</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="nt">SGW_OIDC_SCOPE</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openid,profile,email</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="nt">SKILLSGATEWAY_OIDC_ISSUER</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://login.microsoftonline.com/&lt;tenant&gt;/v2.0</span>
+</code></pre></div>
+<p>The issuer is the tenant boundary here: the multi-tenant endpoints sign with
+keys from a shared JWKS, so without it a token from another tenant verifies.</p>
+<h3 id="3-the-principal-claim">3. The principal claim<a class="headerlink" href="#3-the-principal-claim" title="Permanent link">&para;</a></h3>
+<p><code>sub</code> on a Microsoft Entra ID token is a <strong>pairwise</strong> identifier — unique per
+user <em>per application</em> and meaningless to a human. Left at the default, every
+grant, every <code>roles.admins</code> entry and every audit-ledger row would name an
+opaque string. <code>preferred_username</code> is the readable choice, which is why the
+scope set above includes <code>profile</code>.</p>
+<p>Its cost, stated plainly: <code>preferred_username</code> is <strong>mutable</strong>. If someone's
+sign-in name changes, grant rows and <code>roles.admins</code> entries keyed on the old
+value stop matching, silently. That is an argument for mapping groups rather
+than granting principals — group membership follows the person, not the
+string. Where you need an identifier that never changes, <code>oid</code> is immutable and
+unreadable; pick which cost you would rather pay, and be consistent.</p>
+<h3 id="4-which-claim-to-map">4. Which claim to map<a class="headerlink" href="#4-which-claim-to-map" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>App roles</strong> (recommended) arrive in the <code>roles</code> claim, carry the values you
+  defined, and have no overage problem:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">roles</span><span class="p">:</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">claim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">roles</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">mappings</span><span class="p">:</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SkillsGateway.Admin</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin</span>
+</code></pre></div>
+<ul>
+<li><strong>Groups</strong> arrive in the <code>groups</code> claim as <strong>object ids</strong>, not display names —
+  copy the object id from the group's overview page. Above roughly 200
+  memberships the claim is dropped and <code>hasgroups: true</code> appears instead; the
+  gateway reports this as <code>claimsTruncated</code> on <code>/api/me</code>. Restricting the groups
+  claim to "groups assigned to the application" avoids it in most tenants; app
+  roles avoid it entirely.</li>
+</ul>
+<h3 id="5-verify">5. Verify<a class="headerlink" href="#5-verify" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>session.txt<span class="w"> </span>https://&lt;gateway-host&gt;/api/me<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="go">{</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="go">  "username": "alice@example.com",</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="go">  "rolesEnabled": true,</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="go">  "roles": [{"role": "admin", "marketplace": null, "source": "claim"}],</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="go">  "claimsTruncated": false</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="go">}</span>
+</code></pre></div>
+<p><code>source: claim</code> is the confirmation that the mapping — not a grant row — is
+what made this session an admin.</p>
+<h2 id="locked-out">Locked out?<a class="headerlink" href="#locked-out" title="Permanent link">&para;</a></h2>
+<p>Set <code>skills-gateway.roles.enabled=false</code> and restart: every check passes again
+and nothing is lost. Fix the mappings or the <code>admins</code> list, then re-enable.</p>
 
 
 

@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/dev/guides/declarative-estate/">
       
       
-        <link rel="prev" href="../delegated-administration/">
+        <link rel="prev" href="../identity-providers/">
       
       
         <link rel="next" href="../policy-rules/">
@@ -597,6 +597,8 @@
       
         
       
+        
+      
     
     
     
@@ -1021,6 +1023,34 @@
     
   
     Delegated administration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../identity-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Identity providers
   
 
     
@@ -2005,6 +2035,14 @@ converges:</p>
 <p>Personal access tokens are user-owned credentials and stay API-only by
 design. Deregistration, snapshot approval, waivers — everything that retracts
 or publishes content — stays interactive and audited.</p>
+<p>Identity-provider role mappings (<code>skills-gateway.roles.mappings</code>) are
+deliberately <strong>not</strong> an estate object either, for the opposite reason: they are
+already pure configuration. No endpoint creates or deletes them, there is no
+row to converge, and removing one takes effect on the next request. They sit
+next to <code>skills-gateway.roles.admins</code> — see
+<a href="../identity-providers/">Identity providers</a>. <code>estate.grants</code> remains the way to
+declare grant <em>rows</em>, and it keeps writing them even for a principal who
+already holds the same role through a group.</p>
 <p>Objects created through the API and absent from the declaration are legitimate
 state, not drift to be corrected: reconciliation never touches them. The
 ledger's actor column is the drift report — everything not from

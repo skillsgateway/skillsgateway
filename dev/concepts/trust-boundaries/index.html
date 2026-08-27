@@ -732,6 +732,8 @@
       
         
       
+        
+      
     
     
     
@@ -1156,6 +1158,34 @@
     
   
     Delegated administration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/identity-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Identity providers
   
 
     
@@ -2163,15 +2193,31 @@ locks a deployment out of its own gateway; principals in
 <code>skills-gateway.roles.admins</code> are admins by configuration and cannot be revoked
 through the API — the escape hatch that makes enabling safe. Every grant and
 revocation is on the append-only ledger.</p>
+<p>A role can come from three places, and the union is what a session holds: the
+<code>skills-gateway.roles.admins</code> list, a grant row, or a <strong>claim</strong> of the identity
+provider's token mapped by <code>skills-gateway.roles.mappings</code>. Claim mapping moves
+part of this boundary into the directory — deliberately, because that is where
+membership is already governed — under three rules that keep it from widening
+it. Values are matched exactly, so a mapping cannot grant by resemblance. A
+malformed mapping refuses startup, so a typo cannot quietly grant nothing.
+And claims are read only from a session established through the identity
+provider: a PAT, the <code>dev-insecure-auth</code> principal and the anonymous webhook
+request carry no claims and derive no role, whatever authorities they hold.</p>
+<p>The identity token's own integrity is part of this: the gateway configures its
+provider endpoints explicitly rather than by discovery, so it compares the
+token's issuer only when <code>skills-gateway.oidc.issuer</code> names one. Where a single
+authorization endpoint serves many tenants, that comparison <em>is</em> the tenant
+boundary — every tenant's tokens verify against the same keys.</p>
 <p>This boundary is the web surface's only. The facade's authorization is
 <a href="../../reference/api/tokens/">token scopes</a> — a different credential for a
 different surface — and roles never apply to PATs. See
 <a href="../../guides/delegated-administration/">Delegated administration</a> for the
-workflow and <a href="../../reference/api/roles/">Roles</a> for the grants API.</p>
+workflow, <a href="../../guides/identity-providers/">Identity providers</a> for claim
+mapping, and <a href="../../reference/api/roles/">Roles</a> for the grants API.</p>
 <h2 id="what-is-not-a-boundary-yet">What is not a boundary yet<a class="headerlink" href="#what-is-not-a-boundary-yet" title="Permanent link">&para;</a></h2>
 <p>Per-team catalog scoping (which identities see which virtual marketplaces) and
 a portal UI for managing grants are future capabilities; today the grants API
-is the management surface. Where the role model is not enabled, treat <strong>access
+and the claim mappings are the management surface. Where the role model is not enabled, treat <strong>access
 to the portal</strong> as the reviewer privilege and grant it through the identity
 provider.</p>
 

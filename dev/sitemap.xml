@@ -2,162 +2,166 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/architecture/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/concepts/glossary/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/concepts/lifecycle/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/concepts/related-work/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/concepts/snapshots-and-ledger/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/concepts/trust-boundaries/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/concepts/vetting/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/guides/approving-snapshots/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/guides/client-enforcement/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/guides/consuming-skills/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/guides/declarative-estate/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/guides/delegated-administration/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/guides/exporting-the-audit-ledger/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
+    </url>
+    <url>
+         <loc>https://skillsgateway.github.io/skillsgateway/dev/guides/identity-providers/</loc>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/guides/license-compliance/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/guides/lifecycle-webhooks/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/guides/local-development/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/guides/policy-rules/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/guides/re-vetting/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/guides/registering-a-marketplace/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/guides/snapshot-retention/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/guides/upstream-sync/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/guides/virtual-catalog/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/guides/waiving-findings/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/reference/compatibility/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/reference/configuration/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/reference/container-image/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/reference/decisions/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/reference/git-facade/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/reference/observability/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/reference/portal/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/reference/retention/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/reference/api/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/reference/api/adoption/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/reference/api/audit/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/reference/api/estate/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/reference/api/marketplaces/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/reference/api/policy/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/reference/api/roles/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/reference/api/tokens/</loc>
-         <lastmod>2026-08-23</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
 </urlset>

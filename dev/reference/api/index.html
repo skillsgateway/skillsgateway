@@ -595,6 +595,8 @@
       
         
       
+        
+      
     
     
     
@@ -1019,6 +1021,34 @@
     
   
     Delegated administration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/identity-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Identity providers
   
 
     
@@ -1914,13 +1944,41 @@ consumed by the portal with a session cookie.</p>
 </table>
 <h2 id="session">Session<a class="headerlink" href="#session" title="Permanent link">&para;</a></h2>
 <p><code>GET /api/me</code> returns the current principal, whether role enforcement is
-enabled, and the session's effective roles — a configuration-bootstrapped admin
-appears as a synthetic <code>admin</code> entry. The portal uses it for the sidebar footer
-and, with roles, to adapt its controls.</p>
+enabled, the session's effective roles with the <strong>source</strong> of each, and whether
+the identity provider truncated the membership claim. The portal uses it for
+the sidebar footer and, with roles, to adapt its controls.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"username"</span><span class="p">:</span><span class="w"> </span><span class="s2">"alice@example.com"</span><span class="p">,</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"rolesEnabled"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w"> </span><span class="nt">"roles"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"approver"</span><span class="p">,</span><span class="w"> </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="w"> </span><span class="s2">"acme"</span><span class="p">}]}</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w"> </span><span class="nt">"roles"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"approver"</span><span class="p">,</span><span class="w"> </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="w"> </span><span class="s2">"acme"</span><span class="p">,</span><span class="w"> </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"grant"</span><span class="p">},</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">           </span><span class="p">{</span><span class="nt">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"auditor"</span><span class="p">,</span><span class="w"> </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"claim"</span><span class="p">}],</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w"> </span><span class="nt">"claimsTruncated"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">}</span>
 </code></pre></div>
+<table>
+<thead>
+<tr>
+<th><code>source</code></th>
+<th>Where the role came from</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>config</code></td>
+<td><code>skills-gateway.roles.admins</code>. No grant row; unrevocable through the API.</td>
+</tr>
+<tr>
+<td><code>grant</code></td>
+<td>A row in <a href="roles/">the grants API</a>.</td>
+</tr>
+<tr>
+<td><code>claim</code></td>
+<td>An identity-provider claim value mapped by <code>skills-gateway.roles.mappings</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>The same role and marketplace is reported once, attributed to the most durable
+source that produced it. <code>claimsTruncated: true</code> means the provider dropped the
+membership claim rather than the session having none — the roles listed are
+then incomplete; see <a href="../../guides/identity-providers/">Identity providers</a>.</p>
 <h2 id="non-api-endpoints">Non-API endpoints<a class="headerlink" href="#non-api-endpoints" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

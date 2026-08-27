@@ -16,7 +16,7 @@
         <link rel="prev" href="../snapshot-retention/">
       
       
-        <link rel="next" href="../declarative-estate/">
+        <link rel="next" href="../identity-providers/">
       
       
         
@@ -597,6 +597,8 @@
       
         
       
+        
+      
     
     
     
@@ -1117,6 +1119,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#grants-or-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Grants, or groups?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#locked-out-anyway" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1142,6 +1155,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../identity-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Identity providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1866,6 +1907,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#grants-or-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Grants, or groups?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#locked-out-anyway" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1997,13 +2049,51 @@ well — the configuration list is the one you cannot lose.</p>
 <a href="../../concepts/snapshots-and-ledger/">audit ledger</a> as <code>role-granted</code> /
 <code>role-revoked</code> with the acting identity, the target principal, the role, and
 the marketplace.</p>
+<h2 id="grants-or-groups">Grants, or groups?<a class="headerlink" href="#grants-or-groups" title="Permanent link">&para;</a></h2>
+<p>Grants are not the only source of a role. A session's effective roles are the
+union of three:</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th><code>/api/me</code> reports</th>
+<th>Managed by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>skills-gateway.roles.admins</code></td>
+<td><code>config</code></td>
+<td>Whoever controls deployment. Unrevocable through the API.</td>
+</tr>
+<tr>
+<td>A row in the grants API</td>
+<td><code>grant</code></td>
+<td>Admins, at runtime, audited on the ledger.</td>
+</tr>
+<tr>
+<td>An identity-provider claim</td>
+<td><code>claim</code></td>
+<td>Your directory, through <code>skills-gateway.roles.mappings</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>Prefer <strong>groups</strong> wherever your identity provider already governs membership:
+the joiner/mover/leaver process you already have then governs gateway access
+too, and there is no second list to keep in step. Reach for a <strong>grant</strong> when
+the person is not in a group that fits, when you want the change audited on the
+ledger with an acting identity, or when the role must survive the person
+leaving the group. Keep at least one <strong>configuration admin</strong> either way — it is
+the one source that no directory outage and no bad mapping can take away.</p>
+<p>Setting the mappings up, including a worked Microsoft Entra ID walkthrough, is
+in <a href="../identity-providers/">Identity providers</a>.</p>
 <h2 id="locked-out-anyway">Locked out anyway?<a class="headerlink" href="#locked-out-anyway" title="Permanent link">&para;</a></h2>
 <p>Set <code>skills-gateway.roles.enabled=false</code> and restart: every check passes again,
 grants intact. Fix the grants (or the <code>admins</code> list) and re-enable.</p>
 <h2 id="what-this-is-not">What this is not<a class="headerlink" href="#what-this-is-not" title="Permanent link">&para;</a></h2>
 <ul>
-<li>No portal UI for managing grants yet — the API (and the coming CLI) is the
-  management surface.</li>
+<li>No portal UI for managing grants or claim mappings yet — the API (and the
+  coming CLI) is the management surface for grants; mappings are configuration.</li>
 <li>No roles on personal access tokens: the facade's authorization is
   <a href="../../reference/api/tokens/">token scopes</a>.</li>
 <li>No per-team catalog scoping yet; approver scope is the marketplace.</li>

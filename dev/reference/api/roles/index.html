@@ -595,6 +595,8 @@
       
         
       
+        
+      
     
     
     
@@ -1019,6 +1021,34 @@
     
   
     Delegated administration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../guides/identity-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Identity providers
   
 
     
@@ -1866,8 +1896,9 @@ staging data for the flip. Once enabled, all three are <strong>admin-only</stron
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w"> </span><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"carol@example.com"</span><span class="p">,</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"auditor"</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">"grantedBy"</span><span class="p">:</span><span class="s2">"admin@example.com"</span><span class="p">,</span><span class="nt">"grantedAt"</span><span class="p">:</span><span class="s2">"2026-08-17T09:01:00Z"</span><span class="p">}]</span>
 </code></pre></div>
-<p>Configuration-bootstrapped admins are not grants and do not appear here; they
-show as an effective role on <a href="../#session"><code>/api/me</code></a>.</p>
+<p>Configuration-bootstrapped admins and roles derived from identity-provider
+claims are not grants and do not appear here; they show as effective roles with
+source <code>config</code> and <code>claim</code> on <a href="../#session"><code>/api/me</code></a>.</p>
 <table>
 <thead>
 <tr>
