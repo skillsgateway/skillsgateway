@@ -56,6 +56,10 @@ public class SecurityConfig {
     public SecurityFilterChain publishChain(HttpSecurity http, PatAuthenticationProvider patAuthenticationProvider)
             throws Exception {
         http.securityMatcher("/publish/**")
+                // No CSRF token, for the same reason as the facade chain: a PAT over
+                // Basic on every request, STATELESS, no cookie or session created or
+                // honoured. A forged cross-site request arrives unauthenticated, and
+                // would still need a token carrying push scope for this marketplace.
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationManager(new ProviderManager(patAuthenticationProvider))
