@@ -2,8 +2,13 @@ apiVersion: v2
 name: skills-gateway
 description: Enterprise gateway for git-distributed AI agent skill marketplaces
 type: application
-version: 0.1.0
-appVersion: "0.1.0"
+# Placeholders. The release workflow packages the chart with
+# `helm package --version <tag> --app-version <tag>`, so the published archive
+# carries the released version and these two are never the source of truth --
+# they exist so `helm lint` and a local `helm template` work on a checkout.
+# Nothing hand-edits them; see docs/manual/guides/releasing.md.
+version: 0.0.0-SNAPSHOT
+appVersion: "0.0.0-SNAPSHOT"
 home: https://github.com/skillsgateway/skillsgateway
 sources:
   - https://github.com/skillsgateway/skillsgateway

@@ -1,0 +1,307 @@
+name: Release
+
+# The whole release, start to finish, in one dispatched workflow.
+#
+#   prepare -> checks -> tag + prerelease -> [approval] -> publish -> verify -> promote
+#
+# Before this existed, a release was two `tags:` triggers that happened to watch
+# for the same tag: docs.yml published the version and moved the `stable` alias,
+# native.yml pushed a GHCR tag, and nothing ordered them, gated them, or checked
+# that the tag was even reachable from main. A failed image build left a tag and
+# a half-published release standing.
+#
+# The approval sits on the PUBLISH, not on the tag. Everything before it is
+# reversible and invisible: a tag can be deleted, and the release is created as a
+# prerelease, which /releases/latest excludes. Gating the tag would mean
+# approving a version string; gating the publish means approving with the gates
+# green, the version resolved and the notes rendered. See
+# docs/manual/guides/releasing.md.
+#
+# ⚠️  The `stable` environment must exist WITH a required reviewer. GitHub creates
+# a missing environment on demand with NO protection rules, so an unconfigured
+# `stable` runs straight through and the gate silently does nothing. Environment
+# protection rules are free on public repositories.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: >-
+          Version to release — bare, full three-part semver: 1.2.0, never v1.2.0.
+          Leave empty to derive it from the Conventional Commits since the last tag.
+        required: false
+        type: string
+      prerelease:
+        description: >-
+          Publish a release candidate instead of a release: verified like any
+          release, but never promoted to latest. The number is chosen for you
+          (1.2.0 -> 1.2.0-rc1, then the next).
+        required: false
+        type: choice
+        options: [none, rc, b, a]
+        default: none
+      force:
+        description: "Allow a hand-entered version that disagrees with the derived one."
+        required: false
+        type: boolean
+        default: false
+      dry-run:
+        description: "Validate and preview only — nothing tagged, nothing published."
+        required: false
+        type: boolean
+        default: true
+
+# There is deliberately no `ref` input. The release is cut from the ref this
+# workflow was dispatched on -- choose it in the "Run workflow" dropdown. That is
+# the only way the `checks` and `image` jobs below can be guaranteed to test and
+# build the same commit that gets tagged: `uses: ./.github/workflows/...` always
+# resolves to the caller's ref, never to an arbitrary input, so a `ref` input
+# would tag one commit while verifying another. `prepare` asserts the ref is
+# reachable from main.
+
+# One release at a time. Two concurrent runs would race the tag push and could
+# leave the second having published artifacts for a tag it cannot create.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+# NOTE: every `skillsgateway/.github` ref below is pinned to the same commit.
+# `uses:` cannot be interpolated, so re-pinning after that PR squash-merges means
+# updating each one -- there are four.
+
+jobs:
+  # Resolves and validates what would be released, and writes the summary
+  # including the rendered notes. Deliberately nothing durable: a dry run is this
+  # job and nothing else, so previewing a release costs one cheap job rather than
+  # a full native build.
+  prepare:
+    uses: skillsgateway/.github/.github/workflows/common-release-prepare.yml@50455721fa920c7609e8686abaac71df550e6a06
+    permissions:
+      contents: read
+    with:
+      version-format: maven
+      version: ${{ inputs.version }}
+      prerelease: ${{ inputs.prerelease }}
+      force: ${{ inputs.force }}
+      dry-run: ${{ inputs.dry-run }}
+
+  # The same gates that guard main, called rather than reimplemented, and run
+  # BEFORE the approval so the reviewer approves something already green rather
+  # than a version string. `./` resolves against this repo at the dispatched ref,
+  # so what is verified is what gets tagged.
+  checks:
+    needs: prepare
+    if: ${{ !inputs.dry-run }}
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
+  # Tags, pushes, and creates the release as a PRERELEASE -- publicly readable by
+  # exact tag so `verify` below can download it the way a consumer does, but
+  # excluded from /releases/latest until `promote`.
+  tag:
+    needs: [prepare, checks]
+    if: ${{ !inputs.dry-run }}
+    uses: skillsgateway/.github/.github/workflows/common-release-tag.yml@50455721fa920c7609e8686abaac71df550e6a06
+    permissions:
+      contents: write
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+      version-format: maven
+
+  # THE APPROVAL GATE, and the only reason this job exists: `environment:` cannot
+  # be set on a job that uses `uses:`, so the three publish jobs below cannot
+  # carry it themselves. A single gate job in front of them also means ONE
+  # approval rather than one per publish job.
+  approve:
+    name: Approve the release
+    needs: [prepare, tag]
+    if: ${{ !inputs.dry-run }}
+    runs-on: ubuntu-latest
+    environment:
+      name: stable
+      url: ${{ needs.tag.outputs.url }}
+    steps:
+      - name: Record what was approved
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+          URL: ${{ needs.tag.outputs.url }}
+          CANDIDATE: ${{ needs.prepare.outputs.prerelease }}
+        run: |
+          {
+            echo "### Approved for publication"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Version | \`$VERSION\` |"
+            echo "| Prerelease | $URL |"
+            echo "| Release candidate | $CANDIDATE |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # --- Publication. Everything below is behind the gate. ---
+
+  # The container image, built and smoke-tested by the same workflow that does it
+  # on main, then pushed with the released version as its tag.
+  image:
+    needs: [prepare, approve]
+    uses: ./.github/workflows/native.yml
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+
+  # Versioned documentation plus the `stable` alias. A release candidate does not
+  # move `stable`: the docs a reader lands on must describe a real release.
+  docs:
+    needs: [prepare, approve]
+    if: ${{ needs.prepare.outputs.prerelease != 'true' }}
+    uses: ./.github/workflows/docs.yml
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+
+  # Builds the downloadable artifacts from the tag itself, so what is attached is
+  # what Nisse stamped from the tag rather than from the branch.
+  package:
+    name: Package the release artifacts
+    needs: [prepare, approve]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The tag, not the branch: the artifacts must carry the released version.
+          ref: ${{ needs.prepare.outputs.version }}
+          # Nisse derives the Maven version from git history; shallow clones make
+          # it compute the WRONG version rather than fail.
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Build the jar and the SBOM
+        run: ./mvnw --batch-mode -DskipTests -Dskip.ui.verify=true package
+
+      # `helm package` names the archive skills-gateway-<version>.tgz, which is
+      # what the assets job asserts the version against. Chart.yaml is stamped
+      # from the tag rather than carrying a hand-maintained version.
+      - name: Stamp and package the Helm chart
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+          helm package helm/skills-gateway \
+            --version "$VERSION" \
+            --app-version "$VERSION" \
+            --destination dist
+
+      - name: Collect the artifacts
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp target/skills-gateway-server-*.jar dist/ 2>/dev/null || \
+            cp target/*.jar dist/
+          # Named with the version so the assets job's assertion covers it too.
+          cp target/classes/META-INF/sbom/application.cdx.json \
+            "dist/skills-gateway-${VERSION}-cyclonedx.json"
+          find dist -type f | sort
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist
+          if-no-files-found: error
+
+  # Asserts the artifacts carry the released version, then attaches them to the
+  # prerelease.
+  assets:
+    needs: [prepare, package]
+    uses: skillsgateway/.github/.github/workflows/common-release-assets.yml@50455721fa920c7609e8686abaac71df550e6a06
+    permissions:
+      contents: write
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+      artifact: dist
+      pattern: '*'
+
+  # Re-derives everything from the bytes that actually landed, over the same
+  # unauthenticated path a consumer takes. A different claim from `package`'s:
+  # that one proved the BUILD was right, this proves the UPLOAD was -- a
+  # truncated or clobbered asset is invisible to the build and fatal to whoever
+  # downloads it.
+  verify:
+    name: Verify the published artifacts
+    needs: [prepare, assets, image]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Download the published assets
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p dl
+          gh release download "$VERSION" --repo "$REPO" --dir dl
+          ls -l dl
+
+      - name: Verify the chart and the SBOM
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+          cd dl
+
+          CHART="skills-gateway-${VERSION}.tgz"
+          test -f "$CHART" || { echo "::error::$CHART is not among the published assets."; exit 1; }
+          # A truncated upload is still a file; it is not still a valid archive.
+          gzip -t "$CHART"
+          # And the archive must describe the version it is named for.
+          tar -xzOf "$CHART" skills-gateway/Chart.yaml > chart.yaml
+          grep -qx "version: ${VERSION}" chart.yaml \
+            || { echo "::error::Chart.yaml does not declare version ${VERSION}."; cat chart.yaml; exit 1; }
+          grep -qx "appVersion: \"${VERSION}\"" chart.yaml \
+            || { echo "::error::Chart.yaml does not declare appVersion ${VERSION}."; cat chart.yaml; exit 1; }
+          echo "chart declares ${VERSION} ✓"
+
+          SBOM="skills-gateway-${VERSION}-cyclonedx.json"
+          test -f "$SBOM" || { echo "::error::$SBOM is not among the published assets."; exit 1; }
+          python3 -c "import json,sys; d=json.load(open('$SBOM')); assert d.get('bomFormat')=='CycloneDX', d.get('bomFormat'); print('SBOM is CycloneDX with', len(d.get('components',[])), 'components ✓')"
+
+  # The moment the release becomes real: one flag flip, with the assets in place
+  # and checked.
+  #
+  # The guard is "no job failed", not the default "every job succeeded": a
+  # release candidate deliberately skips `docs`, and a skipped dependency would
+  # otherwise cascade and skip this too -- leaving the candidate unpromoted,
+  # which is right, and every real release unpromoted the moment any optional job
+  # is skipped, which is not. `!inputs.dry-run` has to be spelled out for the same
+  # reason: on a dry run every job above is skipped, and "nothing failed" would
+  # otherwise be true.
+  promote:
+    needs: [prepare, verify]
+    if: ${{ !inputs.dry-run && !cancelled() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+    uses: skillsgateway/.github/.github/workflows/common-release-promote.yml@50455721fa920c7609e8686abaac71df550e6a06
+    permissions:
+      contents: write
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+      # true leaves a release candidate a prerelease permanently.
+      prerelease: ${{ needs.prepare.outputs.prerelease == 'true' }}

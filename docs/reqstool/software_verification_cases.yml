@@ -718,8 +718,8 @@ cases:
     description: |
       GIVEN the repository's release workflow definition
       WHEN the packaging test validates it
-      THEN the workflow pushes the smoke-tested image to the project's registry namespace with commit-SHA and latest tags on main and a version tag on releases, gates every publish step on push events, holds the permissions publishing and attestation require, surfaces the pushed digest in the job summary, and attests the CycloneDX SBOM against the pushed image after the push
-    revision: "0.1.0"
+      THEN the workflow pushes the smoke-tested image to the project's registry namespace with commit-SHA and latest tags on main and the released version's tag when invoked by the release workflow, declares no tag trigger of its own so a hand-pushed tag cannot publish, gates every publish step so that neither a scheduled nor a bare manually dispatched run can reach one, holds the permissions publishing and attestation require, surfaces the pushed digest in the job summary, and attests the CycloneDX SBOM against the pushed image after the push
+    revision: "0.2.0"
 
   - id: SVC_GW_0073
     requirement_ids: ["GW_0073"]
@@ -1036,4 +1036,24 @@ cases:
       THEN it is refused unless it is both marked as a deliberate break and declared
       as breaking by the commit that ships it
       AND the refusal states what a deliberate breaking change is required to do instead
+    revision: "0.1.0"
+
+  - id: SVC_GW_0108
+    requirement_ids: ["GW_0108"]
+    title: The release workflow is dispatch-only, previews by default and gates before publishing
+    verification: automated-test
+    description: |
+      GIVEN the repository's release workflow definition
+      WHEN the packaging test validates it
+      THEN the workflow is reachable only by manual dispatch, its preview input defaults to on, it offers the release-candidate modes alongside a plain release, it requires the override flag before a hand-entered version can disagree with the derived one, it runs the main-branch gates before the approval gate, it binds the publishing stage to a protected environment so a required reviewer holds it, it creates the release as a prerelease, and it orders promotion to latest after the published-artifact verification
+    revision: "0.1.0"
+
+  - id: SVC_GW_0109
+    requirement_ids: ["GW_0109"]
+    title: Release tags are bare semantic versions and cut only from reachable untagged commits
+    verification: automated-test
+    description: |
+      GIVEN the repository's workflow definitions and its changelog configuration
+      WHEN the packaging test validates them
+      THEN no workflow matches or strips a prefixed tag, the changelog configuration recognises only bare three-part semantic versions as release tags, and the release workflow refuses a commit that is unreachable from the main branch or that already carries a release tag
     revision: "0.1.0"

@@ -3,11 +3,21 @@ name: Native image
 on:
   push:
     branches: [main]
-    tags: ['v*']
   schedule:
     # Weekly, Monday 04:30 UTC
     - cron: '30 4 * * 1'
   workflow_dispatch:
+  # Releases arrive here, not through a tag trigger. A `tags:` trigger would fire
+  # the moment release.yml pushed the tag -- racing the release rather than being
+  # a step in it, and publishing an image before anyone approved the release. So
+  # a hand-pushed tag now publishes nothing, deliberately.
+  workflow_call:
+    inputs:
+      version:
+        description: "The released version. Set only by release.yml; becomes the image tag."
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -18,8 +28,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # Publishing runs only on push events (never schedule/dispatch); these
-      # cover the GHCR push and the SBOM attestation.
+      # Publishing runs only from a main push or from release.yml (never from a
+      # schedule or a bare dispatch); these cover the GHCR push and the SBOM
+      # attestation.
       packages: write
       id-token: write
       attestations: write
@@ -63,7 +74,7 @@ jobs:
             -e SPRING_DATASOURCE_USERNAME=skillsgateway \
             -e SPRING_DATASOURCE_PASSWORD=skillsgateway \
             skills-gateway:ci
-          for i in $(seq 1 30); do
+          for _ in $(seq 1 30); do
             if curl -fsS http://localhost:8080/actuator/health | grep -q '"UP"'; then
               echo "gateway healthy"; exit 0
             fi
@@ -74,11 +85,17 @@ jobs:
       - name: Helm lint
         run: helm lint helm/skills-gateway
 
-      # --- Publication: only the smoke-tested image, only from push events ---
-      # (main pushes and v* tags; scheduled and manual runs never move a tag)
-
+      # --- Publication: only the smoke-tested image, and only from a main push
+      # or from release.yml ---
+      #
+      # `inputs.version` is the release path: under workflow_call `github.event_name`
+      # is the CALLER's event (workflow_dispatch), so a bare `== 'push'` test would
+      # silently skip publication for every release. On a push, schedule or bare
+      # dispatch the `inputs` context is empty, so `inputs.version` is null and the
+      # second test is false -- which is what keeps a scheduled or manually
+      # dispatched build from ever moving a published tag.
       - name: Log in to GHCR
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || inputs.version != ''
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           registry: ghcr.io
@@ -86,14 +103,19 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push image
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || inputs.version != ''
         id: push
+        env:
+          # The released version when release.yml called us, empty on a main push.
+          VERSION: ${{ inputs.version }}
+          SHA: ${{ github.sha }}
         run: |
+          set -euo pipefail
           IMAGE=ghcr.io/skillsgateway/skillsgateway
-          if [[ "${{ github.ref_type }}" == "tag" ]]; then
-            TAGS="${{ github.ref_name }}"
+          if [[ -n "$VERSION" ]]; then
+            TAGS="$VERSION"
           else
-            TAGS="sha-${{ github.sha }} latest"
+            TAGS="sha-${SHA} latest"
           fi
           for tag in $TAGS; do
             docker tag skills-gateway:ci "$IMAGE:$tag"
@@ -110,7 +132,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Attest SBOM
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || inputs.version != ''
         uses: actions/attest-sbom@v3
         with:
           subject-name: ghcr.io/skillsgateway/skillsgateway
@@ -123,8 +145,9 @@ jobs:
 
       # Development-path artifacts. Actions storage is free on a public repo, so
       # these are trimmed for tidiness rather than cost -- the image is only ever
-      # wanted while investigating the run that produced it. Release artifacts,
-      # once the release flow exists, keep the default retention.
+      # wanted while investigating the run that produced it. The artifacts a
+      # release attaches are built and uploaded by release.yml's `package` job,
+      # not here, and keep the default retention.
       - name: Upload image artifact
         uses: actions/upload-artifact@v7
         with:
