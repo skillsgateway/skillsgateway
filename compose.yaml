@@ -33,5 +33,8 @@ services:
       SGW_OIDC_AUTHORIZATION_URI: ${SGW_OIDC_AUTHORIZATION_URI:-https://idp.invalid/authorize}
       SGW_OIDC_TOKEN_URI: ${SGW_OIDC_TOKEN_URI:-https://idp.invalid/token}
       SGW_OIDC_JWK_SET_URI: ${SGW_OIDC_JWK_SET_URI:-https://idp.invalid/jwks}
+      SGW_OIDC_USER_NAME_ATTRIBUTE: ${SGW_OIDC_USER_NAME_ATTRIBUTE:-sub}
+      SGW_OIDC_SCOPE: ${SGW_OIDC_SCOPE:-openid}
+      SKILLSGATEWAY_OIDC_ISSUER: ${SKILLSGATEWAY_OIDC_ISSUER:-}
     ports:
       - "8080:8080"

@@ -45,6 +45,14 @@ spec:
               value: {{ .Values.oidc.tokenUri | quote }}
             - name: SGW_OIDC_JWK_SET_URI
               value: {{ .Values.oidc.jwkSetUri | quote }}
+            - name: SGW_OIDC_USER_NAME_ATTRIBUTE
+              value: {{ .Values.oidc.userNameAttribute | quote }}
+            - name: SGW_OIDC_SCOPE
+              value: {{ .Values.oidc.scope | quote }}
+            {{- if .Values.oidc.issuer }}
+            - name: SKILLSGATEWAY_OIDC_ISSUER
+              value: {{ .Values.oidc.issuer | quote }}
+            {{- end }}
           # The exact /actuator/health path is the only unauthenticated
           # actuator endpoint; liveness/readiness subpaths would be
           # redirected to the IdP.

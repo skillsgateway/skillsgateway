@@ -46,7 +46,6 @@ import org.springframework.web.context.WebApplicationContext;
             // Dummy OIDC registration with explicit provider details: no discovery at startup.
             "spring.security.oauth2.client.registration.idp.client-id=test",
             "spring.security.oauth2.client.registration.idp.client-secret=test",
-            "spring.security.oauth2.client.registration.idp.scope=openid",
             "spring.security.oauth2.client.registration.idp.authorization-grant-type=authorization_code",
             "spring.security.oauth2.client.registration.idp.redirect-uri={baseUrl}/login/oauth2/code/idp",
             "spring.security.oauth2.client.provider.idp.authorization-uri=https://idp.invalid/authorize",

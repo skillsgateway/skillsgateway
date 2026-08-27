@@ -107,8 +107,9 @@ class EstateReconciliationTests extends AbstractGatewayTest {
         assertThat(alpha.syncMode()).isEqualTo("scheduled");
 
         assertThat(roleService.rolesOf("estate-approver"))
-                .contains(new RoleService.EffectiveRole("approver", "estate-alpha"));
-        assertThat(roleService.rolesOf("estate-auditor")).contains(new RoleService.EffectiveRole("auditor", null));
+                .contains(new RoleService.EffectiveRole("approver", "estate-alpha", RoleService.EffectiveRole.GRANT));
+        assertThat(roleService.rolesOf("estate-auditor"))
+                .contains(new RoleService.EffectiveRole("auditor", null, RoleService.EffectiveRole.GRANT));
 
         WebhookSubscriber hook = subscriberRepository.findByName("estate-hook").orElseThrow();
         assertThat(hook.url()).isEqualTo("https://receiver.invalid/hook");
@@ -268,7 +269,8 @@ class EstateReconciliationTests extends AbstractGatewayTest {
         EstateReconciliation report = reconciler.reconcile(estate, "api");
         assertThat(report.created()).isEqualTo(1);
         assertThat(report.failed()).isEqualTo(1);
-        assertThat(roleService.rolesOf("estate-late")).contains(new RoleService.EffectiveRole("approver", apiSide));
+        assertThat(roleService.rolesOf("estate-late"))
+                .contains(new RoleService.EffectiveRole("approver", apiSide, RoleService.EffectiveRole.GRANT));
         assertThat(roleService.rolesOf("estate-orphan")).isEmpty();
 
         // Idempotent: the same declaration grants nothing twice.

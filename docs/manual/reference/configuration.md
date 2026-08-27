@@ -528,16 +528,45 @@ skills-gateway:
     # through the API — the escape hatch that survives a bad grant edit.
     admins:
       - admin@example.com
+    # Roles from the identity provider's own claims (GW_0098). The claim name
+    # and every value are yours: on a shared app registration the values are
+    # the organisation's group ids or app-role values, not gateway role names.
+    claim: groups
+    mappings:
+      - claim-value: 8f1c0a2e-0000-0000-0000-000000000000
+        role: admin
+      - claim-value: gateway-approvers-acme
+        role: approver
+        marketplace: acme
+      - claim-value: security-auditors
+        role: auditor
 ```
 
 | Property | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `skills-gateway.roles.enabled` | boolean | `false` | With `false` every check passes; grants stay writable as staging data. |
 | `skills-gateway.roles.admins` | list of strings | `[]` | Principals that are admins by configuration; DB grants add to them. |
+| `skills-gateway.roles.claim` | string | `groups` | Claim carrying membership. A dotted path walks nested claims (`realm_access.roles`). |
+| `skills-gateway.roles.mappings` | list | `[]` | Claim value → role. `approver` names a marketplace; `admin` and `auditor` must not. |
+
+Claim values are matched **exactly**, after trimming surrounding whitespace: no
+prefix, glob or case-insensitive matching, because a looser match can only ever
+widen who is privileged. The claim may be a list of strings or a single string;
+a delimited string is one value and is never split. A malformed mapping — an
+unknown role, a blank value, an unscoped `approver`, a scoped global role —
+refuses startup rather than silently granting nothing. A mapping may name a
+marketplace that is not registered yet; until it is, the mapping matches
+nothing.
+
+Claims are read only from a browser session established through the identity
+provider. A personal access token on the git facade, the `dev-insecure-auth`
+principal and the anonymous webhook request carry no claims and derive no role,
+whatever authorities they hold.
 
 The roles, the enforcement matrix, and the staging workflow are described in
-[Delegated administration](../guides/delegated-administration.md); the grants
-API in [Roles](api/roles.md).
+[Delegated administration](../guides/delegated-administration.md); the mapping
+walkthrough in [Identity providers](../guides/identity-providers.md); the
+grants API in [Roles](api/roles.md).
 
 ---
 
@@ -684,11 +713,32 @@ defaults are the placeholders below rather than being absent.
 | `…client.provider.idp.authorization-uri` | `SGW_OIDC_AUTHORIZATION_URI` | `https://idp.invalid/authorize` |
 | `…client.provider.idp.token-uri` | `SGW_OIDC_TOKEN_URI` | `https://idp.invalid/token` |
 | `…client.provider.idp.jwk-set-uri` | `SGW_OIDC_JWK_SET_URI` | `https://idp.invalid/jwks` |
+| `…client.provider.idp.user-name-attribute` | `SGW_OIDC_USER_NAME_ATTRIBUTE` | `sub` |
+| `…client.registration.idp.scope` | `SGW_OIDC_SCOPE` | `openid` |
 
-Fixed, not intended for override: scope `openid`, grant type
-`authorization_code`, redirect URI `{baseUrl}/login/oauth2/code/idp`.
+`user-name-attribute` decides what the principal is called everywhere else —
+grants, `roles.admins`, and every ledger row. On an app registration shared
+between services, `sub` is an opaque per-application identifier, so set this to
+a readable claim such as `preferred_username` there. Widen `SGW_OIDC_SCOPE`
+when your provider needs a scope before it will emit group or role claims.
 
-Register that redirect URI with your identity provider.
+Fixed, not intended for override: grant type `authorization_code`, redirect URI
+`{baseUrl}/login/oauth2/code/idp`. Register that redirect URI with your
+identity provider.
+
+### Expected issuer
+
+| Property | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `skills-gateway.oidc.issuer` | string | _(unset)_ | ID-token issuer to require. Unset means the issuer is not compared at all. |
+
+The gateway configures its provider endpoints explicitly rather than by issuer
+discovery, and Spring Security compares an ID token's `iss` only when the
+registration carries an issuer — so with this unset, nothing checks it. That
+matters most where one authorization endpoint serves many tenants: every
+tenant's tokens verify against the same signing keys, so the issuer is the only
+thing that says which organisation the person logging in belongs to. The
+gateway logs a warning at startup while it is unset.
 
 ---
 

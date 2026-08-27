@@ -16,10 +16,21 @@ services:
       timeout: 3s
       retries: 30
 
+  # The mock IdP issues a groups claim on every token so the acceptance suite
+  # exercises the real claim-to-role path (GW_0098) through a real login.
   oidc:
     image: ghcr.io/navikt/mock-oauth2-server:2.3.0
     environment:
       JSON_CONFIG: >-
-        {"interactiveLogin": true}
+        {"interactiveLogin": true,
+         "tokenCallbacks": [
+           {"issuerId": "default",
+            "tokenExpiry": 3600,
+            "requestMappings": [
+              {"requestParam": "grant_type",
+               "match": "*",
+               "claims": {"groups": ["sg-gateway-admins"]}}
+            ]}
+         ]}
     ports:
       - "9090:8080"

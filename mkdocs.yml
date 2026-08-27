@@ -123,6 +123,7 @@ nav:
       - Exporting the audit ledger: guides/exporting-the-audit-ledger.md
       - Reclaiming snapshot storage: guides/snapshot-retention.md
       - Delegated administration: guides/delegated-administration.md
+      - Identity providers: guides/identity-providers.md
       - Declarative estate configuration: guides/declarative-estate.md
       - Policy deny rules: guides/policy-rules.md
   - Reference:

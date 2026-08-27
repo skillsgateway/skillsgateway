@@ -937,3 +937,32 @@ cases:
       WHEN its license report endpoint is requested, and a report is requested for a snapshot id that does not exist
       THEN the response lists each detection with its SPDX identifier or unknown state, its file path or manifest field source, and its evaluation under the configured policy including the banned entry marked as banned, and the unknown snapshot id answers not-found
     revision: "0.1.0"
+  - id: SVC_GW_0098
+    requirement_ids: ["GW_0098"]
+    title: Claim-mapped roles grant, compose and never widen, and a malformed mapping refuses startup
+    verification: automated-test
+    description: |
+      GIVEN role enforcement enabled with claim mappings to admin, to approver of one marketplace and to auditor, and no stored grant for the acting principals
+      WHEN sessions carrying the mapped claim values exercise the operations of their role, a session carrying a value that only resembles a mapped one by prefix, substring or letter case attempts the same, a claim-derived approver attempts another marketplace by name and through bare snapshot and waiver ids, a personal access token on the git facade, the insecure development principal and a non-identity-provider credential carrying a forged claim attempt privileged operations, the session identity endpoint is read, and gateways configured with an unknown role, a blank claim value, an unscoped approver mapping and a scoped global mapping are started
+      THEN each mapped session may do exactly what its role allows and no more, the near-miss values and the claimless credentials hold nothing, the derived roles union with configured admins and stored grants without altering deny-by-default or approver scoping, the identity endpoint names the source of every effective role, and each malformed mapping refuses startup while a mapping naming an unregistered marketplace starts and matches nothing
+    revision: "0.1.0"
+
+  - id: SVC_GW_0099
+    requirement_ids: ["GW_0099"]
+    title: A truncated claim is reported, not mistaken for an empty one
+    verification: automated-test
+    description: |
+      GIVEN role enforcement enabled with claim mappings configured
+      WHEN a session whose token omits the configured claim but carries the provider's truncation indicator is established, and a session whose token simply carries no memberships is established
+      THEN the truncated session is reported as truncated on the session identity endpoint, the detection is logged, and it holds no derived role, while the session with no memberships is not reported truncated
+    revision: "0.1.0"
+
+  - id: SVC_GW_0100
+    requirement_ids: ["GW_0100"]
+    title: The principal claim is configurable and a foreign issuer establishes no session
+    verification: automated-test
+    description: |
+      GIVEN a gateway configured with an expected issuer and a principal-name claim other than the subject, and a second gateway left at the defaults
+      WHEN an identity token from a different issuer is presented, one from the expected issuer is presented, and the session identity endpoint is read on both gateways
+      THEN the foreign-issuer token is refused and establishes no session, the matching one succeeds and the identity endpoint reports the configured claim's value which the role lookups key on, and the default gateway behaves exactly as before while logging that no expected issuer is configured
+    revision: "0.1.0"

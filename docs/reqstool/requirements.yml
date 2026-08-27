@@ -765,3 +765,27 @@ requirements:
     rationale: License questions are supply-chain questions and belong on the same read surface as the snapshot content inventory and the gateway's own SBOM; computing the report from the pinned content keeps it answerable for every snapshot regardless of when the connector was introduced and keeps the read a report of current policy truth while recorded chain runs remain the historical evidence.
     categories: ["functional-suitability", "security"]
     revision: 0.1.0
+
+  - id: GW_0098
+    title: Identity-provider claim to role mapping
+    significance: shall
+    description: The system shall derive a browser session's delegated-administration roles from a configured claim of its identity-provider token in addition to the roles it holds by configuration and by stored grant, matching each claim value exactly against a configured list of mappings from claim value to role — an approver mapping naming the marketplace it is scoped to and the global roles naming none — shall union the derived roles with the configured and granted ones without changing deny-by-default enforcement, approver scoping or the auditor's read-only guarantee, shall refuse to start when a mapping names an unknown role, carries no claim value, scopes a global role or leaves an approver unscoped, shall derive no role at all for a credential that carries no identity-provider claims, and shall report on the session identity endpoint which of the three sources each effective role came from.
+    rationale: In an enterprise the group is the unit that already has an owner and a joiner-mover-leaver process, so reproducing its membership as grant rows creates a second source of truth that drifts; mapping by claim value rather than by convention is what lets an app registration shared with other services be used at all, matching exactly keeps a mapping from ever widening who is privileged, refusing a malformed mapping at startup keeps a typo from silently granting nothing, and reporting the source is how an auditor answers why a session holds a role without reading the deployment's configuration.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0099
+    title: Truncated group claim made visible
+    significance: shall
+    description: The system shall detect that an identity provider omitted the configured claim from a token while indicating that the claim was truncated rather than empty, shall record that detection in its logs and report it on the session identity endpoint, and shall distinguish it from a session that genuinely carries no membership.
+    rationale: A provider that drops the group claim once a user belongs to too many groups turns an authorization failure into a mystery — the session is denied while its holder can see their own membership — so the one thing the gateway must not do is treat a truncated claim as an empty one and stay silent about it.
+    categories: ["security", "interaction-capability"]
+    revision: 0.1.0
+
+  - id: GW_0100
+    title: Enterprise identity-provider session integrity
+    significance: shall
+    description: The system shall let an operator configure which claim of the identity-provider token names the principal and which scopes the login requests, defaulting to the subject claim and the openid scope so an existing deployment is unchanged, and shall, when an expected issuer is configured, refuse any identity token whose issuer claim differs from it and establish no session, warning at startup whenever a deployment that is not in the insecure development mode leaves the expected issuer unconfigured.
+    rationale: On an app registration shared between services the subject claim is an opaque per-application identifier, so grants, the configured admin list and every ledger row would name a string no human can resolve to a person; and where one authorization endpoint serves many tenants every tenant's tokens verify against the same signing keys, which makes the issuer the tenant boundary — leaving it unchecked accepts a login from an organisation the deployment has no relationship with.
+    categories: ["security"]
+    revision: 0.1.0

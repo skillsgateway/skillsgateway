@@ -9,7 +9,10 @@ import dev.skillsgateway.server.vetting.WaiverRepository;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
@@ -29,7 +32,11 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class RoleService {
 
-    /** A caller's effective role, config-bootstrapped admins appearing as a synthetic entry. */
+    /**
+     * A caller's effective role and where it came from: configuration admins and identity-provider
+     * claims appear as synthetic entries alongside stored grants, so the session endpoint can
+     * answer why a session holds a role without anyone reading the deployment's configuration.
+     */
     @Schema(description = "An effective role held by the current session")
     public record EffectiveRole(
             @Schema(
@@ -38,7 +45,22 @@ public class RoleService {
             String role,
 
             @Schema(description = "Marketplace an approver role is scoped to; null for the global roles")
-            String marketplace) {}
+            String marketplace,
+
+            @Schema(
+                    description = "Where the role came from",
+                    allowableValues = {"config", "grant", "claim"})
+            String source) {
+
+        /** Listed in {@code skills-gateway.roles.admins}; no API call can revoke it. */
+        public static final String CONFIG = "config";
+
+        /** A row in {@code role_grants}. */
+        public static final String GRANT = "grant";
+
+        /** Derived from the identity provider's claims by {@link ClaimRoleMapper}. */
+        public static final String CLAIM = "claim";
+    }
 
     private static final Set<String> ROLES = Set.of(RoleGrant.ADMIN, RoleGrant.APPROVER, RoleGrant.AUDITOR);
 
@@ -50,6 +72,7 @@ public class RoleService {
     private final SnapshotRepository snapshotRepository;
     private final MarketplaceRepository marketplaceRepository;
     private final WaiverRepository waiverRepository;
+    private final ClaimRoleMapper claimRoleMapper;
     private final AdminAuditLogger auditLogger;
 
     public RoleService(
@@ -58,12 +81,14 @@ public class RoleService {
             SnapshotRepository snapshotRepository,
             MarketplaceRepository marketplaceRepository,
             WaiverRepository waiverRepository,
+            ClaimRoleMapper claimRoleMapper,
             AdminAuditLogger auditLogger) {
         this.properties = properties;
         this.roleGrantRepository = roleGrantRepository;
         this.snapshotRepository = snapshotRepository;
         this.marketplaceRepository = marketplaceRepository;
         this.waiverRepository = waiverRepository;
+        this.claimRoleMapper = claimRoleMapper;
         this.auditLogger = auditLogger;
     }
 
@@ -126,7 +151,7 @@ public class RoleService {
     /** Global mutations: registration, sync modes, catalog, retention, receivers, sinks, grants. */
     @Requirements({"GW_0068"})
     public void requireAdmin(Authentication authentication) {
-        if (!enabled() || isAdmin(authentication.getName())) {
+        if (!enabled() || isAdmin(authentication)) {
             return;
         }
         throw denied();
@@ -138,8 +163,8 @@ public class RoleService {
         if (!enabled()) {
             return;
         }
-        String principal = authentication.getName();
-        if (isAdmin(principal) || hasGlobalRole(principal, RoleGrant.AUDITOR)) {
+        List<EffectiveRole> roles = effectiveRoles(authentication);
+        if (isAdmin(roles) || hasGlobalRole(roles, RoleGrant.AUDITOR)) {
             return;
         }
         throw denied();
@@ -151,8 +176,8 @@ public class RoleService {
         if (!enabled()) {
             return;
         }
-        String principal = authentication.getName();
-        if (isAdmin(principal) || approves(principal, marketplaceName)) {
+        List<EffectiveRole> roles = effectiveRoles(authentication);
+        if (isAdmin(roles) || approves(roles, marketplaceName)) {
             return;
         }
         throw denied();
@@ -184,47 +209,85 @@ public class RoleService {
         if (!enabled()) {
             return;
         }
-        String principal = authentication.getName();
-        if (isAdmin(principal)) {
+        List<EffectiveRole> roles = effectiveRoles(authentication);
+        if (isAdmin(roles)) {
             return;
         }
-        if (marketplaceName.isPresent() && approves(principal, marketplaceName.get())) {
+        if (marketplaceName.isPresent() && approves(roles, marketplaceName.get())) {
             return;
         }
         throw denied();
     }
 
-    /** Effective roles for the session endpoint; a config admin appears as a synthetic entry. */
+    /**
+     * Everything a session may do: configuration admin, stored grants, and the roles its
+     * identity-provider claims confer (GW_0071, GW_0098). The same (role, marketplace) pair is
+     * reported once, attributed to the most durable source that produced it — a grant outranks a
+     * claim, because a grant survives the user leaving the group.
+     */
+    @Requirements({"GW_0071", "GW_0098"})
+    public List<EffectiveRole> effectiveRoles(Authentication authentication) {
+        Map<String, EffectiveRole> roles = new LinkedHashMap<>();
+        for (EffectiveRole role : rolesOf(authentication.getName())) {
+            roles.putIfAbsent(key(role), role);
+        }
+        for (EffectiveRole role : claimRoleMapper.rolesFrom(authentication)) {
+            roles.putIfAbsent(key(role), role);
+        }
+        return List.copyOf(roles.values());
+    }
+
+    /** Whether the provider dropped the membership claim rather than the session having none. */
+    @Requirements({"GW_0099"})
+    public boolean claimsTruncated(Authentication authentication) {
+        return claimRoleMapper.truncated(authentication);
+    }
+
+    /**
+     * Roles the gateway itself stores for a principal: the configuration admin list and grant
+     * rows, and deliberately not claim-derived roles — this is what {@code EstateReconciler} asks
+     * before writing a declared grant, and it has no session to read claims from. Folding claims
+     * in here would make a group membership suppress a declared grant, so losing the group would
+     * silently lose the grant too.
+     */
     @Requirements({"GW_0071"})
     public List<EffectiveRole> rolesOf(String principal) {
         List<EffectiveRole> roles = new ArrayList<>();
         if (properties.roles().admins().contains(principal)) {
-            roles.add(new EffectiveRole(RoleGrant.ADMIN, null));
+            roles.add(new EffectiveRole(RoleGrant.ADMIN, null, EffectiveRole.CONFIG));
         }
         for (RoleGrant grant : roleGrantRepository.findByPrincipal(principal)) {
-            EffectiveRole role = new EffectiveRole(grant.role(), grant.marketplace());
-            if (!roles.contains(role)) {
+            EffectiveRole role = new EffectiveRole(grant.role(), grant.marketplace(), EffectiveRole.GRANT);
+            if (roles.stream().noneMatch(existing -> key(existing).equals(key(role)))) {
                 roles.add(role);
             }
         }
         return List.copyOf(roles);
     }
 
+    /** Identity of a role for de-duplication: what it grants, not where it came from. */
+    private static String key(EffectiveRole role) {
+        return role.role() + "\u0000" + Objects.toString(role.marketplace(), "");
+    }
+
     /** Admins by configuration cannot be revoked through the API: they are never rows (GW_0071). */
     @Requirements({"GW_0071"})
-    private boolean isAdmin(String principal) {
-        return properties.roles().admins().contains(principal) || hasGlobalRole(principal, RoleGrant.ADMIN);
+    private boolean isAdmin(Authentication authentication) {
+        return isAdmin(effectiveRoles(authentication));
     }
 
-    private boolean hasGlobalRole(String principal, String role) {
-        return roleGrantRepository.findByPrincipal(principal).stream()
-                .anyMatch(grant -> grant.role().equals(role));
+    private static boolean isAdmin(List<EffectiveRole> roles) {
+        return hasGlobalRole(roles, RoleGrant.ADMIN);
     }
 
-    private boolean approves(String principal, String marketplaceName) {
-        return roleGrantRepository.findByPrincipal(principal).stream()
-                .anyMatch(grant ->
-                        grant.role().equals(RoleGrant.APPROVER) && marketplaceName.equals(grant.marketplace()));
+    private static boolean hasGlobalRole(List<EffectiveRole> roles, String role) {
+        return roles.stream().anyMatch(effective -> effective.role().equals(role));
+    }
+
+    private static boolean approves(List<EffectiveRole> roles, String marketplaceName) {
+        return roles.stream()
+                .anyMatch(effective ->
+                        effective.role().equals(RoleGrant.APPROVER) && marketplaceName.equals(effective.marketplace()));
     }
 
     /** One denial for every unauthorized call: no role, wrong role, wrong marketplace, unknown id. */

@@ -440,7 +440,10 @@ inward.
   (issue #59). *Implemented:* scoped admin roles on the web surface — global
   admin, per-marketplace approver, read-only auditor; DB-managed audited
   grants with configuration-bootstrapped admins, deny-by-default once
-  enabled, off by default (GW_0068–GW_0071); per-team catalog scoping and a
+  enabled, off by default (GW_0068–GW_0071), and roles derived from the
+  identity provider's own group or application-role claims by configured
+  mapping, with truncated claims made visible and an enforceable expected
+  ID-token issuer (GW_0098–GW_0100); per-team catalog scoping and a
   portal grants UI are deferred.
 - **Phase 3 — assurance & scale.** Client telemetry inventory, kill switch
   with fleet force-uninstall, signed attestations, additional tool adapters,

@@ -773,7 +773,7 @@ export interface paths {
         };
         /**
          * Current user
-         * @description Username of the authenticated browser session, whether role enforcement is enabled, and the session's effective roles — how the portal and CLI adapt their controls to what the caller may do.
+         * @description Username of the authenticated browser session, whether role enforcement is enabled, the session's effective roles with the source of each, and whether the identity provider truncated the membership claim — how the portal and CLI adapt their controls to what the caller may do.
          */
         get: operations["me"];
         put?: never;
@@ -2170,6 +2170,11 @@ export interface components {
             role?: "admin" | "approver" | "auditor";
             /** @description Marketplace an approver role is scoped to; null for the global roles */
             marketplace?: string;
+            /**
+             * @description Where the role came from
+             * @enum {string}
+             */
+            source?: "config" | "grant" | "claim";
         };
         /** @description The authenticated browser session's identity and effective roles */
         MeView: {
@@ -2177,8 +2182,10 @@ export interface components {
             username?: string;
             /** @description Whether role enforcement is enabled; false means every check passes */
             rolesEnabled?: boolean;
-            /** @description The session's effective roles, config-bootstrapped admin included */
+            /** @description The session's effective roles, config-bootstrapped and claim-derived included */
             roles?: components["schemas"]["EffectiveRole"][];
+            /** @description Whether the identity provider dropped the membership claim rather than the session having none — the roles above are then incomplete */
+            claimsTruncated?: boolean;
         };
         /** @description A registered marketplace with its snapshots and forge metadata */
         MarketplaceView: {
