@@ -61,10 +61,10 @@
 
 ## 9. Gates and evidence
 
-- [ ] 9.1 `actionlint` over every changed workflow
-- [ ] 9.2 Dispatch `release.yml` with `dry-run: true` on the branch; confirm the resolved version is bare (`0.2.0`, not `v0.2.0`) and the summary shows version, previous tag and rendered notes
-- [ ] 9.3 Dry-run the negative paths: a `version` disagreeing with auto-detect without `force` must fail; a ref not reachable from `main` must fail; an already-tagged ref must fail
-- [ ] 9.4 Dry-run `prerelease: rc` and confirm it resolves to `-rc1` and does not promote
-- [ ] 9.5 Run all five gates from CLAUDE.md fresh after the last edit; write `openspec/changes/release-workflow/evidence.md` with the commands, pasted result tails and the commit SHA
-- [ ] 9.6 `openspec validate --all --strict`
+- [x] 9.1 `actionlint` over every changed workflow
+- [ ] 9.2 Dispatch `release.yml` with `dry-run: true` on the branch; confirm the resolved version is bare (`0.2.0`, not `v0.2.0`) and the summary shows version, previous tag and rendered notes — **blocked**: needs skillsgateway/.github#1 merged, or the workflow cannot resolve its `uses:` refs
+- [ ] 9.3 Dry-run the negative paths: a `version` disagreeing with auto-detect without `force` must fail; a ref not reachable from `main` must fail; an already-tagged ref must fail — **blocked** on the same
+- [ ] 9.4 Dry-run `prerelease: rc` and confirm it resolves to `-rc1` and does not promote — **blocked** on the same
+- [x] 9.5 Run all five gates from CLAUDE.md fresh after the last edit; write `openspec/changes/release-workflow/evidence.md` with the commands, pasted result tails and the commit SHA
+- [x] 9.6 `openspec validate --all --strict`
 - [ ] 9.7 Open the PR with an **Evidence** section; archive the change with `/opsx:archive` as the final commit
