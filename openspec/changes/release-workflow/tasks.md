@@ -67,4 +67,4 @@
 - [ ] 9.4 Dry-run `prerelease: rc` and confirm it resolves to `-rc1` and does not promote — **blocked** on the same
 - [x] 9.5 Run all five gates from CLAUDE.md fresh after the last edit; write `openspec/changes/release-workflow/evidence.md` with the commands, pasted result tails and the commit SHA
 - [x] 9.6 `openspec validate --all --strict`
-- [ ] 9.7 Open the PR with an **Evidence** section; archive the change with `/opsx:archive` as the final commit
+- [x] 9.7 Open the PR with an **Evidence** section — **[#125](https://github.com/skillsgateway/skillsgateway/pull/125)**; archive the change with `/opsx:archive` as the final commit (deferred: the change is not implementable-complete until the commons PR merges and the `uses:` refs are re-pinned)
