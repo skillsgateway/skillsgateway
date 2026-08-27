@@ -8,15 +8,21 @@ import { fileURLToPath } from "node:url";
 const uiDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const file = path.join(uiDir, "test-results", "playwright-junit.xml");
 
-if (!fs.existsSync(file)) {
-  console.error(`missing ${file}`);
+// Read first and report on failure, rather than testing for existence and then
+// reading: the check-then-act pair is a race, and the read already tells us.
+let xml;
+try {
+  xml = fs.readFileSync(file, "utf8");
+} catch (error) {
+  console.error(`cannot read ${file}: ${error.message}`);
   process.exit(1);
 }
 
-const xml = fs
-  .readFileSync(file, "utf8")
-  .replace(/classname="([^"]+?)\.(?:spec|test)\.(?:ts|tsx)"/g, (_, base) =>
-    `classname="${base.replaceAll("/", ".")}"`,
-  );
-fs.writeFileSync(file, xml);
+fs.writeFileSync(
+  file,
+  xml.replace(
+    /classname="([^"]+?)\.(?:spec|test)\.(?:ts|tsx)"/g,
+    (_, base) => `classname="${base.replaceAll("/", ".")}"`,
+  ),
+);
 console.log(`normalized classnames in ${file}`);
