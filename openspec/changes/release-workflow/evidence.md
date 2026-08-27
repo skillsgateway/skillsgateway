@@ -2,7 +2,18 @@
 
 One fresh run of every gate after the last code edit.
 
-**Commit:** `25e234071ef824a4f1f0dfd7eed2f02d7f96d1a8` (`feat(release): gate the release behind an approval and drop the v tag prefix`)
+**Commit:** `0970eac515cdd7db73a893c3cec14181c714aae1` (`docs(release): record the PR link on task 9.7`)
+
+Re-run after rebasing onto `2bda5f7` — PR #118 (`feat(roles)`) merged to `main`
+mid-change, conflicting on `requirements.yml`, `software_verification_cases.yml`
+and `mkdocs.yml`. All three were append-at-end conflicts. The reqstool files
+were rebuilt from `main` verbatim plus this branch's own blocks rather than
+hand-merged, after a first attempt at resolving them dropped `GW_0100`'s
+`revision` field; both files were then re-validated (99 requirements, 99 SVCs,
+no duplicates, every `requirement_ids` resolving, every block carrying a
+`revision`) and the diff against `main` confirmed to add exactly `GW_0108`,
+`GW_0109`, `SVC_GW_0108`, `SVC_GW_0109` plus the `GW_0072`/`SVC_GW_0072`
+revision.
 
 `DOCKER_HOST` was exported from `podman machine inspect` for the runs that need a
 container runtime; the value in the ambient shell points at a socket that does
@@ -12,13 +23,10 @@ change.
 ## `./mvnw clean verify`
 
 ```
-[INFO] Spotless.Java is keeping 154 files clean - 0 needs changes to be clean
+[INFO] Tests run: 156, Failures: 0, Errors: 0, Skipped: 0
 [INFO] You have 0 Checkstyle violations.
 [INFO] BUILD SUCCESS
-[INFO] Total time:  59.819 s
 ```
-
-Aggregated across the surefire reports: `Tests run: 135, Failures: 0, Errors: 0, Skipped: 0`.
 
 ## `(cd src/main/frontend && pnpm test:stories)`
 
@@ -30,17 +38,14 @@ Aggregated across the surefire reports: `Tests run: 135, Failures: 0, Errors: 0,
 ## `(cd src/main/frontend && pnpm e2e)`
 
 ```
-  11 passed (30.0s)
+  12 passed (26.2s)
 ```
 
 ## `reqstool status local -p docs/reqstool`
 
 ```
-  GW_0108             skills-gateway
-  GW_0109             skills-gateway
-
 INCOMPLETE (0)
-96/96 complete · 0 incomplete · PASS
+99/99 complete · 0 incomplete · PASS
 ```
 
 ## `openspec validate --all --strict`
@@ -54,7 +59,7 @@ Totals: 26 passed, 0 failed (26 items)
 ```
 INFO    -  Cleaning site directory
 INFO    -  Building documentation to directory: /Users/r04755/dev/clones/other/github/skillsgateway/site
-INFO    -  Documentation built in 0.60 seconds
+INFO    -  Documentation built in 0.59 seconds
 ```
 
 ## `actionlint .github/workflows/*.yml`
