@@ -67,7 +67,7 @@ letting an existing facade credential become one.
 - **Mandatory expiry.** A machine credential cannot be issued without one, and
   the configured lifetime cap applies. Rotation and revocation reuse the
   existing PAT lineage unchanged.
-- Requirements GW_0115–GW_0120 with SVC_GW_0115–SVC_GW_0120.
+- Requirements GW_0126–GW_0131 with SVC_GW_0126–SVC_GW_0131.
 
 ## Explicitly not in this change
 
@@ -97,6 +97,19 @@ letting an existing facade credential become one.
   credential — rather than borrowing the session chain's.
 - **No portal UI.** Provisioning a machine credential is an admin API call in
   this change; the screen can follow.
+- **The first credential is still minted by a human session, and that is worth
+  saying out loud.** `/api/tokens/**` is unreachable by machine by design, so
+  bootstrapping a machine credential means an admin driving the admin API from a
+  browser session — the same scripted-session workaround the *Why* section
+  criticises. The difference is that it happens once, to create a credential
+  with a stated expiry and named scopes, rather than continuously to run a
+  pipeline. The portal screen is what removes it properly.
+- **A Terraform provider still cannot converge a marketplace's whole lifecycle.**
+  There is no `PUT` or `DELETE /api/marketplaces/{name}` — registration exists,
+  deregistration does not — so `terraform destroy` has nothing to call. That is a
+  pre-existing gap in the API rather than something this change introduces, but a
+  provider author will meet it immediately, so the guide states what can and
+  cannot be converged instead of letting them discover it.
 
 ## Capabilities
 

@@ -2,8 +2,8 @@
 
 ## ADDED Requirements
 
-### Requirement: GW_0119
-The system SHALL implement GW_0119.
+### Requirement: GW_0130
+The system SHALL implement GW_0130.
 
-#### Scenario: SVC_GW_0119
-The system SHALL pass SVC_GW_0119.
+#### Scenario: SVC_GW_0130
+The system SHALL pass SVC_GW_0130.

@@ -139,8 +139,37 @@ call.
   `session_derived` flag is refused API scope at issue time, not merely absent
   from it.
 - The guarantee is **symmetric**: API scope confers no fetch and no push. The
-  facade keeps asking `permitsMarketplace`, publication keeps asking
-  `permitsPushTo`, and neither learns about API scope.
+  facade keeps asking `permitsMarketplace` and publication keeps asking
+  `permitsPushTo` — but `permitsMarketplace` **must change**, because today it
+  reads:
+
+  ```java
+  return scopeList.isEmpty() || scopeList.contains(marketplace);
+  ```
+
+  Empty fetch scope means *every* marketplace. A machine credential minted with
+  only API scopes has an empty fetch list, so under an unchanged facade it would
+  authenticate and fetch the entire estate — the exact opposite of the
+  guarantee, and the reason task 6.5 could never have gone green.
+
+  **The fetch default is therefore conditional on the credential's shape:** an
+  empty fetch list means every marketplace *only when the token holds no API
+  scope*. For a token with non-empty `api_scopes`, an empty fetch list means
+  **nothing**. `permitsMarketplace` takes the API scope list into account and
+  returns false in that case; the facade learns exactly this much about API
+  scope and no more.
+
+  An earlier revision of this decision said "neither learns about API scope".
+  That sentence could not be true at the same time as the guarantee it was
+  written to support.
+
+**A note on the both-credentials rule.** "Reject a request carrying a `Bearer`
+header and a `Cookie` header" will also reject a machine client sitting behind a
+load balancer that injects its own session affinity cookie (`AWSALB`,
+`GCLB`-style). The rule stays as written — it is the safe direction, and a
+machine client has no business carrying cookies — but the failure mode is
+documented in the API reference so the first support ticket is one line rather
+than an investigation.
 
 **Bearer, not Basic (decided).** The facade and publication chains use HTTP
 Basic because that is what clients of a smart-HTTP remote speak — the username
@@ -159,12 +188,21 @@ benefits beyond convention:
   Basic credential was meant for which chain, which is the ambiguity the rule
   exists to eliminate.
 
-**The every-marketplace trap.** The most dangerous token in the system is the
-ordinary unscoped fetch token, because empty fetch scope means *all*
-marketplaces. Any implementation that reasons "no scopes means unrestricted"
-would hand that token the entire control plane. The three defaults must be
-stated together in the code as they are here: fetch empty = everything, push
-empty = nothing, API empty = nothing.
+**The every-marketplace trap, in both directions.** One record now carries
+three scope lists whose empty values mean three different things, and that is
+where the next bug lives. Stated together, as they must be in the code:
+
+| List | Empty means | Because |
+| --- | --- | --- |
+| fetch (`scopes`) | every marketplace — **unless `api_scopes` is non-empty, in which case nothing** | what every pre-scoping token meant, minus the machine-credential hole |
+| push (`push_scopes`) | nothing | added after scoping existed, so it never had a permissive default |
+| API (`api_scopes`) | nothing | this change; a fetch token must not reach the control plane |
+
+The trap runs both ways. An implementation that reasons "no scopes means
+unrestricted" hands an ordinary fetch token the entire control plane; an
+implementation that leaves `permitsMarketplace` alone hands a machine credential
+the entire estate. The first was guarded from the start; the second was not, and
+is what the conditional default above closes.
 
 **CSRF and the session path.** The machine chain earns its CSRF exemption the
 way the facade and publication chains do, and the same comment shape should say
@@ -228,8 +266,18 @@ draft of this design, which is the argument for deriving it this way.
 | `DELETE /api/snapshots/{id}` | retracts content |
 | `POST /api/snapshots/{id}/restore` | republishes content |
 | `POST /api/roles`, `DELETE /api/roles/{id}` | privilege granting; see below |
-| all of `/api/tokens/**` | credential minting, including session credentials |
+| all of `/api/tokens/**` | credential minting, including session credentials **and every machine-credential provisioning, listing, rotation and revocation path added by this change** |
 | `GET /api/me` | a session identity page; a machine has no session |
+
+**Machine credentials are provisioned under `/api/tokens/**`, deliberately.**
+The endpoints this change adds (decision 6's admin-scoped view and revocation
+path included) live under that prefix and nowhere else, because that prefix is
+already wholly unreachable by machine. Putting them anywhere else would make a
+machine credential able to mint machine credentials — self-replicating privilege,
+and revocation evasion: a compromised credential could mint a sibling before the
+admin revokes it. This is a placement constraint on the implementation, not a
+happy accident of routing, and it gets a test (task 8.6 covers it with every
+scope held at once plus the `admin` role).
 
 **Corrections the controller inventory forced.** Two, both worth recording
 because they were wrong in the first draft:
@@ -377,6 +425,19 @@ was the smell.
 | `machine` | the credential's name | a machine API credential |
 | `system` | `config-reconciler`, `scheduler`, `system` | the gateway acting on its own |
 
+**Facade fetches, which are most of the table.** Most `fetch_log` rows are not
+admin-surface actions at all: they are facade fetches authenticated by a
+personal access token, and many of those tokens are held by CI today. Labelling
+them all `human` forever would be a quiet lie in the one column whose purpose is
+honesty about who acted.
+
+**Decision.** A facade fetch is typed by the credential that authenticated it: a
+token holding **any** API scope writes `machine`, a pure fetch token writes
+`human`. That is imperfect — a fetch-only PAT in a CI variable still records as
+`human` — but it is the only distinction the data actually supports, and it is
+truthful about the thing this change introduces rather than guessing about the
+thing it does not. The backfill leaves existing facade rows `human`, which is
+what they have always implicitly claimed; the alternative is inventing history.
 - **Denormalised, never a join.** A ledger row written years ago must still say
   what it meant, standing alone, after the credential it names has been revoked
   and its row deleted. A join to `access_tokens` would make the ledger's meaning
@@ -458,10 +519,29 @@ Reuse the existing token lineage; it already has the properties this needs.
   scope value, not one test for "scopes".
 - **Expiry is mandatory**, unlike a human token where it is optional. A
   never-expiring credential sitting in a CI variable is the failure mode this
-  feature would otherwise introduce, and the configured lifetime cap
-  (`validateTtl`, GW_0065) applies on top. A request without an expiry is
-  refused, never defaulted — the same "refuse, never clamp" posture GW_0065
-  already takes.
+  feature would otherwise introduce. A request without an expiry is refused,
+  never defaulted — the same "refuse, never clamp" posture GW_0065 already
+  takes.
+
+  **But "mandatory" is not enough on its own,** because the configured cap it
+  leans on can be absent. `TokenService.validateTtl` currently opens with:
+
+  ```java
+  var maxTtl = properties.tokens().maxTtl();
+  if (maxTtl == null) {
+      return;
+  }
+  ```
+
+  With no cap configured — which is a supported configuration today — an expiry
+  of `now + 100 years` satisfies "mandatory expiry" and is functionally the
+  never-expiring CI credential this bullet exists to prevent. Machine
+  credentials therefore carry a **built-in default cap** that applies when
+  `skills-gateway.tokens.max-ttl` is unset. The default is a deliberate
+  configuration decision rather than a magic number and is recorded in the
+  configuration reference; an operator who wants longer sets the property
+  explicitly, which is the point — a long-lived control-plane credential should
+  be a stated choice, not the consequence of leaving a property blank.
 - **Administration.** `TokenService.list` and `revoke` are scoped to
   `authentication.getName()`, so a machine credential's rows would be invisible
   to the admin who created it — nobody could list or revoke it from the portal,
@@ -469,6 +549,63 @@ Reuse the existing token lineage; it already has the properties this needs.
   administered through an **admin-scoped** view and revocation path, separate
   from the caller's own-token listing, which keeps its current strict
   own-principal scoping unchanged.
+
+### 6a. Provisioning is not gated by `skills-gateway.roles.enabled`
+
+`roles.enabled` defaults to **false**, and while false every `require*()` check
+passes. Decision 7 reasons carefully about what that means for a machine
+credential's *enforcement*. It has to be reasoned about for *provisioning* too,
+and the answer is different.
+
+Under the default flag, any user who completes an OIDC login could mint a
+machine credential holding all twenty scopes. That credential then keeps working
+after its creator's IdP account is deprovisioned — a persistence of privilege
+beyond the session that created it, which is not a privilege the session itself
+has. An employee who leaves takes nothing with them; a credential they minted
+stays.
+
+**Decision.** Minting a machine credential, and the admin-scoped list and
+revocation path from decision 6, require the `admin` role **regardless of
+`skills-gateway.roles.enabled`**. This is the same argument decision 7 already
+makes for enforcement — there is no existing machine credential, so there is no
+compatibility to preserve — applied one step earlier. The flag exists to avoid
+breaking deployments that predate role enforcement; nothing predates a feature
+that does not exist yet.
+
+### 6b. The development escape hatch does not open the bearer path
+
+`skills-gateway.dev-insecure-auth=true` makes the web chain `permitAll` while
+the facade chain stays strict (`GW_0110`, `DevInsecureAuthGuard`). The machine
+chain follows the facade, not the web chain: a request carrying an
+`Authorization: Bearer` header is authenticated strictly even in development
+mode, and a garbage bearer token gets 401 rather than a synthetic principal.
+Stated because the facade's posture is documented and tested and this one should
+be too — a mode that made every bearer token valid would be a very quiet way to
+lose the control plane in a copied configuration.
+
+### 6c. Two open questions, deliberately not decided here
+
+Both came out of an independent review of this design. They are judgement calls
+about the operator's world rather than defects, so they are surfaced rather than
+settled unilaterally.
+
+1. **Should `audit-sinks:write` be estate-only, like role grants?** Decision 5
+   locks role grants to the estate because `estate.grants` already serves them
+   declaratively "with no credential in the pipeline at all". That argument
+   applies verbatim to audit sinks and webhooks, which are also estate types —
+   and audit sinks are the sharper case, because `DELETE /api/audit/sinks/{id}`
+   and `PUT …/cursor` let a stolen credential stop or rewind the ledger's export
+   to a SIEM. That is closer to tampering with audit visibility than to
+   configuration. The counter-argument is real too: sinks and webhooks carry
+   one-shot secrets and need imperative drift correction in a way grants do not.
+   **Options:** keep as proposed; or move sink deletion and cursor rewrite to the
+   unreachable table while leaving sink creation reachable.
+
+2. **Why does `POST /api/policy/playground` sit under `policy:read`?** Because it
+   evaluates a policy without persisting anything, so it reads. The reasoning is
+   sound but the shape — a `POST` inside a read scope — will be questioned by
+   every reviewer who meets it, so it is stated here rather than left to be
+   rediscovered.
 
 ### 7. How a machine credential acquires a role
 

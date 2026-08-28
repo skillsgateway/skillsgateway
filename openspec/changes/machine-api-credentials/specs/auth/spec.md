@@ -2,20 +2,20 @@
 
 ## ADDED Requirements
 
-### Requirement: GW_0115
-The system SHALL implement GW_0115.
+### Requirement: GW_0126
+The system SHALL implement GW_0126.
 
-#### Scenario: SVC_GW_0115
-The system SHALL pass SVC_GW_0115.
+#### Scenario: SVC_GW_0126
+The system SHALL pass SVC_GW_0126.
 
-### Requirement: GW_0116
-The system SHALL implement GW_0116.
+### Requirement: GW_0127
+The system SHALL implement GW_0127.
 
-#### Scenario: SVC_GW_0116
-The system SHALL pass SVC_GW_0116.
+#### Scenario: SVC_GW_0127
+The system SHALL pass SVC_GW_0127.
 
-### Requirement: GW_0117
-The system SHALL implement GW_0117.
+### Requirement: GW_0128
+The system SHALL implement GW_0128.
 
-#### Scenario: SVC_GW_0117
-The system SHALL pass SVC_GW_0117.
+#### Scenario: SVC_GW_0128
+The system SHALL pass SVC_GW_0128.
