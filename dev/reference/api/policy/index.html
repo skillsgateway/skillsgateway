@@ -2043,6 +2043,11 @@ the evaluation variables, and the fail-closed semantics are in
 <strong>auditor-or-admin</strong>, and the playground requires permission to <strong>approve the
 named snapshot</strong> (it evaluates quarantine-backed facts, so it is scoped like
 the approval it rehearses).</p>
+<p><strong>Machine reach.</strong> <code>policy:read</code> covers <code>GET /policy/rules</code> <strong>and</strong> <code>POST
+/policy/playground</code> — a <code>POST</code> inside a read scope, because the playground
+evaluates a policy and persists nothing. <code>policy:write</code> covers rule creation,
+update and deletion, and does <strong>not</strong> confer <code>policy:read</code>: no scope implies
+another. See <a href="../tokens/#machine-api-credentials">Machine API credentials</a>.</p>
 <hr />
 <h2 id="post-apipolicyrules"><code>POST /api/policy/rules</code><a class="headerlink" href="#post-apipolicyrules" title="Permanent link">&para;</a></h2>
 <p>Create a rule. The expression is compiled — parsed and type-checked to a

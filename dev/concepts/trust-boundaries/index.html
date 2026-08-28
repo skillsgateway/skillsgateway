@@ -587,6 +587,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-machine-api-a-credential-in-a-pipeline-becomes-a-control-plane-caller" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The machine API — a credential in a pipeline becomes a control-plane caller
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#4-the-inbound-webhook-a-forges-push-event-becomes-a-fetch" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2030,6 +2041,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-machine-api-a-credential-in-a-pipeline-becomes-a-control-plane-caller" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The machine API — a credential in a pipeline becomes a control-plane caller
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#4-the-inbound-webhook-a-forges-push-event-becomes-a-fetch" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2278,7 +2300,44 @@ deployed environment. See <a href="../../guides/local-development/">Local develo
 gateway that has an identity provider configured and this flag on <strong>refuses
 to start</strong>, because the login it configured is the login the flag switches
 off. See <a href="../../reference/configuration/">Configuration</a>.</p>
+<p>It opens the <strong>browser</strong> surface only. A request carrying an
+<code>Authorization: Bearer</code> header is authenticated strictly even in this mode,
+the way the git facade is: a mode in which every bearer value authenticated
+would be a very quiet way to lose the control plane in a copied
+configuration.</p>
 </div>
+<h2 id="the-machine-api-a-credential-in-a-pipeline-becomes-a-control-plane-caller">The machine API — a credential in a pipeline becomes a control-plane caller<a class="headerlink" href="#the-machine-api-a-credential-in-a-pipeline-becomes-a-control-plane-caller" title="Permanent link">&para;</a></h2>
+<p><code>/api/**</code> has a second entrance, taken by a request that carries an
+<code>Authorization: Bearer</code> header. It is a sibling of the git facade's chain rather
+than a mode on the web chain: stateless, no session created, no cookie honoured,
+and a request presenting both a bearer credential and a cookie is refused rather
+than resolved to either.</p>
+<p><strong>Authentication</strong> is a machine API credential — an access token whose API scope
+list is non-empty. That non-emptiness is a <em>precondition of authentication</em>, not
+a later authorization rule, so no controller can be the single point of failure.
+A perfectly valid personal access token — including the every-marketplace form,
+the most permissive fetch grant the system has — does not authenticate here at
+all.</p>
+<p><strong>The guarantee is symmetric.</strong> A credential holding API scopes reaches no
+marketplace through the facade and no marketplace through publication, <em>including
+the marketplaces its empty fetch scope list would otherwise grant</em>: the fetch
+default is conditional on the credential's shape.</p>
+<p><strong>Authorization</strong> is an allowlist over per-concern named scopes, enforced in the
+filter chain and therefore independent of <code>skills-gateway.roles.enabled</code>.
+Reach is the intersection of the allowlist, the credential's scopes and its
+principal's roles — never their union. Every act of human judgement, every
+operation that retracts or republishes content, every role grant and the whole
+of <code>/api/tokens/**</code> sits outside the allowlist, and no combination of scopes and
+no role reaches them. An endpoint added later is unreachable until somebody
+names it; a build-time check refuses an unclassified one.</p>
+<p><strong>Attribution.</strong> Every ledger entry now carries an explicit actor type —
+<code>human</code>, <code>machine</code> or <code>system</code> — beside the identity it names, denormalised so a
+row written years ago still says what it meant after the credential it names has
+been revoked and its row deleted. That replaces an implicit vocabulary in which
+<code>config-reconciler</code>, <code>scheduler</code> and <code>system</code> were magic strings in the identity
+column. A machine entry also carries the credential's id, so a leak trace has
+per-credential resolution.</p>
+<p>See <a href="../../reference/api/tokens/#machine-api-credentials">Access tokens</a>.</p>
 <h2 id="4-the-inbound-webhook-a-forges-push-event-becomes-a-fetch">4. The inbound webhook — a forge's push event becomes a fetch<a class="headerlink" href="#4-the-inbound-webhook-a-forges-push-event-becomes-a-fetch" title="Permanent link">&para;</a></h2>
 <p><code>POST /hooks/{marketplace}</code> is the one endpoint reachable without an OIDC
 session or a PAT, so its authentication is cryptographic and its authority is

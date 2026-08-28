@@ -2630,6 +2630,15 @@ registration and sync-mode changes require <strong>admin</strong>; ingest, appro
 re-vet, and waiver create/delete require <strong>approver of the marketplace</strong> (or
 admin) — resolved server-side from the addressed snapshot or waiver where the
 route carries an id; every <code>GET</code> on this page stays open to any session.</p>
+<p><strong>Machine reach.</strong> <code>marketplaces:read</code> covers <code>GET /marketplaces</code>, <code>GET
+/catalog</code> and a snapshot's <code>/content</code>, <code>/licenses</code>, <code>/provenance</code> and
+<code>/release-age</code>; <code>snapshots:read</code> covers <code>/diff</code>, <code>/file</code>, <code>/files</code>, <code>/vetting</code>,
+<code>/fetchers</code> and <code>/four-eyes</code>; <code>marketplaces:register</code>, <code>marketplaces:ingest</code>,
+<code>vetting:run</code>, <code>sync:write</code> and <code>waivers:read</code> cover the corresponding
+mutations and the waiver listing. <strong>Approve, reject, waiver create, waiver
+delete, snapshot delete and snapshot restore are reachable by no scope at
+all</strong> — they publish, refuse or retract content. See
+<a href="../tokens/#machine-api-credentials">Machine API credentials</a>.</p>
 <h2 id="representations">Representations<a class="headerlink" href="#representations" title="Permanent link">&para;</a></h2>
 <p><strong>Marketplace</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"url"</span><span class="p">:</span><span class="s2">"https://github.com/acme/skills.git"</span><span class="p">,</span>

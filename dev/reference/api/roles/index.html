@@ -1976,6 +1976,20 @@ enforcement matrix is on each endpoint's own reference page.</p>
 <p>While <code>skills-gateway.roles.enabled=false</code> (the default) these endpoints are
 open to any authenticated session and the grants they manage have no effect —
 staging data for the flip. Once enabled, all three are <strong>admin-only</strong>.</p>
+<p><strong>Machine reach.</strong> <code>roles:read</code> covers <code>GET /roles</code>. Granting and revoking are
+reachable by <strong>no scope at all</strong>: <code>estate.grants</code> already declares grants with
+no credential in the pipeline, so a machine write path would add escalation
+surface for something with a safer route.</p>
+<div class="admonition warning">
+<p class="admonition-title">Every authorized read of this endpoint is on the ledger</p>
+<p>Reading who holds what authority has reconnaissance value to a stolen
+credential. Denying the read would not prevent configuration drift — the
+estate never prunes, so it cannot discover a grant made by hand — it would
+only make that drift undetectable, so the exposure is made visible after
+the fact instead. <strong>A person's read is recorded exactly as a machine's
+is</strong>; the entry's actor type is what separates them. A refused read records
+nothing.</p>
+</div>
 <hr />
 <h2 id="get-apiroles"><code>GET /api/roles</code><a class="headerlink" href="#get-apiroles" title="Permanent link">&para;</a></h2>
 <p>List every current grant.</p>

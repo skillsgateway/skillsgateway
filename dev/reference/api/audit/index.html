@@ -1550,6 +1550,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Entry fields">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-actor-type" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The actor type
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1963,6 +1980,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Entry fields">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-actor-type" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The actor type
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2021,6 +2055,12 @@ conceptual treatment.</p>
 <p>With <a href="../../../guides/delegated-administration/">role enforcement</a> enabled: the
 ledger and export reads and the sink listing require <strong>auditor</strong> (or admin);
 sink create, delete, and cursor reset require <strong>admin</strong>.</p>
+<p><strong>Machine reach.</strong> <code>audit:read</code> covers the ledger read and the export;
+<code>audit-sinks:read</code> the sink listing; <code>audit-sinks:write</code> sink creation,
+deletion and cursor reset. A machine read of the ledger writes <strong>no</strong> ledger
+entry, deliberately: logging it would make a polling exporter append an entry
+that is itself new content to export. See
+<a href="../tokens/#machine-api-credentials">Machine API credentials</a>.</p>
 <hr />
 <h2 id="get-apiaudit"><code>GET /api/audit</code><a class="headerlink" href="#get-apiaudit" title="Permanent link">&para;</a></h2>
 <p>Return the ledger. Requires an authenticated session — and, with role
@@ -2099,7 +2139,11 @@ polling, batch payload, signature, replay — is in
 </tr>
 <tr>
 <td><code>principal</code></td>
-<td>The PAT principal for a fetch, the OIDC principal for an admin action.</td>
+<td>The PAT principal for a fetch, the OIDC principal for an admin action, the credential's own principal for a machine API action.</td>
+</tr>
+<tr>
+<td><code>actorType</code> / <code>actor_type</code></td>
+<td>What kind of actor acted: <code>human</code>, <code>machine</code> or <code>system</code> (GW_0128). See below.</td>
 </tr>
 <tr>
 <td><code>marketplace</code></td>
@@ -2123,10 +2167,51 @@ polling, batch payload, signature, replay — is in
 </tr>
 <tr>
 <td><code>tokenId</code> / <code>token_id</code></td>
-<td>Id of the token that authenticated a facade entry (GW_0067); null on admin entries and on entries older than per-token attribution. <code>GET /api/tokens</code> gives the owner the id→name mapping.</td>
+<td>Id of the credential that authenticated a facade entry (GW_0067) or a machine API entry (GW_0128); null on interactive admin entries and on entries older than per-credential attribution. <code>GET /api/tokens</code> gives the owner the id→name mapping.</td>
 </tr>
 </tbody>
 </table>
+<h3 id="the-actor-type">The actor type<a class="headerlink" href="#the-actor-type" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th><code>principal</code> is</th>
+<th>Produced by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>human</code></td>
+<td>the identity-provider subject, or the PAT principal</td>
+<td>an interactive session, and every facade fetch by a credential holding no API scope</td>
+</tr>
+<tr>
+<td><code>machine</code></td>
+<td>the credential's own principal</td>
+<td>a <a href="../tokens/#machine-api-credentials">machine API credential</a>, and a facade fetch by one</td>
+</tr>
+<tr>
+<td><code>system</code></td>
+<td><code>config-reconciler</code>, <code>scheduler</code>, <code>webhook</code>, <code>revet-policy</code> or <code>system</code></td>
+<td>the gateway acting on its own</td>
+</tr>
+</tbody>
+</table>
+<p>It is <strong>denormalised on purpose</strong>, and never a join: an entry written years ago
+must still say what it meant after the credential it names has been revoked and
+its row deleted — the same reasoning <code>token_id</code> already carries. Query it
+directly (<code>WHERE actor_type = 'machine'</code>) rather than comparing <code>principal</code>
+against a list of names.</p>
+<div class="admonition note">
+<p class="admonition-title">Facade fetches are typed by the credential, imperfectly and knowingly</p>
+<p>A facade fetch records <code>machine</code> when the credential that authenticated it
+holds any API scope, and <code>human</code> otherwise. A fetch-only PAT sitting in a CI
+variable therefore still records as <code>human</code>. That is the only distinction
+the data supports, and it is truthful about what this column introduces
+rather than guessing about what it does not. Existing entries are <code>human</code>,
+which is what they have always implicitly claimed.</p>
+</div>
 <h2 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h2>
 <p><strong>From the facade</strong></p>
 <table>
@@ -2150,6 +2235,40 @@ polling, batch payload, signature, replay — is in
 <p>Negotiation rounds are not recorded.</p>
 <p><strong>From the API</strong> — registration, ingestion, approve and reject, each carrying
 the acting OIDC principal.</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>When</th>
+<th><code>detail</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>roles-read</code></td>
+<td>Every <strong>authorized</strong> read of <code>GET /api/roles</code>, by a person or a machine alike (GW_0128). A refused read records nothing.</td>
+<td><code>grants={n}</code>.</td>
+</tr>
+<tr>
+<td><code>machine-credential-created</code></td>
+<td>A machine API credential was provisioned. The actor is the administrator who provisioned it; the credential's own actions are recorded under its own principal.</td>
+<td><code>credential {id} '{name}' scopes=…; expires=…</code>.</td>
+</tr>
+<tr>
+<td><code>machine-credential-rotated</code></td>
+<td>A machine API credential got a new secret with an identical grant.</td>
+<td>As above.</td>
+</tr>
+<tr>
+<td><code>machine-credential-revoked</code></td>
+<td>A machine API credential was revoked.</td>
+<td><code>credential {id} '{name}' principal=…</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>Reads of the ledger itself record <strong>nothing</strong>, deliberately: an exporter polling
+on a cursor loop would otherwise append one entry per poll, and that entry is
+itself new content to export.</p>
 <p><strong>From the vetting chain</strong> — every run, recorded under the <code>admin</code> source with
 <code>vetting</code> as the principal:</p>
 <table>

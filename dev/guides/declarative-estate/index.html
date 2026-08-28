@@ -1209,6 +1209,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#declare-converge-able-state-call-for-acts-and-reads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Declare converge-able state; call for acts and reads
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-stays-interactive-and-drift" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1216,6 +1227,67 @@
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#driving-the-gateway-from-ci-or-terraform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Driving the gateway from CI or Terraform
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Driving the gateway from CI or Terraform">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#provision-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provision one
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-this-credential-cannot-do-by-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this credential cannot do, by design
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rotate-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rotate it
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1975,6 +2047,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#declare-converge-able-state-call-for-acts-and-reads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Declare converge-able state; call for acts and reads
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-stays-interactive-and-drift" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1982,6 +2065,67 @@
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#driving-the-gateway-from-ci-or-terraform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Driving the gateway from CI or Terraform
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Driving the gateway from CI or Terraform">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#provision-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provision one
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-this-credential-cannot-do-by-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this credential cannot do, by design
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rotate-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rotate it
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2124,10 +2268,43 @@ converges:</p>
   through <a href="../../reference/api/marketplaces/"><code>PUT /api/marketplaces/{name}/sync</code></a>
   like the <a href="../upstream-sync/">upstream sync guide</a> describes.</li>
 </ul>
+<h2 id="declare-converge-able-state-call-for-acts-and-reads">Declare converge-able state; call for acts and reads<a class="headerlink" href="#declare-converge-able-state-call-for-acts-and-reads" title="Permanent link">&para;</a></h2>
+<p>This is where operators guess wrong, so the rule is worth stating as a rule:</p>
+<ul>
+<li><strong>Estate YAML</strong> is for desired state the gateway re-converges on every boot —
+  marketplaces, role grants, webhook subscribers, audit sinks. It is additive,
+  idempotent, never prunes, applies the same trust boundary as the API, and, the
+  decisive property, needs <strong>no credential in the pipeline at all</strong>. Where it
+  covers the object it stays the recommendation, Terraform shops included: a
+  provider converging the same objects is a second converger with a secret.</li>
+<li><strong>The API with a <a href="../../reference/api/tokens/#machine-api-credentials">machine credential</a></strong>
+  is for what has no declarative form — acts (trigger a reconcile, rebuild the
+  catalog, run a re-vet), reads (the ledger, the estate report, adoption,
+  drift), one-shot secrets, and objects that are not estate types, such as
+  policy rules. It is also the answer where the gateway's configuration is
+  genuinely not the deployer's to write, on a managed platform whose values file
+  belongs to another team.</li>
+</ul>
+<p><strong>Role grants are estate-only.</strong> No machine credential can call <code>POST
+/api/roles</code>, whatever scopes it holds, because <code>estate.grants</code> already serves
+the same need with the same validation and no credential to steal. This is the
+sharpest case of the rule above rather than an exception to it.</p>
+<div class="admonition note">
+<p class="admonition-title">A provider cannot converge a marketplace's whole lifecycle</p>
+<p>There is no <code>PUT</code> or <code>DELETE /api/marketplaces/{name}</code> — registration
+exists, deregistration does not — so <code>terraform destroy</code> has nothing to
+call. That is a pre-existing gap in the API rather than something machine
+credentials introduce, but a provider author meets it immediately.</p>
+</div>
 <h2 id="what-stays-interactive-and-drift">What stays interactive, and drift<a class="headerlink" href="#what-stays-interactive-and-drift" title="Permanent link">&para;</a></h2>
 <p>Personal access tokens are user-owned credentials and stay API-only by
-design. Deregistration, snapshot approval, waivers — everything that retracts
-or publishes content — stays interactive and audited.</p>
+design, and <strong>machine API credentials are API-only for exactly the same
+reason</strong>: a credential's secret has no declarative form, and inverting that —
+the operator supplying the secret, as <code>estate.webhooks</code> does — would put a
+control-plane credential in a values file.</p>
+<p>Deregistration, snapshot approval, waivers — everything that retracts
+or publishes content — stays interactive and audited, and is unreachable by a
+machine credential holding every scope there is.</p>
 <p>Identity-provider role mappings (<code>skills-gateway.roles.mappings</code>) are
 deliberately <strong>not</strong> an estate object either, for the opposite reason: they are
 already pure configuration. No endpoint creates or deletes them, there is no
@@ -2139,7 +2316,76 @@ already holds the same role through a group.</p>
 <p>Objects created through the API and absent from the declaration are legitimate
 state, not drift to be corrected: reconciliation never touches them. The
 ledger's actor column is the drift report — everything not from
-<code>config-reconciler</code> was someone's interactive decision.</p>
+<code>config-reconciler</code> was someone's interactive decision, and every entry now
+carries an explicit actor type (<code>human</code>, <code>machine</code> or <code>system</code>) so a machine
+credential's writes are separable from a person's without parsing names.</p>
+<h2 id="driving-the-gateway-from-ci-or-terraform">Driving the gateway from CI or Terraform<a class="headerlink" href="#driving-the-gateway-from-ci-or-terraform" title="Permanent link">&para;</a></h2>
+<p>Where the estate cannot reach — a pipeline that must <em>trigger</em> something, read
+drift, or run in a shop whose values file belongs to another team — a
+<a href="../../reference/api/tokens/#machine-api-credentials">machine API credential</a> is
+the answer.</p>
+<h3 id="provision-one">Provision one<a class="headerlink" href="#provision-one" title="Permanent link">&para;</a></h3>
+<p>An administrator does this once, from a browser session, naming only the scopes
+the pipeline needs and an expiry:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://gateway.example.com/api/tokens/machine<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--data<span class="w"> </span><span class="s1">'{</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="s1">    "principal": "platform-ci",</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="s1">    "name": "estate-pipeline",</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="s1">    "apiScopes": ["estate:read", "estate:reconcile", "marketplaces:register"],</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="s1">    "expiresAt": "2026-11-26T00:00:00Z"</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="s1">  }'</span>
+</code></pre></div>
+<p>The response carries the cleartext exactly once. Put it in the pipeline's secret
+store; the gateway keeps only a hash.</p>
+<h3 id="use-it">Use it<a class="headerlink" href="#use-it" title="Permanent link">&para;</a></h3>
+<div class="highlight"><span class="filename">.github/workflows/estate.yml (excerpt)</span><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Reconcile the declared estate</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">env</span><span class="p">:</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="nt">SKILLS_GATEWAY_TOKEN</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ secrets.SKILLS_GATEWAY_TOKEN }}</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="no">curl -sSf -X POST "$GATEWAY/api/estate/reconcile" \</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">      </span><span class="no">-H "Authorization: Bearer $SKILLS_GATEWAY_TOKEN"</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Fail the build on unreconciled entries</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="no">curl -sSf "$GATEWAY/api/estate" \</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">      </span><span class="no">-H "Authorization: Bearer $SKILLS_GATEWAY_TOKEN" \</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">      </span><span class="no">| jq -e '.entries | map(select(.outcome == "failed")) | length == 0'</span>
+</code></pre></div>
+<p>A Terraform provider follows the same shape: the credential in the provider
+block, <code>POST /api/marketplaces</code> to register, <code>GET /api/estate</code> to read back.</p>
+<h3 id="what-this-credential-cannot-do-by-design">What this credential cannot do, by design<a class="headerlink" href="#what-this-credential-cannot-do-by-design" title="Permanent link">&para;</a></h3>
+<p>State it plainly, because a pipeline author will otherwise try:</p>
+<ul>
+<li><strong>It cannot approve or reject a snapshot</strong>, and cannot create or delete a
+  waiver. Publishing content is a human decision, and no scope reaches it.</li>
+<li><strong>It cannot retract content</strong> — no snapshot delete, no restore, no retention
+  evaluate or compact. It can read <code>GET /api/retention/candidates</code> and stop
+  there.</li>
+<li><strong>It cannot grant a role</strong>, to anyone, including itself. Declare grants in
+  <code>estate.grants</code> instead; <code>roles:read</code> lets the pipeline <em>detect</em> a grant made
+  by hand, which the estate cannot discover on its own.</li>
+<li><strong>It cannot mint another credential</strong>, including a replacement for itself, so
+  a compromised one cannot outrun its own revocation.</li>
+<li>
+<p><strong>It cannot clone a marketplace.</strong> A machine credential reaches no repository
+  through the git facade, including the ones an empty fetch scope would grant
+  any other token. If the pipeline also needs content, that is a separate
+  personal access token.</p>
+</li>
+<li>
+<p><strong>It must not send a cookie.</strong> A request carrying both a bearer credential and
+  a <code>Cookie</code> header is refused with a bare 401 — including a session-affinity
+  cookie injected by a load balancer.</p>
+</li>
+</ul>
+<h3 id="rotate-it">Rotate it<a class="headerlink" href="#rotate-it" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">"</span><span class="nv">$GATEWAY</span><span class="s2">/api/tokens/machine/</span><span class="nv">$ID</span><span class="s2">/rotate"</span>
+</code></pre></div>
+<p>The same principal, name, expiry deadline and every one of the same scopes, with
+a new secret; the old one is dead before the new one is returned. The expiry is
+a <strong>deadline</strong>, not a duration, so rotation does not extend the credential's
+life — that is what makes the cap meaningful.</p>
 
 
 

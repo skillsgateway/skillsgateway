@@ -1900,7 +1900,7 @@
 
 
 <h1 id="rest-api">REST API<a class="headerlink" href="#rest-api" title="Permanent link">&para;</a></h1>
-<p>The gateway exposes two HTTP surfaces with different authentication:</p>
+<p>The gateway exposes three HTTP surfaces with different authentication:</p>
 <table>
 <thead>
 <tr>
@@ -1913,15 +1913,25 @@
 <tr>
 <td>Web / API</td>
 <td>everything except <code>/git/**</code></td>
-<td>OIDC session only</td>
+<td>OIDC session cookie</td>
+</tr>
+<tr>
+<td>Machine API</td>
+<td><code>/api/**</code> with an <code>Authorization: Bearer</code> header</td>
+<td><a href="tokens/#machine-api-credentials">Machine API credential</a></td>
 </tr>
 <tr>
 <td>Git facade</td>
 <td><code>/git/**</code></td>
-<td>Personal access token only</td>
+<td>Personal access token over HTTP Basic</td>
 </tr>
 </tbody>
 </table>
+<p>The three do not overlap. A personal access token reaches the facade and
+nothing else; a machine API credential reaches the API and nothing else — it
+cannot clone a marketplace, including the marketplaces an empty fetch scope
+would otherwise grant. Which surface answers a request is decided by what it
+carries, not by what it asks for.</p>
 <p>This section documents the first. For the second see
 <a href="../git-facade/">Git smart-HTTP facade</a>.</p>
 <div class="admonition tip">
@@ -1931,8 +1941,31 @@ OIDC login. These pages describe the same surface with the surrounding
 reasoning.</p>
 </div>
 <h2 id="conventions">Conventions<a class="headerlink" href="#conventions" title="Permanent link">&para;</a></h2>
-<p><strong>Authentication.</strong> Every <code>/api/**</code> endpoint requires an authenticated OIDC
-session.</p>
+<p><strong>Authentication.</strong> Every <code>/api/**</code> endpoint is reached by exactly one of two
+paths:</p>
+<ul>
+<li>an <strong>authenticated OIDC session</strong>, which is what the portal uses; or</li>
+<li>a <strong>machine API credential</strong> presented as <code>Authorization: Bearer &lt;secret&gt;</code>,
+  which is what infrastructure-as-code and CI use.</li>
+</ul>
+<p>A request carrying no bearer header takes the session path, exactly as it always
+has. A request carrying one takes the machine path and is authenticated
+strictly — including when <code>skills-gateway.dev-insecure-auth=true</code>, which opens
+the browser surface and never the bearer path.</p>
+<div class="admonition warning">
+<p class="admonition-title">A machine request must carry no cookie</p>
+<p>The machine path refuses a request that presents both a bearer credential
+and a <code>Cookie</code> header, rather than resolving it to either. Ambiguity about
+which credential authorised a request is where confused-deputy defects live.</p>
+<p>The practical consequence: a client behind a load balancer that injects its
+own session-affinity cookie (<code>AWSALB</code>, <code>GCLB</code>-style) is refused with a bare
+<strong>401</strong>. Strip the cookie, or exclude the gateway's hostname from affinity.</p>
+</div>
+<p><strong>What a machine credential can reach</strong> is an allowlist, described in
+<a href="tokens/#machine-api-credentials">Machine API credentials</a>. Every act of human
+judgement — approving, rejecting, waiving — every operation that retracts or
+republishes content, every role grant and the whole of <code>/api/tokens/**</code> is
+outside it, and no combination of scopes and no role reaches them.</p>
 <p><strong>Authorization.</strong> With role enforcement at its default (off), any
 authenticated session may call any endpoint. With
 <code>skills-gateway.roles.enabled=true</code>, every mutation and the audit surface
@@ -1945,7 +1978,10 @@ mode.</p>
 the identity provider, so an expired session surfaces as an error rather than an
 HTML login page rendered into a <code>fetch()</code>.</p>
 <p><strong>CSRF</strong> is enabled for the web surface but disabled for <code>/api/**</code>, which is
-consumed by the portal with a session cookie.</p>
+consumed by the portal with a session cookie. The machine path earns its own
+exemption the way the git facade does and does not borrow the session path's: it
+is stateless, creates no session, honours no cookie and refuses a request that
+carries one, so every request there authenticates itself.</p>
 <p><strong>Compatibility.</strong> Within a major, this surface only grows; a breaking change
 moves the path prefix and ships as a major. See
 <a href="../compatibility/#the-api-contract">The API contract</a> for what counts as
@@ -1969,7 +2005,7 @@ breaking and how it is enforced.</p>
 </tr>
 <tr>
 <td>403</td>
-<td>Role enforcement is enabled and the session lacks the role the endpoint requires.</td>
+<td>Role enforcement is enabled and the session lacks the role the endpoint requires; or a machine credential reached an endpoint its scopes do not cover, or one no scope covers.</td>
 </tr>
 <tr>
 <td>404</td>
@@ -2004,7 +2040,7 @@ breaking and how it is enforced.</p>
 </tr>
 <tr>
 <td><a href="tokens/">Access tokens</a></td>
-<td>Create, list, revoke</td>
+<td>Create, list, revoke and rotate personal access tokens; provision and administer machine API credentials</td>
 </tr>
 <tr>
 <td><a href="audit/">Audit</a></td>

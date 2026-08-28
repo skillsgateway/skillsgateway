@@ -1955,6 +1955,9 @@ walkthrough is in
 <p>Under role enforcement the report is <strong>auditor-or-admin</strong> (failure reasons
 expose operator infrastructure, like the subscriber and sink listings) and the
 trigger is <strong>admin-only</strong>.</p>
+<p><strong>Machine reach.</strong> <code>estate:read</code> covers the report and <code>estate:reconcile</code> the
+trigger — separately, so a credential that reads drift cannot also cause a
+convergence. See <a href="../tokens/#machine-api-credentials">Machine API credentials</a>.</p>
 <hr />
 <h2 id="get-apiestate"><code>GET /api/estate</code><a class="headerlink" href="#get-apiestate" title="Permanent link">&para;</a></h2>
 <p>The most recent reconciliation run — startup or on-demand — with one entry per

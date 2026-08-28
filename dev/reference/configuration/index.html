@@ -3290,7 +3290,7 @@ nothing appears in <code>application.yaml</code>.</p>
 <tr>
 <td><code>skills-gateway.tokens.max-ttl</code></td>
 <td>duration</td>
-<td>unset (unlimited)</td>
+<td>unset (unlimited for personal access tokens; <strong>90 days</strong> for machine API credentials)</td>
 <td>Cap on accepted token lifetime; refusal, not clamping.</td>
 </tr>
 <tr>
@@ -3301,6 +3301,22 @@ nothing appears in <code>application.yaml</code>.</p>
 </tr>
 </tbody>
 </table>
+<div class="admonition warning">
+<p class="admonition-title">A machine API credential is always capped, even with <code>max-ttl</code> unset</p>
+<p>A <a href="../api/tokens/#machine-api-credentials">machine API credential</a> must state
+an expiry, but "mandatory expiry" alone admits <code>now + 100 years</code> whenever no
+cap is configured — which is the never-expiring credential in a CI variable,
+spelled differently. Machine credentials are therefore held to a built-in
+cap of <strong>90 days</strong> when <code>max-ttl</code> is unset.</p>
+<p>Ninety days is a quarter: short enough that a forgotten credential expires
+within one planning cycle rather than outliving the service it was minted
+for, and long enough that rotating it is a scheduled chore rather than an
+interruption. A configured <code>max-ttl</code>, longer or shorter, always wins — and
+that is the point. A long-lived control-plane credential should be a stated
+choice, not the consequence of leaving a property blank.</p>
+<p>The cap does not change personal access tokens, whose behaviour under an
+unset <code>max-ttl</code> is exactly what it was.</p>
+</div>
 <p>Scopes, expiry, and rotation are described in
 <a href="../api/tokens/">Access tokens</a>; session-derived credentials in
 <a href="../../guides/consuming-skills/">Consuming skills</a>.</p>

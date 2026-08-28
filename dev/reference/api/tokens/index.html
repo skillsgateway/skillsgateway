@@ -1568,6 +1568,122 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#machine-api-credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Machine API credentials
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Machine API credentials">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#three-scope-dimensions-three-different-empty-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Three scope dimensions, three different empty values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-scopes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The scopes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-no-credential-reaches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What no credential reaches
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#roles-still-apply" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Roles still apply
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-apitokensmachine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/tokens/machine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-apitokensmachine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/tokens/machine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-apitokensmachineidrotate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/tokens/machine/{id}/rotate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-apitokensmachineid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DELETE /api/tokens/machine/{id}
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using one
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2031,6 +2147,122 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#machine-api-credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Machine API credentials
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Machine API credentials">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#three-scope-dimensions-three-different-empty-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Three scope dimensions, three different empty values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-scopes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The scopes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-no-credential-reaches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What no credential reaches
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#roles-still-apply" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Roles still apply
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-apitokensmachine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/tokens/machine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-apitokensmachine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/tokens/machine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-apitokensmachineidrotate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/tokens/machine/{id}/rotate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-apitokensmachineid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DELETE /api/tokens/machine/{id}
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using one
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2283,6 +2515,288 @@ lifetime.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="machine-api-credentials">Machine API credentials<a class="headerlink" href="#machine-api-credentials" title="Permanent link">&para;</a></h2>
+<p>A <strong>machine API credential</strong> is what a Terraform provider or a CI job holds. It
+is not a second credential type: it is an access token whose <strong>API scope list</strong>
+is non-empty, sharing one issue-rotate-revoke-expire lifecycle with everything
+else in this table.</p>
+<h3 id="three-scope-dimensions-three-different-empty-values">Three scope dimensions, three different empty values<a class="headerlink" href="#three-scope-dimensions-three-different-empty-values" title="Permanent link">&para;</a></h3>
+<p>This is the part that is easy to get wrong, so it is stated in one place:</p>
+<table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th>Field</th>
+<th>Empty means</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fetch</td>
+<td><code>scopes</code></td>
+<td>every marketplace — <strong>unless <code>apiScopes</code> is non-empty, in which case nothing</strong></td>
+<td>What every pre-scoping token meant, minus the machine-credential hole</td>
+</tr>
+<tr>
+<td>Publish</td>
+<td><code>pushScopes</code></td>
+<td>nowhere</td>
+<td>Added after scoping existed, so it never had a permissive default</td>
+</tr>
+<tr>
+<td>API</td>
+<td><code>apiScopes</code></td>
+<td>nothing</td>
+<td>Reaching the control plane is a grant and never a baseline</td>
+</tr>
+</tbody>
+</table>
+<p>A credential holding API scopes therefore reaches <strong>no</strong> marketplace through the
+git facade even though its fetch list is empty, and a personal access token
+reaches <strong>no</strong> <code>/api/**</code> endpoint even though it is the most permissive fetch
+grant the system has. The guarantee is symmetric and holds in the authentication
+layer, not in a check a controller could forget to make.</p>
+<h3 id="the-scopes">The scopes<a class="headerlink" href="#the-scopes" title="Permanent link">&para;</a></h3>
+<p>There is no wildcard, no implicit "all", and <strong>no scope implies another</strong> —
+<code>policy:write</code> does not confer <code>policy:read</code>. Scopes compose additively: a
+credential reaches the union of its scopes' endpoints and nothing more.</p>
+<table>
+<thead>
+<tr>
+<th>Scope</th>
+<th>Reaches</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>marketplaces:read</code></td>
+<td><code>GET /api/marketplaces</code>, <code>GET /api/catalog</code>, and a snapshot's <code>/content</code>, <code>/licenses</code>, <code>/provenance</code>, <code>/release-age</code></td>
+</tr>
+<tr>
+<td><code>snapshots:read</code></td>
+<td>A snapshot's <code>/diff</code>, <code>/file</code>, <code>/files</code>, <code>/vetting</code>, <code>/fetchers</code>, <code>/four-eyes</code></td>
+</tr>
+<tr>
+<td><code>marketplaces:register</code></td>
+<td><code>POST /api/marketplaces</code></td>
+</tr>
+<tr>
+<td><code>marketplaces:ingest</code></td>
+<td><code>POST /api/marketplaces/{name}/ingest</code></td>
+</tr>
+<tr>
+<td><code>vetting:run</code></td>
+<td><code>POST /api/marketplaces/{name}/revet</code>, <code>POST /api/snapshots/{id}/revet</code></td>
+</tr>
+<tr>
+<td><code>waivers:read</code></td>
+<td><code>GET /api/marketplaces/{name}/waivers</code></td>
+</tr>
+<tr>
+<td><code>sync:write</code></td>
+<td><code>PUT /api/marketplaces/{name}/sync</code></td>
+</tr>
+<tr>
+<td><code>catalog:rebuild</code></td>
+<td><code>POST /api/catalog/rebuild</code></td>
+</tr>
+<tr>
+<td><code>webhooks:read</code></td>
+<td><code>GET /api/webhooks</code>, <code>/deliveries</code>, <code>/events</code></td>
+</tr>
+<tr>
+<td><code>webhooks:write</code></td>
+<td><code>POST /api/webhooks</code>, <code>DELETE /api/webhooks/{id}</code></td>
+</tr>
+<tr>
+<td><code>audit:read</code></td>
+<td><code>GET /api/audit</code>, <code>GET /api/audit/export</code></td>
+</tr>
+<tr>
+<td><code>audit-sinks:read</code></td>
+<td><code>GET /api/audit/sinks</code></td>
+</tr>
+<tr>
+<td><code>audit-sinks:write</code></td>
+<td><code>POST /api/audit/sinks</code>, <code>DELETE /api/audit/sinks/{id}</code>, <code>PUT /api/audit/sinks/{id}/cursor</code></td>
+</tr>
+<tr>
+<td><code>policy:read</code></td>
+<td><code>GET /api/policy/rules</code>, <code>POST /api/policy/playground</code></td>
+</tr>
+<tr>
+<td><code>policy:write</code></td>
+<td><code>POST /api/policy/rules</code>, <code>PUT</code>/<code>DELETE /api/policy/rules/{name}</code></td>
+</tr>
+<tr>
+<td><code>retention:read</code></td>
+<td><code>GET /api/retention/candidates</code></td>
+</tr>
+<tr>
+<td><code>estate:read</code></td>
+<td><code>GET /api/estate</code></td>
+</tr>
+<tr>
+<td><code>estate:reconcile</code></td>
+<td><code>POST /api/estate/reconcile</code></td>
+</tr>
+<tr>
+<td><code>adoption:read</code></td>
+<td><code>GET /api/adoption</code>, <code>GET /api/adoption/staleness</code></td>
+</tr>
+<tr>
+<td><code>roles:read</code></td>
+<td><code>GET /api/roles</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>POST /api/policy/playground</code> sits under <code>policy:read</code> because it evaluates a
+policy against a candidate and persists nothing. It reads; the verb is an
+artefact of needing a request body.</p>
+<h3 id="what-no-credential-reaches">What no credential reaches<a class="headerlink" href="#what-no-credential-reaches" title="Permanent link">&para;</a></h3>
+<p>An allowlist, not a denylist: an endpoint is unreachable until it is named, so a
+new one added later is refused rather than admitted by silence. <strong>No combination
+of scopes and no role reaches any of these:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST /api/snapshots/{id}/approve</code>, <code>/reject</code></td>
+<td>Publishes or refuses content; human judgement</td>
+</tr>
+<tr>
+<td><code>POST /api/snapshots/{id}/waivers</code>, <code>DELETE /api/waivers/{id}</code></td>
+<td>Overrides the vetting chain, and withdraws the override</td>
+</tr>
+<tr>
+<td><code>POST /api/retention/evaluate</code>, <code>/compact</code></td>
+<td>Soft-deletes and permanently purges: retracts content</td>
+</tr>
+<tr>
+<td><code>DELETE /api/snapshots/{id}</code>, <code>POST /api/snapshots/{id}/restore</code></td>
+<td>Retracts and republishes content</td>
+</tr>
+<tr>
+<td><code>POST /api/roles</code>, <code>DELETE /api/roles/{id}</code></td>
+<td>Privilege granting; see below</td>
+</tr>
+<tr>
+<td>All of <code>/api/tokens/**</code></td>
+<td>Credential minting, including this page's own endpoints</td>
+</tr>
+<tr>
+<td><code>GET /api/me</code></td>
+<td>A session identity page; a machine has no session</td>
+</tr>
+</tbody>
+</table>
+<p>Role grants are <strong>declarative only</strong>: <code>estate.grants</code> already serves them with
+the same validation and <strong>no credential in the pipeline at all</strong>, so a machine
+write path would add escalation surface for something that has a safer route.
+See <a href="../../../guides/declarative-estate/">Declarative estate</a>.</p>
+<p><code>GET /api/roles</code> <strong>is</strong> reachable, because denying the read would not prevent
+configuration drift — the estate never prunes, so it cannot discover a grant
+made by hand — it would only make that drift undetectable. The reconnaissance
+cost is paid for instead: <strong>every authorized read of <code>/api/roles</code> is recorded on
+the audit ledger</strong>, by a person and by a machine alike, with the entry's actor
+type telling them apart. Reads of <code>/api/audit</code> are deliberately <em>not</em> recorded,
+because logging a read of the ledger would make a polling exporter append an
+entry that is itself new content to export.</p>
+<h3 id="roles-still-apply">Roles still apply<a class="headerlink" href="#roles-still-apply" title="Permanent link">&para;</a></h3>
+<p>Effective authority is the <strong>intersection</strong> of the allowlist, the credential's
+scopes, and its principal's roles. With <code>skills-gateway.roles.enabled=true</code> a
+credential scoped <code>audit:read</code> still gets <strong>403</strong> unless its principal holds
+<code>auditor</code> or <code>admin</code>.</p>
+<p>Scope and allowlist enforcement, unlike role enforcement, does <strong>not</strong> consult
+that flag and is always on. The flag exists so an upgrade does not lock out
+sessions that predate role enforcement, and nothing predates a credential kind
+that did not exist.</p>
+<p>A machine principal acquires a role from the deployment's configuration
+(<code>skills-gateway.roles.admins</code>) or from a grant, which <code>estate.grants</code> can
+declare. It never acquires one from identity-provider claims: a credential has
+none.</p>
+<h3 id="post-apitokensmachine"><code>POST /api/tokens/machine</code><a class="headerlink" href="#post-apitokensmachine" title="Permanent link">&para;</a></h3>
+<p>Provisions a credential. Requires the <code>admin</code> role <strong>whether or not role
+enforcement is enabled</strong> — a credential outlives the session that created it,
+and under a default-off flag any user who completed a login could otherwise mint
+one that keeps working after their own account is deprovisioned.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p">{</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">"principal"</span><span class="p">:</span><span class="w"> </span><span class="s2">"terraform-ci"</span><span class="p">,</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"platform-pipeline"</span><span class="p">,</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span><span class="nt">"apiScopes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"marketplaces:register"</span><span class="p">,</span><span class="w"> </span><span class="s2">"estate:read"</span><span class="p">],</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-11-01T00:00:00Z"</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="p">}</span>
+</code></pre></div>
+<p><code>principal</code> is not a person. It is what the ledger attributes this credential's
+actions to and what a role grant names.</p>
+<p><strong>Everything here is a refusal rather than a default:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>An unknown or misspelled scope value</td>
+<td><strong>422</strong> — it fails loudly rather than silently never matching</td>
+</tr>
+<tr>
+<td><code>"*"</code>, <code>"all"</code>, or an empty <code>apiScopes</code></td>
+<td><strong>422</strong> — there is no value that grants every scope</td>
+</tr>
+<tr>
+<td>No <code>expiresAt</code></td>
+<td><strong>422</strong> — mandatory, and never defaulted</td>
+</tr>
+<tr>
+<td><code>expiresAt</code> beyond the cap</td>
+<td><strong>422</strong> — refused, never shortened</td>
+</tr>
+<tr>
+<td>The caller is not an admin</td>
+<td><strong>403</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The cap is <code>skills-gateway.tokens.max-ttl</code> when set, and otherwise a built-in
+<strong>90 days</strong>; see <a href="../../configuration/">Configuration</a>. The cleartext is returned
+exactly once.</p>
+<h3 id="get-apitokensmachine"><code>GET /api/tokens/machine</code><a class="headerlink" href="#get-apitokensmachine" title="Permanent link">&para;</a></h3>
+<p>Every machine credential, whoever provisioned it, never a secret. Deliberately
+not scoped to the caller: a machine credential's principal is not an identity
+anyone logs in as, so an owner-scoped listing would leave every one of them
+invisible — and unrevokable — during an incident. Each row carries its
+<code>machineOwner</code>, the person who provisioned it. <code>GET /api/tokens</code> is unaffected
+and still shows only the caller's own tokens.</p>
+<h3 id="post-apitokensmachineidrotate"><code>POST /api/tokens/machine/{id}/rotate</code><a class="headerlink" href="#post-apitokensmachineidrotate" title="Permanent link">&para;</a></h3>
+<p>Same grant, new secret. The principal, name, expiry <strong>deadline</strong> and every one
+of the API scope values carry over, and the old credential is revoked before the
+new one is issued, so no moment has two live secrets.</p>
+<h3 id="delete-apitokensmachineid"><code>DELETE /api/tokens/machine/{id}</code><a class="headerlink" href="#delete-apitokensmachineid" title="Permanent link">&para;</a></h3>
+<p>Revokes it. Checked at authentication time rather than swept, so it takes effect
+on the credential's very next request.</p>
+<h3 id="using-one">Using one<a class="headerlink" href="#using-one" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$SKILLS_GATEWAY_TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">     </span>https://gateway.example.com/api/estate
+</code></pre></div>
+<p>Send no cookie. See <a href="../">REST API</a> for why a request carrying both is
+refused.</p>
+<div class="admonition note">
+<p class="admonition-title">The first credential is minted by a person</p>
+<p><code>/api/tokens/**</code> is unreachable by machine by design, so bootstrapping means
+an administrator driving this endpoint from a browser session — once, to
+create something with a stated expiry and named scopes, rather than
+continuously to run a pipeline. A portal screen is what removes that step
+properly, and is not part of this release.</p>
+</div>
 
 
 
