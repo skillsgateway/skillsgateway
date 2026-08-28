@@ -603,6 +603,8 @@
       
         
       
+        
+      
     
     
     
@@ -1241,6 +1243,34 @@
     
   
     Policy deny rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deploying-on-kubernetes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploying on Kubernetes
   
 
     
@@ -2007,8 +2037,11 @@ clicking or curling anything into being.</p>
 </ul>
 <h2 id="1-declare-the-estate">1. Declare the estate<a class="headerlink" href="#1-declare-the-estate" title="Permanent link">&para;</a></h2>
 <p>The full key-by-key contract is in
-<a href="../../reference/configuration/#declarative-estate">Configuration</a>. A working
-deployment declaration:</p>
+<a href="../../reference/configuration/#declarative-estate">Configuration</a>; how the
+declaration physically reaches a deployed gateway — the chart's <code>config</code> key,
+rendered into a mounted ConfigMap — is in
+<a href="../deploying-on-kubernetes/#configuring-the-application">Deploying on Kubernetes</a>.
+A working deployment declaration:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">roles</span><span class="p">:</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
