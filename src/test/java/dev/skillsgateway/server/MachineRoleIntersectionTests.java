@@ -72,8 +72,8 @@ class MachineRoleIntersectionTests extends AbstractGatewayTest {
     void an_admin_granted_machine_credential_still_cannot_grant_a_role_or_approve() throws Exception {
         String principal = uniqueName("privileged");
         roleService.grant(principal, RoleGrant.ADMIN, null, "owner");
-        TokenService.IssuedToken everything = credential(
-                principal, List.copyOf(dev.skillsgateway.server.auth.MachineApiRegistry.scopes()));
+        TokenService.IssuedToken everything =
+                credential(principal, List.copyOf(dev.skillsgateway.server.auth.MachineApiRegistry.scopes()));
 
         // The role is real: with it, a scoped read it holds succeeds.
         mockMvc.perform(bearer(get("/api/roles"), everything.token())).andExpect(status().isOk());

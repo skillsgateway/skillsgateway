@@ -92,8 +92,8 @@ class MachineCredentialAdminTests extends AbstractGatewayTest {
                 List.of("estate:read"),
                 Instant.now().plus(10, ChronoUnit.DAYS),
                 "owner");
-        var authentication =
-                new MachineApiAuthentication(tokenService.authenticate(machine.token()).orElseThrow());
+        var authentication = new MachineApiAuthentication(
+                tokenService.authenticate(machine.token()).orElseThrow());
 
         // Not a gap to close: a credential has no claims, and the design depends on it. The only
         // route to a machine role is configuration or a declared grant.
