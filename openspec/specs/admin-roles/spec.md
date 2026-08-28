@@ -8,9 +8,7 @@ the REST API once enabled, the auditor's read-only guarantee, the audited
 grant lifecycle with configuration-bootstrapped admins, and roles derived from
 the identity provider's own claims by configured mapping, with the source of
 every effective role reported and a truncated membership claim made visible.
-
 ## Requirements
-
 ### Requirement: GW_0068
 The system SHALL implement GW_0068.
 
@@ -46,3 +44,10 @@ The system SHALL implement GW_0099.
 
 #### Scenario: SVC_GW_0099
 The system SHALL pass SVC_GW_0099.
+
+### Requirement: GW_0130
+The system SHALL implement GW_0130.
+
+#### Scenario: SVC_GW_0130
+The system SHALL pass SVC_GW_0130.
+
