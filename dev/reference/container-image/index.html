@@ -599,6 +599,8 @@
       
         
       
+        
+      
     
     
     
@@ -1135,6 +1137,34 @@
     
   
     Policy deny rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/releasing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutting a release
   
 
     
@@ -1933,9 +1963,9 @@
 binary:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ghcr.io/skillsgateway/skillsgateway
 </code></pre></div>
-<p>Only images that passed the release workflow's smoke test are published, and
-only from push events — the weekly scheduled rebuild and manually dispatched
-runs never move a tag.</p>
+<p>Only images that passed the workflow's smoke test are published, and only from
+a push to <code>main</code> or from the <a href="../../guides/releasing/">release workflow</a> — the
+weekly scheduled rebuild and manually dispatched runs never move a tag.</p>
 <h2 id="tags">Tags<a class="headerlink" href="#tags" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1954,8 +1984,8 @@ runs never move a tag.</p>
 <td>Moving tag following <code>main</code>; a convenience, not a deployment target.</td>
 </tr>
 <tr>
-<td><code>&lt;version&gt;</code> (e.g. <code>v1.2.0</code>)</td>
-<td>Release tags.</td>
+<td><code>&lt;version&gt;</code> (e.g. <code>1.2.0</code>)</td>
+<td>Releases. Bare semantic versions, no <code>v</code> prefix.</td>
 </tr>
 </tbody>
 </table>
