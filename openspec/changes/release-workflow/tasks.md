@@ -53,11 +53,29 @@
 - [x] 7.5 Add the releasing guide to `mkdocs.yml` nav
 - [x] 7.6 Update `.claude/skills/documentation/SKILL.md` and `docs/manual/reference/container-image.md`, both of which documented the retired `v*`-tag publishing behaviour (not in the original plan)
 
-## 8. Repository settings (by hand, outside the repo)
+## 8. Repository settings (outside the repo, but reachable through the REST API)
 
-- [ ] 8.1 Create the `stable` environment with a required reviewer
-- [ ] 8.2 Switch Pages to `build_type: workflow`
-- [ ] 8.3 Confirm `https://skillsgateway.github.io/skillsgateway/` still resolves and no `pages-build-deployment` run appears
+- [x] 8.1 Create the `stable` environment with a required reviewer — verified via
+  `GET /repos/skillsgateway/skillsgateway/environments/stable`: one
+  `required_reviewers` rule naming `jimisola`, plus a `branch_policy` limited to
+  protected branches. **`prevent_self_review` is `false`**, so the person who
+  dispatches a release can approve it; see the note below.
+- [x] 8.2 Switch Pages to `build_type: workflow` — verified via
+  `GET /repos/skillsgateway/skillsgateway/pages`: `"build_type": "workflow"`.
+- [x] 8.3 Confirm `https://skillsgateway.github.io/skillsgateway/` still resolves
+  and no `pages-build-deployment` run appears — the site returns `200`, and no
+  run named `pages-build-deployment` appears in the last 30 workflow runs.
+
+The heading used to say "by hand". That was wrong: the environments and Pages
+REST APIs both accept these writes with the `repo` scope and repository admin,
+so the settings are scriptable and verifiable rather than a manual step that has
+to be taken on trust.
+
+**Open question, not a task:** with `prevent_self_review: false` the approval
+gate stops an *accidental* release, not a unilateral one. That is a defensible
+choice for a single-maintainer project, and it is the same trade-off
+`four-eyes-approval` makes configurable for snapshot approval. Worth revisiting
+when a second maintainer exists.
 
 ## 9. Gates and evidence
 
