@@ -46,6 +46,16 @@ generated annotation files.
   requirement text anywhere else; code carries `@Requirements`/`@SVCs`
   annotations (Java) or JSDoc tags (TypeScript).
 - Never weaken or delete an existing SVC test to make a change pass.
+- Container-backed tests use **Arconia Dev Services** whenever one exists for the
+  dependency (`arconia-dev-services-postgresql`, `-redis`, `-ollama`,
+  `-opentelemetry-lgtm`). Do not hand-roll a raw Testcontainers container for
+  something Arconia already provides — the dev service is what makes the same
+  container serve `bootRun` and the test suite. Reach for raw Testcontainers only
+  when no dev service exists, say so in the change's design, and consider
+  proposing one upstream to [arconia](https://github.com/arconia-io/arconia)
+  rather than leaving the gap for the next change to rediscover. (No object-store
+  dev service exists today, which is why the object-storage work uses a raw
+  container.)
 - The API contract is additive within a major; a breaking change moves the path
   prefix **and** ships as a major, and CI refuses one that the PR title does not
   declare. See `docs/manual/reference/compatibility.md` — "The API contract".
