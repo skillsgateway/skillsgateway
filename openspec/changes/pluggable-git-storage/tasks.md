@@ -117,25 +117,53 @@ applies: failing tests first, proved failing, before any implementation.
 
 ## 4. Failing tests for the new behavior (prove they fail)
 
-- [ ] 4.1 Backend selection tests annotated `@SVCs({"SVC_GW_0111"})`: absent
+- [x] 4.1 Backend selection tests annotated `@SVCs({"SVC_GW_0111"})`: absent
       value yields `FilesystemGitStorage`; unrecognised value fails context
       startup naming the accepted values; `object-store` with no bucket,
       endpoint or credential mode fails startup; no case resolves a backend
-      other than the one named
-- [ ] 4.2 Concurrency tests annotated `@SVCs({"SVC_GW_0112"})` against Floci
+      other than the one named.
+      **Mostly landed with section 5** — `StorageBackendSelectionTests` already
+      covered eight of the nine cases. One did not hold: "naming the accepted
+      values". The enum binding refused with `No enum constant
+      ...Backend.magic`, which names the value and the type but neither spelling
+      that would have worked. Proved RED, then fixed with a
+      `@ConfigurationPropertiesBinding` converter whose refusal lists the
+      accepted set
+- [x] 4.2 Concurrency tests annotated `@SVCs({"SVC_GW_0112"})` against Floci
       (only once task 2.1 has proved it honours `If-Match`):
       N concurrent publications and revocations of the same and of superseding
       snapshots; assert no lost update, that exactly one caller is told its
       removal stopped the serving, and that objects are durable before any ref
-      names them (kill the writer between upload and manifest write)
-- [ ] 4.3 Migration tests annotated `@SVCs({"SVC_GW_0114"})`: full copy across
+      names them (kill the writer between upload and manifest write).
+      **Half of this landed with the backend** — `ObjectStoreBackendTests`
+      already covers six replicas revoking one snapshot (exactly one is told it
+      stopped the serving), six concurrent publications losing nothing, the
+      disjoint-writer retry, a reference that genuinely moved surfacing as
+      `LOCK_FAILURE`, cross-replica revocation asserted from a *second* replica
+      with a warm cache, and packs durable before any reference names them. The
+      four cases those did not reach are in `ObjectStoreConcurrencyTests`: a
+      revocation racing the approval that supersedes it, concurrent revocations
+      of an already-superseded snapshot, publications and revocations of
+      distinct snapshots interleaved, and a writer killed in the window between
+      its objects becoming durable and the manifest naming them
+- [ ] 4.3 **Deferred to section 7, deliberately.** Migration tests annotated `@SVCs({"SVC_GW_0114"})`: full copy across
       all three roles, ref-set comparison, refusal on a deliberately damaged
       copy, source left byte-identical, and a round trip back
-- [ ] 4.4 Packaging tests annotated `@SVCs({"SVC_GW_0115"})`: `replicaCount > 1`
+- [ ] 4.4 **Deferred to section 8, deliberately.** Packaging tests annotated `@SVCs({"SVC_GW_0115"})`: `replicaCount > 1`
       fails on `filesystem`; fails on `object-store` with the uncoordinated
       pollers enabled; renders with them disabled. (#134's `PackagingTests`
-      already cover the fail-closed `persistence.mode`; extend, never weaken)
-- [ ] 4.5 Record the failing run (old-coder evidence) before any implementation
+      already cover the fail-closed `persistence.mode`; extend, never weaken).
+      4.3 and 4.4 verify GW_0114 and GW_0115, whose text task 1.1 reserves for
+      sections 7 and 8 for a stated reason: `reqstool status` fails a
+      requirement that has no annotation and no passing SVC, so writing either
+      SVC before its implementation would break the traceability gate. They land
+      with the sections that implement them
+- [x] 4.5 Record the failing run (old-coder evidence) before any implementation.
+      **`evidence.md`, "Section 4 — the red runs".** Two cases went red against
+      the code as it stood and are recorded with what the failure actually was;
+      the four that passed on first run are recorded with the mutation that
+      proves each of them discriminates, since a test that has never been
+      observed to fail is a test nobody has checked
 
 ## 5. Configuration surface
 
@@ -230,10 +258,28 @@ applies: failing tests first, proved failing, before any implementation.
 
 ## 9. Observability
 
-- [ ] 9.1 Metrics: conditional-write conflicts and retries, WAL depth, live
-      pack count, pack cache hit rate, object-store request latency
-- [ ] 9.2 A health indicator reporting backend reachability and the
-      conditional-write probe result
+- [x] 9.1 Metrics: conditional-write conflicts and retries, WAL depth, live
+      pack count, pack cache hit rate, object-store request latency.
+      `ObjectStoreMetrics` binds the counters `ObjectStoreStatistics` already
+      kept — the wiring the backend deliberately left as a rename rather than an
+      investigation — and adds the two levels it did not track (WAL depth,
+      counted from the bucket by each maintenance pass, and live pack count,
+      read off every manifest for free). Latency is a `MeteredObjectStoreClient`
+      decorator, so the client stays the narrow slice of S3 it was written to be
+      and a context with no registry runs it undecorated. Recorded
+      unconditionally through the auto-configured registry, exactly as
+      `GatewayMetrics` is, so enabling export publishes them with no gateway
+      change; every tag is a closed vocabulary and none is a marketplace
+- [x] 9.2 A health indicator reporting backend reachability and the
+      conditional-write probe result. `GitStorageHealthIndicator`, present on
+      *both* backends — an indicator that names the backend actually in use is
+      the outside-visible half of GW_0111's guarantee. It reads and never
+      writes: a health endpoint is polled, and the conditional-write probe is a
+      startup gate whose result is reported rather than repeated.
+      **Requirement GW_0116 and SVC_GW_0116** carry section 9. The id was
+      re-verified free against `main` (which carries GW_0120–GW_0122 and
+      GW_0125–GW_0131) and against this change's reservations (GW_0114 for
+      section 7, GW_0115 for section 8, GW_0113 dropped); no collision
 
 ## 10. Documentation (same PR as the implementation)
 

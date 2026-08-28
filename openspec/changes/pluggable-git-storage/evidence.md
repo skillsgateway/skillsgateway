@@ -298,6 +298,138 @@ owner's acceptance before task 6.3 can start. Nothing in sections 3–8 was
 implemented, deliberately: building the backend before that decision is settled
 is how a design decision becomes an accident.
 
+## Section 4 — the red runs
+
+Task 4.5. Every case in section 4 was written before the code that satisfies it
+and run against the code as it stood. Two went red on their own; the other four
+passed on first run, so each was instead put through a deliberate mutation of the
+production code, because a test that has never been observed to fail is a test
+nobody has checked. Both kinds are below with the failure text.
+
+Environment for all of it: Floci `1.5.33` through the Arconia Floci dev service
+on podman, `TESTCONTAINERS_RYUK_DISABLED=true`,
+`TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/run/user/501/podman/podman.sock` (the
+socket path inside the podman machine — Floci mounts it, and without the
+override the container fails to start with `failed to change selinux label ...
+/var/run/docker.sock`).
+
+### Red 1 — the refusal did not name what it would have accepted (task 4.1)
+
+`StorageBackendSelectionTests.anUnrecognisedBackendNamesTheAcceptedValues`, against
+the enum binding as section 5 left it:
+
+```
+Caused by: java.lang.IllegalArgumentException: No enum constant
+    dev.skillsgateway.server.config.SkillsGatewayProperties.Storage.Backend.magic
+...
+to contain:
+  "filesystem"
+[ERROR] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0
+```
+
+The refusal named the setting and the value and neither spelling that would have
+worked. Green after a `@ConfigurationPropertiesBinding` converter whose message
+lists the accepted set; the suite is 10/10.
+
+### Red 2 — a publication silently lost to a concurrent revocation
+
+The first shape of the superseding-approval case asserted that the marketplace
+ends up serving the successor on every interleaving. It did not:
+
+```
+java.lang.AssertionError:
+Expecting actual:
+  LOCK_FAILURE
+to be in:
+  [NEW, FORCED, NO_CHANGE]
+    at ObjectStoreConcurrencyTests.setRef
+```
+
+A revocation that lands first deletes `refs/heads/main`, and the publication that
+was moving that same reference then fails its own reference-level precondition —
+correctly, and identically on both backends: this is not an object-store defect,
+`RefDirectory` does the same. What the case now pins down is the property the
+seam actually owns — *exactly one* of the two writers decides the served tip, the
+loser is refused **out loud** so its caller can retry, the successor's pinned
+reference lands on every interleaving, and a retry converges on serving it. Eight
+rounds per run.
+
+**Finding, deliberately not fixed here.** `ApprovalService.approve` calls
+`main.forceUpdate()` and discards the result, so on this interleaving the
+publication is dropped while the database records the snapshot approved — the same
+defect class as `FilesystemGitStorage.deleteRef`, which task 3.3 found and fixed,
+on the other end of the same path. It is a caller-side defect above the storage
+seam, on a trust boundary, and it belongs to a change that can give it its own
+requirement and adversarial tests rather than to section 4.
+
+### Red 3 — a torn manifest read, and what it turned out to be
+
+Under eight-way contention the interleaved case failed intermittently:
+
+```
+com.fasterxml.jackson.databind.JsonMappingException: Unexpected end-of-input in field name
+ (through reference chain: RepositoryManifest["packs"]->java.util.ArrayList[7])
+```
+
+Chased rather than retried away. Instrumenting the read to re-fetch on a parse
+failure settled it in one line:
+
+```
+DIAG first len=6291 etag="e68578600e931147ba2ef45373d5a08c" | reread len=6392
+    etag="22438f949dacff020b7f66d958fc3b3a" PARSES
+```
+
+The store served a **partially written object** — 6291 bytes of what became 6392,
+with a matching `Content-Length` and an ETag of its own — while an overwrite was
+in flight. That is Floci, not us: Amazon S3 does not tear a `PutObject` that way,
+and the fidelity spike (task 2.1) never exercised a `GET` racing an overwrite of
+the same key, which decision 10 had in fact already listed as something the
+spike does not cover. Two things came out of it, both kept:
+
+- `S3ObjectStoreClient` now checks a body against the `Content-Length` the store
+  declared, so a genuinely short response is diagnosed where it happens instead of
+  as a corrupt repository three layers up. (It did not fire here — Floci's length
+  matched its torn body — but a short read is a real failure mode with a
+  one-comparison detector.)
+- `ManifestStore` reads once more before believing a manifest is corrupt. One
+  retry, not a loop: corruption must stay reachable, and a store that tears every
+  read has to be found out rather than worked around.
+
+**Also recorded, because it is a capacity statement rather than a defect.** At
+twenty-four concurrent writers on one repository the bounded retry is exhausted
+and the transition fails loudly:
+
+```
+java.io.IOException: could not apply revocation of refs/snapshots/c93d1f25... :
+    the repository manifest .../manifest was rewritten by another writer on each of 8 attempts
+```
+
+That is `MAX_ATTEMPTS = 8` behaving exactly as designed — bounded, counted, and
+raised rather than swallowed. The suite runs at eight writers, which is well
+inside the bound and already far beyond human-paced approvals.
+
+### Mutations — the four cases that passed on first run
+
+Each mutation was applied to the production code alone, the case run, and the
+mutation reverted.
+
+| Case | Mutation | Result |
+| --- | --- | --- |
+| `concurrentRevocationsOfASupersededSnapshotStopNothing` | `unpublish` reports it stopped the serving whenever the pinned reference existed, rather than only when the served tip was that snapshot | `Tests run: 1, Failures: 1` |
+| `interleavedPublicationsAndRevocationsLoseNothing` | `ManifestStore.MAX_ATTEMPTS` 8 → 1, so a lost compare-and-swap is never retried | `Tests run: 1, Errors: 1` |
+| `aWriterKilledBeforeTheManifestWriteNamesNothing` | `commitPackImpl` swallows the `IOException` from the manifest transition | `Tests run: 1, Failures: 1` |
+| `anUnreachableStoreIsReportedDown` (section 9) | `checkReachable()` does not read the store | `Tests run: 1, Failures: 1` |
+| `theBackendsCountersArePublishedAsMeters` (section 9) | the write-ahead depth gauge is not registered | `Tests run: 1, Errors: 1` |
+
+### What section 4 did not write, and why
+
+Tasks 4.3 and 4.4 verify GW_0114 and GW_0115, whose requirement text task 1.1
+reserves for sections 7 and 8. `reqstool status` counts a requirement with no
+`@Requirements` annotation and no passing SVC as incomplete and fails the gate, so
+writing either SVC before its implementation would break traceability to prove a
+point about ordering. They land with the sections that implement them, exactly as
+GW_0111 landed with section 5.
+
 ## Gate run
 
 Final fresh run after the last edit, on the merge of `origin/main` into this

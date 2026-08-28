@@ -53,6 +53,9 @@ public final class ObjectStoreMaintenance {
         for (String key : manifests.foldedWalEntries(throughSequence)) {
             store.delete(key);
         }
+        // Counted from the bucket rather than from what this replica happens to have written, so
+        // the depth gauge is exact at least once per pass however many replicas are writing.
+        manifests.observeWalDepth(store.list(manifests.walPrefix()).size());
     }
 
     /**

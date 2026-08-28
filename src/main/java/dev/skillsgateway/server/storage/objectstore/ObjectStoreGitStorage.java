@@ -6,6 +6,7 @@ import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -54,6 +55,7 @@ public final class ObjectStoreGitStorage implements GitStorage, AutoCloseable {
     private final PackCache cache;
     private final Path scratch;
     private final ObjectStoreStatistics statistics;
+    private volatile Instant probedAt;
 
     public ObjectStoreGitStorage(
             ObjectStoreClient store, SkillsGatewayProperties properties, ObjectStoreStatistics statistics)
@@ -73,6 +75,25 @@ public final class ObjectStoreGitStorage implements GitStorage, AutoCloseable {
     /** Refuse to run against a store that cannot serialize reference transitions. */
     public void probe() throws IOException {
         store.probe();
+        probedAt = Instant.now();
+    }
+
+    /**
+     * When the conditional-write probe last passed, or null if it never has. Reported by the
+     * health indicator rather than repeated by it: it is a property of the bucket, it gates
+     * startup, and re-running it would put a write on every health poll.
+     */
+    public Instant probedAt() {
+        return probedAt;
+    }
+
+    /**
+     * The cheapest question that distinguishes "the bucket is there and we may read it" from
+     * anything else: one listing of this gateway's own prefix, which needs no object to exist and
+     * writes nothing.
+     */
+    public void checkReachable() throws IOException {
+        store.list(prefix);
     }
 
     @Override

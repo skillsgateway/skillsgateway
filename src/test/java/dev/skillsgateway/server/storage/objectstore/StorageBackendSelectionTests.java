@@ -73,6 +73,22 @@ class StorageBackendSelectionTests {
                 .hasStackTraceContaining("magic"));
     }
 
+    /**
+     * A refusal that names only what was rejected leaves the operator guessing what would have
+     * been accepted. The accepted set is small, closed and known at compile time, so there is no
+     * reason for it not to be in the message that stops the start.
+     */
+    // an unrecognised backend names every value it would have accepted
+    @Test
+    @SVCs({"SVC_GW_0111"})
+    void anUnrecognisedBackendNamesTheAcceptedValues() {
+        contexts.withPropertyValues("skills-gateway.storage.backend=magic").run(context -> assertThat(context)
+                .hasFailed()
+                .getFailure()
+                .hasStackTraceContaining("filesystem")
+                .hasStackTraceContaining("object-store"));
+    }
+
     // the object store without a bucket fails the start rather than falling back to disk
     @Test
     @SVCs({"SVC_GW_0111"})
