@@ -34,22 +34,25 @@ applies: failing tests first, proved failing, before any implementation.
       emulator version regresses, move the conditional-write contract to a
       separate tagged suite against real S3 and consider contributing the
       behaviour upstream
-- [ ] 2.3 Run the same five assertions against **real AWS S3** and against
-      **MinIO**, and promote those rows of the decision-9 table from believed to
-      verified. Floci passing proves the design is implementable and our tests
-      are meaningful; it does not certify the production target, and the
-      supported-store list is not publishable until this is done.
-      **MinIO half done, S3 half not — so this stays unchecked.** MinIO
-      `RELEASE.2025-07-23T15-54-02Z` passes all five, three consecutive runs,
-      and fails under the same two mutations that discriminated Floci; that row
-      is now verified (design decision 9). **AWS S3 was not attempted**: it
-      needs an account this change does not have and deliberately did not
-      acquire, so the row stays documented-but-unexercised and the
-      supported-store list stays unpublishable. The MinIO run is an out-of-band
-      probe rather than a test in `verify`, because there is **no Arconia dev
-      service for MinIO** in the 0.29.0 BOM — landing it permanently means a
-      hand-rolled Testcontainers container, which is the owner's call, not a
-      side effect of closing a spike row (design decision 9)
+- [ ] 2.3 Run the same five assertions against **real AWS S3**, and promote
+      that row of the decision-9 table from believed to verified. Floci passing
+      proves the design is implementable and our tests are meaningful; it does
+      not certify the production target, and the supported-store list is not
+      publishable until this is done. **Not attempted here:** it needs an
+      account this change does not have and deliberately did not acquire, so
+      the row stays documented-but-unexercised.
+
+      **MinIO was dropped as the second store, deliberately.** It was probed —
+      `RELEASE.2025-07-23T15-54-02Z` passes all five assertions across three
+      consecutive runs and fails under the same two mutations that discriminated
+      Floci — so the portability evidence is real and is kept in decision 9. What
+      it is not is a foundation to build CI on: MinIO stopped publishing free
+      container images around October 2025, so any pin would be to a frozen tag
+      with no upgrade path and no guarantee the tag stays hosted. A gate whose
+      image supply has already stopped is a gate that fails later, without
+      warning, for reasons unrelated to the code. Floci remains the single
+      in-build store; real S3 remains the row that actually matters.
+
 - [x] 2.4 Decide the ref database shape — `DfsReftableDatabase` over the
       bucket versus a plain `DfsRefDatabase` over the manifest — and record the
       decision in `design.md`. **Decided: the plain `DfsRefDatabase` over the

@@ -1,12 +1,13 @@
 # Evidence: pluggable-git-storage
 
 Scope of this report: **tasks 2.1, 2.3 (partly) and 2.4** — the
-conditional-write fidelity spike, the MinIO half of the store-portability
-verification, and the ref-database recommendation.
+conditional-write fidelity spike, a MinIO probe of store portability that is
+evidence rather than a gate, and the ref-database decision.
 The DFS backend itself is not implemented, so this is not the change's final
 evidence report; it is the evidence for the decision gates the plan hangs on.
 Sections 3–8 are deliberately not started: task 6.3 builds on the task 2.4
-decision, and that decision is a recommendation awaiting the owner.
+decision, which is now accepted, and on the two design gaps that acceptance
+added to it.
 
 Commit: `HEAD` of `feat/pluggable-git-storage` at the time of writing (see the
 PR's commit list; the run below is the final fresh run after the last edit).
@@ -134,7 +135,7 @@ service, for the one reason that survives: no application code touches object
 storage yet, so there is no `bootRun` consumer to share a container with. That
 flip is task 6.8.
 
-## Task 2.3 — the same five assertions against MinIO (and why not against AWS S3)
+## Task 2.3 — MinIO probed (and why neither MinIO nor AWS S3 closes the row)
 
 `ConditionalWriteFidelityTests` verifies *Floci*. Task 2.3 exists because that
 is an emulator, and the design's portability claim names real stores.
@@ -188,23 +189,32 @@ Tests run: 5, Failures: 2
 the same discriminating signature the Floci mutations produced. The original was
 restored and re-run green before the container was removed.
 
-So MinIO becomes the second independent store on which the design's single
-exotic primitive is shown to hold, and the first that is a production-grade
-store rather than an emulator.
+So MinIO is a second independent store on which the design's single exotic
+primitive is shown to hold, and the first that is a production-grade store
+rather than an emulator. That is worth having as evidence. It does **not** close
+task 2.3: the row that closes it is real AWS S3, and MinIO is not adopted as a
+standing test store for the reason below.
 
-**Where this run lives, and why it is not in `verify`.** It is an out-of-band
-probe: a standalone program driving the same five assertions against a MinIO
-container started by hand, not a JUnit test in the build. That is a deliberate
-limitation and the reason is the project's own dev-services rule. The Arconia
-0.29.0 BOM this project imports ships dev services for Artemis, Docling,
-Elasticsearch, Floci, Kafka, LGTM, LLDAP, MariaDB, MongoDB, MySQL, Ollama,
-OpenLIT, Oracle, the OTel collector, Phoenix, PostgreSQL, Pulsar, RabbitMQ and
-Redis — and **none for MinIO**. Making the MinIO row permanent therefore means
-hand-rolling a raw Testcontainers container, which the rule permits only when no
-dev service exists and the design says so. The design now says so (decision 9),
-but adding a second container to every `verify` is a call for the owner, not a
-side effect of closing a spike row. Floci stays the in-build double: it has a
-dev service, so one container serves `bootRun` and the suite.
+**Where this run lives, and why it stays there.** It is an out-of-band probe: a
+standalone program driving the same five assertions against a MinIO container
+started by hand, not a JUnit test in the build — and it will not be promoted
+into one. **MinIO stopped publishing free container images around October 2025.**
+Pinning a gate to `RELEASE.2025-07-23T15-54-02Z` would mean a frozen tag with no
+upgrade path and no guarantee it stays hosted; a test whose image supply has
+already ended is a test that breaks later for reasons unrelated to this code.
+
+Two further facts, recorded so nobody re-derives them: there is no Arconia dev
+service for MinIO in either the 0.29.0 or the 0.30.0 BOM, so adopting it would
+have meant a hand-rolled container or a dev service written against Arconia's
+public `DevServicesRegistrar` — both were viable — and Arconia's own container
+reuse and cross-application sharing activate only under `BootstrapMode.DEV`, so
+neither would have deduplicated containers across the suite's Spring contexts
+anyway.
+
+**Floci is therefore the single in-build store**, and the portability question a
+second store would have answered is left to real AWS S3 in task 2.3 — the store
+that actually matters. This probe stands as evidence that the primitive is not a
+Floci artefact; it is not a gate, and this report does not pretend it is one.
 
 One incidental finding worth carrying into the backend. The first MinIO run
 failed assertion 5 with `NoHttpResponseException: The target server failed to

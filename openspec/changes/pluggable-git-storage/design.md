@@ -454,7 +454,7 @@ Support, with the evidence behind each row:
 | --- | --- | --- |
 | Floci 1.5.33 (`docker.io/floci/floci`) | `If-Match` / `If-None-Match` on PUT | **Verified here** by the task 2.1 spike — all five assertions pass, and two mutations confirm the spike would have caught a store that ignores preconditions |
 | AWS S3 | `If-Match` / `If-None-Match` on PUT | Documented; the primary target. **Still not exercised by us** — no account, and task 2.3 must not acquire one |
-| MinIO `RELEASE.2025-07-23T15-54-02Z` | `If-Match` / `If-None-Match` on PUT | **Verified here** by the task 2.3 probe — all five assertions pass, three consecutive runs, and the same two mutations fail it |
+| MinIO `RELEASE.2025-07-23T15-54-02Z` | `If-Match` / `If-None-Match` on PUT | **Probed and passing** — all five assertions, three consecutive runs, and the same two mutations fail it. Kept as evidence that the primitive is portable beyond one emulator; **not adopted as a test store**, because MinIO stopped publishing free images around October 2025 |
 | Google Cloud Storage | generation preconditions, not `If-Match` | Would need an adapter; **out of scope** |
 | Ceph RGW, on-prem S3 gateways | varies by version | **Unverified** |
 
@@ -584,22 +584,23 @@ list names S3 as documented-but-unexercised rather than verified.
 
 Two consequences worth recording:
 
-- **Where the MinIO run lives.** It is an out-of-band probe (a standalone
-  program driving the same five assertions against a MinIO container started by
-  hand), not a test in `verify`. That is on purpose. There is **no Arconia dev
-  service for MinIO** — the 0.29.0 BOM this project imports ships dev services
-  for Artemis, Docling, Elasticsearch, Floci, Kafka, LGTM, LLDAP, MariaDB,
-  MongoDB, MySQL, Ollama, OpenLIT, Oracle, the OTel collector, Phoenix,
-  PostgreSQL, Pulsar, RabbitMQ and Redis, and none for MinIO. Landing the MinIO
-  row as a permanent test therefore means hand-rolling a raw Testcontainers
-  container, which the project rule permits only when no dev service exists *and
-  the design says so*. This paragraph is that statement, but the decision to add
-  a second container to every `verify` is the owner's, not a side effect of
-  closing a spike row — so the probe is recorded as evidence and the permanent
-  test is left as a follow-up.
-- **Floci stays the in-build double.** Nothing about the MinIO result argues for
-  replacing it. Floci has a dev service, so one container serves `bootRun` and
-  the suite; MinIO would be a second container proving the same property.
+- **The MinIO run stays a probe, and MinIO is not adopted as a second in-build
+  store.** It was an out-of-band program driving the same five assertions
+  against a hand-started container, and it stays that way. The reason is not the
+  result — the result was good — but the supply: **MinIO stopped publishing free
+  container images around October 2025**, so any pin would be to a frozen tag
+  with no upgrade path and no guarantee the tag remains hosted. Building a gate
+  on an image whose distribution has already stopped buys a test that fails
+  later, without warning, for reasons unrelated to this code. There is also no
+  Arconia dev service for MinIO in the 0.29.0 or 0.30.0 BOMs, so adopting it
+  would additionally have meant either a hand-rolled container or writing a dev
+  service against Arconia's registrar — both viable, neither worth doing for a
+  store on a frozen image.
+- **Floci is the single in-build store.** It has a shipped dev service, so one
+  container serves `bootRun` and the suite. The portability question that a
+  second store would have answered is answered instead by **real AWS S3** in
+  task 2.3, which is the store that actually matters and the row that keeps the
+  supported-store list unpublishable until it passes.
 
 One inconsistency the probe did surface, and it is a client bug rather than a
 store one: the first MinIO run failed assertion 5 with
