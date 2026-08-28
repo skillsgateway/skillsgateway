@@ -402,8 +402,8 @@ Support, with the evidence behind each row:
 | Store | Conditional write | Status |
 | --- | --- | --- |
 | Floci 1.5.33 (`docker.io/floci/floci`) | `If-Match` / `If-None-Match` on PUT | **Verified here** by the task 2.1 spike — all five assertions pass, and two mutations confirm the spike would have caught a store that ignores preconditions |
-| AWS S3 | `If-Match` / `If-None-Match` on PUT | Documented; the primary target. **Not yet exercised by us** |
-| MinIO | `If-Match` / `If-None-Match` | Believed supported; **unverified here** |
+| AWS S3 | `If-Match` / `If-None-Match` on PUT | Documented; the primary target. **Still not exercised by us** — no account, and task 2.3 must not acquire one |
+| MinIO `RELEASE.2025-07-23T15-54-02Z` | `If-Match` / `If-None-Match` on PUT | **Verified here** by the task 2.3 probe — all five assertions pass, three consecutive runs, and the same two mutations fail it |
 | Google Cloud Storage | generation preconditions, not `If-Match` | Would need an adapter; **out of scope** |
 | Ceph RGW, on-prem S3 gateways | varies by version | **Unverified** |
 
@@ -516,6 +516,192 @@ raises confidence that the design is implementable and that our tests are
 meaningful; it does not by itself certify the production target. Exercising the
 same contract against real S3 remains open (task 2.3).
 
+**Task 2.3, half-closed: MinIO verified, AWS S3 still not.** The five assertions
+were re-run, unchanged in substance, against MinIO
+`RELEASE.2025-07-23T15-54-02Z` — a real MinIO server, not an emulator of one.
+All five pass, three consecutive runs, and the two mutations that discriminated
+Floci discriminate MinIO identically: dropping `If-Match` from the stale write
+turns the expected `412` into `200`, and dropping it from the eight concurrent
+writers turns one winner into eight. So the MinIO row moves from believed to
+verified, and it is now the *second* independent store the design's one exotic
+primitive has been shown to hold on.
+
+The AWS S3 row stays open, and deliberately so: verifying it needs an AWS
+account, and acquiring one is out of scope for this change. That row closes when
+someone with credentials runs the same assertions; until then the supported-store
+list names S3 as documented-but-unexercised rather than verified.
+
+Two consequences worth recording:
+
+- **Where the MinIO run lives.** It is an out-of-band probe (a standalone
+  program driving the same five assertions against a MinIO container started by
+  hand), not a test in `verify`. That is on purpose. There is **no Arconia dev
+  service for MinIO** — the 0.29.0 BOM this project imports ships dev services
+  for Artemis, Docling, Elasticsearch, Floci, Kafka, LGTM, LLDAP, MariaDB,
+  MongoDB, MySQL, Ollama, OpenLIT, Oracle, the OTel collector, Phoenix,
+  PostgreSQL, Pulsar, RabbitMQ and Redis, and none for MinIO. Landing the MinIO
+  row as a permanent test therefore means hand-rolling a raw Testcontainers
+  container, which the project rule permits only when no dev service exists *and
+  the design says so*. This paragraph is that statement, but the decision to add
+  a second container to every `verify` is the owner's, not a side effect of
+  closing a spike row — so the probe is recorded as evidence and the permanent
+  test is left as a follow-up.
+- **Floci stays the in-build double.** Nothing about the MinIO result argues for
+  replacing it. Floci has a dev service, so one container serves `bootRun` and
+  the suite; MinIO would be a second container proving the same property.
+
+One inconsistency the probe did surface, and it is a client bug rather than a
+store one: the first MinIO run failed assertion 5 with
+`NoHttpResponseException` — a connection the Apache client had pooled during the
+eight-way concurrency test and MinIO had since closed. Rebuilding the `S3Client`
+per assertion fixed it. It is worth remembering for the backend: a long-lived
+`S3Client` against a store that closes idle connections needs a connection TTL
+below the store's idle timeout, or the first request after a quiet period fails
+in a way that will read as a storage fault.
+
+### 10. The ref database is a plain `DfsRefDatabase` over the manifest — recommended, and awaiting the owner
+
+Task 2.4's open question — `DfsReftableDatabase` over the bucket, or a plain
+`DfsRefDatabase` over the manifest — was researched against the JGit 7.7.1
+classes actually on the classpath
+(`org.eclipse.jgit-7.7.1.202607240634-r.jar`, and the matching sources jar).
+**The recommendation is the plain `DfsRefDatabase`.** The reasoning is below, as
+is what it costs, because the decision is not free in either direction and the
+owner should see both halves before any backend is built on it.
+
+**What each option actually is, in this JGit version.**
+
+`DfsRefDatabase` is an abstract class with exactly three abstract methods:
+
+```java
+protected abstract RefCache scanAllRefs() throws IOException;
+protected abstract boolean compareAndPut(Ref oldRef, Ref newRef) throws IOException;
+protected abstract boolean compareAndRemove(Ref oldRef) throws IOException;
+```
+
+That is a compare-and-swap interface. It is the same shape as the manifest
+transition decision 3 already commits to, down to the boolean return meaning
+"your precondition still held". `scanAllRefs` is one GET of the manifest;
+`compareAndPut` and `compareAndRemove` are one conditional PUT of it.
+
+`DfsReftableDatabase` extends that same class and implements the three methods
+in terms of reftables — and the important discovery is *where reftables live*.
+`DfsReftableBatchRefUpdate.applyUpdates` does:
+
+```java
+DfsPackDescription pack = odb.newPack(PackSource.INSERT);
+try (DfsOutputStream out = odb.writeFile(pack, REFTABLE)) { ... }
+odb.commitPack(Collections.singleton(pack), prune);
+odb.addReftable(pack, prune);
+```
+
+Reftables are **pack files** (`PackExt.REFTABLE`), so choosing reftable does not
+move ref state out of our code — it moves it out of the manifest and into the
+pack list, and the conditional write then has to guard `commitPackImpl` instead.
+The consistency mechanism is unchanged; only what it protects moves.
+
+**Why the plain `DfsRefDatabase` wins here.**
+
+1. *The interface is the design.* `compareAndPut(old, new) -> boolean` is the
+   manifest transition, expressed in JGit's own vocabulary. With reftable there
+   is an encoding, a stack, a compaction policy and a pack-list commit between
+   the gateway's intent and the conditional PUT, and every one of those is a
+   place a correctness argument can hide.
+2. *The manifest stays self-describing.* Decision 3's stated property — "one
+   bucket is a complete, self-describing repository", the thing that makes a
+   replica disposable — is much weaker if reading the current refs means
+   decoding a stack of binary reftable blocks. On the manifest, an operator
+   answering "what is this marketplace serving right now, and is it the SHA the
+   database says was approved?" does one `GetObject` and reads JSON. On a trust
+   boundary whose whole guarantee is *the served ref is the approved SHA*, that
+   is not a convenience; it is the auditability of the guarantee.
+3. *Staleness checks get cheap, and that matters per-request.* Both options
+   cache (`DfsRefDatabase` holds an `AtomicReference<RefCache>`;
+   `DfsObjDatabase` holds a cached `PackList`), so a facade read path needs a
+   freshness policy either way — that part does not differentiate them. What
+   differentiates them is the cost of the check. Against the manifest it is a
+   conditional `HEAD`/`GET` on one key, `O(1)` and identical on every store.
+   Against reftable it is re-listing the pack set, which is a LIST — more
+   expensive, and with consistency semantics that vary across the very
+   S3-compatible stores decision 3 bought portability for.
+4. *Our ref population is tiny, so reftable's advantage does not apply.* The
+   gateway's namespaces are `refs/heads/main` and `refs/snapshots/<sha>` (plus
+   `refs/quarantine/incoming` and `refs/catalog/*`, neither of them served).
+   Reftable exists for Gerrit-scale repositories with millions of refs, where a
+   whole-ref-map rewrite per transition is untenable. Rewriting a few hundred
+   refs as one small object per transition is not. Choosing reftable buys
+   scaling we have no use for and pays for it in machinery.
+5. *Compaction machinery is not lost by choosing the manifest.*
+   `DfsGarbageCollector` has no reftable coupling at all, and
+   `DfsPackCompactor`'s reftable compaction is opt-in — guarded by
+   `reftableConfig != null && !srcReftables.isEmpty()`. Task 6.6 keeps both
+   either way.
+6. *Reftable adds a second compaction obligation.* Every ref transition writes a
+   new reftable file. Without stack compaction the read path degrades with the
+   number of transitions — a distinct failure mode from the pack-count one task
+   6.6 already has to handle, on a different schedule, with its own metric.
+
+**What choosing it costs, stated plainly.**
+
+The one real thing reftable gives away for free is atomic multi-ref
+transactions, and this is the strongest argument for the other side. Today's
+`RefDirectory` returns `performsAtomicTransactions() == true`;
+`DfsReftableDatabase` returns `true`; `RefDatabase`'s default — what a plain
+`DfsRefDatabase` inherits — is `false`. `ReceivePack` advertises the `atomic`
+push capability only when the ref database reports `true`, and
+`GitPublishConfiguration` already sets `receivePack.setAtomic(true)` on the
+hosted-marketplace push path. So a naive plain `DfsRefDatabase` would silently
+stop advertising `atomic` to publishers pushing to a hosted marketplace on the
+object-store backend: an observable, client-visible difference between the two
+backends, which is exactly what the task-3 contract suite exists to forbid.
+
+That is a cost, not a blocker, and the fix is small and belongs in the plan
+rather than being discovered later: our subclass overrides
+`performsAtomicTransactions()` to `true` and `newBatchUpdate()` to return a
+batch update that evaluates the whole `ReceiveCommand` list against one manifest
+read and commits it as one conditional write. That is the same single-transition
+mechanism `unpublish` already needs (task 6.4), applied to N refs instead of
+two — which also answers task 2.6, and answers it the same way whichever option
+is chosen.
+
+Worth noting, because it removes the tempting assumption that reftable would
+have handled this for us: it would not have.
+`ReftableBatchRefUpdate.execute` serialises its precondition check and its write
+with `lock.lock()` on a plain in-JVM `ReentrantLock`. Across pods that is
+nothing. Reftable's `performsAtomicTransactions() == true` is a statement about
+*all-or-nothing within one process*, not about cross-writer isolation. Under
+reftable the conditional write in `commitPackImpl` would still be the only real
+serialization point, and a conflict would surface *after* a reftable had already
+been written and would need pruning. Under the manifest, a conflict is a
+re-read, a re-evaluation, and a retry, with nothing written to clean up. For a
+system whose whole point is uncoordinated concurrent writers, that is the more
+honest structure.
+
+**Consequences to carry into implementation** (task 6.3), if the recommendation
+stands:
+
+- Our `DfsRefDatabase` subclass overrides `performsAtomicTransactions()` and
+  `newBatchUpdate()`; a contract-suite case asserts the `atomic` capability is
+  advertised identically on both backends, so this cannot regress unnoticed.
+- `scanAllRefs()` reads the manifest; the returned `RefCache` carries the
+  manifest ETag so a `compareAndPut` knows precisely which version it is
+  swapping from.
+- Symbolic `HEAD -> refs/heads/main` is part of the manifest, not a separate
+  object, so repository creation is one conditional `If-None-Match: *` PUT — the
+  create-exactly-once primitive assertion 3 of the fidelity spike verified on
+  both Floci and MinIO.
+- Retry on a lost CAS is ours to write and ours to bound, with the
+  conflict/retry metrics task 9.1 already calls for.
+
+**Reversibility.** This is not a one-way door. Both options implement the same
+three abstract methods behind the same `GitStorage` seam, and the task-3
+contract suite is written before either. Moving to reftable later would be a
+rewrite of the ref database and a bucket-layout migration — real work, but
+confined behind the seam and covered by a suite that already exists.
+
+*Recommendation only.* This decision is deliberately not implemented in this
+pass; task 6.3 stays blocked on the owner accepting or rejecting it.
+
 ## Risks / Trade-offs
 
 - **A wrong DFS implementation corrupts the one thing the product guarantees**
@@ -584,19 +770,23 @@ same contract against real S3 remains open (task 2.3).
 
 ## Open Questions
 
-- Does the ref database sit on `DfsReftableDatabase` (reftable encoding, with
-  the conditional write on the stack pointer) or on a plain `DfsRefDatabase`
-  over the manifest? Both satisfy the contract; the first reuses more JGit
-  machinery, the second is smaller to reason about. To be settled by a spike
-  before implementation.
+- **Answered by decision 10, pending the owner.** The ref database sits on a
+  plain `DfsRefDatabase` over the manifest rather than on
+  `DfsReftableDatabase`. Researched against the JGit 7.7.1 classes on the
+  classpath, not from memory. Task 6.3 stays blocked until this is accepted or
+  rejected.
 - WAL granularity: one entry per ref transition, or per publication? Affects
   compaction frequency, not correctness.
-- Does the hosted-marketplace push path (which accepts a real `receive-pack`
-  from a publisher) need anything beyond the same conditional write, given a
-  push is many refs in one transaction?
-- The conditional-write table in decision 9 now has one verified row (Floci).
-  AWS S3, MinIO and Ceph RGW are still believed rather than probed; task 2.3
-  closes that, and until it does the supported-store list is not publishable.
+- **Largely answered by decision 10.** The hosted-marketplace `receive-pack`
+  path needs no mechanism beyond the same conditional write: the whole
+  `ReceiveCommand` list is evaluated against one manifest read and committed as
+  one conditional PUT. Task 2.6 remains open only as the *demonstration* of
+  that, which belongs with the backend.
+- The conditional-write table in decision 9 now has two verified rows, Floci and
+  MinIO. **AWS S3 and Ceph RGW are still believed rather than probed**, and S3
+  is the production target — verifying it needs an account this change does not
+  have and must not acquire. Until that row closes, the supported-store list is
+  not publishable as verified.
 - Is the migration command a subcommand of the same jar, or a separate
   entrypoint? Preference is the former (one artifact), unconfirmed against the
   native-image packaging.

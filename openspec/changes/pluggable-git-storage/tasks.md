@@ -38,10 +38,33 @@ applies: failing tests first, proved failing, before any implementation.
       **MinIO**, and promote those rows of the decision-9 table from believed to
       verified. Floci passing proves the design is implementable and our tests
       are meaningful; it does not certify the production target, and the
-      supported-store list is not publishable until this is done
-- [ ] 2.4 Decide the ref database shape — `DfsReftableDatabase` over the
+      supported-store list is not publishable until this is done.
+      **MinIO half done, S3 half not — so this stays unchecked.** MinIO
+      `RELEASE.2025-07-23T15-54-02Z` passes all five, three consecutive runs,
+      and fails under the same two mutations that discriminated Floci; that row
+      is now verified (design decision 9). **AWS S3 was not attempted**: it
+      needs an account this change does not have and deliberately did not
+      acquire, so the row stays documented-but-unexercised and the
+      supported-store list stays unpublishable. The MinIO run is an out-of-band
+      probe rather than a test in `verify`, because there is **no Arconia dev
+      service for MinIO** in the 0.29.0 BOM — landing it permanently means a
+      hand-rolled Testcontainers container, which is the owner's call, not a
+      side effect of closing a spike row (design decision 9)
+- [x] 2.4 Decide the ref database shape — `DfsReftableDatabase` over the
       bucket versus a plain `DfsRefDatabase` over the manifest — and record the
-      decision in `design.md`
+      decision in `design.md`. **Recommendation written as design decision 10,
+      researched against the JGit 7.7.1 classes on the classpath: a plain
+      `DfsRefDatabase` over the manifest.** Its three abstract methods
+      (`scanAllRefs`, `compareAndPut`, `compareAndRemove`) *are* the manifest
+      compare-and-swap; reftables turn out to be stored as `PackExt.REFTABLE`
+      pack files, so reftable would move ref state into the pack list rather
+      than out of our code, cost `O(1)` staleness checks for a LIST, and buy
+      million-ref scaling the gateway has no use for. The one real cost is
+      stated: `RefDatabase.performsAtomicTransactions()` defaults to `false`
+      where `RefDirectory` and `DfsReftableDatabase` both return `true`, so the
+      subclass must override it and `newBatchUpdate()` to keep the `atomic`
+      push capability the hosted path advertises today. **Awaiting the owner —
+      task 6.3 is blocked until this is accepted or rejected**
 - [ ] 2.5 Prove an AWS SDK v2 S3 client with the web-identity credential
       provider builds and runs under the GraalVM native-image profile
 - [ ] 2.6 Prove a `receive-pack` (hosted-marketplace push, many refs in one

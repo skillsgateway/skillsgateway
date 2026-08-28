@@ -1,9 +1,12 @@
 # Evidence: pluggable-git-storage
 
-Scope of this report: **task 2.1 only** — the conditional-write fidelity spike.
-Rebased onto `main` after #134 and #135.
+Scope of this report: **tasks 2.1, 2.3 (partly) and 2.4** — the
+conditional-write fidelity spike, the MinIO half of the store-portability
+verification, and the ref-database recommendation.
 The DFS backend itself is not implemented, so this is not the change's final
-evidence report; it is the evidence for the decision gate the plan hangs on.
+evidence report; it is the evidence for the decision gates the plan hangs on.
+Sections 3–8 are deliberately not started: task 6.3 builds on the task 2.4
+decision, and that decision is a recommendation awaiting the owner.
 
 Commit: `HEAD` of `feat/pluggable-git-storage` at the time of writing (see the
 PR's commit list; the run below is the final fresh run after the last edit).
@@ -131,24 +134,163 @@ service, for the one reason that survives: no application code touches object
 storage yet, so there is no `bootRun` consumer to share a container with. That
 flip is task 6.8.
 
+## Task 2.3 — the same five assertions against MinIO (and why not against AWS S3)
+
+`ConditionalWriteFidelityTests` verifies *Floci*. Task 2.3 exists because that
+is an emulator, and the design's portability claim names real stores.
+
+**AWS S3 was not attempted.** It requires an account and credentials this change
+does not have, and acquiring them was explicitly out of scope. That row of the
+decision-9 table therefore stays *documented but unexercised*, and the
+supported-store list stays unpublishable as verified. It is recorded here as not
+done rather than glossed, because the alternative — reasoning from AWS's
+documentation and calling the row closed — is exactly the kind of unearned
+confidence the fidelity spike exists to refuse.
+
+**MinIO was verified.** The five assertions were re-run, unchanged in substance,
+against a real MinIO server:
+
+```
+$ podman run -d --name sg-minio-probe -p 19000:9000 \
+    -e MINIO_ROOT_USER=… -e MINIO_ROOT_PASSWORD=… \
+    docker.io/minio/minio:RELEASE.2025-07-23T15-54-02Z server /data
+$ java -cp "$(cat cp.txt)" MinioProbe.java     # ×3
+endpoint: http://localhost:19000
+PASS  1. If-Match with the current ETag succeeds and returns a new ETag
+PASS  2. If-Match with a stale ETag returns 412 and does not write
+PASS  3. If-None-Match: * creates exactly once
+PASS  4. Under real concurrency from one base ETag, exactly one writer wins
+PASS  5. ETags chain correctly across successive conditional updates
+
+Tests run: 5, Failures: 0
+```
+
+Three consecutive runs, identical. Assertion 4 is the concurrent one and is
+therefore the flakiness candidate; it did not vary.
+
+**And the probe was mutated, for the same reason the Floci spike was.** A green
+run against a store proves nothing unless the run can go red. Dropping
+`If-Match` from assertion 2's stale write and from assertion 4's eight
+concurrent writers, in one run:
+
+```
+PASS  1. If-Match with the current ETag succeeds and returns a new ETag
+FAIL  2. If-Match with a stale ETag returns 412 and does not write
+        java.lang.AssertionError: stale If-Match refused with 412, got 200
+PASS  3. If-None-Match: * creates exactly once
+FAIL  4. Under real concurrency from one base ETag, exactly one writer wins
+        java.lang.AssertionError: exactly one winner, got 8
+
+Tests run: 5, Failures: 2
+```
+
+`got 200` where 412 was required, and eight winners where one was required —
+the same discriminating signature the Floci mutations produced. The original was
+restored and re-run green before the container was removed.
+
+So MinIO becomes the second independent store on which the design's single
+exotic primitive is shown to hold, and the first that is a production-grade
+store rather than an emulator.
+
+**Where this run lives, and why it is not in `verify`.** It is an out-of-band
+probe: a standalone program driving the same five assertions against a MinIO
+container started by hand, not a JUnit test in the build. That is a deliberate
+limitation and the reason is the project's own dev-services rule. The Arconia
+0.29.0 BOM this project imports ships dev services for Artemis, Docling,
+Elasticsearch, Floci, Kafka, LGTM, LLDAP, MariaDB, MongoDB, MySQL, Ollama,
+OpenLIT, Oracle, the OTel collector, Phoenix, PostgreSQL, Pulsar, RabbitMQ and
+Redis — and **none for MinIO**. Making the MinIO row permanent therefore means
+hand-rolling a raw Testcontainers container, which the rule permits only when no
+dev service exists and the design says so. The design now says so (decision 9),
+but adding a second container to every `verify` is a call for the owner, not a
+side effect of closing a spike row. Floci stays the in-build double: it has a
+dev service, so one container serves `bootRun` and the suite.
+
+One incidental finding worth carrying into the backend. The first MinIO run
+failed assertion 5 with `NoHttpResponseException: The target server failed to
+respond` — a connection the Apache HTTP client had pooled during the eight-way
+concurrency test and MinIO had since closed. Rebuilding the `S3Client` per
+assertion fixed it; MinIO was never at fault. A long-lived `S3Client` in the
+backend will need a connection TTL below the store's idle timeout, or the first
+request after a quiet period will fail in a way that reads as a storage fault.
+
+## Task 2.4 — the ref database recommendation
+
+Recorded in full as **design decision 10**. Researched against the JGit classes
+actually on the classpath — `org.eclipse.jgit-7.7.1.202607240634-r.jar` and its
+sources jar — rather than from memory, which matters because these are
+`internal` APIs whose shape changes between releases.
+
+**Recommendation: a plain `DfsRefDatabase` over the manifest**, not
+`DfsReftableDatabase`.
+
+The four findings that decided it:
+
+1. `DfsRefDatabase`'s entire abstract surface is `scanAllRefs()`,
+   `compareAndPut(Ref, Ref)` and `compareAndRemove(Ref)`. That *is* a
+   compare-and-swap interface, and it is the same shape as the manifest
+   transition decision 3 already commits to.
+2. Reftables are stored as **pack files** — `DfsReftableBatchRefUpdate
+   .applyUpdates` calls `odb.newPack(PackSource.INSERT)`,
+   `odb.writeFile(pack, REFTABLE)`, `odb.commitPack(...)`. So reftable does not
+   move ref state out of our code; it moves it from the manifest into the pack
+   list, and the conditional write must then guard `commitPackImpl` instead. The
+   consistency mechanism is unchanged; only what it protects moves.
+3. `ReftableBatchRefUpdate.execute` guards its precondition check and its write
+   with a plain in-JVM `ReentrantLock`. Reftable's
+   `performsAtomicTransactions() == true` is a statement about all-or-nothing
+   *within one process*, not about cross-writer isolation — so it would not have
+   solved the multi-pod problem for us, and a losing writer would discover the
+   conflict only after a reftable had been written and needed pruning.
+4. The cost of the recommendation, stated rather than discovered later:
+   `RefDatabase.performsAtomicTransactions()` defaults to `false`, where both
+   `RefDirectory` (today's backend) and `DfsReftableDatabase` return `true`, and
+   `ReceivePack` advertises the `atomic` push capability only when it is `true`.
+   `GitPublishConfiguration` already sets `receivePack.setAtomic(true)`. So the
+   subclass must override `performsAtomicTransactions()` and `newBatchUpdate()`
+   to keep the two backends observably identical — which is also the answer to
+   task 2.6, and would have been needed under reftable anyway.
+
+Also checked, because it would have been a real argument the other way and is
+not: choosing the manifest loses no compaction machinery. `DfsGarbageCollector`
+has no reftable coupling at all, and `DfsPackCompactor`'s reftable compaction is
+opt-in, guarded by `reftableConfig != null && !srcReftables.isEmpty()`.
+
+**This is a recommendation, not an implementation.** Task 6.3 is blocked until
+the owner accepts or rejects it, which is why sections 3–8 are untouched.
+
 ## Conclusion
 
 The plan survives unchanged. Task 2.2's fallback is **not** triggered: the
 conditional-write contract stays in the default `verify` and the offline build
 stays offline. No upstream contribution is needed.
 
-The honest limit: this verifies *Floci*, not AWS S3. It shows the design is
-implementable and that our tests are meaningful; it does not certify the
-production target. Task 2.3 (the same five assertions against real S3 and MinIO)
-stays open, and the supported-store list is not publishable until it closes.
+The honest limit is now narrower but real. Two independent stores — Floci and
+MinIO — implement the one primitive the design rests on, and the assertions
+discriminate on both. **AWS S3, the production target, is still unexercised**,
+so task 2.3 stays unchecked and the supported-store list is not publishable as
+verified. Closing that row needs an account this change did not have and did not
+try to obtain.
+
+Task 2.4 is answered as a recommendation (design decision 10) and needs the
+owner's acceptance before task 6.3 can start. Nothing in sections 3–8 was
+implemented, deliberately: building the backend before that decision is settled
+is how a design decision becomes an accident.
 
 ## Gate run
 
-Final fresh run after the last edit, on the merge of `origin/main` (`007f996`,
-after #138, #140 and #141) into this branch. An earlier run on the pre-merge
-tree reported 12 e2e tests where main now has 13 — the discrepancy is what
-caught it. A gate run against a branch that has not merged main describes a tree
-nobody will merge, so it is not evidence.
+Final fresh run after the last edit, on the merge of `origin/main` into this
+branch. That merge brought in #139 (native PostgreSQL enum types), which landed
+after the previous evidence run — hence the test count moving from 203 to 212.
+A gate run against a branch that has not merged main describes a tree nobody
+will merge, so it is not evidence.
+
+The one exception, stated rather than hidden: the *numbers* below were pasted
+into this file after the run that produced them, so this file is one edit newer
+than the tree the Java, frontend and e2e gates saw. That edit is Markdown inside
+`openspec/changes/`, which only `openspec validate` and `reqstool` read, and
+both were re-run against the final text — `27 passed, 0 failed` and `PASS` —
+along with `mkdocs build --strict`.
 
 `TESTCONTAINERS_RYUK_DISABLED=true` and
 `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/run/user/501/podman/podman.sock` were
@@ -156,11 +298,18 @@ exported (see "Environment" below).
 
 ```
 $ ./mvnw clean verify
+[INFO] Tests run: 212, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
+[INFO] Total time:  01:31 min
 ```
 
-203 tests, 0 failures, 0 errors (aggregated from `target/surefire-reports/*.xml`);
-5 of them are this spike, and the rest is what #138 and #139 brought in.
+212 tests, 0 failures, 0 errors (surefire agreeing across 54 report files);
+5 of them are the Floci fidelity spike —
+
+```
+Test set: dev.skillsgateway.server.storage.ConditionalWriteFidelityTests
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.703 s
+```
 
 ```
 $ (cd src/main/frontend && pnpm test:stories)
@@ -170,23 +319,26 @@ $ (cd src/main/frontend && pnpm test:stories)
 
 ```
 $ (cd src/main/frontend && pnpm e2e)
-  13 passed (28.7s)
+  13 passed (24.6s)
 ```
 
 ```
 $ reqstool status local -p docs/reqstool
-112/112 complete · 0 incomplete · PASS
+113/113 complete · 0 incomplete · PASS
 ```
 
 ```
 $ openspec validate --all --strict
-Totals: 26 passed, 0 failed (26 items)
+Totals: 27 passed, 0 failed (27 items)
 ```
 
 ```
 $ mkdocs build --strict
-INFO    -  Documentation built in 0.64 seconds
+INFO    -  Documentation built in 0.65 seconds
 ```
+
+The MinIO probe of task 2.3 is **not** part of this run and is not part of
+`verify` — see the task 2.3 section above for why, and for its own output.
 
 ## Environment
 
@@ -215,6 +367,10 @@ INFO    -  Documentation built in 0.64 seconds
   Arconia dev service too — it wraps the same container.
 - Containers were reaped with `podman container prune -f` afterwards, since
   nothing reaps them with Ryuk disabled.
+- The task 2.3 MinIO probe needs none of the above: it is a plain
+  `podman run -p 19000:9000` and a standalone client, with no Testcontainers
+  involved, so neither the Ryuk nor the socket-override workaround applies to
+  it.
 
 ## Dependencies added
 
