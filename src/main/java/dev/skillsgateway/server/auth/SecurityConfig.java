@@ -36,6 +36,10 @@ public class SecurityConfig {
     public SecurityFilterChain gitChain(HttpSecurity http, PatAuthenticationProvider patAuthenticationProvider)
             throws Exception {
         http.securityMatcher("/git/**")
+                // No CSRF token: this chain carries no ambient credential for a
+                // third-party page to ride. Every request authenticates itself with a
+                // PAT over Basic, no session is created, and no cookie is honoured, so
+                // a forged cross-site request arrives unauthenticated.
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationManager(new ProviderManager(patAuthenticationProvider))
@@ -79,6 +83,9 @@ public class SecurityConfig {
     @Order(3)
     public SecurityFilterChain hooksChain(HttpSecurity http) throws Exception {
         http.securityMatcher("/hooks/**")
+                // No CSRF token: nothing here is authorized by a cookie or a session.
+                // The controller's HMAC check over the raw body is the whole
+                // authorization, and a browser cannot produce that signature.
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll());
