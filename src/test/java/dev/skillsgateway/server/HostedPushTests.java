@@ -34,7 +34,7 @@ class HostedPushTests extends AbstractGatewayTest {
     private TokenService tokenService;
 
     private String registerHosted(String name, String pushPolicy) {
-        marketplaceRepository.register(name, null, null, Marketplace.ORIGIN_HOSTED, pushPolicy);
+        marketplaceRepository.register(name, null, null, Marketplace.ORIGIN_HOSTED, pushPolicy, null);
         try (Repository ignored = storage.hosted(name)) {
             return name;
         } catch (IOException e) {

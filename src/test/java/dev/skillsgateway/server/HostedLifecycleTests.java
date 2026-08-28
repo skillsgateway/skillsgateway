@@ -41,7 +41,7 @@ class HostedLifecycleTests extends AbstractGatewayTest {
 
     private Publisher hostedPublisher(String prefix) throws Exception {
         String name = uniqueName(prefix);
-        marketplaceRepository.register(name, null, null, Marketplace.ORIGIN_HOSTED, Marketplace.PUSH_APPEND_ONLY);
+        marketplaceRepository.register(name, null, null, Marketplace.ORIGIN_HOSTED, Marketplace.PUSH_APPEND_ONLY, null);
         try (Repository ignored = storage.hosted(name)) {
             // Opening creates the origin repository, as registration does in production.
         } catch (IOException e) {

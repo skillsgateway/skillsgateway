@@ -369,6 +369,11 @@ export const handlers = [
     }),
   ),
   http.get("/api/snapshots/:id/release-age", () => HttpResponse.json(eligible)),
+  // The default fixture is an independent reviewer: warn mode, nothing to declare. A story or a
+  // test that wants the conflicted reviewer overrides this one handler.
+  http.get("/api/snapshots/:id/four-eyes", () =>
+    HttpResponse.json({ mode: "WARN", conflicts: [], refused: false }),
+  ),
   http.get("/api/snapshots/:id/fetchers", () => HttpResponse.json(fetchers)),
   http.get("/api/snapshots/:id/files", () => HttpResponse.json(fileTree)),
   http.get("/api/snapshots/:id/file", ({ request }) =>

@@ -766,6 +766,22 @@ requirements:
     categories: ["functional-suitability", "security"]
     revision: 0.1.0
 
+  - id: GW_0096
+    title: Separation of duties on snapshot approval
+    significance: shall
+    description: The system shall record, as attributes of the objects themselves, the identity that registered each marketplace and the identity that triggered each snapshot's ingestion, and shall determine at approval time whether the reviewer is the snapshot's ingestion actor, its marketplace's registrant, or the author of a waiver the approval relies on, treating the automated sync triggers and an unrecorded actor as no conflict; where the configured mode enforces the rule the system shall refuse such an approval before any state transition, leaving the snapshot undecided and nothing published, and shall answer the refusal naming each conflicting act; and it shall gate no rejection, no role decision and no other operation on this rule.
+    rationale: An approval is worth what the independence of the approver is worth, and nothing prevented the identity that brought content into the gateway from also being the one that published it. Deriving the supply-side identities from the audit ledger would make an append-only observability surface load-bearing for an authorization decision, so they belong on the objects; the waiver author is part of the conflict set because a self-authored waiver followed by a self-approval is the bypass that would otherwise make the rest of the rule decorative; and refusing before the transition is what keeps a refusal from leaving a half-published snapshot behind.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0097
+    title: Four-eyes mode configuration and ledger visibility
+    significance: shall
+    description: The system shall offer exactly two modes for the approval separation-of-duties rule — one that records a detected conflict and lets the approval proceed and one that refuses it — shall default to the recording mode so that a deployment holding a single approving identity keeps working across an upgrade, shall offer no mode that disables detection, and shall append every detected conflict to the audit ledger in both modes, naming the acting identity, the snapshot, the mode in force, whether the approval proceeded, and each conflicting act.
+    rationale: Enforcement that arrives switched on would make a single-administrator estate unapprovable the moment it is upgraded, and an off switch would reproduce the gap the rule closes by making a self-approval invisible again; recording as the floor is what makes the two true at once. Writing the conflict to the ledger in both modes is also what lets an operator measure the blast radius of enforcement before opting into it, from evidence rather than from expectation.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
   - id: GW_0098
     title: Identity-provider claim to role mapping
     significance: shall
@@ -872,6 +888,33 @@ requirements:
     description: The system shall refuse to start when its development-only unauthenticated authentication mode is enabled on a deployment that has an identity provider configured, and the refusal shall state which configuration it was decided by and how to resolve it.
     rationale: The mode makes the entire web surface unauthenticated and attributes every action to a synthetic principal, so being opt-in and off by default is the only thing standing between a copied configuration file and an open gateway. A deployment that has configured an identity provider has also stated it has a login, which is precisely what the escape hatch exists to do without; refusing that combination turns the most likely accident into a failed start rather than a silent exposure, and naming the offending setting keeps the refusal from being a puzzle for whoever meets it.
     categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0120
+    title: Deliberate storage durability choice
+    significance: shall
+    description: The deployment chart shall require every installation to state explicitly whether the gateway's git storage is durable or ephemeral, shall refuse to render when that statement is absent or unrecognised, shall refuse to render when durable storage is chosen without naming the volume claim that provides it, and shall state in the refusal that ephemeral storage loses all quarantined, published and hosted repository content when the pod restarts.
+    rationale: The repositories on disk and the snapshot rows in the database are two halves of one estate, and only one half survives a pod restart onto ephemeral storage; the gateway then records content as published that it can neither serve nor rebuild, with no rehydration path. A silent fallback makes that outcome the reward for forgetting a value, so the choice has to be made in the open and the consequence stated where the choice is made.
+    categories: ["reliability", "interaction-capability"]
+    implementation: configuration
+    revision: 0.1.0
+
+  - id: GW_0121
+    title: Deployable chart surface
+    significance: shall
+    description: The deployment chart shall accept credentials for pulling the container image from a private registry, shall offer an ingress that is disabled by default and that carries an ingress class, annotations, host and path rules and TLS configuration when enabled, shall declare default processor and memory reservations and limits for the container, shall run the workload under a named and annotatable service account of its own rather than the namespace default, and shall run it by default as a non-root user with no privilege escalation, no retained capabilities and a read-only root filesystem.
+    rationale: A chart that cannot pull from a private registry, cannot be reached from outside the cluster and reserves nothing is a chart nobody can install; and because the git facade authenticates clients with personal access tokens over HTTP Basic, the ingress that exposes it is also where the credential either is or is not protected in transit. A named service account is what a workload-identity binding attaches to, and a workload that needs no privileges should have to be granted them rather than merely not have asked.
+    categories: ["flexibility", "security"]
+    implementation: configuration
+    revision: 0.1.0
+
+  - id: GW_0122
+    title: Chart configuration passthrough
+    significance: shall
+    description: The deployment chart shall allow an installation to set any of the application's configuration properties without a chart change, by both individual environment entries whose values may be taken from a secret and structured configuration rendered into a configuration object that is mounted and layered over the configuration built into the image before the estate is reconciled, and its documentation shall state that role enforcement is disabled by default and must be enabled for any shared deployment.
+    rationale: Only the database, the identity provider and the storage location were reachable through the chart, which left role enforcement off — every authenticated user passing every authorization check — with no way to turn it on, and left the declared estate unreachable even though it is the only non-interactive way to configure a gateway whose administrative interface requires a browser session. Structured configuration needs a file because the estate is nested lists, and secrets need an indirection because a configuration object is not a secret.
+    categories: ["security", "flexibility"]
+    implementation: configuration
     revision: 0.1.0
 
   - id: GW_0125

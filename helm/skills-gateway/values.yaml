@@ -5,6 +5,47 @@ image:
   tag: ""          # defaults to .Chart.AppVersion
   pullPolicy: IfNotPresent
 
+# Secrets holding registry credentials, for pulling the image from a private
+# registry. Each entry is `- name: <secret-name>`; the Secrets must already
+# exist in the release namespace and be of type kubernetes.io/dockerconfigjson.
+imagePullSecrets: []
+#  - name: registry-credentials
+
+# The pod's service account. A workload-identity binding (IRSA and its
+# equivalents) attaches to a *named* account through an annotation, so the
+# gateway gets its own rather than sharing `default`. Set `create: false` and a
+# `name` to bind an account managed elsewhere.
+serviceAccount:
+  create: true
+  name: ""          # defaults to the release's full name
+  annotations: {}
+  #  eks.amazonaws.com/role-arn: arn:aws:iam::000000000000:role/skills-gateway
+  automountServiceAccountToken: true
+
+# The image already runs as the distroless `nonroot` user (uid 65532) and the
+# service needs no privileges at all: it listens on 8080, writes to the mounted
+# data volume and to /tmp, and nothing else. These make that explicit so a
+# cluster policy has something to admit, and `fsGroup` is what gives the mounted
+# volume a group the container can write to.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  # The chart mounts an emptyDir at /tmp so the runtime keeps a writable
+  # temporary directory with the root filesystem sealed.
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# The filesystem git storage assumes a SINGLE writer — there is no cross-pod
+# locking — so this must stay 1. See guides/deploying-on-kubernetes.md.
 replicaCount: 1
 
 service:
@@ -38,11 +79,106 @@ oidc:
   # on a multi-tenant endpoint that is the tenant boundary left open.
   issuer: ""
 
-# Git storage (/data). emptyDir by default; set an existing PVC for durability.
+# Git storage (/data): the quarantine, published and hosted repositories.
+#
+# There is deliberately NO default. Losing /data while PostgreSQL still records
+# those snapshots as published leaves an estate the gateway can neither serve
+# nor rehydrate, so the chart refuses to install until the install states which
+# it wants:
+#
+#   mode: existingClaim  — bind `existingClaim` to a PersistentVolumeClaim that
+#                          already exists in the release namespace (durable).
+#   mode: ephemeral      — emptyDir. ALL git content is lost when the pod
+#                          restarts. Demos and throwaway environments only.
+#
+# Anything else — including leaving `mode` empty — fails the template.
 persistence:
+  mode: ""
   existingClaim: ""
 
-resources: {}
+# Ingress for the web portal and the git smart-HTTP facade.
+#
+# TLS is effectively mandatory in production: the facade authenticates git
+# clients with personal access tokens over HTTP Basic, so a plaintext listener
+# puts a long-lived credential on the wire in every clone and fetch. Terminate
+# TLS here (or at a load balancer in front of it) and never expose the HTTP
+# listener directly.
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  #  cert-manager.io/cluster-issuer: letsencrypt
+  hosts:
+    - host: skills-gateway.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: skills-gateway-tls
+  #    hosts:
+  #      - skills-gateway.example.com
+
+# A starting point, not a measurement. The service is a GraalVM native binary,
+# so the runtime footprint is small and startup is immediate; the memory a real
+# deployment needs is driven by JGit packing large upstream repositories, not by
+# a JVM heap. Raise the limits if ingestion of a big marketplace is OOM-killed,
+# and profile before trusting these in production.
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: "2"
+    memory: 1Gi
+
+# --- Application configuration ------------------------------------------------
+#
+# The keys above cover only the database, the identity provider and storage.
+# Everything else the gateway reads — role enforcement, the declarative estate,
+# retention, vetting, token lifetimes, upstream sync — is set through the two
+# passthroughs below.
+#
+# IMPORTANT: `skills-gateway.roles.enabled` defaults to **false**, which lets
+# every authenticated user through every authorization check. Any shared
+# deployment must turn it on, either in `config` or as an entry in `extraEnv`.
+
+# Arbitrary `skills-gateway.*` (and any other Spring) configuration, rendered
+# verbatim into a ConfigMap and layered on top of the image's application.yaml
+# through SPRING_CONFIG_ADDITIONAL_LOCATION. This is the place for structured
+# configuration — above all the declarative estate, which is nested YAML that
+# does not express well as environment variables.
+#
+# Never put a secret here: a ConfigMap is not a Secret. Use `extraEnv` with
+# `valueFrom.secretKeyRef`, or `extraEnvFrom` with a `secretRef`, instead.
+config: {}
+#  skills-gateway:
+#    roles:
+#      enabled: true
+#      admins:
+#        - platform-admin@example.com
+#    estate:
+#      marketplaces:
+#        - name: internal-skills
+#          url: https://git.example.com/skills/internal.git
+
+# Extra environment variables appended to the container, for single-valued
+# settings and for anything that must come from a Secret. Entries are passed
+# through as written, so both `value` and `valueFrom` work.
+extraEnv: []
+#  - name: SKILLSGATEWAY_ROLES_ENABLED
+#    value: "true"
+#  - name: SGW_ESTATE_CI_BOT_SECRET
+#    valueFrom:
+#      secretKeyRef:
+#        name: skills-gateway-estate
+#        key: ci-bot-secret
+
+# Whole ConfigMaps or Secrets projected into the container's environment.
+extraEnvFrom: []
+#  - secretRef:
+#      name: skills-gateway-extra
+#  - configMapRef:
+#      name: skills-gateway-extra
 
 nodeSelector: {}
 tolerations: []

@@ -222,11 +222,26 @@ abstract class AbstractGatewayTest {
 
     protected record Registered(Marketplace marketplace, Snapshot snapshot) {}
 
-    /** Arrangement via services, not HTTP, so each test exercises only its own surface. */
+    /**
+     * Arrangement via services, not HTTP, so each test exercises only its own surface. Neither
+     * supply-side actor is recorded, which is deliberately the shape of a marketplace and a
+     * snapshot from before those columns existed: nothing arranged this way can conflict with a
+     * reviewer, so the four-eyes rule leaves every other test's fixtures exactly as they were.
+     */
     protected Registered registerAndIngest(String name, Path upstreamDir) {
+        return registerAndIngest(name, upstreamDir, null, null);
+    }
+
+    /** As above, with the supply-side identities the four-eyes rule reads (GW_0096). */
+    protected Registered registerAndIngest(String name, Path upstreamDir, String registrant, String ingestActor) {
         Marketplace marketplace = marketplaceRepository.register(
-                name, upstreamDir.toAbsolutePath().toString());
-        Snapshot snapshot = ingestionService.ingest(marketplace);
+                name,
+                upstreamDir.toAbsolutePath().toString(),
+                null,
+                Marketplace.ORIGIN_UPSTREAM,
+                Marketplace.PUSH_APPEND_ONLY,
+                registrant);
+        Snapshot snapshot = ingestionService.ingest(marketplace, ingestActor);
         return new Registered(marketplace, snapshot);
     }
 

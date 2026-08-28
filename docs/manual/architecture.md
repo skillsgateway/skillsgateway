@@ -259,6 +259,20 @@ is compared at each approval request rather than tracked, so the wait clears
 itself. This is the window any future auto-promotion is conditioned on;
 per-marketplace and per-tier ages ride on the policy rules.
 
+Implemented today (GW_0096, GW_0097): **separation of duties** on that same
+gate. The marketplace's registrant and each snapshot's ingestion actor are
+recorded as attributes of the objects themselves, and an approval by the
+registrant, by the ingestion actor, or by the author of a waiver the approval
+relies on is a *four-eyes conflict*. What the conflict does is
+`skills-gateway.approval.four-eyes.mode`: `warn` — the default — records it on
+the ledger and lets the approval through, `enforce` refuses it fail-closed and
+leaves the snapshot held. The default is what keeps a single-administrator
+deployment approvable at all, and there is deliberately no mode that stops the
+detection, so a self-approval is on the ledger either way. The automated sync
+actors are recorded but never conflict. What is *not* implemented is a
+two-approval queue: this refuses a conflicted decision rather than requiring a
+second one.
+
 **Recall (kill switch):** marking a snapshot revoked (a) removes it from every
 virtual marketplace, (b) makes the façade refuse its mirror refs, (c) produces
 the blast-radius report from the ledger (every identity that ever fetched it),

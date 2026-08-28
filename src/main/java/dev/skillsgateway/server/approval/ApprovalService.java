@@ -38,6 +38,7 @@ public class ApprovalService {
     private final CatalogService catalogService;
     private final GatewayMetrics metrics;
     private final ReleaseAgeGate releaseAgeGate;
+    private final FourEyesGate fourEyesGate;
     private final AdminAuditLogger auditLogger;
 
     public ApprovalService(
@@ -49,6 +50,7 @@ public class ApprovalService {
             CatalogService catalogService,
             GatewayMetrics metrics,
             ReleaseAgeGate releaseAgeGate,
+            FourEyesGate fourEyesGate,
             AdminAuditLogger auditLogger) {
         this.storage = storage;
         this.snapshotRepository = snapshotRepository;
@@ -58,6 +60,7 @@ public class ApprovalService {
         this.catalogService = catalogService;
         this.metrics = metrics;
         this.releaseAgeGate = releaseAgeGate;
+        this.fourEyesGate = fourEyesGate;
         this.auditLogger = auditLogger;
     }
 
@@ -70,7 +73,15 @@ public class ApprovalService {
      * ingested its commit, which the ledger records against the decision (GW_0073).
      */
     public record Approved(
-            Snapshot snapshot, List<WaiverEvaluation.Suppression> waiversApplied, Duration ingestionAge) {}
+            Snapshot snapshot,
+            List<WaiverEvaluation.Suppression> waiversApplied,
+            Duration ingestionAge,
+            List<FourEyesConflictException.Conflict> fourEyesConflicts) {
+
+        public Approved {
+            fourEyesConflicts = fourEyesConflicts == null ? List.of() : List.copyOf(fourEyesConflicts);
+        }
+    }
 
     /**
      * Records the decision, then copies the pinned commit to published and advances main.
@@ -122,6 +133,7 @@ public class ApprovalService {
                 .orElseThrow(
                         () -> new ApprovalException("marketplace %d not found".formatted(current.marketplaceId())));
         List<WaiverEvaluation.Suppression> applied = List.of();
+        List<FourEyesConflictException.Conflict> conflicts = List.of();
         Duration ingestionAge = Duration.ZERO;
         if (current.decidable()) {
             WaiverEvaluation.Effect effect = waiverService.evaluate(current);
@@ -135,6 +147,12 @@ public class ApprovalService {
             // decision on the ledger (GW_0091), and leaves the snapshot held with nothing published.
             policyGate.enforce(current, marketplace, reviewer);
             ingestionAge = requireReleaseAge(current, marketplace, reviewer);
+            // Separation of duties last, and after waiver evaluation (GW_0096): the set of waivers
+            // this approval leans on is only known once the effective outcome has been computed,
+            // and one of them being the reviewer's own is a conflict. In enforce mode this throws
+            // before the state transition below, so a refused approval leaves the snapshot held
+            // with nothing published; in warn mode it returns what it found for the ledger.
+            conflicts = requireFourEyes(current, marketplace, applied, reviewer);
         }
         Snapshot decided = snapshotRepository.decide(snapshotId, Snapshot.APPROVED, reviewer);
         String sha = decided.sha();
@@ -154,7 +172,7 @@ public class ApprovalService {
         // The published set just grew; the catalog re-derives from it (GW_0062). Never fails the
         // approval that triggered it.
         catalogService.rebuildQuietly();
-        return new Approved(decided, applied, ingestionAge);
+        return new Approved(decided, applied, ingestionAge, conflicts);
     }
 
     /**
@@ -182,6 +200,46 @@ public class ApprovalService {
                                             tooYoung.eligibility().remainingSeconds()))));
             throw tooYoung;
         }
+    }
+
+    /**
+     * The four-eyes gate, with a refusal appended to the ledger before it is raised - for the same
+     * reason the cooling-off refusal is: a control that turns approvals away invisibly cannot be
+     * audited, and a refused self-approval is the one event an operator most needs to see.
+     */
+    @Requirements({"GW_0096", "GW_0097"})
+    private List<FourEyesConflictException.Conflict> requireFourEyes(
+            Snapshot snapshot, Marketplace marketplace, List<WaiverEvaluation.Suppression> applied, String reviewer) {
+        try {
+            return fourEyesGate.require(snapshot, marketplace, applied, reviewer);
+        } catch (FourEyesConflictException refused) {
+            auditLogger.record(
+                    reviewer,
+                    marketplace.name(),
+                    FourEyesGate.EVENT_CONFLICT,
+                    snapshot.sha(),
+                    "mode=ENFORCE, refused, conflicts=" + FourEyesGate.describe(refused.conflicts()));
+            throw refused;
+        }
+    }
+
+    /**
+     * What the four-eyes rule would say about this reviewer and this snapshot, without deciding
+     * anything (GW_0096). Evaluates the waivers exactly as an approval would, so the answer names
+     * the waiver conflicts a real approval would raise rather than an approximation of them.
+     */
+    @Requirements({"GW_0096"})
+    public Optional<FourEyesGate.FourEyesCheck> fourEyes(long snapshotId, String reviewer) {
+        return snapshotRepository.findById(snapshotId).map(snapshot -> {
+            Marketplace marketplace =
+                    marketplaceRepository.findById(snapshot.marketplaceId()).orElse(null);
+            List<WaiverEvaluation.Suppression> applied =
+                    snapshot.decidable() ? waiverService.evaluate(snapshot).suppressions() : List.of();
+            List<FourEyesConflictException.Conflict> conflicts =
+                    fourEyesGate.conflicts(snapshot, marketplace, applied, reviewer);
+            return new FourEyesGate.FourEyesCheck(
+                    fourEyesGate.mode(), conflicts, !conflicts.isEmpty() && fourEyesGate.enforcing());
+        });
     }
 
     /** Whether the snapshot has cleared the cooling-off window, and when it will if it has not. */

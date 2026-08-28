@@ -1,0 +1,14 @@
+{{- if .Values.config -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "skills-gateway.configMapName" . }}
+  labels:
+    {{- include "skills-gateway.labels" . | nindent 4 }}
+data:
+  # Layered on top of the application.yaml baked into the image through
+  # SPRING_CONFIG_ADDITIONAL_LOCATION, so the image stays authoritative for
+  # defaults and this file only carries the estate's own settings.
+  application.yaml: |
+    {{- toYaml .Values.config | nindent 4 }}
+{{- end }}

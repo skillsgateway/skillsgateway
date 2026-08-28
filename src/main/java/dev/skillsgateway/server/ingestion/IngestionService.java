@@ -65,20 +65,28 @@ public class IngestionService {
      * Fetches the upstream default branch into quarantine, pins the commit, and records a snapshot.
      * Never touches the published repository: upstream changes cannot alter served content until a
      * reviewer approves (publication happens only in ApprovalService).
+     *
+     * <p>The trigger's identity is recorded on the snapshot (GW_0096) — a principal for an
+     * on-demand ingest or a push, one of the constant sync actors for an automated trigger — so
+     * that the approval gate can later tell a reviewer apart from whoever supplied the content. It
+     * is a required argument rather than an optional one precisely so that a new ingestion path
+     * cannot be added without deciding what identity it acts as.
+     *
+     * @param actor the identity that triggered this ingestion
      */
-    @Requirements({"GW_0002", "GW_0004", "GW_0037"})
-    public Snapshot ingest(Marketplace marketplace) {
+    @Requirements({"GW_0002", "GW_0004", "GW_0037", "GW_0096"})
+    public Snapshot ingest(Marketplace marketplace, String actor) {
         ReentrantLock lock = ingestLocks.computeIfAbsent(marketplace.id(), id -> new ReentrantLock());
         lock.lock();
         try {
             // Observation only (GW_0077): timing and outcome around the unchanged ingestion.
-            return metrics.observeIngestion(() -> ingestLocked(marketplace));
+            return metrics.observeIngestion(() -> ingestLocked(marketplace, actor));
         } finally {
             lock.unlock();
         }
     }
 
-    private Snapshot ingestLocked(Marketplace marketplace) {
+    private Snapshot ingestLocked(Marketplace marketplace, String actor) {
         try (Repository repo = storage.quarantine(marketplace.name())) {
             ObjectId sha = fetchIncoming(repo, marketplace);
             RefUpdate pin = repo.updateRef("refs/snapshots/" + sha.name());
@@ -92,7 +100,7 @@ public class IngestionService {
             String state = violation == null ? Snapshot.HELD : Snapshot.REJECTED;
             Snapshot snapshot;
             try {
-                snapshot = snapshotRepository.create(marketplace.id(), sha.name(), state, violation);
+                snapshot = snapshotRepository.create(marketplace.id(), sha.name(), state, violation, actor);
             } catch (DuplicateKeyException raced) {
                 // Belt-and-braces under the per-marketplace lock: another instance of the gateway
                 // (or a path the lock cannot see) recorded the same commit first — same content,

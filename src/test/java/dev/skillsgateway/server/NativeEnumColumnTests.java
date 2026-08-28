@@ -140,14 +140,15 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
                 "file:///upstream",
                 null,
                 Marketplace.ORIGIN_UPSTREAM,
-                Marketplace.PUSH_APPEND_ONLY);
+                Marketplace.PUSH_APPEND_ONLY,
+                null);
         assertThat(upstream.origin()).isEqualTo(Marketplace.ORIGIN_UPSTREAM);
         assertThat(upstream.pushPolicy()).isEqualTo(Marketplace.PUSH_APPEND_ONLY);
         // The column DEFAULT survives the conversion: nothing named the sync mode here.
         assertThat(upstream.syncMode()).isEqualTo(Marketplace.SYNC_ON_DEMAND);
 
         Marketplace hosted = marketplaceRepository.register(
-                uniqueName("enum-host"), null, null, Marketplace.ORIGIN_HOSTED, Marketplace.PUSH_ALLOW_REWRITE);
+                uniqueName("enum-host"), null, null, Marketplace.ORIGIN_HOSTED, Marketplace.PUSH_ALLOW_REWRITE, null);
         assertThat(hosted.origin()).isEqualTo(Marketplace.ORIGIN_HOSTED);
         assertThat(hosted.pushPolicy()).isEqualTo(Marketplace.PUSH_ALLOW_REWRITE);
 
@@ -175,7 +176,7 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
     void every_snapshot_state_round_trips() {
         Marketplace marketplace = marketplaceRepository.register(uniqueName("enum-snap"), "file:///upstream");
         for (String state : List.of(Snapshot.HELD, Snapshot.APPROVED, Snapshot.REJECTED, Snapshot.REVOKED)) {
-            Snapshot written = snapshotRepository.create(marketplace.id(), "sha-" + state, state, null);
+            Snapshot written = snapshotRepository.create(marketplace.id(), "sha-" + state, state, null, null);
             assertThat(written.state()).isEqualTo(state);
             assertThat(snapshotRepository.findById(written.id()).orElseThrow().state())
                     .isEqualTo(state);
@@ -215,7 +216,7 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
     @SVCs({"SVC_GW_0125"})
     void every_vetting_outcome_verdict_state_and_severity_round_trips() {
         Marketplace marketplace = marketplaceRepository.register(uniqueName("enum-vet"), "file:///upstream");
-        Snapshot snapshot = snapshotRepository.create(marketplace.id(), "sha-vetting", Snapshot.HELD, null);
+        Snapshot snapshot = snapshotRepository.create(marketplace.id(), "sha-vetting", Snapshot.HELD, null, null);
 
         long runId = vettingRepository.startRun(snapshot.id(), VettingRepository.TRIGGER_INGESTION, "test@1");
         // startRun writes the fail-closed outcome; both stored outcomes are exercised.

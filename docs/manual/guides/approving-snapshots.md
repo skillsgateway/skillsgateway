@@ -135,7 +135,7 @@ already approved keeps serving.
 | --- | --- |
 | 200 | Decided. |
 | 404 | Unknown snapshot. |
-| 409 | The snapshot is neither `held` nor `revoked`, its effective vetting outcome is blocked (see `uncoveredFindings`), a [policy rule](policy-rules.md) denied it, or it has not yet cleared the [minimum release age](#waiting-out-the-minimum-release-age). |
+| 409 | The snapshot is neither `held` nor `revoked`, its effective vetting outcome is blocked (see `uncoveredFindings`), a [policy rule](policy-rules.md) denied it, it has not yet cleared the [minimum release age](#waiting-out-the-minimum-release-age), or an enforcing [four-eyes rule](#separation-of-duties) refused it (see `conflicts`). |
 
 !!! warning "An approved snapshot cannot be re-decided"
 
@@ -145,6 +145,76 @@ already approved keeps serving.
     To move a marketplace back to earlier content, re-ingest the desired
     upstream commit and approve that snapshot. Approving an older one is not a
     rollback mechanism.
+
+## Separation of duties
+
+An approval is worth what the independence of the approver is worth. The
+gateway therefore checks, at approval time, whether the reviewer is on the
+snapshot's **supply** side — whether they, personally, are any of:
+
+| Conflict | You |
+| --- | --- |
+| `registered-by` | registered the marketplace this snapshot came from |
+| `ingested-by` | triggered the ingestion that pinned it |
+| `waiver-author` | wrote a [waiver](waiving-findings.md) this approval relies on |
+
+The third is not a technicality. Waiving a finding and then approving past your
+own waiver is one decision wearing two hats, and it is the route around the
+other two: a reviewer refused for having ingested a snapshot could otherwise
+accept the objection on a fresh copy and approve that instead.
+
+The automated sync triggers never conflict. A snapshot the polling sweep or a
+forge webhook brought in records `scheduler` or `webhook` as its ingestion
+actor, and neither is a person whose independence is being protected — so an
+estate on [automatic sync](upstream-sync.md) is approvable by anyone the role
+model allows. Nor does an unrecorded actor conflict: marketplaces and snapshots
+that predate this release carry none, so the rule tightens only from here on.
+
+What a conflict *does* is a deployment decision,
+[`skills-gateway.approval.four-eyes.mode`](../reference/configuration.md#separation-of-duties-four-eyes):
+
+- **`warn`, the default.** The approval proceeds and the conflict is written to
+  the audit ledger. This is what keeps a single-administrator deployment — a
+  first evaluation, a small team — working: there is nobody else to ask, and
+  refusing would only mean nothing could ever be published. The record is what
+  makes that visible rather than silent.
+- **`enforce`.** The approval is refused with `409`, and the snapshot stays
+  `held` with nothing published. Somebody else has to decide.
+
+There is deliberately no way to switch detection off. A conflict reaches the
+ledger in both modes as a `four-eyes-conflict` entry naming the acting identity,
+the snapshot, the mode, whether the approval proceeded, and each conflicting
+act — which is also how you size up `enforce` before turning it on: run `warn`,
+then read how many approvals would have been refused, and by whom.
+
+Neither mode gates **Reject**. Refusing suspicious content quickly must never
+wait for a second pair of eyes.
+
+You can see where you stand before deciding. The portal's approve dialog says
+which acts conflict — as a warning under `warn`, and with the confirm button
+shut under `enforce` — and the API answers the same question without deciding
+anything:
+
+```console
+$ curl localhost:8080/api/snapshots/1/four-eyes
+```
+
+```json
+{"mode":"ENFORCE","refused":true,
+ "conflicts":[{"role":"registered-by","principal":"dana","waiverId":null},
+              {"role":"ingested-by","principal":"dana","waiverId":null}]}
+```
+
+A refused approval answers with the same list in its problem document, under
+`conflicts`, alongside the `configKey` that imposed it.
+
+!!! warning "`enforce` needs a second approver per marketplace"
+
+    Under `enforce`, a marketplace whose only approver also registered it or
+    ingests its content has nobody left who may publish it. Give every
+    marketplace that needs deciding a second identity with approval rights —
+    a second admin, or an approver scoped to it under
+    [delegated administration](delegated-administration.md) — before switching.
 
 ## Waiting out the minimum release age
 
@@ -207,12 +277,19 @@ at this exact upstream commit and said no.
 
 ## Who may approve
 
-Anyone with a portal session. There is no role model: any authenticated session
-can register, ingest, approve and reject.
+Two independent questions, answered in this order.
 
-Until admin/reviewer separation lands, **access to the portal is the reviewer
-privilege**. Grant it through your identity provider and treat the portal as a
-restricted application.
+**May this principal approve here at all?** That is
+[delegated administration](delegated-administration.md): with role enforcement
+enabled, an admin or an approver scoped to the marketplace. With it disabled —
+the default — any authenticated session can register, ingest, approve and
+reject, and access to the portal is itself the reviewer privilege.
+
+**May this principal approve *this* snapshot?** That is the four-eyes rule
+above, and it is a different question: it is about what the reviewer already did
+to the content in front of them, not about what they are permitted to do in
+general. A principal can hold every role there is and still be the wrong person
+to approve one particular snapshot.
 
 ## After approval
 

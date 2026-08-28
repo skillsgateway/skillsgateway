@@ -127,7 +127,7 @@ public class HostedPushHook implements PreReceiveHook, PostReceiveHook {
     @Requirements({"GW_0103"})
     private void ingest(Marketplace marketplace, String principal) {
         try {
-            ingestionService.ingest(marketplace);
+            ingestionService.ingest(marketplace, principal);
         } catch (RuntimeException e) {
             log.warn("push to '{}' landed but ingestion failed; re-ingest to pick it up", marketplace.name(), e);
             auditLogger.record(principal, marketplace.name(), "marketplace-push-ingest-failed", null, e.getMessage());

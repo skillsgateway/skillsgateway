@@ -39,7 +39,7 @@ class FacadeTests extends AbstractGatewayTest {
         Snapshot approved = approve(registered.snapshot().id());
 
         String newSha = addUpstreamCommit(upstream, "post-approval-change");
-        Snapshot held = ingestionService.ingest(registered.marketplace());
+        Snapshot held = ingestionService.ingest(registered.marketplace(), null);
 
         assertThat(held.state()).isEqualTo(Snapshot.HELD);
         assertThat(held.sha()).isEqualTo(newSha).isNotEqualTo(approved.sha());
@@ -58,7 +58,7 @@ class FacadeTests extends AbstractGatewayTest {
         Registered registered = registerAndIngest(name, upstream);
         Snapshot approved = approve(registered.snapshot().id());
         String heldSha = addUpstreamCommit(upstream, "held-only-change");
-        Snapshot held = ingestionService.ingest(registered.marketplace());
+        Snapshot held = ingestionService.ingest(registered.marketplace(), null);
         assertThat(held.sha()).isEqualTo(heldSha);
 
         String url = facadeUrl(name, newPat());

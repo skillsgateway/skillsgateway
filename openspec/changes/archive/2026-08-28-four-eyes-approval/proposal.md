@@ -7,7 +7,7 @@ approving it: a marketplace's registrant, the person who triggered an
 ingestion, or the author of the waivers that unblock a snapshot can be the
 same principal that clicks Approve. For a control point whose whole purpose is
 that published content passed independent review, that is a separation-of-
-duties gap — flagged by internal review RB-REV-2026-08 (mandatory second
+duties gap — flagged by an internal security review (mandatory second
 reviewer as a Phase-1 governance prerequisite) and tracked as issue
 [#83](https://github.com/skillsgateway/skillsgateway/issues/83).
 

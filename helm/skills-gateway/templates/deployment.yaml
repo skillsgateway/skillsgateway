@@ -11,13 +11,33 @@ spec:
       {{- include "skills-gateway.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      {{- if .Values.config }}
+      annotations:
+        # Roll the pods when the layered configuration changes: a mounted
+        # ConfigMap is refreshed in place, but the estate is reconciled at
+        # startup, so without a restart the new configuration is never read.
+        checksum/config: {{ toYaml .Values.config | sha256sum }}
+      {{- end }}
       labels:
         {{- include "skills-gateway.selectorLabels" . | nindent 8 }}
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "skills-gateway.serviceAccountName" . }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: skills-gateway
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
             - name: http
               containerPort: 8080
@@ -53,12 +73,36 @@ spec:
             - name: SKILLSGATEWAY_OIDC_ISSUER
               value: {{ .Values.oidc.issuer | quote }}
             {{- end }}
+            {{- if .Values.config }}
+            # Layered on top of the application.yaml inside the image; the
+            # image keeps the defaults, this file overrides them. `optional:`
+            # keeps the container starting if the mount is ever absent.
+            - name: SPRING_CONFIG_ADDITIONAL_LOCATION
+              value: "optional:file:/etc/skills-gateway/"
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.extraEnvFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           # The exact /actuator/health path is the only unauthenticated
           # actuator endpoint; liveness/readiness subpaths would be
           # redirected to the IdP.
           volumeMounts:
             - name: data
               mountPath: /data
+            # The root filesystem is read-only, so the one path the runtime
+            # still needs to write -- temporary files, including JGit's -- is
+            # provided explicitly.
+            - name: tmp
+              mountPath: /tmp
+            {{- if .Values.config }}
+            - name: config
+              mountPath: /etc/skills-gateway
+              readOnly: true
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /actuator/health
@@ -85,9 +129,11 @@ spec:
       {{- end }}
       volumes:
         - name: data
-          {{- if .Values.persistence.existingClaim }}
-          persistentVolumeClaim:
-            claimName: {{ .Values.persistence.existingClaim }}
-          {{- else }}
+          {{- include "skills-gateway.storageVolume" . | nindent 10 }}
+        - name: tmp
           emptyDir: {}
-          {{- end }}
+        {{- if .Values.config }}
+        - name: config
+          configMap:
+            name: {{ include "skills-gateway.configMapName" . }}
+        {{- end }}

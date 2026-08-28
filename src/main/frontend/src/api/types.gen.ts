@@ -664,6 +664,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/snapshots/{id}/four-eyes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Four-eyes standing of the calling reviewer
+         * @description Whether the separation-of-duties rule would object to this caller approving this snapshot, and what the configured mode would then do. A conflict names each supply-side act the caller performed on the snapshot: registering its marketplace, triggering its ingestion, or authoring a waiver the approval would rely on. The automated sync triggers are not identities and never conflict. Answered by the server because the waiver clause depends on which waivers the effective-outcome evaluation actually applies; the approval endpoint enforces the same rule independently, and this endpoint decides nothing.
+         */
+        get: operations["fourEyes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/snapshots/{id}/licenses": {
         parameters: {
             query?: never;
@@ -1112,6 +1132,21 @@ export interface components {
              */
             mode?: "on-demand" | "scheduled" | "webhook";
         };
+        /** @description A supply-side act by the reviewer that makes this approval a self-approval */
+        Conflict: {
+            /** @description The identity that performed it */
+            principal?: string;
+            /**
+             * @description The supply-side act
+             * @enum {string}
+             */
+            role?: "ingested-by" | "registered-by" | "waiver-author";
+            /**
+             * Format: int64
+             * @description The waiver the reviewer authored, for a waiver-author conflict
+             */
+            waiverId?: number;
+        };
         /** @description A connector configured in the vetting chain */
         ConnectorView: {
             /** @description What the connector looks for, and what it cannot see */
@@ -1453,6 +1488,18 @@ export interface components {
              */
             severity?: "INFO" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
         };
+        /** @description Whether the four-eyes rule would refuse this reviewer's approval of this snapshot */
+        FourEyesCheck: {
+            /** @description The supply-side acts this reviewer performed on this snapshot */
+            conflicts?: components["schemas"]["Conflict"][];
+            /**
+             * @description The configured mode
+             * @enum {string}
+             */
+            mode?: "WARN" | "ENFORCE";
+            /** @description True when the mode is enforce and there is at least one conflict */
+            refused?: boolean;
+        };
         /** @description Role grant request */
         GrantRequest: {
             /** @description Marketplace to scope an approver grant to; required for approver, forbidden for admin and auditor */
@@ -1564,6 +1611,8 @@ export interface components {
              * @enum {string}
              */
             pushPolicy?: "append-only" | "allow-rewrite";
+            /** @description Identity that registered the marketplace, or null for one registered before the registrant was recorded */
+            registeredBy?: string;
             /**
              * @description How upstream content reaches quarantine: on-demand, scheduled, or webhook. The trigger only — every mode lands snapshots held behind the approval gate.
              * @enum {string}
@@ -1633,6 +1682,8 @@ export interface components {
              * @enum {string}
              */
             pushPolicy?: "append-only" | "allow-rewrite";
+            /** @description Identity that registered the marketplace, or null when it was not recorded */
+            registeredBy?: string;
             /** @description All snapshots of this marketplace, any state */
             snapshots?: components["schemas"]["Snapshot"][];
             /**
@@ -1971,6 +2022,8 @@ export interface components {
              * @description Snapshot id
              */
             id?: number;
+            /** @description Identity that triggered the ingestion: a principal for an on-demand ingest or a push, 'scheduler' or 'webhook' for an automated trigger, null for a snapshot ingested before the actor was recorded */
+            ingestedBy?: string;
             /**
              * Format: int64
              * @description Owning marketplace id
@@ -3375,7 +3428,7 @@ export interface operations {
                     "*/*": components["schemas"]["Snapshot"];
                 };
             };
-            /** @description Snapshot is neither held nor revoked, its effective vetting outcome is blocked, or it has not yet reached the configured minimum release age */
+            /** @description Snapshot is neither held nor revoked, its effective vetting outcome is blocked, it has not yet reached the configured minimum release age, or - under an enforcing four-eyes rule - the reviewer is on the snapshot's supply side */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -3566,6 +3619,37 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["FileTree"];
+                };
+            };
+        };
+    };
+    fourEyes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The mode in force and any conflicts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FourEyesCheck"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FourEyesCheck"];
                 };
             };
         };
