@@ -324,6 +324,32 @@ committed document is not the one the gateway serves) passes inside gate 1.
 
 ---
 
+## The one red CI check
+
+`CodeQL` reports one **high** alert on this branch:
+`java/spring-disabled-csrf-protection` at `SecurityConfig.java:151` — the new
+machine chain's `csrf.disable()`.
+
+It is the same finding, with the same reasoning, as the two alerts on this rule
+already **dismissed as false positives on `main`** (the facade chain and the
+webhook chain): the chain is `SessionCreationPolicy.STATELESS`, creates no
+session, honours no cookie, and refuses a request presenting one, so a forged
+cross-site request arrives unauthenticated and would still need a credential
+holding the right API scope. CSRF stays enabled on the browser-facing chain, and
+this change neither extends nor relies on that chain's pre-existing `/api/**`
+exemption. The argument is written at the call site rather than only here.
+
+**It was deliberately not dismissed.** Dismissing a security finding on a public
+repository is the owner's decision, not an agent's. The PR body carries the
+dismissal comment to reuse if the owner agrees. A **pre-existing open alert on
+the same rule on `main`** (line 89, the publication chain) appears never to have
+been triaged, and is flagged there too.
+
+Every other check passes: Build & gates, Portal e2e, Storybook tests,
+Traceability & spec gates, Documentation (strict), Render the single-file docs,
+Breaking change detection, DCO, the three CodeQL `Analyze` jobs, and the PR-title
+validator.
+
 ## Environment
 
 - macOS (darwin 25.3.0), Java 25, Maven wrapper, Podman providing
