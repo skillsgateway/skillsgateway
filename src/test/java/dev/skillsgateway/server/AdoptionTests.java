@@ -109,7 +109,7 @@ class AdoptionTests extends AbstractGatewayTest {
         clone(name, alice); // alice received v1
 
         addUpstreamCommit(upstream, "newer content");
-        long secondId = ingestionService.ingest(first.marketplace()).id();
+        long secondId = ingestionService.ingest(first.marketplace(), null).id();
         String v2 = approve(secondId).sha();
         clone(name, bob); // bob received the new tip
 
@@ -142,7 +142,7 @@ class AdoptionTests extends AbstractGatewayTest {
         Registered fixture = registerAndIngest(name, upstream);
         approve(fixture.snapshot().id());
         addUpstreamCommit(upstream, "to be rejected");
-        long rejectedId = ingestionService.ingest(fixture.marketplace()).id();
+        long rejectedId = ingestionService.ingest(fixture.marketplace(), null).id();
         approvalService.reject(rejectedId, "alice");
         clone(name, uniqueName("carol"));
 

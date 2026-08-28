@@ -15,6 +15,7 @@ public record SkillsGatewayProperties(
         AuditExport auditExport,
         Retention retention,
         Vetting vetting,
+        Approval approval,
         Sync sync,
         Catalog catalog,
         Tokens tokens,
@@ -43,6 +44,9 @@ public record SkillsGatewayProperties(
         }
         if (vetting == null) {
             vetting = new Vetting(null, null, null, null, null, null, null);
+        }
+        if (approval == null) {
+            approval = new Approval(null);
         }
         if (sync == null) {
             sync = new Sync(null, null, null, null);
@@ -409,6 +413,69 @@ public record SkillsGatewayProperties(
         WARN,
 
         /** Revoke the snapshot and stop serving it (GW_0050). */
+        ENFORCE
+    }
+
+    /**
+     * The approval gate's own settings (GW_0097). Only the separation-of-duties rule lives here so
+     * far; the vetting, policy and cooling-off preconditions predate it and stay where they are.
+     */
+    public record Approval(FourEyes fourEyes) {
+
+        public Approval {
+            if (fourEyes == null) {
+                fourEyes = new FourEyes(null);
+            }
+        }
+    }
+
+    /**
+     * Separation of duties on approval (GW_0096, GW_0097): whether a reviewer who is also the
+     * snapshot's ingestion actor, the marketplace's registrant, or the author of a waiver the
+     * approval relies on may publish it.
+     *
+     * <p>There is deliberately no {@code enabled} flag. A control an operator can switch off
+     * without leaving a trace is the gap this closes, so {@code warn} is the floor: every conflict
+     * reaches the audit ledger whatever the mode, and the mode decides only whether the approval
+     * is also refused.
+     *
+     * <p>The default is {@code warn}, and that is load-bearing rather than timid. A deployment
+     * with one administrator — a first evaluation, a small team, a single-person estate — has
+     * nobody to be the second pair of eyes, and an upgrade that silently made every approval
+     * impossible would be a worse failure than the one being prevented. Enforcement is what an
+     * organisation opts into once at least two principals hold approval rights in every
+     * marketplace that needs deciding.
+     *
+     * @param mode what a detected conflict does; see {@link FourEyesMode}
+     */
+    public record FourEyes(FourEyesMode mode) {
+
+        /** The property an operator sets, quoted in the refusal so the answer is discoverable. */
+        public static final String CONFIG_KEY = "skills-gateway.approval.four-eyes.mode";
+
+        public FourEyes {
+            if (mode == null) {
+                mode = FourEyesMode.WARN;
+            }
+        }
+
+        public boolean enforcing() {
+            return mode == FourEyesMode.ENFORCE;
+        }
+    }
+
+    /** What a detected four-eyes conflict does to the approval that raised it (GW_0097). */
+    public enum FourEyesMode {
+
+        /**
+         * Record and announce, approve anyway. The conflict lands on the audit ledger and the
+         * portal says so before the reviewer confirms — but the snapshot is published. The
+         * default, and what keeps a single-administrator deployment usable while still making
+         * every self-approval visible after the fact.
+         */
+        WARN,
+
+        /** Refuse the approval fail-closed; the snapshot stays held and nothing is published. */
         ENFORCE
     }
 

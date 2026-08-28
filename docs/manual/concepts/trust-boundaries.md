@@ -153,14 +153,33 @@ refs and moves the snapshot to `revoked`. That path never publishes — it only
 unpublishes — so `ApprovalService` remains the sole publisher, and a revoked
 snapshot returns to being served only by going back through it.
 
-Two gates precede every publication, inside that single publisher and before
-any state transition: the fail-closed [vetting gate](vetting.md) (evidence
-about the content, waivable finding by finding), then the fail-closed
+Gates precede every publication, inside that single publisher and before any
+state transition: the fail-closed [vetting gate](vetting.md) (evidence about the
+content, waivable finding by finding), then the fail-closed
 [policy gate](../guides/policy-rules.md) (standing organizational deny rules,
-not waivable — the exception path is editing the rule, audited). A refusal by
-either leaves the snapshot held and publishes nothing.
+not waivable — the exception path is editing the rule, audited), then the
+cooling-off window, and last the
+[four-eyes rule](../guides/approving-snapshots.md#separation-of-duties). A
+refusal by any of them leaves the snapshot held and publishes nothing.
 
-Both gates only ever *close*: neither can approve. Policy rules in particular
+The last one guards a different property from the others, and it is the property
+the whole boundary rests on. Vetting and policy ask *is this content
+acceptable*; four-eyes asks *is this decision an independent one* — whether the
+reviewer is the marketplace's registrant, the snapshot's ingestion actor, or the
+author of a waiver the approval leans on. Without it, one identity could carry
+content from an upstream URL all the way to the facade unaccompanied, and every
+recorded decision on the way would still look correct.
+
+It is the one gate whose strictness is a deployment decision rather than a
+constant. Under the default `warn` the conflict is recorded on the ledger and
+the approval proceeds — a deployment with a single administrator has no second
+pair of eyes to offer, and refusing there would only make the gateway
+unapprovable; under `enforce` the approval is refused. What has no off switch is
+the *detection*: a self-approval is on the ledger either way, which is what
+keeps `warn` a measurement rather than a blind spot. The automated sync triggers
+are not identities and never conflict.
+
+None of these gates can ever *open*: none can approve. Policy rules in particular
 cannot auto-approve, because that would delegate the human decision this
 boundary exists to guarantee to an expression — a trust-model change, decided
 deliberately or not at all (ADR 0006 in
@@ -285,6 +304,11 @@ workflow, [Identity providers](../guides/identity-providers.md) for claim
 mapping, and [Roles](../reference/api/roles.md) for the grants API.
 
 ## What is not a boundary yet
+
+A **second recorded approval** — a queue in which two identities each decide,
+rather than one deciding while the gateway checks who they are — is not
+implemented. The four-eyes rule refuses a conflicted approval; it does not
+require two approvals of an unconflicted one.
 
 Per-team catalog scoping (which identities see which virtual marketplaces) and
 a portal UI for managing grants are future capabilities; today the grants API

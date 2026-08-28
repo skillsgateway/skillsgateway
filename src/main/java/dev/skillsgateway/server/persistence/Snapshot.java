@@ -21,6 +21,12 @@ public record Snapshot(
 
         @Schema(description = "Ingestion time") Instant createdAt,
 
+        @Schema(
+                description = "Identity that triggered the ingestion: a principal for an on-demand ingest or a"
+                        + " push, 'scheduler' or 'webhook' for an automated trigger, null for a snapshot"
+                        + " ingested before the actor was recorded")
+        String ingestedBy,
+
         @Schema(description = "Reviewer who decided, or null while held")
         String decidedBy,
 

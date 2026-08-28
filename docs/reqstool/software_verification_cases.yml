@@ -937,6 +937,26 @@ cases:
       WHEN its license report endpoint is requested, and a report is requested for a snapshot id that does not exist
       THEN the response lists each detection with its SPDX identifier or unknown state, its file path or manifest field source, and its evaluation under the configured policy including the banned entry marked as banned, and the unknown snapshot id answers not-found
     revision: "0.1.0"
+  - id: SVC_GW_0096
+    requirement_ids: ["GW_0096"]
+    title: The supply side of a snapshot cannot approve it under enforcement, and an independent reviewer is not obstructed
+    verification: automated-test
+    description: |
+      GIVEN a gateway enforcing the approval separation-of-duties rule, and snapshots whose marketplace registrant, ingestion actor and waiver author are recorded identities
+      WHEN the ingestion actor, the marketplace registrant and the author of a waiver the approval relies on each attempt to approve, over the service and over the HTTP endpoint, and afterwards an independent reviewer approves the same snapshots, and snapshots ingested by the scheduled sweep, by a webhook trigger and by an unrecorded actor are approved
+      THEN each conflicted attempt is refused with a conflict response naming the conflicting acts, every refused snapshot remains undecided with no reviewer recorded and nothing served by the facade, the independent reviewer's approval succeeds and is served, and the automated-trigger and unrecorded-actor snapshots are approved by anyone the role model allows
+    revision: "0.1.0"
+
+  - id: SVC_GW_0097
+    requirement_ids: ["GW_0097"]
+    title: The recording mode is the default, publishes the approval, and puts the conflict on the ledger
+    verification: automated-test
+    description: |
+      GIVEN a gateway left at the default approval separation-of-duties mode
+      WHEN a reviewer who registered the marketplace and triggered the ingestion approves the snapshot, an independent reviewer approves another, and a refusal is provoked under enforcement
+      THEN the default mode is the recording one, the conflicted approval succeeds and its content is served, a conflict entry naming the acting identity, the snapshot, the mode and each conflicting act is appended to the ledger beside the approval entry, the independent approval appends no such entry, and the enforced refusal appends its own conflict entry recording that the approval did not proceed
+    revision: "0.1.0"
+
   - id: SVC_GW_0098
     requirement_ids: ["GW_0098"]
     title: Claim-mapped roles grant, compose and never widen, and a malformed mapping refuses startup

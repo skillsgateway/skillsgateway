@@ -270,6 +270,9 @@ export function MarketplaceDetailPage() {
             <dd><Timestamp value={marketplace.upstreamUpdatedAt} /></dd>
             <dt className="font-medium">Registered</dt>
             <dd><Timestamp value={marketplace.createdAt} /></dd>
+            {/* Who chose this upstream is provenance, and the four-eyes rule reads it (GW_0096). */}
+            <dt className="font-medium">Registered by</dt>
+            <dd>{marketplace.registeredBy ?? "—"}</dd>
           </dl>
         </CardContent>
       </Card>
@@ -289,6 +292,11 @@ export function MarketplaceDetailPage() {
                   <div className="flex items-center gap-3">
                     <span className="font-mono text-sm">{snapshot.sha?.slice(0, 12)}</span>
                     <SnapshotStateBadge state={snapshot.state} />
+                    {snapshot.ingestedBy ? (
+                      <span className="text-xs text-muted-foreground">
+                        ingested by {snapshot.ingestedBy}
+                      </span>
+                    ) : null}
                     {snapshot.decidedBy ? (
                       <span className="text-xs text-muted-foreground">
                         decided by {snapshot.decidedBy}

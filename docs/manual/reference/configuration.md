@@ -10,6 +10,7 @@ Every setting the gateway reads, with its default and what consumes it.
 | [`skills-gateway.webhooks.*`](#webhooks) | Outbound lifecycle-webhook dispatch: poll interval, retry budget and backoff. | No — all defaulted. |
 | [`skills-gateway.audit-export.*`](#audit-export) | Ledger export: the commit-settling lag, batch and page sizes. | No — all defaulted. |
 | [`skills-gateway.retention.*`](#retention) | Snapshot retention policies and the schedules that apply them. **Off by default.** | No — all defaulted. |
+| [`skills-gateway.approval.*`](#separation-of-duties-four-eyes) | Separation of duties on approval: whether a reviewer may publish content they themselves supplied. **Records by default; enforcement is opt-in.** | No — all defaulted. |
 | [`skills-gateway.sync.*`](#upstream-sync) | Upstream sync: the polling sweep's schedule and batch, and the inbound webhook body bound. | No — all defaulted. |
 | [`skills-gateway.catalog.*`](#virtual-catalog) | The global virtual catalog and its reserved name. | No — all defaulted. |
 | [`skills-gateway.tokens.*`](#access-tokens) | Access-token policy: the maximum lifetime creation accepts. | No — defaulted (unlimited). |
@@ -340,6 +341,72 @@ skills-gateway:
 
 The sweep, the revoked state, and the re-approval path are described in
 [Re-vetting approved content](../guides/re-vetting.md).
+
+---
+
+## Separation of duties (four-eyes)
+
+Whether the identity that supplied a snapshot may also be the one that approves
+it. Java-side defaults; nothing appears in `application.yaml`.
+
+```yaml
+skills-gateway:
+  approval:
+    four-eyes:
+      # WARN (default): a conflict is recorded on the audit ledger and the
+      # approval proceeds.
+      # ENFORCE: the approval is refused, and the snapshot stays held.
+      mode: warn
+```
+
+| Property | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `skills-gateway.approval.four-eyes.mode` | `warn` \| `enforce` | `warn` | What a detected conflict does. `warn` never refuses an approval; `enforce` refuses it and publishes nothing. |
+
+A reviewer conflicts with a snapshot when they are any of:
+
+| Conflict | Meaning |
+| --- | --- |
+| `registered-by` | They registered the marketplace the snapshot came from. |
+| `ingested-by` | They triggered the ingestion that pinned it. |
+| `waiver-author` | They wrote a waiver this approval relies on — the response names which one. |
+
+The two automated sync triggers, `scheduler` and `webhook`, are recorded as the
+ingestion actor but are never conflicts: a scheduled poll is nobody's judgement
+about the content. Neither is an unrecorded actor, which is what marketplaces
+and snapshots that predate this release carry.
+
+!!! note "There is no way to switch detection off"
+
+    `warn` is the floor, not a disabled state. Whatever the mode, every
+    detected conflict is appended to the audit ledger as a `four-eyes-conflict`
+    entry naming the acting identity, the snapshot, the mode, whether the
+    approval proceeded, and each conflicting act. That is what makes
+    `warn` measurable rather than merely permissive — and what lets an operator
+    size up `enforce` from evidence before turning it on.
+
+!!! warning "`enforce` needs at least two principals who can approve"
+
+    Under `enforce` a marketplace whose only approver also registered it, or
+    ingests its content, has no one left who may publish it. Before switching,
+    check that every marketplace that needs deciding has a second identity with
+    approval rights — a second admin, or an approver scoped to that marketplace
+    under [delegated administration](#delegated-administration). This is why the
+    default is `warn`: a single-administrator deployment must keep working
+    across an upgrade.
+
+Identities are compared as exact strings, as the identity provider reports them
+through the configured principal claim. The comparison assumes what is true of a
+single provider — that one person is one principal string — and makes no attempt
+to reconcile two spellings of the same human.
+
+Refusals are visible to reviewers before they act: the portal's approve dialog
+says which acts conflict, and `GET /api/snapshots/{id}/four-eyes` answers the
+same question for the calling identity. Rejecting a snapshot is never gated —
+refusing content quickly must not need a second pair of eyes.
+
+The rule as part of the approval boundary is described in
+[Approving snapshots](../guides/approving-snapshots.md).
 
 ---
 

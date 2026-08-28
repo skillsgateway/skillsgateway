@@ -26,7 +26,7 @@ public class MarketplaceRepository {
 
     @Requirements({"GW_0021"})
     public Marketplace register(String name, String url, ForgeMetadata metadata) {
-        return register(name, url, metadata, Marketplace.ORIGIN_UPSTREAM, Marketplace.PUSH_APPEND_ONLY);
+        return register(name, url, metadata, Marketplace.ORIGIN_UPSTREAM, Marketplace.PUSH_APPEND_ONLY, null);
     }
 
     /**
@@ -34,15 +34,17 @@ public class MarketplaceRepository {
      * the table's CHECK constraints are what make the two shapes mutually exclusive rather than
      * anything here.
      */
-    @Requirements({"GW_0021", "GW_0101"})
-    public Marketplace register(String name, String url, ForgeMetadata metadata, String origin, String pushPolicy) {
+    @Requirements({"GW_0021", "GW_0096", "GW_0101"})
+    public Marketplace register(
+            String name, String url, ForgeMetadata metadata, String origin, String pushPolicy, String registeredBy) {
         return jdbc.sql("INSERT INTO marketplaces"
-                        + " (name, url, created_at, origin, push_policy, forge, forge_project, description,"
-                        + " upstream_updated_at)"
-                        + " VALUES (:name, :url, :now, :origin, :pushPolicy, :forge, :forgeProject, :description,"
-                        + " :upstreamUpdatedAt)"
+                        + " (name, url, created_at, registered_by, origin, push_policy, forge, forge_project,"
+                        + " description, upstream_updated_at)"
+                        + " VALUES (:name, :url, :now, :registeredBy, :origin, :pushPolicy, :forge, :forgeProject,"
+                        + " :description, :upstreamUpdatedAt)"
                         + " RETURNING *")
                 .param("name", name)
+                .param("registeredBy", registeredBy)
                 .param("url", url)
                 .param("origin", origin == null ? Marketplace.ORIGIN_UPSTREAM : origin)
                 // The column's DEFAULT applies only to an omitted value, not to an explicit null.
@@ -131,6 +133,7 @@ public class MarketplaceRepository {
                 rs.getString("name"),
                 rs.getString("url"),
                 instant(rs, "created_at"),
+                rs.getString("registered_by"),
                 rs.getString("origin"),
                 rs.getString("push_policy"),
                 rs.getString("forge"),

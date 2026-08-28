@@ -68,6 +68,48 @@ test("admin_registers_ingests_and_approves_a_marketplace_in_the_portal", async (
 });
 
 /**
+ * Separation of duties as a lone administrator meets it, in a real browser (GW_0097).
+ *
+ * One identity registers the marketplace, pulls the content and then opens the review dialog —
+ * which is the whole point of this test running against the acceptance deployment's default
+ * configuration rather than a special one. The dialog must say plainly that this is a
+ * self-approval and must still let it through, because the alternative is a gateway that becomes
+ * unapprovable the moment a single-person deployment upgrades. The refusal half of the rule is
+ * a deployment mode this suite's one mock-IdP identity cannot exercise; it is verified over HTTP.
+ *
+ * @SVCs SVC_GW_0097
+ */
+test("the_approve_dialog_warns_that_the_reviewer_supplied_the_content_and_still_allows_it", async ({
+  page,
+}) => {
+  await login(page, "alice");
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Marketplaces" })
+    .click();
+  const name = uniqueName("solo");
+
+  await page.getByRole("button", { name: "Register marketplace" }).click();
+  await page.getByLabel("Name").fill(name);
+  await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
+  await page.getByRole("button", { name: "Register", exact: true }).click();
+  await expect(page.getByText(`Marketplace '${name}' registered`)).toBeVisible();
+  await page.getByRole("button", { name: `Ingest ${name}` }).click();
+
+  const card = page.locator("[data-slot=card]").filter({ hasText: name });
+  await card.getByRole("button", { name: /Approve snapshot \d+/ }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByText(/Four-eyes rule/)).toContainText("registered this marketplace");
+  await expect(dialog.getByText(/Four-eyes rule/)).toContainText("ingested this snapshot");
+
+  // Warn mode: said, recorded, and allowed.
+  const confirm = dialog.getByRole("button", { name: /Confirm approval of snapshot \d+/ });
+  await expect(confirm).toBeEnabled();
+  await confirm.click();
+  await expect(card.getByText("approved", { exact: true })).toBeVisible();
+});
+
+/**
  * @SVCs SVC_GW_0019
  */
 test("token_cleartext_is_shown_once_and_revocation_marks_it_revoked", async ({ page }) => {

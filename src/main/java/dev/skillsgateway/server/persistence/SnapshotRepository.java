@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.persistence;
 
+import io.github.reqstool.annotations.Requirements;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -27,10 +28,18 @@ public class SnapshotRepository {
         this.jdbc = jdbc;
     }
 
-    public Snapshot create(long marketplaceId, String sha, String state, String violation) {
-        return jdbc.sql("INSERT INTO snapshots (marketplace_id, sha, state, violation, created_at)"
-                        + " VALUES (:marketplaceId, :sha, :state, :violation, :now) RETURNING *")
+    /**
+     * Records a snapshot together with the identity that triggered its ingestion (GW_0096). The
+     * actor is a column rather than a ledger lookup because the four-eyes rule reads it as an
+     * authorization input, and null is a legitimate value: a snapshot whose actor was never
+     * recorded conflicts with nobody.
+     */
+    @Requirements({"GW_0096"})
+    public Snapshot create(long marketplaceId, String sha, String state, String violation, String ingestedBy) {
+        return jdbc.sql("INSERT INTO snapshots (marketplace_id, sha, state, violation, created_at, ingested_by)"
+                        + " VALUES (:marketplaceId, :sha, :state, :violation, :now, :ingestedBy) RETURNING *")
                 .param("marketplaceId", marketplaceId)
+                .param("ingestedBy", ingestedBy)
                 .param("sha", sha)
                 .param("state", state)
                 .param("violation", violation)
@@ -270,6 +279,7 @@ public class SnapshotRepository {
                 rs.getString("state"),
                 rs.getString("violation"),
                 MarketplaceRepository.instant(rs, "created_at"),
+                rs.getString("ingested_by"),
                 rs.getString("decided_by"),
                 MarketplaceRepository.instant(rs, "decided_at"),
                 MarketplaceRepository.instant(rs, "revoked_at"),

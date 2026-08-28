@@ -1,6 +1,10 @@
 CREATE TABLE marketplaces (
     id BIGSERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
+    -- The identity that registered the marketplace (GW_0096): the supply-side decision the
+    -- four-eyes rule compares an approving reviewer against. Nullable for the same reason as
+    -- snapshots.ingested_by — an unrecorded registrant never conflicts.
+    registered_by TEXT,
     -- Null only for a gateway-hosted marketplace (GW_0101), which has no upstream to clone from;
     -- the CHECK below is what keeps every other marketplace's URL mandatory.
     url TEXT,
@@ -51,6 +55,13 @@ CREATE TABLE snapshots (
     state TEXT NOT NULL CHECK (state IN ('held', 'approved', 'rejected', 'revoked')),
     violation TEXT,
     created_at TIMESTAMPTZ NOT NULL,
+    -- The identity that triggered this snapshot's ingestion (GW_0096): a person's principal for an
+    -- on-demand ingest or a push, and the constant sync actors 'scheduler'/'webhook' for the
+    -- automated triggers. First-class rather than derived from the ledger because the four-eyes
+    -- rule is an authorization decision, and the ledger is append-only evidence, not an
+    -- authorization source. Nullable: a snapshot ingested before this column existed has no
+    -- recorded actor, and an unrecorded actor never conflicts with anybody.
+    ingested_by TEXT,
     decided_by TEXT,
     decided_at TIMESTAMPTZ,
     -- Revocation stamps are their own columns rather than an overwrite of decided_by/decided_at:
