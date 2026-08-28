@@ -96,4 +96,6 @@ In the repository:
 
 ## License
 
-Apache License 2.0 — see [LICENSE](LICENSE).
+Apache License 2.0 — see [LICENSE](LICENSE) and [NOTICE](NOTICE). Third-party
+components are inventoried by the CycloneDX SBOM the build generates, which the
+running gateway serves from `/actuator/sbom`.

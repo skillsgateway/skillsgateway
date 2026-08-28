@@ -865,3 +865,11 @@ requirements:
     categories: ["maintainability", "security"]
     implementation: configuration
     revision: 0.1.0
+
+  - id: GW_0110
+    title: Development escape hatch refuses a configured deployment
+    significance: shall
+    description: The system shall refuse to start when its development-only unauthenticated authentication mode is enabled on a deployment that has an identity provider configured, and the refusal shall state which configuration it was decided by and how to resolve it.
+    rationale: The mode makes the entire web surface unauthenticated and attributes every action to a synthetic principal, so being opt-in and off by default is the only thing standing between a copied configuration file and an open gateway. A deployment that has configured an identity provider has also stated it has a login, which is precisely what the escape hatch exists to do without; refusing that combination turns the most likely accident into a failed start rather than a silent exposure, and naming the offending setting keeps the refusal from being a puzzle for whoever meets it.
+    categories: ["security"]
+    revision: 0.1.0

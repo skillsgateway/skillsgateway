@@ -100,6 +100,16 @@ $ java -jar target/skills-gateway-server-*.jar --skills-gateway.dev-insecure-aut
     It does **not** affect the git facade: `/git/**` still requires a valid
     personal access token.
 
+!!! note "It refuses to start once an identity provider is configured"
+
+    The escape hatch is for a loop that has no identity provider. Set it
+    alongside a configured one — a real `SGW_OIDC_CLIENT_ID`, an `SGW_OIDC_*`
+    endpoint pointing anywhere other than `idp.invalid`, or a pinned
+    `skills-gateway.oidc.issuer` — and the gateway refuses to start, naming
+    what tripped it. Leave the OIDC variables unset and the placeholders shipped
+    in `application.yaml` keep the local loop working. The full rule is in
+    [Configuration](../reference/configuration.md#skills-gateway).
+
 ## Verify it is up
 
 `/actuator/health` is the only unauthenticated endpoint:

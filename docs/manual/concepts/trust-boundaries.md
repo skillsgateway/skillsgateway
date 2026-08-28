@@ -184,6 +184,11 @@ instead of an HTML login page rendered into a `fetch()`.
     development, logs a loud warning at startup, and must never be set in a
     deployed environment. See [Local development](../guides/local-development.md).
 
+    Being off by default is the control; the second one is a startup guard. A
+    gateway that has an identity provider configured and this flag on **refuses
+    to start**, because the login it configured is the login the flag switches
+    off. See [Configuration](../reference/configuration.md).
+
 ## 4. The inbound webhook — a forge's push event becomes a fetch
 
 `POST /hooks/{marketplace}` is the one endpoint reachable without an OIDC

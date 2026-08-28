@@ -1,0 +1,13 @@
+Skills Gateway
+Copyright 2026 The Skills Gateway Authors
+
+This product is licensed under the Apache License, Version 2.0. A copy of
+the license is in the LICENSE file at the root of this repository, and at
+https://www.apache.org/licenses/LICENSE-2.0
+
+This product includes software developed by third parties and distributed
+under their own licenses. No inventory of those components is maintained by
+hand here: the authoritative one is the CycloneDX SBOM the build generates
+at target/classes/META-INF/sbom/application.cdx.json, which ships inside the
+distributed artifacts and which the running application serves from
+/actuator/sbom. Each component's declared license is recorded there.
