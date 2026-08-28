@@ -34,13 +34,14 @@ public class MarketplaceRepository {
      * the table's CHECK constraints are what make the two shapes mutually exclusive rather than
      * anything here.
      */
-    @Requirements({"GW_0021", "GW_0096", "GW_0101"})
+    @Requirements({"GW_0021", "GW_0096", "GW_0101", "GW_0125"})
     public Marketplace register(
             String name, String url, ForgeMetadata metadata, String origin, String pushPolicy, String registeredBy) {
         return jdbc.sql("INSERT INTO marketplaces"
                         + " (name, url, created_at, registered_by, origin, push_policy, forge, forge_project,"
                         + " description, upstream_updated_at)"
-                        + " VALUES (:name, :url, :now, :registeredBy, :origin, :pushPolicy, :forge, :forgeProject,"
+                        + " VALUES (:name, :url, :now, :registeredBy, :origin::marketplace_origin,"
+                        + " :pushPolicy::marketplace_push_policy, :forge, :forgeProject,"
                         + " :description, :upstreamUpdatedAt)"
                         + " RETURNING *")
                 .param("name", name)
@@ -90,9 +91,9 @@ public class MarketplaceRepository {
      * secret when the new mode is webhook and null otherwise, so leaving webhook mode always
      * discards the key (GW_0056, GW_0058).
      */
-    @Requirements({"GW_0056"})
+    @Requirements({"GW_0056", "GW_0125"})
     public Optional<Marketplace> updateSyncMode(String name, String mode, String webhookSecret) {
-        return jdbc.sql("UPDATE marketplaces SET sync_mode = :mode, webhook_secret = :secret"
+        return jdbc.sql("UPDATE marketplaces SET sync_mode = :mode::marketplace_sync_mode, webhook_secret = :secret"
                         + " WHERE name = :name RETURNING *")
                 .param("mode", mode)
                 .param("secret", webhookSecret)

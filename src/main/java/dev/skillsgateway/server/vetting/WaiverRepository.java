@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.vetting;
 
+import io.github.reqstool.annotations.Requirements;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -31,6 +32,7 @@ public class WaiverRepository {
         this.jdbc = jdbc;
     }
 
+    @Requirements({"GW_0125"})
     public Waiver create(
             long marketplaceId,
             String ruleId,
@@ -41,7 +43,8 @@ public class WaiverRepository {
             Instant expiresAt) {
         long id = jdbc.sql("INSERT INTO vetting_waivers (marketplace_id, rule_id, scope_kind, scope_value,"
                         + " justification, approved_by, created_at, expires_at) VALUES (:marketplaceId, :ruleId,"
-                        + " :scopeKind, :scopeValue, :justification, :approvedBy, :now, :expiresAt) RETURNING id")
+                        + " :scopeKind::vetting_waiver_scope_kind, :scopeValue, :justification, :approvedBy, :now,"
+                        + " :expiresAt) RETURNING id")
                 .param("marketplaceId", marketplaceId)
                 .param("ruleId", ruleId)
                 .param("scopeKind", scope.stored())

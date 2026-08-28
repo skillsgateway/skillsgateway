@@ -916,3 +916,11 @@ requirements:
     categories: ["security", "flexibility"]
     implementation: configuration
     revision: 0.1.0
+
+  - id: GW_0125
+    title: Enumerated persisted values are database types
+    significance: shall
+    description: The system shall persist every closed set of enumerated values as a database type that admits exactly that set, so that the permitted values are readable from the column's declared type and the database refuses a value outside them.
+    rationale: A constraint that happens to list the permitted values leaves the column typeless to everything that introspects the schema, so the set is discoverable only by parsing a constraint expression and a mistyped value is a runtime constraint violation rather than a type error. Making the set a type puts the same guarantee where every tool, query planner and reader already looks, and the cost is deliberate, since a value can be added but never used in the transaction that adds it, and never removed at all, which is the right friction for a set the whole system agrees on.
+    categories: ["maintainability", "reliability"]
+    revision: 0.1.0

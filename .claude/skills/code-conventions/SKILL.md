@@ -29,6 +29,15 @@ openspec validate --all --strict
 - Persistence via `JdbcClient` + Flyway (no JPA). Single `V1__init.sql` until
   the owner says otherwise — fold schema changes into it (Testcontainers
   recreate the schema every run).
+- Enumerated values are native PostgreSQL enum types, never `TEXT ... CHECK (col
+  IN (...))`: `CREATE TYPE <singular table>_<column> AS ENUM (...)` (the column
+  name alone collides — three tables carry a `state`). Write through an explicit
+  cast (`:state::snapshot_state`); reads are unchanged, the driver returns a
+  `String`. The trade is deliberate and permanent-ish: a new value cannot be
+  *used* in the transaction that adds it (adding one and backfilling rows with it
+  takes two migrations), and no value can ever be dropped — `ALTER TYPE ... DROP
+  VALUE` is "not implemented", so removing one means a replacement type and a
+  rewrite of every dependent column.
 - JGit for all git operations — never subprocess git in production code.
   Tests may run the git binary only via `AbstractGatewayTest.git(...)`
   (isolated from host config).

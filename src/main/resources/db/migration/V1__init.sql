@@ -1,3 +1,26 @@
+-- Enumerated value sets are PostgreSQL types, not CHECK constraints: the column then *is* the
+-- set to everything that introspects the schema, and a value outside it is a type error rather
+-- than a constraint violation. A type is named <singular table>_<column>, because three tables
+-- carry a `state` and a bare `state` type would collide.
+--
+-- The trade, verified against PostgreSQL 18.6: a new value added with ALTER TYPE ... ADD VALUE
+-- cannot be *used* in the same transaction that adds it (Flyway runs a migration in one, so
+-- adding a value and backfilling rows with it takes two migrations), and a value can never be
+-- removed -- ALTER TYPE ... DROP VALUE is "not implemented", so dropping one means a replacement
+-- type, a rewrite of every dependent column, and a DROP TYPE. The value set is close to permanent.
+
+CREATE TYPE marketplace_origin AS ENUM ('upstream', 'hosted');
+CREATE TYPE marketplace_push_policy AS ENUM ('append-only', 'allow-rewrite');
+CREATE TYPE marketplace_sync_mode AS ENUM ('on-demand', 'scheduled', 'webhook');
+CREATE TYPE snapshot_state AS ENUM ('held', 'approved', 'rejected', 'revoked');
+CREATE TYPE webhook_delivery_state AS ENUM ('pending', 'delivered', 'failed');
+CREATE TYPE audit_sink_kind AS ENUM ('webhook');
+CREATE TYPE vetting_run_outcome AS ENUM ('clear', 'blocked');
+CREATE TYPE vetting_verdict_state AS ENUM ('pass', 'warn', 'fail', 'error', 'pending');
+CREATE TYPE vetting_finding_severity AS ENUM ('info', 'low', 'medium', 'high', 'critical');
+CREATE TYPE vetting_waiver_scope_kind AS ENUM ('snapshot', 'path');
+CREATE TYPE role_grant_role AS ENUM ('admin', 'approver', 'auditor');
+
 CREATE TABLE marketplaces (
     id BIGSERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
@@ -12,11 +35,10 @@ CREATE TABLE marketplaces (
     -- Where the content comes from (GW_0101): fetched from an upstream clone URL, or pushed by
     -- the organisation into a gateway-owned origin repository. Immutable after registration --
     -- changing it would swap the supply chain under snapshots that were already approved.
-    origin TEXT NOT NULL DEFAULT 'upstream' CHECK (origin IN ('upstream', 'hosted')),
+    origin marketplace_origin NOT NULL DEFAULT 'upstream',
     -- Whether a hosted marketplace's publisher may rewrite its lineage (GW_0102). append-only
     -- refuses a non-fast-forward push; allow-rewrite permits it and puts both tips on the ledger.
-    push_policy TEXT NOT NULL DEFAULT 'append-only'
-        CHECK (push_policy IN ('append-only', 'allow-rewrite')),
+    push_policy marketplace_push_policy NOT NULL DEFAULT 'append-only',
     -- Best-effort forge metadata captured at registration (GW_0021).
     forge TEXT,
     forge_project TEXT,
@@ -25,7 +47,7 @@ CREATE TABLE marketplaces (
     -- How new upstream content reaches quarantine (GW_0056): an operator's click (on-demand),
     -- the polling sweep (scheduled), or a signed forge push webhook (webhook). Only the trigger
     -- varies — every mode lands snapshots held behind the same approval gate.
-    sync_mode TEXT NOT NULL DEFAULT 'on-demand' CHECK (sync_mode IN ('on-demand', 'scheduled', 'webhook')),
+    sync_mode marketplace_sync_mode NOT NULL DEFAULT 'on-demand',
     -- HMAC key for the inbound webhook (GW_0058). Like webhook_subscribers.secret this must stay
     -- recoverable (HMAC verification needs the key itself, so a PAT-style hash is impossible);
     -- it is returned exactly once by the mode change that generated it and by no read endpoint.
@@ -52,7 +74,7 @@ CREATE TABLE snapshots (
     -- and whose later re-vetting run found a violation the active waivers do not cover. It is a
     -- state of its own rather than a return to 'held' because the difference matters to everyone
     -- reading it — the content was served, and to whom is answerable from the fetch ledger.
-    state TEXT NOT NULL CHECK (state IN ('held', 'approved', 'rejected', 'revoked')),
+    state snapshot_state NOT NULL,
     violation TEXT,
     created_at TIMESTAMPTZ NOT NULL,
     -- The identity that triggered this snapshot's ingestion (GW_0096): a person's principal for an
@@ -159,7 +181,7 @@ CREATE TABLE webhook_deliveries (
     -- Serialized once at emit time so every retry sends byte-identical content
     -- and the signature basis never drifts.
     payload TEXT NOT NULL,
-    state TEXT NOT NULL CHECK (state IN ('pending', 'delivered', 'failed')),
+    state webhook_delivery_state NOT NULL,
     attempts INTEGER NOT NULL DEFAULT 0,
     next_attempt_at TIMESTAMPTZ NOT NULL,
     last_status INTEGER,
@@ -178,7 +200,7 @@ CREATE TABLE audit_sinks (
     name TEXT NOT NULL UNIQUE,
     -- Only 'webhook' is accepted in v1; the column exists so a Kafka or syslog sink
     -- slots in behind the same cursor contract without a schema change.
-    kind TEXT NOT NULL CHECK (kind IN ('webhook')),
+    kind audit_sink_kind NOT NULL,
     -- The delivery channel: an ordinary webhook subscriber, so audit batches are signed,
     -- retried, and recorded by exactly the machinery lifecycle events already use.
     subscriber_id BIGINT NOT NULL REFERENCES webhook_subscribers (id) ON DELETE CASCADE,
@@ -215,7 +237,7 @@ CREATE TABLE vetting_runs (
     -- is what the connectors said, and waivers never rewrite it. The outcome that gates the
     -- approval is the *effective* one, derived on read from this run plus the waivers active
     -- at that instant (GW_0045), which is what makes expiry (GW_0046) need no scheduler.
-    outcome TEXT NOT NULL CHECK (outcome IN ('clear', 'blocked'))
+    outcome vetting_run_outcome NOT NULL
 );
 
 -- The only read path: the latest run of one snapshot.
@@ -229,7 +251,7 @@ CREATE TABLE vetting_verdicts (
     position INTEGER NOT NULL,
     -- 'pending' is groundwork for an asynchronous connector whose callback has not arrived;
     -- the aggregation treats it as blocking, so the gate is already correct.
-    state TEXT NOT NULL CHECK (state IN ('pass', 'warn', 'fail', 'error', 'pending')),
+    state vetting_verdict_state NOT NULL,
     detail TEXT,
     report_url TEXT,
     created_at TIMESTAMPTZ NOT NULL,
@@ -242,7 +264,7 @@ CREATE TABLE vetting_findings (
     -- Stable rule identifier ('aws-access-key-id'), not an ordinal: it is the identity a
     -- scoped waiver will be written against.
     finding_id TEXT NOT NULL,
-    severity TEXT NOT NULL CHECK (severity IN ('info', 'low', 'medium', 'high', 'critical')),
+    severity vetting_finding_severity NOT NULL,
     location TEXT,
     message TEXT NOT NULL
 );
@@ -265,7 +287,7 @@ CREATE TABLE vetting_waivers (
     rule_id TEXT NOT NULL,
     -- 'snapshot' pins the waiver to one commit SHA and dies with it; 'path' survives
     -- re-ingestion and is matched as a directory prefix on the finding's path.
-    scope_kind TEXT NOT NULL CHECK (scope_kind IN ('snapshot', 'path')),
+    scope_kind vetting_waiver_scope_kind NOT NULL,
     scope_value TEXT NOT NULL CHECK (scope_value <> ''),
     justification TEXT NOT NULL CHECK (justification <> ''),
     approved_by TEXT NOT NULL CHECK (approved_by <> ''),
@@ -297,7 +319,7 @@ CREATE INDEX idx_vetting_waivers_expiry_sweep ON vetting_waivers (expires_at)
 CREATE TABLE role_grants (
     id BIGSERIAL PRIMARY KEY,
     principal TEXT NOT NULL CHECK (principal <> ''),
-    role TEXT NOT NULL CHECK (role IN ('admin', 'approver', 'auditor')),
+    role role_grant_role NOT NULL,
     -- NULL for the global roles; an approver grant names its one marketplace. The service
     -- enforces which role carries one; the schema enforces the referenced marketplace exists.
     marketplace_id BIGINT REFERENCES marketplaces (id) ON DELETE CASCADE,

@@ -1121,3 +1121,16 @@ cases:
       WHEN the packaging test validates it
       THEN extra environment entries and projected environment sources reach the container verbatim, structured configuration is rendered into a configuration object that is mounted into the container and layered over the image's own configuration, and a change to that configuration changes the pod specification so the estate is reconciled again
     revision: "0.1.0"
+
+  - id: SVC_GW_0125
+    requirement_ids: ["GW_0125"]
+    title: Every enumerated column is a database type that refuses values outside its set
+    verification: automated-test
+    description: |
+      GIVEN a gateway whose schema has been migrated
+      WHEN each column holding a closed set of enumerated values is inspected, written
+      through the repository that owns it, and read back
+      THEN the column's declared type is the enumerated type named for it, every value of
+      the set round trips unchanged, and a value outside the set is refused by the database
+      rather than stored
+    revision: "0.1.0"
