@@ -47,10 +47,12 @@
 
 ## 5. Gates and evidence
 
-- [ ] 5.1 `./mvnw clean verify`
-- [ ] 5.2 `(cd src/main/frontend && pnpm e2e)`
-- [ ] 5.3 `reqstool status local -p docs/reqstool` ends PASS
-- [ ] 5.4 `openspec validate --all --strict`
-- [ ] 5.5 `mkdocs build --strict`
-- [ ] 5.6 Write `openspec/changes/license-compliance/evidence.md`
-- [ ] 5.7 Archive the change as the final commit of the PR
+- [x] 5.1 `./mvnw clean verify`
+- [x] 5.2 `(cd src/main/frontend && pnpm test:stories)` and
+      `(cd src/main/frontend && pnpm e2e)` — the story-test gate was added to
+      `CLAUDE.md` after this task list was written; both were run.
+- [x] 5.3 `reqstool status local -p docs/reqstool` ends PASS
+- [x] 5.4 `openspec validate --all --strict`
+- [x] 5.5 `mkdocs build --strict`
+- [x] 5.6 Write `openspec/changes/license-compliance/evidence.md`
+- [x] 5.7 Archive the change as the final commit of the PR
