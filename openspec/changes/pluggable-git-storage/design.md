@@ -174,6 +174,17 @@ So the implementable surface is: extend `DfsRepository`, implement
 `commitPackImpl`, `rollbackPack`) and a ref database over the bucket, and let
 JGit's existing `DfsReader` / `UploadPack` path do the git.
 
+*No reusable implementation exists to adopt, and that is worth stating because
+it is the obvious reviewer question.* Google's own DFS backend — the reason this
+package exists in JGit at all — was never open-sourced. The only public
+JGit-DFS-over-object-storage project is `johnny0917/jgit-aws`: six stars, last
+pushed in 2015, no license, self-described as "fairly naive… not properly
+tested", and coupled to DynamoDB, which decision 3 rejects on portability
+grounds anyway. Gerrit's `lfs-storage-s3` plugin is sometimes offered as a
+counter-example; it stores Git LFS objects, not repositories, and shares none of
+the ref-consistency problem. So the choice is not build-versus-adopt. It is
+build, or do not do this.
+
 *Alternative rejected — mount the bucket as a filesystem* (s3fs, Mountpoint, a
 CSI driver). It keeps `FilesystemGitStorage` unchanged, which is genuinely
 tempting, and it is wrong for the same reason it is tempting: git's on-disk
@@ -375,6 +386,61 @@ sweeps on and one serving deployment scaled out with them off, sharing the
 bucket. Leader election that removes that split is separate, later work, and
 this design should not pretend otherwise.
 
+### 9. Conditional-write support is the portability boundary, and the test double must be proved to have it
+
+Decision 3 buys portability by requiring only one exotic primitive — a
+conditional write — instead of a lock service or DynamoDB. The price of that
+choice has to be stated as a constraint rather than left as an open question:
+**the set of object stores that implement conditional writes is exactly the set
+of stores this backend can run on.** There is no degraded mode. A store without
+`If-Match` cannot be supported by weakening the model, because last-writer-wins
+on the manifest is precisely the lost update the design exists to prevent.
+
+Known to support it (to be confirmed by the spike, not taken on trust):
+
+| Store | Conditional write | Status |
+| --- | --- | --- |
+| AWS S3 | `If-Match` / `If-None-Match` on PUT | Documented; the primary target |
+| MinIO | `If-Match` / `If-None-Match` | Believed supported; **unverified here** |
+| Google Cloud Storage | generation preconditions, not `If-Match` | Would need an adapter; **out of scope** |
+| Ceph RGW, on-prem S3 gateways | varies by version | **Unverified** |
+
+The gateway probes the configured bucket at startup (decision 1) and refuses to
+run where the probe fails, so an unsupported store is a startup error rather
+than a corruption discovered during an approval. The supported-store list is a
+documentation obligation of this change, not a footnote.
+
+**The local test double is Floci** (`docker.io/floci/floci`), an open-source AWS
+emulator positioned as an alternative to LocalStack Community, driven from
+Testcontainers — the same way the rest of the suite gets its infrastructure, and
+it is already present on the development machines here.
+
+But a test double is exactly the wrong thing to trust here, and this is not
+ordinary test-double caution. The entire correctness argument of this design
+reduces to one behaviour: a conditional PUT whose precondition no longer holds
+must fail with `412 Precondition Failed` rather than succeeding. An emulator
+that accepts every PUT and ignores `If-Match` would make a *broken*
+implementation pass its concurrency tests — including the lost-update test that
+is the whole point — and would do so silently and green. The test double would
+be certifying the one property it does not implement.
+
+So the first task of the object-store work is a fidelity spike against Floci,
+before any backend code exists, asserting:
+
+- a conditional PUT with a matching ETag succeeds and returns a new ETag;
+- a conditional PUT with a stale ETag returns **412**, and the stored object is
+  unchanged;
+- `If-None-Match: *` creates exactly once and returns 412 on the second attempt;
+- under N concurrent writers from the same base ETag, exactly one succeeds — the
+  first-writer-wins property the manifest transition depends on.
+
+If Floci does not honour these exactly, the fallback is decided then and not
+improvised later: run the conditional-write contract as a separate, tagged suite
+against real S3 (excluded from the default `verify` so the offline build stays
+offline), and — because this is an open-source emulator — consider contributing
+the behaviour upstream. What is not acceptable is running the concurrency suite
+against a double that cannot fail it.
+
 ## Risks / Trade-offs
 
 - **A wrong DFS implementation corrupts the one thing the product guarantees**
@@ -405,6 +471,24 @@ this design should not pretend otherwise.
   short-lived and refreshed by the SDK) → an explicit test that a long
   `upload-pack` survives a refresh, rather than discovering it as an
   intermittent facade failure.
+- **The DFS extension points are `internal` JGit API, and Renovate will keep
+  upgrading JGit under us.** `org.eclipse.jgit.internal.storage.dfs` is not a
+  stability-guaranteed public API — the `internal` in the package name is real,
+  and JGit changes it between releases in ways that never affect ordinary
+  `Repository` / `UploadPack` use. We are on 7.7.1 (the current release), the
+  version is a plain `<jgit.version>` property in `pom.xml`, and
+  `.github/renovate.json5` means bumps arrive as automated PRs. A subtly broken
+  DFS backend after an unattended upgrade is a realistic failure mode →
+  mitigation on both sides: a Renovate `packageRules` entry that separates
+  `org.eclipse.jgit*` from the general dependency stream so a JGit bump is
+  always a deliberate, individually reviewed PR rather than part of a group;
+  **and** a backend test suite (task 3's shared contract plus the concurrency
+  suite) thorough enough that such a PR goes red loudly instead of passing.
+  Pinning alone is not the mitigation — a pin only defers the upgrade, it does
+  not tell us when the upgrade breaks us.
+- **A test double that does not implement conditional writes would certify a
+  broken backend** → decision 9: the emulator's `If-Match` fidelity is proved
+  by a spike before any backend code is written, with a named fallback.
 - **The bucket becomes a publishing path that bypasses `ApprovalService`** →
   documented as a trust boundary with a narrow bucket policy prescribed; the
   gateway cannot enforce this, and the docs must not imply it can.
@@ -435,9 +519,9 @@ this design should not pretend otherwise.
 - Does the hosted-marketplace push path (which accepts a real `receive-pack`
   from a publisher) need anything beyond the same conditional write, given a
   push is many refs in one transaction?
-- Which S3-compatible stores are declared supported? MinIO and AWS S3 are the
-  obvious floor; conditional-write support elsewhere needs checking rather than
-  assuming.
+- Confirmation of the conditional-write table in decision 9 — which stores land
+  in "supported" once the spike has actually probed them, rather than being
+  believed to belong there.
 - Is the migration command a subcommand of the same jar, or a separate
   entrypoint? Preference is the former (one artifact), unconfirmed against the
   native-image packaging.

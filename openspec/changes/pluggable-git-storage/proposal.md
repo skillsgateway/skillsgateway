@@ -120,6 +120,14 @@ first trial.
   stops rendering until it names `persistence.mode: ephemeral`. No REST
   contract changes, so the API's major does not move.
 - **DB**: none. The manifest is in the bucket, deliberately not in PostgreSQL.
+- **Testing**: Floci (`docker.io/floci/floci`) via Testcontainers as the local
+  AWS emulator. Its `If-Match` fidelity is proved by a spike *before* any
+  backend code exists — a double that ignores conditional writes would let a
+  broken implementation pass the very concurrency tests that justify the design.
+- **Portability**: conditional-write support is the hard boundary. The set of
+  object stores that implement it is the set this backend can run on; there is
+  no degraded mode, and the gateway refuses to start where a startup probe
+  fails.
 - **Docs** (same PR as the implementation, not this one):
   `reference/configuration.md`, `concepts/lifecycle.md` (the layout table is
   filesystem-shaped), `guides/local-development.md`, a new operations page for

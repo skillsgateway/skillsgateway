@@ -16,15 +16,28 @@ applies: failing tests first, proved failing, before any implementation.
 
 ## 2. Spike (settle the open questions before writing production code)
 
-- [ ] 2.1 Prove conditional writes (`If-Match` on ETag, `If-None-Match: *`)
-      against MinIO in Testcontainers and against real S3; record which
-      S3-compatible stores are declared supported
-- [ ] 2.2 Decide the ref database shape — `DfsReftableDatabase` over the
+- [ ] 2.1 **Test-double fidelity spike — do this before any other object-store
+      work.** Against Floci (`docker.io/floci/floci`) via Testcontainers, prove
+      `If-Match` semantics exactly: matching ETag succeeds and returns a new
+      ETag; stale ETag returns **412** with the stored object unchanged;
+      `If-None-Match: *` creates once and 412s on the second attempt; under N
+      concurrent writers from one base ETag exactly one succeeds. A double that
+      ignores `If-Match` would let a broken backend pass its concurrency tests
+      green, so nothing downstream may be written until this is settled
+- [ ] 2.2 If 2.1 fails on any assertion, take the named fallback rather than
+      improvising: move the conditional-write contract to a separate tagged
+      suite run against real S3 and excluded from the default `verify`, and
+      consider contributing the behaviour upstream to Floci. Record which
+      option was taken in `design.md`
+- [ ] 2.3 Probe the same assertions against MinIO and record the supported-store
+      table from decision 9 as verified fact rather than belief; the set of
+      stores with conditional writes is the set this backend can run on
+- [ ] 2.4 Decide the ref database shape — `DfsReftableDatabase` over the
       bucket versus a plain `DfsRefDatabase` over the manifest — and record the
       decision in `design.md`
-- [ ] 2.3 Prove an AWS SDK v2 S3 client with the web-identity credential
+- [ ] 2.5 Prove an AWS SDK v2 S3 client with the web-identity credential
       provider builds and runs under the GraalVM native-image profile
-- [ ] 2.4 Prove a `receive-pack` (hosted-marketplace push, many refs in one
+- [ ] 2.6 Prove a `receive-pack` (hosted-marketplace push, many refs in one
       transaction) maps onto a single manifest transition
 
 ## 3. The backend contract test (write it before either backend uses it)
@@ -49,7 +62,8 @@ applies: failing tests first, proved failing, before any implementation.
       startup naming the accepted values; `object-store` with no bucket,
       endpoint or credential mode fails startup; no case resolves a backend
       other than the one named
-- [ ] 4.2 Concurrency tests annotated `@SVCs({"SVC_GW_0112"})` against MinIO:
+- [ ] 4.2 Concurrency tests annotated `@SVCs({"SVC_GW_0112"})` against Floci
+      (only once task 2.1 has proved it honours `If-Match`):
       N concurrent publications and revocations of the same and of superseding
       snapshots; assert no lost update, that exactly one caller is told its
       removal stopped the serving, and that objects are durable before any ref
@@ -85,7 +99,7 @@ applies: failing tests first, proved failing, before any implementation.
       and retry on conflict
 - [ ] 6.3 `DfsObjDatabase` implementation (`listPacks`, `openFile`,
       `writePackFile`, `commitPackImpl`, `rollbackPack`) and the ref database
-      chosen in task 2.2; `DfsRepository` subclass wiring the two
+      chosen in task 2.4; `DfsRepository` subclass wiring the two
 - [ ] 6.4 `ObjectStoreGitStorage implements GitStorage` — the three roles and
       `unpublish` evaluated and committed as one transition; annotate
       `@Requirements({"GW_0112"})`
@@ -118,6 +132,10 @@ applies: failing tests first, proved failing, before any implementation.
       `object-store` unless the uncoordinated pollers are disabled
 - [ ] 8.4 Extend the existing packaging consistency test to cover 8.1–8.3;
       chart version bump and a release note naming the deliberate break
+- [ ] 8.5 Add a `packageRules` entry to `.github/renovate.json5` separating
+      `org.eclipse.jgit*` from the general dependency stream, so a JGit bump
+      arrives as its own deliberately reviewed PR — the DFS extension points
+      are `internal` API and can break without breaking ordinary JGit use
 
 ## 9. Observability
 
@@ -132,15 +150,16 @@ applies: failing tests first, proved failing, before any implementation.
       modes, and replace the "Helm volume default is not durable" warning with
       what the packaging now refuses
 - [ ] 10.2 New operations page: choosing a backend, the Fargate constraints
-      (no EBS, EFS static provisioning only, no IMDS), migrating, and the
-      honest cold-start cost
+      (no EBS, EFS static provisioning only, no IMDS), the **supported object
+      store list** verified in task 2.3, migrating, and the honest cold-start
+      cost
 - [ ] 10.3 `concepts/lifecycle.md`: the layout table is filesystem-shaped —
       give it the object-store equivalent without weakening the three-role
       model
 - [ ] 10.4 `concepts/trust-boundaries.md`: write access to the bucket is
       publication without `ApprovalService`
 - [ ] 10.5 `architecture.md` §12 and the roadmap; `guides/local-development.md`
-      (MinIO in Compose)
+      (Floci in Compose)
 - [ ] 10.6 An ADR if the spike changes any decision in `design.md`
 
 ## 11. Gates and evidence
