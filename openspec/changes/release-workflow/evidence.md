@@ -114,17 +114,100 @@ they described. They now parse the workflow with SnakeYAML and assert on
 structure — triggers, job `needs`, step conditions, the `environment` block —
 and the `SVC_GW_0109` text checks strip comment lines first.
 
+## The dry-run exercises (tasks 9.2–9.4), run after the fact
+
+These were open when this report was first written, because they were blocked on
+[skillsgateway/.github#1](https://github.com/skillsgateway/.github/pull/1). That
+PR had in fact merged; the blocker was stale and carried for a while. Closing it
+out found a defect that nothing else could have.
+
+**The first dry run failed, and the release flow could never have worked.**
+[Run 33174202824](https://github.com/skillsgateway/skillsgateway/actions/runs/33174202824)
+died in `prepare` before resolving a version:
+
+```
+Could not get github metadata: HttpClientError(reqwest::Error {
+  kind: Status(403, None),
+  url: "https://api.github.com/repos/skillsgateway/skillsgateway/commits?per_page=100&page=0" })
+##[error]Process completed with exit code 101.
+```
+
+`resolve-version` runs `git-cliff --bumped-version`, which needs no GitHub
+metadata — but `cliff.toml`'s template reads `commit.remote.pr_number` and
+`commit.remote.username`, so git-cliff initialises its GitHub remote and calls
+the commits API anyway. Unauthenticated, that is a 403. The `Generate changelog`
+step three steps later already passed `secrets.GITHUB_TOKEN` for exactly this
+reason; version resolution was simply missed. Fixed as
+[skillsgateway/.github#2](https://github.com/skillsgateway/.github/pull/2)
+(merged `5303024`) and re-pinned here by
+[#142](https://github.com/skillsgateway/skillsgateway/pull/142).
+
+**This is the point of tasks 9.2–9.4.** `PackagingTests` parses `release.yml`
+structurally and the structure was never wrong. The workflow had been on `main`
+since [#125](https://github.com/skillsgateway/skillsgateway/pull/125) looking
+complete, and would have failed on the first real release. Only dispatching it
+could surface this.
+
+### 9.2 — dry-run preview
+
+[Run 33175167625](https://github.com/skillsgateway/skillsgateway/actions/runs/33175167625) — success.
+
+```
+VERSION:    0.1.0
+AUTO:       0.1.0
+SOURCE:     auto-detected from Conventional Commits
+LATEST:
+PRERELEASE: false
+GIT_CLIFF_VERSION: 2.13.1
+```
+
+Bare version, no `v` prefix. `LATEST` is empty because the repository carries no
+tags yet, which is also why auto-detect proposes `0.1.0`.
+
+### 9.3 — negative paths, two of three
+
+| Path | Run | Outcome |
+| --- | --- | --- |
+| `version` disagrees with auto-detect, `force: false` | [33175266927](https://github.com/skillsgateway/skillsgateway/actions/runs/33175266927) | Refused: `Version '9.9.9' disagrees with the auto-detected '0.1.0'. Re-run with force enabled if that is deliberate.` |
+| ref not reachable from `main` | [33175269826](https://github.com/skillsgateway/skillsgateway/actions/runs/33175269826) | Refused: `Releases must come from main, hotfix/*, or release/* (got: 'feat/machine-api-credentials').` |
+| already-tagged ref | — | **Not exercised.** See below. |
+
+### 9.4 — release candidate
+
+[Run 33175356076](https://github.com/skillsgateway/skillsgateway/actions/runs/33175356076) — success.
+
+```
+VERSION:    0.1.0-rc1
+AUTO:       0.1.0
+SOURCE:     auto-detected from Conventional Commits, as rc
+PRERELEASE: true
+```
+
 ## Not verified here, and why
 
-- **The release workflow has never run.** `release.yml` calls reusable workflows
-  from `skillsgateway/.github`, which do not exist on that repository's `main`
-  yet — they are [skillsgateway/.github#1](https://github.com/skillsgateway/.github/pull/1).
-  Until it merges, dispatching this workflow fails at reference resolution. The
-  dry-run and negative-path exercises in tasks 9.2–9.4 are therefore still open.
-- **The `uses:` refs are pinned to that PR's branch head**
-  (`50455721fa920c7609e8686abaac71df550e6a06`), not to a merge SHA. Immutable and
-  valid, but it must be re-pinned once the PR squash-merges — four occurrences.
-- **The two repository settings are not made**: the `stable` environment with a
-  required reviewer, and Pages set to `build_type: workflow`. Neither lives in
-  this repository. Until the Pages setting changes, `docs.yml`'s `deploy` job
-  fails, so that setting has to be made before this merges rather than after.
+- **A release has never actually been cut.** Everything above is `dry-run: true`,
+  which is one job: `prepare`. No tag has been pushed, no artifact published, no
+  approval requested, nothing promoted. The gate itself — the `stable`
+  environment pausing the run — has therefore never been observed pausing
+  anything.
+- **`prerelease: rc` was not observed *failing to promote*.** A dry run skips
+  every job after `prepare`, so promotion cannot be observed either way. What
+  9.4 proves is the value that drives the gating: `prepare` outputs
+  `prerelease: true`, `promote` passes it through as
+  `prerelease: ${{ needs.prepare.outputs.prerelease == 'true' }}` (which leaves a
+  candidate a prerelease permanently), and `docs` is separately gated
+  `if: needs.prepare.outputs.prerelease != 'true'` so the `stable` alias does not
+  move. Wiring verified by inspection, value verified by execution, behaviour
+  unverified.
+- **The already-tagged-ref refusal was not exercised, by the owner's decision.**
+  The repository has no tags at all, so the only way to exercise it is to create
+  one. Rather than have a throwaway probe be the first tag the repository ever
+  carries, the owner will verify this path when cutting the first release.
+- **The repository settings were already in place**, contrary to what this report
+  originally assumed, and both are readable through the REST API rather than
+  being manual steps taken on trust: `GET /repos/.../pages` returns
+  `"build_type": "workflow"`, and `GET /repos/.../environments/stable` returns one
+  `required_reviewers` rule plus a protected-branches policy. Note
+  `prevent_self_review` is `false`, so the approval gate stops an accidental
+  release rather than a unilateral one — reasonable for a single maintainer, and
+  recorded as an open question rather than silently changed.
