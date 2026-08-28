@@ -6,7 +6,7 @@
 
 ## Context and Problem Statement
 
-Internal review RB-REV-2026-08 (the skills-marketplace proposal review) puts
+An internal security review of the skills-marketplace proposal puts
 signed provenance in the Phase-1 supply-chain prerequisite bucket: protected
 distribution channel, mandatory review, secrets scanning, **and provenance**
 before anything is installed by default. The gateway's roadmap
@@ -79,7 +79,7 @@ holding:
 
 - Architecture §7's Phase-3 placement of in-toto/Sigstore attestations stands,
   now backed by a recorded decision instead of a default.
-- The compliance answer to RB-REV-2026-08's provenance prerequisite is:
+- The compliance answer to that review's provenance prerequisite is:
   recorded provenance (content addressing + ledger) with this ADR stating the
   residual risk and its triggers — not "planned later" with no rationale.
 - When a trigger fires, the follow-up starts from this ADR: scope is signing
