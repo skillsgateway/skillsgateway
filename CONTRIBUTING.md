@@ -3,7 +3,9 @@
 ## Prerequisites
 
 - JDK 25 (Temurin; GraalVM CE 25 only for native builds)
-- Docker (Testcontainers/Arconia dev services, e2e infrastructure)
+- A container runtime (Testcontainers/Arconia dev services, e2e infrastructure).
+  Docker works out of the box; Podman needs setup — see "Local observability
+  and dev services" below
 - `git`, `gh`
 - reqstool CLI (`pipx install reqstool` — see `.github/workflows/ci.yml` for the
   currently pinned version) and OpenSpec CLI (`npm i -g @fission-ai/openspec`)
@@ -102,6 +104,41 @@ pnpm …` commands exist only for UI development loops (`pnpm dev` proxies
 real-browser suites — Storybook story tests (`pnpm test:stories`) and e2e
 (`pnpm e2e`) — which are deliberately outside `mvnw verify`.
 
+## Local observability and dev services
+
+Container-backed dependencies come from **Arconia Dev Services**, so one
+container serves both `bootRun` and the tests rather than each being configured
+separately. Two are wired up:
+
+| Dev service | Starts |
+| --- | --- |
+| `arconia-dev-services-postgresql` | **Automatically**, in dev and test. Nothing to enable. |
+| `arconia-dev-services-lgtm` | **Only** under the `observability` Spring profile. |
+
+The LGTM stack (OpenTelemetry Collector, Loki, Tempo, Prometheus, Grafana) is
+opt-in because it is heavy and unnecessary for ordinary work:
+
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=observability \
+                       -Dspring-boot.run.useTestClasspath=true
+```
+
+`useTestClasspath` is required, not optional: the dev-service dependencies are
+test-scoped, so the profile finds nothing without it — deliberately, so nothing
+observability-related is reachable from the packaged jar, the container image or
+the native binary. The Grafana URL is logged at startup. Configuration lives in
+`src/main/resources/application-observability.yaml`, including a 5-minute startup
+timeout because the image boots six processes and the default is tight on a small
+container VM.
+
+Metrics are always recorded; only the *export* is opt-in. In a deployment it is
+enabled with `arconia.otel.enabled=true` plus the standard `OTEL_EXPORTER_OTLP_*`
+variables — see `docs/manual/reference/observability.md`.
+
+When adding a container-backed dependency, check the arconia BOM for an existing
+dev service before hand-rolling a Testcontainers container; the published list is
+longer than a Maven Central name search suggests.
+
 Dependency updates are automated with Renovate (`renovate.json`); enable the
 Renovate GitHub App on the repository for it to take effect.
 
@@ -125,8 +162,11 @@ conventions). Architecture context: `docs/manual/architecture.md` and
 ## Documentation
 
 The published site is MkDocs Material, built from `docs/manual/` and configured
-by `mkdocs.yml`. Rolling `dev` docs publish from `main`; `v*` tags publish a
-versioned release behind the `stable` alias (mike).
+by `mkdocs.yml`. Rolling `dev` docs publish from `main`; a release publishes a versioned
+release behind the `stable` alias (mike). Release tags are bare semantic
+versions with no `v` prefix, and publishing runs from the gated release
+workflow rather than from a tag push — see
+`docs/manual/guides/releasing.md`.
 
 ```bash
 pip install -r docs/requirements.txt
