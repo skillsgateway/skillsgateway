@@ -1886,6 +1886,10 @@ the identity provider, so an expired session surfaces as an error rather than an
 HTML login page rendered into a <code>fetch()</code>.</p>
 <p><strong>CSRF</strong> is enabled for the web surface but disabled for <code>/api/**</code>, which is
 consumed by the portal with a session cookie.</p>
+<p><strong>Compatibility.</strong> Within a major, this surface only grows; a breaking change
+moves the path prefix and ships as a major. See
+<a href="../compatibility/#the-api-contract">The API contract</a> for what counts as
+breaking and how it is enforced.</p>
 <p><strong>Errors</strong> are RFC 7807 <code>ProblemDetail</code> documents:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="s2">"about:blank"</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Bad Request"</span><span class="p">,</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">400</span><span class="p">,</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"url scheme must be one of [http, https]"</span><span class="p">}</span>

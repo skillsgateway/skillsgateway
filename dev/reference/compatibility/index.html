@@ -1756,6 +1756,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-api-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The API contract
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The API contract">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-is-enforced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it is enforced
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#platform" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1959,6 +1987,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-api-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The API contract
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The API contract">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-is-enforced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it is enforced
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#platform" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1995,8 +2051,10 @@
 
 
 <h1 id="compatibility-and-allowlists">Compatibility and allowlists<a class="headerlink" href="#compatibility-and-allowlists" title="Permanent link">&para;</a></h1>
-<p>What the gateway accepts, what it rejects, and what it does not support yet.
-Everything on this page is enforced in code, not merely recommended.</p>
+<p>What the gateway accepts, what it rejects, what it does not support yet, and
+what its own API promises in return. Everything on this page is enforced in code
+or in CI, not merely recommended — where a rule is <em>not</em> mechanically enforced,
+it says so.</p>
 <h2 id="url-schemes">URL schemes<a class="headerlink" href="#url-schemes" title="Permanent link">&para;</a></h2>
 <p>Applied to every operator-supplied outbound URL. The scheme is lower-cased and
 matched against <code>skills-gateway.allowed-url-schemes</code>.</p>
@@ -2165,6 +2223,79 @@ manifest — a designed future capability, not a configuration flag.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="the-api-contract">The API contract<a class="headerlink" href="#the-api-contract" title="Permanent link">&para;</a></h2>
+<p>Everything above is about what the gateway <em>accepts</em>. This is about what its own
+HTTP surface <em>promises</em>.</p>
+<p><strong>Within a major, <code>/api/**</code> only grows.</strong> Endpoints, fields and enum values may
+be added; nothing a deployed client could depend on is removed, narrowed or
+renamed. A breaking change is allowed — it is not free. It moves the path prefix
+<strong>and</strong> ships as a major release, so a client that pinned neither is never
+surprised.</p>
+<table>
+<thead>
+<tr>
+<th>Change</th>
+<th>Additive?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A new endpoint, a new optional field, a new enum value</td>
+<td><strong>Yes.</strong> Ships as a minor.</td>
+</tr>
+<tr>
+<td><code>/api/v2/...</code> added while <code>/api/v1/...</code> remains</td>
+<td><strong>Yes</strong> — nothing was taken away. Deprecate first, remove in a later major.</td>
+</tr>
+<tr>
+<td>Removing or renaming an endpoint or field, making an optional field required, narrowing a type</td>
+<td><strong>No.</strong> New prefix, and a major.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">The prefix does not exist yet</p>
+<p>Endpoints are unversioned today (<code>/api/marketplaces</code>, not
+<code>/api/v1/marketplaces</code>). The version segment arrives with the change that
+introduces API versioning; until then the promise binds, and the check below
+enforces it, against the unversioned paths.</p>
+</div>
+<h3 id="how-it-is-enforced">How it is enforced<a class="headerlink" href="#how-it-is-enforced" title="Permanent link">&para;</a></h3>
+<p>Three mechanisms, and it is worth being clear about which is which.</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Enforced by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The published contract is the contract the gateway serves</td>
+<td>A build test. <code>src/main/frontend/openapi.json</code> must equal the document the running application serves, or <code>./mvnw verify</code> fails naming the command that regenerates it.</td>
+</tr>
+<tr>
+<td>A breaking change is detected</td>
+<td>The <strong>API contract</strong> workflow diffs every pull request's contract against the one it forked from with <a href="https://github.com/oasdiff/oasdiff">oasdiff</a>, and fails on a breaking classification.</td>
+</tr>
+<tr>
+<td>A breaking change is declared</td>
+<td>The same workflow requires the PR title — which becomes the squash commit subject, and so the release version — to carry <code>!</code> or <code>BREAKING CHANGE</code>.</td>
+</tr>
+<tr>
+<td>The prefix <em>was</em> moved</td>
+<td><strong>Nobody.</strong> No check can tell that a break should have been versioned instead; that is review's job.</td>
+</tr>
+</tbody>
+</table>
+<p>Deliberately breaking the contract takes two visible acts: the
+<code>⚠️ BREAKING CONTRACT</code> label on the pull request, and the break declared in its
+title. Both stay in the record. Keeping the old surface alongside the new one
+needs neither — that path is additive, and the gate passes on its own.</p>
+<p>The document served at <code>/v3/api-docs</code> declares the release it describes, derived
+from the build. The copy published in the repository carries a placeholder there
+instead: it is regenerated by hand, and a version that changes on every commit
+would make it differ from the build on every commit.</p>
 <h2 id="platform">Platform<a class="headerlink" href="#platform" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
