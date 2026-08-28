@@ -16,22 +16,26 @@ applies: failing tests first, proved failing, before any implementation.
 
 ## 2. Spike (settle the open questions before writing production code)
 
-- [ ] 2.1 **Test-double fidelity spike — do this before any other object-store
+- [x] 2.1 **Test-double fidelity spike — do this before any other object-store
       work.** Against Floci (`docker.io/floci/floci`) via Testcontainers, prove
       `If-Match` semantics exactly: matching ETag succeeds and returns a new
       ETag; stale ETag returns **412** with the stored object unchanged;
       `If-None-Match: *` creates once and 412s on the second attempt; under N
       concurrent writers from one base ETag exactly one succeeds. A double that
       ignores `If-Match` would let a broken backend pass its concurrency tests
-      green, so nothing downstream may be written until this is settled
-- [ ] 2.2 If 2.1 fails on any assertion, take the named fallback rather than
-      improvising: move the conditional-write contract to a separate tagged
-      suite run against real S3 and excluded from the default `verify`, and
-      consider contributing the behaviour upstream to Floci. Record which
-      option was taken in `design.md`
-- [ ] 2.3 Probe the same assertions against MinIO and record the supported-store
-      table from decision 9 as verified fact rather than belief; the set of
-      stores with conditional writes is the set this backend can run on
+      green, so nothing downstream may be written until this is settled.
+      **Done — Floci 1.5.28 passes all five, and two mutations confirm the
+      suite would have caught a store that ignores preconditions
+      (`ConditionalWriteFidelityTests`)**
+- [x] 2.2 **Not triggered — 2.1 passed.** Fallback kept on record: if a future
+      emulator version regresses, move the conditional-write contract to a
+      separate tagged suite against real S3 and consider contributing the
+      behaviour upstream
+- [ ] 2.3 Run the same five assertions against **real AWS S3** and against
+      **MinIO**, and promote those rows of the decision-9 table from believed to
+      verified. Floci passing proves the design is implementable and our tests
+      are meaningful; it does not certify the production target, and the
+      supported-store list is not publishable until this is done
 - [ ] 2.4 Decide the ref database shape — `DfsReftableDatabase` over the
       bucket versus a plain `DfsRefDatabase` over the manifest — and record the
       decision in `design.md`

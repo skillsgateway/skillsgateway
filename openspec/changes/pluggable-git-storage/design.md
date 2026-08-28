@@ -396,11 +396,12 @@ of stores this backend can run on.** There is no degraded mode. A store without
 `If-Match` cannot be supported by weakening the model, because last-writer-wins
 on the manifest is precisely the lost update the design exists to prevent.
 
-Known to support it (to be confirmed by the spike, not taken on trust):
+Support, with the evidence behind each row:
 
 | Store | Conditional write | Status |
 | --- | --- | --- |
-| AWS S3 | `If-Match` / `If-None-Match` on PUT | Documented; the primary target |
+| Floci 1.5.28 (`docker.io/floci/floci`) | `If-Match` / `If-None-Match` on PUT | **Verified here** by the task 2.1 spike — all five assertions pass, and two mutations confirm the spike would have caught a store that ignores preconditions |
+| AWS S3 | `If-Match` / `If-None-Match` on PUT | Documented; the primary target. **Not yet exercised by us** |
 | MinIO | `If-Match` / `If-None-Match` | Believed supported; **unverified here** |
 | Google Cloud Storage | generation preconditions, not `If-Match` | Would need an adapter; **out of scope** |
 | Ceph RGW, on-prem S3 gateways | varies by version | **Unverified** |
@@ -434,12 +435,35 @@ before any backend code exists, asserting:
 - under N concurrent writers from the same base ETag, exactly one succeeds — the
   first-writer-wins property the manifest transition depends on.
 
-If Floci does not honour these exactly, the fallback is decided then and not
-improvised later: run the conditional-write contract as a separate, tagged suite
-against real S3 (excluded from the default `verify` so the offline build stays
-offline), and — because this is an open-source emulator — consider contributing
-the behaviour upstream. What is not acceptable is running the concurrency suite
-against a double that cannot fail it.
+**Outcome of the spike (task 2.1, run against Floci 1.5.28).** All five
+assertions pass, repeatably. A conditional PUT with the current ETag succeeds and
+returns a new one; a stale ETag is refused with `412` *and the stored object is
+byte-for-byte unchanged afterwards*; `If-None-Match: *` creates exactly once;
+eight threads racing off one barrier from a single base ETag produce exactly one
+winner and seven `412`s, with no other error; and the ETag a conditional PUT
+returns is the one the next conditional PUT must present, across five successive
+generations, with each superseded ETag ceasing to be accepted.
+
+Because a green test against a double proves nothing on its own, the spike was
+also mutated twice to confirm it can fail. Removing `If-Match` from the stale
+write makes assertion 2 fail (`Expecting code to raise a throwable`), proving the
+`412` is caused by the precondition rather than by the emulator refusing writes
+generally. Removing `If-Match` from the concurrent writers makes assertion 4
+report **8 winners instead of 1** — precisely the signature of a store that
+ignores preconditions, and precisely what the suite must catch. The double
+discriminates.
+
+So the fallback in task 2.2 is **not** triggered: the conditional-write contract
+stays in the default `verify`, the offline build stays offline, and no upstream
+contribution is needed. Had any assertion failed, the fallback was to run the
+contract as a separate tagged suite against real S3 and to consider contributing
+the behaviour upstream. What was never acceptable was running the concurrency
+suite against a double that cannot fail it.
+
+One caveat worth keeping honest: this verifies *Floci*, not AWS S3. The spike
+raises confidence that the design is implementable and that our tests are
+meaningful; it does not by itself certify the production target. Exercising the
+same contract against real S3 remains open (task 2.3).
 
 ## Risks / Trade-offs
 
@@ -519,9 +543,9 @@ against a double that cannot fail it.
 - Does the hosted-marketplace push path (which accepts a real `receive-pack`
   from a publisher) need anything beyond the same conditional write, given a
   push is many refs in one transaction?
-- Confirmation of the conditional-write table in decision 9 — which stores land
-  in "supported" once the spike has actually probed them, rather than being
-  believed to belong there.
+- The conditional-write table in decision 9 now has one verified row (Floci).
+  AWS S3, MinIO and Ceph RGW are still believed rather than probed; task 2.3
+  closes that, and until it does the supported-store list is not publishable.
 - Is the migration command a subcommand of the same jar, or a separate
   entrypoint? Preference is the former (one artifact), unconfirmed against the
   native-image packaging.
