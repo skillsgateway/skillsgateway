@@ -14,6 +14,11 @@ public record Marketplace(
         Instant createdAt,
 
         @Schema(
+                description = "Identity that registered the marketplace, or null for one registered before the"
+                        + " registrant was recorded")
+        String registeredBy,
+
+        @Schema(
                 description = "Where the content comes from: fetched from an upstream clone URL, or pushed"
                         + " by the organisation into a gateway-owned origin repository",
                 allowableValues = {"upstream", "hosted"})

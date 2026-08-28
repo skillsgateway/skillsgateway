@@ -15,7 +15,8 @@ route carries an id; every `GET` on this page stays open to any session.
 
 ```json
 {"id":1,"name":"acme","url":"https://github.com/acme/skills.git",
- "createdAt":"2026-08-15T09:00:00Z","forge":"github","forgeProject":"acme/skills",
+ "createdAt":"2026-08-15T09:00:00Z","registeredBy":"dana",
+ "forge":"github","forgeProject":"acme/skills",
  "description":"Acme internal skills","upstreamUpdatedAt":"2026-08-14T18:20:00Z",
  "snapshots":[]}
 ```
@@ -24,9 +25,16 @@ route carries an id; every `GET` on this page stays open to any session.
 
 ```json
 {"id":42,"marketplaceId":1,"sha":"3f9c2ab...","state":"held",
- "violation":null,"createdAt":"2026-08-15T09:01:00Z",
+ "violation":null,"createdAt":"2026-08-15T09:01:00Z","ingestedBy":"ingrid",
  "decidedBy":null,"decidedAt":null}
 ```
+
+`registeredBy` and `ingestedBy` are the supply-side identities the
+[four-eyes rule](../../guides/approving-snapshots.md#separation-of-duties)
+compares a reviewer against. `ingestedBy` is a principal for an on-demand
+ingest or a push, `scheduler` or `webhook` for an automated trigger, and `null`
+for a snapshot ingested before the actor was recorded; `registeredBy` is `null`
+for a marketplace registered before it was.
 
 `state` is one of `held`, `approved`, `rejected`, `revoked`. A revoked snapshot
 also carries `revokedBy` and `revokedAt`, and its `violation` says what
@@ -519,11 +527,30 @@ unblock, because it clears itself:
                 "minimumReleaseAgeSeconds":259200}}
 ```
 
+Under an enforcing
+[four-eyes rule](../../guides/approving-snapshots.md#separation-of-duties) an
+approval by an identity on the snapshot's supply side is refused by the same
+status, with the conflicting acts named:
+
+```json
+{"status":409,"title":"Four-eyes rule refused this approval",
+ "detail":"four-eyes rule refused approval of snapshot 12: …",
+ "configKey":"skills-gateway.approval.four-eyes.mode",
+ "conflicts":[{"role":"registered-by","principal":"dana","waiverId":null},
+              {"role":"ingested-by","principal":"dana","waiverId":null},
+              {"role":"waiver-author","principal":"dana","waiverId":7}]}
+```
+
+Nothing in the API unblocks this one either: a different identity has to
+approve. Under the default `warn` mode the same conflicts are detected, the
+approval succeeds, and a `four-eyes-conflict` entry is appended to the audit
+ledger beside `snapshot-approved`.
+
 | Status | Cause |
 | --- | --- |
 | 200 | Approved; returns the snapshot with `decidedBy` and `decidedAt`. |
 | 404 | Unknown snapshot. |
-| 409 | The snapshot is neither `held` nor `revoked`, its effective vetting outcome is blocked, a [policy rule](policy.md) denied it, or it has not reached the minimum release age. |
+| 409 | The snapshot is neither `held` nor `revoked`, its effective vetting outcome is blocked, a [policy rule](policy.md) denied it, it has not reached the minimum release age, or an enforcing four-eyes rule refused it. |
 
 A `revoked` snapshot is approved through this same endpoint and no other — there
 is no un-revoke. The gate is unchanged, so the finding that revoked it must be
@@ -564,6 +591,37 @@ the two can never disagree.
 | Status | Cause |
 | --- | --- |
 | 200 | The eligibility record above. |
+| 404 | Unknown snapshot. |
+
+---
+
+## `GET /snapshots/{id}/four-eyes`
+
+Whether the
+[four-eyes rule](../../guides/approving-snapshots.md#separation-of-duties) would
+object to **the calling identity** approving this snapshot, and what the
+configured mode would do about it. Decides nothing; the approve endpoint
+enforces the rule independently.
+
+```json
+{"mode":"ENFORCE","refused":true,
+ "conflicts":[{"role":"registered-by","principal":"dana","waiverId":null},
+              {"role":"ingested-by","principal":"dana","waiverId":null}]}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `mode` | `WARN` or `ENFORCE`, as configured. There is no mode that disables detection. |
+| `conflicts` | Each supply-side act the caller performed on this snapshot: `registered-by`, `ingested-by`, or `waiver-author` with the `waiverId` they wrote. Empty for an independent reviewer. |
+| `refused` | Whether an approval by this caller would be refused — true only when the mode is `ENFORCE` and `conflicts` is non-empty. |
+
+The waiver clause is evaluated exactly as an approval would evaluate it, over
+the waivers that are actually suppressing findings on this snapshot right now —
+which is why this is answered by the server rather than derived by a client.
+
+| Status | Cause |
+| --- | --- |
+| 200 | The record above. |
 | 404 | Unknown snapshot. |
 
 ---

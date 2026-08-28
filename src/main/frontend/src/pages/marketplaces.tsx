@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
 import {
+  describeFourEyesConflicts,
   formatRemaining,
   useDecideSnapshot,
   useIngest,
@@ -12,6 +13,7 @@ import {
   useProvenance,
   useRegisterMarketplace,
   useSnapshotReleaseAge,
+  useSnapshotFourEyes,
   useSnapshotVetting,
   type MarketplaceView,
   type Snapshot,
@@ -194,15 +196,25 @@ function ProvenanceDialog({ snapshotId, onClose }: { snapshotId: number; onClose
  * differently on purpose: nothing here can open it, and nothing has to — it opens by itself at the
  * stated time. The server enforces both independently.
  *
- * @Requirements GW_0042, GW_0047, GW_0073
+ * Separation of duties is the third reason, and the only one the reviewer cannot resolve by doing
+ * something to the snapshot: what disqualifies them is what they already did to it. Under warn —
+ * the default — it says so and lets them through, because a single-administrator deployment has
+ * nobody else to ask; under enforce it shuts the button and names the person who has to press it
+ * instead. The server enforces all three independently.
+ *
+ * @Requirements GW_0042, GW_0047, GW_0073, GW_0096, GW_0097
  */
 function ApproveDialog({ snapshotId, onClose }: { snapshotId: number; onClose: () => void }) {
   const vetting = useSnapshotVetting(snapshotId);
   const releaseAge = useSnapshotReleaseAge(snapshotId);
+  const fourEyes = useSnapshotFourEyes(snapshotId);
   const decide = useDecideSnapshot();
   const blocked = vetting.data?.outcome === "BLOCKED" || vetting.data?.outcome === undefined;
   const tooYoung = releaseAge.data?.eligible === false;
   const remaining = formatRemaining(releaseAge.data?.remainingSeconds ?? 0);
+  const conflicted = (fourEyes.data?.conflicts ?? []).length > 0;
+  const refused = fourEyes.data?.refused === true;
+  const conflictSummary = describeFourEyesConflicts(fourEyes.data);
 
   return (
     <Dialog open onOpenChange={(open) => (open ? undefined : onClose())}>
@@ -231,9 +243,23 @@ function ApproveDialog({ snapshotId, onClose }: { snapshotId: number; onClose: (
             sighting, not from the commit's timestamp.
           </p>
         ) : null}
+        {conflicted ? (
+          <p
+            role={refused ? "alert" : undefined}
+            className={refused ? "text-xs text-destructive" : "text-xs text-muted-foreground"}
+          >
+            {refused
+              ? `Four-eyes rule: you ${conflictSummary}, so this approval is refused. Someone else with
+                 approval rights in this marketplace has to make the decision — approving content you
+                 supplied yourself is exactly what the rule exists to prevent.`
+              : `Four-eyes rule: you ${conflictSummary}. Approving is still allowed, but this will be
+                 recorded in the audit ledger as a self-approval. An independent reviewer is what the
+                 gate is worth.`}
+          </p>
+        ) : null}
         <DialogFooter>
           <Button
-            disabled={decide.isPending || blocked || tooYoung}
+            disabled={decide.isPending || blocked || tooYoung || refused}
             aria-label={`Confirm approval of snapshot ${snapshotId}`}
             onClick={() =>
               decide.mutate(

@@ -26,6 +26,7 @@ export type MarketplaceAdoption = components["schemas"]["MarketplaceAdoption"];
 export type SnapshotAdoption = components["schemas"]["SnapshotAdoption"];
 export type StaleIdentity = components["schemas"]["StaleIdentity"];
 export type Eligibility = components["schemas"]["Eligibility"];
+export type FourEyesCheck = components["schemas"]["FourEyesCheck"];
 export type MeView = components["schemas"]["MeView"];
 export type EffectiveRole = components["schemas"]["EffectiveRole"];
 
@@ -195,6 +196,41 @@ export function useSnapshotReleaseAge(snapshotId: number | null) {
     queryFn: () => api<Eligibility>(`/api/snapshots/${snapshotId}/release-age`),
     enabled: snapshotId !== null,
   });
+}
+
+/**
+ * Whether the separation-of-duties rule objects to *this* reviewer approving *this* snapshot, and
+ * what the configured mode would then do about it.
+ *
+ * The server answers rather than the browser deciding: the waiver clause depends on which waivers
+ * the effective-outcome evaluation actually applies, and a second implementation of that here
+ * would be a rule that can disagree with the one that decides. The approval endpoint enforces it
+ * independently in any case — this only lets the dialog say so before the button is pressed.
+ *
+ * @Requirements GW_0096, GW_0097
+ */
+export function useSnapshotFourEyes(snapshotId: number | null) {
+  return useQuery({
+    queryKey: ["snapshot-four-eyes", snapshotId],
+    queryFn: () => api<FourEyesCheck>(`/api/snapshots/${snapshotId}/four-eyes`),
+    enabled: snapshotId !== null,
+  });
+}
+
+/**
+ * The conflicting acts as a reviewer reads them, in the order they happened to the snapshot.
+ *
+ * @Requirements GW_0096
+ */
+export function describeFourEyesConflicts(check: FourEyesCheck | undefined): string {
+  const roles = (check?.conflicts ?? []).map((conflict) =>
+    conflict.role === "registered-by"
+      ? "registered this marketplace"
+      : conflict.role === "ingested-by"
+        ? "ingested this snapshot"
+        : `wrote waiver ${conflict.waiverId} that this approval relies on`,
+  );
+  return roles.join(", ");
 }
 
 /**

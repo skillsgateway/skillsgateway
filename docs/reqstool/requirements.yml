@@ -766,6 +766,22 @@ requirements:
     categories: ["functional-suitability", "security"]
     revision: 0.1.0
 
+  - id: GW_0096
+    title: Separation of duties on snapshot approval
+    significance: shall
+    description: The system shall record, as attributes of the objects themselves, the identity that registered each marketplace and the identity that triggered each snapshot's ingestion, and shall determine at approval time whether the reviewer is the snapshot's ingestion actor, its marketplace's registrant, or the author of a waiver the approval relies on, treating the automated sync triggers and an unrecorded actor as no conflict; where the configured mode enforces the rule the system shall refuse such an approval before any state transition, leaving the snapshot undecided and nothing published, and shall answer the refusal naming each conflicting act; and it shall gate no rejection, no role decision and no other operation on this rule.
+    rationale: An approval is worth what the independence of the approver is worth, and nothing prevented the identity that brought content into the gateway from also being the one that published it. Deriving the supply-side identities from the audit ledger would make an append-only observability surface load-bearing for an authorization decision, so they belong on the objects; the waiver author is part of the conflict set because a self-authored waiver followed by a self-approval is the bypass that would otherwise make the rest of the rule decorative; and refusing before the transition is what keeps a refusal from leaving a half-published snapshot behind.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0097
+    title: Four-eyes mode configuration and ledger visibility
+    significance: shall
+    description: The system shall offer exactly two modes for the approval separation-of-duties rule — one that records a detected conflict and lets the approval proceed and one that refuses it — shall default to the recording mode so that a deployment holding a single approving identity keeps working across an upgrade, shall offer no mode that disables detection, and shall append every detected conflict to the audit ledger in both modes, naming the acting identity, the snapshot, the mode in force, whether the approval proceeded, and each conflicting act.
+    rationale: Enforcement that arrives switched on would make a single-administrator estate unapprovable the moment it is upgraded, and an off switch would reproduce the gap the rule closes by making a self-approval invisible again; recording as the floor is what makes the two true at once. Writing the conflict to the ledger in both modes is also what lets an operator measure the blast radius of enforcement before opting into it, from evidence rather than from expectation.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
   - id: GW_0098
     title: Identity-provider claim to role mapping
     significance: shall

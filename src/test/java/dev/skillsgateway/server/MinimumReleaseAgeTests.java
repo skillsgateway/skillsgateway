@@ -122,7 +122,7 @@ class MinimumReleaseAgeTests extends AbstractGatewayTest {
         Instant firstSeen = snapshotRepository.findById(id).orElseThrow().createdAt();
 
         // Upstream pushes nothing new; the gateway ingests the same commit again.
-        Snapshot again = ingestionService.ingest(registered.marketplace());
+        Snapshot again = ingestionService.ingest(registered.marketplace(), null);
 
         assertThat(again.id()).isEqualTo(id);
         assertThat(snapshotRepository.findById(id).orElseThrow().createdAt()).isEqualTo(firstSeen);

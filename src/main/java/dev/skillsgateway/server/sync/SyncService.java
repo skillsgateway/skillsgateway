@@ -119,7 +119,7 @@ public class SyncService {
     @Requirements({"GW_0059", "GW_0060"})
     private Snapshot ingest(Marketplace marketplace, String actor) {
         try {
-            Snapshot snapshot = ingestionService.ingest(marketplace);
+            Snapshot snapshot = ingestionService.ingest(marketplace, actor);
             auditLogger.record(actor, marketplace.name(), "snapshot-ingested", snapshot.sha());
             webhookService.emit(
                     WebhookEvent.SNAPSHOT_INGESTED,
