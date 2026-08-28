@@ -208,6 +208,51 @@ instead of an HTML login page rendered into a `fetch()`.
     to start**, because the login it configured is the login the flag switches
     off. See [Configuration](../reference/configuration.md).
 
+    It opens the **browser** surface only. A request carrying an
+    `Authorization: Bearer` header is authenticated strictly even in this mode,
+    the way the git facade is: a mode in which every bearer value authenticated
+    would be a very quiet way to lose the control plane in a copied
+    configuration.
+
+## The machine API — a credential in a pipeline becomes a control-plane caller
+
+`/api/**` has a second entrance, taken by a request that carries an
+`Authorization: Bearer` header. It is a sibling of the git facade's chain rather
+than a mode on the web chain: stateless, no session created, no cookie honoured,
+and a request presenting both a bearer credential and a cookie is refused rather
+than resolved to either.
+
+**Authentication** is a machine API credential — an access token whose API scope
+list is non-empty. That non-emptiness is a *precondition of authentication*, not
+a later authorization rule, so no controller can be the single point of failure.
+A perfectly valid personal access token — including the every-marketplace form,
+the most permissive fetch grant the system has — does not authenticate here at
+all.
+
+**The guarantee is symmetric.** A credential holding API scopes reaches no
+marketplace through the facade and no marketplace through publication, *including
+the marketplaces its empty fetch scope list would otherwise grant*: the fetch
+default is conditional on the credential's shape.
+
+**Authorization** is an allowlist over per-concern named scopes, enforced in the
+filter chain and therefore independent of `skills-gateway.roles.enabled`.
+Reach is the intersection of the allowlist, the credential's scopes and its
+principal's roles — never their union. Every act of human judgement, every
+operation that retracts or republishes content, every role grant and the whole
+of `/api/tokens/**` sits outside the allowlist, and no combination of scopes and
+no role reaches them. An endpoint added later is unreachable until somebody
+names it; a build-time check refuses an unclassified one.
+
+**Attribution.** Every ledger entry now carries an explicit actor type —
+`human`, `machine` or `system` — beside the identity it names, denormalised so a
+row written years ago still says what it meant after the credential it names has
+been revoked and its row deleted. That replaces an implicit vocabulary in which
+`config-reconciler`, `scheduler` and `system` were magic strings in the identity
+column. A machine entry also carries the credential's id, so a leak trace has
+per-credential resolution.
+
+See [Access tokens](../reference/api/tokens.md#machine-api-credentials).
+
 ## 4. The inbound webhook — a forge's push event becomes a fetch
 
 `POST /hooks/{marketplace}` is the one endpoint reachable without an OIDC

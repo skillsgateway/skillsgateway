@@ -9,6 +9,21 @@ While `skills-gateway.roles.enabled=false` (the default) these endpoints are
 open to any authenticated session and the grants they manage have no effect —
 staging data for the flip. Once enabled, all three are **admin-only**.
 
+**Machine reach.** `roles:read` covers `GET /roles`. Granting and revoking are
+reachable by **no scope at all**: `estate.grants` already declares grants with
+no credential in the pipeline, so a machine write path would add escalation
+surface for something with a safer route.
+
+!!! warning "Every authorized read of this endpoint is on the ledger"
+
+    Reading who holds what authority has reconnaissance value to a stolen
+    credential. Denying the read would not prevent configuration drift — the
+    estate never prunes, so it cannot discover a grant made by hand — it would
+    only make that drift undetectable, so the exposure is made visible after
+    the fact instead. **A person's read is recorded exactly as a machine's
+    is**; the entry's actor type is what separates them. A refused read records
+    nothing.
+
 ---
 
 ## `GET /api/roles`

@@ -10,6 +10,12 @@ Under role enforcement, rule mutations are **admin-only**, the listing is
 named snapshot** (it evaluates quarantine-backed facts, so it is scoped like
 the approval it rehearses).
 
+**Machine reach.** `policy:read` covers `GET /policy/rules` **and** `POST
+/policy/playground` — a `POST` inside a read scope, because the playground
+evaluates a policy and persists nothing. `policy:write` covers rule creation,
+update and deletion, and does **not** confer `policy:read`: no scope implies
+another. See [Machine API credentials](tokens.md#machine-api-credentials).
+
 ---
 
 ## `POST /api/policy/rules`

@@ -5,6 +5,9 @@ tips of the published repositories. Nothing here writes anything — the ledger
 holds the raw entries, these endpoints aggregate them. For the raw feed see
 [Audit](audit.md).
 
+**Machine reach.** `adoption:read` covers both endpoints on this page. See
+[Machine API credentials](tokens.md#machine-api-credentials).
+
 Only `upload-pack` entries count: a ref advertisement (`info-refs`) fires on
 every `git fetch` whether or not content transfers, so counting it would name
 identities that never received anything.

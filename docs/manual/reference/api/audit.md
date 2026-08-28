@@ -11,6 +11,13 @@ With [role enforcement](../../guides/delegated-administration.md) enabled: the
 ledger and export reads and the sink listing require **auditor** (or admin);
 sink create, delete, and cursor reset require **admin**.
 
+**Machine reach.** `audit:read` covers the ledger read and the export;
+`audit-sinks:read` the sink listing; `audit-sinks:write` sink creation,
+deletion and cursor reset. A machine read of the ledger writes **no** ledger
+entry, deliberately: logging it would make a polling exporter append an entry
+that is itself new content to export. See
+[Machine API credentials](tokens.md#machine-api-credentials).
+
 ---
 
 ## `GET /api/audit`
