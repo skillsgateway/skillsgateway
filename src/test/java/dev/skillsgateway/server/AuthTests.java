@@ -95,7 +95,9 @@ class AuthTests extends AbstractGatewayTest {
         // Closed enumeration on purpose: a leaked hash or secret would fail this, and any new
         // field must be added here deliberately. scopes/expiresAt/rotatedFrom joined in GW_0064-66,
         // pushScopes in GW_0102 and sessionDerived in GW_0104 — both facts about the grant, and
-        // neither a secret.
+        // neither a secret. apiScopes joined in GW_0126: on a personal access token it is always
+        // empty, and asserting its presence here is what would catch it silently becoming
+        // populated on a credential nobody provisioned as a machine one.
         assertThat(entries.get(0).keySet())
                 .containsExactlyInAnyOrder(
                         "id",
@@ -106,7 +108,8 @@ class AuthTests extends AbstractGatewayTest {
                         "expiresAt",
                         "rotatedFrom",
                         "pushScopes",
-                        "sessionDerived");
+                        "sessionDerived",
+                        "apiScopes");
 
         AccessToken stored = tokenService.authenticate(token).orElseThrow();
         assertThat(stored.tokenHash()).isNotEqualTo(token);

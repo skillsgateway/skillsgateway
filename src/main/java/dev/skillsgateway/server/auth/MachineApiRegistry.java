@@ -145,6 +145,10 @@ public final class MachineApiRegistry {
             post("/api/tokens/session"),
             post("/api/tokens/{id}/rotate"),
             delete("/api/tokens/{id}"),
+            post("/api/tokens/machine"),
+            get("/api/tokens/machine"),
+            post("/api/tokens/machine/{id}/rotate"),
+            delete("/api/tokens/machine/{id}"),
             // A session identity page; a machine has no session.
             get("/api/me"));
 

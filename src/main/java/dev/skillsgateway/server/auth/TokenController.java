@@ -80,7 +80,13 @@ public class TokenController {
             @Schema(
                     description = "Whether the credential was derived from a browser session rather than"
                             + " deliberately provisioned; its lifetime was the gateway's to set")
-            boolean sessionDerived) {}
+            boolean sessionDerived,
+
+            @Schema(
+                    description = "Named administrative API scopes this credential holds. Empty for every"
+                            + " personal access token: reaching the control plane is a grant, never a"
+                            + " baseline, so an empty list here means none rather than all.")
+            List<String> apiScopes) {}
 
     @Schema(description = "Session credential request: the lifetime is the gateway's, so there is no field for it")
     public record SessionCredentialRequest(
@@ -234,7 +240,8 @@ public class TokenController {
                 token.expiresAt(),
                 token.rotatedFrom(),
                 token.pushScopeList(),
-                token.sessionDerived());
+                token.sessionDerived(),
+                token.apiScopeList());
     }
 
     @ExceptionHandler(TokenService.InvalidTokenRequestException.class)

@@ -24,6 +24,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class WaiverService {
 
+    /**
+     * The gateway expiring a waiver on its own (GW_0128). Named rather than spelled inline, so
+     * {@code AdminAuditLogger} can declare it as one of the gateway's own actors and type its
+     * ledger entries {@code system} instead of leaving a magic string in the identity column.
+     */
+    public static final String SYSTEM_ACTOR = "system";
+
     /** Ledger events, so the auditor's grep terms are one list rather than scattered literals. */
     public static final String EVENT_CREATED = "waiver-created";
 
@@ -190,7 +197,7 @@ public class WaiverService {
         List<Waiver> expired = waiverRepository.newlyExpired(Instant.now(), batchSize);
         for (Waiver waiver : expired) {
             auditLogger.record(
-                    "system",
+                    SYSTEM_ACTOR,
                     waiver.marketplace(),
                     EVENT_EXPIRED,
                     waiver.scope() == WaiverScope.SNAPSHOT ? waiver.scopeValue() : null,

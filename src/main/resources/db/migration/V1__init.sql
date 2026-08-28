@@ -108,11 +108,24 @@ CREATE INDEX idx_snapshots_purge_queue ON snapshots (purge_after) WHERE deleted_
 CREATE INDEX idx_snapshots_revet_queue ON snapshots (id) WHERE state = 'approved' AND deleted_at IS NULL;
 
 -- Append-only fetch ledger: no UPDATE/DELETE is ever issued against this table.
+-- What kind of actor produced a ledger entry (GW_0128). A native type rather than three
+-- magic strings in `principal`: the ledger already had this vocabulary --
+-- 'config-reconciler', 'scheduler', 'system' -- distinguishable only by string comparison
+-- against values that also look like ordinary identities.
+CREATE TYPE fetch_log_actor_type AS ENUM ('human', 'machine', 'system');
+
 CREATE TABLE fetch_log (
     id BIGSERIAL PRIMARY KEY,
     ts TIMESTAMPTZ NOT NULL,
     source TEXT NOT NULL,
     principal TEXT,
+    -- Denormalised on purpose (GW_0128), for the same reason `token_id` below is not a foreign
+    -- key: the ledger is append-only history and must still say what it meant after the
+    -- credential it names has been revoked and its row deleted. A join to `access_tokens`
+    -- would make the ledger's meaning depend on mutable state, which is what an append-only
+    -- ledger must never do. Existing rows are typed 'human', which is what they have always
+    -- implicitly claimed; the gateway's own actors declare 'system' at their call sites.
+    actor_type fetch_log_actor_type NOT NULL DEFAULT 'human',
     marketplace TEXT NOT NULL,
     event TEXT NOT NULL,
     ref TEXT,
@@ -132,6 +145,11 @@ CREATE TABLE fetch_log (
 -- received the content — info-refs fires on every `git fetch` whether or not anything transfers.
 CREATE INDEX idx_fetch_log_adoption ON fetch_log (principal, marketplace, id DESC)
     WHERE event = 'upload-pack';
+
+-- Separating human, machine and system actors at query time is the whole point of the column
+-- (GW_0128); `WHERE actor_type = 'machine'` is an indexable predicate, unlike the string
+-- comparison it replaces.
+CREATE INDEX idx_fetch_log_actor_type ON fetch_log (actor_type, id DESC);
 
 CREATE TABLE access_tokens (
     id BIGSERIAL PRIMARY KEY,
@@ -156,7 +174,31 @@ CREATE TABLE access_tokens (
     -- Comma-delimited hosted marketplace names this token may PUSH to (GW_0102). Deliberately
     -- unlike `scopes`: NULL here means none, not all, so no token that predates publication --
     -- and no token whose fetch scope is the every-marketplace form -- can write anything.
-    push_scopes TEXT
+    push_scopes TEXT,
+    -- Comma-delimited administrative scope values this token may exercise on /api/** (GW_0126).
+    -- NULL means none -- the push default, not the fetch one, because reaching the control
+    -- plane is a grant and never a baseline: every token that predates this column is exactly
+    -- what it was, a fetch credential that cannot reach the API. A token is a machine API
+    -- credential precisely when this is non-NULL, which is also what makes `scopes` mean
+    -- nothing rather than everything for it.
+    api_scopes TEXT,
+    -- The identity that provisioned a machine credential (GW_0131). `principal` is the
+    -- credential's own name, which is what the ledger attributes its actions to; this is the
+    -- responsible person, named once at provisioning rather than impersonated on every use,
+    -- and what the administrative listing reports. NULL for every non-machine credential.
+    machine_owner TEXT,
+    -- A session-derived credential can never hold administrative scope (GW_0127). Enforced by
+    -- the database rather than by the one service method that mints them, so no future call
+    -- site can launder a browser session -- whose lifetime the holder did not choose and whose
+    -- purpose is fetching -- into a standing control-plane credential.
+    CONSTRAINT session_derived_credentials_hold_no_api_scope
+        CHECK (NOT (session_derived AND api_scopes IS NOT NULL)),
+    -- A machine credential must expire (GW_0131). The never-expiring credential in a
+    -- continuous-integration variable is the failure mode this capability would otherwise
+    -- introduce; the service refuses it at issue time and the schema makes the refusal
+    -- unbypassable.
+    CONSTRAINT machine_credentials_expire
+        CHECK (api_scopes IS NULL OR expires_at IS NOT NULL)
 );
 
 -- Lifecycle event webhooks (GW_0023..GW_0025).

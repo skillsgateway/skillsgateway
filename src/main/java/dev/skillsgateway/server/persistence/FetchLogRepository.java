@@ -41,8 +41,29 @@ public class FetchLogRepository {
             String sha,
             String detail,
             Long tokenId) {
-        jdbc.sql("INSERT INTO fetch_log (ts, source, principal, marketplace, event, ref, sha, detail, token_id)"
-                        + " VALUES (:now, :source, :principal, :marketplace, :event, :ref, :sha, :detail, :tokenId)")
+        append(source, principal, marketplace, event, ref, sha, detail, tokenId, ActorType.HUMAN);
+    }
+
+    /**
+     * As {@link #append}, typing the actor explicitly (GW_0128). The value is written through a
+     * cast to the {@code fetch_log_actor_type} enum, so a value outside the set is a type error
+     * in the database rather than a string nobody checked.
+     */
+    public void append(
+            String source,
+            String principal,
+            String marketplace,
+            String event,
+            String ref,
+            String sha,
+            String detail,
+            Long tokenId,
+            ActorType actorType) {
+        jdbc.sql("INSERT INTO fetch_log"
+                        + " (ts, source, principal, marketplace, event, ref, sha, detail, token_id, actor_type)"
+                        + " VALUES (:now, :source, :principal, :marketplace, :event, :ref, :sha, :detail, :tokenId,"
+                        + " :actorType::fetch_log_actor_type)")
+                .param("actorType", actorType.value())
                 .param("now", OffsetDateTime.now())
                 .param("source", source)
                 .param("principal", principal)
@@ -57,6 +78,19 @@ public class FetchLogRepository {
 
     public List<Map<String, Object>> list() {
         return jdbc.sql("SELECT * FROM fetch_log ORDER BY id").query().listOfRows();
+    }
+
+    /**
+     * The ledger's entries of one actor kind (GW_0128). An indexable predicate on a typed column,
+     * with no string parsing of {@code principal} and no join to {@code access_tokens} — which is
+     * the whole reason the column is denormalised: a row must still say what it meant after the
+     * credential it names has been revoked and its row deleted.
+     */
+    public List<Map<String, Object>> listByActorType(ActorType actorType) {
+        return jdbc.sql("SELECT * FROM fetch_log WHERE actor_type = :actorType::fetch_log_actor_type ORDER BY id")
+                .param("actorType", actorType.value())
+                .query()
+                .listOfRows();
     }
 
     /**

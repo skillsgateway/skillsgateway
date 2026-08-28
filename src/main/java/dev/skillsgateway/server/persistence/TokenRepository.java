@@ -52,12 +52,35 @@ public class TokenRepository {
             Long rotatedFrom,
             String pushScopes,
             boolean sessionDerived) {
+        return create(
+                principal, name, tokenHash, scopes, expiresAt, rotatedFrom, pushScopes, sessionDerived, null, null);
+    }
+
+    /**
+     * As above, plus the administrative scope list and the provisioning identity (GW_0126,
+     * GW_0131). A NULL {@code apiScopes} is the pre-change meaning — no administrative reach —
+     * which is what every credential that already exists keeps.
+     */
+    @Requirements({"GW_0064", "GW_0065", "GW_0102", "GW_0104", "GW_0126", "GW_0131"})
+    public AccessToken create(
+            String principal,
+            String name,
+            String tokenHash,
+            String scopes,
+            Instant expiresAt,
+            Long rotatedFrom,
+            String pushScopes,
+            boolean sessionDerived,
+            String apiScopes,
+            String machineOwner) {
         return jdbc.sql("INSERT INTO access_tokens"
                         + " (principal, name, token_hash, created_at, scopes, expires_at, rotated_from,"
-                        + " push_scopes, session_derived)"
+                        + " push_scopes, session_derived, api_scopes, machine_owner)"
                         + " VALUES (:principal, :name, :hash, :now, :scopes, :expiresAt, :rotatedFrom,"
-                        + " :pushScopes, :sessionDerived)"
+                        + " :pushScopes, :sessionDerived, :apiScopes, :machineOwner)"
                         + " RETURNING *")
+                .param("apiScopes", apiScopes)
+                .param("machineOwner", machineOwner)
                 .param("pushScopes", pushScopes)
                 .param("sessionDerived", sessionDerived)
                 .param("principal", principal)
@@ -100,6 +123,38 @@ public class TokenRepository {
                 .list();
     }
 
+    /**
+     * Every machine credential, whoever provisioned it (GW_0131). Deliberately not filtered by
+     * the caller's principal: a credential's own principal is not a person anyone can log in as,
+     * so scoping the listing the way {@link #listByPrincipal} does would leave every machine
+     * credential invisible to everyone — nobody could revoke one during an incident.
+     */
+    @Requirements({"GW_0131"})
+    public List<AccessToken> listMachineCredentials() {
+        return jdbc.sql("SELECT * FROM access_tokens WHERE api_scopes IS NOT NULL ORDER BY id")
+                .query(TokenRepository::map)
+                .list();
+    }
+
+    /** A single credential by id, unscoped; the administrative paths resolve through this. */
+    @Requirements({"GW_0131"})
+    public Optional<AccessToken> findById(long id) {
+        return jdbc.sql("SELECT * FROM access_tokens WHERE id = :id")
+                .param("id", id)
+                .query(TokenRepository::map)
+                .optional();
+    }
+
+    /** Administrative revocation: by id alone, for the reason {@link #listMachineCredentials} gives. */
+    @Requirements({"GW_0131"})
+    public boolean revoke(long id) {
+        return jdbc.sql("UPDATE access_tokens SET revoked_at = :now WHERE id = :id AND revoked_at IS NULL")
+                        .param("now", OffsetDateTime.now())
+                        .param("id", id)
+                        .update()
+                > 0;
+    }
+
     public boolean revoke(long id, String principal) {
         return jdbc.sql("UPDATE access_tokens SET revoked_at = :now"
                                 + " WHERE id = :id AND principal = :principal AND revoked_at IS NULL")
@@ -124,6 +179,8 @@ public class TokenRepository {
                 MarketplaceRepository.instant(rs, "expires_at"),
                 rotatedFrom,
                 rs.getString("push_scopes"),
-                rs.getBoolean("session_derived"));
+                rs.getBoolean("session_derived"),
+                rs.getString("api_scopes"),
+                rs.getString("machine_owner"));
     }
 }

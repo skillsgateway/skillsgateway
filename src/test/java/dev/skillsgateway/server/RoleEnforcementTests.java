@@ -89,8 +89,21 @@ class RoleEnforcementTests extends AbstractGatewayTest {
     private static final Set<String> OWNER_SCOPED_MUTATIONS = Set.of(
             "POST /api/tokens", "POST /api/tokens/session", "POST /api/tokens/{id}/rotate", "DELETE /api/tokens/{id}");
 
+    /**
+     * Machine credential provisioning (GW_0130): admin-only whether or not enforcement is enabled,
+     * so it walks with the role-gated mutations here and is asserted separately, in
+     * {@code MachineCredentialAdminTests}, with the flag off — which is the state the check
+     * actually exists for.
+     */
+    private static final Set<String> ALWAYS_ADMIN_MUTATIONS = Set.of(
+            "POST /api/tokens/machine", "POST /api/tokens/machine/{id}/rotate", "DELETE /api/tokens/machine/{id}");
+
     /** The ledger and the operational listings: auditor-or-admin reads (GW_0070). */
     private static final Set<String> PRIVILEGED_READS = Set.of(
+            // Admin-only rather than an auditor read: it lists control-plane credentials, and it
+            // is admin-only whether or not enforcement is enabled (GW_0130). The auditor walk
+            // below skips it for the same reason it skips grant administration.
+            "GET /api/tokens/machine",
             "GET /api/audit",
             "GET /api/audit/export",
             "GET /api/audit/sinks",
@@ -111,10 +124,11 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         // The walk's list is asserted complete against the application's own route table first:
         // a mutation endpoint this test does not know about is a failure, not a blind spot.
         assertThat(mutationRoutesFromTheRouteTable())
-                .containsExactlyInAnyOrderElementsOf(union(ROLE_GATED_MUTATIONS, OWNER_SCOPED_MUTATIONS));
+                .containsExactlyInAnyOrderElementsOf(
+                        union(union(ROLE_GATED_MUTATIONS, OWNER_SCOPED_MUTATIONS), ALWAYS_ADMIN_MUTATIONS));
 
         var mallory = oidcLogin().idToken(token -> token.subject("mallory"));
-        for (String route : ROLE_GATED_MUTATIONS) {
+        for (String route : union(ROLE_GATED_MUTATIONS, ALWAYS_ADMIN_MUTATIONS)) {
             mockMvc.perform(request(route).with(mallory)).andExpect(status().isForbidden());
         }
         for (String route : PRIVILEGED_READS) {
@@ -256,13 +270,16 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         grant(root, carolName, "auditor", null);
 
         for (String route : PRIVILEGED_READS) {
-            if (route.equals("GET /api/roles")) {
-                continue; // grant administration is admin-only (GW_0071), not an auditor read
+            if (route.equals("GET /api/roles") || route.equals("GET /api/tokens/machine")) {
+                // Grant administration (GW_0071) and the machine-credential listing (GW_0130)
+                // are admin-only, not auditor reads.
+                continue;
             }
             mockMvc.perform(request(route).with(carol)).andExpect(status().isOk());
         }
         mockMvc.perform(get("/api/roles").with(carol)).andExpect(status().isForbidden());
-        for (String route : ROLE_GATED_MUTATIONS) {
+        mockMvc.perform(get("/api/tokens/machine").with(carol)).andExpect(status().isForbidden());
+        for (String route : union(ROLE_GATED_MUTATIONS, ALWAYS_ADMIN_MUTATIONS)) {
             mockMvc.perform(request(route).with(carol)).andExpect(status().isForbidden());
         }
     }

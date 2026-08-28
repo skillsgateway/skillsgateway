@@ -1134,3 +1134,117 @@ cases:
       the set round trips unchanged, and a value outside the set is refused by the database
       rather than stored
     revision: "0.1.0"
+
+  - id: SVC_GW_0126
+    requirement_ids: ["GW_0126"]
+    title: Administrative scope is its own dimension with its own empty default
+    verification: automated-test
+    description: |
+      GIVEN a credential record whose administrative scope list is absent
+      WHEN its three scope dimensions are asked what they permit, and a credential is
+      requested with an unrecognised administrative scope value, with a wildcard value,
+      and with no administrative scope at all
+      THEN the absent list permits no administrative reach while the fetch list's absence
+      still means every marketplace and the publication list's absence still means none,
+      and each of the unrecognised, wildcard and empty requests is refused rather than
+      granting anything
+    revision: "0.1.0"
+
+  - id: SVC_GW_0127
+    requirement_ids: ["GW_0127"]
+    title: Only an administratively scoped bearer credential reaches the administrative interface
+    verification: automated-test
+    description: |
+      GIVEN credentials of every other shape — an unscoped fetch credential, a
+      marketplace-scoped one, a publication-scoped one, a session-derived one, a revoked
+      one, an expired one, a malformed bearer value and an empty one — and a valid
+      administratively scoped credential
+      WHEN each is presented to the administrative interface, as a bearer credential and
+      as a basic one, alone and alongside a session cookie, with the development-only
+      unauthenticated mode both off and on
+      THEN only the administratively scoped credential presented as a bearer credential
+      alone is authenticated, every other case is refused indistinguishably, the response
+      creates no session and sets no cookie, an administratively scoped credential is
+      refused by the git facade and the publication surface including for the marketplaces
+      an empty fetch list would otherwise grant, deriving an administrative scope onto a
+      session-derived credential is refused at issue time, and a browser session carrying
+      no bearer credential reaches the interface exactly as before
+    revision: "0.1.0"
+
+  - id: SVC_GW_0128
+    requirement_ids: ["GW_0128"]
+    title: The ledger types its actors explicitly and outlives the credentials it names
+    verification: automated-test
+    description: |
+      GIVEN ledger entries produced by a browser session, by a machine credential and by
+      the gateway's own reconciliation
+      WHEN the ledger is queried by actor kind, the credential a machine entry names is
+      revoked and its record deleted, the role grants are read by both a machine
+      credential and a person, an unauthorized read of the role grants is attempted, and
+      the ledger itself is read by a machine credential
+      THEN each entry carries its actor kind with no string comparison and no lookup into
+      the credential records, a machine entry names the credential that produced it and
+      still reports its actor kind after that credential's record is gone, the
+      provisioning person appears only on the entry that records the provisioning, each
+      authorized read of the role grants appends exactly one entry carrying the reading
+      identity and its actor kind, the refused read appends none, and the read of the
+      ledger appends none
+    revision: "0.1.0"
+
+  - id: SVC_GW_0129
+    requirement_ids: ["GW_0129"]
+    title: Every endpoint is classified and no scope reaches an unclassified or excluded one
+    verification: automated-test
+    description: |
+      GIVEN the administrative endpoints the running gateway serves and the classification
+      it carries
+      WHEN the classification is compared with the gateway's own route table, a credential
+      holding exactly one scope is walked over every other scope's endpoints, two scopes
+      are held together, and a credential holding every scope whose principal also holds
+      the administrative role is walked over every excluded endpoint, all with role
+      enforcement disabled
+      THEN the classification covers the route table exactly with no endpoint in neither
+      class and none in both, a single scope reaches its own endpoints and is refused on
+      every other scope's, no scope confers another, two scopes reach exactly the union of
+      their endpoints, and every excluded endpoint — each decision to publish or reject,
+      each override of vetting and its withdrawal, each retraction or republication of
+      content, each grant of privilege and every credential-minting path — is refused
+      even to the credential holding all of them
+    revision: "0.1.0"
+
+  - id: SVC_GW_0130
+    requirement_ids: ["GW_0130"]
+    title: A machine principal's authority is the intersection of scope and declared role
+    verification: automated-test
+    description: |
+      GIVEN a machine credential whose principal is named by configuration or by a
+      declared grant, and one whose principal is named by neither
+      WHEN identity-provider claims are mapped for it, an operation is attempted holding
+      the scope but not the role and holding the role but not the scope with role
+      enforcement enabled, the grants interface is called by the credential, the declared
+      estate is reconciled, and a credential is minted, listed and revoked from a session
+      without the administrative role while role enforcement is disabled
+      THEN the claim mapping derives nothing, both one-sided attempts are refused while
+      holding both succeeds, the grants interface is unreachable by the credential, the
+      declared grant is applied and attributed to the gateway's own reconciliation, and
+      each of minting, listing and revoking is refused to the session without the
+      administrative role
+    revision: "0.1.0"
+
+  - id: SVC_GW_0131
+    requirement_ids: ["GW_0131"]
+    title: A machine credential expires, rotates without widening, and is centrally administered
+    verification: automated-test
+    description: |
+      GIVEN a deployment that configures no lifetime cap
+      WHEN a machine credential is requested with no expiry, with an expiry beyond the
+      built-in cap, and with a valid one; the valid one is then rotated, revoked, and
+      listed and revoked by another identity
+      THEN the request without an expiry and the request beyond the cap are both refused
+      rather than defaulted or shortened, the rotation returns a credential with the same
+      identity, the same expiry deadline and each of the same scope values while the
+      previous secret no longer authenticates, the revoked credential is refused on its
+      very next request, and the listing and revocation succeed for an administrator and
+      are refused for anyone else while a person's own credential listing still shows only
+      their own
+    revision: "0.1.0"
