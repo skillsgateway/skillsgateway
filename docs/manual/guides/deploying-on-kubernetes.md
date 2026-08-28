@@ -157,7 +157,9 @@ throwaway environment; it is a deliberate act either way.
 The claim must already exist in the release namespace. The chart does not create
 a PersistentVolumeClaim, because the interesting decisions — storage class,
 access mode, size, static or dynamic provisioning — belong to the cluster, not
-to this chart.
+to this chart. Which of them are even available to you is constrained by the
+platform — see
+[Storage options on serverless Kubernetes](#storage-options-on-serverless-kubernetes).
 
 ### `replicaCount` must stay 1
 
@@ -224,23 +226,75 @@ filesystem; the chart mounts an `emptyDir` at `/tmp` so the runtime keeps
 somewhere to write. `podSecurityContext.fsGroup` is what makes the mounted data
 volume writable by that user.
 
-## Worked example: serverless Kubernetes
+## Storage options on serverless Kubernetes
 
-Serverless node pools (AWS Fargate and equivalents) constrain storage sharply,
-and the constraints interact:
+Serverless node pools — AWS Fargate and its equivalents — constrain storage
+sharply, and the constraints interact. This is the short version of the choice,
+for the case where the platform is already fixed:
 
-- **Block storage cannot be attached.** The EBS CSI *node* component is a
-  DaemonSet, and serverless pods do not run DaemonSets — so there is no
-  ReadWriteOnce block volume available at all.
-- **Network filesystem storage works, but only statically provisioned.** Dynamic
-  provisioning needs a controller that can create access points on demand;
-  serverless pods get an EFS mount handled by the platform, so the
-  PersistentVolume and its access point must exist before the pod does.
-- **The instance metadata service is unavailable**, so AWS credentials reach the
-  workload through a web-identity role bound to the ServiceAccount (IRSA), which
-  is why the chart lets you annotate it.
-- **Pods run in private subnets**, so ingress arrives through a load balancer
-  you place in front of them.
+| Option | Available? | Verdict for this workload |
+| --- | --- | --- |
+| Block storage (RWO) | **No** | Not a trade-off — there is no configuration that gets you one. |
+| Network filesystem (RWX, e.g. NFS/EFS) | Yes, **static provisioning only** | Works. Good for a proof of concept; the substrate git is worst on. |
+| Parallel filesystem (e.g. FSx for Lustre) | **No** | Unavailable on serverless pods. |
+| Object storage | **Not implemented yet** | The intended production answer here — [#127](https://github.com/skillsgateway/skillsgateway/issues/127). |
+| Block storage on managed nodes | Yes, if you can choose the platform | What today's storage was designed for. |
+
+**Block storage is unavailable, not merely awkward.** On EKS, AWS states plainly
+that *"You can't mount Amazon EBS volumes to Fargate Pods"*, and the reason is
+structural: the EBS CSI *node* component is a DaemonSet, and *"Daemonsets aren't
+supported on Fargate"* — the CSI controller can run there, the node component
+cannot. There is no ReadWriteOnce volume to be had, so the single-writer
+filesystem this gateway was built around has nowhere to live.
+
+**A network filesystem works, with static provisioning only.** A Fargate pod
+mounts EFS without any driver installation, but *"You can't use dynamic
+persistent volume provisioning with Fargate nodes, but you can use static
+provisioning"* — so the PersistentVolume and its access point must exist before
+the pod does, which is what the worked example below creates by hand.
+
+Two caveats worth understanding before choosing it:
+
+- **Git is a bad fit for a network filesystem.** Git's on-disk format is a
+  random walk over large packfiles: object lookup seeks into a pack, follows a
+  delta chain, and does it again — plus constant small metadata operations
+  (`stat` on loose objects, lock files, `fsync` on refs). On a local disk the
+  page cache absorbs all of that. Over NFS each one is a network round trip.
+  Expect clone and repack times in multiples, not percentages.
+- **RWX does not enforce the single-writer assumption.** A network filesystem
+  is ReadWriteMany by nature, so nothing stops a second pod from mounting the
+  same volume and writing to it. Today's storage has no cross-pod locking, so
+  `replicaCount: 1` holds by convention here rather than by construction — an
+  RWO block volume would have refused the second writer for you.
+
+**A parallel filesystem is not an option either**: FSx for Lustre is listed as
+unavailable to Fargate pods.
+
+**Object storage is the intended answer on serverless platforms specifically.**
+Not because of scale — because the alternatives here are "impossible" and "the
+substrate git is worst on". It is not implemented yet; [#127](https://github.com/skillsgateway/skillsgateway/issues/127)
+tracks it.
+
+**If the platform choice is still open**, an ordinary managed node group with an
+RWO block volume is what the current storage implementation was designed for,
+and it enforces the single-writer property structurally rather than by
+convention. Serverless is worth its constraints for plenty of workloads; a git
+server on a network filesystem is not the case it is best at.
+
+### Two operational notes that are easy to miss
+
+- **No instance metadata service.** Serverless pods typically cannot reach IMDS,
+  so cloud credentials come from workload identity bound to a *named* service
+  account (IRSA on EKS). That is why the chart creates a ServiceAccount and lets
+  you annotate it; on EKS the documented remedy for a Fargate pod that needs IAM
+  credentials is exactly that.
+- **Egress needs a NAT path.** Fargate pods run in private subnets only, with no
+  direct route to an internet gateway. Ingestion fetches from upstream git over
+  the network, so without a NAT gateway (or equivalent egress) registration and
+  sync will hang rather than fail quickly. Inbound traffic likewise arrives
+  through a load balancer you place in front of the pods.
+
+## Worked example: a statically provisioned network filesystem
 
 Create the access point and the PersistentVolume by hand (ids below are
 placeholders):
@@ -281,19 +335,13 @@ Give the access point a POSIX owner of `65532:65532` so the non-root container
 can write to it, then install with `persistence.mode: existingClaim` and
 `persistence.existingClaim: skills-gateway-data`.
 
-!!! warning "A network filesystem is a poor substrate for git"
+!!! warning "This is a proof-of-concept substrate"
 
-    This works, and it is not what you want in production. Git's on-disk format
-    is a random walk over large packfiles: object lookup seeks into a pack,
-    follows a delta chain, and does it again. On a local disk the page cache
-    absorbs that. Over NFS every one of those seeks is a network round trip, and
-    the metadata operations git performs constantly — `stat` on loose objects,
-    lock files, `fsync` on refs — are exactly what a network filesystem is worst
-    at. Expect clone and repack times measured in multiples, not percentages.
-
-    It is a reasonable substrate for a proof of concept, a pilot, or a small
-    internal estate. The production answer is an object-storage backend that
-    stops treating a POSIX filesystem as the source of truth, tracked as
+    It works, and it is not what you want in production — see
+    [the comparison above](#storage-options-on-serverless-kubernetes). It is a
+    reasonable substrate for a proof of concept, a pilot, or a small internal
+    estate. The production answer is an object-storage backend that stops
+    treating a POSIX filesystem as the source of truth, tracked as
     [#127](https://github.com/skillsgateway/skillsgateway/issues/127).
 
 ## Verifying the install

@@ -43,6 +43,7 @@
 - [x] 6.3 State honestly that a network filesystem is a poor substrate for git, and point at #127 for the production answer
 - [x] 6.4 Point `declarative-estate.md` at how the declaration reaches a deployed gateway
 - [x] 6.5 One nav line in `mkdocs.yml`
+- [x] 6.6 Move the serverless storage-options comparison into the guide, where an operator choosing between them will actually read it, rather than leaving it in issue comments and change proposals that archive away — every availability claim verified against the vendor's own documentation first, and phrased so a reader on another platform can still use it
 
 ## 7. Gates
 
