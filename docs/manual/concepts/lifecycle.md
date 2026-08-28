@@ -16,19 +16,23 @@ This page is the product. Everything else is detail around it.
 --8<-- "docs/manual/assets/diagrams/lifecycle-dark.svg"
 </div>
 
-## The two repositories
+## The repositories
 
-The gateway maintains two bare git repositories per marketplace under
+The gateway maintains bare git repositories per marketplace under
 `skills-gateway.data-dir`:
 
 | Repository | Path | Refs |
 | --- | --- | --- |
-| **Quarantine** | `{data-dir}/quarantine/{marketplace}.git` | One `refs/snapshots/{sha}` per ingested commit. **Never reachable through the facade.** |
+| **Quarantine** | `{data-dir}/quarantine/{marketplace}.git` | One `refs/snapshots/{sha}` per ingested commit. **Never reachable through either endpoint.** |
 | **Published** | `{data-dir}/published/{marketplace}.git` | Exactly one served ref, `refs/heads/main`. Created only by approval. |
+| **Origin** *(hosted only)* | `{data-dir}/hosted/{marketplace}.git` | The publisher's own `refs/heads/main`, written by push and read only by ingestion. |
 
 The facade resolves repositories through a method that opens only the published
 path and returns nothing unless `refs/heads/main` resolves. There is no code
-path from a facade request to the quarantine tree.
+path from a facade request to the quarantine tree — nor from a
+[publish](../guides/publishing-first-party-skills.md) request to either
+quarantine or published: it resolves only the origin path, and only for a
+marketplace the gateway hosts.
 
 ## Stage 1 — ingestion
 
@@ -39,9 +43,14 @@ the only thing the mode changes — every path below runs identically whatever
 pulled the commit in. See
 [Syncing from upstream automatically](../guides/upstream-sync.md).
 
-It clones the upstream default branch with JGit (the gateway never shells out to
+It clones the source's default branch with JGit (the gateway never shells out to
 `git`), resolves the tip commit, and writes it into quarantine as
 `refs/snapshots/{sha}`. The resulting snapshot starts in state `held`.
+
+For a marketplace the gateway hosts there is no upstream: the source is its own
+origin repository and the trigger is the publisher's push. Everything from the
+snapshot pin onward — the manifest check, the vetting chain, the approval gate —
+is the same code on the same content.
 
 Registration has already constrained what can be ingested at all: the URL scheme
 must be on the allowlist, and the ref is the gateway's decision, not the

@@ -87,14 +87,23 @@ quarantine repository is not reachable from here by any code path.
 
 The served SHA changes only when a reviewer approves a snapshot.
 
-## Writes are impossible
+## The facade accepts no writes
 
 Receive-pack is disabled by construction — the servlet is configured with a null
-receive-pack factory, so no `ReceivePack` can be created at all. `git push`
-receives the standard "service not enabled" rejection.
+receive-pack factory, so no `ReceivePack` can be created at all. `git push` to
+`/git/**` receives the standard "service not enabled" rejection, whatever the
+credential.
 
-There is no write-side endpoint, filter or hook to misconfigure. This is a
-structural guarantee, not a policy one.
+There is no write-side endpoint, filter or hook **on this servlet** to
+misconfigure. This is a structural guarantee, not a policy one.
+
+The gateway does accept a push, for marketplaces it
+[hosts itself](../guides/publishing-first-party-skills.md) — on `/publish/**`,
+which is a different servlet resolving a different repository under a different
+token scope, and which cannot reach a published repository any more than this
+one can construct a `ReceivePack`. See
+[ADR 0007](decisions.md) for why the two are separate objects rather than one
+with a mode flag.
 
 ## Auditing
 
@@ -115,5 +124,5 @@ marketplace, the ref and the SHA. Negotiation rounds are not recorded.
 | 401 on every request | Token missing, mistyped, or revoked. Remember the value goes in the **password** field. |
 | 404 for a marketplace you registered | No snapshot has ever been approved, so no published repository exists. |
 | 404 with an odd name | The name failed `^[a-z0-9][a-z0-9_-]*$`. |
-| `git push` rejected | Expected — the facade is read-only by construction. |
+| `git push` rejected | Expected — the facade is read-only by construction. Publishing to a hosted marketplace goes to `/publish/{name}`. |
 | Client keeps getting an old SHA | Also expected. The published ref moves only on approval. |

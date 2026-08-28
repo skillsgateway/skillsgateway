@@ -966,3 +966,32 @@ cases:
       WHEN an identity token from a different issuer is presented, one from the expected issuer is presented, and the session identity endpoint is read on both gateways
       THEN the foreign-issuer token is refused and establishes no session, the matching one succeeds and the identity endpoint reports the configured claim's value which the role lookups key on, and the default gateway behaves exactly as before while logging that no expected issuer is configured
     revision: "0.1.0"
+  - id: SVC_GW_0101
+    requirement_ids: ["GW_0101"]
+    title: A hosted marketplace registers without an upstream and is never fetched from one
+    verification: automated-test
+    description: |
+      GIVEN a gateway with no marketplaces registered
+      WHEN a marketplace is registered as gateway-hosted with no clone URL, a hosted registration supplying a URL is attempted, a non-hosted registration omitting one is attempted, a change of the hosted marketplace's refresh strategy is attempted, the marketplace is described through the API, and the surfaces that report an upstream are exercised for it
+      THEN the hosted registration succeeds and creates its origin repository, the registration supplying a URL and the one omitting one are both refused, the refresh-strategy change is refused, the description names the origin, the rewrite policy and the publish location, and every surface that would have reported an upstream answers without one rather than failing
+    revision: "0.1.0"
+
+  - id: SVC_GW_0102
+    requirement_ids: ["GW_0102"]
+    title: Only an explicitly push-scoped token publishes, and only the single lineage, forward
+    verification: automated-test
+    description: |
+      GIVEN a hosted marketplace, a second hosted marketplace, a token scoped to push to the first, a token with fetch scopes only, a token whose fetch scope is the unscoped every-marketplace form, and a token predating push scopes
+      WHEN each token attempts a real git push of the lineage reference to the first marketplace, the push-scoped token attempts the second marketplace and a name that escapes the storage layout, the push-scoped token attempts a second branch, a tag and a reference deletion, a non-fast-forward push is attempted under each rewrite policy, and a push is attempted against the endpoint that serves approved content
+      THEN only the push-scoped token publishes to the marketplace it names, every other token is refused, the second marketplace and the escaping name answer as not found, the second branch, the tag and the deletion are refused, the non-fast-forward is refused under the default policy leaving the tip unchanged and accepted under the permissive one with both tips on the append-only ledger, and the serving endpoint refuses the push outright
+    revision: "0.1.0"
+
+  - id: SVC_GW_0103
+    requirement_ids: ["GW_0103"]
+    title: A push is quarantined, vetted, held, and served only once approved
+    verification: automated-test
+    description: |
+      GIVEN a hosted marketplace with a push-scoped token, and fixtures carrying respectively clean content, a planted credential, and a manifest declaring a non-local plugin source
+      WHEN each fixture is pushed, the served endpoint is cloned before and after approval, and an approved snapshot is subsequently revoked
+      THEN each push produces a snapshot identified by the pushed commit SHA, the clean one is held with a passing vetting chain, the planted credential is held with findings, the non-local manifest is rejected, the clone before approval fails as it does for a marketplace that serves nothing, the clone after approval returns exactly the pushed content, and the clone after revocation fails again
+    revision: "0.1.0"

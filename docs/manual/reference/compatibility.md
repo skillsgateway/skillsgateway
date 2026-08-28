@@ -77,7 +77,7 @@ The facade is plain read-only git smart-HTTP, so anything that clones works.
 | Claude Code (`claude plugin marketplace add`) | The primary target. |
 | Copilot / Cursor (open Agent Skills `SKILL.md` repositories) | Works — the facade serves a git repository. |
 | CI pipelines, bare `git clone` | Works with a PAT. |
-| Anything attempting `git push` | Rejected by construction. |
+| Anything attempting `git push` to `/git/**` | Rejected by construction. (A hosted marketplace is published to on `/publish/**`, a separate endpoint.) |
 
 ## Enforcement mechanisms
 

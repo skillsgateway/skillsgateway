@@ -3,6 +3,11 @@
 Registration tells the gateway which upstream repository it is willing to talk
 to. It is the first trust boundary, and it fetches nothing.
 
+If the skills are your organisation's own and there is no upstream to point at,
+register a **hosted** marketplace instead and push to the gateway directly —
+see [Publishing first-party skills](publishing-first-party-skills.md). The rest
+of this page is about upstream marketplaces.
+
 ## In the portal
 
 **Marketplaces** → **Register marketplace**. The dialog states the constraint up

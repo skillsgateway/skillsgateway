@@ -16,7 +16,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * The shared trigger path for sync-driven ingestion (GW_0056–GW_0060). Both automated triggers —
@@ -61,8 +63,16 @@ public class SyncService {
      * (re-)generates the secret — which is also the rotation mechanism — and leaving it discards
      * the key. The secret is returned exactly once, here; no read path ever exposes it.
      */
-    @Requirements({"GW_0056", "GW_0060"})
+    @Requirements({"GW_0056", "GW_0060", "GW_0101"})
     public Optional<ModeChange> changeMode(String name, String mode, String actor) {
+        // A hosted marketplace has no upstream to poll or be notified about: its ingestion trigger
+        // is the push itself (GW_0101). The table's CHECK is the backstop; this is the answer.
+        marketplaceRepository.findByName(name).filter(Marketplace::hosted).ifPresent(marketplace -> {
+            throw new ResponseStatusException(
+                    HttpStatus.UNPROCESSABLE_CONTENT,
+                    "'%s' is hosted by the gateway; its ingestion trigger is the push, not a sync mode"
+                            .formatted(name));
+        });
         String secret = Marketplace.SYNC_WEBHOOK.equals(mode) ? newSecret() : null;
         Optional<Marketplace> updated = marketplaceRepository.updateSyncMode(name, mode, secret);
         updated.ifPresent(

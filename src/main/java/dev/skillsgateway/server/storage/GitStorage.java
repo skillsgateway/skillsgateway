@@ -7,8 +7,9 @@ import org.eclipse.jgit.lib.Repository;
 /**
  * The storage seam between the gateway and its git repositories.
  *
- * <p>Quarantine holds everything fetched from upstreams and is never served; published holds only
- * approved content and is all the facade ever opens. A JGit-DFS implementation over object storage
+ * <p>Quarantine holds everything ingested and is never served; published holds only approved
+ * content and is all the consumer facade ever opens; a hosted marketplace additionally has an
+ * origin repository that publishers push to and only ingestion reads. A JGit-DFS implementation over object storage
  * replaces this interface on the roadmap (ARCHITECTURE.md §12) without touching callers.
  *
  * <p>Returned repositories are open handles; callers close them (try-with-resources).
@@ -17,6 +18,17 @@ public interface GitStorage {
 
     /** Open (creating if absent) the quarantine repository for a marketplace. */
     Repository quarantine(String marketplace) throws IOException;
+
+    /**
+     * Open (creating if absent) the origin repository of a gateway-hosted marketplace (GW_0101):
+     * the publisher's source of record, which is neither quarantine nor published. Ingestion
+     * fetches out of it exactly as it fetches from an upstream URL, so quarantine keeps its
+     * property of having exactly one writer.
+     */
+    Repository hosted(String marketplace) throws IOException;
+
+    /** Open the origin repository only if it already exists; empty otherwise. */
+    Optional<Repository> hostedIfPresent(String marketplace) throws IOException;
 
     /** Open (creating if absent) the published repository for a marketplace. */
     Repository published(String marketplace) throws IOException;

@@ -107,9 +107,14 @@ public record SkillsGatewayProperties(
      *     immutable — a differing declared URL is a reconciliation failure, never an update
      * @param syncMode {@code on-demand} or {@code scheduled}; {@code webhook} is refused (its inbound
      *     HMAC secret is gateway-generated show-once, which has no declarative form). Null means the
-     *     stored mode is not managed and never touched.
+     *     stored mode is not managed and never touched. A hosted marketplace accepts only
+     *     {@code on-demand}: its ingestion trigger is the push.
+     * @param origin {@code upstream} (the default) or {@code hosted} (GW_0101); a hosted marketplace
+     *     declares no url, and like a url the origin is immutable after registration
+     * @param pushPolicy for a hosted marketplace, {@code append-only} (the default) or
+     *     {@code allow-rewrite}
      */
-    public record DeclaredMarketplace(String name, String url, String syncMode) {}
+    public record DeclaredMarketplace(String name, String url, String syncMode, String origin, String pushPolicy) {}
 
     /**
      * A declared role grant (GW_0085), the exact shape of the grants API: approver grants name one

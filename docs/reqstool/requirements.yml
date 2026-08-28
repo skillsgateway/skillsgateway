@@ -789,3 +789,27 @@ requirements:
     rationale: On an app registration shared between services the subject claim is an opaque per-application identifier, so grants, the configured admin list and every ledger row would name a string no human can resolve to a person; and where one authorization endpoint serves many tenants every tenant's tokens verify against the same signing keys, which makes the issuer the tenant boundary — leaving it unchecked accepts a login from an organisation the deployment has no relationship with.
     categories: ["security"]
     revision: 0.1.0
+
+  - id: GW_0101
+    title: Gateway-hosted marketplace origin
+    significance: shall
+    description: The system shall allow an administrator to register a marketplace that the gateway itself hosts — accepting no clone URL for it, refusing a registration that supplies one, and refusing as before a non-hosted registration that omits one — shall create for it a gateway-owned origin repository that is neither the quarantine area nor the served area, shall never fetch such a marketplace from any external location, shall keep its refresh strategy fixed at on-demand and refuse to change it, and shall report the marketplace's origin, its history-rewrite policy and the location publishers push to wherever it describes the marketplace.
+    rationale: An organisation that authors its own skills should not have to stand up a repository elsewhere purely to give the gateway something to pull from, and then govern the same content twice; giving the gateway its own origin removes the second system without giving the served area a writer, and fixing the refresh strategy keeps a scheduled sweep from trying to fetch an upstream that does not exist.
+    categories: ["functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0102
+    title: Authenticated publication over a separate write endpoint
+    significance: shall
+    description: The system shall accept authenticated git pushes into a hosted marketplace's origin repository over an endpoint separate from the one that serves approved content, shall authorize such a push only by a token scope granted explicitly per marketplace with no form of that scope meaning every marketplace, shall answer a push for a marketplace outside the token's scope indistinguishably from one that does not exist, shall accept an update only to the marketplace's single lineage reference and refuse every other reference, shall refuse every reference deletion, shall refuse an update that is not a fast-forward unless the marketplace's policy permits rewriting and shall append the old and new tip to the append-only ledger when it does, and shall continue to accept no push whatsoever on the endpoint that serves approved content.
+    rationale: A write path into a product whose serving surface is read-only by construction earns its trust only by being somewhere else — a different endpoint, a different repository, and a credential nobody holds by default — so no existing token and no existing route gains a capability. Refusing everything but the one lineage reference keeps the single-history guarantee that makes a snapshot's provenance meaningful, and a rewrite that is permitted must at least be answerable afterwards.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0103
+    title: Pushed content traverses the unchanged pipeline
+    significance: shall
+    description: The system shall ingest a commit pushed to a hosted marketplace into the quarantine area, identify it by its commit SHA, validate its manifest, vet it and hold it exactly as it does content fetched from an upstream, and shall not serve it until it has been explicitly approved.
+    rationale: The value of first-party hosting is that it removes a redundant system, not that it removes review; content the organisation wrote is exactly as capable of carrying a planted credential or a prompt injection as content it did not, and a publisher who could also serve would make the approval gate optional.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0

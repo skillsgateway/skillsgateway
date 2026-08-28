@@ -103,6 +103,20 @@ radius for user-authored rules and a playground pointed at real snapshots.
 Scope is deny-only on purpose; auto-approval would delegate the human gate and
 stays parked as a product decision.
 
+### [ADR 0007 — First-party hosting: a write path, deliberately somewhere else](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0007-first-party-hosting-and-the-publish-endpoint.md)
+
+*Accepted, 2026-08-23.*
+
+The gateway accepts git pushes for marketplaces it hosts itself — on a
+**separate endpoint** (`/publish/**`, so the serving facade keeps its null
+receive-pack factory), into a **separate repository** (the publisher's origin,
+so quarantine keeps exactly one writer), under a **separate token scope** that
+no existing token holds and that has no every-marketplace form. One lineage,
+forward only unless the marketplace says otherwise, and the approval gate is
+untouched: pushed content is quarantined, vetted and held like anything
+fetched. Auto-approval for trusted internal publishers stays parked per ADR
+0006.
+
 ## Related
 
 - [Architecture](../architecture.md)

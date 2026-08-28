@@ -203,11 +203,12 @@ class EstateReconciliationTests extends AbstractGatewayTest {
         String fresh = uniqueName("estate-fresh");
         Estate estate = new Estate(
                 List.of(
-                        new DeclaredMarketplace("estate-evil", "ssh://evil.invalid/repo.git", null),
-                        new DeclaredMarketplace("catalog", "https://example.invalid/catalog.git", null),
-                        new DeclaredMarketplace(drift, "https://example.invalid/other.git", null),
-                        new DeclaredMarketplace("estate-webhookmode", "https://example.invalid/wh.git", "webhook"),
-                        new DeclaredMarketplace(fresh, "https://example.invalid/fresh.git", "scheduled")),
+                        new DeclaredMarketplace("estate-evil", "ssh://evil.invalid/repo.git", null, null, null),
+                        new DeclaredMarketplace("catalog", "https://example.invalid/catalog.git", null, null, null),
+                        new DeclaredMarketplace(drift, "https://example.invalid/other.git", null, null, null),
+                        new DeclaredMarketplace(
+                                "estate-webhookmode", "https://example.invalid/wh.git", "webhook", null, null),
+                        new DeclaredMarketplace(fresh, "https://example.invalid/fresh.git", "scheduled", null, null)),
                 null,
                 null,
                 null,
@@ -363,8 +364,8 @@ class EstateReconciliationTests extends AbstractGatewayTest {
         String good = uniqueName("estate-isolated");
         Estate estate = new Estate(
                 List.of(
-                        new DeclaredMarketplace("estate-broken", "ssh://evil.invalid/repo.git", null),
-                        new DeclaredMarketplace(good, "https://example.invalid/good.git", null)),
+                        new DeclaredMarketplace("estate-broken", "ssh://evil.invalid/repo.git", null, null, null),
+                        new DeclaredMarketplace(good, "https://example.invalid/good.git", null, null, null)),
                 null,
                 null,
                 null,
