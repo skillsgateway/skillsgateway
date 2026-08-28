@@ -186,6 +186,21 @@ in group 7 exists, and passing after.
 - [ ] 8.8 RED: `GET /api/retention/candidates` is reachable while
       `POST /api/retention/evaluate` is not, and evaluate's soft-delete is
       demonstrably why. (SVC_GW_0118)
+- [ ] 8.9 Record a machine read of `GET /api/roles` on the ledger — a new
+      behaviour: no read on this surface is logged today. Entry carries
+      `actor_type='machine'`, the credential's principal, and a `roles-read`
+      event. `@Requirements({"GW_0117", "GW_0118"})`.
+- [ ] 8.10 RED: a machine credential reading `/api/roles` writes exactly one
+      ledger entry, with the right actor type and principal. Watch it fail.
+      (SVC_GW_0117)
+- [ ] 8.11 RED: a **human** session reading `/api/roles` writes **no** entry —
+      the asymmetry is deliberate (design decision 3) and must be asserted, not
+      left as an accident of implementation. (SVC_GW_0117)
+- [ ] 8.12 RED: a machine read of `GET /api/audit` writes no entry — reading the
+      ledger must not append to the ledger, or a polling exporter grows a
+      permanent floor of self-referential rows. (SVC_GW_0117)
+- [ ] 8.13 RED: the entry is written only on an authorized read; a 403 on
+      `/api/roles` does not produce a `roles-read` entry. (SVC_GW_0117)
 
 ## 9. Roles for a machine credential
 

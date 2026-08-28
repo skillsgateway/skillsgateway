@@ -278,12 +278,61 @@ attack surface — a credential that can write grants can escalate whatever it c
 reach — for a capability that already has a safer route. It is easy to add later
 and hard to remove once issued credentials depend on it, so it stays out.
 
-`GET /api/roles` **is** reachable as `roles:read`. This is a deliberate narrow
-reading of "role grants should not be machine-reachable": reading who holds
-what is not granting, and it is what lets a pipeline detect drift between
-`estate.grants` and reality — the one thing the estate's additive,
-never-pruning model cannot tell you by itself. Flagged for the owner as the
-single place this design does not take the instruction at its widest.
+**`GET /api/roles` is reachable as `roles:read` (settled).** Reading is not
+granting, and the two are separated deliberately:
+
+- **Denying the read does not prevent drift; it makes drift undetectable.**
+  `estate.grants` is additive and never prunes, so a pipeline can declare grants
+  but cannot discover grants it did not declare. A role granted by hand through
+  the portal is invisible to the estate. `roles:read` is the only mechanism by
+  which automation can find that divergence.
+- **The security property that matters is non-escalation**, and `roles:read`
+  confers none of it: a machine credential cannot create a grant and cannot give
+  itself or anyone else authority. It is the same class of access as
+  `GET /api/audit`, which is already machine-reachable.
+- **The residual cost is real and is not glossed:** it exposes who holds what
+  authority, which has reconnaissance value to a stolen credential. An attacker
+  with a leaked `roles:read` credential learns which principals to target next.
+
+**The condition on keeping it: a machine read of `/api/roles` is recorded on the
+ledger.** Since the exposure cannot be removed without losing drift detection,
+it is made visible after the fact instead.
+
+*What exists today.* Nothing. `RoleController.list` calls `requireAdmin` and
+returns; `AuditController`'s ledger read calls `requireAuditor` and returns.
+Neither writes an entry. **Reads are not logged anywhere on this surface**, so
+this is a new behaviour and a deliberate choice rather than a confirmation that
+an existing mechanism also covers machine principals.
+
+*The choice: machine-principal reads only, not all reads.* A human admin
+opening the roles screen produces a page load, and a portal that re-renders or
+polls would append an entry every time — entries that carry no signal, on a
+ledger that is cursor-exported to SIEM sinks in batches, so the noise has
+downstream cost in someone else's system. A non-interactive credential
+enumerating role grants is rare, deliberate, and unaccompanied by a human; the
+rarity is exactly what makes it worth a row. The asymmetry tracks a real
+difference in exposure: a human admin reading grants already holds admin and is
+present, whereas the case this defends against is a stolen credential doing
+reconnaissance with nobody watching.
+
+*The honest cost of that asymmetry,* stated rather than hidden: the ledger then
+cannot answer "who has read the grants" uniformly, and an attacker who
+compromises a **human** session reads them without a trace. This is accepted
+because the mechanism is identical either way — the entry is written at the same
+call site — so extending it to every principal later is a one-line change, not
+a redesign. `actor_type` is what makes the resulting entries separable, so
+turning it on for humans would not destroy the machine signal.
+
+*Deliberately not extended to `GET /api/audit`,* despite that endpoint having
+at least as much reconnaissance value, for a specific reason: reading the ledger
+would write to the ledger. An audit sink or exporter polling on a cursor loop
+appends one entry per poll, and that entry is itself new content to export. It
+converges rather than exploding — one row per request, not per row read — but it
+means the ledger never goes quiet and every deployment with a polling exporter
+grows a permanent floor of self-referential entries. That is a worse outcome
+than the gap it closes. `GET /api/adoption` has no such feedback and is a
+reasonable future candidate; it is left out here to keep the change to the
+endpoint the reconnaissance argument was actually made about.
 
 ### 4. Audit attribution: an explicit actor type on the ledger row
 
@@ -451,6 +500,11 @@ scopes; with roles on, it narrows further.
   allowlist that excludes every act of judgement and every retraction, explicit
   actor typing so misuse is legible on the ledger, and admin-scoped revocation
   for incidents.
+- **`roles:read` gives a stolen credential a map of who holds what
+  authority.** → Accepted as the price of detectable drift, and made visible
+  after the fact: every machine read of `/api/roles` lands on the ledger with
+  its actor type. A human read does not, which is a known and deliberate hole
+  in that coverage (decision 3).
 - **Twenty scopes is more surface to get right than one.** → Accepted
   deliberately: coarse-to-fine is a breaking change to issued credentials,
   fine-to-coarse is not. The enumerating test (task group 0) is what keeps the
@@ -485,9 +539,10 @@ API reach and nothing else.
 
 ## Open Questions
 
-1. **`roles:read` as `GET /api/roles`** — the one place this design narrows the
-   owner's "role grants should not be machine-reachable" to writes only, on the
-   argument that drift detection needs it. Easy to drop.
+1. **Should machine read-logging extend beyond `/api/roles`?** `GET
+   /api/adoption` exposes identities and has no feedback problem; `GET
+   /api/audit` does have one (decision 3). Left at the one endpoint the
+   reconnaissance argument was made about.
 2. **`GET /api/me` is unreachable**, so a machine credential has no "does my
    token work and what can it do" endpoint. A dedicated introspection endpoint
    would be genuinely useful and is deliberately not proposed here.

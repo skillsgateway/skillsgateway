@@ -81,6 +81,12 @@ letting an existing facade credential become one.
 - **No role granting by machine.** `estate.grants` already covers the
   declarative case with no credential in the pipeline; a machine write path
   would add escalation surface for a capability that has a safer route.
+  *Reading* grants (`roles:read`) is reachable, because denying it would not
+  prevent drift — the estate never prunes, so it cannot discover a grant made
+  by hand — it would only make that drift undetectable. The reconnaissance cost
+  is accepted and paid for: every machine read of `/api/roles` is recorded on
+  the ledger, which is a new behaviour, since no read on this surface is logged
+  today.
 - **The enumerating allowlist test is a prerequisite, not part of this
   change.** It touches every controller and bundling it would make a
   trust-boundary PR harder to review. See task group 0.
