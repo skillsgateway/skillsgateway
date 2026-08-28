@@ -74,6 +74,35 @@ mutant() {
   restore "$file"
 }
 
+# Negative controls, run only on request: the proof that a green run of this
+# script means something. A checker that cannot be observed failing is a
+# checker whose pass is worth nothing, so both of its failure paths are
+# exercised against known-bad input.
+#
+#   MUTATION_NEGATIVE_CONTROL=survivor  a mutant no test can kill (a comment
+#                                       edit) must be reported as SURVIVED and
+#                                       must make the script exit non-zero
+#   MUTATION_NEGATIVE_CONTROL=anchor    a mutant whose anchor matches nothing
+#                                       must abort with FATAL, never be counted
+case "${MUTATION_NEGATIVE_CONTROL:-}" in
+  survivor)
+    mutant "NC1 comment-only edit (must survive)" "$GATE" \
+      's/Separation of duties on approval/Separation of duties at approval/'
+    ;;
+  anchor)
+    mutant "NC2 anchor that matches nothing (must abort)" "$GATE" \
+      's/this anchor does not exist anywhere in the file/replacement/'
+    ;;
+esac
+if [[ -n "${MUTATION_NEGATIVE_CONTROL:-}" ]]; then
+  # A control is about the runner, not about the rule: the eight real mutants
+  # are not run, and a control that behaves as required leaves a non-zero exit.
+  echo "----"
+  echo "negative control only: $((total - survivors))/$total killed, $survivors survived"
+  [[ $survivors -eq 0 ]]
+  exit
+fi
+
 # M1 — the trigger constants stop being excluded: a snapshot the sweep ingested
 #      becomes unapprovable by the identity the sweep acts under.
 mutant "M1 non-human actors no longer excluded" "$GATE" \
