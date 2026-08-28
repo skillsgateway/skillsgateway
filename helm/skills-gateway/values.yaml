@@ -44,9 +44,43 @@ securityContext:
     drop:
       - ALL
 
-# The filesystem git storage assumes a SINGLE writer — there is no cross-pod
-# locking — so this must stay 1. See guides/deploying-on-kubernetes.md.
+# More than one replica is accepted only where concurrent writers are safe by
+# construction: `storage.backend: object-store`, AND with the gateway's
+# uncoordinated background singletons switched off in `config` (see the failure
+# message the chart produces). On `filesystem` there is no cross-pod locking at
+# all, so the chart refuses outright rather than trusting the operator to know
+# that. See guides/deploying-on-kubernetes.md.
 replicaCount: 1
+
+# Which storage holds the git repositories. The gateway takes this from a name
+# and never infers it, and neither does the chart: an object-store selection
+# missing what it needs fails the render, the same way it would fail the start.
+#
+#   backend: filesystem    — bare repositories on the /data volume (the default)
+#   backend: object-store  — JGit over an S3-compatible bucket; reference state
+#                            is one conditionally written manifest per repository
+#
+# With `object-store`, `region` and `bucket` are required. `credentials.mode` is
+# `web-identity` by default — workload identity (IRSA and its equivalents),
+# where the pod holds no secret at all and the role is attached by annotating
+# `serviceAccount.annotations`. `static` is the fallback for stores with no role
+# mechanism, and the keys then come from a Secret rather than from this file.
+storage:
+  backend: filesystem
+  objectStore:
+    # Leave empty for the regional AWS endpoint; set it for an S3-compatible
+    # store or for an S3 VPC endpoint.
+    endpoint: ""
+    region: ""
+    bucket: ""
+    # Key prefix inside the bucket, so one bucket can hold more than one gateway.
+    prefix: ""
+    credentials:
+      # web-identity | default | static
+      mode: web-identity
+      # `static` only: an existing Secret with keys `access-key-id` and
+      # `secret-access-key`. There is deliberately nowhere here to type a key.
+      existingSecret: ""
 
 service:
   type: ClusterIP
@@ -89,7 +123,15 @@ oidc:
 #   mode: existingClaim  — bind `existingClaim` to a PersistentVolumeClaim that
 #                          already exists in the release namespace (durable).
 #   mode: ephemeral      — emptyDir. ALL git content is lost when the pod
-#                          restarts. Demos and throwaway environments only.
+#                          restarts. Demos and throwaway environments only. On
+#                          `storage.backend: object-store` this is the right
+#                          choice for the local pack cache, which is not
+#                          authoritative and is safe to lose at any moment.
+#   mode: none           — no volume at all. Valid ONLY on
+#                          `storage.backend: object-store`, where the bucket is
+#                          the repository; the pack cache then lives in the
+#                          container's temporary directory and is rebuilt on
+#                          every start, which costs cold-start latency.
 #
 # Anything else — including leaving `mode` empty — fails the template.
 persistence:

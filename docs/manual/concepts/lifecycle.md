@@ -18,14 +18,44 @@ This page is the product. Everything else is detail around it.
 
 ## The repositories
 
-The gateway maintains bare git repositories per marketplace under
-`skills-gateway.data-dir`:
+The gateway maintains three repositories per marketplace. The three roles are
+the model; where they physically live depends on the configured
+[storage backend](../guides/storage-backends.md), and nothing above the storage
+seam can tell which one answered.
 
-| Repository | Path | Refs |
-| --- | --- | --- |
-| **Quarantine** | `{data-dir}/quarantine/{marketplace}.git` | One `refs/snapshots/{sha}` per ingested commit. **Never reachable through either endpoint.** |
-| **Published** | `{data-dir}/published/{marketplace}.git` | Exactly one served ref, `refs/heads/main`. Created only by approval. |
-| **Origin** *(hosted only)* | `{data-dir}/hosted/{marketplace}.git` | The publisher's own `refs/heads/main`, written by push and read only by ingestion. |
+| Repository | Refs |
+| --- | --- |
+| **Quarantine** | One `refs/snapshots/{sha}` per ingested commit. **Never reachable through either endpoint.** |
+| **Published** | Exactly one served ref, `refs/heads/main`, plus the `refs/snapshots/{sha}` approval pinned alongside it. Created only by approval. |
+| **Origin** *(hosted only)* | The publisher's own `refs/heads/main`, written by push and read only by ingestion. |
+
+=== "`filesystem`"
+
+    Three directories of bare repositories under `skills-gateway.data-dir`:
+
+    | Repository | Path |
+    | --- | --- |
+    | Quarantine | `{data-dir}/quarantine/{marketplace}.git` |
+    | Published | `{data-dir}/published/{marketplace}.git` |
+    | Origin | `{data-dir}/hosted/{marketplace}.git` |
+
+=== "`object-store`"
+
+    Three key prefixes in one bucket, which keeps the roles separate for the
+    same reason three directories do. Objects are immutable and content-named;
+    the reference map is one small `manifest` object per repository, rewritten
+    by a conditional write, and that compare-and-swap is the only serialization
+    point in the system.
+
+    | Key | Holds |
+    | --- | --- |
+    | `{prefix}/{role}/{marketplace}/manifest` | The reference map, the write-ahead sequence it reflects, and the live pack set |
+    | `{prefix}/{role}/{marketplace}/wal/{seq}` | One immutable entry per accepted transition |
+    | `{prefix}/{role}/{marketplace}/objects/pack/…` | Immutable, content-named packs, durable before anything references them |
+
+    `{role}` is `quarantine`, `published` or `hosted`. Local disk holds only a
+    bounded pack cache; nothing in it is authoritative and deleting it is always
+    safe.
 
 The facade resolves repositories through a method that opens only the published
 path and returns nothing unless `refs/heads/main` resolves. There is no code

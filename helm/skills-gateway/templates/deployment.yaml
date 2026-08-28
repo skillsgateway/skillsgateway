@@ -1,3 +1,5 @@
+{{- include "skills-gateway.storageGate" . -}}
+{{- include "skills-gateway.replicaGate" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -73,6 +75,47 @@ spec:
             - name: SKILLSGATEWAY_OIDC_ISSUER
               value: {{ .Values.oidc.issuer | quote }}
             {{- end }}
+            # The storage backend is named, never inferred -- here as in the
+            # gateway, so what the values file says and what the pod does are
+            # the same statement.
+            - name: SKILLSGATEWAY_STORAGE_BACKEND
+              value: {{ .Values.storage.backend | quote }}
+            {{- if eq .Values.storage.backend "object-store" }}
+            - name: SKILLSGATEWAY_STORAGE_OBJECTSTORE_BUCKET
+              value: {{ .Values.storage.objectStore.bucket | quote }}
+            - name: SKILLSGATEWAY_STORAGE_OBJECTSTORE_REGION
+              value: {{ .Values.storage.objectStore.region | quote }}
+            {{- if .Values.storage.objectStore.endpoint }}
+            - name: SKILLSGATEWAY_STORAGE_OBJECTSTORE_ENDPOINT
+              value: {{ .Values.storage.objectStore.endpoint | quote }}
+            {{- end }}
+            {{- if .Values.storage.objectStore.prefix }}
+            - name: SKILLSGATEWAY_STORAGE_OBJECTSTORE_PREFIX
+              value: {{ .Values.storage.objectStore.prefix | quote }}
+            {{- end }}
+            - name: SKILLSGATEWAY_STORAGE_OBJECTSTORE_CREDENTIALS_MODE
+              value: {{ .Values.storage.objectStore.credentials.mode | quote }}
+            {{- if eq .Values.storage.objectStore.credentials.mode "static" }}
+            # Never from the values file: a ConfigMap is not a Secret, and an
+            # access key is the one credential this deployment can still hold.
+            - name: SKILLSGATEWAY_STORAGE_OBJECTSTORE_CREDENTIALS_ACCESSKEYID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.storage.objectStore.credentials.existingSecret }}
+                  key: access-key-id
+            - name: SKILLSGATEWAY_STORAGE_OBJECTSTORE_CREDENTIALS_SECRETACCESSKEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.storage.objectStore.credentials.existingSecret }}
+                  key: secret-access-key
+            {{- end }}
+            {{- if eq .Values.persistence.mode "none" }}
+            # No volume: the pack cache is not authoritative, so it goes to the
+            # writable temporary directory and is rebuilt on every start.
+            - name: SKILLSGATEWAY_STORAGE_OBJECTSTORE_CACHE_DIR
+              value: /tmp/pack-cache
+            {{- end }}
+            {{- end }}
             {{- if .Values.config }}
             # Layered on top of the application.yaml inside the image; the
             # image keeps the defaults, this file overrides them. `optional:`
@@ -91,8 +134,10 @@ spec:
           # actuator endpoint; liveness/readiness subpaths would be
           # redirected to the IdP.
           volumeMounts:
+            {{- if ne .Values.persistence.mode "none" }}
             - name: data
               mountPath: /data
+            {{- end }}
             # The root filesystem is read-only, so the one path the runtime
             # still needs to write -- temporary files, including JGit's -- is
             # provided explicitly.
@@ -128,8 +173,12 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
+        {{- if ne .Values.persistence.mode "none" }}
         - name: data
           {{- include "skills-gateway.storageVolume" . | nindent 10 }}
+        {{- else }}
+        {{- include "skills-gateway.storageVolume" . }}
+        {{- end }}
         - name: tmp
           emptyDir: {}
         {{- if .Values.config }}

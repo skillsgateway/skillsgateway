@@ -8,6 +8,8 @@ import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Stream;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.RefUpdate;
@@ -18,6 +20,7 @@ public class FilesystemGitStorage implements GitStorage {
 
     private static final String MAIN = "main";
     private static final String SNAPSHOT_REF_PREFIX = "refs/snapshots/";
+    private static final String GIT_SUFFIX = ".git";
 
     /** The results a forced deletion reports when the ref is gone afterwards. */
     private static final Set<RefUpdate.Result> DELETED =
@@ -34,6 +37,29 @@ public class FilesystemGitStorage implements GitStorage {
         Files.createDirectories(quarantineDir);
         Files.createDirectories(publishedDir);
         Files.createDirectories(hostedDir);
+    }
+
+    @Override
+    public Set<String> marketplaces(Role role) throws IOException {
+        Path dir = dir(role);
+        if (!Files.isDirectory(dir)) {
+            return Set.of();
+        }
+        try (Stream<Path> entries = Files.list(dir)) {
+            return entries.filter(Files::isDirectory)
+                    .map(path -> path.getFileName().toString())
+                    .filter(name -> name.endsWith(GIT_SUFFIX))
+                    .map(name -> name.substring(0, name.length() - GIT_SUFFIX.length()))
+                    .collect(java.util.stream.Collectors.toCollection(TreeSet::new));
+        }
+    }
+
+    private Path dir(Role role) {
+        return switch (role) {
+            case QUARANTINE -> quarantineDir;
+            case HOSTED -> hostedDir;
+            case PUBLISHED -> publishedDir;
+        };
     }
 
     @Override

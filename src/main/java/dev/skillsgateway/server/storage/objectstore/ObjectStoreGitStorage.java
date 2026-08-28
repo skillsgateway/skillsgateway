@@ -8,9 +8,10 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
@@ -37,17 +38,6 @@ public final class ObjectStoreGitStorage implements GitStorage, AutoCloseable {
 
     private static final String MAIN = Constants.R_HEADS + "main";
     private static final String SNAPSHOT_REF_PREFIX = "refs/snapshots/";
-
-    /** The three roles, which are three key prefixes. */
-    enum Role {
-        QUARANTINE,
-        HOSTED,
-        PUBLISHED;
-
-        String path() {
-            return name().toLowerCase(Locale.ROOT);
-        }
-    }
 
     private final ObjectStoreClient store;
     private final SkillsGatewayProperties.Cache cacheSettings;
@@ -94,6 +84,27 @@ public final class ObjectStoreGitStorage implements GitStorage, AutoCloseable {
      */
     public void checkReachable() throws IOException {
         store.list(prefix);
+    }
+
+    /**
+     * The marketplaces this role holds, read from the bucket itself: every key under the role's
+     * prefix that is a repository manifest, which is the one object a repository cannot exist
+     * without. Listing prefixes would also count a repository whose packs were uploaded and whose
+     * manifest never was — that is a half-written repository, and a migration must not treat it
+     * as one that exists.
+     */
+    @Override
+    public Set<String> marketplaces(Role role) throws IOException {
+        String rolePrefix = prefix + role.path() + "/";
+        Set<String> names = new TreeSet<>();
+        for (String key : store.list(rolePrefix)) {
+            String rest = key.substring(rolePrefix.length());
+            int slash = rest.indexOf('/');
+            if (slash > 0 && rest.substring(slash + 1).equals("manifest")) {
+                names.add(rest.substring(0, slash));
+            }
+        }
+        return names;
     }
 
     @Override

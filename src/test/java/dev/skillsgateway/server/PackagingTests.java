@@ -214,6 +214,83 @@ class PackagingTests {
     }
 
     @Test
+    @SVCs({"SVC_GW_0115"})
+    void chartRefusesAStorageShapeTheGatewayCannotHonour() throws IOException {
+        Path chart = REPO_ROOT.resolve("helm/skills-gateway");
+        Map<String, Object> values = parse(chart.resolve("values.yaml"));
+        String helpers = Files.readString(chart.resolve("templates/_helpers.tpl"));
+        String deployment = Files.readString(chart.resolve("templates/deployment.yaml"));
+
+        // The backend is named in the chart exactly as it is named in the gateway, and defaults
+        // the same way, so an upgrade of an existing install changes nothing.
+        Map<String, Object> storage = section(values, "storage");
+        assertThat(storage).as("storage block present").isNotNull();
+        assertThat(storage.get("backend")).isEqualTo("filesystem");
+        Map<String, Object> objectStore = section(storage, "objectStore");
+        assertThat(objectStore).containsKeys("endpoint", "region", "bucket", "prefix");
+        Map<String, Object> credentials = section(objectStore, "credentials");
+        assertThat(credentials.get("mode"))
+                .as("workload identity is the primary mechanism, not the fallback")
+                .isEqualTo("web-identity");
+        assertThat(credentials).containsKey("existingSecret");
+
+        // Selecting the bucket must actually reach the gateway, or the chart would render a
+        // deployment that reads from a filesystem while the values file says object storage.
+        String gate = define(helpers, "skills-gateway.storageGate");
+        assertThat(gate).as("the object-store selection is gated").contains("object-store");
+        assertThat(gate)
+                .as("an incomplete object-store selection is refused at render, not at startup")
+                .contains(".Values.storage.objectStore")
+                .contains("bucket is empty")
+                .contains("region is empty")
+                .contains("fail");
+        assertThat(gate)
+                .as("static credentials without the secret holding them are refused")
+                .contains("existingSecret");
+        assertThat(deployment).contains("skills-gateway.storageGate");
+        assertThat(deployment)
+                .contains("SKILLSGATEWAY_STORAGE_BACKEND")
+                .contains("SKILLSGATEWAY_STORAGE_OBJECTSTORE_BUCKET")
+                .contains("SKILLSGATEWAY_STORAGE_OBJECTSTORE_REGION")
+                .contains("SKILLSGATEWAY_STORAGE_OBJECTSTORE_CREDENTIALS_MODE");
+        assertThat(deployment)
+                .as("a static access key comes from a Secret, never from the values file")
+                .contains("access-key-id")
+                .contains("secretKeyRef");
+        assertThat(Files.readString(chart.resolve("values.yaml")))
+                .as("the values file must not carry a place to type an access key")
+                .doesNotContain("accessKeyId");
+
+        // The third durability mode: no volume at all, and only where the bucket is the repository.
+        String volume = define(helpers, "skills-gateway.storageVolume");
+        assertThat(volume).contains("eq $mode \"none\"");
+        assertThat(branch(volume, "eq $mode \"none\""))
+                .as("no durable volume is only ever correct when the bucket holds the repositories")
+                .contains("object-store")
+                .contains("fail");
+        assertThat(deployment)
+                .as("the data volume and its mount are omitted when there is no volume to mount")
+                .contains("ne .Values.persistence.mode \"none\"");
+        assertThat(deployment)
+                .as("with no volume the local pack cache still needs somewhere writable")
+                .contains("SKILLSGATEWAY_STORAGE_OBJECTSTORE_CACHE_DIR");
+
+        // Replica gating: the storage obstacle and the uncoordinated singletons, together.
+        String replicas = define(helpers, "skills-gateway.replicaGate");
+        assertThat(replicas).as("the replica gate exists").isNotEmpty();
+        assertThat(replicas).contains("gt $replicas 1").contains("fail");
+        assertThat(replicas)
+                .as("more than one writer is refused outright on the filesystem backend")
+                .contains("object-store");
+        for (String poller : List.of("sync", "revet", "retention", "webhooks", "audit-export")) {
+            assertThat(replicas)
+                    .as("scaling out must refuse to duplicate the %s singleton", poller)
+                    .contains(poller);
+        }
+        assertThat(deployment).contains("skills-gateway.replicaGate");
+    }
+
+    @Test
     @SVCs({"SVC_GW_0072"})
     void releaseWorkflowCarriesThePublishByDigestContract() throws IOException {
         Path file = REPO_ROOT.resolve(".github/workflows/native.yml");

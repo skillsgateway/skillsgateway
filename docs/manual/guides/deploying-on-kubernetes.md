@@ -161,18 +161,23 @@ to this chart. Which of them are even available to you is constrained by the
 platform — see
 [Storage options on serverless Kubernetes](#storage-options-on-serverless-kubernetes).
 
-### `replicaCount` must stay 1
+### `replicaCount` depends on the storage backend
 
-Storage today is a plain filesystem, written by the ingestion pipeline, the
-approval step and the facade's own repacking. **There is no cross-pod locking**,
-so two replicas writing the same volume can interleave a fetch and a publish
-into a corrupt repository. Scaling out is not a configuration change; it needs a
-storage backend that arbitrates writers, which is
-[#127](https://github.com/skillsgateway/skillsgateway/issues/127).
+On the default `filesystem` backend, storage is a plain filesystem written by
+the ingestion pipeline, the approval step and the facade's own repacking.
+**There is no cross-pod locking**, so two replicas writing the same volume can
+interleave a fetch and a publish into a corrupt repository. The chart refuses to
+render `replicaCount > 1` there rather than trusting you to know that.
 
 Keep `replicaCount: 1`. A rolling update briefly runs two pods, so prefer the
 `Recreate` strategy — or accept a moment's overlap — on volumes that allow only
 one writer anyway.
+
+On the `object-store` backend concurrent writers are safe by construction, and
+more than one replica becomes possible — but only with the gateway's
+uncoordinated background sweeps and pollers switched off on the scaled-out
+deployment, which the chart also checks. See
+[Running more than one replica](storage-backends.md#running-more-than-one-replica).
 
 ## Ingress and TLS
 
@@ -237,7 +242,7 @@ for the case where the platform is already fixed:
 | Block storage (RWO) | **No** | Not a trade-off — there is no configuration that gets you one. |
 | Network filesystem (RWX, e.g. NFS/EFS) | Yes, **static provisioning only** | Works. Good for a proof of concept; the substrate git is worst on. |
 | Parallel filesystem (e.g. FSx for Lustre) | **No** | Unavailable on serverless pods. |
-| Object storage | **Not implemented yet** | The intended production answer here — [#127](https://github.com/skillsgateway/skillsgateway/issues/127). |
+| Object storage | **Supported** | The production answer here: `storage.backend: object-store`, credentials from workload identity, and no volume required at all — see [the storage guide](storage-backends.md). |
 | Block storage on managed nodes | Yes, if you can choose the platform | What today's storage was designed for. |
 
 **Block storage is unavailable, not merely awkward.** On EKS, AWS states plainly
@@ -270,10 +275,13 @@ Two caveats worth understanding before choosing it:
 **A parallel filesystem is not an option either**: FSx for Lustre is listed as
 unavailable to Fargate pods.
 
-**Object storage is the intended answer on serverless platforms specifically.**
-Not because of scale — because the alternatives here are "impossible" and "the
-substrate git is worst on". It is not implemented yet; [#127](https://github.com/skillsgateway/skillsgateway/issues/127)
-tracks it.
+**Object storage is the answer on serverless platforms specifically.** Not
+because of scale — because the alternatives here are "impossible" and "the
+substrate git is worst on". It is implemented: set
+`storage.backend: object-store`, and the repositories live in a bucket with
+local disk as a cache. Fargate has no instance metadata service, so credentials
+come from workload identity — see
+[Choosing and migrating the storage backend](storage-backends.md).
 
 **If the platform choice is still open**, an ordinary managed node group with an
 RWO block volume is what the current storage implementation was designed for,
@@ -340,9 +348,10 @@ can write to it, then install with `persistence.mode: existingClaim` and
     It works, and it is not what you want in production — see
     [the comparison above](#storage-options-on-serverless-kubernetes). It is a
     reasonable substrate for a proof of concept, a pilot, or a small internal
-    estate. The production answer is an object-storage backend that stops
-    treating a POSIX filesystem as the source of truth, tracked as
-    [#127](https://github.com/skillsgateway/skillsgateway/issues/127).
+    estate. The production answer is the `object-store` backend, which stops
+    treating a POSIX filesystem as the source of truth; moving to it is an
+    offline, verified, reversible copy described in
+    [Choosing and migrating the storage backend](storage-backends.md).
 
 ## Verifying the install
 

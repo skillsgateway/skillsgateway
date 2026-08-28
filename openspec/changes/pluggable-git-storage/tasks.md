@@ -6,7 +6,7 @@ applies: failing tests first, proved failing, before any implementation.
 
 ## 1. Requirements (SSOT first)
 
-- [ ] 1.1 Add GW_0111 (backend named not inferred, fail-closed startup,
+- [x] 1.1 Add GW_0111 (backend named not inferred, fail-closed startup,
       credentials without IMDS), GW_0112 (atomic uncoordinated reference
       transitions), GW_0114 (verified migration) and GW_0115 (replication
       refused where unsafe) to `docs/reqstool/requirements.yml`. GW_0113 is
@@ -19,12 +19,21 @@ applies: failing tests first, proved failing, before any implementation.
       each of GW_0111, GW_0114 and GW_0115 lands in the section that
       implements it — 5.3, 7.2 and 8.3 respectively.
       **GW_0111 landed with the configuration surface (section 5).** Its id was
-      re-verified free against `main` before it was written. GW_0114 and GW_0115
-      stay reserved
-- [ ] 1.2 Add the matching SVCs (GIVEN/WHEN/THEN) to
+      re-verified free against `main` before it was written. **GW_0114 landed
+      with the migration (section 7) and GW_0115 with the packaging (section
+      8).** Both ids were re-verified free immediately before being written —
+      against `origin/main` (which carries GW_0093–GW_0110, GW_0120–GW_0122 and
+      GW_0125–GW_0131) and against this change's own reservations. No collision;
+      0113 stays dropped, 0117–0119 and 0123–0124 stay unclaimed
+- [x] 1.2 Add the matching SVCs (GIVEN/WHEN/THEN) to
       `docs/reqstool/software_verification_cases.yml`.
-      **SVC_GW_0112 landed with section 3 and SVC_GW_0111 with section 5**; the
-      rest follow their requirements
+      **SVC_GW_0112 landed with section 3, SVC_GW_0111 with section 5,
+      SVC_GW_0116 with section 9, and SVC_GW_0114 and SVC_GW_0115 here with
+      sections 7 and 8.** Every one is matched by reqstool against a real
+      surefire case — checked by reading the matched-annotation output, not by
+      trusting a PASS, because a `@DisplayName` on a class or method carrying
+      `@SVCs` overwrites the junit name and makes the test invisible while the
+      build stays green
 
 ## 2. Spike (settle the open questions before writing production code)
 
@@ -78,8 +87,14 @@ applies: failing tests first, proved failing, before any implementation.
       tested bound (or an unpublished snapshot stays fetchable from any replica
       with a warm cache).
 
-- [ ] 2.5 Prove an AWS SDK v2 S3 client with the web-identity credential
-      provider builds and runs under the GraalVM native-image profile
+- [ ] 2.5 **Open — no GraalVM toolchain here.** Prove an AWS SDK v2 S3 client
+      with the web-identity credential provider builds and runs under the
+      GraalVM native-image profile. This machine has Temurin 25 and no
+      `native-image`, so the profile cannot be exercised locally. The
+      `native.yml` workflow is what closes it, and it does not run on pull
+      requests — it is dispatched against this branch instead, and its result is
+      recorded in `evidence.md`. Until that result is green this is the one
+      remaining risk in the change that a reviewer cannot see from the diff
 - [x] 2.6 Prove a `receive-pack` (hosted-marketplace push, many refs in one
       transaction) maps onto a single manifest transition. **Done with the
       backend, which is where the demonstration belongs.** The ref database
@@ -146,10 +161,11 @@ applies: failing tests first, proved failing, before any implementation.
       of an already-superseded snapshot, publications and revocations of
       distinct snapshots interleaved, and a writer killed in the window between
       its objects becoming durable and the manifest naming them
-- [ ] 4.3 **Deferred to section 7, deliberately.** Migration tests annotated `@SVCs({"SVC_GW_0114"})`: full copy across
+- [x] 4.3 **Landed with section 7.** Migration tests annotated `@SVCs({"SVC_GW_0114"})`: full copy across
       all three roles, ref-set comparison, refusal on a deliberately damaged
-      copy, source left byte-identical, and a round trip back
-- [ ] 4.4 **Deferred to section 8, deliberately.** Packaging tests annotated `@SVCs({"SVC_GW_0115"})`: `replicaCount > 1`
+      copy, source left byte-identical, and a round trip back.
+      `StorageMigrationTests`, eight cases against a real object store
+- [x] 4.4 **Landed with section 8, proved RED first.** Packaging tests annotated `@SVCs({"SVC_GW_0115"})`: `replicaCount > 1`
       fails on `filesystem`; fails on `object-store` with the uncoordinated
       pollers enabled; renders with them disabled. (#134's `PackagingTests`
       already cover the fail-closed `persistence.mode`; extend, never weaken).
@@ -230,28 +246,74 @@ applies: failing tests first, proved failing, before any implementation.
 
 ## 7. Migration
 
-- [ ] 7.1 Migration command copying all repositories in all three roles
-      between backends, streaming rather than loading whole repositories
-- [ ] 7.2 Verification pass comparing resolved ref sets per repository,
+- [x] 7.1 Migration command copying all repositories in all three roles
+      between backends, streaming rather than loading whole repositories.
+      `StorageMigration` copies objects as a pack stream through a temporary
+      file — `PackWriter` on the source, `PackParser` on the destination — so no
+      repository has to fit in the heap. It is reached as
+      `skills-gateway.storage.migration.enabled=true` with
+      `.to=<backend>`: the same artifact, started as a migration instead of as a
+      service, so the destination is built through the same validation and the
+      same startup conditional-write probe a serving start would use. The
+      process exits with the verification's own answer, so a script cannot
+      mistake "finished" for "verified". This answers the design's open question
+      about a subcommand versus a separate entrypoint in favour of one artifact
+- [x] 7.2 Verification pass comparing resolved ref sets per repository,
       refusing success on any mismatch and naming the repository; annotate
-      `@Requirements({"GW_0114"})`
-- [ ] 7.3 Confirm the source backend is untouched and the reverse direction
-      works, so reverting the property restores the previous state
+      `@Requirements({"GW_0114"})`. It is a second, independent read of both
+      sides rather than a claim the copy makes about itself, and it compares the
+      symbolic references separately from the concrete ones — which is what
+      caught a real defect: `getRefs()` reports a symbolic reference with the id
+      it resolves to, so writing `HEAD` through `updateRef(name)` dereferenced it
+      and wrote whatever branch the *destination's* head pointed at. On a freshly
+      created repository that is `refs/heads/main`, so it looked correct on every
+      repository the gateway itself had made and would have grown a spurious
+      `main` on any marketplace published from another branch. Found by the
+      mutation gauntlet, not by the first green run
+- [x] 7.3 Confirm the source backend is untouched and the reverse direction
+      works, so reverting the property restores the previous state. Asserted as
+      every byte under the filesystem root hashed before and after, not as "the
+      references still resolve the same" — the volume is the rollback, so the
+      question is whether it can be trusted, not whether it happens to agree
 
 ## 8. Packaging
 
-- [ ] 8.1 `values.yaml`: add `none` to the existing `persistence.mode`
+- [x] 8.1 `values.yaml`: add `none` to the existing `persistence.mode`
       (`existingClaim` | `ephemeral` from #134), plus `storage.backend`,
       `storage.objectStore.*`, IRSA annotations on the service account #134
-      added, and `existingSecret` as the static-credential fallback
-- [ ] 8.2 `deployment.yaml`: extend the `_helpers.tpl` storage-volume logic for
+      added, and `existingSecret` as the static-credential fallback. There is
+      deliberately nowhere in `values.yaml` to type an access key: the static
+      mode names a Secret and the deployment projects its `access-key-id` and
+      `secret-access-key` keys
+- [x] 8.2 `deployment.yaml`: extend the `_helpers.tpl` storage-volume logic for
       `none` (refusing it unless the backend is `object-store`); project the
-      credential environment
-- [ ] 8.3 Replica gating: refuse `replicaCount > 1` on `filesystem`, and on
-      `object-store` unless the uncoordinated pollers are disabled
-- [ ] 8.4 Extend the existing packaging consistency test to cover 8.1–8.3;
-      chart version bump and a release note naming the deliberate break
-- [ ] 8.5 Add a `packageRules` entry to `.github/renovate.json5` separating
+      credential environment. `none` renders no data volume and no `/data`
+      mount at all, and points the local pack cache at the writable temporary
+      directory instead — otherwise a read-only root filesystem would leave the
+      cache nowhere to go. A new `skills-gateway.storageGate` helper refuses an
+      unrecognised backend, an `object-store` selection with no bucket or no
+      region, a static mode with no secret, and a `web-identity` mode on a
+      service account carrying no annotation
+- [x] 8.3 Replica gating: refuse `replicaCount > 1` on `filesystem`, and on
+      `object-store` unless the uncoordinated pollers are disabled.
+      `skills-gateway.replicaGate` names every switch still on rather than only
+      saying that something is
+- [x] 8.4 Extend the existing packaging consistency test to cover 8.1–8.3;
+      chart version bump and a release note naming the deliberate break.
+      `PackagingTests.chartRefusesAStorageShapeTheGatewayCannotHonour`
+      (`SVC_GW_0115`), written and proved RED before any chart edit, and
+      #134's `SVC_GW_0120` case is extended nowhere and weakened nowhere — it
+      still passes unchanged. All eight refusals were also exercised through a
+      real `helm template`, recorded in `evidence.md`.
+      **No chart version bump, and that is deliberate:** `Chart.yaml` carries
+      `0.0.0-SNAPSHOT` as a placeholder and the release workflow stamps the real
+      version from the tag — `SVC_GW_0109` asserts exactly that, so hand-editing
+      it would break the release contract. **And there is no deliberate break to
+      note:** every default is unchanged (`storage.backend: filesystem`,
+      `replicaCount: 1`), so an existing install upgrades to identical
+      behaviour. The break this task anticipated was #134's `persistence.mode`,
+      which already shipped
+- [x] 8.5 Add a `packageRules` entry to `.github/renovate.json5` separating
       `org.eclipse.jgit*` from the general dependency stream, so a JGit bump
       arrives as its own deliberately reviewed PR — the DFS extension points
       are `internal` API and can break without breaking ordinary JGit use
@@ -283,27 +345,49 @@ applies: failing tests first, proved failing, before any implementation.
 
 ## 10. Documentation (same PR as the implementation)
 
-- [ ] 10.1 `reference/configuration.md`: the `storage` block, the credential
-      modes, and replace the "Helm volume default is not durable" warning with
-      what the packaging now refuses
-- [ ] 10.2 New operations page: choosing a backend, the Fargate constraints
+- [x] 10.1 `reference/configuration.md`: a new "Git storage" section carrying
+      the whole `storage` block, a property table, the credential-mode table and
+      the two caveats that are not tuning knobs (bucket write is publication;
+      conditional writes are the portability boundary). The stale "the Helm
+      volume default is not durable" warning is gone — it described behaviour
+      #134 removed — and is replaced by what the chart now refuses
+- [x] 10.2 New operations page: `guides/storage-backends.md`: choosing a backend, the Fargate constraints
       (no EBS, EFS static provisioning only, no IMDS), the **supported object
       store list** verified in task 2.3, migrating, and the honest cold-start
       cost
-- [ ] 10.3 `concepts/lifecycle.md`: the layout table is filesystem-shaped —
+- [x] 10.3 `concepts/lifecycle.md`: the layout table is filesystem-shaped —
       give it the object-store equivalent without weakening the three-role
-      model
-- [ ] 10.4 `concepts/trust-boundaries.md`: write access to the bucket is
-      publication without `ApprovalService`
-- [ ] 10.5 `architecture.md` §12 and the roadmap; `guides/local-development.md`
-      (Floci in Compose)
-- [ ] 10.6 An ADR if the spike changes any decision in `design.md`
+      model. The three roles are now stated once as the model, with the two
+      layouts in content tabs beneath them
+- [x] 10.4 `concepts/trust-boundaries.md`: a new "The storage itself" section —
+      write access to the bucket is publication without `ApprovalService`, the
+      gateway cannot enforce it, and the startup probe is a different guarantee
+      rather than a substitute
+- [x] 10.5 `architecture.md` §12 (the two backends, what object storage does and
+      does not make safe) and §13 (an *Implemented* roadmap entry that names the
+      open AWS S3 row and the deferred leader election);
+      `guides/local-development.md` plus a `object-store` Compose profile
+      starting Floci, with a note that the build's own suites use the Arconia
+      dev service rather than that profile.
+      `guides/deploying-on-kubernetes.md` is updated too: three passages there
+      still said object storage was unimplemented
+- [x] 10.6 **Not triggered, and recorded rather than skipped.** No ADR. The
+      condition is "if the spike changes any decision in `design.md`", and it
+      did not: the spike *confirmed* decision 9's premise, and the two
+      corrections it forced (the Arconia/Spring Cloud AWS dependency error, and
+      the withdrawn staleness argument in decision 10) are recorded in
+      `design.md` itself, which is where feature-level decisions live per
+      `reference/decisions.md`. The architecture-level shape that a reader needs
+      outside the change is in `architecture.md` §12
 
 ## 11. Gates and evidence
 
-- [ ] 11.1 `./mvnw clean verify`, `pnpm test:stories`, `pnpm e2e`,
+- [x] 11.1 `./mvnw clean verify`, `pnpm test:stories`, `pnpm e2e`,
       `reqstool status local -p docs/reqstool`, `openspec validate --all
       --strict`, `mkdocs build --strict`
-- [ ] 11.2 Native-image build with the S3 client and the web-identity provider
-- [ ] 11.3 `openspec/changes/pluggable-git-storage/evidence.md` — commands,
+- [ ] 11.2 **Open, with 2.5, for the same reason.** Native-image build with the
+      S3 client and the web-identity provider. No GraalVM on this machine, and
+      `native.yml` does not run on pull requests; it is dispatched against this
+      branch and the result is recorded in `evidence.md`
+- [x] 11.3 `openspec/changes/pluggable-git-storage/evidence.md` — commands,
       pasted result tails of one final fresh run, and the commit SHA
