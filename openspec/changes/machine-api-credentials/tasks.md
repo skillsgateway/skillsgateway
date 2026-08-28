@@ -9,6 +9,20 @@ rules govern every test task below and are not negotiable:
 - **Negative before positive.** For every capability granted, the test that
   proves it is *not* granted elsewhere is written first.
 
+## 0. Prerequisite — ships as its own PR, before this change
+
+- [ ] 0.1 In a separate, small PR: a reflective test that enumerates every
+      mapped `/api/**` controller method and asserts each is classified in a
+      machine-reachability registry — either in a named scope group or on the
+      explicit unreachable list. A method in neither **fails the build**.
+- [ ] 0.2 In that PR: prove the guard bites. Add a throwaway endpoint, watch the
+      build break, remove it, record both outputs.
+- [ ] 0.3 Rationale for the split, to be restated in that PR's body: the test
+      touches every controller, and bundling it here would make a
+      trust-boundary review harder. Merge it first; this change then only adds
+      rows to a registry that already exists and is already enforced.
+- [ ] 0.4 Do not start task group 3 until 0.1 has merged.
+
 ## 1. Requirements SSOT
 
 - [ ] 1.1 Author GW_0115–GW_0120 in `docs/reqstool/requirements.yml` — title,
@@ -22,9 +36,9 @@ rules govern every test task below and are not negotiable:
 ## 2. Specification (approved before any implementation)
 
 - [ ] 2.1 Write the executable spec as a named test list: every scenario in
-      groups 5–8 below stated with concrete inputs and concrete expected
-      status codes, plus the invariants that must survive (SVC_GW_0011,
-      SVC_GW_0012, SVC_GW_0064, SVC_GW_0102, SVC_GW_0104 all still pass).
+      groups 6–10 stated with concrete inputs and concrete expected status
+      codes, plus the invariants that must survive (SVC_GW_0011, SVC_GW_0012,
+      SVC_GW_0064, SVC_GW_0102, SVC_GW_0104 all still pass).
 - [ ] 2.2 Record the setup plan: no new dependencies are expected; if one
       becomes necessary, justify it in one line and get it approved before
       installing.
@@ -46,132 +60,163 @@ rules govern every test task below and are not negotiable:
 - [ ] 3.4 Extend `TokenRepository` for the new columns and for an admin-scoped
       lookup that is not filtered by the caller's principal. (SVC_GW_0120)
 
-## 4. Machine principal and issuance
+## 4. Ledger actor type
 
-- [ ] 4.1 Reserve the `machine:` principal namespace: refused as an
-      identity-provider-derived principal, refused as a hand-typed grant
-      principal. `@Requirements({"GW_0117"})`.
-- [ ] 4.2 RED: a test that an identity-provider subject literally named
-      `machine:x` cannot log in or hold a grant. Watch it fail. (SVC_GW_0117)
-- [ ] 4.3 `TokenService` issuance for machine credentials: validates API scope
-      values against the allowlist, **requires** an expiry, applies the
+- [ ] 4.1 Add `fetch_log.actor_type TEXT NOT NULL` to `V1__init.sql`, with a
+      column comment stating why it is denormalised: the ledger is append-only
+      history and must say what it meant after the credential it names is gone
+      — the same reasoning the existing `token_id` comment already gives.
+      `@Requirements({"GW_0117"})`.
+- [ ] 4.2 Backfill: `config-reconciler`, `scheduler` and `system` become
+      `actor_type = 'system'`; everything else `'human'`.
+- [ ] 4.3 Set `actor_type` in **one place** — `AdminAuditLogger`, derived from
+      the authentication — rather than passing it from each of the ~25 call
+      sites. Update `EstateReconciler`, `SyncService` and `WaiverService` to
+      declare `system` explicitly instead of relying on their magic strings.
+- [ ] 4.4 RED: entries from a machine credential carry `actor_type='machine'`
+      and the human-readable credential name in `principal`. (SVC_GW_0117)
+- [ ] 4.5 RED: a ledger query separates human, machine and system actors with
+      no string parsing and no join to `access_tokens`. (SVC_GW_0117)
+- [ ] 4.6 RED: a ledger row still reports its actor correctly after the
+      credential it names has been revoked **and its row deleted**. This is the
+      whole argument for denormalisation and it gets an explicit test.
+      (SVC_GW_0117)
+- [ ] 4.7 Populate `token_id` on machine-API entries — NULL on admin entries
+      today — so a leak trace has per-credential resolution. (SVC_GW_0117)
+- [ ] 4.8 RED: no ledger entry produced by a machine credential names the
+      provisioning human as the actor; the human appears as owner at
+      provisioning only. (SVC_GW_0117)
+
+## 5. Issuance
+
+- [ ] 5.1 `TokenService` issuance for machine credentials: validates every API
+      scope value against the known set, **requires** an expiry, applies the
       configured lifetime cap, refuses API scope on a session-derived
       credential. `@Requirements({"GW_0115", "GW_0120"})`.
-- [ ] 4.4 RED: issuance without an expiry is refused with 422 and never
+- [ ] 5.2 RED: an unknown or misspelled scope value is refused at issue time
+      with 422 — it must fail loudly, never silently never match, exactly as
+      fetch scopes do today. (SVC_GW_0115)
+- [ ] 5.3 RED: there is no wildcard. A request for `*`, `all`, or an empty list
+      is refused or grants nothing; none of them grants everything.
+      (SVC_GW_0115)
+- [ ] 5.4 RED: issuance without an expiry is refused with 422 and never
       defaulted; issuance beyond the cap is refused, never clamped. Watch both
       fail. (SVC_GW_0120)
-- [ ] 4.5 RED: issuance of a session-derived credential carrying API scope is
+- [ ] 5.5 RED: issuance of a session-derived credential carrying API scope is
       refused at issue time. Watch it fail. (SVC_GW_0116)
-- [ ] 4.6 Record the provisioning human as owner on the `token-created` ledger
+- [ ] 5.6 Record the provisioning human as owner on the `token-created` ledger
       entry and on the administrative listing. (SVC_GW_0117)
 
-## 5. The negative guarantee — adversarial, written first
+## 6. The negative guarantee — adversarial, written first
 
 Every task in this group is a test that must be seen failing before the chain
-in group 6 exists, and passing after.
+in group 7 exists, and passing after.
 
-- [ ] 5.1 RED: a token with **empty fetch scope** — the every-marketplace form,
+- [ ] 6.1 RED: a token with **empty fetch scope** — the every-marketplace form,
       the most permissive fetch grant in the system — is rejected on every
       `/api/**` endpoint. This is the headline case. (SVC_GW_0116)
-- [ ] 5.2 RED: a token with a named fetch scope is rejected on `/api/**`.
+- [ ] 6.2 RED: a token with a named fetch scope is rejected on `/api/**`.
       (SVC_GW_0116)
-- [ ] 5.3 RED: a token with push scope and no API scope is rejected on
+- [ ] 6.3 RED: a token with push scope and no API scope is rejected on
       `/api/**`. (SVC_GW_0116)
-- [ ] 5.4 RED: a session-derived credential is rejected on `/api/**`.
+- [ ] 6.4 RED: a session-derived credential is rejected on `/api/**`.
       (SVC_GW_0116)
-- [ ] 5.5 RED: the symmetric direction — a token holding only API scope is
+- [ ] 6.5 RED: the symmetric direction — a token holding only API scope is
       rejected by the facade chain and by the publication chain. (SVC_GW_0116)
-- [ ] 5.6 RED: a revoked machine credential, and an expired one, are rejected on
+- [ ] 6.6 RED: a revoked machine credential, and an expired one, are rejected on
       `/api/**`. (SVC_GW_0116, SVC_GW_0120)
-- [ ] 5.7 RED: a request carrying **both** a bearer header and a `Cookie` header
-      is refused rather than resolved to either credential. (SVC_GW_0116)
-- [ ] 5.8 RED: a bearer header on the machine chain creates no session and sets
-      no cookie on the response. (SVC_GW_0116)
-- [ ] 5.9 RED: a browser session with no `Authorization` header still reaches
+- [ ] 6.7 RED: a request carrying **both** a `Bearer` header and a `Cookie`
+      header is refused rather than resolved to either credential. (SVC_GW_0116)
+- [ ] 6.8 RED: a bearer request creates no session and sets no cookie on the
+      response. (SVC_GW_0116)
+- [ ] 6.9 RED: a browser session with no `Authorization` header still reaches
       `/api/**` exactly as before — the session chain is unchanged.
       (SVC_GW_0011)
-- [ ] 5.10 RED: a garbage bearer value, an empty bearer value, and a bearer
+- [ ] 6.10 RED: a garbage bearer value, an empty bearer value, and a bearer
       value that is a *valid* facade token all produce 401 with no distinction
       that reveals which. (SVC_GW_0116)
+- [ ] 6.11 RED: a facade token presented as HTTP **Basic** to `/api/**` does not
+      authenticate either — the machine chain accepts only `Bearer`.
+      (SVC_GW_0116)
 
-## 6. The machine API filter chain
+## 7. The machine API filter chain
 
-- [ ] 6.1 Add the stateless `/api/**` chain to `SecurityConfig`, ordered before
-      the web chain and matched additionally on a bearer `Authorization` header.
-      `@Requirements({"GW_0116"})`.
-- [ ] 6.2 Its provider authenticates **only** a token whose API scope list is
+- [ ] 7.1 Add the stateless `/api/**` chain to `SecurityConfig`, ordered before
+      the web chain and matched additionally on an `Authorization: Bearer`
+      header. `@Requirements({"GW_0116"})`.
+- [ ] 7.2 Its provider authenticates **only** a token whose API scope list is
       non-empty — a precondition of authentication, not a later authorization
       rule. `@Requirements({"GW_0116"})`.
-- [ ] 6.3 Write the CSRF comment in the shape the facade and publication chains
+- [ ] 7.3 Write the CSRF comment in the shape the facade and publication chains
       use: STATELESS, no session, no cookie honoured, self-authenticating
       request. Do **not** extend or rely on the session chain's `/api/**`
       exemption.
-- [ ] 6.4 Verify the session chain's configuration is byte-for-byte unchanged
+- [ ] 7.4 Verify the session chain's configuration is byte-for-byte unchanged
       apart from ordering, and say so in the evidence report.
-- [ ] 6.5 Turn group 5 green. Re-run the whole group and record it.
+- [ ] 7.5 Turn group 6 green. Re-run the whole group and record it.
 
-## 7. The endpoint allowlist
+## 8. Scopes and the allowlist
 
-- [ ] 7.1 Implement API scope values as named endpoint groups, deny-by-default,
+- [ ] 8.1 Implement the named scope values from `design.md` decision 3 as
+      entries in the registry that task 0.1 already enforces, deny-by-default,
       enforced **independently of `skills-gateway.roles.enabled`**.
       `@Requirements({"GW_0118"})`.
-- [ ] 7.2 RED: with `roles.enabled=false` — the default, where every
+- [ ] 8.2 RED: with `roles.enabled=false` — the default, where every
       `require*()` passes — a machine credential still reaches only its scoped
       endpoints. Watch it fail. This is the trap this change exists to avoid.
       (SVC_GW_0118)
-- [ ] 7.3 RED, adversarial: a machine credential whose principal holds `admin`
-      is still refused snapshot **approval**, snapshot **rejection**, **waiver**
-      creation, marketplace **deregistration**, retention **soft-delete** and
-      **restore**. One test per act; each seen failing first. (SVC_GW_0118)
-- [ ] 7.4 RED: a machine credential cannot mint a credential for another
-      principal. (SVC_GW_0118)
-- [ ] 7.5 The enumerating test: reflect over every mapped controller method and
-      assert each is either in a scope group or on an explicit unreachable list.
-      A method in neither **fails the build**. (SVC_GW_0118)
-- [ ] 7.6 RED: a newly added endpoint that is in neither list makes 7.5 fail —
-      prove the guard bites by adding a throwaway endpoint, watching the build
-      break, and removing it. Record both outputs.
+- [ ] 8.3 RED, per scope: a credential holding exactly one scope reaches that
+      scope's endpoints and is refused on **every other scope's** endpoints.
+      One parameterised test over the full scope table, not a spot check — this
+      is what proves the granularity is real and not decorative. (SVC_GW_0118)
+- [ ] 8.4 RED: no scope implies another. `policy:write` alone does not confer
+      `policy:read`; `marketplaces:register` alone does not confer
+      `marketplaces:read`. (SVC_GW_0118)
+- [ ] 8.5 RED: scopes compose additively — two scopes reach exactly the union
+      of their endpoint sets and nothing more. (SVC_GW_0118)
+- [ ] 8.6 RED, adversarial: a credential holding **every** scope at once, whose
+      principal also holds `admin`, is still refused on each unreachable
+      endpoint — approve, reject, waiver create, waiver delete, retention
+      evaluate, retention compact, snapshot delete, snapshot restore, role
+      grant, role revoke, and all of `/api/tokens/**`. One test per endpoint;
+      each seen failing first. (SVC_GW_0118)
+- [ ] 8.7 RED: re-vet (`vetting:run`) is reachable and publishes nothing —
+      assert the snapshot's state is unchanged by a re-vet, which is why it is
+      classified reachable while approval is not. (SVC_GW_0118)
+- [ ] 8.8 RED: `GET /api/retention/candidates` is reachable while
+      `POST /api/retention/evaluate` is not, and evaluate's soft-delete is
+      demonstrably why. (SVC_GW_0118)
 
-## 8. Roles for a machine principal
+## 9. Roles for a machine credential
 
-- [ ] 8.1 Confirm by test that `ClaimRoleMapper` derives nothing for a machine
-      credential, and that `config` and `grant` sources work unchanged for a
-      `machine:` principal. `@Requirements({"GW_0119"})`. (SVC_GW_0119)
-- [ ] 8.2 RED: effective authority is the **intersection** — a machine
+- [ ] 9.1 Confirm by test that `ClaimRoleMapper` derives nothing for a machine
+      credential, and that `config` and `grant` sources work unchanged for its
+      principal. `@Requirements({"GW_0119"})`. (SVC_GW_0119)
+- [ ] 9.2 RED: effective authority is the **intersection** — a machine
       credential with a scope but without the role gets 403 once roles are
       enabled; with the role but without the scope it is refused regardless.
       (SVC_GW_0119)
-- [ ] 8.3 RED, adversarial: a machine principal cannot grant a role **to
-      itself**. Watch it fail. (SVC_GW_0119)
-- [ ] 8.4 RED: `estate.grants` can declare a `machine:` principal's role with no
-      new mechanism, and reconciliation attributes it to `config-reconciler`.
+- [ ] 9.3 RED: a machine credential cannot reach the grants API at all, so it
+      cannot grant a role to anyone including itself. (SVC_GW_0119)
+- [ ] 9.4 RED: `estate.grants` can declare a machine credential's principal with
+      no new mechanism, and reconciliation attributes it to `config-reconciler`
+      with `actor_type='system'`. This is the only route to a machine role.
       (SVC_GW_0119)
 
-## 9. Lifecycle
+## 10. Lifecycle
 
-- [ ] 9.1 Rotation preserves the machine principal, the expiry deadline, and all
+- [ ] 10.1 Rotation preserves the machine identity, the expiry deadline, and all
       **three** scope dimensions. `@Requirements({"GW_0120"})`.
-- [ ] 9.2 RED: a rotated machine credential has identical API scope — neither
-      widened nor dropped — and the old secret is dead before the new one is
-      returned. Watch it fail. (SVC_GW_0120)
-- [ ] 9.3 Admin-scoped listing and revocation for machine credentials, leaving
+- [ ] 10.2 RED: a rotated machine credential has an identical API scope set —
+      asserted per scope value, not as "the list is equal" — and the old secret
+      is dead before the new one is returned. (SVC_GW_0120)
+- [ ] 10.3 Admin-scoped listing and revocation for machine credentials, leaving
       the caller's own-token listing strictly own-principal as it is today.
       (SVC_GW_0120)
-- [ ] 9.4 RED: a non-admin cannot list or revoke another principal's machine
+- [ ] 10.4 RED: a non-admin cannot list or revoke another principal's machine
       credential, and an admin can. (SVC_GW_0120)
-- [ ] 9.5 RED: revocation takes effect on the next request, not on a cache
+- [ ] 10.5 RED: revocation takes effect on the next request, not on a cache
       expiry. (SVC_GW_0120)
-
-## 10. Audit
-
-- [ ] 10.1 Ledger entries from a machine credential carry the `machine:`
-      principal as actor and the token id in the detail.
-      `@Requirements({"GW_0117"})`.
-- [ ] 10.2 RED: a ledger query distinguishes machine actors, human actors and
-      `config-reconciler` with no schema change. (SVC_GW_0117)
-- [ ] 10.3 RED: no ledger entry produced by a machine credential names the
-      provisioning human as the actor — the human appears as owner at
-      provisioning only. (SVC_GW_0117)
 
 ## 11. API surface and portal types
 
@@ -189,16 +234,21 @@ in group 6 exists, and passing after.
       endpoint requires an authenticated OIDC session" is no longer true.
       Replace it with the precise two-path statement and update the surface
       table.
-- [ ] 12.2 `docs/manual/reference/api/tokens.md` — the API scope dimension,
-      mandatory expiry, rotation semantics, admin administration.
-- [ ] 12.3 `docs/manual/guides/declarative-estate.md` — the estate-versus-API
-      rule from design decision 5, and machine credentials as deliberately
-      API-only alongside personal access tokens.
-- [ ] 12.4 `docs/manual/concepts/trust-boundaries.md` and
-      `docs/manual/architecture.md` — the new chain and the negative guarantee.
-- [ ] 12.5 `docs/manual/reference/configuration.md` — new keys.
-- [ ] 12.6 A guide section showing a CI job and a Terraform-style flow, stating
-      plainly that approval is not among the things it can do.
+- [ ] 12.2 `docs/manual/reference/api/tokens.md` — the API scope dimension, the
+      full scope table, mandatory expiry, rotation semantics, admin
+      administration.
+- [ ] 12.3 Each endpoint page states whether a machine credential may reach it
+      and under which scope, the way pages already state their role requirement.
+- [ ] 12.4 `docs/manual/guides/declarative-estate.md` — the estate-versus-API
+      rule from design decision 5, that role grants are estate-only, and machine
+      credentials as deliberately API-only alongside personal access tokens.
+- [ ] 12.5 `docs/manual/concepts/trust-boundaries.md` and
+      `docs/manual/architecture.md` — the new chain, the negative guarantee, and
+      the ledger's explicit actor type.
+- [ ] 12.6 `docs/manual/reference/configuration.md` — new keys.
+- [ ] 12.7 A guide section showing a CI job and a Terraform-style flow, stating
+      plainly that approval, retraction and role granting are not among the
+      things it can do.
 
 ## 13. Gauntlet and evidence
 
@@ -206,13 +256,13 @@ in group 6 exists, and passing after.
       `./mvnw clean verify`; `pnpm test:stories`; `pnpm e2e`;
       `reqstool status local -p docs/reqstool` (must end `PASS`);
       `openspec validate --all --strict`; `mkdocs build --strict`.
-- [ ] 13.2 Mutation-test or otherwise stress the scope predicate and the chain
-      matcher specifically: a surviving mutant there is a real hole, not a
-      metric.
+- [ ] 13.2 Mutation-test or otherwise stress the scope predicate, the allowlist
+      lookup and the chain matcher specifically: a surviving mutant there is a
+      real hole, not a metric.
 - [ ] 13.3 Confirm no existing SVC test was weakened or deleted.
 - [ ] 13.4 Write `openspec/changes/machine-api-credentials/evidence.md`: the
       commands, the pasted result tails, the commit SHA, the RED-then-GREEN
-      record for every adversarial test in groups 5, 7, 8 and 9, the spec
+      record for every adversarial test in groups 6, 8, 9 and 10, the spec
       approval line, and every contract clause mapped to a test or explicitly
       skipped with a reason.
 - [ ] 13.5 Summarise the evidence in the PR body under **Evidence**.

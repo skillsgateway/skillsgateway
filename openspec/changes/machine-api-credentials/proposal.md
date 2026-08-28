@@ -33,29 +33,37 @@ letting an existing facade credential become one.
   is non-empty. No new credential type, no new secret store, no second
   revocation story.
 - **A stateless machine-API filter chain**, a sibling of the facade and
-  publication chains rather than a mode on the session chain. It is matched on
-  a bearer `Authorization` header, creates and honours no session, and refuses
-  a request that also carries a `Cookie`. The existing session chain is
-  untouched and continues to ignore `Authorization`.
+  publication chains rather than a mode on the session chain. It authenticates
+  `Authorization: Bearer` — not the Basic scheme the facade uses, so the chain
+  matcher is unambiguous — creates and honours no session, and refuses a request
+  that also carries a `Cookie`. The existing session chain is untouched.
 - **The negative guarantee.** A token holding only fetch scope — including the
   every-marketplace form, which is the most permissive fetch grant that exists
   — or only push scope reaches no `/api/**` endpoint. Session-derived
   credentials (`GW_0104`) can never hold API scope at all. The guarantee holds
   in the other direction too: API scope confers no fetch and no push.
-- **An allowlist, never a denylist.** Named API scope values map to named
-  groups of endpoints. Endpoints of human judgement — snapshot approval and
-  rejection, waiver creation, deregistration, retention soft-delete and restore
-  — are in no group, so no machine credential reaches them and none added later
-  is admitted by silence.
+- **Per-concern scopes, never one coarse "admin".** Around twenty named scopes
+  derived from the actual controller inventory — `marketplaces:register`,
+  `policy:write`, `audit:read`, `estate:reconcile` and so on. A credential
+  minted for a pipeline that registers marketplaces cannot also rewrite audit
+  sinks. This has to be right at first issue: narrowing a coarse scope later
+  silently changes what already-issued credentials mean, which is a breaking
+  change no version bump can communicate. No wildcard, no implicit "all", no
+  scope implying another; scopes compose additively.
+- **An allowlist on top, never a denylist.** Endpoints of human judgement and
+  every endpoint that retracts content — snapshot approval and rejection,
+  waivers, retention evaluate/compact/delete/restore, role granting — are in no
+  scope group, so no combination of scopes reaches them and none added later is
+  admitted by silence.
 - **Enforced independently of `skills-gateway.roles.enabled`.** That flag
   defaults to false and currently makes every `require*()` pass. Machine scope
   enforcement does not consult it: there is no existing machine credential to
   stay compatible with, so it is strict from the first release.
-- **A machine principal.** Credentials are issued to a reserved `machine:`
-  principal namespace that no identity-provider subject can occupy, so the
-  ledger's actor column distinguishes machine from human from
-  `config-reconciler` on sight, and the human who provisioned the credential is
-  recorded as its owner.
+- **An explicit actor type on the audit ledger.** `fetch_log` gains a
+  denormalised `actor_type` (`human` / `machine` / `system`) beside the existing
+  human-readable `principal`. This replaces — and repairs — today's implicit
+  vocabulary, in which `config-reconciler`, `scheduler` and `system` are magic
+  strings smuggled into the principal column.
 - **Mandatory expiry.** A machine credential cannot be issued without one, and
   the configured lifetime cap applies. Rotation and revocation reuse the
   existing PAT lineage unchanged.
@@ -66,14 +74,20 @@ letting an existing facade credential become one.
 - **No OAuth2 client-credentials grant.** Argued in `design.md`; the short
   version is that it makes the gateway an authorization server it is not, and
   buys nothing the PAT lineage does not already give.
-- **No approval by machine.** `CLAUDE.md` and
+- **No approval by machine, and no retraction by machine.** `CLAUDE.md` and
   `docs/manual/guides/declarative-estate.md` already say everything that
   retracts or publishes content stays interactive and audited. This change
   keeps that line and does not propose a "trusted automation" exception.
+- **No role granting by machine.** `estate.grants` already covers the
+  declarative case with no credential in the pipeline; a machine write path
+  would add escalation surface for a capability that has a safer route.
+- **The enumerating allowlist test is a prerequisite, not part of this
+  change.** It touches every controller and bundling it would make a
+  trust-boundary PR harder to review. See task group 0.
 - **No fix for the `/api/**` session-cookie CSRF exemption.** It is a
   pre-existing gap with a "revisit with the portal" note in `SecurityConfig`
   and it needs the portal. This change must not deepen it: the machine chain
-  earns its own exemption the way the git chain does — no cookie, no ambient
+  earns its own exemption the way the facade chain does — no cookie, no ambient
   credential — rather than borrowing the session chain's.
 - **No portal UI.** Provisioning a machine credential is an admin API call in
   this change; the screen can follow.
@@ -88,34 +102,40 @@ _None._
 
 - `auth`: an access token may carry authority for the REST API as a scope
   dimension distinct from fetch and push; the API is reached by a stateless
-  chain that honours no cookie; and a machine credential's principal is a
-  reserved namespace that appears as itself on the ledger.
-- `admin-api`: the endpoints a machine credential may reach are an allowlist
-  that excludes every act of human judgement, enforced regardless of whether
-  role enforcement is enabled.
-- `admin-roles`: a machine principal acquires roles from configuration and
-  grants only — never from claims, which it has none of — and cannot grant to
-  itself; scope and role are both required, never either.
+  bearer chain that honours no cookie; and the audit ledger records an explicit
+  actor type rather than encoding actor kind in the principal string.
+- `admin-api`: the endpoints a machine credential may reach are per-concern
+  named scopes over an allowlist that excludes every act of human judgement and
+  every retraction of content, enforced regardless of whether role enforcement
+  is enabled.
+- `admin-roles`: a machine credential's principal acquires roles from
+  configuration and declared grants only — never from claims, which it has none
+  of, and never through the grants API, which it cannot reach; scope and role
+  are both required, never either.
 - `token-lifecycle`: a machine credential must expire, rotates preserving its
-  principal and all three scope dimensions, and is administered by an admin
+  identity and all three scope dimensions, and is administered by an admin
   rather than appearing in a human's own-token listing.
 
 ## Impact
 
-- **DB**: `access_tokens.api_scopes TEXT` and a machine-owner column, folded
-  into `V1__init.sql` per `CLAUDE.md`.
-- **Backend**: `SecurityConfig` (a new chain), `PatAuthenticationProvider` (or a
-  sibling that fails closed on empty API scope), `AccessToken`, `TokenService`,
-  `TokenController`, `RoleService`, and an allowlist component.
+- **DB**: `access_tokens.api_scopes TEXT` and a machine-owner column;
+  `fetch_log.actor_type TEXT NOT NULL` with a backfill for the three existing
+  magic-string actors. Folded into `V1__init.sql` per `CLAUDE.md` — the project
+  is pre-1.0.0 and schema change is acceptable.
+- **Backend**: `SecurityConfig` (a new chain), a bearer authentication provider
+  that fails closed on empty API scope, `AccessToken`, `TokenService`,
+  `TokenController`, `AdminAuditLogger`, `FetchLogRepository`, `RoleService`,
+  and a scope-to-endpoint allowlist component.
 - **API**: machine-credential provisioning endpoints; the token view gains the
-  API scope list.
+  API scope list. Additive within the major.
 - **Portal**: `types.gen.ts` regenerated; no UI.
+- **Estate**: machine credentials are deliberately API-only, for the same
+  reason PATs are — a credential's secret has no declarative form. The design
+  states this rather than leaving it to inference.
 - **Docs** (same PR): `reference/api/index.md` (the "OIDC session only" line is
   no longer true and must be rewritten precisely), `reference/api/tokens.md`,
   `guides/declarative-estate.md` (estate versus API), `concepts/trust-boundaries.md`,
   `reference/configuration.md`, `architecture.md`.
-- **Estate**: machine credentials are deliberately API-only, for the same
-  reason PATs are — a credential's secret has no declarative form. The design
-  states this rather than leaving it to inference.
+- **Prerequisite**: the enumerating allowlist test ships first, as its own PR.
 - **Trust boundary**: this authenticates the control plane → old-coder Tier 3;
   adversarial and negative tests are required, not optional.
