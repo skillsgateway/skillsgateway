@@ -266,7 +266,7 @@ class SyncTests extends AbstractGatewayTest {
         CountDownLatch start = new CountDownLatch(1);
         Callable<Snapshot> ingest = () -> {
             start.await();
-            return ingestionService.ingest(marketplace);
+            return ingestionService.ingest(marketplace, null);
         };
         ExecutorService pool = Executors.newFixedThreadPool(threads);
         try {

@@ -121,9 +121,11 @@ class PreviewTests extends AbstractGatewayTest {
         // Upstream moves: one file modified, one added, one removed.
         changeUpstream(upstream);
         long heldId = ingestionService
-                .ingest(marketplaceRepository
-                        .findById(fixture.marketplace().id())
-                        .orElseThrow())
+                .ingest(
+                        marketplaceRepository
+                                .findById(fixture.marketplace().id())
+                                .orElseThrow(),
+                        null)
                 .id();
 
         String body = mockMvc.perform(get("/api/snapshots/{id}/diff", heldId).with(alice))

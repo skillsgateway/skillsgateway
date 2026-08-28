@@ -69,7 +69,7 @@ public class MarketplaceRegistrationService {
      * check and a supplied URL is a contradiction rather than an unused field; its origin
      * repository is created here so a publisher can push the moment registration returns.
      */
-    @Requirements({"GW_0001", "GW_0101"})
+    @Requirements({"GW_0001", "GW_0096", "GW_0101"})
     public Marketplace register(String name, String url, String origin, String pushPolicy, String actor) {
         if (name == null || !MARKETPLACE_NAME.matcher(name).matches()) {
             throw new ResponseStatusException(
@@ -99,7 +99,10 @@ public class MarketplaceRegistrationService {
                 url,
                 hosted ? null : forgeMetadataService.resolve(url).orElse(null),
                 resolvedOrigin,
-                resolvedPolicy);
+                resolvedPolicy,
+                // The registrant is a column, not only a ledger row (GW_0096): the four-eyes rule
+                // reads it when this marketplace's snapshots are approved.
+                actor);
         if (hosted) {
             createOriginRepository(marketplace.name());
         }
