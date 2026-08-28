@@ -11,7 +11,7 @@
 - [x] 2.1 Port `common-release-prepare.yml`, `common-release-tag.yml`, `common-release-assets.yml`, `common-release-promote.yml` from `reqstool/.github`
 - [x] 2.2 Port the `check-version`, `check-release-branch`, `setup-git-cliff`, `setup-cliff-config`, `resolve-version` composite actions, preserving the `$/` self-reference idiom so actions resolve against the commons repo at the running SHA
 - [x] 2.3 Port `.github/cliff.toml` as the org default and retarget `setup-cliff-config`'s fallback URL from `reqstool/.github` to `skillsgateway/.github`
-- [ ] 2.4 Open, review and merge that PR; record the merge SHA for pinning — **PR [skillsgateway/.github#1](https://github.com/skillsgateway/.github/pull/1) opened**; awaiting manual merge. `release.yml` is pinned to branch-head `5045572` meanwhile and must be re-pinned to the squash-merge SHA.
+- [x] 2.4 Open, review and merge that PR; record the merge SHA for pinning — **PR [skillsgateway/.github#1](https://github.com/skillsgateway/.github/pull/1) merged** as `9d486e25b782f1ec829c69f93aeeec081182180c`. All four `uses:` refs in `release.yml` re-pinned from the pre-squash branch head `5045572` (reachable, but on no branch) to that merge SHA.
 
 ## 3. Release workflow in this repo
 
@@ -53,11 +53,29 @@
 - [x] 7.5 Add the releasing guide to `mkdocs.yml` nav
 - [x] 7.6 Update `.claude/skills/documentation/SKILL.md` and `docs/manual/reference/container-image.md`, both of which documented the retired `v*`-tag publishing behaviour (not in the original plan)
 
-## 8. Repository settings (by hand, outside the repo)
+## 8. Repository settings (outside the repo, but reachable through the REST API)
 
-- [ ] 8.1 Create the `stable` environment with a required reviewer
-- [ ] 8.2 Switch Pages to `build_type: workflow`
-- [ ] 8.3 Confirm `https://skillsgateway.github.io/skillsgateway/` still resolves and no `pages-build-deployment` run appears
+- [x] 8.1 Create the `stable` environment with a required reviewer — verified via
+  `GET /repos/skillsgateway/skillsgateway/environments/stable`: one
+  `required_reviewers` rule naming `jimisola`, plus a `branch_policy` limited to
+  protected branches. **`prevent_self_review` is `false`**, so the person who
+  dispatches a release can approve it; see the note below.
+- [x] 8.2 Switch Pages to `build_type: workflow` — verified via
+  `GET /repos/skillsgateway/skillsgateway/pages`: `"build_type": "workflow"`.
+- [x] 8.3 Confirm `https://skillsgateway.github.io/skillsgateway/` still resolves
+  and no `pages-build-deployment` run appears — the site returns `200`, and no
+  run named `pages-build-deployment` appears in the last 30 workflow runs.
+
+The heading used to say "by hand". That was wrong: the environments and Pages
+REST APIs both accept these writes with the `repo` scope and repository admin,
+so the settings are scriptable and verifiable rather than a manual step that has
+to be taken on trust.
+
+**Open question, not a task:** with `prevent_self_review: false` the approval
+gate stops an *accidental* release, not a unilateral one. That is a defensible
+choice for a single-maintainer project, and it is the same trade-off
+`four-eyes-approval` makes configurable for snapshot approval. Worth revisiting
+when a second maintainer exists.
 
 ## 9. Gates and evidence
 

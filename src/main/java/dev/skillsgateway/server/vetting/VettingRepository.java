@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.vetting;
 
+import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -47,9 +48,10 @@ public class VettingRepository {
      * Starts a run, already carrying the fail-closed outcome it has before anything ran, and
      * stamped with the identity of the chain that is about to produce it.
      */
+    @Requirements({"GW_0125"})
     public long startRun(long snapshotId, String trigger, String chain) {
         return jdbc.sql("INSERT INTO vetting_runs (snapshot_id, trigger, started_at, outcome, chain)"
-                        + " VALUES (:snapshotId, :trigger, :now, :outcome, :chain) RETURNING id")
+                        + " VALUES (:snapshotId, :trigger, :now, :outcome::vetting_run_outcome, :chain) RETURNING id")
                 .param("snapshotId", snapshotId)
                 .param("trigger", trigger)
                 .param("now", OffsetDateTime.now())
@@ -60,11 +62,12 @@ public class VettingRepository {
     }
 
     /** Records one connector's verdict and its findings. */
+    @Requirements({"GW_0125"})
     @Transactional
     public void recordVerdict(long runId, String connector, int position, Verdict verdict) {
         long verdictId = jdbc.sql(
                         "INSERT INTO vetting_verdicts (run_id, connector, position, state, detail, report_url,"
-                                + " created_at) VALUES (:runId, :connector, :position, :state, :detail, :reportUrl,"
+                                + " created_at) VALUES (:runId, :connector, :position, :state::vetting_verdict_state, :detail, :reportUrl,"
                                 + " :now) RETURNING id")
                 .param("runId", runId)
                 .param("connector", connector)
@@ -76,8 +79,9 @@ public class VettingRepository {
                 .query(Long.class)
                 .single();
         for (Finding finding : verdict.findings()) {
-            jdbc.sql("INSERT INTO vetting_findings (verdict_id, finding_id, severity, location, message)"
-                            + " VALUES (:verdictId, :findingId, :severity, :location, :message)")
+            jdbc.sql(
+                            "INSERT INTO vetting_findings (verdict_id, finding_id, severity, location, message)"
+                                    + " VALUES (:verdictId, :findingId, :severity::vetting_finding_severity, :location, :message)")
                     .param("verdictId", verdictId)
                     .param("findingId", finding.id())
                     .param("severity", finding.severity().stored())
@@ -102,8 +106,10 @@ public class VettingRepository {
                                 .stored());
     }
 
+    @Requirements({"GW_0125"})
     public void finishRun(long runId, VettingChain.Outcome outcome) {
-        jdbc.sql("UPDATE vetting_runs SET finished_at = :now, outcome = :outcome WHERE id = :id")
+        jdbc.sql("UPDATE vetting_runs SET finished_at = :now, outcome = :outcome::vetting_run_outcome"
+                        + " WHERE id = :id")
                 .param("now", OffsetDateTime.now())
                 .param("outcome", outcome.stored())
                 .param("id", runId)

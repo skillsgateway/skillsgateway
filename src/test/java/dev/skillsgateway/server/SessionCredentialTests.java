@@ -121,7 +121,8 @@ class SessionCredentialTests extends AbstractGatewayTest {
     @SVCs({"SVC_GW_0104"})
     void it_cannot_publish_to_a_hosted_marketplace() throws Exception {
         String hosted = uniqueName("sessionpush");
-        marketplaceRepository.register(hosted, null, null, Marketplace.ORIGIN_HOSTED, Marketplace.PUSH_APPEND_ONLY);
+        marketplaceRepository.register(
+                hosted, null, null, Marketplace.ORIGIN_HOSTED, Marketplace.PUSH_APPEND_ONLY, null);
         try (Repository ignored = storage.hosted(hosted)) {
             assertThat(ignored.getDirectory()).exists();
         } catch (IOException e) {

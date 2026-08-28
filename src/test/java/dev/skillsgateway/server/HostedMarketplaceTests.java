@@ -141,7 +141,7 @@ class HostedMarketplaceTests extends AbstractGatewayTest {
         long marketplaceId =
                 marketplaceRepository.findByName(name).orElseThrow().id();
         long snapshotId = snapshotRepository
-                .create(marketplaceId, "0".repeat(40), dev.skillsgateway.server.persistence.Snapshot.HELD, null)
+                .create(marketplaceId, "0".repeat(40), dev.skillsgateway.server.persistence.Snapshot.HELD, null, null)
                 .id();
         mockMvc.perform(get("/api/snapshots/{id}/provenance", snapshotId).with(oidcLogin()))
                 .andExpect(status().isOk())

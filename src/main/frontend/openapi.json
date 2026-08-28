@@ -74,6 +74,30 @@
         },
         "type": "object"
       },
+      "Conflict": {
+        "description": "A supply-side act by the reviewer that makes this approval a self-approval",
+        "properties": {
+          "principal": {
+            "description": "The identity that performed it",
+            "type": "string"
+          },
+          "role": {
+            "description": "The supply-side act",
+            "enum": [
+              "ingested-by",
+              "registered-by",
+              "waiver-author"
+            ],
+            "type": "string"
+          },
+          "waiverId": {
+            "description": "The waiver the reviewer authored, for a waiver-author conflict",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "ConnectorView": {
         "description": "A connector configured in the vetting chain",
         "properties": {
@@ -586,6 +610,31 @@
         },
         "type": "object"
       },
+      "FourEyesCheck": {
+        "description": "Whether the four-eyes rule would refuse this reviewer's approval of this snapshot",
+        "properties": {
+          "conflicts": {
+            "description": "The supply-side acts this reviewer performed on this snapshot",
+            "items": {
+              "$ref": "#/components/schemas/Conflict"
+            },
+            "type": "array"
+          },
+          "mode": {
+            "description": "The configured mode",
+            "enum": [
+              "WARN",
+              "ENFORCE"
+            ],
+            "type": "string"
+          },
+          "refused": {
+            "description": "True when the mode is enforce and there is at least one conflict",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "GrantRequest": {
         "description": "Role grant request",
         "properties": {
@@ -785,6 +834,10 @@
             ],
             "type": "string"
           },
+          "registeredBy": {
+            "description": "Identity that registered the marketplace, or null for one registered before the registrant was recorded",
+            "type": "string"
+          },
           "syncMode": {
             "description": "How upstream content reaches quarantine: on-demand, scheduled, or webhook. The trigger only — every mode lands snapshots held behind the approval gate.",
             "enum": [
@@ -889,6 +942,10 @@
               "append-only",
               "allow-rewrite"
             ],
+            "type": "string"
+          },
+          "registeredBy": {
+            "description": "Identity that registered the marketplace, or null when it was not recorded",
             "type": "string"
           },
           "snapshots": {
@@ -1422,6 +1479,10 @@
             "description": "Snapshot id",
             "format": "int64",
             "type": "integer"
+          },
+          "ingestedBy": {
+            "description": "Identity that triggered the ingestion: a principal for an on-demand ingest or a push, 'scheduler' or 'webhook' for an automated trigger, null for a snapshot ingested before the actor was recorded",
+            "type": "string"
           },
           "marketplaceId": {
             "description": "Owning marketplace id",
@@ -3355,7 +3416,7 @@
                 }
               }
             },
-            "description": "Snapshot is neither held nor revoked, its effective vetting outcome is blocked, or it has not yet reached the configured minimum release age"
+            "description": "Snapshot is neither held nor revoked, its effective vetting outcome is blocked, it has not yet reached the configured minimum release age, or - under an enforcing four-eyes rule - the reviewer is on the snapshot's supply side"
           }
         },
         "summary": "Approve a held or revoked snapshot",
@@ -3620,6 +3681,49 @@
         "summary": "File tree of the pinned commit",
         "tags": [
           "Snapshot preview"
+        ]
+      }
+    },
+    "/api/snapshots/{id}/four-eyes": {
+      "get": {
+        "description": "Whether the separation-of-duties rule would object to this caller approving this snapshot, and what the configured mode would then do. A conflict names each supply-side act the caller performed on the snapshot: registering its marketplace, triggering its ingestion, or authoring a waiver the approval would rely on. The automated sync triggers are not identities and never conflict. Answered by the server because the waiver clause depends on which waivers the effective-outcome evaluation actually applies; the approval endpoint enforces the same rule independently, and this endpoint decides nothing.",
+        "operationId": "fourEyes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FourEyesCheck"
+                }
+              }
+            },
+            "description": "The mode in force and any conflicts"
+          },
+          "404": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FourEyesCheck"
+                }
+              }
+            },
+            "description": "Snapshot not found"
+          }
+        },
+        "summary": "Four-eyes standing of the calling reviewer",
+        "tags": [
+          "Snapshots"
         ]
       }
     },

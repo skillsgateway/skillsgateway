@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.persistence;
 
+import io.github.reqstool.annotations.Requirements;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -27,10 +28,19 @@ public class SnapshotRepository {
         this.jdbc = jdbc;
     }
 
-    public Snapshot create(long marketplaceId, String sha, String state, String violation) {
-        return jdbc.sql("INSERT INTO snapshots (marketplace_id, sha, state, violation, created_at)"
-                        + " VALUES (:marketplaceId, :sha, :state, :violation, :now) RETURNING *")
+    /**
+     * Records a snapshot together with the identity that triggered its ingestion (GW_0096). The
+     * actor is a column rather than a ledger lookup because the four-eyes rule reads it as an
+     * authorization input, and null is a legitimate value: a snapshot whose actor was never
+     * recorded conflicts with nobody.
+     */
+    @Requirements({"GW_0096", "GW_0125"})
+    public Snapshot create(long marketplaceId, String sha, String state, String violation, String ingestedBy) {
+        return jdbc.sql("INSERT INTO snapshots (marketplace_id, sha, state, violation, created_at, ingested_by)"
+                        + " VALUES (:marketplaceId, :sha, :state::snapshot_state, :violation, :now, :ingestedBy)"
+                        + " RETURNING *")
                 .param("marketplaceId", marketplaceId)
+                .param("ingestedBy", ingestedBy)
                 .param("sha", sha)
                 .param("state", state)
                 .param("violation", violation)
@@ -73,6 +83,7 @@ public class SnapshotRepository {
      * stamps are cleared by the transition, so a re-published snapshot never carries a revocation
      * marker that no longer holds; what it was revoked for stays in the ledger.
      */
+    @Requirements({"GW_0125"})
     @Transactional
     public Snapshot decide(long id, String newState, String reviewer) {
         Snapshot snapshot = findById(id).orElseThrow(() -> new SnapshotNotFoundException(id));
@@ -82,9 +93,10 @@ public class SnapshotRepository {
         if (!Snapshot.APPROVED.equals(newState) && !Snapshot.REJECTED.equals(newState)) {
             throw new IllegalStateException("invalid target state " + newState);
         }
-        return jdbc.sql("UPDATE snapshots SET state = :state, decided_by = :reviewer, decided_at = :now,"
-                        + " revoked_at = NULL, revoked_by = NULL, violation = NULL"
-                        + " WHERE id = :id RETURNING *")
+        return jdbc.sql(
+                        "UPDATE snapshots SET state = :state::snapshot_state, decided_by = :reviewer, decided_at = :now,"
+                                + " revoked_at = NULL, revoked_by = NULL, violation = NULL"
+                                + " WHERE id = :id RETURNING *")
                 .param("state", newState)
                 .param("reviewer", reviewer)
                 .param("now", OffsetDateTime.now())
@@ -102,9 +114,10 @@ public class SnapshotRepository {
      * @return the revoked snapshot, or empty when it was not approved (already revoked, or never
      *     approved) — which the caller must treat as "someone else got there first", not an error
      */
+    @Requirements({"GW_0125"})
     public Optional<Snapshot> revoke(long id, String actor, String violation) {
-        return jdbc.sql("UPDATE snapshots SET state = :state, revoked_at = :now, revoked_by = :actor,"
-                        + " violation = :violation WHERE id = :id AND state = :approved RETURNING *")
+        return jdbc.sql("UPDATE snapshots SET state = :state::snapshot_state, revoked_at = :now, revoked_by = :actor,"
+                        + " violation = :violation WHERE id = :id AND state = :approved::snapshot_state RETURNING *")
                 .param("state", Snapshot.REVOKED)
                 .param("now", OffsetDateTime.now())
                 .param("actor", actor)
@@ -130,7 +143,7 @@ public class SnapshotRepository {
         return jdbc.sql("SELECT s.* FROM snapshots s"
                         + " LEFT JOIN LATERAL (SELECT MAX(r.started_at) AS last_run FROM vetting_runs r"
                         + "   WHERE r.snapshot_id = s.id) latest ON TRUE"
-                        + " WHERE s.state = :approved AND s.deleted_at IS NULL"
+                        + " WHERE s.state = :approved::snapshot_state AND s.deleted_at IS NULL"
                         + " AND (latest.last_run IS NULL OR latest.last_run < :cutoff)"
                         + " ORDER BY latest.last_run ASC NULLS FIRST, s.id LIMIT :limit")
                 .param("approved", Snapshot.APPROVED)
@@ -143,7 +156,7 @@ public class SnapshotRepository {
     /** Every live approved snapshot of one marketplace: what a manual marketplace re-vet covers. */
     public List<Snapshot> approvedByMarketplace(long marketplaceId) {
         return jdbc.sql("SELECT * FROM snapshots WHERE marketplace_id = :marketplaceId"
-                        + " AND state = :approved AND deleted_at IS NULL ORDER BY id")
+                        + " AND state = :approved::snapshot_state AND deleted_at IS NULL ORDER BY id")
                 .param("marketplaceId", marketplaceId)
                 .param("approved", Snapshot.APPROVED)
                 .query(SnapshotRepository::map)
@@ -270,6 +283,7 @@ public class SnapshotRepository {
                 rs.getString("state"),
                 rs.getString("violation"),
                 MarketplaceRepository.instant(rs, "created_at"),
+                rs.getString("ingested_by"),
                 rs.getString("decided_by"),
                 MarketplaceRepository.instant(rs, "decided_at"),
                 MarketplaceRepository.instant(rs, "revoked_at"),

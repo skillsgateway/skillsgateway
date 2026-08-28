@@ -37,7 +37,7 @@ class RetentionTests extends AbstractGatewayTest {
 
     /** Ingests the current upstream head as a new snapshot of the marketplace. */
     private Snapshot ingest(Marketplace marketplace) {
-        return ingestionService.ingest(marketplace);
+        return ingestionService.ingest(marketplace, null);
     }
 
     private boolean hasPin(String marketplace, String sha) throws IOException {

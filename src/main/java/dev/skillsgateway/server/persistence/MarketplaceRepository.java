@@ -26,7 +26,7 @@ public class MarketplaceRepository {
 
     @Requirements({"GW_0021"})
     public Marketplace register(String name, String url, ForgeMetadata metadata) {
-        return register(name, url, metadata, Marketplace.ORIGIN_UPSTREAM, Marketplace.PUSH_APPEND_ONLY);
+        return register(name, url, metadata, Marketplace.ORIGIN_UPSTREAM, Marketplace.PUSH_APPEND_ONLY, null);
     }
 
     /**
@@ -34,15 +34,18 @@ public class MarketplaceRepository {
      * the table's CHECK constraints are what make the two shapes mutually exclusive rather than
      * anything here.
      */
-    @Requirements({"GW_0021", "GW_0101"})
-    public Marketplace register(String name, String url, ForgeMetadata metadata, String origin, String pushPolicy) {
+    @Requirements({"GW_0021", "GW_0096", "GW_0101", "GW_0125"})
+    public Marketplace register(
+            String name, String url, ForgeMetadata metadata, String origin, String pushPolicy, String registeredBy) {
         return jdbc.sql("INSERT INTO marketplaces"
-                        + " (name, url, created_at, origin, push_policy, forge, forge_project, description,"
-                        + " upstream_updated_at)"
-                        + " VALUES (:name, :url, :now, :origin, :pushPolicy, :forge, :forgeProject, :description,"
-                        + " :upstreamUpdatedAt)"
+                        + " (name, url, created_at, registered_by, origin, push_policy, forge, forge_project,"
+                        + " description, upstream_updated_at)"
+                        + " VALUES (:name, :url, :now, :registeredBy, :origin::marketplace_origin,"
+                        + " :pushPolicy::marketplace_push_policy, :forge, :forgeProject,"
+                        + " :description, :upstreamUpdatedAt)"
                         + " RETURNING *")
                 .param("name", name)
+                .param("registeredBy", registeredBy)
                 .param("url", url)
                 .param("origin", origin == null ? Marketplace.ORIGIN_UPSTREAM : origin)
                 // The column's DEFAULT applies only to an omitted value, not to an explicit null.
@@ -88,9 +91,9 @@ public class MarketplaceRepository {
      * secret when the new mode is webhook and null otherwise, so leaving webhook mode always
      * discards the key (GW_0056, GW_0058).
      */
-    @Requirements({"GW_0056"})
+    @Requirements({"GW_0056", "GW_0125"})
     public Optional<Marketplace> updateSyncMode(String name, String mode, String webhookSecret) {
-        return jdbc.sql("UPDATE marketplaces SET sync_mode = :mode, webhook_secret = :secret"
+        return jdbc.sql("UPDATE marketplaces SET sync_mode = :mode::marketplace_sync_mode, webhook_secret = :secret"
                         + " WHERE name = :name RETURNING *")
                 .param("mode", mode)
                 .param("secret", webhookSecret)
@@ -131,6 +134,7 @@ public class MarketplaceRepository {
                 rs.getString("name"),
                 rs.getString("url"),
                 instant(rs, "created_at"),
+                rs.getString("registered_by"),
                 rs.getString("origin"),
                 rs.getString("push_policy"),
                 rs.getString("forge"),

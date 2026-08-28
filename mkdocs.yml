@@ -127,6 +127,7 @@ nav:
       - Identity providers: guides/identity-providers.md
       - Declarative estate configuration: guides/declarative-estate.md
       - Policy deny rules: guides/policy-rules.md
+      - Deploying on Kubernetes: guides/deploying-on-kubernetes.md
       - Cutting a release: guides/releasing.md
   - Reference:
       - Configuration: reference/configuration.md

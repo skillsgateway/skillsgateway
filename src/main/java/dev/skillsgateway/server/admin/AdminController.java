@@ -1,9 +1,12 @@
 package dev.skillsgateway.server.admin;
 
 import dev.skillsgateway.server.approval.ApprovalService;
+import dev.skillsgateway.server.approval.FourEyesConflictException;
+import dev.skillsgateway.server.approval.FourEyesGate;
 import dev.skillsgateway.server.approval.ReleaseAgeGate;
 import dev.skillsgateway.server.approval.SnapshotTooYoungException;
 import dev.skillsgateway.server.approval.VettingBlockedException;
+import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.ingestion.IngestionException;
 import dev.skillsgateway.server.ingestion.IngestionService;
 import dev.skillsgateway.server.ingestion.SnapshotContentService;
@@ -133,6 +136,9 @@ public class AdminController {
 
             @Schema(description = "Registration time") Instant createdAt,
 
+            @Schema(description = "Identity that registered the marketplace, or null when it was not recorded")
+            String registeredBy,
+
             @Schema(
                     description = "Where the content comes from",
                     allowableValues = {"upstream", "hosted"})
@@ -242,6 +248,7 @@ public class AdminController {
                         marketplace.name(),
                         marketplace.url(),
                         marketplace.createdAt(),
+                        marketplace.registeredBy(),
                         marketplace.origin(),
                         marketplace.pushPolicy(),
                         marketplace.hosted() ? "/publish/" + marketplace.name() : null,
@@ -270,14 +277,14 @@ public class AdminController {
                 .findByName(name)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "marketplace '%s' not found".formatted(name)));
-        Snapshot snapshot = ingestionService.ingest(marketplace);
+        Snapshot snapshot = ingestionService.ingest(marketplace, authentication.getName());
         auditLogger.record(authentication.getName(), marketplace.name(), "snapshot-ingested", snapshot.sha());
         emit(WebhookEvent.SNAPSHOT_INGESTED, marketplace.name(), snapshot, authentication.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(snapshot);
     }
 
     @PostMapping("/snapshots/{id}/approve")
-    @Requirements({"GW_0041", "GW_0050"})
+    @Requirements({"GW_0041", "GW_0050", "GW_0096", "GW_0097"})
     @Tag(name = "Snapshots")
     @Operation(
             summary = "Approve a held or revoked snapshot",
@@ -295,8 +302,9 @@ public class AdminController {
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
     @ApiResponse(
             responseCode = "409",
-            description = "Snapshot is neither held nor revoked, its effective vetting outcome is blocked, or it"
-                    + " has not yet reached the configured minimum release age")
+            description = "Snapshot is neither held nor revoked, its effective vetting outcome is blocked, it"
+                    + " has not yet reached the configured minimum release age, or - under an enforcing"
+                    + " four-eyes rule - the reviewer is on the snapshot's supply side")
     public Snapshot approve(@PathVariable long id, Authentication authentication) {
         roleService.requireApproverOfSnapshot(authentication, id);
         ApprovalService.Approved approved = approvalService.approve(id, authentication.getName());
@@ -312,6 +320,17 @@ public class AdminController {
                 "snapshot-approved",
                 snapshot.sha(),
                 "ingestion-age=" + ReleaseAgeGate.format(approved.ingestionAge()));
+        // Warn mode published a self-approval (GW_0097). The decision entry above says who approved;
+        // this one says why that was not an independent review, and it is written beside the
+        // approval rather than instead of it so the ledger carries both facts.
+        if (!approved.fourEyesConflicts().isEmpty()) {
+            auditLogger.record(
+                    authentication.getName(),
+                    marketplace,
+                    FourEyesGate.EVENT_CONFLICT,
+                    snapshot.sha(),
+                    "mode=WARN, approved, conflicts=" + FourEyesGate.describe(approved.fourEyesConflicts()));
+        }
         emit(
                 WebhookEvent.SNAPSHOT_APPROVED,
                 marketplaceName(snapshot.marketplaceId()),
@@ -393,6 +412,28 @@ public class AdminController {
                         () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "snapshot %d not found".formatted(id)));
     }
 
+    @GetMapping("/snapshots/{id}/four-eyes")
+    @Requirements({"GW_0096", "GW_0097"})
+    @Tag(name = "Snapshots")
+    @Operation(
+            summary = "Four-eyes standing of the calling reviewer",
+            description = "Whether the separation-of-duties rule would object to this caller approving this"
+                    + " snapshot, and what the configured mode would then do. A conflict names each supply-side"
+                    + " act the caller performed on the snapshot: registering its marketplace, triggering its"
+                    + " ingestion, or authoring a waiver the approval would rely on. The automated sync"
+                    + " triggers are not identities and never conflict. Answered by the server because the"
+                    + " waiver clause depends on which waivers the effective-outcome evaluation actually"
+                    + " applies; the approval endpoint enforces the same rule independently, and this endpoint"
+                    + " decides nothing.")
+    @ApiResponse(responseCode = "200", description = "The mode in force and any conflicts")
+    @ApiResponse(responseCode = "404", description = "Snapshot not found")
+    public FourEyesGate.FourEyesCheck fourEyes(@PathVariable long id, Authentication authentication) {
+        return approvalService
+                .fourEyes(id, authentication.getName())
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "snapshot %d not found".formatted(id)));
+    }
+
     @GetMapping("/audit")
     @Tag(name = "Audit")
     @Operation(
@@ -445,6 +486,22 @@ public class AdminController {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
         problem.setTitle("Policy rules denied this snapshot");
         problem.setProperty("denials", e.denials());
+        return problem;
+    }
+
+    /**
+     * Separation of duties (GW_0096). 409 rather than 403 on purpose: the principal <em>is</em>
+     * authorized to approve in this marketplace — the role model already said so — and what refuses
+     * them is this snapshot's provenance, which a different reviewer resolves and a different
+     * permission would not. The response names each conflicting role so the answer is actionable:
+     * who has to approve instead, and which waiver would have to come from somebody else.
+     */
+    @ExceptionHandler(FourEyesConflictException.class)
+    public ProblemDetail fourEyesConflict(FourEyesConflictException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+        problem.setTitle("Four-eyes rule refused this approval");
+        problem.setProperty("configKey", SkillsGatewayProperties.FourEyes.CONFIG_KEY);
+        problem.setProperty("conflicts", e.conflicts());
         return problem;
     }
 

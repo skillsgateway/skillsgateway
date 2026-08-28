@@ -6,9 +6,7 @@ Authentication for both client types: OIDC (OAuth2) browser sessions for the
 web/admin surface — including which claim names the principal, which scopes the
 login requests, and the expected identity-token issuer — and personal access
 tokens for git clients, including the token lifecycle.
-
 ## Requirements
-
 ### Requirement: GW_0011
 The system SHALL implement GW_0011.
 
@@ -32,3 +30,10 @@ The system SHALL implement GW_0100.
 
 #### Scenario: SVC_GW_0100
 The system SHALL pass SVC_GW_0100.
+
+### Requirement: GW_0110
+The system SHALL implement GW_0110.
+
+#### Scenario: SVC_GW_0110
+The system SHALL pass SVC_GW_0110.
+
