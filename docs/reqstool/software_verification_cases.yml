@@ -1057,3 +1057,17 @@ cases:
       WHEN the packaging test validates them
       THEN no workflow matches or strips a prefixed tag, the changelog configuration recognises only bare three-part semantic versions as release tags, and the release workflow refuses a commit that is unreachable from the main branch or that already carries a release tag
     revision: "0.1.0"
+
+  - id: SVC_GW_0110
+    requirement_ids: ["GW_0110"]
+    title: A configured deployment refuses to start with the development escape hatch on
+    verification: automated-test
+    description: |
+      GIVEN a gateway whose development-only unauthenticated mode is enabled
+      WHEN it is started with an identity provider configured, whether by a real client
+      registration, a provider endpoint that is not the shipped placeholder, or a pinned
+      issuer
+      THEN it refuses to start, and the refusal names the configuration that decided it and
+      both ways to resolve it
+      AND a gateway with the mode enabled and no identity provider configured still starts
+    revision: "0.1.0"
