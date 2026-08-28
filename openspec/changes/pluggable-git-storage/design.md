@@ -170,7 +170,7 @@ from. It is a transport for pushing a mirror *into* a bucket, not a storage
 backend to *serve from*. Using it here would be a category error.
 
 So the implementable surface is: extend `DfsRepository`, implement
-`DfsObjDatabase` (pack lifecycle — `listPacks`, `openFile`, `writePackFile`,
+`DfsObjDatabase` (pack lifecycle — `newPack`, `listPacks`, `openFile`, `writeFile`,
 `commitPackImpl`, `rollbackPack`) and a ref database over the bucket, and let
 JGit's existing `DfsReader` / `UploadPack` path do the git.
 
@@ -247,6 +247,57 @@ second hard infrastructure dependency, plus a cloud-specific one. Requiring only
 conditional-write object storage keeps MinIO and on-prem S3-compatible stores in
 scope, which for an air-gap-friendly product matters more than using the
 nicest available primitive.
+
+*Alternative rejected — a distributed lock over the PostgreSQL we already run
+(e.g. Spring Integration's `JdbcLockRegistry`).* Stated at length because it is
+the most predictable suggestion this design will meet — "we already have a
+database, why not lock?" — and because the answer is not obvious.
+
+**As a substitute for the conditional write it is unsafe, and no amount of
+tuning fixes it.** A lock is a lease. A writer takes it, reads the manifest, and
+then stops — a stop-the-world pause, CPU throttling, a partition. It cannot
+renew, because it is stopped. The lease expires, a second pod legitimately takes
+the lock and publishes, and the first pod resumes and issues its write believing
+it is still exclusive. That is a lost update: precisely the defect this design
+exists to prevent. Checking "do I still hold the lock?" immediately before
+writing does not close it either — the lease can lapse between the check and the
+write.
+
+The standard remedy is a **fencing token** that the *storage system* validates at
+write time, and plain S3 has exactly one such mechanism: `If-Match`. So the lock
+scheme needs the conditional write anyway — at which point the conditional write
+alone is already sufficient and the lock has added nothing to correctness.
+Spring Integration is worth naming precisely here: as of 7.0 it offers
+`DistributedLock` with a custom TTL and `RenewableLockRegistry.renewLock`, and
+its own documentation frames the guarantee as holding "as long as the underlying
+database supports the serializable isolation level in its transactions". None of
+that is a fencing token, and serializable isolation is a statement about
+correctness *inside* the database. The fencing problem exists exactly because the
+lock lives in one system and the data in another.
+
+Three further costs, any one of which would be disqualifying on its own:
+
+- **It only binds participants.** A lock constrains writers that take it. A
+  migration command, a manual repair, an older gateway version mid-rollout, or a
+  second gateway misconfigured onto the same bucket would clobber silently — and
+  this change's own migration tooling would be the first non-participant. A
+  conditional write is enforced by the store against every writer, including ones
+  that have never heard of us.
+- **It couples storage correctness to database availability.** Lock-only means a
+  PostgreSQL outage halts publication while the bucket is perfectly healthy, and
+  a failover that double-grants the lock row corrupts rather than halts.
+- **It moves correctness out of the bucket.** The self-describing property above
+  survives only if the lock is purely additive; if the lock *replaces* the
+  conditional write, the bucket's integrity depends on an out-of-band convention
+  recorded nowhere in the bucket — losing through the back door exactly what the
+  "refs in PostgreSQL" alternative was rejected to preserve.
+
+**As an addition on top of the conditional write** a lock is safe but, here,
+unmotivated: it buys fewer wasted retries under contention, and this system's
+write rate is human-paced approvals against per-marketplace manifests. Losers
+fail cleanly with 412 having written nothing. If the conflict and retry metrics
+task 9.1 calls for ever show real contention, revisit it then — with evidence,
+and as an optimisation rather than as the guarantee.
 
 *Alternative rejected — treating JGit's reftable stack as the consistency
 mechanism.* `DfsReftableDatabase` exists and may well be the encoding the ref
@@ -559,13 +610,17 @@ per assertion fixed it. It is worth remembering for the backend: a long-lived
 below the store's idle timeout, or the first request after a quiet period fails
 in a way that will read as a storage fault.
 
-### 10. The ref database is a plain `DfsRefDatabase` over the manifest — recommended, and awaiting the owner
+### 10. The ref database is a plain `DfsRefDatabase` over the manifest — accepted
 
 Task 2.4's open question — `DfsReftableDatabase` over the bucket, or a plain
 `DfsRefDatabase` over the manifest — was researched against the JGit 7.7.1
 classes actually on the classpath
 (`org.eclipse.jgit-7.7.1.202607240634-r.jar`, and the matching sources jar).
-**The recommendation is the plain `DfsRefDatabase`.** The reasoning is below, as
+**Accepted: the plain `DfsRefDatabase`.** Reviewed independently before
+acceptance; that review confirmed the JGit claims below against the classpath,
+corrected three of them (the withdrawn staleness argument at point 3, the
+garbage-collector coupling at point 5, and the `DfsObjDatabase` method names in
+decision 2), and added the last five consequences at the end of this decision. The reasoning is below, as
 is what it costs, because the decision is not free in either direction and the
 owner should see both halves before any backend is built on it.
 
@@ -615,15 +670,17 @@ The consistency mechanism is unchanged; only what it protects moves.
    database says was approved?" does one `GetObject` and reads JSON. On a trust
    boundary whose whole guarantee is *the served ref is the approved SHA*, that
    is not a convenience; it is the auditability of the guarantee.
-3. *Staleness checks get cheap, and that matters per-request.* Both options
-   cache (`DfsRefDatabase` holds an `AtomicReference<RefCache>`;
-   `DfsObjDatabase` holds a cached `PackList`), so a facade read path needs a
-   freshness policy either way — that part does not differentiate them. What
-   differentiates them is the cost of the check. Against the manifest it is a
-   conditional `HEAD`/`GET` on one key, `O(1)` and identical on every store.
-   Against reftable it is re-listing the pack set, which is a LIST — more
-   expensive, and with consistency semantics that vary across the very
-   S3-compatible stores decision 3 bought portability for.
+3. *Staleness is a wash, and an earlier revision of this decision claimed
+   otherwise.* Both options cache — `DfsRefDatabase` holds an
+   `AtomicReference<RefCache>`, `DfsObjDatabase` a cached `PackList` — so a
+   facade read path needs a freshness policy either way. This decision
+   previously argued that reftable made the check a bucket `LIST` while the
+   manifest made it an `O(1)` conditional `GET`. **That was a false dichotomy:**
+   nothing in JGit forces `listPacks()` to be a bucket listing, and since the
+   manifest already holds the live pack set, a reftable implementation over the
+   same manifest would refresh with the same single conditional GET. The
+   argument is withdrawn; the recommendation does not need it, and keeping a
+   weak argument invites a reviewer to discount the strong ones.
 4. *Our ref population is tiny, so reftable's advantage does not apply.* The
    gateway's namespaces are `refs/heads/main` and `refs/snapshots/<sha>` (plus
    `refs/quarantine/incoming` and `refs/catalog/*`, neither of them served).
@@ -632,7 +689,12 @@ The consistency mechanism is unchanged; only what it protects moves.
    refs as one small object per transition is not. Choosing reftable buys
    scaling we have no use for and pays for it in machinery.
 5. *Compaction machinery is not lost by choosing the manifest.*
-   `DfsGarbageCollector` has no reftable coupling at all, and
+   `DfsGarbageCollector`'s reftable machinery (`setReftableConfig`,
+   `convertToReftable`, `writeReftable`, `hasGcReftable`) is **opt-in**, gated
+   on a `reftableConfig` that is null by default — exactly like the compactor's.
+   An earlier revision of this decision said GC "has no reftable coupling at
+   all", which is simply wrong; the operative conclusion is unchanged, but the
+   claim was not. And
    `DfsPackCompactor`'s reftable compaction is opt-in — guarded by
    `reftableConfig != null && !srcReftables.isEmpty()`. Task 6.6 keeps both
    either way.
@@ -692,6 +754,57 @@ stands:
   both Floci and MinIO.
 - Retry on a lost CAS is ours to write and ours to bound, with the
   conflict/retry metrics task 9.1 already calls for.
+
+- **The precondition JGit hands us is per-ref; the one the store enforces is
+  per-repository. That mismatch must be absorbed inside `compareAndPut`, not
+  leaked to the caller.** `compareAndPut(oldRef, newRef)` asks "is this ref still
+  what I read?"; the manifest ETag asks "is this *repository* still what I read?"
+  Two writers touching different refs — an approval writing `refs/snapshots/A`
+  and `main` while retention deletes `refs/snapshots/B` — both hold valid
+  ref-level preconditions, but one loses the ETag race. Returning `false` there
+  is wrong: `DfsRefUpdate.doUpdate` turns it into `LOCK_FAILURE`, JGit does not
+  retry, and the caller sees a spurious failure for an update that should have
+  succeeded. So `compareAndPut` re-reads the manifest on 412, re-checks the
+  *ref-level* precondition against the fresh state, and re-PUTs; it returns
+  `false` only when the ref itself moved. Bounded, and with the retry counted.
+
+  This is also why the contract suite must assert **result codes**, not merely
+  end states. `FilesystemGitStorage.deleteRef` ignores the `RefUpdate.delete()`
+  result today; carried onto the object store, a swallowed `LOCK_FAILURE`
+  becomes a silent unpublish failure — on the revocation path, which is the last
+  place a silent failure belongs.
+
+- **Cross-replica revocation needs a stated bound, and today has none.**
+  `DfsRefDatabase` caches its `RefCache` until `clearCache()`. With one pod and
+  `RefDirectory` that was invisible; with N replicas over a shared bucket, an
+  unpublished snapshot stays advertised and fetchable from every replica that has
+  not re-read the manifest. Revocation latency therefore becomes a property of
+  the cache policy, and an unstated policy is an unbounded one. The freshness
+  check is a conditional GET of the manifest (`If-None-Match` on the cached ETag)
+  before serving a ref advertisement — `O(1)`, and cheap enough to do per
+  advertisement. The bound must be written down and a test must assert that a
+  snapshot revoked on one replica stops being served by a *different* replica
+  within it. This is a trust-boundary property, not a performance tuning knob.
+
+- **Pack deletion needs a grace period.** GC and compaction delete pack objects;
+  a replica part-way through `upload-pack` streaming from a pack that has just
+  been deleted gets a 404 mid-stream. Delete only packs unreferenced by any
+  manifest version for longer than the maximum plausible fetch duration.
+
+- **Approve-time ordering between PostgreSQL and the bucket must be chosen and
+  named.** A crash between the database write and the manifest flip leaves either
+  "approved but never served" or "served but not recorded" — the same estate
+  inconsistency this change criticises elsewhere, in miniature. Pick the order,
+  and name the reconciliation that repairs it (the startup check that verifies
+  the served estate against the database generalises to this).
+
+- **What the fidelity spike does *not* cover**, so the backend's own concurrency
+  suite does: a conditional PUT racing a DELETE (unpublish deletes), read-after-CAS
+  visibility from a *different* client and connection (the multi-replica read
+  path), agreement between `headObject` and `getObject` ETags (the spike reads
+  the current ETag with `headObject`), and ETag semantics under SSE-KMS or bucket
+  versioning on real S3 — where the ETag is not a content hash. Chaining the
+  returned ETag stays correct there; ever *computing* an expected ETag would not.
 
 **Reversibility.** This is not a one-way door. Both options implement the same
 three abstract methods behind the same `GitStorage` seam, and the task-3

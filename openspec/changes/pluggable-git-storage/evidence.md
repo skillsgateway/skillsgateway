@@ -252,12 +252,23 @@ The four findings that decided it:
    task 2.6, and would have been needed under reftable anyway.
 
 Also checked, because it would have been a real argument the other way and is
-not: choosing the manifest loses no compaction machinery. `DfsGarbageCollector`
-has no reftable coupling at all, and `DfsPackCompactor`'s reftable compaction is
-opt-in, guarded by `reftableConfig != null && !srcReftables.isEmpty()`.
+not: choosing the manifest loses no compaction machinery. Both
+`DfsGarbageCollector` and `DfsPackCompactor` carry reftable machinery, and in
+both it is **opt-in** — the collector's `setReftableConfig` /
+`convertToReftable` / `writeReftable` path and the compactor's
+`compactReftables`, guarded by `reftableConfig != null && !srcReftables.isEmpty()`,
+are inert while `reftableConfig` is null, which is the default. An earlier
+revision of this report said the collector "has no reftable coupling at all";
+`javap` on `DfsGarbageCollector` lists nine reftable members, so that was wrong.
+The conclusion it supported — GC and compaction work unchanged over a
+manifest-based ref database — holds.
 
-**This is a recommendation, not an implementation.** Task 6.3 is blocked until
-the owner accepts or rejects it, which is why sections 3–8 are untouched.
+**The recommendation was reviewed independently and accepted**, with three
+factual corrections (this one, the `DfsObjDatabase` method names, and a
+withdrawn staleness argument) and two design gaps that are now recorded as
+consequences rather than discovered during implementation: the per-ref versus
+whole-manifest precondition mismatch, and the unbounded cross-replica
+revocation window. Both are in decision 10.
 
 ## Conclusion
 

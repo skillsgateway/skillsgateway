@@ -52,19 +52,17 @@ applies: failing tests first, proved failing, before any implementation.
       side effect of closing a spike row (design decision 9)
 - [x] 2.4 Decide the ref database shape — `DfsReftableDatabase` over the
       bucket versus a plain `DfsRefDatabase` over the manifest — and record the
-      decision in `design.md`. **Recommendation written as design decision 10,
-      researched against the JGit 7.7.1 classes on the classpath: a plain
-      `DfsRefDatabase` over the manifest.** Its three abstract methods
-      (`scanAllRefs`, `compareAndPut`, `compareAndRemove`) *are* the manifest
-      compare-and-swap; reftables turn out to be stored as `PackExt.REFTABLE`
-      pack files, so reftable would move ref state into the pack list rather
-      than out of our code, cost `O(1)` staleness checks for a LIST, and buy
-      million-ref scaling the gateway has no use for. The one real cost is
-      stated: `RefDatabase.performsAtomicTransactions()` defaults to `false`
-      where `RefDirectory` and `DfsReftableDatabase` both return `true`, so the
-      subclass must override it and `newBatchUpdate()` to keep the `atomic`
-      push capability the hosted path advertises today. **Awaiting the owner —
-      task 6.3 is blocked until this is accepted or rejected**
+      decision in `design.md`. **Decided: the plain `DfsRefDatabase` over the
+      manifest** (design decision 10). Researched against JGit 7.7.1 on the
+      classpath, then reviewed independently: the review upheld the conclusion,
+      corrected three factual claims, and added five consequences — of which two
+      are design gaps that must be honoured in task 6.3 rather than discovered
+      there: `compareAndPut` must absorb the per-ref versus whole-manifest
+      precondition mismatch internally (or disjoint-ref writes fail spuriously
+      with `LOCK_FAILURE`), and cross-replica revocation needs a stated,
+      tested bound (or an unpublished snapshot stays fetchable from any replica
+      with a warm cache).
+
 - [ ] 2.5 Prove an AWS SDK v2 S3 client with the web-identity credential
       provider builds and runs under the GraalVM native-image profile
 - [ ] 2.6 Prove a `receive-pack` (hosted-marketplace push, many refs in one
@@ -128,7 +126,7 @@ applies: failing tests first, proved failing, before any implementation.
       live pack set; every transition a single conditional write with re-read
       and retry on conflict
 - [ ] 6.3 `DfsObjDatabase` implementation (`listPacks`, `openFile`,
-      `writePackFile`, `commitPackImpl`, `rollbackPack`) and the ref database
+      `newPack`, `writeFile`, `commitPackImpl`, `rollbackPack`) and the ref database
       chosen in task 2.4; `DfsRepository` subclass wiring the two
 - [ ] 6.4 `ObjectStoreGitStorage implements GitStorage` — the three roles and
       `unpublish` evaluated and committed as one transition; annotate
