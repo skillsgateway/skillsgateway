@@ -3,7 +3,12 @@
 One fresh run of all six gates after the last code edit, plus the RED-before-GREEN
 record and the mutation gauntlet the trust-boundary discipline calls for.
 
-Commit: `e4077ecb69da661a0def54d17a6a793684c92384`
+Commit: `aeba7ad` — the merge of `origin/main` into this branch. The gates were
+re-run from scratch on that tree: the first run recorded here was made at
+`e4077ec`, before two merges from main brought in `DevInsecureAuthGuard`, the
+Helm chart work and 201 lines of `PackagingTests`. A report describing a tree
+other than the one being merged is not evidence, so the numbers below are from
+the second run. Only this file and the archive commit follow it.
 
 Tier 3 (old-coder): this change decides who may publish content through the only
 publisher in the system. Spec approval: the OpenSpec proposal, design and tasks
@@ -16,13 +21,14 @@ where the design met the code*, and were not approved in advance.
 ```
     [INFO] BUILD SUCCESS
     [INFO] ------------------------------------------------------------------------
-    [INFO] Total time:  01:31 min
-    [INFO] Finished at: 2026-08-28T11:51:59+02:00
+    [INFO] Total time:  01:19 min
+    [INFO] Finished at: 2026-08-28T12:58:54+02:00
 ```
 
-193 backend tests, 0 failures — 11 of them new (`FourEyesEnforceTests` 7,
-`FourEyesTests` 4). The UI gate (typecheck, oxlint, vitest, reqstool tags) runs
-inside it.
+198 backend tests, 0 failures, 0 errors, 0 skipped (aggregated from
+`target/surefire-reports/*.xml`) — 11 of them new here (`FourEyesEnforceTests` 7,
+`FourEyesTests` 4); the rise from 193 is what the merges from main brought with
+them. The UI gate (typecheck, oxlint, vitest, reqstool tags) runs inside it.
 
 ## `(cd src/main/frontend && pnpm test:stories)`
 
@@ -34,7 +40,7 @@ inside it.
 ## `(cd src/main/frontend && pnpm e2e)`
 
 ```
-      13 passed (33.3s)
+      13 passed (29.8s)
 ```
 
 12 before this change; the new one is
@@ -43,22 +49,23 @@ inside it.
 ## `reqstool status local -p docs/reqstool`
 
 ```
-    108/108 complete · 0 incomplete · PASS
+    112/112 complete · 0 incomplete · PASS
 ```
 
-106 before; GW_0096 and GW_0097 are the two new ones.
+GW_0096 and GW_0097 are the two this change adds. The total is 112 rather than
+108 because main gained four requirements while this branch was open.
 
 ## `openspec validate --all --strict`
 
 ```
     ✓ change/four-eyes-approval
-    Totals: 26 passed, 0 failed (26 items)
+    Totals: 28 passed, 0 failed (28 items)
 ```
 
 ## `mkdocs build --strict`
 
 ```
-    INFO    -  Documentation built in 0.74 seconds
+    INFO    -  Documentation built in 0.64 seconds
 ```
 
 ## RED before GREEN
