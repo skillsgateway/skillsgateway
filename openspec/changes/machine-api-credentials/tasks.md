@@ -186,19 +186,22 @@ in group 7 exists, and passing after.
 - [ ] 8.8 RED: `GET /api/retention/candidates` is reachable while
       `POST /api/retention/evaluate` is not, and evaluate's soft-delete is
       demonstrably why. (SVC_GW_0118)
-- [ ] 8.9 Record a machine read of `GET /api/roles` on the ledger — a new
-      behaviour: no read on this surface is logged today. Entry carries
-      `actor_type='machine'`, the credential's principal, and a `roles-read`
-      event. `@Requirements({"GW_0117", "GW_0118"})`.
+- [ ] 8.9 Record **every authorized read** of `GET /api/roles` on the ledger —
+      a new behaviour: no read on this surface is logged today. One rule, no
+      principal-type condition. Entry carries `actor_type`, the principal, and a
+      `roles-read` event. `@Requirements({"GW_0117", "GW_0118"})`.
 - [ ] 8.10 RED: a machine credential reading `/api/roles` writes exactly one
-      ledger entry, with the right actor type and principal. Watch it fail.
-      (SVC_GW_0117)
-- [ ] 8.11 RED: a **human** session reading `/api/roles` writes **no** entry —
-      the asymmetry is deliberate (design decision 3) and must be asserted, not
-      left as an accident of implementation. (SVC_GW_0117)
+      ledger entry, with `actor_type='machine'` and its principal. Watch it
+      fail. (SVC_GW_0117)
+- [ ] 8.11 RED: a **human** session reading `/api/roles` also writes exactly one
+      entry, with `actor_type='human'` and the identity-provider subject. The
+      rule is uniform; `actor_type` is what separates the two at query time, not
+      the presence or absence of a row. (SVC_GW_0117)
 - [ ] 8.12 RED: a machine read of `GET /api/audit` writes no entry — reading the
       ledger must not append to the ledger, or a polling exporter grows a
-      permanent floor of self-referential rows. (SVC_GW_0117)
+      permanent floor of self-referential rows. This exclusion is about a
+      feedback loop, not about volume, so it survives the uniform rule above.
+      (SVC_GW_0117)
 - [ ] 8.13 RED: the entry is written only on an authorized read; a 403 on
       `/api/roles` does not produce a `roles-read` entry. (SVC_GW_0117)
 

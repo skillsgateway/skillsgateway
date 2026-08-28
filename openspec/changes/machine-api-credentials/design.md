@@ -294,7 +294,7 @@ granting, and the two are separated deliberately:
   authority, which has reconnaissance value to a stolen credential. An attacker
   with a leaked `roles:read` credential learns which principals to target next.
 
-**The condition on keeping it: a machine read of `/api/roles` is recorded on the
+**The condition on keeping it: reads of `/api/roles` are recorded on the
 ledger.** Since the exposure cannot be removed without losing drift detection,
 it is made visible after the fact instead.
 
@@ -304,24 +304,37 @@ Neither writes an entry. **Reads are not logged anywhere on this surface**, so
 this is a new behaviour and a deliberate choice rather than a confirmation that
 an existing mechanism also covers machine principals.
 
-*The choice: machine-principal reads only, not all reads.* A human admin
-opening the roles screen produces a page load, and a portal that re-renders or
-polls would append an entry every time — entries that carry no signal, on a
-ledger that is cursor-exported to SIEM sinks in batches, so the noise has
-downstream cost in someone else's system. A non-interactive credential
-enumerating role grants is rare, deliberate, and unaccompanied by a human; the
-rarity is exactly what makes it worth a row. The asymmetry tracks a real
-difference in exposure: a human admin reading grants already holds admin and is
-present, whereas the case this defends against is a stolen credential doing
-reconnaissance with nobody watching.
+*The rule: every authorized read, with no principal-type condition.* An earlier
+draft logged only machine-principal reads, on the argument that a human page
+load would flood the ledger. **That premise does not hold in this codebase.**
+The portal does not call `GET /api/roles` at all: there is no roles page under
+`src/main/frontend/src/pages/`, `src/api/queries.ts` has no roles query, and the
+endpoint appears only in `src/api/types.gen.ts`, which is the generated OpenAPI
+type surface rather than a call site. A human read of this endpoint today means
+someone with curl or a script — exactly as rare and as deliberate as a machine
+read. (The client is also configured conservatively: `refetchOnWindowFocus:
+false` in `main.tsx`, and `staleTime: Infinity` on the queries that set it, so
+even a future page would not poll.)
 
-*The honest cost of that asymmetry,* stated rather than hidden: the ledger then
-cannot answer "who has read the grants" uniformly, and an attacker who
-compromises a **human** session reads them without a trace. This is accepted
-because the mechanism is identical either way — the entry is written at the same
-call site — so extending it to every principal later is a one-line change, not
-a redesign. `actor_type` is what makes the resulting entries separable, so
-turning it on for humans would not destroy the machine signal.
+With the noise argument gone, so is the only reason for an asymmetry — and what
+the asymmetry cost was a real gap: an attacker who compromised a human session
+would read the grants untraced. Deferring that on the grounds it is a one-line
+change later is worse than making the line now, while the reasoning is in front
+of us rather than in a changelog.
+
+So: **one rule.** Every authorized read of `GET /api/roles` writes a ledger
+entry carrying its `actor_type` and principal. It is simpler to state, simpler
+to test, and it answers "who has read the grants" uniformly. Separating machine
+from human at query time — the actual requirement — is satisfied by the
+`actor_type` column rather than by which rows happen to exist, which is the
+right level for that distinction to live at.
+
+*Revisit this if a roles page is ever built.* Not because the entries would
+become wrong, but because the volume assumption behind "reads of this endpoint
+are rare" would have changed: a screen someone opens is a different traffic
+shape from a script someone runs. That is the honest version of what the earlier
+draft was guarding against, recorded where it belongs — as a condition on the
+premise, not as a permanent asymmetry in the rule.
 
 *Deliberately not extended to `GET /api/audit`,* despite that endpoint having
 at least as much reconnaissance value, for a specific reason: reading the ledger
@@ -502,9 +515,8 @@ scopes; with roles on, it narrows further.
   for incidents.
 - **`roles:read` gives a stolen credential a map of who holds what
   authority.** → Accepted as the price of detectable drift, and made visible
-  after the fact: every machine read of `/api/roles` lands on the ledger with
-  its actor type. A human read does not, which is a known and deliberate hole
-  in that coverage (decision 3).
+  after the fact: every authorized read of `/api/roles` lands on the ledger with
+  its actor type and principal, human and machine alike (decision 3).
 - **Twenty scopes is more surface to get right than one.** → Accepted
   deliberately: coarse-to-fine is a breaking change to issued credentials,
   fine-to-coarse is not. The enumerating test (task group 0) is what keeps the
