@@ -48,6 +48,172 @@ class PackagingTests {
     }
 
     @Test
+    @SVCs({"SVC_GW_0120"})
+    void chartRefusesToRenderWithoutAnExplicitStorageDurabilityChoice() throws IOException {
+        Path chart = REPO_ROOT.resolve("helm/skills-gateway");
+        Map<String, Object> persistence = section(parse(chart.resolve("values.yaml")), "persistence");
+
+        // No default: the chart ships neither a durable nor an ephemeral choice,
+        // so an install that says nothing gets nothing rendered.
+        assertThat(persistence).as("persistence block present").isNotNull();
+        assertThat(persistence.get("mode"))
+                .as("the storage durability choice has no default")
+                .isEqualTo("");
+        assertThat(persistence.get("existingClaim")).isEqualTo("");
+
+        // The Deployment delegates the volume source to the helper rather than
+        // choosing one itself, so there is a single place the choice is made and
+        // no second, silent path to an emptyDir.
+        String deployment = Files.readString(chart.resolve("templates/deployment.yaml"));
+        String dataVolume = between(deployment, "volumes:", "- name: tmp");
+        assertThat(dataVolume).contains("skills-gateway.storageVolume");
+        assertThat(dataVolume)
+                .as("the data volume must not carry its own storage fallback")
+                .doesNotContain("emptyDir")
+                .doesNotContain("persistentVolumeClaim");
+
+        String helper =
+                define(Files.readString(chart.resolve("templates/_helpers.tpl")), "skills-gateway.storageVolume");
+
+        // Exactly two accepted answers, and the ephemeral one is the only branch
+        // that may produce an emptyDir.
+        assertThat(helper).contains("eq $mode \"existingClaim\"").contains("eq $mode \"ephemeral\"");
+        assertThat(branch(helper, "eq $mode \"ephemeral\"")).contains("emptyDir");
+        assertThat(branch(helper, "eq $mode \"existingClaim\"")).contains("persistentVolumeClaim");
+
+        // Durable storage that names no claim is refused too -- otherwise the
+        // choice is made and still nothing durable is mounted.
+        assertThat(branch(helper, "eq $mode \"existingClaim\""))
+                .as("a claimless durable choice is refused")
+                .contains("if not .Values.persistence.existingClaim")
+                .contains("fail");
+
+        // Anything else stops the render, and says why rather than only that.
+        String otherwise = branch(helper, "else");
+        assertThat(otherwise)
+                .as("an unrecognised or absent choice fails the render")
+                .contains("fail");
+        assertThat(otherwise)
+                .as("the refusal states the data-loss consequence")
+                .contains("lost when the pod restarts")
+                .contains("existingClaim")
+                .contains("ephemeral");
+    }
+
+    @Test
+    @SVCs({"SVC_GW_0121"})
+    void chartCarriesRegistryCredentialsAnOptionalIngressAndDefaultReservations() throws IOException {
+        Path chart = REPO_ROOT.resolve("helm/skills-gateway");
+        Map<String, Object> values = parse(chart.resolve("values.yaml"));
+
+        // Pull secrets: declarable, empty by default, and actually reaching the
+        // pod spec -- a values key nothing reads would be worse than none.
+        assertThat(values).containsKey("imagePullSecrets");
+        assertThat(values.get("imagePullSecrets")).isEqualTo(List.of());
+        String deployment = Files.readString(chart.resolve("templates/deployment.yaml"));
+        assertThat(deployment).contains("imagePullSecrets:").contains(".Values.imagePullSecrets");
+
+        // Reservations are declared, not left to the cluster's guess.
+        Map<String, Object> resources = section(values, "resources");
+        assertThat(section(resources, "requests")).containsKeys("cpu", "memory");
+        assertThat(section(resources, "limits")).containsKeys("cpu", "memory");
+
+        // The ingress is off unless asked for, and carries the full surface a
+        // real one needs.
+        Map<String, Object> ingress = section(values, "ingress");
+        assertThat(ingress).as("ingress block present").isNotNull();
+        assertThat(ingress.get("enabled")).as("the ingress is opt-in").isEqualTo(false);
+        assertThat(ingress).containsKeys("className", "annotations", "hosts", "tls");
+
+        String template = Files.readString(chart.resolve("templates/ingress.yaml"));
+        assertThat(template).contains("if .Values.ingress.enabled");
+        assertThat(template)
+                .contains("kind: Ingress")
+                .contains("ingressClassName")
+                .contains(".Values.ingress.annotations")
+                .contains(".Values.ingress.tls")
+                .contains(".Values.ingress.hosts")
+                .contains("pathType");
+
+        // TLS is what keeps the facade's Basic-auth token off the wire, so the
+        // values file has to say so where an operator configures the ingress.
+        assertThat(Files.readString(chart.resolve("values.yaml")))
+                .as("the values file explains why TLS is not optional in production")
+                .contains("HTTP Basic");
+
+        // Its own service account, nameable and annotatable, because that is
+        // what a workload-identity binding attaches to.
+        Map<String, Object> serviceAccount = section(values, "serviceAccount");
+        assertThat(serviceAccount).as("serviceAccount block present").isNotNull();
+        assertThat(serviceAccount.get("create")).isEqualTo(true);
+        assertThat(serviceAccount).containsKeys("name", "annotations");
+        assertThat(Files.readString(chart.resolve("templates/serviceaccount.yaml")))
+                .contains("kind: ServiceAccount")
+                .contains("if .Values.serviceAccount.create")
+                .contains(".Values.serviceAccount.annotations");
+        assertThat(deployment).contains("serviceAccountName:").contains("skills-gateway.serviceAccountName");
+
+        // Least privilege by default: nothing here needs root, a capability or a
+        // writable image.
+        Map<String, Object> pod = section(values, "podSecurityContext");
+        assertThat(pod.get("runAsNonRoot")).isEqualTo(true);
+        assertThat(pod).containsKeys("runAsUser", "fsGroup");
+        Map<String, Object> container = section(values, "securityContext");
+        assertThat(container.get("allowPrivilegeEscalation")).isEqualTo(false);
+        assertThat(container.get("readOnlyRootFilesystem")).isEqualTo(true);
+        assertThat(section(container, "capabilities").get("drop")).isEqualTo(List.of("ALL"));
+        assertThat(deployment).contains(".Values.podSecurityContext").contains(".Values.securityContext");
+
+        // A read-only root filesystem still has to leave the runtime somewhere
+        // to write, or the seal is just an outage.
+        assertThat(deployment).contains("mountPath: /tmp").contains("- name: tmp\n          emptyDir: {}");
+    }
+
+    @Test
+    @SVCs({"SVC_GW_0122"})
+    void chartPassesArbitraryApplicationConfigurationThrough() throws IOException {
+        Path chart = REPO_ROOT.resolve("helm/skills-gateway");
+        Map<String, Object> values = parse(chart.resolve("values.yaml"));
+
+        // Empty by default -- the passthrough adds nothing until it is used.
+        assertThat(values.get("extraEnv")).isEqualTo(List.of());
+        assertThat(values.get("extraEnvFrom")).isEqualTo(List.of());
+        assertThat(values.get("config")).isEqualTo(Map.of());
+
+        String deployment = Files.readString(chart.resolve("templates/deployment.yaml"));
+
+        // Single-valued settings and secret references land in the container's
+        // env verbatim, so `valueFrom` works without a chart change.
+        // Matched with the closing brace: `.Values.extraEnv` alone is a prefix
+        // of `.Values.extraEnvFrom`, so the looser assertion stayed green with
+        // the extraEnv block deleted.
+        assertThat(deployment).contains(".Values.extraEnv }}");
+        assertThat(deployment).contains("envFrom:").contains(".Values.extraEnvFrom }}");
+
+        // Structured configuration is a mounted file layered over the image's
+        // own application.yaml, which is what makes the nested estate lists
+        // expressible at all.
+        assertThat(deployment)
+                .contains("SPRING_CONFIG_ADDITIONAL_LOCATION")
+                .contains("optional:file:/etc/skills-gateway/")
+                .contains("mountPath: /etc/skills-gateway");
+        assertThat(deployment).contains("skills-gateway.configMapName");
+
+        // The estate is reconciled at startup, so a configuration change that
+        // does not change the pod spec would never be read.
+        assertThat(deployment)
+                .as("a configuration change must roll the pods")
+                .contains("checksum/config")
+                .contains("sha256sum");
+
+        String configMap = Files.readString(chart.resolve("templates/configmap.yaml"));
+        assertThat(configMap)
+                .contains("kind: ConfigMap")
+                .contains("application.yaml: |")
+                .contains(".Values.config");
+    }
+
+    @Test
     @SVCs({"SVC_GW_0072"})
     void releaseWorkflowCarriesThePublishByDigestContract() throws IOException {
         Path file = REPO_ROOT.resolve(".github/workflows/native.yml");
@@ -262,6 +428,41 @@ class PackagingTests {
         Object condition = step(workflow, jobId, stepName).get("if");
         assertThat(condition).as("step '%s' has a condition", stepName).isNotNull();
         return String.valueOf(condition).trim();
+    }
+
+    /** The text between two markers, both of which must be present in that order. */
+    private static String between(String text, String from, String to) {
+        int start = text.indexOf(from);
+        assertThat(start).as("'%s' is present", from).isNotNegative();
+        int end = text.indexOf(to, start);
+        assertThat(end).as("'%s' follows '%s'", to, from).isNotNegative();
+        return text.substring(start, end);
+    }
+
+    /** The body of one `{{- define "name" -}}` block, up to the next define or the end of the file. */
+    private static String define(String template, String name) {
+        int start = template.indexOf("define \"" + name + "\"");
+        assertThat(start).as("template '%s' is defined", name).isNotNegative();
+        int next = template.indexOf("{{- define", start + 1);
+        return next < 0 ? template.substring(start) : template.substring(start, next);
+    }
+
+    /**
+     * One branch of a template's if/else-if/else chain: the first part introduced by {@code marker},
+     * or the trailing `else` when marker is "else". Asserting on the branch rather than on the whole
+     * body is what keeps "an emptyDir is produced" tied to "and only when ephemeral was asked for".
+     */
+    private static String branch(String template, String marker) {
+        String[] parts = template.split("\\{\\{- else");
+        if ("else".equals(marker)) {
+            return parts[parts.length - 1];
+        }
+        for (String part : parts) {
+            if (part.contains(marker)) {
+                return part;
+            }
+        }
+        throw new AssertionError("no branch introduced by '" + marker + "'");
     }
 
     /** Comments stripped, so a rule cannot be satisfied -- or broken -- by prose describing it. */
