@@ -1,0 +1,73 @@
+[changelog]
+header = ""
+# `striptags` strips the `<!-- N -->` sort prefixes below -- without them, groups
+# sort alphabetically and Security/Features end up buried after Bug Fixes.
+# `commit.breaking` marks a `feat!:` so it doesn't render identically to an
+# ordinary `feat:`.
+#
+# `remote.pr_number` (the `in #N` below) only resolves for a squash merge --
+# git-cliff matches a commit's SHA against a closed PR's merge_commit_sha, never
+# true for a real merge commit's constituent commits. The `replace` strips
+# GitHub's own auto-appended " (#N)" from a squashed title first, using this
+# exact pr_number so it can't touch an unrelated "(#N)" elsewhere.
+body = """
+{% for group, commits in commits | group_by(attribute="group") %}\
+### {{ group | striptags | trim | upper_first }}
+{% for commit in commits %}\
+- {% if commit.breaking %}**BREAKING** {% endif %}{% if commit.remote.pr_number %}{{ commit.message | replace(from=" (#" ~ commit.remote.pr_number ~ ")", to="") | upper_first }}{% else %}{{ commit.message | upper_first }}{% endif %}{% if commit.remote.username %} by @{{ commit.remote.username }}{% endif %}{% if commit.remote.pr_number %} in #{{ commit.remote.pr_number }}{% endif %}
+{% endfor %}
+{% endfor %}\
+"""
+trim = true
+footer = ""
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+
+# Security first, not alphabetical: "is there a fix I need" outranks "what's new".
+commit_parsers = [
+  # Scope first, before the type rules below: `fix(ci):` is a fix *to CI*, not a
+  # fix users can observe, and matching on `^fix` alone would file it under Bug
+  # Fixes. Skipping only the `ci`/`build` *types* is not enough: a CI change
+  # typed `fix(ci)` or `refactor(ci)` would be advertised as a user-facing
+  # change, which is how this rule came to exist.
+  { message = "^[a-z]+\\(ci\\)", skip = true },
+  { message = "^[a-z]+\\(build\\)", skip = true },
+
+  { message = "^security", group = "<!-- 0 -->Security" },
+  { message = "^feat", group = "<!-- 1 -->Features" },
+  { message = "^fix", group = "<!-- 2 -->Bug Fixes" },
+  { message = "^perf", group = "<!-- 3 -->Performance" },
+  { message = "^refactor", group = "<!-- 4 -->Refactoring" },
+  { message = "^docs", group = "<!-- 5 -->Documentation" },
+  { message = "^test", group = "<!-- 6 -->Testing" },
+  { message = "^style", group = "<!-- 7 -->Style" },
+  { message = "^revert", group = "<!-- 8 -->Reverts" },
+  { message = "^chore", group = "<!-- 9 -->Miscellaneous" },
+  # ci/build are for maintainers, not consumers of the artifact -- skipped from
+  # release notes. protect_breaking_commits below overrides this for `!:`.
+  { message = "^ci", group = "CI/CD", skip = true },
+  { message = "^build", group = "Build", skip = true },
+]
+
+# `build!: require Java 21` must reach users despite the skip above -- without
+# this, an upgrade that breaks their build ships with no warning.
+protect_breaking_commits = true
+
+filter_commits = false
+# No `v` prefix -- see docs/manual/guides/releasing.md. Anchored at *both* ends:
+# without `^` a stray `v1.0.0` tag becomes a release boundary, and without `$` so
+# does a release candidate, which would then base the next version on itself.
+# This is what keeps candidates invisible to versioning -- the 1.2.0 that ends an
+# rc cycle is still computed from the last stable tag, and its notes still span
+# everything since that tag rather than starting at the last candidate.
+tag_pattern = "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+sort_commits = "newest"
+
+[bump]
+# Defaults true, which sends a single `type!:` at 0.x straight to 1.0.0 -- an
+# ordinary pre-1.0 breaking change declaring the API stable by accident. False
+# keeps it at the minor instead (0.1.0 + `feat!:` -> 0.2.0); 1.0.0+ is
+# unaffected. Reaching 1.0.0 needs `version` and `force` passed to Release.
+breaking_always_bump_major = false

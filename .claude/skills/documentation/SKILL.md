@@ -113,8 +113,15 @@ Rules:
 Published versions are managed by **mike**:
 
 - Every push to `main` redeploys the rolling `dev` version.
-- A `v*` tag deploys that release and moves the `stable` alias to it; the first
-  such tag also makes `stable` the default landing version.
+- A release deploys its own version and moves the `stable` alias to it; the
+  first release also makes `stable` the default landing version. Releases reach
+  this workflow through `release.yml`, which calls it after the approval gate —
+  `docs.yml` does **not** watch for tags, so a hand-pushed tag publishes
+  nothing. See `docs/manual/guides/releasing.md`.
+
+Deployment itself runs in this workflow via `actions/deploy-pages`, which needs
+the repository's Pages source set to GitHub Actions. `mike` still owns
+versioning on `gh-pages`.
 
 Do not deploy versions by hand, and do not commit to `gh-pages` — the workflow
 owns that branch.

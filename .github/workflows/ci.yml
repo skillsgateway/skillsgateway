@@ -4,6 +4,11 @@ on:
   pull_request:
   push:
     branches: [main]
+  # Called by release.yml so a release runs the same gates that guard main,
+  # rather than a second, drifting copy of them. `uses: ./.github/workflows/ci.yml`
+  # resolves against the *caller's* ref, so the gates run on the commit being
+  # released -- which is the commit that then gets tagged.
+  workflow_call:
 
 permissions:
   contents: read

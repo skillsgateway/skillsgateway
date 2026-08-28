@@ -3,11 +3,21 @@ name: Docs
 on:
   push:
     branches: [main]
-    tags: ['v*']
   workflow_dispatch:
+  # Releases arrive here, not through a tag trigger. A `tags:` trigger would fire
+  # the moment release.yml pushed the tag, moving the `stable` alias before anyone
+  # approved the release -- and racing native.yml rather than being ordered with
+  # it. So a hand-pushed tag no longer publishes docs, deliberately.
+  workflow_call:
+    inputs:
+      version:
+        description: "The released version. Set only by release.yml; published as its own version with the `stable` alias."
+        required: false
+        type: string
+        default: ''
 
 permissions:
-  contents: write
+  contents: read
 
 # mike commits to gh-pages, so concurrent runs would race.
 concurrency:
@@ -18,6 +28,9 @@ jobs:
   publish:
     name: Build & publish documentation
     runs-on: ubuntu-latest
+    permissions:
+      # mike pushes the built site to gh-pages.
+      contents: write
     steps:
       - uses: actions/checkout@v7
         with:
@@ -45,13 +58,13 @@ jobs:
       # Rolling development docs. Every push to main replaces the `dev`
       # version in place; `dev` is the site default until a release exists.
       - name: Deploy dev docs
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && inputs.version == ''
         run: |
           mike deploy --push --update-aliases dev
           # `mike set-default` writes the root index.html that redirects `/` to
           # a version. Without it the site root is a 404 -- which is exactly
           # what https://skillsgateway.github.io/skillsgateway/ served, because
-          # set-default only ran on a `v*` tag and no tag exists yet, while
+          # set-default only ran on a release and none existed yet, while
           # mkdocs.yml `site_url` and the repo homepage both point at the root.
           # Once a release exists `stable` owns the default (set below); until
           # then `dev` does, which is what the comment above always claimed.
@@ -61,16 +74,64 @@ jobs:
             mike set-default --push dev
           fi
 
-      # A `v*` tag publishes that release as its own version and points the
-      # `stable` alias at it. `--update-aliases` moves `stable` off whatever
-      # it pointed at before, so this is also the upgrade path for later
-      # releases. No tags exist yet; the first one activates versioned docs
-      # without any change to this workflow.
+      # A release publishes that version as its own and points the `stable` alias
+      # at it. `--update-aliases` moves `stable` off whatever it pointed at
+      # before, so this is also the upgrade path for later releases. The version
+      # arrives as an input from release.yml rather than being parsed out of a
+      # tag ref -- which is what retired the old `${GITHUB_REF_NAME#v}` strip
+      # along with the `v` prefix itself.
       - name: Deploy release docs
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: inputs.version != ''
+        env:
+          VERSION: ${{ inputs.version }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
-          mike deploy --push --update-aliases "$version" stable
+          set -euo pipefail
+          mike deploy --push --update-aliases "$VERSION" stable
           # The first release takes over the default landing version from
           # `dev`; on later releases this is a no-op that keeps it on stable.
           mike set-default --push stable
+
+      # --- Hand the published tree to Pages ---
+      #
+      # mike stays the version manager: it owns gh-pages, the aliases and the
+      # root redirect. What changed is who serves that branch. Pages used to
+      # build it itself, which is why every publish showed up as a
+      # `pages-build-deployment` run nobody in this repo wrote and nobody could
+      # name. Uploading the branch as an artifact instead puts deployment under
+      # this workflow, where it belongs.
+      #
+      # A worktree rather than a checkout: the branch was just rewritten by mike
+      # in this same job, so this reads what was actually pushed.
+      - name: Export the published site
+        run: |
+          set -euo pipefail
+          git fetch origin gh-pages
+          git worktree add site origin/gh-pages
+          # The worktree marker would otherwise be uploaded as site content.
+          rm -f site/.git
+          test -f site/index.html || { echo "::error::gh-pages has no root index.html."; exit 1; }
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  # Separate job because `actions/deploy-pages` requires the `github-pages`
+  # environment, and an environment cannot be declared on a job that is itself a
+  # reusable-workflow call -- which is how release.yml reaches this workflow.
+  #
+  # ⚠️  This needs the repository's Pages source set to GitHub Actions
+  # (`build_type: workflow`). While it is still on the legacy gh-pages branch
+  # source, this job fails -- see docs/manual/guides/releasing.md.
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

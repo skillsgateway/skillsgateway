@@ -7,9 +7,9 @@ binary:
 ghcr.io/skillsgateway/skillsgateway
 ```
 
-Only images that passed the release workflow's smoke test are published, and
-only from push events — the weekly scheduled rebuild and manually dispatched
-runs never move a tag.
+Only images that passed the workflow's smoke test are published, and only from
+a push to `main` or from the [release workflow](../guides/releasing.md) — the
+weekly scheduled rebuild and manually dispatched runs never move a tag.
 
 ## Tags
 
@@ -17,7 +17,7 @@ runs never move a tag.
 | --- | --- |
 | `sha-<commit>` | Every push to `main`; immutable per commit. |
 | `latest` | Moving tag following `main`; a convenience, not a deployment target. |
-| `<version>` (e.g. `v1.2.0`) | Release tags. |
+| `<version>` (e.g. `1.2.0`) | Releases. Bare semantic versions, no `v` prefix. |
 
 ## Pin by digest
 

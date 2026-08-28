@@ -2,18 +2,18 @@
 # covers this repository's own additions -- the preset itself is validated in
 # skillsgateway/.github.
 
-name: Validate Renovate config
+name: Renovate config
 
 on:
   push:
     branches: [main]
     paths:
       - ".github/renovate.json5"
-      - ".github/workflows/validate-renovate.yml"
+      - ".github/workflows/renovate-config.yml"
   pull_request:
     paths:
       - ".github/renovate.json5"
-      - ".github/workflows/validate-renovate.yml"
+      - ".github/workflows/renovate-config.yml"
   # Renovate's schema changes server-side, so a config that passed last month can
   # break with no commit here to trigger a re-check.
   workflow_dispatch:

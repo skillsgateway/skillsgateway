@@ -1,4 +1,4 @@
-name: Label PRs
+name: PR labels
 
 on:
   pull_request_target:

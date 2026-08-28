@@ -1,4 +1,4 @@
-# Configuration for actions/labeler -- see .github/workflows/labeler.yml
+# Configuration for actions/labeler -- see .github/workflows/pr-labels.yml
 #
 # Labels map to the subsystem boundaries CLAUDE.md and ARCHITECTURE.md describe,
 # which the package layout under src/main/java/.../skillsgateway/ already

@@ -1,4 +1,4 @@
-name: Semantic PR
+name: PR title
 
 # The PR title is not cosmetic here: this repository squash-merges with
 # `squash_merge_commit_title: PR_TITLE`, so the title *becomes* the commit
