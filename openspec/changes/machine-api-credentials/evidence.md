@@ -253,3 +253,82 @@ Three existing test files were touched, all **additively**:
 One fresh run of all six, in order, after the last code edit, at
 `9020e63fa1c457558aec3e78169e0de32a5f3cb9`.
 
+
+### 1. `./mvnw clean verify`
+
+```
+[INFO] Tests run: 256, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+[INFO] Total time:  01:17 min
+```
+
+256 tests, **0 failures, 0 errors**. Spotless, Checkstyle, the CycloneDX SBOM,
+the UI gates and the packaged jar are all inside this run. 40 of those tests are
+new in this change.
+
+### 2. `(cd src/main/frontend && pnpm test:stories)`
+
+```
+ Test Files  3 passed (3)
+      Tests  6 passed (6)
+   Start at  16:05:32
+   Duration  2.97s (transform 0ms, setup 1.74s, import 672ms, tests 809ms, environment 0ms)
+```
+
+### 3. `(cd src/main/frontend && pnpm e2e)`
+
+```
+  13 passed (32.5s)
+```
+
+13 Playwright tests in real chromium against the packaged jar and a mock OIDC
+identity provider. No e2e test was added: this change ships no portal UI.
+
+### 4. `reqstool status local -p docs/reqstool`
+
+```
+119/119 complete · 0 incomplete · PASS
+```
+
+Up from 113/113 — the six new requirements are traced. The gate exits 0 even
+when it prints `FAIL`, so the last line is what was read.
+
+### 5. `openspec validate --all --strict`
+
+```
+Totals: 27 passed, 0 failed (27 items)
+```
+
+### 6. `mkdocs build --strict`
+
+```
+INFO    -  Documentation built in 0.67 seconds
+```
+
+No warnings. `--strict` turns a broken internal link or an unlisted page into a
+failure, which is what makes it usable as a gate.
+
+### Additionally: the API compatibility gate
+
+The contract change is **additive**, so the breaking-change gate stays green and
+the PR title needs no `!`:
+
+```
+$ oasdiff breaking <origin/main openapi.json> <this branch's openapi.json>
+No breaking changes to report, but the specs are different.
+```
+
+`src/main/frontend/openapi.json` and `src/api/types.gen.ts` were regenerated from
+`target/openapi.json`, so `OpenApiContractTests` (which fails the build when the
+committed document is not the one the gateway serves) passes inside gate 1.
+
+---
+
+## Environment
+
+- macOS (darwin 25.3.0), Java 25, Maven wrapper, Podman providing
+  `/var/run/docker.sock`.
+- `TESTCONTAINERS_RYUK_DISABLED=true` throughout, as this environment requires.
+- PostgreSQL via **Arconia dev services** (`arconia-dev-services-postgresql`),
+  not a hand-rolled Testcontainers container. **No new dependency was added by
+  this change**, as the spec's setup plan stated.
