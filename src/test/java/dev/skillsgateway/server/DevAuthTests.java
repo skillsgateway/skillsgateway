@@ -69,6 +69,15 @@ class DevAuthTests {
             mockMvc.perform(get("/api/marketplaces").header(HttpHeaders.AUTHORIZATION, "Bearer " + value))
                     .andExpect(status().isUnauthorized());
         }
+        // The scheme with nothing after it at all — not even the trailing space. This mode is the
+        // only place the distinction is observable: everywhere else both chains answer 401, so a
+        // matcher that stopped recognising the bare scheme would look identical. Here the web
+        // chain permits everything, so falling through to it would answer 200. A surviving mutant
+        // on the matcher is what found this; the assertion above could not.
+        mockMvc.perform(get("/api/marketplaces").header(HttpHeaders.AUTHORIZATION, "Bearer"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/marketplaces").header(HttpHeaders.AUTHORIZATION, "bearer"))
+                .andExpect(status().isUnauthorized());
         // Not merely 401 for everything: the same request without the header is still open, which
         // is what the mode is for.
         mockMvc.perform(get("/api/marketplaces")).andExpect(status().isOk());

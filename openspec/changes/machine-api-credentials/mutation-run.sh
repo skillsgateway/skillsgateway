@@ -28,8 +28,31 @@ if ! git diff --quiet -- "$TOKEN" "$FILTER" "$PROVIDER" "$CONFIG"; then
     exit 2
 fi
 
-restore() { git checkout -- "$TOKEN" "$FILTER" "$PROVIDER" "$CONFIG"; }
-trap restore EXIT
+# Back the originals up by content, not by git state: `git checkout --` would silently
+# restore whatever HEAD happens to be if somebody commits mid-run, and a commit taken
+# while a mutant is applied would then be restored TO the mutant. That happened once.
+BACKUP=$(mktemp -d)
+for f in "$TOKEN" "$FILTER" "$PROVIDER" "$CONFIG"; do
+    cp "$f" "$BACKUP/$(basename "$f")"
+done
+
+restore() {
+    for f in "$TOKEN" "$FILTER" "$PROVIDER" "$CONFIG"; do
+        cp "$BACKUP/$(basename "$f")" "$f"
+    done
+}
+finish() {
+    restore
+    rm -rf "$BACKUP"
+    # Fail closed: never exit leaving a mutant on disk.
+    if ! git diff --quiet -- "$TOKEN" "$FILTER" "$PROVIDER" "$CONFIG"; then
+        echo "ERROR: files still differ from HEAD after restore -- inspect before committing." >&2
+        exit 3
+    fi
+}
+trap finish EXIT
+
+echo "NOTE: do not commit while this runs; a mutant is on disk for most of it." >&2
 
 killed=0
 survived=0
