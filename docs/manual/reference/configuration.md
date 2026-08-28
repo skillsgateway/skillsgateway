@@ -65,6 +65,26 @@ skills-gateway:
     authentication, and attributes every audit entry to `dev`. There is no
     partial mode.
 
+!!! note "The gateway refuses to start where the flag cannot belong"
+
+    The escape hatch exists for a development loop that has no identity
+    provider to log in to. So a gateway with `dev-insecure-auth: true` **and an
+    identity provider configured** refuses to start, naming what it decided on
+    and both ways out. It counts a provider as configured when any of these is
+    true:
+
+    - an OIDC client registration carries a client id other than the shipped
+      `change-me` placeholder;
+    - a provider endpoint (`authorization-uri`, `token-uri`, `jwk-set-uri`,
+      `issuer-uri`) names a host other than the shipped `idp.invalid`
+      placeholder;
+    - `skills-gateway.oidc.issuer` is pinned.
+
+    There is no property that switches the guard off — the way out is to stop
+    setting `dev-insecure-auth`. Note what the guard cannot see: a deployment
+    with no identity provider at all is indistinguishable from a laptop, so it
+    is not a substitute for keeping the flag out of your deployed configuration.
+
 ---
 
 ## Webhooks
@@ -738,6 +758,11 @@ when your provider needs a scope before it will emit group or role claims.
 Fixed, not intended for override: grant type `authorization_code`, redirect URI
 `{baseUrl}/login/oauth2/code/idp`. Register that redirect URI with your
 identity provider.
+
+Moving any of these off its placeholder is what tells the gateway an identity
+provider exists — and a gateway with one configured refuses to start with
+`skills-gateway.dev-insecure-auth` on. See
+[`skills-gateway`](#skills-gateway) above.
 
 ### Expected issuer
 
