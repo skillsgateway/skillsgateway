@@ -1248,3 +1248,22 @@ cases:
       are refused for anyone else while a person's own credential listing still shows only
       their own
     revision: "0.1.0"
+
+  - id: SVC_GW_0112
+    requirement_ids: ["GW_0112"]
+    title: Every storage backend satisfies the same reference-transition contract
+    verification: automated-test
+    description: |
+      GIVEN each supported git storage backend in turn
+      WHEN the shared storage contract suite exercises the three repository roles,
+      publication and revocation against it
+      THEN quarantine, hosted and published are separate repositories created with the
+      head reference linked to the branch the gateway publishes on, the two
+      open-only-if-present accessors stay empty until there is something to open,
+      publication makes exactly the served tip and the pinned snapshot reference appear,
+      revocation removes the pinned reference unconditionally and the served tip only
+      while it still resolves to that snapshot, reporting true exactly when its removal
+      is what stopped the marketplace serving, a reference transition the backend could
+      not apply is raised rather than reported as done, and the atomic push capability
+      is advertised identically by every backend
+    revision: "0.1.0"
