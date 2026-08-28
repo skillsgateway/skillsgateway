@@ -2,18 +2,26 @@
 
 One fresh run of every gate after the last code edit.
 
-**Commit:** `0970eac515cdd7db73a893c3cec14181c714aae1` (`docs(release): record the PR link on task 9.7`)
+**Commit:** `6390664` (`feat(release): gate the release behind an approval and drop the v tag prefix`)
 
-Re-run after rebasing onto `2bda5f7` — PR #118 (`feat(roles)`) merged to `main`
-mid-change, conflicting on `requirements.yml`, `software_verification_cases.yml`
-and `mkdocs.yml`. All three were append-at-end conflicts. The reqstool files
-were rebuilt from `main` verbatim plus this branch's own blocks rather than
-hand-merged, after a first attempt at resolving them dropped `GW_0100`'s
-`revision` field; both files were then re-validated (99 requirements, 99 SVCs,
-no duplicates, every `requirement_ids` resolving, every block carrying a
-`revision`) and the diff against `main` confirmed to add exactly `GW_0108`,
-`GW_0109`, `SVC_GW_0108`, `SVC_GW_0109` plus the `GW_0072`/`SVC_GW_0072`
-revision.
+Named as the implementation commit rather than this report's own, which cannot
+contain its own hash. Every file this change touches outside
+`openspec/changes/release-workflow/` is at its final state as of `6390664`; the
+commits after it carry only this report and the task list.
+
+Re-run after rebasing onto `46e847e` — PRs #118 (`feat(roles)`) and #119
+(`feat(hosting)`) each merged to `main` mid-change, conflicting both times on
+`requirements.yml` and `software_verification_cases.yml` (the first rebase also
+took `mkdocs.yml`). All were append-at-end conflicts.
+
+Both times the reqstool files were rebuilt from `main` verbatim plus this
+branch's own blocks rather than hand-merged — a first attempt at resolving them
+by hand dropped `GW_0100`'s `revision` field, which is why the rebuild is
+scripted. After each rebuild both files were re-validated (102 requirements, 102
+SVCs at the final state; no duplicates, every `requirement_ids` resolving, every
+block carrying a `revision`) and the diff against `main` confirmed to add
+exactly `GW_0108`, `GW_0109`, `SVC_GW_0108`, `SVC_GW_0109` plus the
+`GW_0072`/`SVC_GW_0072` revision.
 
 `DOCKER_HOST` was exported from `podman machine inspect` for the runs that need a
 container runtime; the value in the ambient shell points at a socket that does
@@ -23,7 +31,7 @@ change.
 ## `./mvnw clean verify`
 
 ```
-[INFO] Tests run: 156, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 172, Failures: 0, Errors: 0, Skipped: 0
 [INFO] You have 0 Checkstyle violations.
 [INFO] BUILD SUCCESS
 ```
@@ -38,14 +46,14 @@ change.
 ## `(cd src/main/frontend && pnpm e2e)`
 
 ```
-  12 passed (26.2s)
+  12 passed (27.8s)
 ```
 
 ## `reqstool status local -p docs/reqstool`
 
 ```
 INCOMPLETE (0)
-99/99 complete · 0 incomplete · PASS
+102/102 complete · 0 incomplete · PASS
 ```
 
 ## `openspec validate --all --strict`
@@ -59,7 +67,7 @@ Totals: 26 passed, 0 failed (26 items)
 ```
 INFO    -  Cleaning site directory
 INFO    -  Building documentation to directory: /Users/r04755/dev/clones/other/github/skillsgateway/site
-INFO    -  Documentation built in 0.59 seconds
+INFO    -  Documentation built in 0.63 seconds
 ```
 
 ## `actionlint .github/workflows/*.yml`
