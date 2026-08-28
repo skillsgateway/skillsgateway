@@ -1860,6 +1860,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#adr-0008-the-serving-surface-stays-the-embedded-facade-sso-closes-at-the-gateway" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0008 — The serving surface stays the embedded facade; SSO closes at the gateway
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2012,6 +2023,17 @@
     <span class="md-ellipsis">
       
         ADR 0007 — First-party hosting: a write path, deliberately somewhere else
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-0008-the-serving-surface-stays-the-embedded-facade-sso-closes-at-the-gateway" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0008 — The serving surface stays the embedded facade; SSO closes at the gateway
       
     </span>
   </a>
@@ -2217,6 +2239,19 @@ forward only unless the marketplace says otherwise, and the approval gate is
 untouched: pushed content is quarantined, vetted and held like anything
 fetched. Auto-approval for trusted internal publishers stays parked per ADR
 0006.</p>
+<h3 id="adr-0008-the-serving-surface-stays-the-embedded-facade-sso-closes-at-the-gateway"><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0008-serving-surface-stays-the-embedded-facade.md">ADR 0008 — The serving surface stays the embedded facade; SSO closes at the gateway</a><a class="headerlink" href="#adr-0008-the-serving-surface-stays-the-embedded-facade-sso-closes-at-the-gateway" title="Permanent link">&para;</a></h3>
+<p><em>Accepted, 2026-08-23.</em></p>
+<p>Serving approved content out of an external forge was weighed and declined: it
+would outsource <strong>authentication and visibility</strong>, which are commodities, at the
+price of outsourcing <strong>enforcement and audit</strong>, which are the product — a
+forge-served repository makes the approval gate bypassable by anyone with
+repository write, and forge logs do not record per-user fetches. The two things
+a forge was wanted for are addressed at the gateway instead: <strong>SSO-derived
+short-lived git credentials</strong> (GW_0104, implemented) close the
+second-credential-system gap without moving a fetch off the ledger, and a
+read-only <strong>forge mirror for browsing</strong> is sequenced after, never as a serving
+surface. Availability of the facade is now explicitly a security property, with
+serving independent of ingestion.</p>
 <h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../architecture/">Architecture</a>

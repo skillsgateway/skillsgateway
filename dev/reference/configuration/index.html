@@ -3078,6 +3078,11 @@ nothing appears in <code>application.yaml</code>.</p>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span><span class="c1"># silently shortened. Unset (the default) accepts tokens that never</span>
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="c1"># expire, which is what every pre-cap deployment had.</span>
 <a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span><span class="nt">max-ttl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90d</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span><span class="c1"># What a session-derived credential is GRANTED (GW_0104), as opposed to</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">    </span><span class="c1"># what a holder may ask for. Not derived from max-ttl on purpose: a</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">    </span><span class="c1"># deployment may allow year-long CI tokens and still want a credential</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">    </span><span class="c1"># minted from a browser session to die at the end of the working day.</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">    </span><span class="nt">session-ttl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8h</span>
 </code></pre></div>
 <table>
 <thead>
@@ -3095,10 +3100,17 @@ nothing appears in <code>application.yaml</code>.</p>
 <td>unset (unlimited)</td>
 <td>Cap on accepted token lifetime; refusal, not clamping.</td>
 </tr>
+<tr>
+<td><code>skills-gateway.tokens.session-ttl</code></td>
+<td>duration</td>
+<td><code>8h</code></td>
+<td>Lifetime granted to a session-derived credential. The caller cannot influence it.</td>
+</tr>
 </tbody>
 </table>
 <p>Scopes, expiry, and rotation are described in
-<a href="../api/tokens/">Access tokens</a>.</p>
+<a href="../api/tokens/">Access tokens</a>; session-derived credentials in
+<a href="../../guides/consuming-skills/">Consuming skills</a>.</p>
 <hr />
 <h2 id="delegated-administration">Delegated administration<a class="headerlink" href="#delegated-administration" title="Permanent link">&para;</a></h2>
 <p>Role enforcement for the web surface (GW_0068, GW_0071). Java-side defaults;

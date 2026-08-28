@@ -937,13 +937,41 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-create-a-personal-access-token" class="md-nav__link">
+  <a href="#1-get-a-credential" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Create a personal access token
+        1. Get a credential
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="1. Get a credential">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-session-credential-recommended-for-people" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A session credential (recommended for people)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-personal-access-token-for-ci-and-anything-without-a-browser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A personal access token (for CI, and anything without a browser)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1893,13 +1921,41 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-create-a-personal-access-token" class="md-nav__link">
+  <a href="#1-get-a-credential" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Create a personal access token
+        1. Get a credential
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="1. Get a credential">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-session-credential-recommended-for-people" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A session credential (recommended for people)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-personal-access-token-for-ci-and-anything-without-a-browser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A personal access token (for CI, and anything without a browser)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2006,7 +2062,36 @@ command, and the clone URL — each with a copy button. The rest of this
 guide is the same procedure by hand. See
 <a href="../../reference/portal/#set-up-a-client">the portal reference</a>.</p>
 </div>
-<h2 id="1-create-a-personal-access-token">1. Create a personal access token<a class="headerlink" href="#1-create-a-personal-access-token" title="Permanent link">&para;</a></h2>
+<h2 id="1-get-a-credential">1. Get a credential<a class="headerlink" href="#1-get-a-credential" title="Permanent link">&para;</a></h2>
+<p>Git clients authenticate with a token, not with your portal session cookie.
+There are two kinds, and for a human at a keyboard the first is the better
+default.</p>
+<h3 id="a-session-credential-recommended-for-people">A session credential (recommended for people)<a class="headerlink" href="#a-session-credential-recommended-for-people" title="Permanent link">&para;</a></h3>
+<p>If you are already logged in to the portal, mint a credential from that session
+instead of creating a standing token:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/tokens/session<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"name":"my-laptop"}'</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"my-laptop"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-08-23T17:00:00Z"</span><span class="p">,</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"sessionDerived"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"pushScopes"</span><span class="p">:[]}</span>
+</code></pre></div>
+<p>The gateway sets the lifetime —
+<a href="../../reference/configuration/#access-tokens"><code>skills-gateway.tokens.session-ttl</code></a>,
+8 hours by default — and you cannot ask for longer. That is the entire
+difference between this and a personal access token: a credential whose life
+the holder chooses is a standing credential wearing a different name. It also
+carries no publication authority, and it is marked <code>sessionDerived</code> wherever it
+appears, so the <a href="../../concepts/snapshots-and-ledger/">audit ledger</a> distinguishes
+"a fetch by a credential minted moments after an SSO login" from "a fetch by a
+token provisioned months ago".</p>
+<div class="admonition warning">
+<p class="admonition-title">The timer is the control, not your session</p>
+<p>A session credential is <strong>not</strong> revoked when you log out or close the
+browser — the gateway does not track session lifetime. It dies when its
+expiry passes, and until then it is a bearer token like any other. What it
+buys is a bounded window and an attributable origin, not immunity.</p>
+</div>
+<h3 id="a-personal-access-token-for-ci-and-anything-without-a-browser">A personal access token (for CI, and anything without a browser)<a class="headerlink" href="#a-personal-access-token-for-ci-and-anything-without-a-browser" title="Permanent link">&para;</a></h3>
 <p>Git clients authenticate with PATs, not with your portal session.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Portal</label><label for="__tabbed_1_2">API</label></div>
 <div class="tabbed-content">
@@ -2015,10 +2100,10 @@ guide is the same procedure by hand. See
 dialog with a copy button.</p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/tokens<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"name":"my-laptop"}'</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/tokens<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"name":"my-laptop"}'</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"my-laptop"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"my-laptop"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}</span>
 </code></pre></div>
 </div>
 </div>
@@ -2042,18 +2127,18 @@ act. See <a href="../../reference/api/tokens/">Access tokens</a>.</p>
 </div>
 <h2 id="2-verify-the-remote">2. Verify the remote<a class="headerlink" href="#2-verify-the-remote" title="Permanent link">&para;</a></h2>
 <p>The username is ignored; the token goes in the password field.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>git<span class="w"> </span>ls-remote<span class="w"> </span>https://token:sgw_...@skills.corp.example/git/acme
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="go">3f9c2ab...  refs/heads/main</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>git<span class="w"> </span>ls-remote<span class="w"> </span>https://token:sgw_...@skills.corp.example/git/acme
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="go">3f9c2ab...  refs/heads/main</span>
 </code></pre></div>
 <p>A 404 here means the marketplace has never had a snapshot approved — there is
 nothing to serve. A 401 means the token is wrong or revoked.</p>
 <h2 id="3-store-the-credential">3. Store the credential<a class="headerlink" href="#3-store-the-credential" title="Permanent link">&para;</a></h2>
 <p>So the client never prompts:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span><span class="nb">printf</span><span class="w"> </span><span class="s1">'protocol=https\nhost=skills.corp.example\nusername=token\npassword=sgw_...\n'</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="p">|</span><span class="w"> </span>git<span class="w"> </span>credential<span class="w"> </span>approve
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span><span class="nb">printf</span><span class="w"> </span><span class="s1">'protocol=https\nhost=skills.corp.example\nusername=token\npassword=sgw_...\n'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="p">|</span><span class="w"> </span>git<span class="w"> </span>credential<span class="w"> </span>approve
 </code></pre></div>
 <p>Or configure the username and let your credential helper hold the secret:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>credential.https://skills.corp.example.username<span class="w"> </span>token
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>credential.https://skills.corp.example.username<span class="w"> </span>token
 </code></pre></div>
 <h2 id="4-point-your-agent-at-it">4. Point your agent at it<a class="headerlink" href="#4-point-your-agent-at-it" title="Permanent link">&para;</a></h2>
 <div class="admonition tip">
@@ -2066,8 +2151,8 @@ names prefixed by their marketplace.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="2:3"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><input id="__tabbed_2_3" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Claude Code</label><label for="__tabbed_2_2">Copilot / Cursor</label><label for="__tabbed_2_3">CI</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>claude<span class="w"> </span>plugin<span class="w"> </span>marketplace<span class="w"> </span>add<span class="w"> </span>https://skills.corp.example/git/acme
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="gp">$ </span>claude<span class="w"> </span>plugin<span class="w"> </span>install<span class="w"> </span>acme-tools
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>claude<span class="w"> </span>plugin<span class="w"> </span>marketplace<span class="w"> </span>add<span class="w"> </span>https://skills.corp.example/git/acme
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="gp">$ </span>claude<span class="w"> </span>plugin<span class="w"> </span>install<span class="w"> </span>acme-tools
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -2076,7 +2161,7 @@ facade serves plain git, and the open Agent Skills format needs nothing
 more.</p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>git<span class="w"> </span>clone<span class="w"> </span>--depth<span class="w"> </span><span class="m">1</span><span class="w"> </span>https://token:<span class="si">${</span><span class="nv">SGW_TOKEN</span><span class="si">}</span>@skills.corp.example/git/acme
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="gp">$ </span>git<span class="w"> </span>clone<span class="w"> </span>--depth<span class="w"> </span><span class="m">1</span><span class="w"> </span>https://token:<span class="si">${</span><span class="nv">SGW_TOKEN</span><span class="si">}</span>@skills.corp.example/git/acme
 </code></pre></div>
 <p>Issue a dedicated token per pipeline so revocation is surgical.</p>
 </div>

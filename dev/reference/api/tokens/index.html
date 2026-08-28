@@ -1497,6 +1497,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#post-apitokenssession" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/tokens/session
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1949,6 +1960,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#post-apitokenssession" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/tokens/session
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2015,6 +2037,9 @@ issued before publication existed can write anything and none can be granted
 publication to everything by forgetting a field. Entries are validated against
 the registered hosted marketplaces at creation. An out-of-scope push answers
 exactly like a marketplace that does not exist, as an out-of-scope fetch does.</p>
+<p><code>sessionDerived</code> on a returned token says the credential came from
+<a href="#post-apitokenssession"><code>POST /api/tokens/session</code></a> rather than from a
+deliberate provisioning.</p>
 <p><code>expiresAt</code> (GW_0065): an expired token fails authentication exactly like a
 revoked one, decided by comparing the stamp at authentication time — no
 background process is involved. When
@@ -2116,6 +2141,88 @@ helper setup.</p>
 <p>Issue a separate token per laptop and per pipeline. Revocation is then
 surgical, and ledger entries attribute fetches to something meaningful.</p>
 </div>
+<hr />
+<h2 id="post-apitokenssession"><code>POST /api/tokens/session</code><a class="headerlink" href="#post-apitokenssession" title="Permanent link">&para;</a></h2>
+<p>Mint a short-lived git credential from the calling principal's browser session
+(GW_0104). The identity half of
+<a href="../../decisions/">ADR 0008</a>: a human who has just proved who they are should
+not have to create a second, standing credential in order to fetch.</p>
+<p><strong>Body</strong> — <code>{name, scopes?}</code></p>
+<p>There is deliberately <strong>no</strong> lifetime field. The gateway grants
+<a href="../../configuration/#access-tokens"><code>skills-gateway.tokens.session-ttl</code></a>
+(8 hours by default) and a caller who sends <code>expiresAt</code> anyway does not get it —
+a credential whose life the holder chooses is a personal access token reached
+through another URL.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/tokens/session<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"name":"my-laptop"}'</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">9</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"my-laptop"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"2026-08-23T09:00:00Z"</span><span class="p">,</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:[],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-08-23T17:00:00Z"</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w"> </span><span class="nt">"pushScopes"</span><span class="p">:[],</span><span class="nt">"sessionDerived"</span><span class="p">:</span><span class="kc">true</span><span class="p">}</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Session credential</th>
+<th>Personal access token</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lifetime</td>
+<td>the gateway's, not negotiable</td>
+<td>the caller's, capped by <code>max-ttl</code></td>
+</tr>
+<tr>
+<td>Publication</td>
+<td>never</td>
+<td><code>pushScopes</code> if granted</td>
+</tr>
+<tr>
+<td>Marked on the ledger</td>
+<td>yes, <code>session-derived</code></td>
+<td>no</td>
+</tr>
+<tr>
+<td>Survives having no browser</td>
+<td>no — it is minted from a session</td>
+<td>yes</td>
+</tr>
+</tbody>
+</table>
+<p><code>scopes</code> narrows it to named marketplaces exactly as for any token. Rotation
+(<code>POST /api/tokens/{id}/rotate</code>) keeps both the expiry deadline and the
+session-derived mark, so it can neither extend the credential nor launder it
+into a standing one.</p>
+<div class="admonition warning">
+<p class="admonition-title">Not tied to the session's end</p>
+<p>It is revoked by its timer, by <code>DELETE /api/tokens/{id}</code>, or not at all —
+logging out does not kill it, because the gateway does not track session
+lifetime.</p>
+</div>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>201</td>
+<td>Issued; the only response carrying the cleartext.</td>
+</tr>
+<tr>
+<td>401</td>
+<td>No authenticated session.</td>
+</tr>
+<tr>
+<td>422</td>
+<td>Unknown scope.</td>
+</tr>
+</tbody>
+</table>
 
 
 
