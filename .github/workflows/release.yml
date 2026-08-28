@@ -78,7 +78,7 @@ jobs:
   # job and nothing else, so previewing a release costs one cheap job rather than
   # a full native build.
   prepare:
-    uses: skillsgateway/.github/.github/workflows/common-release-prepare.yml@9d486e25b782f1ec829c69f93aeeec081182180c
+    uses: skillsgateway/.github/.github/workflows/common-release-prepare.yml@53030249aec4552ff11d9e73371a091ef8bfb095
     permissions:
       contents: read
     with:
@@ -105,7 +105,7 @@ jobs:
   tag:
     needs: [prepare, checks]
     if: ${{ !inputs.dry-run }}
-    uses: skillsgateway/.github/.github/workflows/common-release-tag.yml@9d486e25b782f1ec829c69f93aeeec081182180c
+    uses: skillsgateway/.github/.github/workflows/common-release-tag.yml@53030249aec4552ff11d9e73371a091ef8bfb095
     permissions:
       contents: write
     with:
@@ -231,7 +231,7 @@ jobs:
   # prerelease.
   assets:
     needs: [prepare, package]
-    uses: skillsgateway/.github/.github/workflows/common-release-assets.yml@9d486e25b782f1ec829c69f93aeeec081182180c
+    uses: skillsgateway/.github/.github/workflows/common-release-assets.yml@53030249aec4552ff11d9e73371a091ef8bfb095
     permissions:
       contents: write
     with:
@@ -298,7 +298,7 @@ jobs:
   promote:
     needs: [prepare, verify]
     if: ${{ !inputs.dry-run && !cancelled() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
-    uses: skillsgateway/.github/.github/workflows/common-release-promote.yml@9d486e25b782f1ec829c69f93aeeec081182180c
+    uses: skillsgateway/.github/.github/workflows/common-release-promote.yml@53030249aec4552ff11d9e73371a091ef8bfb095
     permissions:
       contents: write
     with:

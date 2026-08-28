@@ -80,9 +80,39 @@ when a second maintainer exists.
 ## 9. Gates and evidence
 
 - [x] 9.1 `actionlint` over every changed workflow
-- [ ] 9.2 Dispatch `release.yml` with `dry-run: true` on the branch; confirm the resolved version is bare (`0.2.0`, not `v0.2.0`) and the summary shows version, previous tag and rendered notes — **blocked**: needs skillsgateway/.github#1 merged, or the workflow cannot resolve its `uses:` refs
-- [ ] 9.3 Dry-run the negative paths: a `version` disagreeing with auto-detect without `force` must fail; a ref not reachable from `main` must fail; an already-tagged ref must fail — **blocked** on the same
-- [ ] 9.4 Dry-run `prerelease: rc` and confirm it resolves to `-rc1` and does not promote — **blocked** on the same
+- [x] 9.2 Dispatch `release.yml` with `dry-run: true`; confirm the resolved
+      version is bare and the summary shows version, previous tag and rendered
+      notes — **[run 33175167625](https://github.com/skillsgateway/skillsgateway/actions/runs/33175167625)**:
+      `VERSION: 0.1.0`, `AUTO: 0.1.0`, `SOURCE: auto-detected from Conventional
+      Commits`, `LATEST:` empty (the repository has no tags yet), git-cliff
+      2.13.1. No `v` prefix anywhere.
+- [x] 9.3 Dry-run the negative paths — two of three exercised:
+      - a `version` disagreeing with auto-detect without `force` **is refused**
+        ([run 33175266927](https://github.com/skillsgateway/skillsgateway/actions/runs/33175266927)):
+        `Version '9.9.9' disagrees with the auto-detected '0.1.0'. Re-run with
+        force enabled if that is deliberate.`
+      - a ref not reachable from `main` **is refused**
+        ([run 33175269826](https://github.com/skillsgateway/skillsgateway/actions/runs/33175269826)):
+        `Releases must come from main, hotfix/*, or release/* (got:
+        'feat/machine-api-credentials').`
+      - an already-tagged ref: **not exercised, by the owner's decision.** The
+        repository has no tags at all, so this path can only be exercised by
+        creating one, and the owner will verify it when cutting the first
+        release rather than have a probe tag be the first tag the repository
+        ever carries.
+- [x] 9.4 Dry-run `prerelease: rc` — **[run 33175356076](https://github.com/skillsgateway/skillsgateway/actions/runs/33175356076)**:
+      `VERSION: 0.1.0-rc1`, `AUTO: 0.1.0`, `SOURCE: auto-detected from
+      Conventional Commits, as rc`, `PRERELEASE: true`.
+
+      **The "does not promote" half is verified by wiring, not by execution,**
+      and that limit is stated rather than glossed: a dry run skips every job
+      after `prepare`, so no promotion can be observed either way. What the run
+      proves is the value that drives the gating — `prepare` outputs
+      `prerelease: true`. `promote` passes it through as
+      `prerelease: ${{ needs.prepare.outputs.prerelease == 'true' }}`, which
+      leaves a candidate a prerelease permanently, and `docs` is separately
+      gated `if: needs.prepare.outputs.prerelease != 'true'` so the `stable`
+      alias does not move. End-to-end promotion behaviour needs a real release.
 - [x] 9.5 Run all five gates from CLAUDE.md fresh after the last edit; write `openspec/changes/release-workflow/evidence.md` with the commands, pasted result tails and the commit SHA
 - [x] 9.6 `openspec validate --all --strict`
 - [x] 9.7 Open the PR with an **Evidence** section — **[#125](https://github.com/skillsgateway/skillsgateway/pull/125)**; archive the change with `/opsx:archive` as the final commit (deferred: the change is not implementable-complete until the commons PR merges and the `uses:` refs are re-pinned)
