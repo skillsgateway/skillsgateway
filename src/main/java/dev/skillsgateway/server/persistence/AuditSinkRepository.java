@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.persistence;
 
+import io.github.reqstool.annotations.Requirements;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
@@ -17,11 +18,13 @@ public class AuditSinkRepository {
         this.jdbc = jdbc;
     }
 
+    @Requirements({"GW_0125"})
     public AuditSink create(String name, String kind, long subscriberId, long cursorPosition, int batchSize) {
         OffsetDateTime now = OffsetDateTime.now();
         return jdbc.sql("INSERT INTO audit_sinks"
                         + " (name, kind, subscriber_id, cursor_position, batch_size, enabled, created_at, updated_at)"
-                        + " VALUES (:name, :kind, :subscriberId, :cursor, :batchSize, TRUE, :now, :now) RETURNING *")
+                        + " VALUES (:name, :kind::audit_sink_kind, :subscriberId, :cursor, :batchSize, TRUE, :now, :now)"
+                        + " RETURNING *")
                 .param("name", name)
                 .param("kind", kind)
                 .param("subscriberId", subscriberId)

@@ -1071,3 +1071,16 @@ cases:
       both ways to resolve it
       AND a gateway with the mode enabled and no identity provider configured still starts
     revision: "0.1.0"
+
+  - id: SVC_GW_0125
+    requirement_ids: ["GW_0125"]
+    title: Every enumerated column is a database type that refuses values outside its set
+    verification: automated-test
+    description: |
+      GIVEN a gateway whose schema has been migrated
+      WHEN each column holding a closed set of enumerated values is inspected, written
+      through the repository that owns it, and read back
+      THEN the column's declared type is the enumerated type named for it, every value of
+      the set round trips unchanged, and a value outside the set is refused by the database
+      rather than stored
+    revision: "0.1.0"
