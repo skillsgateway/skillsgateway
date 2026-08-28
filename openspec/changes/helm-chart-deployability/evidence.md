@@ -1,23 +1,73 @@
 # Evidence — helm-chart-deployability
 
-Commit under test: `f683680` (`docs(helm): compare the serverless storage options
-in the deployment guide`, on top of `29da944` and `bb5e01c`). One fresh run of
-every gate after the last edit.
+Commit under test: `dc84ff9` (`docs(helm): compare the serverless storage options
+in the deployment guide`), rebased onto `origin/main` at `8e83dac`. One fresh run
+of every gate after the rebase.
+
+## Rebase onto `8e83dac`
+
+Two commits landed on main after this branch was cut — #129 (archiving
+`license-compliance`) and #133 (`GW_0110`, the dev escape hatch) — and both
+reqstool files conflicted. The clash is positional, not semantic: #133 appended
+`GW_0110`/`SVC_GW_0110` at the end of each file, this change appended
+`GW_0120`–`GW_0122`/`SVC_GW_0120`–`SVC_GW_0122` at the same place. No id
+overlaps, so nothing was renumbered.
+
+**Neither file was resolved by editing conflict markers.** Each was rebuilt
+mechanically — `git show origin/main:<file>` verbatim, then this branch's own
+blocks appended — so there is no edit that could silently drop a field from one
+of main's blocks. The rebuilt files were then asserted against, by parsing the
+YAML rather than reading the diff:
+
+```
+requirements: 110 ids, 0 duplicates
+SVCs: 110 ids, 0 duplicates
+dangling requirement_ids: none
+requirements missing 'revision': none
+SVCs missing 'revision': none
+ids from main lost: none; GW_0110 present: True
+main requirement blocks altered: none
+removed lines in diff: 0
+ids added by diff: ['GW_0120', 'GW_0121', 'GW_0122', 'SVC_GW_0120', 'SVC_GW_0121', 'SVC_GW_0122']
+
+ALL CHECKS PASS
+```
+
+The last two are the ones that matter for a merge conflict: `git diff
+origin/main -- docs/reqstool/` removes **zero** lines, and the only ids it adds
+are this change's own. "main requirement blocks altered: none" compares each of
+main's blocks as a parsed object, so a dropped or reworded field would fail it
+even where the line count matched.
+
+```
+$ git diff origin/main --stat -- docs/reqstool/
+ docs/reqstool/requirements.yml                | 27 ++++++++++++++++++++++++
+ docs/reqstool/software_verification_cases.yml | 30 +++++++++++++++++++++++++++
+ 2 files changed, 57 insertions(+)
+```
 
 ## Gates
+
+All re-run after the rebase, against the merged tree.
 
 ### `./mvnw clean verify`
 
 ```
-[INFO] Tests run: 185, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 187, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
 ```
 
-!!! note "Two runs on this commit failed first, for an environment reason"
+(187 rather than 185: #133 brought two tests with it.)
 
-    Two earlier attempts on this same commit failed with a single error in a
-    *different* test each time — `SessionCredentialExpiryTests`, then
-    `ClaimRolesDisabledTests` — both with the same root cause:
+!!! note "Runs that failed first, both for environment reasons"
+
+    Recorded rather than quietly re-run, since a green result obtained on the
+    third attempt is worth less than one obtained on the first. Neither cause is
+    in this change, and both are local to this machine.
+
+    **Before the rebase**, two attempts on the same commit each failed with a
+    single error in a *different* test — `SessionCredentialExpiryTests`, then
+    `ClaimRolesDisabledTests` — with one root cause:
 
     ```
     Caused by: org.testcontainers.containers.ContainerLaunchException: Timed out
@@ -25,13 +75,19 @@ every gate after the last edit.
     connections.*\s|...)'
     ```
 
-    The local container VM has 2 GB of memory and an unrelated long-running
-    observability stack in it; an `otel-collector` container was OOM-killed
-    during one of the runs. The failures are memory pressure starting the
-    PostgreSQL test container, not the change: they moved between tests, none of
-    them touches the chart, and the run above is clean. Recorded rather than
-    quietly re-run, since a green result obtained on the third attempt is worth
-    less than one obtained on the first.
+    The container VM has 2 GB of memory and an unrelated long-running
+    observability stack inside it; an `otel-collector` container was OOM-killed
+    during one of the runs. Memory pressure starting the PostgreSQL test
+    container: the failures moved between tests, and none of those tests touches
+    the chart.
+
+    **After the rebase**, the first attempt failed with 150 errors, nearly all
+    `Could not find a valid Docker environment`, because it was run without
+    `DOCKER_HOST` exported. `~/.testcontainers.properties` names the right socket
+    path and the socket exists, but Testcontainers still does not find it here;
+    exporting `DOCKER_HOST` from `podman machine inspect` fixes it, and the run
+    above is with it exported. `TESTCONTAINERS_RYUK_DISABLED=true` remains
+    necessary as well.
 
 ### `(cd src/main/frontend && pnpm test:stories)`
 
@@ -43,26 +99,26 @@ every gate after the last edit.
 ### `(cd src/main/frontend && pnpm e2e)`
 
 ```
-  12 passed (25.8s)
+  12 passed (31.4s)
 ```
 
 ### `reqstool status local -p docs/reqstool`
 
 ```
 INCOMPLETE (0)
-109/109 complete · 0 incomplete · PASS
+110/110 complete · 0 incomplete · PASS
 ```
 
 ### `openspec validate --all --strict`
 
 ```
-Totals: 27 passed, 0 failed (27 items)
+Totals: 28 passed, 0 failed (28 items)
 ```
 
 ### `mkdocs build --strict`
 
 ```
-INFO    -  Documentation built in 0.65 seconds
+INFO    -  Documentation built in 0.92 seconds
 ```
 
 The guide's two cross-references to the storage comparison were checked against
