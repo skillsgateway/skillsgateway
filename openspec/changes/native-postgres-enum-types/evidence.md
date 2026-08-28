@@ -2,15 +2,30 @@
 
 One fresh run of every gate after the last edit.
 
-**Commit:** `061255d` (`refactor(db): persist enumerated values as native PostgreSQL enum types`)
+**Commit:** the merge of `origin/main` into this branch, plus the conflict resolution and
+the one formatting fix that followed it. Only this report and the archive commit come after.
 
-Named as the implementation commit rather than this report's own, which cannot contain its
-own hash. Every file the change touches outside
-`openspec/changes/native-postgres-enum-types/` is at its final state as of `061255d`.
+The gates were run twice. The first run was at `061255d`, before `four-eyes-approval`
+merged; that change added a `registered_by` column and parameter to
+`MarketplaceRepository.register` and an `ingested_by` pair to `SnapshotRepository.create`,
+which collide directly with the write casts this change introduces. Merging main produced
+four conflicts — both reqstool files, and both repositories — and left
+`NativeEnumColumnTests` calling the old signatures. A report describing the pre-merge tree
+would describe a tree nobody will merge, so the numbers below are from the second run.
 
-`DOCKER_HOST` was exported from `podman machine inspect` and `TESTCONTAINERS_RYUK_DISABLED=true`
-set for the runs that need a container runtime — Ryuk cannot start under rootless Podman on
-this machine, and the ambient socket path does not resolve.
+Conflict resolution, for the record: the reqstool conflicts were both "two changes appended
+at the same point" and were resolved by keeping all blocks, then parsing each file with a
+YAML loader to confirm no requirement or case lost its `revision` field (113 of each, no
+duplicate ids). The two repository conflicts were semantic — main's new actor column and
+this change's write cast, in the same statement — and both were kept.
+`NativeEnumColumnTests` passes `null` for the two new actor parameters: these are enum
+round-trip cases that assert nothing about who acted, and `SnapshotRepository`'s own
+javadoc records null as legitimate.
+
+`TESTCONTAINERS_RYUK_DISABLED=true` and
+`TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/run/user/501/podman/podman.sock` were set for the
+runs that need a container runtime — Ryuk cannot start under rootless Podman on this
+machine.
 
 ## Red before green
 
@@ -53,13 +68,16 @@ is the behaviour the conversion has to preserve, and the test is not vacuous abo
 ## `./mvnw clean verify`
 
 ```
-[INFO] Tests run: 193, Failures: 0, Errors: 0, Skipped: 0
-[INFO] You have 0 Checkstyle violations.
 [INFO] BUILD SUCCESS
+[INFO] Total time:  01:09 min
 ```
 
-193 tests, up from 184 before the change: the nine new cases in `NativeEnumColumnTests`. No
-existing test was changed, weakened or removed.
+207 tests, 0 failures, 0 errors, 0 skipped, aggregated from
+`target/surefire-reports/*.xml`. Nine of them are this change's `NativeEnumColumnTests`;
+the rise from 193 is what `four-eyes-approval` and the chart work brought in with the
+merge. No existing test was changed, weakened or removed — the only edit to a pre-existing
+test file was updating four call sites in `NativeEnumColumnTests` to the signatures main
+now defines.
 
 ## `(cd src/main/frontend && pnpm test:stories)`
 
@@ -71,14 +89,14 @@ existing test was changed, weakened or removed.
 ## `(cd src/main/frontend && pnpm e2e)`
 
 ```
-  12 passed (25.3s)
+  13 passed (30.5s)
 ```
 
 ## `reqstool status local -p docs/reqstool`
 
 ```
 INCOMPLETE (0)
-108/108 complete · 0 incomplete · PASS
+113/113 complete · 0 incomplete · PASS
 ```
 
 ## `openspec validate --all --strict`
@@ -90,5 +108,5 @@ Totals: 28 passed, 0 failed (28 items)
 ## `mkdocs build --strict`
 
 ```
-INFO    -  Documentation built in 0.64 seconds
+INFO    -  Documentation built in 0.63 seconds
 ```
