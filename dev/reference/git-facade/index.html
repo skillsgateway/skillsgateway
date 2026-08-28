@@ -597,6 +597,8 @@
       
         
       
+        
+      
     
     
     
@@ -685,6 +687,34 @@
     
   
     Registering a marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/publishing-first-party-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing first-party skills
   
 
     
@@ -1665,10 +1695,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#writes-are-impossible" class="md-nav__link">
+  <a href="#the-facade-accepts-no-writes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Writes are impossible
+        The facade accepts no writes
       
     </span>
   </a>
@@ -1885,10 +1915,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#writes-are-impossible" class="md-nav__link">
+  <a href="#the-facade-accepts-no-writes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Writes are impossible
+        The facade accepts no writes
       
     </span>
   </a>
@@ -2011,12 +2041,20 @@ touch <code>/git/**</code>. A valid PAT is still required.</p>
 but never approved therefore returns <strong>404</strong>: there is nothing to serve, and the
 quarantine repository is not reachable from here by any code path.</p>
 <p>The served SHA changes only when a reviewer approves a snapshot.</p>
-<h2 id="writes-are-impossible">Writes are impossible<a class="headerlink" href="#writes-are-impossible" title="Permanent link">&para;</a></h2>
+<h2 id="the-facade-accepts-no-writes">The facade accepts no writes<a class="headerlink" href="#the-facade-accepts-no-writes" title="Permanent link">&para;</a></h2>
 <p>Receive-pack is disabled by construction — the servlet is configured with a null
-receive-pack factory, so no <code>ReceivePack</code> can be created at all. <code>git push</code>
-receives the standard "service not enabled" rejection.</p>
-<p>There is no write-side endpoint, filter or hook to misconfigure. This is a
-structural guarantee, not a policy one.</p>
+receive-pack factory, so no <code>ReceivePack</code> can be created at all. <code>git push</code> to
+<code>/git/**</code> receives the standard "service not enabled" rejection, whatever the
+credential.</p>
+<p>There is no write-side endpoint, filter or hook <strong>on this servlet</strong> to
+misconfigure. This is a structural guarantee, not a policy one.</p>
+<p>The gateway does accept a push, for marketplaces it
+<a href="../../guides/publishing-first-party-skills/">hosts itself</a> — on <code>/publish/**</code>,
+which is a different servlet resolving a different repository under a different
+token scope, and which cannot reach a published repository any more than this
+one can construct a <code>ReceivePack</code>. See
+<a href="../decisions/">ADR 0007</a> for why the two are separate objects rather than one
+with a mode flag.</p>
 <h2 id="auditing">Auditing<a class="headerlink" href="#auditing" title="Permanent link">&para;</a></h2>
 <p>Two hooks append to the ledger:</p>
 <table>
@@ -2062,7 +2100,7 @@ marketplace, the ref and the SHA. Negotiation rounds are not recorded.</p>
 </tr>
 <tr>
 <td><code>git push</code> rejected</td>
-<td>Expected — the facade is read-only by construction.</td>
+<td>Expected — the facade is read-only by construction. Publishing to a hosted marketplace goes to <code>/publish/{name}</code>.</td>
 </tr>
 <tr>
 <td>Client keeps getting an old SHA</td>

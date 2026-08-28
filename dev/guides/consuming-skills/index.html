@@ -599,6 +599,8 @@
       
         
       
+        
+      
     
     
     
@@ -687,6 +689,34 @@
     
   
     Registering a marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../publishing-first-party-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing first-party skills
   
 
     
@@ -2054,8 +2084,11 @@ more.</p>
 </div>
 <h2 id="what-clients-see">What clients see<a class="headerlink" href="#what-clients-see" title="Permanent link">&para;</a></h2>
 <p>Exactly one branch, <code>main</code>, at the approved SHA. Unapproved snapshots do not
-exist on this remote, and pushing is impossible — receive-pack is disabled by
-construction, so <code>git push</code> gets a "service not enabled" rejection.</p>
+exist on this remote, and pushing here is impossible — receive-pack is disabled
+by construction on the facade, so <code>git push</code> gets a "service not enabled"
+rejection. (Publishing to a marketplace the gateway hosts is a different
+endpoint and a different credential; see
+<a href="../publishing-first-party-skills/">Publishing first-party skills</a>.)</p>
 <p>The served SHA changes only when a reviewer approves a new snapshot. Upstream
 movement alone never changes what you receive.</p>
 <h2 id="every-fetch-is-recorded">Every fetch is recorded<a class="headerlink" href="#every-fetch-is-recorded" title="Permanent link">&para;</a></h2>

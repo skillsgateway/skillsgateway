@@ -597,6 +597,8 @@
       
         
       
+        
+      
     
     
     
@@ -685,6 +687,34 @@
     
   
     Registering a marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../guides/publishing-first-party-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing first-party skills
   
 
     
@@ -2536,12 +2566,38 @@ re-vetting found. See
 <a href="../../../guides/re-vetting/">Re-vetting approved content</a>.</p>
 <hr />
 <h2 id="post-marketplaces"><code>POST /marketplaces</code><a class="headerlink" href="#post-marketplaces" title="Permanent link">&para;</a></h2>
-<p>Register an upstream repository. Fetches nothing.</p>
-<p><strong>Body</strong> — <code>{name, url, ref?}</code></p>
+<p>Register a marketplace. Fetches nothing.</p>
+<p><strong>Body</strong> — <code>{name, url?, ref?, origin?, pushPolicy?}</code></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/marketplaces<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"name":"acme","url":"https://github.com/acme/skills.git"}'</span>
 </code></pre></div>
+<p><code>origin</code> decides where the content comes from:</p>
+<table>
+<thead>
+<tr>
+<th><code>origin</code></th>
+<th><code>url</code></th>
+<th>Content arrives by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>upstream</code> (default)</td>
+<td>required</td>
+<td>the gateway fetching the upstream default branch</td>
+</tr>
+<tr>
+<td><code>hosted</code></td>
+<td>must be absent</td>
+<td>a publisher pushing to <code>/publish/{name}</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>pushPolicy</code> applies to a hosted marketplace only: <code>append-only</code> (the default)
+refuses a non-fast-forward push, <code>allow-rewrite</code> permits one and records both
+tips on the ledger. See
+<a href="../../../guides/publishing-first-party-skills/">Publishing first-party skills</a>.</p>
 <table>
 <thead>
 <tr>
@@ -2556,7 +2612,7 @@ re-vetting found. See
 </tr>
 <tr>
 <td>400</td>
-<td>URL scheme not allowlisted, or <code>ref</code> is present and not <code>main</code>.</td>
+<td>URL scheme not allowlisted, <code>ref</code> present and not <code>main</code>, a hosted registration supplying a <code>url</code>, an upstream one omitting it, or a <code>pushPolicy</code> on an upstream marketplace.</td>
 </tr>
 <tr>
 <td>409</td>
@@ -2564,11 +2620,11 @@ re-vetting found. See
 </tr>
 <tr>
 <td>422</td>
-<td>Name fails <code>^[a-z0-9][a-z0-9_-]*$</code>.</td>
+<td>Name fails <code>^[a-z0-9][a-z0-9_-]*$</code>, or an unknown <code>origin</code>/<code>pushPolicy</code>.</td>
 </tr>
 </tbody>
 </table>
-<p>Both 400 cases are trust-boundary rejections — see
+<p>The 400 cases are trust-boundary rejections — see
 <a href="../../compatibility/">Compatibility and allowlists</a>.</p>
 <hr />
 <h2 id="get-marketplaces"><code>GET /marketplaces</code><a class="headerlink" href="#get-marketplaces" title="Permanent link">&para;</a></h2>
@@ -2577,8 +2633,10 @@ the portal's primary query; there is no per-marketplace endpoint.</p>
 <p><strong>200</strong> — array of marketplaces.</p>
 <hr />
 <h2 id="post-marketplacesnameingest"><code>POST /marketplaces/{name}/ingest</code><a class="headerlink" href="#post-marketplacesnameingest" title="Permanent link">&para;</a></h2>
-<p>Clone the upstream default branch into quarantine and pin the tip commit as
-<code>refs/snapshots/{sha}</code>. Creates a snapshot in state <code>held</code>.</p>
+<p>Clone the source's default branch into quarantine and pin the tip commit as
+<code>refs/snapshots/{sha}</code>. Creates a snapshot in state <code>held</code>. For a hosted
+marketplace the source is its own origin repository, and a push already does
+this — the endpoint stays available to re-ingest.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/marketplaces/acme/ingest
 </code></pre></div>
 <table>

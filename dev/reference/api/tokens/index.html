@@ -597,6 +597,8 @@
       
         
       
+        
+      
     
     
     
@@ -685,6 +687,34 @@
     
   
     Registering a marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../guides/publishing-first-party-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing first-party skills
   
 
     
@@ -1961,13 +1991,14 @@ be recovered afterwards.</p>
 <hr />
 <h2 id="post-tokens"><code>POST /tokens</code><a class="headerlink" href="#post-tokens" title="Permanent link">&para;</a></h2>
 <p>Create a token for the calling principal.</p>
-<p><strong>Body</strong> — <code>{name, scopes?, expiresAt?}</code></p>
+<p><strong>Body</strong> — <code>{name, scopes?, expiresAt?, pushScopes?}</code></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/tokens<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"name":"ci-runner","scopes":["acme","catalog"],"expiresAt":"2026-12-31T00:00:00Z"}'</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"ci-runner"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"2026-08-17T09:00:00Z"</span><span class="p">,</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:[</span><span class="s2">"acme"</span><span class="p">,</span><span class="s2">"catalog"</span><span class="p">],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-12-31T00:00:00Z"</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="kc">null</span><span class="p">}</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:[</span><span class="s2">"acme"</span><span class="p">,</span><span class="s2">"catalog"</span><span class="p">],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-12-31T00:00:00Z"</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w"> </span><span class="nt">"pushScopes"</span><span class="p">:[]}</span>
 </code></pre></div>
 <p><code>scopes</code> (GW_0064) lists marketplace names the token may fetch — the
 <a href="../../../guides/virtual-catalog/">virtual catalog</a>'s name is a valid entry —
@@ -1976,6 +2007,14 @@ Empty or omitted grants every marketplace, which is what every pre-scoping
 token meant. An out-of-scope fetch answers exactly like a marketplace that
 does not exist, so a scoped token is not a directory of what else the gateway
 governs.</p>
+<p><code>pushScopes</code> (GW_0102) lists <strong>hosted</strong> marketplaces the token may publish to
+through <a href="../../../guides/publishing-first-party-skills/"><code>/publish/{name}</code></a>, and
+is a different grant from <code>scopes</code> in the one way that matters: omitting it
+grants <strong>none</strong>, not all. There is no every-marketplace push scope, so no token
+issued before publication existed can write anything and none can be granted
+publication to everything by forgetting a field. Entries are validated against
+the registered hosted marketplaces at creation. An out-of-scope push answers
+exactly like a marketplace that does not exist, as an out-of-scope fetch does.</p>
 <p><code>expiresAt</code> (GW_0065): an expired token fails authentication exactly like a
 revoked one, decided by comparing the stamp at authentication time — no
 background process is involved. When
@@ -2035,7 +2074,8 @@ rows.</p>
 <hr />
 <h2 id="post-tokensidrotate"><code>POST /tokens/{id}/rotate</code><a class="headerlink" href="#post-tokensidrotate" title="Permanent link">&para;</a></h2>
 <p>Retire a possibly-exposed secret without renegotiating the grant (GW_0066).
-Issues a fresh secret with the <strong>identical</strong> grant — name, scopes, and the same
+Issues a fresh secret with the <strong>identical</strong> grant — name, scopes (fetch and
+push alike), and the same
 expiry deadline — records which token it replaced (<code>rotatedFrom</code>), and revokes
 the old token <em>before</em> the new one is issued: a failure between the two steps
 leaves no live secret, never two.</p>

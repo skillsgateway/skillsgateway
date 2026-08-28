@@ -595,6 +595,8 @@
       
         
       
+        
+      
     
     
     
@@ -683,6 +685,34 @@
     
   
     Registering a marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/publishing-first-party-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing first-party skills
   
 
     
@@ -1819,6 +1849,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#adr-0007-first-party-hosting-a-write-path-deliberately-somewhere-else" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0007 — First-party hosting: a write path, deliberately somewhere else
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1960,6 +2001,17 @@
     <span class="md-ellipsis">
       
         ADR 0006 — Embedded CEL for policy rules, not an OPA sidecar
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-0007-first-party-hosting-a-write-path-deliberately-somewhere-else" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0007 — First-party hosting: a write path, deliberately somewhere else
       
     </span>
   </a>
@@ -2154,6 +2206,17 @@ gate, and CEL's non-Turing-complete, terminating semantics are the right blast
 radius for user-authored rules and a playground pointed at real snapshots.
 Scope is deny-only on purpose; auto-approval would delegate the human gate and
 stays parked as a product decision.</p>
+<h3 id="adr-0007-first-party-hosting-a-write-path-deliberately-somewhere-else"><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0007-first-party-hosting-and-the-publish-endpoint.md">ADR 0007 — First-party hosting: a write path, deliberately somewhere else</a><a class="headerlink" href="#adr-0007-first-party-hosting-a-write-path-deliberately-somewhere-else" title="Permanent link">&para;</a></h3>
+<p><em>Accepted, 2026-08-23.</em></p>
+<p>The gateway accepts git pushes for marketplaces it hosts itself — on a
+<strong>separate endpoint</strong> (<code>/publish/**</code>, so the serving facade keeps its null
+receive-pack factory), into a <strong>separate repository</strong> (the publisher's origin,
+so quarantine keeps exactly one writer), under a <strong>separate token scope</strong> that
+no existing token holds and that has no every-marketplace form. One lineage,
+forward only unless the marketplace says otherwise, and the approval gate is
+untouched: pushed content is quarantined, vetted and held like anything
+fetched. Auto-approval for trusted internal publishers stays parked per ADR
+0006.</p>
 <h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../architecture/">Architecture</a>

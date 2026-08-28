@@ -597,6 +597,8 @@
       
         
       
+        
+      
     
     
     
@@ -685,6 +687,34 @@
     
   
     Registering a marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/publishing-first-party-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing first-party skills
   
 
     
@@ -2102,8 +2132,8 @@ manifest — a designed future capability, not a configuration flag.</p>
 <td>Works with a PAT.</td>
 </tr>
 <tr>
-<td>Anything attempting <code>git push</code></td>
-<td>Rejected by construction.</td>
+<td>Anything attempting <code>git push</code> to <code>/git/**</code></td>
+<td>Rejected by construction. (A hosted marketplace is published to on <code>/publish/**</code>, a separate endpoint.)</td>
 </tr>
 </tbody>
 </table>

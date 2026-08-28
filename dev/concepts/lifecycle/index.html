@@ -448,10 +448,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-two-repositories" class="md-nav__link">
+  <a href="#the-repositories" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The two repositories
+        The repositories
       
     </span>
   </a>
@@ -718,6 +718,8 @@
       
         
       
+        
+      
     
     
     
@@ -806,6 +808,34 @@
     
   
     Registering a marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/publishing-first-party-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing first-party skills
   
 
     
@@ -1858,10 +1888,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-two-repositories" class="md-nav__link">
+  <a href="#the-repositories" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The two repositories
+        The repositories
       
     </span>
   </a>
@@ -2251,8 +2281,8 @@ physically lives in a different git repository from published content.</p>
 
 </div>
 
-<h2 id="the-two-repositories">The two repositories<a class="headerlink" href="#the-two-repositories" title="Permanent link">&para;</a></h2>
-<p>The gateway maintains two bare git repositories per marketplace under
+<h2 id="the-repositories">The repositories<a class="headerlink" href="#the-repositories" title="Permanent link">&para;</a></h2>
+<p>The gateway maintains bare git repositories per marketplace under
 <code>skills-gateway.data-dir</code>:</p>
 <table>
 <thead>
@@ -2266,18 +2296,26 @@ physically lives in a different git repository from published content.</p>
 <tr>
 <td><strong>Quarantine</strong></td>
 <td><code>{data-dir}/quarantine/{marketplace}.git</code></td>
-<td>One <code>refs/snapshots/{sha}</code> per ingested commit. <strong>Never reachable through the facade.</strong></td>
+<td>One <code>refs/snapshots/{sha}</code> per ingested commit. <strong>Never reachable through either endpoint.</strong></td>
 </tr>
 <tr>
 <td><strong>Published</strong></td>
 <td><code>{data-dir}/published/{marketplace}.git</code></td>
 <td>Exactly one served ref, <code>refs/heads/main</code>. Created only by approval.</td>
 </tr>
+<tr>
+<td><strong>Origin</strong> <em>(hosted only)</em></td>
+<td><code>{data-dir}/hosted/{marketplace}.git</code></td>
+<td>The publisher's own <code>refs/heads/main</code>, written by push and read only by ingestion.</td>
+</tr>
 </tbody>
 </table>
 <p>The facade resolves repositories through a method that opens only the published
 path and returns nothing unless <code>refs/heads/main</code> resolves. There is no code
-path from a facade request to the quarantine tree.</p>
+path from a facade request to the quarantine tree — nor from a
+<a href="../../guides/publishing-first-party-skills/">publish</a> request to either
+quarantine or published: it resolves only the origin path, and only for a
+marketplace the gateway hosts.</p>
 <h2 id="stage-1-ingestion">Stage 1 — ingestion<a class="headerlink" href="#stage-1-ingestion" title="Permanent link">&para;</a></h2>
 <p>Ingestion has three triggers, chosen per marketplace as its <strong>sync mode</strong>: an
 operator's explicit call (<code>on-demand</code>, the default), the gateway's own polling
@@ -2285,9 +2323,13 @@ sweep (<code>scheduled</code>), or a signed forge push webhook (<code>webhook</c
 the only thing the mode changes — every path below runs identically whatever
 pulled the commit in. See
 <a href="../../guides/upstream-sync/">Syncing from upstream automatically</a>.</p>
-<p>It clones the upstream default branch with JGit (the gateway never shells out to
+<p>It clones the source's default branch with JGit (the gateway never shells out to
 <code>git</code>), resolves the tip commit, and writes it into quarantine as
 <code>refs/snapshots/{sha}</code>. The resulting snapshot starts in state <code>held</code>.</p>
+<p>For a marketplace the gateway hosts there is no upstream: the source is its own
+origin repository and the trigger is the publisher's push. Everything from the
+snapshot pin onward — the manifest check, the vetting chain, the approval gate —
+is the same code on the same content.</p>
 <p>Registration has already constrained what can be ingested at all: the URL scheme
 must be on the allowlist, and the ref is the gateway's decision, not the
 registrant's. See <a href="../trust-boundaries/">Trust boundaries</a>.</p>

@@ -609,6 +609,8 @@
       
         
       
+        
+      
     
     
     
@@ -697,6 +699,34 @@
     
   
     Registering a marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/publishing-first-party-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing first-party skills
   
 
     
@@ -1877,7 +1907,9 @@ the trigger — every mode lands snapshots <code>held</code> behind the same app
 gate.</dd>
 <dt><strong>Upload-pack</strong></dt>
 <dd>The git smart-HTTP operation that serves objects to a fetching client. The
-only git service the facade enables; receive-pack (push) is disabled.</dd>
+only git service the <em>facade</em> enables; receive-pack (push) is disabled
+there. The separate publish endpoint enables both, for hosted marketplaces
+only.</dd>
 <dt><strong>Violation</strong></dt>
 <dd>The reason ingestion flagged a snapshot — for example an external plugin
 source, which is rejected fail-closed in the current scope.</dd>
