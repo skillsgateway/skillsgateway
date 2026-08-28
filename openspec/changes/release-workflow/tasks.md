@@ -11,7 +11,7 @@
 - [x] 2.1 Port `common-release-prepare.yml`, `common-release-tag.yml`, `common-release-assets.yml`, `common-release-promote.yml` from `reqstool/.github`
 - [x] 2.2 Port the `check-version`, `check-release-branch`, `setup-git-cliff`, `setup-cliff-config`, `resolve-version` composite actions, preserving the `$/` self-reference idiom so actions resolve against the commons repo at the running SHA
 - [x] 2.3 Port `.github/cliff.toml` as the org default and retarget `setup-cliff-config`'s fallback URL from `reqstool/.github` to `skillsgateway/.github`
-- [ ] 2.4 Open, review and merge that PR; record the merge SHA for pinning — **PR [skillsgateway/.github#1](https://github.com/skillsgateway/.github/pull/1) opened**; awaiting manual merge. `release.yml` is pinned to branch-head `5045572` meanwhile and must be re-pinned to the squash-merge SHA.
+- [x] 2.4 Open, review and merge that PR; record the merge SHA for pinning — **PR [skillsgateway/.github#1](https://github.com/skillsgateway/.github/pull/1) merged** as `9d486e25b782f1ec829c69f93aeeec081182180c`. All four `uses:` refs in `release.yml` re-pinned from the pre-squash branch head `5045572` (reachable, but on no branch) to that merge SHA.
 
 ## 3. Release workflow in this repo
 
