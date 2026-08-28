@@ -4,9 +4,7 @@
 
 The held-until-approved gate between quarantine and served content: manual
 approval decisions by reviewers and the provenance record of every approval.
-
 ## Requirements
-
 ### Requirement: GW_0004
 The system SHALL implement GW_0004.
 
@@ -30,4 +28,16 @@ The system SHALL implement GW_0073.
 
 #### Scenario: SVC_GW_0073
 The system SHALL pass SVC_GW_0073.
+
+### Requirement: GW_0096
+The system SHALL implement GW_0096.
+
+#### Scenario: SVC_GW_0096
+The system SHALL pass SVC_GW_0096.
+
+### Requirement: GW_0097
+The system SHALL implement GW_0097.
+
+#### Scenario: SVC_GW_0097
+The system SHALL pass SVC_GW_0097.
 
