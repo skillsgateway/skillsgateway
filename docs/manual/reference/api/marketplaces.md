@@ -9,6 +9,16 @@ re-vet, and waiver create/delete require **approver of the marketplace** (or
 admin) — resolved server-side from the addressed snapshot or waiver where the
 route carries an id; every `GET` on this page stays open to any session.
 
+**Machine reach.** `marketplaces:read` covers `GET /marketplaces`, `GET
+/catalog` and a snapshot's `/content`, `/licenses`, `/provenance` and
+`/release-age`; `snapshots:read` covers `/diff`, `/file`, `/files`, `/vetting`,
+`/fetchers` and `/four-eyes`; `marketplaces:register`, `marketplaces:ingest`,
+`vetting:run`, `sync:write` and `waivers:read` cover the corresponding
+mutations and the waiver listing. **Approve, reject, waiver create, waiver
+delete, snapshot delete and snapshot restore are reachable by no scope at
+all** — they publish, refuse or retract content. See
+[Machine API credentials](tokens.md#machine-api-credentials).
+
 ## Representations
 
 **Marketplace**

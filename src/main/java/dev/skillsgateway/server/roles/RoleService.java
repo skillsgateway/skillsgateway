@@ -157,6 +157,25 @@ public class RoleService {
         throw denied();
     }
 
+    /**
+     * The administrative role, required whether or not enforcement is enabled (GW_0130).
+     *
+     * <p>Every other {@code require*} passes while {@code skills-gateway.roles.enabled} is false,
+     * because that flag exists so an upgrade does not lock out sessions that predate role
+     * enforcement. Provisioning a machine credential has nothing that predates it, and the thing
+     * it creates outlives the session that created it: under the default flag any user who
+     * completed a login could otherwise mint a credential holding every scope, which keeps working
+     * after their own account is deprovisioned. That is a persistence of privilege the session
+     * itself does not have, so this check does not consult the flag.
+     */
+    @Requirements({"GW_0130"})
+    public void requireAdminRegardlessOfEnforcement(Authentication authentication) {
+        if (isAdmin(authentication)) {
+            return;
+        }
+        throw denied();
+    }
+
     /** The ledger, its export, and the operational listings: auditor or admin (GW_0070). */
     @Requirements({"GW_0068", "GW_0070"})
     public void requireAuditor(Authentication authentication) {

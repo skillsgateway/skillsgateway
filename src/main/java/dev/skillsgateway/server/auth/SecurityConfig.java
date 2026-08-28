@@ -8,7 +8,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.Customizer;
@@ -25,6 +27,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -114,6 +117,68 @@ public class SecurityConfig {
     }
 
     /**
+     * The machine API chain (GW_0127): a sibling of the facade and publication chains rather than
+     * a mode on the session chain. It matches {@code /api/**} <em>and</em> the presence of an
+     * {@code Authorization: Bearer} header, so a browser request without one still falls through
+     * to the session chain exactly as before and that chain is unchanged apart from its order.
+     *
+     * <p>Authentication is {@link MachineApiAuthenticationProvider}, which authenticates only a
+     * credential holding at least one administrative scope. Authorization is
+     * {@link MachineApiRegistry}, expanded here into one rule per reachable route with
+     * {@code denyAll} underneath: every route the registry does not name — every act of human
+     * judgement, every retraction of content, every credential-minting path — is refused whatever
+     * combination of scopes the credential holds. Because both live in the filter chain, neither
+     * consults {@code skills-gateway.roles.enabled}: that flag exists so an upgrade does not lock
+     * out existing sessions, and nothing predates a credential kind that did not exist.
+     *
+     * <p>Ordered ahead of the web chain, so this holds under
+     * {@code skills-gateway.dev-insecure-auth=true} as well — the escape hatch opens the browser
+     * surface, never the bearer path. The facade's posture, applied here.
+     */
+    @Bean
+    @Order(4)
+    @Requirements({"GW_0127", "GW_0129"})
+    public SecurityFilterChain machineApiChain(
+            HttpSecurity http, MachineApiAuthenticationProvider machineApiAuthenticationProvider) throws Exception {
+        AuthenticationManager authenticationManager = new ProviderManager(machineApiAuthenticationProvider);
+        http.securityMatcher(new AndRequestMatcher(
+                        PathPatternRequestMatcher.withDefaults().matcher("/api/**"),
+                        MachineApiAuthenticationFilter::presentsBearerCredential))
+                // No CSRF token, for the same reason as the facade and publication chains: the
+                // request is self-authenticating, STATELESS, no session is created and no cookie
+                // is honoured -- the filter refuses a request that carries one at all. This chain
+                // neither extends nor relies on the session chain's /api/** exemption.
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationManager(authenticationManager)
+                .addFilterBefore(
+                        new MachineApiAuthenticationFilter(authenticationManager), AnonymousAuthenticationFilter.class)
+                .authorizeHttpRequests(SecurityConfig::machineApiRules)
+                .exceptionHandling(exceptions ->
+                        exceptions.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
+        return http.build();
+    }
+
+    /**
+     * One rule per reachable route, then {@code denyAll} (GW_0129). Deny-by-default is the shape:
+     * an endpoint the registry does not classify as reachable is refused here, so a new endpoint
+     * is unreachable until somebody names it rather than being admitted by silence.
+     */
+    @Requirements({"GW_0129"})
+    private static void machineApiRules(
+            org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer<HttpSecurity>
+                            .AuthorizationManagerRequestMatcherRegistry
+                    registry) {
+        for (java.util.Map.Entry<String, MachineApiRegistry.Route> reachable : MachineApiRegistry.reachableRoutes()) {
+            MachineApiRegistry.Route route = reachable.getValue();
+            registry.requestMatchers(PathPatternRequestMatcher.withDefaults()
+                            .matcher(HttpMethod.valueOf(route.method()), route.pattern()))
+                    .hasAuthority(MachineApiAuthentication.SCOPE_PREFIX + reachable.getKey());
+        }
+        registry.anyRequest().denyAll();
+    }
+
+    /**
      * OIDC for browsers; unauthenticated /api/** gets 401 instead of a login redirect.
      *
      * <p>With {@code skills-gateway.dev-insecure-auth=true} (development only, default off) the
@@ -121,7 +186,7 @@ public class SecurityConfig {
      * requiring PATs. GW_0011 holds for every default-configured deployment.
      */
     @Bean
-    @Order(4)
+    @Order(5)
     @Requirements({"GW_0011"})
     public SecurityFilterChain webChain(HttpSecurity http, SkillsGatewayProperties properties) throws Exception {
         if (properties.devInsecureAuth()) {

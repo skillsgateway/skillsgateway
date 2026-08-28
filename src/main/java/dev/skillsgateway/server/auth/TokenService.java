@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.HexFormat;
@@ -61,7 +62,15 @@ public class TokenService {
             List<String> pushScopes,
 
             @Schema(description = "Whether this credential was derived from a browser session (GW_0104)")
-            boolean sessionDerived) {}
+            boolean sessionDerived,
+
+            @Schema(
+                    description = "Administrative API scopes this credential may exercise; empty grants"
+                            + " no administrative reach at all")
+            List<String> apiScopes,
+
+            @Schema(description = "The identity that provisioned a machine credential, or null")
+            String machineOwner) {}
 
     /** A scope or lifetime the policy refuses; surfaces as 422. */
     public static class InvalidTokenRequestException extends RuntimeException {
@@ -127,6 +136,131 @@ public class TokenService {
         AccessToken stored =
                 tokenRepository.create(principal, name, sha256Hex(secret), storedScopes, expiresAt, null, null, true);
         return issued(stored, secret);
+    }
+
+    /**
+     * Issues a machine API credential (GW_0126, GW_0131). Everything here is a refusal rather
+     * than a default, because every default this method could offer is a weaker credential than
+     * the caller asked for:
+     *
+     * <ul>
+     *   <li>Every administrative scope value is checked against the registry, so a misspelling is
+     *       a 422 at issue time rather than a grant that silently never matches — exactly as
+     *       fetch scopes already behave. There is no wildcard value to spell.
+     *   <li>An empty scope list is refused: a machine credential with no administrative scope is
+     *       not a credential, it is a fetch token, and issuing one here would quietly produce
+     *       something that cannot do what the caller asked for.
+     *   <li>An expiry is required and is never defaulted, and a lifetime beyond the cap is
+     *       refused rather than clamped — the posture GW_0065 already takes. The cap applies even
+     *       when the deployment configures none; see {@code Tokens.DEFAULT_MACHINE_MAX_TTL}.
+     *   <li>A session-derived credential can never hold administrative scope. It is minted from a
+     *       browser session with a lifetime the holder did not choose, for fetching; letting one
+     *       carry control-plane authority would launder a session into a standing credential.
+     * </ul>
+     */
+    @Requirements({"GW_0126", "GW_0127", "GW_0131"})
+    public IssuedToken createMachineCredential(
+            String principal, String name, List<String> apiScopes, Instant expiresAt, String owner) {
+        String storedApiScopes = validateApiScopes(apiScopes);
+        validateMachineTtl(expiresAt);
+        String secret = newSecret();
+        AccessToken stored = tokenRepository.create(
+                principal, name, sha256Hex(secret), null, expiresAt, null, null, false, storedApiScopes, owner);
+        return issued(stored, secret);
+    }
+
+    /**
+     * Rotation for a machine credential (GW_0131): the same grant with a new secret. The identity,
+     * the expiry <em>deadline</em> and all three scope dimensions carry over, and the old
+     * credential is revoked before the new one is issued, so no moment has two live secrets. A
+     * rotation that silently widened or dropped an administrative scope would be the worst defect
+     * this feature could have, which is why the test asserts it per scope value.
+     *
+     * <p>Administered by id alone rather than by the caller's principal: a machine credential's
+     * principal is not an identity anybody logs in as, so owner-scoping would leave it
+     * unrotatable by everyone.
+     */
+    @Requirements({"GW_0066", "GW_0131"})
+    public Optional<IssuedToken> rotateMachineCredential(long id) {
+        Optional<AccessToken> found = tokenRepository.findById(id).filter(AccessToken::machineCredential);
+        if (found.isEmpty()) {
+            return Optional.empty();
+        }
+        AccessToken old = found.get();
+        if (old.revokedAt() != null
+                || (old.expiresAt() != null && !old.expiresAt().isAfter(Instant.now()))) {
+            throw new TokenNotRotatableException("token %d is not live; issue a new token instead".formatted(id));
+        }
+        if (!tokenRepository.revoke(id)) {
+            throw new TokenNotRotatableException("token %d is not live; issue a new token instead".formatted(id));
+        }
+        String secret = newSecret();
+        AccessToken stored = tokenRepository.create(
+                old.principal(),
+                old.name(),
+                sha256Hex(secret),
+                old.scopes(),
+                old.expiresAt(),
+                id,
+                old.pushScopes(),
+                old.sessionDerived(),
+                old.apiScopes(),
+                old.machineOwner());
+        return Optional.of(issued(stored, secret));
+    }
+
+    /**
+     * Every machine credential, whoever provisioned it (GW_0131). The caller's own-token listing
+     * keeps its strict own-principal scoping; this is the separate administrative view, because a
+     * credential nobody can see is a credential nobody can revoke during an incident.
+     */
+    @Requirements({"GW_0131"})
+    public List<AccessToken> listMachineCredentials() {
+        return tokenRepository.listMachineCredentials();
+    }
+
+    /** Administrative revocation of a machine credential; takes effect at the next lookup. */
+    @Requirements({"GW_0131"})
+    public boolean revokeMachineCredential(long id) {
+        return tokenRepository
+                .findById(id)
+                .filter(AccessToken::machineCredential)
+                .map(token -> tokenRepository.revoke(id))
+                .orElse(false);
+    }
+
+    /** A machine credential by id, for the administrative listing and the ledger detail. */
+    public Optional<AccessToken> findMachineCredential(long id) {
+        return tokenRepository.findById(id).filter(AccessToken::machineCredential);
+    }
+
+    @Requirements({"GW_0126"})
+    private String validateApiScopes(List<String> apiScopes) {
+        if (apiScopes == null || apiScopes.isEmpty()) {
+            throw new InvalidTokenRequestException("a machine credential must name at least one API scope;"
+                    + " there is no value that grants every scope");
+        }
+        for (String scope : apiScopes) {
+            if (!MachineApiRegistry.isKnownScope(scope)) {
+                throw new InvalidTokenRequestException(
+                        "unknown API scope '%s': API scopes are named per concern and there is no wildcard"
+                                .formatted(scope));
+            }
+        }
+        return String.join(",", new LinkedHashSet<>(apiScopes));
+    }
+
+    @Requirements({"GW_0131"})
+    private void validateMachineTtl(Instant expiresAt) {
+        if (expiresAt == null) {
+            throw new InvalidTokenRequestException("a machine credential must state an expiry; it is never defaulted");
+        }
+        Duration cap = properties.tokens().machineMaxTtl();
+        if (expiresAt.isAfter(Instant.now().plus(cap))) {
+            throw new InvalidTokenRequestException(
+                    "machine credential lifetime is capped at %s; an expiry within that window is required"
+                            .formatted(cap));
+        }
     }
 
     private String newSecret() {
@@ -239,7 +373,9 @@ public class TokenService {
                 stored.expiresAt(),
                 stored.rotatedFrom(),
                 stored.pushScopeList(),
-                stored.sessionDerived());
+                stored.sessionDerived(),
+                stored.apiScopeList(),
+                stored.machineOwner());
     }
 
     static String sha256Hex(String value) {

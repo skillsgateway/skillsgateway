@@ -6,9 +6,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import dev.skillsgateway.server.auth.DevInsecureAuthGuard;
+import io.github.reqstool.annotations.SVCs;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -45,6 +48,38 @@ class DevAuthTests {
         mockMvc.perform(get("/api/me"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("dev"));
+        mockMvc.perform(get("/api/marketplaces")).andExpect(status().isOk());
+    }
+
+    /**
+     * The escape hatch opens the web chain, never the machine chain (GW_0127). It follows the git
+     * facade's posture, which stays strict in this mode for the same reason: a mode in which every
+     * bearer value authenticated would be a very quiet way to lose the control plane in a copied
+     * configuration — and unlike a browser session, a machine credential leaves no clue that it
+     * was ever needed.
+     */
+    @Test
+    @SVCs({"SVC_GW_0127"})
+    void dev_insecure_auth_does_not_open_the_bearer_path() throws Exception {
+        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+                .apply(SecurityMockMvcConfigurers.springSecurity())
+                .build();
+
+        for (String value : List.of("sgw_definitely-not-a-token", "", "   ")) {
+            mockMvc.perform(get("/api/marketplaces").header(HttpHeaders.AUTHORIZATION, "Bearer " + value))
+                    .andExpect(status().isUnauthorized());
+        }
+        // The scheme with nothing after it at all — not even the trailing space. This mode is the
+        // only place the distinction is observable: everywhere else both chains answer 401, so a
+        // matcher that stopped recognising the bare scheme would look identical. Here the web
+        // chain permits everything, so falling through to it would answer 200. A surviving mutant
+        // on the matcher is what found this; the assertion above could not.
+        mockMvc.perform(get("/api/marketplaces").header(HttpHeaders.AUTHORIZATION, "Bearer"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/marketplaces").header(HttpHeaders.AUTHORIZATION, "bearer"))
+                .andExpect(status().isUnauthorized());
+        // Not merely 401 for everything: the same request without the header is still open, which
+        // is what the mode is for.
         mockMvc.perform(get("/api/marketplaces")).andExpect(status().isOk());
     }
 }

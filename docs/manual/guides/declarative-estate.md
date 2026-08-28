@@ -133,11 +133,47 @@ Two failures are policy, not typos:
   through [`PUT /api/marketplaces/{name}/sync`](../reference/api/marketplaces.md)
   like the [upstream sync guide](upstream-sync.md) describes.
 
+## Declare converge-able state; call for acts and reads
+
+This is where operators guess wrong, so the rule is worth stating as a rule:
+
+- **Estate YAML** is for desired state the gateway re-converges on every boot —
+  marketplaces, role grants, webhook subscribers, audit sinks. It is additive,
+  idempotent, never prunes, applies the same trust boundary as the API, and, the
+  decisive property, needs **no credential in the pipeline at all**. Where it
+  covers the object it stays the recommendation, Terraform shops included: a
+  provider converging the same objects is a second converger with a secret.
+- **The API with a [machine credential](../reference/api/tokens.md#machine-api-credentials)**
+  is for what has no declarative form — acts (trigger a reconcile, rebuild the
+  catalog, run a re-vet), reads (the ledger, the estate report, adoption,
+  drift), one-shot secrets, and objects that are not estate types, such as
+  policy rules. It is also the answer where the gateway's configuration is
+  genuinely not the deployer's to write, on a managed platform whose values file
+  belongs to another team.
+
+**Role grants are estate-only.** No machine credential can call `POST
+/api/roles`, whatever scopes it holds, because `estate.grants` already serves
+the same need with the same validation and no credential to steal. This is the
+sharpest case of the rule above rather than an exception to it.
+
+!!! note "A provider cannot converge a marketplace's whole lifecycle"
+
+    There is no `PUT` or `DELETE /api/marketplaces/{name}` — registration
+    exists, deregistration does not — so `terraform destroy` has nothing to
+    call. That is a pre-existing gap in the API rather than something machine
+    credentials introduce, but a provider author meets it immediately.
+
 ## What stays interactive, and drift
 
 Personal access tokens are user-owned credentials and stay API-only by
-design. Deregistration, snapshot approval, waivers — everything that retracts
-or publishes content — stays interactive and audited.
+design, and **machine API credentials are API-only for exactly the same
+reason**: a credential's secret has no declarative form, and inverting that —
+the operator supplying the secret, as `estate.webhooks` does — would put a
+control-plane credential in a values file.
+
+Deregistration, snapshot approval, waivers — everything that retracts
+or publishes content — stays interactive and audited, and is unreachable by a
+machine credential holding every scope there is.
 
 Identity-provider role mappings (`skills-gateway.roles.mappings`) are
 deliberately **not** an estate object either, for the opposite reason: they are
@@ -151,4 +187,87 @@ already holds the same role through a group.
 Objects created through the API and absent from the declaration are legitimate
 state, not drift to be corrected: reconciliation never touches them. The
 ledger's actor column is the drift report — everything not from
-`config-reconciler` was someone's interactive decision.
+`config-reconciler` was someone's interactive decision, and every entry now
+carries an explicit actor type (`human`, `machine` or `system`) so a machine
+credential's writes are separable from a person's without parsing names.
+
+
+## Driving the gateway from CI or Terraform
+
+Where the estate cannot reach — a pipeline that must *trigger* something, read
+drift, or run in a shop whose values file belongs to another team — a
+[machine API credential](../reference/api/tokens.md#machine-api-credentials) is
+the answer.
+
+### Provision one
+
+An administrator does this once, from a browser session, naming only the scopes
+the pipeline needs and an expiry:
+
+```bash
+curl -X POST https://gateway.example.com/api/tokens/machine \
+  -H 'Content-Type: application/json' \
+  --data '{
+    "principal": "platform-ci",
+    "name": "estate-pipeline",
+    "apiScopes": ["estate:read", "estate:reconcile", "marketplaces:register"],
+    "expiresAt": "2026-11-26T00:00:00Z"
+  }'
+```
+
+The response carries the cleartext exactly once. Put it in the pipeline's secret
+store; the gateway keeps only a hash.
+
+### Use it
+
+```yaml title=".github/workflows/estate.yml (excerpt)"
+- name: Reconcile the declared estate
+  env:
+    SKILLS_GATEWAY_TOKEN: ${{ secrets.SKILLS_GATEWAY_TOKEN }}
+  run: |
+    curl -sSf -X POST "$GATEWAY/api/estate/reconcile" \
+      -H "Authorization: Bearer $SKILLS_GATEWAY_TOKEN"
+
+- name: Fail the build on unreconciled entries
+  run: |
+    curl -sSf "$GATEWAY/api/estate" \
+      -H "Authorization: Bearer $SKILLS_GATEWAY_TOKEN" \
+      | jq -e '.entries | map(select(.outcome == "failed")) | length == 0'
+```
+
+A Terraform provider follows the same shape: the credential in the provider
+block, `POST /api/marketplaces` to register, `GET /api/estate` to read back.
+
+### What this credential cannot do, by design
+
+State it plainly, because a pipeline author will otherwise try:
+
+- **It cannot approve or reject a snapshot**, and cannot create or delete a
+  waiver. Publishing content is a human decision, and no scope reaches it.
+- **It cannot retract content** — no snapshot delete, no restore, no retention
+  evaluate or compact. It can read `GET /api/retention/candidates` and stop
+  there.
+- **It cannot grant a role**, to anyone, including itself. Declare grants in
+  `estate.grants` instead; `roles:read` lets the pipeline *detect* a grant made
+  by hand, which the estate cannot discover on its own.
+- **It cannot mint another credential**, including a replacement for itself, so
+  a compromised one cannot outrun its own revocation.
+- **It cannot clone a marketplace.** A machine credential reaches no repository
+  through the git facade, including the ones an empty fetch scope would grant
+  any other token. If the pipeline also needs content, that is a separate
+  personal access token.
+
+- **It must not send a cookie.** A request carrying both a bearer credential and
+  a `Cookie` header is refused with a bare 401 — including a session-affinity
+  cookie injected by a load balancer.
+
+### Rotate it
+
+```bash
+curl -X POST "$GATEWAY/api/tokens/machine/$ID/rotate"
+```
+
+The same principal, name, expiry deadline and every one of the same scopes, with
+a new secret; the old one is dead before the new one is returned. The expiry is
+a **deadline**, not a duration, so rotation does not extend the credential's
+life — that is what makes the cap meaningful.

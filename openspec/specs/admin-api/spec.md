@@ -4,9 +4,7 @@
 
 The administrative HTTP interface for registering marketplaces, listing
 snapshots and their states, and approving or rejecting held snapshots.
-
 ## Requirements
-
 ### Requirement: GW_0010
 The system SHALL implement GW_0010.
 
@@ -18,6 +16,7 @@ The system SHALL implement GW_0022.
 
 #### Scenario: SVC_GW_0022
 The system SHALL pass SVC_GW_0022.
+
 ### Requirement: GW_0105
 The system SHALL implement GW_0105.
 
@@ -35,3 +34,10 @@ The system SHALL implement GW_0107.
 
 #### Scenario: SVC_GW_0107
 The system SHALL pass SVC_GW_0107.
+
+### Requirement: GW_0129
+The system SHALL implement GW_0129.
+
+#### Scenario: SVC_GW_0129
+The system SHALL pass SVC_GW_0129.
+

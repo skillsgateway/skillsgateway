@@ -10,6 +10,10 @@ Under role enforcement the report is **auditor-or-admin** (failure reasons
 expose operator infrastructure, like the subscriber and sink listings) and the
 trigger is **admin-only**.
 
+**Machine reach.** `estate:read` covers the report and `estate:reconcile` the
+trigger — separately, so a credential that reads drift cannot also cause a
+convergence. See [Machine API credentials](tokens.md#machine-api-credentials).
+
 ---
 
 ## `GET /api/estate`

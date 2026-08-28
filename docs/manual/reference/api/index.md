@@ -1,11 +1,18 @@
 # REST API
 
-The gateway exposes two HTTP surfaces with different authentication:
+The gateway exposes three HTTP surfaces with different authentication:
 
 | Surface | Paths | Authentication |
 | --- | --- | --- |
-| Web / API | everything except `/git/**` | OIDC session only |
-| Git facade | `/git/**` | Personal access token only |
+| Web / API | everything except `/git/**` | OIDC session cookie |
+| Machine API | `/api/**` with an `Authorization: Bearer` header | [Machine API credential](tokens.md#machine-api-credentials) |
+| Git facade | `/git/**` | Personal access token over HTTP Basic |
+
+The three do not overlap. A personal access token reaches the facade and
+nothing else; a machine API credential reaches the API and nothing else — it
+cannot clone a marketplace, including the marketplaces an empty fetch scope
+would otherwise grant. Which surface answers a request is decided by what it
+carries, not by what it asks for.
 
 This section documents the first. For the second see
 [Git smart-HTTP facade](../git-facade.md).
@@ -18,8 +25,33 @@ This section documents the first. For the second see
 
 ## Conventions
 
-**Authentication.** Every `/api/**` endpoint requires an authenticated OIDC
-session.
+**Authentication.** Every `/api/**` endpoint is reached by exactly one of two
+paths:
+
+- an **authenticated OIDC session**, which is what the portal uses; or
+- a **machine API credential** presented as `Authorization: Bearer <secret>`,
+  which is what infrastructure-as-code and CI use.
+
+A request carrying no bearer header takes the session path, exactly as it always
+has. A request carrying one takes the machine path and is authenticated
+strictly — including when `skills-gateway.dev-insecure-auth=true`, which opens
+the browser surface and never the bearer path.
+
+!!! warning "A machine request must carry no cookie"
+
+    The machine path refuses a request that presents both a bearer credential
+    and a `Cookie` header, rather than resolving it to either. Ambiguity about
+    which credential authorised a request is where confused-deputy defects live.
+
+    The practical consequence: a client behind a load balancer that injects its
+    own session-affinity cookie (`AWSALB`, `GCLB`-style) is refused with a bare
+    **401**. Strip the cookie, or exclude the gateway's hostname from affinity.
+
+**What a machine credential can reach** is an allowlist, described in
+[Machine API credentials](tokens.md#machine-api-credentials). Every act of human
+judgement — approving, rejecting, waiving — every operation that retracts or
+republishes content, every role grant and the whole of `/api/tokens/**` is
+outside it, and no combination of scopes and no role reaches them.
 
 **Authorization.** With role enforcement at its default (off), any
 authenticated session may call any endpoint. With
@@ -35,7 +67,10 @@ the identity provider, so an expired session surfaces as an error rather than an
 HTML login page rendered into a `fetch()`.
 
 **CSRF** is enabled for the web surface but disabled for `/api/**`, which is
-consumed by the portal with a session cookie.
+consumed by the portal with a session cookie. The machine path earns its own
+exemption the way the git facade does and does not borrow the session path's: it
+is stateless, creates no session, honours no cookie and refuses a request that
+carries one, so every request there authenticates itself.
 
 **Compatibility.** Within a major, this surface only grows; a breaking change
 moves the path prefix and ships as a major. See
@@ -54,7 +89,7 @@ breaking and how it is enforced.
 | Status | Meaning |
 | --- | --- |
 | 400 | The request violated a trust-boundary rule — a disallowed URL scheme, or a non-default ref. |
-| 403 | Role enforcement is enabled and the session lacks the role the endpoint requires. |
+| 403 | Role enforcement is enabled and the session lacks the role the endpoint requires; or a machine credential reached an endpoint its scopes do not cover, or one no scope covers. |
 | 404 | No such marketplace, snapshot or token. |
 | 409 | A state conflict — a duplicate name, a decision on a snapshot that is already `approved` or `rejected`, or a re-vet of one that is not `approved`. |
 | 422 | A name failed `^[a-z0-9][a-z0-9_-]*$`. |
@@ -65,7 +100,7 @@ breaking and how it is enforced.
 | Area | Endpoints |
 | --- | --- |
 | [Marketplaces and snapshots](marketplaces.md) | Register, list, ingest, inspect contents, licenses, vetting, waivers, re-vet, fetchers, approve, reject, provenance |
-| [Access tokens](tokens.md) | Create, list, revoke |
+| [Access tokens](tokens.md) | Create, list, revoke and rotate personal access tokens; provision and administer machine API credentials |
 | [Audit](audit.md) | Read the ledger; stream it as NDJSON; register, replay and delete export sinks |
 | [Adoption](adoption.md) | Windowed adoption report per marketplace and SHA; identities not on the served tip |
 | [Webhooks](../../guides/lifecycle-webhooks.md) | Register, list and delete subscribers; list delivery attempts |

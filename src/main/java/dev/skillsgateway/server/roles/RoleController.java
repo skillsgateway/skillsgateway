@@ -59,7 +59,6 @@ public class RoleController {
             String marketplace) {}
 
     @GetMapping("/roles")
-    @Requirements({"GW_0071"})
     @Tag(name = "Roles")
     @Operation(
             summary = "List role grants",
@@ -68,9 +67,19 @@ public class RoleController {
                     + " enforcement is enabled.")
     @ApiResponse(responseCode = "200", description = "Current grants")
     @ApiResponse(responseCode = "403", description = "Enforcement is enabled and the caller is not an admin")
+    @Requirements({"GW_0071", "GW_0128", "GW_0129"})
     public List<RoleGrant> list(Authentication authentication) {
         roleService.requireAdmin(authentication);
-        return roleGrantRepository.list();
+        List<RoleGrant> grants = roleGrantRepository.list();
+        // Every authorized read lands on the ledger (GW_0128) -- one rule, with no condition on
+        // what kind of principal read it. Reading who holds what authority has reconnaissance
+        // value to a stolen credential, and denying the read would not prevent configuration
+        // drift, only make it undetectable: the declared estate never prunes, so it cannot
+        // discover a grant made by hand. The exposure is therefore made visible after the fact
+        // instead. It is written after the authorization call, so a refused read appends nothing.
+        auditLogger.record(
+                authentication.getName(), NO_MARKETPLACE, "roles-read", null, "grants=%d".formatted(grants.size()));
+        return grants;
     }
 
     @PostMapping("/roles")

@@ -214,10 +214,30 @@ public record SkillsGatewayProperties(
         /** About a working day: the credential lasts as long as the work does, and no longer. */
         public static final Duration DEFAULT_SESSION_TTL = Duration.ofHours(8);
 
+        /**
+         * The cap a machine API credential is held to when {@code max-ttl} is unset (GW_0131).
+         *
+         * <p>Ninety days: a quarter, which is short enough that a forgotten credential in a
+         * pipeline variable expires within one planning cycle rather than outliving the service
+         * it was minted for, and long enough that rotating it is a scheduled chore rather than an
+         * interruption. It exists because "mandatory expiry" alone admits {@code now + 100 years}
+         * whenever no cap is configured, which is the never-expiring credential this rule was
+         * written to prevent, spelled differently. An operator who wants longer sets
+         * {@code skills-gateway.tokens.max-ttl} explicitly — and that is the point: a long-lived
+         * control-plane credential should be a stated choice, not the consequence of leaving a
+         * property blank. A configured cap, longer or shorter, always wins.
+         */
+        public static final Duration DEFAULT_MACHINE_MAX_TTL = Duration.ofDays(90);
+
         public Tokens {
             if (sessionTtl == null) {
                 sessionTtl = DEFAULT_SESSION_TTL;
             }
+        }
+
+        /** The cap that applies to a machine credential: the configured one, or the built-in. */
+        public Duration machineMaxTtl() {
+            return maxTtl == null ? DEFAULT_MACHINE_MAX_TTL : maxTtl;
         }
     }
 

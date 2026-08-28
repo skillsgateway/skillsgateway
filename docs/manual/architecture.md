@@ -162,6 +162,15 @@ flowchart LR
   *virtual marketplaces* and (b) mirrored, pinned plugin repos, at stable
   internal URLs. Authenticated via SSO-issued tokens (standard git credential
   helper flow). This is the only surface end users ever talk to.
+- **Machine API chain.** A stateless sibling of the façade's chain for
+  `/api/**` requests carrying `Authorization: Bearer`, so infrastructure-as-code
+  and CI can configure the gateway with no browser. It authenticates only a
+  credential holding a non-empty API scope list, honours no cookie and refuses a
+  request presenting one, and authorizes against an allowlist that excludes
+  every act of human judgement, every retraction of content, every role grant
+  and all credential minting. The guarantee runs both ways: a façade credential
+  reaches no API endpoint, and an API credential reaches no marketplace — see
+  [Trust boundaries](concepts/trust-boundaries.md).
 - **Ingestion.** Watches registered upstreams for new commits/tags, fetches the
   marketplace repo, parses the manifest, **recursively resolves every plugin
   source** (relative paths, external git URLs, GitHub refs), and snapshots the
@@ -462,7 +471,14 @@ inward.
   identity provider's own group or application-role claims by configured
   mapping, with truncated claims made visible and an enforceable expected
   ID-token issuer (GW_0098–GW_0100); per-team catalog scoping and a
-  portal grants UI are deferred.
+  portal grants UI are deferred. *Implemented:* non-interactive machine
+  credentials for the REST API (GW_0126–GW_0131) — a third scope dimension on
+  the existing token rather than a second credential type, reached by a
+  stateless bearer chain, scoped per concern over an allowlist that no
+  combination of scopes and no role can widen, with mandatory expiry under a
+  built-in cap and an explicit actor type on every ledger entry; a portal
+  screen for provisioning one is deferred, so the first is still minted from a
+  browser session.
 - *Implemented:* first-party hosting — a marketplace the gateway hosts itself,
   published to by authenticated git push on a separate endpoint into a separate
   origin repository under a push scope no existing token holds, with one

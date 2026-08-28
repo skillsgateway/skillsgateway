@@ -323,7 +323,7 @@ export interface paths {
          * A marketplace's vetting waivers
          * @description Every waiver recorded for the marketplace, newest first, active and lapsed alike. A lapsed or revoked waiver is kept and returned with active=false: the record of what was once accepted, by whom and until when is part of the audit trail.
          */
-        get: operations["list_4"];
+        get: operations["list_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -383,13 +383,13 @@ export interface paths {
          * List policy rules
          * @description Every stored rule, enabled or not, with its expression and attribution.
          */
-        get: operations["list_3"];
+        get: operations["list_4"];
         put?: never;
         /**
          * Create a policy deny rule
          * @description Stores a named CEL deny rule after compiling it — parsing and type-checking to a boolean over the documented variables (snapshot, files, plugins, skills). An expression that does not compile is refused and never stored. Enabled rules are evaluated fail-closed at every approval; a matching or erroring rule refuses it. The creation lands on the audit ledger.
          */
-        post: operations["create_3"];
+        post: operations["create_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -491,7 +491,7 @@ export interface paths {
          * List role grants
          * @description Every current grant. Configuration-bootstrapped admins are not grants and do not appear here; they show up as an effective role on /api/me. Admin-only while role enforcement is enabled.
          */
-        get: operations["list_2"];
+        get: operations["list_3"];
         put?: never;
         /**
          * Grant a role
@@ -518,7 +518,7 @@ export interface paths {
          * Revoke a role grant
          * @description Deletes the grant; the ledger keeps the history. Configuration-bootstrapped admins have no grant row, so they cannot be revoked here — by design, they are the escape hatch that survives a bad grant edit. Admin-only while role enforcement is enabled.
          */
-        delete: operations["revoke_2"];
+        delete: operations["revoke_3"];
         options?: never;
         head?: never;
         patch?: never;
@@ -837,7 +837,7 @@ export interface paths {
          * Accept a vetting finding on this snapshot's marketplace
          * @description Records a scoped, expiring waiver for one finding rule. The marketplace — and, for SNAPSHOT scope, the commit SHA — are taken from the snapshot, so a waiver cannot be mis-scoped to content it does not belong to. A justification, the acting identity and a future expiry are all mandatory; an unlimited waiver cannot be expressed. While an active waiver covers a finding, that finding no longer contributes to the snapshot's effective vetting outcome.
          */
-        post: operations["create_2"];
+        post: operations["create_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -862,6 +862,70 @@ export interface paths {
          * @description Issues a personal access token for the git facade. Optionally scoped to named marketplaces (unscoped grants all) and optionally expiring; the cleartext is returned exactly once. Push scopes are separate and grant nothing by default: they name the hosted marketplaces the token may publish to. Creation is audit-logged with the token's name and both kinds of scope.
          */
         post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tokens/machine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List machine API credentials
+         * @description Every machine credential, whoever provisioned it, never any secret. Deliberately not scoped to the caller: a machine credential's principal is not an identity anyone logs in as, so an owner-scoped listing would leave every one of them invisible — and unrevokable — during an incident. A person's own token listing is unaffected and still shows only their own.
+         */
+        get: operations["list_2"];
+        put?: never;
+        /**
+         * Provision a machine API credential
+         * @description Issues a non-interactive credential for the REST API, presented as `Authorization: Bearer`. It carries no fetch and no publication authority, reaches only the endpoints its named scopes allow, and can never reach an act of human judgement, a retraction of content, a role grant or this endpoint. An expiry is mandatory. The cleartext is returned exactly once. Requires the admin role whether or not role enforcement is enabled.
+         */
+        post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tokens/machine/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke a machine API credential
+         * @description Immediate and permanent, checked at authentication time rather than swept, so it takes effect on the credential's very next request. Audit-logged.
+         */
+        delete: operations["revoke_2"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tokens/machine/{id}/rotate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rotate a machine API credential
+         * @description Issues a fresh secret with the identical grant — the same principal, name, expiry deadline and every one of the same API scopes — and revokes the old credential first, so no moment has two live secrets.
+         */
+        post: operations["rotate_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1165,6 +1229,32 @@ export interface components {
             marketplace?: string;
             /** @description Upstream commit SHA of its served snapshot */
             sha?: string;
+        };
+        /** @description Machine API credential request; every field below is required */
+        CreateMachineCredentialRequest: {
+            /**
+             * @description Named API scopes. There is no wildcard, no scope implies another, and an unknown value is refused rather than silently never matching.
+             * @example [
+             *       "marketplaces:register",
+             *       "estate:read"
+             *     ]
+             */
+            apiScopes: string[];
+            /**
+             * Format: date-time
+             * @description Expiry. Mandatory and never defaulted; a lifetime beyond the cap is refused rather than shortened.
+             */
+            expiresAt: string;
+            /**
+             * @description Human-readable credential name
+             * @example platform-pipeline
+             */
+            name: string;
+            /**
+             * @description The principal the credential acts as. It is not a person: the ledger attributes this credential's actions to it, and role grants name it.
+             * @example terraform-ci
+             */
+            principal: string;
         };
         /** @description Policy rule creation request */
         CreateRuleRequest: {
@@ -1514,6 +1604,8 @@ export interface components {
         };
         /** @description A freshly issued token; the only time the cleartext is ever returned */
         IssuedToken: {
+            /** @description Administrative API scopes this credential may exercise; empty grants no administrative reach at all */
+            apiScopes?: string[];
             /**
              * Format: date-time
              * @description Creation time
@@ -1529,6 +1621,8 @@ export interface components {
              * @description Token id
              */
             id?: number;
+            /** @description The identity that provisioned a machine credential, or null */
+            machineOwner?: string;
             /** @description Token name */
             name?: string;
             /** @description Hosted marketplaces this token may publish to; empty grants none */
@@ -1582,6 +1676,42 @@ export interface components {
              * @example Apache-2.0
              */
             spdxId?: string;
+        };
+        /** @description A machine API credential without its secret */
+        MachineCredentialView: {
+            /** @description The named API scopes it holds */
+            apiScopes?: string[];
+            /**
+             * Format: date-time
+             * @description Creation time
+             */
+            createdAt?: string;
+            /**
+             * Format: date-time
+             * @description Expiry; never null for a machine credential
+             */
+            expiresAt?: string;
+            /**
+             * Format: int64
+             * @description Credential id
+             */
+            id?: number;
+            /** @description The identity that provisioned it */
+            machineOwner?: string;
+            /** @description Credential name */
+            name?: string;
+            /** @description The principal the credential acts as */
+            principal?: string;
+            /**
+             * Format: date-time
+             * @description Revocation time, or null while active
+             */
+            revokedAt?: string;
+            /**
+             * Format: int64
+             * @description The credential this one replaced by rotation, or null
+             */
+            rotatedFrom?: number;
         };
         /** @description A registered marketplace, fetched from an upstream or hosted by the gateway */
         Marketplace: {
@@ -2170,6 +2300,8 @@ export interface components {
         };
         /** @description A token without its secret; the cleartext is only returned at creation */
         TokenView: {
+            /** @description Named administrative API scopes this credential holds. Empty for every personal access token: reaching the control plane is a grant, never a baseline, so an empty list here means none rather than all. */
+            apiScopes?: string[];
             /**
              * Format: date-time
              * @description Creation time
@@ -2945,7 +3077,7 @@ export interface operations {
             };
         };
     };
-    list_4: {
+    list_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -3029,7 +3161,7 @@ export interface operations {
             };
         };
     };
-    list_3: {
+    list_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -3049,7 +3181,7 @@ export interface operations {
             };
         };
     };
-    create_3: {
+    create_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -3236,7 +3368,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -3325,7 +3457,7 @@ export interface operations {
             };
         };
     };
-    revoke_2: {
+    revoke_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -3898,7 +4030,7 @@ export interface operations {
             };
         };
     };
-    create_2: {
+    create_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -3986,6 +4118,160 @@ export interface operations {
             };
             /** @description Unknown scope, or lifetime beyond the configured cap */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+        };
+    };
+    list_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Every machine credential */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MachineCredentialView"][];
+                };
+            };
+            /** @description The caller does not hold the admin role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MachineCredentialView"][];
+                };
+            };
+        };
+    };
+    create_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateMachineCredentialRequest"];
+            };
+        };
+        responses: {
+            /** @description Issued; the only response carrying the cleartext */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+            /** @description The caller does not hold the admin role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+            /** @description Unknown or empty API scope, missing expiry, or a lifetime beyond the cap */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+        };
+    };
+    revoke_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Revoked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The caller does not hold the admin role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No such active machine credential */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    rotate_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rotated; the only response carrying the new cleartext */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+            /** @description The caller does not hold the admin role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+            /** @description No such machine credential */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+            /** @description The credential is revoked or expired; provision a new one */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

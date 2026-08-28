@@ -924,3 +924,51 @@ requirements:
     rationale: A constraint that happens to list the permitted values leaves the column typeless to everything that introspects the schema, so the set is discoverable only by parsing a constraint expression and a mistyped value is a runtime constraint violation rather than a type error. Making the set a type puts the same guarantee where every tool, query planner and reader already looks, and the cost is deliberate, since a value can be added but never used in the transaction that adds it, and never removed at all, which is the right friction for a set the whole system agrees on.
     categories: ["maintainability", "reliability"]
     revision: 0.1.0
+
+  - id: GW_0126
+    title: Machine credential authority is a distinct scope dimension
+    significance: shall
+    description: The system shall model a credential's authority over the administrative interface as a list of named scope values held on the credential itself, independent of the lists that govern what it may fetch and what it may publish, whose empty value shall grant no administrative reach at all; and it shall refuse at issue time a scope value it does not know, offering no value that grants every scope and no value that grants another.
+    rationale: A credential that reaches the control plane and a credential that reaches content are different grants, and modelling them as one boolean would make the whole administrative interface a single thing to hold. Empty granting nothing is the only safe default for a dimension added to credentials that already exist, since the alternative would silently hand every issued fetch credential the control plane. Refusing an unknown value at issue time turns a misspelling into a failed request rather than a grant that quietly never matches, and refusing a wildcard keeps the grant readable from the credential; a coarse scope narrowed later would silently change what already-issued credentials mean, which no version can communicate.
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0127
+    title: Fetch and publication credentials cannot reach the administrative interface
+    significance: shall
+    description: The system shall authenticate a credential on the administrative interface only when that credential holds at least one administrative scope, shall reject there every credential holding only fetch or publication authority including the every-marketplace fetch form and every credential derived from a browser session, shall refuse to derive an administrative scope onto a session-derived credential at issue time, shall grant no fetch and no publication authority to a credential holding administrative scope, shall accept only a bearer credential presented in its own request without creating or honouring a session, shall refuse a request that presents both a bearer credential and a session cookie rather than resolving it to either, and shall keep all of this in force when the development-only unauthenticated authentication mode is enabled.
+    rationale: The credential that reaches the git facade is deliberately confined to git, and a change that adds a control-plane credential must not turn that confinement into an accident of routing. Making a non-empty administrative scope a precondition of authentication rather than a later authorization check means no controller can be the single point of failure. Refusing an ambiguous request that carries two credentials costs a legitimate machine client nothing and removes the class of confused-deputy defect where the answer depends on which credential the server happened to prefer. The development escape hatch opens the browser surface only, because a mode in which every bearer value authenticated would be a very quiet way to lose the control plane in a copied configuration.
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0128
+    title: The ledger records what kind of actor acted
+    significance: shall
+    description: The system shall record on every ledger entry an explicit actor kind distinguishing an interactive person, a machine credential and the gateway acting on its own, stored on the entry itself rather than derived from any record that can later change or be deleted, and shall record on an entry produced by a machine credential which credential produced it. It shall record every authorized read of the role grants as a ledger entry carrying that actor kind and the reading identity, and shall record no entry for a read of the ledger itself.
+    rationale: The ledger already had an actor vocabulary, but it was three magic strings in the same column that holds ordinary identities, distinguishable only by string comparison and enforced by nothing; adding a fourth would extend that mistake. An entry written years ago must still say what it meant after the credential it names has been revoked and its row deleted, which is the same reasoning the ledger already applies to the credential id it carries. Reading who holds what authority has reconnaissance value to a stolen credential, and since denying the read would make configuration drift undetectable rather than prevent it, the exposure is made visible after the fact instead — uniformly, because an asymmetry would leave a compromised interactive session reading the grants untraced. The ledger's own read is the one exclusion, because logging it would make a polling exporter append an entry that is itself new content to export.
+    categories: ["security", "maintainability"]
+    revision: 0.1.0
+
+  - id: GW_0129
+    title: Machine reach is an allowlist that excludes judgement and retraction
+    significance: shall
+    description: The system shall classify every administrative endpoint it serves as reachable under exactly one named scope or as unreachable by any credential, shall refuse to start or to build when an endpoint is classified as neither, and shall admit no combination of scopes and no role to any endpoint classified unreachable — which shall include every decision to publish, reject or override vetting, every operation that retracts or republishes content, every grant of privilege, and every path that mints a credential. This enforcement shall not depend on whether role enforcement is enabled.
+    rationale: A denylist admits by silence, so the next act of judgement somebody adds would be machine-reachable by default and the mistake would be invisible in the diff that made it; an allowlist fails the other way, surfacing an omission as a bug report rather than as an incident. Acts of judgement and retractions of content are exactly the line the gateway's approval model draws, and a credential that can mint a sibling can evade its own revocation. Role enforcement defaults to off so that upgrading does not lock out existing sessions, but nothing predates a credential kind that does not exist yet, so there is no compatibility to preserve and the new path can deny by default from its first release.
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0130
+    title: A machine principal's roles come from configuration and declaration only
+    significance: shall
+    description: The system shall derive no role for a machine credential from identity-provider claims, shall let its principal hold a role only through the deployment's configuration or a declared or stored grant, shall require both a scope and the corresponding role before an operation is permitted once role enforcement is enabled, and shall require the administrative role for minting, listing and revoking a machine credential whether or not role enforcement is enabled.
+    rationale: A machine credential has no claims, so claim-derived roles cannot apply to it, and that is the correct behaviour rather than a gap to close. Leaving the declarative grant as the only route means a machine credential's authority is written where the deployment's other desired state is written, with no credential in the pipeline and nothing a compromised credential can call to escalate itself. Requiring scope and role together makes authority an intersection, so an administratively-privileged machine principal still reaches nothing its credential was not scoped for. Minting is held to the administrative role regardless of the enforcement flag because a credential outlives the session that created it — under a default-off flag any user who completed a login could otherwise mint authority that survives their own account being deprovisioned.
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0131
+    title: A machine credential must expire and is administered centrally
+    significance: shall
+    description: The system shall refuse to issue a machine credential without an expiry and shall refuse rather than shorten one whose requested lifetime exceeds the applicable cap, applying a built-in cap when the deployment configures none; shall preserve on rotation the credential's identity, its expiry deadline and all of its scope dimensions while leaving no moment at which two of its secrets are live; and shall offer an administrator a listing and a revocation path covering machine credentials regardless of which identity provisioned them, without widening the listing through which a person sees their own credentials.
+    rationale: A never-expiring credential sitting in a continuous-integration variable is the failure mode this capability would otherwise introduce, and a mandatory expiry that leans on an absent cap admits a hundred-year lifetime, which is the same thing spelled differently; a long-lived control-plane credential should be a stated choice rather than the consequence of leaving a property blank. A rotation that silently widened or dropped a scope would be the worst defect this capability could have. Credentials scoped to the identity that created them would be invisible to everyone else, so nobody could revoke one during an incident — which is precisely when someone must.
+    categories: ["security", "reliability"]
+    revision: 0.1.0
