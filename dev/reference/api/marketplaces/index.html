@@ -1791,6 +1791,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#get-snapshotsidfour-eyes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /snapshots/{id}/four-eyes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#post-snapshotsidreject" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2554,6 +2565,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#get-snapshotsidfour-eyes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /snapshots/{id}/four-eyes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#post-snapshotsidreject" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2611,15 +2633,22 @@ route carries an id; every <code>GET</code> on this page stays open to any sessi
 <h2 id="representations">Representations<a class="headerlink" href="#representations" title="Permanent link">&para;</a></h2>
 <p><strong>Marketplace</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"url"</span><span class="p">:</span><span class="s2">"https://github.com/acme/skills.git"</span><span class="p">,</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w"> </span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"2026-08-15T09:00:00Z"</span><span class="p">,</span><span class="nt">"forge"</span><span class="p">:</span><span class="s2">"github"</span><span class="p">,</span><span class="nt">"forgeProject"</span><span class="p">:</span><span class="s2">"acme/skills"</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w"> </span><span class="nt">"description"</span><span class="p">:</span><span class="s2">"Acme internal skills"</span><span class="p">,</span><span class="nt">"upstreamUpdatedAt"</span><span class="p">:</span><span class="s2">"2026-08-14T18:20:00Z"</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w"> </span><span class="nt">"snapshots"</span><span class="p">:[]}</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w"> </span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"2026-08-15T09:00:00Z"</span><span class="p">,</span><span class="nt">"registeredBy"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w"> </span><span class="nt">"forge"</span><span class="p">:</span><span class="s2">"github"</span><span class="p">,</span><span class="nt">"forgeProject"</span><span class="p">:</span><span class="s2">"acme/skills"</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w"> </span><span class="nt">"description"</span><span class="p">:</span><span class="s2">"Acme internal skills"</span><span class="p">,</span><span class="nt">"upstreamUpdatedAt"</span><span class="p">:</span><span class="s2">"2026-08-14T18:20:00Z"</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w"> </span><span class="nt">"snapshots"</span><span class="p">:[]}</span>
 </code></pre></div>
 <p><strong>Snapshot</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span><span class="nt">"marketplaceId"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"held"</span><span class="p">,</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"violation"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"2026-08-15T09:01:00Z"</span><span class="p">,</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"violation"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"2026-08-15T09:01:00Z"</span><span class="p">,</span><span class="nt">"ingestedBy"</span><span class="p">:</span><span class="s2">"ingrid"</span><span class="p">,</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w"> </span><span class="nt">"decidedBy"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"decidedAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">}</span>
 </code></pre></div>
+<p><code>registeredBy</code> and <code>ingestedBy</code> are the supply-side identities the
+<a href="../../../guides/approving-snapshots/#separation-of-duties">four-eyes rule</a>
+compares a reviewer against. <code>ingestedBy</code> is a principal for an on-demand
+ingest or a push, <code>scheduler</code> or <code>webhook</code> for an automated trigger, and <code>null</code>
+for a snapshot ingested before the actor was recorded; <code>registeredBy</code> is <code>null</code>
+for a marketplace registered before it was.</p>
 <p><code>state</code> is one of <code>held</code>, <code>approved</code>, <code>rejected</code>, <code>revoked</code>. A revoked snapshot
 also carries <code>revokedBy</code> and <code>revokedAt</code>, and its <code>violation</code> says what
 re-vetting found. See
@@ -3249,6 +3278,21 @@ unblock, because it clears itself:</p>
 <a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="w">                </span><span class="nt">"ageSeconds"</span><span class="p">:</span><span class="mi">57600</span><span class="p">,</span><span class="nt">"remainingSeconds"</span><span class="p">:</span><span class="mi">187200</span><span class="p">,</span>
 <a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="w">                </span><span class="nt">"minimumReleaseAgeSeconds"</span><span class="p">:</span><span class="mi">259200</span><span class="p">}}</span>
 </code></pre></div>
+<p>Under an enforcing
+<a href="../../../guides/approving-snapshots/#separation-of-duties">four-eyes rule</a> an
+approval by an identity on the snapshot's supply side is refused by the same
+status, with the conflicting acts named:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">409</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Four-eyes rule refused this approval"</span><span class="p">,</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"four-eyes rule refused approval of snapshot 12: …"</span><span class="p">,</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w"> </span><span class="nt">"configKey"</span><span class="p">:</span><span class="s2">"skills-gateway.approval.four-eyes.mode"</span><span class="p">,</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w"> </span><span class="nt">"conflicts"</span><span class="p">:[{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"registered-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">},</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">              </span><span class="p">{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"ingested-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">},</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">              </span><span class="p">{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"waiver-author"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="mi">7</span><span class="p">}]}</span>
+</code></pre></div>
+<p>Nothing in the API unblocks this one either: a different identity has to
+approve. Under the default <code>warn</code> mode the same conflicts are detected, the
+approval succeeds, and a <code>four-eyes-conflict</code> entry is appended to the audit
+ledger beside <code>snapshot-approved</code>.</p>
 <table>
 <thead>
 <tr>
@@ -3267,7 +3311,7 @@ unblock, because it clears itself:</p>
 </tr>
 <tr>
 <td>409</td>
-<td>The snapshot is neither <code>held</code> nor <code>revoked</code>, its effective vetting outcome is blocked, a <a href="../policy/">policy rule</a> denied it, or it has not reached the minimum release age.</td>
+<td>The snapshot is neither <code>held</code> nor <code>revoked</code>, its effective vetting outcome is blocked, a <a href="../policy/">policy rule</a> denied it, it has not reached the minimum release age, or an enforcing four-eyes rule refused it.</td>
 </tr>
 </tbody>
 </table>
@@ -3288,9 +3332,9 @@ accepted, by whom, and until when.</p>
 <a href="../../configuration/#minimum-release-age">minimum release age</a>, and when it will
 if it has not. This is the same computation the approve endpoint gates on, so
 the two can never disagree.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"eligible"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w"> </span><span class="nt">"firstIngestedAt"</span><span class="p">:</span><span class="s2">"2026-08-16T09:00:00Z"</span><span class="p">,</span><span class="nt">"eligibleAt"</span><span class="p">:</span><span class="s2">"2026-08-19T09:00:00Z"</span><span class="p">,</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w"> </span><span class="nt">"ageSeconds"</span><span class="p">:</span><span class="mi">57600</span><span class="p">,</span><span class="nt">"remainingSeconds"</span><span class="p">:</span><span class="mi">187200</span><span class="p">,</span><span class="nt">"minimumReleaseAgeSeconds"</span><span class="p">:</span><span class="mi">259200</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"eligible"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w"> </span><span class="nt">"firstIngestedAt"</span><span class="p">:</span><span class="s2">"2026-08-16T09:00:00Z"</span><span class="p">,</span><span class="nt">"eligibleAt"</span><span class="p">:</span><span class="s2">"2026-08-19T09:00:00Z"</span><span class="p">,</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w"> </span><span class="nt">"ageSeconds"</span><span class="p">:</span><span class="mi">57600</span><span class="p">,</span><span class="nt">"remainingSeconds"</span><span class="p">:</span><span class="mi">187200</span><span class="p">,</span><span class="nt">"minimumReleaseAgeSeconds"</span><span class="p">:</span><span class="mi">259200</span><span class="p">}</span>
 </code></pre></div>
 <table>
 <thead>
@@ -3345,6 +3389,60 @@ the two can never disagree.</p>
 </tbody>
 </table>
 <hr />
+<h2 id="get-snapshotsidfour-eyes"><code>GET /snapshots/{id}/four-eyes</code><a class="headerlink" href="#get-snapshotsidfour-eyes" title="Permanent link">&para;</a></h2>
+<p>Whether the
+<a href="../../../guides/approving-snapshots/#separation-of-duties">four-eyes rule</a> would
+object to <strong>the calling identity</strong> approving this snapshot, and what the
+configured mode would do about it. Decides nothing; the approve endpoint
+enforces the rule independently.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="p">{</span><span class="nt">"mode"</span><span class="p">:</span><span class="s2">"ENFORCE"</span><span class="p">,</span><span class="nt">"refused"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w"> </span><span class="nt">"conflicts"</span><span class="p">:[{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"registered-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">},</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">              </span><span class="p">{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"ingested-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">}]}</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mode</code></td>
+<td><code>WARN</code> or <code>ENFORCE</code>, as configured. There is no mode that disables detection.</td>
+</tr>
+<tr>
+<td><code>conflicts</code></td>
+<td>Each supply-side act the caller performed on this snapshot: <code>registered-by</code>, <code>ingested-by</code>, or <code>waiver-author</code> with the <code>waiverId</code> they wrote. Empty for an independent reviewer.</td>
+</tr>
+<tr>
+<td><code>refused</code></td>
+<td>Whether an approval by this caller would be refused — true only when the mode is <code>ENFORCE</code> and <code>conflicts</code> is non-empty.</td>
+</tr>
+</tbody>
+</table>
+<p>The waiver clause is evaluated exactly as an approval would evaluate it, over
+the waivers that are actually suppressing findings on this snapshot right now —
+which is why this is answered by the server rather than derived by a client.</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>The record above.</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Unknown snapshot.</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="post-snapshotsidreject"><code>POST /snapshots/{id}/reject</code><a class="headerlink" href="#post-snapshotsidreject" title="Permanent link">&para;</a></h2>
 <p>Mark the snapshot <code>rejected</code>. No repository is touched; whatever was already
 approved keeps serving. This is also the terminal answer to a <code>revoked</code>
@@ -3361,10 +3459,10 @@ the gateway makes, not a caller.</p>
 <hr />
 <h2 id="get-snapshotsidprovenance"><code>GET /snapshots/{id}/provenance</code><a class="headerlink" href="#get-snapshotsidprovenance" title="Permanent link">&para;</a></h2>
 <p>Where the snapshot came from and who decided on it.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w"> </span><span class="nt">"upstreamUrl"</span><span class="p">:</span><span class="s2">"https://github.com/acme/skills.git"</span><span class="p">,</span><span class="nt">"upstreamSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w"> </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"approved"</span><span class="p">,</span><span class="nt">"violation"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"ingestedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w"> </span><span class="nt">"decidedBy"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span><span class="nt">"decidedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="w"> </span><span class="nt">"upstreamUrl"</span><span class="p">:</span><span class="s2">"https://github.com/acme/skills.git"</span><span class="p">,</span><span class="nt">"upstreamSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w"> </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"approved"</span><span class="p">,</span><span class="nt">"violation"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"ingestedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w"> </span><span class="nt">"decidedBy"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span><span class="nt">"decidedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}</span>
 </code></pre></div>
 <p><strong>200</strong> · <strong>404</strong> unknown snapshot.</p>
 <p>Every action on this page also appends an entry to the

@@ -2232,13 +2232,30 @@ ref only ever advances through a deliberate, recorded decision.</p>
 refs and moves the snapshot to <code>revoked</code>. That path never publishes — it only
 unpublishes — so <code>ApprovalService</code> remains the sole publisher, and a revoked
 snapshot returns to being served only by going back through it.</p>
-<p>Two gates precede every publication, inside that single publisher and before
-any state transition: the fail-closed <a href="../vetting/">vetting gate</a> (evidence
-about the content, waivable finding by finding), then the fail-closed
+<p>Gates precede every publication, inside that single publisher and before any
+state transition: the fail-closed <a href="../vetting/">vetting gate</a> (evidence about the
+content, waivable finding by finding), then the fail-closed
 <a href="../../guides/policy-rules/">policy gate</a> (standing organizational deny rules,
-not waivable — the exception path is editing the rule, audited). A refusal by
-either leaves the snapshot held and publishes nothing.</p>
-<p>Both gates only ever <em>close</em>: neither can approve. Policy rules in particular
+not waivable — the exception path is editing the rule, audited), then the
+cooling-off window, and last the
+<a href="../../guides/approving-snapshots/#separation-of-duties">four-eyes rule</a>. A
+refusal by any of them leaves the snapshot held and publishes nothing.</p>
+<p>The last one guards a different property from the others, and it is the property
+the whole boundary rests on. Vetting and policy ask <em>is this content
+acceptable</em>; four-eyes asks <em>is this decision an independent one</em> — whether the
+reviewer is the marketplace's registrant, the snapshot's ingestion actor, or the
+author of a waiver the approval leans on. Without it, one identity could carry
+content from an upstream URL all the way to the facade unaccompanied, and every
+recorded decision on the way would still look correct.</p>
+<p>It is the one gate whose strictness is a deployment decision rather than a
+constant. Under the default <code>warn</code> the conflict is recorded on the ledger and
+the approval proceeds — a deployment with a single administrator has no second
+pair of eyes to offer, and refusing there would only make the gateway
+unapprovable; under <code>enforce</code> the approval is refused. What has no off switch is
+the <em>detection</em>: a self-approval is on the ledger either way, which is what
+keeps <code>warn</code> a measurement rather than a blind spot. The automated sync triggers
+are not identities and never conflict.</p>
+<p>None of these gates can ever <em>open</em>: none can approve. Policy rules in particular
 cannot auto-approve, because that would delegate the human decision this
 boundary exists to guarantee to an expression — a trust-model change, decided
 deliberately or not at all (ADR 0006 in
@@ -2367,6 +2384,10 @@ different surface — and roles never apply to PATs. See
 workflow, <a href="../../guides/identity-providers/">Identity providers</a> for claim
 mapping, and <a href="../../reference/api/roles/">Roles</a> for the grants API.</p>
 <h2 id="what-is-not-a-boundary-yet">What is not a boundary yet<a class="headerlink" href="#what-is-not-a-boundary-yet" title="Permanent link">&para;</a></h2>
+<p>A <strong>second recorded approval</strong> — a queue in which two identities each decide,
+rather than one deciding while the gateway checks who they are — is not
+implemented. The four-eyes rule refuses a conflicted approval; it does not
+require two approvals of an unconflicted one.</p>
 <p>Per-team catalog scoping (which identities see which virtual marketplaces) and
 a portal UI for managing grants are future capabilities; today the grants API
 and the claim mappings are the management surface. Where the role model is not enabled, treat <strong>access
