@@ -1,32 +1,49 @@
 # Evidence — helm-chart-deployability
 
-Commit under test: `29da944` (`docs(helm): document deploying the gateway on
-Kubernetes`, on top of `bb5e01c`). One fresh run of every gate after the last
-code edit.
+Commit under test: `f683680` (`docs(helm): compare the serverless storage options
+in the deployment guide`, on top of `29da944` and `bb5e01c`). One fresh run of
+every gate after the last edit.
 
 ## Gates
 
 ### `./mvnw clean verify`
 
 ```
+[INFO] Tests run: 185, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
-[INFO] Total time:  01:21 min
-[INFO] Finished at: 2026-08-28T11:12:40+02:00
 ```
+
+!!! note "Two runs on this commit failed first, for an environment reason"
+
+    Two earlier attempts on this same commit failed with a single error in a
+    *different* test each time — `SessionCredentialExpiryTests`, then
+    `ClaimRolesDisabledTests` — both with the same root cause:
+
+    ```
+    Caused by: org.testcontainers.containers.ContainerLaunchException: Timed out
+    waiting for log output matching '(.*database system is ready to accept
+    connections.*\s|...)'
+    ```
+
+    The local container VM has 2 GB of memory and an unrelated long-running
+    observability stack in it; an `otel-collector` container was OOM-killed
+    during one of the runs. The failures are memory pressure starting the
+    PostgreSQL test container, not the change: they moved between tests, none of
+    them touches the chart, and the run above is clean. Recorded rather than
+    quietly re-run, since a green result obtained on the third attempt is worth
+    less than one obtained on the first.
 
 ### `(cd src/main/frontend && pnpm test:stories)`
 
 ```
+ Test Files  3 passed (3)
       Tests  6 passed (6)
-   Duration  2.34s
 ```
 
 ### `(cd src/main/frontend && pnpm e2e)`
 
 ```
-  ✓  12 [chromium] › e2e/portal.spec.ts:572:1 › the_session_holds_an_admin_role_derived_from_the_identity_providers_group_claim (298ms)
-
-  12 passed (29.6s)
+  12 passed (25.8s)
 ```
 
 ### `reqstool status local -p docs/reqstool`
@@ -45,9 +62,41 @@ Totals: 27 passed, 0 failed (27 items)
 ### `mkdocs build --strict`
 
 ```
-INFO    -  Building documentation to directory: .../site
-INFO    -  Documentation built in 0.63 seconds
+INFO    -  Documentation built in 0.65 seconds
 ```
+
+The guide's two cross-references to the storage comparison were checked against
+the built HTML rather than trusted — `--strict` fails on broken *page* links but
+not on a missing heading anchor:
+
+```
+$ grep -o 'id="storage-options-on-serverless-kubernetes"' \
+    site/guides/deploying-on-kubernetes/index.html
+id="storage-options-on-serverless-kubernetes"
+```
+
+## Sourcing of the storage comparison
+
+Every availability claim in "Storage options on serverless Kubernetes" was
+verified against the vendor's own documentation before it was written, not
+carried over from the issue thread it came from
+([EKS User Guide — AWS Fargate considerations](https://docs.aws.amazon.com/eks/latest/userguide/fargate.html)):
+
+| Claim in the guide | Documented as |
+| --- | --- |
+| Block storage unavailable | "You can't mount Amazon EBS volumes to Fargate Pods." |
+| …and structurally so | "You can run the Amazon EBS CSI controller on Fargate nodes, but the Amazon EBS CSI node DaemonSet can only run on Amazon EC2 instances", with "Daemonsets aren't supported on Fargate." |
+| Network filesystem, static provisioning only | "A Pod running on Fargate automatically mounts an Amazon EFS file system… You can't use dynamic persistent volume provisioning with Fargate nodes, but you can use static provisioning." |
+| Parallel filesystem unavailable | Comparison table: "Can use Amazon FSx for Lustre storage with Pods — No". |
+| No instance metadata service | "The Amazon EC2 instance metadata service (IMDS) isn't available to Pods that are deployed to Fargate nodes… assign them to your Pods using IAM roles for service accounts." |
+| Private subnets, egress needs NAT | "Pods that run on Fargate are only supported on private subnets (with NAT gateway access to AWS services, but not a direct route to an Internet Gateway)." |
+
+The RWX caveat (a network filesystem does not enforce the single-writer property
+that the current storage relies on) and the packfile-access argument are this
+project's own reasoning about its own storage, not vendor claims, and are
+written as such. The section names one vendor's products only where it cites
+them, and leads with the vendor-neutral category in each row, so a reader on
+another platform can still use the table.
 
 ## Chart
 
