@@ -221,10 +221,20 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
                 .andExpect(status().isUnauthorized()));
         String empty = body(mockMvc.perform(get("/api/marketplaces").header(HttpHeaders.AUTHORIZATION, "Bearer "))
                 .andExpect(status().isUnauthorized()));
+        // The scheme with nothing after it at all, and no trailing space either. It must be
+        // refused by this chain rather than falling through to the session chain, which would
+        // answer a differently-shaped 401 and make the two distinguishable. Found by a surviving
+        // mutant on the chain matcher, not by inspection.
+        String bare = body(mockMvc.perform(get("/api/marketplaces").header(HttpHeaders.AUTHORIZATION, "Bearer"))
+                .andExpect(status().isUnauthorized()));
+        // And a lower-cased scheme, which RFC 7235 says is the same scheme.
+        String lowercased = body(mockMvc.perform(
+                        get("/api/marketplaces").header(HttpHeaders.AUTHORIZATION, "bearer " + facadeToken.token()))
+                .andExpect(status().isUnauthorized()));
         String valid = body(mockMvc.perform(bearer(get("/api/marketplaces"), facadeToken.token()))
                 .andExpect(status().isUnauthorized()));
 
-        assertThat(garbage).isEqualTo(empty).isEqualTo(valid);
+        assertThat(garbage).isEqualTo(empty).isEqualTo(valid).isEqualTo(bare).isEqualTo(lowercased);
         reachesTheApi(machineCredential(List.of("marketplaces:read")));
     }
 
