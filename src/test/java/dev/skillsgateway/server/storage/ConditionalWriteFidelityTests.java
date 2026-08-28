@@ -3,9 +3,9 @@ package dev.skillsgateway.server.storage;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.floci.testcontainers.FlociContainer;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -14,13 +14,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -36,34 +35,37 @@ import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 /**
- * Proves that the local object-store test double implements conditional writes faithfully, before
- * any code trusts it.
+ * Proves that the object store the gateway develops and tests against implements conditional
+ * writes faithfully, before any code trusts it.
  *
  * <p>The whole consistency model of the object-store git backend reduces to one behavior: a
- * conditional {@code PutObject} must fail when its precondition no longer holds. A double that
+ * conditional {@code PutObject} must fail when its precondition no longer holds. A store that
  * accepts every write regardless of {@code If-Match} would let a <em>broken</em> backend pass the
- * concurrency suite that is supposed to justify the design — green, and meaningless. So the double
+ * concurrency suite that is supposed to justify the design — green, and meaningless. So the store
  * is tested before it is trusted.
  *
  * <p>Assertion 2 deliberately checks the stored content after the refusal, not just the status
- * code: an emulator that answers 412 and writes anyway is the worst possible outcome, and it is
- * exactly what a status-only assertion misses. Assertion 4 uses real threads racing off one
- * barrier, because sequential calls cannot distinguish a correct implementation from one that
- * ignores preconditions but happens to be ordered.
+ * code: a store that answers 412 and writes anyway is the worst possible outcome, and it is exactly
+ * what a status-only assertion misses. Assertion 4 uses real threads racing off one barrier,
+ * because sequential calls cannot distinguish a correct implementation from one that ignores
+ * preconditions but happens to be ordered.
+ *
+ * <p>The container is the Floci project's own {@link FlociContainer} — the same class the Arconia
+ * Floci dev service wraps, and the source of the image tag, port and wait strategy — rather than a
+ * hand-rolled {@code GenericContainer} with a guessed port. The dev service itself is deliberately
+ * not used yet: its auto-configuration is {@code @ConditionalOnClass} on Spring Cloud AWS, and
+ * putting that on the classpath makes awspring's own {@code CredentialsProviderAutoConfiguration}
+ * fail every gateway Spring context for want of an {@code AwsRegionProvider}. Decision 9 of the
+ * {@code pluggable-git-storage} design records the evidence and the plan: adopt the dev service
+ * once the object-store backend exists and the application configures AWS region and credentials
+ * for real, at which point the conflict resolves itself.
  *
  * <p>This is the fidelity spike from task 2.1 of the {@code pluggable-git-storage} change. It
- * carries no {@code @SVCs} annotation: it verifies the test double, not the gateway.
+ * carries no {@code @SVCs} annotation: it verifies the store, not the gateway.
  */
-@DisplayName("Object-store conditional-write fidelity (test double)")
+@DisplayName("Object-store conditional-write fidelity")
 class ConditionalWriteFidelityTests {
 
-    /**
-     * Floci — a local AWS emulator, self-described as an open-source alternative to LocalStack
-     * Community. Port 4566 is the LocalStack-compatible edge port the image exposes.
-     */
-    private static final DockerImageName FLOCI = DockerImageName.parse("docker.io/floci/floci:latest");
-
-    private static final int EDGE_PORT = 4566;
     private static final String BUCKET = "fidelity";
     private static final String KEY = "manifest";
 
@@ -71,22 +73,27 @@ class ConditionalWriteFidelityTests {
     private static final byte[] REPLACEMENT = "replacement".getBytes(StandardCharsets.UTF_8);
     private static final byte[] INTRUDER = "intruder".getBytes(StandardCharsets.UTF_8);
 
+    /**
+     * Pinned, not {@code latest}: the store's conditional-write behaviour is the thing under test,
+     * so the version that behaviour was observed on has to be the version CI runs. This is the tag
+     * the Arconia Floci dev service resolves at Arconia 0.29.0, which keeps the two in step for the
+     * eventual switch to the dev service.
+     */
+    private static final DockerImageName IMAGE = DockerImageName.parse("floci/floci:1.5.33");
+
     @SuppressWarnings("resource")
-    private static final GenericContainer<?> FLOCI_CONTAINER = new GenericContainer<>(FLOCI)
-            .withExposedPorts(EDGE_PORT)
-            .waitingFor(Wait.forListeningPort())
-            .withStartupTimeout(Duration.ofMinutes(3));
+    private static final FlociContainer FLOCI = new FlociContainer(IMAGE);
 
     private static S3Client s3;
 
     @BeforeAll
-    static void startEmulator() {
-        FLOCI_CONTAINER.start();
+    static void buildClient() {
+        FLOCI.start();
         s3 = S3Client.builder()
-                .endpointOverride(URI.create(
-                        "http://%s:%d".formatted(FLOCI_CONTAINER.getHost(), FLOCI_CONTAINER.getMappedPort(EDGE_PORT))))
-                .region(Region.US_EAST_1)
-                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("test", "test")))
+                .endpointOverride(URI.create(FLOCI.getEndpoint()))
+                .region(Region.of(FLOCI.getRegion()))
+                .credentialsProvider(StaticCredentialsProvider.create(
+                        AwsBasicCredentials.create(FLOCI.getAccessKey(), FLOCI.getSecretKey())))
                 // Path style: the emulator is reached by host:port, so a virtual-host bucket
                 // prefix would resolve to a name that does not exist.
                 .serviceConfiguration(
@@ -96,11 +103,12 @@ class ConditionalWriteFidelityTests {
     }
 
     @AfterAll
-    static void stopEmulator() {
+    static void closeClient() {
         if (s3 != null) {
             s3.close();
+            s3 = null;
         }
-        FLOCI_CONTAINER.stop();
+        FLOCI.stop();
     }
 
     @BeforeEach
@@ -181,9 +189,8 @@ class ConditionalWriteFidelityTests {
         AtomicInteger refused = new AtomicInteger();
         AtomicInteger other = new AtomicInteger();
 
-        List<Future<String>> results;
         try (ExecutorService pool = Executors.newFixedThreadPool(writers)) {
-            List<Callable<String>> tasks = java.util.stream.IntStream.range(0, writers)
+            List<Callable<String>> tasks = IntStream.range(0, writers)
                     .<Callable<String>>mapToObj(i -> () -> {
                         ready.countDown();
                         go.await(1, TimeUnit.MINUTES);
@@ -204,10 +211,9 @@ class ConditionalWriteFidelityTests {
             List<Future<String>> submitted = tasks.stream().map(pool::submit).toList();
             assertThat(ready.await(1, TimeUnit.MINUTES)).isTrue();
             go.countDown();
-            results = submitted;
 
             long winners = 0;
-            for (Future<String> f : results) {
+            for (Future<String> f : submitted) {
                 if (f.get(2, TimeUnit.MINUTES) != null) {
                     winners++;
                 }

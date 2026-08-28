@@ -338,24 +338,25 @@ state exactly, because nothing wrote to the volume in between.
 window in which the two can disagree and needs its own reconciliation story; for
 a one-replica system it buys nothing a maintenance window does not.
 
-### 7. The chart's ephemeral default is a defect, and the fix is to fail closed
+### 7. The chart's ephemeral default — already fixed; this change only adds `none`
 
-`persistence.mode` becomes explicit: `pvc` (with `existingClaim` — the EFS
-static-provisioning path on Fargate, and any RWO claim elsewhere), `ephemeral`
-(today's `emptyDir`, now something you ask for by name), or `none` (valid only
-when the backend is `object-store`). No mode, no claim and no bucket → the
-template fails to render, with a message naming the three options.
+**Superseded in part by #134 (GW_0120), merged while this was in review.** The
+chart no longer defaults to `emptyDir`: `persistence.mode` is explicit and must
+be `existingClaim` (with `persistence.existingClaim` set — the EFS
+static-provisioning path on Fargate, and any RWO claim elsewhere) or `ephemeral`,
+and anything else fails template rendering with a message that spells out the
+data-loss consequence. The defect this change was going to fix is fixed, and the
+requirement it was going to raise is GW_0120's.
 
-`ephemeral` stays supported and is not merely a legacy: with the
-`object-store` backend, `emptyDir` is the correct choice for the local pack
-cache, because nothing in it is authoritative. What changes is that the operator
-says so.
+What is left for this change is one mode: **`none`**, valid only when
+`storage.backend` is `object-store`, for a deployment that keeps no durable
+volume because the bucket is the repository. Short of that a local pack cache
+still wants a volume, and `ephemeral` is the correct choice for it — nothing in
+that cache is authoritative — so `none` is genuinely a third case rather than a
+rename of one that already exists.
 
-This is deliberately a breaking change to the chart: a values file that relied
-on the fallback stops working. That is the intent. The current behavior is worse
-than an error — it starts, it reports healthy, it serves, and it loses approved
-content on the first restart. The REST contract does not move, so the gateway's
-own major is unaffected.
+This change's reserved requirement id for the ephemeral-default defect is
+therefore dropped; see the proposal.
 
 ### 8. Multi-replica: what becomes possible, and what still must not be assumed
 
@@ -400,7 +401,7 @@ Support, with the evidence behind each row:
 
 | Store | Conditional write | Status |
 | --- | --- | --- |
-| Floci 1.5.28 (`docker.io/floci/floci`) | `If-Match` / `If-None-Match` on PUT | **Verified here** by the task 2.1 spike — all five assertions pass, and two mutations confirm the spike would have caught a store that ignores preconditions |
+| Floci 1.5.33 (`docker.io/floci/floci`) | `If-Match` / `If-None-Match` on PUT | **Verified here** by the task 2.1 spike — all five assertions pass, and two mutations confirm the spike would have caught a store that ignores preconditions |
 | AWS S3 | `If-Match` / `If-None-Match` on PUT | Documented; the primary target. **Not yet exercised by us** |
 | MinIO | `If-Match` / `If-None-Match` | Believed supported; **unverified here** |
 | Google Cloud Storage | generation preconditions, not `If-Match` | Would need an adapter; **out of scope** |
@@ -412,9 +413,46 @@ than a corruption discovered during an approval. The supported-store list is a
 documentation obligation of this change, not a footnote.
 
 **The local test double is Floci** (`docker.io/floci/floci`), an open-source AWS
-emulator positioned as an alternative to LocalStack Community, driven from
-Testcontainers — the same way the rest of the suite gets its infrastructure, and
-it is already present on the development machines here.
+emulator positioned as an alternative to LocalStack Community, reached through
+the Floci project's own `FlociContainer` Testcontainers module, pinned to
+`1.5.33`.
+
+*Not, yet, through the Arconia Floci dev service — and that needs justifying,
+because the project rule is that a container-backed test uses an Arconia dev
+service wherever one exists, so that one container serves both `bootRun` and the
+suite.* `io.arconia:arconia-dev-services-floci` does exist (since Arconia 0.27.0;
+present in the 0.29.0 BOM this project already imports) and it **was** made to
+work here: all five assertions and both mutation proofs pass through it, with the
+endpoint and credentials taken from the `AwsConnectionDetails` its
+`FlociAwsContainerConnectionDetailsFactory` publishes.
+
+It was reverted for one measured reason. `FlociDevServicesAutoConfiguration` is
+`@ConditionalOnClass(io.awspring.cloud.autoconfigure.core.AwsConnectionDetails,
+software.amazon.awssdk.awscore.AwsClient)`, so using it means putting Spring
+Cloud AWS on the classpath — and with the AWS SDK also present, awspring's own
+`CredentialsProviderAutoConfiguration` then activates in **every** Spring context
+in the project and fails for want of an `AwsRegionProvider` bean. The measured
+cost was the entire gateway suite: `EstateStartupFailureTests`, `FacadeTests`,
+`IngestionTests`, `VettingTests` and the rest, all erroring on context startup.
+The only ways out were to configure Spring Cloud AWS for real, or to list
+awspring's auto-configurations in the application's own
+`spring.autoconfigure.exclude` — both of which put AWS-vendor configuration into
+a product that does not use AWS, in order to satisfy a test double.
+
+What is used instead is not a hand-rolled `GenericContainer`: it is
+`io.floci:testcontainers-floci`, the same container class the dev service wraps,
+carrying the same image tag, port and wait strategy, and exposing the same four
+accessors (`getEndpoint`, `getRegion`, `getAccessKey`, `getSecretKey`) as the
+connection details. The image is pinned to the tag Arconia 0.29.0 resolves, so
+the two stay in step.
+
+**This is explicitly temporary, and it self-resolves.** The rule's purpose is
+that one container serves `bootRun` and the tests — and today no application code
+touches object storage at all, so there is no `bootRun` consumer to share with
+and the benefit is currently zero. The moment the object-store backend exists,
+the application will configure an AWS region and credentials because the backend
+needs them, which is exactly what awspring was missing. Adopting the dev service
+is therefore **task 6.8**, not a decision deferred indefinitely.
 
 But a test double is exactly the wrong thing to trust here, and this is not
 ordinary test-double caution. The entire correctness argument of this design
@@ -435,7 +473,7 @@ before any backend code exists, asserting:
 - under N concurrent writers from the same base ETag, exactly one succeeds — the
   first-writer-wins property the manifest transition depends on.
 
-**Outcome of the spike (task 2.1, run against Floci 1.5.28).** All five
+**Outcome of the spike (task 2.1, run against Floci 1.5.33).** All five
 assertions pass, repeatably. A conditional PUT with the current ETag succeeds and
 returns a new one; a stale ETag is refused with `412` *and the stored object is
 byte-for-byte unchanged afterwards*; `If-None-Match: *` creates exactly once;

@@ -1,6 +1,7 @@
 # Evidence: pluggable-git-storage
 
 Scope of this report: **task 2.1 only** — the conditional-write fidelity spike.
+Rebased onto `main` after #134 and #135.
 The DFS backend itself is not implemented, so this is not the change's final
 evidence report; it is the evidence for the decision gate the plan hangs on.
 
@@ -15,11 +16,11 @@ local test double does not implement that faithfully, every concurrency test
 written later is green and meaningless. `ConditionalWriteFidelityTests` tests the
 double before anything trusts it.
 
-Target: **Floci 1.5.28** (`docker.io/floci/floci:latest`, digest-dated
-2026-06-26), a local AWS emulator self-described as an open-source alternative to
-LocalStack Community, on the LocalStack-compatible edge port 4566, driven through
-Testcontainers 2.0.5 with the AWS SDK v2 S3 client (`software.amazon.awssdk:s3`
-2.46.7) the implementation would use.
+Target: **Floci 1.5.33** (`docker.io/floci/floci`, pinned — not `latest`), a
+local AWS emulator self-described as an open-source alternative to LocalStack
+Community, reached through the Floci project's own `FlociContainer`
+Testcontainers module (`io.floci:testcontainers-floci` 2.12.0) with the AWS SDK
+v2 S3 client (`software.amazon.awssdk:s3` 2.46.7) the implementation would use.
 
 | # | Assertion | Result |
 | --- | --- | --- |
@@ -66,9 +67,57 @@ restored before the gate run below.
 
 ## Repeatability
 
-The suite was run three times against a fresh container; `Tests run: 5,
-Failures: 0, Errors: 0` each time (2.081 s, 1.440 s, 1.505 s). Assertion 4 is
-concurrent and therefore the flakiness candidate; it did not vary.
+The suite was run repeatedly against a fresh container across three container
+wirings (raw `GenericContainer`, the Arconia dev service, and the final
+`FlociContainer`); `Tests run: 5, Failures: 0, Errors: 0` every time, in
+1.38–2.08 s. Assertion 4 is concurrent and therefore the flakiness candidate; it
+did not vary, including under the dev service, which was the specific worry —
+a dev service that pooled or reused state could have weakened it.
+
+## Why not the Arconia Floci dev service (yet)
+
+The project rule is that a container-backed test uses an Arconia dev service
+wherever one exists, so that one container serves both `bootRun` and the suite.
+`io.arconia:arconia-dev-services-floci` does exist (Arconia 0.27.0+, in the
+0.29.0 BOM this project already imports), and it **was made to work**: all five
+assertions and both mutations passed through it, with endpoint and credentials
+taken from the `AwsConnectionDetails` published by
+`FlociAwsContainerConnectionDetailsFactory`.
+
+It was reverted for a measured reason.
+`FlociDevServicesAutoConfiguration` is
+`@ConditionalOnClass(io.awspring.cloud.autoconfigure.core.AwsConnectionDetails,
+software.amazon.awssdk.awscore.AwsClient)`. Putting Spring Cloud AWS on the
+classpath to satisfy that makes awspring's own
+`CredentialsProviderAutoConfiguration` activate in every Spring context in the
+project, where it fails:
+
+```
+Error creating bean with name
+'io.awspring.cloud.autoconfigure.core.CredentialsProviderAutoConfiguration':
+Unsatisfied dependency expressed through constructor parameter 1:
+No qualifying bean of type 'software.amazon.awssdk.regions.providers.AwsRegionProvider'
+```
+
+Measured blast radius: the whole gateway suite — `EstateStartupFailureTests`,
+`FacadeTests`, `IngestionTests`, `VettingTests`, `RetentionTests`,
+`OpenApiContractTests` and the rest — all erroring on context startup. The two
+ways out were to configure Spring Cloud AWS for real, or to name awspring's
+auto-configurations in the application's own `spring.autoconfigure.exclude`.
+Both put AWS-vendor configuration into a product that does not use AWS, to
+satisfy a test double.
+
+What is used instead is **not** a hand-rolled container: `FlociContainer` is the
+same class the dev service wraps, with the same image tag, port and wait
+strategy, exposing the same four accessors (`getEndpoint`, `getRegion`,
+`getAccessKey`, `getSecretKey`) as the connection details. The image is pinned to
+the tag Arconia 0.29.0 resolves, so the two stay in step.
+
+This is temporary and self-resolving. No application code touches object storage
+today, so there is no `bootRun` consumer to share a container with and the rule's
+benefit is currently zero. When the backend lands it will configure an AWS region
+and credentials — exactly what awspring was missing. Adopting the dev service is
+**task 6.8**.
 
 ## Conclusion
 
@@ -88,11 +137,11 @@ explicit `DOCKER_HOST` were exported (see "Environment" below).
 
 ```
 $ ./mvnw clean verify
-[INFO] Tests run: 187, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 192, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
 ```
 
-(182 before this change; the 5 added are the spike.)
+(187 on `main` after #134; the 5 added are the spike.)
 
 ```
 $ (cd src/main/frontend && pnpm test:stories)
@@ -102,17 +151,17 @@ $ (cd src/main/frontend && pnpm test:stories)
 
 ```
 $ (cd src/main/frontend && pnpm e2e)
-  12 passed (26.1s)
+  12 passed (29.0s)
 ```
 
 ```
 $ reqstool status local -p docs/reqstool
-106/106 complete · 0 incomplete · PASS
+110/110 complete · 0 incomplete · PASS
 ```
 
 ```
 $ openspec validate --all --strict
-Totals: 27 passed, 0 failed (27 items)
+Totals: 29 passed, 0 failed (29 items)
 ```
 
 ```
@@ -136,6 +185,15 @@ INFO    -  Documentation built in 0.60 seconds
   defaults`). This was a configuration-precedence issue in Testcontainers 2.x,
   **not** the memory pressure that was suspected — the Podman VM reports 1942 MB
   and no OOM or startup timeout occurred in any run.
+- `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/run/user/501/podman/podman.sock` is
+  **newly required** on this machine. `FlociContainer` unconditionally
+  bind-mounts the docker socket (`withFileSystemBind(DockerClientFactory
+  .instance().getRemoteDockerUnixSocketPath(), "/var/run/docker.sock")`), and
+  without the override that resolves to the macOS-side podman socket path, which
+  does not exist inside the podman VM: `Status 500: … making volume mountpoint
+  … operation not supported`. On Linux CI, where the path is a real
+  `/var/run/docker.sock`, the override is unnecessary. This applies to the
+  Arconia dev service too — it wraps the same container.
 - Containers were reaped with `podman container prune -f` afterwards, since
   nothing reaps them with Ryuk disabled.
 
@@ -143,4 +201,4 @@ INFO    -  Documentation built in 0.60 seconds
 
 Both test-scoped, for the spike and for the backend that follows:
 `software.amazon.awssdk:bom` 2.46.7 (imported), `software.amazon.awssdk:s3`,
-`org.testcontainers:testcontainers`.
+`io.floci:testcontainers-floci` 2.12.0.

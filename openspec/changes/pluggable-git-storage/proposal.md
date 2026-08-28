@@ -69,10 +69,11 @@ first trial.
   is still that SHA, is the same observable outcome on either backend — and on
   object storage it becomes one atomic manifest transition rather than two
   independent ref deletions.
-- **The chart stops defaulting to ephemeral storage.** `emptyDir` becomes an
-  explicit, named opt-in (`persistence.mode: ephemeral`) instead of what you
-  get by forgetting a value; a deployment that configures neither a claim nor a
-  bucket fails to render rather than shipping a data-loss default.
+- **A `none` persistence mode.** ~~The chart stops defaulting to ephemeral
+  storage~~ — **done by #134 (GW_0120)** while this was in review: the chart
+  already refuses to render without an explicit `persistence.mode`. What is left
+  here is the third mode, `none`, valid only on `object-store`, for a deployment
+  that keeps no durable volume because the bucket is the repository.
 - **`replicaCount > 1` becomes possible, and gated.** The chart accepts more
   than one replica only on a backend that supports concurrent writers, and only
   while the gateway's uncoordinated background singletons (sync sweep,
@@ -82,9 +83,12 @@ first trial.
   re-approving anything: an offline one-shot copy of quarantine, hosted and
   published repositories, verified by comparing the resolved ref sets before
   the old volume is discarded.
-- Requirements GW_0111–GW_0115 with SVC_GW_0111–SVC_GW_0115. The ids are
-  reserved here; their text lands in `docs/reqstool/requirements.yml` (the
-  SSOT) with the implementation, as task 1 says.
+- Requirements **GW_0111, GW_0112, GW_0114, GW_0115** with the matching SVCs.
+  GW_0113 was reserved for "deployment never defaults to storage that loses
+  served content" and is **dropped**: #134 landed exactly that as GW_0120 while
+  this change was in review. The remaining ids are reserved here; their text
+  lands in `docs/reqstool/requirements.yml` (the SSOT) with the implementation,
+  as task 1 says.
 - **Not in this change:** implementation. This is a proposal for review.
 
 ## Capabilities
@@ -98,9 +102,9 @@ first trial.
 
 ### Modified Capabilities
 
-- `release-packaging`: the chart must not default to storage that loses served
-  content, and must refuse a replica count the configured backend cannot
-  support.
+- `release-packaging`: the chart must refuse a replica count the configured
+  backend cannot support. (The "must not default to storage that loses served
+  content" half of this is already shipped as GW_0120.)
 
 ## Impact
 
@@ -113,17 +117,20 @@ first trial.
   break the GraalVM native-image release profile. Credential resolution must
   work **without IMDS**, which Fargate pods do not have: IRSA / web-identity
   federation is a hard requirement, not a nice-to-have.
-- **Helm**: `persistence.mode`, a `storage.objectStore` block with a service
-  account annotated for IRSA and an `existingSecret` only as the fallback for
-  stores with no role mechanism, replica gating in the deployment template.
-  **BREAKING for the chart**: a values file relying on the `emptyDir` fallback
-  stops rendering until it names `persistence.mode: ephemeral`. No REST
-  contract changes, so the API's major does not move.
+- **Helm**: a `none` case for the existing `persistence.mode`, a
+  `storage.objectStore` block (the service account #134 already added is
+  annotated for IRSA; `existingSecret` only as the fallback for stores with no
+  role mechanism), and replica gating in the deployment template. No REST
+  contract changes, so the API's major does not move, and the chart's
+  fail-closed break already shipped with #134.
 - **DB**: none. The manifest is in the bucket, deliberately not in PostgreSQL.
-- **Testing**: Floci (`docker.io/floci/floci`) via Testcontainers as the local
-  AWS emulator. Its `If-Match` fidelity is proved by a spike *before* any
-  backend code exists — a double that ignores conditional writes would let a
-  broken implementation pass the very concurrency tests that justify the design.
+- **Testing**: Floci (`docker.io/floci/floci`, pinned `1.5.33`) as the local AWS
+  emulator, through the Floci project's own Testcontainers module. Its
+  `If-Match` fidelity is proved by a spike *before* any backend code exists — a
+  double that ignores conditional writes would let a broken implementation pass
+  the very concurrency tests that justify the design. The Arconia Floci dev
+  service is the intended end state and is deferred to task 6.8 for a measured
+  reason recorded in the design.
 - **Portability**: conditional-write support is the hard boundary. The set of
   object stores that implement it is the set this backend can run on; there is
   no degraded mode, and the gateway refuses to start where a startup probe

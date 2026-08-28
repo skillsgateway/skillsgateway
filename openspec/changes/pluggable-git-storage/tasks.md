@@ -8,10 +8,10 @@ applies: failing tests first, proved failing, before any implementation.
 
 - [ ] 1.1 Add GW_0111 (backend named not inferred, fail-closed startup,
       credentials without IMDS), GW_0112 (atomic uncoordinated reference
-      transitions), GW_0113 (no ephemeral default), GW_0114 (verified
-      migration) and GW_0115 (replication refused where unsafe) to
-      `docs/reqstool/requirements.yml`
-- [ ] 1.2 Add SVC_GW_0111–SVC_GW_0115 (GIVEN/WHEN/THEN) to
+      transitions), GW_0114 (verified migration) and GW_0115 (replication
+      refused where unsafe) to `docs/reqstool/requirements.yml`. GW_0113 is
+      dropped — #134 shipped it as GW_0120
+- [ ] 1.2 Add the matching SVCs (GIVEN/WHEN/THEN) to
       `docs/reqstool/software_verification_cases.yml`
 
 ## 2. Spike (settle the open questions before writing production code)
@@ -75,10 +75,10 @@ applies: failing tests first, proved failing, before any implementation.
 - [ ] 4.3 Migration tests annotated `@SVCs({"SVC_GW_0114"})`: full copy across
       all three roles, ref-set comparison, refusal on a deliberately damaged
       copy, source left byte-identical, and a round trip back
-- [ ] 4.4 Packaging tests annotated `@SVCs({"SVC_GW_0113"})` and
-      `@SVCs({"SVC_GW_0115"})`: unstated storage choice fails to render;
-      `replicaCount > 1` fails on `filesystem`; fails on `object-store` with
-      the uncoordinated pollers enabled; renders with them disabled
+- [ ] 4.4 Packaging tests annotated `@SVCs({"SVC_GW_0115"})`: `replicaCount > 1`
+      fails on `filesystem`; fails on `object-store` with the uncoordinated
+      pollers enabled; renders with them disabled. (#134's `PackagingTests`
+      already cover the fail-closed `persistence.mode`; extend, never weaken)
 - [ ] 4.5 Record the failing run (old-coder evidence) before any implementation
 
 ## 5. Configuration surface
@@ -114,6 +114,14 @@ applies: failing tests first, proved failing, before any implementation.
       guarded so a losing compactor loses harmlessly
 - [ ] 6.7 Make the whole contract test suite (task 3) green against this
       backend with no change to any `GitStorage` caller
+- [ ] 6.8 Switch `ConditionalWriteFidelityTests` (and any later object-store
+      test) from `io.floci:testcontainers-floci` to the Arconia Floci dev
+      service, per the project rule that one container serves `bootRun` and the
+      suite. Blocked until now only because the dev service's auto-configuration
+      is `@ConditionalOnClass` on Spring Cloud AWS, whose own auto-configuration
+      then fails every gateway context for want of an `AwsRegionProvider`; once
+      this backend configures an AWS region and credentials for real, that
+      conflict is gone. Re-run both mutation proofs after the switch
 
 ## 7. Migration
 
@@ -127,11 +135,13 @@ applies: failing tests first, proved failing, before any implementation.
 
 ## 8. Packaging
 
-- [ ] 8.1 `values.yaml`: `persistence.mode` (`pvc` | `ephemeral` | `none`),
-      `storage.backend`, `storage.objectStore.*`, service account annotated
-      for IRSA, `existingSecret` as the static-credential fallback
-- [ ] 8.2 `deployment.yaml`: fail rendering on an unstated storage choice;
-      mount the volume per mode; project the credential environment
+- [ ] 8.1 `values.yaml`: add `none` to the existing `persistence.mode`
+      (`existingClaim` | `ephemeral` from #134), plus `storage.backend`,
+      `storage.objectStore.*`, IRSA annotations on the service account #134
+      added, and `existingSecret` as the static-credential fallback
+- [ ] 8.2 `deployment.yaml`: extend the `_helpers.tpl` storage-volume logic for
+      `none` (refusing it unless the backend is `object-store`); project the
+      credential environment
 - [ ] 8.3 Replica gating: refuse `replicaCount > 1` on `filesystem`, and on
       `object-store` unless the uncoordinated pollers are disabled
 - [ ] 8.4 Extend the existing packaging consistency test to cover 8.1–8.3;
