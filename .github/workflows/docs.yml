@@ -102,18 +102,22 @@ jobs:
       #
       # A worktree rather than a checkout: the branch was just rewritten by mike
       # in this same job, so this reads what was actually pushed.
+      #
+      # NOT `site/`: that is mkdocs' default site_dir, which the strict build
+      # above already created, and `git worktree add` refuses an existing path.
       - name: Export the published site
         run: |
           set -euo pipefail
           git fetch origin gh-pages
-          git worktree add site origin/gh-pages
+          git worktree add gh-pages-export origin/gh-pages
           # The worktree marker would otherwise be uploaded as site content.
-          rm -f site/.git
-          test -f site/index.html || { echo "::error::gh-pages has no root index.html."; exit 1; }
+          rm -f gh-pages-export/.git
+          test -f gh-pages-export/index.html \
+            || { echo "::error::gh-pages has no root index.html."; exit 1; }
 
       - uses: actions/upload-pages-artifact@v5
         with:
-          path: site
+          path: gh-pages-export
 
   # Separate job because `actions/deploy-pages` requires the `github-pages`
   # environment, and an environment cannot be declared on a job that is itself a
