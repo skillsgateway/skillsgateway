@@ -95,7 +95,9 @@ the web chain, and it is **stateless**:
   else the gateway governs.
 - Every fetch entry on the ledger names the token that authenticated it
   (GW_0067), not just the principal: a principal with several tokens is several
-  distinct credentials.
+  distinct credentials — and says whether that credential was derived from a
+  browser session (GW_0104) or deliberately provisioned, which is a different
+  question from who held it.
 - Receive-pack is disabled by construction on this endpoint, so there is no
   write path here to reject at runtime. Publication into a gateway-hosted
   marketplace is a separate boundary — see below.

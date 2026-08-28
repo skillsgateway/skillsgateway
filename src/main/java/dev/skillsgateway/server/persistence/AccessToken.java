@@ -14,7 +14,8 @@ public record AccessToken(
         String scopes,
         Instant expiresAt,
         Long rotatedFrom,
-        String pushScopes) {
+        String pushScopes,
+        boolean sessionDerived) {
 
     /** The scope list, empty meaning every marketplace (GW_0064). */
     public List<String> scopeList() {

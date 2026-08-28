@@ -117,6 +117,22 @@ untouched: pushed content is quarantined, vetted and held like anything
 fetched. Auto-approval for trusted internal publishers stays parked per ADR
 0006.
 
+### [ADR 0008 — The serving surface stays the embedded facade; SSO closes at the gateway](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0008-serving-surface-stays-the-embedded-facade.md)
+
+*Accepted, 2026-08-23.*
+
+Serving approved content out of an external forge was weighed and declined: it
+would outsource **authentication and visibility**, which are commodities, at the
+price of outsourcing **enforcement and audit**, which are the product — a
+forge-served repository makes the approval gate bypassable by anyone with
+repository write, and forge logs do not record per-user fetches. The two things
+a forge was wanted for are addressed at the gateway instead: **SSO-derived
+short-lived git credentials** (GW_0104, implemented) close the
+second-credential-system gap without moving a fetch off the ledger, and a
+read-only **forge mirror for browsing** is sequenced after, never as a serving
+surface. Availability of the facade is now explicitly a security property, with
+serving independent of ingestion.
+
 ## Related
 
 - [Architecture](../architecture.md)

@@ -51,7 +51,7 @@ public record SkillsGatewayProperties(
             catalog = new Catalog(null, null);
         }
         if (tokens == null) {
-            tokens = new Tokens(null);
+            tokens = new Tokens(null, null);
         }
         if (roles == null) {
             roles = new Roles(null, null, null, null);
@@ -201,8 +201,21 @@ public record SkillsGatewayProperties(
      *
      * @param maxTtl the longest lifetime creation accepts; a request beyond it is refused, never
      *     silently clamped. Null — the default, for compatibility — accepts tokens with no expiry.
+     * @param sessionTtl what a session-derived credential is *granted* (GW_0104), as opposed to
+     *     what a holder may ask for. Deliberately not derived from {@code maxTtl}: a deployment
+     *     may allow year-long CI tokens and still want session credentials to die at lunchtime.
      */
-    public record Tokens(Duration maxTtl) {}
+    public record Tokens(Duration maxTtl, Duration sessionTtl) {
+
+        /** About a working day: the credential lasts as long as the work does, and no longer. */
+        public static final Duration DEFAULT_SESSION_TTL = Duration.ofHours(8);
+
+        public Tokens {
+            if (sessionTtl == null) {
+                sessionTtl = DEFAULT_SESSION_TTL;
+            }
+        }
+    }
 
     /**
      * The global virtual catalog (GW_0061–GW_0063). {@code name} is reserved: registration

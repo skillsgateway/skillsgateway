@@ -156,6 +156,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tokens/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mint a git credential from this session
+         * @description Issues a short-lived facade credential to the principal of the current browser session. Its lifetime is set by the gateway (`skills-gateway.tokens.session-ttl`) and cannot be chosen or extended by the caller — which is the whole difference between this and a personal access token. It carries no publication authority, and is marked session-derived wherever it appears, including on the audit ledger. It is NOT revoked when the session ends: the lifetime is the control.
+         */
+        post: operations["createSessionCredential"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/snapshots/{id}/waivers": {
         parameters: {
             query?: never;
@@ -1277,6 +1297,18 @@ export interface components {
             rotatedFrom?: number;
             /** @description Hosted marketplaces this token may publish to; empty grants none */
             pushScopes?: string[];
+            /** @description Whether this credential was derived from a browser session (GW_0104) */
+            sessionDerived?: boolean;
+        };
+        /** @description Session credential request: the lifetime is the gateway's, so there is no field for it */
+        SessionCredentialRequest: {
+            /**
+             * @description Human-readable name
+             * @example laptop
+             */
+            name?: string;
+            /** @description Marketplace names to narrow the credential to; empty or omitted grants every marketplace, as for any fetch scope */
+            scopes?: string[];
         };
         /** @description Request to accept one finding rule on a snapshot's marketplace, until an expiry */
         WaiverRequest: {
@@ -1816,6 +1848,8 @@ export interface components {
             rotatedFrom?: number;
             /** @description Hosted marketplaces this token may publish to; empty grants none */
             pushScopes?: string[];
+            /** @description Whether the credential was derived from a browser session rather than deliberately provisioned; its lifetime was the gateway's to set */
+            sessionDerived?: boolean;
         };
         /** @description A connector configured in the vetting chain */
         ConnectorView: {
@@ -2002,6 +2036,7 @@ export interface components {
             snapshotId?: number;
             marketplace?: string;
             upstreamUrl?: string;
+            origin?: string;
             upstreamSha?: string;
             state?: string;
             violation?: string;
@@ -2690,6 +2725,39 @@ export interface operations {
             };
             /** @description Token is revoked or expired; issue a new one instead */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+        };
+    };
+    createSessionCredential: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SessionCredentialRequest"];
+            };
+        };
+        responses: {
+            /** @description Credential issued; the only response carrying the cleartext */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+            /** @description Unknown scope */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -80,9 +80,14 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             // Read-only by contract, but a POST and approver-gated: it walks as a mutation.
             "POST /api/policy/playground");
 
-    /** Owner-scoped by design (GW_0068): a session's own tokens need no role. */
-    private static final Set<String> OWNER_SCOPED_MUTATIONS =
-            Set.of("POST /api/tokens", "POST /api/tokens/{id}/rotate", "DELETE /api/tokens/{id}");
+    /**
+     * Owner-scoped by design (GW_0068): a session's own tokens need no role. A session-derived
+     * credential (GW_0104) is the same thing — it grants the session's own principal exactly what
+     * that principal could already ask for, with a shorter life and no publication authority — so
+     * it belongs here rather than behind a role.
+     */
+    private static final Set<String> OWNER_SCOPED_MUTATIONS = Set.of(
+            "POST /api/tokens", "POST /api/tokens/session", "POST /api/tokens/{id}/rotate", "DELETE /api/tokens/{id}");
 
     /** The ledger and the operational listings: auditor-or-admin reads (GW_0070). */
     private static final Set<String> PRIVILEGED_READS = Set.of(

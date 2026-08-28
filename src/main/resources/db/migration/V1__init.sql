@@ -116,6 +116,10 @@ CREATE TABLE access_tokens (
     expires_at TIMESTAMPTZ,
     -- The token this one replaced via rotation (GW_0066): the lineage an auditor follows.
     rotated_from BIGINT REFERENCES access_tokens (id),
+    -- Derived from a browser session rather than deliberately provisioned (GW_0104). Recorded
+    -- rather than inferred from a short expiry: a short-lived PAT is an ordinary thing to want,
+    -- and what the ledger needs to distinguish is how the credential was obtained.
+    session_derived BOOLEAN NOT NULL DEFAULT FALSE,
     -- Comma-delimited hosted marketplace names this token may PUSH to (GW_0102). Deliberately
     -- unlike `scopes`: NULL here means none, not all, so no token that predates publication --
     -- and no token whose fetch scope is the every-marketplace form -- can write anything.
