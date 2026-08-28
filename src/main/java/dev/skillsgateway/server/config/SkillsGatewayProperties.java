@@ -19,6 +19,7 @@ public record SkillsGatewayProperties(
         Catalog catalog,
         Tokens tokens,
         Roles roles,
+        Oidc oidc,
         Estate estate) {
 
     public SkillsGatewayProperties {
@@ -50,10 +51,13 @@ public record SkillsGatewayProperties(
             catalog = new Catalog(null, null);
         }
         if (tokens == null) {
-            tokens = new Tokens(null);
+            tokens = new Tokens(null, null);
         }
         if (roles == null) {
-            roles = new Roles(null, null);
+            roles = new Roles(null, null, null, null);
+        }
+        if (oidc == null) {
+            oidc = new Oidc(null);
         }
         if (estate == null) {
             estate = new Estate(null, null, null, null, null);
@@ -103,9 +107,14 @@ public record SkillsGatewayProperties(
      *     immutable — a differing declared URL is a reconciliation failure, never an update
      * @param syncMode {@code on-demand} or {@code scheduled}; {@code webhook} is refused (its inbound
      *     HMAC secret is gateway-generated show-once, which has no declarative form). Null means the
-     *     stored mode is not managed and never touched.
+     *     stored mode is not managed and never touched. A hosted marketplace accepts only
+     *     {@code on-demand}: its ingestion trigger is the push.
+     * @param origin {@code upstream} (the default) or {@code hosted} (GW_0101); a hosted marketplace
+     *     declares no url, and like a url the origin is immutable after registration
+     * @param pushPolicy for a hosted marketplace, {@code append-only} (the default) or
+     *     {@code allow-rewrite}
      */
-    public record DeclaredMarketplace(String name, String url, String syncMode) {}
+    public record DeclaredMarketplace(String name, String url, String syncMode, String origin, String pushPolicy) {}
 
     /**
      * A declared role grant (GW_0085), the exact shape of the grants API: approver grants name one
@@ -149,23 +158,64 @@ public record SkillsGatewayProperties(
      * its grants and then opts in. {@code admins} are admins by configuration and cannot be
      * revoked through the API — the escape hatch that survives a bad grant edit.
      */
-    public record Roles(Boolean enabled, List<String> admins) {
+    public record Roles(Boolean enabled, List<String> admins, String claim, List<ClaimMapping> mappings) {
+
+        /** The claim an enterprise directory most often carries group membership in. */
+        public static final String DEFAULT_CLAIM = "groups";
 
         public Roles {
             if (enabled == null) {
                 enabled = false;
             }
             admins = admins == null ? List.of() : List.copyOf(admins);
+            if (claim == null || claim.isBlank()) {
+                claim = DEFAULT_CLAIM;
+            }
+            mappings = mappings == null ? List.of() : List.copyOf(mappings);
         }
     }
+
+    /**
+     * One identity-provider claim value granting one role (GW_0098). The value is the provider's
+     * own — a group object id, an app-role value — so it is matched exactly and never by
+     * convention; an {@code approver} mapping names the marketplace it is scoped to and the global
+     * roles name none, which {@code ClaimRoleMapper} refuses to start without.
+     *
+     * <p>The named marketplace need not exist yet: registration may come later, including from
+     * {@link Estate}, and until then the mapping simply matches nothing.
+     */
+    public record ClaimMapping(String claimValue, String role, String marketplace) {}
+
+    /**
+     * Browser-login integrity beyond what the client registration expresses (GW_0100).
+     *
+     * @param issuer the ID-token issuer to require. Null — the default, for compatibility — runs
+     *     Spring Security's own checks only, which compare no issuer at all when the registration
+     *     carries none; the gateway warns at startup while that is the case. Where one
+     *     authorization endpoint serves many tenants, this is the tenant boundary.
+     */
+    public record Oidc(String issuer) {}
 
     /**
      * Access-token policy (GW_0065).
      *
      * @param maxTtl the longest lifetime creation accepts; a request beyond it is refused, never
      *     silently clamped. Null — the default, for compatibility — accepts tokens with no expiry.
+     * @param sessionTtl what a session-derived credential is *granted* (GW_0104), as opposed to
+     *     what a holder may ask for. Deliberately not derived from {@code maxTtl}: a deployment
+     *     may allow year-long CI tokens and still want session credentials to die at lunchtime.
      */
-    public record Tokens(Duration maxTtl) {}
+    public record Tokens(Duration maxTtl, Duration sessionTtl) {
+
+        /** About a working day: the credential lasts as long as the work does, and no longer. */
+        public static final Duration DEFAULT_SESSION_TTL = Duration.ofHours(8);
+
+        public Tokens {
+            if (sessionTtl == null) {
+                sessionTtl = DEFAULT_SESSION_TTL;
+            }
+        }
+    }
 
     /**
      * The global virtual catalog (GW_0061–GW_0063). {@code name} is reserved: registration

@@ -765,3 +765,85 @@ requirements:
     rationale: License questions are supply-chain questions and belong on the same read surface as the snapshot content inventory and the gateway's own SBOM; computing the report from the pinned content keeps it answerable for every snapshot regardless of when the connector was introduced and keeps the read a report of current policy truth while recorded chain runs remain the historical evidence.
     categories: ["functional-suitability", "security"]
     revision: 0.1.0
+
+  - id: GW_0098
+    title: Identity-provider claim to role mapping
+    significance: shall
+    description: The system shall derive a browser session's delegated-administration roles from a configured claim of its identity-provider token in addition to the roles it holds by configuration and by stored grant, matching each claim value exactly against a configured list of mappings from claim value to role — an approver mapping naming the marketplace it is scoped to and the global roles naming none — shall union the derived roles with the configured and granted ones without changing deny-by-default enforcement, approver scoping or the auditor's read-only guarantee, shall refuse to start when a mapping names an unknown role, carries no claim value, scopes a global role or leaves an approver unscoped, shall derive no role at all for a credential that carries no identity-provider claims, and shall report on the session identity endpoint which of the three sources each effective role came from.
+    rationale: In an enterprise the group is the unit that already has an owner and a joiner-mover-leaver process, so reproducing its membership as grant rows creates a second source of truth that drifts; mapping by claim value rather than by convention is what lets an app registration shared with other services be used at all, matching exactly keeps a mapping from ever widening who is privileged, refusing a malformed mapping at startup keeps a typo from silently granting nothing, and reporting the source is how an auditor answers why a session holds a role without reading the deployment's configuration.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0099
+    title: Truncated group claim made visible
+    significance: shall
+    description: The system shall detect that an identity provider omitted the configured claim from a token while indicating that the claim was truncated rather than empty, shall record that detection in its logs and report it on the session identity endpoint, and shall distinguish it from a session that genuinely carries no membership.
+    rationale: A provider that drops the group claim once a user belongs to too many groups turns an authorization failure into a mystery — the session is denied while its holder can see their own membership — so the one thing the gateway must not do is treat a truncated claim as an empty one and stay silent about it.
+    categories: ["security", "interaction-capability"]
+    revision: 0.1.0
+
+  - id: GW_0100
+    title: Enterprise identity-provider session integrity
+    significance: shall
+    description: The system shall let an operator configure which claim of the identity-provider token names the principal and which scopes the login requests, defaulting to the subject claim and the openid scope so an existing deployment is unchanged, and shall, when an expected issuer is configured, refuse any identity token whose issuer claim differs from it and establish no session, warning at startup whenever a deployment that is not in the insecure development mode leaves the expected issuer unconfigured.
+    rationale: On an app registration shared between services the subject claim is an opaque per-application identifier, so grants, the configured admin list and every ledger row would name a string no human can resolve to a person; and where one authorization endpoint serves many tenants every tenant's tokens verify against the same signing keys, which makes the issuer the tenant boundary — leaving it unchecked accepts a login from an organisation the deployment has no relationship with.
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0101
+    title: Gateway-hosted marketplace origin
+    significance: shall
+    description: The system shall allow an administrator to register a marketplace that the gateway itself hosts — accepting no clone URL for it, refusing a registration that supplies one, and refusing as before a non-hosted registration that omits one — shall create for it a gateway-owned origin repository that is neither the quarantine area nor the served area, shall never fetch such a marketplace from any external location, shall keep its refresh strategy fixed at on-demand and refuse to change it, and shall report the marketplace's origin, its history-rewrite policy and the location publishers push to wherever it describes the marketplace.
+    rationale: An organisation that authors its own skills should not have to stand up a repository elsewhere purely to give the gateway something to pull from, and then govern the same content twice; giving the gateway its own origin removes the second system without giving the served area a writer, and fixing the refresh strategy keeps a scheduled sweep from trying to fetch an upstream that does not exist.
+    categories: ["functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0102
+    title: Authenticated publication over a separate write endpoint
+    significance: shall
+    description: The system shall accept authenticated git pushes into a hosted marketplace's origin repository over an endpoint separate from the one that serves approved content, shall authorize such a push only by a token scope granted explicitly per marketplace with no form of that scope meaning every marketplace, shall answer a push for a marketplace outside the token's scope indistinguishably from one that does not exist, shall accept an update only to the marketplace's single lineage reference and refuse every other reference, shall refuse every reference deletion, shall refuse an update that is not a fast-forward unless the marketplace's policy permits rewriting and shall append the old and new tip to the append-only ledger when it does, and shall continue to accept no push whatsoever on the endpoint that serves approved content.
+    rationale: A write path into a product whose serving surface is read-only by construction earns its trust only by being somewhere else — a different endpoint, a different repository, and a credential nobody holds by default — so no existing token and no existing route gains a capability. Refusing everything but the one lineage reference keeps the single-history guarantee that makes a snapshot's provenance meaningful, and a rewrite that is permitted must at least be answerable afterwards.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0103
+    title: Pushed content traverses the unchanged pipeline
+    significance: shall
+    description: The system shall ingest a commit pushed to a hosted marketplace into the quarantine area, identify it by its commit SHA, validate its manifest, vet it and hold it exactly as it does content fetched from an upstream, and shall not serve it until it has been explicitly approved.
+    rationale: The value of first-party hosting is that it removes a redundant system, not that it removes review; content the organisation wrote is exactly as capable of carrying a planted credential or a prompt injection as content it did not, and a publisher who could also serve would make the approval gate optional.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0104
+    title: Session-derived short-lived git credentials
+    significance: shall
+    description: The system shall issue, to a principal holding an authenticated browser session, a git facade credential whose lifetime the gateway sets from configuration and which the requester can neither choose nor extend, shall grant such a credential no publication authority whatsoever, shall let it be narrowed to named marketplaces exactly as any other credential, shall record and report that the credential was derived from a session so it is distinguishable everywhere a credential appears including the append-only ledger, and shall carry both that mark and the unchanged expiry deadline through a rotation.
+    rationale: A human who has just proved who they are to the identity provider should not have to create a second, standing credential that outlives the session, the laptop and the employment in order to fetch — that duplication is the whole argument for serving content from somewhere else instead of the gateway; making the lifetime the gateway's decision is what separates this from a personal access token requested through a different path, and marking the origin is what lets an auditor tell a credential minted moments after an SSO login from one provisioned months ago.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0105
+    title: Contract document declares the release it describes
+    significance: shall
+    description: The system shall declare, in the API contract document it serves, the version of the release that document describes, derived from the build rather than maintained by hand.
+    rationale: A document whose declared version never changes tells a consumer nothing about which release they are reading, and leaves the one string that identifies the interface to be remembered by whoever last edited it. Deriving it from the build is also what makes "this change removes something" and "the version went up a major" two facts that can be checked against each other rather than two independent acts of good intent.
+    categories: ["functional-suitability", "maintainability"]
+    revision: 0.1.0
+
+  - id: GW_0106
+    title: Published contract matches the served contract
+    significance: shall
+    description: The system shall keep the API contract document published in its repository identical to the document the running application serves, apart from the release version that document declares, and shall fail its own build when the two diverge.
+    rationale: The published copy is what client types and request mocks are generated from and what a compatibility check diffs against, yet nothing regenerates it automatically. When it drifts, generated clients describe an interface the gateway no longer has, and any check built on it keeps reporting success while comparing a document nobody serves — a gate that is green precisely because it has stopped measuring anything.
+    categories: ["maintainability", "functional-suitability"]
+    implementation: configuration
+    revision: 0.1.0
+
+  - id: GW_0107
+    title: Breaking contract changes are detected and declared
+    significance: shall
+    description: The system's change process shall compare every proposed change to the API contract against the contract that change branched from, shall refuse a change that removes or narrows what the contract already offered unless that change is both explicitly marked as a deliberate break and declared as breaking by the commit that ships it, and shall state in the refusal what a deliberate breaking change is required to do instead.
+    rationale: A rule that changes within a major are additive is worth exactly what its enforcement is worth, and until the first release there is no deployed client to make breaking it expensive — which is why the check is cheap to add now. A refusal that only refuses teaches nobody, so it has to name the escape; and requiring the shipping commit to declare the break is what carries it into the version a consumer eventually sees, rather than leaving the two to agree by coincidence.
+    categories: ["maintainability", "functional-suitability"]
+    implementation: configuration
+    revision: 0.1.0

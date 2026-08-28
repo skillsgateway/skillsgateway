@@ -3,8 +3,9 @@
 ## Purpose
 
 Authentication for both client types: OIDC (OAuth2) browser sessions for the
-web/admin surface, and personal access tokens for git clients, including the
-token lifecycle.
+web/admin surface — including which claim names the principal, which scopes the
+login requests, and the expected identity-token issuer — and personal access
+tokens for git clients, including the token lifecycle.
 
 ## Requirements
 
@@ -25,3 +26,9 @@ The system SHALL implement GW_0013.
 
 #### Scenario: SVC_GW_0013
 The system SHALL pass SVC_GW_0013.
+
+### Requirement: GW_0100
+The system SHALL implement GW_0100.
+
+#### Scenario: SVC_GW_0100
+The system SHALL pass SVC_GW_0100.

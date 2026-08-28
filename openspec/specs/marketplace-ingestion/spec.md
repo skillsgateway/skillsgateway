@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Registering upstream skill marketplaces and ingesting them into held,
+Registering skill marketplaces — fetched from an upstream, or hosted by the
+gateway itself and published to by push — and ingesting them into held,
 SHA-identified quarantine snapshots, enforcing that all plugin sources are
 local to the marketplace repository.
 
@@ -49,3 +50,15 @@ The system SHALL implement GW_0021.
 
 #### Scenario: SVC_GW_0021
 The system SHALL pass SVC_GW_0021.
+
+### Requirement: GW_0101
+The system SHALL implement GW_0101.
+
+#### Scenario: SVC_GW_0101
+The system SHALL pass SVC_GW_0101.
+
+### Requirement: GW_0103
+The system SHALL implement GW_0103.
+
+#### Scenario: SVC_GW_0103
+The system SHALL pass SVC_GW_0103.

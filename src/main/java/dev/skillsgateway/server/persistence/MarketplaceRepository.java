@@ -26,12 +26,27 @@ public class MarketplaceRepository {
 
     @Requirements({"GW_0021"})
     public Marketplace register(String name, String url, ForgeMetadata metadata) {
+        return register(name, url, metadata, Marketplace.ORIGIN_UPSTREAM, Marketplace.PUSH_APPEND_ONLY);
+    }
+
+    /**
+     * The full insert. A hosted marketplace (GW_0101) passes a null url and carries a push policy;
+     * the table's CHECK constraints are what make the two shapes mutually exclusive rather than
+     * anything here.
+     */
+    @Requirements({"GW_0021", "GW_0101"})
+    public Marketplace register(String name, String url, ForgeMetadata metadata, String origin, String pushPolicy) {
         return jdbc.sql("INSERT INTO marketplaces"
-                        + " (name, url, created_at, forge, forge_project, description, upstream_updated_at)"
-                        + " VALUES (:name, :url, :now, :forge, :forgeProject, :description, :upstreamUpdatedAt)"
+                        + " (name, url, created_at, origin, push_policy, forge, forge_project, description,"
+                        + " upstream_updated_at)"
+                        + " VALUES (:name, :url, :now, :origin, :pushPolicy, :forge, :forgeProject, :description,"
+                        + " :upstreamUpdatedAt)"
                         + " RETURNING *")
                 .param("name", name)
                 .param("url", url)
+                .param("origin", origin == null ? Marketplace.ORIGIN_UPSTREAM : origin)
+                // The column's DEFAULT applies only to an omitted value, not to an explicit null.
+                .param("pushPolicy", pushPolicy == null ? Marketplace.PUSH_APPEND_ONLY : pushPolicy)
                 .param("now", OffsetDateTime.now())
                 .param("forge", metadata == null ? null : metadata.forge())
                 .param("forgeProject", metadata == null ? null : metadata.project())
@@ -116,6 +131,8 @@ public class MarketplaceRepository {
                 rs.getString("name"),
                 rs.getString("url"),
                 instant(rs, "created_at"),
+                rs.getString("origin"),
+                rs.getString("push_policy"),
                 rs.getString("forge"),
                 rs.getString("forge_project"),
                 rs.getString("description"),

@@ -14,6 +14,9 @@ import org.junit.jupiter.api.Test;
 /**
  * Verifies the springdoc OpenAPI document and snapshots it to target/openapi.json — the input for
  * the portal's type generation (ADR 0003: MSW/types are contract-derived, never hand-authored).
+ *
+ * <p>The snapshot is written in {@link OpenApiSnapshot#publishedForm published form}, which is what
+ * {@code src/main/frontend/openapi.json} must equal (GW_0106).
  */
 class OpenApiDocsTests extends AbstractGatewayTest {
 
@@ -30,6 +33,6 @@ class OpenApiDocsTests extends AbstractGatewayTest {
 
         Path out = Path.of("target", "openapi.json");
         Files.createDirectories(out.getParent());
-        Files.writeString(out, doc);
+        Files.writeString(out, OpenApiSnapshot.publishedForm(doc));
     }
 }

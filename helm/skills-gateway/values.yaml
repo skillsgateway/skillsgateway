@@ -28,6 +28,15 @@ oidc:
   authorizationUri: ""
   tokenUri: ""
   jwkSetUri: ""
+  # Claim that names the principal. A shared app registration's `sub` is an
+  # opaque per-application id, so set this to a readable claim there.
+  userNameAttribute: "sub"
+  # Comma-separated scopes to request; widen when the provider needs a scope to
+  # emit group or role claims.
+  scope: "openid"
+  # Expected ID-token issuer. Unset means the issuer is not checked at all —
+  # on a multi-tenant endpoint that is the tenant boundary left open.
+  issuer: ""
 
 # Git storage (/data). emptyDir by default; set an existing PVC for durability.
 persistence:

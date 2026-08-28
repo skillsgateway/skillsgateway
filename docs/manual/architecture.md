@@ -436,12 +436,25 @@ inward.
   item. *Implemented:* token lifecycle — marketplace-scoped PATs enforced at
   the facade, expiry decided at authentication time, rotation that cannot
   widen a grant, per-token fetch attribution on the ledger (GW_0064–GW_0067);
-  team entitlements and SSO-derived short-lived credentials are deferred
-  (issue #59). *Implemented:* scoped admin roles on the web surface — global
+  team entitlements are deferred. SSO-derived short-lived credentials are
+  *implemented* (GW_0104): a git credential minted from a browser session with
+  a gateway-set lifetime the holder cannot extend, no publication authority,
+  and a session-derived mark on the ledger — the identity half of ADR 0008,
+  which declined serving from an external forge and keeps the audited facade
+  canonical. The forge mirror for browsing is sequenced after it. *Implemented:* scoped admin roles on the web surface — global
   admin, per-marketplace approver, read-only auditor; DB-managed audited
   grants with configuration-bootstrapped admins, deny-by-default once
-  enabled, off by default (GW_0068–GW_0071); per-team catalog scoping and a
+  enabled, off by default (GW_0068–GW_0071), and roles derived from the
+  identity provider's own group or application-role claims by configured
+  mapping, with truncated claims made visible and an enforceable expected
+  ID-token issuer (GW_0098–GW_0100); per-team catalog scoping and a
   portal grants UI are deferred.
+- *Implemented:* first-party hosting — a marketplace the gateway hosts itself,
+  published to by authenticated git push on a separate endpoint into a separate
+  origin repository under a push scope no existing token holds, with one
+  lineage, forward-only by default, and the same quarantine, vetting and
+  approval gate as fetched content (GW_0101–GW_0103, ADR 0007); auto-approval
+  for trusted internal publishers stays parked per ADR 0006.
 - **Phase 3 — assurance & scale.** Client telemetry inventory, kill switch
   with fleet force-uninstall, signed attestations, additional tool adapters,
   repository-manager catalog federation, OCI re-publication.

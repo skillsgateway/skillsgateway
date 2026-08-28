@@ -107,8 +107,9 @@ class EstateReconciliationTests extends AbstractGatewayTest {
         assertThat(alpha.syncMode()).isEqualTo("scheduled");
 
         assertThat(roleService.rolesOf("estate-approver"))
-                .contains(new RoleService.EffectiveRole("approver", "estate-alpha"));
-        assertThat(roleService.rolesOf("estate-auditor")).contains(new RoleService.EffectiveRole("auditor", null));
+                .contains(new RoleService.EffectiveRole("approver", "estate-alpha", RoleService.EffectiveRole.GRANT));
+        assertThat(roleService.rolesOf("estate-auditor"))
+                .contains(new RoleService.EffectiveRole("auditor", null, RoleService.EffectiveRole.GRANT));
 
         WebhookSubscriber hook = subscriberRepository.findByName("estate-hook").orElseThrow();
         assertThat(hook.url()).isEqualTo("https://receiver.invalid/hook");
@@ -202,11 +203,12 @@ class EstateReconciliationTests extends AbstractGatewayTest {
         String fresh = uniqueName("estate-fresh");
         Estate estate = new Estate(
                 List.of(
-                        new DeclaredMarketplace("estate-evil", "ssh://evil.invalid/repo.git", null),
-                        new DeclaredMarketplace("catalog", "https://example.invalid/catalog.git", null),
-                        new DeclaredMarketplace(drift, "https://example.invalid/other.git", null),
-                        new DeclaredMarketplace("estate-webhookmode", "https://example.invalid/wh.git", "webhook"),
-                        new DeclaredMarketplace(fresh, "https://example.invalid/fresh.git", "scheduled")),
+                        new DeclaredMarketplace("estate-evil", "ssh://evil.invalid/repo.git", null, null, null),
+                        new DeclaredMarketplace("catalog", "https://example.invalid/catalog.git", null, null, null),
+                        new DeclaredMarketplace(drift, "https://example.invalid/other.git", null, null, null),
+                        new DeclaredMarketplace(
+                                "estate-webhookmode", "https://example.invalid/wh.git", "webhook", null, null),
+                        new DeclaredMarketplace(fresh, "https://example.invalid/fresh.git", "scheduled", null, null)),
                 null,
                 null,
                 null,
@@ -268,7 +270,8 @@ class EstateReconciliationTests extends AbstractGatewayTest {
         EstateReconciliation report = reconciler.reconcile(estate, "api");
         assertThat(report.created()).isEqualTo(1);
         assertThat(report.failed()).isEqualTo(1);
-        assertThat(roleService.rolesOf("estate-late")).contains(new RoleService.EffectiveRole("approver", apiSide));
+        assertThat(roleService.rolesOf("estate-late"))
+                .contains(new RoleService.EffectiveRole("approver", apiSide, RoleService.EffectiveRole.GRANT));
         assertThat(roleService.rolesOf("estate-orphan")).isEmpty();
 
         // Idempotent: the same declaration grants nothing twice.
@@ -361,8 +364,8 @@ class EstateReconciliationTests extends AbstractGatewayTest {
         String good = uniqueName("estate-isolated");
         Estate estate = new Estate(
                 List.of(
-                        new DeclaredMarketplace("estate-broken", "ssh://evil.invalid/repo.git", null),
-                        new DeclaredMarketplace(good, "https://example.invalid/good.git", null)),
+                        new DeclaredMarketplace("estate-broken", "ssh://evil.invalid/repo.git", null, null, null),
+                        new DeclaredMarketplace(good, "https://example.invalid/good.git", null, null, null)),
                 null,
                 null,
                 null,

@@ -49,6 +49,11 @@ openspec validate --all --strict
   (`pnpm exec openapi-typescript openapi.json -o src/api/types.gen.ts`).
   Regenerate after backend API changes (snapshot comes from
   `OpenApiDocsTests` → `target/openapi.json`). Never hand-edit.
+  `OpenApiContractTests` fails the build when the committed `openapi.json` is not
+  the document the gateway serves, so regenerate it in the same change — it is
+  the baseline the breaking-change gate diffs against, not just an input to
+  codegen. `info.version` is a placeholder there by design (the served document
+  carries the real one).
 - MSW handlers are typed from the generated types; mocks never appear in the
   acceptance path (Playwright runs against the real gateway).
 

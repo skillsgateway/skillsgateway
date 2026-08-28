@@ -11,11 +11,14 @@ spring:
           idp:
             client-id: ${SGW_OIDC_CLIENT_ID:change-me}
             client-secret: ${SGW_OIDC_CLIENT_SECRET:change-me}
-            scope: openid
+            scope: ${SGW_OIDC_SCOPE:openid}
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/idp"
         provider:
           idp:
+            # A shared registration's `sub` is an opaque per-application id, so this has to be
+            # settable or every grant and ledger row names a string no human can resolve.
+            user-name-attribute: ${SGW_OIDC_USER_NAME_ATTRIBUTE:sub}
             authorization-uri: ${SGW_OIDC_AUTHORIZATION_URI:https://idp.invalid/authorize}
             token-uri: ${SGW_OIDC_TOKEN_URI:https://idp.invalid/token}
             jwk-set-uri: ${SGW_OIDC_JWK_SET_URI:https://idp.invalid/jwks}

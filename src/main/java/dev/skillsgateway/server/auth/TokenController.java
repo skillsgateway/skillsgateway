@@ -48,7 +48,12 @@ public class TokenController {
             List<String> scopes,
 
             @Schema(description = "Expiry; omitted means never, unless a max lifetime is configured")
-            Instant expiresAt) {}
+            Instant expiresAt,
+
+            @Schema(
+                    description = "Hosted marketplace names the token may PUBLISH to. Unlike fetch scopes,"
+                            + " omitting these grants none: there is no every-marketplace push scope.")
+            List<String> pushScopes) {}
 
     /** Never exposes the stored hash. */
     @Schema(description = "A token without its secret; the cleartext is only returned at creation")
@@ -67,7 +72,49 @@ public class TokenController {
             Instant expiresAt,
 
             @Schema(description = "The token this one replaced by rotation, or null")
-            Long rotatedFrom) {}
+            Long rotatedFrom,
+
+            @Schema(description = "Hosted marketplaces this token may publish to; empty grants none")
+            List<String> pushScopes,
+
+            @Schema(
+                    description = "Whether the credential was derived from a browser session rather than"
+                            + " deliberately provisioned; its lifetime was the gateway's to set")
+            boolean sessionDerived) {}
+
+    @Schema(description = "Session credential request: the lifetime is the gateway's, so there is no field for it")
+    public record SessionCredentialRequest(
+            @Schema(description = "Human-readable name", example = "laptop")
+            String name,
+
+            @Schema(
+                    description = "Marketplace names to narrow the credential to; empty or omitted grants"
+                            + " every marketplace, as for any fetch scope")
+            List<String> scopes) {}
+
+    @PostMapping("/session")
+    @Requirements({"GW_0104"})
+    @Tag(name = "Tokens")
+    @Operation(
+            summary = "Mint a git credential from this session",
+            description = "Issues a short-lived facade credential to the principal of the current browser"
+                    + " session. Its lifetime is set by the gateway"
+                    + " (`skills-gateway.tokens.session-ttl`) and cannot be chosen or extended by the"
+                    + " caller — which is the whole difference between this and a personal access token."
+                    + " It carries no publication authority, and is marked session-derived wherever it"
+                    + " appears, including on the audit ledger. It is NOT revoked when the session ends:"
+                    + " the lifetime is the control.")
+    @ApiResponse(responseCode = "201", description = "Credential issued; the only response carrying the cleartext")
+    @ApiResponse(responseCode = "422", description = "Unknown scope")
+    public ResponseEntity<TokenService.IssuedToken> createSessionCredential(
+            @RequestBody SessionCredentialRequest request, Authentication authentication) {
+        TokenService.IssuedToken issued = tokenService.createSessionCredential(
+                authentication.getName(),
+                request == null ? null : request.name(),
+                request == null || request.scopes() == null ? List.of() : request.scopes());
+        auditSession(authentication, issued);
+        return ResponseEntity.status(HttpStatus.CREATED).body(issued);
+    }
 
     @PostMapping
     @Requirements({"GW_0067"})
@@ -76,7 +123,9 @@ public class TokenController {
             summary = "Create a token",
             description = "Issues a personal access token for the git facade. Optionally scoped to named"
                     + " marketplaces (unscoped grants all) and optionally expiring; the cleartext is returned"
-                    + " exactly once. Creation is audit-logged with the token's name and scopes.")
+                    + " exactly once. Push scopes are separate and grant nothing by default: they name the"
+                    + " hosted marketplaces the token may publish to. Creation is audit-logged with the"
+                    + " token's name and both kinds of scope.")
     @ApiResponse(responseCode = "201", description = "Token issued; the only response carrying the cleartext")
     @ApiResponse(responseCode = "422", description = "Unknown scope, or lifetime beyond the configured cap")
     public ResponseEntity<TokenService.IssuedToken> create(
@@ -85,8 +134,9 @@ public class TokenController {
                 authentication.getName(),
                 request.name(),
                 request.scopes() == null ? List.of() : request.scopes(),
-                request.expiresAt());
-        audit(authentication, "token-created", issued.id(), issued.name(), issued.scopes());
+                request.expiresAt(),
+                request.pushScopes() == null ? List.of() : request.pushScopes());
+        audit(authentication, "token-created", issued.id(), issued.name(), issued.scopes(), issued.pushScopes());
         return ResponseEntity.status(HttpStatus.CREATED).body(issued);
     }
 
@@ -144,9 +194,33 @@ public class TokenController {
         return ResponseEntity.noContent().build();
     }
 
+    /** A session credential's ledger entry says so: the origin is what an auditor needs. */
+    @Requirements({"GW_0104"})
+    private void auditSession(Authentication authentication, TokenService.IssuedToken issued) {
+        String detail = "token %d '%s' scopes=%s session-derived expires=%s"
+                .formatted(
+                        issued.id(),
+                        issued.name(),
+                        issued.scopes().isEmpty() ? "all" : issued.scopes(),
+                        issued.expiresAt());
+        auditLogger.record(authentication.getName(), NO_MARKETPLACE, "token-created", null, detail);
+    }
+
     /** Lifecycle entries carry the token's identity, name and scopes (GW_0067). */
     private void audit(Authentication authentication, String event, long tokenId, String name, List<String> scopes) {
-        String detail = "token %d '%s' scopes=%s".formatted(tokenId, name, scopes.isEmpty() ? "all" : scopes);
+        audit(authentication, event, tokenId, name, scopes, List.of());
+    }
+
+    private void audit(
+            Authentication authentication,
+            String event,
+            long tokenId,
+            String name,
+            List<String> scopes,
+            List<String> pushScopes) {
+        String detail = "token %d '%s' scopes=%s push=%s"
+                .formatted(
+                        tokenId, name, scopes.isEmpty() ? "all" : scopes, pushScopes.isEmpty() ? "none" : pushScopes);
         auditLogger.record(authentication.getName(), NO_MARKETPLACE, event, null, detail);
     }
 
@@ -158,7 +232,9 @@ public class TokenController {
                 token.revokedAt(),
                 token.scopeList(),
                 token.expiresAt(),
-                token.rotatedFrom());
+                token.rotatedFrom(),
+                token.pushScopeList(),
+                token.sessionDerived());
     }
 
     @ExceptionHandler(TokenService.InvalidTokenRequestException.class)

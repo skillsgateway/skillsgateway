@@ -27,10 +27,39 @@ public class TokenRepository {
     @Requirements({"GW_0064", "GW_0065"})
     public AccessToken create(
             String principal, String name, String tokenHash, String scopes, Instant expiresAt, Long rotatedFrom) {
+        return create(principal, name, tokenHash, scopes, expiresAt, rotatedFrom, null);
+    }
+
+    @Requirements({"GW_0064", "GW_0065", "GW_0102"})
+    public AccessToken create(
+            String principal,
+            String name,
+            String tokenHash,
+            String scopes,
+            Instant expiresAt,
+            Long rotatedFrom,
+            String pushScopes) {
+        return create(principal, name, tokenHash, scopes, expiresAt, rotatedFrom, pushScopes, false);
+    }
+
+    @Requirements({"GW_0064", "GW_0065", "GW_0102", "GW_0104"})
+    public AccessToken create(
+            String principal,
+            String name,
+            String tokenHash,
+            String scopes,
+            Instant expiresAt,
+            Long rotatedFrom,
+            String pushScopes,
+            boolean sessionDerived) {
         return jdbc.sql("INSERT INTO access_tokens"
-                        + " (principal, name, token_hash, created_at, scopes, expires_at, rotated_from)"
-                        + " VALUES (:principal, :name, :hash, :now, :scopes, :expiresAt, :rotatedFrom)"
+                        + " (principal, name, token_hash, created_at, scopes, expires_at, rotated_from,"
+                        + " push_scopes, session_derived)"
+                        + " VALUES (:principal, :name, :hash, :now, :scopes, :expiresAt, :rotatedFrom,"
+                        + " :pushScopes, :sessionDerived)"
                         + " RETURNING *")
+                .param("pushScopes", pushScopes)
+                .param("sessionDerived", sessionDerived)
                 .param("principal", principal)
                 .param("name", name)
                 .param("hash", tokenHash)
@@ -93,6 +122,8 @@ public class TokenRepository {
                 MarketplaceRepository.instant(rs, "revoked_at"),
                 rs.getString("scopes"),
                 MarketplaceRepository.instant(rs, "expires_at"),
-                rotatedFrom);
+                rotatedFrom,
+                rs.getString("push_scopes"),
+                rs.getBoolean("session_derived"));
     }
 }

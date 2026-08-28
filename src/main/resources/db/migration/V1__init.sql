@@ -1,8 +1,18 @@
 CREATE TABLE marketplaces (
     id BIGSERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
-    url TEXT NOT NULL,
+    -- Null only for a gateway-hosted marketplace (GW_0101), which has no upstream to clone from;
+    -- the CHECK below is what keeps every other marketplace's URL mandatory.
+    url TEXT,
     created_at TIMESTAMPTZ NOT NULL,
+    -- Where the content comes from (GW_0101): fetched from an upstream clone URL, or pushed by
+    -- the organisation into a gateway-owned origin repository. Immutable after registration --
+    -- changing it would swap the supply chain under snapshots that were already approved.
+    origin TEXT NOT NULL DEFAULT 'upstream' CHECK (origin IN ('upstream', 'hosted')),
+    -- Whether a hosted marketplace's publisher may rewrite its lineage (GW_0102). append-only
+    -- refuses a non-fast-forward push; allow-rewrite permits it and puts both tips on the ledger.
+    push_policy TEXT NOT NULL DEFAULT 'append-only'
+        CHECK (push_policy IN ('append-only', 'allow-rewrite')),
     -- Best-effort forge metadata captured at registration (GW_0021).
     forge TEXT,
     forge_project TEXT,
@@ -18,7 +28,12 @@ CREATE TABLE marketplaces (
     webhook_secret TEXT,
     -- Last sync attempt, success or failure (GW_0057): stamping failures too is what keeps one
     -- dead upstream from monopolizing the sweep's oldest-first order.
-    last_sync_at TIMESTAMPTZ
+    last_sync_at TIMESTAMPTZ,
+    -- An upstream marketplace is defined by its clone URL; a hosted one has none (GW_0101).
+    CONSTRAINT marketplaces_upstream_has_url CHECK (origin = 'hosted' OR url IS NOT NULL),
+    -- A hosted marketplace has no upstream to poll or be notified about: its ingestion trigger is
+    -- the push itself, so the sweep must never see it (GW_0101).
+    CONSTRAINT marketplaces_hosted_is_on_demand CHECK (origin <> 'hosted' OR sync_mode = 'on-demand')
 );
 
 -- The scheduled sync sweep's only query: scheduled marketplaces, least recently attempted first.
@@ -100,7 +115,15 @@ CREATE TABLE access_tokens (
     -- be late and no scheduler outage can keep a dead token alive. NULL never expires.
     expires_at TIMESTAMPTZ,
     -- The token this one replaced via rotation (GW_0066): the lineage an auditor follows.
-    rotated_from BIGINT REFERENCES access_tokens (id)
+    rotated_from BIGINT REFERENCES access_tokens (id),
+    -- Derived from a browser session rather than deliberately provisioned (GW_0104). Recorded
+    -- rather than inferred from a short expiry: a short-lived PAT is an ordinary thing to want,
+    -- and what the ledger needs to distinguish is how the credential was obtained.
+    session_derived BOOLEAN NOT NULL DEFAULT FALSE,
+    -- Comma-delimited hosted marketplace names this token may PUSH to (GW_0102). Deliberately
+    -- unlike `scopes`: NULL here means none, not all, so no token that predates publication --
+    -- and no token whose fetch scope is the every-marketplace form -- can write anything.
+    push_scopes TEXT
 );
 
 -- Lifecycle event webhooks (GW_0023..GW_0025).

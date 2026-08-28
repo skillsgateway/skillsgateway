@@ -55,7 +55,13 @@ public class TokenService {
             Instant expiresAt,
 
             @Schema(description = "The token this one replaced by rotation, or null")
-            Long rotatedFrom) {}
+            Long rotatedFrom,
+
+            @Schema(description = "Hosted marketplaces this token may publish to; empty grants none")
+            List<String> pushScopes,
+
+            @Schema(description = "Whether this credential was derived from a browser session (GW_0104)")
+            boolean sessionDerived) {}
 
     /** A scope or lifetime the policy refuses; surfaces as 422. */
     public static class InvalidTokenRequestException extends RuntimeException {
@@ -86,10 +92,40 @@ public class TokenService {
      */
     @Requirements({"GW_0013", "GW_0064", "GW_0065"})
     public IssuedToken create(String principal, String name, List<String> scopes, Instant expiresAt) {
+        return create(principal, name, scopes, expiresAt, List.of());
+    }
+
+    /**
+     * As above, plus push scopes (GW_0102). A push scope must name a registered <em>hosted</em>
+     * marketplace: the catalog is generated, an upstream marketplace's content comes from its
+     * upstream, and neither can be published to — so naming one is a mistake worth failing at
+     * issue time rather than a grant that could never match.
+     */
+    @Requirements({"GW_0013", "GW_0064", "GW_0065", "GW_0102"})
+    public IssuedToken create(
+            String principal, String name, List<String> scopes, Instant expiresAt, List<String> pushScopes) {
         String storedScopes = validateScopes(scopes);
+        String storedPushScopes = validatePushScopes(pushScopes);
         validateTtl(expiresAt);
         String secret = newSecret();
-        AccessToken stored = tokenRepository.create(principal, name, sha256Hex(secret), storedScopes, expiresAt, null);
+        AccessToken stored = tokenRepository.create(
+                principal, name, sha256Hex(secret), storedScopes, expiresAt, null, storedPushScopes);
+        return issued(stored, secret);
+    }
+
+    /**
+     * A git credential derived from the caller's browser session (GW_0104). The lifetime is the
+     * gateway's, taken from configuration: there is no parameter for it, because a credential
+     * whose life the holder can choose is a personal access token reached through another URL.
+     * No push scopes, ever — publishing is done with something somebody provisioned on purpose.
+     */
+    @Requirements({"GW_0104"})
+    public IssuedToken createSessionCredential(String principal, String name, List<String> scopes) {
+        String storedScopes = validateScopes(scopes);
+        Instant expiresAt = Instant.now().plus(properties.tokens().sessionTtl());
+        String secret = newSecret();
+        AccessToken stored =
+                tokenRepository.create(principal, name, sha256Hex(secret), storedScopes, expiresAt, null, null, true);
         return issued(stored, secret);
     }
 
@@ -124,8 +160,18 @@ public class TokenService {
             throw new TokenNotRotatableException("token %d is not live; issue a new token instead".formatted(id));
         }
         String secret = newSecret();
-        AccessToken stored =
-                tokenRepository.create(principal, old.name(), sha256Hex(secret), old.scopes(), old.expiresAt(), id);
+        AccessToken stored = tokenRepository.create(
+                principal,
+                old.name(),
+                sha256Hex(secret),
+                old.scopes(),
+                old.expiresAt(),
+                id,
+                // Rotation changes the secret and nothing else (GW_0066): push scopes, the expiry
+                // deadline, and the session-derived mark all carry over — so a rotation can
+                // neither widen a grant nor launder a session credential into a standing one.
+                old.pushScopes(),
+                old.sessionDerived());
         return Optional.of(issued(stored, secret));
     }
 
@@ -154,6 +200,24 @@ public class TokenService {
         return String.join(",", new LinkedHashSet<>(scopes));
     }
 
+    @Requirements({"GW_0102"})
+    private String validatePushScopes(List<String> pushScopes) {
+        if (pushScopes == null || pushScopes.isEmpty()) {
+            return null;
+        }
+        Set<String> hosted = new LinkedHashSet<>();
+        marketplaceRepository.list().stream()
+                .filter(dev.skillsgateway.server.persistence.Marketplace::hosted)
+                .forEach(marketplace -> hosted.add(marketplace.name()));
+        for (String scope : pushScopes) {
+            if (!hosted.contains(scope)) {
+                throw new InvalidTokenRequestException(
+                        "unknown push scope '%s': push scopes name registered hosted marketplaces".formatted(scope));
+            }
+        }
+        return String.join(",", new LinkedHashSet<>(pushScopes));
+    }
+
     private void validateTtl(Instant expiresAt) {
         var maxTtl = properties.tokens().maxTtl();
         if (maxTtl == null) {
@@ -173,7 +237,9 @@ public class TokenService {
                 stored.createdAt(),
                 stored.scopeList(),
                 stored.expiresAt(),
-                stored.rotatedFrom());
+                stored.rotatedFrom(),
+                stored.pushScopeList(),
+                stored.sessionDerived());
     }
 
     static String sha256Hex(String value) {

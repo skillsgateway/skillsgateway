@@ -37,9 +37,9 @@ re-vetting found. See
 
 ## `POST /marketplaces`
 
-Register an upstream repository. Fetches nothing.
+Register a marketplace. Fetches nothing.
 
-**Body** — `{name, url, ref?}`
+**Body** — `{name, url?, ref?, origin?, pushPolicy?}`
 
 ```console
 $ curl -X POST localhost:8080/api/marketplaces \
@@ -47,14 +47,26 @@ $ curl -X POST localhost:8080/api/marketplaces \
     -d '{"name":"acme","url":"https://github.com/acme/skills.git"}'
 ```
 
+`origin` decides where the content comes from:
+
+| `origin` | `url` | Content arrives by |
+| --- | --- | --- |
+| `upstream` (default) | required | the gateway fetching the upstream default branch |
+| `hosted` | must be absent | a publisher pushing to `/publish/{name}` |
+
+`pushPolicy` applies to a hosted marketplace only: `append-only` (the default)
+refuses a non-fast-forward push, `allow-rewrite` permits one and records both
+tips on the ledger. See
+[Publishing first-party skills](../../guides/publishing-first-party-skills.md).
+
 | Status | Cause |
 | --- | --- |
 | 201 | Registered; returns the marketplace. |
-| 400 | URL scheme not allowlisted, or `ref` is present and not `main`. |
+| 400 | URL scheme not allowlisted, `ref` present and not `main`, a hosted registration supplying a `url`, an upstream one omitting it, or a `pushPolicy` on an upstream marketplace. |
 | 409 | Name already exists. |
-| 422 | Name fails `^[a-z0-9][a-z0-9_-]*$`. |
+| 422 | Name fails `^[a-z0-9][a-z0-9_-]*$`, or an unknown `origin`/`pushPolicy`. |
 
-Both 400 cases are trust-boundary rejections — see
+The 400 cases are trust-boundary rejections — see
 [Compatibility and allowlists](../compatibility.md).
 
 ---
@@ -70,8 +82,10 @@ the portal's primary query; there is no per-marketplace endpoint.
 
 ## `POST /marketplaces/{name}/ingest`
 
-Clone the upstream default branch into quarantine and pin the tip commit as
-`refs/snapshots/{sha}`. Creates a snapshot in state `held`.
+Clone the source's default branch into quarantine and pin the tip commit as
+`refs/snapshots/{sha}`. Creates a snapshot in state `held`. For a hosted
+marketplace the source is its own origin repository, and a push already does
+this — the endpoint stays available to re-ingest.
 
 ```console
 $ curl -X POST localhost:8080/api/marketplaces/acme/ingest

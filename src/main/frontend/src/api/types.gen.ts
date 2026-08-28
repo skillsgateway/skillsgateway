@@ -4,91 +4,7 @@
  */
 
 export interface paths {
-    "/api/policy/rules/{name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Update a policy rule
-         * @description Replaces a rule's description, expression and enabled flag. The new expression is compiled first; an expression that does not compile is refused and the stored rule is unchanged. Disabling a rule is the audited off-switch — there is no per-snapshot waiver of a policy denial.
-         */
-        put: operations["update"];
-        post?: never;
-        /**
-         * Delete a policy rule
-         * @description Removes the rule; the deletion lands on the audit ledger. Past denials it decided stay on the append-only ledger.
-         */
-        delete: operations["delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/marketplaces/{name}/sync": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Change a marketplace's sync mode
-         * @description Sets how upstream content reaches quarantine: on-demand (operator-triggered, the default), scheduled (the gateway polls upstream), or webhook (a signed forge push webhook triggers ingestion). Enabling webhook mode generates the HMAC secret and returns it exactly once — re-enabling rotates it, and no read endpoint ever returns it. No mode bypasses approval: sync-triggered snapshots land held.
-         */
-        put: operations["changeSyncMode"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/audit/sinks/{id}/cursor": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Set an audit export sink's ledger position
-         * @description Replay: setting the position back re-delivers every ledger entry after it on the next export pass. Receivers de-duplicate on the ledger sequence carried by each entry.
-         */
-        put: operations["setCursor"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/hooks/{marketplace}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Forge push webhook
-         * @description Trigger endpoint for a forge push webhook. Authenticated solely by an HMAC-SHA256 signature of the raw request body (GitHub-compatible X-Hub-Signature-256 header) against the secret generated when the marketplace's sync mode was set to webhook. The payload is ignored: a valid signature only causes the registered upstream URL's default branch to be ingested into a held quarantine snapshot, asynchronously.
-         */
-        post: operations["trigger"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/webhooks": {
+    "/api/adoption": {
         parameters: {
             query?: never;
             header?: never;
@@ -96,410 +12,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List webhook subscribers
-         * @description Every registered receiver with its event filter. Signing secrets are never returned.
+         * Adoption report over the fetch ledger
+         * @description Per marketplace: content-transferring fetches in the window, distinct fetching identities, the most recent fetch, and the per-snapshot-SHA breakdown with each SHA marked current against the served tip. Attribution is by authenticated identity as the ledger records it — the gateway has no team concept. Out-of-range windows are clamped to 1..365 days.
          */
-        get: operations["list"];
-        put?: never;
-        /**
-         * Register a webhook subscriber
-         * @description Registers a receiver for snapshot lifecycle events. The signing secret is returned exactly once, in this response, and is never readable afterwards.
-         */
-        post: operations["create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/tokens": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List your tokens
-         * @description Only the caller's own tokens, never any secret.
-         */
-        get: operations["list_1"];
-        put?: never;
-        /**
-         * Create a token
-         * @description Issues a personal access token for the git facade. Optionally scoped to named marketplaces (unscoped grants all) and optionally expiring; the cleartext is returned exactly once. Creation is audit-logged with the token's name and scopes.
-         */
-        post: operations["create_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/tokens/{id}/rotate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Rotate a token
-         * @description Issues a fresh secret with the identical grant — name, scopes, and the same expiry deadline — and revokes the old token first, so no moment has two live secrets. Only the owner may rotate, only a live token can be rotated, and the new cleartext is returned exactly once.
-         */
-        post: operations["rotate"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/snapshots/{id}/waivers": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Accept a vetting finding on this snapshot's marketplace
-         * @description Records a scoped, expiring waiver for one finding rule. The marketplace — and, for SNAPSHOT scope, the commit SHA — are taken from the snapshot, so a waiver cannot be mis-scoped to content it does not belong to. A justification, the acting identity and a future expiry are all mandatory; an unlimited waiver cannot be expressed. While an active waiver covers a finding, that finding no longer contributes to the snapshot's effective vetting outcome.
-         */
-        post: operations["create_2"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/snapshots/{id}/revet": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Re-vet an approved snapshot now
-         * @description Runs the vetting chain again over the snapshot's pinned content and records a new run with trigger revet-manual. If the run's effective outcome — after the waivers active right now — objects to the content, the violation is written to the ledger and announced as snapshot.revet_violation. In enforce mode the snapshot is then revoked and its published refs are removed; in warn mode, the default, publication is untouched. A run that only blocks because a connector errored or has not answered is recorded as inconclusive and never revokes anything.
-         */
-        post: operations["revetSnapshot"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/snapshots/{id}/restore": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Restore a soft-deleted snapshot
-         * @description Clears the deletion marks, provided compaction has not yet removed the snapshot.
-         */
-        post: operations["restore"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/snapshots/{id}/reject": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Reject a held or revoked snapshot
-         * @description Marks the snapshot rejected with the reviewer identity and timestamp; its content is never served again. This is the terminal answer to a re-vetting revocation the reviewer does not intend to waive.
-         */
-        post: operations["reject"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/snapshots/{id}/approve": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Approve a held or revoked snapshot
-         * @description Publishes the snapshot to the git facade and records the reviewer identity and timestamp. Takes no request body. Held snapshots and snapshots that re-vetting revoked can be approved; a revoked one is re-published only by this fresh decision, behind the same gate, which means the violation that revoked it must have been waived or fixed first. A snapshot whose effective vetting outcome is blocked — its chain run objects and at least one blocking finding is not covered by an active waiver, including a snapshot with no chain run at all — is refused, and the problem document names both the blocking connectors and the uncovered findings. Record a scoped, expiring waiver for each of those findings and approve again; every waiver that let the approval through is written to the ledger.
-         */
-        post: operations["approve"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/roles": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List role grants
-         * @description Every current grant. Configuration-bootstrapped admins are not grants and do not appear here; they show up as an effective role on /api/me. Admin-only while role enforcement is enabled.
-         */
-        get: operations["list_2"];
-        put?: never;
-        /**
-         * Grant a role
-         * @description Grants admin or auditor globally, or approver scoped to one existing marketplace. Every grant lands on the append-only ledger with the acting identity. Admin-only while role enforcement is enabled; while disabled, grants are inert data a deployment stages before enabling enforcement.
-         */
-        post: operations["grant"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/retention/evaluate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Run a retention evaluation pass
-         * @description Soft-deletes every snapshot the policies select. Equivalent to what the scheduled pass does when retention is enabled.
-         */
-        post: operations["evaluate"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/retention/compact": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Run a compaction pass
-         * @description Permanently removes every soft-deleted snapshot whose restore window has elapsed, together with its pinned commit in the quarantine repository.
-         */
-        post: operations["compact"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/policy/rules": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List policy rules
-         * @description Every stored rule, enabled or not, with its expression and attribution.
-         */
-        get: operations["list_3"];
-        put?: never;
-        /**
-         * Create a policy deny rule
-         * @description Stores a named CEL deny rule after compiling it — parsing and type-checking to a boolean over the documented variables (snapshot, files, plugins, skills). An expression that does not compile is refused and never stored. Enabled rules are evaluated fail-closed at every approval; a matching or erroring rule refuses it. The creation lands on the audit ledger.
-         */
-        post: operations["create_3"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/policy/playground": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Test an expression against a real snapshot
-         * @description Compiles and evaluates any CEL expression over a real snapshot's facts — held, approved or revoked — and answers matched or the error. Read-only by contract: nothing is stored, nothing lands on the ledger, no state changes; the answer never carries snapshot content. This is how a rule is tested before it is enforced. Requires permission to approve the named snapshot.
-         */
-        post: operations["playground"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/marketplaces": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List marketplaces and their snapshots
-         * @description All registered marketplaces with every snapshot and its state (held, approved, rejected, or revoked).
-         */
-        get: operations["listMarketplaces"];
-        put?: never;
-        /**
-         * Register a marketplace
-         * @description Registers an upstream git skill marketplace by clone URL. The URL scheme must be on the configured allowlist (default http/https). The ingested ref is set by the gateway (the upstream default branch) and cannot be overridden; a request supplying any other ref is rejected.
-         */
-        post: operations["registerMarketplace"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/marketplaces/{name}/revet": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Re-vet every approved snapshot of a marketplace now
-         * @description Runs the vetting chain again over every live approved snapshot of the marketplace, one run each, and applies the configured re-vetting mode to each result. This is the operational answer to a connector rule set or advisory feed that has just been updated.
-         */
-        post: operations["revetMarketplace"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/marketplaces/{name}/ingest": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Ingest the upstream default branch
-         * @description Fetches the marketplace's upstream default branch into quarantine and records an immutable snapshot pinned to the upstream commit SHA. The snapshot is held until a reviewer approves it; manifests declaring non-local plugin sources are rejected.
-         */
-        post: operations["ingest"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/estate/reconcile": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Reconcile the declared estate now
-         * @description Runs the same additive, idempotent reconciliation as startup against the current declaration and returns its report. A converged estate reconciles with zero writes and zero ledger entries; the trigger itself is an administrative action and is always recorded with the acting identity. Admin-only while role enforcement is enabled.
-         */
-        post: operations["reconcile"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/catalog/rebuild": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Rebuild the catalog now
-         * @description Regenerates the catalog from what every marketplace is serving right now. Approvals and revocations already do this on their own; this is the on-demand repair path, and it lands on the audit ledger with the acting identity.
-         */
-        post: operations["rebuild"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/audit/sinks": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List audit export sinks
-         * @description Every registered sink with its target, its position in the ledger, and how many entries it still has to receive. Signing secrets are never returned.
-         */
-        get: operations["listSinks"];
-        put?: never;
-        /**
-         * Register an audit export sink
-         * @description Registers a push consumer of the ledger. Batches are POSTed to the target URL by the same signed, retried delivery machinery as lifecycle webhooks; the signing secret is returned exactly once, in this response.
-         */
-        post: operations["createSink"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/docs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getDocs"];
+        get: operations["adoption"];
         put?: never;
         post?: never;
         delete?: never;
@@ -508,23 +24,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/docs/scalar.js": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getScalarJs"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/webhooks/events": {
+    "/api/adoption/staleness": {
         parameters: {
             query?: never;
             header?: never;
@@ -532,310 +32,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List the subscribable lifecycle events
-         * @description Every snapshot lifecycle event a subscriber may filter on. Read-only, records nothing. The audit export event is not subscribable and never appears here.
+         * Identities not on the served tip
+         * @description Every identity whose most recent content-transferring fetch of a marketplace received a SHA that is not the currently served tip. A null servedSha means the marketplace stopped serving entirely (revoked or unpublished) — the identity holds retracted content. The report states facts, not verdicts: an identity may be pinned to an old SHA on purpose.
          */
-        get: operations["events"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/webhooks/deliveries": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List recent delivery attempts
-         * @description Most recent deliveries first, with state, attempt count, and the last response status or error — the operator's view of a failing integration.
-         */
-        get: operations["deliveries"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/snapshots/{id}/vetting": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Snapshot vetting verdicts
-         * @description The snapshot's latest vetting chain run: each connector's verdict in chain order, the findings behind it, the waivers currently suppressing any of them, and the fail-closed effective aggregate that gates approval. A snapshot the chain has never run against reports a blocked outcome and no run.
-         */
-        get: operations["vetting"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/snapshots/{id}/release-age": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Minimum release age eligibility
-         * @description Whether the snapshot has cleared the configured cooling-off window and may be approved, and when it will if it has not. The age is measured from the instant the gateway first ingested the commit — never from the commit's own timestamp, which whoever made the commit controls — and re-ingesting the same commit does not reset it. Computed on every request, so a snapshot becomes eligible with nothing having had to run in the background. With the gate off (the default) every snapshot reports eligible.
-         */
-        get: operations["releaseAge"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/snapshots/{id}/provenance": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Snapshot provenance
-         * @description What was served, from where, and who approved it: upstream URL, upstream commit SHA, state, reviewer, and timestamps.
-         */
-        get: operations["provenance"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/snapshots/{id}/licenses": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Snapshot license report
-         * @description The licenses the snapshot declares — detected deterministically from license/copying files and marketplace-manifest metadata over the content pinned to the snapshot's commit SHA — each with its SPDX id (or its unknown state) and its standing under the license allow/ban policy currently configured. Computed from the pinned content and the current configuration: the historical evidence the approval gate read lives in the recorded vetting runs. Complements the snapshot content inventory and the gateway's own SBOM endpoint as the supply-chain read surface.
-         */
-        get: operations["snapshotLicenses"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/snapshots/{id}/files": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * File tree of the pinned commit
-         * @description Every path in exactly the commit the snapshot pins, resolved through the quarantine repository's object store, capped at 2000 entries with an explicit marker when cut. Privileged while role enforcement is enabled: admin or an approver of the snapshot's marketplace.
-         */
-        get: operations["files"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/snapshots/{id}/file": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * One file of the pinned commit
-         * @description One blob addressed strictly within the pinned commit's tree — a path the tree does not contain, traversal shapes included, is not found. Text is returned for rendering only, cut at 128 KiB with an explicit truncation marker; a blob detected as binary returns metadata without text. Privileged while role enforcement is enabled.
-         */
-        get: operations["file"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/snapshots/{id}/fetchers": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Who fetched this snapshot
-         * @description Every authenticated identity that received this snapshot's content through the git facade, with how many times and when it last did — the blast radius of a retroactive violation, answered from the append-only fetch ledger. Only pack transfers count: a ref advertisement means the client asked, not that it received anything.
-         */
-        get: operations["fetchers"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/snapshots/{id}/diff": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Diff against the currently served commit
-         * @description Added, modified and removed paths between the pinned commit and the marketplace's currently served commit (the published repository's served tip), with a unified text diff per non-binary entry under the same size caps as file reads. When the marketplace serves nothing the baseline is null and every path is reported as added. Privileged while role enforcement is enabled.
-         */
-        get: operations["diff"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/snapshots/{id}/content": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Snapshot content inventory
-         * @description The plugins declared by the snapshot's marketplace manifest and the skills found under each plugin's source tree — the basis for future per-plugin/per-skill limiting.
-         */
-        get: operations["snapshotContent"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/retention/candidates": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Preview the retention candidates
-         * @description The snapshots the policies in force would delete right now, each with the criterion that selected it. A dry run: nothing is written.
-         */
-        get: operations["candidates"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Current user
-         * @description Username of the authenticated browser session, whether role enforcement is enabled, and the session's effective roles — how the portal and CLI adapt their controls to what the caller may do.
-         */
-        get: operations["me"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/marketplaces/{name}/waivers": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * A marketplace's vetting waivers
-         * @description Every waiver recorded for the marketplace, newest first, active and lapsed alike. A lapsed or revoked waiver is kept and returned with active=false: the record of what was once accepted, by whom and until when is part of the audit trail.
-         */
-        get: operations["list_4"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/estate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Last estate reconciliation report
-         * @description The most recent reconciliation run — per declared entry, what was created, updated, unchanged, or failed and why. The report is held in memory; after a restart the startup run repopulates it. Secret values never appear. Auditor or admin while role enforcement is enabled, because failure reasons expose operator infrastructure.
-         */
-        get: operations["lastRun"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/catalog": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * The served catalog revision
-         * @description The catalog commit the facade is serving at /git/{catalog-name}, with the marketplace and upstream commit SHA of every constituent vendored into it.
-         */
-        get: operations["catalog"];
+        get: operations["staleness"];
         put?: never;
         post?: never;
         delete?: never;
@@ -884,7 +84,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/adoption": {
+    "/api/audit/sinks": {
         parameters: {
             query?: never;
             header?: never;
@@ -892,10 +92,74 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Adoption report over the fetch ledger
-         * @description Per marketplace: content-transferring fetches in the window, distinct fetching identities, the most recent fetch, and the per-snapshot-SHA breakdown with each SHA marked current against the served tip. Attribution is by authenticated identity as the ledger records it — the gateway has no team concept. Out-of-range windows are clamped to 1..365 days.
+         * List audit export sinks
+         * @description Every registered sink with its target, its position in the ledger, and how many entries it still has to receive. Signing secrets are never returned.
          */
-        get: operations["adoption"];
+        get: operations["listSinks"];
+        put?: never;
+        /**
+         * Register an audit export sink
+         * @description Registers a push consumer of the ledger. Batches are POSTed to the target URL by the same signed, retried delivery machinery as lifecycle webhooks; the signing secret is returned exactly once, in this response.
+         */
+        post: operations["createSink"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/audit/sinks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete an audit export sink
+         * @description Removes the sink and its delivery channel; no further batches are queued for it.
+         */
+        delete: operations["deleteSink"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/audit/sinks/{id}/cursor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set an audit export sink's ledger position
+         * @description Replay: setting the position back re-delivers every ledger entry after it on the next export pass. Receivers de-duplicate on the ledger sequence carried by each entry.
+         */
+        put: operations["setCursor"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The served catalog revision
+         * @description The catalog commit the facade is serving at /git/{catalog-name}, with the marketplace and upstream commit SHA of every constituent vendored into it.
+         */
+        get: operations["catalog"];
         put?: never;
         post?: never;
         delete?: never;
@@ -904,7 +168,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/adoption/staleness": {
+    "/api/catalog/rebuild": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rebuild the catalog now
+         * @description Regenerates the catalog from what every marketplace is serving right now. Approvals and revocations already do this on their own; this is the on-demand repair path, and it lands on the audit ledger with the acting identity.
+         */
+        post: operations["rebuild"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/estate": {
         parameters: {
             query?: never;
             header?: never;
@@ -912,10 +196,794 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Identities not on the served tip
-         * @description Every identity whose most recent content-transferring fetch of a marketplace received a SHA that is not the currently served tip. A null servedSha means the marketplace stopped serving entirely (revoked or unpublished) — the identity holds retracted content. The report states facts, not verdicts: an identity may be pinned to an old SHA on purpose.
+         * Last estate reconciliation report
+         * @description The most recent reconciliation run — per declared entry, what was created, updated, unchanged, or failed and why. The report is held in memory; after a restart the startup run repopulates it. Secret values never appear. Auditor or admin while role enforcement is enabled, because failure reasons expose operator infrastructure.
          */
-        get: operations["staleness"];
+        get: operations["lastRun"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/estate/reconcile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reconcile the declared estate now
+         * @description Runs the same additive, idempotent reconciliation as startup against the current declaration and returns its report. A converged estate reconciles with zero writes and zero ledger entries; the trigger itself is an administrative action and is always recorded with the acting identity. Admin-only while role enforcement is enabled.
+         */
+        post: operations["reconcile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/marketplaces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List marketplaces and their snapshots
+         * @description All registered marketplaces with every snapshot and its state (held, approved, rejected, or revoked).
+         */
+        get: operations["listMarketplaces"];
+        put?: never;
+        /**
+         * Register a marketplace
+         * @description Registers a git skill marketplace. An upstream marketplace (the default) names a clone URL whose scheme must be on the configured allowlist (default http/https); the ingested ref is set by the gateway (the upstream default branch) and cannot be overridden. A hosted marketplace takes no URL at all and is published to by pushing to /publish/{name}.
+         */
+        post: operations["registerMarketplace"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/marketplaces/{name}/ingest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ingest the upstream default branch
+         * @description Fetches the marketplace's upstream default branch into quarantine and records an immutable snapshot pinned to the upstream commit SHA. The snapshot is held until a reviewer approves it; manifests declaring non-local plugin sources are rejected.
+         */
+        post: operations["ingest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/marketplaces/{name}/revet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Re-vet every approved snapshot of a marketplace now
+         * @description Runs the vetting chain again over every live approved snapshot of the marketplace, one run each, and applies the configured re-vetting mode to each result. This is the operational answer to a connector rule set or advisory feed that has just been updated.
+         */
+        post: operations["revetMarketplace"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/marketplaces/{name}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Change a marketplace's sync mode
+         * @description Sets how upstream content reaches quarantine: on-demand (operator-triggered, the default), scheduled (the gateway polls upstream), or webhook (a signed forge push webhook triggers ingestion). Enabling webhook mode generates the HMAC secret and returns it exactly once — re-enabling rotates it, and no read endpoint ever returns it. No mode bypasses approval: sync-triggered snapshots land held.
+         */
+        put: operations["changeSyncMode"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/marketplaces/{name}/waivers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A marketplace's vetting waivers
+         * @description Every waiver recorded for the marketplace, newest first, active and lapsed alike. A lapsed or revoked waiver is kept and returned with active=false: the record of what was once accepted, by whom and until when is part of the audit trail.
+         */
+        get: operations["list_4"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Current user
+         * @description Username of the authenticated browser session, whether role enforcement is enabled, the session's effective roles with the source of each, and whether the identity provider truncated the membership claim — how the portal and CLI adapt their controls to what the caller may do.
+         */
+        get: operations["me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/policy/playground": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test an expression against a real snapshot
+         * @description Compiles and evaluates any CEL expression over a real snapshot's facts — held, approved or revoked — and answers matched or the error. Read-only by contract: nothing is stored, nothing lands on the ledger, no state changes; the answer never carries snapshot content. This is how a rule is tested before it is enforced. Requires permission to approve the named snapshot.
+         */
+        post: operations["playground"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/policy/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List policy rules
+         * @description Every stored rule, enabled or not, with its expression and attribution.
+         */
+        get: operations["list_3"];
+        put?: never;
+        /**
+         * Create a policy deny rule
+         * @description Stores a named CEL deny rule after compiling it — parsing and type-checking to a boolean over the documented variables (snapshot, files, plugins, skills). An expression that does not compile is refused and never stored. Enabled rules are evaluated fail-closed at every approval; a matching or erroring rule refuses it. The creation lands on the audit ledger.
+         */
+        post: operations["create_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/policy/rules/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update a policy rule
+         * @description Replaces a rule's description, expression and enabled flag. The new expression is compiled first; an expression that does not compile is refused and the stored rule is unchanged. Disabling a rule is the audited off-switch — there is no per-snapshot waiver of a policy denial.
+         */
+        put: operations["update"];
+        post?: never;
+        /**
+         * Delete a policy rule
+         * @description Removes the rule; the deletion lands on the audit ledger. Past denials it decided stay on the append-only ledger.
+         */
+        delete: operations["delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/retention/candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview the retention candidates
+         * @description The snapshots the policies in force would delete right now, each with the criterion that selected it. A dry run: nothing is written.
+         */
+        get: operations["candidates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/retention/compact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run a compaction pass
+         * @description Permanently removes every soft-deleted snapshot whose restore window has elapsed, together with its pinned commit in the quarantine repository.
+         */
+        post: operations["compact"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/retention/evaluate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run a retention evaluation pass
+         * @description Soft-deletes every snapshot the policies select. Equivalent to what the scheduled pass does when retention is enabled.
+         */
+        post: operations["evaluate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List role grants
+         * @description Every current grant. Configuration-bootstrapped admins are not grants and do not appear here; they show up as an effective role on /api/me. Admin-only while role enforcement is enabled.
+         */
+        get: operations["list_2"];
+        put?: never;
+        /**
+         * Grant a role
+         * @description Grants admin or auditor globally, or approver scoped to one existing marketplace. Every grant lands on the append-only ledger with the acting identity. Admin-only while role enforcement is enabled; while disabled, grants are inert data a deployment stages before enabling enforcement.
+         */
+        post: operations["grant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roles/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke a role grant
+         * @description Deletes the grant; the ledger keeps the history. Configuration-bootstrapped admins have no grant row, so they cannot be revoked here — by design, they are the escape hatch that survives a bad grant edit. Admin-only while role enforcement is enabled.
+         */
+        delete: operations["revoke_2"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Soft-delete a snapshot
+         * @description Marks the snapshot deleted and restorable until the end of the marketplace's restore window; its vetting state is unchanged. Approved snapshots are served by the git facade and can never be deleted.
+         */
+        delete: operations["softDelete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve a held or revoked snapshot
+         * @description Publishes the snapshot to the git facade and records the reviewer identity and timestamp. Takes no request body. Held snapshots and snapshots that re-vetting revoked can be approved; a revoked one is re-published only by this fresh decision, behind the same gate, which means the violation that revoked it must have been waived or fixed first. A snapshot whose effective vetting outcome is blocked — its chain run objects and at least one blocking finding is not covered by an active waiver, including a snapshot with no chain run at all — is refused, and the problem document names both the blocking connectors and the uncovered findings. Record a scoped, expiring waiver for each of those findings and approve again; every waiver that let the approval through is written to the ledger.
+         */
+        post: operations["approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Snapshot content inventory
+         * @description The plugins declared by the snapshot's marketplace manifest and the skills found under each plugin's source tree — the basis for future per-plugin/per-skill limiting.
+         */
+        get: operations["snapshotContent"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Diff against the currently served commit
+         * @description Added, modified and removed paths between the pinned commit and the marketplace's currently served commit (the published repository's served tip), with a unified text diff per non-binary entry under the same size caps as file reads. When the marketplace serves nothing the baseline is null and every path is reported as added. Privileged while role enforcement is enabled.
+         */
+        get: operations["diff"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/fetchers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Who fetched this snapshot
+         * @description Every authenticated identity that received this snapshot's content through the git facade, with how many times and when it last did — the blast radius of a retroactive violation, answered from the append-only fetch ledger. Only pack transfers count: a ref advertisement means the client asked, not that it received anything.
+         */
+        get: operations["fetchers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One file of the pinned commit
+         * @description One blob addressed strictly within the pinned commit's tree — a path the tree does not contain, traversal shapes included, is not found. Text is returned for rendering only, cut at 128 KiB with an explicit truncation marker; a blob detected as binary returns metadata without text. Privileged while role enforcement is enabled.
+         */
+        get: operations["file"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * File tree of the pinned commit
+         * @description Every path in exactly the commit the snapshot pins, resolved through the quarantine repository's object store, capped at 2000 entries with an explicit marker when cut. Privileged while role enforcement is enabled: admin or an approver of the snapshot's marketplace.
+         */
+        get: operations["files"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/licenses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Snapshot license report
+         * @description The licenses the snapshot declares — detected deterministically from license/copying files and marketplace-manifest metadata over the content pinned to the snapshot's commit SHA — each with its SPDX id (or its unknown state) and its standing under the license allow/ban policy currently configured. Computed from the pinned content and the current configuration: the historical evidence the approval gate read lives in the recorded vetting runs. Complements the snapshot content inventory and the gateway's own SBOM endpoint as the supply-chain read surface.
+         */
+        get: operations["snapshotLicenses"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/provenance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Snapshot provenance
+         * @description What was served, from where, and who approved it: upstream URL, upstream commit SHA, state, reviewer, and timestamps.
+         */
+        get: operations["provenance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reject a held or revoked snapshot
+         * @description Marks the snapshot rejected with the reviewer identity and timestamp; its content is never served again. This is the terminal answer to a re-vetting revocation the reviewer does not intend to waive.
+         */
+        post: operations["reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/release-age": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Minimum release age eligibility
+         * @description Whether the snapshot has cleared the configured cooling-off window and may be approved, and when it will if it has not. The age is measured from the instant the gateway first ingested the commit — never from the commit's own timestamp, which whoever made the commit controls — and re-ingesting the same commit does not reset it. Computed on every request, so a snapshot becomes eligible with nothing having had to run in the background. With the gate off (the default) every snapshot reports eligible.
+         */
+        get: operations["releaseAge"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore a soft-deleted snapshot
+         * @description Clears the deletion marks, provided compaction has not yet removed the snapshot.
+         */
+        post: operations["restore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/revet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Re-vet an approved snapshot now
+         * @description Runs the vetting chain again over the snapshot's pinned content and records a new run with trigger revet-manual. If the run's effective outcome — after the waivers active right now — objects to the content, the violation is written to the ledger and announced as snapshot.revet_violation. In enforce mode the snapshot is then revoked and its published refs are removed; in warn mode, the default, publication is untouched. A run that only blocks because a connector errored or has not answered is recorded as inconclusive and never revokes anything.
+         */
+        post: operations["revetSnapshot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/vetting": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Snapshot vetting verdicts
+         * @description The snapshot's latest vetting chain run: each connector's verdict in chain order, the findings behind it, the waivers currently suppressing any of them, and the fail-closed effective aggregate that gates approval. A snapshot the chain has never run against reports a blocked outcome and no run.
+         */
+        get: operations["vetting"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/snapshots/{id}/waivers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept a vetting finding on this snapshot's marketplace
+         * @description Records a scoped, expiring waiver for one finding rule. The marketplace — and, for SNAPSHOT scope, the commit SHA — are taken from the snapshot, so a waiver cannot be mis-scoped to content it does not belong to. A justification, the acting identity and a future expiry are all mandatory; an unlimited waiver cannot be expressed. While an active waiver covers a finding, that finding no longer contributes to the snapshot's effective vetting outcome.
+         */
+        post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List your tokens
+         * @description Only the caller's own tokens, never any secret.
+         */
+        get: operations["list_1"];
+        put?: never;
+        /**
+         * Create a token
+         * @description Issues a personal access token for the git facade. Optionally scoped to named marketplaces (unscoped grants all) and optionally expiring; the cleartext is returned exactly once. Push scopes are separate and grant nothing by default: they name the hosted marketplaces the token may publish to. Creation is audit-logged with the token's name and both kinds of scope.
+         */
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tokens/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mint a git credential from this session
+         * @description Issues a short-lived facade credential to the principal of the current browser session. Its lifetime is set by the gateway (`skills-gateway.tokens.session-ttl`) and cannot be chosen or extended by the caller — which is the whole difference between this and a personal access token. It carries no publication authority, and is marked session-derived wherever it appears, including on the audit ledger. It is NOT revoked when the session ends: the lifetime is the control.
+         */
+        post: operations["createSessionCredential"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tokens/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke a token
+         * @description Immediate and permanent; audit-logged.
+         */
+        delete: operations["revoke_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tokens/{id}/rotate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rotate a token
+         * @description Issues a fresh secret with the identical grant — name, scopes, and the same expiry deadline — and revokes the old token first, so no moment has two live secrets. Only the owner may rotate, only a live token can be rotated, and the new cleartext is returned exactly once.
+         */
+        post: operations["rotate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/waivers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Withdraw a waiver
+         * @description Revokes the waiver. It stops suppressing its finding immediately — the effective vetting outcome is recomputed on every read — so a snapshot that was cleared only by this waiver becomes blocked again. The row is kept, with its revoker and time.
+         */
+        delete: operations["revoke"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/webhooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List webhook subscribers
+         * @description Every registered receiver with its event filter. Signing secrets are never returned.
+         */
+        get: operations["list"];
+        put?: never;
+        /**
+         * Register a webhook subscriber
+         * @description Registers a receiver for snapshot lifecycle events. The signing secret is returned exactly once, in this response, and is never readable afterwards.
+         */
+        post: operations["create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/webhooks/deliveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List recent delivery attempts
+         * @description Most recent deliveries first, with state, attempt count, and the last response status or error — the operator's view of a failing integration.
+         */
+        get: operations["deliveries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/webhooks/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the subscribable lifecycle events
+         * @description Every snapshot lifecycle event a subscriber may filter on. Read-only, records nothing. The audit export event is not subscribable and never appears here.
+         */
+        get: operations["events"];
         put?: never;
         post?: never;
         delete?: never;
@@ -944,47 +1012,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/waivers/{id}": {
+    "/docs": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["getDocs"];
         put?: never;
         post?: never;
-        /**
-         * Withdraw a waiver
-         * @description Revokes the waiver. It stops suppressing its finding immediately — the effective vetting outcome is recomputed on every read — so a snapshot that was cleared only by this waiver becomes blocked again. The row is kept, with its revoker and time.
-         */
-        delete: operations["revoke"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/tokens/{id}": {
+    "/docs/scalar.js": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["getScalarJs"];
         put?: never;
         post?: never;
-        /**
-         * Revoke a token
-         * @description Immediate and permanent; audit-logged.
-         */
-        delete: operations["revoke_1"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/snapshots/{id}": {
+    "/hooks/{marketplace}": {
         parameters: {
             query?: never;
             header?: never;
@@ -993,52 +1053,12 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post?: never;
         /**
-         * Soft-delete a snapshot
-         * @description Marks the snapshot deleted and restorable until the end of the marketplace's restore window; its vetting state is unchanged. Approved snapshots are served by the git facade and can never be deleted.
+         * Forge push webhook
+         * @description Trigger endpoint for a forge push webhook. Authenticated solely by an HMAC-SHA256 signature of the raw request body (GitHub-compatible X-Hub-Signature-256 header) against the secret generated when the marketplace's sync mode was set to webhook. The payload is ignored: a valid signature only causes the registered upstream URL's default branch to be ingested into a held quarantine snapshot, asynchronously.
          */
-        delete: operations["softDelete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/roles/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Revoke a role grant
-         * @description Deletes the grant; the ledger keeps the history. Configuration-bootstrapped admins have no grant row, so they cannot be revoked here — by design, they are the escape hatch that survives a bad grant edit. Admin-only while role enforcement is enabled.
-         */
-        delete: operations["revoke_2"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/audit/sinks/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Delete an audit export sink
-         * @description Removes the sink and its delivery channel; no further batches are queued for it.
-         */
-        delete: operations["deleteSink"];
+        post: operations["trigger"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1048,44 +1068,41 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** @description Policy rule update request; the name is the path */
-        UpdateRuleRequest: {
-            /** @description What the rule prohibits */
-            description?: string;
-            /** @description CEL expression; must compile to a boolean */
-            expression?: string;
-            /** @description Whether the rule gates approvals; omitted means enabled */
-            enabled?: boolean;
-        };
-        /** @description A CEL policy deny rule, evaluated fail-closed at approval time */
-        PolicyRule: {
-            /**
-             * Format: int64
-             * @description Rule id
-             */
-            id?: number;
-            /** @description Rule name: the identity a denial carries on the ledger and in the refusal */
-            name?: string;
-            /** @description What the rule prohibits, for reviewers reading a refusal */
-            description?: string;
-            /** @description CEL expression over the policy variables, compiled to a boolean at write time */
-            expression?: string;
-            /** @description Only enabled rules gate approvals; disabling is the audited off-switch */
-            enabled?: boolean;
-            /** @description Identity that created the rule */
-            createdBy?: string;
+        /** @description A snapshot a retention policy would delete, and the criterion that selected it */
+        Candidate: {
             /**
              * Format: date-time
-             * @description Creation time
+             * @description Ingestion time
              */
             createdAt?: string;
-            /** @description Identity of the last update, or null */
-            updatedBy?: string;
+            /** @description Marketplace the snapshot belongs to */
+            marketplace?: string;
+            /**
+             * @description Criterion that selected the snapshot
+             * @enum {string}
+             */
+            reason?: "held-too-long" | "superseded";
+            /** @description Upstream commit SHA the snapshot is pinned to */
+            sha?: string;
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            snapshotId?: number;
+            /** @description Vetting state; never approved, which is categorically ineligible */
+            state?: string;
+        };
+        /** @description The catalog revision the facade is serving */
+        CatalogInfo: {
+            /** @description Served marketplaces vendored into this revision */
+            constituents?: components["schemas"]["Constituent"][];
             /**
              * Format: date-time
-             * @description Time of the last update, or null
+             * @description When this revision was generated
              */
-            updatedAt?: string;
+            generatedAt?: string;
+            /** @description Catalog commit SHA */
+            sha?: string;
         };
         /** @description Sync mode change request */
         ChangeSyncModeRequest: {
@@ -1095,534 +1112,17 @@ export interface components {
              */
             mode?: "on-demand" | "scheduled" | "webhook";
         };
-        /** @description A registered upstream marketplace */
-        Marketplace: {
-            /** Format: int64 */
-            id?: number;
-            name?: string;
-            url?: string;
-            /** Format: date-time */
-            createdAt?: string;
-            /** @description Detected forge (github, gitlab, bitbucket, azure-devops, gitea) or null */
-            forge?: string;
-            /** @description Project path on the forge */
-            forgeProject?: string;
-            /** @description Project description from the forge */
+        /** @description A connector configured in the vetting chain */
+        ConnectorView: {
+            /** @description What the connector looks for, and what it cannot see */
             description?: string;
-            /**
-             * Format: date-time
-             * @description Last upstream update as reported by the forge
-             */
-            upstreamUpdatedAt?: string;
-            /**
-             * @description How upstream content reaches quarantine: on-demand, scheduled, or webhook. The trigger only — every mode lands snapshots held behind the approval gate.
-             * @enum {string}
-             */
-            syncMode?: "on-demand" | "scheduled" | "webhook";
-            /**
-             * Format: date-time
-             * @description Last sync attempt (success or failure), or null before the first one
-             */
-            lastSyncAt?: string;
-        };
-        /** @description The updated marketplace and, only when webhook mode was enabled, its secret */
-        SyncModeView: {
-            marketplace?: components["schemas"]["Marketplace"];
-            /** @description HMAC secret for the inbound webhook — returned exactly once, here. Setting webhook mode again rotates it. Null for the other modes. */
-            webhookSecret?: string;
-        };
-        /** @description Cursor reset request */
-        CursorRequest: {
-            /**
-             * Format: int64
-             * @description Ledger sequence to resume after; entries following it are delivered again
-             */
-            after?: number;
-        };
-        /** @description A registered audit export sink */
-        SinkView: {
-            /**
-             * Format: int64
-             * @description Sink id
-             */
-            id?: number;
-            /** @description Sink name */
+            /** @description Stable connector name */
             name?: string;
-            /** @description Sink kind */
-            kind?: string;
-            /** @description Target URL */
-            url?: string;
-            /**
-             * Format: int64
-             * @description Ledger sequence last handed to this sink
-             */
-            cursorPosition?: number;
-            /**
-             * Format: int64
-             * @description Highest ledger sequence written so far
-             */
-            ledgerHead?: number;
-            /**
-             * Format: int64
-             * @description Ledger entries not yet handed to this sink
-             */
-            behind?: number;
             /**
              * Format: int32
-             * @description Maximum ledger entries per batch
+             * @description Position in the chain
              */
-            batchSize?: number;
-            /** @description Whether export passes run for this sink */
-            enabled?: boolean;
-            /**
-             * Format: date-time
-             * @description Creation time
-             */
-            createdAt?: string;
-        };
-        /** @description Webhook subscriber registration request */
-        CreateSubscriberRequest: {
-            /**
-             * @description Gateway-local subscriber name
-             * @example ci-bot
-             */
-            name?: string;
-            /**
-             * @description Target URL; scheme must be on the configured allowlist (default http/https)
-             * @example https://ci.example.com/hooks/skills-gateway
-             */
-            url?: string;
-            /**
-             * @description Comma-delimited event filter, or * for every event
-             * @example snapshot.approved,snapshot.rejected
-             */
-            events?: string;
-        };
-        /** @description A freshly created subscriber; the only time the signing secret is ever returned */
-        CreatedSubscriber: {
-            /**
-             * Format: int64
-             * @description Subscriber id
-             */
-            id?: number;
-            /** @description Subscriber name */
-            name?: string;
-            /** @description Target URL */
-            url?: string;
-            /** @description Comma-delimited event filter, or * for all */
-            events?: string;
-            /** @description Signing secret - shown exactly once */
-            secret?: string;
-            /**
-             * Format: date-time
-             * @description Creation time
-             */
-            createdAt?: string;
-        };
-        /** @description Token creation request */
-        CreateTokenRequest: {
-            /**
-             * @description Human-readable token name
-             * @example ci-runner
-             */
-            name?: string;
-            /** @description Marketplace names (the catalog's name is valid) the token may fetch; empty or omitted grants every marketplace */
-            scopes?: string[];
-            /**
-             * Format: date-time
-             * @description Expiry; omitted means never, unless a max lifetime is configured
-             */
-            expiresAt?: string;
-        };
-        /** @description A freshly issued token; the only time the cleartext is ever returned */
-        IssuedToken: {
-            /**
-             * Format: int64
-             * @description Token id
-             */
-            id?: number;
-            /** @description Token name */
-            name?: string;
-            /** @description Cleartext token value - shown exactly once, only a hash is stored */
-            token?: string;
-            /**
-             * Format: date-time
-             * @description Creation time
-             */
-            createdAt?: string;
-            /** @description Marketplace scopes; empty grants every marketplace */
-            scopes?: string[];
-            /**
-             * Format: date-time
-             * @description Expiry, or null for a token that never expires
-             */
-            expiresAt?: string;
-            /**
-             * Format: int64
-             * @description The token this one replaced by rotation, or null
-             */
-            rotatedFrom?: number;
-        };
-        /** @description Request to accept one finding rule on a snapshot's marketplace, until an expiry */
-        WaiverRequest: {
-            /**
-             * @description Finding rule identifier to accept
-             * @example aws-access-key-id
-             */
-            ruleId: string;
-            /**
-             * @description SNAPSHOT pins the waiver to this snapshot's commit SHA; PATH applies it to a path in the marketplace and survives re-ingestion
-             * @enum {string}
-             */
-            scope: "SNAPSHOT" | "PATH";
-            /**
-             * @description Repository-relative path for PATH scope; ignored for SNAPSHOT scope, which always takes the snapshot's own SHA
-             * @example plugins/hello
-             */
-            path?: string;
-            /** @description Why this risk is accepted; recorded and shown to the next reviewer */
-            justification: string;
-            /**
-             * Format: date-time
-             * @description When the acceptance lapses. Required and must be in the future: there are no unlimited waivers.
-             * @example 2026-12-31T00:00:00Z
-             */
-            expiresAt: string;
-        };
-        /** @description A waiver as returned by the API, with its activity resolved as of now */
-        WaiverView: {
-            /**
-             * Format: int64
-             * @description Waiver id
-             */
-            id?: number;
-            /** @description Marketplace the waiver belongs to */
-            marketplace?: string;
-            /**
-             * @description Finding rule identifier being accepted
-             * @example aws-access-key-id
-             */
-            ruleId?: string;
-            /**
-             * @description How the scope value is matched
-             * @enum {string}
-             */
-            scope?: "SNAPSHOT" | "PATH";
-            /** @description A commit SHA for snapshot scope, a repository-relative path for path scope */
-            scopeValue?: string;
-            /** @description Why the risk is accepted */
-            justification?: string;
-            /** @description Identity that accepted the risk */
-            approvedBy?: string;
-            /**
-             * Format: date-time
-             * @description When the waiver was created
-             */
-            createdAt?: string;
-            /**
-             * Format: date-time
-             * @description When the acceptance lapses; never null
-             */
-            expiresAt?: string;
-            /**
-             * Format: date-time
-             * @description When the waiver was revoked, or null
-             */
-            revokedAt?: string;
-            /** @description Identity that revoked it, or null */
-            revokedBy?: string;
-            /** @description Whether the waiver suppresses anything right now */
-            active?: boolean;
-        };
-        /** @description An identity that fetched a snapshot's content through the git facade */
-        Fetcher: {
-            /** @description Authenticated identity that fetched it */
-            principal?: string;
-            /**
-             * Format: int64
-             * @description How many times it received a pack for this commit
-             */
-            fetches?: number;
-            /**
-             * Format: date-time
-             * @description The most recent of those fetches
-             */
-            lastFetch?: string;
-        };
-        /** @description What one re-vetting run concluded about one approved snapshot */
-        RevetResult: {
-            /**
-             * Format: int64
-             * @description Snapshot that was re-vetted
-             */
-            snapshotId?: number;
-            /** @description Marketplace it belongs to */
-            marketplace?: string;
-            /** @description Commit SHA that was re-vetted */
-            sha?: string;
-            /**
-             * Format: int64
-             * @description Chain run this re-vetting recorded
-             */
-            runId?: number;
-            /**
-             * @description What the run means for already-approved content
-             * @enum {string}
-             */
-            classification?: "CLEAR" | "VIOLATION" | "INCONCLUSIVE";
-            /**
-             * @description The effective vetting outcome after active waivers
-             * @enum {string}
-             */
-            outcome?: "CLEAR" | "CLEAR_WITH_WAIVERS" | "BLOCKED";
-            /** @description Whether the snapshot was revoked and unpublished as a result */
-            revoked?: boolean;
-            /**
-             * @description Mode in force for this run: WARN records the violation and leaves publication alone, ENFORCE revokes
-             * @enum {string}
-             */
-            mode?: "WARN" | "ENFORCE";
-            /** @description Blocking findings no active waiver covers; the reason for a violation */
-            uncovered?: components["schemas"]["UncoveredFinding"][];
-            /** @description Identities that fetched this commit through the facade before the violation */
-            affected?: components["schemas"]["Fetcher"][];
-        };
-        /** @description A blocking finding that no active waiver covers */
-        UncoveredFinding: {
-            /** @description Connector whose verdict carried the finding */
-            connector?: string;
-            /** @description Finding rule identifier */
-            ruleId?: string;
-            /** @description Where the finding was located */
-            location?: string;
-            /**
-             * @description How much it matters
-             * @enum {string}
-             */
-            severity?: "INFO" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
-            /** @description Reviewer-facing explanation */
-            message?: string;
-        };
-        /** @description An immutable, SHA-identified snapshot of an upstream marketplace */
-        Snapshot: {
-            /**
-             * Format: int64
-             * @description Snapshot id
-             */
-            id?: number;
-            /**
-             * Format: int64
-             * @description Owning marketplace id
-             */
-            marketplaceId?: number;
-            /** @description Upstream commit SHA the snapshot is pinned to */
-            sha?: string;
-            /**
-             * @description held, approved, rejected, or revoked (retroactively quarantined by re-vetting)
-             * @enum {string}
-             */
-            state?: "held" | "approved" | "rejected" | "revoked";
-            /** @description Policy or vetting violation that rejected or revoked the snapshot, or null */
-            violation?: string;
-            /**
-             * Format: date-time
-             * @description Ingestion time
-             */
-            createdAt?: string;
-            /** @description Reviewer who decided, or null while held */
-            decidedBy?: string;
-            /**
-             * Format: date-time
-             * @description Decision time, or null while held
-             */
-            decidedAt?: string;
-            /**
-             * Format: date-time
-             * @description When re-vetting revoked the snapshot, or null
-             */
-            revokedAt?: string;
-            /** @description Identity that revoked it, or null */
-            revokedBy?: string;
-            /**
-             * Format: date-time
-             * @description When the snapshot was soft-deleted, or null when it is live
-             */
-            deletedAt?: string;
-            /** @description Retention criterion or administrative reason for the deletion */
-            deletedReason?: string;
-            /**
-             * Format: date-time
-             * @description End of the restore window; after it compaction removes the snapshot permanently
-             */
-            purgeAfter?: string;
-        };
-        /** @description Role grant request */
-        GrantRequest: {
-            /** @description Principal to grant the role to */
-            principal: string;
-            /**
-             * @description The role
-             * @enum {string}
-             */
-            role: "admin" | "approver" | "auditor";
-            /** @description Marketplace to scope an approver grant to; required for approver, forbidden for admin and auditor */
-            marketplace?: string;
-        };
-        /** @description A role grant */
-        RoleGrant: {
-            /**
-             * Format: int64
-             * @description Grant id
-             */
-            id?: number;
-            /** @description Principal the role is granted to */
-            principal?: string;
-            /**
-             * @description The role
-             * @enum {string}
-             */
-            role?: "admin" | "approver" | "auditor";
-            /** @description Marketplace an approver grant is scoped to; null for the global roles */
-            marketplace?: string;
-            /** @description Identity that made the grant */
-            grantedBy?: string;
-            /**
-             * Format: date-time
-             * @description When the grant was made
-             */
-            grantedAt?: string;
-        };
-        /** @description Outcome of a retention pass */
-        PassResult: {
-            /**
-             * Format: int32
-             * @description Snapshots evaluated as eligible
-             */
-            selected?: number;
-            /**
-             * Format: int32
-             * @description Snapshots acted on by this pass
-             */
-            acted?: number;
-        };
-        /** @description Policy rule creation request */
-        CreateRuleRequest: {
-            /**
-             * @description Rule name; the identity a denial carries
-             * @example no-shell-tools
-             */
-            name?: string;
-            /** @description What the rule prohibits, for reviewers reading a refusal */
-            description?: string;
-            /**
-             * @description CEL expression over the policy variables; must compile to a boolean
-             * @example skills.exists(s, s.tools.exists(t, t.startsWith("Bash")))
-             */
-            expression?: string;
-            /** @description Whether the rule gates approvals; omitted means enabled */
-            enabled?: boolean;
-        };
-        /** @description Playground evaluation request */
-        PlaygroundRequest: {
-            /**
-             * Format: int64
-             * @description The real snapshot to evaluate against
-             */
-            snapshotId?: number;
-            /**
-             * @description CEL expression to test; it is compiled and evaluated but never stored
-             * @example skills.exists(s, s.tools.exists(t, t.startsWith("Bash")))
-             */
-            expression?: string;
-        };
-        /** @description Playground answer: what the expression said, or why it could not say anything */
-        PlaygroundResult: {
-            /** @description Whether the expression matched; absent when it errored */
-            matched?: boolean;
-            /** @description The compile or evaluation error; absent when the expression answered */
-            error?: string;
-        };
-        /** @description Marketplace registration request */
-        RegisterMarketplaceRequest: {
-            /**
-             * @description Gateway-local marketplace name; becomes the facade clone path /git/{name}
-             * @example corp-marketplace
-             */
-            name?: string;
-            /**
-             * @description Upstream clone URL; scheme must be on the configured allowlist (default http/https)
-             * @example https://github.com/acme/skills-marketplace.git
-             */
-            url?: string;
-            /**
-             * @description Must be omitted or equal the upstream default branch; the ingested ref is the gateway's decision, never the consumer's (GW_0017)
-             * @example main
-             */
-            ref?: string;
-        };
-        /** @description One declared entry's reconciliation outcome */
-        Entry: {
-            /**
-             * @description The kind of declared object
-             * @enum {string}
-             */
-            kind?: "marketplace" | "grant" | "webhook" | "audit-sink" | "policy-rule";
-            /** @description The declared name (for a grant: principal/role/marketplace) */
-            name?: string;
-            /**
-             * @description What the reconciler did
-             * @enum {string}
-             */
-            action?: "created" | "updated" | "unchanged" | "failed";
-            /** @description What changed, or why the entry failed; never a secret value */
-            detail?: string;
-        };
-        /** @description The outcome of one estate reconciliation run */
-        EstateReconciliation: {
-            /**
-             * Format: date-time
-             * @description When the run happened
-             */
-            ranAt?: string;
-            /**
-             * @description What started the run
-             * @enum {string}
-             */
-            trigger?: "startup" | "api";
-            /** @description Per declared entry, what happened */
-            entries?: components["schemas"]["Entry"][];
-            /**
-             * Format: int32
-             * @description Entries created
-             */
-            created?: number;
-            /**
-             * Format: int32
-             * @description Entries updated to match the declaration
-             */
-            updated?: number;
-            /**
-             * Format: int32
-             * @description Entries already converged; nothing was written
-             */
-            unchanged?: number;
-            /**
-             * Format: int32
-             * @description Entries that failed validation and were skipped
-             */
-            failed?: number;
-        };
-        /** @description The catalog revision the facade is serving */
-        CatalogInfo: {
-            /** @description Catalog commit SHA */
-            sha?: string;
-            /**
-             * Format: date-time
-             * @description When this revision was generated
-             */
-            generatedAt?: string;
-            /** @description Served marketplaces vendored into this revision */
-            constituents?: components["schemas"]["Constituent"][];
+            order?: number;
         };
         /** @description One marketplace inside the served catalog revision */
         Constituent: {
@@ -1631,18 +1131,25 @@ export interface components {
             /** @description Upstream commit SHA of its served snapshot */
             sha?: string;
         };
-        /** @description Audit export sink registration request */
-        CreateSinkRequest: {
+        /** @description Policy rule creation request */
+        CreateRuleRequest: {
+            /** @description What the rule prohibits, for reviewers reading a refusal */
+            description?: string;
+            /** @description Whether the rule gates approvals; omitted means enabled */
+            enabled?: boolean;
             /**
-             * @description Gateway-local sink name
-             * @example siem
+             * @description CEL expression over the policy variables; must compile to a boolean
+             * @example skills.exists(s, s.tools.exists(t, t.startsWith("Bash")))
+             */
+            expression?: string;
+            /**
+             * @description Rule name; the identity a denial carries
+             * @example no-shell-tools
              */
             name?: string;
-            /**
-             * @description Target URL batches are POSTed to; scheme must be on the configured allowlist (default http/https)
-             * @example https://siem.example.com/ingest/skills-gateway
-             */
-            url?: string;
+        };
+        /** @description Audit export sink registration request */
+        CreateSinkRequest: {
             /**
              * Format: int64
              * @description Ledger sequence to start after; omit to start at the beginning
@@ -1655,40 +1162,92 @@ export interface components {
              * @example 500
              */
             batchSize?: number;
+            /**
+             * @description Gateway-local sink name
+             * @example siem
+             */
+            name?: string;
+            /**
+             * @description Target URL batches are POSTed to; scheme must be on the configured allowlist (default http/https)
+             * @example https://siem.example.com/ingest/skills-gateway
+             */
+            url?: string;
+        };
+        /** @description Webhook subscriber registration request */
+        CreateSubscriberRequest: {
+            /**
+             * @description Comma-delimited event filter, or * for every event
+             * @example snapshot.approved,snapshot.rejected
+             */
+            events?: string;
+            /**
+             * @description Gateway-local subscriber name
+             * @example ci-bot
+             */
+            name?: string;
+            /**
+             * @description Target URL; scheme must be on the configured allowlist (default http/https)
+             * @example https://ci.example.com/hooks/skills-gateway
+             */
+            url?: string;
+        };
+        /** @description Token creation request */
+        CreateTokenRequest: {
+            /**
+             * Format: date-time
+             * @description Expiry; omitted means never, unless a max lifetime is configured
+             */
+            expiresAt?: string;
+            /**
+             * @description Human-readable token name
+             * @example ci-runner
+             */
+            name?: string;
+            /** @description Hosted marketplace names the token may PUBLISH to. Unlike fetch scopes, omitting these grants none: there is no every-marketplace push scope. */
+            pushScopes?: string[];
+            /** @description Marketplace names (the catalog's name is valid) the token may fetch; empty or omitted grants every marketplace */
+            scopes?: string[];
         };
         /** @description A newly registered audit export sink, with its show-once signing secret */
         CreatedSink: {
             /**
-             * Format: int64
-             * @description Sink id
+             * Format: int32
+             * @description Maximum ledger entries per batch
              */
-            id?: number;
-            /** @description Sink name */
-            name?: string;
-            /** @description Sink kind */
-            kind?: string;
-            /** @description Target URL batches are POSTed to */
-            url?: string;
+            batchSize?: number;
+            /**
+             * Format: date-time
+             * @description Creation time
+             */
+            createdAt?: string;
             /**
              * Format: int64
              * @description Ledger sequence the sink starts after
              */
             cursorPosition?: number;
             /**
-             * Format: int32
-             * @description Maximum ledger entries per batch
+             * Format: int64
+             * @description Sink id
              */
-            batchSize?: number;
+            id?: number;
+            /** @description Sink kind */
+            kind?: string;
+            /** @description Sink name */
+            name?: string;
             /** @description Signing secret of the sink's delivery channel - shown exactly once */
             secret?: string;
+            /** @description Target URL batches are POSTed to */
+            url?: string;
+        };
+        /** @description A freshly created subscriber; the only time the signing secret is ever returned */
+        CreatedSubscriber: {
             /**
              * Format: date-time
              * @description Creation time
              */
             createdAt?: string;
-        };
-        /** @description A webhook subscriber without its signing secret */
-        SubscriberView: {
+            /** @description Comma-delimited event filter, or * for all */
+            events?: string;
             /**
              * Format: int64
              * @description Subscriber id
@@ -1696,110 +1255,186 @@ export interface components {
             id?: number;
             /** @description Subscriber name */
             name?: string;
+            /** @description Signing secret - shown exactly once */
+            secret?: string;
             /** @description Target URL */
             url?: string;
-            /** @description Comma-delimited event filter, or * */
-            events?: string;
-            /** @description Whether deliveries are queued for this subscriber */
-            enabled?: boolean;
-            /**
-             * Format: date-time
-             * @description Creation time
-             */
-            createdAt?: string;
         };
-        /** @description One webhook delivery: an event queued for a subscriber, with its attempt history */
-        WebhookDelivery: {
+        /** @description Cursor reset request */
+        CursorRequest: {
             /**
              * Format: int64
-             * @description Delivery id; sent as the de-duplication header
+             * @description Ledger sequence to resume after; entries following it are delivered again
              */
-            id?: number;
+            after?: number;
+        };
+        /** @description One changed path between the served baseline and the pinned commit */
+        DiffEntryView: {
+            /** @description True when either side is binary; such an entry carries no diff text */
+            binary?: boolean;
+            /** @description Unified text diff, or null for a binary entry or when no baseline is served */
+            diff?: string;
+            /** @description Path within the snapshot */
+            path?: string;
+            /** @description True when the diff text was cut at the per-file size limit */
+            truncated?: boolean;
             /**
-             * Format: int64
-             * @description Owning subscriber id
-             */
-            subscriberId?: number;
-            /** @description Lifecycle event name */
-            event?: string;
-            /** @description Serialized JSON body; the exact bytes that are signed and sent */
-            payload?: string;
-            /**
-             * @description pending, delivered, or failed
+             * @description How the path changed relative to the served baseline
              * @enum {string}
              */
-            state?: "pending" | "delivered" | "failed";
-            /**
-             * Format: int32
-             * @description Attempts made so far
-             */
-            attempts?: number;
-            /**
-             * Format: date-time
-             * @description When the next attempt becomes due
-             */
-            nextAttemptAt?: string;
-            /**
-             * Format: int32
-             * @description HTTP status of the last attempt, or null
-             */
-            lastStatus?: number;
-            /** @description Error of the last attempt, or null */
-            lastError?: string;
-            /**
-             * Format: date-time
-             * @description Enqueue time
-             */
-            createdAt?: string;
-            /**
-             * Format: date-time
-             * @description Last state change
-             */
-            updatedAt?: string;
+            type?: "added" | "modified" | "removed";
         };
-        /** @description A token without its secret; the cleartext is only returned at creation */
-        TokenView: {
+        /** @description An effective role held by the current session */
+        EffectiveRole: {
+            /** @description Marketplace an approver role is scoped to; null for the global roles */
+            marketplace?: string;
+            /**
+             * @description The role
+             * @enum {string}
+             */
+            role?: "admin" | "approver" | "auditor";
+            /**
+             * @description Where the role came from
+             * @enum {string}
+             */
+            source?: "config" | "grant" | "claim";
+        };
+        /** @description Whether a snapshot has cleared the minimum release age, and when it will if not */
+        Eligibility: {
             /**
              * Format: int64
-             * @description Token id
+             * @description How long ago the gateway first ingested this commit, in seconds
              */
-            id?: number;
-            /** @description Token name */
-            name?: string;
+            ageSeconds?: number;
+            /** @description Whether the snapshot may be approved now; always true when the gate is off */
+            eligible?: boolean;
             /**
              * Format: date-time
-             * @description Creation time
+             * @description The instant the snapshot becomes approvable; equal to firstIngestedAt when the gate is off
              */
-            createdAt?: string;
+            eligibleAt?: string;
             /**
              * Format: date-time
-             * @description Revocation time, or null while active
+             * @description When the gateway first ingested this commit — the age is measured from here, never from the commit's own timestamp
              */
-            revokedAt?: string;
-            /** @description Marketplace scopes; empty grants every marketplace */
-            scopes?: string[];
-            /**
-             * Format: date-time
-             * @description Expiry, or null for a token that never expires
-             */
-            expiresAt?: string;
+            firstIngestedAt?: string;
             /**
              * Format: int64
-             * @description The token this one replaced by rotation, or null
+             * @description The configured minimum release age in seconds; zero when the gate is off
              */
-            rotatedFrom?: number;
+            minimumReleaseAgeSeconds?: number;
+            /**
+             * Format: int64
+             * @description Seconds still to wait; zero when eligible
+             */
+            remainingSeconds?: number;
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            snapshotId?: number;
         };
-        /** @description A connector configured in the vetting chain */
-        ConnectorView: {
-            /** @description Stable connector name */
+        /** @description One declared entry's reconciliation outcome */
+        Entry: {
+            /**
+             * @description What the reconciler did
+             * @enum {string}
+             */
+            action?: "created" | "updated" | "unchanged" | "failed";
+            /** @description What changed, or why the entry failed; never a secret value */
+            detail?: string;
+            /**
+             * @description The kind of declared object
+             * @enum {string}
+             */
+            kind?: "marketplace" | "grant" | "webhook" | "audit-sink" | "policy-rule";
+            /** @description The declared name (for a grant: principal/role/marketplace) */
             name?: string;
+        };
+        /** @description The outcome of one estate reconciliation run */
+        EstateReconciliation: {
             /**
              * Format: int32
-             * @description Position in the chain
+             * @description Entries created
              */
-            order?: number;
-            /** @description What the connector looks for, and what it cannot see */
-            description?: string;
+            created?: number;
+            /** @description Per declared entry, what happened */
+            entries?: components["schemas"]["Entry"][];
+            /**
+             * Format: int32
+             * @description Entries that failed validation and were skipped
+             */
+            failed?: number;
+            /**
+             * Format: date-time
+             * @description When the run happened
+             */
+            ranAt?: string;
+            /**
+             * @description What started the run
+             * @enum {string}
+             */
+            trigger?: "startup" | "api";
+            /**
+             * Format: int32
+             * @description Entries already converged; nothing was written
+             */
+            unchanged?: number;
+            /**
+             * Format: int32
+             * @description Entries updated to match the declaration
+             */
+            updated?: number;
+        };
+        /** @description An identity that fetched a snapshot's content through the git facade */
+        Fetcher: {
+            /**
+             * Format: int64
+             * @description How many times it received a pack for this commit
+             */
+            fetches?: number;
+            /**
+             * Format: date-time
+             * @description The most recent of those fetches
+             */
+            lastFetch?: string;
+            /** @description Authenticated identity that fetched it */
+            principal?: string;
+        };
+        /** @description One blob of the pinned commit, as text for rendering only */
+        FileContent: {
+            /** @description True for a blob detected as binary; such a blob carries no text */
+            binary?: boolean;
+            /** @description Path within the snapshot */
+            path?: string;
+            /**
+             * Format: int64
+             * @description Full blob size in bytes
+             */
+            size?: number;
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            snapshotId?: number;
+            /** @description Blob content as UTF-8 text, or null for a binary blob */
+            text?: string;
+            /** @description True when the text was cut at the per-file size limit */
+            truncated?: boolean;
+        };
+        /** @description The file tree of exactly the commit the snapshot pins */
+        FileTree: {
+            /** @description Paths in the pinned commit's tree */
+            entries?: components["schemas"]["TreeEntry"][];
+            /** @description Pinned commit SHA */
+            sha?: string;
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            snapshotId?: number;
+            /** @description True when the listing was cut at the tree-size limit */
+            truncated?: boolean;
         };
         /** @description One thing a vetting connector found in a snapshot */
         Finding: {
@@ -1808,218 +1443,79 @@ export interface components {
              * @example aws-access-key-id
              */
             id?: string;
+            /** @description Where in the snapshot it was found, normally path:line */
+            location?: string;
+            /** @description Reviewer-facing explanation; never echoes the matched secret */
+            message?: string;
             /**
              * @description How much the finding matters
              * @enum {string}
              */
             severity?: "INFO" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
-            /** @description Where in the snapshot it was found, normally path:line */
-            location?: string;
-            /** @description Reviewer-facing explanation; never echoes the matched secret */
-            message?: string;
         };
-        /** @description One execution of the vetting chain against a snapshot */
-        Run: {
+        /** @description Role grant request */
+        GrantRequest: {
+            /** @description Marketplace to scope an approver grant to; required for approver, forbidden for admin and auditor */
+            marketplace?: string;
+            /** @description Principal to grant the role to */
+            principal: string;
             /**
-             * Format: int64
-             * @description Chain run id
-             */
-            runId?: number;
-            /**
-             * Format: int64
-             * @description Snapshot the run vetted
-             */
-            snapshotId?: number;
-            /**
-             * @description What caused the run
+             * @description The role
              * @enum {string}
              */
-            trigger?: "ingestion" | "revet-scheduled" | "revet-manual";
-            /**
-             * @description Fail-closed aggregate of the run's verdicts
-             * @enum {string}
-             */
-            outcome?: "CLEAR" | "CLEAR_WITH_WAIVERS" | "BLOCKED";
-            /**
-             * Format: date-time
-             * @description When the run started
-             */
-            startedAt?: string;
-            /**
-             * Format: date-time
-             * @description When the run finished, or null if it never did
-             */
-            finishedAt?: string;
-            /**
-             * @description Identity of the chain that produced the run: connector@version in chain order
-             * @example prompt-injection@1,secret-scan@1
-             */
-            chain?: string;
-            /** @description The run's verdicts, in chain order */
-            verdicts?: components["schemas"]["VerdictView"][];
+            role: "admin" | "approver" | "auditor";
         };
-        /** @description A finding an active waiver is currently suppressing */
-        Suppression: {
-            /** @description Connector whose verdict carried the finding */
-            connector?: string;
-            /** @description Finding rule identifier */
-            ruleId?: string;
-            /** @description Where the finding was located */
-            location?: string;
-            /**
-             * Format: int64
-             * @description Waiver suppressing it
-             */
-            waiverId?: number;
-            /** @description Identity that accepted the risk */
-            approvedBy?: string;
+        /** @description A freshly issued token; the only time the cleartext is ever returned */
+        IssuedToken: {
             /**
              * Format: date-time
-             * @description When the acceptance lapses
+             * @description Creation time
+             */
+            createdAt?: string;
+            /**
+             * Format: date-time
+             * @description Expiry, or null for a token that never expires
              */
             expiresAt?: string;
-        };
-        /** @description One connector's recorded verdict within a chain run */
-        VerdictView: {
             /**
              * Format: int64
-             * @description Verdict id
+             * @description Token id
              */
-            verdictId?: number;
-            /** @description Connector name */
-            connector?: string;
-            /**
-             * Format: int32
-             * @description Position of the connector in the chain
-             */
-            position?: number;
-            /**
-             * @description The connector's conclusion
-             * @enum {string}
-             */
-            state?: "PASS" | "WARN" | "FAIL" | "ERROR" | "PENDING";
-            /** @description One-line summary of the findings, or null when there are none */
-            detail?: string;
-            /** @description External report URL, when the connector produced one */
-            reportUrl?: string;
-            /** @description What the connector found */
-            findings?: components["schemas"]["Finding"][];
-        };
-        /** @description A snapshot's latest vetting chain run, the waivers over it, and the chain that produced it */
-        VettingView: {
+            id?: number;
+            /** @description Token name */
+            name?: string;
+            /** @description Hosted marketplaces this token may publish to; empty grants none */
+            pushScopes?: string[];
             /**
              * Format: int64
-             * @description Snapshot id
+             * @description The token this one replaced by rotation, or null
              */
-            snapshotId?: number;
-            /**
-             * @description The effective outcome, which is what gates approval: the run's verdicts with every waived finding removed. CLEAR_WITH_WAIVERS means nothing objects any more only because an active waiver is suppressing a finding. A snapshot with no run is blocked.
-             * @enum {string}
-             */
-            outcome?: "CLEAR" | "CLEAR_WITH_WAIVERS" | "BLOCKED";
-            /**
-             * @description What the connectors themselves concluded, before any waiver was applied
-             * @enum {string}
-             */
-            recordedOutcome?: "CLEAR" | "BLOCKED";
-            /** @description The latest run with its verdicts and findings, or null if the chain never ran */
-            run?: components["schemas"]["Run"];
-            /** @description Findings an active waiver is currently suppressing, keyed by connector, rule and location */
-            suppressed?: components["schemas"]["Suppression"][];
-            /** @description Blocking findings that no active waiver covers; the waivers approval still needs */
-            uncovered?: components["schemas"]["UncoveredFinding"][];
-            /** @description Waivers of this snapshot's marketplace whose rule appears in this run, active and lapsed alike, so an expired acceptance stays visible */
-            waivers?: components["schemas"]["WaiverView"][];
-            /** @description The connectors configured in the chain, in the order they run */
-            connectors?: components["schemas"]["ConnectorView"][];
-        };
-        /** @description Whether a snapshot has cleared the minimum release age, and when it will if not */
-        Eligibility: {
-            /**
-             * Format: int64
-             * @description Snapshot id
-             */
-            snapshotId?: number;
-            /** @description Whether the snapshot may be approved now; always true when the gate is off */
-            eligible?: boolean;
-            /**
-             * Format: date-time
-             * @description When the gateway first ingested this commit — the age is measured from here, never from the commit's own timestamp
-             */
-            firstIngestedAt?: string;
-            /**
-             * Format: date-time
-             * @description The instant the snapshot becomes approvable; equal to firstIngestedAt when the gate is off
-             */
-            eligibleAt?: string;
-            /**
-             * Format: int64
-             * @description How long ago the gateway first ingested this commit, in seconds
-             */
-            ageSeconds?: number;
-            /**
-             * Format: int64
-             * @description Seconds still to wait; zero when eligible
-             */
-            remainingSeconds?: number;
-            /**
-             * Format: int64
-             * @description The configured minimum release age in seconds; zero when the gate is off
-             */
-            minimumReleaseAgeSeconds?: number;
-        };
-        /** @description Provenance of a snapshot: what was served, from where, and who approved it */
-        Provenance: {
-            /** Format: int64 */
-            snapshotId?: number;
-            marketplace?: string;
-            upstreamUrl?: string;
-            upstreamSha?: string;
-            state?: string;
-            violation?: string;
-            /** Format: date-time */
-            ingestedAt?: string;
-            decidedBy?: string;
-            /** Format: date-time */
-            decidedAt?: string;
-            /**
-             * Format: date-time
-             * @description When re-vetting revoked the snapshot, or null
-             */
-            revokedAt?: string;
-            /** @description Identity that revoked it, or null */
-            revokedBy?: string;
+            rotatedFrom?: number;
+            /** @description Marketplace scopes; empty grants every marketplace */
+            scopes?: string[];
+            /** @description Whether this credential was derived from a browser session (GW_0104) */
+            sessionDerived?: boolean;
+            /** @description Cleartext token value - shown exactly once, only a hash is stored */
+            token?: string;
         };
         /** @description The licenses a snapshot declares, evaluated under the configured policy */
         LicenseReport: {
-            /**
-             * Format: int64
-             * @description Snapshot id
-             */
-            snapshotId?: number;
-            /** @description Upstream commit SHA the detection ran over */
-            sha?: string;
-            /** @description Every detection; empty means the snapshot carries no license information */
-            licenses?: components["schemas"]["LicenseView"][];
             /** @description The configured allow list (SPDX ids); empty means not configured */
             allowed?: string[];
             /** @description The configured ban list (SPDX ids) */
             banned?: string[];
+            /** @description Every detection; empty means the snapshot carries no license information */
+            licenses?: components["schemas"]["LicenseView"][];
+            /** @description Upstream commit SHA the detection ran over */
+            sha?: string;
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            snapshotId?: number;
         };
         /** @description One detected license and its standing under the configured policy */
         LicenseView: {
-            /**
-             * @description SPDX id, or null for the unknown-license state
-             * @example Apache-2.0
-             */
-            spdxId?: string;
-            /**
-             * @description Where it was detected
-             * @enum {string}
-             */
-            source?: "file" | "manifest";
-            /** @description File path, or <manifest path>#<field> for manifest metadata */
-            location?: string;
             /** @description Raw declared value for manifest metadata; null for files */
             declared?: string;
             /**
@@ -2027,201 +1523,62 @@ export interface components {
              * @enum {string}
              */
             evaluation?: "OK" | "BANNED" | "NOT_ALLOWED" | "UNKNOWN";
-        };
-        /** @description The file tree of exactly the commit the snapshot pins */
-        FileTree: {
+            /** @description File path, or <manifest path>#<field> for manifest metadata */
+            location?: string;
             /**
-             * Format: int64
-             * @description Snapshot id
-             */
-            snapshotId?: number;
-            /** @description Pinned commit SHA */
-            sha?: string;
-            /** @description Paths in the pinned commit's tree */
-            entries?: components["schemas"]["TreeEntry"][];
-            /** @description True when the listing was cut at the tree-size limit */
-            truncated?: boolean;
-        };
-        /** @description One path in the pinned commit's tree */
-        TreeEntry: {
-            /** @description Path within the snapshot */
-            path?: string;
-            /**
-             * Format: int64
-             * @description Blob size in bytes
-             */
-            size?: number;
-        };
-        /** @description One blob of the pinned commit, as text for rendering only */
-        FileContent: {
-            /**
-             * Format: int64
-             * @description Snapshot id
-             */
-            snapshotId?: number;
-            /** @description Path within the snapshot */
-            path?: string;
-            /**
-             * Format: int64
-             * @description Full blob size in bytes
-             */
-            size?: number;
-            /** @description True for a blob detected as binary; such a blob carries no text */
-            binary?: boolean;
-            /** @description True when the text was cut at the per-file size limit */
-            truncated?: boolean;
-            /** @description Blob content as UTF-8 text, or null for a binary blob */
-            text?: string;
-        };
-        /** @description One changed path between the served baseline and the pinned commit */
-        DiffEntryView: {
-            /** @description Path within the snapshot */
-            path?: string;
-            /**
-             * @description How the path changed relative to the served baseline
+             * @description Where it was detected
              * @enum {string}
              */
-            type?: "added" | "modified" | "removed";
-            /** @description True when either side is binary; such an entry carries no diff text */
-            binary?: boolean;
-            /** @description True when the diff text was cut at the per-file size limit */
-            truncated?: boolean;
-            /** @description Unified text diff, or null for a binary entry or when no baseline is served */
-            diff?: string;
-        };
-        /** @description The snapshot's delta against the marketplace's currently served commit */
-        SnapshotDiff: {
+            source?: "file" | "manifest";
             /**
-             * Format: int64
-             * @description Snapshot id
+             * @description SPDX id, or null for the unknown-license state
+             * @example Apache-2.0
              */
-            snapshotId?: number;
-            /** @description Pinned commit SHA */
-            sha?: string;
-            /** @description The served commit the diff is against, or null when nothing is served */
-            baselineSha?: string;
-            /** @description Changed paths; with no baseline, every path of the snapshot, all added */
-            entries?: components["schemas"]["DiffEntryView"][];
-            /** @description True when the entry list was cut at the diff-size limit */
-            truncated?: boolean;
+            spdxId?: string;
         };
-        /** @description A plugin declared by the marketplace manifest */
-        PluginContent: {
-            /** @description Plugin name from the manifest */
-            name?: string;
-            /** @description Plugin description from the manifest */
-            description?: string;
-            /** @description Relative source path inside the marketplace repository */
-            source?: string;
-            /** @description Skills found under <source>/skills/ */
-            skills?: components["schemas"]["SkillInfo"][];
-        };
-        /** @description A skill found under a plugin's source tree */
-        SkillInfo: {
-            /** @description Skill directory name */
-            name?: string;
-            /** @description Path of the SKILL.md within the snapshot */
-            path?: string;
-        };
-        /** @description What a snapshot ships: the manifest's plugins and their skills */
-        SnapshotContent: {
-            /**
-             * Format: int64
-             * @description Snapshot id
-             */
-            snapshotId?: number;
-            /** @description Upstream commit SHA */
-            sha?: string;
-            /** @description held, approved, or rejected */
-            state?: string;
-            /** @description Plugins declared by the manifest */
-            plugins?: components["schemas"]["PluginContent"][];
-        };
-        /** @description A snapshot a retention policy would delete, and the criterion that selected it */
-        Candidate: {
-            /**
-             * Format: int64
-             * @description Snapshot id
-             */
-            snapshotId?: number;
-            /** @description Marketplace the snapshot belongs to */
-            marketplace?: string;
-            /** @description Upstream commit SHA the snapshot is pinned to */
-            sha?: string;
-            /** @description Vetting state; never approved, which is categorically ineligible */
-            state?: string;
-            /**
-             * @description Criterion that selected the snapshot
-             * @enum {string}
-             */
-            reason?: "held-too-long" | "superseded";
-            /**
-             * Format: date-time
-             * @description Ingestion time
-             */
+        /** @description A registered marketplace, fetched from an upstream or hosted by the gateway */
+        Marketplace: {
+            /** Format: date-time */
             createdAt?: string;
-        };
-        /** @description An effective role held by the current session */
-        EffectiveRole: {
-            /**
-             * @description The role
-             * @enum {string}
-             */
-            role?: "admin" | "approver" | "auditor";
-            /** @description Marketplace an approver role is scoped to; null for the global roles */
-            marketplace?: string;
-        };
-        /** @description The authenticated browser session's identity and effective roles */
-        MeView: {
-            /** @description Username of the session */
-            username?: string;
-            /** @description Whether role enforcement is enabled; false means every check passes */
-            rolesEnabled?: boolean;
-            /** @description The session's effective roles, config-bootstrapped admin included */
-            roles?: components["schemas"]["EffectiveRole"][];
-        };
-        /** @description A registered marketplace with its snapshots and forge metadata */
-        MarketplaceView: {
-            /**
-             * Format: int64
-             * @description Marketplace id
-             */
-            id?: number;
-            /** @description Gateway-local name (also the facade clone path) */
-            name?: string;
-            /** @description Upstream clone URL */
-            url?: string;
-            /**
-             * Format: date-time
-             * @description Registration time
-             */
-            createdAt?: string;
-            /** @description Detected forge (github, gitlab, bitbucket, azure-devops, gitea) or null */
-            forge?: string;
-            /** @description Project path on the forge, e.g. acme/skills */
-            forgeProject?: string;
             /** @description Project description from the forge */
             description?: string;
+            /** @description Detected forge (github, gitlab, bitbucket, azure-devops, gitea) or null */
+            forge?: string;
+            /** @description Project path on the forge */
+            forgeProject?: string;
+            /** Format: int64 */
+            id?: number;
+            /**
+             * Format: date-time
+             * @description Last sync attempt (success or failure), or null before the first one
+             */
+            lastSyncAt?: string;
+            name?: string;
+            /**
+             * @description Where the content comes from: fetched from an upstream clone URL, or pushed by the organisation into a gateway-owned origin repository
+             * @enum {string}
+             */
+            origin?: "upstream" | "hosted";
+            /**
+             * @description Whether a hosted marketplace's publisher may rewrite its lineage; meaningless for an upstream marketplace
+             * @enum {string}
+             */
+            pushPolicy?: "append-only" | "allow-rewrite";
+            /**
+             * @description How upstream content reaches quarantine: on-demand, scheduled, or webhook. The trigger only — every mode lands snapshots held behind the approval gate.
+             * @enum {string}
+             */
+            syncMode?: "on-demand" | "scheduled" | "webhook";
             /**
              * Format: date-time
              * @description Last upstream update as reported by the forge
              */
             upstreamUpdatedAt?: string;
-            /**
-             * @description How upstream content reaches quarantine (GW_0056)
-             * @enum {string}
-             */
-            syncMode?: "on-demand" | "scheduled" | "webhook";
-            /** @description All snapshots of this marketplace, any state */
-            snapshots?: components["schemas"]["Snapshot"][];
+            /** @description Upstream clone URL; null for a gateway-hosted marketplace */
+            url?: string;
         };
-        StreamingResponseBody: unknown;
         /** @description Adoption of one marketplace over the report window */
         MarketplaceAdoption: {
-            /** @description Marketplace name as the ledger records it */
-            marketplace?: string;
-            /** @description Currently served tip, or null when the marketplace is not serving */
-            servedSha?: string;
             /**
              * Format: int64
              * @description Content-transferring fetches in the window
@@ -2237,13 +1594,414 @@ export interface components {
              * @description Most recent fetch in the window
              */
             lastFetch?: string;
+            /** @description Marketplace name as the ledger records it */
+            marketplace?: string;
+            /** @description Currently served tip, or null when the marketplace is not serving */
+            servedSha?: string;
             /** @description Per-snapshot-SHA breakdown, most recently fetched first */
             snapshots?: components["schemas"]["SnapshotAdoption"][];
         };
+        /** @description A registered marketplace with its snapshots and forge metadata */
+        MarketplaceView: {
+            /**
+             * Format: date-time
+             * @description Registration time
+             */
+            createdAt?: string;
+            /** @description Project description from the forge */
+            description?: string;
+            /** @description Detected forge (github, gitlab, bitbucket, azure-devops, gitea) or null */
+            forge?: string;
+            /** @description Project path on the forge, e.g. acme/skills */
+            forgeProject?: string;
+            /**
+             * Format: int64
+             * @description Marketplace id
+             */
+            id?: number;
+            /** @description Gateway-local name (also the facade clone path) */
+            name?: string;
+            /**
+             * @description Where the content comes from
+             * @enum {string}
+             */
+            origin?: "upstream" | "hosted";
+            /** @description Path publishers push a hosted marketplace to; null for an upstream one */
+            publishPath?: string;
+            /**
+             * @description Whether a hosted marketplace's publisher may rewrite its lineage
+             * @enum {string}
+             */
+            pushPolicy?: "append-only" | "allow-rewrite";
+            /** @description All snapshots of this marketplace, any state */
+            snapshots?: components["schemas"]["Snapshot"][];
+            /**
+             * @description How upstream content reaches quarantine (GW_0056)
+             * @enum {string}
+             */
+            syncMode?: "on-demand" | "scheduled" | "webhook";
+            /**
+             * Format: date-time
+             * @description Last upstream update as reported by the forge
+             */
+            upstreamUpdatedAt?: string;
+            /** @description Upstream clone URL; null for a gateway-hosted marketplace */
+            url?: string;
+        };
+        /** @description The authenticated browser session's identity and effective roles */
+        MeView: {
+            /** @description Whether the identity provider dropped the membership claim rather than the session having none — the roles above are then incomplete */
+            claimsTruncated?: boolean;
+            /** @description The session's effective roles, config-bootstrapped and claim-derived included */
+            roles?: components["schemas"]["EffectiveRole"][];
+            /** @description Whether role enforcement is enabled; false means every check passes */
+            rolesEnabled?: boolean;
+            /** @description Username of the session */
+            username?: string;
+        };
+        /** @description Outcome of a retention pass */
+        PassResult: {
+            /**
+             * Format: int32
+             * @description Snapshots acted on by this pass
+             */
+            acted?: number;
+            /**
+             * Format: int32
+             * @description Snapshots evaluated as eligible
+             */
+            selected?: number;
+        };
+        /** @description Playground evaluation request */
+        PlaygroundRequest: {
+            /**
+             * @description CEL expression to test; it is compiled and evaluated but never stored
+             * @example skills.exists(s, s.tools.exists(t, t.startsWith("Bash")))
+             */
+            expression?: string;
+            /**
+             * Format: int64
+             * @description The real snapshot to evaluate against
+             */
+            snapshotId?: number;
+        };
+        /** @description Playground answer: what the expression said, or why it could not say anything */
+        PlaygroundResult: {
+            /** @description The compile or evaluation error; absent when the expression answered */
+            error?: string;
+            /** @description Whether the expression matched; absent when it errored */
+            matched?: boolean;
+        };
+        /** @description A plugin declared by the marketplace manifest */
+        PluginContent: {
+            /** @description Plugin description from the manifest */
+            description?: string;
+            /** @description Plugin name from the manifest */
+            name?: string;
+            /** @description Skills found under <source>/skills/ */
+            skills?: components["schemas"]["SkillInfo"][];
+            /** @description Relative source path inside the marketplace repository */
+            source?: string;
+        };
+        /** @description A CEL policy deny rule, evaluated fail-closed at approval time */
+        PolicyRule: {
+            /**
+             * Format: date-time
+             * @description Creation time
+             */
+            createdAt?: string;
+            /** @description Identity that created the rule */
+            createdBy?: string;
+            /** @description What the rule prohibits, for reviewers reading a refusal */
+            description?: string;
+            /** @description Only enabled rules gate approvals; disabling is the audited off-switch */
+            enabled?: boolean;
+            /** @description CEL expression over the policy variables, compiled to a boolean at write time */
+            expression?: string;
+            /**
+             * Format: int64
+             * @description Rule id
+             */
+            id?: number;
+            /** @description Rule name: the identity a denial carries on the ledger and in the refusal */
+            name?: string;
+            /**
+             * Format: date-time
+             * @description Time of the last update, or null
+             */
+            updatedAt?: string;
+            /** @description Identity of the last update, or null */
+            updatedBy?: string;
+        };
+        /** @description Provenance of a snapshot: what was served, from where, and who approved it */
+        Provenance: {
+            /** Format: date-time */
+            decidedAt?: string;
+            decidedBy?: string;
+            /** Format: date-time */
+            ingestedAt?: string;
+            marketplace?: string;
+            origin?: string;
+            /**
+             * Format: date-time
+             * @description When re-vetting revoked the snapshot, or null
+             */
+            revokedAt?: string;
+            /** @description Identity that revoked it, or null */
+            revokedBy?: string;
+            /** Format: int64 */
+            snapshotId?: number;
+            state?: string;
+            upstreamSha?: string;
+            upstreamUrl?: string;
+            violation?: string;
+        };
+        /** @description Marketplace registration request */
+        RegisterMarketplaceRequest: {
+            /**
+             * @description Gateway-local marketplace name; becomes the facade clone path /git/{name}
+             * @example corp-marketplace
+             */
+            name?: string;
+            /**
+             * @description Where the content comes from: 'upstream' (the default) fetches the clone URL; 'hosted' takes no URL and gives the marketplace a gateway-owned origin repository that publishers push to
+             * @example upstream
+             * @enum {string}
+             */
+            origin?: "upstream" | "hosted";
+            /**
+             * @description For a hosted marketplace, whether its publisher may rewrite the lineage. Defaults to append-only, which refuses a non-fast-forward push.
+             * @enum {string}
+             */
+            pushPolicy?: "append-only" | "allow-rewrite";
+            /**
+             * @description Must be omitted or equal the upstream default branch; the ingested ref is the gateway's decision, never the consumer's (GW_0017)
+             * @example main
+             */
+            ref?: string;
+            /**
+             * @description Upstream clone URL; scheme must be on the configured allowlist (default http/https)
+             * @example https://github.com/acme/skills-marketplace.git
+             */
+            url?: string;
+        };
+        /** @description What one re-vetting run concluded about one approved snapshot */
+        RevetResult: {
+            /** @description Identities that fetched this commit through the facade before the violation */
+            affected?: components["schemas"]["Fetcher"][];
+            /**
+             * @description What the run means for already-approved content
+             * @enum {string}
+             */
+            classification?: "CLEAR" | "VIOLATION" | "INCONCLUSIVE";
+            /** @description Marketplace it belongs to */
+            marketplace?: string;
+            /**
+             * @description Mode in force for this run: WARN records the violation and leaves publication alone, ENFORCE revokes
+             * @enum {string}
+             */
+            mode?: "WARN" | "ENFORCE";
+            /**
+             * @description The effective vetting outcome after active waivers
+             * @enum {string}
+             */
+            outcome?: "CLEAR" | "CLEAR_WITH_WAIVERS" | "BLOCKED";
+            /** @description Whether the snapshot was revoked and unpublished as a result */
+            revoked?: boolean;
+            /**
+             * Format: int64
+             * @description Chain run this re-vetting recorded
+             */
+            runId?: number;
+            /** @description Commit SHA that was re-vetted */
+            sha?: string;
+            /**
+             * Format: int64
+             * @description Snapshot that was re-vetted
+             */
+            snapshotId?: number;
+            /** @description Blocking findings no active waiver covers; the reason for a violation */
+            uncovered?: components["schemas"]["UncoveredFinding"][];
+        };
+        /** @description A role grant */
+        RoleGrant: {
+            /**
+             * Format: date-time
+             * @description When the grant was made
+             */
+            grantedAt?: string;
+            /** @description Identity that made the grant */
+            grantedBy?: string;
+            /**
+             * Format: int64
+             * @description Grant id
+             */
+            id?: number;
+            /** @description Marketplace an approver grant is scoped to; null for the global roles */
+            marketplace?: string;
+            /** @description Principal the role is granted to */
+            principal?: string;
+            /**
+             * @description The role
+             * @enum {string}
+             */
+            role?: "admin" | "approver" | "auditor";
+        };
+        /** @description One execution of the vetting chain against a snapshot */
+        Run: {
+            /**
+             * @description Identity of the chain that produced the run: connector@version in chain order
+             * @example prompt-injection@1,secret-scan@1
+             */
+            chain?: string;
+            /**
+             * Format: date-time
+             * @description When the run finished, or null if it never did
+             */
+            finishedAt?: string;
+            /**
+             * @description Fail-closed aggregate of the run's verdicts
+             * @enum {string}
+             */
+            outcome?: "CLEAR" | "CLEAR_WITH_WAIVERS" | "BLOCKED";
+            /**
+             * Format: int64
+             * @description Chain run id
+             */
+            runId?: number;
+            /**
+             * Format: int64
+             * @description Snapshot the run vetted
+             */
+            snapshotId?: number;
+            /**
+             * Format: date-time
+             * @description When the run started
+             */
+            startedAt?: string;
+            /**
+             * @description What caused the run
+             * @enum {string}
+             */
+            trigger?: "ingestion" | "revet-scheduled" | "revet-manual";
+            /** @description The run's verdicts, in chain order */
+            verdicts?: components["schemas"]["VerdictView"][];
+        };
+        /** @description Session credential request: the lifetime is the gateway's, so there is no field for it */
+        SessionCredentialRequest: {
+            /**
+             * @description Human-readable name
+             * @example laptop
+             */
+            name?: string;
+            /** @description Marketplace names to narrow the credential to; empty or omitted grants every marketplace, as for any fetch scope */
+            scopes?: string[];
+        };
+        /** @description A registered audit export sink */
+        SinkView: {
+            /**
+             * Format: int32
+             * @description Maximum ledger entries per batch
+             */
+            batchSize?: number;
+            /**
+             * Format: int64
+             * @description Ledger entries not yet handed to this sink
+             */
+            behind?: number;
+            /**
+             * Format: date-time
+             * @description Creation time
+             */
+            createdAt?: string;
+            /**
+             * Format: int64
+             * @description Ledger sequence last handed to this sink
+             */
+            cursorPosition?: number;
+            /** @description Whether export passes run for this sink */
+            enabled?: boolean;
+            /**
+             * Format: int64
+             * @description Sink id
+             */
+            id?: number;
+            /** @description Sink kind */
+            kind?: string;
+            /**
+             * Format: int64
+             * @description Highest ledger sequence written so far
+             */
+            ledgerHead?: number;
+            /** @description Sink name */
+            name?: string;
+            /** @description Target URL */
+            url?: string;
+        };
+        /** @description A skill found under a plugin's source tree */
+        SkillInfo: {
+            /** @description Skill directory name */
+            name?: string;
+            /** @description Path of the SKILL.md within the snapshot */
+            path?: string;
+        };
+        /** @description An immutable, SHA-identified snapshot of an upstream marketplace */
+        Snapshot: {
+            /**
+             * Format: date-time
+             * @description Ingestion time
+             */
+            createdAt?: string;
+            /**
+             * Format: date-time
+             * @description Decision time, or null while held
+             */
+            decidedAt?: string;
+            /** @description Reviewer who decided, or null while held */
+            decidedBy?: string;
+            /**
+             * Format: date-time
+             * @description When the snapshot was soft-deleted, or null when it is live
+             */
+            deletedAt?: string;
+            /** @description Retention criterion or administrative reason for the deletion */
+            deletedReason?: string;
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            id?: number;
+            /**
+             * Format: int64
+             * @description Owning marketplace id
+             */
+            marketplaceId?: number;
+            /**
+             * Format: date-time
+             * @description End of the restore window; after it compaction removes the snapshot permanently
+             */
+            purgeAfter?: string;
+            /**
+             * Format: date-time
+             * @description When re-vetting revoked the snapshot, or null
+             */
+            revokedAt?: string;
+            /** @description Identity that revoked it, or null */
+            revokedBy?: string;
+            /** @description Upstream commit SHA the snapshot is pinned to */
+            sha?: string;
+            /**
+             * @description held, approved, rejected, or revoked (retroactively quarantined by re-vetting)
+             * @enum {string}
+             */
+            state?: "held" | "approved" | "rejected" | "revoked";
+            /** @description Policy or vetting violation that rejected or revoked the snapshot, or null */
+            violation?: string;
+        };
         /** @description Adoption of one snapshot SHA over the report window */
         SnapshotAdoption: {
-            /** @description Upstream commit SHA that was fetched */
-            sha?: string;
+            /** @description Whether this SHA is the currently served tip */
+            current?: boolean;
             /**
              * Format: int64
              * @description Content-transferring fetches of this SHA in the window
@@ -2259,24 +2017,348 @@ export interface components {
              * @description Most recent of those fetches
              */
             lastFetch?: string;
-            /** @description Whether this SHA is the currently served tip */
-            current?: boolean;
+            /** @description Upstream commit SHA that was fetched */
+            sha?: string;
+        };
+        /** @description What a snapshot ships: the manifest's plugins and their skills */
+        SnapshotContent: {
+            /** @description Plugins declared by the manifest */
+            plugins?: components["schemas"]["PluginContent"][];
+            /** @description Upstream commit SHA */
+            sha?: string;
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            snapshotId?: number;
+            /** @description held, approved, or rejected */
+            state?: string;
+        };
+        /** @description The snapshot's delta against the marketplace's currently served commit */
+        SnapshotDiff: {
+            /** @description The served commit the diff is against, or null when nothing is served */
+            baselineSha?: string;
+            /** @description Changed paths; with no baseline, every path of the snapshot, all added */
+            entries?: components["schemas"]["DiffEntryView"][];
+            /** @description Pinned commit SHA */
+            sha?: string;
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            snapshotId?: number;
+            /** @description True when the entry list was cut at the diff-size limit */
+            truncated?: boolean;
         };
         /** @description An identity whose most recent fetch is not the currently served tip */
         StaleIdentity: {
-            /** @description Authenticated identity that fetched */
-            principal?: string;
-            /** @description Marketplace the fetch was of */
-            marketplace?: string;
-            /** @description SHA the identity last received */
-            sha?: string;
             /**
              * Format: date-time
              * @description When it last received it
              */
             lastFetch?: string;
+            /** @description Marketplace the fetch was of */
+            marketplace?: string;
+            /** @description Authenticated identity that fetched */
+            principal?: string;
             /** @description Currently served tip it diverges from, or null when the marketplace is no longer serving */
             servedSha?: string;
+            /** @description SHA the identity last received */
+            sha?: string;
+        };
+        StreamingResponseBody: unknown;
+        /** @description A webhook subscriber without its signing secret */
+        SubscriberView: {
+            /**
+             * Format: date-time
+             * @description Creation time
+             */
+            createdAt?: string;
+            /** @description Whether deliveries are queued for this subscriber */
+            enabled?: boolean;
+            /** @description Comma-delimited event filter, or * */
+            events?: string;
+            /**
+             * Format: int64
+             * @description Subscriber id
+             */
+            id?: number;
+            /** @description Subscriber name */
+            name?: string;
+            /** @description Target URL */
+            url?: string;
+        };
+        /** @description A finding an active waiver is currently suppressing */
+        Suppression: {
+            /** @description Identity that accepted the risk */
+            approvedBy?: string;
+            /** @description Connector whose verdict carried the finding */
+            connector?: string;
+            /**
+             * Format: date-time
+             * @description When the acceptance lapses
+             */
+            expiresAt?: string;
+            /** @description Where the finding was located */
+            location?: string;
+            /** @description Finding rule identifier */
+            ruleId?: string;
+            /**
+             * Format: int64
+             * @description Waiver suppressing it
+             */
+            waiverId?: number;
+        };
+        /** @description The updated marketplace and, only when webhook mode was enabled, its secret */
+        SyncModeView: {
+            marketplace?: components["schemas"]["Marketplace"];
+            /** @description HMAC secret for the inbound webhook — returned exactly once, here. Setting webhook mode again rotates it. Null for the other modes. */
+            webhookSecret?: string;
+        };
+        /** @description A token without its secret; the cleartext is only returned at creation */
+        TokenView: {
+            /**
+             * Format: date-time
+             * @description Creation time
+             */
+            createdAt?: string;
+            /**
+             * Format: date-time
+             * @description Expiry, or null for a token that never expires
+             */
+            expiresAt?: string;
+            /**
+             * Format: int64
+             * @description Token id
+             */
+            id?: number;
+            /** @description Token name */
+            name?: string;
+            /** @description Hosted marketplaces this token may publish to; empty grants none */
+            pushScopes?: string[];
+            /**
+             * Format: date-time
+             * @description Revocation time, or null while active
+             */
+            revokedAt?: string;
+            /**
+             * Format: int64
+             * @description The token this one replaced by rotation, or null
+             */
+            rotatedFrom?: number;
+            /** @description Marketplace scopes; empty grants every marketplace */
+            scopes?: string[];
+            /** @description Whether the credential was derived from a browser session rather than deliberately provisioned; its lifetime was the gateway's to set */
+            sessionDerived?: boolean;
+        };
+        /** @description One path in the pinned commit's tree */
+        TreeEntry: {
+            /** @description Path within the snapshot */
+            path?: string;
+            /**
+             * Format: int64
+             * @description Blob size in bytes
+             */
+            size?: number;
+        };
+        /** @description A blocking finding that no active waiver covers */
+        UncoveredFinding: {
+            /** @description Connector whose verdict carried the finding */
+            connector?: string;
+            /** @description Where the finding was located */
+            location?: string;
+            /** @description Reviewer-facing explanation */
+            message?: string;
+            /** @description Finding rule identifier */
+            ruleId?: string;
+            /**
+             * @description How much it matters
+             * @enum {string}
+             */
+            severity?: "INFO" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+        };
+        /** @description Policy rule update request; the name is the path */
+        UpdateRuleRequest: {
+            /** @description What the rule prohibits */
+            description?: string;
+            /** @description Whether the rule gates approvals; omitted means enabled */
+            enabled?: boolean;
+            /** @description CEL expression; must compile to a boolean */
+            expression?: string;
+        };
+        /** @description One connector's recorded verdict within a chain run */
+        VerdictView: {
+            /** @description Connector name */
+            connector?: string;
+            /** @description One-line summary of the findings, or null when there are none */
+            detail?: string;
+            /** @description What the connector found */
+            findings?: components["schemas"]["Finding"][];
+            /**
+             * Format: int32
+             * @description Position of the connector in the chain
+             */
+            position?: number;
+            /** @description External report URL, when the connector produced one */
+            reportUrl?: string;
+            /**
+             * @description The connector's conclusion
+             * @enum {string}
+             */
+            state?: "PASS" | "WARN" | "FAIL" | "ERROR" | "PENDING";
+            /**
+             * Format: int64
+             * @description Verdict id
+             */
+            verdictId?: number;
+        };
+        /** @description A snapshot's latest vetting chain run, the waivers over it, and the chain that produced it */
+        VettingView: {
+            /** @description The connectors configured in the chain, in the order they run */
+            connectors?: components["schemas"]["ConnectorView"][];
+            /**
+             * @description The effective outcome, which is what gates approval: the run's verdicts with every waived finding removed. CLEAR_WITH_WAIVERS means nothing objects any more only because an active waiver is suppressing a finding. A snapshot with no run is blocked.
+             * @enum {string}
+             */
+            outcome?: "CLEAR" | "CLEAR_WITH_WAIVERS" | "BLOCKED";
+            /**
+             * @description What the connectors themselves concluded, before any waiver was applied
+             * @enum {string}
+             */
+            recordedOutcome?: "CLEAR" | "BLOCKED";
+            /** @description The latest run with its verdicts and findings, or null if the chain never ran */
+            run?: components["schemas"]["Run"];
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            snapshotId?: number;
+            /** @description Findings an active waiver is currently suppressing, keyed by connector, rule and location */
+            suppressed?: components["schemas"]["Suppression"][];
+            /** @description Blocking findings that no active waiver covers; the waivers approval still needs */
+            uncovered?: components["schemas"]["UncoveredFinding"][];
+            /** @description Waivers of this snapshot's marketplace whose rule appears in this run, active and lapsed alike, so an expired acceptance stays visible */
+            waivers?: components["schemas"]["WaiverView"][];
+        };
+        /** @description Request to accept one finding rule on a snapshot's marketplace, until an expiry */
+        WaiverRequest: {
+            /**
+             * Format: date-time
+             * @description When the acceptance lapses. Required and must be in the future: there are no unlimited waivers.
+             * @example 2026-12-31T00:00:00Z
+             */
+            expiresAt: string;
+            /** @description Why this risk is accepted; recorded and shown to the next reviewer */
+            justification: string;
+            /**
+             * @description Repository-relative path for PATH scope; ignored for SNAPSHOT scope, which always takes the snapshot's own SHA
+             * @example plugins/hello
+             */
+            path?: string;
+            /**
+             * @description Finding rule identifier to accept
+             * @example aws-access-key-id
+             */
+            ruleId: string;
+            /**
+             * @description SNAPSHOT pins the waiver to this snapshot's commit SHA; PATH applies it to a path in the marketplace and survives re-ingestion
+             * @enum {string}
+             */
+            scope: "SNAPSHOT" | "PATH";
+        };
+        /** @description A waiver as returned by the API, with its activity resolved as of now */
+        WaiverView: {
+            /** @description Whether the waiver suppresses anything right now */
+            active?: boolean;
+            /** @description Identity that accepted the risk */
+            approvedBy?: string;
+            /**
+             * Format: date-time
+             * @description When the waiver was created
+             */
+            createdAt?: string;
+            /**
+             * Format: date-time
+             * @description When the acceptance lapses; never null
+             */
+            expiresAt?: string;
+            /**
+             * Format: int64
+             * @description Waiver id
+             */
+            id?: number;
+            /** @description Why the risk is accepted */
+            justification?: string;
+            /** @description Marketplace the waiver belongs to */
+            marketplace?: string;
+            /**
+             * Format: date-time
+             * @description When the waiver was revoked, or null
+             */
+            revokedAt?: string;
+            /** @description Identity that revoked it, or null */
+            revokedBy?: string;
+            /**
+             * @description Finding rule identifier being accepted
+             * @example aws-access-key-id
+             */
+            ruleId?: string;
+            /**
+             * @description How the scope value is matched
+             * @enum {string}
+             */
+            scope?: "SNAPSHOT" | "PATH";
+            /** @description A commit SHA for snapshot scope, a repository-relative path for path scope */
+            scopeValue?: string;
+        };
+        /** @description One webhook delivery: an event queued for a subscriber, with its attempt history */
+        WebhookDelivery: {
+            /**
+             * Format: int32
+             * @description Attempts made so far
+             */
+            attempts?: number;
+            /**
+             * Format: date-time
+             * @description Enqueue time
+             */
+            createdAt?: string;
+            /** @description Lifecycle event name */
+            event?: string;
+            /**
+             * Format: int64
+             * @description Delivery id; sent as the de-duplication header
+             */
+            id?: number;
+            /** @description Error of the last attempt, or null */
+            lastError?: string;
+            /**
+             * Format: int32
+             * @description HTTP status of the last attempt, or null
+             */
+            lastStatus?: number;
+            /**
+             * Format: date-time
+             * @description When the next attempt becomes due
+             */
+            nextAttemptAt?: string;
+            /** @description Serialized JSON body; the exact bytes that are signed and sent */
+            payload?: string;
+            /**
+             * @description pending, delivered, or failed
+             * @enum {string}
+             */
+            state?: "pending" | "delivered" | "failed";
+            /**
+             * Format: int64
+             * @description Owning subscriber id
+             */
+            subscriberId?: number;
+            /**
+             * Format: date-time
+             * @description Last state change
+             */
+            updatedAt?: string;
         };
     };
     responses: never;
@@ -2287,6 +2369,675 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    adoption: {
+        parameters: {
+            query?: {
+                /** @description Report window in days, default 30, clamped to 1..365 */
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The adoption report, one entry per fetched marketplace */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MarketplaceAdoption"][];
+                };
+            };
+        };
+    };
+    staleness: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The stale identities, window-free */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["StaleIdentity"][];
+                };
+            };
+        };
+    };
+    audit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: unknown;
+                    }[];
+                };
+            };
+        };
+    };
+    export: {
+        parameters: {
+            query?: {
+                after?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The entries after the cursor, newline-delimited */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/x-ndjson": components["schemas"]["StreamingResponseBody"];
+                };
+            };
+        };
+    };
+    listSinks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SinkView"][];
+                };
+            };
+        };
+    };
+    createSink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSinkRequest"];
+            };
+        };
+        responses: {
+            /** @description Sink registered; response carries the show-once secret */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreatedSink"];
+                };
+            };
+            /** @description Disallowed URL scheme */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreatedSink"];
+                };
+            };
+            /** @description A sink or webhook subscriber with that name already exists */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreatedSink"];
+                };
+            };
+            /** @description Invalid sink name */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreatedSink"];
+                };
+            };
+        };
+    };
+    deleteSink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sink deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sink not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    setCursor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CursorRequest"];
+            };
+        };
+        responses: {
+            /** @description Position updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SinkView"];
+                };
+            };
+            /** @description Sink not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SinkView"];
+                };
+            };
+        };
+    };
+    catalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Served catalog revision and its constituents */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CatalogInfo"];
+                };
+            };
+            /** @description Catalog disabled, or not generated yet */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CatalogInfo"];
+                };
+            };
+        };
+    };
+    rebuild: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Catalog rebuilt; returns the new revision */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CatalogInfo"];
+                };
+            };
+            /** @description Catalog disabled */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CatalogInfo"];
+                };
+            };
+        };
+    };
+    lastRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The last reconciliation report */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EstateReconciliation"];
+                };
+            };
+            /** @description No reconciliation has run */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EstateReconciliation"];
+                };
+            };
+        };
+    };
+    reconcile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The run's report */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EstateReconciliation"];
+                };
+            };
+            /** @description Enforcement is enabled and the caller is not an admin */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EstateReconciliation"];
+                };
+            };
+        };
+    };
+    listMarketplaces: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MarketplaceView"][];
+                };
+            };
+        };
+    };
+    registerMarketplace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterMarketplaceRequest"];
+            };
+        };
+        responses: {
+            /** @description Marketplace registered */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Marketplace"];
+                };
+            };
+            /** @description Disallowed URL scheme, or a ref other than the default branch */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Marketplace"];
+                };
+            };
+            /** @description A marketplace with that name already exists */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Marketplace"];
+                };
+            };
+            /** @description Invalid marketplace name */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Marketplace"];
+                };
+            };
+        };
+    };
+    ingest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Snapshot recorded (held, or rejected on policy violation) */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description Marketplace not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description Upstream fetch failed */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+        };
+    };
+    revetMarketplace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description What the pass re-vetted and concluded */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PassResult"];
+                };
+            };
+            /** @description Marketplace not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PassResult"];
+                };
+            };
+        };
+    };
+    changeSyncMode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeSyncModeRequest"];
+            };
+        };
+        responses: {
+            /** @description Sync mode changed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SyncModeView"];
+                };
+            };
+            /** @description Marketplace not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SyncModeView"];
+                };
+            };
+            /** @description Not a valid sync mode */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SyncModeView"];
+                };
+            };
+        };
+    };
+    list_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The marketplace's waivers */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WaiverView"][];
+                };
+            };
+            /** @description Marketplace not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WaiverView"][];
+                };
+            };
+        };
+    };
+    me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MeView"];
+                };
+            };
+        };
+    };
+    playground: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlaygroundRequest"];
+            };
+        };
+        responses: {
+            /** @description The expression's answer, or its error */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PlaygroundResult"];
+                };
+            };
+            /** @description No such snapshot */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PlaygroundResult"];
+                };
+            };
+        };
+    };
+    list_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description All policy rules */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PolicyRule"][];
+                };
+            };
+        };
+    };
+    create_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRuleRequest"];
+            };
+        };
+        responses: {
+            /** @description Rule created and, if enabled, in force immediately */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PolicyRule"];
+                };
+            };
+            /** @description A rule of that name exists */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PolicyRule"];
+                };
+            };
+            /** @description Malformed name, or an expression that does not compile */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PolicyRule"];
+                };
+            };
+        };
+    };
     update: {
         parameters: {
             query?: never;
@@ -2366,129 +3117,30 @@ export interface operations {
             };
         };
     };
-    changeSyncMode: {
+    candidates: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Restrict to one marketplace */
+                marketplace?: string;
+            };
             header?: never;
-            path: {
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ChangeSyncModeRequest"];
-            };
-        };
-        responses: {
-            /** @description Sync mode changed */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["SyncModeView"];
-                };
-            };
-            /** @description Marketplace not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["SyncModeView"];
-                };
-            };
-            /** @description Not a valid sync mode */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["SyncModeView"];
-                };
-            };
-        };
-    };
-    setCursor: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CursorRequest"];
-            };
-        };
-        responses: {
-            /** @description Position updated */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["SinkView"];
-                };
-            };
-            /** @description Sink not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["SinkView"];
-                };
-            };
-        };
-    };
-    trigger: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Hub-Signature-256"?: string;
-            };
-            path: {
-                marketplace: string;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Trigger accepted; ingestion queued */
-            202: {
+            /** @description Candidate snapshots */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Missing or invalid signature */
-            403: {
-                headers: {
-                    [name: string]: unknown;
+                content: {
+                    "*/*": components["schemas"]["Candidate"][];
                 };
-                content?: never;
-            };
-            /** @description Unknown marketplace, or its sync mode is not webhook */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Request body exceeds the configured bound */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };
-    list: {
+    compact: {
         parameters: {
             query?: never;
             header?: never;
@@ -2497,361 +3149,36 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Pass outcome */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SubscriberView"][];
+                    "*/*": components["schemas"]["PassResult"];
                 };
             };
         };
     };
-    create: {
+    evaluate: {
         parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateSubscriberRequest"];
+            query?: {
+                /** @description Restrict to one marketplace */
+                marketplace?: string;
             };
-        };
-        responses: {
-            /** @description Subscriber registered; response carries the show-once secret */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["CreatedSubscriber"];
-                };
-            };
-            /** @description Disallowed URL scheme, or an unknown event name */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["CreatedSubscriber"];
-                };
-            };
-            /** @description A subscriber with that name already exists */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["CreatedSubscriber"];
-                };
-            };
-            /** @description Invalid subscriber name */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["CreatedSubscriber"];
-                };
-            };
-        };
-    };
-    list_1: {
-        parameters: {
-            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Pass outcome */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["TokenView"][];
-                };
-            };
-        };
-    };
-    create_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateTokenRequest"];
-            };
-        };
-        responses: {
-            /** @description Token issued; the only response carrying the cleartext */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["IssuedToken"];
-                };
-            };
-            /** @description Unknown scope, or lifetime beyond the configured cap */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["IssuedToken"];
-                };
-            };
-        };
-    };
-    rotate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Rotated; the only response carrying the new cleartext */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["IssuedToken"];
-                };
-            };
-            /** @description No such token of yours */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["IssuedToken"];
-                };
-            };
-            /** @description Token is revoked or expired; issue a new one instead */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["IssuedToken"];
-                };
-            };
-        };
-    };
-    create_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["WaiverRequest"];
-            };
-        };
-        responses: {
-            /** @description Waiver recorded */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["WaiverView"];
-                };
-            };
-            /** @description Missing justification or expiry, an expiry in the past, or an unusable scope */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["WaiverView"];
-                };
-            };
-            /** @description Snapshot not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["WaiverView"];
-                };
-            };
-        };
-    };
-    revetSnapshot: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The re-vetting run and what it concluded */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["RevetResult"];
-                };
-            };
-            /** @description Snapshot not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["RevetResult"];
-                };
-            };
-            /** @description The snapshot is not approved; only served content is re-vetted */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["RevetResult"];
-                };
-            };
-        };
-    };
-    restore: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Snapshot restored */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Snapshot"];
-                };
-            };
-            /** @description Snapshot not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Snapshot"];
-                };
-            };
-            /** @description Snapshot is not deleted */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Snapshot"];
-                };
-            };
-        };
-    };
-    reject: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Snapshot rejected */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Snapshot"];
-                };
-            };
-            /** @description Snapshot not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Snapshot"];
-                };
-            };
-            /** @description Snapshot is neither held nor revoked */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Snapshot"];
-                };
-            };
-        };
-    };
-    approve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Snapshot approved and now served */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Snapshot"];
-                };
-            };
-            /** @description Snapshot not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Snapshot"];
-                };
-            };
-            /** @description Snapshot is neither held nor revoked, its effective vetting outcome is blocked, or it has not yet reached the configured minimum release age */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Snapshot"];
+                    "*/*": components["schemas"]["PassResult"];
                 };
             };
         };
@@ -2945,1102 +3272,32 @@ export interface operations {
             };
         };
     };
-    evaluate: {
-        parameters: {
-            query?: {
-                /** @description Restrict to one marketplace */
-                marketplace?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Pass outcome */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["PassResult"];
-                };
-            };
-        };
-    };
-    compact: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Pass outcome */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["PassResult"];
-                };
-            };
-        };
-    };
-    list_3: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description All policy rules */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["PolicyRule"][];
-                };
-            };
-        };
-    };
-    create_3: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateRuleRequest"];
-            };
-        };
-        responses: {
-            /** @description Rule created and, if enabled, in force immediately */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["PolicyRule"];
-                };
-            };
-            /** @description A rule of that name exists */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["PolicyRule"];
-                };
-            };
-            /** @description Malformed name, or an expression that does not compile */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["PolicyRule"];
-                };
-            };
-        };
-    };
-    playground: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PlaygroundRequest"];
-            };
-        };
-        responses: {
-            /** @description The expression's answer, or its error */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["PlaygroundResult"];
-                };
-            };
-            /** @description No such snapshot */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["PlaygroundResult"];
-                };
-            };
-        };
-    };
-    listMarketplaces: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["MarketplaceView"][];
-                };
-            };
-        };
-    };
-    registerMarketplace: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RegisterMarketplaceRequest"];
-            };
-        };
-        responses: {
-            /** @description Marketplace registered */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Marketplace"];
-                };
-            };
-            /** @description Disallowed URL scheme, or a ref other than the default branch */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Marketplace"];
-                };
-            };
-            /** @description A marketplace with that name already exists */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Marketplace"];
-                };
-            };
-            /** @description Invalid marketplace name */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Marketplace"];
-                };
-            };
-        };
-    };
-    revetMarketplace: {
+    revoke_2: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                name: string;
+                id: number;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description What the pass re-vetted and concluded */
-            200: {
+            /** @description Grant revoked */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "*/*": components["schemas"]["PassResult"];
-                };
-            };
-            /** @description Marketplace not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["PassResult"];
-                };
-            };
-        };
-    };
-    ingest: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Snapshot recorded (held, or rejected on policy violation) */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Snapshot"];
-                };
-            };
-            /** @description Marketplace not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Snapshot"];
-                };
-            };
-            /** @description Upstream fetch failed */
-            502: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Snapshot"];
-                };
-            };
-        };
-    };
-    reconcile: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The run's report */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["EstateReconciliation"];
-                };
+                content?: never;
             };
             /** @description Enforcement is enabled and the caller is not an admin */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "*/*": components["schemas"]["EstateReconciliation"];
-                };
-            };
-        };
-    };
-    rebuild: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Catalog rebuilt; returns the new revision */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["CatalogInfo"];
-                };
-            };
-            /** @description Catalog disabled */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["CatalogInfo"];
-                };
-            };
-        };
-    };
-    listSinks: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["SinkView"][];
-                };
-            };
-        };
-    };
-    createSink: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateSinkRequest"];
-            };
-        };
-        responses: {
-            /** @description Sink registered; response carries the show-once secret */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["CreatedSink"];
-                };
-            };
-            /** @description Disallowed URL scheme */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["CreatedSink"];
-                };
-            };
-            /** @description A sink or webhook subscriber with that name already exists */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["CreatedSink"];
-                };
-            };
-            /** @description Invalid sink name */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["CreatedSink"];
-                };
-            };
-        };
-    };
-    getDocs: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": string;
-                };
-            };
-        };
-    };
-    getScalarJs: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": string;
-                };
-            };
-        };
-    };
-    events: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The event registry */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": string[];
-                };
-            };
-        };
-    };
-    deliveries: {
-        parameters: {
-            query?: {
-                limit?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["WebhookDelivery"][];
-                };
-            };
-        };
-    };
-    vetting: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The latest chain run and the configured chain */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["VettingView"];
-                };
-            };
-            /** @description Snapshot not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["VettingView"];
-                };
-            };
-        };
-    };
-    releaseAge: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Eligibility and the time remaining */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Eligibility"];
-                };
-            };
-            /** @description Snapshot not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Eligibility"];
-                };
-            };
-        };
-    };
-    provenance: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Provenance record */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Provenance"];
-                };
-            };
-            /** @description Snapshot not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Provenance"];
-                };
-            };
-        };
-    };
-    snapshotLicenses: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Detected licenses and their policy evaluation */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["LicenseReport"];
-                };
-            };
-            /** @description Snapshot not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["LicenseReport"];
-                };
-            };
-        };
-    };
-    files: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Paths and sizes of the pinned commit's tree */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["FileTree"];
-                };
-            };
-            /** @description Role enforcement is enabled and the session holds no applicable role */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["FileTree"];
-                };
-            };
-            /** @description Snapshot not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["FileTree"];
-                };
-            };
-        };
-    };
-    file: {
-        parameters: {
-            query: {
-                path: string;
-            };
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Blob metadata, and its text unless binary */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["FileContent"];
-                };
-            };
-            /** @description Role enforcement is enabled and the session holds no applicable role */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["FileContent"];
-                };
-            };
-            /** @description Snapshot not found, or the path is not in the pinned tree */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["FileContent"];
-                };
-            };
-        };
-    };
-    fetchers: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The identities that fetched the snapshot's content */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Fetcher"][];
-                };
-            };
-            /** @description Snapshot not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Fetcher"][];
-                };
-            };
-        };
-    };
-    diff: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The delta a reviewer decides */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["SnapshotDiff"];
-                };
-            };
-            /** @description Role enforcement is enabled and the session holds no applicable role */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["SnapshotDiff"];
-                };
-            };
-            /** @description Snapshot not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["SnapshotDiff"];
-                };
-            };
-        };
-    };
-    snapshotContent: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Plugins and skills in the snapshot */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["SnapshotContent"];
-                };
-            };
-            /** @description Snapshot not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["SnapshotContent"];
-                };
-            };
-        };
-    };
-    candidates: {
-        parameters: {
-            query?: {
-                /** @description Restrict to one marketplace */
-                marketplace?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Candidate snapshots */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Candidate"][];
-                };
-            };
-        };
-    };
-    me: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["MeView"];
-                };
-            };
-        };
-    };
-    list_4: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The marketplace's waivers */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["WaiverView"][];
-                };
-            };
-            /** @description Marketplace not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["WaiverView"][];
-                };
-            };
-        };
-    };
-    lastRun: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The last reconciliation report */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["EstateReconciliation"];
-                };
-            };
-            /** @description No reconciliation has run */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["EstateReconciliation"];
-                };
-            };
-        };
-    };
-    catalog: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Served catalog revision and its constituents */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["CatalogInfo"];
-                };
-            };
-            /** @description Catalog disabled, or not generated yet */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["CatalogInfo"];
-                };
-            };
-        };
-    };
-    audit: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": {
-                        [key: string]: unknown;
-                    }[];
-                };
-            };
-        };
-    };
-    export: {
-        parameters: {
-            query?: {
-                after?: number;
-                limit?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The entries after the cursor, newline-delimited */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/x-ndjson": components["schemas"]["StreamingResponseBody"];
-                };
-            };
-        };
-    };
-    adoption: {
-        parameters: {
-            query?: {
-                /** @description Report window in days, default 30, clamped to 1..365 */
-                days?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The adoption report, one entry per fetched marketplace */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["MarketplaceAdoption"][];
-                };
-            };
-        };
-    };
-    staleness: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The stale identities, window-free */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["StaleIdentity"][];
-                };
-            };
-        };
-    };
-    delete_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Subscriber deleted */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content?: never;
             };
-            /** @description Subscriber not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    revoke: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Waiver revoked */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["WaiverView"];
-                };
-            };
-            /** @description Waiver not found, or already revoked */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["WaiverView"];
-                };
-            };
-        };
-    };
-    revoke_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Revoked */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description No such active token of yours */
+            /** @description Grant not found */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -4089,7 +3346,7 @@ export interface operations {
             };
         };
     };
-    revoke_2: {
+    approve: {
         parameters: {
             query?: never;
             header?: never;
@@ -4100,21 +3357,612 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Grant revoked */
+            /** @description Snapshot approved and now served */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description Snapshot is neither held nor revoked, its effective vetting outcome is blocked, or it has not yet reached the configured minimum release age */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+        };
+    };
+    snapshotContent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Plugins and skills in the snapshot */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SnapshotContent"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SnapshotContent"];
+                };
+            };
+        };
+    };
+    diff: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The delta a reviewer decides */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SnapshotDiff"];
+                };
+            };
+            /** @description Role enforcement is enabled and the session holds no applicable role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SnapshotDiff"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SnapshotDiff"];
+                };
+            };
+        };
+    };
+    fetchers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The identities that fetched the snapshot's content */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Fetcher"][];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Fetcher"][];
+                };
+            };
+        };
+    };
+    file: {
+        parameters: {
+            query: {
+                path: string;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Blob metadata, and its text unless binary */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FileContent"];
+                };
+            };
+            /** @description Role enforcement is enabled and the session holds no applicable role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FileContent"];
+                };
+            };
+            /** @description Snapshot not found, or the path is not in the pinned tree */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FileContent"];
+                };
+            };
+        };
+    };
+    files: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paths and sizes of the pinned commit's tree */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FileTree"];
+                };
+            };
+            /** @description Role enforcement is enabled and the session holds no applicable role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FileTree"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FileTree"];
+                };
+            };
+        };
+    };
+    snapshotLicenses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Detected licenses and their policy evaluation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LicenseReport"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LicenseReport"];
+                };
+            };
+        };
+    };
+    provenance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Provenance record */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Provenance"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Provenance"];
+                };
+            };
+        };
+    };
+    reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Snapshot rejected */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description Snapshot is neither held nor revoked */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+        };
+    };
+    releaseAge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Eligibility and the time remaining */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Eligibility"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Eligibility"];
+                };
+            };
+        };
+    };
+    restore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Snapshot restored */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description Snapshot is not deleted */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+        };
+    };
+    revetSnapshot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The re-vetting run and what it concluded */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RevetResult"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RevetResult"];
+                };
+            };
+            /** @description The snapshot is not approved; only served content is re-vetted */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RevetResult"];
+                };
+            };
+        };
+    };
+    vetting: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The latest chain run and the configured chain */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VettingView"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VettingView"];
+                };
+            };
+        };
+    };
+    create_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WaiverRequest"];
+            };
+        };
+        responses: {
+            /** @description Waiver recorded */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WaiverView"];
+                };
+            };
+            /** @description Missing justification or expiry, an expiry in the past, or an unusable scope */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WaiverView"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WaiverView"];
+                };
+            };
+        };
+    };
+    list_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TokenView"][];
+                };
+            };
+        };
+    };
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description Token issued; the only response carrying the cleartext */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+            /** @description Unknown scope, or lifetime beyond the configured cap */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+        };
+    };
+    createSessionCredential: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SessionCredentialRequest"];
+            };
+        };
+        responses: {
+            /** @description Credential issued; the only response carrying the cleartext */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+            /** @description Unknown scope */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+        };
+    };
+    revoke_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Revoked */
             204: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description Enforcement is enabled and the caller is not an admin */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Grant not found */
+            /** @description No such active token of yours */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -4123,7 +3971,7 @@ export interface operations {
             };
         };
     };
-    deleteSink: {
+    rotate: {
         parameters: {
             query?: never;
             header?: never;
@@ -4134,15 +3982,282 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Sink deleted */
+            /** @description Rotated; the only response carrying the new cleartext */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+            /** @description No such token of yours */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+            /** @description Token is revoked or expired; issue a new one instead */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+        };
+    };
+    revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Waiver revoked */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WaiverView"];
+                };
+            };
+            /** @description Waiver not found, or already revoked */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WaiverView"];
+                };
+            };
+        };
+    };
+    list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SubscriberView"][];
+                };
+            };
+        };
+    };
+    create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSubscriberRequest"];
+            };
+        };
+        responses: {
+            /** @description Subscriber registered; response carries the show-once secret */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreatedSubscriber"];
+                };
+            };
+            /** @description Disallowed URL scheme, or an unknown event name */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreatedSubscriber"];
+                };
+            };
+            /** @description A subscriber with that name already exists */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreatedSubscriber"];
+                };
+            };
+            /** @description Invalid subscriber name */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreatedSubscriber"];
+                };
+            };
+        };
+    };
+    deliveries: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WebhookDelivery"][];
+                };
+            };
+        };
+    };
+    events: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The event registry */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string[];
+                };
+            };
+        };
+    };
+    delete_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Subscriber deleted */
             204: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description Sink not found */
+            /** @description Subscriber not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getDocs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    getScalarJs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    trigger: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Hub-Signature-256"?: string;
+            };
+            path: {
+                marketplace: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Trigger accepted; ingestion queued */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid signature */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unknown marketplace, or its sync mode is not webhook */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Request body exceeds the configured bound */
+            413: {
                 headers: {
                     [name: string]: unknown;
                 };

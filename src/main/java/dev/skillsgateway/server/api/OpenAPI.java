@@ -1,11 +1,16 @@
 package dev.skillsgateway.server.api;
 
+import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.ExternalDocumentation;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Contact;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.info.License;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springdoc.core.customizers.OpenApiCustomizer;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.info.BuildProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @OpenAPIDefinition(
@@ -51,7 +56,6 @@ import org.springframework.context.annotation.Configuration;
                                 This API is the same surface the admin portal uses. The gateway \
                                 also exposes its own CycloneDX SBOM at `/actuator/sbom` and \
                                 health at `/actuator/health`.""",
-                        version = "v1",
                         contact = @Contact(name = "jimisola", url = "https://github.com/skillsgateway/skillsgateway"),
                         license = @License(name = "Apache-2.0", url = "https://www.apache.org/licenses/LICENSE-2.0")),
         externalDocs =
@@ -82,4 +86,24 @@ import org.springframework.context.annotation.Configuration;
                             + " playground that tests an expression against a real snapshot before it is enforced."),
         })
 @Configuration(proxyBeanMethods = false)
-public class OpenAPI {}
+public class OpenAPI {
+
+    /**
+     * Served when {@code build-info.properties} is absent — an IDE run, not a build. Valid semver
+     * so a consumer parsing the field does not have to special-case it.
+     */
+    public static final String UNKNOWN_VERSION = "0.0.0-unknown";
+
+    /**
+     * The document reports the release it describes, derived from git state by Nisse rather than
+     * maintained by hand. The published snapshot normalises this field away — it changes on every
+     * commit, so a snapshot carrying it would differ from the build on every commit.
+     */
+    @Bean
+    @Requirements({"GW_0105"})
+    OpenApiCustomizer documentVersion(ObjectProvider<BuildProperties> buildProperties) {
+        BuildProperties build = buildProperties.getIfAvailable();
+        String version = build != null ? build.getVersion() : UNKNOWN_VERSION;
+        return openApi -> openApi.getInfo().setVersion(version);
+    }
+}
