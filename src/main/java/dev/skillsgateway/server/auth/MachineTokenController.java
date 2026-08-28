@@ -11,9 +11,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -214,6 +216,17 @@ public class MachineTokenController {
                 null,
                 "credential %d '%s' scopes=%s expires=%s"
                         .formatted(issued.id(), issued.name(), issued.apiScopes(), issued.expiresAt()));
+    }
+
+    /** A refused scope or lifetime is 422, the same shape the personal-token surface uses. */
+    @ExceptionHandler(TokenService.InvalidTokenRequestException.class)
+    public ProblemDetail invalidRequest(TokenService.InvalidTokenRequestException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, e.getMessage());
+    }
+
+    @ExceptionHandler(TokenService.TokenNotRotatableException.class)
+    public ProblemDetail notRotatable(TokenService.TokenNotRotatableException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
     }
 
     private static MachineCredentialView view(AccessToken token) {

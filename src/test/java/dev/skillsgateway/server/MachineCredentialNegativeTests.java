@@ -57,9 +57,7 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
         return MachineApiRegistry.reachableRoutes().stream()
                 .map(entry -> entry.getValue())
                 .filter(route -> route.method().equals("GET"))
-                .map(route -> get(route.pattern()
-                        .replace("{id}", "999999")
-                        .replace("{name}", "no-such-marketplace")))
+                .map(route -> get(route.pattern().replace("{id}", "999999").replace("{name}", "no-such-marketplace")))
                 .toList();
     }
 
@@ -96,10 +94,8 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
     @SVCs({"SVC_GW_0127"})
     void a_push_scoped_token_reaches_no_api_endpoint() throws Exception {
         String name = uniqueName("hosted");
-        marketplaceRepository.register(
-                name, null, null, Marketplace.ORIGIN_HOSTED, "append-only", null);
-        TokenService.IssuedToken pusher =
-                tokenService.create("alice", "pusher", List.of(), null, List.of(name));
+        marketplaceRepository.register(name, null, null, Marketplace.ORIGIN_HOSTED, "append-only", null);
+        TokenService.IssuedToken pusher = tokenService.create("alice", "pusher", List.of(), null, List.of(name));
         assertThat(tokenService.authenticate(pusher.token()).orElseThrow().permitsPushTo(name))
                 .isTrue();
 
@@ -170,8 +166,7 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
         assertThat(tokenService.revokeMachineCredential(revoked.id())).isTrue();
         // Immediate: checked at authentication time, so it takes effect on the very next request
         // rather than when some cache happens to expire.
-        mockMvc.perform(bearer(get("/api/marketplaces"), revoked.token()))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(bearer(get("/api/marketplaces"), revoked.token())).andExpect(status().isUnauthorized());
 
         TokenService.IssuedToken expired = tokenService.createMachineCredential(
                 uniqueName("expiring"),
@@ -180,8 +175,7 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
                 Instant.now().plusMillis(1),
                 "admin@example.invalid");
         Thread.sleep(20);
-        mockMvc.perform(bearer(get("/api/marketplaces"), expired.token()))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(bearer(get("/api/marketplaces"), expired.token())).andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -247,7 +241,8 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
         mockMvc.perform(get("/api/marketplaces")
                         .header(
                                 HttpHeaders.AUTHORIZATION,
-                                basic(machineCredential(List.of("marketplaces:read")).token())))
+                                basic(machineCredential(List.of("marketplaces:read"))
+                                        .token())))
                 .andExpect(status().isUnauthorized());
         reachesTheApi(machineCredential(List.of("marketplaces:read")));
     }
@@ -262,8 +257,7 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
     }
 
     private static String basic(String secret) {
-        return "Basic "
-                + Base64.getEncoder().encodeToString(("gateway:" + secret).getBytes(StandardCharsets.UTF_8));
+        return "Basic " + Base64.getEncoder().encodeToString(("gateway:" + secret).getBytes(StandardCharsets.UTF_8));
     }
 
     private static String body(org.springframework.test.web.servlet.ResultActions actions) throws Exception {

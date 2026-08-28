@@ -131,6 +131,44 @@
         },
         "type": "object"
       },
+      "CreateMachineCredentialRequest": {
+        "description": "Machine API credential request; every field below is required",
+        "properties": {
+          "apiScopes": {
+            "description": "Named API scopes. There is no wildcard, no scope implies another, and an unknown value is refused rather than silently never matching.",
+            "example": [
+              "marketplaces:register",
+              "estate:read"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "expiresAt": {
+            "description": "Expiry. Mandatory and never defaulted; a lifetime beyond the cap is refused rather than shortened.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "name": {
+            "description": "Human-readable credential name",
+            "example": "platform-pipeline",
+            "type": "string"
+          },
+          "principal": {
+            "description": "The principal the credential acts as. It is not a person: the ledger attributes this credential's actions to it, and role grants name it.",
+            "example": "terraform-ci",
+            "type": "string"
+          }
+        },
+        "required": [
+          "apiScopes",
+          "expiresAt",
+          "name",
+          "principal"
+        ],
+        "type": "object"
+      },
       "CreateRuleRequest": {
         "description": "Policy rule creation request",
         "properties": {
@@ -665,6 +703,13 @@
       "IssuedToken": {
         "description": "A freshly issued token; the only time the cleartext is ever returned",
         "properties": {
+          "apiScopes": {
+            "description": "Administrative API scopes this credential may exercise; empty grants no administrative reach at all",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "createdAt": {
             "description": "Creation time",
             "format": "date-time",
@@ -679,6 +724,10 @@
             "description": "Token id",
             "format": "int64",
             "type": "integer"
+          },
+          "machineOwner": {
+            "description": "The identity that provisioned a machine credential, or null",
+            "type": "string"
           },
           "name": {
             "description": "Token name",
@@ -783,6 +832,56 @@
             "description": "SPDX id, or null for the unknown-license state",
             "example": "Apache-2.0",
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "MachineCredentialView": {
+        "description": "A machine API credential without its secret",
+        "properties": {
+          "apiScopes": {
+            "description": "The named API scopes it holds",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "createdAt": {
+            "description": "Creation time",
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiresAt": {
+            "description": "Expiry; never null for a machine credential",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "description": "Credential id",
+            "format": "int64",
+            "type": "integer"
+          },
+          "machineOwner": {
+            "description": "The identity that provisioned it",
+            "type": "string"
+          },
+          "name": {
+            "description": "Credential name",
+            "type": "string"
+          },
+          "principal": {
+            "description": "The principal the credential acts as",
+            "type": "string"
+          },
+          "revokedAt": {
+            "description": "Revocation time, or null while active",
+            "format": "date-time",
+            "type": "string"
+          },
+          "rotatedFrom": {
+            "description": "The credential this one replaced by rotation, or null",
+            "format": "int64",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -1717,6 +1816,13 @@
       "TokenView": {
         "description": "A token without its secret; the cleartext is only returned at creation",
         "properties": {
+          "apiScopes": {
+            "description": "Named administrative API scopes this credential holds. Empty for every personal access token: reaching the control plane is a grant, never a baseline, so an empty list here means none rather than all.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "createdAt": {
             "description": "Creation time",
             "format": "date-time",
@@ -2796,7 +2902,7 @@
     "/api/marketplaces/{name}/waivers": {
       "get": {
         "description": "Every waiver recorded for the marketplace, newest first, active and lapsed alike. A lapsed or revoked waiver is kept and returned with active=false: the record of what was once accepted, by whom and until when is part of the audit trail.",
-        "operationId": "list_4",
+        "operationId": "list_5",
         "parameters": [
           {
             "in": "path",
@@ -2908,7 +3014,7 @@
     "/api/policy/rules": {
       "get": {
         "description": "Every stored rule, enabled or not, with its expression and attribution.",
-        "operationId": "list_3",
+        "operationId": "list_4",
         "responses": {
           "200": {
             "content": {
@@ -2931,7 +3037,7 @@
       },
       "post": {
         "description": "Stores a named CEL deny rule after compiling it — parsing and type-checking to a boolean over the documented variables (snapshot, files, plugins, skills). An expression that does not compile is refused and never stored. Enabled rules are evaluated fail-closed at every approval; a matching or erroring rule refuses it. The creation lands on the audit ledger.",
-        "operationId": "create_3",
+        "operationId": "create_4",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3182,7 +3288,7 @@
     "/api/roles": {
       "get": {
         "description": "Every current grant. Configuration-bootstrapped admins are not grants and do not appear here; they show up as an effective role on /api/me. Admin-only while role enforcement is enabled.",
-        "operationId": "list_2",
+        "operationId": "list_3",
         "responses": {
           "200": {
             "content": {
@@ -3290,7 +3396,7 @@
     "/api/roles/{id}": {
       "delete": {
         "description": "Deletes the grant; the ledger keeps the history. Configuration-bootstrapped admins have no grant row, so they cannot be revoked here — by design, they are the escape hatch that survives a bad grant edit. Admin-only while role enforcement is enabled.",
-        "operationId": "revoke_2",
+        "operationId": "revoke_3",
         "parameters": [
           {
             "in": "path",
@@ -4061,7 +4167,7 @@
     "/api/snapshots/{id}/waivers": {
       "post": {
         "description": "Records a scoped, expiring waiver for one finding rule. The marketplace — and, for SNAPSHOT scope, the commit SHA — are taken from the snapshot, so a waiver cannot be mis-scoped to content it does not belong to. A justification, the acting identity and a future expiry are all mandatory; an unlimited waiver cannot be expressed. While an active waiver covers a finding, that finding no longer contributes to the snapshot's effective vetting outcome.",
-        "operationId": "create_2",
+        "operationId": "create_3",
         "parameters": [
           {
             "in": "path",
@@ -4181,6 +4287,189 @@
           }
         },
         "summary": "Create a token",
+        "tags": [
+          "Tokens"
+        ]
+      }
+    },
+    "/api/tokens/machine": {
+      "get": {
+        "description": "Every machine credential, whoever provisioned it, never any secret. Deliberately not scoped to the caller: a machine credential's principal is not an identity anyone logs in as, so an owner-scoped listing would leave every one of them invisible — and unrevokable — during an incident. A person's own token listing is unaffected and still shows only their own.",
+        "operationId": "list_2",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MachineCredentialView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Every machine credential"
+          },
+          "403": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MachineCredentialView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The caller does not hold the admin role"
+          }
+        },
+        "summary": "List machine API credentials",
+        "tags": [
+          "Tokens"
+        ]
+      },
+      "post": {
+        "description": "Issues a non-interactive credential for the REST API, presented as `Authorization: Bearer`. It carries no fetch and no publication authority, reaches only the endpoints its named scopes allow, and can never reach an act of human judgement, a retraction of content, a role grant or this endpoint. An expiry is mandatory. The cleartext is returned exactly once. Requires the admin role whether or not role enforcement is enabled.",
+        "operationId": "create_2",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMachineCredentialRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedToken"
+                }
+              }
+            },
+            "description": "Issued; the only response carrying the cleartext"
+          },
+          "403": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedToken"
+                }
+              }
+            },
+            "description": "The caller does not hold the admin role"
+          },
+          "422": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedToken"
+                }
+              }
+            },
+            "description": "Unknown or empty API scope, missing expiry, or a lifetime beyond the cap"
+          }
+        },
+        "summary": "Provision a machine API credential",
+        "tags": [
+          "Tokens"
+        ]
+      }
+    },
+    "/api/tokens/machine/{id}": {
+      "delete": {
+        "description": "Immediate and permanent, checked at authentication time rather than swept, so it takes effect on the credential's very next request. Audit-logged.",
+        "operationId": "revoke_2",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Revoked"
+          },
+          "403": {
+            "description": "The caller does not hold the admin role"
+          },
+          "404": {
+            "description": "No such active machine credential"
+          }
+        },
+        "summary": "Revoke a machine API credential",
+        "tags": [
+          "Tokens"
+        ]
+      }
+    },
+    "/api/tokens/machine/{id}/rotate": {
+      "post": {
+        "description": "Issues a fresh secret with the identical grant — the same principal, name, expiry deadline and every one of the same API scopes — and revokes the old credential first, so no moment has two live secrets.",
+        "operationId": "rotate_1",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedToken"
+                }
+              }
+            },
+            "description": "Rotated; the only response carrying the new cleartext"
+          },
+          "403": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedToken"
+                }
+              }
+            },
+            "description": "The caller does not hold the admin role"
+          },
+          "404": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedToken"
+                }
+              }
+            },
+            "description": "No such machine credential"
+          },
+          "409": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedToken"
+                }
+              }
+            },
+            "description": "The credential is revoked or expired; provision a new one"
+          }
+        },
+        "summary": "Rotate a machine API credential",
         "tags": [
           "Tokens"
         ]
