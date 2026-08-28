@@ -2,22 +2,23 @@
 
 One fresh run of every gate after the last code edit.
 
-**Commit:** `6390664` (`feat(release): gate the release behind an approval and drop the v tag prefix`)
+**Commit:** `2eebf30` (`feat(release): gate the release behind an approval and drop the v tag prefix`)
 
 Named as the implementation commit rather than this report's own, which cannot
 contain its own hash. Every file this change touches outside
 `openspec/changes/release-workflow/` is at its final state as of `6390664`; the
 commits after it carry only this report and the task list.
 
-Re-run after rebasing onto `46e847e` — PRs #118 (`feat(roles)`) and #119
-(`feat(hosting)`) each merged to `main` mid-change, conflicting both times on
+Re-run after rebasing onto `b95db67` — PRs #118 (`feat(roles)`), #119
+(`feat(hosting)`) and #120 (`feat(tokens)`) each merged to `main` mid-change,
+conflicting every time on
 `requirements.yml` and `software_verification_cases.yml` (the first rebase also
 took `mkdocs.yml`). All were append-at-end conflicts.
 
 Both times the reqstool files were rebuilt from `main` verbatim plus this
 branch's own blocks rather than hand-merged — a first attempt at resolving them
 by hand dropped `GW_0100`'s `revision` field, which is why the rebuild is
-scripted. After each rebuild both files were re-validated (102 requirements, 102
+scripted. After each rebuild both files were re-validated (103 requirements, 103
 SVCs at the final state; no duplicates, every `requirement_ids` resolving, every
 block carrying a `revision`) and the diff against `main` confirmed to add
 exactly `GW_0108`, `GW_0109`, `SVC_GW_0108`, `SVC_GW_0109` plus the
@@ -31,7 +32,7 @@ change.
 ## `./mvnw clean verify`
 
 ```
-[INFO] Tests run: 172, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 178, Failures: 0, Errors: 0, Skipped: 0
 [INFO] You have 0 Checkstyle violations.
 [INFO] BUILD SUCCESS
 ```
@@ -46,14 +47,14 @@ change.
 ## `(cd src/main/frontend && pnpm e2e)`
 
 ```
-  12 passed (27.8s)
+  12 passed (35.9s)
 ```
 
 ## `reqstool status local -p docs/reqstool`
 
 ```
 INCOMPLETE (0)
-102/102 complete · 0 incomplete · PASS
+103/103 complete · 0 incomplete · PASS
 ```
 
 ## `openspec validate --all --strict`
@@ -82,6 +83,15 @@ exit=0
 Clean across all eight workflows. It was **not** clean before this change: the
 smoke-test loop in `native.yml` tripped `SC2034` (`i appears unused`) on `main`
 as well, and since this change edits that file the loop variable became `_`.
+
+## One intermittent failure, not from this change
+
+The first `mvnw clean verify` of this run failed in
+`src/main/frontend/src/pages/marketplace-detail.test.tsx`
+(`deleted_snapshot_shows_its_restore_deadline_and_control`). An immediate re-run
+of the same tree passed, and the file is not touched by this change — it arrived
+with #120. Recorded rather than quietly re-run: it is a real flake in the suite
+and someone should chase it.
 
 ## The negative runs
 
