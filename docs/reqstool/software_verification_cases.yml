@@ -1077,3 +1077,47 @@ cases:
       WHEN the packaging test validates them
       THEN no workflow matches or strips a prefixed tag, the changelog configuration recognises only bare three-part semantic versions as release tags, and the release workflow refuses a commit that is unreachable from the main branch or that already carries a release tag
     revision: "0.1.0"
+
+  - id: SVC_GW_0110
+    requirement_ids: ["GW_0110"]
+    title: A configured deployment refuses to start with the development escape hatch on
+    verification: automated-test
+    description: |
+      GIVEN a gateway whose development-only unauthenticated mode is enabled
+      WHEN it is started with an identity provider configured, whether by a real client
+      registration, a provider endpoint that is not the shipped placeholder, or a pinned
+      issuer
+      THEN it refuses to start, and the refusal names the configuration that decided it and
+      both ways to resolve it
+      AND a gateway with the mode enabled and no identity provider configured still starts
+    revision: "0.1.0"
+
+  - id: SVC_GW_0120
+    requirement_ids: ["GW_0120"]
+    title: The chart fails closed when the storage durability choice is missing
+    verification: automated-test
+    description: |
+      GIVEN the deployment chart
+      WHEN the packaging test validates it
+      THEN the chart ships no default storage choice, refuses to render when the choice is absent, unrecognised, or names durable storage without a volume claim, states the data-loss consequence in the refusal, and renders the durable volume from the named claim once the choice is made
+    revision: "0.1.0"
+
+  - id: SVC_GW_0121
+    requirement_ids: ["GW_0121"]
+    title: The chart carries registry credentials, an optional ingress, default reservations, its own service account and a non-root security context
+    verification: automated-test
+    description: |
+      GIVEN the deployment chart
+      WHEN the packaging test validates it
+      THEN the pod specification carries the configured image pull secrets, names a service account the chart creates and can annotate, and defaults to running as a non-root user with no privilege escalation, all capabilities dropped and a read-only root filesystem alongside a writable temporary directory; the ingress renders only when enabled and carries its class, annotations, host and path rules and TLS block; and the container declares default processor and memory reservations and limits
+    revision: "0.1.0"
+
+  - id: SVC_GW_0122
+    requirement_ids: ["GW_0122"]
+    title: The chart passes arbitrary application configuration through to the container
+    verification: automated-test
+    description: |
+      GIVEN the deployment chart
+      WHEN the packaging test validates it
+      THEN extra environment entries and projected environment sources reach the container verbatim, structured configuration is rendered into a configuration object that is mounted into the container and layered over the image's own configuration, and a change to that configuration changes the pod specification so the estate is reconciled again
+    revision: "0.1.0"

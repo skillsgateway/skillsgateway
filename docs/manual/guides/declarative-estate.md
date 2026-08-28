@@ -28,8 +28,11 @@ What reconciliation guarantees:
 ## 1. Declare the estate
 
 The full key-by-key contract is in
-[Configuration](../reference/configuration.md#declarative-estate). A working
-deployment declaration:
+[Configuration](../reference/configuration.md#declarative-estate); how the
+declaration physically reaches a deployed gateway — the chart's `config` key,
+rendered into a mounted ConfigMap — is in
+[Deploying on Kubernetes](deploying-on-kubernetes.md#configuring-the-application).
+A working deployment declaration:
 
 ```yaml
 skills-gateway:
