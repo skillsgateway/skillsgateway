@@ -13,9 +13,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryBuilder;
-import org.springframework.stereotype.Component;
 
-@Component
 public class FilesystemGitStorage implements GitStorage {
 
     private static final String MAIN = "main";

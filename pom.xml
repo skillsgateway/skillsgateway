@@ -172,10 +172,24 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- The object-store git backend (skills-gateway.storage.backend=object-store). Compile
+             scope because the backend is part of the application; it stays inert at runtime unless
+             the backend is named, and the filesystem backend remains the default. apache5-client is
+             the synchronous HTTP client, chosen explicitly so the connection pool can be given an
+             idle time below the store's own; sts is what the web-identity (IRSA) credential
+             provider needs, and web identity is a hard requirement rather than an option because
+             the first deployment target has no instance metadata service. -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
-            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>apache5-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>sts</artifactId>
         </dependency>
         <!-- Floci (a local AWS emulator) through Arconia Dev Services, per the
              project rule that a dev service is used wherever one exists. The dev
@@ -189,19 +203,24 @@
              the project then fails to start. The starter brings both halves and the
              problem does not arise. Reported upstream as arconia-io/arconia#281.
 
-             Test scope, not `optional` like the Postgres dev service below: no
-             application code reaches object storage yet, so there is no bootRun
-             consumer to share a container with. Flip it to `optional` when the
-             object-store backend lands. -->
+             `optional`, alongside the Postgres dev service: the object-store backend
+             now gives bootRun an object-store consumer to share the container with,
+             which is the whole point of the project's dev-services rule — one
+             container serves the development run and the test suite, so the thing
+             developed against and the thing tested against cannot drift apart. -->
         <dependency>
             <groupId>io.arconia</groupId>
             <artifactId>arconia-dev-services-floci</artifactId>
-            <scope>test</scope>
+            <optional>true</optional>
         </dependency>
+        <!-- Only the Floci dev service needs this: the object-store backend builds its own
+             S3 client from skills-gateway.storage.object-store.*, and never from Spring Cloud
+             AWS. `optional` for the same reason as the dev service above — it must reach
+             bootRun and the tests, and neither a consumer's classpath nor the packaged jar. -->
         <dependency>
             <groupId>io.awspring.cloud</groupId>
             <artifactId>spring-cloud-aws-starter-s3</artifactId>
-            <scope>test</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
@@ -449,6 +468,16 @@
                 <dependency>
                     <groupId>io.arconia</groupId>
                     <artifactId>arconia-dev-services-lgtm</artifactId>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>io.arconia</groupId>
+                    <artifactId>arconia-dev-services-floci</artifactId>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>io.awspring.cloud</groupId>
+                    <artifactId>spring-cloud-aws-starter-s3</artifactId>
                     <scope>test</scope>
                 </dependency>
                 <dependency>

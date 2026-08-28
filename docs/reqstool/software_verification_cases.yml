@@ -1249,6 +1249,24 @@ cases:
       their own
     revision: "0.1.0"
 
+  - id: SVC_GW_0111
+    requirement_ids: ["GW_0111"]
+    title: The storage backend is the one that was named, or the gateway does not start
+    verification: automated-test
+    description: |
+      GIVEN a gateway configuration
+      WHEN the git storage backend is resolved at startup
+      THEN an absent selection resolves the filesystem backend, a named backend resolves that
+      backend and no other, an unrecognised name fails startup naming both the setting and the
+      value it could not accept, an object-storage selection missing its bucket, its region or the
+      credentials the credential mode it names requires fails startup naming the missing setting,
+      a workload-identity selection resolvable from neither configuration nor the standard
+      environment fails startup rather than falling back to a credential chain, a
+      workload-identity selection that is resolvable starts while the gateway holds no secret, and
+      the storage client the configuration builds carries an explicit bounded connection lifetime
+      and passes conditional writes through faithfully
+    revision: "0.1.0"
+
   - id: SVC_GW_0112
     requirement_ids: ["GW_0112"]
     title: Every storage backend satisfies the same reference-transition contract
