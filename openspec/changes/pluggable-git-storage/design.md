@@ -417,42 +417,55 @@ emulator positioned as an alternative to LocalStack Community, reached through
 the Floci project's own `FlociContainer` Testcontainers module, pinned to
 `1.5.33`.
 
-*Not, yet, through the Arconia Floci dev service — and that needs justifying,
-because the project rule is that a container-backed test uses an Arconia dev
-service wherever one exists, so that one container serves both `bootRun` and the
-suite.* `io.arconia:arconia-dev-services-floci` does exist (since Arconia 0.27.0;
-present in the 0.29.0 BOM this project already imports) and it **was** made to
-work here: all five assertions and both mutation proofs pass through it, with the
-endpoint and credentials taken from the `AwsConnectionDetails` its
-`FlociAwsContainerConnectionDetailsFactory` publishes.
+**Through the Arconia Floci dev service**, per the project rule that a
+container-backed test uses a dev service wherever one exists, so that one
+container serves both `bootRun` and the suite.
+`io.arconia:arconia-dev-services-floci` has existed since Arconia 0.27.0 and is
+in the 0.29.0 BOM this project already imports. The spike takes its `S3Client`
+straight from the context: Spring Cloud AWS auto-configures it from the
+`AwsConnectionDetails` that Arconia's `FlociAwsContainerConnectionDetailsFactory`
+publishes, and Arconia's own `S3ClientCustomizer` supplies path-style
+addressing. The test names no image, no port and no URL.
 
-It was reverted for one measured reason. `FlociDevServicesAutoConfiguration` is
+**A correction, recorded because the wrong answer was believed for a while.** An
+earlier revision of this design claimed the dev service was unusable — that
+putting Spring Cloud AWS on the classpath made awspring's
+`CredentialsProviderAutoConfiguration` fail every Spring context in the project
+for want of an `AwsRegionProvider`, at a measured cost of the entire gateway
+suite, and that the only escapes were to configure Spring Cloud AWS for real or
+to exclude its auto-configurations. That was wrong, and the error was a
+dependency choice, not an incompatibility.
+
+`FlociDevServicesAutoConfiguration` is
 `@ConditionalOnClass(io.awspring.cloud.autoconfigure.core.AwsConnectionDetails,
-software.amazon.awssdk.awscore.AwsClient)`, so using it means putting Spring
-Cloud AWS on the classpath — and with the AWS SDK also present, awspring's own
-`CredentialsProviderAutoConfiguration` then activates in **every** Spring context
-in the project and fails for want of an `AwsRegionProvider` bean. The measured
-cost was the entire gateway suite: `EstateStartupFailureTests`, `FacadeTests`,
-`IngestionTests`, `VettingTests` and the rest, all erroring on context startup.
-The only ways out were to configure Spring Cloud AWS for real, or to list
-awspring's auto-configurations in the application's own
-`spring.autoconfigure.exclude` — both of which put AWS-vendor configuration into
-a product that does not use AWS, in order to satisfy a test double.
+software.amazon.awssdk.awscore.AwsClient)`. `AwsConnectionDetails` lives in
+`spring-cloud-aws-autoconfigure`, so adding exactly that artifact satisfies the
+condition and looks correct — but it does not bring `spring-cloud-aws-core`, so
+awspring's `RegionProviderAutoConfiguration`
+(`@ConditionalOnClass(io.awspring.cloud.core.region.StaticRegionProvider, …)`)
+is silently skipped, while `CredentialsProviderAutoConfiguration` — conditioned
+only on AWS SDK classes — still activates and takes `AwsRegionProvider` as a
+constructor parameter. The bean never exists, and every context fails. The
+failure names awspring rather than the dev service, which is why it read as an
+incompatibility.
 
-What is used instead is not a hand-rolled `GenericContainer`: it is
-`io.floci:testcontainers-floci`, the same container class the dev service wraps,
-carrying the same image tag, port and wait strategy, and exposing the same four
-accessors (`getEndpoint`, `getRegion`, `getAccessKey`, `getSecretKey`) as the
-connection details. The image is pinned to the tag Arconia 0.29.0 resolves, so
-the two stay in step.
+With a starter (`spring-cloud-aws-starter-s3`) both halves are present and the
+problem does not arise. Verified by running the full suite both ways: green with
+the starter, and green with **no** AWS configuration at all — no static region,
+no credentials. Region resolution never even happens, because
+`DefaultAwsRegionProviderChain` only resolves when `getRegion()` is called and
+nothing here builds a client that calls it; the bean merely has to exist.
+Reported upstream as
+[arconia-io/arconia#281](https://github.com/arconia-io/arconia/issues/281),
+suggesting the docs name the artifact and that the dev service condition on a
+`spring-cloud-aws-core` class so an incomplete classpath leaves it inactive
+rather than breaking the application.
 
-**This is explicitly temporary, and it self-resolves.** The rule's purpose is
-that one container serves `bootRun` and the tests — and today no application code
-touches object storage at all, so there is no `bootRun` consumer to share with
-and the benefit is currently zero. The moment the object-store backend exists,
-the application will configure an AWS region and credentials because the backend
-needs them, which is exactly what awspring was missing. Adopting the dev service
-is therefore **task 6.8**, not a decision deferred indefinitely.
+The dependency is `test` scope rather than `optional` like the Postgres dev
+service, for the one reason that survives from the earlier analysis: no
+application code touches object storage yet, so there is no `bootRun` consumer
+to share a container with. Flipping it to `optional` belongs with the backend
+that creates one.
 
 But a test double is exactly the wrong thing to trust here, and this is not
 ordinary test-double caution. The entire correctness argument of this design

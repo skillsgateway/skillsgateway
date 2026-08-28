@@ -17,16 +17,19 @@ applies: failing tests first, proved failing, before any implementation.
 ## 2. Spike (settle the open questions before writing production code)
 
 - [x] 2.1 **Test-double fidelity spike — do this before any other object-store
-      work.** Against Floci (`docker.io/floci/floci`) via Testcontainers, prove
+      work.** Against Floci (`docker.io/floci/floci`) through the Arconia Floci
+      dev service, prove
       `If-Match` semantics exactly: matching ETag succeeds and returns a new
       ETag; stale ETag returns **412** with the stored object unchanged;
       `If-None-Match: *` creates once and 412s on the second attempt; under N
       concurrent writers from one base ETag exactly one succeeds. A double that
       ignores `If-Match` would let a broken backend pass its concurrency tests
       green, so nothing downstream may be written until this is settled.
-      **Done — Floci 1.5.28 passes all five, and two mutations confirm the
-      suite would have caught a store that ignores preconditions
-      (`ConditionalWriteFidelityTests`)**
+      **Done — Floci 1.5.33 passes all five through the Arconia Floci dev
+      service, and two mutations confirm the suite would have caught a store
+      that ignores preconditions: dropping `If-Match` fails 3 of 5 including
+      the concurrency case (`expected: 1L`), dropping `If-None-Match` fails the
+      create-once case (`ConditionalWriteFidelityTests`)**
 - [x] 2.2 **Not triggered — 2.1 passed.** Fallback kept on record: if a future
       emulator version regresses, move the conditional-write contract to a
       separate tagged suite against real S3 and consider contributing the
@@ -114,14 +117,14 @@ applies: failing tests first, proved failing, before any implementation.
       guarded so a losing compactor loses harmlessly
 - [ ] 6.7 Make the whole contract test suite (task 3) green against this
       backend with no change to any `GitStorage` caller
-- [ ] 6.8 Switch `ConditionalWriteFidelityTests` (and any later object-store
-      test) from `io.floci:testcontainers-floci` to the Arconia Floci dev
-      service, per the project rule that one container serves `bootRun` and the
-      suite. Blocked until now only because the dev service's auto-configuration
-      is `@ConditionalOnClass` on Spring Cloud AWS, whose own auto-configuration
-      then fails every gateway context for want of an `AwsRegionProvider`; once
-      this backend configures an AWS region and credentials for real, that
-      conflict is gone. Re-run both mutation proofs after the switch
+- [ ] 6.8 Flip the Floci dev-service dependency from `test` scope to `optional`,
+      alongside the Postgres dev service, once this backend gives `bootRun` an
+      object-store consumer to share the container with. The dev service itself
+      is already in use — `ConditionalWriteFidelityTests` takes its `S3Client`
+      from the context (task 2.1) — so this is the remaining half of the rule,
+      not the adoption. **Deferred to the backend, not blocked:** with no
+      application code touching object storage, an `optional` dependency would
+      start a Floci container on every `bootRun` for nothing
 
 ## 7. Migration
 

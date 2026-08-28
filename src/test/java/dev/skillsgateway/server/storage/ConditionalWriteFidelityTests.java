@@ -3,8 +3,6 @@ package dev.skillsgateway.server.storage;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.floci.testcontainers.FlociContainer;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -15,19 +13,14 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.utility.DockerImageName;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -50,19 +43,40 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
  * because sequential calls cannot distinguish a correct implementation from one that ignores
  * preconditions but happens to be ordered.
  *
- * <p>The container is the Floci project's own {@link FlociContainer} — the same class the Arconia
- * Floci dev service wraps, and the source of the image tag, port and wait strategy — rather than a
- * hand-rolled {@code GenericContainer} with a guessed port. The dev service itself is deliberately
- * not used yet: its auto-configuration is {@code @ConditionalOnClass} on Spring Cloud AWS, and
- * putting that on the classpath makes awspring's own {@code CredentialsProviderAutoConfiguration}
- * fail every gateway Spring context for want of an {@code AwsRegionProvider}. Decision 9 of the
- * {@code pluggable-git-storage} design records the evidence and the plan: adopt the dev service
- * once the object-store backend exists and the application configures AWS region and credentials
- * for real, at which point the conflict resolves itself.
+ * <p>The store is Floci, started by the <b>Arconia Floci dev service</b> and reached through the
+ * {@link S3Client} Spring Cloud AWS auto-configures from the connection details that dev service
+ * publishes — endpoint, region, credentials and path-style addressing all wired without this test
+ * naming an image, a port or a URL. That is the point of the project's dev-services rule: the same
+ * container serves {@code bootRun} and the test suite, so the thing developed against and the
+ * thing tested against cannot drift apart.
+ *
+ * <p>The dev service activates only when Spring Cloud AWS is on the classpath, and the artifact
+ * that literally satisfies its {@code @ConditionalOnClass} is not sufficient on its own — see the
+ * dependency comment in {@code pom.xml} and decision 9 of the {@code pluggable-git-storage}
+ * design. Reported upstream as arconia-io/arconia#281.
  *
  * <p>This is the fidelity spike from task 2.1 of the {@code pluggable-git-storage} change. It
  * carries no {@code @SVCs} annotation: it verifies the store, not the gateway.
  */
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.NONE,
+        properties = {
+            // Dummy OIDC registration with explicit provider details: no discovery at startup.
+            "spring.security.oauth2.client.registration.idp.client-id=test",
+            "spring.security.oauth2.client.registration.idp.client-secret=test",
+            "spring.security.oauth2.client.registration.idp.authorization-grant-type=authorization_code",
+            "spring.security.oauth2.client.registration.idp.redirect-uri={baseUrl}/login/oauth2/code/idp",
+            "spring.security.oauth2.client.provider.idp.authorization-uri=https://idp.invalid/authorize",
+            "spring.security.oauth2.client.provider.idp.token-uri=https://idp.invalid/token",
+            "spring.security.oauth2.client.provider.idp.jwk-set-uri=https://idp.invalid/jwks",
+            "skills-gateway.data-dir=target/test-git-data",
+            // Every background pass off: this test exercises the object store, not the gateway.
+            "skills-gateway.webhooks.enabled=false",
+            "skills-gateway.audit-export.enabled=false",
+            "skills-gateway.retention.enabled=false",
+            "skills-gateway.vetting.revet.enabled=false",
+            "skills-gateway.sync.enabled=false"
+        })
 @DisplayName("Object-store conditional-write fidelity")
 class ConditionalWriteFidelityTests {
 
@@ -73,46 +87,20 @@ class ConditionalWriteFidelityTests {
     private static final byte[] REPLACEMENT = "replacement".getBytes(StandardCharsets.UTF_8);
     private static final byte[] INTRUDER = "intruder".getBytes(StandardCharsets.UTF_8);
 
-    /**
-     * Pinned, not {@code latest}: the store's conditional-write behaviour is the thing under test,
-     * so the version that behaviour was observed on has to be the version CI runs. This is the tag
-     * the Arconia Floci dev service resolves at Arconia 0.29.0, which keeps the two in step for the
-     * eventual switch to the dev service.
-     */
-    private static final DockerImageName IMAGE = DockerImageName.parse("floci/floci:1.5.33");
-
-    @SuppressWarnings("resource")
-    private static final FlociContainer FLOCI = new FlociContainer(IMAGE);
-
-    private static S3Client s3;
-
-    @BeforeAll
-    static void buildClient() {
-        FLOCI.start();
-        s3 = S3Client.builder()
-                .endpointOverride(URI.create(FLOCI.getEndpoint()))
-                .region(Region.of(FLOCI.getRegion()))
-                .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create(FLOCI.getAccessKey(), FLOCI.getSecretKey())))
-                // Path style: the emulator is reached by host:port, so a virtual-host bucket
-                // prefix would resolve to a name that does not exist.
-                .serviceConfiguration(
-                        S3Configuration.builder().pathStyleAccessEnabled(true).build())
-                .build();
-        s3.createBucket(b -> b.bucket(BUCKET));
-    }
-
-    @AfterAll
-    static void closeClient() {
-        if (s3 != null) {
-            s3.close();
-            s3 = null;
-        }
-        FLOCI.stop();
-    }
+    @Autowired
+    private S3Client s3;
 
     @BeforeEach
     void resetObject() {
+        // One @BeforeEach, not two: JUnit does not order lifecycle methods declared at the same
+        // level, and a separate bucket-creation hook ran after this one often enough to fail.
+        //
+        // The dev service hands over a running store, not a provisioned one, and the container is
+        // shared by every test in this context, so bucket creation has to tolerate one that is
+        // already there rather than assume a clean store.
+        if (s3.listBuckets().buckets().stream().noneMatch(b -> BUCKET.equals(b.name()))) {
+            s3.createBucket(b -> b.bucket(BUCKET));
+        }
         put(ORIGINAL, null, null);
     }
 
@@ -256,11 +244,11 @@ class ConditionalWriteFidelityTests {
 
     // --- helpers ------------------------------------------------------------
 
-    private static PutObjectResponse put(byte[] content, String ifMatch, String ifNoneMatch) {
+    private PutObjectResponse put(byte[] content, String ifMatch, String ifNoneMatch) {
         return putKey(KEY, content, ifMatch, ifNoneMatch);
     }
 
-    private static PutObjectResponse putKey(String key, byte[] content, String ifMatch, String ifNoneMatch) {
+    private PutObjectResponse putKey(String key, byte[] content, String ifMatch, String ifNoneMatch) {
         PutObjectRequest.Builder request =
                 PutObjectRequest.builder().bucket(BUCKET).key(key);
         if (ifMatch != null) {
@@ -272,15 +260,15 @@ class ConditionalWriteFidelityTests {
         return s3.putObject(request.build(), RequestBody.fromBytes(content));
     }
 
-    private static String currentEtag() {
+    private String currentEtag() {
         return s3.headObject(h -> h.bucket(BUCKET).key(KEY)).eTag();
     }
 
-    private static byte[] body() {
+    private byte[] body() {
         return bodyOf(KEY);
     }
 
-    private static byte[] bodyOf(String key) {
+    private byte[] bodyOf(String key) {
         ResponseBytes<GetObjectResponse> bytes = s3.getObjectAsBytes(
                 GetObjectRequest.builder().bucket(BUCKET).key(key).build());
         return bytes.asByteArray();

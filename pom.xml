@@ -40,7 +40,7 @@
         <reqstool-plugin.version>1.0.4</reqstool-plugin.version>
         <arconia.version>0.29.0</arconia.version>
         <awssdk.version>2.46.7</awssdk.version>
-        <testcontainers-floci.version>2.12.0</testcontainers-floci.version>
+        <spring-cloud-aws.version>4.1.0</spring-cloud-aws.version>
         <cyclonedx-plugin.version>2.9.3</cyclonedx-plugin.version>
         <springdoc.version>3.1.0</springdoc.version>
         <scalar.version>0.4.4</scalar.version>
@@ -69,6 +69,16 @@
                 <groupId>software.amazon.awssdk</groupId>
                 <artifactId>bom</artifactId>
                 <version>${awssdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- Spring Cloud AWS. Present so the Arconia Floci dev service can
+                 activate: its auto-configuration is @ConditionalOnClass on
+                 io.awspring.cloud.autoconfigure.core.AwsConnectionDetails. -->
+            <dependency>
+                <groupId>io.awspring.cloud</groupId>
+                <artifactId>spring-cloud-aws-dependencies</artifactId>
+                <version>${spring-cloud-aws.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -167,18 +177,30 @@
             <artifactId>s3</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- The Floci project's own Testcontainers module: the same container class the
-             Arconia Floci dev service wraps, and the source of the image tag, port and
-             wait strategy. Used directly rather than through the dev service because the
-             dev service's auto-configuration is @ConditionalOnClass on Spring Cloud AWS,
-             whose own auto-configuration then fails every gateway Spring context (no
-             AwsRegionProvider bean) — see the pluggable-git-storage design, decision 9.
-             Revisit once the object-store backend exists and the application configures
-             AWS credentials and region for real. -->
+        <!-- Floci (a local AWS emulator) through Arconia Dev Services, per the
+             project rule that a dev service is used wherever one exists. The dev
+             service activates only when Spring Cloud AWS is on the classpath, and
+             the artifact that satisfies its @ConditionalOnClass —
+             spring-cloud-aws-autoconfigure — is NOT sufficient on its own: it does
+             not bring spring-cloud-aws-core, so awspring's own
+             RegionProviderAutoConfiguration is silently skipped while its
+             CredentialsProviderAutoConfiguration still activates and demands the
+             AwsRegionProvider bean that was never created. Every Spring context in
+             the project then fails to start. The starter brings both halves and the
+             problem does not arise. Reported upstream as arconia-io/arconia#281.
+
+             Test scope, not `optional` like the Postgres dev service below: no
+             application code reaches object storage yet, so there is no bootRun
+             consumer to share a container with. Flip it to `optional` when the
+             object-store backend lands. -->
         <dependency>
-            <groupId>io.floci</groupId>
-            <artifactId>testcontainers-floci</artifactId>
-            <version>${testcontainers-floci.version}</version>
+            <groupId>io.arconia</groupId>
+            <artifactId>arconia-dev-services-floci</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.awspring.cloud</groupId>
+            <artifactId>spring-cloud-aws-starter-s3</artifactId>
             <scope>test</scope>
         </dependency>
 
