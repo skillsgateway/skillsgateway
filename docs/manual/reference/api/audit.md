@@ -69,13 +69,37 @@ polling, batch payload, signature, replay — is in
 | `id` | `BIGSERIAL`. The ordering key. |
 | `ts` | When the entry was appended. |
 | `source` | Client address for a facade fetch; the literal `admin` for an administrative action. |
-| `principal` | The PAT principal for a fetch, the OIDC principal for an admin action. |
+| `principal` | The PAT principal for a fetch, the OIDC principal for an admin action, the credential's own principal for a machine API action. |
+| `actorType` / `actor_type` | What kind of actor acted: `human`, `machine` or `system` (GW_0128). See below. |
 | `marketplace` | The marketplace name, or `-` when not marketplace-scoped. |
 | `event` | What happened — see below. |
 | `ref` | The ref involved, when there is one. |
 | `sha` | The commit involved, when there is one. |
 | `detail` | Free-text qualifier, when the entry needs one: the vetting chain outcome, a connector's verdict, or the reason a reviewer gave when overriding a blocked outcome. |
-| `tokenId` / `token_id` | Id of the token that authenticated a facade entry (GW_0067); null on admin entries and on entries older than per-token attribution. `GET /api/tokens` gives the owner the id→name mapping. |
+| `tokenId` / `token_id` | Id of the credential that authenticated a facade entry (GW_0067) or a machine API entry (GW_0128); null on interactive admin entries and on entries older than per-credential attribution. `GET /api/tokens` gives the owner the id→name mapping. |
+
+### The actor type
+
+| Value | `principal` is | Produced by |
+| --- | --- | --- |
+| `human` | the identity-provider subject, or the PAT principal | an interactive session, and every facade fetch by a credential holding no API scope |
+| `machine` | the credential's own principal | a [machine API credential](tokens.md#machine-api-credentials), and a facade fetch by one |
+| `system` | `config-reconciler`, `scheduler`, `webhook`, `revet-policy` or `system` | the gateway acting on its own |
+
+It is **denormalised on purpose**, and never a join: an entry written years ago
+must still say what it meant after the credential it names has been revoked and
+its row deleted — the same reasoning `token_id` already carries. Query it
+directly (`WHERE actor_type = 'machine'`) rather than comparing `principal`
+against a list of names.
+
+!!! note "Facade fetches are typed by the credential, imperfectly and knowingly"
+
+    A facade fetch records `machine` when the credential that authenticated it
+    holds any API scope, and `human` otherwise. A fetch-only PAT sitting in a CI
+    variable therefore still records as `human`. That is the only distinction
+    the data supports, and it is truthful about what this column introduces
+    rather than guessing about what it does not. Existing entries are `human`,
+    which is what they have always implicitly claimed.
 
 ## Events
 
@@ -90,6 +114,17 @@ Negotiation rounds are not recorded.
 
 **From the API** — registration, ingestion, approve and reject, each carrying
 the acting OIDC principal.
+
+| Event | When | `detail` |
+| --- | --- | --- |
+| `roles-read` | Every **authorized** read of `GET /api/roles`, by a person or a machine alike (GW_0128). A refused read records nothing. | `grants={n}`. |
+| `machine-credential-created` | A machine API credential was provisioned. The actor is the administrator who provisioned it; the credential's own actions are recorded under its own principal. | `credential {id} '{name}' scopes=…; expires=…`. |
+| `machine-credential-rotated` | A machine API credential got a new secret with an identical grant. | As above. |
+| `machine-credential-revoked` | A machine API credential was revoked. | `credential {id} '{name}' principal=…`. |
+
+Reads of the ledger itself record **nothing**, deliberately: an exporter polling
+on a cursor loop would otherwise append one entry per poll, and that entry is
+itself new content to export.
 
 **From the vetting chain** — every run, recorded under the `admin` source with
 `vetting` as the principal:

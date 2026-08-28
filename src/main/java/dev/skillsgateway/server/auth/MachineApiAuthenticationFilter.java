@@ -104,6 +104,6 @@ public class MachineApiAuthenticationFilter extends OncePerRequestFilter {
         // bare "Bearer" with nothing after it: an empty credential must be refused by this chain
         // rather than fall through to the session chain and be answered differently.
         String trimmed = header.stripLeading();
-        return trimmed.regionMatches(true, 0, BEARER, 0, BEARER.length()) || trimmed.equalsIgnoreCase(BEARER.strip());
+        return trimmed.regionMatches(true, 0, BEARER, 0, BEARER.length()) || false;
     }
 }
