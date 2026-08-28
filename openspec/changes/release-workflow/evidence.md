@@ -2,23 +2,25 @@
 
 One fresh run of every gate after the last code edit.
 
-**Commit:** `2eebf30` (`feat(release): gate the release behind an approval and drop the v tag prefix`)
+**Commit:** `1776ce5` (`feat(release): gate the release behind an approval and drop the v tag prefix`)
 
 Named as the implementation commit rather than this report's own, which cannot
 contain its own hash. Every file this change touches outside
 `openspec/changes/release-workflow/` is at its final state as of `6390664`; the
 commits after it carry only this report and the task list.
 
-Re-run after rebasing onto `b95db67` — PRs #118 (`feat(roles)`), #119
-(`feat(hosting)`) and #120 (`feat(tokens)`) each merged to `main` mid-change,
-conflicting every time on
-`requirements.yml` and `software_verification_cases.yml` (the first rebase also
-took `mkdocs.yml`). All were append-at-end conflicts.
+Re-run after rebasing onto `aaab273` — PRs #118, #119, #120, #122 and #124 each
+merged to `main` while this change was open, conflicting every time on
+`requirements.yml` and `software_verification_cases.yml` — plus `mkdocs.yml` on
+the first rebase and `.github/workflows/native.yml` on the last. The reqstool and
+nav conflicts were all append-at-end. The `native.yml` one was real: #124
+SHA-pinned `docker/login-action` on the same line this change re-gates, and the
+resolution keeps both — main's pin and this change's condition.
 
 Both times the reqstool files were rebuilt from `main` verbatim plus this
 branch's own blocks rather than hand-merged — a first attempt at resolving them
 by hand dropped `GW_0100`'s `revision` field, which is why the rebuild is
-scripted. After each rebuild both files were re-validated (103 requirements, 103
+scripted. After each rebuild both files were re-validated (106 requirements, 106
 SVCs at the final state; no duplicates, every `requirement_ids` resolving, every
 block carrying a `revision`) and the diff against `main` confirmed to add
 exactly `GW_0108`, `GW_0109`, `SVC_GW_0108`, `SVC_GW_0109` plus the
@@ -32,7 +34,7 @@ change.
 ## `./mvnw clean verify`
 
 ```
-[INFO] Tests run: 178, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 182, Failures: 0, Errors: 0, Skipped: 0
 [INFO] You have 0 Checkstyle violations.
 [INFO] BUILD SUCCESS
 ```
@@ -47,14 +49,14 @@ change.
 ## `(cd src/main/frontend && pnpm e2e)`
 
 ```
-  12 passed (35.9s)
+  12 passed (25.2s)
 ```
 
 ## `reqstool status local -p docs/reqstool`
 
 ```
 INCOMPLETE (0)
-103/103 complete · 0 incomplete · PASS
+106/106 complete · 0 incomplete · PASS
 ```
 
 ## `openspec validate --all --strict`
