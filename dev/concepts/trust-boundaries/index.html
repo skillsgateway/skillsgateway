@@ -2227,6 +2227,10 @@ instead of an HTML login page rendered into a <code>fetch()</code>.</p>
 unauthenticated and injects a synthetic principal <code>dev</code>. It exists for local
 development, logs a loud warning at startup, and must never be set in a
 deployed environment. See <a href="../../guides/local-development/">Local development</a>.</p>
+<p>Being off by default is the control; the second one is a startup guard. A
+gateway that has an identity provider configured and this flag on <strong>refuses
+to start</strong>, because the login it configured is the login the flag switches
+off. See <a href="../../reference/configuration/">Configuration</a>.</p>
 </div>
 <h2 id="4-the-inbound-webhook-a-forges-push-event-becomes-a-fetch">4. The inbound webhook — a forge's push event becomes a fetch<a class="headerlink" href="#4-the-inbound-webhook-a-forges-push-event-becomes-a-fetch" title="Permanent link">&para;</a></h2>
 <p><code>POST /hooks/{marketplace}</code> is the one endpoint reachable without an OIDC

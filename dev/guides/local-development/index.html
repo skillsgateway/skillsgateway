@@ -2239,6 +2239,16 @@ warning at startup.</p>
 <p>It does <strong>not</strong> affect the git facade: <code>/git/**</code> still requires a valid
 personal access token.</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">It refuses to start once an identity provider is configured</p>
+<p>The escape hatch is for a loop that has no identity provider. Set it
+alongside a configured one — a real <code>SGW_OIDC_CLIENT_ID</code>, an <code>SGW_OIDC_*</code>
+endpoint pointing anywhere other than <code>idp.invalid</code>, or a pinned
+<code>skills-gateway.oidc.issuer</code> — and the gateway refuses to start, naming
+what tripped it. Leave the OIDC variables unset and the placeholders shipped
+in <code>application.yaml</code> keep the local loop working. The full rule is in
+<a href="../../reference/configuration/#skills-gateway">Configuration</a>.</p>
+</div>
 <h2 id="verify-it-is-up">Verify it is up<a class="headerlink" href="#verify-it-is-up" title="Permanent link">&para;</a></h2>
 <p><code>/actuator/health</code> is the only unauthenticated endpoint:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span>localhost:8080/actuator/health

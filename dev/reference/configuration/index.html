@@ -2454,6 +2454,26 @@ omitting a whole block and omitting individual keys behave identically.</p>
 authentication, and attributes every audit entry to <code>dev</code>. There is no
 partial mode.</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">The gateway refuses to start where the flag cannot belong</p>
+<p>The escape hatch exists for a development loop that has no identity
+provider to log in to. So a gateway with <code>dev-insecure-auth: true</code> <strong>and an
+identity provider configured</strong> refuses to start, naming what it decided on
+and both ways out. It counts a provider as configured when any of these is
+true:</p>
+<ul>
+<li>an OIDC client registration carries a client id other than the shipped
+  <code>change-me</code> placeholder;</li>
+<li>a provider endpoint (<code>authorization-uri</code>, <code>token-uri</code>, <code>jwk-set-uri</code>,
+  <code>issuer-uri</code>) names a host other than the shipped <code>idp.invalid</code>
+  placeholder;</li>
+<li><code>skills-gateway.oidc.issuer</code> is pinned.</li>
+</ul>
+<p>There is no property that switches the guard off — the way out is to stop
+setting <code>dev-insecure-auth</code>. Note what the guard cannot see: a deployment
+with no identity provider at all is indistinguishable from a laptop, so it
+is not a substitute for keeping the flag out of your deployed configuration.</p>
+</div>
 <hr />
 <h2 id="webhooks">Webhooks<a class="headerlink" href="#webhooks" title="Permanent link">&para;</a></h2>
 <p>Tuning for the outbound dispatcher that delivers snapshot lifecycle events. None
@@ -3481,6 +3501,10 @@ when your provider needs a scope before it will emit group or role claims.</p>
 <p>Fixed, not intended for override: grant type <code>authorization_code</code>, redirect URI
 <code>{baseUrl}/login/oauth2/code/idp</code>. Register that redirect URI with your
 identity provider.</p>
+<p>Moving any of these off its placeholder is what tells the gateway an identity
+provider exists — and a gateway with one configured refuses to start with
+<code>skills-gateway.dev-insecure-auth</code> on. See
+<a href="#skills-gateway"><code>skills-gateway</code></a> above.</p>
 <h3 id="expected-issuer">Expected issuer<a class="headerlink" href="#expected-issuer" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
