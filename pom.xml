@@ -39,6 +39,8 @@
         <native-plugin.version>1.1.9</native-plugin.version>
         <reqstool-plugin.version>1.0.4</reqstool-plugin.version>
         <arconia.version>0.29.0</arconia.version>
+        <awssdk.version>2.46.7</awssdk.version>
+        <spring-cloud-aws.version>4.1.0</spring-cloud-aws.version>
         <cyclonedx-plugin.version>2.9.3</cyclonedx-plugin.version>
         <springdoc.version>3.1.0</springdoc.version>
         <scalar.version>0.4.4</scalar.version>
@@ -56,6 +58,27 @@
                 <groupId>io.arconia</groupId>
                 <artifactId>arconia-bom</artifactId>
                 <version>${arconia.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- AWS SDK v2. Test scope only today: the conditional-write fidelity
+                 spike for the object-store storage backend (task 2.1 of the
+                 pluggable-git-storage change) uses the same S3 client the
+                 implementation would. -->
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${awssdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- Spring Cloud AWS. Present so the Arconia Floci dev service can
+                 activate: its auto-configuration is @ConditionalOnClass on
+                 io.awspring.cloud.autoconfigure.core.AwsConnectionDetails. -->
+            <dependency>
+                <groupId>io.awspring.cloud</groupId>
+                <artifactId>spring-cloud-aws-dependencies</artifactId>
+                <version>${spring-cloud-aws.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -149,6 +172,57 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- The object-store git backend (skills-gateway.storage.backend=object-store). Compile
+             scope because the backend is part of the application; it stays inert at runtime unless
+             the backend is named, and the filesystem backend remains the default. apache5-client is
+             the synchronous HTTP client, chosen explicitly so the connection pool can be given an
+             idle time below the store's own; sts is what the web-identity (IRSA) credential
+             provider needs, and web identity is a hard requirement rather than an option because
+             the first deployment target has no instance metadata service. -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>apache5-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>sts</artifactId>
+        </dependency>
+        <!-- Floci (a local AWS emulator) through Arconia Dev Services, per the
+             project rule that a dev service is used wherever one exists. The dev
+             service activates only when Spring Cloud AWS is on the classpath, and
+             the artifact that satisfies its @ConditionalOnClass —
+             spring-cloud-aws-autoconfigure — is NOT sufficient on its own: it does
+             not bring spring-cloud-aws-core, so awspring's own
+             RegionProviderAutoConfiguration is silently skipped while its
+             CredentialsProviderAutoConfiguration still activates and demands the
+             AwsRegionProvider bean that was never created. Every Spring context in
+             the project then fails to start. The starter brings both halves and the
+             problem does not arise. Reported upstream as arconia-io/arconia#281.
+
+             `optional`, alongside the Postgres dev service: the object-store backend
+             now gives bootRun an object-store consumer to share the container with,
+             which is the whole point of the project's dev-services rule — one
+             container serves the development run and the test suite, so the thing
+             developed against and the thing tested against cannot drift apart. -->
+        <dependency>
+            <groupId>io.arconia</groupId>
+            <artifactId>arconia-dev-services-floci</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <!-- Only the Floci dev service needs this: the object-store backend builds its own
+             S3 client from skills-gateway.storage.object-store.*, and never from Spring Cloud
+             AWS. `optional` for the same reason as the dev service above — it must reach
+             bootRun and the tests, and neither a consumer's classpath nor the packaged jar. -->
+        <dependency>
+            <groupId>io.awspring.cloud</groupId>
+            <artifactId>spring-cloud-aws-starter-s3</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
@@ -394,6 +468,16 @@
                 <dependency>
                     <groupId>io.arconia</groupId>
                     <artifactId>arconia-dev-services-lgtm</artifactId>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>io.arconia</groupId>
+                    <artifactId>arconia-dev-services-floci</artifactId>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>io.awspring.cloud</groupId>
+                    <artifactId>spring-cloud-aws-starter-s3</artifactId>
                     <scope>test</scope>
                 </dependency>
                 <dependency>

@@ -29,6 +29,47 @@ Facade requests already carry the standard HTTP server observation for
 Standard JVM, HTTP server and datasource metrics come from Spring Boot actuator
 as usual.
 
+### Storage backend
+
+These are recorded on both storage backends and move only on `object-store`
+(see [Configuration](configuration.md)). They are how the compare-and-swap
+design is checked against its own assumptions rather than trusted.
+
+| Metric | Type | Tags | Recorded around |
+| --- | --- | --- | --- |
+| `skills_gateway.storage.conditional_write.conflicts` | counter | — | Conditional writes the store refused because another writer had moved the repository manifest on. |
+| `skills_gateway.storage.conditional_write.retries` | counter | — | Transition attempts made after such a refusal. |
+| `skills_gateway.storage.conditional_write.exhaustions` | counter | — | Transitions abandoned because the bounded retry ran out. **Alert on this**: it is a reference transition that did not happen. |
+| `skills_gateway.storage.manifest.refreshes` | counter | — | Freshness checks that found the reference map had moved under a cached copy. |
+| `skills_gateway.storage.wal.depth` | gauge | — | Write-ahead entries not yet folded into a manifest, summed across the repositories this replica has written to. Exact as of each maintenance pass. |
+| `skills_gateway.storage.packs.live` | gauge | — | Packs the manifests this replica has read say are live, summed the same way. |
+| `skills_gateway.storage.pack_cache.hits` | counter | — | Pack opens served from the local on-disk cache. |
+| `skills_gateway.storage.pack_cache.downloads` | counter | — | Packs fetched from the store into that cache — the other half of the hit rate. |
+| `skills_gateway.storage.requests` | timer | `operation=get\|conditional-get\|open\|stat\|put\|conditional-put\|create\|list\|delete\|probe`, `outcome=success\|error` | Every object-store request. A conditional write the store *refused* is `outcome=success` — the store answered correctly; the conflict counter above is where a refusal means something. |
+
+Two of these are the ones to watch. `conditional_write.exhaustions` is a failed
+reference transition and belongs on an alert. `wal.depth` and `packs.live`
+climbing without falling back is compaction falling behind, which shows up as a
+slow restore long before it shows up as anything else.
+
+## Health
+
+`/actuator/health` carries a `gitStorage` indicator on both backends. It names
+the backend actually in use — which is the point, since a gateway serving from
+local disk while the operator believes it is serving from a bucket looks healthy
+from every other angle.
+
+| Backend | Up when | Details |
+| --- | --- | --- |
+| `filesystem` | the data directory exists and is writable | `backend`, `dataDir` |
+| `object-store` | the bucket answers a listing of the gateway's own prefix | `backend`, `bucket`, `region`, `conditionalWrites` |
+
+The indicator **reads and never writes**. The conditional-write check that
+decides whether a store can serialize reference transitions at all is a startup
+gate — a gateway for which it failed never started — so its result is *reported*
+here (`conditionalWrites: verified at startup`) rather than repeated on every
+poll.
+
 ## Exporting
 
 Export is opt-in and off by default: `arconia.otel.enabled=false` in the

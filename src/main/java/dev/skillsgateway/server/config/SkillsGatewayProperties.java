@@ -21,7 +21,8 @@ public record SkillsGatewayProperties(
         Tokens tokens,
         Roles roles,
         Oidc oidc,
-        Estate estate) {
+        Estate estate,
+        Storage storage) {
 
     public SkillsGatewayProperties {
         if (dataDir == null) {
@@ -65,6 +66,199 @@ public record SkillsGatewayProperties(
         }
         if (estate == null) {
             estate = new Estate(null, null, null, null, null);
+        }
+        if (storage == null) {
+            storage = new Storage(null, null, null);
+        }
+    }
+
+    /**
+     * Which git storage backend holds the repositories, and how to reach it (GW_0111).
+     *
+     * <p>The backend is <em>named</em>, never inferred. An absent block is {@code filesystem},
+     * which is what every existing deployment already has, so an upgrade changes nothing; an
+     * unrecognised name fails startup through Spring's own enum binding; and an
+     * {@code object-store} selection that cannot be completed fails startup rather than falling
+     * back to a filesystem nobody asked for. A gateway serving from storage the operator did not
+     * choose is the same class of defect as a volume that silently loses published content.
+     *
+     * @param backend the named backend; null is {@link Backend#FILESYSTEM}
+     * @param objectStore how to reach the bucket; required, and validated, only when the backend
+     *     is {@link Backend#OBJECT_STORE}
+     * @param migration the one-shot offline copy between backends (GW_0114); off unless asked for
+     */
+    public record Storage(Backend backend, ObjectStore objectStore, Migration migration) {
+
+        public Storage {
+            if (backend == null) {
+                backend = Backend.FILESYSTEM;
+            }
+            if (objectStore == null) {
+                objectStore = new ObjectStore(null, null, null, null, null, null, null, null);
+            }
+            if (migration == null) {
+                migration = new Migration(null, null);
+            }
+        }
+
+        /**
+         * The one-shot offline copy from the configured backend into another one (GW_0114).
+         *
+         * <p>Both ends come from this same configuration: the source is whatever
+         * {@code storage.backend} names, and {@code to} names the destination, so a migration and
+         * the rollback that follows it are the same file with two values swapped. It is off unless
+         * it is asked for, it runs before anything is served, and the process exits when it is
+         * done — a migration is not a mode the gateway runs in.
+         *
+         * @param enabled whether this start is a migration rather than a service; null is false
+         * @param to the destination backend; required when enabled, and it must not be the source
+         */
+        public record Migration(Boolean enabled, Backend to) {
+
+            public Migration {
+                if (enabled == null) {
+                    enabled = false;
+                }
+            }
+        }
+
+        /** The backends a deployment may name. There is deliberately no {@code auto}. */
+        public enum Backend {
+            /** Bare repositories under {@code skills-gateway.data-dir}. The default. */
+            FILESYSTEM,
+            /** JGit DFS over an S3-compatible bucket, ref state in a conditionally written manifest. */
+            OBJECT_STORE
+        }
+    }
+
+    /**
+     * An S3-compatible bucket and how to reach it.
+     *
+     * @param endpoint override for an S3-compatible store or an S3 VPC endpoint; null uses the
+     *     SDK's regional endpoint
+     * @param region the region to sign for; required, because an unsigned-for region is a runtime
+     *     failure in the middle of an approval rather than a startup one
+     * @param bucket the bucket holding every repository; required
+     * @param prefix key prefix inside the bucket, so one bucket can hold more than one gateway
+     * @param credentials how credentials are resolved; the mode is named for the same reason the
+     *     backend is
+     * @param cache local pack-cache and block-cache sizing, and the freshness bound that decides
+     *     how long a revoked snapshot may still be advertised by a replica
+     * @param connectionMaxIdleTime how long a pooled connection may sit unused before the client
+     *     discards it. This must stay <em>below</em> the store's own idle timeout: a connection the
+     *     store has already closed reads, on the first request after a quiet period, as a storage
+     *     fault rather than as the pooling artefact it is. Observed for real while probing a store
+     *     during this change's spike, which is why it is a setting and not a default nobody named
+     * @param connectionTimeToLive an upper bound on a pooled connection's total life, so a
+     *     connection also stops being reused across a load balancer's own recycling
+     */
+    public record ObjectStore(
+            String endpoint,
+            String region,
+            String bucket,
+            String prefix,
+            Credentials credentials,
+            Cache cache,
+            Duration connectionMaxIdleTime,
+            Duration connectionTimeToLive) {
+
+        public ObjectStore {
+            if (prefix == null) {
+                prefix = "";
+            }
+            if (credentials == null) {
+                credentials = new Credentials(null, null, null, null, null);
+            }
+            if (cache == null) {
+                cache = new Cache(null, null, null, null, null, null);
+            }
+            if (connectionMaxIdleTime == null || connectionMaxIdleTime.isNegative()) {
+                connectionMaxIdleTime = Duration.ofSeconds(20);
+            }
+            if (connectionTimeToLive == null || connectionTimeToLive.isNegative()) {
+                connectionTimeToLive = Duration.ofMinutes(1);
+            }
+        }
+    }
+
+    /**
+     * How the S3 client obtains credentials.
+     *
+     * <p>{@link Mode#WEB_IDENTITY} is the primary mechanism rather than an option to add later:
+     * the first deployment target has no instance metadata service, so anything that leans on the
+     * instance-profile leg of the default provider chain does not run there. Naming the mode means
+     * a misconfigured deployment fails at startup saying so, instead of walking down the chain to
+     * a metadata endpoint that never answers and timing out mid-approval.
+     *
+     * @param mode {@code default}, {@code web-identity} or {@code static}; null is {@code default}
+     * @param accessKeyId static mode only
+     * @param secretAccessKey static mode only; never logged, never audited, never echoed by any API
+     * @param roleArn web-identity mode; null falls back to the standard {@code AWS_ROLE_ARN}
+     *     environment variable, which is what a service-account annotation projects
+     * @param tokenFile web-identity mode; null falls back to
+     *     {@code AWS_WEB_IDENTITY_TOKEN_FILE}
+     */
+    public record Credentials(Mode mode, String accessKeyId, String secretAccessKey, String roleArn, String tokenFile) {
+
+        public Credentials {
+            if (mode == null) {
+                mode = Mode.DEFAULT;
+            }
+        }
+
+        /** How credentials are resolved. */
+        public enum Mode {
+            /** The SDK's own provider chain. */
+            DEFAULT,
+            /** Web-identity federation: IRSA, Workload Identity. No secret is held by the gateway. */
+            WEB_IDENTITY,
+            /** An access key pair, for stores with no role mechanism. */
+            STATIC
+        }
+    }
+
+    /**
+     * Local caching and freshness, all of it bounded.
+     *
+     * <p>Nothing in either cache is authoritative: packs are immutable and content-named, so a
+     * cached pack is never stale and deleting the whole cache at any moment is always safe. Only
+     * the manifest is re-read — and {@code refFreshness} is how long a replica may keep serving a
+     * ref map it has already read, which on the revocation path is a trust-boundary property and
+     * not a tuning knob. Zero, the default, means every reference advertisement is preceded by a
+     * conditional {@code GET} of the manifest, so the bound is "the next advertisement".
+     *
+     * @param dir where cached packs live; null puts them under {@code data-dir/object-store-cache}
+     * @param maxBytes cache budget; the least recently used cached packs are evicted past it
+     * @param blockCacheBytes size of JGit's in-process DFS block cache
+     * @param blockSizeBytes DFS block size
+     * @param refFreshness how long a read ref map may be reused before the manifest is re-checked
+     * @param packGrace how long a pack no manifest references any more is kept before deletion,
+     *     so a replica part-way through streaming it does not get a 404 mid-fetch
+     */
+    public record Cache(
+            Path dir,
+            Long maxBytes,
+            Long blockCacheBytes,
+            Integer blockSizeBytes,
+            Duration refFreshness,
+            Duration packGrace) {
+
+        public Cache {
+            if (maxBytes == null || maxBytes <= 0) {
+                maxBytes = 2L * 1024 * 1024 * 1024;
+            }
+            if (blockCacheBytes == null || blockCacheBytes <= 0) {
+                blockCacheBytes = 128L * 1024 * 1024;
+            }
+            if (blockSizeBytes == null || blockSizeBytes <= 0) {
+                blockSizeBytes = 64 * 1024;
+            }
+            if (refFreshness == null || refFreshness.isNegative()) {
+                refFreshness = Duration.ZERO;
+            }
+            if (packGrace == null || packGrace.isNegative()) {
+                packGrace = Duration.ofHours(1);
+            }
         }
     }
 

@@ -133,12 +133,34 @@ Then open <http://localhost:8080/> and log in.
 Git repositories live under `skills-gateway.data-dir`, which defaults to `data`
 relative to the working directory. In the container image it is `/data`.
 
-!!! warning "The Helm default is not durable"
+!!! warning "Storage durability is a decision, and the chart makes you state it"
 
-    The chart mounts `/data` as an `emptyDir` unless you supply
-    `persistence.existingClaim`. Losing that volume loses the quarantine and
-    published repositories — everything else is rebuildable from the database
-    and upstream, but approved refs are not.
+    The chart has no default `persistence.mode`. `ephemeral` is an `emptyDir`
+    and loses the quarantine, published and hosted repositories on every pod
+    restart; `existingClaim` binds a durable volume; `none` keeps no volume at
+    all and is accepted only on the object-store backend. See
+    [Choosing and migrating the storage backend](storage-backends.md).
+
+## Running against object storage
+
+The default is the filesystem backend, which needs nothing. To develop against
+the `object-store` backend instead, start the Compose profile that brings up a
+local S3-compatible store — Floci, the same emulator the build's object-store
+suites run against:
+
+```console
+$ SGW_STORAGE_BACKEND=object-store docker compose --profile object-store up
+```
+
+The bucket must exist before the gateway starts; create `skills-gateway` once
+with any S3 client pointed at `http://localhost:4566`. The gateway probes the
+bucket at startup and refuses to run if conditional writes are not honoured, so
+a store that cannot serialize reference transitions is a failed start rather
+than a corruption found later.
+
+The object-store suites in `./mvnw verify` do not use this Compose service at
+all — they take their store from the **Arconia Floci dev service**, so one
+container serves both `bootRun` through the dev service and the test suite.
 
 ## Observability
 

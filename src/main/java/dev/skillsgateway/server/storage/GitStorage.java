@@ -1,7 +1,9 @@
 package dev.skillsgateway.server.storage;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import org.eclipse.jgit.lib.Repository;
 
 /**
@@ -9,12 +11,53 @@ import org.eclipse.jgit.lib.Repository;
  *
  * <p>Quarantine holds everything ingested and is never served; published holds only approved
  * content and is all the consumer facade ever opens; a hosted marketplace additionally has an
- * origin repository that publishers push to and only ingestion reads. A JGit-DFS implementation over object storage
- * replaces this interface on the roadmap (ARCHITECTURE.md §12) without touching callers.
+ * origin repository that publishers push to and only ingestion reads.
+ *
+ * <p>There are two implementations and exactly one of them is in the context, chosen by
+ * {@code skills-gateway.storage.backend}: bare repositories on a filesystem, or JGit DFS over an
+ * S3-compatible bucket. No caller knows which answered, which is the point of the seam — and it is
+ * what {@code GitStorageContractTests} exists to keep true, since a difference between the two
+ * would be invisible above this interface.
  *
  * <p>Returned repositories are open handles; callers close them (try-with-resources).
  */
 public interface GitStorage {
+
+    /**
+     * The three repository roles, named so that a caller can talk about all of them at once.
+     *
+     * <p>Only migration needs this: everything else in the gateway knows exactly which role it
+     * wants and asks for it by name, which is what keeps "quarantine is never served" a property
+     * of the call sites rather than of a parameter.
+     */
+    enum Role {
+        QUARANTINE,
+        HOSTED,
+        PUBLISHED;
+
+        /** The role's own name in the layout, lowercase — a directory here, a key prefix there. */
+        public String path() {
+            return name().toLowerCase(Locale.ROOT);
+        }
+    }
+
+    /**
+     * Every marketplace that already has a repository in this role, as the backend itself sees it.
+     *
+     * <p>Read off the storage rather than off the database on purpose: a migration copies what is
+     * actually there, so a repository the database has forgotten still moves, and a marketplace
+     * row with nothing on disk does not invent an empty repository at the destination.
+     */
+    Set<String> marketplaces(Role role) throws IOException;
+
+    /** Open (creating if absent) the repository a role holds for a marketplace. */
+    default Repository open(Role role, String marketplace) throws IOException {
+        return switch (role) {
+            case QUARANTINE -> quarantine(marketplace);
+            case HOSTED -> hosted(marketplace);
+            case PUBLISHED -> published(marketplace);
+        };
+    }
 
     /** Open (creating if absent) the quarantine repository for a marketplace. */
     Repository quarantine(String marketplace) throws IOException;

@@ -1,22 +1,30 @@
 package dev.skillsgateway.server.storage;
 
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
+import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Stream;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryBuilder;
-import org.springframework.stereotype.Component;
 
-@Component
 public class FilesystemGitStorage implements GitStorage {
 
     private static final String MAIN = "main";
     private static final String SNAPSHOT_REF_PREFIX = "refs/snapshots/";
+    private static final String GIT_SUFFIX = ".git";
+
+    /** The results a forced deletion reports when the ref is gone afterwards. */
+    private static final Set<RefUpdate.Result> DELETED =
+            EnumSet.of(RefUpdate.Result.FORCED, RefUpdate.Result.NEW, RefUpdate.Result.NO_CHANGE);
 
     private final Path quarantineDir;
     private final Path publishedDir;
@@ -29,6 +37,29 @@ public class FilesystemGitStorage implements GitStorage {
         Files.createDirectories(quarantineDir);
         Files.createDirectories(publishedDir);
         Files.createDirectories(hostedDir);
+    }
+
+    @Override
+    public Set<String> marketplaces(Role role) throws IOException {
+        Path dir = dir(role);
+        if (!Files.isDirectory(dir)) {
+            return Set.of();
+        }
+        try (Stream<Path> entries = Files.list(dir)) {
+            return entries.filter(Files::isDirectory)
+                    .map(path -> path.getFileName().toString())
+                    .filter(name -> name.endsWith(GIT_SUFFIX))
+                    .map(name -> name.substring(0, name.length() - GIT_SUFFIX.length()))
+                    .collect(java.util.stream.Collectors.toCollection(TreeSet::new));
+        }
+    }
+
+    private Path dir(Role role) {
+        return switch (role) {
+            case QUARANTINE -> quarantineDir;
+            case HOSTED -> hostedDir;
+            case PUBLISHED -> publishedDir;
+        };
     }
 
     @Override
@@ -67,6 +98,7 @@ public class FilesystemGitStorage implements GitStorage {
     }
 
     @Override
+    @Requirements({"GW_0112"})
     public boolean unpublish(String marketplace, String sha) throws IOException {
         Path path = publishedDir.resolve(marketplace + ".git");
         if (!Files.isDirectory(path)) {
@@ -88,6 +120,13 @@ public class FilesystemGitStorage implements GitStorage {
     /**
      * Deletes a ref if it is there. Force is required because the ref is not being fast-forwarded
      * to anything — the whole point is that nothing replaces it.
+     *
+     * <p>The result is checked rather than discarded (GW_0112). A ref update can be refused —
+     * {@code LOCK_FAILURE} when another writer holds the lock, {@code IO_FAILURE} underneath it —
+     * and this is the revocation path, so a refusal that returned quietly would have
+     * {@code unpublish} report that a snapshot stopped being served while it is still advertised.
+     * Raising is the only honest answer: the caller records revocations on the ledger, and a ledger
+     * entry that disagrees with what the facade serves is worse than a failed revocation.
      */
     private static void deleteRef(Repository repository, String ref) throws IOException {
         if (repository.exactRef(ref) == null) {
@@ -95,9 +134,13 @@ public class FilesystemGitStorage implements GitStorage {
         }
         RefUpdate update = repository.updateRef(ref);
         update.setForceUpdate(true);
-        update.delete();
+        RefUpdate.Result result = update.delete();
+        if (!DELETED.contains(result)) {
+            throw new IOException("could not delete %s in %s: %s".formatted(ref, repository.getDirectory(), result));
+        }
     }
 
+    @Requirements({"GW_0112"})
     private static Repository openOrCreate(Path path) throws IOException {
         Repository repository = open(path);
         if (!repository.getObjectDatabase().exists()) {

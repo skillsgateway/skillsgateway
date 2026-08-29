@@ -34,9 +34,13 @@ The application's own namespace. Only `data-dir` appears in
 
 ```yaml
 skills-gateway:
-  # Root of git storage. Two subdirectories are created beneath it:
+  # Root of local storage. On the filesystem backend three subdirectories are
+  # created beneath it:
   #   {data-dir}/quarantine/{marketplace}.git   — never served
   #   {data-dir}/published/{marketplace}.git    — what the facade reads
+  #   {data-dir}/hosted/{marketplace}.git       — a hosted marketplace's origin
+  # On the object-store backend the repositories are in the bucket and this
+  # holds only the local pack cache, which is never authoritative.
   # The container image sets SKILLSGATEWAY_DATADIR=/data instead.
   data-dir: data
 
@@ -85,6 +89,124 @@ skills-gateway:
     setting `dev-insecure-auth`. Note what the guard cannot see: a deployment
     with no identity provider at all is indistinguishable from a laptop, so it
     is not a substitute for keeping the flag out of your deployed configuration.
+
+---
+
+## Git storage
+
+Which storage holds the repositories, and how to reach it. The backend is
+**named, never inferred**: an absent block is the filesystem, an unrecognised
+name fails startup, and an `object-store` selection missing what it needs fails
+startup naming the missing setting. There is no fallback in either direction —
+a gateway serving from local disk while the operator believes it is serving from
+a bucket reports healthy and is wrong from the outside.
+
+For choosing between the two, and for moving an estate from one to the other,
+see [Choosing and migrating the storage backend](../guides/storage-backends.md).
+
+```yaml
+skills-gateway:
+  storage:
+    # filesystem (default) | object-store
+    backend: filesystem
+
+    object-store:
+      bucket: skills-gateway
+      region: eu-north-1
+      # Empty for the regional AWS endpoint; set it for an S3-compatible store
+      # or for an S3 VPC endpoint.
+      endpoint: ""
+      # Key prefix, so one bucket can hold more than one gateway.
+      prefix: ""
+
+      credentials:
+        # default | web-identity | static
+        mode: web-identity
+        # web-identity: both fall back to AWS_ROLE_ARN and
+        # AWS_WEB_IDENTITY_TOKEN_FILE, which is what an annotated service
+        # account projects into the pod.
+        role-arn: ""
+        token-file: ""
+        # static only, for stores with no role mechanism.
+        access-key-id: ""
+        secret-access-key: ""
+
+      cache:
+        # Local pack cache; nothing in it is authoritative and deleting it at
+        # any moment is safe. Defaults to {data-dir}/object-store-cache.
+        dir: ""
+        max-bytes: 2147483648
+        block-size-bytes: 65536
+        block-cache-bytes: 268435456
+        # How long a replica may keep serving a reference map it has not
+        # re-read. This is the upper bound on how long a revoked snapshot can
+        # still be advertised by a replica that did not do the revoking.
+        ref-freshness: 10s
+        # How long a pack nothing references is kept before its objects are
+        # deleted, so a fetch already streaming from it is not cut off.
+        pack-grace: 1h
+
+      # Below the store's own idle timeout: a connection the store has already
+      # closed reads, on the first request after a quiet period, as a storage
+      # fault rather than as the pooling artefact it is.
+      connection-max-idle-time: 20s
+      connection-time-to-live: 1m
+
+    # The offline one-shot copy between backends. Off unless asked for.
+    migration:
+      enabled: false
+      # The destination; the source is whatever `backend` above names.
+      to: object-store
+```
+
+| Property | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `skills-gateway.storage.backend` | `filesystem` \| `object-store` | `filesystem` | An unrecognised value fails startup listing the accepted ones. |
+| `skills-gateway.storage.object-store.bucket` | string | — | Required on `object-store`. |
+| `skills-gateway.storage.object-store.region` | string | — | Required on `object-store`; an unsigned-for region fails mid-approval rather than at startup. |
+| `skills-gateway.storage.object-store.endpoint` | URL | SDK regional | An S3-compatible store, or an S3 VPC endpoint. |
+| `skills-gateway.storage.object-store.prefix` | string | `""` | Key prefix inside the bucket. |
+| `skills-gateway.storage.object-store.credentials.mode` | `default` \| `web-identity` \| `static` | `default` | See below. |
+| `skills-gateway.storage.object-store.credentials.role-arn` | string | `AWS_ROLE_ARN` | `web-identity` only. |
+| `skills-gateway.storage.object-store.credentials.token-file` | path | `AWS_WEB_IDENTITY_TOKEN_FILE` | `web-identity` only. |
+| `skills-gateway.storage.object-store.credentials.access-key-id` | string | — | `static` only. |
+| `skills-gateway.storage.object-store.credentials.secret-access-key` | string | — | `static` only. Never logged, audited or echoed by any API. |
+| `skills-gateway.storage.object-store.cache.dir` | path | `{data-dir}/object-store-cache` | Safe to delete at any time. |
+| `skills-gateway.storage.object-store.cache.max-bytes` | bytes | `2 GiB` | Bound on the on-disk pack cache. |
+| `skills-gateway.storage.object-store.cache.block-size-bytes` | bytes | `64 KiB` | JGit `DfsBlockCache` block size. |
+| `skills-gateway.storage.object-store.cache.block-cache-bytes` | bytes | `256 MiB` | JGit `DfsBlockCache` size. |
+| `skills-gateway.storage.object-store.cache.ref-freshness` | duration | `10s` | Upper bound on cross-replica revocation latency. |
+| `skills-gateway.storage.object-store.cache.pack-grace` | duration | `1h` | Grace before an unreferenced pack's objects are deleted. |
+| `skills-gateway.storage.object-store.connection-max-idle-time` | duration | `20s` | Keep below the store's idle timeout. |
+| `skills-gateway.storage.object-store.connection-time-to-live` | duration | `1m` | Upper bound on a pooled connection's life. |
+| `skills-gateway.storage.migration.enabled` | boolean | `false` | Makes this start a migration instead of a service. |
+| `skills-gateway.storage.migration.to` | `filesystem` \| `object-store` | — | Required when enabled; must differ from `backend`. |
+
+### Credential modes
+
+| Mode | Where credentials come from | Use it for |
+| --- | --- | --- |
+| `default` | The AWS SDK's own provider chain | A host where the chain already resolves, and where an instance metadata service exists |
+| `web-identity` | A projected service-account token exchanged for a role | Workload identity (IRSA and its equivalents). The gateway holds no secret at all, and it is the only mode that works where there is no instance metadata service |
+| `static` | An access key pair | Stores with no role mechanism |
+
+!!! warning "Write access to the bucket is publication"
+
+    On the `object-store` backend the served reference map is an object in the
+    bucket. Anyone who can write it can put content on the wire without going
+    through approval. Give the gateway a narrow policy — object read, write and
+    delete under its own prefix, and no bucket administration — and treat the
+    bucket as part of the trust boundary the volume already was. See
+    [Trust boundaries](../concepts/trust-boundaries.md).
+
+!!! note "Conditional writes are the portability boundary"
+
+    The backend serializes every reference transition with a conditional write
+    (`If-Match` / `If-None-Match`) on one small object. A store that does not
+    implement those cannot be supported by weakening the model, so the gateway
+    probes the configured bucket at startup and refuses to run where the probe
+    fails. The stores this has actually been exercised against are listed in
+    [the storage guide](../guides/storage-backends.md#which-object-stores-work).
 
 ---
 
@@ -910,8 +1032,18 @@ Both paths sit behind the OIDC login like the rest of the web surface.
 **Container storage.** The image sets `SKILLSGATEWAY_DATADIR=/data` — the
 relaxed-binding environment form of `skills-gateway.data-dir`.
 
-!!! warning "The Helm volume default is not durable"
+**Volume durability is a decision the chart makes you state.** There is no
+default: `persistence.mode` must be `existingClaim` (a PersistentVolumeClaim
+that already exists), `ephemeral` (an `emptyDir`, and everything on it is lost
+on restart), or `none` (no volume at all, accepted only on the `object-store`
+backend). Anything else — including leaving it empty — stops the render with a
+message that spells out the consequence. See
+[Choosing and migrating the storage backend](../guides/storage-backends.md).
 
-    `/data` is mounted as an `emptyDir` unless `persistence.existingClaim` is
-    set. The database and upstream can rebuild almost everything, but approved
-    published refs live only on that volume.
+**What the chart refuses.** Alongside the durability choice it will not render
+an `object-store` selection with no bucket or no region, a static credential
+mode with no secret to take the keys from, a `web-identity` mode with no
+annotation on the service account, `persistence.mode: none` on the filesystem
+backend, more than one replica on the filesystem backend, or more than one
+replica while any of the background pollers is still enabled. Each refusal
+names the value it was decided by.

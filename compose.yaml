@@ -36,5 +36,31 @@ services:
       SGW_OIDC_USER_NAME_ATTRIBUTE: ${SGW_OIDC_USER_NAME_ATTRIBUTE:-sub}
       SGW_OIDC_SCOPE: ${SGW_OIDC_SCOPE:-openid}
       SKILLSGATEWAY_OIDC_ISSUER: ${SKILLSGATEWAY_OIDC_ISSUER:-}
+      # Git storage. The default is the filesystem backend, which needs nothing
+      # here. To run against object storage instead, start the `object-store`
+      # profile below and set SGW_STORAGE_BACKEND=object-store.
+      SKILLSGATEWAY_STORAGE_BACKEND: ${SGW_STORAGE_BACKEND:-filesystem}
+      SKILLSGATEWAY_STORAGE_OBJECTSTORE_ENDPOINT: ${SGW_STORAGE_ENDPOINT:-http://floci:4566}
+      SKILLSGATEWAY_STORAGE_OBJECTSTORE_REGION: ${SGW_STORAGE_REGION:-eu-north-1}
+      SKILLSGATEWAY_STORAGE_OBJECTSTORE_BUCKET: ${SGW_STORAGE_BUCKET:-skills-gateway}
+      SKILLSGATEWAY_STORAGE_OBJECTSTORE_CREDENTIALS_MODE: ${SGW_STORAGE_CREDENTIALS_MODE:-static}
+      SKILLSGATEWAY_STORAGE_OBJECTSTORE_CREDENTIALS_ACCESSKEYID: ${SGW_STORAGE_ACCESS_KEY_ID:-test}
+      SKILLSGATEWAY_STORAGE_OBJECTSTORE_CREDENTIALS_SECRETACCESSKEY: ${SGW_STORAGE_SECRET_ACCESS_KEY:-test}
     ports:
       - "8080:8080"
+
+  # A local S3-compatible store, off unless asked for:
+  #
+  #   SGW_STORAGE_BACKEND=object-store docker compose --profile object-store up
+  #
+  # Floci is the same emulator the build's object-store suites run against, so
+  # what is developed against and what is tested against are the same store.
+  # The bucket must exist before the gateway starts; create it once with any S3
+  # client pointed at http://localhost:4566.
+  floci:
+    profiles: ["object-store"]
+    image: docker.io/floci/floci:1.5.33
+    environment:
+      SERVICES: s3
+    ports:
+      - "4566:4566"
