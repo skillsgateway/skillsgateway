@@ -5,7 +5,9 @@ Get a gateway running on your machine, with or without an identity provider.
 ## Prerequisites
 
 - JDK 25 (Temurin; GraalVM CE 25 only for native builds)
-- Docker — Testcontainers for the build, Compose for running
+- A container runtime — Testcontainers and the Arconia dev services for the
+  build, Compose for running. Docker works out of the box; Podman works
+  too, with the setup in [Running the gates on Podman](#running-the-gates-on-podman)
 - `git`
 
 Node and pnpm are provisioned by the Maven build. You do **not** need them to
@@ -236,12 +238,128 @@ $ mkdocs build --strict                        # documentation
 Use `clean` for the reqstool gate — incremental compilation truncates the
 generated annotation files.
 
+That list is an **ordered sequence, not a set**. `reqstool status` reads the
+portal suites' JUnit output from `src/main/frontend/test-results/`, so running it
+before `pnpm e2e` reports requirements as unverified that are in fact covered.
+
+!!! warning "`reqstool status` exits 0 even when it prints FAIL"
+
+    Its exit code is not a gate. Read the **last line** of its output — the gate
+    passes only when it ends `PASS`, and a script that checks `$?` will call a
+    failing run green.
+
 For the documentation gate:
 
 ```console
 $ pip install -r docs/requirements.txt
 $ mkdocs build --strict
 ```
+
+### Running the gates on Podman
+
+Podman is a supported way to run the container-backed gates, but not an
+unconfigured one. Both of the problems below present as a broken change rather
+than a broken environment — a wall of test errors, with nothing pointing at the
+container runtime — so they are worth setting up before the first run rather
+than diagnosing during it.
+
+Export both of these; the rest of this section is why.
+
+```console
+$ export TESTCONTAINERS_RYUK_DISABLED=true
+$ export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/run/user/501/podman/podman.sock
+```
+
+#### Ryuk cannot start on rootless Podman
+
+Ryuk is the Testcontainers resource reaper. Under a rootless Podman machine it
+fails to start and every container-backed test errors:
+
+```
+ERROR tc.testcontainers/ryuk:0.14.0 : Could not start container
+Tests run: 3, Failures: 0, Errors: 3
+```
+
+`TESTCONTAINERS_RYUK_DISABLED=true` is the fix, and the consequence is that
+**nothing reaps test containers**. They accumulate across runs and each
+published port stays forwarded by `gvproxy`, so prune periodically:
+
+```console
+$ podman container prune -f
+```
+
+The alternative is a rootful machine (`podman machine stop && podman machine set
+--rootful && podman machine start`), where Ryuk works. Note that rootless and
+rootful use **separate image and container storage**, so everything already
+pulled is pulled again.
+
+#### The Floci dev service needs the in-VM socket path
+
+`io.floci:testcontainers-floci` — which `arconia-dev-services-floci` wraps, and
+which the object-store storage suites depend on — bind-mounts the container
+runtime's socket unconditionally. Without an override it resolves to the
+**macOS-side** path, which does not exist inside the machine VM, and the failure
+reads as a container-creation fault rather than a missing socket:
+
+```
+Status 500 ... operation not supported
+```
+
+`TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE` must name the socket **inside** the VM,
+not on the host. Confirm it rather than copying it:
+
+```console
+$ podman machine ssh 'echo "$XDG_RUNTIME_DIR/podman/podman.sock"'
+/run/user/501/podman/podman.sock
+```
+
+The override is unnecessary on Linux, where the host path is the VM path; CI
+sets neither variable.
+
+#### If Testcontainers cannot find a container runtime at all
+
+```
+Could not find a valid Docker environment
+```
+
+Testcontainers resolves the socket itself, so the `docker` CLI working proves
+nothing — under Podman `docker` is an alias, and `docker info` succeeds against
+a socket Testcontainers never consults. What it wants is `/var/run/docker.sock`,
+which `podman machine start` creates as a symlink into the machine's socket:
+
+```console
+$ ls -la /var/run/docker.sock
+lrwxr-xr-x  1 root  daemon  ...  /var/run/docker.sock -> ~/.local/share/containers/podman/machine/podman.sock
+```
+
+If it is missing, restart the machine. Exporting `DOCKER_HOST` from `podman
+machine inspect` also works.
+
+The symptom can look inconsistent between suites, which is what makes it slow to
+diagnose: the Arconia dev services resolve the runtime differently and can keep
+working while tests that use Testcontainers directly fail in the same build.
+
+#### Give the machine enough memory
+
+The default machine is small. Under a parallel build the PostgreSQL, Floci and
+LGTM containers plus the native-image and CycloneDX steps hit container-startup
+timeouts and OOM kills. Raise it in place — stop, set, start; storage is
+preserved:
+
+```console
+$ podman machine stop
+$ podman machine set --memory 8192
+$ podman machine start
+```
+
+!!! tip "A failed run is not always a failed change"
+
+    Under load the machine intermittently stops answering mid-build — a
+    connection refused, or a container dying during startup — and the whole
+    suite errors on context load. The same command re-run unchanged is green.
+    Retry once before debugging the code, and **record the retry in the change's
+    evidence** rather than quietly re-running: a genuinely flaky test looks
+    identical from here.
 
 ## Next steps
 
