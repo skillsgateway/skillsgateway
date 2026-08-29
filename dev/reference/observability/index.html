@@ -1814,6 +1814,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Metrics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#storage-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storage backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#health" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Health
+      
+    </span>
+  </a>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1917,6 +1945,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Metrics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#storage-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storage backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#health" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Health
+      
+    </span>
+  </a>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2015,6 +2071,111 @@ Facade requests already carry the standard HTTP server observation for
 <code>/git/**</code>; the counter adds the event-kind dimension without a second span.</p>
 <p>Standard JVM, HTTP server and datasource metrics come from Spring Boot actuator
 as usual.</p>
+<h3 id="storage-backend">Storage backend<a class="headerlink" href="#storage-backend" title="Permanent link">&para;</a></h3>
+<p>These are recorded on both storage backends and move only on <code>object-store</code>
+(see <a href="../configuration/">Configuration</a>). They are how the compare-and-swap
+design is checked against its own assumptions rather than trusted.</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Type</th>
+<th>Tags</th>
+<th>Recorded around</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>skills_gateway.storage.conditional_write.conflicts</code></td>
+<td>counter</td>
+<td>—</td>
+<td>Conditional writes the store refused because another writer had moved the repository manifest on.</td>
+</tr>
+<tr>
+<td><code>skills_gateway.storage.conditional_write.retries</code></td>
+<td>counter</td>
+<td>—</td>
+<td>Transition attempts made after such a refusal.</td>
+</tr>
+<tr>
+<td><code>skills_gateway.storage.conditional_write.exhaustions</code></td>
+<td>counter</td>
+<td>—</td>
+<td>Transitions abandoned because the bounded retry ran out. <strong>Alert on this</strong>: it is a reference transition that did not happen.</td>
+</tr>
+<tr>
+<td><code>skills_gateway.storage.manifest.refreshes</code></td>
+<td>counter</td>
+<td>—</td>
+<td>Freshness checks that found the reference map had moved under a cached copy.</td>
+</tr>
+<tr>
+<td><code>skills_gateway.storage.wal.depth</code></td>
+<td>gauge</td>
+<td>—</td>
+<td>Write-ahead entries not yet folded into a manifest, summed across the repositories this replica has written to. Exact as of each maintenance pass.</td>
+</tr>
+<tr>
+<td><code>skills_gateway.storage.packs.live</code></td>
+<td>gauge</td>
+<td>—</td>
+<td>Packs the manifests this replica has read say are live, summed the same way.</td>
+</tr>
+<tr>
+<td><code>skills_gateway.storage.pack_cache.hits</code></td>
+<td>counter</td>
+<td>—</td>
+<td>Pack opens served from the local on-disk cache.</td>
+</tr>
+<tr>
+<td><code>skills_gateway.storage.pack_cache.downloads</code></td>
+<td>counter</td>
+<td>—</td>
+<td>Packs fetched from the store into that cache — the other half of the hit rate.</td>
+</tr>
+<tr>
+<td><code>skills_gateway.storage.requests</code></td>
+<td>timer</td>
+<td><code>operation=get\|conditional-get\|open\|stat\|put\|conditional-put\|create\|list\|delete\|probe</code>, <code>outcome=success\|error</code></td>
+<td>Every object-store request. A conditional write the store <em>refused</em> is <code>outcome=success</code> — the store answered correctly; the conflict counter above is where a refusal means something.</td>
+</tr>
+</tbody>
+</table>
+<p>Two of these are the ones to watch. <code>conditional_write.exhaustions</code> is a failed
+reference transition and belongs on an alert. <code>wal.depth</code> and <code>packs.live</code>
+climbing without falling back is compaction falling behind, which shows up as a
+slow restore long before it shows up as anything else.</p>
+<h2 id="health">Health<a class="headerlink" href="#health" title="Permanent link">&para;</a></h2>
+<p><code>/actuator/health</code> carries a <code>gitStorage</code> indicator on both backends. It names
+the backend actually in use — which is the point, since a gateway serving from
+local disk while the operator believes it is serving from a bucket looks healthy
+from every other angle.</p>
+<table>
+<thead>
+<tr>
+<th>Backend</th>
+<th>Up when</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>filesystem</code></td>
+<td>the data directory exists and is writable</td>
+<td><code>backend</code>, <code>dataDir</code></td>
+</tr>
+<tr>
+<td><code>object-store</code></td>
+<td>the bucket answers a listing of the gateway's own prefix</td>
+<td><code>backend</code>, <code>bucket</code>, <code>region</code>, <code>conditionalWrites</code></td>
+</tr>
+</tbody>
+</table>
+<p>The indicator <strong>reads and never writes</strong>. The conditional-write check that
+decides whether a store can serialize reference transitions at all is a startup
+gate — a gateway for which it failed never started — so its result is <em>reported</em>
+here (<code>conditionalWrites: verified at startup</code>) rather than repeated on every
+poll.</p>
 <h2 id="exporting">Exporting<a class="headerlink" href="#exporting" title="Permanent link">&para;</a></h2>
 <p>Export is opt-in and off by default: <code>arconia.otel.enabled=false</code> in the
 shipped configuration, so builds, tests and default deployments never attempt
