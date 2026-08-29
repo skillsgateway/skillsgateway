@@ -178,7 +178,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           # The tag, not the branch: the artifacts must carry the released version.
           ref: ${{ needs.prepare.outputs.version }}
@@ -186,7 +186,7 @@ jobs:
           # it compute the WRONG version rather than fail.
           fetch-depth: 0
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v5.7.0
         with:
           distribution: temurin
           java-version: '25'
@@ -221,7 +221,7 @@ jobs:
             "dist/skills-gateway-${VERSION}-cyclonedx.json"
           find dist -type f | sort
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v7.0.1
         with:
           name: dist
           path: dist
