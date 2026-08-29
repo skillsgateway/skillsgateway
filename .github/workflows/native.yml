@@ -49,7 +49,7 @@ jobs:
           --health-timeout 5s
           --health-retries 20
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
 
@@ -133,7 +133,7 @@ jobs:
 
       - name: Attest SBOM
         if: github.event_name == 'push' || inputs.version != ''
-        uses: actions/attest-sbom@v3
+        uses: actions/attest-sbom@v3.0.0
         with:
           subject-name: ghcr.io/skillsgateway/skillsgateway
           subject-digest: ${{ steps.push.outputs.digest }}
@@ -149,14 +149,14 @@ jobs:
       # release attaches are built and uploaded by release.yml's `package` job,
       # not here, and keep the default retention.
       - name: Upload image artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: skills-gateway-native-image
           path: skills-gateway-image.tar.gz
           retention-days: 7
 
       - name: Upload native-build SBOM
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: sbom-cyclonedx-native
           path: target/classes/META-INF/sbom/application.cdx.json
