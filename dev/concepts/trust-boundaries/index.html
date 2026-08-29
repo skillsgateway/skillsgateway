@@ -631,6 +631,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-storage-itself" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The storage itself
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-not-a-boundary-yet" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -721,6 +732,8 @@
   
     
     
+      
+        
       
         
       
@@ -1298,6 +1311,34 @@
     
   
     Policy deny rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/storage-backends/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choosing and migrating the storage backend
   
 
     
@@ -2085,6 +2126,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-storage-itself" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The storage itself
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-not-a-boundary-yet" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2442,6 +2494,24 @@ different surface — and roles never apply to PATs. See
 <a href="../../guides/delegated-administration/">Delegated administration</a> for the
 workflow, <a href="../../guides/identity-providers/">Identity providers</a> for claim
 mapping, and <a href="../../reference/api/roles/">Roles</a> for the grants API.</p>
+<h2 id="the-storage-itself">The storage itself<a class="headerlink" href="#the-storage-itself" title="Permanent link">&para;</a></h2>
+<p>Publication is a reference transition on the published repository, and the
+boundary is therefore wherever those references physically live.</p>
+<p>On the <code>filesystem</code> backend that is the mounted volume: anyone who can write to
+it can move <code>refs/heads/main</code> without <code>ApprovalService</code> ever running. That has
+always been true, and it is why the volume inherits the encryption and access
+expectations of the content it holds.</p>
+<p>On the <code>object-store</code> backend it is the bucket. The served reference map is one
+small object; <strong>anyone who can write that object can put content on the wire
+without approval</strong>, and can do it from outside the gateway entirely. The
+mitigation is a narrow bucket policy — object read, write and delete under the
+gateway's own prefix, no bucket administration — and treating the bucket as the
+same kind of asset the volume was.</p>
+<p>The gateway cannot enforce this. It has no way to distinguish its own write from
+anyone else's, and no way to detect one that already happened. What it does do
+is refuse to start against a store whose conditional writes are not faithful, so
+that its <em>own</em> concurrent writers cannot lose a transition. That is a different
+guarantee, and it is not a substitute for the policy.</p>
 <h2 id="what-is-not-a-boundary-yet">What is not a boundary yet<a class="headerlink" href="#what-is-not-a-boundary-yet" title="Permanent link">&para;</a></h2>
 <p>A <strong>second recorded approval</strong> — a queue in which two identities each decide,
 rather than one deciding while the gateway checks who they are — is not

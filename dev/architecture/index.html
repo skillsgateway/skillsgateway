@@ -855,6 +855,8 @@
       
         
       
+        
+      
     
     
     
@@ -1391,6 +1393,34 @@
     
   
     Policy deny rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/storage-backends/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choosing and migrating the storage backend
   
 
     
@@ -2771,13 +2801,47 @@ format-agnostic; tool specifics live in <strong>adapters</strong>:</p>
 </ul>
 <h2 id="12-deployment-shape">12. Deployment shape<a class="headerlink" href="#12-deployment-shape" title="Permanent link">&para;</a></h2>
 <p>Stateless services (façade, ingestion, vetting orchestrator, publisher,
-portal) in front of Postgres (metadata, ledger) and object storage
-(content-addressed snapshots; façade serves generated packfiles/bare repos).
+portal) in front of Postgres (metadata, ledger) and git storage.
 OIDC SSO for humans, token auth for CI, SCIM for team scoping. Vetting
 connectors run outside the gateway and talk to it over the trigger/callback
 contract; sandbox connectors use isolated ephemeral runners. Air-gap friendly by construction: ingestion is the only
 component needing internet egress, and can run in a DMZ with one-way promotion
 inward.</p>
+<p><strong>Git storage is a named backend behind one seam.</strong> <code>GitStorage</code> hands callers
+open JGit <code>Repository</code> handles for the three repository roles, and exactly one
+implementation is in the context:</p>
+<table>
+<thead>
+<tr>
+<th>Backend</th>
+<th>Substrate</th>
+<th>Writers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>filesystem</code> (default)</td>
+<td>Bare repositories on the mounted volume</td>
+<td>One. No cross-pod locking exists</td>
+</tr>
+<tr>
+<td><code>object-store</code></td>
+<td>JGit DFS over an S3-compatible bucket: immutable content-named packs, a write-ahead log, and one reference manifest per repository</td>
+<td>Any number. Every transition is one conditional write on the manifest, and that compare-and-swap is the only serialization point — no lock service, no coordination database, no leader election</td>
+</tr>
+</tbody>
+</table>
+<p>The backend is named and never inferred; an unrecognised name, or an
+<code>object-store</code> selection whose settings are incomplete or whose bucket fails the
+startup conditional-write probe, refuses to start rather than degrading to a
+filesystem nobody chose. Local disk on the object-store backend is a bounded
+cache and nothing in it is authoritative. Moving between the two is an offline,
+verified, reversible copy — see
+<a href="../guides/storage-backends/">Choosing and migrating the storage backend</a>.</p>
+<p>What object storage does <strong>not</strong> make safe is the gateway's uncoordinated
+background singletons (sync, re-vetting, retention, webhook dispatch, audit
+export). It unblocks multi-replica serving; the chart refuses a replica count
+that would duplicate a sweep, and leader election is separate later work.</p>
 <h2 id="13-roadmap">13. Roadmap<a class="headerlink" href="#13-roadmap" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Phase 1 — visibility &amp; choke point (MVP).</strong> Git façade + ingestion of
@@ -2827,6 +2891,15 @@ inward.</p>
   lineage, forward-only by default, and the same quarantine, vetting and
   approval gate as fetched content (GW_0101–GW_0103, ADR 0007); auto-approval
   for trusted internal publishers stays parked per ADR 0006.</li>
+<li><em>Implemented:</em> a pluggable git storage backend — the <code>GitStorage</code> seam with a
+  JGit DFS implementation over an S3-compatible bucket beside the filesystem
+  one, reference transitions made atomic by a conditional write on a
+  per-repository manifest, a named and fail-closed backend selection, an
+  offline verified migration between the two, and a chart that refuses a replica
+  count or a storage shape the selected backend cannot honour
+  (GW_0111, GW_0112, GW_0114, GW_0115, GW_0116). Real AWS S3 has not yet been
+  exercised against the conditional-write assertions; leader election for the
+  background sweeps remains separate work.</li>
 <li><strong>Phase 3 — assurance &amp; scale.</strong> Client telemetry inventory, kill switch
   with fleet force-uninstall, signed attestations, additional tool adapters,
   repository-manager catalog federation, OCI re-publication.</li>

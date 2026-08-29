@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/dev/guides/deploying-on-kubernetes/">
       
       
-        <link rel="prev" href="../policy-rules/">
+        <link rel="prev" href="../storage-backends/">
       
       
         <link rel="next" href="../releasing/">
@@ -564,6 +564,8 @@
   
     
     
+      
+        
       
         
       
@@ -1158,6 +1160,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../storage-backends/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choosing and migrating the storage backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -1294,10 +1324,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#replicacount-must-stay-1" class="md-nav__link">
+  <a href="#replicacount-depends-on-the-storage-backend" class="md-nav__link">
     <span class="md-ellipsis">
       
-        replicaCount must stay 1
+        replicaCount depends on the storage backend
       
     </span>
   </a>
@@ -2110,10 +2140,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#replicacount-must-stay-1" class="md-nav__link">
+  <a href="#replicacount-depends-on-the-storage-backend" class="md-nav__link">
     <span class="md-ellipsis">
       
-        replicaCount must stay 1
+        replicaCount depends on the storage backend
       
     </span>
   </a>
@@ -2378,16 +2408,20 @@ access mode, size, static or dynamic provisioning — belong to the cluster, not
 to this chart. Which of them are even available to you is constrained by the
 platform — see
 <a href="#storage-options-on-serverless-kubernetes">Storage options on serverless Kubernetes</a>.</p>
-<h3 id="replicacount-must-stay-1"><code>replicaCount</code> must stay 1<a class="headerlink" href="#replicacount-must-stay-1" title="Permanent link">&para;</a></h3>
-<p>Storage today is a plain filesystem, written by the ingestion pipeline, the
-approval step and the facade's own repacking. <strong>There is no cross-pod locking</strong>,
-so two replicas writing the same volume can interleave a fetch and a publish
-into a corrupt repository. Scaling out is not a configuration change; it needs a
-storage backend that arbitrates writers, which is
-<a href="https://github.com/skillsgateway/skillsgateway/issues/127">#127</a>.</p>
+<h3 id="replicacount-depends-on-the-storage-backend"><code>replicaCount</code> depends on the storage backend<a class="headerlink" href="#replicacount-depends-on-the-storage-backend" title="Permanent link">&para;</a></h3>
+<p>On the default <code>filesystem</code> backend, storage is a plain filesystem written by
+the ingestion pipeline, the approval step and the facade's own repacking.
+<strong>There is no cross-pod locking</strong>, so two replicas writing the same volume can
+interleave a fetch and a publish into a corrupt repository. The chart refuses to
+render <code>replicaCount &gt; 1</code> there rather than trusting you to know that.</p>
 <p>Keep <code>replicaCount: 1</code>. A rolling update briefly runs two pods, so prefer the
 <code>Recreate</code> strategy — or accept a moment's overlap — on volumes that allow only
 one writer anyway.</p>
+<p>On the <code>object-store</code> backend concurrent writers are safe by construction, and
+more than one replica becomes possible — but only with the gateway's
+uncoordinated background sweeps and pollers switched off on the scaled-out
+deployment, which the chart also checks. See
+<a href="../storage-backends/#running-more-than-one-replica">Running more than one replica</a>.</p>
 <h2 id="ingress-and-tls">Ingress and TLS<a class="headerlink" href="#ingress-and-tls" title="Permanent link">&para;</a></h2>
 <p>The Ingress is off by default:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">ingress</span><span class="p">:</span>
@@ -2459,8 +2493,8 @@ for the case where the platform is already fixed:</p>
 </tr>
 <tr>
 <td>Object storage</td>
-<td><strong>Not implemented yet</strong></td>
-<td>The intended production answer here — <a href="https://github.com/skillsgateway/skillsgateway/issues/127">#127</a>.</td>
+<td><strong>Supported</strong></td>
+<td>The production answer here: <code>storage.backend: object-store</code>, credentials from workload identity, and no volume required at all — see <a href="../storage-backends/">the storage guide</a>.</td>
 </tr>
 <tr>
 <td>Block storage on managed nodes</td>
@@ -2496,10 +2530,13 @@ the pod does, which is what the worked example below creates by hand.</p>
 </ul>
 <p><strong>A parallel filesystem is not an option either</strong>: FSx for Lustre is listed as
 unavailable to Fargate pods.</p>
-<p><strong>Object storage is the intended answer on serverless platforms specifically.</strong>
-Not because of scale — because the alternatives here are "impossible" and "the
-substrate git is worst on". It is not implemented yet; <a href="https://github.com/skillsgateway/skillsgateway/issues/127">#127</a>
-tracks it.</p>
+<p><strong>Object storage is the answer on serverless platforms specifically.</strong> Not
+because of scale — because the alternatives here are "impossible" and "the
+substrate git is worst on". It is implemented: set
+<code>storage.backend: object-store</code>, and the repositories live in a bucket with
+local disk as a cache. Fargate has no instance metadata service, so credentials
+come from workload identity — see
+<a href="../storage-backends/">Choosing and migrating the storage backend</a>.</p>
 <p><strong>If the platform choice is still open</strong>, an ordinary managed node group with an
 RWO block volume is what the current storage implementation was designed for,
 and it enforces the single-writer property structurally rather than by
@@ -2559,9 +2596,10 @@ can write to it, then install with <code>persistence.mode: existingClaim</code> 
 <p>It works, and it is not what you want in production — see
 <a href="#storage-options-on-serverless-kubernetes">the comparison above</a>. It is a
 reasonable substrate for a proof of concept, a pilot, or a small internal
-estate. The production answer is an object-storage backend that stops
-treating a POSIX filesystem as the source of truth, tracked as
-<a href="https://github.com/skillsgateway/skillsgateway/issues/127">#127</a>.</p>
+estate. The production answer is the <code>object-store</code> backend, which stops
+treating a POSIX filesystem as the source of truth; moving to it is an
+offline, verified, reversible copy described in
+<a href="../storage-backends/">Choosing and migrating the storage backend</a>.</p>
 </div>
 <h2 id="verifying-the-install">Verifying the install<a class="headerlink" href="#verifying-the-install" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>skills-gateway<span class="w"> </span>rollout<span class="w"> </span>status<span class="w"> </span>deploy/skills-gateway

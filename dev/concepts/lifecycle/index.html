@@ -724,6 +724,8 @@
       
         
       
+        
+      
     
     
     
@@ -1260,6 +1262,34 @@
     
   
     Policy deny rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/storage-backends/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choosing and migrating the storage backend
   
 
     
@@ -2342,34 +2372,93 @@ physically lives in a different git repository from published content.</p>
 </div>
 
 <h2 id="the-repositories">The repositories<a class="headerlink" href="#the-repositories" title="Permanent link">&para;</a></h2>
-<p>The gateway maintains bare git repositories per marketplace under
-<code>skills-gateway.data-dir</code>:</p>
+<p>The gateway maintains three repositories per marketplace. The three roles are
+the model; where they physically live depends on the configured
+<a href="../../guides/storage-backends/">storage backend</a>, and nothing above the storage
+seam can tell which one answered.</p>
 <table>
 <thead>
 <tr>
 <th>Repository</th>
-<th>Path</th>
 <th>Refs</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><strong>Quarantine</strong></td>
-<td><code>{data-dir}/quarantine/{marketplace}.git</code></td>
 <td>One <code>refs/snapshots/{sha}</code> per ingested commit. <strong>Never reachable through either endpoint.</strong></td>
 </tr>
 <tr>
 <td><strong>Published</strong></td>
-<td><code>{data-dir}/published/{marketplace}.git</code></td>
-<td>Exactly one served ref, <code>refs/heads/main</code>. Created only by approval.</td>
+<td>Exactly one served ref, <code>refs/heads/main</code>, plus the <code>refs/snapshots/{sha}</code> approval pinned alongside it. Created only by approval.</td>
 </tr>
 <tr>
 <td><strong>Origin</strong> <em>(hosted only)</em></td>
-<td><code>{data-dir}/hosted/{marketplace}.git</code></td>
 <td>The publisher's own <code>refs/heads/main</code>, written by push and read only by ingestion.</td>
 </tr>
 </tbody>
 </table>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1"><code>filesystem</code></label><label for="__tabbed_1_2"><code>object-store</code></label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>Three directories of bare repositories under <code>skills-gateway.data-dir</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Repository</th>
+<th>Path</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Quarantine</td>
+<td><code>{data-dir}/quarantine/{marketplace}.git</code></td>
+</tr>
+<tr>
+<td>Published</td>
+<td><code>{data-dir}/published/{marketplace}.git</code></td>
+</tr>
+<tr>
+<td>Origin</td>
+<td><code>{data-dir}/hosted/{marketplace}.git</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tabbed-block">
+<p>Three key prefixes in one bucket, which keeps the roles separate for the
+same reason three directories do. Objects are immutable and content-named;
+the reference map is one small <code>manifest</code> object per repository, rewritten
+by a conditional write, and that compare-and-swap is the only serialization
+point in the system.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>{prefix}/{role}/{marketplace}/manifest</code></td>
+<td>The reference map, the write-ahead sequence it reflects, and the live pack set</td>
+</tr>
+<tr>
+<td><code>{prefix}/{role}/{marketplace}/wal/{seq}</code></td>
+<td>One immutable entry per accepted transition</td>
+</tr>
+<tr>
+<td><code>{prefix}/{role}/{marketplace}/objects/pack/…</code></td>
+<td>Immutable, content-named packs, durable before anything references them</td>
+</tr>
+</tbody>
+</table>
+<p><code>{role}</code> is <code>quarantine</code>, <code>published</code> or <code>hosted</code>. Local disk holds only a
+bounded pack cache; nothing in it is authoritative and deleting it is always
+safe.</p>
+</div>
+</div>
+</div>
 <p>The facade resolves repositories through a method that opens only the published
 path and returns nothing unless <code>refs/heads/main</code> resolves. There is no code
 path from a facade request to the quarantine tree — nor from a

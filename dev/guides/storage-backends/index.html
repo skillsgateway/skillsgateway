@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/dev/guides/snapshot-retention/">
+        <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/dev/guides/storage-backends/">
       
       
-        <link rel="prev" href="../exporting-the-audit-ledger/">
+        <link rel="prev" href="../policy-rules/">
       
       
-        <link rel="next" href="../delegated-administration/">
+        <link rel="next" href="../deploying-on-kubernetes/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Reclaiming snapshot storage - Skills Gateway</title>
+        <title>Choosing and migrating the storage backend - Skills Gateway</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#reclaiming-snapshot-storage" class="md-skip">
+        <a href="#choosing-and-migrating-the-storage-backend" class="md-skip">
           Skip to content
         </a>
       
@@ -119,7 +119,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Reclaiming snapshot storage
+              Choosing and migrating the storage backend
             
           </span>
         </div>
@@ -1020,37 +1020,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Reclaiming snapshot storage
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../snapshot-retention/" class="md-nav__link">
         
   
   
@@ -1066,103 +1039,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#1-see-what-a-policy-would-delete" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. See what a policy would delete
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-choose-the-policy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Choose the policy
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-run-a-pass-by-hand" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Run a pass by hand
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-restore-anything-you-did-not-mean-to-delete" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Restore anything you did not mean to delete
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-enable-the-schedulers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Enable the schedulers
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#6-watch-it" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Watch it
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#turning-it-off-again" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Turning it off again
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1284,10 +1160,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../storage-backends/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choosing and migrating the storage backend
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1303,6 +1206,164 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#when-the-platform-makes-the-choice-for-you" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When the platform makes the choice for you
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#which-object-stores-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Which object stores work
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Credentials
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-costs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it costs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-more-than-one-replica" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running more than one replica
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migrating-an-existing-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migrating an existing deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migrating an existing deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-stop-the-gateway" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Stop the gateway
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-run-the-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Run the migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-read-the-exit-status-not-the-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Read the exit status, not the log
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-switch-the-backend-and-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Switch the backend and start
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rolling-back" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rolling back
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1983,10 +2044,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-see-what-a-policy-would-delete" class="md-nav__link">
+  <a href="#when-the-platform-makes-the-choice-for-you" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. See what a policy would delete
+        When the platform makes the choice for you
       
     </span>
   </a>
@@ -1994,10 +2055,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-choose-the-policy" class="md-nav__link">
+  <a href="#which-object-stores-work" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Choose the policy
+        Which object stores work
       
     </span>
   </a>
@@ -2005,10 +2066,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-run-a-pass-by-hand" class="md-nav__link">
+  <a href="#credentials" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Run a pass by hand
+        Credentials
       
     </span>
   </a>
@@ -2016,10 +2077,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-restore-anything-you-did-not-mean-to-delete" class="md-nav__link">
+  <a href="#what-it-costs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Restore anything you did not mean to delete
+        What it costs
       
     </span>
   </a>
@@ -2027,10 +2088,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#5-enable-the-schedulers" class="md-nav__link">
+  <a href="#running-more-than-one-replica" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5. Enable the schedulers
+        Running more than one replica
       
     </span>
   </a>
@@ -2038,21 +2099,82 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#6-watch-it" class="md-nav__link">
+  <a href="#migrating-an-existing-deployment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        6. Watch it
+        Migrating an existing deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migrating an existing deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-stop-the-gateway" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Stop the gateway
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#turning-it-off-again" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#2-run-the-migration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Turning it off again
+        2. Run the migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-read-the-exit-status-not-the-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Read the exit status, not the log
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-switch-the-backend-and-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Switch the backend and start
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rolling-back" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rolling back
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See also
       
     </span>
   </a>
@@ -2076,7 +2198,7 @@
 
 
   
-    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/guides/snapshot-retention.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/guides/storage-backends.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -2084,127 +2206,280 @@
   
 
 
-<h1 id="reclaiming-snapshot-storage">Reclaiming snapshot storage<a class="headerlink" href="#reclaiming-snapshot-storage" title="Permanent link">&para;</a></h1>
-<p>A marketplace polled daily accumulates a snapshot per upstream commit forever,
-each pinning a commit in the quarantine repository. Retention reclaims that
-space on stated criteria, with a restore window so a mistake is recoverable.</p>
-<p>Nothing here happens on its own until you turn it on.</p>
-<div class="admonition warning">
-<p class="admonition-title">This guide enables a destructive capability</p>
-<p>Retention deletes. Work through it in the order below — preview first,
-enable second — and read
-<a href="../../reference/retention/">Snapshot retention</a> for exactly what the criteria
-select and what they can never touch.</p>
-</div>
-<h2 id="1-see-what-a-policy-would-delete">1. See what a policy would delete<a class="headerlink" href="#1-see-what-a-policy-would-delete" title="Permanent link">&para;</a></h2>
-<p>The dry run writes nothing and works with retention disabled, which is the whole
-point: inspect the effect before switching the scheduler on.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span><span class="s1">'localhost:8080/api/retention/candidates'</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">[{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">17</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"held"</span><span class="p">,</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">"reason"</span><span class="p">:</span><span class="s2">"held-too-long"</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"2026-04-02T08:11:03Z"</span><span class="p">},</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w"> </span><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">21</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"9d1e4c7..."</span><span class="p">,</span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"rejected"</span><span class="p">,</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">"reason"</span><span class="p">:</span><span class="s2">"superseded"</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"2026-05-19T14:02:47Z"</span><span class="p">}]</span>
-</code></pre></div>
-<p><code>reason</code> is the criterion that selected it. Add <code>?marketplace=acme</code> to scope the
-preview to one upstream.</p>
-<p>If the list is longer than you expected, adjust the policy rather than the plan —
-<code>held-max-age</code> and <code>superseded-min-age</code> are the two knobs that move it most.</p>
-<h2 id="2-choose-the-policy">2. Choose the policy<a class="headerlink" href="#2-choose-the-policy" title="Permanent link">&para;</a></h2>
-<p>Global defaults with per-marketplace overrides, in your deployment
-configuration:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">retention</span><span class="p">:</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w">          </span><span class="c1"># still off; step 3 turns it on</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="nt">defaults</span><span class="p">:</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">      </span><span class="nt">held-max-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90d</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">      </span><span class="nt">superseded</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">      </span><span class="nt">superseded-min-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30d</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">      </span><span class="nt">min-idle</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30d</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">      </span><span class="nt">restore-window</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">14d</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">    </span><span class="nt">marketplaces</span><span class="p">:</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">      </span><span class="nt">acme</span><span class="p">:</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">        </span><span class="nt">held-max-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30d</span><span class="w">   </span><span class="c1"># a busy upstream; everything else inherited</span>
-</code></pre></div>
-<p>Unset override fields fall back to <code>defaults</code>, so a per-marketplace block only
-states what differs. The full reference is
-<a href="../../reference/configuration/#retention">Configuration</a>.</p>
-<p>Two rules worth internalising before you tune:</p>
+<h1 id="choosing-and-migrating-the-storage-backend">Choosing and migrating the storage backend<a class="headerlink" href="#choosing-and-migrating-the-storage-backend" title="Permanent link">&para;</a></h1>
+<p>The gateway holds its git repositories on one of two backends. The choice is
+named in configuration, never inferred, and it is the same choice in the chart
+and in the application.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><code>filesystem</code></th>
+<th><code>object-store</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Where repositories live</td>
+<td>Bare repositories under <code>skills-gateway.data-dir</code></td>
+<td>Immutable packs plus one reference manifest per repository, in an S3-compatible bucket</td>
+</tr>
+<tr>
+<td>Writers</td>
+<td>Exactly one. There is no cross-pod locking of any kind</td>
+<td>Any number. Every reference transition is one conditional write</td>
+</tr>
+<tr>
+<td><code>replicaCount</code></td>
+<td>Must be 1</td>
+<td>May exceed 1, under <a href="#running-more-than-one-replica">the gate below</a></td>
+</tr>
+<tr>
+<td>Durability</td>
+<td>The volume's problem</td>
+<td>The bucket's problem</td>
+</tr>
+<tr>
+<td>Local disk</td>
+<td>The source of truth</td>
+<td>A cache, safe to delete at any moment</td>
+</tr>
+<tr>
+<td>Read latency</td>
+<td>Page cache</td>
+<td>First fetch of a pack pays object-store latency; later reads are local</td>
+</tr>
+<tr>
+<td>Default</td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>filesystem</code> stays the default and stays the recommendation for a single-node
+or air-gapped deployment.</strong> It is simpler, it is faster once warm, and nothing
+about it is deprecated. The reason to move is that one pod with one volume is
+also one point of failure, and that on some platforms there is no good volume to
+have.</p>
+<h2 id="when-the-platform-makes-the-choice-for-you">When the platform makes the choice for you<a class="headerlink" href="#when-the-platform-makes-the-choice-for-you" title="Permanent link">&para;</a></h2>
+<p>On serverless Kubernetes — EKS Fargate is the worked example — object storage
+is not a scaling nicety. It is the only substrate that suits git:</p>
 <ul>
-<li><strong>An approved snapshot is never eligible</strong>, by policy or by hand. Retention
-  cannot delete what the facade is serving.</li>
-<li><strong><code>min-idle</code> is a veto, not a selector.</strong> It only removes candidates that were
-  fetched recently; it never selects anything.</li>
+<li><strong>EBS cannot be mounted at all.</strong> The EBS CSI node component is a DaemonSet,
+  and DaemonSets are unsupported there, so there is no workaround.</li>
+<li><strong>EFS is supported, statically provisioned only</strong> — that is, NFS. Git's
+  on-disk format is a random walk over large packfiles, which is exactly the
+  access pattern a network filesystem is worst at.</li>
+<li><strong>EFS is ReadWriteMany</strong>, so a second pod can mount and write the same volume.
+  On the filesystem backend <code>replicaCount: 1</code> is then held by convention alone.</li>
+<li><strong>There is no instance metadata service</strong>, so credentials must come from
+  workload identity. See <a href="#credentials">credential modes</a>.</li>
 </ul>
-<h2 id="3-run-a-pass-by-hand">3. Run a pass by hand<a class="headerlink" href="#3-run-a-pass-by-hand" title="Permanent link">&para;</a></h2>
-<p>Still with the scheduler off, apply the policy once and watch what happens:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s1">'localhost:8080/api/retention/evaluate?marketplace=acme'</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span><span class="nt">"selected"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="nt">"acted"</span><span class="p">:</span><span class="mi">2</span><span class="p">}</span>
-</code></pre></div>
-<p>The selected snapshots are now <strong>soft-deleted</strong>: marked with a reason and a
-<code>purge_after</code> deadline, their vetting state untouched, and restorable for the
-whole restore window. Nothing has been removed from git.</p>
-<p>Check the portal — <a href="../../reference/portal/#marketplace-detail">Marketplace detail</a>
-shows each deleted snapshot with a <code>deleted</code> badge and its restore deadline.</p>
-<h2 id="4-restore-anything-you-did-not-mean-to-delete">4. Restore anything you did not mean to delete<a class="headerlink" href="#4-restore-anything-you-did-not-mean-to-delete" title="Permanent link">&para;</a></h2>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Portal</label><label for="__tabbed_1_2">API</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<p>On the marketplace detail page, the deleted snapshot's <strong>Restore</strong> button.
-It toasts <em>Snapshot {id} restored</em>.</p>
+<p>An EFS-backed claim does work, and it is a reasonable substrate for a pilot.
+It is not the production answer.</p>
+<h2 id="which-object-stores-work">Which object stores work<a class="headerlink" href="#which-object-stores-work" title="Permanent link">&para;</a></h2>
+<p>The backend needs exactly one primitive that not every store implements: a
+<strong>conditional write</strong> (<code>If-Match</code>, and <code>If-None-Match: *</code> for creation) on a
+small object. That single compare-and-swap is what makes a reference transition
+atomic without a lock service, a coordination database or leader election —
+and there is no degraded mode without it, because last-writer-wins on the
+reference manifest is precisely the lost update the design exists to prevent.</p>
+<p>The gateway probes the configured bucket at startup and refuses to run where the
+probe fails, so an unsupported store is a startup error rather than a corruption
+discovered during an approval.</p>
+<table>
+<thead>
+<tr>
+<th>Store</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Floci <code>1.5.33</code></td>
+<td><strong>Verified.</strong> Every build runs the backend's contract and concurrency suites against it</td>
+</tr>
+<tr>
+<td>MinIO <code>RELEASE.2025-07-23T15-54-02Z</code></td>
+<td><strong>Verified by probe.</strong> All the conditional-write assertions pass, repeatably. Not part of the build, because MinIO stopped publishing free container images around October 2025</td>
+</tr>
+<tr>
+<td>AWS S3</td>
+<td><strong>Documented, not exercised by this project.</strong> AWS documents <code>If-Match</code> and <code>If-None-Match</code> on <code>PutObject</code>, and it is the primary target — but nobody here has run the assertions against a real account, so it is believed rather than verified</td>
+</tr>
+<tr>
+<td>Google Cloud Storage</td>
+<td><strong>Out of scope.</strong> It has generation preconditions rather than <code>If-Match</code>, which would need an adapter</td>
+</tr>
+<tr>
+<td>Ceph RGW and other on-prem S3 gateways</td>
+<td><strong>Unverified.</strong> Varies by version; the startup probe is what will tell you</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title">The AWS S3 row is not a verified row</p>
+<p>It is the production target and it is the row that has never been run. If
+you are the first to run the gateway against a real S3 bucket, the startup
+probe is doing real work for you rather than confirming something already
+known.</p>
+<p>Closing that row is tracked as
+<a href="https://github.com/skillsgateway/skillsgateway/issues/151">issue #151</a>.</p>
 </div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/17/restore
+<h2 id="credentials">Credentials<a class="headerlink" href="#credentials" title="Permanent link">&para;</a></h2>
+<p><code>skills-gateway.storage.object-store.credentials.mode</code> names how credentials are
+resolved, for the same reason the backend is named: a misconfigured deployment
+should fail at startup saying so, rather than walking down a provider chain to a
+metadata endpoint that never answers and timing out in the middle of an approval.</p>
+<p><code>web-identity</code> is the primary mechanism and the chart's default. The pod's
+service account carries the role annotation, the projected token is exchanged
+for credentials, and the gateway holds no secret at all:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">serviceAccount</span><span class="p">:</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">create</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nt">eks.amazonaws.com/role-arn</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">arn:aws:iam::000000000000:role/skills-gateway</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="nt">storage</span><span class="p">:</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object-store</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="nt">objectStore</span><span class="p">:</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="nt">bucket</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">skills-gateway</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="nt">region</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">eu-north-1</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="nt">credentials</span><span class="p">:</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">      </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web-identity</span>
 </code></pre></div>
-</div>
-</div>
-</div>
-<p><strong>409</strong> means the snapshot is not deleted; <strong>404</strong> means compaction has already
-removed it, and at that point there is nothing to restore.</p>
-<p>You can also delete a single snapshot by hand — the <strong>Delete</strong> button, or
-<code>DELETE /api/snapshots/17</code>, recorded with the reason <code>manual</code>. Approved
-snapshots offer no delete control and the endpoint refuses them with <strong>409</strong>.</p>
-<h2 id="5-enable-the-schedulers">5. Enable the schedulers<a class="headerlink" href="#5-enable-the-schedulers" title="Permanent link">&para;</a></h2>
-<p>Once the previews and a manual pass look right:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">retention</span><span class="p">:</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="nt">poll-interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1h</span><span class="w">         </span><span class="c1"># evaluation: marks</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="nt">compaction-interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6h</span><span class="w">   </span><span class="c1"># compaction: removes</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span><span class="nt">batch-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">200</span>
+<p><code>static</code> is the fallback for stores with no role mechanism. The keys come from a
+Secret that already exists, with keys <code>access-key-id</code> and <code>secret-access-key</code>;
+there is deliberately nowhere in <code>values.yaml</code> to type one.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">storage</span><span class="p">:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">objectStore</span><span class="p">:</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">credentials</span><span class="p">:</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">      </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">static</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">      </span><span class="nt">existingSecret</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">skills-gateway-object-store</span>
 </code></pre></div>
-<p>Evaluation soft-deletes on its interval; compaction permanently removes
-snapshots whose restore window has elapsed, deleting the pinned quarantine ref
-and garbage-collecting the repository so the objects are actually reclaimed.</p>
+<div class="admonition warning">
+<p class="admonition-title">Write access to the bucket is publication</p>
+<p>The served reference map is an object in the bucket. Anyone who can write it
+can put content on the wire without <code>ApprovalService</code> ever seeing it. Give
+the gateway a narrow policy — object read, write and delete under its own
+prefix, no bucket administration — and inherit the encryption and
+access-logging expectations of the volume it replaces. The gateway cannot
+enforce this for you.</p>
+</div>
+<h2 id="what-it-costs">What it costs<a class="headerlink" href="#what-it-costs" title="Permanent link">&para;</a></h2>
+<p>A replica that has never seen a repository reads one small manifest and then
+fetches packs on demand; a pack is fetched whole into the local cache on first
+open and read from disk after that. So the first clone of a marketplace on a
+fresh replica pays object-store latency, and everything after it does not.</p>
+<p>Marketplace repositories are skill repositories rather than monorepos, so the
+absolute cost is small — but it is a real regression against a warm volume, and
+it is worth measuring on your own store before deciding the trade is free.</p>
+<p>Two levels grow with use and are held down by compaction: the write-ahead log,
+and the number of live packs. Both are published as metrics, along with
+conditional-write conflicts and retries and per-request latency — see
+<a href="../../reference/observability/">Observability</a>.</p>
+<h2 id="running-more-than-one-replica">Running more than one replica<a class="headerlink" href="#running-more-than-one-replica" title="Permanent link">&para;</a></h2>
+<p>Removing the storage obstacle is not the same as making the gateway
+cluster-safe. Reads and facade fetches spread across replicas safely on the
+object-store backend, and concurrent writers are serialized by the conditional
+write. What is <em>not</em> safe is everything in the gateway that is a scheduled
+singleton with no coordination: the upstream sync sweep, the re-vetting sweep,
+retention, the webhook dispatch poller and the audit-export poller. N replicas
+would mean N sweeps, N webhook deliveries and N exporters advancing the same
+cursor.</p>
+<p>The chart gates both together. <code>replicaCount &gt; 1</code> is refused outright on
+<code>filesystem</code>, and on <code>object-store</code> it is refused while any of those switches is
+still on — the refusal names each one. The honest shape is two deployments
+sharing one bucket:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># The worker: one replica, the sweeps on.</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nt">replicaCount</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nt">storage</span><span class="p">:</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object-store</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="nt">objectStore</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> bucket</span><span class="p">:</span><span class="w"> </span><span class="nv">skills-gateway</span><span class="p p-Indicator">,</span><span class="nt"> region</span><span class="p">:</span><span class="w"> </span><span class="nv">eu-north-1</span><span class="w"> </span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># The serving deployment: scaled out, the sweeps off.</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nt">replicaCount</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nt">storage</span><span class="p">:</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object-store</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="nt">objectStore</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> bucket</span><span class="p">:</span><span class="w"> </span><span class="nv">skills-gateway</span><span class="p p-Indicator">,</span><span class="nt"> region</span><span class="p">:</span><span class="w"> </span><span class="nv">eu-north-1</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="nt">config</span><span class="p">:</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">    </span><span class="nt">sync</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="nt">vetting</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> revet</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="nt">retention</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="nt">webhooks</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">    </span><span class="nt">audit-export</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<p>Leader election that removes the split is separate, later work.</p>
+<div class="admonition note">
+<p class="admonition-title">Revocation is not instantaneous across replicas</p>
+<p>A replica serves the reference map it last read. <code>ref-freshness</code> (10 s by
+default) is the upper bound on how long a replica that did not perform a
+revocation may still advertise the revoked snapshot. Lower it if that
+matters more than the extra conditional <code>GET</code> per advertisement.</p>
+</div>
+<h2 id="migrating-an-existing-deployment">Migrating an existing deployment<a class="headerlink" href="#migrating-an-existing-deployment" title="Permanent link">&para;</a></h2>
+<p>The migration is <strong>offline, verified and reversible</strong>. There is no dual write
+and no live cutover: the gateway runs one replica on one volume today, so a
+short maintenance window is affordable and far cheaper to make correct.</p>
+<p>The old volume is the rollback. Keep it until you are satisfied.</p>
+<h3 id="1-stop-the-gateway">1. Stop the gateway<a class="headerlink" href="#1-stop-the-gateway" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kubectl<span class="w"> </span>scale<span class="w"> </span>deployment/skills-gateway<span class="w"> </span>--replicas<span class="o">=</span><span class="m">0</span>
+</code></pre></div>
+<h3 id="2-run-the-migration">2. Run the migration<a class="headerlink" href="#2-run-the-migration" title="Permanent link">&para;</a></h3>
+<p>The migration is the same artifact, started as a migration instead of as a
+service. The source is whatever <code>storage.backend</code> names; <code>storage.migration.to</code>
+names the destination, so the migration and its rollback are the same
+configuration with two values swapped.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>skills-gateway-server<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--spring.main.web-application-type<span class="o">=</span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--skills-gateway.data-dir<span class="o">=</span>/data<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--skills-gateway.storage.backend<span class="o">=</span>filesystem<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span>--skills-gateway.storage.object-store.bucket<span class="o">=</span>skills-gateway<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span>--skills-gateway.storage.object-store.region<span class="o">=</span>eu-north-1<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">  </span>--skills-gateway.storage.object-store.credentials.mode<span class="o">=</span>web-identity<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span>--skills-gateway.storage.migration.enabled<span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span>--skills-gateway.storage.migration.to<span class="o">=</span>object-store
+</code></pre></div>
+<p>It builds the destination through the same validation and the same startup probe
+a serving start would use, so a bucket the gateway would refuse to serve from is
+one it refuses to migrate into — found before the copy rather than after it. It
+then copies every repository in all three roles, streaming rather than loading
+whole repositories into memory.</p>
+<h3 id="3-read-the-exit-status-not-the-log">3. Read the exit status, not the log<a class="headerlink" href="#3-read-the-exit-status-not-the-log" title="Permanent link">&para;</a></h3>
+<p>After copying, the migration re-reads <strong>both</strong> sides and compares, per
+repository, the resolved reference set and the branch the head reference names.
+The process exits <code>0</code> only when every repository verified, and <code>1</code> otherwise,
+naming each repository that did not match. Nothing is re-approved and nothing is
+re-ingested — the bytes move, the decisions do not.</p>
 <div class="admonition danger">
-<p class="admonition-title">Compaction is the irreversible half</p>
-<p>Restore works only before <code>purge_after</code>. After compaction the row and the
-unreachable objects are gone; what remains is the ledger entry saying the
-SHA existed and was purged. Give yourself a restore window you would
-actually notice a mistake within — the default is 14 days.</p>
+<p class="admonition-title">Do not discard the old volume on a non-zero exit</p>
+<p>A failed verification means the destination must not be adopted. The source
+is untouched either way, so the recovery is to fix the cause and run it
+again, not to reconcile a half-migrated estate.</p>
 </div>
-<p>To force a compaction pass — after a deliberate cleanup, say:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/retention/compact
+<h3 id="4-switch-the-backend-and-start">4. Switch the backend and start<a class="headerlink" href="#4-switch-the-backend-and-start" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">storage</span><span class="p">:</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object-store</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nt">objectStore</span><span class="p">:</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="nt">bucket</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">skills-gateway</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="nt">region</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">eu-north-1</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="nt">persistence</span><span class="p">:</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">  </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ephemeral</span><span class="w">   </span><span class="c1"># the local pack cache; or `none` to keep no volume at all</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span><span class="nt">"selected"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="nt">"acted"</span><span class="p">:</span><span class="mi">2</span><span class="p">}</span>
-</code></pre></div>
-<p><code>selected</code> is what was due; <code>acted</code> is what was actually removed. A snapshot
-whose quarantine ref could not be deleted is left in place for the next pass
-rather than removed from the table.</p>
-<h2 id="6-watch-it">6. Watch it<a class="headerlink" href="#6-watch-it" title="Permanent link">&para;</a></h2>
-<p>Every retention action is in the append-only ledger with the acting identity:
-<code>retention-evaluated:…</code>, <code>snapshot-soft-deleted:&lt;reason&gt;</code>, <code>snapshot-restored</code>
-and <code>snapshot-purged</code>. Policy-driven deletions are attributed to
-<code>retention-policy</code> rather than to a person.</p>
-<p>Soft delete and restore also fire the <code>snapshot.soft_deleted</code> and
-<code>snapshot.restored</code> webhook events, so an inventory system can follow deletions
-the same way it follows approvals — see
-<a href="../lifecycle-webhooks/">Receiving lifecycle webhooks</a>.</p>
-<h2 id="turning-it-off-again">Turning it off again<a class="headerlink" href="#turning-it-off-again" title="Permanent link">&para;</a></h2>
-<p>Set <code>enabled: false</code>. The schedulers stop; already-marked snapshots keep their
-marks and stay restorable, and nothing new is selected or purged. Restoring them
-is the explicit second step.</p>
+<p>Then scale back up and check the served estate against what the database records
+as approved.</p>
+<h3 id="rolling-back">Rolling back<a class="headerlink" href="#rolling-back" title="Permanent link">&para;</a></h3>
+<p>Switch <code>storage.backend</code> back to <code>filesystem</code> and scale up. Nothing wrote to the
+volume while the gateway was on the bucket, so the previous state returns
+exactly. If the volume is already gone, the same command with <code>backend</code> and
+<code>migration.to</code> swapped copies the estate back onto a fresh one.</p>
+<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../reference/configuration/#git-storage">Configuration reference — Git storage</a></li>
+<li><a href="../deploying-on-kubernetes/">Deploying on Kubernetes</a></li>
+<li><a href="../../concepts/trust-boundaries/">Trust boundaries</a></li>
+<li><a href="../../reference/observability/">Observability</a></li>
+</ul>
 
 
 

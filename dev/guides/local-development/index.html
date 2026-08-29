@@ -605,6 +605,8 @@
       
         
       
+        
+      
     
     
     
@@ -815,6 +817,17 @@
     <span class="md-ellipsis">
       
         Storage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-against-object-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running against object storage
       
     </span>
   </a>
@@ -1337,6 +1350,34 @@
     
   
     Policy deny rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../storage-backends/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choosing and migrating the storage backend
   
 
     
@@ -2130,6 +2171,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#running-against-object-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running against object storage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#observability" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2296,12 +2348,28 @@ point both probes at the bare path.</p>
 <p>Git repositories live under <code>skills-gateway.data-dir</code>, which defaults to <code>data</code>
 relative to the working directory. In the container image it is <code>/data</code>.</p>
 <div class="admonition warning">
-<p class="admonition-title">The Helm default is not durable</p>
-<p>The chart mounts <code>/data</code> as an <code>emptyDir</code> unless you supply
-<code>persistence.existingClaim</code>. Losing that volume loses the quarantine and
-published repositories — everything else is rebuildable from the database
-and upstream, but approved refs are not.</p>
+<p class="admonition-title">Storage durability is a decision, and the chart makes you state it</p>
+<p>The chart has no default <code>persistence.mode</code>. <code>ephemeral</code> is an <code>emptyDir</code>
+and loses the quarantine, published and hosted repositories on every pod
+restart; <code>existingClaim</code> binds a durable volume; <code>none</code> keeps no volume at
+all and is accepted only on the object-store backend. See
+<a href="../storage-backends/">Choosing and migrating the storage backend</a>.</p>
 </div>
+<h2 id="running-against-object-storage">Running against object storage<a class="headerlink" href="#running-against-object-storage" title="Permanent link">&para;</a></h2>
+<p>The default is the filesystem backend, which needs nothing. To develop against
+the <code>object-store</code> backend instead, start the Compose profile that brings up a
+local S3-compatible store — Floci, the same emulator the build's object-store
+suites run against:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span><span class="nv">SGW_STORAGE_BACKEND</span><span class="o">=</span>object-store<span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>--profile<span class="w"> </span>object-store<span class="w"> </span>up
+</code></pre></div>
+<p>The bucket must exist before the gateway starts; create <code>skills-gateway</code> once
+with any S3 client pointed at <code>http://localhost:4566</code>. The gateway probes the
+bucket at startup and refuses to run if conditional writes are not honoured, so
+a store that cannot serialize reference transitions is a failed start rather
+than a corruption found later.</p>
+<p>The object-store suites in <code>./mvnw verify</code> do not use this Compose service at
+all — they take their store from the <strong>Arconia Floci dev service</strong>, so one
+container serves both <code>bootRun</code> through the dev service and the test suite.</p>
 <h2 id="observability">Observability<a class="headerlink" href="#observability" title="Permanent link">&para;</a></h2>
 <p>Traces, metrics and logs can be sent to a local <strong>Grafana LGTM</strong> stack — the
 <code>grafana/otel-lgtm</code> image, which bundles an OpenTelemetry Collector with Loki
@@ -2311,11 +2379,11 @@ no compose file to start.</p>
 <p>It is <strong>opt-in through the <code>observability</code> Spring profile</strong> and off in every
 other run: <code>./mvnw clean verify</code> and the e2e suite start no LGTM container and
 attempt no OTLP export, which keeps the test loop fast and the logs quiet.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>spring-boot:run<span class="w"> </span>-Dspring-boot.run.profiles<span class="o">=</span>observability
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>spring-boot:run<span class="w"> </span>-Dspring-boot.run.profiles<span class="o">=</span>observability
 </code></pre></div>
 <p>The stack takes a moment to pull on first use. Watch the log for the Grafana
 URL, which is on a random port:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>Dev Service 'lgtm' is ready — Grafana: http://localhost:&lt;port&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>Dev Service 'lgtm' is ready — Grafana: http://localhost:&lt;port&gt;
 </code></pre></div>
 <p>Log in is not required (anonymous admin). Explore traces in <strong>Tempo</strong>, metrics
 in <strong>Prometheus</strong> and logs in <strong>Loki</strong>; all three are pre-provisioned as Grafana
@@ -2354,28 +2422,28 @@ deployed gateway to a collector is a separate, not-yet-implemented concern.</p>
 </div>
 <h2 id="ui-development-loop">UI development loop<a class="headerlink" href="#ui-development-loop" title="Permanent link">&para;</a></h2>
 <p>Only needed when changing the portal:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>src/main/frontend
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="gp">$ </span>corepack<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>pnpm
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="gp">$ </span>pnpm<span class="w"> </span>install
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="gp">$ </span>pnpm<span class="w"> </span>dev<span class="w">           </span><span class="c1"># proxies /api and /actuator to localhost:8080</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="gp">$ </span>pnpm<span class="w"> </span><span class="nb">test</span><span class="w">          </span><span class="c1"># jsdom unit tests</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="gp">$ </span>pnpm<span class="w"> </span>test:stories<span class="w">  </span><span class="c1"># Storybook story tests in real chromium</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="gp">$ </span>pnpm<span class="w"> </span>storybook
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>src/main/frontend
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="gp">$ </span>corepack<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>pnpm
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="gp">$ </span>pnpm<span class="w"> </span>install
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="gp">$ </span>pnpm<span class="w"> </span>dev<span class="w">           </span><span class="c1"># proxies /api and /actuator to localhost:8080</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="gp">$ </span>pnpm<span class="w"> </span><span class="nb">test</span><span class="w">          </span><span class="c1"># jsdom unit tests</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="gp">$ </span>pnpm<span class="w"> </span>test:stories<span class="w">  </span><span class="c1"># Storybook story tests in real chromium</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="gp">$ </span>pnpm<span class="w"> </span>storybook
 </code></pre></div>
 <h2 id="the-gates">The gates<a class="headerlink" href="#the-gates" title="Permanent link">&para;</a></h2>
 <p>All must pass before any pull request:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>clean<span class="w"> </span>verify<span class="w">                          </span><span class="c1"># Java + UI gates, packaged jar</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="gp">$ </span><span class="o">(</span><span class="nb">cd</span><span class="w"> </span>src/main/frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pnpm<span class="w"> </span>test:stories<span class="o">)</span><span class="w">  </span><span class="c1"># Storybook story tests in real chromium</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="gp">$ </span><span class="o">(</span><span class="nb">cd</span><span class="w"> </span>src/main/frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pnpm<span class="w"> </span>e2e<span class="o">)</span><span class="w">           </span><span class="c1"># real-browser e2e vs a mock OIDC IdP</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="gp">$ </span>reqstool<span class="w"> </span>status<span class="w"> </span><span class="nb">local</span><span class="w"> </span>-p<span class="w"> </span>docs/reqstool<span class="w">       </span><span class="c1"># must end "PASS"</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="gp">$ </span>openspec<span class="w"> </span>validate<span class="w"> </span>--all<span class="w"> </span>--strict
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="gp">$ </span>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict<span class="w">                        </span><span class="c1"># documentation</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>clean<span class="w"> </span>verify<span class="w">                          </span><span class="c1"># Java + UI gates, packaged jar</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="gp">$ </span><span class="o">(</span><span class="nb">cd</span><span class="w"> </span>src/main/frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pnpm<span class="w"> </span>test:stories<span class="o">)</span><span class="w">  </span><span class="c1"># Storybook story tests in real chromium</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="gp">$ </span><span class="o">(</span><span class="nb">cd</span><span class="w"> </span>src/main/frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pnpm<span class="w"> </span>e2e<span class="o">)</span><span class="w">           </span><span class="c1"># real-browser e2e vs a mock OIDC IdP</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="gp">$ </span>reqstool<span class="w"> </span>status<span class="w"> </span><span class="nb">local</span><span class="w"> </span>-p<span class="w"> </span>docs/reqstool<span class="w">       </span><span class="c1"># must end "PASS"</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="gp">$ </span>openspec<span class="w"> </span>validate<span class="w"> </span>--all<span class="w"> </span>--strict
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="gp">$ </span>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict<span class="w">                        </span><span class="c1"># documentation</span>
 </code></pre></div>
 <p>Use <code>clean</code> for the reqstool gate — incremental compilation truncates the
 generated annotation files.</p>
 <p>For the documentation gate:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="gp">$ </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>docs/requirements.txt
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="gp">$ </span>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="gp">$ </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>docs/requirements.txt
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="gp">$ </span>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict
 </code></pre></div>
 <h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <ul>
