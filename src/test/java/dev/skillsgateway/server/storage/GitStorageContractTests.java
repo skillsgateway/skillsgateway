@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatIOException;
 
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
+import dev.skillsgateway.server.storage.objectstore.ObjectStoreTestSupport;
+import dev.skillsgateway.server.storage.objectstore.ObstructingObjectStoreClient;
 import io.github.reqstool.annotations.SVCs;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -92,10 +94,12 @@ class GitStorageContractTests {
     }
 
     static List<Backend> backends() {
-        // Only the filesystem backend exists today. The suite is written before the second one so
-        // that the contract is a description of current behavior before it is a requirement on new
-        // behavior, which is the only order in which it can be trusted as a description.
-        return List.of(filesystemBackend());
+        // The suite was written against the filesystem backend alone, before the second one
+        // existed, so that the contract was a description of current behavior before it became a
+        // requirement on new behavior — the only order in which it can be trusted as a description.
+        // Adding a backend is adding a line here, and that is the whole acceptance criterion: a
+        // backend that does not pass this suite is not a backend.
+        return List.of(filesystemBackend(), objectStoreBackend());
     }
 
     // --- 3.1 the three roles, the emptiness rules, HEAD, and what publication makes appear ------
@@ -415,7 +419,7 @@ class GitStorageContractTests {
             // Every other field of the properties record normalises null to its default, so the
             // data directory is the only one this backend reads.
             SkillsGatewayProperties properties = new SkillsGatewayProperties(
-                    root, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                    root, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
             return new Backend("filesystem", new FilesystemGitStorage(properties), obstructOnDisk(root));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -433,6 +437,27 @@ class GitStorageContractTests {
             Files.createDirectories(lock.getParent());
             Files.writeString(lock, "held by another writer\n");
         };
+    }
+
+    // --- the object-storage backend under test --------------------------------------------------
+
+    /**
+     * JGit DFS over an S3-compatible bucket, on its own key prefix so it cannot see anything
+     * another suite left behind. The store is Floci through the Arconia dev service — a real store
+     * whose conditional-write fidelity was proved before any of this code trusted it.
+     */
+    private static Backend objectStoreBackend() {
+        try {
+            String prefix = ObjectStoreTestSupport.isolatedPrefix("contract");
+            ObstructingObjectStoreClient store = new ObstructingObjectStoreClient(ObjectStoreTestSupport.client());
+            GitStorage storage = ObjectStoreTestSupport.storage(store, prefix);
+            return new Backend(
+                    "object-store",
+                    storage,
+                    (marketplace, ref) -> store.obstruct(prefix + "published/" + marketplace + "/manifest", ref));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     /** Guards the guard: the obstruction must be able to make a deletion fail at all. */

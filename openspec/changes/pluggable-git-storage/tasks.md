@@ -17,11 +17,14 @@ applies: failing tests first, proved failing, before any implementation.
       reserved: `reqstool status` counts a requirement with no `@Requirements`
       annotation and no passing SVC test as incomplete and fails the gate, so
       each of GW_0111, GW_0114 and GW_0115 lands in the section that
-      implements it — 5.3, 7.2 and 8.3 respectively
+      implements it — 5.3, 7.2 and 8.3 respectively.
+      **GW_0111 landed with the configuration surface (section 5).** Its id was
+      re-verified free against `main` before it was written. GW_0114 and GW_0115
+      stay reserved
 - [ ] 1.2 Add the matching SVCs (GIVEN/WHEN/THEN) to
       `docs/reqstool/software_verification_cases.yml`.
-      **SVC_GW_0112 landed with section 3**; the rest follow their
-      requirements
+      **SVC_GW_0112 landed with section 3 and SVC_GW_0111 with section 5**; the
+      rest follow their requirements
 
 ## 2. Spike (settle the open questions before writing production code)
 
@@ -77,8 +80,15 @@ applies: failing tests first, proved failing, before any implementation.
 
 - [ ] 2.5 Prove an AWS SDK v2 S3 client with the web-identity credential
       provider builds and runs under the GraalVM native-image profile
-- [ ] 2.6 Prove a `receive-pack` (hosted-marketplace push, many refs in one
-      transaction) maps onto a single manifest transition
+- [x] 2.6 Prove a `receive-pack` (hosted-marketplace push, many refs in one
+      transaction) maps onto a single manifest transition. **Done with the
+      backend, which is where the demonstration belongs.** The ref database
+      overrides `newBatchUpdate()` with one that evaluates the whole
+      `ReceiveCommand` list against a single manifest read and commits it as one
+      conditional write; `ObjectStoreBackendTests` asserts it on the manifest
+      sequence — three references move it by exactly one — and asserts that an
+      atomic push with one refused precondition leaves the sequence untouched and
+      rejects every command, including the one that was fine
 
 ## 3. The backend contract test (write it before either backend uses it)
 
@@ -129,38 +139,59 @@ applies: failing tests first, proved failing, before any implementation.
 
 ## 5. Configuration surface
 
-- [ ] 5.1 `SkillsGatewayProperties.Storage(Backend backend, ObjectStore
+- [x] 5.1 `SkillsGatewayProperties.Storage(Backend backend, ObjectStore
       objectStore)` with `Backend` = `FILESYSTEM` (default) | `OBJECT_STORE`
-- [ ] 5.2 `ObjectStore(endpoint, region, bucket, prefix, Credentials
+- [x] 5.2 `ObjectStore(endpoint, region, bucket, prefix, Credentials
       credentials, cache)` and `Credentials(mode, ...)` with mode `DEFAULT` |
       `WEB_IDENTITY` | `STATIC`; validation that fails startup on an
-      incomplete `OBJECT_STORE` selection
-- [ ] 5.3 `GitStorageConfiguration` selecting the single `GitStorage` bean;
-      annotate the selection path `@Requirements({"GW_0111"})`
+      incomplete `OBJECT_STORE` selection. Two fields the design asked for and
+      the plan had not named are here too: `connection-max-idle-time` and
+      `connection-time-to-live`, because "below the store's idle timeout" is a
+      fact about the store and cannot be a constant of ours
+- [x] 5.3 `GitStorageConfiguration` selecting the single `GitStorage` bean;
+      annotate the selection path `@Requirements({"GW_0111"})`. GW_0111 and
+      SVC_GW_0111 are written here, with the selection behaviour they describe:
+      `StorageBackendSelectionTests` covers the four refusals and the four
+      resolutions, and `FilesystemGitStorage` stops being a `@Component` so that
+      exactly one backend can ever be in the context
 
 ## 6. The object-storage backend
 
-- [ ] 6.1 Object-store client abstraction over the S3 SDK: get, ranged get,
+- [x] 6.1 Object-store client abstraction over the S3 SDK: get, ranged get,
       put, conditional put (`If-Match` / `If-None-Match`), list, delete —
-      plus the startup probe for read-after-write and conditional writes
-- [ ] 6.2 Manifest and write-ahead log: immutable content-named packs, `wal/`
+      plus the startup probe for read-after-write and conditional writes.
+      **One deliberate departure, recorded rather than glossed:** there is no
+      ranged get. A pack is fetched whole into the bounded local cache on first
+      open and read from disk after that, which trades cold-start latency for
+      per-read latency and narrows a real window — a pack deleted while a replica
+      is part-way through streaming it. `DfsBlockCache` still provides the
+      in-process block caching the DFS reader is built around. A conditional
+      `GET` is here, and is what bounds revocation across replicas
+- [x] 6.2 Manifest and write-ahead log: immutable content-named packs, `wal/`
       entries per transition, `manifest` holding the ref map, WAL sequence and
       live pack set; every transition a single conditional write with re-read
       and retry on conflict
-- [ ] 6.3 `DfsObjDatabase` implementation (`listPacks`, `openFile`,
+- [x] 6.3 `DfsObjDatabase` implementation (`listPacks`, `openFile`,
       `newPack`, `writeFile`, `commitPackImpl`, `rollbackPack`) and the ref database
       chosen in task 2.4; `DfsRepository` subclass wiring the two
-- [ ] 6.4 `ObjectStoreGitStorage implements GitStorage` — the three roles and
+- [x] 6.4 `ObjectStoreGitStorage implements GitStorage` — the three roles and
       `unpublish` evaluated and committed as one transition; annotate
       `@Requirements({"GW_0112"})`
-- [ ] 6.5 Bounded on-disk pack cache under `data-dir` plus `DfsBlockCache`
+- [x] 6.5 Bounded on-disk pack cache under `data-dir` plus `DfsBlockCache`
       sizing; deleting the cache must be safe at any time
-- [ ] 6.6 Compaction: WAL entries folded into the manifest, small packs via
+- [x] 6.6 Compaction: WAL entries folded into the manifest, small packs via
       `DfsPackCompactor` / `DfsGarbageCollector`, itself conditional-write
-      guarded so a losing compactor loses harmlessly
-- [ ] 6.7 Make the whole contract test suite (task 3) green against this
-      backend with no change to any `GitStorage` caller
-- [ ] 6.8 Flip the Floci dev-service dependency from `test` scope to `optional`,
+      guarded so a losing compactor loses harmlessly. **Pack deletion waits:**
+      a pack that stops being referenced is tombstoned with the moment it stopped,
+      and its objects are deleted only once it has been unreferenced for longer
+      than the configured grace period — otherwise a replica part-way through
+      `upload-pack` gets a 404 mid-stream, which the client cannot tell from
+      corruption
+- [x] 6.7 Make the whole contract test suite (task 3) green against this
+      backend with no change to any `GitStorage` caller. **Green:** the suite
+      runs 11 cases against each backend and the only change to it is the extra
+      entry in `backends()` and the object-store obstruction hook
+- [x] 6.8 Flip the Floci dev-service dependency from `test` scope to `optional`,
       alongside the Postgres dev service, once this backend gives `bootRun` an
       object-store consumer to share the container with. The dev service itself
       is already in use — `ConditionalWriteFidelityTests` takes its `S3Client`

@@ -973,6 +973,14 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
+  - id: GW_0111
+    title: Named git storage backend
+    significance: shall
+    description: The system shall take the storage that holds its git repositories from an explicitly named backend rather than inferring one from whichever settings happen to be present, shall use the local filesystem when no backend is named, shall refuse to start when the named backend is not one it implements or when the settings that backend requires are absent or incomplete, shall state in every such refusal which setting it was decided by, shall never resolve a backend other than the one named, and shall offer a credential mechanism for remote storage that needs no instance metadata service and refuse to start when that mechanism is named but cannot be resolved.
+    rationale: A gateway serving from local disk while the operator believes it is serving from a bucket reports healthy, is wrong, and is undetectable from outside — the same defect as a volume that silently loses served content, and reached the same way, by forgetting a value. Making the backend a name rather than an inference means a typo fails the start instead of silently moving where published content lives, and refusing to fall back in either direction is what keeps the name and the reality the same thing. The credential requirement is not a preference but a constraint of the target, because a serverless deployment has no instance metadata service, so a design that leans on one fails as a timeout in the middle of an approval rather than as a refusal at startup.
+    categories: ["reliability", "security", "flexibility"]
+    revision: 0.1.0
+
   - id: GW_0112
     title: Reference transitions are the same on every storage backend
     significance: shall
