@@ -31,7 +31,7 @@
     <properties>
         <java.version>25</java.version>
         <jgit.version>7.7.1.202607240634-r</jgit.version>
-        <reqstool-annotations.version>1.0.0</reqstool-annotations.version>
+        <reqstool-annotations.version>1.0.1</reqstool-annotations.version>
         <cel.version>0.10.1</cel.version>
         <spotless.version>3.9.0</spotless.version>
         <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
