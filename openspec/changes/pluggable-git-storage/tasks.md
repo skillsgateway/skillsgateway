@@ -10,9 +10,18 @@ applies: failing tests first, proved failing, before any implementation.
       credentials without IMDS), GW_0112 (atomic uncoordinated reference
       transitions), GW_0114 (verified migration) and GW_0115 (replication
       refused where unsafe) to `docs/reqstool/requirements.yml`. GW_0113 is
-      dropped — #134 shipped it as GW_0120
+      dropped — #134 shipped it as GW_0120.
+      **GW_0112 landed with the contract suite (section 3).** The other three
+      ids are verified free against `main` (which now carries GW_0120–GW_0122
+      and GW_0125–GW_0131, so 0111–0119 and 0123–0124 are unclaimed) and stay
+      reserved: `reqstool status` counts a requirement with no `@Requirements`
+      annotation and no passing SVC test as incomplete and fails the gate, so
+      each of GW_0111, GW_0114 and GW_0115 lands in the section that
+      implements it — 5.3, 7.2 and 8.3 respectively
 - [ ] 1.2 Add the matching SVCs (GIVEN/WHEN/THEN) to
-      `docs/reqstool/software_verification_cases.yml`
+      `docs/reqstool/software_verification_cases.yml`.
+      **SVC_GW_0112 landed with section 3**; the rest follow their
+      requirements
 
 ## 2. Spike (settle the open questions before writing production code)
 
@@ -73,18 +82,28 @@ applies: failing tests first, proved failing, before any implementation.
 
 ## 3. The backend contract test (write it before either backend uses it)
 
-- [ ] 3.1 `GitStorageContractTests`, parameterized over every `GitStorage`
+- [x] 3.1 `GitStorageContractTests`, parameterized over every `GitStorage`
       implementation: the three repository roles, `hostedIfPresent` and
       `publishedIfServing` emptiness rules, `HEAD` linked to `refs/heads/main`
-      on creation, and publication making exactly the two refs appear
-- [ ] 3.2 `unpublish` cases in the same suite, annotated
+      on creation, and publication making exactly the two refs appear.
+      **Also carries the two cases decision 10's review added:** a refused ref
+      transition must be raised rather than swallowed (result codes, not end
+      states), and the `atomic` push capability must be *advertised* — read off
+      a `receive-pack` advertisement, since `ReceivePack.service()` overwrites
+      the server-side flag from what the client enabled
+- [x] 3.2 `unpublish` cases in the same suite, annotated
       `@SVCs({"SVC_GW_0112"})`: `refs/snapshots/{sha}` always removed;
       `refs/heads/main` removed only when it still resolves to that SHA;
       the returned boolean true exactly when the tip was removed; revoking a
       superseded snapshot leaves the marketplace serving
-- [ ] 3.3 Run the suite against `FilesystemGitStorage` and confirm it passes —
+- [x] 3.3 Run the suite against `FilesystemGitStorage` and confirm it passes —
       the contract is a description of today's behavior before it is a
-      requirement on a new backend
+      requirement on a new backend. **It did not pass unchanged:** the
+      result-code case failed RED against `FilesystemGitStorage.deleteRef`,
+      which discarded `RefUpdate.delete()`'s result, so a `LOCK_FAILURE` on the
+      revocation path returned as success. Fixed in the same section — the
+      defect the review predicted for the object store was already present on
+      the filesystem
 
 ## 4. Failing tests for the new behavior (prove they fail)
 
