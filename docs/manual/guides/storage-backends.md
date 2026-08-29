@@ -66,6 +66,9 @@ discovered during an approval.
     probe is doing real work for you rather than confirming something already
     known.
 
+    Closing that row is tracked as
+    [issue #151](https://github.com/skillsgateway/skillsgateway/issues/151).
+
 ## Credentials
 
 `skills-gateway.storage.object-store.credentials.mode` names how credentials are

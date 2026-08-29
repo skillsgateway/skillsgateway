@@ -55,13 +55,20 @@ applies: failing tests first, proved failing, before any implementation.
       emulator version regresses, move the conditional-write contract to a
       separate tagged suite against real S3 and consider contributing the
       behaviour upstream
-- [ ] 2.3 Run the same five assertions against **real AWS S3**, and promote
-      that row of the decision-9 table from believed to verified. Floci passing
-      proves the design is implementable and our tests are meaningful; it does
-      not certify the production target, and the supported-store list is not
-      publishable until this is done. **Not attempted here:** it needs an
-      account this change does not have and deliberately did not acquire, so
-      the row stays documented-but-unexercised.
+- [x] 2.3 Run the same five assertions against **real AWS S3** — **deferred out
+      of this change and tracked as
+      [#151](https://github.com/skillsgateway/skillsgateway/issues/151).**
+      It needs an AWS account this change does not have and deliberately did not
+      acquire. Deferred rather than dropped: the row is genuinely unverified, and
+      #151 carries the five assertions, both mutation re-runs, and the real-S3
+      specifics the spike never exercised (ETag semantics under SSE-KMS and
+      bucket versioning, a conditional PUT racing a DELETE, cross-connection
+      read-after-CAS).
+
+      **Nothing in this change claims otherwise.** The supported-store table in
+      `docs/manual/guides/storage-backends.md` marks AWS S3 as not verified and
+      says so as a warning rather than a footnote; decision 9's table keeps the
+      same distinction. Archiving this change closes the work, not the question.
 
       **MinIO was dropped as the second store, deliberately.** It was probed —
       `RELEASE.2025-07-23T15-54-02Z` passes all five assertions across three
@@ -87,14 +94,17 @@ applies: failing tests first, proved failing, before any implementation.
       tested bound (or an unpublished snapshot stays fetchable from any replica
       with a warm cache).
 
-- [ ] 2.5 **Open — no GraalVM toolchain here.** Prove an AWS SDK v2 S3 client
-      with the web-identity credential provider builds and runs under the
-      GraalVM native-image profile. This machine has Temurin 25 and no
-      `native-image`, so the profile cannot be exercised locally. The
-      `native.yml` workflow is what closes it, and it does not run on pull
-      requests — it is dispatched against this branch instead, and its result is
-      recorded in `evidence.md`. Until that result is green this is the one
-      remaining risk in the change that a reviewer cannot see from the diff
+- [x] 2.5 **Closed in CI, not locally.** Prove an AWS SDK v2 S3 client with the
+      web-identity credential provider builds and runs under the GraalVM
+      native-image profile. This machine has Temurin 25 and no `native-image`,
+      so `native.yml` was dispatched against the branch instead — it does not
+      trigger on pull requests. **Green**
+      ([run 33215061839](https://github.com/skillsgateway/skillsgateway/actions/runs/33215061839),
+      8m19s): *Build native image*, *Build container image*, *Smoke test
+      container* and *Helm lint* all succeeded, and the publish steps were
+      correctly skipped for a bare dispatch. So the S3 SDK and the web-identity
+      credential provider need no reflection configuration beyond what is
+      already there — which was the open risk, and it is closed
 - [x] 2.6 Prove a `receive-pack` (hosted-marketplace push, many refs in one
       transaction) maps onto a single manifest transition. **Done with the
       backend, which is where the demonstration belongs.** The ref database
@@ -385,9 +395,8 @@ applies: failing tests first, proved failing, before any implementation.
 - [x] 11.1 `./mvnw clean verify`, `pnpm test:stories`, `pnpm e2e`,
       `reqstool status local -p docs/reqstool`, `openspec validate --all
       --strict`, `mkdocs build --strict`
-- [ ] 11.2 **Open, with 2.5, for the same reason.** Native-image build with the
-      S3 client and the web-identity provider. No GraalVM on this machine, and
-      `native.yml` does not run on pull requests; it is dispatched against this
-      branch and the result is recorded in `evidence.md`
+- [x] 11.2 **Closed with 2.5.** Native-image build with the S3 client and the
+      web-identity provider — dispatched against this branch and green; see 2.5
+      for the run and what it covered
 - [x] 11.3 `openspec/changes/pluggable-git-storage/evidence.md` — commands,
       pasted result tails of one final fresh run, and the commit SHA

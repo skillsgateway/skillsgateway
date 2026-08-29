@@ -48,3 +48,9 @@ The system SHALL implement GW_0109.
 #### Scenario: SVC_GW_0109
 The system SHALL pass SVC_GW_0109.
 
+### Requirement: GW_0115
+The system SHALL implement GW_0115.
+
+#### Scenario: SVC_GW_0115
+The system SHALL pass SVC_GW_0115.
+

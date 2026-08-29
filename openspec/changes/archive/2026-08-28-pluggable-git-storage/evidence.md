@@ -14,12 +14,14 @@ of what is still open.
 
 **Three things a reader should not have to dig for:**
 
-- **Real AWS S3 has never been exercised** (task 2.3). It is the production
+- **Real AWS S3 has never been exercised.** Deferred out of this change and
+  tracked as [#151](https://github.com/skillsgateway/skillsgateway/issues/151). It is the production
   target and it is the one row of the supported-store table nobody here has run.
   The docs say so in a warning rather than a footnote.
-- **The native-image build has not been run** (tasks 2.5 and 11.2). There is no
-  GraalVM toolchain on this machine and `native.yml` does not trigger on pull
-  requests, so it is dispatched against the branch instead.
+- **The native-image build was run in CI, not here** (tasks 2.5 and 11.2). No
+  GraalVM toolchain on this machine, and `native.yml` does not trigger on pull
+  requests, so it was dispatched against the branch — and it is **green**. See
+  "The native image" below.
 - **`ApprovalService.approve` discards its `RefUpdate` result.** That is a real
   defect and it is *out of scope here* — it is caller-side, on a trust boundary,
   and needs its own requirement and adversarial tests. Filed as
@@ -213,7 +215,7 @@ restored and re-run green before the container was removed.
 So MinIO is a second independent store on which the design's single exotic
 primitive is shown to hold, and the first that is a production-grade store
 rather than an emulator. That is worth having as evidence. It does **not** close
-task 2.3: the row that closes it is real AWS S3, and MinIO is not adopted as a
+the question: the row that closes it is real AWS S3 ([#151](https://github.com/skillsgateway/skillsgateway/issues/151)), and MinIO is not adopted as a
 standing test store for the reason below.
 
 **Where this run lives, and why it stays there.** It is an out-of-band probe: a
@@ -233,7 +235,7 @@ neither would have deduplicated containers across the suite's Spring contexts
 anyway.
 
 **Floci is therefore the single in-build store**, and the portability question a
-second store would have answered is left to real AWS S3 in task 2.3 — the store
+second store would have answered is left to real AWS S3 ([#151](https://github.com/skillsgateway/skillsgateway/issues/151)) — the store
 that actually matters. This probe stands as evidence that the primitive is not a
 Floci artefact; it is not a gate, and this report does not pretend it is one.
 
@@ -310,7 +312,7 @@ stays offline. No upstream contribution is needed.
 The honest limit is now narrower but real. Two independent stores — Floci and
 MinIO — implement the one primitive the design rests on, and the assertions
 discriminate on both. **AWS S3, the production target, is still unexercised**,
-so task 2.3 stays unchecked and the supported-store list is not publishable as
+so the question is deferred to [#151](https://github.com/skillsgateway/skillsgateway/issues/151) and the supported-store list is not publishable as
 verified. Closing that row needs an account this change did not have and did not
 try to obtain.
 
@@ -652,7 +654,7 @@ Recorded here so the archive cannot imply otherwise.
 | Task | State | Why |
 | --- | --- | --- |
 | 2.3 — the five conditional-write assertions against **real AWS S3** | **Open** | It needs an AWS account this change does not have and deliberately did not acquire. S3 is the production target, so this is the row that matters; until someone with credentials runs it, the supported-store list names S3 as documented-but-unexercised, and the docs say so in a warning. Floci is verified in every build and MinIO is verified by probe, so the *primitive* has been shown to hold on two independent stores — that is confidence, not certification |
-| 2.5 / 11.2 — native-image build with the S3 client and the web-identity provider | **Open** | No GraalVM toolchain on this machine, and `native.yml` does not trigger on pull requests. It is dispatched against this branch instead. The web-identity credential provider is the part most likely to need reflection configuration and it is the part the first deployment target cannot do without, so this is the one risk in the change a reviewer cannot see from the diff |
+| 2.5 / 11.2 — native-image build with the S3 client and the web-identity provider | **Closed in CI** | Dispatched against this branch because `native.yml` has no pull-request trigger, and green — see "The native image" below |
 | Leader election for the background sweeps | **Not in scope, by design** | This change *unblocks* multi-replica serving and the chart refuses a replica count that would duplicate a sweep. Making the singletons cluster-safe is separate work and the design says so |
 | [#149](https://github.com/skillsgateway/skillsgateway/issues/149) — `ApprovalService.approve` discards its `RefUpdate` result | **Out of scope, filed** | Caller-side, on a trust boundary, and it needs its own requirement and adversarial tests rather than a quiet fix inside a storage PR |
 
@@ -667,6 +669,43 @@ manifest is corrupt — because a short read is a real failure mode with a
 one-comparison detector, and because a store that tears *every* read must still
 be found out rather than retried around. It should not be read as evidence that
 S3 behaves this way.
+
+## The native image (tasks 2.5 and 11.2)
+
+There is no GraalVM toolchain on the machine this change was written on, and
+`native.yml` triggers only on a push to `main`, a schedule or a dispatch — never
+on a pull request. So it was dispatched against the branch, which is the only way
+to see this result before merge rather than after it:
+
+```
+$ gh workflow run native.yml --ref feat/storage-migration-packaging
+https://github.com/skillsgateway/skillsgateway/actions/runs/33215061839
+
+completed  success  Native image  workflow_dispatch  8m19s
+```
+
+Every step that matters passed:
+
+```
+success  Build native image
+success  Build container image
+success  Smoke test container
+success  Helm lint
+skipped  Log in to GHCR      <- correct: a bare dispatch must not publish
+skipped  Push image
+skipped  Attest SBOM
+```
+
+That closes the open risk the design named: the AWS SDK v2 S3 client and the
+web-identity credential provider build and run under closed-world compilation
+with no reflection configuration beyond what is already in the tree. It was a
+real question — web identity is the credential mechanism the first deployment
+target cannot do without — and it is now answered by a build rather than by an
+expectation.
+
+*Helm lint* running green in that same job is worth noting too: the chart gates
+added here are exercised by CI on every native run, not only by the structural
+packaging test.
 
 ## Environment
 
