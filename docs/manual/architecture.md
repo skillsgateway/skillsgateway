@@ -428,13 +428,34 @@ format-agnostic; tool specifics live in **adapters**:
 ## 12. Deployment shape
 
 Stateless services (façade, ingestion, vetting orchestrator, publisher,
-portal) in front of Postgres (metadata, ledger) and object storage
-(content-addressed snapshots; façade serves generated packfiles/bare repos).
+portal) in front of Postgres (metadata, ledger) and git storage.
 OIDC SSO for humans, token auth for CI, SCIM for team scoping. Vetting
 connectors run outside the gateway and talk to it over the trigger/callback
 contract; sandbox connectors use isolated ephemeral runners. Air-gap friendly by construction: ingestion is the only
 component needing internet egress, and can run in a DMZ with one-way promotion
 inward.
+
+**Git storage is a named backend behind one seam.** `GitStorage` hands callers
+open JGit `Repository` handles for the three repository roles, and exactly one
+implementation is in the context:
+
+| Backend | Substrate | Writers |
+| --- | --- | --- |
+| `filesystem` (default) | Bare repositories on the mounted volume | One. No cross-pod locking exists |
+| `object-store` | JGit DFS over an S3-compatible bucket: immutable content-named packs, a write-ahead log, and one reference manifest per repository | Any number. Every transition is one conditional write on the manifest, and that compare-and-swap is the only serialization point — no lock service, no coordination database, no leader election |
+
+The backend is named and never inferred; an unrecognised name, or an
+`object-store` selection whose settings are incomplete or whose bucket fails the
+startup conditional-write probe, refuses to start rather than degrading to a
+filesystem nobody chose. Local disk on the object-store backend is a bounded
+cache and nothing in it is authoritative. Moving between the two is an offline,
+verified, reversible copy — see
+[Choosing and migrating the storage backend](guides/storage-backends.md).
+
+What object storage does **not** make safe is the gateway's uncoordinated
+background singletons (sync, re-vetting, retention, webhook dispatch, audit
+export). It unblocks multi-replica serving; the chart refuses a replica count
+that would duplicate a sweep, and leader election is separate later work.
 
 ## 13. Roadmap
 
@@ -485,6 +506,15 @@ inward.
   lineage, forward-only by default, and the same quarantine, vetting and
   approval gate as fetched content (GW_0101–GW_0103, ADR 0007); auto-approval
   for trusted internal publishers stays parked per ADR 0006.
+- *Implemented:* a pluggable git storage backend — the `GitStorage` seam with a
+  JGit DFS implementation over an S3-compatible bucket beside the filesystem
+  one, reference transitions made atomic by a conditional write on a
+  per-repository manifest, a named and fail-closed backend selection, an
+  offline verified migration between the two, and a chart that refuses a replica
+  count or a storage shape the selected backend cannot honour
+  (GW_0111, GW_0112, GW_0114, GW_0115, GW_0116). Real AWS S3 has not yet been
+  exercised against the conditional-write assertions; leader election for the
+  background sweeps remains separate work.
 - **Phase 3 — assurance & scale.** Client telemetry inventory, kill switch
   with fleet force-uninstall, signed attestations, additional tool adapters,
   repository-manager catalog federation, OCI re-publication.

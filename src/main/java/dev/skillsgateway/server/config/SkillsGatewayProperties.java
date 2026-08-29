@@ -68,7 +68,7 @@ public record SkillsGatewayProperties(
             estate = new Estate(null, null, null, null, null);
         }
         if (storage == null) {
-            storage = new Storage(null, null);
+            storage = new Storage(null, null, null);
         }
     }
 
@@ -85,8 +85,9 @@ public record SkillsGatewayProperties(
      * @param backend the named backend; null is {@link Backend#FILESYSTEM}
      * @param objectStore how to reach the bucket; required, and validated, only when the backend
      *     is {@link Backend#OBJECT_STORE}
+     * @param migration the one-shot offline copy between backends (GW_0114); off unless asked for
      */
-    public record Storage(Backend backend, ObjectStore objectStore) {
+    public record Storage(Backend backend, ObjectStore objectStore, Migration migration) {
 
         public Storage {
             if (backend == null) {
@@ -94,6 +95,30 @@ public record SkillsGatewayProperties(
             }
             if (objectStore == null) {
                 objectStore = new ObjectStore(null, null, null, null, null, null, null, null);
+            }
+            if (migration == null) {
+                migration = new Migration(null, null);
+            }
+        }
+
+        /**
+         * The one-shot offline copy from the configured backend into another one (GW_0114).
+         *
+         * <p>Both ends come from this same configuration: the source is whatever
+         * {@code storage.backend} names, and {@code to} names the destination, so a migration and
+         * the rollback that follows it are the same file with two values swapped. It is off unless
+         * it is asked for, it runs before anything is served, and the process exits when it is
+         * done — a migration is not a mode the gateway runs in.
+         *
+         * @param enabled whether this start is a migration rather than a service; null is false
+         * @param to the destination backend; required when enabled, and it must not be the source
+         */
+        public record Migration(Boolean enabled, Backend to) {
+
+            public Migration {
+                if (enabled == null) {
+                    enabled = false;
+                }
             }
         }
 

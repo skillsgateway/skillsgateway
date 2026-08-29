@@ -453,7 +453,7 @@ Support, with the evidence behind each row:
 | Store | Conditional write | Status |
 | --- | --- | --- |
 | Floci 1.5.33 (`docker.io/floci/floci`) | `If-Match` / `If-None-Match` on PUT | **Verified here** by the task 2.1 spike — all five assertions pass, and two mutations confirm the spike would have caught a store that ignores preconditions |
-| AWS S3 | `If-Match` / `If-None-Match` on PUT | Documented; the primary target. **Still not exercised by us** — no account, and task 2.3 must not acquire one |
+| AWS S3 | `If-Match` / `If-None-Match` on PUT | Documented; the primary target. **Still not exercised by us** — no account. Deferred out of this change and tracked as [#151](https://github.com/skillsgateway/skillsgateway/issues/151) |
 | MinIO `RELEASE.2025-07-23T15-54-02Z` | `If-Match` / `If-None-Match` on PUT | **Probed and passing** — all five assertions, three consecutive runs, and the same two mutations fail it. Kept as evidence that the primitive is portable beyond one emulator; **not adopted as a test store**, because MinIO stopped publishing free images around October 2025 |
 | Google Cloud Storage | generation preconditions, not `If-Match` | Would need an adapter; **out of scope** |
 | Ceph RGW, on-prem S3 gateways | varies by version | **Unverified** |
@@ -565,7 +565,7 @@ suite against a double that cannot fail it.
 One caveat worth keeping honest: this verifies *Floci*, not AWS S3. The spike
 raises confidence that the design is implementable and that our tests are
 meaningful; it does not by itself certify the production target. Exercising the
-same contract against real S3 remains open (task 2.3).
+same contract against real S3 remains open, deferred to [#151](https://github.com/skillsgateway/skillsgateway/issues/151).
 
 **Task 2.3, half-closed: MinIO verified, AWS S3 still not.** The five assertions
 were re-run, unchanged in substance, against MinIO
@@ -599,7 +599,7 @@ Two consequences worth recording:
 - **Floci is the single in-build store.** It has a shipped dev service, so one
   container serves `bootRun` and the suite. The portability question that a
   second store would have answered is answered instead by **real AWS S3** in
-  task 2.3, which is the store that actually matters and the row that keeps the
+  [#151](https://github.com/skillsgateway/skillsgateway/issues/151), which is the store that actually matters and the row that keeps the
   supported-store list unpublishable until it passes.
 
 One inconsistency the probe did surface, and it is a client bug rather than a

@@ -87,8 +87,8 @@ public final class ObjectStoreTestSupport {
                 new SkillsGatewayProperties.Cache(data.resolve("cache"), null, null, null, refFreshness, packGrace);
         SkillsGatewayProperties.ObjectStore objectStore =
                 new SkillsGatewayProperties.ObjectStore(null, "eu-north-1", BUCKET, prefix, null, cache, null, null);
-        SkillsGatewayProperties.Storage storage =
-                new SkillsGatewayProperties.Storage(SkillsGatewayProperties.Storage.Backend.OBJECT_STORE, objectStore);
+        SkillsGatewayProperties.Storage storage = new SkillsGatewayProperties.Storage(
+                SkillsGatewayProperties.Storage.Backend.OBJECT_STORE, objectStore, null);
         return new SkillsGatewayProperties(
                 data, null, null, null, null, null, null, null, null, null, null, null, null, null, storage);
     }

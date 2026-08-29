@@ -15,7 +15,11 @@ import java.util.stream.Collectors;
 import org.eclipse.jgit.internal.storage.dfs.DfsBlockCache;
 import org.eclipse.jgit.internal.storage.dfs.DfsBlockCacheConfig;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -100,9 +104,70 @@ public class GitStorageConfiguration {
             ObjectProvider<ObjectStoreClient> clients,
             ObjectProvider<MeterRegistry> meters)
             throws IOException {
-        return switch (properties.storage().backend()) {
+        return create(properties.storage().backend(), properties, statistics, clients, meters);
+    }
+
+    /**
+     * Build one named backend. The bean above builds the configured one; the migration runner
+     * builds the other one from the same configuration, which is what makes a migration and its
+     * rollback the same file with two values swapped.
+     */
+    private GitStorage create(
+            SkillsGatewayProperties.Storage.Backend backend,
+            SkillsGatewayProperties properties,
+            ObjectStoreStatistics statistics,
+            ObjectProvider<ObjectStoreClient> clients,
+            ObjectProvider<MeterRegistry> meters)
+            throws IOException {
+        return switch (backend) {
             case FILESYSTEM -> new FilesystemGitStorage(properties);
             case OBJECT_STORE -> objectStore(properties, statistics, clients, meters);
+        };
+    }
+
+    /**
+     * The offline one-shot migration (GW_0114), which is a start the gateway makes instead of
+     * serving rather than alongside it.
+     *
+     * <p>It exists as a runner in the same artifact on purpose: the destination backend is built
+     * from the same configuration, the same validation and the same startup probe as a serving
+     * start would use, so a bucket the gateway would refuse to serve from is also a bucket it
+     * refuses to migrate into — found before the copy rather than after it. The process exits with
+     * the verification's own answer, so an operator's script cannot mistake "finished" for
+     * "verified", and the source is left untouched either way.
+     */
+    @Bean
+    @ConditionalOnProperty(prefix = "skills-gateway.storage.migration", name = "enabled", havingValue = "true")
+    public ApplicationRunner storageMigrationRunner(
+            SkillsGatewayProperties properties,
+            GitStorage source,
+            ObjectStoreStatistics statistics,
+            ObjectProvider<ObjectStoreClient> clients,
+            ObjectProvider<MeterRegistry> meters,
+            ConfigurableApplicationContext context) {
+        return args -> {
+            SkillsGatewayProperties.Storage.Backend to =
+                    properties.storage().migration().to();
+            if (to == null) {
+                throw new IllegalStateException("skills-gateway.storage.migration.enabled is true but"
+                        + " skills-gateway.storage.migration.to names no destination backend; the accepted values are "
+                        + accepted());
+            }
+            if (to == properties.storage().backend()) {
+                throw new IllegalStateException(
+                        "skills-gateway.storage.migration.to is the backend already in use (%s); a migration has two"
+                                        .formatted(to)
+                                + " ends, and copying a backend onto itself would rewrite the only copy of the"
+                                + " estate rather than duplicating it");
+            }
+            GitStorage target = create(to, properties, statistics, clients, meters);
+            StorageMigration.Report report =
+                    new StorageMigration(properties.dataDir().resolve("migration")).migrate(source, target);
+            if (target instanceof AutoCloseable closeable) {
+                closeable.close();
+            }
+            int code = report.verified() ? 0 : 1;
+            System.exit(SpringApplication.exit(context, () -> code));
         };
     }
 

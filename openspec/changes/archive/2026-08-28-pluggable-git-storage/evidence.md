@@ -1,16 +1,39 @@
 # Evidence: pluggable-git-storage
 
-Scope of this report: **tasks 2.1, 2.3 (partly) and 2.4** — the
-conditional-write fidelity spike, a MinIO probe of store portability that is
-evidence rather than a gate, and the ref-database decision.
-The DFS backend itself is not implemented, so this is not the change's final
-evidence report; it is the evidence for the decision gates the plan hangs on.
-Sections 3–8 are deliberately not started: task 6.3 builds on the task 2.4
-decision, which is now accepted, and on the two design gaps that acceptance
-added to it.
+**This is the change's final evidence report.** It covers the whole of
+`pluggable-git-storage`, not one pull request of it, and it is written on the
+last of a five-PR stack: #131 (the `GitStorage` seam), #144 (the shared contract
+suite), #147 (the object-store backend), #148 (concurrency and observability)
+and this one (migration, packaging, documentation, the gates and the archive).
 
-Commit: `HEAD` of `feat/pluggable-git-storage` at the time of writing (see the
-PR's commit list; the run below is the final fresh run after the last edit).
+The spike and decision records below are kept exactly as they were written,
+because they are what the later work rests on and rewriting them after the fact
+would turn evidence into narration. What is new is at the end: the red runs and
+mutation gauntlet for sections 7 and 8, the final gate run, and an honest list
+of what is still open.
+
+**Three things a reader should not have to dig for:**
+
+- **Real AWS S3 has never been exercised.** Deferred out of this change and
+  tracked as [#151](https://github.com/skillsgateway/skillsgateway/issues/151). It is the production
+  target and it is the one row of the supported-store table nobody here has run.
+  The docs say so in a warning rather than a footnote.
+- **The native-image build was run in CI, not here** (tasks 2.5 and 11.2). No
+  GraalVM toolchain on this machine, and `native.yml` does not trigger on pull
+  requests, so it was dispatched against the branch — and it is **green**. See
+  "The native image" below.
+- **`ApprovalService.approve` discards its `RefUpdate` result.** That is a real
+  defect and it is *out of scope here* — it is caller-side, on a trust boundary,
+  and needs its own requirement and adversarial tests. Filed as
+  [#149](https://github.com/skillsgateway/skillsgateway/issues/149). This change
+  fixed the same defect on the storage side, where the contract suite found it
+  (`FilesystemGitStorage.deleteRef`, task 3.3), and deliberately stopped there.
+
+Commit: the final gate run below was made on the tree at
+`feat/storage-migration-packaging` after the last code edit. The commit that
+carries it is the one immediately preceding the archive commit in this PR's
+commit list; the archive commit changes only file locations under
+`openspec/`.
 
 ## What was proved, and why it needed proving
 
@@ -192,7 +215,7 @@ restored and re-run green before the container was removed.
 So MinIO is a second independent store on which the design's single exotic
 primitive is shown to hold, and the first that is a production-grade store
 rather than an emulator. That is worth having as evidence. It does **not** close
-task 2.3: the row that closes it is real AWS S3, and MinIO is not adopted as a
+the question: the row that closes it is real AWS S3 ([#151](https://github.com/skillsgateway/skillsgateway/issues/151)), and MinIO is not adopted as a
 standing test store for the reason below.
 
 **Where this run lives, and why it stays there.** It is an out-of-band probe: a
@@ -212,7 +235,7 @@ neither would have deduplicated containers across the suite's Spring contexts
 anyway.
 
 **Floci is therefore the single in-build store**, and the portability question a
-second store would have answered is left to real AWS S3 in task 2.3 — the store
+second store would have answered is left to real AWS S3 ([#151](https://github.com/skillsgateway/skillsgateway/issues/151)) — the store
 that actually matters. This probe stands as evidence that the primitive is not a
 Floci artefact; it is not a gate, and this report does not pretend it is one.
 
@@ -289,7 +312,7 @@ stays offline. No upstream contribution is needed.
 The honest limit is now narrower but real. Two independent stores — Floci and
 MinIO — implement the one primitive the design rests on, and the assertions
 discriminate on both. **AWS S3, the production target, is still unexercised**,
-so task 2.3 stays unchecked and the supported-store list is not publishable as
+so the question is deferred to [#151](https://github.com/skillsgateway/skillsgateway/issues/151) and the supported-store list is not publishable as
 verified. Closing that row needs an account this change did not have and did not
 try to obtain.
 
@@ -430,39 +453,164 @@ writing either SVC before its implementation would break traceability to prove a
 point about ordering. They land with the sections that implement them, exactly as
 GW_0111 landed with section 5.
 
+## Section 7 — migration
+
+### Red 4 — the destination grew a branch the source never had
+
+The migration's tests went green on the first run, so the mutation gauntlet was
+run before believing them — and the second mutation did not fail. Skipping the
+copy of `HEAD` entirely left every case passing.
+
+That is not a weak assertion; it is a real defect the assertion could not see.
+`getRefs()` reports a symbolic reference **with the object id it resolves to**,
+so `HEAD` came back looking like an ordinary reference, and writing it through
+`updateRef(name)` silently *dereferenced* it and wrote whatever branch the
+**destination's** head pointed at. On a repository the gateway had just created
+that is `refs/heads/main` — the same branch the source was publishing on — so
+the wrong write produced the right answer, on every repository anyone had tested
+with.
+
+A repository published from another branch showed it immediately:
+
+```
+storage migration is NOT complete: 1 of 1 repositories did not verify.
+  published/m1: refs/heads/main exists at the destination and not at the source
+
+DST refs: [SymbolicRef[HEAD -> refs/heads/trunk=ed4e39d3...],
+           Ref[refs/heads/main=ed4e39d3...],
+           Ref[refs/heads/trunk=ed4e39d3...]]
+```
+
+Fixed by separating concrete references from symbolic ones on both sides —
+`resolved()` now excludes symbolic references, `symbolic()` carries them, and
+they are written back with `updateRef(name, true)` so the update names the
+reference itself rather than what it resolves to. Two cases were added that can
+tell the difference: `aHeadPointingSomewhereOtherThanTheDefaultIsCarriedAcross`
+and `aDestinationWhoseHeadNamesAnotherBranchIsRefused`.
+
+**The finding is worth stating plainly**: the tests as first written would have
+shipped a migration that corrupted exactly the marketplaces that do not use
+`main`, and nothing but the gauntlet would have caught it.
+
+### Mutation gauntlet — `StorageMigrationTests`
+
+Each mutation was applied to `StorageMigration` alone, the suite run, and the
+mutation reverted. `git diff` was empty afterwards.
+
+| # | Mutation | Result |
+| --- | --- | --- |
+| M1 | `compare` stops noticing a reference present at the source and missing at the destination | `Tests run: 8, Failures: 1` — `aDestinationMissingAReferenceIsRefusedAndTheRepositoryNamed` |
+| M2 | symbolic references are not carried to the destination | `Tests run: 8, Failures: 1` — `aHeadPointingSomewhereOtherThanTheDefaultIsCarriedAcross` (**survived before the fix above; kills after it**) |
+| M3 | only the `published` role is migrated | `Tests run: 8, Failures: 3` — every-role, round-trip and not-invented cases |
+| M4 | no objects are copied, only references written | `Tests run: 8, Errors: 5` |
+| M5 | the symbolic comparison is dropped from the verification pass | `Tests run: 8, Failures: 1` — `aDestinationWhoseHeadNamesAnotherBranchIsRefused` (**survived until that case was written**) |
+| M6 | the "the source repository changed during the migration" guard inside `migrateOne` is removed | **survived, deliberately.** That guard is belt-and-braces; the property it protects is proved from outside by `theSourceIsLeftByteIdentical`, which hashes every file under the source root before and after. A mutation that survives because a *stronger* test covers the property is recorded rather than papered over |
+
+## Section 8 — packaging
+
+### Red 5 — the chart test before the chart
+
+`PackagingTests.chartRefusesAStorageShapeTheGatewayCannotHonour` was written and
+run **before** any chart edit:
+
+```
+$ ./mvnw -o test -Dtest=PackagingTests
+[ERROR] Tests run: 8, Failures: 1, Errors: 0
+[ERROR]   PackagingTests.chartRefusesAStorageShapeTheGatewayCannotHonour:227
+          [storage block present]
+```
+
+`SVC_GW_0120` — #134's fail-closed durability case — was neither weakened nor
+touched, and passes unchanged in the same run.
+
+### The eight refusals, exercised through a real `helm template`
+
+A structural test asserts the chart *has* the gates; it does not prove they
+fire. Each was run against `helm template` (Helm v4.2.3) and its message read:
+
+| Values | Refusal |
+| --- | --- |
+| `persistence.mode=none` on `filesystem` | *Keeping no volume is only correct when the bucket is the repository* |
+| `storage.backend=object-store`, no bucket | *…bucket is empty. The bucket is where every repository would live…* |
+| `credentials.mode=static`, no secret | *…existingSecret is empty. Access keys come from a Secret with keys…* |
+| `replicaCount=3` on `filesystem` | *…single writer and has no cross-pod locking, so a second pod…* |
+| `replicaCount=3` on `object-store`, pollers on | *…still enabled and would run on every replica: skills-gateway.sync.enabled, skills-gateway.vetting.revet.enabled, skills-gateway.webhooks.enabled, skills-gateway.audit-export.enabled* |
+| `replicaCount=3` on `object-store`, pollers off | **renders** — the gate is not a blanket refusal |
+| `storage.backend=magic` | *…no inferred backend: a gateway serving from local disk while…* |
+| `credentials.mode=web-identity`, no service-account annotation | *…annotations is empty. Workload identity is attached by annotating…* |
+
+The fifth row is worth reading twice: `retention` is absent from the list
+because its default is already `false`, so the gate names what is *actually* on
+rather than reciting the whole set.
+
+`helm lint helm/skills-gateway` passes (one pre-existing informational notice
+about a missing chart icon).
+
+`persistence.mode=none` on `object-store` renders no `data` volume, no `/data`
+mount, and sets `SKILLSGATEWAY_STORAGE_OBJECTSTORE_CACHE_DIR=/tmp/pack-cache` —
+verified by reading the rendered manifest, not the template.
+
+## Traceability — the new SVCs were matched, not merely declared
+
+A `@DisplayName` on a class or method carrying `@SVCs` overwrites `classname` or
+`name` in the surefire XML and makes the test invisible to reqstool **while the
+build stays green**, so a `PASS` on its own proves nothing. Neither new test
+class carries one, and the machine-readable status was read rather than the
+summary line:
+
+```
+$ reqstool status --format json local -p docs/reqstool
+"skills-gateway:GW_0114": {"completed": true, "implementations": 1,
+    "implementation_type": "in-code",
+    "automated_tests": {"total": 8, "passed": 8, "failed": 0, "missing": 0}}
+"skills-gateway:GW_0115": {"completed": true, "implementations": 0,
+    "implementation_type": "configuration",
+    "automated_tests": {"total": 1, "passed": 1, "failed": 0, "missing": 0}}
+```
+
+`missing: 0` is the assertion that matters: reqstool found the actual junit
+cases behind both SVCs. GW_0115's `implementations: 0` is correct and expected —
+it is `implementation_type: configuration`, verified against the chart, exactly
+as GW_0120–GW_0122 are.
+
 ## Gate run
 
-Final fresh run after the last edit, on the merge of `origin/main` into this
-branch. That merge brought in #139 (native PostgreSQL enum types), which landed
-after the previous evidence run — hence the test count moving from 203 to 212.
-A gate run against a branch that has not merged main describes a tree nobody
-will merge, so it is not evidence.
+Final fresh run of all six gates, after the last code edit, from the worktree
+root. `TESTCONTAINERS_RYUK_DISABLED=true` and
+`TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/run/user/501/podman/podman.sock` were
+exported (see "Environment" below).
 
 The one exception, stated rather than hidden: the *numbers* below were pasted
 into this file after the run that produced them, so this file is one edit newer
 than the tree the Java, frontend and e2e gates saw. That edit is Markdown inside
 `openspec/changes/`, which only `openspec validate` and `reqstool` read, and
-both were re-run against the final text — `27 passed, 0 failed` and `PASS` —
-along with `mkdocs build --strict`.
-
-`TESTCONTAINERS_RYUK_DISABLED=true` and
-`TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/run/user/501/podman/podman.sock` were
-exported (see "Environment" below).
+both were re-run against the final text, along with `mkdocs build --strict`.
 
 ```
 $ ./mvnw clean verify
-[INFO] Tests run: 212, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 276, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
-[INFO] Total time:  01:31 min
+[INFO] Total time:  01:19 min
 ```
 
-212 tests, 0 failures, 0 errors (surefire agreeing across 54 report files);
-5 of them are the Floci fidelity spike —
+276 tests, 0 failures, 0 errors — up from 212 at the previous report: this PR
+adds 8 migration cases and 1 packaging case, and #147/#148 added the rest.
+
+**One honest note about that run.** The first attempt at `./mvnw clean verify`
+failed with five errors, all of them `ConditionalWriteFidelityTests` failing to
+load its application context:
 
 ```
-Test set: dev.skillsgateway.server.storage.ConditionalWriteFidelityTests
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.703 s
+Caused by: com.github.dockerjava.zerodep...NoHttpResponseException:
+    localhost:2375 failed to respond
 ```
+
+That is the container runtime on this machine, not the code — the docker
+endpoint stopped answering mid-run while the Floci dev service was starting. The
+identical command re-run immediately afterwards, with no edit of any kind in
+between, was green. It is recorded because a reader deserves to know the run was
+not first-time green, and because "re-ran it and it passed" is the kind of claim
+that has to come with the reason.
 
 ```
 $ (cd src/main/frontend && pnpm test:stories)
@@ -472,26 +620,92 @@ $ (cd src/main/frontend && pnpm test:stories)
 
 ```
 $ (cd src/main/frontend && pnpm e2e)
-  13 passed (24.6s)
+  13 passed (29.0s)
 ```
 
 ```
 $ reqstool status local -p docs/reqstool
-113/113 complete · 0 incomplete · PASS
+118/118 complete · 0 incomplete · PASS
 ```
+
+113 → 118: GW_0114 and GW_0115 here, and GW_0116 plus two from earlier in the
+stack.
 
 ```
 $ openspec validate --all --strict
 Totals: 27 passed, 0 failed (27 items)
 ```
 
+Re-run after `openspec archive pluggable-git-storage -y`, which is the final
+commit of this PR.
+
 ```
 $ mkdocs build --strict
-INFO    -  Documentation built in 0.65 seconds
+INFO    -  Documentation built in 0.64 seconds
 ```
 
 The MinIO probe of task 2.3 is **not** part of this run and is not part of
 `verify` — see the task 2.3 section above for why, and for its own output.
+
+## What is still open when this change archives
+
+Recorded here so the archive cannot imply otherwise.
+
+| Task | State | Why |
+| --- | --- | --- |
+| 2.3 — the five conditional-write assertions against **real AWS S3** | **Open** | It needs an AWS account this change does not have and deliberately did not acquire. S3 is the production target, so this is the row that matters; until someone with credentials runs it, the supported-store list names S3 as documented-but-unexercised, and the docs say so in a warning. Floci is verified in every build and MinIO is verified by probe, so the *primitive* has been shown to hold on two independent stores — that is confidence, not certification |
+| 2.5 / 11.2 — native-image build with the S3 client and the web-identity provider | **Closed in CI** | Dispatched against this branch because `native.yml` has no pull-request trigger, and green — see "The native image" below |
+| Leader election for the background sweeps | **Not in scope, by design** | This change *unblocks* multi-replica serving and the chart refuses a replica count that would duplicate a sweep. Making the singletons cluster-safe is separate work and the design says so |
+| [#149](https://github.com/skillsgateway/skillsgateway/issues/149) — `ApprovalService.approve` discards its `RefUpdate` result | **Out of scope, filed** | Caller-side, on a trust boundary, and it needs its own requirement and adversarial tests rather than a quiet fix inside a storage PR |
+
+### A limitation of the test double, restated
+
+Section "Red 3" above records that **Floci served a partially written object**
+mid-overwrite, with a matching `Content-Length` and an ETag of its own. That is
+a fidelity gap in the emulator, not a defect in the backend: real S3 does not
+tear a `PutObject`. Two guards were kept anyway — a declared-length check in
+`S3ObjectStoreClient` and one re-read in `ManifestStore` before believing a
+manifest is corrupt — because a short read is a real failure mode with a
+one-comparison detector, and because a store that tears *every* read must still
+be found out rather than retried around. It should not be read as evidence that
+S3 behaves this way.
+
+## The native image (tasks 2.5 and 11.2)
+
+There is no GraalVM toolchain on the machine this change was written on, and
+`native.yml` triggers only on a push to `main`, a schedule or a dispatch — never
+on a pull request. So it was dispatched against the branch, which is the only way
+to see this result before merge rather than after it:
+
+```
+$ gh workflow run native.yml --ref feat/storage-migration-packaging
+https://github.com/skillsgateway/skillsgateway/actions/runs/33215061839
+
+completed  success  Native image  workflow_dispatch  8m19s
+```
+
+Every step that matters passed:
+
+```
+success  Build native image
+success  Build container image
+success  Smoke test container
+success  Helm lint
+skipped  Log in to GHCR      <- correct: a bare dispatch must not publish
+skipped  Push image
+skipped  Attest SBOM
+```
+
+That closes the open risk the design named: the AWS SDK v2 S3 client and the
+web-identity credential provider build and run under closed-world compilation
+with no reflection configuration beyond what is already in the tree. It was a
+real question — web identity is the credential mechanism the first deployment
+target cannot do without — and it is now answered by a build rather than by an
+expectation.
+
+*Helm lint* running green in that same job is worth noting too: the chart gates
+added here are exercised by CI on every native run, not only by the structural
+packaging test.
 
 ## Environment
 

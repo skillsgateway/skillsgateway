@@ -353,6 +353,29 @@ different surface — and roles never apply to PATs. See
 workflow, [Identity providers](../guides/identity-providers.md) for claim
 mapping, and [Roles](../reference/api/roles.md) for the grants API.
 
+## The storage itself
+
+Publication is a reference transition on the published repository, and the
+boundary is therefore wherever those references physically live.
+
+On the `filesystem` backend that is the mounted volume: anyone who can write to
+it can move `refs/heads/main` without `ApprovalService` ever running. That has
+always been true, and it is why the volume inherits the encryption and access
+expectations of the content it holds.
+
+On the `object-store` backend it is the bucket. The served reference map is one
+small object; **anyone who can write that object can put content on the wire
+without approval**, and can do it from outside the gateway entirely. The
+mitigation is a narrow bucket policy — object read, write and delete under the
+gateway's own prefix, no bucket administration — and treating the bucket as the
+same kind of asset the volume was.
+
+The gateway cannot enforce this. It has no way to distinguish its own write from
+anyone else's, and no way to detect one that already happened. What it does do
+is refuse to start against a store whose conditional writes are not faithful, so
+that its *own* concurrent writers cannot lose a transition. That is a different
+guarantee, and it is not a substitute for the policy.
+
 ## What is not a boundary yet
 
 A **second recorded approval** — a queue in which two identities each decide,

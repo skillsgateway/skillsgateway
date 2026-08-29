@@ -1303,3 +1303,38 @@ cases:
       the conditional-write check that gated startup; and an unreachable store is reported
       down rather than up
     revision: "0.1.0"
+
+  - id: SVC_GW_0114
+    requirement_ids: ["GW_0114"]
+    title: A migration between backends copies everything and proves it, or refuses
+    verification: automated-test
+    description: |
+      GIVEN an estate held on one storage backend, with a repository in each of the
+      three roles
+      WHEN it is migrated onto the other backend and back again
+      THEN every repository appears at the destination with the same references
+      resolving to the same objects and the same branch named by its head, the served
+      tip and the pinned snapshot reference both survive, a marketplace the source did
+      not hold in a role is not created there, a destination that has lost a reference
+      is reported as not verified with the repository named and the source stated to be
+      intact, the source is byte-identical afterwards, and the reverse direction
+      restores the previous state
+    revision: "0.1.0"
+
+  - id: SVC_GW_0115
+    requirement_ids: ["GW_0115"]
+    title: The chart refuses a storage backend or a replica count it cannot honour
+    verification: automated-test
+    description: |
+      GIVEN the deployment chart
+      WHEN the packaging test validates it
+      THEN the storage backend is a named value defaulting to the filesystem, an
+      unrecognised name and an object-store selection missing its bucket or its region
+      stop the render, static credentials are refused without the secret holding them
+      and the values file offers no place to write a key, a deployment with no storage
+      volume renders only on the object-store backend and points the local pack cache
+      somewhere writable, the selection reaches the container as configuration rather
+      than staying in the values file, and more than one replica is refused on the
+      filesystem backend and refused on the object-store backend while any background
+      singleton is still enabled
+    revision: "0.1.0"

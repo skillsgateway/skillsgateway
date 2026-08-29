@@ -19,6 +19,19 @@
 
   packageRules: [
     {
+      // The object-storage backend extends org.eclipse.jgit.internal.storage.dfs
+      // -- `internal` in the package name is real, and JGit changes those
+      // extension points between releases in ways that never affect ordinary
+      // Repository/UploadPack use. So a JGit bump arrives on its own, to be
+      // reviewed deliberately, rather than inside a group where it would be
+      // approved as one line of a larger diff. Pinning is not the mitigation:
+      // a pin defers the upgrade without telling us when it breaks us. The
+      // storage contract and concurrency suites are the other half.
+      description: "JGit alone: the DFS extension points are internal API",
+      groupName: "jgit",
+      matchPackageNames: ["org.eclipse.jgit{/,}**"],
+    },
+    {
       description: "Group Spring Boot and the Boot-aligned Arconia BOM",
       groupName: "spring boot",
       matchPackageNames: [
