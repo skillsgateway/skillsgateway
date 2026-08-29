@@ -3,7 +3,7 @@
 # distroless *base*.
 
 # Distroless has no shell; stage an empty, nonroot-owned data directory here.
-FROM busybox:1.37 AS dirs
+FROM busybox:1.38 AS dirs
 RUN mkdir -p /data && chown 65532:65532 /data
 
 FROM gcr.io/distroless/base-debian12:nonroot
