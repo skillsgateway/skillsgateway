@@ -140,8 +140,7 @@ public final class ManifestStore {
         if (changed.isEmpty()) {
             return false;
         }
-        remember(new Snapshot(
-                RepositoryManifest.parse(changed.get().body()), changed.get().etag()));
+        remember(interpret(changed.get()));
         statistics.refreshed();
         return true;
     }
@@ -190,6 +189,7 @@ public final class ManifestStore {
                 "packs",
                 next.packs().stream().map(RepositoryManifest.PackEntry::name).toList());
         store.put(key, MAPPER.writeValueAsBytes(entry));
+        statistics.walAppended(manifestKey);
     }
 
     /** Write-ahead entries the manifest has already absorbed, oldest first. */
@@ -215,13 +215,64 @@ public final class ManifestStore {
         if (object.isEmpty()) {
             return Optional.empty();
         }
-        Snapshot snapshot = new Snapshot(
-                RepositoryManifest.parse(object.get().body()), object.get().etag());
+        Snapshot snapshot = interpret(object.get());
         remember(snapshot);
         return Optional.of(snapshot);
     }
 
+    /**
+     * Turn the bytes that came back into a manifest, reading once more before believing they are
+     * corrupt.
+     *
+     * <p>An unparseable manifest is one of two very different things. It is corruption, in which
+     * case it is permanent and a second read says the same — and the only safe response is to
+     * refuse, because this object is the entire state of the repository and half of it is not a
+     * state anything may act on. Or it is a torn read: a store that let a {@code GET} observe an
+     * overwrite part-way through, which one of the emulators this project tests against was
+     * observed doing under contention (a 6291-byte body, with a matching length and an ETag of its
+     * own, where the completed object was 6392). Amazon S3 does not tear a {@code PutObject} that
+     * way, so on the production target this second read never happens; where a store does tear,
+     * one extra {@code GET} on a path that is already failing is what stands between a transient
+     * store fault and a repository reported as corrupt.
+     *
+     * <p>It is deliberately one retry and not a loop: corruption must still be reachable, and a
+     * store that tears every read is a store that has to be found out rather than worked around.
+     */
+    private Snapshot interpret(ObjectStoreClient.StoredObject object) throws IOException {
+        try {
+            return new Snapshot(RepositoryManifest.parse(object.body()), object.etag());
+        } catch (IOException first) {
+            Optional<ObjectStoreClient.StoredObject> again = store.get(manifestKey);
+            if (again.isEmpty()) {
+                throw first;
+            }
+            try {
+                return new Snapshot(
+                        RepositoryManifest.parse(again.get().body()),
+                        again.get().etag());
+            } catch (IOException second) {
+                second.addSuppressed(first);
+                throw new IOException(
+                        "the repository manifest %s could not be read on two consecutive attempts, so it is the object"
+                                        .formatted(manifestKey)
+                                + " that is damaged rather than the read; nothing may act on half a manifest",
+                        second);
+            }
+        }
+    }
+
+    /** Where this repository's write-ahead entries live, for a pass that wants to count them. */
+    String walPrefix() {
+        return walPrefix;
+    }
+
+    /** Tell the counters what a maintenance pass counted, now that it has counted it. */
+    void observeWalDepth(long depth) {
+        statistics.walDepthObserved(manifestKey, depth);
+    }
+
     private void remember(Snapshot snapshot) {
+        statistics.livePacksObserved(manifestKey, snapshot.manifest().packs().size());
         cached = snapshot;
         lastCheckedNanos.set(System.nanoTime());
     }

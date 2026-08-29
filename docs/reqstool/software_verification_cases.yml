@@ -1285,3 +1285,21 @@ cases:
       not apply is raised rather than reported as done, and the atomic push capability
       is advertised identically by every backend
     revision: "0.1.0"
+
+  - id: SVC_GW_0116
+    requirement_ids: ["GW_0116"]
+    title: The storage backend's contention, levels, latency and reachability are observable
+    verification: automated-test
+    description: |
+      GIVEN a gateway on the object-storage backend whose transitions have met contention,
+      whose packs have been compacted and whose caches have been read
+      WHEN the backend's counters are bound to a meter registry and the storage health
+      indicator is asked
+      THEN the registry carries the conditional-write conflict, retry and exhaustion counts,
+      the write-ahead depth and live pack levels, the pack-cache hit and download counts and
+      a request timer tagged by operation and outcome, all under the skills_gateway prefix
+      and none of them tagged by marketplace, repository or key; the health indicator names
+      the configured backend, reports it reachable without having written to it, and reports
+      the conditional-write check that gated startup; and an unreachable store is reported
+      down rather than up
+    revision: "0.1.0"

@@ -10,9 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
@@ -37,8 +39,7 @@ public final class S3ObjectStoreClient implements ObjectStoreClient, AutoCloseab
     public Optional<StoredObject> get(String key) throws IOException {
         try {
             var response = s3.getObjectAsBytes(r -> r.bucket(bucket).key(key));
-            return Optional.of(
-                    new StoredObject(response.asByteArray(), response.response().eTag()));
+            return Optional.of(whole(key, response));
         } catch (NoSuchKeyException e) {
             return Optional.empty();
         } catch (SdkException e) {
@@ -50,8 +51,7 @@ public final class S3ObjectStoreClient implements ObjectStoreClient, AutoCloseab
     public Optional<StoredObject> getIfChanged(String key, String etag) throws IOException {
         try {
             var response = s3.getObjectAsBytes(r -> r.bucket(bucket).key(key).ifNoneMatch(etag));
-            return Optional.of(
-                    new StoredObject(response.asByteArray(), response.response().eTag()));
+            return Optional.of(whole(key, response));
         } catch (NoSuchKeyException e) {
             throw new FileNotFoundException(bucket + "/" + key);
         } catch (S3Exception e) {
@@ -62,6 +62,26 @@ public final class S3ObjectStoreClient implements ObjectStoreClient, AutoCloseab
         } catch (SdkException e) {
             throw failure("conditionally read", key, e);
         }
+    }
+
+    /**
+     * The object, checked against the length the store said it was sending.
+     *
+     * <p>A body shorter than its own {@code Content-Length} is the store failing, not the caller
+     * misreading, and it is worth one comparison to say so. Without this a short read surfaces
+     * wherever the bytes are finally interpreted — as a JSON parse error on the manifest, which
+     * reads like a corrupt repository rather than like a store that did not finish a response.
+     * The manifest is the only state this backend has; a half-read one must be an error at the
+     * boundary it came from and never a value anything acts on.
+     */
+    private StoredObject whole(String key, ResponseBytes<GetObjectResponse> response) throws IOException {
+        byte[] body = response.asByteArray();
+        Long declared = response.response().contentLength();
+        if (declared != null && declared != body.length) {
+            throw new IOException("the object store returned %d of the %d bytes it declared for %s/%s"
+                    .formatted(body.length, declared, bucket, key));
+        }
+        return new StoredObject(body, response.response().eTag());
     }
 
     @Override
