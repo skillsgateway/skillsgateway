@@ -89,7 +89,9 @@ public class SecurityConfig {
                 // No CSRF token: nothing here is authorized by a cookie or a session.
                 // The controller's HMAC check over the raw body is the whole
                 // authorization, and a browser cannot produce that signature.
-                .csrf(csrf -> csrf.disable())
+                // Exempted rather than disabled, so a path added to this chain later
+                // is protected by default instead of inheriting the exemption.
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/hooks/**"))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll());
         return http.build();
