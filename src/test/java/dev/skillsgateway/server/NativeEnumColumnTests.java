@@ -188,17 +188,24 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
     void every_webhook_delivery_state_round_trips() {
         WebhookSubscriber subscriber =
                 webhookSubscriberRepository.create(uniqueName("enum-sub"), "http://localhost/hook", "secret", "*");
-        WebhookDelivery pending = webhookDeliveryRepository.enqueue(subscriber.id(), "snapshot.approved", "{}");
-        assertThat(pending.state()).isEqualTo(WebhookDelivery.PENDING);
+        try {
+            WebhookDelivery pending = webhookDeliveryRepository.enqueue(subscriber.id(), "snapshot.approved", "{}");
+            assertThat(pending.state()).isEqualTo(WebhookDelivery.PENDING);
 
-        webhookDeliveryRepository.markDelivered(pending.id(), 1, 200);
-        assertThat(state(pending.id())).isEqualTo(WebhookDelivery.DELIVERED);
+            webhookDeliveryRepository.markDelivered(pending.id(), 1, 200);
+            assertThat(state(pending.id())).isEqualTo(WebhookDelivery.DELIVERED);
 
-        webhookDeliveryRepository.markRetry(pending.id(), 2, Instant.now().plus(Duration.ofMinutes(1)), 500, "boom");
-        assertThat(state(pending.id())).isEqualTo(WebhookDelivery.PENDING);
+            webhookDeliveryRepository.markRetry(
+                    pending.id(), 2, Instant.now().plus(Duration.ofMinutes(1)), 500, "boom");
+            assertThat(state(pending.id())).isEqualTo(WebhookDelivery.PENDING);
 
-        webhookDeliveryRepository.markFailed(pending.id(), 3, 500, "boom");
-        assertThat(state(pending.id())).isEqualTo(WebhookDelivery.FAILED);
+            webhookDeliveryRepository.markFailed(pending.id(), 3, 500, "boom");
+            assertThat(state(pending.id())).isEqualTo(WebhookDelivery.FAILED);
+        } finally {
+            // Scaffolding for the column, not a subscriber: left registered it would collect a
+            // delivery from every lifecycle event the rest of the suite emits. Cascades the rows.
+            webhookSubscriberRepository.delete(subscriber.id());
+        }
     }
 
     @Test
@@ -206,10 +213,15 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
     void the_audit_sink_kind_round_trips() {
         WebhookSubscriber subscriber =
                 webhookSubscriberRepository.create(uniqueName("enum-sink-sub"), "http://localhost/hook", "s", "*");
-        AuditSink sink =
-                auditSinkRepository.create(uniqueName("enum-sink"), AuditSink.WEBHOOK, subscriber.id(), 0, 500);
-        assertThat(sink.kind()).isEqualTo(AuditSink.WEBHOOK);
-        assertThat(auditSinkRepository.findById(sink.id()).orElseThrow().kind()).isEqualTo(AuditSink.WEBHOOK);
+        try {
+            AuditSink sink =
+                    auditSinkRepository.create(uniqueName("enum-sink"), AuditSink.WEBHOOK, subscriber.id(), 0, 500);
+            assertThat(sink.kind()).isEqualTo(AuditSink.WEBHOOK);
+            assertThat(auditSinkRepository.findById(sink.id()).orElseThrow().kind())
+                    .isEqualTo(AuditSink.WEBHOOK);
+        } finally {
+            webhookSubscriberRepository.delete(subscriber.id());
+        }
     }
 
     @Test
