@@ -7,8 +7,8 @@
 #
 # NOTE: actions/labeler does not create labels -- every label named here must
 # already exist on the repo or the action errors. They are declared in
-# safe-settings/settings.yml in the private admin repo skillsgateway/.github-private
-# (see issue #23), which is also the only place they may be added or renamed:
+# safe-settings/ in the admin repo skillsgateway/.github (see issue #23),
+# which is also the only place they may be added or renamed:
 # safe-settings deletes any label that is not listed there.
 #
 # `sync-labels: true` in the workflow means a glob here also *removes* a
@@ -17,60 +17,60 @@
 
 ingestion:
   - changed-files:
-      - any-glob-to-any-file: 'src/main/java/io/github/jimisola/skillsgateway/ingestion/**'
+      - any-glob-to-any-file: 'src/main/java/dev/skillsgateway/server/ingestion/**'
 
 vetting:
   - changed-files:
-      - any-glob-to-any-file: 'src/main/java/io/github/jimisola/skillsgateway/vetting/**'
+      - any-glob-to-any-file: 'src/main/java/dev/skillsgateway/server/vetting/**'
 
 approval:
   - changed-files:
-      - any-glob-to-any-file: 'src/main/java/io/github/jimisola/skillsgateway/approval/**'
+      - any-glob-to-any-file: 'src/main/java/dev/skillsgateway/server/approval/**'
 
 facade:
   - changed-files:
-      - any-glob-to-any-file: 'src/main/java/io/github/jimisola/skillsgateway/facade/**'
+      - any-glob-to-any-file: 'src/main/java/dev/skillsgateway/server/facade/**'
 
 audit:
   - changed-files:
-      - any-glob-to-any-file: 'src/main/java/io/github/jimisola/skillsgateway/audit/**'
+      - any-glob-to-any-file: 'src/main/java/dev/skillsgateway/server/audit/**'
 
 auth:
   - changed-files:
-      - any-glob-to-any-file: 'src/main/java/io/github/jimisola/skillsgateway/auth/**'
+      - any-glob-to-any-file: 'src/main/java/dev/skillsgateway/server/auth/**'
 
 persistence:
   - changed-files:
       - any-glob-to-any-file:
-          - 'src/main/java/io/github/jimisola/skillsgateway/persistence/**'
+          - 'src/main/java/dev/skillsgateway/server/persistence/**'
           - 'src/main/resources/db/**'
 
 retention:
   - changed-files:
-      - any-glob-to-any-file: 'src/main/java/io/github/jimisola/skillsgateway/retention/**'
+      - any-glob-to-any-file: 'src/main/java/dev/skillsgateway/server/retention/**'
 
 storage:
   - changed-files:
-      - any-glob-to-any-file: 'src/main/java/io/github/jimisola/skillsgateway/storage/**'
+      - any-glob-to-any-file: 'src/main/java/dev/skillsgateway/server/storage/**'
 
 admin:
   - changed-files:
-      - any-glob-to-any-file: 'src/main/java/io/github/jimisola/skillsgateway/admin/**'
+      - any-glob-to-any-file: 'src/main/java/dev/skillsgateway/server/admin/**'
 
 api:
   - changed-files:
       - any-glob-to-any-file:
-          - 'src/main/java/io/github/jimisola/skillsgateway/api/**'
+          - 'src/main/java/dev/skillsgateway/server/api/**'
           - 'src/main/frontend/openapi.json'
 
 webhook:
   - changed-files:
-      - any-glob-to-any-file: 'src/main/java/io/github/jimisola/skillsgateway/webhook/**'
+      - any-glob-to-any-file: 'src/main/java/dev/skillsgateway/server/webhook/**'
 
 config:
   - changed-files:
       - any-glob-to-any-file:
-          - 'src/main/java/io/github/jimisola/skillsgateway/config/**'
+          - 'src/main/java/dev/skillsgateway/server/config/**'
           - 'src/main/resources/application*.yaml'
           - 'config/**'
 
@@ -138,13 +138,13 @@ dependencies:
 "⚠️ TRUST BOUNDARY":
   - changed-files:
       - any-glob-to-any-file:
-          - 'src/main/java/io/github/jimisola/skillsgateway/approval/**'
-          - 'src/main/java/io/github/jimisola/skillsgateway/auth/**'
-          - 'src/main/java/io/github/jimisola/skillsgateway/facade/**'
-          - 'src/main/java/io/github/jimisola/skillsgateway/admin/AdminController.java'
-          - 'src/main/java/io/github/jimisola/skillsgateway/ingestion/ManifestPolicy.java'
-          - 'src/main/java/io/github/jimisola/skillsgateway/ingestion/ForgeMetadataService.java'
+          - 'src/main/java/dev/skillsgateway/server/approval/**'
+          - 'src/main/java/dev/skillsgateway/server/auth/**'
+          - 'src/main/java/dev/skillsgateway/server/facade/**'
+          - 'src/main/java/dev/skillsgateway/server/admin/AdminController.java'
+          - 'src/main/java/dev/skillsgateway/server/ingestion/ManifestPolicy.java'
+          - 'src/main/java/dev/skillsgateway/server/ingestion/ForgeMetadataService.java'
 
 # The "⚠️ REPO SETTINGS" rule was removed with .github/settings.yml (issue #23):
-# repository settings now live in skillsgateway/.github-private, so no diff in
+# repository settings now live in skillsgateway/.github, so no diff in
 # this repo can change them and there is nothing here left to warn about.
