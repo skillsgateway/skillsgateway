@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.jayway.jsonpath.JsonPath;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.persistence.WebhookDelivery;
 import dev.skillsgateway.server.persistence.WebhookDeliveryRepository;
 import dev.skillsgateway.server.webhook.WebhookDispatcher;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -41,6 +43,24 @@ class WebhookTests extends AbstractGatewayTest {
 
     @Autowired
     private WebhookDeliveryRepository deliveryRepository;
+
+    @Autowired
+    private SkillsGatewayProperties properties;
+
+    /**
+     * These tests drive the real dispatch pass, which takes the oldest {@code batchSize} due
+     * deliveries across the whole shared database. A subscriber left registered by an earlier test
+     * class goes on collecting one delivery per event the rest of the suite emits, and once that
+     * backlog fills the batch this class's own delivery is never reached -- surfacing here as a
+     * delivery that was silently never attempted. Fail on the cause instead.
+     */
+    @BeforeEach
+    void backlogLeavesRoomInTheDispatchBatch() {
+        int batchSize = properties.webhooks().batchSize();
+        assertThat(deliveryRepository.dueIds(batchSize))
+                .describedAs("due webhook deliveries left behind by earlier test classes")
+                .hasSizeLessThan(batchSize);
+    }
 
     /** A captured inbound request: everything a receiver would use to authenticate the delivery. */
     private record Received(Map<String, String> headers, String body) {}
