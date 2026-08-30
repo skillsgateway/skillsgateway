@@ -1,7 +1,7 @@
 // Extends the shared @skillsgateway preset; only repository-specific rules
 // belong here. The preset silently drops labels that do not exist on this
 // repository -- bot-renovate*, renovate-version-* and security are declared in
-// the skillsgateway/.github-private safe-settings repository.
+// skillsgateway/.github, under safe-settings/.
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
 
