@@ -865,6 +865,73 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="The gates">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#running-the-gates-on-podman" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running the gates on Podman
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running the gates on Podman">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ryuk-cannot-start-on-rootless-podman" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ryuk cannot start on rootless Podman
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-floci-dev-service-needs-the-in-vm-socket-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Floci dev service needs the in-VM socket path
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#if-testcontainers-cannot-find-a-container-runtime-at-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        If Testcontainers cannot find a container runtime at all
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#give-the-machine-enough-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Give the machine enough memory
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2212,6 +2279,73 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="The gates">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#running-the-gates-on-podman" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running the gates on Podman
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running the gates on Podman">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ryuk-cannot-start-on-rootless-podman" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ryuk cannot start on rootless Podman
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-floci-dev-service-needs-the-in-vm-socket-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Floci dev service needs the in-VM socket path
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#if-testcontainers-cannot-find-a-container-runtime-at-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        If Testcontainers cannot find a container runtime at all
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#give-the-machine-enough-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Give the machine enough memory
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2255,7 +2389,9 @@
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
 <ul>
 <li>JDK 25 (Temurin; GraalVM CE 25 only for native builds)</li>
-<li>Docker — Testcontainers for the build, Compose for running</li>
+<li>A container runtime — Testcontainers and the Arconia dev services for the
+  build, Compose for running. Docker works out of the box; Podman works
+  too, with the setup in <a href="#running-the-gates-on-podman">Running the gates on Podman</a></li>
 <li><code>git</code></li>
 </ul>
 <p>Node and pnpm are provisioned by the Maven build. You do <strong>not</strong> need them to
@@ -2441,10 +2577,92 @@ deployed gateway to a collector is a separate, not-yet-implemented concern.</p>
 </code></pre></div>
 <p>Use <code>clean</code> for the reqstool gate — incremental compilation truncates the
 generated annotation files.</p>
+<p>That list is an <strong>ordered sequence, not a set</strong>. <code>reqstool status</code> reads the
+portal suites' JUnit output from <code>src/main/frontend/test-results/</code>, so running it
+before <code>pnpm e2e</code> reports requirements as unverified that are in fact covered.</p>
+<div class="admonition warning">
+<p class="admonition-title"><code>reqstool status</code> exits 0 even when it prints FAIL</p>
+<p>Its exit code is not a gate. Read the <strong>last line</strong> of its output — the gate
+passes only when it ends <code>PASS</code>, and a script that checks <code>$?</code> will call a
+failing run green.</p>
+</div>
 <p>For the documentation gate:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="gp">$ </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>docs/requirements.txt
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="gp">$ </span>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict
 </code></pre></div>
+<h3 id="running-the-gates-on-podman">Running the gates on Podman<a class="headerlink" href="#running-the-gates-on-podman" title="Permanent link">&para;</a></h3>
+<p>Podman is a supported way to run the container-backed gates, but not an
+unconfigured one. Both of the problems below present as a broken change rather
+than a broken environment — a wall of test errors, with nothing pointing at the
+container runtime — so they are worth setting up before the first run rather
+than diagnosing during it.</p>
+<p>Export both of these; the rest of this section is why.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">TESTCONTAINERS_RYUK_DISABLED</span><span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE</span><span class="o">=</span>/run/user/501/podman/podman.sock
+</code></pre></div>
+<h4 id="ryuk-cannot-start-on-rootless-podman">Ryuk cannot start on rootless Podman<a class="headerlink" href="#ryuk-cannot-start-on-rootless-podman" title="Permanent link">&para;</a></h4>
+<p>Ryuk is the Testcontainers resource reaper. Under a rootless Podman machine it
+fails to start and every container-backed test errors:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>ERROR tc.testcontainers/ryuk:0.14.0 : Could not start container
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>Tests run: 3, Failures: 0, Errors: 3
+</code></pre></div>
+<p><code>TESTCONTAINERS_RYUK_DISABLED=true</code> is the fix, and the consequence is that
+<strong>nothing reaps test containers</strong>. They accumulate across runs and each
+published port stays forwarded by <code>gvproxy</code>, so prune periodically:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="gp">$ </span>podman<span class="w"> </span>container<span class="w"> </span>prune<span class="w"> </span>-f
+</code></pre></div>
+<p>The alternative is a rootful machine (<code>podman machine stop &amp;&amp; podman machine set
+--rootful &amp;&amp; podman machine start</code>), where Ryuk works. Note that rootless and
+rootful use <strong>separate image and container storage</strong>, so everything already
+pulled is pulled again.</p>
+<h4 id="the-floci-dev-service-needs-the-in-vm-socket-path">The Floci dev service needs the in-VM socket path<a class="headerlink" href="#the-floci-dev-service-needs-the-in-vm-socket-path" title="Permanent link">&para;</a></h4>
+<p><code>io.floci:testcontainers-floci</code> — which <code>arconia-dev-services-floci</code> wraps, and
+which the object-store storage suites depend on — bind-mounts the container
+runtime's socket unconditionally. Without an override it resolves to the
+<strong>macOS-side</strong> path, which does not exist inside the machine VM, and the failure
+reads as a container-creation fault rather than a missing socket:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>Status 500 ... operation not supported
+</code></pre></div>
+<p><code>TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE</code> must name the socket <strong>inside</strong> the VM,
+not on the host. Confirm it rather than copying it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="gp">$ </span>podman<span class="w"> </span>machine<span class="w"> </span>ssh<span class="w"> </span><span class="s1">'echo "$XDG_RUNTIME_DIR/podman/podman.sock"'</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="go">/run/user/501/podman/podman.sock</span>
+</code></pre></div>
+<p>The override is unnecessary on Linux, where the host path is the VM path; CI
+sets neither variable.</p>
+<h4 id="if-testcontainers-cannot-find-a-container-runtime-at-all">If Testcontainers cannot find a container runtime at all<a class="headerlink" href="#if-testcontainers-cannot-find-a-container-runtime-at-all" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>Could not find a valid Docker environment
+</code></pre></div>
+<p>Testcontainers resolves the socket itself, so the <code>docker</code> CLI working proves
+nothing — under Podman <code>docker</code> is an alias, and <code>docker info</code> succeeds against
+a socket Testcontainers never consults. What it wants is <code>/var/run/docker.sock</code>,
+which <code>podman machine start</code> creates as a symlink into the machine's socket:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="gp">$ </span>ls<span class="w"> </span>-la<span class="w"> </span>/var/run/docker.sock
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="go">lrwxr-xr-x  1 root  daemon  ...  /var/run/docker.sock -&gt; ~/.local/share/containers/podman/machine/podman.sock</span>
+</code></pre></div>
+<p>If it is missing, restart the machine. Exporting <code>DOCKER_HOST</code> from <code>podman
+machine inspect</code> also works.</p>
+<p>The symptom can look inconsistent between suites, which is what makes it slow to
+diagnose: the Arconia dev services resolve the runtime differently and can keep
+working while tests that use Testcontainers directly fail in the same build.</p>
+<h4 id="give-the-machine-enough-memory">Give the machine enough memory<a class="headerlink" href="#give-the-machine-enough-memory" title="Permanent link">&para;</a></h4>
+<p>The default machine is small. Under a parallel build the PostgreSQL, Floci and
+LGTM containers plus the native-image and CycloneDX steps hit container-startup
+timeouts and OOM kills. Raise it in place — stop, set, start; storage is
+preserved:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="gp">$ </span>podman<span class="w"> </span>machine<span class="w"> </span>stop
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="gp">$ </span>podman<span class="w"> </span>machine<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--memory<span class="w"> </span><span class="m">8192</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="gp">$ </span>podman<span class="w"> </span>machine<span class="w"> </span>start
+</code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">A failed run is not always a failed change</p>
+<p>Under load the machine intermittently stops answering mid-build — a
+connection refused, or a container dying during startup — and the whole
+suite errors on context load. The same command re-run unchanged is green.
+Retry once before debugging the code, and <strong>record the retry in the change's
+evidence</strong> rather than quietly re-running: a genuinely flaky test looks
+identical from here.</p>
+</div>
 <h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../registering-a-marketplace/">Registering a marketplace</a></li>
