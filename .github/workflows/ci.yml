@@ -205,6 +205,13 @@ jobs:
       - name: Diagram manifest in sync
         run: python3 docs/diagrams/verify.py
 
+      # Not documentation, but it wants exactly what this job already has -- a
+      # checkout, Python, and a required check to fail. A label whose globs match
+      # nothing is silent to actions/labeler, which is how the Java package move
+      # left nineteen dead globs and no trust-boundary warning (#193).
+      - name: Labeler globs match real paths
+        run: python3 .github/verify-labeler.py
+
   traceability:
     name: Traceability & spec gates
     runs-on: ubuntu-latest
