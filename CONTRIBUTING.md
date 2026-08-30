@@ -66,7 +66,10 @@ Two consequences worth knowing before you open a PR:
   threads resolved. Force-pushes and branch deletion are blocked.
 - **Labels are declarative.** `.github/labeler.yml` may only reference labels
   declared in the admin repo; a label that exists on the repo but not there is
-  deleted on the next sync. Adding a label means a PR against that repo.
+  deleted on the next sync. Adding a label means a PR against that repo. CI
+  checks that every glob in that file still matches a tracked path
+  (`.github/verify-labeler.py`), because one that matches nothing applies no
+  label and reports nothing.
 
 ## Gates — all must pass
 
