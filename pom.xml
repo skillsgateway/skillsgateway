@@ -36,7 +36,7 @@
         <spotless.version>3.10.0</spotless.version>
         <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
         <checkstyle.version>13.11.0</checkstyle.version>
-        <native-plugin.version>1.1.10</native-plugin.version>
+        <native-plugin.version>1.1.11</native-plugin.version>
         <reqstool-plugin.version>1.1.0</reqstool-plugin.version>
         <arconia.version>0.30.0</arconia.version>
         <awssdk.version>2.54.5</awssdk.version>
