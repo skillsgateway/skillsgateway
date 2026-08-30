@@ -133,7 +133,7 @@ jobs:
 
       - name: Attest SBOM
         if: github.event_name == 'push' || inputs.version != ''
-        uses: actions/attest-sbom@v3.0.0
+        uses: actions/attest-sbom@v4.1.0
         with:
           subject-name: ghcr.io/skillsgateway/skillsgateway
           subject-digest: ${{ steps.push.outputs.digest }}
