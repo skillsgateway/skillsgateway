@@ -208,50 +208,56 @@ class SyncTests extends AbstractGatewayTest {
         long subscriberId = subscriberRepository
                 .create(uniqueName("sub"), "http://127.0.0.1:9/sink", "sub-secret", "snapshot.ingested")
                 .id();
-        String me = JsonPath.read(
-                mockMvc.perform(get("/api/me").with(oidcLogin()))
-                        .andReturn()
-                        .getResponse()
-                        .getContentAsString(),
-                "$.username");
+        try {
+            String me = JsonPath.read(
+                    mockMvc.perform(get("/api/me").with(oidcLogin()))
+                            .andReturn()
+                            .getResponse()
+                            .getContentAsString(),
+                    "$.username");
 
-        String secret = enableWebhookMode(name);
-        trigger(name, "{}", signer.sign(secret, "{}")).andExpect(status().isAccepted());
-        Snapshot fromWebhook = awaitSnapshot(marketplace.id());
+            String secret = enableWebhookMode(name);
+            trigger(name, "{}", signer.sign(secret, "{}")).andExpect(status().isAccepted());
+            Snapshot fromWebhook = awaitSnapshot(marketplace.id());
 
-        addUpstreamCommit(upstream, uniqueName("more"));
-        marketplaceRepository.updateSyncMode(name, Marketplace.SYNC_SCHEDULED, null);
-        syncService.sweep(Integer.MAX_VALUE);
-        List<Snapshot> snapshots = snapshotRepository.listByMarketplace(marketplace.id());
-        assertThat(snapshots).hasSize(2);
+            addUpstreamCommit(upstream, uniqueName("more"));
+            marketplaceRepository.updateSyncMode(name, Marketplace.SYNC_SCHEDULED, null);
+            syncService.sweep(Integer.MAX_VALUE);
+            List<Snapshot> snapshots = snapshotRepository.listByMarketplace(marketplace.id());
+            assertThat(snapshots).hasSize(2);
 
-        List<Map<String, Object>> ledger = fetchLogRepository.list().stream()
-                .filter(entry -> name.equals(entry.get("marketplace")))
-                .toList();
-        assertThat(ledger)
-                .anySatisfy(entry -> {
-                    assertThat(entry.get("event")).isEqualTo("sync-mode-changed");
-                    assertThat(entry.get("principal")).isEqualTo(me);
-                    assertThat(entry.get("detail")).isEqualTo("webhook");
-                })
-                .anySatisfy(entry -> {
-                    assertThat(entry.get("event")).isEqualTo("snapshot-ingested");
-                    assertThat(entry.get("principal")).isEqualTo(SyncService.WEBHOOK_ACTOR);
-                    assertThat(entry.get("sha")).isEqualTo(fromWebhook.sha());
-                })
-                .anySatisfy(entry -> {
-                    assertThat(entry.get("event")).isEqualTo("snapshot-ingested");
-                    assertThat(entry.get("principal")).isEqualTo(SyncService.SCHEDULER_ACTOR);
-                });
+            List<Map<String, Object>> ledger = fetchLogRepository.list().stream()
+                    .filter(entry -> name.equals(entry.get("marketplace")))
+                    .toList();
+            assertThat(ledger)
+                    .anySatisfy(entry -> {
+                        assertThat(entry.get("event")).isEqualTo("sync-mode-changed");
+                        assertThat(entry.get("principal")).isEqualTo(me);
+                        assertThat(entry.get("detail")).isEqualTo("webhook");
+                    })
+                    .anySatisfy(entry -> {
+                        assertThat(entry.get("event")).isEqualTo("snapshot-ingested");
+                        assertThat(entry.get("principal")).isEqualTo(SyncService.WEBHOOK_ACTOR);
+                        assertThat(entry.get("sha")).isEqualTo(fromWebhook.sha());
+                    })
+                    .anySatisfy(entry -> {
+                        assertThat(entry.get("event")).isEqualTo("snapshot-ingested");
+                        assertThat(entry.get("principal")).isEqualTo(SyncService.SCHEDULER_ACTOR);
+                    });
 
-        // Each sync-triggered ingestion emitted the ordinary lifecycle event with its trigger actor.
-        List<String> payloads = deliveryRepository.listBySubscriber(subscriberId).stream()
-                .map(delivery -> delivery.payload())
-                .filter(payload -> payload.contains("\"" + name + "\""))
-                .toList();
-        assertThat(payloads).hasSize(2);
-        assertThat(payloads).anySatisfy(payload -> assertThat(payload).contains("\"actor\":\"webhook\""));
-        assertThat(payloads).anySatisfy(payload -> assertThat(payload).contains("\"actor\":\"scheduler\""));
+            // Each sync-triggered ingestion emitted the ordinary lifecycle event with its trigger actor.
+            List<String> payloads = deliveryRepository.listBySubscriber(subscriberId).stream()
+                    .map(delivery -> delivery.payload())
+                    .filter(payload -> payload.contains("\"" + name + "\""))
+                    .toList();
+            assertThat(payloads).hasSize(2);
+            assertThat(payloads).anySatisfy(payload -> assertThat(payload).contains("\"actor\":\"webhook\""));
+            assertThat(payloads).anySatisfy(payload -> assertThat(payload).contains("\"actor\":\"scheduler\""));
+        } finally {
+            // Observes this test's own ingestions and nothing more: left registered it would go on
+            // collecting a delivery from every later class's events. Cascades its deliveries.
+            subscriberRepository.delete(subscriberId);
+        }
     }
 
     @Test
