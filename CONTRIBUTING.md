@@ -4,8 +4,10 @@
 
 - JDK 25 (Temurin; GraalVM CE 25 only for native builds)
 - A container runtime (Testcontainers/Arconia dev services, e2e infrastructure).
-  Docker works out of the box; Podman needs setup — see "Local observability
-  and dev services" below
+  Docker works out of the box; Podman needs setup — Ryuk cannot start rootless
+  and the Floci dev service needs the in-VM socket path. Both present as a wall
+  of test errors rather than as an environment problem; see
+  [Running the gates on Podman](docs/manual/guides/local-development.md#running-the-gates-on-podman)
 - `git`, `gh`
 - reqstool CLI (`pipx install reqstool` — see `.github/workflows/ci.yml` for the
   currently pinned version) and OpenSpec CLI (`npm i -g @fission-ai/openspec`)
@@ -85,7 +87,11 @@ final job joins the gates and e2e jobs' junit results for the reqstool and
 OpenSpec gates.
 
 `clean` matters for the reqstool gate: incremental compilation truncates the
-generated annotation files.
+generated annotation files. The list is an ordered sequence, not a set:
+`reqstool status` reads the portal suites' JUnit output from
+`src/main/frontend/test-results/`, so it must run after `pnpm e2e`. It also
+**exits 0 even when it prints FAIL** — read its last line rather than its exit
+code.
 
 ## Building and running the packaged artifacts
 
