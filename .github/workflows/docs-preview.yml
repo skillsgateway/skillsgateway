@@ -37,11 +37,11 @@ jobs:
       # which is what the comment step's own guard is for.
       pull-requests: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@v7.0.0
         with:
-          python-version: '3.13'
+          python-version: '3.14.7'
 
       - name: Install the documentation toolchain
         run: pip install -r docs/requirements.txt htmlark
@@ -68,7 +68,7 @@ jobs:
       # from the filename and allows exactly one file.
       - name: Upload the single-file site
         id: upload
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           path: ${{ steps.render.outputs.name }}
           archive: false

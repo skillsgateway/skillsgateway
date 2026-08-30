@@ -20,7 +20,7 @@ jobs:
     name: Breaking change detection
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           # The baseline is resolved with git merge-base, which needs history.
           fetch-depth: 0

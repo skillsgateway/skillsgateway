@@ -59,7 +59,7 @@ services:
   # client pointed at http://localhost:4566.
   floci:
     profiles: ["object-store"]
-    image: docker.io/floci/floci:1.5.33
+    image: docker.io/floci/floci:1.7.0
     environment:
       SERVICES: s3
     ports:
