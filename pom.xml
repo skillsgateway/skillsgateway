@@ -37,7 +37,7 @@
         <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
         <checkstyle.version>13.11.0</checkstyle.version>
         <native-plugin.version>1.1.10</native-plugin.version>
-        <reqstool-plugin.version>1.0.4</reqstool-plugin.version>
+        <reqstool-plugin.version>1.1.0</reqstool-plugin.version>
         <arconia.version>0.29.0</arconia.version>
         <awssdk.version>2.46.7</awssdk.version>
         <spring-cloud-aws.version>4.1.1</spring-cloud-aws.version>
