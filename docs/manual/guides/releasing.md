@@ -45,6 +45,38 @@ Releases may only be cut from `main`, `hotfix/*` or `release/*`, and only from
 a commit that is reachable from that branch and does not already carry a
 release tag.
 
+### The version between tags
+
+On any commit that is not itself tagged, Nisse derives a `-SNAPSHOT` version by
+increasing the last release tag, and it reads the size of that increase from
+the **Conventional Commits** in `tag..HEAD` — the same source the release
+workflow derives from. `.mvn/maven.config` selects it:
+
+```
+-Dnisse.source.jgit.versionIncrement=conventionalCommits
+-Dnisse.source.jgit.versionIncrement.zeroMajorDemotion=true
+```
+
+The highest increase in the range wins. Against a `0.1.0` tag:
+
+| Highest commit in `tag..HEAD` | Version on `main` |
+| --- | --- |
+| `fix:`, `chore:`, or anything not a Conventional Commit | `0.1.1-N-SNAPSHOT` |
+| `feat:` | `0.2.0-N-SNAPSHOT` |
+| `feat!:`, or a `BREAKING CHANGE:` footer | `0.2.0-N-SNAPSHOT` |
+
+`N` is the number of commits since the tag. A breaking change lands on the
+minor rather than the major because `zeroMajorDemotion` holds the `0.x` line —
+which is the same rule the release workflow applies, and the reason reaching
+`1.0.0` needs `version` and `force` together.
+
+The consequence worth stating plainly: **every commit message is a vote on the
+next version.** A `feat:` in a pull request moves the whole line's minor, and a
+`!` moves it as far as the pre-1.0 rule allows.
+
+Until the first release tag exists there is nothing to increase, so the version
+stays at the `0.1.0-N-SNAPSHOT` fallback whatever the commits say.
+
 ## Running it
 
 **Actions → Release → Run workflow.** The branch you pick in the dropdown is
