@@ -96,7 +96,7 @@
 - [x] 7.2 Author `SVC_GW_0132`–`SVC_GW_0137` in
       `docs/reqstool/software_verification_cases.yml`.
 - [x] 7.3 Annotate every new test with `@SVCs`.
-- [ ] 7.4 `reqstool status local -p docs/reqstool` ends PASS after
+- [x] 7.4 `reqstool status local -p docs/reqstool` ends PASS after
       `./mvnw clean verify`.
 
 ## 8. Documentation
@@ -110,13 +110,13 @@
 
 ## 9. Gates and evidence
 
-- [ ] 9.1 `./mvnw clean verify`
-- [ ] 9.2 `(cd src/main/frontend && pnpm test:stories)`
-- [ ] 9.3 `(cd src/main/frontend && pnpm e2e)`
-- [ ] 9.4 `reqstool status local -p docs/reqstool` — ends PASS
-- [ ] 9.5 `openspec validate --all --strict`
+- [x] 9.1 `./mvnw clean verify`
+- [x] 9.2 `(cd src/main/frontend && pnpm test:stories)`
+- [x] 9.3 `(cd src/main/frontend && pnpm e2e)`
+- [x] 9.4 `reqstool status local -p docs/reqstool` — ends PASS
+- [x] 9.5 `openspec validate --all --strict`
 - [x] 9.6 `mkdocs build --strict`
-- [ ] 9.7 Write `evidence.md` — the commands and pasted result tails of one final
+- [x] 9.7 Write `evidence.md` — the commands and pasted result tails of one final
       fresh run after the last code edit, plus the commit SHA.
-- [ ] 9.8 File the separate issue for the `GitFacadeConfiguration` fetch-audit ref
+- [x] 9.8 File the separate issue for the `GitFacadeConfiguration` fetch-audit ref
       mislabelling, referenced as out of scope in the proposal.
