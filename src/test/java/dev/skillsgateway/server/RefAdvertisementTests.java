@@ -75,7 +75,9 @@ class RefAdvertisementTests extends AbstractGatewayTest {
         String leftover = "refs/catalog/" + name;
         try (Repository catalog = storage.published("catalog")) {
             ObjectId tip = catalog.resolve("refs/heads/main");
-            assertThat(tip).as("the catalog serves a tip to hang the residue off").isNotNull();
+            assertThat(tip)
+                    .as("the catalog serves a tip to hang the residue off")
+                    .isNotNull();
             RefUpdate residue = catalog.updateRef(leftover);
             residue.setNewObjectId(tip);
             residue.setForceUpdate(true);

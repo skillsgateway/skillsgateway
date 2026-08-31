@@ -5,14 +5,12 @@ import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Stream;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryBuilder;
 
@@ -21,10 +19,6 @@ public class FilesystemGitStorage implements GitStorage {
     private static final String MAIN = "main";
     private static final String SNAPSHOT_REF_PREFIX = "refs/snapshots/";
     private static final String GIT_SUFFIX = ".git";
-
-    /** The results a forced deletion reports when the ref is gone afterwards. */
-    private static final Set<RefUpdate.Result> DELETED =
-            EnumSet.of(RefUpdate.Result.FORCED, RefUpdate.Result.NEW, RefUpdate.Result.NO_CHANGE);
 
     private final Path quarantineDir;
     private final Path publishedDir;
@@ -117,6 +111,37 @@ public class FilesystemGitStorage implements GitStorage {
         }
     }
 
+    @Override
+    @Requirements({"GW_0132", "GW_0112"})
+    public boolean commitPublication(String marketplace, String sha) throws IOException {
+        try (Repository published = openOrCreate(publishedDir.resolve(marketplace + GIT_SUFFIX))) {
+            ObjectId tip = ObjectId.fromString(sha);
+            boolean startedTheServing = published.resolve(Constants.R_HEADS + MAIN) == null;
+            String pinned = SNAPSHOT_REF_PREFIX + sha;
+
+            // RefDirectory does not perform atomic transactions, so all-or-nothing is achieved by
+            // undoing rather than by the reference database: the pinned reference is the visible
+            // half, and if the served tip then refuses to move it is removed again. The alternative
+            // is what this change exists to delete -- a snapshot fetchable by name that the
+            // marketplace does not resolve to.
+            RefTransitions.write(published, pinned, tip);
+            try {
+                RefTransitions.write(published, Constants.R_HEADS + MAIN, tip);
+            } catch (IOException refused) {
+                try {
+                    RefTransitions.delete(published, pinned);
+                } catch (IOException leftBehind) {
+                    // Both failures matter: the publication did not happen, and the estate is now
+                    // holding a reference nobody asked it to serve.
+                    refused.addSuppressed(leftBehind);
+                }
+                throw refused;
+            }
+            RefTransitions.delete(published, STAGING_REF_PREFIX + sha);
+            return startedTheServing;
+        }
+    }
+
     /**
      * Deletes a ref if it is there. Force is required because the ref is not being fast-forwarded
      * to anything — the whole point is that nothing replaces it.
@@ -129,15 +154,7 @@ public class FilesystemGitStorage implements GitStorage {
      * entry that disagrees with what the facade serves is worse than a failed revocation.
      */
     private static void deleteRef(Repository repository, String ref) throws IOException {
-        if (repository.exactRef(ref) == null) {
-            return;
-        }
-        RefUpdate update = repository.updateRef(ref);
-        update.setForceUpdate(true);
-        RefUpdate.Result result = update.delete();
-        if (!DELETED.contains(result)) {
-            throw new IOException("could not delete %s in %s: %s".formatted(ref, repository.getDirectory(), result));
-        }
+        RefTransitions.delete(repository, ref);
     }
 
     @Requirements({"GW_0112"})

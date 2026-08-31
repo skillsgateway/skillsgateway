@@ -412,5 +412,10 @@ class StorageMigrationTests {
         public boolean unpublish(String marketplace, String sha) throws IOException {
             return delegate.unpublish(marketplace, sha);
         }
+
+        @Override
+        public boolean commitPublication(String marketplace, String sha) throws IOException {
+            return delegate.commitPublication(marketplace, sha);
+        }
     }
 }

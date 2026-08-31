@@ -111,6 +111,24 @@ a correctly-detected, retryable conflict into a failed approval.
 contract suite has to grow. That is the point: the suite is what makes a backend
 substitutable, and publication was missing from it.
 
+### 1b. Publication is also *broken* on the object-store backend, which settles where object transfer belongs
+
+Found while implementing decision 1, and it strengthens it. `doApprove` builds
+its fetch remote from `quarantine.getDirectory().getAbsolutePath()`. A
+`DfsRepository` has no working directory — probed directly against the
+object-store backend, `getDirectory()` returns `null` — so real approval on that
+backend raises `NullPointerException` before it reaches the ref update at all.
+
+Nothing caught this because **no test anywhere calls `ApprovalService.approve` on
+the object-store backend**: the storage contract suite is written against the seam
+and simulates publication by writing refs directly, and the object-store suites do
+the same. Publication was the one transition with no cross-backend coverage,
+which is precisely how it also became the one transition outside the seam.
+
+So object transfer cannot be a path-based fetch performed by the caller. Each
+backend has to own how objects move between its own repositories, which is an
+independent argument for decision 1 and decides decision 2's shape.
+
 ### 2. Object transfer is separated from the ref transition, and stages out of sight
 
 The refspec `+refs/snapshots/<sha>:refs/snapshots/<sha>` cannot be used as the

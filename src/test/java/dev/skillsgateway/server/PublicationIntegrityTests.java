@@ -54,7 +54,8 @@ class PublicationIntegrityTests extends AbstractGatewayTest {
             lock = lockServedRef(published);
         }
         try {
-            mockMvc.perform(post("/api/snapshots/%d/approve".formatted(next.id())).with(oidcLogin()))
+            mockMvc.perform(post("/api/snapshots/%d/approve".formatted(next.id()))
+                            .with(oidcLogin()))
                     .andExpect(status().is5xxServerError());
         } finally {
             Files.deleteIfExists(lock);
@@ -69,8 +70,8 @@ class PublicationIntegrityTests extends AbstractGatewayTest {
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        List<String> approvals = JsonPath.read(
-                audit, "$[?(@.event == 'snapshot-approved' && @.sha == '%s')].sha".formatted(next.sha()));
+        List<String> approvals =
+                JsonPath.read(audit, "$[?(@.event == 'snapshot-approved' && @.sha == '%s')].sha".formatted(next.sha()));
         assertThat(approvals)
                 .as("the ledger must not record a publication that did not happen")
                 .isEmpty();

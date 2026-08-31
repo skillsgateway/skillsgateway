@@ -3,6 +3,7 @@ package dev.skillsgateway.server.storage;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatIOException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.storage.objectstore.ObjectStoreTestSupport;
@@ -218,6 +219,90 @@ class GitStorageContractTests {
                             .toList())
                     .as("publication puts exactly the served tip and the pinned snapshot on the wire")
                     .containsExactlyInAnyOrder(MAIN, SNAPSHOT_PREFIX + tip.name());
+        }
+    }
+
+    // --- 3.1b publication, the transition that used to live outside this seam -------------------
+
+    /**
+     * Publication as a seam operation, on every backend.
+     *
+     * <p>This case did not exist while publication was performed by {@code ApprovalService} against
+     * a raw repository, and its absence hid two defects at once: a discarded {@code RefUpdate}
+     * result, and object transfer built from {@code quarantine.getDirectory().getAbsolutePath()} —
+     * {@code null} on a DFS repository, so approval on the object-store backend raised
+     * {@code NullPointerException} and no test drove it.
+     */
+    @ParameterizedTest
+    @MethodSource("backends")
+    @SVCs({"SVC_GW_0132"})
+    void publicationTransfersObjectsAndLandsBothRefs(Backend backend) throws IOException {
+        String marketplace = marketplace();
+        GitStorage storage = backend.storage();
+        ObjectId tip;
+        try (Repository quarantine = storage.quarantine(marketplace)) {
+            tip = commit(quarantine, "ingested, vetted, held");
+            setRef(quarantine, SNAPSHOT_PREFIX + tip.name(), tip);
+        }
+
+        assertThat(storage.publish(marketplace, tip.name()))
+                .as("the first publication is what starts the marketplace serving")
+                .isTrue();
+
+        try (Repository published = storage.published(marketplace)) {
+            assertThat(published.getObjectDatabase().has(tip))
+                    .as("the objects came across without either repository having a path")
+                    .isTrue();
+            assertThat(published.getRefDatabase().getRefsByPrefix("refs/").stream()
+                            .map(Ref::getName)
+                            .toList())
+                    .as("exactly the served tip and the pinned snapshot; staging is not left behind")
+                    .containsExactlyInAnyOrder(MAIN, SNAPSHOT_PREFIX + tip.name());
+        }
+
+        assertThat(storage.publish(marketplace, tip.name()))
+                .as("republishing the tip it already serves starts nothing")
+                .isFalse();
+    }
+
+    /**
+     * The #149 guarantee at the seam: a refused transition publishes nothing at all — not the served
+     * tip, and not the snapshot reference that is advertised in its own right.
+     */
+    @ParameterizedTest
+    @MethodSource("backends")
+    @SVCs({"SVC_GW_0132"})
+    void aRefusedPublicationLeavesNothingOnTheWire(Backend backend) throws IOException {
+        String marketplace = marketplace();
+        GitStorage storage = backend.storage();
+        ObjectId tip;
+        try (Repository quarantine = storage.quarantine(marketplace)) {
+            tip = commit(quarantine, "ingested, vetted, held");
+            setRef(quarantine, SNAPSHOT_PREFIX + tip.name(), tip);
+        }
+        // Ensure the published repository exists before it is obstructed, the way a marketplace that
+        // has never served yet does.
+        storage.published(marketplace).close();
+        backend.obstruction().obstruct(marketplace, MAIN);
+
+        assertThatThrownBy(() -> storage.publish(marketplace, tip.name()))
+                .as("a refused publication is raised, never reported as done")
+                .isInstanceOf(IOException.class);
+
+        try (Repository published = storage.published(marketplace)) {
+            // Not "no references at all": the object-store obstruction moves the served tip to a
+            // competing object id of its own to simulate a losing compare-and-swap. The guarantee is
+            // about *this* snapshot -- nothing the facade advertises may resolve to it.
+            assertThat(published.exactRef(SNAPSHOT_PREFIX + tip.name()))
+                    .as("the pinned reference is advertised in its own right, so it must not survive")
+                    .isNull();
+            assertThat(published.getRefDatabase().getRefsByPrefix("refs/").stream()
+                            .filter(ref -> !ref.getName().startsWith(GitStorage.STAGING_REF_PREFIX))
+                            .filter(ref -> tip.equals(ref.getObjectId()))
+                            .map(Ref::getName)
+                            .toList())
+                    .as("no advertised reference resolves to a snapshot whose publication was refused")
+                    .isEmpty();
         }
     }
 

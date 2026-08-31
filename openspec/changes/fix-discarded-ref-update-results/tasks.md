@@ -28,22 +28,22 @@
 
 ## 3. Publication joins the seam (GW_0132 / SVC_GW_0132)
 
-- [ ] 3.1 Add `boolean publish(String marketplace, String sha)` to `GitStorage`,
+- [x] 3.1 Add `boolean publish(String marketplace, String sha)` to `GitStorage`,
       documenting it as the inverse of `unpublish` and its return as "this call is
       what started the marketplace serving".
-- [ ] 3.2 Implement object transfer into the unadvertised `refs/staging/<sha>`
+- [x] 3.2 Implement object transfer into the unadvertised `refs/staging/<sha>`
       namespace, shared across backends.
-- [ ] 3.3 Implement the atomic transition in `FilesystemGitStorage` as a batched
+- [x] 3.3 Implement the atomic transition in `FilesystemGitStorage` as a batched
       ref update with every result checked.
-- [ ] 3.4 Implement it in `ObjectStoreGitStorage` as one `ManifestStore.transact`
+- [x] 3.4 Implement it in `ObjectStoreGitStorage` as one `ManifestStore.transact`
       with both edits, mirroring `unpublish`.
-- [ ] 3.5 Annotate both implementations with `@Requirements({"GW_0132", "GW_0112"})`.
-- [ ] 3.6 Extend the storage contract suite: publication lands both refs or
+- [x] 3.5 Annotate both implementations with `@Requirements({"GW_0132", "GW_0112"})`.
+- [x] 3.6 Extend the storage contract suite: publication lands both refs or
       neither; a refused transition raises rather than reporting success; the
       staging ref is gone afterwards. Runs against both backends.
 - [ ] 3.7 Extend the concurrency suite with publish-races-revoke — the
       interleaving that surfaced #149 — and publish-races-publish.
-- [ ] 3.8 Prove the new contract cases fail against a deliberately non-atomic
+- [x] 3.8 Prove the new contract cases fail against a deliberately non-atomic
       implementation (write one ref, skip the other) before trusting them.
 
 ## 4. Approval uses the seam and repairs on failure (GW_0133 / SVC_GW_0133)
@@ -68,7 +68,7 @@
 
 ## 5. The remaining raw ref updates (GW_0135, GW_0136, GW_0137)
 
-- [ ] 5.1 Extract one checked ref-update helper, moving `StorageMigration`'s
+- [x] 5.1 Extract one checked ref-update helper, moving `StorageMigration`'s
       `WRITTEN` and `FilesystemGitStorage`'s `DELETED` sets into it; leave both
       call sites behaviourally unchanged.
 - [ ] 5.2 Check the result in `CatalogService.pruneInternalRefs` and
