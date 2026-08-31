@@ -86,6 +86,7 @@ public class IngestionService {
         }
     }
 
+    @Requirements({"GW_0137"})
     private Snapshot ingestLocked(Marketplace marketplace, String actor) {
         try (Repository repo = storage.quarantine(marketplace.name())) {
             ObjectId sha = fetchIncoming(repo, marketplace);

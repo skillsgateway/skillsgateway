@@ -1051,7 +1051,7 @@ requirements:
     significance: shall
     description: The system shall remove a snapshot's quarantine reference before deleting its record; shall raise a removal that did not take effect; shall leave the record in place and record no deletion on the audit ledger when the reference could not be removed; and shall count such a snapshot as not acted on, so a later pass attempts it again.
     rationale: The purge deletes the record and writes the ledger entry after removing the reference, so a removal that failed quietly took the record with it and left the content behind — and because the record was gone, nothing would ever revisit it. The snapshot would be retained indefinitely, garbage collection would find nothing to reclaim, and the ledger would assert a deletion that had not happened, which is the one claim a retention promise cannot afford to make falsely. The recovery this requires already existed in the pass; only the discarded result kept it from ever running.
-    categories: ["reliability", "legal"]
+    categories: ["reliability", "functional-suitability"]
     revision: 0.1.0
 
   - id: GW_0137
