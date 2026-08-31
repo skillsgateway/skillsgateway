@@ -2124,13 +2124,46 @@ exactly what the credential helper expects; a bad or revoked token gets 401 too.
 touch <code>/git/**</code>. A valid PAT is still required.</p>
 </div>
 <h2 id="what-is-served">What is served<a class="headerlink" href="#what-is-served" title="Permanent link">&para;</a></h2>
-<p>Exactly one ref, <code>refs/heads/main</code>, from
-<code>{data-dir}/published/{marketplace}.git</code>.</p>
+<p>Two namespaces, from <code>{data-dir}/published/{marketplace}.git</code>, and nothing else:</p>
+<table>
+<thead>
+<tr>
+<th>Advertised</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>refs/heads/main</code></td>
+<td>The served tip. This is what a clone checks out.</td>
+</tr>
+<tr>
+<td><code>refs/snapshots/&lt;sha&gt;</code></td>
+<td>Every approved snapshot, fetchable by name in its own right — including one a later approval has superseded, until it is revoked.</td>
+</tr>
+</tbody>
+</table>
+<p><code>HEAD</code> is advertised too, because a clone reads it to learn which branch to check
+out.</p>
+<p>This is an <strong>allowlist</strong>, not a description of what the repositories happen to
+contain. Upload-pack advertises every ref it can see unless told otherwise, and
+every advertised tip is a legal <code>want</code>, so the facade states its surface
+explicitly: references the gateway keeps for its own purposes — the catalog's
+rebuild scaffolding, the staging namespace publication uses before it commits to
+serving anything — are never on the wire, whether or not the code that tidies
+them up succeeded.</p>
 <p>Repository resolution opens only the published path and returns nothing unless
 <code>refs/heads/main</code> resolves. A marketplace that has been registered and ingested
 but never approved therefore returns <strong>404</strong>: there is nothing to serve, and the
 quarantine repository is not reachable from here by any code path.</p>
 <p>The served SHA changes only when a reviewer approves a snapshot.</p>
+<div class="admonition note">
+<p class="admonition-title">Revocation removes both refs</p>
+<p>Because a snapshot is fetchable by name as well as through <code>main</code>, taking one
+off the wire means removing both references. Revoking a snapshot that a later
+approval has already superseded removes only its own pinned reference and
+leaves the marketplace serving.</p>
+</div>
 <h2 id="the-facade-accepts-no-writes">The facade accepts no writes<a class="headerlink" href="#the-facade-accepts-no-writes" title="Permanent link">&para;</a></h2>
 <p>Receive-pack is disabled by construction — the servlet is configured with a null
 receive-pack factory, so no <code>ReceivePack</code> can be created at all. <code>git push</code> to

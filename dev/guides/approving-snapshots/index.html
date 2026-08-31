@@ -958,6 +958,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#when-an-approval-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When an approval fails
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#rejection-is-not-deletion" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2193,6 +2204,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#when-an-approval-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When an approval fails
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#rejection-is-not-deletion" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2502,6 +2524,24 @@ reviewer, a new timestamp, and the revocation marks cleared. What the snapshot
 was revoked for stays in the audit ledger.</p>
 <p>Rejecting it instead is the terminal answer, and the right one when the finding
 is not something anyone intends to accept.</p>
+<h2 id="when-an-approval-fails">When an approval fails<a class="headerlink" href="#when-an-approval-fails" title="Permanent link">&para;</a></h2>
+<p>An approval publishes by moving the marketplace's served references onto the
+snapshot. That is a single all-or-nothing transition, and it can be refused — by
+a competing writer holding the reference, by the storage underneath it, or, on
+the object-store backend with more than one replica, by an ordinary lost
+compare-and-swap.</p>
+<p>A refused publication <strong>fails the approval</strong>. Nothing is published, the snapshot
+stays exactly as it was — held, or revoked, with its revocation intact — the
+audit ledger records no approval, and no lifecycle event is emitted. Retry the
+approval; there is nothing to clean up first.</p>
+<div class="admonition danger">
+<p class="admonition-title">Do not treat a failed approval as a published one</p>
+<p>Earlier versions reported such an approval as successful: the snapshot was
+recorded as approved, the ledger said so, and subscribers were notified, while
+the facade went on serving the previous tip. If you are looking at an estate
+where the database and the facade disagree about what is served, that is the
+cause, and re-approving the affected snapshot is the fix.</p>
+</div>
 <h2 id="rejection-is-not-deletion">Rejection is not deletion<a class="headerlink" href="#rejection-is-not-deletion" title="Permanent link">&para;</a></h2>
 <p>The rejected snapshot stays as evidence — it is the record that someone looked
 at this exact upstream commit and said no.</p>
