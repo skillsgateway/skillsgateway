@@ -71,15 +71,15 @@
 - [x] 5.1 Extract one checked ref-update helper, moving `StorageMigration`'s
       `WRITTEN` and `FilesystemGitStorage`'s `DELETED` sets into it; leave both
       call sites behaviourally unchanged.
-- [ ] 5.2 Check the result in `CatalogService.pruneInternalRefs` and
+- [x] 5.2 Check the result in `CatalogService.pruneInternalRefs` and
       `CatalogService.rebuild`; annotate `@Requirements({"GW_0135"})`.
-- [ ] 5.3 Check the pin delete in `RetentionService`, so a purge that cannot
+- [x] 5.3 Check the pin delete in `RetentionService`, so a purge that cannot
       remove the pin does not proceed to purge the row and write the ledger entry;
       annotate `@Requirements({"GW_0136"})`.
-- [ ] 5.4 Check the pin in `IngestionService`; annotate `@Requirements({"GW_0137"})`.
-- [ ] 5.5 Adversarial tests for each: a refused update must fail its operation,
+- [x] 5.4 Check the pin in `IngestionService`; annotate `@Requirements({"GW_0137"})`.
+- [x] 5.5 Adversarial tests for each: a refused update must fail its operation,
       and the retention case must leave the row unpurged and the ledger silent.
-- [ ] 5.6 Sweep the repository for any remaining discarded `update()`,
+- [x] 5.6 Sweep the repository for any remaining discarded `update()`,
       `forceUpdate()` or `delete()` result and assert in a test that none exists.
 
 ## 6. Staging hygiene

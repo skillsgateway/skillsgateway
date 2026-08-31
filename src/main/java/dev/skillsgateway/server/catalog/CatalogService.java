@@ -8,6 +8,7 @@ import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.storage.GitStorage;
+import dev.skillsgateway.server.storage.RefTransitions;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.IOException;
@@ -28,7 +29,6 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.TreeFormatter;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -286,19 +286,25 @@ public class CatalogService {
             ObjectId commitId = inserter.insert(commit);
             inserter.flush();
 
-            RefUpdate main = catalog.updateRef(MAIN);
-            main.setNewObjectId(commitId);
-            main.forceUpdate();
+            // Checked (GW_0135): a refused move would have this method return a commit the facade
+            // does not serve, and the rebuild endpoint report a sha nobody can fetch.
+            RefTransitions.write(catalog, MAIN, commitId);
             return commitId;
         }
     }
 
-    /** The fetch refs are scaffolding; only main (and nothing else) stays advertised. */
+    /**
+     * The fetch refs are scaffolding; only main (and nothing else) stays in the catalog repository.
+     *
+     * <p>Checked (GW_0135). The facade now advertises an allowlist, so a reference left here is no
+     * longer served — but it still holds objects a later revocation should have made unreachable,
+     * and a prune that reported success while leaving them is the same class of untruth as a
+     * publication that did not happen.
+     */
+    @Requirements({"GW_0135"})
     private static void pruneInternalRefs(Repository catalog) throws IOException {
         for (Ref ref : catalog.getRefDatabase().getRefsByPrefix(INTERNAL_REF_PREFIX)) {
-            RefUpdate update = catalog.updateRef(ref.getName());
-            update.setForceUpdate(true);
-            update.delete();
+            RefTransitions.delete(catalog, ref.getName());
         }
     }
 }

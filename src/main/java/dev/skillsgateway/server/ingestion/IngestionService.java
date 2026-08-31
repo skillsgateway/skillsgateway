@@ -5,6 +5,7 @@ import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
 import dev.skillsgateway.server.storage.GitStorage;
+import dev.skillsgateway.server.storage.RefTransitions;
 import dev.skillsgateway.server.vetting.VettingService;
 import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
@@ -19,7 +20,6 @@ import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -89,9 +89,10 @@ public class IngestionService {
     private Snapshot ingestLocked(Marketplace marketplace, String actor) {
         try (Repository repo = storage.quarantine(marketplace.name())) {
             ObjectId sha = fetchIncoming(repo, marketplace);
-            RefUpdate pin = repo.updateRef("refs/snapshots/" + sha.name());
-            pin.setNewObjectId(sha);
-            pin.forceUpdate();
+            // Checked (GW_0137): the pin is what a later approval publishes from and what retention
+            // treats as the snapshot's anchor. A refused pin that returned quietly would leave a
+            // reviewable, approvable row whose objects only the transient staging reference holds.
+            RefTransitions.write(repo, "refs/snapshots/" + sha.name(), sha);
             Optional<Snapshot> existing = snapshotRepository.findByMarketplaceAndSha(marketplace.id(), sha.name());
             if (existing.isPresent()) {
                 return existing.get();
