@@ -6,9 +6,7 @@ Registering skill marketplaces — fetched from an upstream, or hosted by the
 gateway itself and published to by push — and ingesting them into held,
 SHA-identified quarantine snapshots, enforcing that all plugin sources are
 local to the marketplace repository.
-
 ## Requirements
-
 ### Requirement: GW_0001
 The system SHALL implement GW_0001.
 
@@ -62,3 +60,10 @@ The system SHALL implement GW_0103.
 
 #### Scenario: SVC_GW_0103
 The system SHALL pass SVC_GW_0103.
+
+### Requirement: GW_0137
+The system SHALL implement GW_0137.
+
+#### Scenario: SVC_GW_0137
+The system SHALL pass SVC_GW_0137.
+

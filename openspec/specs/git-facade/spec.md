@@ -5,9 +5,7 @@
 Serving approved snapshots as read-only git repositories over smart-HTTP for
 unmodified git clients, exposing only approved content and audit-logging
 every fetch.
-
 ## Requirements
-
 ### Requirement: GW_0006
 The system SHALL implement GW_0006.
 
@@ -31,3 +29,10 @@ The system SHALL implement GW_0102.
 
 #### Scenario: SVC_GW_0102
 The system SHALL pass SVC_GW_0102.
+
+### Requirement: GW_0134
+The system SHALL implement GW_0134.
+
+#### Scenario: SVC_GW_0134
+The system SHALL pass SVC_GW_0134.
+
