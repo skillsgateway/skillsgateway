@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import dev.skillsgateway.server.catalog.CatalogService;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.storage.GitStorage;
+import io.github.reqstool.annotations.SVCs;
 import java.nio.file.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ObjectId;
@@ -34,6 +35,7 @@ class RefAdvertisementTests extends AbstractGatewayTest {
     private CatalogService catalogService;
 
     @Test
+    @SVCs({"SVC_GW_0134"})
     void an_approved_snapshot_stays_fetchable_by_name() throws Exception {
         String name = uniqueName("corp");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
@@ -64,6 +66,31 @@ class RefAdvertisementTests extends AbstractGatewayTest {
     }
 
     @Test
+    @SVCs({"SVC_GW_0134"})
+    void a_staging_ref_is_never_advertised() throws Exception {
+        String name = uniqueName("corp");
+        Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
+        Snapshot approved = approve(registered.snapshot().id());
+
+        // Publication stages objects here before it commits to serving them, so whatever a crash
+        // leaves in this namespace must be invisible on the wire -- that is what lets the transfer
+        // happen before the transition rather than as its side effect.
+        String staging = GitStorage.STAGING_REF_PREFIX + approved.sha();
+        try (Repository published = storage.published(name)) {
+            RefUpdate leftover = published.updateRef(staging);
+            leftover.setNewObjectId(ObjectId.fromString(approved.sha()));
+            leftover.setForceUpdate(true);
+            assertThat(leftover.forceUpdate()).isIn(RefUpdate.Result.NEW, RefUpdate.Result.FORCED);
+        }
+
+        GitResult lsRemote = git(null, "ls-remote", facadeUrl(name, newPat()));
+
+        assertThat(lsRemote.exitCode()).as(lsRemote.output()).isZero();
+        assertThat(lsRemote.output()).doesNotContain(staging);
+    }
+
+    @Test
+    @SVCs({"SVC_GW_0134"})
     void no_internal_catalog_ref_is_advertised() throws Exception {
         String name = uniqueName("corp");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));

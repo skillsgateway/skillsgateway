@@ -9,11 +9,13 @@ import com.jayway.jsonpath.JsonPath;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.retention.RetentionService;
 import dev.skillsgateway.server.storage.GitStorage;
+import io.github.reqstool.annotations.SVCs;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,12 @@ class RefRefusalTests extends AbstractGatewayTest {
     @Autowired
     private RetentionService retentionService;
 
+    @Autowired
+    private dev.skillsgateway.server.catalog.CatalogService catalogService;
+
+    @org.springframework.beans.factory.annotation.Value("${skills-gateway.catalog.name:catalog}")
+    private String catalogName;
+
     /** Holds a reference the way a competing writer would, so the transition is refused. */
     private boolean hasPin(String marketplace, String sha) throws Exception {
         try (Repository quarantine = storage.quarantine(marketplace)) {
@@ -50,6 +58,7 @@ class RefRefusalTests extends AbstractGatewayTest {
     }
 
     @Test
+    @SVCs({"SVC_GW_0136"})
     void a_purge_that_cannot_remove_the_pin_keeps_the_row_and_says_nothing() throws Exception {
         String name = uniqueName("retain");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
@@ -96,6 +105,7 @@ class RefRefusalTests extends AbstractGatewayTest {
     }
 
     @Test
+    @SVCs({"SVC_GW_0137"})
     void an_ingestion_that_cannot_pin_the_snapshot_fails() throws Exception {
         String name = uniqueName("pin");
         Path upstream = createUpstream(DEFAULT_MANIFEST);
@@ -118,5 +128,35 @@ class RefRefusalTests extends AbstractGatewayTest {
                         registered.marketplace().id(), nextSha))
                 .as("nothing is approvable that publication would later fail to find")
                 .isEmpty();
+    }
+
+    @Test
+    @SVCs({"SVC_GW_0135"})
+    void a_rebuild_that_cannot_prune_its_scaffolding_fails() throws Exception {
+        String name = uniqueName("cat");
+        Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
+        approve(registered.snapshot().id());
+        catalogService.rebuild();
+
+        // The scaffolding reference the next rebuild will try to remove, held by a competing writer.
+        String scaffolding = "refs/catalog/" + name;
+        Path lockFile;
+        try (Repository catalog = storage.published(catalogName)) {
+            assertThat(catalog.exactRef(scaffolding))
+                    .as("the rebuild prunes its own scaffolding, so it is not there between rebuilds")
+                    .isNull();
+            RefUpdate residue = catalog.updateRef(scaffolding);
+            residue.setNewObjectId(catalog.resolve("refs/heads/main"));
+            residue.setForceUpdate(true);
+            assertThat(residue.forceUpdate()).isIn(RefUpdate.Result.NEW, RefUpdate.Result.FORCED);
+            lockFile = lock(catalog, scaffolding);
+        }
+        try {
+            assertThatThrownBy(() -> catalogService.rebuild())
+                    .as("a prune that cannot remove a reference must not report the rebuild as done")
+                    .isNotNull();
+        } finally {
+            Files.deleteIfExists(lockFile);
+        }
     }
 }

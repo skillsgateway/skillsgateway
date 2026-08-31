@@ -84,28 +84,28 @@
 
 ## 6. Staging hygiene
 
-- [ ] 6.1 Decide and implement design open question 1: sweep stale
+- [x] 6.1 Decide and implement design open question 1: sweep stale
       `refs/staging/*` in retention, or rely on overwrite-on-next-publish. Record
       the decision in design.md.
-- [ ] 6.2 Test that a staging ref left behind serves nothing and does not block a
+- [x] 6.2 Test that a staging ref left behind serves nothing and does not block a
       later publication of the same sha.
 
 ## 7. Requirements and traceability
 
-- [ ] 7.1 Author `GW_0132`–`GW_0137` in `docs/reqstool/requirements.yml`.
-- [ ] 7.2 Author `SVC_GW_0132`–`SVC_GW_0137` in
+- [x] 7.1 Author `GW_0132`–`GW_0137` in `docs/reqstool/requirements.yml`.
+- [x] 7.2 Author `SVC_GW_0132`–`SVC_GW_0137` in
       `docs/reqstool/software_verification_cases.yml`.
-- [ ] 7.3 Annotate every new test with `@SVCs`.
+- [x] 7.3 Annotate every new test with `@SVCs`.
 - [ ] 7.4 `reqstool status local -p docs/reqstool` ends PASS after
       `./mvnw clean verify`.
 
 ## 8. Documentation
 
-- [ ] 8.1 `docs/manual/guides/approving-snapshots.md` — the failure mode: an
+- [x] 8.1 `docs/manual/guides/approving-snapshots.md` — the failure mode: an
       approval can fail with the snapshot still held, and what to do.
-- [ ] 8.2 `docs/manual/guides/storage-backends.md` — publication is atomic on both
+- [x] 8.2 `docs/manual/guides/storage-backends.md` — publication is atomic on both
       refs, and a lost compare-and-swap is an ordinary multi-replica outcome.
-- [ ] 8.3 `docs/manual/reference/git-facade.md` — advertisement is an explicit
+- [x] 8.3 `docs/manual/reference/git-facade.md` — advertisement is an explicit
       allowlist; state the two namespaces.
 
 ## 9. Gates and evidence
@@ -115,7 +115,7 @@
 - [ ] 9.3 `(cd src/main/frontend && pnpm e2e)`
 - [ ] 9.4 `reqstool status local -p docs/reqstool` — ends PASS
 - [ ] 9.5 `openspec validate --all --strict`
-- [ ] 9.6 `mkdocs build --strict`
+- [x] 9.6 `mkdocs build --strict`
 - [ ] 9.7 Write `evidence.md` — the commands and pasted result tails of one final
       fresh run after the last code edit, plus the commit SHA.
 - [ ] 9.8 File the separate issue for the `GitFacadeConfiguration` fetch-audit ref

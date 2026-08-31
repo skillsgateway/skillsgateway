@@ -77,8 +77,23 @@ exactly what the credential helper expects; a bad or revoked token gets 401 too.
 
 ## What is served
 
-Exactly one ref, `refs/heads/main`, from
-`{data-dir}/published/{marketplace}.git`.
+Two namespaces, from `{data-dir}/published/{marketplace}.git`, and nothing else:
+
+| Advertised | What it is |
+| --- | --- |
+| `refs/heads/main` | The served tip. This is what a clone checks out. |
+| `refs/snapshots/<sha>` | Every approved snapshot, fetchable by name in its own right — including one a later approval has superseded, until it is revoked. |
+
+`HEAD` is advertised too, because a clone reads it to learn which branch to check
+out.
+
+This is an **allowlist**, not a description of what the repositories happen to
+contain. Upload-pack advertises every ref it can see unless told otherwise, and
+every advertised tip is a legal `want`, so the facade states its surface
+explicitly: references the gateway keeps for its own purposes — the catalog's
+rebuild scaffolding, the staging namespace publication uses before it commits to
+serving anything — are never on the wire, whether or not the code that tidies
+them up succeeded.
 
 Repository resolution opens only the published path and returns nothing unless
 `refs/heads/main` resolves. A marketplace that has been registered and ingested
@@ -86,6 +101,13 @@ but never approved therefore returns **404**: there is nothing to serve, and the
 quarantine repository is not reachable from here by any code path.
 
 The served SHA changes only when a reviewer approves a snapshot.
+
+!!! note "Revocation removes both refs"
+
+    Because a snapshot is fetchable by name as well as through `main`, taking one
+    off the wire means removing both references. Revoking a snapshot that a later
+    approval has already superseded removes only its own pinned reference and
+    leaves the marketplace serving.
 
 ## The facade accepts no writes
 

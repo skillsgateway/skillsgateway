@@ -173,6 +173,21 @@ config:
 
 Leader election that removes the split is separate, later work.
 
+!!! note "Publication is one transition, and a lost race is ordinary"
+
+    Putting a snapshot on the wire moves two references — the served tip and the
+    snapshot's own pinned reference — and it does so as a single all-or-nothing
+    transition, so an observer never sees one without the other. On this backend
+    that is one conditional write of the reference manifest, retried internally
+    when it loses.
+
+    With more than one replica, or any concurrent revocation, losing that race is
+    an expected outcome rather than an error. What matters is that a transition
+    which did not take effect is raised rather than reported as done: a refused
+    publication fails the approval, publishes nothing, and leaves the snapshot to
+    be approved again. See
+    [Approving snapshots](approving-snapshots.md#when-an-approval-fails).
+
 !!! note "Revocation is not instantaneous across replicas"
 
     A replica serves the reference map it last read. `ref-freshness` (10 s by

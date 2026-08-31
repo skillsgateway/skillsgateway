@@ -270,6 +270,27 @@ was revoked for stays in the audit ledger.
 Rejecting it instead is the terminal answer, and the right one when the finding
 is not something anyone intends to accept.
 
+## When an approval fails
+
+An approval publishes by moving the marketplace's served references onto the
+snapshot. That is a single all-or-nothing transition, and it can be refused — by
+a competing writer holding the reference, by the storage underneath it, or, on
+the object-store backend with more than one replica, by an ordinary lost
+compare-and-swap.
+
+A refused publication **fails the approval**. Nothing is published, the snapshot
+stays exactly as it was — held, or revoked, with its revocation intact — the
+audit ledger records no approval, and no lifecycle event is emitted. Retry the
+approval; there is nothing to clean up first.
+
+!!! danger "Do not treat a failed approval as a published one"
+
+    Earlier versions reported such an approval as successful: the snapshot was
+    recorded as approved, the ledger said so, and subscribers were notified, while
+    the facade went on serving the previous tip. If you are looking at an estate
+    where the database and the facade disagree about what is served, that is the
+    cause, and re-approving the affected snapshot is the fix.
+
 ## Rejection is not deletion
 
 The rejected snapshot stays as evidence — it is the record that someone looked

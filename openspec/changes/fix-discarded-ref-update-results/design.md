@@ -300,6 +300,16 @@ refspec.
 
 ## Open Questions
 
-- Should retention actively sweep stale `refs/staging/*`, or is
-  overwrite-on-next-publish sufficient? Leaning sweep, since orphaned staging refs
-  pin objects garbage collection would otherwise reclaim.
+- **Settled: no active sweep in this change.** A staging reference is unadvertised,
+  so it serves nothing — asserted against a real client. A staging reference for a
+  snapshot that is later published is reused and cleared by the publication that
+  completes — asserted on both backends. What remains is a staging reference for a
+  snapshot that is *never* published, which holds objects garbage collection would
+  otherwise reclaim.
+
+  Sweeping those needs to know which SHAs are abandoned, and that is database
+  knowledge the seam deliberately does not have; retention, which does have it,
+  garbage-collects quarantine rather than published repositories. So the sweep is a
+  retention change with a snapshot-row query, not a storage change, and inventing a
+  mechanism for it inside a trust-boundary fix would be the drive-by this change
+  exists to avoid. Filed as a follow-up.

@@ -306,6 +306,38 @@ class GitStorageContractTests {
         }
     }
 
+    /**
+     * A staging reference left behind by a crash must not block the snapshot it belongs to from
+     * being published later, and must not survive that publication.
+     */
+    @ParameterizedTest
+    @MethodSource("backends")
+    @SVCs({"SVC_GW_0132"})
+    void aStaleStagingReferenceDoesNotBlockALaterPublication(Backend backend) throws IOException {
+        String marketplace = marketplace();
+        GitStorage storage = backend.storage();
+        ObjectId tip;
+        try (Repository quarantine = storage.quarantine(marketplace)) {
+            tip = commit(quarantine, "ingested, vetted, held");
+            setRef(quarantine, SNAPSHOT_PREFIX + tip.name(), tip);
+        }
+        // Exactly what a process killed between the transfer and the transition leaves behind: the
+        // objects are across and staged, and nothing served ever moved.
+        try (Repository quarantine = storage.quarantine(marketplace);
+                Repository published = storage.published(marketplace)) {
+            GitObjectTransfer.copy(quarantine, published, tip);
+            setRef(published, GitStorage.STAGING_REF_PREFIX + tip.name(), tip);
+        }
+
+        assertThat(storage.publish(marketplace, tip.name())).isTrue();
+
+        try (Repository published = storage.published(marketplace)) {
+            assertThat(published.exactRef(GitStorage.STAGING_REF_PREFIX + tip.name()))
+                    .as("the publication that completes clears the staging reference it reused")
+                    .isNull();
+        }
+    }
+
     // --- 3.2 unpublish ------------------------------------------------------------------------
 
     @ParameterizedTest
