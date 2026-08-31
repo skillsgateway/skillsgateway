@@ -21,7 +21,6 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.PackParser;
 import org.slf4j.Logger;
@@ -48,10 +47,6 @@ import org.slf4j.LoggerFactory;
 public final class StorageMigration {
 
     private static final Logger log = LoggerFactory.getLogger(StorageMigration.class);
-
-    /** The results a forced reference write reports when the reference is what we asked for after. */
-    private static final Set<RefUpdate.Result> WRITTEN = Set.of(
-            RefUpdate.Result.NEW, RefUpdate.Result.FORCED, RefUpdate.Result.FAST_FORWARD, RefUpdate.Result.NO_CHANGE);
 
     /** One repository's outcome: what moved, and what the verification pass found. */
     public record RepositoryResult(GitStorage.Role role, String marketplace, int refs, List<String> mismatches) {
@@ -233,23 +228,10 @@ public final class StorageMigration {
     private static void writeRefs(Repository to, Map<String, ObjectId> concrete, Map<String, String> links)
             throws IOException {
         for (Map.Entry<String, ObjectId> ref : new LinkedHashMap<>(concrete).entrySet()) {
-            RefUpdate update = to.updateRef(ref.getKey());
-            update.setNewObjectId(ref.getValue());
-            update.setForceUpdate(true);
-            RefUpdate.Result result = update.update();
-            if (!WRITTEN.contains(result)) {
-                throw new IOException(
-                        "could not write %s at the migration destination: %s".formatted(ref.getKey(), result));
-            }
+            RefTransitions.write(to, ref.getKey(), ref.getValue());
         }
         for (Map.Entry<String, String> link : links.entrySet()) {
-            // Detached, so the update names the symbolic reference itself rather than whatever the
-            // destination's copy of it currently resolves to.
-            RefUpdate.Result result = to.updateRef(link.getKey(), true).link(link.getValue());
-            if (!WRITTEN.contains(result)) {
-                throw new IOException("could not link %s to %s at the migration destination: %s"
-                        .formatted(link.getKey(), link.getValue(), result));
-            }
+            RefTransitions.link(to, link.getKey(), link.getValue());
         }
     }
 

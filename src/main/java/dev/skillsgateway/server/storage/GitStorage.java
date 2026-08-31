@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 
 /**
@@ -22,6 +23,15 @@ import org.eclipse.jgit.lib.Repository;
  * <p>Returned repositories are open handles; callers close them (try-with-resources).
  */
 public interface GitStorage {
+
+    /**
+     * Where publication puts a snapshot's objects before it commits to serving them.
+     *
+     * <p>Deliberately outside the advertised namespaces, so a transfer that completes and a
+     * transition that is then refused leaves nothing on the wire. A staging reference left behind by
+     * a crash serves nothing and is overwritten by the next publication of the same snapshot.
+     */
+    String STAGING_REF_PREFIX = "refs/staging/";
 
     /**
      * The three repository roles, named so that a caller can talk about all of them at once.
@@ -97,4 +107,46 @@ public interface GitStorage {
      *     was the tip — so the caller can say so in the ledger without re-deriving it
      */
     boolean unpublish(String marketplace, String sha) throws IOException;
+
+    /**
+     * Puts one snapshot's content on the wire (GW_0132) — the exact inverse of
+     * {@link #unpublish(String, String)}, and the only way content becomes served.
+     *
+     * <p>Publication was for a long time the one reference transition performed <em>outside</em>
+     * this seam: {@code ApprovalService} took a raw published repository and did its own fetch and
+     * {@code RefUpdate}, so putting a snapshot on the wire was two unsynchronised writes while
+     * taking the same pair off was one atomic transaction here. That asymmetry is what let a refused
+     * update leave {@code refs/snapshots/<sha>} advertised with {@code refs/heads/main} unmoved —
+     * a snapshot fetchable by name that the marketplace does not resolve to.
+     *
+     * <p>So the two references land together or not at all. Objects are copied first, into an
+     * unadvertised staging reference; only then do the served references move, and a refusal at that
+     * point leaves nothing published. What staging holds is not served: the facade advertises
+     * {@code refs/heads/main} and {@code refs/snapshots/*} and nothing else.
+     *
+     * @return true when this call is what <em>started</em> the marketplace serving — the mirror of
+     *     {@code unpublish}'s return, so the caller can say so on the ledger without re-deriving it
+     */
+    default boolean publish(String marketplace, String sha) throws IOException {
+        ObjectId tip = ObjectId.fromString(sha);
+        try (Repository quarantine = quarantine(marketplace);
+                Repository published = published(marketplace)) {
+            GitObjectTransfer.copy(quarantine, published, tip);
+            RefTransitions.write(published, STAGING_REF_PREFIX + sha, tip);
+        }
+        return commitPublication(marketplace, sha);
+    }
+
+    /**
+     * Moves the served references onto a snapshot whose objects are already staged, as one
+     * all-or-nothing transition, and drops the staging reference.
+     *
+     * <p>Split from {@link #publish(String, String)} so object transfer — which is identical
+     * everywhere and needs no backend knowledge — is written once, while the transition, which is
+     * the part that has to be atomic and is the part a backend can actually make atomic, belongs to
+     * the backend.
+     *
+     * @return true when this call is what started the marketplace serving
+     */
+    boolean commitPublication(String marketplace, String sha) throws IOException;
 }

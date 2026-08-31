@@ -8,6 +8,7 @@ import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotNotFoundException;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
 import dev.skillsgateway.server.storage.GitStorage;
+import dev.skillsgateway.server.storage.RefTransitions;
 import dev.skillsgateway.server.webhook.WebhookEvent;
 import dev.skillsgateway.server.webhook.WebhookService;
 import io.github.reqstool.annotations.Requirements;
@@ -25,7 +26,6 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -261,13 +261,16 @@ public class RetentionService {
         }
     }
 
+    /**
+     * Checked (GW_0136). The purge order is remove-the-pin, delete the row, then write the
+     * {@code snapshot-purged} ledger entry — so a deletion that was refused and returned quietly
+     * left the pin in place while the row went away. Nothing would ever revisit it: the content
+     * would be retained forever, garbage collection would reclaim nothing, and the ledger would
+     * assert a deletion that did not happen. Raising here stops the purge before the row is gone.
+     */
+    @Requirements({"GW_0136"})
     private static void delete(Repository repository, String ref) throws IOException {
-        if (repository.exactRef(ref) == null) {
-            return;
-        }
-        RefUpdate update = repository.updateRef(ref);
-        update.setForceUpdate(true);
-        update.delete();
+        RefTransitions.delete(repository, ref);
     }
 
     /** Once per marketplace per pass; the expiry is now, so the objects go now, not in two weeks. */

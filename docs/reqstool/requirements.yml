@@ -1013,3 +1013,51 @@ requirements:
     categories: ["reliability", "security"]
     implementation: configuration
     revision: 0.1.0
+
+  - id: GW_0132
+    title: Publication is one verified transition on every storage backend
+    significance: shall
+    description: The system shall put a snapshot's content on the wire through a single operation of the storage seam that both transfers the objects the snapshot needs and moves every reference through which it becomes reachable; shall make that reference movement all-or-nothing, so an observer sees either every such reference on the snapshot or none of them; shall transfer objects without requiring either repository to have a filesystem location; shall stage transferred objects outside every reference namespace the gateway serves until the transition commits; shall raise a transition that did not take effect rather than reporting it as done; shall leave nothing reachable on the served surface when a transition is refused; and shall report whether the call is what started the marketplace serving.
+    rationale: Publication was the one reference transition performed outside the storage seam, and everything that went wrong with it followed from that. A caller holding a raw repository moved two references with no relationship between them, so a refusal on the second left the first standing — a snapshot fetchable by name that the marketplace does not resolve to, which is the precise inverse of what the approval gate promises. The same position also made object transfer depend on a filesystem path, which a backend whose repositories live in a bucket does not have, so publication could not work there at all and no test noticed, because the transition nobody had put on the seam was also the transition nobody had covered across backends. Staging outside the served namespaces is what lets the objects arrive before the decision to serve them, rather than as a side effect of it; reporting whether the marketplace started serving is what lets the caller record the fact without deriving it a second time from state that may already have moved.
+    categories: ["security", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_0133
+    title: An approval reports success only when the publication happened
+    significance: shall
+    description: The system shall report a snapshot as approved only after its publication has taken effect; shall record no approval on the audit ledger, apply no waiver use, and emit no lifecycle event for an approval whose publication was refused; shall return the snapshot's record to the state it held before the decision, including any revocation it carried, when publication does not take effect; shall not record a failed publication as a revocation; shall leave a record it cannot return alone rather than overwrite a decision made in the meantime; and shall report a repair it could not perform rather than discarding it.
+    rationale: The reference update that publishes a snapshot does not raise when it is refused; it returns the refusal. A caller that discards the returned value therefore reports success for a reference that never moved, and every consequence follows from a return that should not have happened — the record says approved, the ledger says approved, and external subscribers are told a snapshot is being served that is not. Returning the record to what it was matters twice over, because the decision also clears the revocation stamps a retroactively quarantined snapshot carries, so a failed re-publication would erase a revocation the ledger still records. It has to be a return rather than a revocation, because a publication that failed is not a policy judgement and an auditor must not be shown a revoker who never made one.
+    categories: ["security", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_0134
+    title: The facade advertises only the references it serves
+    significance: shall
+    description: The read-only git facade shall advertise only the served branch of a published repository, the references that pin its approved snapshots, and the symbolic reference a client reads to learn which branch to check out; shall advertise no other reference a repository happens to hold, whatever the gateway keeps it for; and shall keep every fetch of an approved snapshot by name working.
+    rationale: The facade advertised whatever the repository contained, because nothing told it otherwise, and every advertised reference is a legal request. So the gateway's internal scaffolding — the references a rebuild uses, the references publication needs before it commits to serving anything — was on the wire by default, and stayed off it only for as long as the code that removed them happened to succeed. An allowlist inverts that, so the served surface becomes a decision that has to be edited rather than a consequence that has to be maintained, and content the gateway holds for its own purposes stops being one discarded result away from being fetchable.
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0135
+    title: The served catalog repository keeps no scaffolding references
+    significance: shall
+    description: The system shall remove every internal reference the catalog rebuild creates once the rebuild has committed; shall raise a removal that did not take effect rather than reporting the rebuild as done; and shall report a catalog commit as the served catalog only when the reference that serves it moved.
+    rationale: The catalog is a repository served by the ordinary facade, so anything left in it is content the gateway is holding, and the references a rebuild creates hold whole marketplace histories that a later revocation is supposed to make unreachable. The prune that removes them discarded its result, which made the invariant its own documentation stated true only by luck. Reporting a commit as served when the reference did not move is the same defect in the other direction, where an operator is told which SHA the catalog serves, and can fetch a different one.
+    categories: ["security", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_0136
+    title: A purge reports a deletion only when the snapshot's reference is gone
+    significance: shall
+    description: The system shall remove a snapshot's quarantine reference before deleting its record; shall raise a removal that did not take effect; shall leave the record in place and record no deletion on the audit ledger when the reference could not be removed; and shall count such a snapshot as not acted on, so a later pass attempts it again.
+    rationale: The purge deletes the record and writes the ledger entry after removing the reference, so a removal that failed quietly took the record with it and left the content behind — and because the record was gone, nothing would ever revisit it. The snapshot would be retained indefinitely, garbage collection would find nothing to reclaim, and the ledger would assert a deletion that had not happened, which is the one claim a retention promise cannot afford to make falsely. The recovery this requires already existed in the pass; only the discarded result kept it from ever running.
+    categories: ["reliability", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0137
+    title: An ingestion reports a pinned snapshot only when it is pinned
+    significance: shall
+    description: The system shall pin an ingested commit in the quarantine repository before recording the snapshot; shall raise a pin that did not take effect; and shall record no snapshot whose pin was refused.
+    rationale: The pin is what a later approval publishes from and what retention treats as the snapshot's anchor, so a pin that failed quietly produced a record that could be vetted, reviewed and approved, and whose approval would then fail when the content it named could not be found. Its objects would meanwhile be held only by a staging reference the next ingestion overwrites, after which garbage collection may reclaim them — a reviewable snapshot with nothing behind it.
+    categories: ["reliability"]
+    revision: 0.1.0

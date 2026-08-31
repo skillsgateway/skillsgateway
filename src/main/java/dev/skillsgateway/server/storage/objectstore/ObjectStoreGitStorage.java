@@ -168,6 +168,28 @@ public final class ObjectStoreGitStorage implements GitStorage, AutoCloseable {
         });
     }
 
+    @Override
+    @Requirements({"GW_0132", "GW_0112"})
+    public boolean commitPublication(String marketplace, String sha) throws IOException {
+        ManifestStore manifests = manifests(Role.PUBLISHED, marketplace);
+        String pinned = SNAPSHOT_REF_PREFIX + sha;
+        String staged = GitStorage.STAGING_REF_PREFIX + sha;
+        String description = "publication of %s as the served tip, and the retirement of its staging reference, in %s"
+                .formatted(pinned, marketplace);
+        // One transition, so the pinned reference and the served tip cannot be observed apart and a
+        // lost compare-and-swap costs a retry rather than half a publication.
+        return manifests.transact(description, current -> {
+            boolean startedTheServing = current.ref(MAIN) == null;
+            Map<String, String> edits = new HashMap<>();
+            edits.put(pinned, sha);
+            edits.put(MAIN, sha);
+            if (current.ref(staged) != null) {
+                edits.put(staged, null);
+            }
+            return new ManifestStore.Step<>(current.withRefs(edits), startedTheServing);
+        });
+    }
+
     /** The counters this backend keeps about its own contention and caching. */
     public ObjectStoreStatistics statistics() {
         return statistics;

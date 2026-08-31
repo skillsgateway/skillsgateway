@@ -1338,3 +1338,90 @@ cases:
       filesystem backend and refused on the object-store backend while any background
       singleton is still enabled
     revision: "0.1.0"
+
+  - id: SVC_GW_0132
+    requirement_ids: ["GW_0132"]
+    title: Publication lands both references or neither, on every backend
+    verification: automated-test
+    description: |
+      GIVEN a snapshot pinned in a marketplace's quarantine repository
+      WHEN the storage seam publishes it, on each backend the gateway implements
+      THEN the objects it needs are present in the published repository although neither
+      repository has a filesystem location, exactly the served branch and the pinned
+      snapshot reference are present, no staging reference is left behind, the first
+      such call reports that it started the marketplace serving and a repeat of the
+      tip already served reports that it started nothing, a transition refused by a
+      competing writer is raised rather than reported as done and leaves no advertised
+      reference resolving to that snapshot, and a staging reference left behind by an
+      interrupted attempt neither blocks a later publication of the same snapshot nor
+      survives it
+    revision: "0.1.0"
+
+  - id: SVC_GW_0133
+    requirement_ids: ["GW_0133"]
+    title: A refused publication yields no approval, no ledger entry and nothing served
+    verification: automated-test
+    description: |
+      GIVEN a held snapshot in a marketplace whose served branch is held by a competing
+      writer
+      WHEN it is approved
+      THEN the approval fails naming the reference that refused and the refusal that was
+      returned, the snapshot's record is back in the state it held before the decision,
+      the audit ledger records no approval for it, nothing is fetchable for that
+      snapshot by the served branch or by name, a marketplace whose first publication
+      was refused serves nothing at all, a refused re-publication of a revoked snapshot
+      leaves its revocation time, revoker and violation exactly as they were, and no
+      reference transition outside the checked helper exists anywhere in the gateway's
+      own sources
+    revision: "0.1.0"
+
+  - id: SVC_GW_0134
+    requirement_ids: ["GW_0134"]
+    title: The facade advertises the served branch, the snapshot pins, and nothing else
+    verification: automated-test
+    description: |
+      GIVEN a marketplace serving an approved snapshot, and the virtual catalog
+      WHEN a standard git client lists and fetches from the facade
+      THEN every advertised reference is the served branch, a snapshot pin or the
+      symbolic head, an approved snapshot is still fetchable by name, a clone still
+      resolves its head, and neither a catalog scaffolding reference nor a publication
+      staging reference appears on the wire
+    revision: "0.1.0"
+
+  - id: SVC_GW_0135
+    requirement_ids: ["GW_0135"]
+    title: The catalog rebuild removes its scaffolding and reports only a served commit
+    verification: automated-test
+    description: |
+      GIVEN an estate whose served snapshots the virtual catalog aggregates
+      WHEN the catalog is rebuilt
+      THEN the internal references the rebuild created are gone from the catalog
+      repository, a removal that did not take effect fails the rebuild rather than
+      reporting it as done, and the commit the rebuild reports is the one the served
+      reference resolves to
+    revision: "0.1.0"
+
+  - id: SVC_GW_0136
+    requirement_ids: ["GW_0136"]
+    title: A purge that cannot remove the pin keeps the record and writes no ledger entry
+    verification: automated-test
+    description: |
+      GIVEN a soft-deleted snapshot past its restore window whose quarantine pin is held
+      by a competing writer
+      WHEN the retention pass compacts
+      THEN the snapshot is not counted as acted on, its pin is still present, its record
+      is still present so a later pass attempts it again, and the audit ledger records
+      no purge for it
+    revision: "0.1.0"
+
+  - id: SVC_GW_0137
+    requirement_ids: ["GW_0137"]
+    title: An ingestion whose pin is refused records no snapshot
+    verification: automated-test
+    description: |
+      GIVEN a marketplace with a new upstream commit whose quarantine pin is held by a
+      competing writer
+      WHEN the marketplace is ingested
+      THEN the ingestion fails rather than reporting a snapshot, and no record exists for
+      that commit for a reviewer to approve
+    revision: "0.1.0"
