@@ -1,14 +1,17 @@
 package dev.skillsgateway.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
+import dev.skillsgateway.server.approval.ApprovalException;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.storage.GitStorage;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -54,9 +57,17 @@ class PublicationIntegrityTests extends AbstractGatewayTest {
             lock = lockServedRef(published);
         }
         try {
-            mockMvc.perform(post("/api/snapshots/%d/approve".formatted(next.id()))
-                            .with(oidcLogin()))
-                    .andExpect(status().is5xxServerError());
+            // Through the controller, because the ledger entry and the lifecycle event are written by
+            // the caller once approve returns: the point is that neither is reached.
+            assertThatThrownBy(() -> mockMvc.perform(post("/api/snapshots/%d/approve".formatted(next.id()))
+                            .with(oidcLogin())))
+                    .as("a publication that did not happen fails loudly")
+                    .hasCauseInstanceOf(ApprovalException.class)
+                    .rootCause()
+                    .as("and it fails because the refusal was detected, not for some other reason")
+                    .isInstanceOf(IOException.class)
+                    .hasMessageContaining("refs/heads/main")
+                    .hasMessageContaining("LOCK_FAILURE");
         } finally {
             Files.deleteIfExists(lock);
         }
@@ -84,5 +95,66 @@ class PublicationIntegrityTests extends AbstractGatewayTest {
                 .contains(served.sha())
                 .as("and the refused snapshot is not on the wire at all, by name or otherwise")
                 .doesNotContain(next.sha());
+    }
+
+    @Test
+    void a_refused_first_publication_leaves_the_marketplace_unserved() throws Exception {
+        String name = uniqueName("corp");
+        Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
+
+        // The published repository has to exist for its served ref to be lockable, which is also
+        // the state a marketplace is in before its first approval.
+        Path lock;
+        try (Repository published = storage.published(name)) {
+            lock = lockServedRef(published);
+        }
+        try {
+            assertThatThrownBy(
+                            () -> approvalService.approve(registered.snapshot().id(), "alice"))
+                    .isInstanceOf(ApprovalException.class);
+        } finally {
+            Files.deleteIfExists(lock);
+        }
+
+        assertThat(snapshotRepository
+                        .findById(registered.snapshot().id())
+                        .orElseThrow()
+                        .state())
+                .isEqualTo(Snapshot.HELD);
+        assertThat(storage.publishedIfServing(name))
+                .as("a marketplace whose first publication was refused serves nothing at all")
+                .isEmpty();
+    }
+
+    @Test
+    void a_refused_republication_of_a_revoked_snapshot_keeps_its_revocation() throws Exception {
+        String name = uniqueName("corp");
+        Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
+        long id = registered.snapshot().id();
+        approve(id);
+        Snapshot revoked = snapshotRepository
+                .revoke(id, "revet", "a violation its waivers do not cover")
+                .orElseThrow();
+        assertThat(revoked.state()).isEqualTo(Snapshot.REVOKED);
+        assertThat(revoked.revokedBy()).isEqualTo("revet");
+
+        Path lock;
+        try (Repository published = storage.published(name)) {
+            lock = lockServedRef(published);
+        }
+        try {
+            assertThatThrownBy(() -> approvalService.approve(id, "alice")).isInstanceOf(ApprovalException.class);
+        } finally {
+            Files.deleteIfExists(lock);
+        }
+
+        // decide() clears revoked_at, revoked_by and violation on its way to approved. If the
+        // publication then fails, a row left as decide() wrote it would have lost a revocation the
+        // ledger still records.
+        Snapshot after = snapshotRepository.findById(id).orElseThrow();
+        assertThat(after.state()).isEqualTo(Snapshot.REVOKED);
+        assertThat(after.revokedBy()).isEqualTo(revoked.revokedBy());
+        assertThat(after.revokedAt()).isEqualTo(revoked.revokedAt());
+        assertThat(after.violation()).isEqualTo(revoked.violation());
     }
 }

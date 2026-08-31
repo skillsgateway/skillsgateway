@@ -106,6 +106,51 @@ public class SnapshotRepository {
     }
 
     /**
+     * Puts a row back exactly as it was before an approval that could not be published (GW_0133).
+     *
+     * <p>{@code decide} commits before publication, and it also clears {@code revoked_at},
+     * {@code revoked_by} and {@code violation} — so an approval that then fails to publish leaves a
+     * row claiming a publication that never happened, and, when the snapshot had been revoked
+     * before, one whose revocation stamps have been erased while the ledger still carries them.
+     * This is the compensation: every field {@code decide} touched is restored from the row as it
+     * was read before the decision.
+     *
+     * <p>Deliberately not {@link #revoke(long, String, String)}. That is the retroactive-quarantine
+     * transition and stamps a revoker and a violation; a publication that failed is not a policy
+     * revocation, and recording it as one would put a fabricated revocation in front of an auditor.
+     *
+     * <p>The {@code state = 'approved'} predicate is in the statement, so a concurrent revocation or
+     * a second attempt cannot be clobbered by this repair.
+     *
+     * @param before the row as it was before {@code decide} was called
+     * @return the restored snapshot, or empty when the row was no longer {@code approved} — which
+     *     means something else decided it in the meantime and the caller must not claim to have
+     *     repaired anything
+     */
+    @Requirements({"GW_0133"})
+    @Transactional
+    public Optional<Snapshot> undecide(Snapshot before) {
+        return jdbc.sql("UPDATE snapshots SET state = :state::snapshot_state, violation = :violation,"
+                        + " revoked_at = :revokedAt, revoked_by = :revokedBy,"
+                        + " decided_by = :decidedBy, decided_at = :decidedAt"
+                        + " WHERE id = :id AND state = :approved::snapshot_state RETURNING *")
+                .param("state", before.state())
+                .param("violation", before.violation())
+                .param("revokedAt", at(before.revokedAt()))
+                .param("revokedBy", before.revokedBy())
+                .param("decidedBy", before.decidedBy())
+                .param("decidedAt", at(before.decidedAt()))
+                .param("id", before.id())
+                .param("approved", Snapshot.APPROVED)
+                .query(SnapshotRepository::map)
+                .optional();
+    }
+
+    private static OffsetDateTime at(Instant instant) {
+        return instant == null ? null : instant.atOffset(ZoneOffset.UTC);
+    }
+
+    /**
      * Retroactive quarantine (GW_0050): the one transition out of {@code approved}. The
      * {@code state = 'approved'} predicate is in the statement rather than in the caller, so a
      * concurrent revocation or a second sweep pass cannot revoke the same snapshot twice, and

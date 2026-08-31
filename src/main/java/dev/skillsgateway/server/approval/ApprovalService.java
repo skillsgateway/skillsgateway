@@ -19,16 +19,14 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.RefUpdate;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.transport.RefSpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ApprovalService {
+
+    private static final Logger log = LoggerFactory.getLogger(ApprovalService.class);
 
     private final GitStorage storage;
     private final SnapshotRepository snapshotRepository;
@@ -156,23 +154,54 @@ public class ApprovalService {
         }
         Snapshot decided = snapshotRepository.decide(snapshotId, Snapshot.APPROVED, reviewer);
         String sha = decided.sha();
-        try (Repository quarantine = storage.quarantine(marketplace.name());
-                Repository published = storage.published(marketplace.name());
-                Git git = new Git(published)) {
-            git.fetch()
-                    .setRemote(quarantine.getDirectory().getAbsolutePath())
-                    .setRefSpecs(new RefSpec("+refs/snapshots/" + sha + ":refs/snapshots/" + sha))
-                    .call();
-            RefUpdate main = published.updateRef("refs/heads/main");
-            main.setNewObjectId(ObjectId.fromString(sha));
-            main.forceUpdate();
-        } catch (IOException | GitAPIException e) {
-            throw new ApprovalException("publish failed for snapshot %d".formatted(snapshotId), e);
+        try {
+            // Publication is one seam operation (GW_0132): both served references land or neither
+            // does, and a transition that did not take effect is raised rather than returned. What
+            // used to be here -- a fetch built from the quarantine's filesystem path, then a
+            // RefUpdate whose Result was discarded -- could not work on a backend whose
+            // repositories have no path, and reported success when the served reference refused to
+            // move.
+            storage.publish(marketplace.name(), sha);
+        } catch (IOException | RuntimeException publishFailed) {
+            repair(current, publishFailed);
+            throw new ApprovalException("publish failed for snapshot %d".formatted(snapshotId), publishFailed);
         }
         // The published set just grew; the catalog re-derives from it (GW_0062). Never fails the
         // approval that triggered it.
         catalogService.rebuildQuietly();
         return new Approved(decided, applied, ingestionAge, conflicts);
+    }
+
+    /**
+     * Puts the row back after a publication that did not happen (GW_0133).
+     *
+     * <p>{@code decide} has already committed by this point, so the row says {@code approved} while
+     * nothing is served. The caller writes the ledger entry and emits the event only once
+     * {@code approve} returns, so failing before returning is what keeps those honest; the row is
+     * the one thing that needs undoing.
+     *
+     * <p>A repair that itself fails is not swallowed. It is attached to the failure that caused it,
+     * because at that point the estate is genuinely inconsistent — a row claiming a publication that
+     * did not happen — and that is the case the startup check comparing the served estate against
+     * the database exists to catch. Logged at error, since nothing downstream will see it again.
+     */
+    private void repair(Snapshot before, Throwable publishFailed) {
+        try {
+            if (snapshotRepository.undecide(before).isEmpty()) {
+                log.warn(
+                        "publication of snapshot {} failed and its row was no longer approved, so it was left"
+                                + " alone: something else decided it in the meantime",
+                        before.id());
+            }
+        } catch (RuntimeException repairFailed) {
+            log.error(
+                    "publication of snapshot {} failed and the row could not be returned to {}: the database"
+                            + " records an approval that was never served",
+                    before.id(),
+                    before.state(),
+                    repairFailed);
+            publishFailed.addSuppressed(repairFailed);
+        }
     }
 
     /**

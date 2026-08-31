@@ -41,29 +41,29 @@
 - [x] 3.6 Extend the storage contract suite: publication lands both refs or
       neither; a refused transition raises rather than reporting success; the
       staging ref is gone afterwards. Runs against both backends.
-- [ ] 3.7 Extend the concurrency suite with publish-races-revoke — the
+- [x] 3.7 Extend the concurrency suite with publish-races-revoke — the
       interleaving that surfaced #149 — and publish-races-publish.
 - [x] 3.8 Prove the new contract cases fail against a deliberately non-atomic
       implementation (write one ref, skip the other) before trusting them.
 
 ## 4. Approval uses the seam and repairs on failure (GW_0133 / SVC_GW_0133)
 
-- [ ] 4.1 Add a state-guarded transition to `SnapshotRepository` returning an
+- [x] 4.1 Add a state-guarded transition to `SnapshotRepository` returning an
       `approved` row to `held` and restoring the `revoked_at`, `revoked_by` and
       `violation` values captured before `decide()`. Guard with
       `WHERE id = :id AND state = 'approved'`.
-- [ ] 4.2 Replace the raw fetch and `forceUpdate` in `ApprovalService.doApprove`
+- [x] 4.2 Replace the raw fetch and `forceUpdate` in `ApprovalService.doApprove`
       with the seam call; on failure repair the row, then raise.
-- [ ] 4.3 Raise both causes together when the repair itself fails, and log that
+- [x] 4.3 Raise both causes together when the repair itself fails, and log that
       the estate is inconsistent.
-- [ ] 4.4 Annotate with `@Requirements({"GW_0133"})`.
-- [ ] 4.5 Turn 1.3's test green. Add adversarial cases: a refused publication
+- [x] 4.4 Annotate with `@Requirements({"GW_0133"})`.
+- [x] 4.5 Turn 1.3's test green. Add adversarial cases: a refused publication
       produces no `Approved`, no ledger entry, no webhook, nothing fetchable by
       `main` or by SHA, and a row still `held`; a refused re-publish of a
       previously revoked snapshot leaves its revocation stamps intact.
-- [ ] 4.6 Cover the first-ever approval of a marketplace, where a refusal leaves
+- [x] 4.6 Cover the first-ever approval of a marketplace, where a refusal leaves
       the repository unserved rather than partially served.
-- [ ] 4.7 Confirm no compensating ref deletion is needed — assert the published
+- [x] 4.7 Confirm no compensating ref deletion is needed — assert the published
       repository holds neither ref after a refusal.
 
 ## 5. The remaining raw ref updates (GW_0135, GW_0136, GW_0137)
