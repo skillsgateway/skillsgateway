@@ -51,6 +51,16 @@ class RefAdvertisementTests extends AbstractGatewayTest {
         Git.init().setDirectory(fresh.toFile()).setInitialBranch("main").call().close();
         GitResult fetch = git(fresh, "fetch", url, approved.sha());
         assertThat(fetch.exitCode()).as(fetch.output()).isZero();
+
+        // The advertised set is stated, not sampled: anything new appearing here is a decision
+        // someone has to make on purpose.
+        assertThat(lsRemote.output().lines().map(line -> line.split("\\s+")[1]).toList())
+                .as("the whole advertised surface")
+                .allSatisfy(ref -> assertThat(ref)
+                        .satisfiesAnyOf(
+                                advertised -> assertThat(advertised).isEqualTo("HEAD"),
+                                advertised -> assertThat(advertised).isEqualTo("refs/heads/main"),
+                                advertised -> assertThat(advertised).startsWith("refs/snapshots/")));
     }
 
     @Test

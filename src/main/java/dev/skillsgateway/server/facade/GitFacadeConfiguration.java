@@ -5,13 +5,18 @@ import io.github.reqstool.annotations.Requirements;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.http.server.GitServlet;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.PreUploadHook;
+import org.eclipse.jgit.transport.RefFilter;
 import org.eclipse.jgit.transport.ServiceMayNotContinueException;
 import org.eclipse.jgit.transport.UploadPack;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
@@ -23,6 +28,35 @@ public class GitFacadeConfiguration {
 
     private static final Pattern MARKETPLACE_NAME = Pattern.compile("^[a-z0-9][a-z0-9_-]*$");
     private static final String SERVED_REF = "refs/heads/main";
+    private static final String SNAPSHOT_REF_PREFIX = "refs/snapshots/";
+
+    /**
+     * What the facade puts on the wire, stated rather than inherited (GW_0134).
+     *
+     * <p>{@code UploadPack} advertises every reference the repository holds unless told otherwise,
+     * and under the default {@code RequestPolicy.ADVERTISED} every advertised tip is a legal
+     * {@code want}. So the served surface was whatever happened to be in the repository: the
+     * catalog's {@code refs/catalog/*} scaffolding, and any staging reference publication needs
+     * before it commits to serving something. An allowlist makes the surface a decision.
+     *
+     * <p>Two namespaces belong on it. {@code refs/heads/main} is the served tip. Snapshot
+     * references are advertised deliberately — an approved snapshot stays fetchable by name even
+     * once a later approval supersedes it, which is why {@code GitStorage.unpublish} removes both
+     * when a snapshot is revoked. Nothing else is served, and a reference the gateway uses to build
+     * what it serves is not the same thing as a reference it serves.
+     *
+     * <p>{@code HEAD} stays: it is in the map the filter receives, and a clone reads it to learn
+     * which branch to check out. Dropping it leaves a client that can fetch but cannot clone.
+     */
+    private static final RefFilter SERVED_REFS = refs -> {
+        Map<String, Ref> served = new LinkedHashMap<>();
+        refs.forEach((name, ref) -> {
+            if (Constants.HEAD.equals(name) || SERVED_REF.equals(name) || name.startsWith(SNAPSHOT_REF_PREFIX)) {
+                served.put(name, ref);
+            }
+        });
+        return served;
+    };
 
     private final GitStorage storage;
     private final FetchAuditHook auditHook;
@@ -79,8 +113,10 @@ public class GitFacadeConfiguration {
         return repository;
     }
 
+    @Requirements({"GW_0134"})
     UploadPack createUploadPack(HttpServletRequest request, Repository repository) {
         UploadPack uploadPack = new UploadPack(repository);
+        uploadPack.setRefFilter(SERVED_REFS);
         uploadPack.setPreUploadHook(new AuditingPreUploadHook(
                 request.getRemoteAddr(), auditHook.currentPrincipal(), marketplaceName(repository)));
         return uploadPack;

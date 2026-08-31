@@ -17,13 +17,13 @@
 
 ## 2. The advertisement allowlist (GW_0134 / SVC_GW_0134)
 
-- [ ] 2.1 Add a `RefFilter` to `GitFacadeConfiguration`'s `UploadPack` restricting
+- [x] 2.1 Add a `RefFilter` to `GitFacadeConfiguration`'s `UploadPack` restricting
       advertisement to `refs/heads/main` and `refs/snapshots/*`. Leave
       `GitPublishConfiguration` untouched.
-- [ ] 2.2 Annotate with `@Requirements({"GW_0134"})`.
-- [ ] 2.3 Turn 1.2's catalog test green; add a real-client test that clone and
+- [x] 2.2 Annotate with `@Requirements({"GW_0134"})`.
+- [x] 2.3 Turn 1.2's catalog test green; add a real-client test that clone and
       fetch-by-SHA still work and that no other namespace is advertised.
-- [ ] 2.4 Prove the check discriminates: mutate the filter to allow everything and
+- [x] 2.4 Prove the check discriminates: mutate the filter to allow everything and
       confirm the tests fail.
 
 ## 3. Publication joins the seam (GW_0132 / SVC_GW_0132)
