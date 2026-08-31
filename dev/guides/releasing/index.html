@@ -1298,6 +1298,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Versions and tags">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-version-between-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The version between tags
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2041,6 +2058,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Versions and tags">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-version-between-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The version between tags
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2199,6 +2233,46 @@ expect the bare form.</p>
 <p>Releases may only be cut from <code>main</code>, <code>hotfix/*</code> or <code>release/*</code>, and only from
 a commit that is reachable from that branch and does not already carry a
 release tag.</p>
+<h3 id="the-version-between-tags">The version between tags<a class="headerlink" href="#the-version-between-tags" title="Permanent link">&para;</a></h3>
+<p>On any commit that is not itself tagged, Nisse derives a <code>-SNAPSHOT</code> version by
+increasing the last release tag, and it reads the size of that increase from
+the <strong>Conventional Commits</strong> in <code>tag..HEAD</code> — the same source the release
+workflow derives from. <code>.mvn/maven.config</code> selects it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>-Dnisse.source.jgit.versionIncrement=conventionalCommits
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>-Dnisse.source.jgit.versionIncrement.zeroMajorDemotion=true
+</code></pre></div>
+<p>The highest increase in the range wins. Against a <code>0.1.0</code> tag:</p>
+<table>
+<thead>
+<tr>
+<th>Highest commit in <code>tag..HEAD</code></th>
+<th>Version on <code>main</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fix:</code>, <code>chore:</code>, or anything not a Conventional Commit</td>
+<td><code>0.1.1-N-SNAPSHOT</code></td>
+</tr>
+<tr>
+<td><code>feat:</code></td>
+<td><code>0.2.0-N-SNAPSHOT</code></td>
+</tr>
+<tr>
+<td><code>feat!:</code>, or a <code>BREAKING CHANGE:</code> footer</td>
+<td><code>0.2.0-N-SNAPSHOT</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>N</code> is the number of commits since the tag. A breaking change lands on the
+minor rather than the major because <code>zeroMajorDemotion</code> holds the <code>0.x</code> line —
+which is the same rule the release workflow applies, and the reason reaching
+<code>1.0.0</code> needs <code>version</code> and <code>force</code> together.</p>
+<p>The consequence worth stating plainly: <strong>every commit message is a vote on the
+next version.</strong> A <code>feat:</code> in a pull request moves the whole line's minor, and a
+<code>!</code> moves it as far as the pre-1.0 rule allows.</p>
+<p>Until the first release tag exists there is nothing to increase, so the version
+stays at the <code>0.1.0-N-SNAPSHOT</code> fallback whatever the commits say.</p>
 <h2 id="running-it">Running it<a class="headerlink" href="#running-it" title="Permanent link">&para;</a></h2>
 <p><strong>Actions → Release → Run workflow.</strong> The branch you pick in the dropdown is
 the branch that gets released; there is deliberately no ref input, so what the
