@@ -26,7 +26,8 @@ A minimal `my-values.yaml`:
 ```yaml
 image:
   repository: ghcr.io/skillsgateway/skillsgateway
-  tag: "1.0.0"
+  # A released version, or an image digest — see the container image reference.
+  tag: "<released-version>"
 
 postgresql:
   host: postgres.example.com
