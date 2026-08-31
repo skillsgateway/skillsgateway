@@ -375,17 +375,50 @@ Rollback is the previous image plus restoring the property; nothing in this
 change writes to the database or alters the schema, so a rollback needs no data
 migration.
 
-## Open Questions
+## Open Questions — resolved
 
-1. **Decision 3's strictness.** Should a stored `role_grants` admin row satisfy
-   the bootstrap check, at the cost of a database read at startup and an
-   ordering relationship with `EstateReconciler`? The design says no; the owner
-   may prefer yes for operational forgiveness.
-2. **Decision 6.** Remove `/api/me.rolesEnabled` (breaking, declared) or keep it
-   deprecated and always `true` (non-breaking)? The tasks assume removal.
-3. **Issue #121.** This change states that the configuration surface is not
-   covered by the API-contract promise and points at #121; it does not decide
-   #121. Should it instead settle the question in the same PR?
-4. **The refusal's lifetime** (Decision 4). Removed at the next major is
-   proposed; the owner may prefer to keep it indefinitely as a permanent
-   tripwire.
+All four are decided. Question 2 by the owner; the other three taken on the
+design's own reasoning during an autonomous run, and recorded here so the calls
+are visible rather than implicit.
+
+1. **Decision 3's strictness — no database read. Configuration only.**
+   A stored `role_grants` row is revocable through the API, so it proves nothing
+   about the *next* start: the first `DELETE /api/roles/...` could remove the only
+   thing satisfying the check, and the gateway would then refuse to start on a
+   restart nobody connected to that deletion. A configuration-only check is a
+   property of the deployment rather than of mutable state, which is what makes
+   the refusal reproducible and the fix obvious. It also keeps startup independent
+   of database reachability and free of an ordering relationship with
+   `EstateReconciler`.
+
+2. **Decision 6 — `/api/me.rolesEnabled` is removed.** Owner's decision. This
+   makes the change a declared breaking API change: `fix!:` in the title and the
+   `⚠️ BREAKING CONTRACT` label. The compatibility page's "moves the path prefix
+   **and** ships as a major" clause cannot be honoured literally — there is no
+   `/api/v1` prefix to move and the product is pre-1.0 — which is itself worth
+   stating on that page rather than leaving as an apparent violation.
+
+3. **Issue #121 stays open.** This change states the current reading — the
+   API-contract promise covers `/api/**` and does not extend to the
+   `skills-gateway.*` configuration surface, the Helm values or the declarative
+   estate — and points at #121. It does not settle it. Settling it means choosing
+   a baseline mechanism for a configuration schema, which is a different piece of
+   work from removing an authorization toggle, and bundling the two would put a
+   contract decision inside a trust-boundary change where nobody would look for
+   it later.
+
+4. **The refusal's lifetime — removed at the next major.** It is a migration aid,
+   not a feature: its entire purpose is to catch a deployment carrying the removed
+   property across the upgrade that removed it. Once a major has passed, a
+   configuration file still setting it is a curiosity rather than a live risk, and
+   a permanent tripwire for a property that no supported version ever read is
+   maintenance nobody will thank us for. Recorded on the compatibility page so the
+   removal is scheduled rather than remembered.
+
+## Spec approval
+
+`spec approval: not obtained (autonomous run)`. The owner approved the *decision*
+(remove the toggle, always enforce, fail closed on bootstrap) and Decision 6, but
+did not review a written executable spec before implementation. Confidence is
+claimed accordingly: the adversarial cases and the mutation run are the evidence
+here, not sign-off.

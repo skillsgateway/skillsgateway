@@ -488,7 +488,7 @@ that would duplicate a sweep, and leader election is separate later work.
   canonical. The forge mirror for browsing is sequenced after it. *Implemented:* scoped admin roles on the web surface — global
   admin, per-marketplace approver, read-only auditor; DB-managed audited
   grants with configuration-bootstrapped admins, deny-by-default once
-  enabled, off by default (GW_0068–GW_0071), and roles derived from the
+  always enforced (GW_0068–GW_0071, GW_0138), and roles derived from the
   identity provider's own group or application-role claims by configured
   mapping, with truncated claims made visible and an enforceable expected
   ID-token issuer (GW_0098–GW_0100); per-team catalog scoping and a

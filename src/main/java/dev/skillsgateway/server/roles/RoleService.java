@@ -1,6 +1,7 @@
 package dev.skillsgateway.server.roles;
 
 import dev.skillsgateway.server.admin.AdminAuditLogger;
+import dev.skillsgateway.server.auth.SecurityConfig;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
@@ -17,6 +18,7 @@ import java.util.Optional;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -26,8 +28,10 @@ import org.springframework.web.server.ResponseStatusException;
  * whole surface is greppable as {@code requireA}; the facade is out of scope (its authorization
  * is token scopes, GW_0064).
  *
- * <p>With {@code skills-gateway.roles.enabled=false} — the default — every check passes, so an
- * upgrade never locks anyone out. Roles compose upward: admin ⊇ approver, admin ⊇ auditor.
+ * <p>Enforcement is unconditional (GW_0138): there is no configuration that makes a check pass for
+ * a principal holding no role. A deployment that configures no administrator is refused at startup
+ * by {@link RoleBootstrapGuard} rather than started in a state nobody can administer. Roles compose
+ * upward: admin ⊇ approver, admin ⊇ auditor.
  */
 @Service
 public class RoleService {
@@ -49,7 +53,7 @@ public class RoleService {
 
             @Schema(
                     description = "Where the role came from",
-                    allowableValues = {"config", "grant", "claim"})
+                    allowableValues = {"config", "grant", "claim", "dev-insecure-auth"})
             String source) {
 
         /** Listed in {@code skills-gateway.roles.admins}; no API call can revoke it. */
@@ -60,6 +64,15 @@ public class RoleService {
 
         /** Derived from the identity provider's claims by {@link ClaimRoleMapper}. */
         public static final String CLAIM = "claim";
+
+        /**
+         * Conferred by the development escape hatch on its own synthetic principal (GW_0141).
+         *
+         * <p>Named separately from {@link #CONFIG} on purpose: the session endpoint exists to
+         * answer why a session holds a role, and an operator told that this admin came from
+         * configuration would go looking for a configuration entry that does not exist.
+         */
+        public static final String DEV_INSECURE_AUTH = "dev-insecure-auth";
     }
 
     private static final Set<String> ROLES = Set.of(RoleGrant.ADMIN, RoleGrant.APPROVER, RoleGrant.AUDITOR);
@@ -144,32 +157,19 @@ public class RoleService {
                         HttpStatus.NOT_FOUND, "marketplace '%s' not found".formatted(marketplace)));
     }
 
-    public boolean enabled() {
-        return properties.roles().enabled();
-    }
-
-    /** Global mutations: registration, sync modes, catalog, retention, receivers, sinks, grants. */
-    @Requirements({"GW_0068"})
-    public void requireAdmin(Authentication authentication) {
-        if (!enabled() || isAdmin(authentication)) {
-            return;
-        }
-        throw denied();
-    }
-
     /**
-     * The administrative role, required whether or not enforcement is enabled (GW_0130).
+     * Global mutations: registration, sync modes, catalog, retention, receivers, sinks, grants, and
+     * machine-credential provisioning (GW_0068, GW_0130, GW_0138).
      *
-     * <p>Every other {@code require*} passes while {@code skills-gateway.roles.enabled} is false,
-     * because that flag exists so an upgrade does not lock out sessions that predate role
-     * enforcement. Provisioning a machine credential has nothing that predates it, and the thing
-     * it creates outlives the session that created it: under the default flag any user who
-     * completed a login could otherwise mint a credential holding every scope, which keeps working
-     * after their own account is deprovisioned. That is a persistence of privilege the session
-     * itself does not have, so this check does not consult the flag.
+     * <p>This used to have a twin, {@code requireAdminRegardlessOfEnforcement}, which existed only
+     * because the other {@code require*} methods could be switched off and machine-credential
+     * provisioning must not be — a credential outlives the session that minted it, so a login that
+     * could mint one holding every scope would leave privilege behind after the account itself was
+     * deprovisioned. With enforcement unconditional the distinction it drew no longer exists, and
+     * keeping two methods that do the same thing would invite a caller to pick the wrong one.
      */
-    @Requirements({"GW_0130"})
-    public void requireAdminRegardlessOfEnforcement(Authentication authentication) {
+    @Requirements({"GW_0068", "GW_0130", "GW_0138"})
+    public void requireAdmin(Authentication authentication) {
         if (isAdmin(authentication)) {
             return;
         }
@@ -177,11 +177,8 @@ public class RoleService {
     }
 
     /** The ledger, its export, and the operational listings: auditor or admin (GW_0070). */
-    @Requirements({"GW_0068", "GW_0070"})
+    @Requirements({"GW_0068", "GW_0070", "GW_0138"})
     public void requireAuditor(Authentication authentication) {
-        if (!enabled()) {
-            return;
-        }
         List<EffectiveRole> roles = effectiveRoles(authentication);
         if (isAdmin(roles) || hasGlobalRole(roles, RoleGrant.AUDITOR)) {
             return;
@@ -190,11 +187,8 @@ public class RoleService {
     }
 
     /** Marketplace-named routes: an approver of exactly this marketplace, or an admin. */
-    @Requirements({"GW_0069"})
+    @Requirements({"GW_0069", "GW_0138"})
     public void requireApprover(Authentication authentication, String marketplaceName) {
-        if (!enabled()) {
-            return;
-        }
         List<EffectiveRole> roles = effectiveRoles(authentication);
         if (isAdmin(roles) || approves(roles, marketplaceName)) {
             return;
@@ -225,9 +219,6 @@ public class RoleService {
     }
 
     private void requireApproverOf(Authentication authentication, Optional<String> marketplaceName) {
-        if (!enabled()) {
-            return;
-        }
         List<EffectiveRole> roles = effectiveRoles(authentication);
         if (isAdmin(roles)) {
             return;
@@ -244,9 +235,13 @@ public class RoleService {
      * reported once, attributed to the most durable source that produced it — a grant outranks a
      * claim, because a grant survives the user leaving the group.
      */
-    @Requirements({"GW_0071", "GW_0098"})
+    @Requirements({"GW_0071", "GW_0098", "GW_0141"})
     public List<EffectiveRole> effectiveRoles(Authentication authentication) {
         Map<String, EffectiveRole> roles = new LinkedHashMap<>();
+        if (escapeHatchPrincipal(authentication)) {
+            EffectiveRole hatch = new EffectiveRole(RoleGrant.ADMIN, null, EffectiveRole.DEV_INSECURE_AUTH);
+            roles.put(key(hatch), hatch);
+        }
         for (EffectiveRole role : rolesOf(authentication.getName())) {
             roles.putIfAbsent(key(role), role);
         }
@@ -282,6 +277,27 @@ public class RoleService {
             }
         }
         return List.copyOf(roles);
+    }
+
+    /**
+     * Whether this session is the one the development escape hatch invents (GW_0141).
+     *
+     * <p>Three conditions, each closing a way this could become more than a local convenience. The
+     * flag must be on, so nothing is conferred in a deployment that never opened the hatch. The
+     * principal must be the synthetic name exactly. And it must not be an {@link OidcUser}, so a
+     * real identity-provider account that happens to be called {@code dev} gains nothing here — the
+     * hatch replaces the provider rather than coexisting with it, and a session that came through a
+     * provider did not come through the hatch.
+     *
+     * <p>The check lives in this service rather than in the filter chain so that
+     * {@link #effectiveRoles} and every {@code require*} decide from the same fact; a role the
+     * session endpoint reports but the checks do not honour, or the reverse, would be worse than
+     * either answer.
+     */
+    private boolean escapeHatchPrincipal(Authentication authentication) {
+        return properties.devInsecureAuth()
+                && SecurityConfig.DEV_PRINCIPAL.equals(authentication.getName())
+                && !(authentication.getPrincipal() instanceof OidcUser);
     }
 
     /** Identity of a role for de-duplication: what it grants, not where it came from. */

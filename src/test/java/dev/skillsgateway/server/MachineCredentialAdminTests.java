@@ -21,17 +21,21 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * Provisioning is admin-only whether or not role enforcement is enabled (GW_0130), and this suite
- * runs with the flag at its <b>default of disabled</b> — the state in which every other
- * {@code require*} check passes and any user who completed a login would otherwise be able to mint
- * a credential holding every scope.
+ * Provisioning is admin-only (GW_0130).
+ *
+ * <p>This suite used to make its point by running with role enforcement at its default of
+ * disabled — the state in which every other {@code require*} check passed, so that a check which
+ * still refused stood out. That state is gone, and with it the twin method that existed only to
+ * survive it. What remains worth pinning is that provisioning takes the administrative role and not
+ * a lesser one: a credential outlives the session that minted it, so a login able to mint one
+ * holding every scope leaves privilege behind after the account itself is deprovisioned.
  *
  * <p>The reason that matters: the credential outlives the session that created it. An employee who
  * leaves takes nothing with them; a credential they minted stays, working long after their
  * identity-provider account is deprovisioned. That is a persistence of privilege the session
  * itself does not have.
  */
-@TestPropertySource(properties = {"skills-gateway.roles.admins=owner"})
+@TestPropertySource(properties = {"skills-gateway.roles.admins=owner", "skills-gateway.roles.admins=owner"})
 class MachineCredentialAdminTests extends AbstractGatewayTest {
 
     @Autowired
@@ -52,9 +56,12 @@ class MachineCredentialAdminTests extends AbstractGatewayTest {
 
     @Test
     @SVCs({"SVC_GW_0130"})
-    void minting_listing_and_revoking_require_the_admin_role_even_with_enforcement_disabled() throws Exception {
-        // The flag really is off: an ordinary session passes every other privileged check.
-        mockMvc.perform(get("/api/roles").with(anyone())).andExpect(status().isOk());
+    void minting_listing_and_revoking_require_the_admin_role() throws Exception {
+        // An ordinary session is refused here for the same reason it is refused everywhere else
+        // now. What this suite still pins is narrower and worth keeping: provisioning is admin-only
+        // and never approver-only or auditor-only, because a credential outlives the session that
+        // minted it.
+        mockMvc.perform(get("/api/roles").with(anyone())).andExpect(status().isForbidden());
 
         mockMvc.perform(post("/api/tokens/machine")
                         .with(anyone())

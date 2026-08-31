@@ -115,8 +115,8 @@ a narrower meaning here.
 **Role grant**
 :   One row of current state giving a principal a role — `admin` (global),
     `approver` (scoped to one marketplace), or `auditor` (global, read-only).
-    Managed through `/api/roles`, audited on the ledger, inert until
-    `skills-gateway.roles.enabled=true`. Principals in
+    Managed through `/api/roles`, audited on the ledger, and effective as soon
+    as it is made. Principals in
     `skills-gateway.roles.admins` are admins by configuration, without a grant
     row, and cannot be revoked through the API.
 

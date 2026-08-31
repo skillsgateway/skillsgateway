@@ -39,6 +39,9 @@ import org.springframework.test.context.TestPropertySource;
  * way to exercise both is to run two gateways.
  */
 @TestPropertySource(properties = "skills-gateway.approval.four-eyes.mode=enforce")
+@TestPropertySource(
+        // Authorization is always enforced (GW_0138), so this suite names the principal it acts as.
+        properties = {"skills-gateway.roles.admins=dana,rachel"})
 class FourEyesEnforceTests extends AbstractGatewayTest {
 
     private static final String PLANTED_SECRET = """

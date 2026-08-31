@@ -35,7 +35,6 @@ import org.springframework.test.context.TestPropertySource;
  */
 @TestPropertySource(
         properties = {
-            "skills-gateway.roles.enabled=true",
             "skills-gateway.roles.admins=root",
             "skills-gateway.roles.claim=groups",
             "skills-gateway.roles.mappings[0].claim-value=gw-admins",

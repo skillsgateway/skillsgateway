@@ -412,7 +412,8 @@
             "enum": [
               "config",
               "grant",
-              "claim"
+              "claim",
+              "dev-insecure-auth"
             ],
             "type": "string"
           }
@@ -1088,10 +1089,6 @@
               "$ref": "#/components/schemas/EffectiveRole"
             },
             "type": "array"
-          },
-          "rolesEnabled": {
-            "description": "Whether role enforcement is enabled; false means every check passes",
-            "type": "boolean"
           },
           "username": {
             "description": "Username of the session",
@@ -2949,7 +2946,7 @@
     },
     "/api/me": {
       "get": {
-        "description": "Username of the authenticated browser session, whether role enforcement is enabled, the session's effective roles with the source of each, and whether the identity provider truncated the membership claim — how the portal and CLI adapt their controls to what the caller may do.",
+        "description": "Username of the authenticated browser session, the session's effective roles with the source of each, and whether the identity provider truncated the membership claim — how the portal and CLI adapt their controls to what the caller may do. Authorization is always enforced, so there is no enforcement flag to report.",
         "operationId": "me",
         "responses": {
           "200": {

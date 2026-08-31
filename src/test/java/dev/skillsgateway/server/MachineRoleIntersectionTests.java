@@ -27,7 +27,7 @@ import org.springframework.test.context.TestPropertySource;
  * genuinely enabled, so the one-sided cases below can actually be observed: with the flag at its
  * default of off, every {@code require*} passes and the role half of the intersection is invisible.
  */
-@TestPropertySource(properties = {"skills-gateway.roles.enabled=true", "skills-gateway.roles.admins=owner"})
+@TestPropertySource(properties = {"skills-gateway.roles.admins=owner"})
 class MachineRoleIntersectionTests extends AbstractGatewayTest {
 
     @Autowired

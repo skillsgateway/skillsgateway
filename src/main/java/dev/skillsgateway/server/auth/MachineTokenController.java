@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
  * named scopes, rather than continuously to run a pipeline.
  *
  * <p>Every path here requires the {@code admin} role <b>whether or not role enforcement is
- * enabled</b>; see {@link RoleService#requireAdminRegardlessOfEnforcement}.
+ * enabled</b>; see {@link RoleService#requireAdmin}.
  */
 @RestController
 @RequestMapping("/api/tokens/machine")
@@ -127,7 +127,7 @@ public class MachineTokenController {
             description = "Unknown or empty API scope, missing expiry, or a lifetime beyond the cap")
     public ResponseEntity<TokenService.IssuedToken> create(
             @RequestBody CreateMachineCredentialRequest request, Authentication authentication) {
-        roleService.requireAdminRegardlessOfEnforcement(authentication);
+        roleService.requireAdmin(authentication);
         TokenService.IssuedToken issued = tokenService.createMachineCredential(
                 request.principal(),
                 request.name(),
@@ -154,7 +154,7 @@ public class MachineTokenController {
     @ApiResponse(responseCode = "200", description = "Every machine credential")
     @ApiResponse(responseCode = "403", description = "The caller does not hold the admin role")
     public List<MachineCredentialView> list(Authentication authentication) {
-        roleService.requireAdminRegardlessOfEnforcement(authentication);
+        roleService.requireAdmin(authentication);
         return tokenService.listMachineCredentials().stream()
                 .map(MachineTokenController::view)
                 .toList();
@@ -173,7 +173,7 @@ public class MachineTokenController {
     @ApiResponse(responseCode = "404", description = "No such machine credential")
     @ApiResponse(responseCode = "409", description = "The credential is revoked or expired; provision a new one")
     public ResponseEntity<TokenService.IssuedToken> rotate(@PathVariable long id, Authentication authentication) {
-        roleService.requireAdminRegardlessOfEnforcement(authentication);
+        roleService.requireAdmin(authentication);
         return tokenService
                 .rotateMachineCredential(id)
                 .map(issued -> {
@@ -194,7 +194,7 @@ public class MachineTokenController {
     @ApiResponse(responseCode = "403", description = "The caller does not hold the admin role")
     @ApiResponse(responseCode = "404", description = "No such active machine credential")
     public ResponseEntity<Void> revoke(@PathVariable long id, Authentication authentication) {
-        roleService.requireAdminRegardlessOfEnforcement(authentication);
+        roleService.requireAdmin(authentication);
         AccessToken credential = tokenService.findMachineCredential(id).orElse(null);
         if (!tokenService.revokeMachineCredential(id)) {
             return ResponseEntity.notFound().build();

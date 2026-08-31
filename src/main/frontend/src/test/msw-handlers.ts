@@ -325,7 +325,7 @@ export const handlers = [
   http.get("/api/adoption", () => HttpResponse.json(marketplaceAdoption)),
   http.get("/api/adoption/staleness", () => HttpResponse.json(staleIdentities)),
   http.get("/api/me", () =>
-    HttpResponse.json({ username: "alice", rolesEnabled: false, roles: [], claimsTruncated: false }),
+    HttpResponse.json({ username: "alice", roles: [], claimsTruncated: false }),
   ),
   http.get("/api/marketplaces", () => HttpResponse.json([marketplace])),
   http.post("/api/marketplaces", () =>

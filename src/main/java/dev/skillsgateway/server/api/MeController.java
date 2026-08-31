@@ -24,9 +24,6 @@ public class MeController {
     public record MeView(
             @Schema(description = "Username of the session") String username,
 
-            @Schema(description = "Whether role enforcement is enabled; false means every check passes")
-            boolean rolesEnabled,
-
             @Schema(description = "The session's effective roles, config-bootstrapped and claim-derived included")
             List<RoleService.EffectiveRole> roles,
 
@@ -40,14 +37,13 @@ public class MeController {
     @Tag(name = "Session")
     @Operation(
             summary = "Current user",
-            description = "Username of the authenticated browser session, whether role enforcement is"
-                    + " enabled, the session's effective roles with the source of each, and whether the"
-                    + " identity provider truncated the membership claim — how the portal and CLI adapt"
-                    + " their controls to what the caller may do.")
+            description = "Username of the authenticated browser session, the session's effective roles with"
+                    + " the source of each, and whether the identity provider truncated the membership"
+                    + " claim — how the portal and CLI adapt their controls to what the caller may do."
+                    + " Authorization is always enforced, so there is no enforcement flag to report.")
     public MeView me(Authentication authentication) {
         return new MeView(
                 authentication.getName(),
-                roleService.enabled(),
                 roleService.effectiveRoles(authentication),
                 roleService.claimsTruncated(authentication));
     }

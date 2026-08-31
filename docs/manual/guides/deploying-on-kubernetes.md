@@ -53,13 +53,17 @@ The chart's own keys cover the database, the identity provider and storage.
 [Configuration](../reference/configuration.md) — is set through two
 passthroughs, so no chart change is needed to reach a setting.
 
-!!! danger "Role enforcement is off by default"
+!!! danger "Name an administrator, or the pod will not start"
 
-    `skills-gateway.roles.enabled` defaults to `false`, and while it is false
-    every authorization check passes for every authenticated principal. A
-    gateway installed and left alone therefore grants full administrative
-    access to anyone who can complete an OIDC login. **Turn it on, and name at
-    least one config admin, before the first person logs in.**
+    Authorization is always enforced, and a gateway whose configuration grants
+    the admin role to nobody refuses to start rather than run as an estate
+    nobody can administer. Name one in `skills-gateway.roles.admins`, in a
+    `skills-gateway.roles.mappings` entry resolving `admin`, or in a declared
+    `skills-gateway.estate.grants` entry.
+
+    A grant made later through `/api/roles` does **not** satisfy this: it is
+    revocable through the API, so it says nothing about whether the next start
+    will have an administrator. The refusal names every path that resolves it.
 
 ### Structured configuration: `config`
 
@@ -124,7 +128,7 @@ extraEnvFrom:
 ```
 
 Environment names are Spring's relaxed-binding form of the property:
-`skills-gateway.roles.enabled` is `SKILLSGATEWAY_ROLES_ENABLED`.
+`skills-gateway.roles.claim` is `SKILLSGATEWAY_ROLES_CLAIM`.
 
 ## Storage
 

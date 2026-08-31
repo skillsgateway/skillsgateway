@@ -53,10 +53,9 @@ judgement — approving, rejecting, waiving — every operation that retracts or
 republishes content, every role grant and the whole of `/api/tokens/**` is
 outside it, and no combination of scopes and no role reaches them.
 
-**Authorization.** With role enforcement at its default (off), any
-authenticated session may call any endpoint. With
-`skills-gateway.roles.enabled=true`, every mutation and the audit surface
-require a role and answer **403** without one; the browsing surface stays open.
+**Authorization.** Every mutation and the audit surface require a role and
+answer **403** without one; the browsing surface stays open. There is no
+configuration that relaxes this.
 Each endpoint's page states its requirement, and
 [Delegated administration](../../guides/delegated-administration.md) has the
 matrix. Access tokens are scoped to the calling principal server-side in either
@@ -118,7 +117,6 @@ the sidebar footer and, with roles, to adapt its controls.
 
 ```json
 {"username": "alice@example.com",
- "rolesEnabled": true,
  "roles": [{"role": "approver", "marketplace": "acme", "source": "grant"},
            {"role": "auditor", "marketplace": null, "source": "claim"}],
  "claimsTruncated": false}

@@ -70,6 +70,10 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
             "spring.security.oauth2.client.provider.idp.token-uri=https://idp.invalid/token",
             "spring.security.oauth2.client.provider.idp.jwk-set-uri=https://idp.invalid/jwks",
             "skills-gateway.data-dir=target/test-git-data",
+            // Authorization is always enforced and a gateway with no administrator refuses to start
+            // (GW_0139). This suite boots the application to reach the store rather than the web
+            // surface, so it names one and never uses it.
+            "skills-gateway.roles.admins=fidelity-suite",
             // Every background pass off: this test exercises the object store, not the gateway.
             "skills-gateway.webhooks.enabled=false",
             "skills-gateway.audit-export.enabled=false",

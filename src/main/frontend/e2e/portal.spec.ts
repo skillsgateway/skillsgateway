@@ -609,7 +609,7 @@ test("preview_pane_shows_tree_inert_skill_md_and_diff_vs_served", async ({ page 
  * every test above already depends on this path. Here it is named: the session
  * holds admin, and its source is the claim rather than a grant row.
  *
- * @SVCs SVC_GW_0098
+ * @SVCs SVC_GW_0098, SVC_GW_0138
  */
 test("the_session_holds_an_admin_role_derived_from_the_identity_providers_group_claim", async ({
   page,
@@ -620,7 +620,9 @@ test("the_session_holds_an_admin_role_derived_from_the_identity_providers_group_
   expect(me.ok()).toBeTruthy();
   const body = await me.json();
 
-  expect(body.rolesEnabled).toBe(true);
+  // Authorization is always enforced, so there is no flag to report and its absence is the
+  // assertion (GW_0138). The role below is what proves enforcement reached a real login.
+  expect(body.rolesEnabled).toBeUndefined();
   expect(body.claimsTruncated).toBe(false);
   expect(body.roles).toContainEqual({ role: "admin", marketplace: null, source: "claim" });
 });

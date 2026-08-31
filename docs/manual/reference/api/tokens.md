@@ -282,8 +282,8 @@ entry that is itself new content to export.
 ### Roles still apply
 
 Effective authority is the **intersection** of the allowlist, the credential's
-scopes, and its principal's roles. With `skills-gateway.roles.enabled=true` a
-credential scoped `audit:read` still gets **403** unless its principal holds
+scopes, and its principal's roles. A credential scoped `audit:read` still gets
+**403** unless its principal holds
 `auditor` or `admin`.
 
 Scope and allowlist enforcement, unlike role enforcement, does **not** consult
