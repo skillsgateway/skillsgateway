@@ -39,7 +39,7 @@ nothing.
 | `reqstool status local -p docs/reqstool` | **134/134 complete · 0 incomplete · PASS** |
 | `openspec validate --all --strict` | 28 passed, 0 failed |
 | `mkdocs build --strict` | clean |
-| `./mvnw -Pnative -DskipTests native:compile` | **not run — no GraalVM on this machine** (see below) |
+| `./mvnw -Pnative -DskipTests native:compile` | not runnable locally (no GraalVM); **run in CI instead — see below** |
 
 ## Mutation proofs
 
@@ -130,7 +130,33 @@ truncated the environment the gateway starts with; the symptom was Boot failing
 on a missing datasource, nothing to do with roles. Caught by the e2e gate, fixed
 by moving the comment above the block.
 
-## Native image — skipped, with reason
+## Native image — run in CI, and it found a real break
+
+The local step could not run (no GraalVM on this machine), so the **Native image**
+workflow was dispatched against the branch rather than left unverified. It failed,
+and not for a native-image reason:
+
+```
+Caused by: java.lang.IllegalStateException:
+  Authorization is always enforced, and this gateway has no administrator.
+    at dev.skillsgateway.server.roles.RoleBootstrapGuard.<init>(RoleBootstrapGuard.java:39)
+```
+
+The workflow's container smoke test starts the image with datasource settings and
+nothing else, so under the new rule the gateway correctly refused to boot and the
+health probe never connected. The guard did exactly what it is for; the smoke test
+was configuring a deployment that is no longer valid.
+
+Fixed here by naming an administrator in that step. It is part of this change
+rather than a workflow fix in passing: this change is what makes the old
+configuration insufficient.
+
+**Nothing else would have caught it.** The smoke test exists only in `native.yml`,
+which does not run on pull requests, so every JVM gate can be green — as all of
+them were — while the packaged container cannot start. That is worth remembering
+next time a change touches startup.
+
+## The original gap, for the record
 
 The gauntlet's native step **did not run**, and the change is claimed with that
 gap stated rather than glossed:

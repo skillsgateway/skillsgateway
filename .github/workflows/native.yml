@@ -69,10 +69,15 @@ jobs:
 
       - name: Smoke test container
         run: |
+          # Authorization is always enforced and a gateway that grants the admin role to
+          # nobody refuses to start (GW_0139), so the smoke test names one. It never logs in
+          # as it: the assertion here is that the image boots and reports healthy, and the
+          # startup guard is part of booting.
           docker run -d --name gateway --network host \
             -e SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/skillsgateway \
             -e SPRING_DATASOURCE_USERNAME=skillsgateway \
             -e SPRING_DATASOURCE_PASSWORD=skillsgateway \
+            -e SKILLSGATEWAY_ROLES_ADMINS_0=smoke-test \
             skills-gateway:ci
           for _ in $(seq 1 30); do
             if curl -fsS http://localhost:8080/actuator/health | grep -q '"UP"'; then
