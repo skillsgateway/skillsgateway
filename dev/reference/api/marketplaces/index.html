@@ -2928,10 +2928,8 @@ resolves through the quarantine repository's object store at the pinned commit
 contain (traversal shapes included) is simply not found. Works on <code>held</code>
 snapshots: inspecting content must not require serving it.</p>
 <p>These reads return raw held content, so unlike the metadata reads above they
-are <strong>privileged while role enforcement is enabled</strong>
-(<code>skills-gateway.roles.enabled=true</code>): an admin, or an approver of the
-snapshot's marketplace. Everyone else gets <strong>403</strong>. With enforcement at its
-default (off) they are open to any authenticated session.</p>
+are <strong>privileged</strong>: an admin, or an approver of the snapshot's marketplace.
+Everyone else gets <strong>403</strong>.</p>
 <h3 id="get-snapshotsidfiles"><code>GET /snapshots/{id}/files</code><a class="headerlink" href="#get-snapshotsidfiles" title="Permanent link">&para;</a></h3>
 <p>Every path in the pinned commit's tree, with blob sizes. The listing is capped
 at 2000 entries; <code>"truncated": true</code> says it was cut.</p>

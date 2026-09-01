@@ -2321,12 +2321,15 @@ example on serverless Kubernetes.</p>
 <a href="../../reference/configuration/">Configuration</a> — is set through two
 passthroughs, so no chart change is needed to reach a setting.</p>
 <div class="admonition danger">
-<p class="admonition-title">Role enforcement is off by default</p>
-<p><code>skills-gateway.roles.enabled</code> defaults to <code>false</code>, and while it is false
-every authorization check passes for every authenticated principal. A
-gateway installed and left alone therefore grants full administrative
-access to anyone who can complete an OIDC login. <strong>Turn it on, and name at
-least one config admin, before the first person logs in.</strong></p>
+<p class="admonition-title">Name an administrator, or the pod will not start</p>
+<p>Authorization is always enforced, and a gateway whose configuration grants
+the admin role to nobody refuses to start rather than run as an estate
+nobody can administer. Name one in <code>skills-gateway.roles.admins</code>, in a
+<code>skills-gateway.roles.mappings</code> entry resolving <code>admin</code>, or in a declared
+<code>skills-gateway.estate.grants</code> entry.</p>
+<p>A grant made later through <code>/api/roles</code> does <strong>not</strong> satisfy this: it is
+revocable through the API, so it says nothing about whether the next start
+will have an administrator. The refusal names every path that resolves it.</p>
 </div>
 <h3 id="structured-configuration-config">Structured configuration: <code>config</code><a class="headerlink" href="#structured-configuration-config" title="Permanent link">&para;</a></h3>
 <p>Anything under <code>config</code> is rendered verbatim into a ConfigMap, mounted at
@@ -2382,7 +2385,7 @@ from the estate declaration as described in
 <a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">skills-gateway-extra</span>
 </code></pre></div>
 <p>Environment names are Spring's relaxed-binding form of the property:
-<code>skills-gateway.roles.enabled</code> is <code>SKILLSGATEWAY_ROLES_ENABLED</code>.</p>
+<code>skills-gateway.roles.claim</code> is <code>SKILLSGATEWAY_ROLES_CLAIM</code>.</p>
 <h2 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">&para;</a></h2>
 <p>The gateway keeps three sets of repositories on disk under <code>/data</code>: the
 quarantine, the published content the facade serves, and hosted first-party

@@ -2362,7 +2362,7 @@ is what gets you back in when a group is renamed, a claim stops being
 emitted, or a mapping is wrong.</p>
 </div>
 <h3 id="dry-run-before-you-enforce">Dry-run before you enforce<a class="headerlink" href="#dry-run-before-you-enforce" title="Permanent link">&para;</a></h3>
-<p>Configure the mappings while <code>skills-gateway.roles.enabled</code> is still <code>false</code>.
+<p>Configure the mappings before the gateway's first start.
 Nothing is enforced, but <code>/api/me</code> already reports what each session <em>would</em>
 hold — so you can confirm the claim arrives and the values match before the
 switch flips.</p>
@@ -2454,15 +2454,15 @@ unreadable; pick which cost you would rather pay, and be consistent.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>session.txt<span class="w"> </span>https://&lt;gateway-host&gt;/api/me<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="go">{</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="go">  "username": "alice@example.com",</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="go">  "rolesEnabled": true,</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="go">  "roles": [{"role": "admin", "marketplace": null, "source": "claim"}],</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="go">  "claimsTruncated": false</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="go">}</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="go">  "roles": [{"role": "admin", "marketplace": null, "source": "claim"}],</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="go">  "claimsTruncated": false</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="go">}</span>
 </code></pre></div>
 <p><code>source: claim</code> is the confirmation that the mapping — not a grant row — is
 what made this session an admin.</p>
 <h2 id="locked-out">Locked out?<a class="headerlink" href="#locked-out" title="Permanent link">&para;</a></h2>
-<p>Set <code>skills-gateway.roles.enabled=false</code> and restart: every check passes again
+<p>Add yourself to <code>skills-gateway.roles.admins</code> and restart: that is configuration
+rather than a stored grant, so it cannot be revoked through the API
 and nothing is lost. Fix the mappings or the <code>admins</code> list, then re-enable.</p>
 
 

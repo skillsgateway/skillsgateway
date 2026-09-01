@@ -2003,9 +2003,8 @@
 walkthrough live in
 <a href="../../../guides/delegated-administration/">Delegated administration</a>; the
 enforcement matrix is on each endpoint's own reference page.</p>
-<p>While <code>skills-gateway.roles.enabled=false</code> (the default) these endpoints are
-open to any authenticated session and the grants they manage have no effect —
-staging data for the flip. Once enabled, all three are <strong>admin-only</strong>.</p>
+<p>Authorization is always enforced, so a grant made here takes effect immediately
+and all three endpoints are <strong>admin-only</strong>.</p>
 <p><strong>Machine reach.</strong> <code>roles:read</code> covers <code>GET /roles</code>. Granting and revoking are
 reachable by <strong>no scope at all</strong>: <code>estate.grants</code> already declares grants with
 no credential in the pipeline, so a machine write path would add escalation

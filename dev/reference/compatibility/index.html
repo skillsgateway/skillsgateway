@@ -2316,6 +2316,20 @@ manifest — a designed future capability, not a configuration flag.</p>
 <h2 id="the-api-contract">The API contract<a class="headerlink" href="#the-api-contract" title="Permanent link">&para;</a></h2>
 <p>Everything above is about what the gateway <em>accepts</em>. This is about what its own
 HTTP surface <em>promises</em>.</p>
+<div class="admonition note">
+<p class="admonition-title">What this promise does not cover</p>
+<p>It covers <code>/api/**</code>. It does <strong>not</strong> currently extend to the
+<code>skills-gateway.*</code> configuration surface, the Helm chart's values, or the
+declarative estate schema. Whether those should carry the same additive
+obligation — and what would gate it — is open in
+<a href="https://github.com/skillsgateway/skillsgateway/issues/121">#121</a>.</p>
+<p>One consequence is live today: <code>skills-gateway.roles.enabled</code> was removed,
+and a deployment that still sets it is <strong>refused at startup</strong> rather than
+having the setting ignored. Ignoring it would reverse an operator who set it
+to <code>false</code>, and a property that is read and a property that is ignored look
+identical from inside a deployment. That refusal is a migration aid and is
+scheduled for removal at the next major.</p>
+</div>
 <p><strong>Within a major, <code>/api/**</code> only grows.</strong> Endpoints, fields and enum values may
 be added; nothing a deployed client could depend on is removed, narrowed or
 renamed. A breaking change is allowed — it is not free. It moves the path prefix

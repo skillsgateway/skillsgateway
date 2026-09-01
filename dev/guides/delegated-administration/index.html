@@ -1122,10 +1122,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-1-stage-your-grants" class="md-nav__link">
+  <a href="#step-1-make-your-grants" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 1 — stage your grants
+        Step 1 — make your grants
       
     </span>
   </a>
@@ -1994,10 +1994,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-1-stage-your-grants" class="md-nav__link">
+  <a href="#step-1-make-your-grants" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 1 — stage your grants
+        Step 1 — make your grants
       
     </span>
   </a>
@@ -2122,11 +2122,12 @@ own <a href="../../reference/api/tokens/">access tokens</a>.</p>
 <p>Enforcement lives at the REST API, which is what the portal speaks. The
 <a href="../../reference/git-facade/">git facade</a> is untouched: its authorization is
 token scopes, a different credential for a different surface.</p>
-<h2 id="step-1-stage-your-grants">Step 1 — stage your grants<a class="headerlink" href="#step-1-stage-your-grants" title="Permanent link">&para;</a></h2>
-<p>Role enforcement is <strong>off by default</strong> (<code>skills-gateway.roles.enabled=false</code>):
-every check passes and the gateway behaves exactly as before. The grants API
-already works in this state, which is how you stage grants <em>before</em> anything is
-enforced:</p>
+<h2 id="step-1-make-your-grants">Step 1 — make your grants<a class="headerlink" href="#step-1-make-your-grants" title="Permanent link">&para;</a></h2>
+<p>Authorization is always enforced, so a grant takes effect the moment it is made.
+There is no staging state to make them in first, and no switch to flip
+afterwards: the gateway you are configuring is already enforcing. Make the grants
+as an administrator — the one your configuration names, which the gateway refused
+to start without:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/roles<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"principal": "alice@example.com", "role": "approver", "marketplace": "acme"}'</span>
@@ -2159,7 +2160,7 @@ well — the configuration list is the one you cannot lose.</p>
 <h2 id="step-3-enable-and-verify">Step 3 — enable and verify<a class="headerlink" href="#step-3-enable-and-verify" title="Permanent link">&para;</a></h2>
 <p>Restart with the configuration above. Then verify from a browser session:</p>
 <ul>
-<li><code>GET /api/me</code> now reports <code>"rolesEnabled": true</code> and your effective roles.</li>
+<li><code>GET /api/me</code> reports your effective roles and where each came from.</li>
 <li>A session with no role gets <strong>403</strong> from every mutation and from the ledger,
   while browsing and its own tokens keep working.</li>
 <li>Your approver can approve their marketplace and gets <strong>403</strong> for any other,
@@ -2208,8 +2209,14 @@ the one source that no directory outage and no bad mapping can take away.</p>
 <p>Setting the mappings up, including a worked Microsoft Entra ID walkthrough, is
 in <a href="../identity-providers/">Identity providers</a>.</p>
 <h2 id="locked-out-anyway">Locked out anyway?<a class="headerlink" href="#locked-out-anyway" title="Permanent link">&para;</a></h2>
-<p>Set <code>skills-gateway.roles.enabled=false</code> and restart: every check passes again,
-grants intact. Fix the grants (or the <code>admins</code> list) and re-enable.</p>
+<p>There is no longer a switch that turns authorization off, so the way back is to
+grant the role rather than to stop enforcing it. <code>skills-gateway.roles.admins</code> is
+the escape hatch that fits in a restart: it is configuration, so no API call is
+needed to set it and no API call can revoke it. Add yourself, restart, fix the
+grants, and remove yourself again if you would rather not be a standing admin.</p>
+<p>For a local checkout, <code>skills-gateway.dev-insecure-auth=true</code> skips authentication
+entirely and makes its own principal an admin. It refuses to start against a
+configured identity provider, so it is not available as a production remedy.</p>
 <h2 id="what-this-is-not">What this is not<a class="headerlink" href="#what-this-is-not" title="Permanent link">&para;</a></h2>
 <ul>
 <li>No portal UI for managing grants or claim mappings yet — the API (and the

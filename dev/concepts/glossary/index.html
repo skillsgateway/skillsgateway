@@ -1979,8 +1979,8 @@ indistinguishable from not-found.</dd>
 <dt><strong>Role grant</strong></dt>
 <dd>One row of current state giving a principal a role — <code>admin</code> (global),
 <code>approver</code> (scoped to one marketplace), or <code>auditor</code> (global, read-only).
-Managed through <code>/api/roles</code>, audited on the ledger, inert until
-<code>skills-gateway.roles.enabled=true</code>. Principals in
+Managed through <code>/api/roles</code>, audited on the ledger, and effective as soon
+as it is made. Principals in
 <code>skills-gateway.roles.admins</code> are admins by configuration, without a grant
 row, and cannot be revoked through the API.</dd>
 <dt><strong>Skill</strong></dt>

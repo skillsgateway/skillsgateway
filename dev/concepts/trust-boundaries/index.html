@@ -2375,7 +2375,7 @@ marketplace through the facade and no marketplace through publication, <em>inclu
 the marketplaces its empty fetch scope list would otherwise grant</em>: the fetch
 default is conditional on the credential's shape.</p>
 <p><strong>Authorization</strong> is an allowlist over per-concern named scopes, enforced in the
-filter chain and therefore independent of <code>skills-gateway.roles.enabled</code>.
+filter chain and therefore independent of the session chain's role checks.
 Reach is the intersection of the allowlist, the credential's scopes and its
 principal's roles — never their union. Every act of human judgement, every
 operation that retracts or republishes content, every role grant and the whole
@@ -2466,12 +2466,13 @@ top of every privileged endpoint:</p>
 </tr>
 </tbody>
 </table>
-<p>Enforcement is <strong>deny-by-default once enabled</strong>: a session with no role keeps
-the browsing surface and its own tokens, and is refused everything else. It is
-<strong>off by default</strong> (<code>skills-gateway.roles.enabled=false</code>) so an upgrade never
-locks a deployment out of its own gateway; principals in
+<p>Enforcement is <strong>deny-by-default and unconditional</strong>: a session with no role
+keeps the browsing surface and its own tokens, and is refused everything else.
+There is no configuration that turns it off. A deployment that locks itself out
+is prevented at the other end instead — the gateway refuses to start unless its
+configuration grants the admin role to somebody, and principals in
 <code>skills-gateway.roles.admins</code> are admins by configuration and cannot be revoked
-through the API — the escape hatch that makes enabling safe. Every grant and
+through the API. Every grant and
 revocation is on the append-only ledger.</p>
 <p>A role can come from three places, and the union is what a session holds: the
 <code>skills-gateway.roles.admins</code> list, a grant row, or a <strong>claim</strong> of the identity

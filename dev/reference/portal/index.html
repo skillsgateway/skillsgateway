@@ -2767,9 +2767,7 @@ identity provider.</p>
   an absent one renders as an em dash.</li>
 </ul>
 <h2 id="authorization">Authorization<a class="headerlink" href="#authorization" title="Permanent link">&para;</a></h2>
-<p>With role enforcement at its default (off), any authenticated session can
-register marketplaces, ingest, approve and reject. With
-<code>skills-gateway.roles.enabled=true</code> the server refuses mutations, the audit
+<p>The server refuses mutations, the audit
 surface and the <a href="#preview-pane">snapshot preview reads</a> to sessions without an
 applicable role — see
 <a href="../../guides/delegated-administration/">Delegated administration</a>; the portal

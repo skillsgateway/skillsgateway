@@ -3688,10 +3688,10 @@ nothing appears in <code>application.yaml</code>.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>skills-gateway.roles.enabled</code></td>
-<td>boolean</td>
-<td><code>false</code></td>
-<td>With <code>false</code> every check passes; grants stay writable as staging data.</td>
+<td><code>skills-gateway.roles.admins</code></td>
+<td>list</td>
+<td>empty</td>
+<td>Principals that hold the admin role by configuration; no API call can revoke them. Naming an administrator here, in <code>roles.mappings</code>, or in <code>estate.grants</code> is required — authorization is always enforced, and a gateway that names none refuses to start.</td>
 </tr>
 <tr>
 <td><code>skills-gateway.roles.admins</code></td>
