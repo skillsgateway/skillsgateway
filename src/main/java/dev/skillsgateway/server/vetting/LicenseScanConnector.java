@@ -55,10 +55,14 @@ public class LicenseScanConnector implements VettingConnector {
     }
 
     @Override
-    @Requirements({"GW_0093", "GW_0094"})
+    @Requirements({"GW_0093", "GW_0094", "GW_0143"})
     public Verdict vet(SnapshotUnderVetting snapshot) {
         try {
-            return Verdict.of(policy.findings(LicenseDetector.detect(snapshot)));
+            var detections = LicenseDetector.detect(snapshot);
+            String summary = "detected %d license declaration(s) over license/copying files and manifest metadata;"
+                            .formatted(detections.size())
+                    + " evaluated against the configured allow/ban lists";
+            return Verdict.of(policy.findings(detections), summary);
         } catch (IOException e) {
             // Reading the snapshot failed midway; the chain records this as an error, which blocks.
             throw new IllegalStateException("cannot read snapshot content", e);

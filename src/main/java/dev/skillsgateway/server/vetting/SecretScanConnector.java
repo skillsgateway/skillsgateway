@@ -87,12 +87,14 @@ public class SecretScanConnector implements VettingConnector {
     }
 
     @Override
-    @Requirements({"GW_0039"})
+    @Requirements({"GW_0039", "GW_0143"})
     public Verdict vet(SnapshotUnderVetting snapshot) {
         List<Finding> findings = new ArrayList<>();
+        int[] counts = new int[2]; // {scanned, skipped}
         try {
             snapshot.walk((path, content) -> {
                 if (content == null) {
+                    counts[1]++;
                     findings.add(new Finding(
                             "file-not-scanned",
                             Severity.INFO,
@@ -103,10 +105,12 @@ public class SecretScanConnector implements VettingConnector {
                 String text = ContentRules.text(content);
                 if (text == null) {
                     // Binary: reported, not silently dropped, so a reviewer knows the coverage gap.
+                    counts[1]++;
                     findings.add(new Finding(
                             "file-not-scanned", Severity.INFO, path, "binary file; text rules do not apply"));
                     return;
                 }
+                counts[0]++;
                 findings.addAll(ContentRules.apply(RULES, path, text));
                 findings.addAll(highEntropyAssignments(path, text));
             });
@@ -114,7 +118,16 @@ public class SecretScanConnector implements VettingConnector {
             // Reading the snapshot failed midway; the chain records this as an error, which blocks.
             throw new IllegalStateException("cannot read snapshot content", e);
         }
-        return Verdict.of(findings);
+        return Verdict.of(findings, summary(counts[0], counts[1]));
+    }
+
+    /** What the scan examined (GW_0143): a clean pass records this so it is not read as "did not run". */
+    private static String summary(int scanned, int skipped) {
+        return "scanned %d text file(s)%s; applied %d secret-shape rules plus high-entropy assignment analysis"
+                .formatted(
+                        scanned,
+                        skipped == 0 ? "" : " (%d skipped as binary or oversize)".formatted(skipped),
+                        RULES.size());
     }
 
     /** Assignment-shaped values that are random enough to be credentials rather than identifiers. */

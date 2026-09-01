@@ -290,8 +290,15 @@ never invisible.
 ## What lands in the ledger
 
 Every chain run writes to the append-only ledger: one entry per connector
-verdict (`vetting-verdict`, with `connector=state` in its detail) and one entry
-for the run outcome (`vetting-completed`).
+verdict (`vetting-verdict`) and one entry for the run outcome
+(`vetting-completed`). Both are attributed to the `system` actor kind — the chain
+is the gateway's own automated subsystem, not a person. A verdict entry leads
+with `connector=state` and then carries the finding count, the worst severity
+present, and the id of the chain run, so the entry is auditable on its own; a
+clean pass additionally states what the connector examined — the files it scanned
+and the rules it applied — so a pass in the ledger is never indistinguishable
+from a connector that did not run. The completion entry carries the same run id,
+so a run's scattered verdict entries reassemble into the one run they came from.
 
 The whole waiver lifecycle lands there too:
 
