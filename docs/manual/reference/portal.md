@@ -22,7 +22,11 @@ A fixed sidebar, grouped:
 not from the sidebar.
 
 The sidebar footer shows the signed-in username from `GET /api/me`. The header
-carries a breadcrumb and a dark-mode toggle.
+carries a breadcrumb and a theme toggle. The toggle is three-state and cycles
+**system → light → dark**: it defaults to _system_ (follow the operating
+system's appearance), and its icon shows the chosen state — a monitor for
+system, a sun for light, a moon for dark. The choice is remembered in the
+browser (`localStorage`); _system_ tracks the OS setting as it changes.
 
 !!! note "There is no logout control"
 
@@ -424,8 +428,13 @@ The table, from `GET /api/audit`.
 | Commit | First 12 characters of the SHA, or "—". Filterable. |
 | Detail | The entry's free-text detail. |
 
-The per-column filter boxes sit above the table; the table paginates client-side
-(25 rows a page) over the JSON ledger. The status is a **read-only legibility
+The per-column filter boxes sit above the table; each is free-text but offers
+**completion** from the values actually present, so you pick rather than type
+blind. The event, principal and commit lists are the distinct values in the
+loaded rows; the marketplace list draws on the registered marketplaces, so it
+completes beyond the rows on screen. Because the table paginates client-side
+(25 rows a page) over the JSON ledger, the event/principal/commit suggestions
+cover only the rows loaded so far. The status is a **read-only legibility
 aid** derived from what the ledger already records — it does not correct the
 ledger; the lossy verdict detail and the actor-type on automated vetting
 principals are tracked in [#221](https://github.com/skillsgateway/skillsgateway/issues/221).
