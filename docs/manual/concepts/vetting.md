@@ -78,7 +78,8 @@ has to get its severity right.
 
 `PENDING` exists so that an asynchronous connector — one that is triggered over
 a webhook and answers later — fits without changing the gate. No built-in
-connector returns it today.
+connector returns it; a configured [external connector](#external-connectors)
+that answers `pending` does, and it blocks until it is resolved.
 
 ## Fail-closed aggregation
 
@@ -276,8 +277,29 @@ detection is readable per snapshot at
     A `PASS` means "no known marker matched". It is triage that tells a reviewer
     where to look first — it is not a statement that the snapshot is safe, and
     reading the content is still the reviewer's job. Semantic review of skill
-    instructions needs an LLM review connector, which is not part of this chain
-    yet.
+    instructions needs an LLM review connector, which the gateway does not ship
+    but an operator can add as an [external connector](#external-connectors).
+
+## External connectors
+
+An operator can extend the chain with their own connectors — an LLM reviewer, a
+sandbox detonator, a corporate scanner — configured under
+`skills-gateway.vetting.external` (see
+[Configuration → External connectors](../reference/configuration.md#external-connectors)).
+Each is an HTTP endpoint the gateway POSTs the snapshot's scannable content to
+and reads a normalized `{state, reportUrl, findings[]}` back from. A configured
+external connector runs in the chain at its position and is recorded, aggregated
+and waivable exactly like a built-in one — its findings and its external report
+link surface wherever a built-in's do.
+
+Because the endpoint is a dependency the gateway does not control, an external
+connector is **fail-closed** in the strong sense: an unreachable, slow, oversized,
+unparseable, unrecognised or partial answer is an `ERROR` verdict, which blocks —
+a broken external reviewer holds a snapshot, it never lets one through. And the
+recorded state is the **worse** of what the endpoint declared and what its own
+findings imply, so an endpoint cannot pass content its evidence condemns. An
+endpoint that needs to answer later returns `PENDING`, which blocks until it is
+resolved.
 
 ## Coverage gaps are reported, not hidden
 
