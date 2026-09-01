@@ -7,7 +7,10 @@ With [role enforcement](../../guides/delegated-administration.md) enabled:
 registration and sync-mode changes require **admin**; ingest, approve, reject,
 re-vet, and waiver create/delete require **approver of the marketplace** (or
 admin) — resolved server-side from the addressed snapshot or waiver where the
-route carries an id; every `GET` on this page stays open to any session.
+route carries an id; every `GET` on this page stays open to any session, except
+the connector settings, which are **admin**. Two administrative escape hatches
+require **admin** specifically: overriding a blocked vetting outcome on approve,
+and enabling or disabling a connector.
 
 **Machine reach.** `marketplaces:read` covers `GET /marketplaces`, `GET
 /catalog` and a snapshot's `/content`, `/licenses`, `/provenance` and
@@ -354,15 +357,62 @@ chain has never run against reports `"outcome":"BLOCKED"` and `"run":null`.
 | `suppressed` | The findings an active waiver is currently removing from the computation. |
 | `uncovered` | The blocking findings no active waiver covers — the waivers approval still needs. |
 | `waivers` | The marketplace's waivers whose rule appears in this run, active and lapsed alike. |
+| `override` | Present when an administrator approved this snapshot over a blocked outcome (`reason`, `blockingConnectors`, `uncoveredFindings`, `overriddenBy`, `overriddenAt`); `null` otherwise. Its presence is what surfaces the override so it is never indistinguishable from a clean approval. See [The vetting override](#administrative-override-of-a-blocked-outcome). |
 
-`state` is one of `PASS`, `WARN`, `FAIL`, `ERROR`, `PENDING`; `severity` is one
-of `INFO`, `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`. What each means is described in
-[Vetting — the connector chain](../../concepts/vetting.md).
+`state` is one of `PASS`, `WARN`, `FAIL`, `ERROR`, `PENDING`, `DISABLED`;
+`severity` is one of `INFO`, `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`. A `DISABLED`
+verdict records that an administrator switched that connector off for the
+snapshot's marketplace ([connector settings](#connector-enabledisable)); it is
+neither clearing nor blocking, but a run still needs one clearing verdict to
+clear, so disabling every connector leaves a run `BLOCKED`. What each state means
+is described in [Vetting — the connector chain](../../concepts/vetting.md).
 
 | Status | Cause |
 | --- | --- |
 | 200 | The latest chain run, its waivers, and the configured chain. |
 | 404 | Unknown snapshot. |
+
+---
+
+## Connector enable/disable
+
+An administrator can switch a built-in connector (secret-scan, prompt-injection,
+license-scan) off or on, globally or for one marketplace. Both endpoints are
+**admin-only** — the switch that governs the vetting chain, and even the
+visibility of its settings, are not shown to marketplace-scoped approvers.
+
+A disabled connector is **not run** at ingestion or re-vetting; the chain records
+a `DISABLED` verdict in its place, so the disablement is part of the run's
+evidence rather than a silently shorter chain. Disabling every connector leaves a
+run `BLOCKED`, never cleared — the switch is not a blanket approval.
+
+### `GET /vetting/connector-toggles`
+
+Lists every enable/disable setting — the global settings and the per-marketplace
+overrides.
+
+| Status | Cause |
+| --- | --- |
+| 200 | The connector settings. |
+| 403 | Caller does not hold the administrative role. |
+
+### `PUT /vetting/connectors/{name}/toggle`
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `enabled` | yes | `true` to run the connector, `false` to switch it off. |
+| `marketplace` | no | Scope the setting to one marketplace; omit for the global setting. A per-marketplace setting overrides the global one. |
+| `reason` | no | A note recorded with the change and on the audit ledger. |
+
+Each toggle is audited (`connector-disabled` / `connector-enabled`) naming the
+administrator, the connector, the scope and the new state.
+
+| Status | Cause |
+| --- | --- |
+| 200 | The setting after the change. |
+| 403 | Caller does not hold the administrative role. |
+| 404 | Named marketplace not found. |
+| 422 | Unknown connector, or `enabled` omitted. |
 
 ---
 
@@ -501,9 +551,9 @@ received anything, so counting it would name teams that never got the content.
 **The only endpoint that publishes.** Fetches the pinned quarantine ref into the
 published repository and force-updates `refs/heads/main` to that SHA.
 
-**Takes no request body.** A snapshot whose effective vetting outcome is blocked
-is refused, and the problem document carries both `blockingConnectors` and
-`uncoveredFindings`:
+**The request body is optional.** A snapshot whose effective vetting outcome is
+blocked is refused, and the problem document carries both `blockingConnectors`
+and `uncoveredFindings`:
 
 ```json
 {"status":409,"title":"Vetting chain blocked this snapshot",
@@ -558,19 +608,41 @@ ledger beside `snapshot-approved`.
 | --- | --- |
 | 200 | Approved; returns the snapshot with `decidedBy` and `decidedAt`. |
 | 404 | Unknown snapshot. |
-| 409 | The snapshot is neither `held` nor `revoked`, its effective vetting outcome is blocked, a [policy rule](policy.md) denied it, it has not reached the minimum release age, or an enforcing four-eyes rule refused it. |
+| 409 | The snapshot is neither `held` nor `revoked`, its effective vetting outcome is blocked and no override was supplied, a [policy rule](policy.md) denied it, it has not reached the minimum release age, or an enforcing four-eyes rule refused it. |
+| 422 | An override was requested (`overrideVetting: true`) without a `reason`. |
 
 A `revoked` snapshot is approved through this same endpoint and no other — there
 is no un-revoke. The gate is unchanged, so the finding that revoked it must be
 waived or fixed first; the transition records a fresh reviewer and clears the
 revocation marks.
 
+### Administrative override of a blocked outcome
+
+The airline-cockpit escape hatch: an **administrator — and only an
+administrator** — may approve a snapshot whose effective outcome is blocked by
+sending a body:
+
+```json
+{"overrideVetting": true, "reason": "vendor-signed key, accepted risk in TICKET-42"}
+```
+
+The override **lifts only the vetting gate** — the policy, minimum-release-age
+and four-eyes gates still run. A `reason` is required (a reasonless override is
+`422`). The override writes a distinct audit event,
+`snapshot-approved-over-vetting-failure`, naming the administrator, the reason
+and the blocking verdicts, and it marks the snapshot so `GET
+/snapshots/{id}/vetting` reports an `override` — an override is never
+indistinguishable from an approval the chain cleared. A marketplace-scoped
+approver, who may approve a *clean* snapshot, cannot override a blocked one.
+
 !!! warning "A blocked snapshot can still be published"
 
-    The gate is a set of written, attributed, expiring acceptances — not a
-    prohibition. A fully waived snapshot publishes exactly as an ordinary
-    approval does. The difference is that the ledger says which risk was
-    accepted, by whom, and until when.
+    There are two deliberate ways past a block, and each leaves its own trail. A
+    **waiver** is a scoped, expiring acceptance of one finding that any reviewer
+    may record; the ledger says which risk was accepted, by whom, and until when.
+    An **override** is a one-off, whole-outcome act reserved to an administrator,
+    who states a reason and is named on a distinct ledger event. Neither is a
+    silent bypass.
 
 ---
 

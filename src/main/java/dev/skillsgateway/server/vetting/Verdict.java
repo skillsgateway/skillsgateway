@@ -47,6 +47,23 @@ public record Verdict(
         return new Verdict(worst.atLeast(Severity.HIGH) ? VerdictState.FAIL : VerdictState.WARN, findings, null);
     }
 
+    /**
+     * The verdict recorded in place of a connector an administrator switched off for this
+     * marketplace (GW_0143). Carries an informational finding so the disablement is visible on the
+     * run rather than being a silently shorter chain; INFO severity keeps it out of the block
+     * decision, and {@link VerdictState#DISABLED} is neither clearing nor blocking regardless.
+     */
+    public static Verdict disabled(String connector, String scope) {
+        return new Verdict(
+                VerdictState.DISABLED,
+                List.of(new Finding(
+                        "connector-disabled",
+                        Severity.INFO,
+                        connector,
+                        "connector '%s' is disabled %s and was not run".formatted(connector, scope))),
+                null);
+    }
+
     /** The verdict recorded for a connector that threw or timed out; never a silent skip. */
     public static Verdict error(String connector, String detail) {
         return new Verdict(

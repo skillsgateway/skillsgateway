@@ -179,11 +179,24 @@ the *detection*: a self-approval is on the ledger either way, which is what
 keeps `warn` a measurement rather than a blind spot. The automated sync triggers
 are not identities and never conflict.
 
-None of these gates can ever *open*: none can approve. Policy rules in particular
-cannot auto-approve, because that would delegate the human decision this
-boundary exists to guarantee to an expression — a trust-model change, decided
-deliberately or not at all (ADR 0006 in
+None of these gates can ever *open* on their own: none can approve. Policy rules
+in particular cannot auto-approve, because that would delegate the human decision
+this boundary exists to guarantee to an expression — a trust-model change,
+decided deliberately or not at all (ADR 0006 in
 [Architecture decisions](../reference/decisions.md)).
+
+What *a human* can do, deliberately and audibly, is the airline-cockpit escape
+hatch (ADR 0009): an **administrator** can disconnect the automation. Two acts,
+both admin-only and both on the ledger. An administrator can **override** a
+blocked outcome on approve, by stating a reason — the override lifts only the
+vetting gate, leaving policy, cooling-off and four-eyes in force, and writes a
+distinct `snapshot-approved-over-vetting-failure` event plus a standing marker so
+the served snapshot is never indistinguishable from a clean approval. An
+administrator can also **disable a connector**, globally or per marketplace — but
+the disablement is recorded as a `disabled` verdict on every run, and a run with
+nothing but disabled verdicts stays *blocked*, so switching the chain off is
+never a way to clear content. The override is the rarer, whole-outcome
+counterpart to a scoped, expiring waiver; neither is a silent bypass.
 
 ## The web surface
 

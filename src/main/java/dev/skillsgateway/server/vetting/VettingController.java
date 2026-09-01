@@ -1,5 +1,7 @@
 package dev.skillsgateway.server.vetting;
 
+import dev.skillsgateway.server.approval.VettingOverrideRecord;
+import dev.skillsgateway.server.approval.VettingOverrideRepository;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotNotFoundException;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
@@ -28,12 +30,17 @@ public class VettingController {
     private final VettingService vettingService;
     private final WaiverService waiverService;
     private final SnapshotRepository snapshotRepository;
+    private final VettingOverrideRepository overrideRepository;
 
     public VettingController(
-            VettingService vettingService, WaiverService waiverService, SnapshotRepository snapshotRepository) {
+            VettingService vettingService,
+            WaiverService waiverService,
+            SnapshotRepository snapshotRepository,
+            VettingOverrideRepository overrideRepository) {
         this.vettingService = vettingService;
         this.waiverService = waiverService;
         this.snapshotRepository = snapshotRepository;
+        this.overrideRepository = overrideRepository;
     }
 
     @Schema(description = "A connector configured in the vetting chain")
@@ -78,7 +85,13 @@ public class VettingController {
             List<WaiverController.WaiverView> waivers,
 
             @Schema(description = "The connectors configured in the chain, in the order they run")
-            List<ConnectorView> connectors) {}
+            List<ConnectorView> connectors,
+
+            @Schema(
+                    description = "Present when an administrator approved this snapshot over a blocked vetting"
+                            + " outcome (GW_0142); its presence is what surfaces the override so it is never"
+                            + " indistinguishable from a clean approval. Null otherwise.")
+            VettingOverrideRecord override) {}
 
     @GetMapping("/snapshots/{id}/vetting")
     @Requirements({"GW_0037", "GW_0038", "GW_0045"})
@@ -113,6 +126,7 @@ public class VettingController {
                 .filter(waiver -> rulesInRun.contains(waiver.ruleId()))
                 .map(WaiverController.WaiverView::of)
                 .toList();
+        VettingOverrideRecord override = overrideRepository.findBySnapshot(id).orElse(null);
         return new VettingView(
                 id,
                 effect.outcome(),
@@ -121,7 +135,8 @@ public class VettingController {
                 effect.suppressions(),
                 effect.uncovered(),
                 relevant,
-                connectors);
+                connectors,
+                override);
     }
 
     @ExceptionHandler(SnapshotNotFoundException.class)

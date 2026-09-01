@@ -16,7 +16,10 @@ CREATE TYPE snapshot_state AS ENUM ('held', 'approved', 'rejected', 'revoked');
 CREATE TYPE webhook_delivery_state AS ENUM ('pending', 'delivered', 'failed');
 CREATE TYPE audit_sink_kind AS ENUM ('webhook');
 CREATE TYPE vetting_run_outcome AS ENUM ('clear', 'blocked');
-CREATE TYPE vetting_verdict_state AS ENUM ('pass', 'warn', 'fail', 'error', 'pending');
+-- 'disabled' records that an administrator switched this connector off for the snapshot's
+-- marketplace (GW_0143): the chain skipped it rather than running it. It is neither clearing
+-- nor blocking — the disablement is fail-loud evidence on the run, not a silent shorter chain.
+CREATE TYPE vetting_verdict_state AS ENUM ('pass', 'warn', 'fail', 'error', 'pending', 'disabled');
 CREATE TYPE vetting_finding_severity AS ENUM ('info', 'low', 'medium', 'high', 'critical');
 CREATE TYPE vetting_waiver_scope_kind AS ENUM ('snapshot', 'path');
 CREATE TYPE role_grant_role AS ENUM ('admin', 'approver', 'auditor');
@@ -395,3 +398,51 @@ CREATE TABLE policy_rules (
     updated_by TEXT,
     updated_at TIMESTAMPTZ
 );
+
+-- Administrative override of a blocked vetting outcome (GW_0142): the cockpit model's
+-- "captain disconnects the autopilot" recorded as its own evidence, deliberately separate from
+-- `snapshots.state` for the same reason vetting runs are — the override is a fact about one
+-- approval of a commit, not a vetting state of its own. One row per snapshot, replaced if the
+-- snapshot is re-approved over a failure again; the audit ledger keeps the full history. Its
+-- presence is what marks a served snapshot "approved over a vetting failure" so the override is
+-- never indistinguishable from an approval the chain cleared.
+
+CREATE TABLE snapshot_vetting_overrides (
+    id BIGSERIAL PRIMARY KEY,
+    snapshot_id BIGINT NOT NULL UNIQUE REFERENCES snapshots (id) ON DELETE CASCADE,
+    -- The administrator's stated reason for taking responsibility for the block. Required and
+    -- non-empty: an override with no reason is refused before it reaches this table.
+    reason TEXT NOT NULL CHECK (reason <> ''),
+    -- What was blocking at the moment of the override, captured so the surface and an auditor can
+    -- see what the administrator overrode without re-deriving it from the run: a comma-separated
+    -- connector list and a human-readable finding summary.
+    blocking_connectors TEXT,
+    uncovered_findings TEXT,
+    overridden_by TEXT NOT NULL CHECK (overridden_by <> ''),
+    overridden_at TIMESTAMPTZ NOT NULL
+);
+
+-- Administrative connector enable/disable (GW_0143): the standing decision to switch a built-in
+-- connector off, globally or for one marketplace. NULL marketplace_id is the global setting; a
+-- per-marketplace row overrides it. Absence of a row is "enabled", so the table's emptiness is
+-- exactly today's behaviour — every connector runs. NULLS NOT DISTINCT so a duplicate global
+-- setting for a connector is one row, upserted in place, never two.
+
+CREATE TABLE connector_toggles (
+    id BIGSERIAL PRIMARY KEY,
+    -- The connector's stable name (VettingConnector.name()), e.g. 'secret-scan'. Not a foreign
+    -- key: connectors are code, not rows, and a toggle for a name no connector currently carries
+    -- is harmless — it simply matches nothing when the chain runs.
+    connector TEXT NOT NULL CHECK (connector <> ''),
+    marketplace_id BIGINT REFERENCES marketplaces (id) ON DELETE CASCADE,
+    enabled BOOLEAN NOT NULL,
+    -- The administrator's optional note for why the connector was switched, mirrored onto the
+    -- ledger entry the toggle writes.
+    reason TEXT,
+    updated_by TEXT NOT NULL CHECK (updated_by <> ''),
+    updated_at TIMESTAMPTZ NOT NULL,
+    UNIQUE NULLS NOT DISTINCT (connector, marketplace_id)
+);
+
+-- The chain's per-run lookup: every setting for one marketplace plus the globals.
+CREATE INDEX idx_connector_toggles_lookup ON connector_toggles (connector, marketplace_id);

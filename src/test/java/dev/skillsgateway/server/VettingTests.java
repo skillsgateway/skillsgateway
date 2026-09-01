@@ -78,6 +78,9 @@ class VettingTests extends AbstractGatewayTest {
     @Autowired
     private SkillsGatewayProperties properties;
 
+    @Autowired
+    private dev.skillsgateway.server.vetting.ConnectorToggleService connectorToggleService;
+
     @Test
     @SVCs({"SVC_GW_0037"})
     void ingestionRecordsAChainRunWithAVerdictPerConnector() throws Exception {
@@ -324,7 +327,13 @@ class VettingTests extends AbstractGatewayTest {
     /** A chain with exactly the given connectors, over the real repository and storage. */
     private VettingService chainOf(VettingConnector... connectors) {
         return new VettingService(
-                List.of(connectors), vettingRepository, storage, auditLogger, webhookService, properties);
+                List.of(connectors),
+                vettingRepository,
+                storage,
+                auditLogger,
+                webhookService,
+                connectorToggleService,
+                properties);
     }
 
     private VettingRepository.VerdictView verdictOf(Registered registered, String connector) {

@@ -1479,3 +1479,40 @@ cases:
       is refused, and an identity-provider session sharing that name gains nothing by
       this path
     revision: "0.1.0"
+
+  - id: SVC_GW_0142
+    requirement_ids: ["GW_0142"]
+    title: An administrator overrides a blocked vetting outcome, audibly and no one else can
+    verification: automated-test
+    description: |
+      GIVEN a held snapshot whose effective vetting outcome is blocked by a failing
+      connector no waiver covers
+      WHEN a non-administrator approver of the marketplace requests approval with the
+      override set, an administrator requests the override with no reason, and an
+      administrator requests the override with a reason
+      THEN the non-administrator's override is refused and the snapshot stays held with
+      nothing published, the administrator's reasonless override is refused, the
+      administrator's override with a reason approves and publishes the snapshot, the
+      ledger carries a distinct override event naming the administrator, the reason and
+      the connectors and uncovered findings that were blocking, and the snapshot's
+      vetting surface reports it approved over a vetting failure rather than clear
+    revision: "0.1.0"
+
+  - id: SVC_GW_0143
+    requirement_ids: ["GW_0143"]
+    title: An administrator disables a connector globally and per marketplace, audibly and alone
+    verification: automated-test
+    description: |
+      GIVEN a marketplace whose snapshot a built-in connector would block, and the same
+      connector left enabled for a second marketplace
+      WHEN an administrator disables that connector for the first marketplace, a
+      non-administrator attempts to disable it and to read the connector settings, the
+      first marketplace is re-ingested, an administrator disables every connector
+      globally, and a marketplace is ingested under that global disablement
+      THEN the non-administrator is refused both the toggle and the read, the first
+      marketplace's re-ingested snapshot records the connector as a disabled verdict and
+      no longer blocks on it while the second marketplace still runs and blocks on it,
+      every toggle is on the ledger naming the administrator, the connector, the scope
+      and the new state, and the snapshot ingested with every connector disabled is
+      blocked rather than clear
+    revision: "0.1.0"

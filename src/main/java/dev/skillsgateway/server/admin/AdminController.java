@@ -3,9 +3,11 @@ package dev.skillsgateway.server.admin;
 import dev.skillsgateway.server.approval.ApprovalService;
 import dev.skillsgateway.server.approval.FourEyesConflictException;
 import dev.skillsgateway.server.approval.FourEyesGate;
+import dev.skillsgateway.server.approval.MissingOverrideReasonException;
 import dev.skillsgateway.server.approval.ReleaseAgeGate;
 import dev.skillsgateway.server.approval.SnapshotTooYoungException;
 import dev.skillsgateway.server.approval.VettingBlockedException;
+import dev.skillsgateway.server.approval.VettingOverrideRecord;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.ingestion.IngestionException;
 import dev.skillsgateway.server.ingestion.IngestionService;
@@ -283,34 +285,74 @@ public class AdminController {
         return ResponseEntity.status(HttpStatus.CREATED).body(snapshot);
     }
 
+    @Schema(description = "Optional approval body carrying an administrative override of a blocked vetting outcome")
+    public record ApproveRequest(
+            @Schema(
+                    description = "Set true, as an administrator, to approve despite a blocked vetting outcome"
+                            + " (GW_0142); a reason is then required and the override is recorded distinctly")
+            Boolean overrideVetting,
+
+            @Schema(description = "The administrator's reason for overriding the block; required when overrideVetting")
+            String reason) {}
+
     @PostMapping("/snapshots/{id}/approve")
-    @Requirements({"GW_0041", "GW_0050", "GW_0096", "GW_0097"})
+    @Requirements({"GW_0041", "GW_0050", "GW_0096", "GW_0097", "GW_0142"})
     @Tag(name = "Snapshots")
     @Operation(
             summary = "Approve a held or revoked snapshot",
             description = "Publishes the snapshot to the git facade and records the reviewer identity and"
-                    + " timestamp. Takes no request body. Held snapshots and snapshots that re-vetting revoked"
-                    + " can be approved; a revoked one is re-published only by this fresh decision, behind the"
-                    + " same gate, which means the violation that revoked it must have been waived or fixed"
+                    + " timestamp. The request body is optional. Held snapshots and snapshots that re-vetting"
+                    + " revoked can be approved; a revoked one is re-published only by this fresh decision, behind"
+                    + " the same gate, which means the violation that revoked it must have been waived or fixed"
                     + " first. A snapshot whose"
                     + " effective vetting outcome is blocked — its chain run objects and at least one blocking"
                     + " finding is not covered by an active waiver, including a snapshot with no chain run at"
                     + " all — is refused, and the problem document names both the blocking connectors and the"
                     + " uncovered findings. Record a scoped, expiring waiver for each of those findings and"
-                    + " approve again; every waiver that let the approval through is written to the ledger.")
+                    + " approve again; every waiver that let the approval through is written to the ledger."
+                    + " Alternatively an administrator — and only an administrator — may set overrideVetting with"
+                    + " a reason to approve over the block (GW_0142): the override lifts only the vetting gate,"
+                    + " is written to the ledger as a distinct event with the failing verdicts, and marks the"
+                    + " snapshot approved over a vetting failure.")
     @ApiResponse(responseCode = "200", description = "Snapshot approved and now served")
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
     @ApiResponse(
             responseCode = "409",
-            description = "Snapshot is neither held nor revoked, its effective vetting outcome is blocked, it"
-                    + " has not yet reached the configured minimum release age, or - under an enforcing"
-                    + " four-eyes rule - the reviewer is on the snapshot's supply side")
-    public Snapshot approve(@PathVariable long id, Authentication authentication) {
-        roleService.requireApproverOfSnapshot(authentication, id);
-        ApprovalService.Approved approved = approvalService.approve(id, authentication.getName());
+            description = "Snapshot is neither held nor revoked, its effective vetting outcome is blocked and no"
+                    + " override was supplied, it has not yet reached the configured minimum release age, or -"
+                    + " under an enforcing four-eyes rule - the reviewer is on the snapshot's supply side")
+    @ApiResponse(responseCode = "422", description = "An override was requested without a reason")
+    public Snapshot approve(
+            @PathVariable long id,
+            @RequestBody(required = false) ApproveRequest request,
+            Authentication authentication) {
+        ApprovalService.ApprovalOverride override = ApprovalService.ApprovalOverride.none();
+        if (request != null && Boolean.TRUE.equals(request.overrideVetting())) {
+            // The override is the captain disconnecting the autopilot: admin-only, deliberately
+            // stricter than the marketplace-scoped approver gate an ordinary approval passes
+            // (GW_0142). An approver may not override the control that governs their own content.
+            roleService.requireAdmin(authentication);
+            override = ApprovalService.ApprovalOverride.ofVettingFailure(request.reason());
+        } else {
+            roleService.requireApproverOfSnapshot(authentication, id);
+        }
+        ApprovalService.Approved approved = approvalService.approve(id, authentication.getName(), override);
         Snapshot snapshot = approved.snapshot();
         String marketplace = marketplaceName(snapshot.marketplaceId());
         waiverService.recordUse(marketplace, snapshot.sha(), authentication.getName(), approved.waiversApplied());
+        // The override lands on the ledger as its own event beside snapshot-approved (GW_0142), so
+        // the decision entry says who approved and this one says what they overrode and why — both
+        // facts kept, never one instead of the other.
+        if (approved.vettingOverride() != null) {
+            VettingOverrideRecord over = approved.vettingOverride();
+            auditLogger.record(
+                    authentication.getName(),
+                    marketplace,
+                    ApprovalService.EVENT_OVERRIDE,
+                    snapshot.sha(),
+                    "reason=%s; blockingConnectors=%s; uncovered=%s"
+                            .formatted(over.reason(), over.blockingConnectors(), over.uncoveredFindings()));
+        }
         // The age at approval is on the decision's own ledger entry (GW_0073): what the cooling-off
         // window was worth for this snapshot is only reconstructible if the entry says how long the
         // commit had been sitting in quarantine when someone adopted it.
@@ -472,6 +514,18 @@ public class AdminController {
         problem.setTitle("Vetting chain blocked this snapshot");
         problem.setProperty("blockingConnectors", e.blockingConnectors());
         problem.setProperty("uncoveredFindings", e.uncoveredFindings());
+        return problem;
+    }
+
+    /**
+     * An administrator asked to override a blocked vetting outcome without a reason (GW_0142). 422
+     * rather than 409: the request is well-formed as far as the snapshot's state goes, but the one
+     * field that makes an override an act of taking responsibility — the reason — is missing.
+     */
+    @ExceptionHandler(MissingOverrideReasonException.class)
+    public ProblemDetail missingOverrideReason(MissingOverrideReasonException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage());
+        problem.setTitle("A vetting override requires a reason");
         return problem;
     }
 

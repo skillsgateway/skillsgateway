@@ -19,6 +19,12 @@ import java.util.Locale;
  * misconfigured to nothing — fail closed rather than sail through the approval gate. There is no
  * input to this function that yields {@code CLEAR} without positive evidence.
  *
+ * <p>A {@link VerdictState#DISABLED} verdict (GW_0143) is the one state that is neither clearing
+ * nor blocking: an administrator switched that connector off, which is a deliberate audited act
+ * rather than a crash. It is discounted from the block decision — but not from the requirement for
+ * positive evidence. A run whose only verdicts are {@code DISABLED} still {@code BLOCKED}s, so
+ * disabling every connector can never be a way to clear a snapshot with no evidence behind it.
+ *
  * <p>This is a pure static function over states so that it can be tested exhaustively over every
  * combination of verdict states without a database, a repository, or a Spring context.
  */
@@ -58,17 +64,24 @@ public final class VettingChain {
         }
     }
 
-    @Requirements({"GW_0038"})
+    @Requirements({"GW_0038", "GW_0143"})
     public static Outcome aggregate(Collection<VerdictState> states) {
         if (states == null || states.isEmpty()) {
             return Outcome.BLOCKED;
         }
+        boolean anyClearing = false;
         for (VerdictState state : states) {
-            if (state == null || !state.clearing()) {
+            if (state == null || state.blocking()) {
                 return Outcome.BLOCKED;
             }
+            if (state.clearing()) {
+                anyClearing = true;
+            }
         }
-        return Outcome.CLEAR;
+        // Every verdict is clearing or DISABLED; only a run that actually cleared something clears.
+        // A chain of nothing but DISABLED verdicts has switched every control off and proven
+        // nothing, so it blocks (GW_0143).
+        return anyClearing ? Outcome.CLEAR : Outcome.BLOCKED;
     }
 
     /** {@link #aggregate(Collection)} over whole verdicts. */
