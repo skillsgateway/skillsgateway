@@ -93,7 +93,7 @@ endpoint.
 
 ### Dry-run before you enforce
 
-Configure the mappings while `skills-gateway.roles.enabled` is still `false`.
+Configure the mappings before the gateway's first start.
 Nothing is enforced, but `/api/me` already reports what each session *would*
 hold — so you can confirm the claim arrives and the values match before the
 switch flips.
@@ -209,7 +209,6 @@ unreadable; pick which cost you would rather pay, and be consistent.
 $ curl -s -b session.txt https://<gateway-host>/api/me | jq
 {
   "username": "alice@example.com",
-  "rolesEnabled": true,
   "roles": [{"role": "admin", "marketplace": null, "source": "claim"}],
   "claimsTruncated": false
 }
@@ -220,5 +219,6 @@ what made this session an admin.
 
 ## Locked out?
 
-Set `skills-gateway.roles.enabled=false` and restart: every check passes again
+Add yourself to `skills-gateway.roles.admins` and restart: that is configuration
+rather than a stored grant, so it cannot be revoked through the API
 and nothing is lost. Fix the mappings or the `admins` list, then re-enable.

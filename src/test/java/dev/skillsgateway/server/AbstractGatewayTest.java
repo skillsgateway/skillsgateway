@@ -53,6 +53,15 @@ import org.springframework.web.context.WebApplicationContext;
             "spring.security.oauth2.client.provider.idp.token-uri=https://idp.invalid/token",
             "spring.security.oauth2.client.provider.idp.jwk-set-uri=https://idp.invalid/jwks",
             "skills-gateway.data-dir=target/test-git-data",
+            // Authorization is always enforced and a gateway with no configured administrator
+            // refuses to start (GW_0138, GW_0139), so the shared context names the principals its
+            // suites act as: "user" is what Spring Security's oidcLogin() invents by default, and
+            // "root" and "alice" are the named subjects the non-authorization suites use.
+            //
+            // This does blunt the shared context as a place to catch a missing require* call, which
+            // is why the deny-by-default walk that guards against exactly that lives in
+            // RoleEnforcementTests: its own context, its own admin, and a principal that is not one.
+            "skills-gateway.roles.admins=user,root,alice",
             // file is allowed only here so HTTP-level tests can register local fixtures.
             "skills-gateway.allowed-url-schemes=http,https,file",
             // Webhook dispatch is driven explicitly by the tests: the poller is off and the

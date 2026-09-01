@@ -21,12 +21,13 @@ Enforcement lives at the REST API, which is what the portal speaks. The
 [git facade](../reference/git-facade.md) is untouched: its authorization is
 token scopes, a different credential for a different surface.
 
-## Step 1 — stage your grants
+## Step 1 — make your grants
 
-Role enforcement is **off by default** (`skills-gateway.roles.enabled=false`):
-every check passes and the gateway behaves exactly as before. The grants API
-already works in this state, which is how you stage grants *before* anything is
-enforced:
+Authorization is always enforced, so a grant takes effect the moment it is made.
+There is no staging state to make them in first, and no switch to flip
+afterwards: the gateway you are configuring is already enforcing. Make the grants
+as an administrator — the one your configuration names, which the gateway refused
+to start without:
 
 ```console
 $ curl -X POST localhost:8080/api/roles \
@@ -68,7 +69,7 @@ well — the configuration list is the one you cannot lose.
 
 Restart with the configuration above. Then verify from a browser session:
 
-- `GET /api/me` now reports `"rolesEnabled": true` and your effective roles.
+- `GET /api/me` reports your effective roles and where each came from.
 - A session with no role gets **403** from every mutation and from the ledger,
   while browsing and its own tokens keep working.
 - Your approver can approve their marketplace and gets **403** for any other,
@@ -103,8 +104,15 @@ in [Identity providers](identity-providers.md).
 
 ## Locked out anyway?
 
-Set `skills-gateway.roles.enabled=false` and restart: every check passes again,
-grants intact. Fix the grants (or the `admins` list) and re-enable.
+There is no longer a switch that turns authorization off, so the way back is to
+grant the role rather than to stop enforcing it. `skills-gateway.roles.admins` is
+the escape hatch that fits in a restart: it is configuration, so no API call is
+needed to set it and no API call can revoke it. Add yourself, restart, fix the
+grants, and remove yourself again if you would rather not be a standing admin.
+
+For a local checkout, `skills-gateway.dev-insecure-auth=true` skips authentication
+entirely and makes its own principal an admin. It refuses to start against a
+configured identity provider, so it is not available as a production remedy.
 
 ## What this is not
 

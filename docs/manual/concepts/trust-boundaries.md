@@ -235,7 +235,7 @@ the marketplaces its empty fetch scope list would otherwise grant*: the fetch
 default is conditional on the credential's shape.
 
 **Authorization** is an allowlist over per-concern named scopes, enforced in the
-filter chain and therefore independent of `skills-gateway.roles.enabled`.
+filter chain and therefore independent of the session chain's role checks.
 Reach is the intersection of the allowlist, the credential's scopes and its
 principal's roles — never their union. Every act of human judgement, every
 operation that retracts or republishes content, every role grant and the whole
@@ -321,12 +321,13 @@ top of every privileged endpoint:
 | `approver` | one marketplace | Ingest, approve, reject, re-vet, waive — for that marketplace only. The owning marketplace is resolved from the addressed snapshot or waiver on the server side, so a bare id cannot reach another marketplace's content. |
 | `auditor` | global | Read the ledger, its export, the operational listings. No mutations. |
 
-Enforcement is **deny-by-default once enabled**: a session with no role keeps
-the browsing surface and its own tokens, and is refused everything else. It is
-**off by default** (`skills-gateway.roles.enabled=false`) so an upgrade never
-locks a deployment out of its own gateway; principals in
+Enforcement is **deny-by-default and unconditional**: a session with no role
+keeps the browsing surface and its own tokens, and is refused everything else.
+There is no configuration that turns it off. A deployment that locks itself out
+is prevented at the other end instead — the gateway refuses to start unless its
+configuration grants the admin role to somebody, and principals in
 `skills-gateway.roles.admins` are admins by configuration and cannot be revoked
-through the API — the escape hatch that makes enabling safe. Every grant and
+through the API. Every grant and
 revocation is on the append-only ledger.
 
 A role can come from three places, and the union is what a session holds: the

@@ -5,7 +5,8 @@
       "source": "amazingang/old-coder",
       "sourceType": "github",
       "skillPath": "skills/old-coder/SKILL.md",
-      "computedHash": "3fb78e613ebff5aaf5d4c438cbe5c4a302d6dc988cfecab34aa2c26d322a0565"
+      "sourceCommit": "6bdcdd5a852e355a0adee11f733a37d940c979a6",
+      "computedHash": "00c34b1f16206bbc7b887e24a28fb635dacedcf5c811abe38ec943fa88be2af8"
     }
   }
 }

@@ -59,7 +59,7 @@ public record SkillsGatewayProperties(
             tokens = new Tokens(null, null);
         }
         if (roles == null) {
-            roles = new Roles(null, null, null, null);
+            roles = new Roles(null, null, null);
         }
         if (oidc == null) {
             oidc = new Oidc(null);
@@ -356,15 +356,12 @@ public record SkillsGatewayProperties(
      * its grants and then opts in. {@code admins} are admins by configuration and cannot be
      * revoked through the API — the escape hatch that survives a bad grant edit.
      */
-    public record Roles(Boolean enabled, List<String> admins, String claim, List<ClaimMapping> mappings) {
+    public record Roles(List<String> admins, String claim, List<ClaimMapping> mappings) {
 
         /** The claim an enterprise directory most often carries group membership in. */
         public static final String DEFAULT_CLAIM = "groups";
 
         public Roles {
-            if (enabled == null) {
-                enabled = false;
-            }
             admins = admins == null ? List.of() : List.copyOf(admins);
             if (claim == null || claim.isBlank()) {
                 claim = DEFAULT_CLAIM;

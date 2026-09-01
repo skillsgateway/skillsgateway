@@ -12,38 +12,40 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * The compatibility half of claim mapping (GW_0098): mappings configured while enforcement is off.
- * They are reported so an operator can dry-run a mapping before flipping the switch, and they
- * change nothing about who may do what — because with enforcement off, nobody is refused anything.
+ * A claim-derived role both reports and binds (GW_0098, GW_0138).
+ *
+ * <p>This suite used to assert the opposite half: that a configured mapping was reported but inert,
+ * so an operator could dry-run it before turning enforcement on. There is no off state to dry-run
+ * against any more, so the interesting assertion is the one that state made impossible — the mapped
+ * role is what the caller may do, and nothing more than that.
  */
 @TestPropertySource(
         properties = {
-            "skills-gateway.roles.enabled=false",
             "skills-gateway.roles.claim=groups",
             "skills-gateway.roles.mappings[0].claim-value=gw-auditors",
             "skills-gateway.roles.mappings[0].role=auditor"
         })
-class ClaimRolesDisabledTests extends AbstractGatewayTest {
+class ClaimMappedRoleIsEnforcedTests extends AbstractGatewayTest {
 
     @Test
     @SVCs({"SVC_GW_0098"})
-    void mappings_are_reported_but_enforce_nothing_while_the_switch_is_off() throws Exception {
+    void a_mapped_auditor_reads_the_ledger_and_is_refused_an_admin_mutation() throws Exception {
         var carol = oidcLogin()
                 .idToken(token -> token.subject("dryrun-carol").claim("groups", java.util.List.of("gw-auditors")));
 
-        // Reported, so the mapping can be verified before enforcement is turned on...
+        // Reported, with the source that produced it...
         mockMvc.perform(get("/api/me").with(carol))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.rolesEnabled").value(false))
                 .andExpect(jsonPath("$.roles[0].role").value("auditor"))
                 .andExpect(jsonPath("$.roles[0].source").value("claim"));
 
-        // ... and inert: an auditor mapping would refuse this mutation once enforcement is on.
+        // ... and binding: the auditor surface opens, and an admin mutation does not.
+        mockMvc.perform(get("/api/audit").with(carol)).andExpect(status().isOk());
         mockMvc.perform(post("/api/marketplaces")
                         .with(carol)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"%s\",\"url\":\"https://example.com/x.git\"}"
-                                .formatted(uniqueName("dryrun"))))
-                .andExpect(status().isCreated());
+                                .formatted(uniqueName("mapped"))))
+                .andExpect(status().isForbidden());
     }
 }

@@ -778,7 +778,7 @@ skills-gateway:
 
 | Property | Type | Default | Notes |
 | --- | --- | --- | --- |
-| `skills-gateway.roles.enabled` | boolean | `false` | With `false` every check passes; grants stay writable as staging data. |
+| `skills-gateway.roles.admins` | list | empty | Principals that hold the admin role by configuration; no API call can revoke them. Naming an administrator here, in `roles.mappings`, or in `estate.grants` is required — authorization is always enforced, and a gateway that names none refuses to start. |
 | `skills-gateway.roles.admins` | list of strings | `[]` | Principals that are admins by configuration; DB grants add to them. |
 | `skills-gateway.roles.claim` | string | `groups` | Claim carrying membership. A dotted path walks nested claims (`realm_access.roles`). |
 | `skills-gateway.roles.mappings` | list | `[]` | Claim value → role. `approver` names a marketplace; `admin` and `auditor` must not. |

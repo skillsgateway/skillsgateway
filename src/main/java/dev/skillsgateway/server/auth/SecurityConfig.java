@@ -33,6 +33,13 @@ import org.springframework.security.web.util.matcher.AndRequestMatcher;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    /**
+     * The principal the development escape hatch invents. Named here because {@code RoleService}
+     * confers the administrative role on exactly this name while the hatch is open (GW_0141), and
+     * two copies of the string would let the two halves drift apart.
+     */
+    public static final String DEV_PRINCIPAL = "dev";
+
     /** Stateless PAT-over-Basic chain for git clients; 401 + Basic challenge on failure. */
     @Bean
     @Order(1)
@@ -201,7 +208,7 @@ public class SecurityConfig {
                                 SecurityContext context = SecurityContextHolder.getContext();
                                 if (context.getAuthentication() == null) {
                                     context.setAuthentication(UsernamePasswordAuthenticationToken.authenticated(
-                                            "dev", null, List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+                                            DEV_PRINCIPAL, null, List.of(new SimpleGrantedAuthority("ROLE_USER"))));
                                 }
                                 chain.doFilter(request, response);
                             },

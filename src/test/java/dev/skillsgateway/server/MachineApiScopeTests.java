@@ -17,6 +17,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
@@ -29,14 +30,25 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
  * list, so a scope added without a test is impossible: the parameterised walk covers whatever the
  * registry holds.
  */
+@TestPropertySource(
+        // The scope walk holds the administrative role, so every refusal it observes is the scope
+        // allowlist's and never a missing role (GW_0138, SVC_GW_0129).
+        properties = {"skills-gateway.roles.admins=scope-walk-machine"})
 class MachineApiScopeTests extends AbstractGatewayTest {
 
     /** 403, not 401: the credential authenticated and the allowlist refused it. */
     private static final int FORBIDDEN = 403;
 
+    /**
+     * One named principal for every credential this suite mints, so the class can grant it the
+     * administrative role (GW_0138). The walk is about scopes, not roles: holding admin is what
+     * makes a refusal here attributable to the scope allowlist and to nothing else.
+     */
+    private static final String MACHINE_PRINCIPAL = "scope-walk-machine";
+
     private TokenService.IssuedToken credential(List<String> scopes) {
         return tokenService.createMachineCredential(
-                uniqueName("scoped"),
+                MACHINE_PRINCIPAL,
                 "scope-walk",
                 scopes,
                 Instant.now().plus(30, ChronoUnit.DAYS),
@@ -65,9 +77,10 @@ class MachineApiScopeTests extends AbstractGatewayTest {
 
     @Test
     @SVCs({"SVC_GW_0129"})
-    void scope_enforcement_holds_with_role_enforcement_disabled() throws Exception {
-        // The default flag: every require*() passes, so nothing but the allowlist and the scopes
-        // stand between this credential and the endpoints it was not scoped for.
+    void scope_enforcement_is_independent_of_the_role_the_principal_holds() throws Exception {
+        // The credential's principal is an admin, so nothing but the allowlist and the scopes stand
+        // between it and the endpoints it was not scoped for. Scope and role are separate gates and
+        // this asserts the scope gate alone.
         TokenService.IssuedToken reader = credential(List.of("marketplaces:read"));
 
         mockMvc.perform(request(new Route("GET", "/api/marketplaces"), reader.token()))

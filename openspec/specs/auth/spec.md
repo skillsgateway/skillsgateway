@@ -55,3 +55,9 @@ The system SHALL implement GW_0128.
 #### Scenario: SVC_GW_0128
 The system SHALL pass SVC_GW_0128.
 
+### Requirement: GW_0141
+The system SHALL implement GW_0141.
+
+#### Scenario: SVC_GW_0141
+The system SHALL pass SVC_GW_0141.
+

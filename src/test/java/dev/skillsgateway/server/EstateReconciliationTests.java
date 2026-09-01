@@ -44,7 +44,6 @@ import org.springframework.test.context.TestPropertySource;
  */
 @TestPropertySource(
         properties = {
-            "skills-gateway.roles.enabled=true",
             "skills-gateway.roles.admins=root",
             // The declared webhook secret references this property: the operator's env-var
             // indirection, proven end to end through Spring's placeholder resolution.

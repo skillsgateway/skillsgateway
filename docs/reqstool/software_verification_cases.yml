@@ -1425,3 +1425,57 @@ cases:
       THEN the ingestion fails rather than reporting a snapshot, and no record exists for
       that commit for a reviewer to approve
     revision: "0.1.0"
+
+  - id: SVC_GW_0138
+    requirement_ids: ["GW_0138"]
+    title: A session holding no role is refused everywhere, with no enforcement switch present
+    verification: automated-test
+    description: |
+      GIVEN a gateway whose configuration names an administrator and sets no
+      authorization-enforcement property at all
+      WHEN a session holding no role calls each privileged route
+      THEN every one is refused, the walk asserts its route set complete against the
+      running application's own route table so a route added without a check fails
+      the build, and the session identity endpoint carries no enforcement flag
+    revision: "0.1.0"
+
+  - id: SVC_GW_0139
+    requirement_ids: ["GW_0139"]
+    title: A configuration naming no administrator refuses to start
+    verification: automated-test
+    description: |
+      GIVEN configurations that respectively name no administrator at all, name one in
+      the configuration admin list, map an identity-provider claim value to the
+      administrative role, and declare an administrative grant in the estate
+      WHEN each is started
+      THEN the first refuses with a message naming all three configuration paths and the
+      development escape hatch, the other three start cleanly, and no configuration
+      reads the database to decide
+    revision: "0.1.0"
+
+  - id: SVC_GW_0140
+    requirement_ids: ["GW_0140"]
+    title: The removed enforcement property is refused in every spelling
+    verification: automated-test
+    description: |
+      GIVEN configurations setting the removed authorization-enforcement property to
+      false, to true, and through its relaxed environment-variable spelling
+      WHEN each is started
+      THEN each refuses with a message stating that the property was removed and that
+      enforcement is now unconditional
+    revision: "0.1.0"
+
+  - id: SVC_GW_0141
+    requirement_ids: ["GW_0141"]
+    title: The escape hatch's principal administers, and nothing else does by that path
+    verification: automated-test
+    description: |
+      GIVEN a gateway started with the development authentication escape hatch enabled
+      WHEN its synthetic principal performs an administrative mutation and reads the
+      session identity endpoint
+      THEN the mutation succeeds and the administrative role is reported attributed to
+      the escape hatch rather than to configuration or to a stored grant
+      AND with the escape hatch disabled a principal of the same name holds nothing and
+      is refused, and an identity-provider session sharing that name gains nothing by
+      this path
+    revision: "0.1.0"

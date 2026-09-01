@@ -24,6 +24,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.test.context.TestPropertySource;
 
 /**
  * Adoption and staleness reporting off the fetch ledger (GW_0075, GW_0076) and the always-recorded
@@ -32,6 +33,9 @@ import org.springframework.jdbc.core.simple.JdbcClient;
  * the two reads lives in RoleEnforcementTests, whose enforcing context classifies them as
  * privileged reads.
  */
+@TestPropertySource(
+        // Authorization is always enforced (GW_0138), so this suite names the principal it acts as.
+        properties = {"skills-gateway.roles.admins=auditor"})
 class AdoptionTests extends AbstractGatewayTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
