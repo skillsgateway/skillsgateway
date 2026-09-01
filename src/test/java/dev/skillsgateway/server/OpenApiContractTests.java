@@ -28,7 +28,7 @@ class OpenApiContractTests extends AbstractGatewayTest {
 
     private static final String REGENERATE =
             "cp target/openapi.json src/main/frontend/openapi.json && (cd src/main/frontend && "
-                    + "pnpm exec openapi-typescript openapi.json -o src/api/types.gen.ts)";
+                    + "pnpm run gen:api-types)";
 
     @Autowired
     private BuildProperties buildProperties;
@@ -86,7 +86,7 @@ class OpenApiContractTests extends AbstractGatewayTest {
         assertThatThrownBy(() -> assertPublishedIsCurrent(drifted, served))
                 .isInstanceOf(AssertionError.class)
                 .hasMessageContaining("is stale")
-                .hasMessageContaining("openapi-typescript");
+                .hasMessageContaining("gen:api-types");
     }
 
     @Test

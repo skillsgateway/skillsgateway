@@ -13,6 +13,7 @@
     "test:stories": "vitest run --project storybook --outputFile.junit=test-results/storybook-junit.xml",
     "typecheck": "tsc -b",
     "reqstool:tags": "reqstool-typescript-tags tags --inputs src,e2e --output reqstool/annotations.yml",
+    "gen:api-types": "pnpm --package=typescript@5.9.3 --package=openapi-typescript@7.13.0 dlx openapi-typescript openapi.json -o src/api/types.gen.ts",
     "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm reqstool:tags && pnpm reqstool:merge",
     "e2e": "bash e2e/run-e2e.sh",
     "reqstool:merge": "node scripts/merge-annotations.mjs",
