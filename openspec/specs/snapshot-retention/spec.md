@@ -39,3 +39,9 @@ The system SHALL implement GW_0036.
 #### Scenario: SVC_GW_0036
 The system SHALL pass SVC_GW_0036.
 
+### Requirement: GW_0136
+The system SHALL implement GW_0136.
+
+#### Scenario: SVC_GW_0136
+The system SHALL pass SVC_GW_0136.
+
