@@ -1,5 +1,16 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import {
+  type ColumnDef,
+  type ExpandedState,
+  type SortingState,
+  flexRender,
+  getCoreRowModel,
+  getExpandedRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import { ArrowDown, ArrowUp, ChevronRight, ChevronsUpDown, TriangleAlert } from "lucide-react";
+import { Fragment, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -20,10 +31,11 @@ import {
 } from "@/api/queries";
 import { Timestamp } from "@/components/timestamp";
 import { OutcomeBadge, VettingReport } from "@/components/vetting-report";
-import { GATEWAY_NAME, GATEWAY_NAME_HINT } from "@/lib/form-rules";
+import { GATEWAY_NAME, GATEWAY_NAME_HINT, normalizeCloneUrl } from "@/lib/form-rules";
 import { SnapshotStateBadge } from "@/components/snapshot-state";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -55,8 +67,9 @@ const registerSchema = z.object({
 
 type RegisterForm = z.infer<typeof registerSchema>;
 
-function RegisterMarketplaceDialog() {
+function RegisterMarketplaceDialog({ existing }: { existing: MarketplaceView[] }) {
   const [open, setOpen] = useState(false);
+  const [acknowledgedDuplicate, setAcknowledgedDuplicate] = useState(false);
   const register = useRegisterMarketplace();
   // onChange validation is what lets Register stay disabled until both fields would be
   // accepted by the server, rather than failing on press.
@@ -65,13 +78,25 @@ function RegisterMarketplaceDialog() {
     defaultValues: { name: "", url: "" },
     mode: "onChange",
   });
-  const canRegister = form.formState.isValid && !register.isPending;
+  const urlValue = form.watch("url");
+  // The gateway does not reject a repeated upstream — the same URL under two names is a
+  // legitimate test setup — so this is a warning, not a block. When one is detected the user
+  // must tick "register anyway" to proceed, which turns a silent collision into a deliberate one.
+  const normalized = normalizeCloneUrl(urlValue ?? "");
+  const duplicates =
+    normalized === null
+      ? []
+      : existing.filter((m) => normalizeCloneUrl(m.url ?? "") === normalized);
+  const hasDuplicate = duplicates.length > 0;
+  const canRegister =
+    form.formState.isValid && !register.isPending && (!hasDuplicate || acknowledgedDuplicate);
 
   const onSubmit = form.handleSubmit((values) => {
     register.mutate(values, {
       onSuccess: () => {
         toast.success(`Marketplace '${values.name}' registered`);
         form.reset();
+        setAcknowledgedDuplicate(false);
         setOpen(false);
       },
       onError: (error) => toast.error(error.message),
@@ -79,7 +104,13 @@ function RegisterMarketplaceDialog() {
   });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) setAcknowledgedDuplicate(false);
+      }}
+    >
       <DialogTrigger render={<Button>Register marketplace</Button>} />
       <DialogContent>
         <DialogHeader>
@@ -136,6 +167,31 @@ function RegisterMarketplaceDialog() {
               </p>
             ) : null}
           </div>
+          {hasDuplicate ? (
+            <div
+              role="alert"
+              className="space-y-2 rounded-md border border-l-2 border-l-destructive bg-destructive/5 p-3"
+            >
+              <div className="flex items-start gap-2">
+                <TriangleAlert className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden />
+                <p className="text-sm">
+                  This URL is already registered as{" "}
+                  <span className="font-medium">
+                    {duplicates.map((m) => m.name).join(", ")}
+                  </span>
+                  . Registering it again is allowed — the same upstream can be tracked under more
+                  than one name — but it is usually a mistake.
+                </p>
+              </div>
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <Checkbox
+                  checked={acknowledgedDuplicate}
+                  onCheckedChange={(value) => setAcknowledgedDuplicate(value === true)}
+                />
+                Register anyway
+              </label>
+            </div>
+          ) : null}
           <DialogFooter>
             <Button type="submit" disabled={!canRegister}>
               {register.isPending ? "Registering…" : "Register"}
@@ -359,45 +415,69 @@ function SnapshotRow({ snapshot, onProvenance }: { snapshot: Snapshot; onProvena
   );
 }
 
-function MarketplaceCard({ marketplace }: { marketplace: MarketplaceView }) {
+/** The snapshot a reviewer means by "the latest one": newest by ingestion time. */
+function latestSnapshot(marketplace: MarketplaceView): Snapshot | undefined {
+  const snapshots = marketplace.snapshots ?? [];
+  if (snapshots.length === 0) return undefined;
+  return [...snapshots].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))[0];
+}
+
+/** The forge label for the row: the detected forge, else the bare host of the clone URL. */
+function forgeLabel(marketplace: MarketplaceView): string {
+  if (marketplace.forge) return marketplace.forge;
+  try {
+    return marketplace.url ? new URL(marketplace.url).host : "—";
+  } catch {
+    return "—";
+  }
+}
+
+/**
+ * The snapshots of one marketplace, revealed when its row is expanded: the same review table
+ * as before — commit, state, vetting outcome, and the Approve/Reject/Provenance actions — plus
+ * the Ingest control that fetches a fresh snapshot of the upstream default branch.
+ */
+function MarketplaceSnapshots({ marketplace }: { marketplace: MarketplaceView }) {
   const ingest = useIngest();
   const [provenanceId, setProvenanceId] = useState<number | null>(null);
   const snapshots = marketplace.snapshots ?? [];
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between">
-        <div>
-          <CardTitle>
-            <Link to={`/marketplaces/${marketplace.name}`} className="hover:underline">
-              {marketplace.name}
-            </Link>
-          </CardTitle>
-          <CardDescription className="break-all">
-            {marketplace.url}
-            {marketplace.description ? <span className="block">{marketplace.description}</span> : null}
-            {marketplace.upstreamUpdatedAt ? (
-              <span className="block text-xs">upstream updated <Timestamp value={marketplace.upstreamUpdatedAt} /></span>
-            ) : null}
-          </CardDescription>
+    <section
+      aria-label={`Snapshots of ${marketplace.name}`}
+      className="space-y-3 bg-muted/30 p-4"
+    >
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium">Snapshots of {marketplace.name}</h3>
+        <div className="flex items-center gap-2">
+          <Link
+            to={`/marketplaces/${marketplace.name}`}
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            Open detail
+          </Link>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              ingest.mutate(marketplace.name ?? "", {
+                onSuccess: (snapshot) =>
+                  toast.success(`Snapshot ${snapshot.sha?.slice(0, 12)} is ${snapshot.state}`),
+                onError: (error) => toast.error(error.message),
+              })
+            }
+            disabled={ingest.isPending}
+            aria-label={`Ingest ${marketplace.name}`}
+          >
+            {ingest.isPending ? "Ingesting…" : "Ingest"}
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          onClick={() =>
-            ingest.mutate(marketplace.name ?? "", {
-              onSuccess: (snapshot) => toast.success(`Snapshot ${snapshot.sha?.slice(0, 12)} is ${snapshot.state}`),
-              onError: (error) => toast.error(error.message),
-            })
-          }
-          disabled={ingest.isPending}
-          aria-label={`Ingest ${marketplace.name}`}
-        >
-          {ingest.isPending ? "Ingesting…" : "Ingest"}
-        </Button>
-      </CardHeader>
-      <CardContent>
-        {snapshots.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No snapshots yet — ingest to fetch the upstream default branch.</p>
-        ) : (
+      </div>
+      {snapshots.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No snapshots yet — ingest to fetch the upstream default branch.
+        </p>
+      ) : (
+        <div className="overflow-x-auto rounded-md border bg-background">
           <Table>
             <TableHeader>
               <TableRow>
@@ -411,26 +491,173 @@ function MarketplaceCard({ marketplace }: { marketplace: MarketplaceView }) {
             </TableHeader>
             <TableBody>
               {snapshots.map((snapshot) => (
-                <SnapshotRow key={snapshot.id} snapshot={snapshot} onProvenance={setProvenanceId} />
+                <SnapshotRow
+                  key={snapshot.id}
+                  snapshot={snapshot}
+                  onProvenance={setProvenanceId}
+                />
               ))}
             </TableBody>
           </Table>
-        )}
-        {provenanceId !== null ? (
-          <ProvenanceDialog snapshotId={provenanceId} onClose={() => setProvenanceId(null)} />
-        ) : null}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+      {provenanceId !== null ? (
+        <ProvenanceDialog snapshotId={provenanceId} onClose={() => setProvenanceId(null)} />
+      ) : null}
+    </section>
+  );
+}
+
+/** A sortable column header; the arrow shows the current direction, if any. */
+function MarketHeader({
+  label,
+  sorted,
+  onToggle,
+}: {
+  label: string;
+  sorted: false | "asc" | "desc";
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="-ml-1 inline-flex items-center gap-1 rounded px-1 py-0.5 hover:text-foreground"
+    >
+      {label}
+      {sorted === "asc" ? (
+        <ArrowUp className="size-3" aria-hidden />
+      ) : sorted === "desc" ? (
+        <ArrowDown className="size-3" aria-hidden />
+      ) : (
+        <ChevronsUpDown className="size-3 text-muted-foreground/50" aria-hidden />
+      )}
+    </button>
   );
 }
 
 /**
- * Marketplace administration: register, ingest, review snapshots, approve/reject.
+ * Marketplace administration: register, ingest, review snapshots, approve/reject. One compact,
+ * sortable row per marketplace — name, forge, its latest snapshot's state and vetting outcome,
+ * and when upstream last moved — that expands in place to the snapshot review table. The name
+ * links to the marketplace's full detail page.
  *
  * @Requirements GW_0018
  */
 export function MarketplacesPage() {
   const marketplaces = useMarketplaces();
+  const [sorting, setSorting] = useState<SortingState>([{ id: "name", desc: false }]);
+  const [expanded, setExpanded] = useState<ExpandedState>({});
+  const data = useMemo(() => marketplaces.data ?? [], [marketplaces.data]);
+
+  const columns = useMemo<ColumnDef<MarketplaceView>[]>(
+    () => [
+      {
+        id: "expander",
+        header: () => null,
+        cell: ({ row }) => (
+          <button
+            type="button"
+            aria-label={row.getIsExpanded() ? `Collapse ${row.original.name}` : `Expand ${row.original.name}`}
+            aria-expanded={row.getIsExpanded()}
+            onClick={() => row.toggleExpanded()}
+            className="flex size-6 items-center justify-center rounded hover:bg-muted"
+          >
+            <ChevronRight
+              className={`size-4 transition-transform ${row.getIsExpanded() ? "rotate-90" : ""}`}
+              aria-hidden
+            />
+          </button>
+        ),
+      },
+      {
+        id: "name",
+        header: ({ column }) => (
+          <MarketHeader label="Name" sorted={column.getIsSorted()} onToggle={() => column.toggleSorting()} />
+        ),
+        accessorFn: (row) => row.name ?? "",
+        cell: ({ row }) => (
+          <Link
+            to={`/marketplaces/${row.original.name}`}
+            className="font-medium text-primary hover:underline"
+          >
+            {row.original.name}
+          </Link>
+        ),
+      },
+      {
+        id: "forge",
+        header: "Source",
+        accessorFn: (row) => forgeLabel(row),
+        cell: ({ row }) => (
+          <div className="max-w-xs">
+            <div className="text-sm">{forgeLabel(row.original)}</div>
+            <div className="truncate text-xs text-muted-foreground" title={row.original.url}>
+              {row.original.url ?? "—"}
+            </div>
+          </div>
+        ),
+      },
+      {
+        id: "latest",
+        header: "Latest snapshot",
+        enableSorting: false,
+        cell: ({ row }) => {
+          const snapshot = latestSnapshot(row.original);
+          if (!snapshot) {
+            return <span className="text-xs text-muted-foreground">none yet</span>;
+          }
+          return (
+            <div className="flex flex-wrap items-center gap-2">
+              <SnapshotStateBadge state={snapshot.state} />
+              <VettingOutcomeCell snapshotId={snapshot.id ?? 0} />
+            </div>
+          );
+        },
+      },
+      {
+        id: "upstream",
+        header: ({ column }) => (
+          <MarketHeader
+            label="Upstream updated"
+            sorted={column.getIsSorted()}
+            onToggle={() => column.toggleSorting()}
+          />
+        ),
+        accessorFn: (row) => row.upstreamUpdatedAt ?? "",
+        cell: ({ row }) =>
+          row.original.upstreamUpdatedAt ? (
+            <span className="whitespace-nowrap text-xs text-muted-foreground">
+              <Timestamp value={row.original.upstreamUpdatedAt} />
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">—</span>
+          ),
+      },
+      {
+        id: "count",
+        header: "Snapshots",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <Badge variant="outline">{(row.original.snapshots ?? []).length}</Badge>
+        ),
+      },
+    ],
+    [],
+  );
+
+  const table = useReactTable({
+    data,
+    columns,
+    state: { sorting, expanded },
+    getRowId: (row) => String(row.id),
+    onSortingChange: setSorting,
+    onExpandedChange: setExpanded,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -440,7 +667,7 @@ export function MarketplacesPage() {
             Registered upstreams and their quarantined, held, and approved snapshots.
           </p>
         </div>
-        <RegisterMarketplaceDialog />
+        <RegisterMarketplaceDialog existing={data} />
       </div>
       {marketplaces.isLoading ? <p>Loading…</p> : null}
       {marketplaces.isError ? (
@@ -451,11 +678,53 @@ export function MarketplacesPage() {
       {marketplaces.data?.length === 0 ? (
         <p className="text-sm text-muted-foreground">No marketplaces registered yet.</p>
       ) : null}
-      <div className="space-y-4">
-        {marketplaces.data?.map((marketplace) => (
-          <MarketplaceCard key={marketplace.id} marketplace={marketplace} />
-        ))}
-      </div>
+      {data.length > 0 ? (
+        <div className="overflow-x-auto rounded-md border">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((group) => (
+                <TableRow key={group.id}>
+                  {group.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(header.column.columnDef.header, header.getContext())}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.map((row) => (
+                <Fragment key={row.id}>
+                  <TableRow
+                    data-state={row.getIsExpanded() ? "expanded" : undefined}
+                    className="cursor-pointer"
+                    onClick={(event) => {
+                      // A click on the name link or an action must not also toggle the row.
+                      if ((event.target as HTMLElement).closest("a,button")) return;
+                      row.toggleExpanded();
+                    }}
+                  >
+                    {row.getVisibleCells().map((visibleCell) => (
+                      <TableCell key={visibleCell.id}>
+                        {flexRender(visibleCell.column.columnDef.cell, visibleCell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  {row.getIsExpanded() ? (
+                    <TableRow className="hover:bg-transparent">
+                      <TableCell colSpan={row.getVisibleCells().length} className="p-0">
+                        <MarketplaceSnapshots marketplace={row.original} />
+                      </TableCell>
+                    </TableRow>
+                  ) : null}
+                </Fragment>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : null}
     </div>
   );
 }
