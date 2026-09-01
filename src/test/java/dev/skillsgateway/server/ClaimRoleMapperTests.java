@@ -33,7 +33,7 @@ class ClaimRoleMapperTests {
             new ClaimMapping("gw-auditors", "auditor", null));
 
     private static ClaimRoleMapper mapper(String claim) {
-        return new ClaimRoleMapper(new Roles(true, List.of(), claim, MAPPINGS));
+        return new ClaimRoleMapper(new Roles(List.of(), claim, MAPPINGS));
     }
 
     private static Authentication oidc(Map<String, Object> claims) {
@@ -109,27 +109,27 @@ class ClaimRoleMapperTests {
     @SVCs({"SVC_GW_0098"})
     void a_malformed_mapping_refuses_construction() {
         assertThatThrownBy(() -> new ClaimRoleMapper(
-                        new Roles(true, List.of(), "groups", List.of(new ClaimMapping("x", "superuser", null)))))
+                        new Roles(List.of(), "groups", List.of(new ClaimMapping("x", "superuser", null)))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("superuser");
 
         assertThatThrownBy(() -> new ClaimRoleMapper(
-                        new Roles(true, List.of(), "groups", List.of(new ClaimMapping("  ", "admin", null)))))
+                        new Roles(List.of(), "groups", List.of(new ClaimMapping("  ", "admin", null)))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("claim-value");
 
         assertThatThrownBy(() -> new ClaimRoleMapper(
-                        new Roles(true, List.of(), "groups", List.of(new ClaimMapping("x", "approver", null)))))
+                        new Roles(List.of(), "groups", List.of(new ClaimMapping("x", "approver", null)))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("marketplace");
 
         assertThatThrownBy(() -> new ClaimRoleMapper(
-                        new Roles(true, List.of(), "groups", List.of(new ClaimMapping("x", "admin", "acme")))))
+                        new Roles(List.of(), "groups", List.of(new ClaimMapping("x", "admin", "acme")))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("marketplace");
 
         // A blank claim name is not an error: Roles normalises it to the default claim.
-        assertThat(new ClaimRoleMapper(new Roles(true, List.of(), "  ", MAPPINGS))
+        assertThat(new ClaimRoleMapper(new Roles(List.of(), "  ", MAPPINGS))
                         .rolesFrom(oidc(Map.of("groups", List.of("gw-admins")))))
                 .containsExactly(new EffectiveRole("admin", null, EffectiveRole.CLAIM));
     }

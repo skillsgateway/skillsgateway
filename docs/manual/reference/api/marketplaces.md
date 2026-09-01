@@ -261,10 +261,8 @@ contain (traversal shapes included) is simply not found. Works on `held`
 snapshots: inspecting content must not require serving it.
 
 These reads return raw held content, so unlike the metadata reads above they
-are **privileged while role enforcement is enabled**
-(`skills-gateway.roles.enabled=true`): an admin, or an approver of the
-snapshot's marketplace. Everyone else gets **403**. With enforcement at its
-default (off) they are open to any authenticated session.
+are **privileged**: an admin, or an approver of the snapshot's marketplace.
+Everyone else gets **403**.
 
 ### `GET /snapshots/{id}/files`
 

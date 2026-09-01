@@ -2,6 +2,7 @@ package dev.skillsgateway.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -81,5 +83,32 @@ class DevAuthTests {
         // Not merely 401 for everything: the same request without the header is still open, which
         // is what the mode is for.
         mockMvc.perform(get("/api/marketplaces")).andExpect(status().isOk());
+    }
+
+    /**
+     * The escape hatch's principal can administer (GW_0141), because otherwise making enforcement
+     * unconditional would break the documented local loop: the hatch replaces the identity provider
+     * entirely, so there is no claim to map and no directory to grant from.
+     */
+    @Test
+    @SVCs({"SVC_GW_0141"})
+    void the_escape_hatch_principal_administers_and_says_where_that_came_from() throws Exception {
+        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+                .apply(SecurityMockMvcConfigurers.springSecurity())
+                .build();
+
+        // An administrative mutation, not merely a read: this is the loop a developer actually runs.
+        mockMvc.perform(post("/api/marketplaces")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\": \"dev-local\", \"url\": \"https://example.com/x.git\"}"))
+                .andExpect(status().isCreated());
+
+        // Attributed to the hatch rather than to config or a grant, because the session endpoint
+        // exists to answer why a session holds a role and there is no configuration entry to find.
+        mockMvc.perform(get("/api/me"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.roles[0].role").value("admin"))
+                .andExpect(jsonPath("$.roles[0].marketplace").doesNotExist())
+                .andExpect(jsonPath("$.roles[0].source").value("dev-insecure-auth"));
     }
 }

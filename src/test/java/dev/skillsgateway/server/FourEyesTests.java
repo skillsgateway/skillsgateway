@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.TestPropertySource;
 
 /**
  * The default mode (GW_0097): a conflict is recorded and the approval proceeds.
@@ -30,6 +31,9 @@ import org.springframework.beans.factory.annotation.Autowired;
  * <p>No {@code TestPropertySource}: the point of the class is that this is what an operator gets
  * without configuring anything.
  */
+@TestPropertySource(
+        // Authorization is always enforced (GW_0138), so this suite names the principal it acts as.
+        properties = {"skills-gateway.roles.admins=dana,ingrid,rachel,solo"})
 class FourEyesTests extends AbstractGatewayTest {
 
     @Autowired

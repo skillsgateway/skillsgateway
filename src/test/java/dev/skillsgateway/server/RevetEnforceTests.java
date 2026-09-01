@@ -51,6 +51,9 @@ import org.springframework.test.context.TestPropertySource;
  * must not be settable per call, so the only way to exercise both is to run two gateways.
  */
 @TestPropertySource(properties = "skills-gateway.vetting.revet.mode=enforce")
+@TestPropertySource(
+        // Authorization is always enforced (GW_0138), so this suite names the principal it acts as.
+        properties = {"skills-gateway.roles.admins=bob"})
 class RevetEnforceTests extends AbstractGatewayTest {
 
     private static final String PLANTED_SECRET = """

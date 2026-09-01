@@ -1061,3 +1061,35 @@ requirements:
     rationale: The pin is what a later approval publishes from and what retention treats as the snapshot's anchor, so a pin that failed quietly produced a record that could be vetted, reviewed and approved, and whose approval would then fail when the content it named could not be found. Its objects would meanwhile be held only by a staging reference the next ingestion overwrites, after which garbage collection may reclaim them — a reviewable snapshot with nothing behind it.
     categories: ["reliability"]
     revision: 0.1.0
+
+  - id: GW_0138
+    title: Authorization on the web surface is always enforced
+    significance: shall
+    description: The system shall evaluate every authorization check on its web surface against the roles the calling session actually holds, and shall offer no configuration that disables those checks or causes them to pass for a principal holding no role.
+    rationale: A switch that turns authorization off is a switch that makes every authenticated session a full administrator, and this one defaulted to off, so a gateway installed and left alone granted complete administrative access to anyone who could complete a login. Nothing in its name said so — a property called enabled reads as a feature toggle for an optional capability rather than as the thing standing between a login and the estate — and because the secure state was the one that had to be switched on, absence of configuration produced the insecure state. The compatibility argument that justified defaulting off, that an upgrade must not lock anyone out, is answered instead by refusing to start when no administrator is configured, which is a loud failure at deployment time rather than a quiet one that only an attacker notices.
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_0139
+    title: A gateway with no administrator refuses to start
+    significance: shall
+    description: The system shall determine from its configuration alone, before serving any request, whether any principal could hold the administrative role; shall refuse to start when none could; shall name in that refusal every configuration path that would resolve it; and shall not consult stored state when making this determination.
+    rationale: Enforcing authorization unconditionally replaces one failure mode with another — an estate nobody can administer, where no marketplace can be registered and no snapshot approved — and the moment to discover that is at deployment, from a message naming the fix, rather than after a login that turns out to be able to do nothing. The check reads configuration only, and deliberately so, because a stored grant is revocable through the API, so it says nothing about whether the next start will have an administrator, and a deployment could be broken by a deletion nobody connected to it. Configuration is a property of the deployment, which is what makes the refusal reproducible and the remedy obvious to whoever is holding the manifest.
+    categories: ["security", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_0140
+    title: The removed enforcement property is refused rather than ignored
+    significance: shall
+    description: The system shall refuse to start when the removed authorization-enforcement property is present in its configuration in any form the framework resolves, including the relaxed and environment-variable spellings, and shall state in the refusal that the property was removed and that enforcement is now unconditional.
+    rationale: Unknown configuration properties are ignored, and for most properties that is the right behaviour. This one is different in one direction that matters, because an operator who set it to false was expressing an explicit intention that the gateway have no authorization, and silently ignoring that intention reverses it. Whichever way the reversal falls, a manifest that still carries the property and a manifest that never did are indistinguishable from inside the deployment, so the only way an operator learns their setting stopped being read is to be told. The refusal is a migration aid rather than a feature and is scheduled for removal at the next major, once no supported version has ever read the property.
+    categories: ["security", "maintainability"]
+    revision: 0.1.0
+
+  - id: GW_0141
+    title: The development escape hatch confers the administrative role on its own principal
+    significance: shall
+    description: While the development authentication escape hatch is enabled, the system shall confer the administrative role on the synthetic principal that escape hatch creates, shall attribute that role to the escape hatch rather than to configuration or to a stored grant when reporting the session's effective roles, and shall confer nothing by this path while the escape hatch is disabled or to an identity-provider session that merely shares the synthetic principal's name.
+    rationale: Enforcing authorization unconditionally would otherwise break the documented local development loop, where the escape hatch replaces the identity provider entirely and there is no claim to map and no directory to grant from. Making its principal an administrator keeps that loop working without a second, quieter switch beside the one that already announces itself; the existing guard that refuses the escape hatch on anything resembling a real deployment is what keeps this from becoming a bypass. Attributing the role to the escape hatch matters because the session endpoint exists to answer why a session holds a role, and an operator who sees admin attributed to configuration would go looking for a configuration entry that does not exist. Refusing it to an identity-provider session of the same name closes the obvious impersonation.
+    categories: ["security"]
+    revision: 0.1.0

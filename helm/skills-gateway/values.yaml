@@ -176,13 +176,15 @@ resources:
 # --- Application configuration ------------------------------------------------
 #
 # The keys above cover only the database, the identity provider and storage.
-# Everything else the gateway reads — role enforcement, the declarative estate,
+# Everything else the gateway reads — the declarative estate, role grants,
 # retention, vetting, token lifetimes, upstream sync — is set through the two
 # passthroughs below.
 #
-# IMPORTANT: `skills-gateway.roles.enabled` defaults to **false**, which lets
-# every authenticated user through every authorization check. Any shared
-# deployment must turn it on, either in `config` or as an entry in `extraEnv`.
+# IMPORTANT: authorization is always enforced, and a gateway that names no
+# administrator refuses to start. Name one below — `skills-gateway.roles.admins`,
+# a `skills-gateway.roles.mappings` entry resolving the admin role, or a declared
+# `skills-gateway.estate.grants` entry — or the pod will not become ready, and
+# its log will say so.
 
 # Arbitrary `skills-gateway.*` (and any other Spring) configuration, rendered
 # verbatim into a ConfigMap and layered on top of the image's application.yaml
@@ -195,7 +197,6 @@ resources:
 config: {}
 #  skills-gateway:
 #    roles:
-#      enabled: true
 #      admins:
 #        - platform-admin@example.com
 #    estate:
@@ -207,8 +208,8 @@ config: {}
 # settings and for anything that must come from a Secret. Entries are passed
 # through as written, so both `value` and `valueFrom` work.
 extraEnv: []
-#  - name: SKILLSGATEWAY_ROLES_ENABLED
-#    value: "true"
+#  - name: SKILLSGATEWAY_ROLES_ADMINS_0
+#    value: platform-admin@example.com
 #  - name: SGW_ESTATE_CI_BOT_SECRET
 #    valueFrom:
 #      secretKeyRef:

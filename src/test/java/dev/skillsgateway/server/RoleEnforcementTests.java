@@ -33,11 +33,12 @@ import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 /**
- * Role enforcement in force (GW_0068–GW_0071): its own context — and therefore its own database —
- * with the switch enabled and one configuration-bootstrapped admin, so no grant here can leak
- * into the compatibility suites and vice versa.
+ * Role enforcement (GW_0068–GW_0071, GW_0138): its own context — and therefore its own database —
+ * with one configuration-bootstrapped admin, so no grant here can leak into another suite and vice
+ * versa. It names its own admin rather than inheriting the base class's, which is also what keeps
+ * the deny-by-default walk below honest: the principal it drives is not an admin here.
  */
-@TestPropertySource(properties = {"skills-gateway.roles.enabled=true", "skills-gateway.roles.admins=root"})
+@TestPropertySource(properties = {"skills-gateway.roles.admins=root"})
 class RoleEnforcementTests extends AbstractGatewayTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -159,7 +160,6 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                 .andExpect(status().isOk());
         mockMvc.perform(get("/api/me").with(mallory))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.rolesEnabled").value(true))
                 .andExpect(jsonPath("$.roles").isEmpty());
 
         // A session's own tokens keep working end to end.
@@ -444,7 +444,6 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         // API call could revoke (GW_0071) — its admin role comes from configuration alone.
         String meAsRoot = mockMvc.perform(get("/api/me").with(root))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.rolesEnabled").value(true))
                 .andExpect(jsonPath("$.roles[0].role").value("admin"))
                 .andReturn()
                 .getResponse()

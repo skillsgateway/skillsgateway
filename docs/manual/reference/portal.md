@@ -52,9 +52,7 @@ carries a breadcrumb and a dark-mode toggle.
 
 ## Authorization
 
-With role enforcement at its default (off), any authenticated session can
-register marketplaces, ingest, approve and reject. With
-`skills-gateway.roles.enabled=true` the server refuses mutations, the audit
+The server refuses mutations, the audit
 surface and the [snapshot preview reads](#preview-pane) to sessions without an
 applicable role — see
 [Delegated administration](../guides/delegated-administration.md); the portal

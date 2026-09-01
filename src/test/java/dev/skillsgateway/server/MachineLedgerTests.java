@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.test.context.TestPropertySource;
 
 /**
  * The ledger's explicit actor kind (GW_0128). The vocabulary existed before this column did — as
@@ -23,6 +24,13 @@ import org.springframework.jdbc.core.simple.JdbcClient;
  * values that also look like ordinary principals. What changes here is that no consumer compares
  * strings at all.
  */
+@TestPropertySource(
+        // Authorization is always enforced (GW_0138), so this suite names every principal it acts
+        // as -- the human and each machine credential. The machine principals are fixed rather than
+        // unique because this suite has its own context, and therefore its own database.
+        properties = {
+            "skills-gateway.roles.admins=a-person,ledger-machine,ledger-ephemeral,ledger-owned,ledger-reader,ledger-exporter,ledger-machine-kinds,ledger-person"
+        })
 class MachineLedgerTests extends AbstractGatewayTest {
 
     @Autowired
@@ -42,7 +50,7 @@ class MachineLedgerTests extends AbstractGatewayTest {
     @Test
     @SVCs({"SVC_GW_0128"})
     void a_machine_credentials_entries_carry_its_actor_kind_its_name_and_its_credential_id() throws Exception {
-        String principal = uniqueName("machine");
+        String principal = "ledger-machine";
         TokenService.IssuedToken machine = credential(principal, List.of("roles:read"));
 
         mockMvc.perform(get("/api/roles").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
@@ -59,7 +67,7 @@ class MachineLedgerTests extends AbstractGatewayTest {
     @Test
     @SVCs({"SVC_GW_0128"})
     void the_ledger_separates_actor_kinds_without_string_parsing_or_a_join() throws Exception {
-        String principal = uniqueName("machine");
+        String principal = "ledger-machine-kinds";
         TokenService.IssuedToken machine = credential(principal, List.of("roles:read"));
         mockMvc.perform(get("/api/roles").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
                 .andExpect(status().isOk());
@@ -87,7 +95,7 @@ class MachineLedgerTests extends AbstractGatewayTest {
     @Test
     @SVCs({"SVC_GW_0128"})
     void a_ledger_row_still_reports_its_actor_after_the_credential_it_names_is_deleted() throws Exception {
-        String principal = uniqueName("ephemeral");
+        String principal = "ledger-ephemeral";
         TokenService.IssuedToken machine = credential(principal, List.of("roles:read"));
         mockMvc.perform(get("/api/roles").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
                 .andExpect(status().isOk());
@@ -107,7 +115,7 @@ class MachineLedgerTests extends AbstractGatewayTest {
     @Test
     @SVCs({"SVC_GW_0128"})
     void no_entry_a_machine_credential_produces_names_the_provisioning_human() throws Exception {
-        String principal = uniqueName("owned");
+        String principal = "ledger-owned";
         TokenService.IssuedToken machine = credential(principal, List.of("roles:read"));
         mockMvc.perform(get("/api/roles").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
                 .andExpect(status().isOk());
@@ -127,7 +135,7 @@ class MachineLedgerTests extends AbstractGatewayTest {
     @Test
     @SVCs({"SVC_GW_0128"})
     void every_authorized_read_of_the_role_grants_writes_exactly_one_entry_of_its_own_kind() throws Exception {
-        String principal = uniqueName("reader");
+        String principal = "ledger-reader";
         TokenService.IssuedToken machine = credential(principal, List.of("roles:read"));
 
         mockMvc.perform(get("/api/roles").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
@@ -141,7 +149,7 @@ class MachineLedgerTests extends AbstractGatewayTest {
         // asymmetry an earlier draft proposed would have left a compromised session reading the
         // grants untraced, and actor_type is what separates the two at query time — not which
         // rows happen to exist.
-        String human = uniqueName("person");
+        String human = "ledger-person";
         mockMvc.perform(get("/api/roles").with(oidcLogin().idToken(token -> token.subject(human))))
                 .andExpect(status().isOk());
         assertThat(entriesFor(human)).singleElement().satisfies(row -> {
@@ -159,7 +167,7 @@ class MachineLedgerTests extends AbstractGatewayTest {
     @Test
     @SVCs({"SVC_GW_0128"})
     void a_machine_read_of_the_ledger_writes_no_entry() throws Exception {
-        String principal = uniqueName("exporter");
+        String principal = "ledger-exporter";
         TokenService.IssuedToken machine = credential(principal, List.of("audit:read"));
         int before = fetchLogRepository.list().size();
 
