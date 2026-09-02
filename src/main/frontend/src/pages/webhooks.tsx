@@ -255,7 +255,10 @@ export function WebhooksPage() {
       </div>
 
       <form onSubmit={onCreate} className="space-y-2">
-        <div className="flex flex-wrap items-end gap-3">
+        {/* Top-align every control so the short inputs and the button read as one row against
+            the taller Events picker, rather than staggering off its bottom edge. The button
+            carries an invisible label so it lines up with the inputs, not with the labels. */}
+        <div className="flex flex-wrap items-start gap-3">
           <div className="space-y-2">
             <Label htmlFor="subscriber-name">Subscriber name</Label>
             <Input
@@ -279,9 +282,14 @@ export function WebhooksPage() {
             />
           </div>
           <EventFilterField registry={registry} selected={selected} onSelectedChange={setSelected} />
-          <Button type="submit" disabled={!canCreate}>
-            {create.isPending ? "Adding…" : "Add subscriber"}
-          </Button>
+          <div className="space-y-2">
+            <Label className="invisible" aria-hidden>
+              Add subscriber
+            </Label>
+            <Button type="submit" className="w-full" disabled={!canCreate}>
+              {create.isPending ? "Adding…" : "Add subscriber"}
+            </Button>
+          </div>
         </div>
         <p id="subscriber-form-hint" className="text-xs text-muted-foreground">
           A name, a target URL and at least one event are required — Add subscriber enables

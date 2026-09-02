@@ -49,3 +49,24 @@ export function isAbsoluteUrl(value: string): boolean {
     return false;
   }
 }
+
+/**
+ * A clone URL reduced to the shape two registrations would collide on: lowercased scheme and
+ * host, no trailing slash, and the `.git` suffix dropped so `…/m` and `…/m.git` compare equal.
+ *
+ * This is a client-side aid only — it powers the duplicate-URL *warning* on the register form,
+ * not a block. Registering the same upstream under two names is legitimate (it is how one tests
+ * a marketplace), so the server does not reject it; the portal only surfaces it so the collision
+ * is a deliberate choice rather than a silent one.
+ */
+export function normalizeCloneUrl(value: string): string | null {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return null;
+  try {
+    const url = new URL(trimmed);
+    const path = url.pathname.replace(/\.git$/i, "").replace(/\/+$/, "");
+    return `${url.protocol.toLowerCase()}//${url.host.toLowerCase()}${path}`;
+  } catch {
+    return null;
+  }
+}

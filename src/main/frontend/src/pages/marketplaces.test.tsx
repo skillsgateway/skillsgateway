@@ -19,11 +19,16 @@ function renderPage() {
   );
 }
 
-test("lists_registered_marketplaces_with_held_snapshots", async () => {
+test("lists_registered_marketplaces_and_reveals_snapshots_on_expand", async () => {
+  const user = userEvent.setup();
   renderPage();
   expect(await screen.findByText("corp-marketplace")).toBeInTheDocument();
+  // The latest snapshot's state is shown on the collapsed row.
   expect(screen.getByText("held")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Approve snapshot 1" })).toBeInTheDocument();
+  // The review actions live in the row's expandable snapshots table.
+  expect(screen.queryByRole("button", { name: "Approve snapshot 1" })).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Expand corp-marketplace" }));
+  expect(await screen.findByRole("button", { name: "Approve snapshot 1" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Reject snapshot 1" })).toBeInTheDocument();
 });
 
@@ -38,8 +43,10 @@ test("lists_registered_marketplaces_with_held_snapshots", async () => {
  * here would register a verification the traceability gate could never see pass.
  */
 test("approve_is_disabled_with_the_remaining_time_inside_the_cooling_off_window", async () => {
+  const user = userEvent.setup();
   server.use(http.get("/api/snapshots/:id/release-age", () => HttpResponse.json(tooYoung)));
   renderPage();
+  await user.click(await screen.findByRole("button", { name: "Expand corp-marketplace" }));
 
   const approve = await screen.findByRole("button", { name: "Approve snapshot 1" });
   await waitFor(() => expect(approve).toHaveTextContent("Eligible in 2d 4h"));
@@ -49,7 +56,9 @@ test("approve_is_disabled_with_the_remaining_time_inside_the_cooling_off_window"
 });
 
 test("approve_is_offered_normally_once_the_window_has_passed", async () => {
+  const user = userEvent.setup();
   renderPage();
+  await user.click(await screen.findByRole("button", { name: "Expand corp-marketplace" }));
 
   const approve = await screen.findByRole("button", { name: "Approve snapshot 1" });
   // Never shut merely because the answer has not arrived: the server is the gate, and a portal
@@ -104,6 +113,7 @@ test("register_dialog_rejects_invalid_name_and_malformed_url", async () => {
 test("approving_a_blocked_snapshot_shows_the_findings_and_offers_a_waiver", async () => {
   const user = userEvent.setup();
   renderPage();
+  await user.click(await screen.findByRole("button", { name: "Expand corp-marketplace" }));
   await user.click(await screen.findByRole("button", { name: "Approve snapshot 1" }));
 
   const dialog = await screen.findByRole("dialog");
@@ -130,4 +140,25 @@ test("approving_a_blocked_snapshot_shows_the_findings_and_offers_a_waiver", asyn
   await user.clear(expiry);
   await user.type(expiry, "2020-01-01");
   expect(record).toBeDisabled();
+});
+
+/**
+ * Registering an already-registered upstream is legitimate but usually a mistake, so the form
+ * warns and holds Register shut until the collision is acknowledged — a deliberate choice, not a
+ * silent one. The `.git` suffix and a trailing slash do not hide the collision.
+ */
+test("register_warns_and_gates_on_a_duplicate_clone_url", async () => {
+  const user = userEvent.setup();
+  renderPage();
+  await user.click(await screen.findByRole("button", { name: "Register marketplace" }));
+  await user.type(screen.getByLabelText("Name"), "corp-copy");
+  // corp-marketplace is registered at https://github.com/corp/marketplace.git in the fixtures.
+  await user.type(screen.getByLabelText("Clone URL"), "https://github.com/corp/marketplace");
+
+  const register = screen.getByRole("button", { name: "Register" });
+  expect(register).toBeDisabled();
+  expect(await screen.findByText(/already registered as/)).toBeInTheDocument();
+
+  await user.click(screen.getByRole("checkbox", { name: "Register anyway" }));
+  expect(register).toBeEnabled();
 });

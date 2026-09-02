@@ -6,6 +6,7 @@ import dev.skillsgateway.server.persistence.ActorType;
 import dev.skillsgateway.server.persistence.FetchLogRepository;
 import dev.skillsgateway.server.sync.SyncService;
 import dev.skillsgateway.server.vetting.RevetService;
+import dev.skillsgateway.server.vetting.VettingService;
 import dev.skillsgateway.server.vetting.WaiverService;
 import io.github.reqstool.annotations.Requirements;
 import java.util.Set;
@@ -50,7 +51,11 @@ public class AdminAuditLogger {
             SyncService.SCHEDULER_ACTOR,
             SyncService.WEBHOOK_ACTOR,
             RevetService.SWEEP_ACTOR,
-            WaiverService.SYSTEM_ACTOR);
+            WaiverService.SYSTEM_ACTOR,
+            // The vetting chain is the gateway's own automated subsystem, not a person; without
+            // this its verdict and run-completed entries fell through to HUMAN and the portal
+            // showed an automated verdict as a human actor (GW_0128).
+            VettingService.VETTING_ACTOR);
 
     private final FetchLogRepository fetchLogRepository;
 
@@ -64,7 +69,7 @@ public class AdminAuditLogger {
     }
 
     /** As {@link #record}, carrying the entry's free-text qualifier (a vetting outcome or reason). */
-    @Requirements({"GW_0022", "GW_0043", "GW_0128"})
+    @Requirements({"GW_0022", "GW_0043", "GW_0128", "GW_0142"})
     public void record(String principal, String marketplace, String event, String sha, String detail) {
         Authentication authentication = current();
         MachineApiAuthentication machine = machineActor(authentication, principal);

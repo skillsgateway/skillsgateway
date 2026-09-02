@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
+  useAudit,
   useMarketplaces,
   useRestoreSnapshot,
   useRevetSnapshot,
@@ -11,15 +12,101 @@ import {
   useSoftDeleteSnapshot,
   type Snapshot,
 } from "@/api/queries";
+import { AuditStatusBadge, auditRowClass } from "@/components/audit-status";
+import { auditStatus } from "@/lib/audit-status";
 import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { RevocationNote, SnapshotStateBadge } from "@/components/snapshot-state";
 import { SetupWizard } from "@/components/setup-wizard";
 import { SnapshotPreview } from "@/components/snapshot-preview";
 import { VettingReport } from "@/components/vetting-report";
+
+/**
+ * This marketplace's slice of the append-only ledger: every facade fetch and administrative
+ * action recorded against it, newest first, with the same verdict colouring the audit page
+ * and the marketplace row use. It answers "what has happened to this marketplace" without
+ * making the reader scan the whole ledger and pick its name out by eye (#221/#224).
+ *
+ * @Requirements GW_0022, GW_0018
+ */
+function MarketplaceAudit({ name }: { name: string }) {
+  const audit = useAudit();
+  const rows = (audit.data ?? []).filter((row) => row.marketplace === name).slice().reverse();
+
+  return (
+    <div className="space-y-3">
+      <h2 className="text-lg font-semibold">Audit log</h2>
+      <p className="text-sm text-muted-foreground">
+        Ledger entries recorded against this marketplace.{" "}
+        <Link to="/audit" className="text-primary hover:underline">
+          See the full ledger
+        </Link>
+        .
+      </p>
+      {audit.isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : null}
+      {audit.isError ? (
+        <p role="alert" className="text-sm text-destructive">
+          {audit.error.message}
+        </p>
+      ) : null}
+      {!audit.isLoading && rows.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          Nothing recorded against this marketplace yet.
+        </p>
+      ) : null}
+      {rows.length > 0 ? (
+        <div className="overflow-x-auto rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Status</TableHead>
+                <TableHead>When</TableHead>
+                <TableHead>Event</TableHead>
+                <TableHead>Principal</TableHead>
+                <TableHead>Commit</TableHead>
+                <TableHead>Detail</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row, index) => {
+                const sha = typeof row.sha === "string" ? row.sha : "";
+                return (
+                  <TableRow key={index} className={auditRowClass(row)}>
+                    <TableCell>
+                      <AuditStatusBadge status={auditStatus(row)} />
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                      <Timestamp value={row.ts as string | undefined} />
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">{String(row.event ?? "—")}</TableCell>
+                    <TableCell className="text-xs">{String(row.principal ?? "—")}</TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {sha ? sha.slice(0, 12) : "—"}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {row.detail ? String(row.detail) : "—"}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 /**
  * Retention state of one snapshot: whether it is deleted, until when it can be restored, and
@@ -346,6 +433,8 @@ export function MarketplaceDetailPage() {
           })
         )}
       </div>
+
+      <MarketplaceAudit name={marketplace.name ?? ""} />
     </div>
   );
 }

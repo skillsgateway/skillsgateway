@@ -22,7 +22,11 @@ A fixed sidebar, grouped:
 not from the sidebar.
 
 The sidebar footer shows the signed-in username from `GET /api/me`. The header
-carries a breadcrumb and a dark-mode toggle.
+carries a breadcrumb and a theme toggle. The toggle is three-state and cycles
+**system → light → dark**: it defaults to _system_ (follow the operating
+system's appearance), and its icon shows the chosen state — a monitor for
+system, a sun for light, a moon for dark. The choice is remembered in the
+browser (`localStorage`); _system_ tracks the OS setting as it changes.
 
 !!! note "There is no logout control"
 
@@ -107,16 +111,32 @@ ingests the upstream default branch; the ref is not selectable."
 **Register** stays disabled until both fields are valid; it enables as soon as the
 name matches the pattern and the clone URL parses.
 
+If the clone URL already matches a registered marketplace — comparison ignores
+case, a trailing slash and a `.git` suffix — the dialog shows a **warning** naming
+the existing marketplace(s) and holds **Register** shut until *Register anyway* is
+ticked. This is a warning, not a block: the same upstream under a different name is
+a legitimate test setup, so the server still accepts it; the acknowledgement only
+makes the collision deliberate rather than silent.
+
 Submits `POST /api/marketplaces`; toasts *Marketplace '{name}' registered*.
 
-### Marketplace cards
+### Marketplace table
 
-One card per marketplace, titled with its name and linking to the detail page.
-Beneath: the clone URL, the forge description if captured, and the last upstream
-update if known.
+One sortable row per marketplace:
 
-The card action is **Ingest** (`POST /api/marketplaces/{name}/ingest`), toasting
-*Snapshot {sha12} is {state}*.
+| Column | Contents |
+| --- | --- |
+| (expander) | A chevron; clicking the row (or the chevron) reveals the marketplace's snapshot table in place. |
+| Name | The marketplace name, a link to its [detail page](#marketplace-detail). |
+| Source | The detected forge (or the clone URL's host), with the clone URL beneath. |
+| Latest snapshot | The newest snapshot's state badge and its vetting outcome badge. |
+| Upstream updated | The last upstream update if known, else "—". Sortable. |
+| Snapshots | A count badge. |
+
+Expanding a row reveals **Ingest**
+(`POST /api/marketplaces/{name}/ingest`, toasting *Snapshot {sha12} is {state}*),
+an **Open detail** link, and the [snapshot table](#snapshot-table) with its
+review actions.
 
 ### Snapshot table
 
@@ -191,8 +211,8 @@ justification, approver and expiry. An active one carries
 `GET /api/snapshots/{id}/provenance`: marketplace, upstream URL, upstream SHA,
 state, ingested time, decided by, decided at.
 
-Empty states: "No marketplaces registered yet." and, per card, "No snapshots yet
-— ingest to fetch the upstream default branch."
+Empty states: "No marketplaces registered yet." and, in an expanded row, "No
+snapshots yet — ingest to fetch the upstream default branch."
 
 ---
 
@@ -343,6 +363,14 @@ mutation in the portal — deletion here is a reversible mark, not a purge.
 
 Empty state: "No snapshots yet."
 
+### Audit log
+
+Below the snapshots, the marketplace's slice of the ledger: the entries from
+`GET /api/audit` whose marketplace is this one, newest first, with the same
+verdict colouring as the [Audit log](#audit-log) page — a blocked verdict reads
+red here too. A **See the full ledger** link goes to `/audit`. Empty state:
+"Nothing recorded against this marketplace yet."
+
 ---
 
 ## Audit log
@@ -390,13 +418,27 @@ Empty state: "No export sinks yet."
 
 The table, from `GET /api/audit`.
 
-It is **schema-less**: columns are the keys of the first returned row, in
-order, and every cell renders as monospace text with nulls shown as "—". In
-practice those columns are `id`, `ts`, `source`, `principal`, `marketplace`,
-`event`, `ref` and `sha`.
+| Column | Contents |
+| --- | --- |
+| Status | A verdict badge derived from the entry: a `vetting-completed` row reads from the `outcome=` in its detail, and refusal/violation events (rejected, revoked, refused approval, a re-vetting violation, a blocked private key) read **blocked**. A blocked row is drawn in the destructive colour — the same red the marketplace surfaces use — with a faint tint and a left accent so it is findable; a clear act reads in the accent, a warn one muted. Everything else (a fetch, an ingest, a token event) is neutral and uncoloured. |
+| When | The entry timestamp. Sortable. |
+| Event | The event name, monospace. Sortable and filterable. |
+| Principal | The acting identity. Sortable and filterable. |
+| Marketplace | A **link** to that marketplace's [detail page](#marketplace-detail); "—" for an entry not tied to a marketplace. Sortable and filterable. |
+| Commit | First 12 characters of the SHA, or "—". Filterable. |
+| Detail | The entry's free-text detail. |
 
-There is no filtering, search or paging — it is a recent-activity view rather
-than an investigation tool.
+The per-column filter boxes sit above the table; each is free-text but offers
+**completion** from the values actually present, so you pick rather than type
+blind. The event, principal and commit lists are the distinct values in the
+loaded rows; the marketplace list draws on the registered marketplaces, so it
+completes beyond the rows on screen. Because the table paginates client-side
+(25 rows a page) over the JSON ledger, the event/principal/commit suggestions
+cover only the rows loaded so far. The status is a **read-only legibility
+aid** derived from what the ledger already records — it does not correct the
+ledger; the lossy verdict detail and the actor-type on automated vetting
+principals are tracked in [#221](https://github.com/skillsgateway/skillsgateway/issues/221).
+For a full, resumable pull, use the [NDJSON export](#export) and its cursor.
 
 Empty state: "No fetches recorded yet."
 
