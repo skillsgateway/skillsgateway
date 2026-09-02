@@ -368,21 +368,36 @@ class PackagingTests {
 
         // The gates run before the approval, so the reviewer approves something
         // already green rather than a version string.
-        assertThat(needsOf(wf, "tag")).contains("checks");
-        assertThat(needsOf(wf, "approve")).contains("tag");
+        assertThat(needsOf(wf, "approve")).contains("checks");
 
-        // The gate guards the publish, not the tag.
+        // And the approval decides whether the version comes into existence: the
+        // tag is the first irreversible, publicly visible step, so it is behind
+        // the gate rather than in front of it.
+        assertThat(needsOf(wf, "tag"))
+                .as("the approval must be able to prevent the tag")
+                .contains("approve");
+
+        // The gate is the approve job. The tag job is behind it, not it.
         assertThat(section(job(wf, "approve"), "environment")).containsEntry("name", "stable");
         assertThat(job(wf, "tag"))
                 .as("the tag job is deliberately not the gate")
                 .doesNotContainKey("environment");
 
-        // Every publish job waits on that approval.
+        // Nothing publishes before the tag, which is itself behind the approval.
         for (String publisher : List.of("image", "docs", "package")) {
             assertThat(needsOf(wf, publisher))
-                    .as("%s waits on the approval", publisher)
-                    .contains("approve");
+                    .as("%s waits on the tag", publisher)
+                    .contains("tag");
         }
+
+        // A run that tags and then stops leaves a partial release and says so —
+        // including when it stops by being cancelled, which `verify` cannot
+        // report because a failed publish skips it.
+        assertThat(needsOf(wf, "partial")).contains("tag", "promote");
+        assertThat(String.valueOf(job(wf, "partial").get("if")))
+                .as("the partial report must survive a cancelled run and key off the tag")
+                .contains("always()")
+                .contains("needs.tag.result == 'success'");
 
         // Created as a prerelease, promoted only after the published bytes are
         // verified, so nothing resolving "latest" sees an incomplete release.

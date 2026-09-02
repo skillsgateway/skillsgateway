@@ -1065,8 +1065,8 @@ cases:
     description: |
       GIVEN the repository's release workflow definition
       WHEN the packaging test validates it
-      THEN the workflow is reachable only by manual dispatch, its preview input defaults to on, it offers the release-candidate modes alongside a plain release, it requires the override flag before a hand-entered version can disagree with the derived one, it runs the main-branch gates before the approval gate, it binds the publishing stage to a protected environment so a required reviewer holds it, it creates the release as a prerelease, and it orders promotion to latest after the published-artifact verification
-    revision: "0.1.0"
+      THEN the workflow is reachable only by manual dispatch, its preview input defaults to on, it offers the release-candidate modes alongside a plain release, it requires the override flag before a hand-entered version can disagree with the derived one, it runs the main-branch gates before the approval gate, it binds the approval to a protected environment so a required reviewer holds it, it orders the tag and every publishing step after that approval so the reviewer can prevent the version from existing, it creates the release as a prerelease, it orders promotion to latest after the published-artifact verification, and it reports the surviving state of any run that tagged without promoting, including a run that was cancelled
+    revision: "0.2.0"
 
   - id: SVC_GW_0109
     requirement_ids: ["GW_0109"]

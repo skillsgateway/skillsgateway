@@ -2,7 +2,7 @@ name: Release
 
 # The whole release, start to finish, in one dispatched workflow.
 #
-#   prepare -> checks -> tag + prerelease -> [approval] -> publish -> verify -> promote
+#   prepare -> checks -> [approval] -> tag + prerelease -> publish -> verify -> promote
 #
 # Before this existed, a release was two `tags:` triggers that happened to watch
 # for the same tag: docs.yml published the version and moved the `stable` alias,
@@ -10,11 +10,12 @@ name: Release
 # that the tag was even reachable from main. A failed image build left a tag and
 # a half-published release standing.
 #
-# The approval sits on the PUBLISH, not on the tag. Everything before it is
-# reversible and invisible: a tag can be deleted, and the release is created as a
-# prerelease, which /releases/latest excludes. Gating the tag would mean
-# approving a version string; gating the publish means approving with the gates
-# green, the version resolved and the notes rendered. See
+# The approval decides whether the version EXISTS. The tag is the first
+# irreversible, publicly visible step -- "the git tag is the only version" -- so
+# it sits behind the gate along with everything it feeds. `checks` still runs
+# first, so the reviewer approves something already green with the version
+# resolved and the notes rendered in the run summary, rather than a version
+# string. Abandoning a run at the gate now leaves nothing at all (#205). See
 # docs/manual/guides/releasing.md.
 #
 # ⚠️  The `stable` environment must exist WITH a required reviewer. GitHub creates
@@ -99,36 +100,29 @@ jobs:
     permissions:
       contents: read
 
-  # Tags, pushes, and creates the release as a PRERELEASE -- publicly readable by
-  # exact tag so `verify` below can download it the way a consumer does, but
-  # excluded from /releases/latest until `promote`.
-  tag:
-    needs: [prepare, checks]
-    if: ${{ !inputs.dry-run }}
-    uses: skillsgateway/.github/.github/workflows/common-release-tag.yml@53030249aec4552ff11d9e73371a091ef8bfb095
-    permissions:
-      contents: write
-    with:
-      version: ${{ needs.prepare.outputs.version }}
-      version-format: maven
-
   # THE APPROVAL GATE, and the only reason this job exists: `environment:` cannot
-  # be set on a job that uses `uses:`, so the three publish jobs below cannot
-  # carry it themselves. A single gate job in front of them also means ONE
-  # approval rather than one per publish job.
+  # be set on a job that uses `uses:`, so neither the tag job nor the publish jobs
+  # below can carry it themselves. A single gate job in front of them also means
+  # ONE approval rather than one per job.
+  #
+  # `environment.url` points at this run rather than at a prerelease, because at
+  # this point there deliberately is no prerelease to point at. What the reviewer
+  # reads is the run summary: `prepare` wrote the resolved version, the version it
+  # derived, the previous tag and the rendered release notes there, and `checks`
+  # is green above it. That is strictly more than a prerelease page showed, and
+  # unlike a prerelease it costs nothing if the answer is no.
   approve:
     name: Approve the release
-    needs: [prepare, tag]
+    needs: [prepare, checks]
     if: ${{ !inputs.dry-run }}
     runs-on: ubuntu-latest
     environment:
       name: stable
-      url: ${{ needs.tag.outputs.url }}
+      url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - name: Record what was approved
         env:
           VERSION: ${{ needs.prepare.outputs.version }}
-          URL: ${{ needs.tag.outputs.url }}
           CANDIDATE: ${{ needs.prepare.outputs.prerelease }}
         run: |
           {
@@ -137,16 +131,35 @@ jobs:
             echo "| | |"
             echo "|---|---|"
             echo "| Version | \`$VERSION\` |"
-            echo "| Prerelease | $URL |"
             echo "| Release candidate | $CANDIDATE |"
+            echo ""
+            echo "The tag and the prerelease are created next. Nothing existed until this approval."
           } >> "$GITHUB_STEP_SUMMARY"
 
   # --- Publication. Everything below is behind the gate. ---
 
+  # Tags, pushes, and creates the release as a PRERELEASE -- publicly readable by
+  # exact tag so `verify` below can download it the way a consumer does, but
+  # excluded from /releases/latest until `promote`.
+  #
+  # Behind the approval, because this is where the version starts to exist. The
+  # reusable workflow re-checks that the tag is absent, which is what makes an
+  # approval sitting between `prepare` and here safe -- and which is also why
+  # re-running an abandoned release for the same version fails here.
+  tag:
+    needs: [prepare, approve]
+    if: ${{ !inputs.dry-run }}
+    uses: skillsgateway/.github/.github/workflows/common-release-tag.yml@53030249aec4552ff11d9e73371a091ef8bfb095
+    permissions:
+      contents: write
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+      version-format: maven
+
   # The container image, built and smoke-tested by the same workflow that does it
   # on main, then pushed with the released version as its tag.
   image:
-    needs: [prepare, approve]
+    needs: [prepare, tag]
     uses: ./.github/workflows/native.yml
     permissions:
       contents: read
@@ -159,7 +172,7 @@ jobs:
   # Versioned documentation plus the `stable` alias. A release candidate does not
   # move `stable`: the docs a reader lands on must describe a real release.
   docs:
-    needs: [prepare, approve]
+    needs: [prepare, tag]
     if: ${{ needs.prepare.outputs.prerelease != 'true' }}
     uses: ./.github/workflows/docs.yml
     permissions:
@@ -173,7 +186,7 @@ jobs:
   # what Nisse stamped from the tag rather than from the branch.
   package:
     name: Package the release artifacts
-    needs: [prepare, approve]
+    needs: [prepare, tag]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -305,3 +318,51 @@ jobs:
       version: ${{ needs.prepare.outputs.version }}
       # true leaves a release candidate a prerelease permanently.
       prerelease: ${{ needs.prepare.outputs.prerelease == 'true' }}
+
+  # The one outcome nothing else reports: a run that created the tag and then did
+  # not finish. `verify` cannot cover it -- it is skipped the moment a publishing
+  # job fails -- so the run ends red with no statement of what survived it, which
+  # is how #205 left a tag and a prerelease with nothing behind them.
+  #
+  # `always()` so this also runs when the release is abandoned by cancelling the
+  # run, which is the likeliest way to reach the state. Best-effort there: a
+  # second cancellation kills this job too. It reports; it never fails the run,
+  # which has already failed.
+  partial:
+    name: Report a partial release
+    needs: [prepare, tag, image, docs, package, assets, verify, promote]
+    if: ${{ always() && needs.tag.result == 'success' && needs.promote.result != 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Report what this run left behind
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+          IMAGE: ${{ needs.image.result }}
+          DOCS: ${{ needs.docs.result }}
+          PACKAGE: ${{ needs.package.result }}
+          ASSETS: ${{ needs.assets.result }}
+          VERIFY: ${{ needs.verify.result }}
+          PROMOTE: ${{ needs.promote.result }}
+        run: |
+          {
+            echo "### Partial release — \`$VERSION\`"
+            echo ""
+            echo "The tag and the prerelease exist. The release did not complete."
+            echo ""
+            echo "| Step | Outcome |"
+            echo "|---|---|"
+            echo "| Tag and prerelease | success |"
+            echo "| Container image | $IMAGE |"
+            echo "| Documentation | $DOCS |"
+            echo "| Packaged artifacts | $PACKAGE |"
+            echo "| Assets attached | $ASSETS |"
+            echo "| Published bytes verified | $VERIFY |"
+            echo "| Promoted to latest | $PROMOTE |"
+            echo ""
+            echo "Re-dispatching this workflow for \`$VERSION\` will fail: the tag job refuses a"
+            echo "version whose tag already exists. Recovery is in the releasing guide, under"
+            echo "\"If a release goes wrong\"."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning::Partial release $VERSION — the tag and prerelease exist but the run did not complete. See the run summary."
