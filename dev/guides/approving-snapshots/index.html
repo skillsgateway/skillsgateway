@@ -865,6 +865,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#what-it-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#provenance" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2111,6 +2122,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#what-it-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#provenance" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2307,13 +2329,26 @@ page.</p>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">             </span><span class="nt">"skills"</span><span class="p">:[{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"deploy"</span><span class="p">,</span><span class="nt">"path"</span><span class="p">:</span><span class="s2">"skills/deploy/SKILL.md"</span><span class="p">}]}]}</span>
 </code></pre></div>
 <p>This works on <code>held</code> snapshots by design — reviewing must not require serving.</p>
+<h3 id="what-it-changes">What it changes<a class="headerlink" href="#what-it-changes" title="Permanent link">&para;</a></h3>
+<p>The inventory says what the snapshot ships; <code>GET
+/api/snapshots/{id}/content-diff</code> says what approving it would add to what you
+already approved. Every plugin and skill is marked <code>added</code>, <code>removed</code>,
+<code>changed</code>, <code>moved</code> or <code>unchanged</code> against the marketplace's last approved
+snapshot, and a skill counts as changed when anything under its directory
+differs — not only its <code>SKILL.md</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/snapshots/1/content-diff
+</code></pre></div>
+<p>On the tenth snapshot of a large marketplace this is the read worth starting
+from: it is the difference between reviewing two new skills and re-reading
+forty. In the portal it is the second half of the <strong>Show contents</strong> panel. See
+<a href="../../reference/api/marketplaces/#get-snapshotsidcontent-diff">the API reference</a>.</p>
 <h3 id="provenance">Provenance<a class="headerlink" href="#provenance" title="Permanent link">&para;</a></h3>
 <p>Where it came from and who has touched it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/snapshots/1/provenance
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/snapshots/1/provenance
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"upstreamUrl"</span><span class="p">:</span><span class="s2">"https://github.com/acme/skills.git"</span><span class="p">,</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w"> </span><span class="nt">"upstreamSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"held"</span><span class="p">,</span><span class="nt">"violation"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w"> </span><span class="nt">"ingestedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"decidedBy"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"decidedAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"upstreamUrl"</span><span class="p">:</span><span class="s2">"https://github.com/acme/skills.git"</span><span class="p">,</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w"> </span><span class="nt">"upstreamSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"held"</span><span class="p">,</span><span class="nt">"violation"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w"> </span><span class="nt">"ingestedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"decidedBy"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"decidedAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">}</span>
 </code></pre></div>
 <h3 id="violations">Violations<a class="headerlink" href="#violations" title="Permanent link">&para;</a></h3>
 <p>If ingestion flagged the snapshot — an external plugin source, for instance —
@@ -2366,8 +2401,8 @@ confirm button stays disabled until every blocking finding is waived from
 that same dialog.</p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/1/approve
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/1/reject
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/1/approve
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/1/reject
 </code></pre></div>
 <p>Neither takes a request body. A snapshot the vetting chain blocked is
 refused with 409 until each blocking finding is covered by an active
@@ -2470,11 +2505,11 @@ wait for a second pair of eyes.</p>
 which acts conflict — as a warning under <code>warn</code>, and with the confirm button
 shut under <code>enforce</code> — and the API answers the same question without deciding
 anything:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/snapshots/1/four-eyes
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/snapshots/1/four-eyes
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span><span class="nt">"mode"</span><span class="p">:</span><span class="s2">"ENFORCE"</span><span class="p">,</span><span class="nt">"refused"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w"> </span><span class="nt">"conflicts"</span><span class="p">:[{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"registered-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">},</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">              </span><span class="p">{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"ingested-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">}]}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p">{</span><span class="nt">"mode"</span><span class="p">:</span><span class="s2">"ENFORCE"</span><span class="p">,</span><span class="nt">"refused"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w"> </span><span class="nt">"conflicts"</span><span class="p">:[{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"registered-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">},</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">              </span><span class="p">{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"ingested-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">}]}</span>
 </code></pre></div>
 <p>A refused approval answers with the same list in its problem document, under
 <code>conflicts</code>, alongside the <code>configKey</code> that imposed it.</p>

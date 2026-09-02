@@ -3008,9 +3008,20 @@ shows "—".</p>
 <p>One card per snapshot showing the short SHA (12 characters, monospace), the
 state badge, and the deciding principal once decided. A violation, when present,
 renders as destructive text beneath the header row.</p>
-<p>The <strong>Show contents</strong> toggle loads <code>GET /api/snapshots/{id}/content</code> and renders
+<p>The <strong>Show contents</strong> toggle opens two sections.</p>
+<p><strong>What this snapshot ships</strong> loads <code>GET /api/snapshots/{id}/content</code> and renders
 one block per declared plugin: name, <code>source</code>, optional description, and one
 badge per skill found under it. Plugins with no skills show "no skills found".</p>
+<p><strong>Changes since the last approved snapshot</strong> loads
+<code>GET /api/snapshots/{id}/content-diff</code> and lists only what differs from the
+marketplace's last approved snapshot, named above the list with its short SHA
+and summarised as count chips (added, changed, moved, removed). Each entry
+carries a status badge; a skill that moved between plugins is listed once,
+under its new plugin, with the plugin it came from. Unchanged skills are not
+repeated here — the section above already lists them. Two states replace the
+list where it would say nothing: a marketplace with nothing approved yet says
+there is no baseline and that approving publishes all of the snapshot, and a
+snapshot that changed nothing says so.</p>
 <p>This is the review surface, and it works on <code>held</code> snapshots — inspecting a
 snapshot must not require serving it.</p>
 <h3 id="preview-pane">Preview pane<a class="headerlink" href="#preview-pane" title="Permanent link">&para;</a></h3>
