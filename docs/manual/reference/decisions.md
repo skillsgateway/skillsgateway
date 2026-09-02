@@ -144,10 +144,10 @@ connector and version that produced it (GW_0049). It is a **synchronous** HTTP
 participant in the existing chain: the gateway POSTs the snapshot bundle and reads
 back the normalized `{state, report-url, findings[]}`. The load-bearing half is
 **fail-closed** — an unreachable, slow, oversized, unparseable, unrecognised or
-partial answer is an `error` verdict that blocks, never a pass (GW_0143) — plus
+partial answer is an `error` verdict that blocks, never a pass (GW_0145) — plus
 **worst-of** aggregation so an endpoint cannot pass content its own findings
-condemn (GW_0144). A `pending` answer is the **asynchronous seam** and blocks
-until resolved (GW_0145); the inbound resolution callback is deliberately a
+condemn (GW_0146). A `pending` answer is the **asynchronous seam** and blocks
+until resolved (GW_0147); the inbound resolution callback is deliberately a
 separate, sequenced piece of work.
 
 ## Related

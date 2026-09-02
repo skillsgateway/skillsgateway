@@ -17,7 +17,7 @@ import org.springframework.core.type.AnnotationMetadata;
 
 /**
  * Turns {@code skills-gateway.vetting.external[*]} into one {@link ExternalVettingConnector} bean
- * per entry (GW_0142). Registering them as ordinary beans means they join the chain through the
+ * per entry (GW_0144). Registering them as ordinary beans means they join the chain through the
  * same {@code List<VettingConnector>} injection the built-ins do — {@code VettingService} is
  * untouched, and the ordering, recording and fail-closed aggregation apply identically.
  *

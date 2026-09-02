@@ -7,15 +7,15 @@ has an adversarial test; the run is closed by a gauntlet and `evidence.md`.
 ## 1. Spec (old-coder SPEC)
 
 - [x] 1.1 Write the executable spec to `spec-approval.md` (named test list for
-  GW_0142–GW_0145, negative constraints, setup plan, no new dependencies).
+  GW_0144–GW_0147, negative constraints, setup plan, no new dependencies).
 - [x] 1.2 Autonomous run: spec approval not obtained; recorded in `evidence.md`
   with correspondingly lower confidence.
 
 ## 2. Requirements (reqstool SSOT, before code)
 
-- [x] 2.1 Add GW_0142–GW_0145 to `docs/reqstool/requirements.yml`.
-- [x] 2.2 Add SVC_GW_0142–SVC_GW_0145 to `software_verification_cases.yml`.
-- [x] 2.3 Confirm GW_0142–GW_0145 unused elsewhere (GW_0132–GW_0141 are claimed by
+- [x] 2.1 Add GW_0144–GW_0147 to `docs/reqstool/requirements.yml`.
+- [x] 2.2 Add SVC_GW_0144–SVC_GW_0147 to `software_verification_cases.yml`.
+- [x] 2.3 Confirm GW_0144–GW_0147 unused elsewhere (GW_0132–GW_0141 are claimed by
   other in-flight branches).
 
 ## 3. ADR
@@ -38,11 +38,11 @@ has an adversarial test; the run is closed by a gauntlet and `evidence.md`.
 
 - [x] 5.1 `ExternalVettingConnectorUnitTests` (pure, container-free): happy paths,
   worst-of, `pending`, credential, binary-unscanned, and the full fail-closed
-  matrix (GW_0142–GW_0145). 20 tests.
+  matrix (GW_0144–GW_0147). 20 tests.
 - [x] 5.2 `ExternalVettingConnectorTests` (integration, real `VettingService` over
   an ingested snapshot + in-process endpoint): pass clears, fail persists findings
   and report link, worst-of blocks, `pending` blocks and cannot be approved, the
-  fail-closed matrix leaves the snapshot held. Carries SVC_GW_0142–0145.
+  fail-closed matrix leaves the snapshot held. Carries SVC_GW_0144–0145.
 - [x] 5.3 `ExternalConnectorRegistrationTests` (own context): a configured
   connector joins the chain in order and names itself in the chain identity.
 - [x] 5.4 Manual mutation on the three load-bearing branches (non-2xx→pass,

@@ -57,8 +57,8 @@ Tests run: 20, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 Covers (→ SVC): pass/warn/info mapping, worst-of, credential header, binary
-shipped-unscanned (SVC_GW_0142, SVC_GW_0144); `pending` blocks (SVC_GW_0145); and
-the fail-closed matrix (SVC_GW_0143) — unreachable, non-2xx, read timeout, empty,
+shipped-unscanned (SVC_GW_0144, SVC_GW_0146); `pending` blocks (SVC_GW_0147); and
+the fail-closed matrix (SVC_GW_0145) — unreachable, non-2xx, read timeout, empty,
 JSON-null, unparseable, unknown state, missing state, declared `error`, malformed
 finding severity, missing finding id, oversized response, over-cap request bundle.
 
@@ -82,8 +82,8 @@ ruamel.yaml + PyYAML load of requirements.yml and software_verification_cases.ym
 Generated annotations confirm the mapping is captured:
 
 ```
-target/generated-sources/annotations/resources/annotations.yml:      GW_0142..GW_0145
-target/generated-test-sources/test-annotations/resources/annotations.yml: SVC_GW_0142..SVC_GW_0145
+target/generated-sources/annotations/resources/annotations.yml:      GW_0144..GW_0147
+target/generated-test-sources/test-annotations/resources/annotations.yml: SVC_GW_0144..SVC_GW_0147
 ```
 
 ### OpenSpec

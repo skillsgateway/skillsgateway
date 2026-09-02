@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Pure, container-free verification of {@link ExternalVettingConnector}'s fail-closed contract
- * (GW_0142-GW_0145). Every branch by which a network dependency can fail to produce a verdict the
+ * (GW_0144-GW_0147). Every branch by which a network dependency can fail to produce a verdict the
  * gateway can stand behind is driven against a real in-process HTTP endpoint and asserted to yield
  * an {@link VerdictState#ERROR} verdict, which the chain treats as blocking. No Spring context, no
  * database, no dev-service container — so this is the layer that runs anywhere and pins the trust
@@ -46,7 +46,7 @@ class ExternalVettingConnectorUnitTests {
     // --- Happy paths and the normalization rules -------------------------------------------------
 
     @Test
-    @SVCs({"SVC_GW_0142"})
+    @SVCs({"SVC_GW_0144"})
     void aPassIsMappedToAPassVerdict() {
         stub.respond(200, "{\"state\":\"pass\"}");
         Verdict verdict = connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "clean content")));
@@ -56,7 +56,7 @@ class ExternalVettingConnectorUnitTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0144"})
+    @SVCs({"SVC_GW_0146"})
     void aFailWithFindingsCarriesFindingsAndReportUrl() {
         stub.respond(200, """
                 {"state":"fail","reportUrl":"https://r.example/1","findings":[
@@ -69,7 +69,7 @@ class ExternalVettingConnectorUnitTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0144"})
+    @SVCs({"SVC_GW_0146"})
     void aPassAlongsideACriticalFindingIsRecordedAsFailByWorstOf() {
         stub.respond(
                 200,
@@ -79,7 +79,7 @@ class ExternalVettingConnectorUnitTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0144"})
+    @SVCs({"SVC_GW_0146"})
     void informationalFindingsAloneStillPass() {
         stub.respond(
                 200, "{\"state\":\"pass\",\"findings\":[{\"id\":\"note\",\"severity\":\"info\",\"message\":\"m\"}]}");
@@ -88,7 +88,7 @@ class ExternalVettingConnectorUnitTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0145"})
+    @SVCs({"SVC_GW_0147"})
     void aPendingAnswerIsRecordedAsPendingWhichBlocks() {
         stub.respond(200, "{\"state\":\"pending\"}");
         Verdict verdict = connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x")));
@@ -97,7 +97,7 @@ class ExternalVettingConnectorUnitTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0142"})
+    @SVCs({"SVC_GW_0144"})
     void theConfiguredCredentialIsSentToTheEndpoint() {
         stub.respond(200, "{\"state\":\"pass\"}");
         ExternalVettingConnector connector = new ExternalVettingConnector(new ExternalConnectorProperties(
@@ -106,23 +106,23 @@ class ExternalVettingConnectorUnitTests {
         assertThat(stub.lastHeader("Authorization")).isEqualTo("Bearer sekret");
     }
 
-    // --- Fail-closed: every inconclusive answer blocks (GW_0143) ---------------------------------
+    // --- Fail-closed: every inconclusive answer blocks (GW_0145) ---------------------------------
 
     @Test
-    @SVCs({"SVC_GW_0143"})
+    @SVCs({"SVC_GW_0145"})
     void aNon2xxStatusIsAnErrorVerdict() {
         stub.respond(503, "unavailable");
         assertError(connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
     @Test
-    @SVCs({"SVC_GW_0143"})
+    @SVCs({"SVC_GW_0145"})
     void anUnreachableEndpointIsAnErrorVerdict() throws IOException {
         assertError(connector(deadUrl()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
     @Test
-    @SVCs({"SVC_GW_0143"})
+    @SVCs({"SVC_GW_0145"})
     void aReadTimeoutIsAnErrorVerdict() {
         stub.hang(Duration.ofSeconds(3));
         ExternalVettingConnector connector = new ExternalVettingConnector(new ExternalConnectorProperties(
@@ -143,42 +143,42 @@ class ExternalVettingConnectorUnitTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0143"})
+    @SVCs({"SVC_GW_0145"})
     void anUnparseableBodyIsAnErrorVerdict() {
         stub.respond(200, "definitely not json");
         assertError(connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
     @Test
-    @SVCs({"SVC_GW_0143"})
+    @SVCs({"SVC_GW_0145"})
     void anEmptyBodyIsAnErrorVerdict() {
         stub.respond(200, "");
         assertError(connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
     @Test
-    @SVCs({"SVC_GW_0143"})
+    @SVCs({"SVC_GW_0145"})
     void aJsonNullBodyIsAnErrorVerdict() {
         stub.respond(200, "null");
         assertError(connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
     @Test
-    @SVCs({"SVC_GW_0143"})
+    @SVCs({"SVC_GW_0145"})
     void anUnrecognizedStateIsAnErrorVerdict() {
         stub.respond(200, "{\"state\":\"approved\"}");
         assertError(connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
     @Test
-    @SVCs({"SVC_GW_0143"})
+    @SVCs({"SVC_GW_0145"})
     void aMissingStateIsAnErrorVerdict() {
         stub.respond(200, "{\"reportUrl\":\"https://r.example/1\"}");
         assertError(connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
     @Test
-    @SVCs({"SVC_GW_0143"})
+    @SVCs({"SVC_GW_0145"})
     void anEndpointDeclaringErrorIsAnErrorVerdict() {
         // 'error' is a gateway-internal state; an endpoint may not declare it as a verdict.
         stub.respond(200, "{\"state\":\"error\"}");
@@ -186,7 +186,7 @@ class ExternalVettingConnectorUnitTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0143"})
+    @SVCs({"SVC_GW_0145"})
     void aMalformedFindingSeverityIsAnErrorVerdict() {
         stub.respond(
                 200, "{\"state\":\"warn\",\"findings\":[{\"id\":\"x\",\"severity\":\"spicy\",\"message\":\"m\"}]}");
@@ -194,14 +194,14 @@ class ExternalVettingConnectorUnitTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0143"})
+    @SVCs({"SVC_GW_0145"})
     void aFindingMissingItsIdIsAnErrorVerdict() {
         stub.respond(200, "{\"state\":\"warn\",\"findings\":[{\"severity\":\"low\",\"message\":\"m\"}]}");
         assertError(connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
     @Test
-    @SVCs({"SVC_GW_0143"})
+    @SVCs({"SVC_GW_0145"})
     void anOversizedResponseIsAnErrorVerdict() {
         stub.respond(200, "{\"state\":\"pass\",\"reportUrl\":\"" + "x".repeat(4096) + "\"}");
         ExternalVettingConnector connector = new ExternalVettingConnector(new ExternalConnectorProperties(
@@ -210,7 +210,7 @@ class ExternalVettingConnectorUnitTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0143"})
+    @SVCs({"SVC_GW_0145"})
     void aSnapshotBundleOverTheRequestCapIsAnErrorVerdict() {
         stub.respond(200, "{\"state\":\"pass\"}");
         ExternalVettingConnector connector = new ExternalVettingConnector(new ExternalConnectorProperties(
@@ -220,7 +220,7 @@ class ExternalVettingConnectorUnitTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0142"})
+    @SVCs({"SVC_GW_0144"})
     void aBinaryFileIsShippedUnscannedNotDropped() {
         stub.respond(200, "{\"state\":\"pass\"}");
         // Invalid UTF-8 makes ContentRules.text return null: present, marked not scanned, not dropped.

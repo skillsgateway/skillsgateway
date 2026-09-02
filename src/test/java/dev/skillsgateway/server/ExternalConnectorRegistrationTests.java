@@ -11,7 +11,7 @@ import org.springframework.test.context.TestPropertySource;
 
 /**
  * Verification that an operator-configured external connector is bound from configuration and joins
- * the ordered chain (GW_0142). Its own Spring context via {@link TestPropertySource}: the external
+ * the ordered chain (GW_0144). Its own Spring context via {@link TestPropertySource}: the external
  * chain is a deployment decision resolved at startup, so it cannot be varied within the shared
  * context. The credential uses a {@code ${...}} placeholder to prove placeholder resolution — a
  * literal in a manifest is exactly what the write-only contract exists to avoid.
@@ -31,7 +31,7 @@ class ExternalConnectorRegistrationTests extends AbstractGatewayTest {
     private VettingService vettingService;
 
     @Test
-    @SVCs({"SVC_GW_0142"})
+    @SVCs({"SVC_GW_0144"})
     void aConfiguredExternalConnectorJoinsTheChainInItsConfiguredPosition() {
         // order=1 sits ahead of every built-in (whose orders start at 100), so it is first.
         VettingConnector first = vettingService.connectors().getFirst();

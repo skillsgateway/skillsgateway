@@ -6,7 +6,7 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * One operator-configured external vetting connector (GW_0142), bound from
+ * One operator-configured external vetting connector (GW_0144), bound from
  * {@code skills-gateway.vetting.external[*]}.
  *
  * <p>External connectors are deliberately <b>configuration</b>, not API-managed runtime state, for

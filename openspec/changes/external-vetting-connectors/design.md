@@ -77,7 +77,7 @@ bundle; both fail closed when exceeded. The endpoint URL is operator-configured
 The specific ways this change can hurt, each with a covering test layer:
 
 - **Silent pass on a broken dependency** → the adversarial matrix
-  (`ExternalVettingConnectorUnitTests`, GW_0143): unreachable, refused, timeout,
+  (`ExternalVettingConnectorUnitTests`, GW_0145): unreachable, refused, timeout,
   non-2xx, empty, oversized, unparseable, unknown state, malformed finding, over-cap
   bundle — each asserted `ERROR`/blocked.
 - **Memory exhaustion from a hostile response** → oversized-response and

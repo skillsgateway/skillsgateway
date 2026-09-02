@@ -15,7 +15,7 @@ the container-backed gates are deferred to a serial pre-merge run (see
 
 ## Behaviours (each maps to a test)
 
-### GW_0142 — a configured external connector joins the ordered chain
+### GW_0144 — a configured external connector joins the ordered chain
 
 - `external[0]` with name/url/order/version/description binds to a connector that
   appears in `VettingService.connectors()` at its `order`, alongside the
@@ -27,7 +27,7 @@ the container-backed gates are deferred to a serial pre-merge run (see
   unit `aPassIsMappedToAPassVerdict`, `theConfiguredCredentialIsSentToTheEndpoint`,
   `aBinaryFileIsShippedUnscannedNotDropped`.
 
-### GW_0143 — fail closed on any inconclusive answer
+### GW_0145 — fail closed on any inconclusive answer
 
 Each of these records `ERROR` and a blocked outcome, and never clears:
 
@@ -43,7 +43,7 @@ Each of these records `ERROR` and a blocked outcome, and never clears:
 And a snapshot so blocked stays `HELD` and `approve` throws `VettingBlockedException`.
 → unit tests (each branch) + `ExternalVettingConnectorTests.everyInconclusiveAnswerFromTheEndpointBlocks`.
 
-### GW_0144 — worst-of, and the report link and findings are recorded
+### GW_0146 — worst-of, and the report link and findings are recorded
 
 - `fail` + findings + `reportUrl` → `FAIL`, findings and report link persisted
   through the verdict model.
@@ -54,7 +54,7 @@ And a snapshot so blocked stays `HELD` and `approve` throws `VettingBlockedExcep
   `aFailWithFindingsCarriesFindingsAndReportUrl`, `aPassAlongsideACriticalFindingIsRecordedAsFailByWorstOf`,
   `informationalFindingsAloneStillPass`.
 
-### GW_0145 — a `pending` answer blocks as the async seam
+### GW_0147 — a `pending` answer blocks as the async seam
 
 - `pending` → `PENDING` verdict, blocked outcome, does not clear, snapshot stays
   held and cannot be approved.

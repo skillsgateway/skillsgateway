@@ -3,7 +3,7 @@ package dev.skillsgateway.server.vetting;
 import java.util.List;
 
 /**
- * The request body the gateway POSTs to an external vetting connector (GW_0142): the snapshot's
+ * The request body the gateway POSTs to an external vetting connector (GW_0144): the snapshot's
  * identity and a bundle of its scannable file content, the same view of the snapshot a built-in
  * connector walks. Quarantined content is never served through the facade, so the external service
  * cannot fetch it itself — the gateway ships it.

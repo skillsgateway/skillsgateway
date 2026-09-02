@@ -41,10 +41,10 @@ answer or truncated request must never be indistinguishable from a clean pass
   blocks until resolved. The inbound resolution callback is deliberately a
   separate, later capability; an unresolved `pending` simply keeps the snapshot
   held, which is the correct default.
-- **ADR 0009** records the contract; new requirements **GW_0142**–**GW_0145**
+- **ADR 0009** records the contract; new requirements **GW_0144**–**GW_0147**
   with SVCs cover it.
 
-Requirement ids start at GW_0142 because GW_0132–GW_0141 are claimed by in-flight
+Requirement ids start at GW_0144 because GW_0132–GW_0141 are claimed by in-flight
 changes on other branches (`fix-discarded-ref-update-results`,
 `remove-roles-enabled-toggle`).
 
@@ -56,10 +56,10 @@ _None._ The behaviour extends `snapshot-vetting`.
 
 ### Modified Capabilities
 
-- `snapshot-vetting`: gains GW_0142 (operator-configured external connectors join
-  the ordered chain), GW_0143 (an external connector fails closed on any
-  inconclusive answer), GW_0144 (worst-of, and the report link and findings are
-  recorded through the existing verdict model), GW_0145 (a `pending` answer is
+- `snapshot-vetting`: gains GW_0144 (operator-configured external connectors join
+  the ordered chain), GW_0145 (an external connector fails closed on any
+  inconclusive answer), GW_0146 (worst-of, and the report link and findings are
+  recorded through the existing verdict model), GW_0147 (a `pending` answer is
   the asynchronous seam and blocks until resolved).
 
 ## Impact
@@ -82,7 +82,7 @@ _None._ The behaviour extends `snapshot-vetting`.
   `concepts/vetting.md` (external connectors; the LLM-review note), ADR 0009 and
   `reference/decisions.md`.
 - **Requirements**: `docs/reqstool/requirements.yml` and
-  `software_verification_cases.yml` — GW_0142–GW_0145 and their SVCs.
+  `software_verification_cases.yml` — GW_0144–GW_0147 and their SVCs.
 - **Trust boundary**: this is vetting-chain evidence, so the
   `.claude/skills/old-coder` discipline applies — adversarial/negative tests
   proving a hostile or unreachable endpoint fails closed, manual mutation, and an

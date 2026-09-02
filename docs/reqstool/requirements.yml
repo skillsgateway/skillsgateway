@@ -1095,6 +1095,22 @@ requirements:
     revision: 0.1.0
 
   - id: GW_0142
+    title: A vetting ledger entry is self-describing and correctly attributed
+    significance: shall
+    description: The system shall append every connector verdict to the audit ledger carrying the connector name, its conclusion, the number of findings and the worst finding severity present, and a reference to the chain run the verdict belongs to; shall append the run-completed entry carrying that same run reference; and shall attribute every entry produced by the automated vetting chain to the gateway acting on its own rather than to a person.
+    rationale: An auditor asking what a snapshot's vetting did must be able to answer it from the ledger alone; an entry that records only that a connector passed forces the reader back into the vetting tables to learn how much was examined and how it relates to the rest of the run, which is exactly the derivation the ledger exists to remove. Carrying the run reference on both the verdict and the completion entry is what lets the scattered per-connector rows be reassembled into the one run they came from. Typing the chain as the automated subsystem it is stops the ledger from asserting that a machine verdict was a human act, which is itself a transparency defect on the surface whose whole purpose is transparency.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0143
+    title: A clean vetting pass records what it examined
+    significance: shall
+    description: The system shall record on every connector verdict, including a pass that produced no findings, a non-empty statement of what the connector examined — the files it scanned and the rules it applied — so that a pass is distinguishable in the ledger and in the vetting report from a connector that did not run.
+    rationale: A pass with a null detail and no findings is indistinguishable from a connector that was never invoked, and on a fail-closed surface that ambiguity is dangerous — a reviewer reading "nothing found" cannot tell coverage from absence. Stating the coverage on the verdict itself makes a clean pass carry positive evidence of what was checked, the same way a finding carries positive evidence of what was wrong.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0144
     title: Operator-configured external vetting connectors join the ordered chain
     significance: shall
     description: The system shall allow an operator to configure external vetting connectors that each take a position in the ordered connector chain, run against the quarantined SHA-pinned snapshot alongside the built-in connectors, and have their verdicts recorded and aggregated by the same fail-closed rules; and shall stamp each configured external connector's identity and rule-set version into the chain identity recorded on every run.
@@ -1102,7 +1118,7 @@ requirements:
     categories: ["functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0143
+  - id: GW_0145
     title: An external vetting connector fails closed on any inconclusive answer
     significance: shall
     description: The system shall record an external vetting connector's verdict as an error — which blocks — whenever the connector's endpoint is unreachable, refuses the connection, or does not answer within the configured connect or read timeout; whenever it returns a non-success HTTP status, an empty body, a body larger than the configured response cap, or a body that cannot be parsed; whenever it declares a verdict state the system does not recognise or a finding the system cannot validate; and whenever the snapshot's scannable content exceeds the configured request cap so that no complete evidence bundle can be sent. In none of these cases shall the system record a passing or clearing verdict.
@@ -1110,7 +1126,7 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0144
+  - id: GW_0146
     title: An external verdict is never weaker than its own findings, and its report link is recorded
     significance: shall
     description: The system shall record an external vetting connector's verdict state as the more severe of the state the connector declared and the state its own returned findings imply; and shall persist the connector's findings and its external report link through the same verdict model the built-in connectors use, so that both are surfaced wherever a snapshot's vetting evidence is shown.
@@ -1118,7 +1134,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0145
+  - id: GW_0147
     title: An external vetting connector may answer asynchronously, which blocks until resolved
     significance: shall
     description: The system shall accept a pending answer from an external vetting connector, record it as a pending verdict that blocks the snapshot exactly as every other non-verdict does, and shall never treat a pending answer as a passing or clearing verdict.
