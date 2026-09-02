@@ -34,6 +34,17 @@ function changedPlugins(plugins: SnapshotPluginDiff[]) {
     .filter(({ plugin, skills }) => plugin.status !== "unchanged" || skills.length > 0);
 }
 
+/**
+ * What to say about a plugin that is listed but has no changed skill under it. A removed plugin
+ * whose skills all moved elsewhere reaches this too, and telling that reader "the manifest entry
+ * changed" would be a plain lie.
+ */
+function emptyNote(status?: string) {
+  if (status === "removed") return "The snapshot no longer declares this plugin.";
+  if (status === "added") return "New plugin; it declares no skills yet.";
+  return "The manifest entry changed; its skills did not.";
+}
+
 /** The counts worth stating; a zero is left out rather than shown as a zero. */
 function summaryChips(summary: ContentDiff["summary"]) {
   return [
@@ -114,21 +125,21 @@ function Body({ diff }: { diff: ContentDiff }) {
       ) : (
         <ul className="space-y-2">
           {plugins.map(({ plugin, skills }) => (
-            <li key={plugin.name} className="rounded-md border p-3">
+            <li key={`${plugin.name}-${plugin.source}`} className="rounded-md border p-3">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-medium">{plugin.name}</span>
+                <span className="break-all font-medium">{plugin.name}</span>
                 <StatusBadge status={plugin.status} />
-                <span className="font-mono text-xs text-muted-foreground">{plugin.source}</span>
+                <span className="break-all font-mono text-xs text-muted-foreground">
+                  {plugin.source}
+                </span>
               </div>
               {skills.length === 0 ? (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  The manifest entry changed; its skills did not.
-                </p>
+                <p className="mt-1 text-xs text-muted-foreground">{emptyNote(plugin.status)}</p>
               ) : (
                 <ul aria-label={`Changed skills in ${plugin.name}`} className="mt-2 space-y-1">
                   {skills.map((skill) => (
                     <li key={skill.path} className="flex flex-wrap items-center gap-2 text-sm">
-                      <span>{skill.name}</span>
+                      <span className="break-all">{skill.name}</span>
                       <StatusBadge status={skill.status} />
                       {skill.movedFromPlugin ? (
                         <span className="text-xs text-muted-foreground">
