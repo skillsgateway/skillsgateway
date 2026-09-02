@@ -2392,6 +2392,11 @@ enforces it, against the unversioned paths.</p>
 </tr>
 </tbody>
 </table>
+<p>Two of oasdiff's default severities are raised to errors in <code>.oasdiff.yaml</code>:
+removing a response field, and removing an optional response header. Both are
+warnings by default unless the schema marks them required, and no response
+schema here does — so the most ordinary breaking change there is used to pass a
+gate that fails on errors only.</p>
 <p>Deliberately breaking the contract takes two visible acts: the
 <code>⚠️ BREAKING CONTRACT</code> label on the pull request, and the break declared in its
 title. Both stay in the record. Keeping the old surface alongside the new one
