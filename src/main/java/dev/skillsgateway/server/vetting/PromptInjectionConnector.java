@@ -107,15 +107,17 @@ public class PromptInjectionConnector implements VettingConnector {
     }
 
     @Override
-    @Requirements({"GW_0040"})
+    @Requirements({"GW_0040", "GW_0143"})
     public Verdict vet(SnapshotUnderVetting snapshot) {
         List<Finding> findings = new ArrayList<>();
+        int[] counts = new int[2]; // {scanned, skipped}
         try {
             snapshot.walk((path, content) -> {
                 if (!instructionContent(path)) {
                     return;
                 }
                 if (content == null) {
+                    counts[1]++;
                     findings.add(new Finding(
                             "file-not-scanned",
                             Severity.INFO,
@@ -125,6 +127,7 @@ public class PromptInjectionConnector implements VettingConnector {
                 }
                 String text = ContentRules.text(content);
                 if (text == null) {
+                    counts[1]++;
                     findings.add(new Finding(
                             "file-not-scanned",
                             Severity.INFO,
@@ -132,13 +135,25 @@ public class PromptInjectionConnector implements VettingConnector {
                             "instruction file is not valid UTF-8 and was not scanned"));
                     return;
                 }
+                counts[0]++;
                 findings.addAll(ContentRules.apply(RULES, path, text));
                 findings.addAll(invisibleCharacters(path, text));
             });
         } catch (java.io.IOException e) {
             throw new IllegalStateException("cannot read snapshot content", e);
         }
-        return Verdict.of(findings);
+        return Verdict.of(findings, summary(counts[0], counts[1]));
+    }
+
+    /** What the scan examined (GW_0143): a clean pass records this so it is not read as "did not run". */
+    private static String summary(int scanned, int skipped) {
+        return "scanned %d instruction file(s) (%s)%s; applied %d injection-marker rules plus"
+                        .formatted(
+                                scanned,
+                                String.join(", ", INSTRUCTION_SUFFIXES),
+                                skipped == 0 ? "" : " (%d skipped as oversize or non-UTF-8)".formatted(skipped),
+                                RULES.size())
+                + " invisible-character analysis";
     }
 
     private static boolean instructionContent(String path) {

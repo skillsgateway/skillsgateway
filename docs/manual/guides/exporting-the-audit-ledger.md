@@ -17,6 +17,29 @@ Two shapes of the same feed:
     Compliance evidence may not be. The ledger export is a separate, lossless
     path by design.
 
+## What a vetting entry carries
+
+Every chain run lands two kinds of entry, both attributed to the **`system`**
+actor kind — the vetting chain is the gateway's own automated subsystem, not a
+person, so the portal audit table and the ledger show it as `system`, never as a
+human actor.
+
+- A **`vetting-verdict`** entry per connector. Its detail leads with
+  `connector=state` and then carries the finding count, the worst severity
+  present (`none` when there are none), and the id of the chain run — so the
+  entry is auditable on its own rather than a pointer back into the vetting
+  tables. A clean pass additionally states what the connector examined (the files
+  it scanned and the rules it applied), so a pass reads as positive coverage
+  rather than as silence:
+
+  ```text
+  secret-scan=fail; findings=2; worst=critical; run=1841
+  prompt-injection=pass; findings=0; worst=none; run=1841; scanned 12 instruction file(s) (.md, .mdc, .markdown, .txt); applied 7 injection-marker rules plus invisible-character analysis
+  ```
+
+- A **`vetting-completed`** entry per run, carrying the trigger, the fail-closed
+  outcome, the connector count, the same `run=` id, and the chain identity.
+
 ## The cursor
 
 Both paths are a **cursor over the ledger**, not a copy of it. The cursor is the

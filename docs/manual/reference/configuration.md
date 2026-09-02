@@ -423,6 +423,80 @@ The chain, the verdict states, the aggregation rule, waivers, and the honest
 limits of the built-in scanners are described in
 [Vetting — the connector chain](../concepts/vetting.md).
 
+### External connectors
+
+An operator can extend the chain with their own connectors — an LLM reviewer, a
+sandbox, a corporate scanner — under `skills-gateway.vetting.external`. Each
+entry becomes a connector at its configured `order`, running against the
+quarantined snapshot alongside the built-ins and recorded by the same
+fail-closed rules. An empty or absent list changes nothing.
+
+```yaml
+skills-gateway:
+  vetting:
+    external:
+      - name: llm-review              # stable identity, recorded on every verdict;
+                                      # must be unique and not a built-in name
+        url: https://vet.internal/api/vet   # http/https endpoint the gateway POSTs to
+        order: 150                    # chain position; the built-ins are at 100+
+        version: "2024-06"            # rule-set identity, stamped into the chain identity
+        description: IT Security LLM review of skill instructions
+        # Credential sent to the endpoint. Reference an environment variable —
+        # never inline a literal. Write-only: never logged, audited or echoed.
+        token: ${VETTING_LLM_TOKEN}
+        token-header: Authorization   # default; any header name is accepted
+        token-scheme: Bearer          # applied only for the Authorization header
+        connect-timeout: 5s
+        read-timeout: 30s
+        # Caps that keep a hostile or broken endpoint from exhausting memory, and
+        # a too-large snapshot from earning a verdict about partial content.
+        max-request-bytes: 5242880
+        max-response-bytes: 1048576
+        max-file-bytes: 1048576
+```
+
+The gateway POSTs `{snapshotId, marketplace, sha, files[]}` — the snapshot's
+scannable file content, since quarantined content is never served — and expects
+back a normalized `{state, reportUrl, findings[]}` where `state` is one of
+`pass`, `warn`, `fail` or `pending`, and each finding carries `id`, `severity`
+(`info`|`low`|`medium`|`high`|`critical`), optional `location` and a `message`.
+
+| Property | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `…external[n].name` | string | — | Required, unique; must not be a built-in (`secret-scan`, `prompt-injection`, `license-scan`). |
+| `…external[n].url` | url | — | Required; `http` or `https` only. |
+| `…external[n].order` | integer | `1000` | Chain position; ties broken by name. Built-ins start at `100`. |
+| `…external[n].version` | string | `1` | Stamped into the chain identity (GW_0049). Bump when the external rules change. |
+| `…external[n].description` | string | derived | Reviewer-facing one-liner. |
+| `…external[n].token` | string | none | Credential; use `${ENV}`. Write-only. Null sends no credential. |
+| `…external[n].token-header` | string | `Authorization` | Header the credential is sent in. |
+| `…external[n].token-scheme` | string | `Bearer` | Prefix, applied only for `Authorization`. Blank sends the raw value. |
+| `…external[n].connect-timeout` | duration | `5s` | Exceeding it is an `ERROR` verdict, which blocks. |
+| `…external[n].read-timeout` | duration | `30s` | Exceeding it is an `ERROR` verdict, which blocks. |
+| `…external[n].max-request-bytes` | integer | `5242880` | A snapshot whose scannable content exceeds this fails closed rather than shipping partial evidence. |
+| `…external[n].max-response-bytes` | integer | `1048576` | A larger response fails closed. |
+| `…external[n].max-file-bytes` | integer | `1048576` | Per-file cap on content in the bundle; a larger file is sent unscanned, not dropped. |
+
+!!! warning "An external connector fails closed, hard"
+
+    Every way the endpoint can fail to return a verdict the gateway can stand
+    behind — unreachable, connection refused, timeout, non-2xx, empty, oversized,
+    unparseable, an unrecognised state, or a malformed finding — is recorded as
+    an `ERROR` verdict, which **blocks** the snapshot. A flaky external endpoint
+    blocks approvals; it never lets content through. The recorded state is also
+    the **worse** of the state the endpoint declared and the state its own
+    findings imply, so an endpoint cannot return `pass` alongside a `critical`
+    finding and have it pass.
+
+!!! note "External connectors are configuration for the same reason the license policy is"
+
+    Their identity and `version` are stamped into every run's chain identity
+    (GW_0049), so a changed answer about unchanged content is attributable. That
+    is why they are declared by deploy, not managed through the API. A `pending`
+    answer is the asynchronous seam: it is recorded as `PENDING` and **blocks**
+    until resolved — the inbound resolution callback is a separate, later
+    capability.
+
 ---
 
 ## Continuous re-vetting
