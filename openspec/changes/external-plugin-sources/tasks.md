@@ -103,7 +103,7 @@
 
 - [x] 6.1 `openspec validate --all --strict`
 - [~] 6.2 `mkdocs build --strict` passes; `./mvnw -o clean verify` did not
-      finish locally (64 classes / 335 tests green bar an offline-only SBOM
+      finish locally (77 classes / 388 tests green bar an offline-only SBOM
       failure) and `reqstool status` needs a completed run — see `evidence.md`
 - [x] 6.3 `evidence.md`: spec ↔ test mapping, the negative cases, and an honest
       record of what ran locally versus what is deferred to CI

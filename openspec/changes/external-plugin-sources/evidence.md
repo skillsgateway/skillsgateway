@@ -70,10 +70,11 @@ Run against the tree at the implementation commit.
 
 ## What did not complete locally, and why
 
-`./mvnw -o clean verify` was started and did **not finish** on this machine: it
-was still running the Spring integration suites after ~90 minutes against a load
-average above 10 from unrelated concurrent work. At the point this report was
-written it had completed **64 test classes, 335 tests, with one failure**:
+`./mvnw -o clean verify` was started and did **not finish** within the session
+that wrote this report — it was still working through the Spring integration
+suites, against a load average around 10 from unrelated concurrent work on the
+same machine. At the point this report was written it had completed **77 test
+classes, 388 tests, with one failure**:
 
 - **`SbomTests.sbomEndpointServesCycloneDxBom`** — `/actuator/sbom` lists no
   `application` id because `target/classes/META-INF/sbom/` was never written.
@@ -84,9 +85,12 @@ written it had completed **64 test classes, 335 tests, with one failure**:
   confirming with an online `./mvnw clean verify` before the PR leaves draft.
 
 Everything else was green, including every suite that could plausibly be
-affected: `IngestionTests` (5), `HostedLifecycleTests` (3), `VettingTests` (9)
-and the three new suites (19). `ApprovalTests` and `FacadeTests` had not been
-reached.
+affected: `IngestionTests` (5), `HostedLifecycleTests` (3), `VettingTests` (9),
+`FacadeTests`, and the three new suites (19). Eight classes had not been
+reached — `AdminAuditTests`, `AdminTests`, `AdoptionTests`, `ApprovalTests`,
+`AuditExportTests`, `AuthTests`, `CatalogTests`, `ClaimMappedRoleIsEnforcedTests`
+— none of which this change touches, though `ApprovalTests` is the one a reviewer
+should want to see green given the trust boundary.
 
 **`reqstool status local -p docs/reqstool` was not run**, because it consumes the
 surefire results and the merged annotation file that a completed `verify`
