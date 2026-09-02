@@ -7,6 +7,7 @@ Every setting the gateway reads, with its default and what consumes it.
 | Block | Purpose | Required in production |
 | --- | --- | --- |
 | [`skills-gateway.*`](#skills-gateway) | Storage location, the URL-scheme allowlist, and the development auth escape hatch. | No — all defaulted. |
+| [`skills-gateway.ingestion.*`](#ingestion-external-plugin-sources) | Whether a manifest may declare plugin sources outside the marketplace repository, and within what bounds. **Admits nothing by default.** | No — all defaulted. |
 | [`skills-gateway.webhooks.*`](#webhooks) | Outbound lifecycle-webhook dispatch: poll interval, retry budget and backoff. | No — all defaulted. |
 | [`skills-gateway.audit-export.*`](#audit-export) | Ledger export: the commit-settling lag, batch and page sizes. | No — all defaulted. |
 | [`skills-gateway.retention.*`](#retention) | Snapshot retention policies and the schedules that apply them. **Off by default.** | No — all defaulted. |
@@ -61,7 +62,7 @@ skills-gateway:
 | Property | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `skills-gateway.data-dir` | path | `data` | Relative to the working directory. `/data` in the container image. |
-| `skills-gateway.allowed-url-schemes` | list of string | `[http, https]` | See [Compatibility and allowlists](compatibility.md). |
+| `skills-gateway.allowed-url-schemes` | list of string | `[http, https]` | Governs registration **and** an admitted external plugin source's clone URL. See [Compatibility and allowlists](compatibility.md). |
 | `skills-gateway.dev-insecure-auth` | boolean | `false` | Must stay `false` outside a development loop. |
 
 !!! danger "`dev-insecure-auth` in a deployed environment"
