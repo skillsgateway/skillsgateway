@@ -1055,6 +1055,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#what-a-vetting-entry-carries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What a vetting entry carries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-cursor" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1978,6 +1989,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#what-a-vetting-entry-carries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What a vetting entry carries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-cursor" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2106,6 +2128,27 @@ without gaps.</p>
 Compliance evidence may not be. The ledger export is a separate, lossless
 path by design.</p>
 </div>
+<h2 id="what-a-vetting-entry-carries">What a vetting entry carries<a class="headerlink" href="#what-a-vetting-entry-carries" title="Permanent link">&para;</a></h2>
+<p>Every chain run lands two kinds of entry, both attributed to the <strong><code>system</code></strong>
+actor kind — the vetting chain is the gateway's own automated subsystem, not a
+person, so the portal audit table and the ledger show it as <code>system</code>, never as a
+human actor.</p>
+<ul>
+<li>A <strong><code>vetting-verdict</code></strong> entry per connector. Its detail leads with
+  <code>connector=state</code> and then carries the finding count, the worst severity
+  present (<code>none</code> when there are none), and the id of the chain run — so the
+  entry is auditable on its own rather than a pointer back into the vetting
+  tables. A clean pass additionally states what the connector examined (the files
+  it scanned and the rules it applied), so a pass reads as positive coverage
+  rather than as silence:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>secret-scan=fail; findings=2; worst=critical; run=1841
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>prompt-injection=pass; findings=0; worst=none; run=1841; scanned 12 instruction file(s) (.md, .mdc, .markdown, .txt); applied 7 injection-marker rules plus invisible-character analysis
+</code></pre></div>
+<ul>
+<li>A <strong><code>vetting-completed</code></strong> entry per run, carrying the trigger, the fail-closed
+  outcome, the connector count, the same <code>run=</code> id, and the chain identity.</li>
+</ul>
 <h2 id="the-cursor">The cursor<a class="headerlink" href="#the-cursor" title="Permanent link">&para;</a></h2>
 <p>Both paths are a <strong>cursor over the ledger</strong>, not a copy of it. The cursor is the
 <code>id</code> of the last ledger entry a consumer has been handed, and the ledger itself
@@ -2114,11 +2157,11 @@ makes replay a single write rather than a re-materialisation of history.</p>
 <p>Every exported entry carries its ledger <code>id</code>, so it doubles as the receiver's
 de-duplication key.</p>
 <h2 id="pull-ndjson">Pull: NDJSON<a class="headerlink" href="#pull-ndjson" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-D-<span class="w"> </span><span class="s1">'localhost:8080/api/audit/export?after=0&amp;limit=1000'</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="go">X-Skills-Gateway-Audit-Cursor: 842</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">{"id":1,"ts":"2026-08-15T09:04:11Z","source":"10.0.0.4","principal":"alice@example.com","marketplace":"acme","event":"info-refs","ref":"refs/heads/main","sha":"3f9c2ab..."}</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="go">{"id":2,"ts":"2026-08-15T09:04:11Z","source":"10.0.0.4","principal":"alice@example.com","marketplace":"acme","event":"upload-pack","ref":null,"sha":"3f9c2ab..."}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-D-<span class="w"> </span><span class="s1">'localhost:8080/api/audit/export?after=0&amp;limit=1000'</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="go">X-Skills-Gateway-Audit-Cursor: 842</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="go">{"id":1,"ts":"2026-08-15T09:04:11Z","source":"10.0.0.4","principal":"alice@example.com","marketplace":"acme","event":"info-refs","ref":"refs/heads/main","sha":"3f9c2ab..."}</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="go">{"id":2,"ts":"2026-08-15T09:04:11Z","source":"10.0.0.4","principal":"alice@example.com","marketplace":"acme","event":"upload-pack","ref":null,"sha":"3f9c2ab..."}</span>
 </code></pre></div>
 <p>One compact JSON object per line, in ascending ledger sequence — the format
 Splunk, Elastic and Sentinel ingest natively. A JSON array would force the
@@ -2149,10 +2192,10 @@ fixed-size chunks, so gateway memory is bounded by the chunk rather than by
 <p><strong>The whole poller is a loop over one header.</strong> Send <code>after</code>, read
 <code>X-Skills-Gateway-Audit-Cursor</code> from the response, and use it as the next
 <code>after</code>. When a response comes back empty the consumer is caught up.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span><span class="nv">cursor</span><span class="o">=</span><span class="k">$(</span>cat<span class="w"> </span>cursor.txt<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="m">0</span><span class="k">)</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="gp">$ </span><span class="nv">next</span><span class="o">=</span><span class="k">$(</span>curl<span class="w"> </span>-s<span class="w"> </span>-D<span class="w"> </span>headers.txt<span class="w"> </span><span class="s2">"localhost:8080/api/audit/export?after=</span><span class="si">${</span><span class="nv">cursor</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span>-o<span class="w"> </span>batch.ndjson<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sed<span class="w"> </span>-n<span class="w"> </span><span class="s1">'s/^X-Skills-Gateway-Audit-Cursor: //Ip'</span><span class="w"> </span>headers.txt<span class="w"> </span><span class="p">|</span><span class="w"> </span>tr<span class="w"> </span>-d<span class="w"> </span><span class="s1">'\r'</span><span class="k">)</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="gp">$ </span><span class="o">[</span><span class="w"> </span>-s<span class="w"> </span>batch.ndjson<span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>ingest<span class="w"> </span>batch.ndjson<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">next</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span>&gt;<span class="w"> </span>cursor.txt
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span><span class="nv">cursor</span><span class="o">=</span><span class="k">$(</span>cat<span class="w"> </span>cursor.txt<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="m">0</span><span class="k">)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="gp">$ </span><span class="nv">next</span><span class="o">=</span><span class="k">$(</span>curl<span class="w"> </span>-s<span class="w"> </span>-D<span class="w"> </span>headers.txt<span class="w"> </span><span class="s2">"localhost:8080/api/audit/export?after=</span><span class="si">${</span><span class="nv">cursor</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>-o<span class="w"> </span>batch.ndjson<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sed<span class="w"> </span>-n<span class="w"> </span><span class="s1">'s/^X-Skills-Gateway-Audit-Cursor: //Ip'</span><span class="w"> </span>headers.txt<span class="w"> </span><span class="p">|</span><span class="w"> </span>tr<span class="w"> </span>-d<span class="w"> </span><span class="s1">'\r'</span><span class="k">)</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="gp">$ </span><span class="o">[</span><span class="w"> </span>-s<span class="w"> </span>batch.ndjson<span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>ingest<span class="w"> </span>batch.ndjson<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">next</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span>&gt;<span class="w"> </span>cursor.txt
 </code></pre></div>
 <p>The endpoint sits behind the OIDC session like the rest of <code>/api/**</code>, so a
 collector polls it with a session the same way the portal does; the portal's own
@@ -2170,14 +2213,14 @@ engine.</p>
 <strong>Add sink</strong>. The signing secret appears in a show-once dialog.</p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/audit/sinks<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="err">'</span><span class="o">{</span><span class="s2">"name"</span>:<span class="s2">"siem"</span>,<span class="s2">"url"</span>:<span class="s2">"https://siem.example.com/ingest/skills-gateway"</span>,
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="go">         "after":0,"batchSize":500}'</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/audit/sinks<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="err">'</span><span class="o">{</span><span class="s2">"name"</span>:<span class="s2">"siem"</span>,<span class="s2">"url"</span>:<span class="s2">"https://siem.example.com/ingest/skills-gateway"</span>,
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="go">         "after":0,"batchSize":500}'</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"siem"</span><span class="p">,</span><span class="nt">"kind"</span><span class="p">:</span><span class="s2">"webhook"</span><span class="p">,</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w"> </span><span class="nt">"url"</span><span class="p">:</span><span class="s2">"https://siem.example.com/ingest/skills-gateway"</span><span class="p">,</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w"> </span><span class="nt">"cursorPosition"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="nt">"batchSize"</span><span class="p">:</span><span class="mi">500</span><span class="p">,</span><span class="nt">"secret"</span><span class="p">:</span><span class="s2">"whsec_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"siem"</span><span class="p">,</span><span class="nt">"kind"</span><span class="p">:</span><span class="s2">"webhook"</span><span class="p">,</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w"> </span><span class="nt">"url"</span><span class="p">:</span><span class="s2">"https://siem.example.com/ingest/skills-gateway"</span><span class="p">,</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w"> </span><span class="nt">"cursorPosition"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="nt">"batchSize"</span><span class="p">:</span><span class="mi">500</span><span class="p">,</span><span class="nt">"secret"</span><span class="p">:</span><span class="s2">"whsec_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}</span>
 </code></pre></div>
 </div>
 </div>
@@ -2209,10 +2252,10 @@ engine.</p>
 </tbody>
 </table>
 <p>A batch arrives as one signed POST whose body wraps the entries:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span><span class="nt">"event"</span><span class="p">:</span><span class="s2">"audit.export"</span><span class="p">,</span><span class="nt">"sink"</span><span class="p">:</span><span class="s2">"siem"</span><span class="p">,</span><span class="nt">"exportedAt"</span><span class="p">:</span><span class="s2">"2026-08-15T09:20:00Z"</span><span class="p">,</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w"> </span><span class="nt">"fromCursor"</span><span class="p">:</span><span class="mi">800</span><span class="p">,</span><span class="nt">"toCursor"</span><span class="p">:</span><span class="mi">842</span><span class="p">,</span><span class="nt">"count"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w"> </span><span class="nt">"entries"</span><span class="p">:[{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">801</span><span class="p">,</span><span class="nt">"ts"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"source"</span><span class="p">:</span><span class="s2">"10.0.0.4"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">             </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"event"</span><span class="p">:</span><span class="s2">"info-refs"</span><span class="p">,</span><span class="nt">"ref"</span><span class="p">:</span><span class="s2">"refs/heads/main"</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">}]}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">{</span><span class="nt">"event"</span><span class="p">:</span><span class="s2">"audit.export"</span><span class="p">,</span><span class="nt">"sink"</span><span class="p">:</span><span class="s2">"siem"</span><span class="p">,</span><span class="nt">"exportedAt"</span><span class="p">:</span><span class="s2">"2026-08-15T09:20:00Z"</span><span class="p">,</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w"> </span><span class="nt">"fromCursor"</span><span class="p">:</span><span class="mi">800</span><span class="p">,</span><span class="nt">"toCursor"</span><span class="p">:</span><span class="mi">842</span><span class="p">,</span><span class="nt">"count"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w"> </span><span class="nt">"entries"</span><span class="p">:[{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">801</span><span class="p">,</span><span class="nt">"ts"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"source"</span><span class="p">:</span><span class="s2">"10.0.0.4"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">             </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"event"</span><span class="p">:</span><span class="s2">"info-refs"</span><span class="p">,</span><span class="nt">"ref"</span><span class="p">:</span><span class="s2">"refs/heads/main"</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">}]}</span>
 </code></pre></div>
 <p>Verify <code>X-Skills-Gateway-Signature</code> exactly as for a lifecycle event — HMAC-SHA256
 over the raw body with the sink's <code>whsec_</code> secret. The delivery attempts show up
@@ -2244,8 +2287,8 @@ otherwise loop forever. Fix the receiver, then replay explicitly.</p>
 <em>Sink '{name}' will replay the ledger</em>.</p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>localhost:8080/api/audit/sinks/1/cursor<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"after":800}'</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>localhost:8080/api/audit/sinks/1/cursor<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"after":800}'</span>
 </code></pre></div>
 </div>
 </div>
@@ -2255,11 +2298,11 @@ the updated sink, <strong>404</strong> if the sink is unknown.</p>
 <p>The sink list also reports how far behind the ledger head each sink is, which is
 the signal that a receiver is failing or that a batch size is too small for the
 poll interval:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/audit/sinks
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/audit/sinks
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p">[{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"siem"</span><span class="p">,</span><span class="nt">"kind"</span><span class="p">:</span><span class="s2">"webhook"</span><span class="p">,</span><span class="nt">"url"</span><span class="p">:</span><span class="s2">"https://siem.example.com/..."</span><span class="p">,</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">"cursorPosition"</span><span class="p">:</span><span class="mi">842</span><span class="p">,</span><span class="nt">"ledgerHead"</span><span class="p">:</span><span class="mi">844</span><span class="p">,</span><span class="nt">"behind"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="nt">"batchSize"</span><span class="p">:</span><span class="mi">500</span><span class="p">,</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nt">"enabled"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">[{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"siem"</span><span class="p">,</span><span class="nt">"kind"</span><span class="p">:</span><span class="s2">"webhook"</span><span class="p">,</span><span class="nt">"url"</span><span class="p">:</span><span class="s2">"https://siem.example.com/..."</span><span class="p">,</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">"cursorPosition"</span><span class="p">:</span><span class="mi">842</span><span class="p">,</span><span class="nt">"ledgerHead"</span><span class="p">:</span><span class="mi">844</span><span class="p">,</span><span class="nt">"behind"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="nt">"batchSize"</span><span class="p">:</span><span class="mi">500</span><span class="p">,</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">"enabled"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}]</span>
 </code></pre></div>
 <p><code>DELETE /api/audit/sinks/{id}</code> removes the sink and its delivery channel — <strong>204</strong>,
 or <strong>404</strong> if it never existed.</p>

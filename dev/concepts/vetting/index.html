@@ -2697,8 +2697,15 @@ the verdict, but they are visible, so "the scanner did not look at this" is
 never invisible.</p>
 <h2 id="what-lands-in-the-ledger">What lands in the ledger<a class="headerlink" href="#what-lands-in-the-ledger" title="Permanent link">&para;</a></h2>
 <p>Every chain run writes to the append-only ledger: one entry per connector
-verdict (<code>vetting-verdict</code>, with <code>connector=state</code> in its detail) and one entry
-for the run outcome (<code>vetting-completed</code>).</p>
+verdict (<code>vetting-verdict</code>) and one entry for the run outcome
+(<code>vetting-completed</code>). Both are attributed to the <code>system</code> actor kind — the chain
+is the gateway's own automated subsystem, not a person. A verdict entry leads
+with <code>connector=state</code> and then carries the finding count, the worst severity
+present, and the id of the chain run, so the entry is auditable on its own; a
+clean pass additionally states what the connector examined — the files it scanned
+and the rules it applied — so a pass in the ledger is never indistinguishable
+from a connector that did not run. The completion entry carries the same run id,
+so a run's scattered verdict entries reassemble into the one run they came from.</p>
 <p>The whole waiver lifecycle lands there too:</p>
 <table>
 <thead>
