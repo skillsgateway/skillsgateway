@@ -285,6 +285,23 @@ export function useSnapshotContent(snapshotId: number | null) {
   });
 }
 
+export type SnapshotContentDiff = components["schemas"]["ContentDiff"];
+export type SnapshotPluginDiff = components["schemas"]["PluginDiff"];
+export type SnapshotSkillDiff = components["schemas"]["SkillDiff"];
+
+/**
+ * The same inventory, against the marketplace's last approved snapshot: what approving this
+ * snapshot would add to what the organisation already accepted. Distinct from `useSnapshotDiff`,
+ * which is the file-level delta against what the facade currently serves.
+ */
+export function useSnapshotContentDiff(snapshotId: number | null) {
+  return useQuery({
+    queryKey: ["snapshot-content-diff", snapshotId],
+    queryFn: () => api<SnapshotContentDiff>(`/api/snapshots/${snapshotId}/content-diff`),
+    enabled: snapshotId !== null,
+  });
+}
+
 export type SnapshotFileTree = components["schemas"]["FileTree"];
 export type SnapshotFileContent = components["schemas"]["FileContent"];
 export type SnapshotDiff = components["schemas"]["SnapshotDiff"];

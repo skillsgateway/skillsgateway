@@ -182,6 +182,45 @@
         },
         "type": "object"
       },
+      "ContentDiff": {
+        "description": "A snapshot's content inventory against the marketplace's last approved snapshot",
+        "properties": {
+          "baselineSha": {
+            "description": "Commit SHA compared against, or null when no snapshot is approved",
+            "type": "string"
+          },
+          "baselineSnapshotId": {
+            "description": "Id of the approved snapshot compared against, or null when none is approved",
+            "format": "int64",
+            "type": "integer"
+          },
+          "plugins": {
+            "description": "Every plugin on either side, in manifest order, removed plugins last",
+            "items": {
+              "$ref": "#/components/schemas/PluginDiff"
+            },
+            "type": "array"
+          },
+          "sha": {
+            "description": "Upstream commit SHA",
+            "type": "string"
+          },
+          "snapshotId": {
+            "description": "Snapshot id",
+            "format": "int64",
+            "type": "integer"
+          },
+          "state": {
+            "description": "held, approved, rejected, or revoked",
+            "type": "string"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/DiffSummary",
+            "description": "Skill counts per status"
+          }
+        },
+        "type": "object"
+      },
       "CreateMachineCredentialRequest": {
         "description": "Machine API credential request; every field below is required",
         "properties": {
@@ -438,6 +477,37 @@
               "removed"
             ],
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "DiffSummary": {
+        "description": "How many skills fall into each status",
+        "properties": {
+          "added": {
+            "description": "Skills the baseline does not have",
+            "format": "int32",
+            "type": "integer"
+          },
+          "changed": {
+            "description": "Skills whose content differs",
+            "format": "int32",
+            "type": "integer"
+          },
+          "moved": {
+            "description": "Skills that kept their content and changed plugin",
+            "format": "int32",
+            "type": "integer"
+          },
+          "removed": {
+            "description": "Skills the snapshot no longer has",
+            "format": "int32",
+            "type": "integer"
+          },
+          "unchanged": {
+            "description": "Skills that are identical on both sides",
+            "format": "int32",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -1219,6 +1289,41 @@
         },
         "type": "object"
       },
+      "PluginDiff": {
+        "description": "One plugin of the snapshot or of the baseline, and how it differs",
+        "properties": {
+          "description": {
+            "description": "Plugin description; the baseline's for a removed plugin",
+            "type": "string"
+          },
+          "name": {
+            "description": "Plugin name",
+            "type": "string"
+          },
+          "skills": {
+            "description": "Every skill of this plugin on either side, each with its own status",
+            "items": {
+              "$ref": "#/components/schemas/SkillDiff"
+            },
+            "type": "array"
+          },
+          "source": {
+            "description": "Relative source path; the baseline's for a removed plugin",
+            "type": "string"
+          },
+          "status": {
+            "description": "How the plugin differs from the baseline. A plugin is changed when any skill under it differs or when its manifest entry does",
+            "enum": [
+              "added",
+              "removed",
+              "changed",
+              "unchanged"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "PolicyRule": {
         "description": "A CEL policy deny rule, evaluated fail-closed at approval time",
         "properties": {
@@ -1577,6 +1682,35 @@
           },
           "url": {
             "description": "Target URL",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SkillDiff": {
+        "description": "One skill of the snapshot or of the baseline, and how it differs",
+        "properties": {
+          "movedFromPlugin": {
+            "description": "Plugin the skill was declared under in the baseline, when it moved; else null",
+            "type": "string"
+          },
+          "name": {
+            "description": "Skill directory name",
+            "type": "string"
+          },
+          "path": {
+            "description": "Path of the SKILL.md; the baseline's path for a removed skill",
+            "type": "string"
+          },
+          "status": {
+            "description": "How the skill differs from the baseline",
+            "enum": [
+              "added",
+              "removed",
+              "changed",
+              "moved",
+              "unchanged"
+            ],
             "type": "string"
           }
         },
@@ -3696,6 +3830,49 @@
           }
         },
         "summary": "Snapshot content inventory",
+        "tags": [
+          "Snapshots"
+        ]
+      }
+    },
+    "/api/snapshots/{id}/content-diff": {
+      "get": {
+        "description": "What approving this snapshot would add to what the marketplace already had approved: every plugin and skill on either side, each marked added, removed, changed, moved or unchanged, with a skill counted as changed when anything under its directory differs — not only its SKILL.md. A skill a plugin gave up and another took over is reported once, as moved, naming the plugin it came from. The baseline is the marketplace's newest live approved snapshot other than this one; with nothing approved the baseline is null and everything is added. Complements the file-level preview diff, which is against what the facade currently serves and returns the text of the change.",
+        "operationId": "snapshotContentDiff",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentDiff"
+                }
+              }
+            },
+            "description": "The inventory delta a reviewer decides"
+          },
+          "404": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentDiff"
+                }
+              }
+            },
+            "description": "Snapshot not found"
+          }
+        },
+        "summary": "Snapshot content inventory against the last approved snapshot",
         "tags": [
           "Snapshots"
         ]

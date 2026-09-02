@@ -209,6 +209,27 @@ public class SnapshotRepository {
     }
 
     /**
+     * The newest live approved snapshot of one marketplace other than {@code excludingId}: the
+     * baseline a content diff is taken against (GW_0153).
+     *
+     * <p>"Approved and not deleted" is the same predicate {@link #approvedByMarketplace} uses, so
+     * approved means one thing in this repository. The exclusion is what keeps a snapshot from
+     * being its own baseline — a revoked-then-re-reviewed snapshot is approved history, and
+     * diffing it against itself would report a review with nothing in it.
+     */
+    @Requirements({"GW_0153"})
+    public Optional<Snapshot> latestApprovedByMarketplace(long marketplaceId, long excludingId) {
+        return jdbc.sql("SELECT * FROM snapshots WHERE marketplace_id = :marketplaceId"
+                        + " AND state = :approved::snapshot_state AND deleted_at IS NULL"
+                        + " AND id <> :excludingId ORDER BY id DESC LIMIT 1")
+                .param("marketplaceId", marketplaceId)
+                .param("approved", Snapshot.APPROVED)
+                .param("excludingId", excludingId)
+                .query(SnapshotRepository::map)
+                .optional();
+    }
+
+    /**
      * Snapshots a retention policy would delete for one marketplace, each with the criterion that
      * selected it (GW_0031).
      *
