@@ -1875,10 +1875,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#marketplace-cards" class="md-nav__link">
+  <a href="#marketplace-table" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Marketplace cards
+        Marketplace table
       
     </span>
   </a>
@@ -2018,13 +2018,24 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#audit-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit log
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#audit-log" class="md-nav__link">
+  <a href="#audit-log_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Audit log
@@ -2350,10 +2361,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#marketplace-cards" class="md-nav__link">
+  <a href="#marketplace-table" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Marketplace cards
+        Marketplace table
       
     </span>
   </a>
@@ -2493,13 +2504,24 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#audit-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit log
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#audit-log" class="md-nav__link">
+  <a href="#audit-log_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Audit log
@@ -2818,13 +2840,53 @@ ingests the upstream default branch; the ref is not selectable."</p>
 </table>
 <p><strong>Register</strong> stays disabled until both fields are valid; it enables as soon as the
 name matches the pattern and the clone URL parses.</p>
+<p>If the clone URL already matches a registered marketplace — comparison ignores
+case, a trailing slash and a <code>.git</code> suffix — the dialog shows a <strong>warning</strong> naming
+the existing marketplace(s) and holds <strong>Register</strong> shut until <em>Register anyway</em> is
+ticked. This is a warning, not a block: the same upstream under a different name is
+a legitimate test setup, so the server still accepts it; the acknowledgement only
+makes the collision deliberate rather than silent.</p>
 <p>Submits <code>POST /api/marketplaces</code>; toasts <em>Marketplace '{name}' registered</em>.</p>
-<h3 id="marketplace-cards">Marketplace cards<a class="headerlink" href="#marketplace-cards" title="Permanent link">&para;</a></h3>
-<p>One card per marketplace, titled with its name and linking to the detail page.
-Beneath: the clone URL, the forge description if captured, and the last upstream
-update if known.</p>
-<p>The card action is <strong>Ingest</strong> (<code>POST /api/marketplaces/{name}/ingest</code>), toasting
-<em>Snapshot {sha12} is {state}</em>.</p>
+<h3 id="marketplace-table">Marketplace table<a class="headerlink" href="#marketplace-table" title="Permanent link">&para;</a></h3>
+<p>One sortable row per marketplace:</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>(expander)</td>
+<td>A chevron; clicking the row (or the chevron) reveals the marketplace's snapshot table in place.</td>
+</tr>
+<tr>
+<td>Name</td>
+<td>The marketplace name, a link to its <a href="#marketplace-detail">detail page</a>.</td>
+</tr>
+<tr>
+<td>Source</td>
+<td>The detected forge (or the clone URL's host), with the clone URL beneath.</td>
+</tr>
+<tr>
+<td>Latest snapshot</td>
+<td>The newest snapshot's state badge and its vetting outcome badge.</td>
+</tr>
+<tr>
+<td>Upstream updated</td>
+<td>The last upstream update if known, else "—". Sortable.</td>
+</tr>
+<tr>
+<td>Snapshots</td>
+<td>A count badge.</td>
+</tr>
+</tbody>
+</table>
+<p>Expanding a row reveals <strong>Ingest</strong>
+(<code>POST /api/marketplaces/{name}/ingest</code>, toasting <em>Snapshot {sha12} is {state}</em>),
+an <strong>Open detail</strong> link, and the <a href="#snapshot-table">snapshot table</a> with its
+review actions.</p>
 <h3 id="snapshot-table">Snapshot table<a class="headerlink" href="#snapshot-table" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -2925,8 +2987,8 @@ justification, approver and expiry. An active one carries
 <p><strong>Provenance</strong> is always available, opening a dialog fed by
 <code>GET /api/snapshots/{id}/provenance</code>: marketplace, upstream URL, upstream SHA,
 state, ingested time, decided by, decided at.</p>
-<p>Empty states: "No marketplaces registered yet." and, per card, "No snapshots yet
-— ingest to fetch the upstream default branch."</p>
+<p>Empty states: "No marketplaces registered yet." and, in an expanded row, "No
+snapshots yet — ingest to fetch the upstream default branch."</p>
 <hr />
 <h2 id="marketplace-detail">Marketplace detail<a class="headerlink" href="#marketplace-detail" title="Permanent link">&para;</a></h2>
 <p><strong>Route:</strong> <code>/marketplaces/{name}</code> · <strong>Heading:</strong> the marketplace name</p>
@@ -3079,8 +3141,14 @@ quarantine ref permanently and the card disappears. See
 <a href="../retention/">Snapshot retention</a>.</p>
 </div>
 <p>Empty state: "No snapshots yet."</p>
+<h3 id="audit-log">Audit log<a class="headerlink" href="#audit-log" title="Permanent link">&para;</a></h3>
+<p>Below the snapshots, the marketplace's slice of the ledger: the entries from
+<code>GET /api/audit</code> whose marketplace is this one, newest first, with the same
+verdict colouring as the <a href="#audit-log">Audit log</a> page — a blocked verdict reads
+red here too. A <strong>See the full ledger</strong> link goes to <code>/audit</code>. Empty state:
+"Nothing recorded against this marketplace yet."</p>
 <hr />
-<h2 id="audit-log">Audit log<a class="headerlink" href="#audit-log" title="Permanent link">&para;</a></h2>
+<h2 id="audit-log_1">Audit log<a class="headerlink" href="#audit-log_1" title="Permanent link">&para;</a></h2>
 <p><strong>Route:</strong> <code>/audit</code> · <strong>Heading:</strong> Audit log</p>
 <p>The ledger and its export surface. Subtitle: "Append-only ledger of every facade
 fetch and administrative action, exportable to an external compliance system."</p>
@@ -3137,12 +3205,50 @@ channel with it, and toasts <em>Sink '{name}' deleted</em>.</p>
 <p>Empty state: "No export sinks yet."</p>
 <h3 id="ledger">Ledger<a class="headerlink" href="#ledger" title="Permanent link">&para;</a></h3>
 <p>The table, from <code>GET /api/audit</code>.</p>
-<p>It is <strong>schema-less</strong>: columns are the keys of the first returned row, in
-order, and every cell renders as monospace text with nulls shown as "—". In
-practice those columns are <code>id</code>, <code>ts</code>, <code>source</code>, <code>principal</code>, <code>marketplace</code>,
-<code>event</code>, <code>ref</code> and <code>sha</code>.</p>
-<p>There is no filtering, search or paging — it is a recent-activity view rather
-than an investigation tool.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Status</td>
+<td>A verdict badge derived from the entry: a <code>vetting-completed</code> row reads from the <code>outcome=</code> in its detail, and refusal/violation events (rejected, revoked, refused approval, a re-vetting violation, a blocked private key) read <strong>blocked</strong>. A blocked row is drawn in the destructive colour — the same red the marketplace surfaces use — with a faint tint and a left accent so it is findable; a clear act reads in the accent, a warn one muted. Everything else (a fetch, an ingest, a token event) is neutral and uncoloured.</td>
+</tr>
+<tr>
+<td>When</td>
+<td>The entry timestamp. Sortable.</td>
+</tr>
+<tr>
+<td>Event</td>
+<td>The event name, monospace. Sortable and filterable.</td>
+</tr>
+<tr>
+<td>Principal</td>
+<td>The acting identity. Sortable and filterable.</td>
+</tr>
+<tr>
+<td>Marketplace</td>
+<td>A <strong>link</strong> to that marketplace's <a href="#marketplace-detail">detail page</a>; "—" for an entry not tied to a marketplace. Sortable and filterable.</td>
+</tr>
+<tr>
+<td>Commit</td>
+<td>First 12 characters of the SHA, or "—". Filterable.</td>
+</tr>
+<tr>
+<td>Detail</td>
+<td>The entry's free-text detail.</td>
+</tr>
+</tbody>
+</table>
+<p>The per-column filter boxes sit above the table; the table paginates client-side
+(25 rows a page) over the JSON ledger. The status is a <strong>read-only legibility
+aid</strong> derived from what the ledger already records — it does not correct the
+ledger; the lossy verdict detail and the actor-type on automated vetting
+principals are tracked in <a href="https://github.com/skillsgateway/skillsgateway/issues/221">#221</a>.
+For a full, resumable pull, use the <a href="#export">NDJSON export</a> and its cursor.</p>
 <p>Empty state: "No fetches recorded yet."</p>
 <hr />
 <h2 id="adoption">Adoption<a class="headerlink" href="#adoption" title="Permanent link">&para;</a></h2>
