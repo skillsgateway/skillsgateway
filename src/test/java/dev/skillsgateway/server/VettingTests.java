@@ -123,7 +123,7 @@ class VettingTests extends AbstractGatewayTest {
                     .as("single verdict %s", first)
                     .isEqualTo(first.clearing() ? VettingChain.Outcome.CLEAR : VettingChain.Outcome.BLOCKED);
             for (VerdictState second : VerdictState.values()) {
-                // A verdict blocks unless it clears or is DISABLED (GW_0143): an administrator
+                // A verdict blocks unless it clears or is DISABLED (GW_0149): an administrator
                 // switching a connector off is discounted from the block decision, but positive
                 // clearing evidence is still required from somewhere in the run.
                 boolean anyBlocking = first.blocking() || second.blocking();

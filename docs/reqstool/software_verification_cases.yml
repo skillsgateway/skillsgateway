@@ -1480,8 +1480,8 @@ cases:
       this path
     revision: "0.1.0"
 
-  - id: SVC_GW_0142
-    requirement_ids: ["GW_0142"]
+  - id: SVC_GW_0148
+    requirement_ids: ["GW_0148"]
     title: An administrator overrides a blocked vetting outcome, audibly and no one else can
     verification: automated-test
     description: |
@@ -1498,8 +1498,8 @@ cases:
       vetting surface reports it approved over a vetting failure rather than clear
     revision: "0.1.0"
 
-  - id: SVC_GW_0143
-    requirement_ids: ["GW_0143"]
+  - id: SVC_GW_0149
+    requirement_ids: ["GW_0149"]
     title: An administrator disables a connector globally and per marketplace, audibly and alone
     verification: automated-test
     description: |

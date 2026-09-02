@@ -133,7 +133,7 @@ read-only **forge mirror for browsing** is sequenced after, never as a serving
 surface. Availability of the facade is now explicitly a security property, with
 serving independent of ingestion.
 
-### [ADR 0009 — Admin override of vetting automation (the cockpit model)](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0009-admin-override-of-vetting-automation.md)
+### [ADR 0010 — Admin override of vetting automation (the cockpit model)](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0010-admin-override-of-vetting-automation.md)
 
 *Accepted, 2026-09-01.*
 
@@ -141,10 +141,10 @@ The airline-cockpit principle applied to vetting: automation can be
 **disconnected by the captain**, deliberately and audibly. Two stances taken on
 purpose are narrowly reversed for **admin-only, audited** acts. An administrator
 may **enable or disable a built-in connector**, globally or per marketplace
-(GW_0143) — a disabled connector is recorded as a distinct `disabled` verdict
+(GW_0149) — a disabled connector is recorded as a distinct `disabled` verdict
 (fail-loud) and disabling every connector still leaves a run **blocked**, never
 cleared. An administrator may also **approve a snapshot over a blocked outcome**
-(GW_0142) with a required reason — the override lifts only the vetting gate (the
+(GW_0148) with a required reason — the override lifts only the vetting gate (the
 policy, release-age and four-eyes gates still run), writes a distinct
 `snapshot-approved-over-vetting-failure` ledger event, and marks the snapshot so
 it is never indistinguishable from a clean approval. The override does not

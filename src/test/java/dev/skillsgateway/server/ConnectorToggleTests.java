@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.OidcLoginRequestPostProcessor;
 
 /**
- * The administrative connector on/off switch (GW_0143). Adversarial: a non-administrator can
+ * The administrative connector on/off switch (GW_0149). Adversarial: a non-administrator can
  * neither switch a connector nor even see the settings, a disabled connector is recorded on the run
  * as fail-loud evidence rather than silently vanishing, and disabling every connector leaves a run
  * blocked rather than clear so the switch can never be a blanket approval.
@@ -35,7 +35,7 @@ class ConnectorToggleTests extends AbstractGatewayTest {
     private final OidcLoginRequestPostProcessor root = oidcLogin().idToken(token -> token.subject("root"));
 
     @Test
-    @SVCs({"SVC_GW_0143"})
+    @SVCs({"SVC_GW_0149"})
     void an_admin_disables_a_connector_per_marketplace_and_no_one_else_can() throws Exception {
         String nameA = uniqueName("toggle-a");
         String nameB = uniqueName("toggle-b");
@@ -91,7 +91,7 @@ class ConnectorToggleTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0143"})
+    @SVCs({"SVC_GW_0149"})
     void disabling_every_connector_leaves_a_run_blocked_not_clear() throws Exception {
         // Scoped to one marketplace so the shared context is untouched: switching every connector
         // off for it is the integration-level counterpart of the pure-function "disable-all blocks"

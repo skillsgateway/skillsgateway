@@ -17,7 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.OidcLoginRequestPostProcessor;
 
 /**
- * The administrative override of a blocked vetting outcome (GW_0142) — the cockpit model's "captain
+ * The administrative override of a blocked vetting outcome (GW_0148) — the cockpit model's "captain
  * disconnects the autopilot". Adversarial where it counts: a marketplace approver who may approve a
  * clean snapshot must not be able to override a blocked one, an override with no reason is refused,
  * and every accepted override leaves a distinct, unmistakable trail.
@@ -34,7 +34,7 @@ class VettingOverrideTests extends AbstractGatewayTest {
     private final OidcLoginRequestPostProcessor root = oidcLogin().idToken(token -> token.subject("root"));
 
     @Test
-    @SVCs({"SVC_GW_0142"})
+    @SVCs({"SVC_GW_0148"})
     void an_admin_overrides_a_blocked_outcome_with_a_reason_and_no_one_else_can() throws Exception {
         String name = uniqueName("override");
         Registered fixture = registerAndIngest(

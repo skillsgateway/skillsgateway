@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * The administrative connector on/off switch (GW_0143), and the only place its resolution rule
+ * The administrative connector on/off switch (GW_0149), and the only place its resolution rule
  * lives. The rule is deliberately narrow: a connector's effective state for a marketplace is its
  * per-marketplace setting when one exists, otherwise its global setting, otherwise enabled.
  *
@@ -26,10 +26,10 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class ConnectorToggleService {
 
-    /** Ledger event when a connector is switched off (GW_0143). */
+    /** Ledger event when a connector is switched off (GW_0149). */
     public static final String EVENT_DISABLED = "connector-disabled";
 
-    /** Ledger event when a connector is switched back on (GW_0143). */
+    /** Ledger event when a connector is switched back on (GW_0149). */
     public static final String EVENT_ENABLED = "connector-enabled";
 
     private final ConnectorToggleRepository repository;
@@ -49,10 +49,10 @@ public class ConnectorToggleService {
     }
 
     /**
-     * Whether a connector runs for one marketplace's chain run (GW_0143): the per-marketplace
+     * Whether a connector runs for one marketplace's chain run (GW_0149): the per-marketplace
      * setting if there is one, otherwise the global setting, otherwise enabled.
      */
-    @Requirements({"GW_0143"})
+    @Requirements({"GW_0149"})
     public boolean enabled(String connector, long marketplaceId) {
         return repository
                 .find(connector, marketplaceId)
@@ -66,7 +66,7 @@ public class ConnectorToggleService {
      * marketplace, and writes the change to the ledger. Refuses an unknown connector name and an
      * unknown marketplace name so a mistaken toggle fails loudly instead of matching nothing.
      */
-    @Requirements({"GW_0143"})
+    @Requirements({"GW_0149"})
     public ConnectorToggle set(
             String connector, String marketplaceName, boolean enabled, String reason, String principal) {
         if (connector == null || !knownConnectors.contains(connector)) {

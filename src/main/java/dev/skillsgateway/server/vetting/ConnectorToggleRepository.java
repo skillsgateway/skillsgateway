@@ -11,7 +11,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
 /**
- * Persistence for {@link ConnectorToggle} (GW_0143). Upsert-in-place on the {@code (connector,
+ * Persistence for {@link ConnectorToggle} (GW_0149). Upsert-in-place on the {@code (connector,
  * marketplace_id)} pair — {@code NULLS NOT DISTINCT} in the schema — so a connector never has two
  * settings at the same scope; the audit ledger, not this table, carries the history.
  */
@@ -28,7 +28,7 @@ public class ConnectorToggleRepository {
      * Sets the enablement of one connector at one scope, creating the row or overwriting the
      * setting that is already there. {@code marketplaceId} null is the global scope.
      */
-    @Requirements({"GW_0143"})
+    @Requirements({"GW_0149"})
     public ConnectorToggle set(String connector, Long marketplaceId, boolean enabled, String reason, String updatedBy) {
         return jdbc.sql(
                         "INSERT INTO connector_toggles (connector, marketplace_id, enabled, reason, updated_by, updated_at)"

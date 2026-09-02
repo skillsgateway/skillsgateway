@@ -5,7 +5,7 @@ import java.time.Instant;
 
 /**
  * A standing administrative decision to enable or disable one built-in vetting connector, globally
- * or for a single marketplace (GW_0143).
+ * or for a single marketplace (GW_0149).
  *
  * <p>A {@code null} {@link #marketplaceId()} is the global setting; a row that names a marketplace
  * overrides the global one for that marketplace. The absence of any row for a connector means it is

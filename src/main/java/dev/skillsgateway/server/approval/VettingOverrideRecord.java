@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 
 /**
- * The record that an administrator approved a snapshot over a blocked vetting outcome (GW_0142) —
+ * The record that an administrator approved a snapshot over a blocked vetting outcome (GW_0148) —
  * the cockpit model's "captain disconnected the autopilot", captured as evidence about one
  * approval of a commit.
  *

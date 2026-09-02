@@ -89,7 +89,7 @@ public class VettingController {
 
             @Schema(
                     description = "Present when an administrator approved this snapshot over a blocked vetting"
-                            + " outcome (GW_0142); its presence is what surfaces the override so it is never"
+                            + " outcome (GW_0148); its presence is what surfaces the override so it is never"
                             + " indistinguishable from a clean approval. Null otherwise.")
             VettingOverrideRecord override) {}
 

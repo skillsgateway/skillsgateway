@@ -70,13 +70,13 @@ public class ApprovalService {
 
     /**
      * Ledger event for an administrator approving a snapshot over a blocked vetting outcome
-     * (GW_0142) — deliberately its own event so an override is never indistinguishable from a clean
+     * (GW_0148) — deliberately its own event so an override is never indistinguishable from a clean
      * approval on the ledger.
      */
     public static final String EVENT_OVERRIDE = "snapshot-approved-over-vetting-failure";
 
     /**
-     * An administrator's request to approve past a blocked vetting outcome (GW_0142). The captain
+     * An administrator's request to approve past a blocked vetting outcome (GW_0148). The captain
      * disconnecting the autopilot: it lifts only the vetting gate, requires a reason, and is
      * admin-only (enforced at the controller). {@link #none()} is the ordinary approval, which
      * overrides nothing.
@@ -109,7 +109,7 @@ public class ApprovalService {
             Duration ingestionAge,
             List<FourEyesConflictException.Conflict> fourEyesConflicts,
 
-            /** The administrator's override of a blocked vetting outcome, or null (GW_0142). */
+            /** The administrator's override of a blocked vetting outcome, or null (GW_0148). */
             VettingOverrideRecord vettingOverride) {
 
         public Approved {
@@ -156,13 +156,13 @@ public class ApprovalService {
 
     /**
      * As {@link #approve(long, String)}, but with an administrator's override of a blocked vetting
-     * outcome (GW_0142). When {@code override.vettingFailure()} is set and the effective outcome is
+     * outcome (GW_0148). When {@code override.vettingFailure()} is set and the effective outcome is
      * blocked, the vetting gate is lifted instead of refusing — the reason is required, the block
      * is recorded as a distinct ledger event and a standing marker on the snapshot, and every other
      * gate (policy, cooling-off, four-eyes) still runs. The admin-only nature of the override is
      * enforced by the caller; this method assumes an override request has already been authorized.
      */
-    @Requirements({"GW_0005", "GW_0041", "GW_0050", "GW_0073", "GW_0142"})
+    @Requirements({"GW_0005", "GW_0041", "GW_0050", "GW_0073", "GW_0148"})
     public Approved approve(long snapshotId, String reviewer, ApprovalOverride override) {
         // Observation only (GW_0077): timing and outcome around the unchanged decision — a
         // vetting-blocked refusal is the observation's error and still propagates untouched.
@@ -186,7 +186,7 @@ public class ApprovalService {
         if (current.decidable()) {
             WaiverEvaluation.Effect effect = waiverService.evaluate(current);
             if (effect.blocked()) {
-                // No blanket override existed here by design; GW_0142 adds one, and only for an
+                // No blanket override existed here by design; GW_0148 adds one, and only for an
                 // administrator who states a reason. When one is requested the vetting gate is
                 // lifted — the block is recorded rather than refused — and every other gate below
                 // still runs. Without a request the refusal is exactly as before.
@@ -226,7 +226,7 @@ public class ApprovalService {
             repair(current, publishFailed);
             throw new ApprovalException("publish failed for snapshot %d".formatted(snapshotId), publishFailed);
         }
-        // The override marker is written only once the publication has actually landed (GW_0142):
+        // The override marker is written only once the publication has actually landed (GW_0148):
         // the snapshot is now served over a vetting failure, so the standing marker that says so
         // must not exist for a snapshot that was never published. The ledger event is written by
         // the caller once approve returns, beside snapshot-approved, exactly as the four-eyes
@@ -246,7 +246,7 @@ public class ApprovalService {
     }
 
     /**
-     * What was blocking at the moment an administrator overrode the vetting gate (GW_0142),
+     * What was blocking at the moment an administrator overrode the vetting gate (GW_0148),
      * rendered for the ledger, the standing marker, and the refusal-that-was-not. Captured from the
      * effective outcome before the state transition, so it names exactly what the administrator
      * took responsibility for.
@@ -265,7 +265,7 @@ public class ApprovalService {
     }
 
     /** The administrator's override of a blocked vetting outcome for this snapshot, or empty. */
-    @Requirements({"GW_0142"})
+    @Requirements({"GW_0148"})
     public Optional<VettingOverrideRecord> vettingOverride(long snapshotId) {
         return vettingOverrideRepository.findBySnapshot(snapshotId);
     }

@@ -1,4 +1,4 @@
-# ADR 0009 — Admin override of vetting automation (the cockpit model)
+# ADR 0010 — Admin override of vetting automation (the cockpit model)
 
 *Accepted, 2026-09-01.*
 
@@ -37,7 +37,7 @@ Two mechanisms are in scope, and they are different kinds of act:
 **Both mechanisms exist, both are admin-only, both are audited distinctly, and
 both are fail-loud. Neither weakens the gate silently.**
 
-### 1. Connector enable/disable (GW_0143)
+### 1. Connector enable/disable (GW_0149)
 
 An administrator may switch a built-in connector off — globally or for one
 marketplace — through `PUT /api/vetting/connectors/{name}/toggle`. A disabled
@@ -56,7 +56,7 @@ disablement is **recorded per run** (fail-loud), and disabling everything still
 **blocks** (no free pass). What an operator gains is the ability to answer a
 too-noisy or wrong connector for one marketplace without redeploying.
 
-### 2. Override of a blocked outcome (GW_0142)
+### 2. Override of a blocked outcome (GW_0148)
 
 An administrator — and only an administrator — may approve a held or revoked
 snapshot whose effective outcome is blocked, by setting `overrideVetting` with a
@@ -74,7 +74,7 @@ override is never indistinguishable from an approval the chain cleared.
 The override does **not** replace waivers, and the two are deliberately different
 tools:
 
-| | Waiver (GW_0044–0048) | Override (GW_0142) |
+| | Waiver (GW_0044–0048) | Override (GW_0148) |
 | --- | --- | --- |
 | Who | any reviewer/approver | administrator only |
 | Scope | one finding, one rule, scoped and **expiring** | one snapshot, the whole blocked outcome, one-off |

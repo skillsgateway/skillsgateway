@@ -289,14 +289,14 @@ public class AdminController {
     public record ApproveRequest(
             @Schema(
                     description = "Set true, as an administrator, to approve despite a blocked vetting outcome"
-                            + " (GW_0142); a reason is then required and the override is recorded distinctly")
+                            + " (GW_0148); a reason is then required and the override is recorded distinctly")
             Boolean overrideVetting,
 
             @Schema(description = "The administrator's reason for overriding the block; required when overrideVetting")
             String reason) {}
 
     @PostMapping("/snapshots/{id}/approve")
-    @Requirements({"GW_0041", "GW_0050", "GW_0096", "GW_0097", "GW_0142"})
+    @Requirements({"GW_0041", "GW_0050", "GW_0096", "GW_0097", "GW_0148"})
     @Tag(name = "Snapshots")
     @Operation(
             summary = "Approve a held or revoked snapshot",
@@ -311,7 +311,7 @@ public class AdminController {
                     + " uncovered findings. Record a scoped, expiring waiver for each of those findings and"
                     + " approve again; every waiver that let the approval through is written to the ledger."
                     + " Alternatively an administrator — and only an administrator — may set overrideVetting with"
-                    + " a reason to approve over the block (GW_0142): the override lifts only the vetting gate,"
+                    + " a reason to approve over the block (GW_0148): the override lifts only the vetting gate,"
                     + " is written to the ledger as a distinct event with the failing verdicts, and marks the"
                     + " snapshot approved over a vetting failure.")
     @ApiResponse(responseCode = "200", description = "Snapshot approved and now served")
@@ -330,7 +330,7 @@ public class AdminController {
         if (request != null && Boolean.TRUE.equals(request.overrideVetting())) {
             // The override is the captain disconnecting the autopilot: admin-only, deliberately
             // stricter than the marketplace-scoped approver gate an ordinary approval passes
-            // (GW_0142). An approver may not override the control that governs their own content.
+            // (GW_0148). An approver may not override the control that governs their own content.
             roleService.requireAdmin(authentication);
             override = ApprovalService.ApprovalOverride.ofVettingFailure(request.reason());
         } else {
@@ -340,7 +340,7 @@ public class AdminController {
         Snapshot snapshot = approved.snapshot();
         String marketplace = marketplaceName(snapshot.marketplaceId());
         waiverService.recordUse(marketplace, snapshot.sha(), authentication.getName(), approved.waiversApplied());
-        // The override lands on the ledger as its own event beside snapshot-approved (GW_0142), so
+        // The override lands on the ledger as its own event beside snapshot-approved (GW_0148), so
         // the decision entry says who approved and this one says what they overrode and why — both
         // facts kept, never one instead of the other.
         if (approved.vettingOverride() != null) {
@@ -518,7 +518,7 @@ public class AdminController {
     }
 
     /**
-     * An administrator asked to override a blocked vetting outcome without a reason (GW_0142). 422
+     * An administrator asked to override a blocked vetting outcome without a reason (GW_0148). 422
      * rather than 409: the request is well-formed as far as the snapshot's state goes, but the one
      * field that makes an override an act of taking responsibility — the reason — is missing.
      */

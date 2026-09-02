@@ -9,7 +9,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
 /**
- * Persistence for {@link VettingOverrideRecord} (GW_0142). One row per snapshot, replaced if the
+ * Persistence for {@link VettingOverrideRecord} (GW_0148). One row per snapshot, replaced if the
  * snapshot is re-approved over a failure again — the audit ledger keeps the full history, this is
  * the current standing marker that makes the override fail-loud on the snapshot's vetting surface.
  */
@@ -22,7 +22,7 @@ public class VettingOverrideRepository {
         this.jdbc = jdbc;
     }
 
-    @Requirements({"GW_0142"})
+    @Requirements({"GW_0148"})
     public VettingOverrideRecord record(
             long snapshotId, String reason, String blockingConnectors, String uncoveredFindings, String overriddenBy) {
         return jdbc.sql("INSERT INTO snapshot_vetting_overrides"

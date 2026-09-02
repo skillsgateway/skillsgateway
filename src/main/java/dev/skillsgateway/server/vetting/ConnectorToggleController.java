@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * The administrative connector on/off surface (GW_0143). Both endpoints are administrator-only:
+ * The administrative connector on/off surface (GW_0149). Both endpoints are administrator-only:
  * the switch that governs the vetting chain, and even the visibility of its current settings, are
  * not something a marketplace-scoped approver may reach — that would let the owner of content turn
  * off the control that governs it.
@@ -47,7 +47,7 @@ public class ConnectorToggleController {
             String reason) {}
 
     @GetMapping("/vetting/connector-toggles")
-    @Requirements({"GW_0143"})
+    @Requirements({"GW_0149"})
     @Tag(name = "Vetting")
     @Operation(
             summary = "List connector enable/disable settings",
@@ -62,7 +62,7 @@ public class ConnectorToggleController {
     }
 
     @PutMapping("/vetting/connectors/{name}/toggle")
-    @Requirements({"GW_0143"})
+    @Requirements({"GW_0149"})
     @Tag(name = "Vetting")
     @Operation(
             summary = "Enable or disable a built-in connector",

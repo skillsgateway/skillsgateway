@@ -1094,7 +1094,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0142
+  - id: GW_0148
     title: Administrative override of a blocked vetting outcome
     significance: shall
     description: The system shall allow an administrator, and only an administrator, to approve a held or revoked snapshot whose effective vetting outcome is blocked by supplying a non-empty reason, shall refuse such an override to a principal that is not an administrator and refuse it to an administrator who supplies no reason, shall leave every other approval precondition — the policy gate, the minimum release age and the separation-of-duties rule — in force so that the override lifts only the vetting block, shall record the override as a distinct audit-ledger event naming the acting administrator, the reason, and the connectors and uncovered findings that were blocking, and shall mark the approved snapshot as approved over a vetting failure so that the override is surfaced wherever the snapshot's vetting is shown and is never indistinguishable from an approval the chain cleared.
@@ -1102,7 +1102,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0143
+  - id: GW_0149
     title: Administrative enable and disable of a built-in vetting connector
     significance: shall
     description: The system shall allow an administrator, and only an administrator, to disable or re-enable a specific built-in vetting connector either globally or for one named marketplace, resolving the effective state of a connector for a marketplace as its per-marketplace setting when one exists and otherwise its global setting and otherwise enabled, shall skip a connector that is disabled for a snapshot's marketplace when the chain runs at ingestion or re-vetting rather than running it, recording a distinct disabled verdict against that chain run in the connector's place so the disablement is part of the run's evidence, shall count a disabled verdict as neither clearing nor blocking while still requiring at least one clearing verdict for a run to clear so that disabling every connector leaves the run blocked rather than cleared, shall record every toggle as an administrator-only, audited action naming the acting administrator, the connector, the scope and the new state, and shall neither show connector settings to nor accept a toggle from a principal that is not an administrator.

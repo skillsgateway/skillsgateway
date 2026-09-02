@@ -2,27 +2,27 @@
 
 ## 1. Requirements (SSOT first)
 
-- [x] 1.1 Add GW_0142 (admin override of a blocked vetting outcome: admin-only,
+- [x] 1.1 Add GW_0148 (admin override of a blocked vetting outcome: admin-only,
       reason-required, distinct ledger event, fail-loud marker, lifts only the
-      vetting gate) and GW_0143 (admin connector enable/disable, global or per
+      vetting gate) and GW_0149 (admin connector enable/disable, global or per
       marketplace; disabled verdict recorded non-blocking; positive evidence
       still required; audited, admin-only) to `docs/reqstool/requirements.yml`
-- [x] 1.2 Add SVC_GW_0142 and SVC_GW_0143 (GIVEN/WHEN/THEN) to
+- [x] 1.2 Add SVC_GW_0148 and SVC_GW_0149 (GIVEN/WHEN/THEN) to
       `docs/reqstool/software_verification_cases.yml`
 
 ## 2. Failing tests first (old-coder: prove they fail)
 
-- [x] 2.1 `VettingChainDisabledTests` (pure function, `@SVCs({"SVC_GW_0143"})`):
+- [x] 2.1 `VettingChainDisabledTests` (pure function, `@SVCs({"SVC_GW_0149"})`):
       a disabled verdict does not block when something clears; disabling every
       connector blocks; a disabled verdict never rescues a failing one;
       pre-existing rules unchanged; `DISABLED` neither clears nor blocks
 - [x] 2.2 `ConnectorToggleTests` (extends `AbstractGatewayTest`,
-      `@SVCs({"SVC_GW_0143"})`): non-admin refused the toggle and the read; admin
+      `@SVCs({"SVC_GW_0149"})`): non-admin refused the toggle and the read; admin
       disables secret-scan for one marketplace; the toggle is on the ledger; the
       re-ingested snapshot records a disabled verdict and clears while a second
       marketplace still blocks; disabling every connector for a marketplace blocks
 - [x] 2.3 `VettingOverrideTests` (extends `AbstractGatewayTest`,
-      `@SVCs({"SVC_GW_0142"})`): a marketplace approver is refused the override
+      `@SVCs({"SVC_GW_0148"})`): a marketplace approver is refused the override
       (403) and a plain approval is refused for the block (409); an admin override
       with no reason is refused (422); an admin override with a reason approves,
       publishes, writes the distinct `snapshot-approved-over-vetting-failure`
@@ -40,10 +40,10 @@
 
 - [x] 4.1 `VerdictState`: `DISABLED` + `blocking()`; `Verdict.disabled(...)`
 - [x] 4.2 `VettingChain.aggregate`: discount `DISABLED`, still require a clearing
-      verdict; `@Requirements({"GW_0038", "GW_0143"})`
+      verdict; `@Requirements({"GW_0038", "GW_0149"})`
 - [x] 4.3 `ConnectorToggleService` (resolution rule, validated audited `set`,
       `list`); `VettingService.run` consults it per connector, records a disabled
-      verdict when off; `@Requirements({"GW_0143"})`
+      verdict when off; `@Requirements({"GW_0149"})`
 - [x] 4.4 `ConnectorToggleController`: admin-only `PUT
       /api/vetting/connectors/{name}/toggle` and `GET
       /api/vetting/connector-toggles`
@@ -52,7 +52,7 @@
 
 - [x] 5.1 `ApprovalService.ApprovalOverride`; override path in `doApprove`
       (lifts only vetting, requires a reason, records the marker after publish);
-      `MissingOverrideReasonException`; `@Requirements({"GW_0142"})`
+      `MissingOverrideReasonException`; `@Requirements({"GW_0148"})`
 - [x] 5.2 `AdminController.approve`: optional `ApproveRequest`; `requireAdmin`
       for an override; distinct `snapshot-approved-over-vetting-failure` ledger
       event; 422 handler

@@ -15,11 +15,11 @@ role model was hardened to unconditional enforcement in
 [#210](https://github.com/skillsgateway/skillsgateway/issues/210), which is what
 makes "admin-only" load-bearing here. This reverses two deliberate design
 decisions, so it ships with an ADR
-([0009](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0009-admin-override-of-vetting-automation.md)).
+([0010](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0010-admin-override-of-vetting-automation.md)).
 
 ## What Changes
 
-- **Connector enable/disable (GW_0143).** An administrator can disable or
+- **Connector enable/disable (GW_0149).** An administrator can disable or
   re-enable a built-in connector (secret-scan, prompt-injection, license-scan),
   globally or per marketplace, via `PUT /api/vetting/connectors/{name}/toggle`
   (admin-only), with the settings readable at `GET
@@ -30,7 +30,7 @@ decisions, so it ships with an ADR
   verdict to clear, so disabling every connector leaves a run **blocked**. Every
   toggle is an audited, admin-only action (`connector-disabled` /
   `connector-enabled`).
-- **Override of a blocked outcome (GW_0142).** An administrator — and only an
+- **Override of a blocked outcome (GW_0148).** An administrator — and only an
   administrator — can approve a held or revoked snapshot whose effective outcome
   is blocked by setting `overrideVetting` with a reason on the approve endpoint.
   The override lifts only the vetting gate; the policy, release-age and
@@ -39,8 +39,8 @@ decisions, so it ships with an ADR
   naming the administrator, the reason and the blocking verdicts, and records a
   standing marker (`snapshot_vetting_overrides`) surfaced on the vetting read
   surface so it is never indistinguishable from a clean approval.
-- Requirements GW_0142 (override) and GW_0143 (connector toggle), with
-  SVC_GW_0142 / SVC_GW_0143.
+- Requirements GW_0148 (override) and GW_0149 (connector toggle), with
+  SVC_GW_0148 / SVC_GW_0149.
 
 ## Capabilities
 

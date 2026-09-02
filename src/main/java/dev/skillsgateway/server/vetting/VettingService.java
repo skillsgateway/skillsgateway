@@ -127,7 +127,7 @@ public class VettingService {
             for (VettingConnector connector : connectors) {
                 // A connector an administrator switched off for this marketplace is skipped, not
                 // run, and recorded as a distinct disabled verdict so the disablement is part of
-                // the run's evidence rather than a silently shorter chain (GW_0143). The
+                // the run's evidence rather than a silently shorter chain (GW_0149). The
                 // aggregation counts it as neither clearing nor blocking.
                 Verdict verdict = toggleService.enabled(connector.name(), snapshot.marketplaceId())
                         ? runGuarded(connector, content)
