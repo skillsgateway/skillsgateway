@@ -20,7 +20,7 @@ import org.eclipse.jgit.lib.PersonIdent;
 import org.junit.jupiter.api.Test;
 
 /**
- * The inventory diff a reviewer decides on (GW_0150): what approving a held snapshot would add to
+ * The inventory diff a reviewer decides on (GW_0153): what approving a held snapshot would add to
  * what the marketplace already had approved.
  */
 class ContentDiffTests extends AbstractGatewayTest {
@@ -50,7 +50,7 @@ class ContentDiffTests extends AbstractGatewayTest {
             """;
 
     @Test
-    @SVCs({"SVC_GW_0150"})
+    @SVCs({"SVC_GW_0153"})
     void snapshotContentDiffAgainstTheLastApprovedSnapshot() throws Exception {
         Path upstream = createUpstream(THREE_PLUGIN_MANIFEST);
         // hello/hello comes from the fixture; critique starts under hello and moves later.

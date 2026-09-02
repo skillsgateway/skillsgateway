@@ -2,20 +2,20 @@
 
 ## 1. Requirements (SSOT first)
 
-- [x] 1.1 Add GW_0150 (inventory diff of a snapshot against the marketplace's
+- [x] 1.1 Add GW_0153 (inventory diff of a snapshot against the marketplace's
       newest approved snapshot, at plugin and skill granularity, with
       added/removed/changed/moved/unchanged, relocation reported once, and an
       explicit no-baseline answer) to `docs/reqstool/requirements.yml`
-- [x] 1.2 Add SVC_GW_0150 (GIVEN/WHEN/THEN) to
+- [x] 1.2 Add SVC_GW_0153 (GIVEN/WHEN/THEN) to
       `docs/reqstool/software_verification_cases.yml`
 
-## 2. Backend (SVC_GW_0150)
+## 2. Backend (SVC_GW_0153)
 
 - [x] 2.1 `SnapshotRepository.latestApprovedByMarketplace(marketplaceId,
       excludingSnapshotId)` — newest live approved snapshot, or empty
 - [x] 2.2 `SnapshotContentService`: `ContentDiff` / `PluginDiff` / `SkillDiff` /
       `DiffSummary` records with `@Schema`, and `diff(snapshotId)` annotated
-      `@Requirements({"GW_0150"})` — tree-object comparison per skill directory,
+      `@Requirements({"GW_0153"})` — tree-object comparison per skill directory,
       move detection by skill name across plugins, removed plugins retained from
       the baseline, null baseline reported as such
 - [x] 2.3 `AdminController`: `GET /api/snapshots/{id}/content-diff` with `@Tag`,
@@ -24,7 +24,7 @@
 ## 3. Tests (never weakening an existing SVC test)
 
 - [x] 3.1 `ContentDiffTests` extends `AbstractGatewayTest`,
-      `@SVCs({"SVC_GW_0150"})`: first snapshot has no baseline and reports
+      `@SVCs({"SVC_GW_0153"})`: first snapshot has no baseline and reports
       everything added; a second snapshot over an approved one reports an added
       skill, a changed skill (edited helper file, not `SKILL.md`), a removed
       plugin with its skills, and a skill moved between plugins reported once as
@@ -34,7 +34,7 @@
 
 - [x] 4.1 `api/queries.ts`: `SnapshotContentDiff` types + `useSnapshotContentDiff`
 - [x] 4.2 `components/snapshot-content-diff.tsx`: loading / error / no-baseline /
-      no-changes / changes states, JSDoc `@Requirements GW_0150`
+      no-changes / changes states, JSDoc `@Requirements GW_0153`
 - [x] 4.3 Render it inside the **Show contents** panel of
       `pages/marketplace-detail.tsx`
 - [x] 4.4 MSW handler for the new endpoint; component test beside
@@ -51,7 +51,7 @@
 
 - [x] 6.1 `openspec validate --all --strict`
 - [x] 6.2 `./mvnw clean verify`
-- [x] 6.3 `reqstool status local -p docs/reqstool` — GW_0150 complete; the run
+- [x] 6.3 `reqstool status local -p docs/reqstool` — GW_0153 complete; the run
       ends FAIL only for the 14 e2e-verified requirements the blocked Playwright
       suite leaves without results (see `evidence.md`)
 - [x] 6.4 `mkdocs build --strict`

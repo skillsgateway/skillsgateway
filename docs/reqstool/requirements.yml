@@ -1158,7 +1158,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0150
+  - id: GW_0153
     title: Snapshot content diff against the last approved snapshot
     significance: shall
     description: The system shall expose, for any snapshot, a diff of its content inventory against the inventory of the newest live approved snapshot of the same marketplace other than itself, classifying every plugin and every skill as added, removed, changed, moved or unchanged; shall classify a skill as changed whenever anything under its directory differs between the two snapshots rather than only its skill definition file; shall report a skill that a plugin no longer declares but another plugin now does exactly once, naming the plugin it came from, rather than as an unrelated removal and addition; shall report a plugin the baseline declared and the snapshot does not, together with the skills it had, as removed; and shall report the absence of any approved snapshot to compare against explicitly, with every plugin and skill added.

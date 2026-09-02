@@ -24,7 +24,7 @@ the answer.
 
 ## What Changes
 
-- **Plugin/skill-level content diff (GW_0150).** New
+- **Plugin/skill-level content diff (GW_0153).** New
   `SnapshotContentService.diff(snapshotId)` compares a snapshot's inventory
   against the inventory of the newest approved, live snapshot of the same
   marketplace, and classifies every plugin and every skill as `added`,
@@ -41,7 +41,7 @@ the answer.
   gains a "Changes since the last approved snapshot" section listing only what
   changed, with its own states for a first snapshot (no baseline) and for a
   snapshot that changed nothing.
-- Requirement GW_0150 with SVC_GW_0150.
+- Requirement GW_0153 with SVC_GW_0153.
 
 ## Capabilities
 

@@ -1599,8 +1599,8 @@ cases:
       blocked rather than clear
     revision: "0.1.0"
 
-  - id: SVC_GW_0150
-    requirement_ids: ["GW_0150"]
+  - id: SVC_GW_0153
+    requirement_ids: ["GW_0153"]
     title: A snapshot's inventory diff against the last approved snapshot
     verification: automated-test
     description: |

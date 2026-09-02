@@ -102,7 +102,7 @@ test("admin_registers_ingests_and_approves_a_marketplace_in_the_portal", async (
   await page.getByRole("button", { name: /Show contents of snapshot \d+/ }).click();
   await expect(page.getByText("hello", { exact: true }).first()).toBeVisible();
 
-  // Beside it, what approving it would change (GW_0150). This marketplace has exactly one
+  // Beside it, what approving it would change (GW_0153). This marketplace has exactly one
   // snapshot — the one on screen — so there is no approved baseline, and the panel says so
   // rather than rendering an empty diff.
   await expect(

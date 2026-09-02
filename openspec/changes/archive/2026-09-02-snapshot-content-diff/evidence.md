@@ -8,7 +8,7 @@ it returns no file bytes, and nothing in the approval path reads it.
 
 | Requirement | Verifies | Test |
 | --- | --- | --- |
-| GW_0150 — inventory diff against the last approved snapshot | no baseline, added, changed-by-neighbouring-file, removed plugin, skill moved between plugins, unknown snapshot | `ContentDiffTests.snapshotContentDiffAgainstTheLastApprovedSnapshot` (SVC_GW_0150) |
+| GW_0153 — inventory diff against the last approved snapshot | no baseline, added, changed-by-neighbouring-file, removed plugin, skill moved between plugins, unknown snapshot | `ContentDiffTests.snapshotContentDiffAgainstTheLastApprovedSnapshot` (SVC_GW_0153) |
 
 The one test walks every case the requirement names, in one fixture, because
 they interact — a move is only correct if the skill is *not* also reported
@@ -48,7 +48,8 @@ new ones:
 ## Gates run locally
 
 All at commit `8449bcc` (`feat(api): classify the content diff route for machine
-credentials`), which is the last code edit in this change.
+credentials`), which was the last code edit in this change, and re-run after the
+requirement was renumbered (see below).
 
 | Gate | Command | Result |
 | --- | --- | --- |
@@ -58,12 +59,27 @@ credentials`), which is the last code edit in this change.
 | OpenSpec | `openspec validate --all --strict` | `Totals: 31 passed, 0 failed (31 items)` |
 | Docs | `mkdocs build --strict` | `Documentation built in 2.46 seconds`, no warnings |
 | Design harness | `/impeccable audit` + `harden` on the changed surface; `detect.mjs --json` | detector `[]`; one real finding fixed (see below) |
-| Traceability | `reqstool status local -p docs/reqstool` | `129/143 complete · 14 incomplete · FAIL` — **GW_0150 is COMPLETE**; see below |
+| Traceability | `reqstool status local -p docs/reqstool` | `129/143 complete · 14 incomplete · FAIL` — **GW_0153 is COMPLETE**; see below |
 
 The impeccable harden pass found one genuine defect: a plugin reported `removed`
 whose skills had all moved to other plugins reached the "the manifest entry
 changed; its skills did not" note, which is false for it. Fixed in `38d26b9`;
 the note is now status-aware. No finding was dismissed.
+
+## Renumbering, after the fact
+
+The requirement first shipped here as GW_0150, which collided with #244
+(`feat/external-plugin-sources`), already green and ahead of this change. It is
+now **GW_0153 / SVC_GW_0153**, verified free against `origin/main` (highest
+GW_0149), against #244 (GW_0150-GW_0152) and against the other open PRs (#242
+and #245 add none above GW_0149).
+
+The rename is identifier-only — no behaviour, no test, no endpoint changed — and
+the gates above were re-run over it: `./mvnw clean verify` **BUILD SUCCESS**
+(`Tests run: 388, Failures: 0, Errors: 0, Skipped: 0`), `openspec validate --all
+--strict` 30 passed, `mkdocs build --strict` clean, and `reqstool status local -p
+docs/reqstool` unchanged in shape at `129/143 complete · 14 incomplete · FAIL`
+with GW_0153 COMPLETE in GW_0150's place.
 
 ## Gates that could not complete in this environment
 
@@ -91,5 +107,5 @@ it reports incomplete — GW_0018, GW_0019, GW_0026, GW_0030, GW_0036, GW_0042,
 GW_0047, GW_0055, GW_0078, GW_0079, GW_0082, GW_0097, GW_0098, GW_0138 — are
 *exactly* the 14 whose SVCs are carried by `e2e/portal.spec.ts`, and they are
 incomplete solely because that suite produced no JUnit results. None of them
-belongs to this change, and GW_0150 is reported COMPLETE. With the e2e suite's
+belongs to this change, and GW_0153 is reported COMPLETE. With the e2e suite's
 results present the gate reaches 143/143.
