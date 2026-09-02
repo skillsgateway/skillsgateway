@@ -168,6 +168,24 @@ it is never indistinguishable from a clean approval. The override does not
 replace scoped, expiring **waivers**; it is the rarer administrative act for a
 whole blocked outcome.
 
+### [ADR 0011 — External plugin sources: admission before resolution](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md)
+
+*Accepted, 2026-09-02.*
+
+The staged reversal of the local-only stance. Support for external plugin
+sources lands in increments — **admission** (a typed source model and a
+configuration gate, disabled by default) before **resolution** (fetching and
+rewriting into a gateway-local composite snapshot) — separated by a standing
+invariant: a snapshot is **held only when every plugin source it declares
+resolves inside the snapshot the gateway serves** (GW_0152), so T4 stays closed
+for the whole reversal rather than reopening between increments. When the
+rewriter lands, snapshot identity becomes the **served composite SHA**, which is
+what leaves vetting, approval, the facade and retention unchanged by
+construction. Egress isolation — not URL validation — is named as the primary
+SSRF control for the resolution increment; the allowlists are defence in depth.
+`npm` and `archive` sources are refused permanently, above the configuration
+gate.
+
 ## Related
 
 - [Architecture](../architecture.md)

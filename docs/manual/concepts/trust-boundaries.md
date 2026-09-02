@@ -73,6 +73,35 @@ allowlist as an API registration, has no ref key to declare, and a failing
 entry is reported rather than registered. Reconciliation is additive — the
 declaration can create and converge, never deregister.
 
+**A manifest's plugin sources reach for this boundary too.** A registered
+upstream's `marketplace.json` is attacker-influenceable content that names
+further URLs. Those sources are parsed into a typed model, and an external one is
+admitted only when `skills-gateway.ingestion.external-sources` says so — a
+setting that defaults to admitting nothing. An admitted source's derived clone
+URL passes **the same scheme allowlist** as a registration, so there is one
+scheme policy for every URL the gateway will ever dereference, plus an optional
+exact-host allowlist and a cap on external sources per manifest. `npm` and
+`archive` are refused above that gate, by no configuration.
+
+The standing invariant, and the reason the reversal can be staged safely: **a
+snapshot is held only when every plugin source it declares resolves inside the
+snapshot the gateway serves.** Held is what makes a snapshot approvable and
+therefore publishable, so a manifest still pointing a client at an external URL
+never reaches it — that is threat T4, and it stays closed whether the gateway
+cannot admit a source or cannot yet resolve one it has admitted.
+
+!!! danger "When resolution lands, the allowlists are not the control"
+
+    Manifest-driven fetching is gateway-originated traffic chosen by upstream
+    data — the SSRF shape. The scheme, host and count checks above are **defence
+    in depth**. The primary control is network topology: ingestion egress routed
+    through a proxy or DMZ with no route to cloud metadata endpoints, internal
+    APIs or anything holding corporate credentials. Post-DNS address validation,
+    connect-to-the-validated-address, per-redirect re-validation, downgrade
+    refusal and pack-inflation budgets are the in-application second layer, and
+    arrive with the resolver. See
+    [ADR 0011](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md).
+
 ## 2. The facade — an anonymous network peer becomes a reader
 
 `/git/**` is served by its own Spring Security filter chain, ordered ahead of

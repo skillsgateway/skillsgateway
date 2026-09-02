@@ -181,6 +181,14 @@ flowchart LR
   removes transitive resolution and source rewriting from the MVP entirely
   (relative sources resolve inside the served snapshot by themselves); the
   closure/rewrite machinery arrives with external-source support in Phase 2.
+  That reversal is staged, and its shape is decided in
+  [ADR 0011](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md):
+  **admission** (a typed source model and a configuration gate that defaults to
+  admitting nothing) before **resolution** (fetching and rewriting external
+  content into a gateway-local composite snapshot), the two separated by a
+  standing invariant — a snapshot is held only when every source it declares
+  resolves inside the snapshot the gateway serves (GW_0152). Local-only remains
+  the behaviour of an unconfigured gateway throughout.
 - **Vetting orchestrator (connector-based).** The gateway does not vet
   content itself — it orchestrates. Per snapshot it emits a vetting trigger
   (webhook/queue event carrying snapshot metadata and a fetch URL for the
@@ -466,7 +474,12 @@ that would duplicate a sweep, and leader election is separate later work.
   approve button). Even this closes T3/T4/T6 — T4 by rejection rather than
   rewriting — and gives Security eyes.
 - **Phase 2 — governance.** External plugin sources with transitive
-  resolution and source rewriting, connector framework with automated vetting
+  resolution and source rewriting — *decided, staged, not yet implemented:*
+  [ADR 0011](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md)
+  splits it into admission (typed source model, configuration gate defaulting to
+  disabled) then resolution (composite rewrite), separated by the
+  held-only-if-gateway-local invariant so T4 stays closed across the reversal —
+  connector framework with automated vetting
   (scanners, LLM review, sandbox), risk tiers, approval workflow with
   semantic diffs, policy-as-code, catalog/portal with request flow, per-team
   virtual marketplaces, multi-ref publication. *Implemented:* per-marketplace

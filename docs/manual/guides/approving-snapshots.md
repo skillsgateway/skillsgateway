@@ -82,9 +82,17 @@ $ curl localhost:8080/api/snapshots/1/provenance
 
 ### Violations
 
-If ingestion flagged the snapshot — an external plugin source, for instance,
-which is rejected fail-closed in the current scope — the reason is on the
-snapshot row and rendered in the portal as destructive text.
+If ingestion flagged the snapshot — an external plugin source, for instance —
+the reason is on the snapshot row and rendered in the portal as destructive text.
+
+An external source produces one of two violations, and they mean different
+things. *"has a non-local source"* means the gateway will not admit it: either
+external sources are not enabled, or the type, host or scheme is outside what is
+configured, or the type (`npm`, `archive`) is never admissible. *"admits but
+cannot yet resolve"* means the source passed admission and the gateway simply
+cannot fetch and rewrite it yet — a snapshot is held only when every source it
+declares resolves inside the snapshot the gateway serves. The first is a
+configuration question; the second is not, and neither snapshot can be approved.
 
 ### Vetting verdicts
 
