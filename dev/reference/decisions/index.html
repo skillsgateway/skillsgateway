@@ -1961,6 +1961,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#adr-0009-the-external-vetting-connector-contract-configured-synchronous-fail-closed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0009 — The external vetting connector contract: configured, synchronous, fail-closed
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2124,6 +2135,17 @@
     <span class="md-ellipsis">
       
         ADR 0008 — The serving surface stays the embedded facade; SSO closes at the gateway
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-0009-the-external-vetting-connector-contract-configured-synchronous-fail-closed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0009 — The external vetting connector contract: configured, synchronous, fail-closed
       
     </span>
   </a>
@@ -2342,6 +2364,20 @@ second-credential-system gap without moving a fetch off the ledger, and a
 read-only <strong>forge mirror for browsing</strong> is sequenced after, never as a serving
 surface. Availability of the facade is now explicitly a security property, with
 serving independent of ingestion.</p>
+<h3 id="adr-0009-the-external-vetting-connector-contract-configured-synchronous-fail-closed"><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0009-external-vetting-connector-contract.md">ADR 0009 — The external vetting connector contract: configured, synchronous, fail-closed</a><a class="headerlink" href="#adr-0009-the-external-vetting-connector-contract-configured-synchronous-fail-closed" title="Permanent link">&para;</a></h3>
+<p><em>Proposed, 2026-09-01.</em></p>
+<p>An operator can add their own vetting connector — an LLM reviewer, a sandbox, a
+corporate scanner — as <strong>configuration</strong> (<code>skills-gateway.vetting.external[*]</code>),
+not API-managed state, so every chain run stays attributable to the exact
+connector and version that produced it (GW_0049). It is a <strong>synchronous</strong> HTTP
+participant in the existing chain: the gateway POSTs the snapshot bundle and reads
+back the normalized <code>{state, report-url, findings[]}</code>. The load-bearing half is
+<strong>fail-closed</strong> — an unreachable, slow, oversized, unparseable, unrecognised or
+partial answer is an <code>error</code> verdict that blocks, never a pass (GW_0145) — plus
+<strong>worst-of</strong> aggregation so an endpoint cannot pass content its own findings
+condemn (GW_0146). A <code>pending</code> answer is the <strong>asynchronous seam</strong> and blocks
+until resolved (GW_0147); the inbound resolution callback is deliberately a
+separate, sequenced piece of work.</p>
 <h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../architecture/">Architecture</a>

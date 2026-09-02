@@ -643,6 +643,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#external-connectors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External connectors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#coverage-gaps-are-reported-not-hidden" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2273,6 +2284,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#external-connectors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External connectors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#coverage-gaps-are-reported-not-hidden" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2424,7 +2446,8 @@ verdict follows the worst severity present — <code>HIGH</code> or <code>CRITIC
 has to get its severity right.</p>
 <p><code>PENDING</code> exists so that an asynchronous connector — one that is triggered over
 a webhook and answers later — fits without changing the gate. No built-in
-connector returns it today.</p>
+connector returns it; a configured <a href="#external-connectors">external connector</a>
+that answers <code>pending</code> does, and it blocks until it is resolved.</p>
 <h2 id="fail-closed-aggregation">Fail-closed aggregation<a class="headerlink" href="#fail-closed-aggregation" title="Permanent link">&para;</a></h2>
 <p>A chain run is <strong>clear</strong> if and only if it produced at least one verdict and
 every verdict is <code>PASS</code> or <code>WARN</code>. Everything else is <strong>blocked</strong>:</p>
@@ -2686,9 +2709,27 @@ invisible to it.</p>
 <p>A <code>PASS</code> means "no known marker matched". It is triage that tells a reviewer
 where to look first — it is not a statement that the snapshot is safe, and
 reading the content is still the reviewer's job. Semantic review of skill
-instructions needs an LLM review connector, which is not part of this chain
-yet.</p>
+instructions needs an LLM review connector, which the gateway does not ship
+but an operator can add as an <a href="#external-connectors">external connector</a>.</p>
 </div>
+<h2 id="external-connectors">External connectors<a class="headerlink" href="#external-connectors" title="Permanent link">&para;</a></h2>
+<p>An operator can extend the chain with their own connectors — an LLM reviewer, a
+sandbox detonator, a corporate scanner — configured under
+<code>skills-gateway.vetting.external</code> (see
+<a href="../../reference/configuration/#external-connectors">Configuration → External connectors</a>).
+Each is an HTTP endpoint the gateway POSTs the snapshot's scannable content to
+and reads a normalized <code>{state, reportUrl, findings[]}</code> back from. A configured
+external connector runs in the chain at its position and is recorded, aggregated
+and waivable exactly like a built-in one — its findings and its external report
+link surface wherever a built-in's do.</p>
+<p>Because the endpoint is a dependency the gateway does not control, an external
+connector is <strong>fail-closed</strong> in the strong sense: an unreachable, slow, oversized,
+unparseable, unrecognised or partial answer is an <code>ERROR</code> verdict, which blocks —
+a broken external reviewer holds a snapshot, it never lets one through. And the
+recorded state is the <strong>worse</strong> of what the endpoint declared and what its own
+findings imply, so an endpoint cannot pass content its evidence condemns. An
+endpoint that needs to answer later returns <code>PENDING</code>, which blocks until it is
+resolved.</p>
 <h2 id="coverage-gaps-are-reported-not-hidden">Coverage gaps are reported, not hidden<a class="headerlink" href="#coverage-gaps-are-reported-not-hidden" title="Permanent link">&para;</a></h2>
 <p>A file larger than the configured size limit, or one that is not valid UTF-8, is
 not silently skipped: the connector records an informational
