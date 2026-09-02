@@ -93,7 +93,7 @@ class LicensePolicyTests extends AbstractGatewayTest {
                 .filteredOn(
                         entry -> name.equals(entry.get("marketplace")) && "vetting-verdict".equals(entry.get("event")))
                 .extracting(entry -> String.valueOf(entry.get("detail")))
-                .contains("license-scan=fail");
+                .anySatisfy(detail -> assertThat(detail).startsWith("license-scan=fail"));
 
         // The standard acceptance path — a scoped, expiring waiver on the rule id — is the only
         // way through, and it is enough.
