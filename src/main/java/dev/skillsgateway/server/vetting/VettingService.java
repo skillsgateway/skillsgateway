@@ -59,6 +59,7 @@ public class VettingService {
     private final GitStorage storage;
     private final AdminAuditLogger auditLogger;
     private final WebhookService webhookService;
+    private final ConnectorToggleService toggleService;
     private final SkillsGatewayProperties.Vetting properties;
     private final ExecutorService executor;
 
@@ -68,6 +69,7 @@ public class VettingService {
             GitStorage storage,
             AdminAuditLogger auditLogger,
             WebhookService webhookService,
+            ConnectorToggleService toggleService,
             SkillsGatewayProperties properties) {
         this.connectors = connectors.stream()
                 .sorted(Comparator.comparingInt(VettingConnector::order).thenComparing(VettingConnector::name))
@@ -76,6 +78,7 @@ public class VettingService {
         this.storage = storage;
         this.auditLogger = auditLogger;
         this.webhookService = webhookService;
+        this.toggleService = toggleService;
         this.properties = properties.vetting();
         // Daemon threads: a connector that ignores interruption after a timeout must never keep
         // the JVM alive. The abandoned thread is the accepted cost of in-process connectors;
@@ -160,7 +163,13 @@ public class VettingService {
         try (QuarantineSnapshot content = open(snapshot, marketplace)) {
             int position = 0;
             for (VettingConnector connector : connectors) {
-                Verdict verdict = runGuarded(connector, content);
+                // A connector an administrator switched off for this marketplace is skipped, not
+                // run, and recorded as a distinct disabled verdict so the disablement is part of
+                // the run's evidence rather than a silently shorter chain (GW_0149). The
+                // aggregation counts it as neither clearing nor blocking.
+                Verdict verdict = toggleService.enabled(connector.name(), snapshot.marketplaceId())
+                        ? runGuarded(connector, content)
+                        : Verdict.disabled(connector.name(), "for marketplace '" + marketplace + "'");
                 vettingRepository.recordVerdict(runId, connector.name(), position++, verdict);
                 states.add(verdict.state());
                 auditLogger.record(

@@ -78,6 +78,9 @@ class VettingTests extends AbstractGatewayTest {
     @Autowired
     private SkillsGatewayProperties properties;
 
+    @Autowired
+    private dev.skillsgateway.server.vetting.ConnectorToggleService connectorToggleService;
+
     @Test
     @SVCs({"SVC_GW_0037"})
     void ingestionRecordsAChainRunWithAVerdictPerConnector() throws Exception {
@@ -120,9 +123,13 @@ class VettingTests extends AbstractGatewayTest {
                     .as("single verdict %s", first)
                     .isEqualTo(first.clearing() ? VettingChain.Outcome.CLEAR : VettingChain.Outcome.BLOCKED);
             for (VerdictState second : VerdictState.values()) {
-                VettingChain.Outcome expected = first.clearing() && second.clearing()
-                        ? VettingChain.Outcome.CLEAR
-                        : VettingChain.Outcome.BLOCKED;
+                // A verdict blocks unless it clears or is DISABLED (GW_0149): an administrator
+                // switching a connector off is discounted from the block decision, but positive
+                // clearing evidence is still required from somewhere in the run.
+                boolean anyBlocking = first.blocking() || second.blocking();
+                boolean anyClearing = first.clearing() || second.clearing();
+                VettingChain.Outcome expected =
+                        !anyBlocking && anyClearing ? VettingChain.Outcome.CLEAR : VettingChain.Outcome.BLOCKED;
                 assertThat(VettingChain.aggregate(List.of(first, second)))
                         .as("verdicts %s and %s", first, second)
                         .isEqualTo(expected);
@@ -414,7 +421,13 @@ class VettingTests extends AbstractGatewayTest {
     /** A chain with exactly the given connectors, over the real repository and storage. */
     private VettingService chainOf(VettingConnector... connectors) {
         return new VettingService(
-                List.of(connectors), vettingRepository, storage, auditLogger, webhookService, properties);
+                List.of(connectors),
+                vettingRepository,
+                storage,
+                auditLogger,
+                webhookService,
+                connectorToggleService,
+                properties);
     }
 
     private VettingRepository.VerdictView verdictOf(Registered registered, String connector) {
