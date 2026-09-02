@@ -56,19 +56,28 @@ character set is constrained.
 
 ## Plugin sources inside a marketplace
 
-The current scope accepts **local sources only**.
+An unconfigured gateway accepts **local sources only**, and that is the default.
 
 | Source type | Status |
 | --- | --- |
 | Relative path inside the marketplace repository | **Accepted** |
-| `github`, `url`, `git-subdir`, `npm`, `archive`, or any external source | **Rejected fail-closed** at ingestion, with the reason recorded as the snapshot's violation |
+| `github`, `git`/`url`, `git-subdir` | **Rejected fail-closed** unless `skills-gateway.ingestion.external-sources.enabled` is set, and rejected anyway until a resolver exists — see below |
+| `npm`, `archive` | **Rejected fail-closed**, permanently: no configuration admits them |
+| Anything else — an unrecognised type, an object with no type, a value that is neither a path nor an object | **Rejected fail-closed**, with the form named in the snapshot's violation |
 
-This removes transitive resolution and source rewriting from the current scope
-entirely: relative sources resolve inside the served snapshot by themselves, so
-every URL a client dereferences already resolves inside the gateway.
+A relative source resolves inside the served snapshot by itself, so for a
+local-only marketplace every URL a client dereferences already resolves inside
+the gateway.
 
-Supporting external sources means mirroring the closure and rewriting the
-manifest — a designed future capability, not a configuration flag.
+External source support arrives in increments
+([ADR 0011](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md)).
+Today's increment is **admission**: an enabled gateway parses and accepts an
+external source rather than refusing it for its shape, but cannot yet fetch it
+and rewrite the manifest, so the snapshot is still rejected — with a violation
+saying the source was admitted and is not yet resolvable, distinct from the one
+for a source that was not admitted. A snapshot is held, and therefore approvable,
+only when every source it declares resolves inside the snapshot the gateway
+serves.
 
 ## Clients
 

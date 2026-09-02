@@ -37,6 +37,7 @@ public class IngestionService {
     private final GitStorage storage;
     private final SnapshotRepository snapshotRepository;
     private final VettingService vettingService;
+    private final ManifestPolicy manifestPolicy;
 
     /**
      * One lock per marketplace: with sync modes (GW_0057, GW_0058) a manual ingest, a scheduler
@@ -54,10 +55,12 @@ public class IngestionService {
             GitStorage storage,
             SnapshotRepository snapshotRepository,
             VettingService vettingService,
+            ManifestPolicy manifestPolicy,
             GatewayMetrics metrics) {
         this.storage = storage;
         this.snapshotRepository = snapshotRepository;
         this.vettingService = vettingService;
+        this.manifestPolicy = manifestPolicy;
         this.metrics = metrics;
     }
 
@@ -205,7 +208,7 @@ public class IngestionService {
                 .orElseThrow(() -> new IngestionException("cannot determine default branch of %s".formatted(url)));
     }
 
-    private static String validateManifest(Repository repo, ObjectId sha) throws IOException {
+    private String validateManifest(Repository repo, ObjectId sha) throws IOException {
         try (RevWalk walk = new RevWalk(repo)) {
             RevCommit commit = walk.parseCommit(sha);
             try (TreeWalk tree = TreeWalk.forPath(repo, MANIFEST_PATH, commit.getTree())) {
@@ -213,7 +216,7 @@ public class IngestionService {
                     return "missing " + MANIFEST_PATH;
                 }
                 byte[] bytes = repo.open(tree.getObjectId(0)).getBytes();
-                return ManifestPolicy.validate(bytes);
+                return manifestPolicy.validate(bytes);
             }
         }
     }

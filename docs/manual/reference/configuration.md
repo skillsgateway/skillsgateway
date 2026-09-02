@@ -7,6 +7,7 @@ Every setting the gateway reads, with its default and what consumes it.
 | Block | Purpose | Required in production |
 | --- | --- | --- |
 | [`skills-gateway.*`](#skills-gateway) | Storage location, the URL-scheme allowlist, and the development auth escape hatch. | No — all defaulted. |
+| [`skills-gateway.ingestion.*`](#ingestion-external-plugin-sources) | Whether a manifest may declare plugin sources outside the marketplace repository, and within what bounds. **Admits nothing by default.** | No — all defaulted. |
 | [`skills-gateway.webhooks.*`](#webhooks) | Outbound lifecycle-webhook dispatch: poll interval, retry budget and backoff. | No — all defaulted. |
 | [`skills-gateway.audit-export.*`](#audit-export) | Ledger export: the commit-settling lag, batch and page sizes. | No — all defaulted. |
 | [`skills-gateway.retention.*`](#retention) | Snapshot retention policies and the schedules that apply them. **Off by default.** | No — all defaulted. |
@@ -61,7 +62,7 @@ skills-gateway:
 | Property | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `skills-gateway.data-dir` | path | `data` | Relative to the working directory. `/data` in the container image. |
-| `skills-gateway.allowed-url-schemes` | list of string | `[http, https]` | See [Compatibility and allowlists](compatibility.md). |
+| `skills-gateway.allowed-url-schemes` | list of string | `[http, https]` | Governs registration **and** an admitted external plugin source's clone URL. See [Compatibility and allowlists](compatibility.md). |
 | `skills-gateway.dev-insecure-auth` | boolean | `false` | Must stay `false` outside a development loop. |
 
 !!! danger "`dev-insecure-auth` in a deployed environment"
@@ -314,6 +315,71 @@ skills-gateway:
 
 Sinks, cursors and replay are described in
 [Exporting the audit ledger](../guides/exporting-the-audit-ledger.md).
+
+---
+
+## Ingestion — external plugin sources
+
+Whether a marketplace manifest may declare plugins that live outside the
+marketplace repository (GW_0151). Java-side defaults; nothing appears in
+`application.yaml`, and an absent block is the behaviour every existing
+deployment already has.
+
+```yaml
+skills-gateway:
+  ingestion:
+    external-sources:
+      # false is GW_0003's local-only rejection: a manifest declaring a github,
+      # git, git-subdir, npm or archive source is refused, snapshot rejected.
+      enabled: false
+
+      # The types an enabled gateway will consider. Only types something can
+      # resolve belong here — the allowlist never advertises a form nothing
+      # implements.
+      allowed-types: [github]
+
+      # Exact hosts the derived clone URL may name; empty means any host. Never
+      # a suffix or pattern match: github.com does not admit evil-github.com.
+      allowed-hosts: []
+
+      # How many external sources one manifest may declare.
+      max-sources: 20
+```
+
+| Key | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `skills-gateway.ingestion.external-sources.enabled` | boolean | `false` | `false` is unchanged GW_0003 behaviour. |
+| `skills-gateway.ingestion.external-sources.allowed-types` | list | `[github]` | `npm` and `archive` are refused whatever this says. |
+| `skills-gateway.ingestion.external-sources.allowed-hosts` | list | `[]` (any) | Exact-host matching on the derived clone URL. |
+| `skills-gateway.ingestion.external-sources.max-sources` | integer | `20` | Counts external sources, not plugins. |
+
+A source's derived clone URL must also satisfy `skills-gateway.allowed-url-schemes`
+— the same allowlist that governs registration, so there is one scheme policy for
+every URL the gateway will ever dereference. A `github` shorthand is expanded to
+`https://github.com/<owner>/<repo>` before the scheme and host checks, and a
+shorthand that is not exactly `owner/repo` is refused rather than expanded.
+
+!!! warning "Enabling this admits sources; it does not yet resolve them"
+
+    This is the first increment of external plugin source support. An enabled
+    gateway *understands and accepts* an external source, but cannot yet fetch it
+    and rewrite the manifest into content it serves — so the snapshot is still
+    recorded **rejected**, with a violation saying the source was admitted and is
+    not yet resolvable (distinct from the violation for a source that was not
+    admitted). That is deliberate: a snapshot is held — and therefore approvable
+    and publishable — only when every source it declares resolves inside the
+    snapshot the gateway serves (GW_0152). Serving a manifest that still points a
+    client at an external URL would reopen threat T4. See
+    [ADR 0011](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md).
+
+!!! danger "Egress isolation is the control that matters, and it is not in this file"
+
+    When resolution lands, manifest content — attacker-influenced upstream data —
+    will drive gateway-originated fetches. The allowlists above are **defence in
+    depth, not the primary control**. Run ingestion egress through a proxy or DMZ
+    with no route to cloud metadata endpoints, internal APIs, or anything holding
+    corporate credentials. The gateway documents the topology; the network
+    enforces it.
 
 ---
 

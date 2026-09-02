@@ -1598,3 +1598,54 @@ cases:
       and the new state, and the snapshot ingested with every connector disabled is
       blocked rather than clear
     revision: "0.1.0"
+
+  - id: SVC_GW_0150
+    requirement_ids: ["GW_0150"]
+    title: Every plugin source form is classified, and the unsupported ones fail closed by type
+    verification: automated-test
+    description: |
+      GIVEN manifests declaring in turn a relative local path, a github source, a git
+      url source, a git-subdir source, an npm source, an archive source, a source
+      carrying a type the gateway does not implement, a source that is neither a string
+      nor an object, and a local path that escapes the marketplace repository
+      WHEN each manifest is validated at ingestion
+      THEN the local path is classified local and accepted, each external form is
+      classified as its declared type rather than refused for not being a string, and
+      the npm, archive, unrecognised-type, unparseable and escaping-path manifests are
+      each refused with a violation naming the offending plugin and the form its source
+      took, with the snapshot recorded rejected
+    revision: "0.1.0"
+
+  - id: SVC_GW_0151
+    requirement_ids: ["GW_0151"]
+    title: External sources are admitted only when enabled, and only within the configured bounds
+    verification: automated-test
+    description: |
+      GIVEN a manifest declaring a github plugin source, and a gateway configured in turn
+      with external sources left at their default, with them enabled, with them enabled
+      but the source's type absent from the type allowlist, with them enabled but the
+      source's derived clone URL host absent from a non-empty host allowlist, with them
+      enabled but the derived clone URL carrying a scheme outside the gateway's URL
+      scheme allowlist, and with them enabled but the manifest declaring more external
+      sources than the configured maximum
+      WHEN each configuration validates the manifest at ingestion
+      THEN the default configuration refuses the source as not admitted, the enabled
+      configuration admits it, each of the type, host, scheme and count configurations
+      refuses it with a violation naming the plugin and which bound it exceeded, and no
+      configuration causes a network request to the source
+    revision: "0.1.0"
+
+  - id: SVC_GW_0152
+    requirement_ids: ["GW_0152"]
+    title: An admitted but unresolved external source is rejected, never held
+    verification: automated-test
+    description: |
+      GIVEN a gateway with external plugin sources enabled and a manifest declaring a
+      github plugin source the gateway admits but cannot yet resolve into gateway-local
+      content
+      WHEN ingestion runs, and an approver attempts to approve the resulting snapshot
+      THEN the snapshot is recorded rejected rather than held, its violation states that
+      the source was admitted but is not yet resolvable and is distinguishable from the
+      violation recorded when the same source is not admitted, the approval is refused,
+      and the published repository is unchanged
+    revision: "0.1.0"
