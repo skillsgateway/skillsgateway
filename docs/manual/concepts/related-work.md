@@ -4,12 +4,10 @@ Skills Gateway is not the only product occupying the "central place for AI
 agent skills" space. This page positions it against the closest alternatives,
 so the difference in trust model is explicit rather than implied by the name.
 
-!!! note "This is a point-in-time comparison"
-
-    Every product on this page is under active development, and several are in
-    preview. Each section states the date its claims were read from the linked
-    primary source. Treat anything undated as unverified, and re-read the
-    vendor's own documentation before making a decision on it.
+_Every product on this page is under active development, and several are in
+preview. Each section states the date its claims were read from the linked
+primary source; treat anything undated as unverified, and re-read the
+vendor's own documentation before deciding on it._
 
 ## LiteLLM Skills Gateway
 
@@ -186,17 +184,17 @@ current availability with JFrog before comparing it as a shipping product.
 Read the columns as answers to the same question, not as scores; agentgateway
 in particular is a different layer and several rows do not apply to it.
 
-| Concern | LiteLLM Skills Gateway | agentgateway | AWS Agent Registry | JFrog AI Catalog | Skills Gateway |
+| Concern | Skills Gateway | LiteLLM Skills Gateway | agentgateway | AWS Agent Registry | JFrog AI Catalog |
 | --- | --- | --- | --- | --- | --- |
-| What is registered | A pointer to an upstream GitHub URL | Nothing — a route to a live MCP/A2A/LLM backend | A metadata record: a schema-validated descriptor plus an optional repository URL or package identifier | Metadata over a versioned artifact stored in Artifactory | The upstream URL, ingested into a quarantine repository |
-| What clients receive | Content fetched from upstream at install time | Proxied protocol traffic, live from the backend | Descriptor metadata from search; the skill itself is fetched elsewhere | The artifact from Artifactory, through Agent Guard or a package client | Bytes from a SHA-pinned, human-approved snapshot served by the read-only facade |
-| Publish gate | Listing visibility (enable/disable) | None — a route is a configuration change | Curator approve/reject with a `statusReason`; auto-approval is a per-registry option | Project-scoped approval, plus Curation policy at the repository perimeter | Human approval of a specific snapshot; held updates never displace the approved one |
-| Rug-pull protection | None — upstream refs stay mutable and authoritative | None — the backend is live and mutable by design | Partial: an edit becomes a new `DRAFT` while the approved revision stays discoverable — but the referenced repository or package is outside the registry's control | Strong for what Artifactory stores (immutable, signed artifacts); not documented for remote-endpoint MCP servers | The core of the design: [snapshots and held updates](snapshots-and-ledger.md) |
-| Revocation | Disable the listing; already-installed content unaffected | Remove the route or policy; effective for new calls | Deprecate (terminal, irreversible) or reject to hide from discovery; already-fetched content unaffected | Unapprove or block via Curation; Agent Guard refuses at call time | Revocation unpublishes the served ref itself |
-| Audit | Not described | Per-request OpenTelemetry metrics, logs and traces | CloudTrail management events for the control plane; no data-plane consumption logging documented | Platform audit and ML-BOM provenance; not detailed on the public pages | Append-only ledger of every fetch and administrative action |
-| Facade access | Unauthenticated public hub | JWT/OAuth/API key with CEL authorization, enforced by the proxy | IAM or JWT for search and the MCP endpoint; control plane always IAM | JFrog Platform credentials, enforced client-side by Agent Guard | PAT-only facade — a deliberate [trust boundary](trust-boundaries.md) |
-| Single catalog | Generated manifest of external pointers | One endpoint multiplexing many MCP backends — no catalog of content | One registry with hybrid search and a native MCP endpoint | One system of record across models, MCP servers and skills | The [virtual catalog](../guides/virtual-catalog.md), strictly derived from approved-and-served snapshots, self-contained relative sources only |
-| Skill metadata for discovery | Semver, keywords, domains/namespaces per skill | Not applicable | `SKILL.md` plus a structured definition, with hybrid semantic and keyword search | Versioned skill packages with scan and signature status | Marketplace-granular catalog; skill-level browse is not a current capability |
+| What is registered | The upstream URL, ingested into a quarantine repository | A pointer to an upstream GitHub URL | Nothing — a route to a live MCP/A2A/LLM backend | A metadata record: a schema-validated descriptor plus an optional repository URL or package identifier | Metadata over a versioned artifact stored in Artifactory |
+| What clients receive | Bytes from a SHA-pinned, human-approved snapshot served by the read-only facade | Content fetched from upstream at install time | Proxied protocol traffic, live from the backend | Descriptor metadata from search; the skill itself is fetched elsewhere | The artifact from Artifactory, through Agent Guard or a package client |
+| Publish gate | Human approval of a specific snapshot; held updates never displace the approved one | Listing visibility (enable/disable) | None — a route is a configuration change | Curator approve/reject with a `statusReason`; auto-approval is a per-registry option | Project-scoped approval, plus Curation policy at the repository perimeter |
+| Rug-pull protection | The core of the design: [snapshots and held updates](snapshots-and-ledger.md) | None — upstream refs stay mutable and authoritative | None — the backend is live and mutable by design | Partial: an edit becomes a new `DRAFT` while the approved revision stays discoverable — but the referenced repository or package is outside the registry's control | Strong for what Artifactory stores (immutable, signed artifacts); not documented for remote-endpoint MCP servers |
+| Revocation | Revocation unpublishes the served ref itself | Disable the listing; already-installed content unaffected | Remove the route or policy; effective for new calls | Deprecate (terminal, irreversible) or reject to hide from discovery; already-fetched content unaffected | Unapprove or block via Curation; Agent Guard refuses at call time |
+| Audit | Append-only ledger of every fetch and administrative action | Not described | Per-request OpenTelemetry metrics, logs and traces | CloudTrail management events for the control plane; no data-plane consumption logging documented | Platform audit and ML-BOM provenance; not detailed on the public pages |
+| Facade access | PAT-only facade — a deliberate [trust boundary](trust-boundaries.md) | Unauthenticated public hub | JWT/OAuth/API key with CEL authorization, enforced by the proxy | IAM or JWT for search and the MCP endpoint; control plane always IAM | JFrog Platform credentials, enforced client-side by Agent Guard |
+| Single catalog | The [virtual catalog](../guides/virtual-catalog.md), strictly derived from approved-and-served snapshots, self-contained relative sources only | Generated manifest of external pointers | One endpoint multiplexing many MCP backends — no catalog of content | One registry with hybrid search and a native MCP endpoint | One system of record across models, MCP servers and skills |
+| Skill metadata for discovery | Marketplace-granular catalog; skill-level browse is not a current capability | Semver, keywords, domains/namespaces per skill | Not applicable | `SKILL.md` plus a structured definition, with hybrid semantic and keyword search | Versioned skill packages with scan and signature status |
 
 ## What this means
 
