@@ -5,7 +5,7 @@
         "description": "Optional approval body carrying an administrative override of a blocked vetting outcome",
         "properties": {
           "overrideVetting": {
-            "description": "Set true, as an administrator, to approve despite a blocked vetting outcome (GW_0142); a reason is then required and the override is recorded distinctly",
+            "description": "Set true, as an administrator, to approve despite a blocked vetting outcome (GW_0148); a reason is then required and the override is recorded distinctly",
             "type": "boolean"
           },
           "reason": {
@@ -2013,7 +2013,7 @@
             "type": "string"
           },
           "detail": {
-            "description": "One-line summary of the findings, or null when there are none",
+            "description": "One-line summary: how many findings and the worst severity, or — for a clean pass with no findings — what the connector examined",
             "type": "string"
           },
           "findings": {
@@ -2110,7 +2110,7 @@
           },
           "override": {
             "$ref": "#/components/schemas/VettingOverrideRecord",
-            "description": "Present when an administrator approved this snapshot over a blocked vetting outcome (GW_0142); its presence is what surfaces the override so it is never indistinguishable from a clean approval. Null otherwise."
+            "description": "Present when an administrator approved this snapshot over a blocked vetting outcome (GW_0148); its presence is what surfaces the override so it is never indistinguishable from a clean approval. Null otherwise."
           },
           "recordedOutcome": {
             "description": "What the connectors themselves concluded, before any waiver was applied",
@@ -3588,7 +3588,7 @@
     },
     "/api/snapshots/{id}/approve": {
       "post": {
-        "description": "Publishes the snapshot to the git facade and records the reviewer identity and timestamp. The request body is optional. Held snapshots and snapshots that re-vetting revoked can be approved; a revoked one is re-published only by this fresh decision, behind the same gate, which means the violation that revoked it must have been waived or fixed first. A snapshot whose effective vetting outcome is blocked — its chain run objects and at least one blocking finding is not covered by an active waiver, including a snapshot with no chain run at all — is refused, and the problem document names both the blocking connectors and the uncovered findings. Record a scoped, expiring waiver for each of those findings and approve again; every waiver that let the approval through is written to the ledger. Alternatively an administrator — and only an administrator — may set overrideVetting with a reason to approve over the block (GW_0142): the override lifts only the vetting gate, is written to the ledger as a distinct event with the failing verdicts, and marks the snapshot approved over a vetting failure.",
+        "description": "Publishes the snapshot to the git facade and records the reviewer identity and timestamp. The request body is optional. Held snapshots and snapshots that re-vetting revoked can be approved; a revoked one is re-published only by this fresh decision, behind the same gate, which means the violation that revoked it must have been waived or fixed first. A snapshot whose effective vetting outcome is blocked — its chain run objects and at least one blocking finding is not covered by an active waiver, including a snapshot with no chain run at all — is refused, and the problem document names both the blocking connectors and the uncovered findings. Record a scoped, expiring waiver for each of those findings and approve again; every waiver that let the approval through is written to the ledger. Alternatively an administrator — and only an administrator — may set overrideVetting with a reason to approve over the block (GW_0148): the override lifts only the vetting gate, is written to the ledger as a distinct event with the failing verdicts, and marks the snapshot approved over a vetting failure.",
         "operationId": "approve",
         "parameters": [
           {

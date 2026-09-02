@@ -22,6 +22,12 @@ correlation), and why EVIDENCE reports layered, auditable confidence, never
 absolute proof. Every shortcut you take against the gauntlet destroys the only
 basis of trust.
 
+**Composition with `old-coder-api`:** when both skills apply, this skill owns
+workflow order, SPEC approval, the gauntlet, and EVIDENCE; `old-coder-api` owns
+the HTTP/JSON contract. Run its scope check and API gates while drafting SPEC,
+turn the surviving constraints and risks into acceptance criteria and checks,
+then map those checks into EVIDENCE. Do not run two parallel workflows.
+
 ## The Loop
 
 ```
@@ -45,11 +51,11 @@ implementation files:
   line — never silently absent from the mapping.
 - The spec doubles as the authorization point: include the **setup plan** —
   tools to install, git usage (init? checkpoint commit cadence?), files the
-  gauntlet will add, and **every new dependency with a one-line justification**
-  (prefer the standard library and deps already present; an unjustified
-  package is a spec defect) — so approving the spec authorizes the environment
-  changes in one step instead of N interruptions, and the human can veto a
-  risky package before it is ever installed.
+  gauntlet will add **by path**, and **every new dependency with a one-line
+  justification** (prefer the standard library and deps already present; an
+  unjustified package is a spec defect) — so approving the spec authorizes the
+  environment changes in one step instead of N interruptions, and the human can
+  veto a risky package before it is ever installed.
 - Show the spec to the human in plain language and get approval **before writing
   implementation**. In autonomous mode, state the spec in your response and
   proceed — but the correlation-breaking review never happened, so EVIDENCE
@@ -71,7 +77,14 @@ implementation files:
   wrong, say so explicitly and revise it visibly — never silently drift.
 - **Write the spec to a file and name it by absolute path.** A relative path is
   not clickable in a terminal, so the human cannot open the one artifact they
-  are being asked to approve. Same for EVIDENCE when you get there.
+  are being asked to approve. Same for EVIDENCE when you get there. The SPEC
+  and Gherkin templates are in `references/templates.md`.
+- **Commit the spec at approval** where the repo's git conventions allow it —
+  the setup plan is where that was authorized. Once the approved spec is a
+  commit, later drift is literally a `git diff`. Without a durable spec, a
+  compaction loses the approved contract while the code it authorized remains,
+  and nobody can check whether a scenario was quietly dropped from the EVIDENCE
+  mapping.
 
 ### 2. RED — prove each test can fail
 
@@ -175,7 +188,7 @@ such excuse: you chose them, so choose real bugs.
 ### 6. EVIDENCE — the only thing the human reads after code
 
 End with a report the human can trust without opening a single source file
-(template in `references/gauntlet.md`):
+(template in `references/templates.md`):
 
 - The approved spec, with each behavior mapped to the test that verifies it.
 - Each gauntlet layer: the command run, and its actual result (pasted numbers,
@@ -283,6 +296,20 @@ until that file has been read in full and executed; missing or unreadable →
   spec. On Tier 3 it needs no apology — say so and claim less.
 
 ## Setup
+
+**Isolation — do not mutate the user's working tree to do your work.** Declare
+the mechanism in the SPEC, with one line of why: a worktree, a branch, or none —
+the last only at Tier 1, where the blast radius is a typo. The human vetoes the
+mechanism at approval rather than discovering it afterwards.
+
+The trap: **a fresh worktree contains no gitignored content**, so the gauntlet
+often cannot run there until dependencies are rebuilt. Two outcomes are
+acceptable — rebuild and run there, or fall back to a branch and record why.
+Never report green from a tree that never ran the suite.
+
+Where the isolated tree and the tree the change lands in differ by ignored or
+untracked content, say so in EVIDENCE: a green run in a tree missing the landing
+tree's `.env` or build outputs is not evidence about the landing tree.
 
 If the project has no test runner, no linter, or no type checking, set up the
 minimal standard toolchain for the language **first** (see

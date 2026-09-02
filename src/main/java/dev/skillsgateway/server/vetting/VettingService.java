@@ -44,6 +44,16 @@ public class VettingService {
 
     private static final Logger log = LoggerFactory.getLogger(VettingService.class);
 
+    /**
+     * The ledger principal of the automated vetting chain (GW_0128). The chain is the gateway's own
+     * subsystem acting on its own, not a person, so its entries are typed {@link
+     * dev.skillsgateway.server.persistence.ActorType#SYSTEM} — declared here and recognised by
+     * {@code AdminAuditLogger}'s system-actor set, the one place a ledger entry's actor kind is
+     * decided. Referencing this constant rather than re-spelling {@code "vetting"} makes a rename a
+     * compile error instead of a silently mistyped, mis-attributed entry.
+     */
+    public static final String VETTING_ACTOR = "vetting";
+
     private final List<VettingConnector> connectors;
     private final VettingRepository vettingRepository;
     private final GitStorage storage;
@@ -105,6 +115,34 @@ public class VettingService {
         return run(snapshot, marketplace, VettingRepository.TRIGGER_INGESTION).outcome();
     }
 
+    /**
+     * The ledger detail of one connector verdict (GW_0043). It leads with {@code connector=state}
+     * so the row is scannable, then carries the finding count and the worst severity present and a
+     * reference to the chain run the verdict belongs to — so the ledger is auditable on its own
+     * rather than as a pointer back into the vetting tables. For a clean pass with no findings it
+     * appends the connector's coverage statement (GW_0143), so a passing row still says what was
+     * examined instead of only that nothing was found.
+     */
+    @Requirements({"GW_0043", "GW_0142"})
+    static String verdictDetail(VettingConnector connector, Verdict verdict, long runId) {
+        String worst = verdict.findings().stream()
+                .map(Finding::severity)
+                .max(Severity::compareTo)
+                .map(Severity::stored)
+                .orElse("none");
+        StringBuilder detail = new StringBuilder("%s=%s; findings=%d; worst=%s; run=%d"
+                .formatted(
+                        connector.name(),
+                        verdict.state().stored(),
+                        verdict.findings().size(),
+                        worst,
+                        runId));
+        if (verdict.findings().isEmpty() && verdict.summary() != null) {
+            detail.append("; ").append(verdict.summary());
+        }
+        return detail.toString();
+    }
+
     /** One chain run and the id it was recorded under. */
     public record Run(long runId, VettingChain.Outcome outcome) {}
 
@@ -135,11 +173,11 @@ public class VettingService {
                 vettingRepository.recordVerdict(runId, connector.name(), position++, verdict);
                 states.add(verdict.state());
                 auditLogger.record(
-                        "vetting",
+                        VETTING_ACTOR,
                         marketplace,
                         "vetting-verdict",
                         snapshot.sha(),
-                        "%s=%s".formatted(connector.name(), verdict.state().stored()));
+                        verdictDetail(connector, verdict, runId));
             }
         } catch (Exception e) {
             // The content itself could not be opened: nothing was vetted, so nothing clears. The
@@ -152,12 +190,12 @@ public class VettingService {
         VettingChain.Outcome outcome = VettingChain.aggregate(states);
         vettingRepository.finishRun(runId, outcome);
         auditLogger.record(
-                "vetting",
+                VETTING_ACTOR,
                 marketplace,
                 "vetting-completed",
                 snapshot.sha(),
-                "trigger=%s; outcome=%s; connectors=%d; chain=%s"
-                        .formatted(trigger, outcome.stored(), states.size(), chainIdentity()));
+                "trigger=%s; outcome=%s; connectors=%d; run=%d; chain=%s"
+                        .formatted(trigger, outcome.stored(), states.size(), runId, chainIdentity()));
         webhookService.emit(
                 WebhookEvent.SNAPSHOT_VETTED, marketplace, snapshot.id(), snapshot.sha(), snapshot.state(), "vetting");
         return new Run(runId, outcome);

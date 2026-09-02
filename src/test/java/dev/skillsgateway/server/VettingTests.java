@@ -319,13 +319,103 @@ class VettingTests extends AbstractGatewayTest {
                     assertThat(entry.get("sha")).isEqualTo(sha);
                     assertThat(String.valueOf(entry.get("detail"))).contains("outcome=blocked");
                 });
+        // The verdict rows still lead with connector=state, and now carry the finding count, the
+        // worst severity and the run they belong to (GW_0142) — additive over the old assertion.
         assertThat(entries)
                 .filteredOn(entry -> "vetting-verdict".equals(entry.get("event")))
                 .extracting(entry -> String.valueOf(entry.get("detail")))
-                .contains("secret-scan=fail", "prompt-injection=pass");
+                .anySatisfy(detail -> assertThat(detail).startsWith("secret-scan=fail"))
+                .anySatisfy(detail -> assertThat(detail).startsWith("prompt-injection=pass"));
         assertThat(entries)
                 .filteredOn(entry -> "vetting-verdict".equals(entry.get("event")))
                 .allSatisfy(entry -> assertThat(entry.get("sha")).isEqualTo(sha));
+    }
+
+    /**
+     * A vetting-verdict ledger entry is self-sufficient (GW_0142): it names the finding count and
+     * the worst severity present and references the chain run it belongs to; the run-completed
+     * entry references the same run; and every vetting entry is typed as the gateway's own
+     * automated subsystem, never as a human actor.
+     */
+    @Test
+    @SVCs({"SVC_GW_0142"})
+    void vettingLedgerEntriesAreSelfDescribingAndTypedAsSystem() throws Exception {
+        String name = uniqueName("vetledgerrich");
+        Registered blocked = registerAndIngest(
+                name, createUpstream(DEFAULT_MANIFEST, Map.of("plugins/hello/DEPLOY.md", PLANTED_SECRETS)));
+        long snapshotId = blocked.snapshot().id();
+        long runId = vettingRepository.latestRun(snapshotId).orElseThrow().runId();
+
+        List<Map<String, Object>> vetting = fetchLogRepository.list().stream()
+                .filter(entry -> name.equals(entry.get("marketplace")))
+                .filter(entry -> String.valueOf(entry.get("event")).startsWith("vetting-"))
+                .toList();
+        assertThat(vetting).isNotEmpty();
+
+        // Every vetting entry is the gateway acting on its own, not a person.
+        assertThat(vetting)
+                .allSatisfy(entry -> assertThat(entry.get("actor_type")).isEqualTo("system"));
+        assertThat(vetting)
+                .allSatisfy(entry -> assertThat(entry.get("principal")).isEqualTo("vetting"));
+
+        // A failing verdict carries its count, its worst severity, and the run it belongs to.
+        assertThat(vetting)
+                .filteredOn(entry -> "vetting-verdict".equals(entry.get("event")))
+                .extracting(entry -> String.valueOf(entry.get("detail")))
+                .anySatisfy(detail -> assertThat(detail)
+                        .startsWith("secret-scan=fail")
+                        .contains("worst=critical")
+                        .contains("run=" + runId)
+                        .containsPattern("findings=[1-9]"));
+
+        // A passing verdict states zero findings, no worst severity, and still the run.
+        assertThat(vetting)
+                .filteredOn(entry -> "vetting-verdict".equals(entry.get("event")))
+                .extracting(entry -> String.valueOf(entry.get("detail")))
+                .anySatisfy(detail -> assertThat(detail)
+                        .startsWith("prompt-injection=pass")
+                        .contains("findings=0")
+                        .contains("worst=none")
+                        .contains("run=" + runId));
+
+        // The completion entry references the same run, so the scattered verdicts reassemble.
+        assertThat(vetting)
+                .filteredOn(entry -> "vetting-completed".equals(entry.get("event")))
+                .singleElement()
+                .satisfies(
+                        entry -> assertThat(String.valueOf(entry.get("detail"))).contains("run=" + runId));
+    }
+
+    /**
+     * A clean connector pass records what it examined (GW_0143): its verdict detail is non-empty
+     * and states the coverage, so "pass" is distinguishable from "did not run" — in the recorded
+     * verdict and in the ledger alike.
+     */
+    @Test
+    @SVCs({"SVC_GW_0143"})
+    void aCleanPassRecordsTheCoverageItExamined() throws Exception {
+        String name = uniqueName("vetcoverage");
+        Registered clean = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
+
+        VettingRepository.VerdictView secret = verdictOf(clean, "secret-scan");
+        assertThat(secret.state()).isEqualTo(VerdictState.PASS);
+        assertThat(secret.detail()).isNotBlank();
+        assertThat(secret.detail()).contains("scanned").contains("rules");
+
+        VettingRepository.VerdictView injection = verdictOf(clean, "prompt-injection");
+        assertThat(injection.state()).isEqualTo(VerdictState.PASS);
+        assertThat(injection.detail()).isNotBlank();
+        assertThat(injection.detail()).contains("scanned").contains("rules");
+
+        // The same coverage reaches the ledger: no passing vetting-verdict entry has a null detail.
+        assertThat(fetchLogRepository.list().stream()
+                        .filter(entry -> name.equals(entry.get("marketplace")))
+                        .filter(entry -> "vetting-verdict".equals(entry.get("event")))
+                        .filter(entry -> String.valueOf(entry.get("detail")).contains("=pass"))
+                        .toList())
+                .isNotEmpty()
+                .allSatisfy(
+                        entry -> assertThat(String.valueOf(entry.get("detail"))).contains("scanned"));
     }
 
     /** A chain with exactly the given connectors, over the real repository and storage. */

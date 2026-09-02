@@ -91,10 +91,15 @@ public class VettingRepository {
         }
     }
 
-    /** A one-line summary so the verdict row is readable without joining the findings. */
+    /**
+     * A one-line summary so the verdict row is readable without joining the findings (GW_0143).
+     * When there are findings it names how many and the worst severity; when there are none it
+     * falls back to the connector's coverage summary — what it examined — so a clean pass records
+     * substance rather than a null that reads the same as "the connector never ran".
+     */
     private static String detailOf(Verdict verdict) {
         if (verdict.findings().isEmpty()) {
-            return null;
+            return verdict.summary();
         }
         return "%d finding(s); worst %s"
                 .formatted(
@@ -196,7 +201,9 @@ public class VettingRepository {
             @Schema(description = "The connector's conclusion")
             VerdictState state,
 
-            @Schema(description = "One-line summary of the findings, or null when there are none")
+            @Schema(
+                    description = "One-line summary: how many findings and the worst severity, or — for a clean"
+                            + " pass with no findings — what the connector examined")
             String detail,
 
             @Schema(description = "External report URL, when the connector produced one")

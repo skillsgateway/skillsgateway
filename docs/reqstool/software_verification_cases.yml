@@ -1480,6 +1480,88 @@ cases:
       this path
     revision: "0.1.0"
 
+  - id: SVC_GW_0142
+    requirement_ids: ["GW_0142"]
+    title: Vetting ledger entries carry the run, the finding count and severity, and a system actor
+    verification: automated-test
+    description: |
+      GIVEN a snapshot taken through a chain run that both fails and passes connectors
+      WHEN the audit ledger is read
+      THEN each vetting-verdict entry carries the connector name and conclusion, the
+      number of findings, the worst severity present or none, and the id of the chain
+      run it belongs to
+      AND the vetting-completed entry carries that same run id
+      AND every vetting entry is typed as the gateway acting on its own rather than as a
+      human actor
+    revision: "0.1.0"
+
+  - id: SVC_GW_0143
+    requirement_ids: ["GW_0143"]
+    title: A clean connector pass records the coverage it examined
+    verification: automated-test
+    description: |
+      GIVEN a snapshot whose content trips no secret-scan or prompt-injection rule
+      WHEN its recorded verdicts and the ledger are read
+      THEN each passing connector's detail is non-empty and states what it examined —
+      the files it scanned and the rules it applied — rather than being null and
+      indistinguishable from a connector that never ran
+    revision: "0.1.0"
+
+  - id: SVC_GW_0144
+    requirement_ids: ["GW_0144"]
+    title: A configured external connector joins the chain and runs in order
+    verification: automated-test
+    description: |
+      GIVEN a gateway configured with an external vetting connector at an ordered
+      position, endpoint URL and rule-set version
+      WHEN the chain is inspected and a snapshot is vetted
+      THEN the external connector appears in the chain at its configured position
+      alongside the unremoved built-ins, the chain identity names it and its version,
+      the snapshot bundle it is sent carries the snapshot identity and its scannable
+      file content, and a passing answer is recorded as a passing verdict that clears
+    revision: "0.1.0"
+
+  - id: SVC_GW_0145
+    requirement_ids: ["GW_0145"]
+    title: Every inconclusive answer from an external connector blocks
+    verification: automated-test
+    description: |
+      GIVEN an external vetting connector whose endpoint is in turn unreachable,
+      refusing the connection, hanging past the read timeout, returning a non-success
+      status, returning an empty, oversized or unparseable body, declaring an
+      unrecognised or missing verdict state, returning a malformed finding, and being
+      sent a snapshot whose content exceeds the request cap
+      WHEN each snapshot is vetted
+      THEN each case records an error verdict and a blocked outcome, none records a
+      passing or clearing verdict, and a snapshot so blocked stays held and cannot be
+      approved
+    revision: "0.1.0"
+
+  - id: SVC_GW_0146
+    requirement_ids: ["GW_0146"]
+    title: External verdicts take the worst of declared and derived, and carry their report link
+    verification: automated-test
+    description: |
+      GIVEN an external connector that returns a failing state with findings and a
+      report link, and separately one that declares a passing state alongside a
+      critical finding
+      WHEN each snapshot is vetted
+      THEN the failing verdict persists its findings and its report link through the
+      verdict model, and the declared pass alongside a critical finding is recorded as
+      a failing verdict that blocks, while informational findings alone still pass
+    revision: "0.1.0"
+
+  - id: SVC_GW_0147
+    requirement_ids: ["GW_0147"]
+    title: A pending answer from an external connector blocks as the async seam
+    verification: automated-test
+    description: |
+      GIVEN an external vetting connector whose endpoint answers with a pending state
+      WHEN the snapshot is vetted
+      THEN the verdict is recorded as pending, the run outcome is blocked, the pending
+      state does not clear, and the snapshot stays held and cannot be approved
+    revision: "0.1.0"
+
   - id: SVC_GW_0148
     requirement_ids: ["GW_0148"]
     title: An administrator overrides a blocked vetting outcome, audibly and no one else can
