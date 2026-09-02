@@ -13,13 +13,13 @@ require **admin** specifically: overriding a blocked vetting outcome on approve,
 and enabling or disabling a connector.
 
 **Machine reach.** `marketplaces:read` covers `GET /marketplaces`, `GET
-/catalog` and a snapshot's `/content`, `/licenses`, `/provenance` and
-`/release-age`; `snapshots:read` covers `/diff`, `/file`, `/files`, `/vetting`,
-`/fetchers` and `/four-eyes`; `marketplaces:register`, `marketplaces:ingest`,
-`vetting:run`, `sync:write` and `waivers:read` cover the corresponding
-mutations and the waiver listing. **Approve, reject, waiver create, waiver
-delete, snapshot delete and snapshot restore are reachable by no scope at
-all** — they publish, refuse or retract content. See
+/catalog` and a snapshot's `/content`, `/content-diff`, `/licenses`,
+`/provenance` and `/release-age`; `snapshots:read` covers `/diff`, `/file`,
+`/files`, `/vetting`, `/fetchers` and `/four-eyes`; `marketplaces:register`,
+`marketplaces:ingest`, `vetting:run`, `sync:write` and `waivers:read` cover
+the corresponding mutations and the waiver listing. **Approve, reject, waiver
+create, waiver delete, snapshot delete and snapshot restore are reachable by no
+scope at all** — they publish, refuse or retract content. See
 [Machine API credentials](tokens.md#machine-api-credentials).
 
 ## Representations

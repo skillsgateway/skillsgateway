@@ -148,6 +148,8 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         mockMvc.perform(get("/api/marketplaces").with(mallory)).andExpect(status().isOk());
         mockMvc.perform(get("/api/snapshots/{id}/content", snapshotId).with(mallory))
                 .andExpect(status().isOk());
+        mockMvc.perform(get("/api/snapshots/{id}/content-diff", snapshotId).with(mallory))
+                .andExpect(status().isOk());
         mockMvc.perform(get("/api/snapshots/{id}/provenance", snapshotId).with(mallory))
                 .andExpect(status().isOk());
         mockMvc.perform(get("/api/snapshots/{id}/vetting", snapshotId).with(mallory))

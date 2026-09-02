@@ -224,7 +224,7 @@ credential reaches the union of its scopes' endpoints and nothing more.
 
 | Scope | Reaches |
 | --- | --- |
-| `marketplaces:read` | `GET /api/marketplaces`, `GET /api/catalog`, and a snapshot's `/content`, `/licenses`, `/provenance`, `/release-age` |
+| `marketplaces:read` | `GET /api/marketplaces`, `GET /api/catalog`, and a snapshot's `/content`, `/content-diff`, `/licenses`, `/provenance`, `/release-age` |
 | `snapshots:read` | A snapshot's `/diff`, `/file`, `/files`, `/vetting`, `/fetchers`, `/four-eyes` |
 | `marketplaces:register` | `POST /api/marketplaces` |
 | `marketplaces:ingest` | `POST /api/marketplaces/{name}/ingest` |

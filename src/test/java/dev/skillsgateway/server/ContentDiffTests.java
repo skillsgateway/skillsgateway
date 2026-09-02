@@ -25,8 +25,7 @@ import org.junit.jupiter.api.Test;
  */
 class ContentDiffTests extends AbstractGatewayTest {
 
-    private static final String THREE_PLUGIN_MANIFEST =
-            """
+    private static final String THREE_PLUGIN_MANIFEST = """
             {
               "name": "diff-marketplace",
               "owner": {"name": "Test"},
@@ -39,8 +38,7 @@ class ContentDiffTests extends AbstractGatewayTest {
             """;
 
     /** The same manifest with {@code legacy} dropped: a plugin a reviewer must be shown leaving. */
-    private static final String TWO_PLUGIN_MANIFEST =
-            """
+    private static final String TWO_PLUGIN_MANIFEST = """
             {
               "name": "diff-marketplace",
               "owner": {"name": "Test"},
@@ -69,8 +67,7 @@ class ContentDiffTests extends AbstractGatewayTest {
         String noBaseline = diff(first);
         assertThat((Object) JsonPath.read(noBaseline, "$.baselineSnapshotId")).isNull();
         assertThat((Object) JsonPath.read(noBaseline, "$.baselineSha")).isNull();
-        assertThat(this.<String>values(noBaseline, "$.plugins[*].status"))
-                .containsOnly("added");
+        assertThat(this.<String>values(noBaseline, "$.plugins[*].status")).containsOnly("added");
         assertThat(this.<String>values(noBaseline, "$.plugins[*].skills[*].status"))
                 .containsOnly("added");
         assertThat((Integer) JsonPath.read(noBaseline, "$.summary.added")).isEqualTo(4);
@@ -106,7 +103,8 @@ class ContentDiffTests extends AbstractGatewayTest {
         assertThat(this.<String>values(
                         body, "$.plugins[?(@.name == 'review')].skills[?(@.name == 'critique')].movedFromPlugin"))
                 .containsExactly("hello");
-        assertThat(this.<String>values(body, "$.plugins[?(@.name == 'review')].skills[?(@.name == 'summarize')].status"))
+        assertThat(this.<String>values(
+                        body, "$.plugins[?(@.name == 'review')].skills[?(@.name == 'summarize')].status"))
                 .containsExactly("changed");
 
         assertThat(this.<String>values(body, "$.plugins[?(@.name == 'legacy')].status"))
@@ -125,8 +123,8 @@ class ContentDiffTests extends AbstractGatewayTest {
     }
 
     private String diff(long snapshotId) throws Exception {
-        return mockMvc.perform(
-                        get("/api/snapshots/%d/content-diff".formatted(snapshotId)).with(oidcLogin()))
+        return mockMvc.perform(get("/api/snapshots/%d/content-diff".formatted(snapshotId))
+                        .with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
