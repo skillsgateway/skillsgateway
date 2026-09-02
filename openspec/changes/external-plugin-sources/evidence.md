@@ -65,17 +65,18 @@ Run against the tree at the implementation commit.
 | Style | `./mvnw checkstyle:check` | BUILD SUCCESS |
 | New unit tests | `./mvnw -Dtest=PluginSourceTests,ExternalSourceAdmissionTests,ManifestPolicyTests test` | Tests run: 19, Failures: 0, Errors: 0 |
 | SVC_GW_0003 regression | `./mvnw -Dtest=IngestionTests,HostedLifecycleTests test` | Tests run: 8, Failures: 0, Errors: 0 — **both suites unmodified** |
-| Full build | `./mvnw -o clean verify` | **Killed by a 1h timeout at 77/85 classes — see below** |
+| Full build | `./mvnw -o clean verify` | **Stopped at 77/85 classes before completing — see below** |
 | Requirements | `reqstool status local -p docs/reqstool` | **Not run — see below** |
 
 ## What did not complete locally, and why
 
-`./mvnw -o clean verify` was run under `timeout 3600` and was **killed by that
-timeout** (SIGTERM, exit 143) while still working through the Spring integration
-suites — the machine was carrying a load average around 10 from unrelated
-concurrent work. It was not hung and it did not fail: it ran out of the budget
-this session gave it. At termination it had completed **77 test classes, 388
-tests, with one failure**:
+`./mvnw -o clean verify` was run under `timeout 3600` and was **stopped from
+outside** (SIGTERM, exit 143) while still working through the Spring integration
+suites: the machine had climbed past a load average of 30 under concurrent work,
+and the same gates run on this PR in CI. Its own timeout never fired — about 15
+minutes of the hour had elapsed. It was not hung, and it did not fail; it was
+ended early, so the eight classes it never reached are simply unproven here. At
+that point it had completed **77 test classes, 388 tests, with one failure**:
 
 - **`SbomTests.sbomEndpointServesCycloneDxBom`** — `/actuator/sbom` lists no
   `application` id because `target/classes/META-INF/sbom/` was never written.
