@@ -65,16 +65,17 @@ Run against the tree at the implementation commit.
 | Style | `./mvnw checkstyle:check` | BUILD SUCCESS |
 | New unit tests | `./mvnw -Dtest=PluginSourceTests,ExternalSourceAdmissionTests,ManifestPolicyTests test` | Tests run: 19, Failures: 0, Errors: 0 |
 | SVC_GW_0003 regression | `./mvnw -Dtest=IngestionTests,HostedLifecycleTests test` | Tests run: 8, Failures: 0, Errors: 0 — **both suites unmodified** |
-| Full build | `./mvnw -o clean verify` | **Incomplete locally — see below** |
+| Full build | `./mvnw -o clean verify` | **Killed by a 1h timeout at 77/85 classes — see below** |
 | Requirements | `reqstool status local -p docs/reqstool` | **Not run — see below** |
 
 ## What did not complete locally, and why
 
-`./mvnw -o clean verify` was started and did **not finish** within the session
-that wrote this report — it was still working through the Spring integration
-suites, against a load average around 10 from unrelated concurrent work on the
-same machine. At the point this report was written it had completed **77 test
-classes, 388 tests, with one failure**:
+`./mvnw -o clean verify` was run under `timeout 3600` and was **killed by that
+timeout** (SIGTERM, exit 143) while still working through the Spring integration
+suites — the machine was carrying a load average around 10 from unrelated
+concurrent work. It was not hung and it did not fail: it ran out of the budget
+this session gave it. At termination it had completed **77 test classes, 388
+tests, with one failure**:
 
 - **`SbomTests.sbomEndpointServesCycloneDxBom`** — `/actuator/sbom` lists no
   `application` id because `target/classes/META-INF/sbom/` was never written.
