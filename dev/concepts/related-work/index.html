@@ -571,6 +571,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#agentgateway" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        agentgateway
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#aws-agent-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AWS Agent Registry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jfrog-ai-catalog-and-agent-skills-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JFrog AI Catalog and Agent Skills Registry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-difference-in-one-table" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1950,6 +1983,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#agentgateway" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        agentgateway
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#aws-agent-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AWS Agent Registry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jfrog-ai-catalog-and-agent-skills-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JFrog AI Catalog and Agent Skills Registry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-difference-in-one-table" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1998,10 +2064,14 @@
 
 <h1 id="related-work">Related work<a class="headerlink" href="#related-work" title="Permanent link">&para;</a></h1>
 <p>Skills Gateway is not the only product occupying the "central place for AI
-agent skills" space. This page positions it against the closest-named
-alternative, so the difference in trust model is explicit rather than implied
-by the name.</p>
+agent skills" space. This page positions it against the closest alternatives,
+so the difference in trust model is explicit rather than implied by the name.</p>
+<p><em>Every product on this page is under active development, and several are in
+preview. Each section states the date its claims were read from the linked
+primary source; treat anything undated as unverified, and re-read the
+vendor's own documentation before deciding on it.</em></p>
 <h2 id="litellm-skills-gateway">LiteLLM Skills Gateway<a class="headerlink" href="#litellm-skills-gateway" title="Permanent link">&para;</a></h2>
+<p><em>Claims below read from the linked documentation on 2026-09-02.</em></p>
 <p><a href="https://docs.litellm.ai/docs/skills_gateway">LiteLLM's Skills Gateway</a> is a
 centralized <strong>registry</strong> for Claude Code skills: teams register a GitHub URL
 via API or UI, the system auto-detects the skill name (including nested
@@ -2013,75 +2083,271 @@ descriptions, keywords, and a domain/namespace hierarchy.</p>
 registry of <em>pointers</em>: the content authority remains the upstream repository,
 and "publishing" gates the visibility of a listing, not the bytes a client
 receives.</p>
+<h2 id="agentgateway">agentgateway<a class="headerlink" href="#agentgateway" title="Permanent link">&para;</a></h2>
+<p><em>Claims below read from the linked documentation and repository on
+2026-09-02.</em></p>
+<p><a href="https://agentgateway.dev/docs/about/">agentgateway</a> —
+<a href="https://github.com/agentgateway/agentgateway">source</a> — is not a registry at
+all, and including it here is a way of showing where the boundary of this
+comparison lies. It is an open-source <strong>data-plane proxy</strong> for agentic traffic,
+donated to the Linux Foundation and now an Agentic AI Foundation project. It
+sits on the request path between agents and the things they call: MCP tool
+servers, LLM inference endpoints, agent-to-agent (A2A) peers, and ordinary
+HTTP/gRPC services.</p>
+<p>Its <a href="https://agentgateway.dev/docs/mcp/">MCP documentation</a> describes
+multiplexing several backend MCP servers behind a single endpoint (a "virtual"
+MCP backend), OAuth 2.0 and JWT authentication for those servers, CEL-based
+authorization rules over individual tools and resources, external
+guardrail/processing hooks, and per-request metrics, logs and traces.</p>
+<p>What it does <strong>not</strong> do is hold content. There is no artifact, no snapshot, and
+no publishing decision: a route points at a live backend, and whatever that
+backend returns at call time is what the agent gets. Governance in agentgateway
+is enforcement <em>at invocation</em> — who may call which tool, under which policy —
+rather than curation <em>before distribution</em>. Nothing in its documentation
+describes an approval workflow over the content a backend serves.</p>
+<p>That makes agentgateway complementary to Skills Gateway rather than an
+alternative to it: one governs the call, the other governs the bytes. The rows
+in the table below that concern publishing and rug-pull are therefore not
+gaps in agentgateway so much as questions it does not attempt to answer.</p>
+<p>This reading is confirmed directly by the project, not inferred from its
+docs: when <a href="https://github.com/agentgateway/agentgateway/issues/3094">asked to add a skill/capability
+registry</a>, a
+maintainer replied that <a href="https://github.com/agentgateway/agentgateway/issues/3094#issuecomment-5357819313">"agentgateway is not really positioning itself as a
+registry"</a>
+and pointed toward <a href="https://aregistry.ai/">aregistry.ai</a> for that need
+instead.</p>
+<h2 id="aws-agent-registry">AWS Agent Registry<a class="headerlink" href="#aws-agent-registry" title="Permanent link">&para;</a></h2>
+<p><em>Claims below read from the linked documentation on 2026-09-02.</em></p>
+<p><a href="https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/registry.html">AWS Agent Registry</a>
+is a managed catalog for publishing and discovering MCP servers, agents,
+skills and custom resources across an organization.</p>
+<div class="admonition warning">
+<p class="admonition-title">The namespace is moving</p>
+<p>As of 2026-09-02 the documentation carries a migration banner: the service
+has launched under a new <code>agent-registry</code> namespace, and support for the
+public-preview <code>bedrock-agentcore</code> namespace is stated to be discontinued
+on <strong>2026-09-17</strong>. Some API names differ between the two
+(<code>SearchRegistryRecords</code> became <code>SearchDiscoverableRegistryRecords</code>; the
+<code>ListDiscoverableRegistryRecords</code> and <code>BatchGetDiscoverableRegistryRecord</code>
+APIs exist only in the new namespace). The links on this page point at the
+documentation as it stood on that date and may themselves move.</p>
+</div>
+<p>A record has a
+<a href="https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/registry-supported-record-types.html">record type</a>
+— <code>AGENT</code>, <code>MCP</code>, <code>SKILL</code> or <code>CUSTOM</code> — and a matching descriptor that the
+registry schema-validates: MCP records against the <code>server.json</code> definition
+from the official MCP registry, agent records against the A2A AgentCard
+specification, skill markdown against the AgentSkills specification.</p>
+<p>It is, like LiteLLM's, a <strong>registry of pointers</strong> — and the documentation is
+unusually clear about it. A <code>SKILL</code> record's descriptor holds an optional
+<code>SKILL.md</code> and an optional structured definition whose fields are a repository
+URL and a list of package identifiers. The same page states plainly that the
+markdown "is only used as metadata for discovery purpose" and that the
+"Registry does not support storing other agent skill files". The registry
+catalogs the description of a skill; the skill itself lives, and changes,
+somewhere else.</p>
+<p>Its governance model is the most developed of the pointer registries. The
+<a href="https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/registry-record-lifecycle.html">record lifecycle</a>
+runs <code>DRAFT</code> → <code>PENDING_APPROVAL</code> → <code>APPROVED</code> or <code>REJECTED</code>, with
+<code>DEPRECATED</code> terminal and irreversible from any state, and status changes
+carry a <code>statusReason</code>. Editing an approved record produces a new <code>DRAFT</code>
+revision while the approved revision stays discoverable until the new one is
+approved — a genuinely careful piece of design, and the closest thing in this
+comparison to Skills Gateway's held updates. Discovery APIs and the per-registry
+MCP endpoint return only approved revisions; management APIs return the latest
+revision whatever its status. Submission raises an EventBridge event so an
+existing security or compliance pipeline can call <code>UpdateRegistryRecordStatus</code>
+to decide; administrators may also enable auto-approval outright. Inbound
+authorization for search and the MCP endpoint is IAM or JWT from a corporate
+IdP, while control-plane operations are always IAM.</p>
+<p>Two limits are worth stating plainly, both from the absence of a claim rather
+than the presence of one. First, the approval reviews a <em>descriptor</em>, not
+content: beyond schema conformance, no scanning or vetting of the referenced
+repository or package is described, and because the registry stores no files,
+the approved revision does not pin the bytes a consumer will later fetch. The
+dual-revision behaviour protects the <em>record</em> from a rug-pull, not the
+artifact. Second, the
+<a href="https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/registry-concepts.html">personas</a>
+(administrator, publisher, curator, consumer) are separated by IAM permissions
+the administrator configures; nothing in the documentation requires the
+approver to be a different principal from the publisher, and the administrator
+persona is explicitly described as holding both. Separation of duty is
+available to configure, not enforced by the service.</p>
+<p>On audit, the
+<a href="https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/registry-cloudtrail.html">CloudTrail page</a>
+states that "control plane API calls are logged in AWS CloudTrail" and are
+"logged as management events by default". No data-plane logging of discovery or
+consumption is documented — so who <em>changed</em> the catalog is recorded, while who
+<em>read</em> it is not, at least not by default.</p>
+<h2 id="jfrog-ai-catalog-and-agent-skills-registry">JFrog AI Catalog and Agent Skills Registry<a class="headerlink" href="#jfrog-ai-catalog-and-agent-skills-registry" title="Permanent link">&para;</a></h2>
+<p><em>Claims below read from the linked documentation and product pages on
+2026-09-02.</em></p>
+<p>JFrog does not ship a product called "AI Registry". The governance product is
+the <a href="https://jfrog.com/ai-catalog/">JFrog AI Catalog</a>, within which the
+<a href="https://jfrog.com/ai-catalog/mcp-registry/">MCP Registry</a> and the
+<a href="https://jfrog.com/ai-catalog/skills-registry/">Agent Skills Registry</a> are
+capabilities alongside model governance and shadow-AI detection.</p>
+<p>This is the one comparison on the page where the other product also <strong>holds
+content</strong>, and it is the most direct architectural counterpart to Skills
+Gateway. The
+<a href="https://docs.jfrog.com/ai-ml/docs/jfrog-ai-catalog-architecture">AI Catalog architecture</a>
+describes the catalog as a governance layer over JFrog Artifactory: Artifactory
+stores the model packages, container images and MCP server packages, while the
+catalog holds metadata records — including an ML-BOM — that point at those
+versioned artifacts. The distinction from AWS and LiteLLM matters: the pointer
+resolves into an artifact repository the enterprise controls, not into a
+third-party repository it does not.</p>
+<p>The Agent Skills Registry applies the same model to skills. JFrog describes a
+skill as a versioned bundle of <code>SKILL.md</code>, scripts, documents and other assets,
+and states that in the registry "every skill is automatically versioned,
+scanned for malicious intent, cryptographically signed, and access-controlled",
+with "strict approval workflows, ensuring agents only utilize skills that have
+been formally vetted for specific projects or teams". The MCP Registry page
+similarly describes treating MCP servers as immutable binary artifacts, JFrog
+Xray scanning for vulnerabilities, malicious content and license risk, and
+JFrog Curation blocking on policy. Consumption runs through <strong>Agent Guard</strong>, a
+local proxy that enforces authentication and project-scoped permission checks
+on the developer's machine — so the enforcement point is client-side and
+per-call, not a server-side facade.</p>
+<p>Where Skills Gateway pins a snapshot and refuses to serve anything else, JFrog
+scans and signs an artifact and blocks on policy at consumption. Both keep the
+bytes; the mechanisms differ. The automated scanning story is a real capability
+Skills Gateway does not have — its gate is a human approving a snapshot, with
+no content scanner in the loop.</p>
+<p>Two caveats. The public pages are marketing pages, and several claims — the
+exact approval state machine, what is audited, how remote-endpoint MCP servers
+(as opposed to packaged ones) are pinned — are not stated at the level of
+detail the AWS documentation offers; treat them as advertised rather than
+verified. And the Agent Skills Registry was announced in 2026 in partnership
+with NVIDIA; the architecture documentation lists the skills registry as a
+planned feature, and no GA date is stated on the pages read here. Confirm its
+current availability with JFrog before comparing it as a shipping product.</p>
 <h2 id="the-difference-in-one-table">The difference in one table<a class="headerlink" href="#the-difference-in-one-table" title="Permanent link">&para;</a></h2>
+<p>Read the columns as answers to the same question, not as scores; agentgateway
+in particular is a different layer and several rows do not apply to it.</p>
 <table>
 <thead>
 <tr>
 <th>Concern</th>
-<th>LiteLLM Skills Gateway</th>
 <th>Skills Gateway</th>
+<th>LiteLLM Skills Gateway</th>
+<th>agentgateway</th>
+<th>AWS Agent Registry</th>
+<th>JFrog AI Catalog</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>What is registered</td>
-<td>A pointer to an upstream GitHub URL</td>
 <td>The upstream URL, ingested into a quarantine repository</td>
+<td>A pointer to an upstream GitHub URL</td>
+<td>Nothing — a route to a live MCP/A2A/LLM backend</td>
+<td>A metadata record: a schema-validated descriptor plus an optional repository URL or package identifier</td>
+<td>Metadata over a versioned artifact stored in Artifactory</td>
 </tr>
 <tr>
 <td>What clients receive</td>
-<td>Content fetched from upstream at install time</td>
 <td>Bytes from a SHA-pinned, human-approved snapshot served by the read-only facade</td>
+<td>Content fetched from upstream at install time</td>
+<td>Proxied protocol traffic, live from the backend</td>
+<td>Descriptor metadata from search; the skill itself is fetched elsewhere</td>
+<td>The artifact from Artifactory, through Agent Guard or a package client</td>
 </tr>
 <tr>
 <td>Publish gate</td>
-<td>Listing visibility (enable/disable)</td>
 <td>Human approval of a specific snapshot; held updates never displace the approved one</td>
+<td>Listing visibility (enable/disable)</td>
+<td>None — a route is a configuration change</td>
+<td>Curator approve/reject with a <code>statusReason</code>; auto-approval is a per-registry option</td>
+<td>Project-scoped approval, plus Curation policy at the repository perimeter</td>
 </tr>
 <tr>
 <td>Rug-pull protection</td>
-<td>None — upstream refs stay mutable and authoritative</td>
 <td>The core of the design: <a href="../snapshots-and-ledger/">snapshots and held updates</a></td>
+<td>None — upstream refs stay mutable and authoritative</td>
+<td>None — the backend is live and mutable by design</td>
+<td>Partial: an edit becomes a new <code>DRAFT</code> while the approved revision stays discoverable — but the referenced repository or package is outside the registry's control</td>
+<td>Strong for what Artifactory stores (immutable, signed artifacts); not documented for remote-endpoint MCP servers</td>
 </tr>
 <tr>
 <td>Revocation</td>
-<td>Disable the listing; already-installed content unaffected</td>
 <td>Revocation unpublishes the served ref itself</td>
+<td>Disable the listing; already-installed content unaffected</td>
+<td>Remove the route or policy; effective for new calls</td>
+<td>Deprecate (terminal, irreversible) or reject to hide from discovery; already-fetched content unaffected</td>
+<td>Unapprove or block via Curation; Agent Guard refuses at call time</td>
 </tr>
 <tr>
 <td>Audit</td>
-<td>Not described</td>
 <td>Append-only ledger of every fetch and administrative action</td>
+<td>Not described</td>
+<td>Per-request OpenTelemetry metrics, logs and traces</td>
+<td>CloudTrail management events for the control plane; no data-plane consumption logging documented</td>
+<td>Platform audit and ML-BOM provenance; not detailed on the public pages</td>
 </tr>
 <tr>
 <td>Facade access</td>
-<td>Unauthenticated public hub</td>
 <td>PAT-only facade — a deliberate <a href="../trust-boundaries/">trust boundary</a></td>
+<td>Unauthenticated public hub</td>
+<td>JWT/OAuth/API key with CEL authorization, enforced by the proxy</td>
+<td>IAM or JWT for search and the MCP endpoint; control plane always IAM</td>
+<td>JFrog Platform credentials, enforced client-side by Agent Guard</td>
 </tr>
 <tr>
-<td>Single marketplace URL</td>
-<td>Generated manifest of external pointers</td>
+<td>Single catalog</td>
 <td>The <a href="../../guides/virtual-catalog/">virtual catalog</a>, strictly derived from approved-and-served snapshots, self-contained relative sources only</td>
+<td>Generated manifest of external pointers</td>
+<td>One endpoint multiplexing many MCP backends — no catalog of content</td>
+<td>One registry with hybrid search and a native MCP endpoint</td>
+<td>One system of record across models, MCP servers and skills</td>
 </tr>
 <tr>
 <td>Skill metadata for discovery</td>
-<td>Semver, keywords, domains/namespaces per skill</td>
 <td>Marketplace-granular catalog; skill-level browse is not a current capability</td>
+<td>Semver, keywords, domains/namespaces per skill</td>
+<td>Not applicable</td>
+<td><code>SKILL.md</code> plus a structured definition, with hybrid semantic and keyword search</td>
+<td>Versioned skill packages with scan and signature status</td>
 </tr>
 </tbody>
 </table>
 <h2 id="what-this-means">What this means<a class="headerlink" href="#what-this-means" title="Permanent link">&para;</a></h2>
-<p>The two products are complementary ends of the same space. A registry answers
-"where do I find skills?"; Skills Gateway answers "how do I know the skills my
-developers install are the ones we reviewed — and stay that way?". A registry
-of pointers inherits the <a href="../../#threat-model-in-brief">threat model</a>
-unmitigated: a compromised or mutated upstream flows straight to every
-consumer, because nothing sits between the listing and the clone.</p>
-<p>The one capability the comparison surfaces as a genuine gap on this side is
-<strong>skill-level discovery metadata</strong> (categories, keywords, per-skill search in
-the portal). That is a product feature, not an architectural difference, and
-it composes cleanly on top of the existing model if the estate grows large
-enough to need it.</p>
+<p>The four products divide along two axes: whether they hold the bytes, and
+whether anything must be approved before a consumer gets them.</p>
+<p><strong>agentgateway holds nothing and approves nothing</strong> — deliberately. It is a
+data plane, and its contribution is policy at the moment of invocation. It
+composes with any of the other three rather than replacing them.</p>
+<p><strong>LiteLLM and AWS Agent Registry hold metadata and approve metadata.</strong> They
+answer "where do I find skills?" extremely well, and AWS answers "who said this
+listing was acceptable?" with real rigour — the dual-revision behaviour and the
+mandatory <code>statusReason</code> are better than most. But a registry of pointers
+inherits the <a href="../../#threat-model-in-brief">threat model</a> unmitigated: a
+compromised or mutated upstream flows straight to every consumer, because
+nothing sits between the listing and the clone. AWS's own documentation is
+explicit that the registry does not store skill files, which is precisely why
+its approval cannot bind the bytes.</p>
+<p><strong>JFrog and Skills Gateway hold the bytes and gate them</strong>, by different
+mechanisms — automated scanning and signing over immutable artifacts on one
+side, human approval of a SHA-pinned snapshot served through an authenticated
+facade on the other. This is the comparison worth thinking hardest about,
+because the disagreement is genuine rather than a matter of scope.</p>
+<p>Two capabilities the comparison surfaces as honest gaps on this side:</p>
+<ul>
+<li><strong>Skill-level discovery metadata</strong> — categories, keywords, per-skill search
+  in the portal. AWS's hybrid semantic search and LiteLLM's keyword/domain
+  hierarchy are both ahead here. It is a product feature, not an architectural
+  difference, and it composes cleanly on top of the existing model if the
+  estate grows large enough to need it.</li>
+<li><strong>Automated content scanning</strong> — JFrog scans and signs on upload; the gate
+  here is a human reading a diff. Nothing in the architecture prevents a
+  scanner from being added as an input to the approval decision, and the
+  append-only ledger is the right place to record what it found, but that is
+  not a capability today.</li>
+</ul>
+<p>What none of the three alternatives offers is the combination this project is
+built around: a snapshot the gateway itself holds, an approval that binds that
+exact snapshot, a facade that will serve nothing else, and a ledger that
+records every read as well as every decision.</p>
 
 
 
