@@ -58,6 +58,14 @@ alternative to it: one governs the call, the other governs the bytes. The rows
 in the table below that concern publishing and rug-pull are therefore not
 gaps in agentgateway so much as questions it does not attempt to answer.
 
+This reading is confirmed directly by the project, not inferred from its
+docs: when [asked to add a skill/capability
+registry](https://github.com/agentgateway/agentgateway/issues/3094), a
+maintainer replied that ["agentgateway is not really positioning itself as a
+registry"](https://github.com/agentgateway/agentgateway/issues/3094#issuecomment-5357819313)
+and pointed toward [aregistry.ai](https://aregistry.ai/) for that need
+instead.
+
 ## AWS Agent Registry
 
 *Claims below read from the linked documentation on 2026-09-02.*
