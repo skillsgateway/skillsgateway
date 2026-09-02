@@ -40,6 +40,9 @@ jobs:
         with:
           base: baseline-openapi.json
           revision: src/main/frontend/openapi.json
+          # Severities come from `.oasdiff.yaml` at the repository root, which the
+          # action reads: without it, removing a response field is a WARN and
+          # passes ERR (#216).
           fail-on: ERR
           # Do not upload the contract to oasdiff.com. Detection and the inline
           # annotations are unaffected; this only declines to send the document
