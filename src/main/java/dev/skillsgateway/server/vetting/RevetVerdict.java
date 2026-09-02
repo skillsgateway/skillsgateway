@@ -103,7 +103,10 @@ public final class RevetVerdict {
         }
         for (String connector : blocking) {
             VerdictState recorded = run.stateOf(connector).orElse(VerdictState.ERROR);
-            if (recorded != VerdictState.ERROR && recorded != VerdictState.PENDING) {
+            // ERROR and PENDING name no fault in the content; neither does DISABLED (GW_0143) — an
+            // administrator switching a connector off says nothing about what it would have found,
+            // so it must not be read as the chain objecting to the content.
+            if (recorded != VerdictState.ERROR && recorded != VerdictState.PENDING && recorded != VerdictState.DISABLED) {
                 return Classification.VIOLATION;
             }
         }

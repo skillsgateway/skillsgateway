@@ -150,7 +150,12 @@ public final class MachineApiRegistry {
             post("/api/tokens/machine/{id}/rotate"),
             delete("/api/tokens/machine/{id}"),
             // A session identity page; a machine has no session.
-            get("/api/me"));
+            get("/api/me"),
+            // The connector on/off switch (GW_0143): administrator judgement over the vetting
+            // chain itself, and even seeing the current settings is reserved to administrators —
+            // no scope may let a machine credential turn off the control that governs it.
+            get("/api/vetting/connector-toggles"),
+            put("/api/vetting/connectors/{name}/toggle"));
 
     private MachineApiRegistry() {}
 

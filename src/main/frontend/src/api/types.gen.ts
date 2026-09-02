@@ -555,7 +555,7 @@ export interface paths {
         put?: never;
         /**
          * Approve a held or revoked snapshot
-         * @description Publishes the snapshot to the git facade and records the reviewer identity and timestamp. Takes no request body. Held snapshots and snapshots that re-vetting revoked can be approved; a revoked one is re-published only by this fresh decision, behind the same gate, which means the violation that revoked it must have been waived or fixed first. A snapshot whose effective vetting outcome is blocked — its chain run objects and at least one blocking finding is not covered by an active waiver, including a snapshot with no chain run at all — is refused, and the problem document names both the blocking connectors and the uncovered findings. Record a scoped, expiring waiver for each of those findings and approve again; every waiver that let the approval through is written to the ledger.
+         * @description Publishes the snapshot to the git facade and records the reviewer identity and timestamp. The request body is optional. Held snapshots and snapshots that re-vetting revoked can be approved; a revoked one is re-published only by this fresh decision, behind the same gate, which means the violation that revoked it must have been waived or fixed first. A snapshot whose effective vetting outcome is blocked — its chain run objects and at least one blocking finding is not covered by an active waiver, including a snapshot with no chain run at all — is refused, and the problem document names both the blocking connectors and the uncovered findings. Record a scoped, expiring waiver for each of those findings and approve again; every waiver that let the approval through is written to the ledger. Alternatively an administrator — and only an administrator — may set overrideVetting with a reason to approve over the block (GW_0142): the override lifts only the vetting gate, is written to the ledger as a distinct event with the failing verdicts, and marks the snapshot approved over a vetting failure.
          */
         post: operations["approve"];
         delete?: never;
@@ -992,6 +992,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/vetting/connector-toggles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List connector enable/disable settings
+         * @description Every administrative enable/disable setting for the built-in vetting connectors — the global settings and the per-marketplace overrides. Administrator-only: the switch that governs the vetting chain is not shown to marketplace-scoped approvers.
+         */
+        get: operations["toggles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vetting/connectors/{name}/toggle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Enable or disable a built-in connector
+         * @description Switches a specific built-in vetting connector on or off, globally or for one named marketplace, and records the change on the audit ledger. A per-marketplace setting overrides the global one; the absence of any setting means the connector runs. A disabled connector is not run at ingestion or re-vetting but is recorded as a distinct disabled verdict on the chain run, and disabling every connector leaves a run blocked rather than clear. Administrator-only.
+         */
+        put: operations["toggle"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/waivers/{id}": {
         parameters: {
             query?: never;
@@ -1152,6 +1192,13 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description Optional approval body carrying an administrative override of a blocked vetting outcome */
+        ApproveRequest: {
+            /** @description Set true, as an administrator, to approve despite a blocked vetting outcome (GW_0142); a reason is then required and the override is recorded distinctly */
+            overrideVetting?: boolean;
+            /** @description The administrator's reason for overriding the block; required when overrideVetting */
+            reason?: string;
+        };
         /** @description A snapshot a retention policy would delete, and the criterion that selected it */
         Candidate: {
             /**
@@ -1210,6 +1257,32 @@ export interface components {
              * @description The waiver the reviewer authored, for a waiver-author conflict
              */
             waiverId?: number;
+        };
+        /** @description An administrative enable/disable setting for one built-in vetting connector */
+        ConnectorToggle: {
+            /** @description The connector's stable name, e.g. secret-scan */
+            connector?: string;
+            /** @description Whether the connector runs under this setting */
+            enabled?: boolean;
+            /**
+             * Format: int64
+             * @description Setting id
+             */
+            id?: number;
+            /**
+             * Format: int64
+             * @description Marketplace this setting is scoped to, or null for the global setting
+             */
+            marketplaceId?: number;
+            /** @description The administrator's note for the setting, or null */
+            reason?: string;
+            /**
+             * Format: date-time
+             * @description When it was last set
+             */
+            updatedAt?: string;
+            /** @description Identity that last set it */
+            updatedBy?: string;
         };
         /** @description A connector configured in the vetting chain */
         ConnectorView: {
@@ -2296,6 +2369,15 @@ export interface components {
             /** @description HMAC secret for the inbound webhook — returned exactly once, here. Setting webhook mode again rotates it. Null for the other modes. */
             webhookSecret?: string;
         };
+        /** @description Enable or disable a built-in vetting connector, globally or for one marketplace */
+        ToggleRequest: {
+            /** @description Whether the connector should run under this setting */
+            enabled?: boolean;
+            /** @description Marketplace to scope the setting to; omit for the global setting */
+            marketplace?: string;
+            /** @description Optional note recorded with the change and on the audit ledger */
+            reason?: string;
+        };
         /** @description A token without its secret; the cleartext is only returned at creation */
         TokenView: {
             /** @description Named administrative API scopes this credential holds. Empty for every personal access token: reaching the control plane is a grant, never a baseline, so an empty list here means none rather than all. */
@@ -2388,12 +2470,38 @@ export interface components {
              * @description The connector's conclusion
              * @enum {string}
              */
-            state?: "PASS" | "WARN" | "FAIL" | "ERROR" | "PENDING";
+            state?: "PASS" | "WARN" | "FAIL" | "ERROR" | "PENDING" | "DISABLED";
             /**
              * Format: int64
              * @description Verdict id
              */
             verdictId?: number;
+        };
+        /** @description An administrator's override of a blocked vetting outcome on a snapshot */
+        VettingOverrideRecord: {
+            /** @description The connectors that were blocking, comma-separated */
+            blockingConnectors?: string;
+            /**
+             * Format: int64
+             * @description Override id
+             */
+            id?: number;
+            /**
+             * Format: date-time
+             * @description When the override was recorded
+             */
+            overriddenAt?: string;
+            /** @description Identity of the administrator who overrode the block */
+            overriddenBy?: string;
+            /** @description The administrator's stated reason */
+            reason?: string;
+            /**
+             * Format: int64
+             * @description The snapshot approved over the block
+             */
+            snapshotId?: number;
+            /** @description Summary of the blocking findings no waiver covered */
+            uncoveredFindings?: string;
         };
         /** @description A snapshot's latest vetting chain run, the waivers over it, and the chain that produced it */
         VettingView: {
@@ -2404,6 +2512,8 @@ export interface components {
              * @enum {string}
              */
             outcome?: "CLEAR" | "CLEAR_WITH_WAIVERS" | "BLOCKED";
+            /** @description Present when an administrator approved this snapshot over a blocked vetting outcome (GW_0142); its presence is what surfaces the override so it is never indistinguishable from a clean approval. Null otherwise. */
+            override?: components["schemas"]["VettingOverrideRecord"];
             /**
              * @description What the connectors themselves concluded, before any waiver was applied
              * @enum {string}
@@ -3538,7 +3648,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ApproveRequest"];
+            };
+        };
         responses: {
             /** @description Snapshot approved and now served */
             200: {
@@ -3558,8 +3672,17 @@ export interface operations {
                     "*/*": components["schemas"]["Snapshot"];
                 };
             };
-            /** @description Snapshot is neither held nor revoked, its effective vetting outcome is blocked, it has not yet reached the configured minimum release age, or - under an enforcing four-eyes rule - the reviewer is on the snapshot's supply side */
+            /** @description Snapshot is neither held nor revoked, its effective vetting outcome is blocked and no override was supplied, it has not yet reached the configured minimum release age, or - under an enforcing four-eyes rule - the reviewer is on the snapshot's supply side */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description An override was requested without a reason */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4375,6 +4498,88 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+        };
+    };
+    toggles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The connector settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ConnectorToggle"][];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ConnectorToggle"][];
+                };
+            };
+        };
+    };
+    toggle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ToggleRequest"];
+            };
+        };
+        responses: {
+            /** @description The setting after the change */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ConnectorToggle"];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ConnectorToggle"];
+                };
+            };
+            /** @description Named marketplace not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ConnectorToggle"];
+                };
+            };
+            /** @description Unknown connector, or the enabled field was omitted */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ConnectorToggle"];
                 };
             };
         };

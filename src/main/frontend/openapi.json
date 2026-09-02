@@ -1,6 +1,20 @@
 {
   "components": {
     "schemas": {
+      "ApproveRequest": {
+        "description": "Optional approval body carrying an administrative override of a blocked vetting outcome",
+        "properties": {
+          "overrideVetting": {
+            "description": "Set true, as an administrator, to approve despite a blocked vetting outcome (GW_0142); a reason is then required and the override is recorded distinctly",
+            "type": "boolean"
+          },
+          "reason": {
+            "description": "The administrator's reason for overriding the block; required when overrideVetting",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "Candidate": {
         "description": "A snapshot a retention policy would delete, and the criterion that selected it",
         "properties": {
@@ -94,6 +108,43 @@
             "description": "The waiver the reviewer authored, for a waiver-author conflict",
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "ConnectorToggle": {
+        "description": "An administrative enable/disable setting for one built-in vetting connector",
+        "properties": {
+          "connector": {
+            "description": "The connector's stable name, e.g. secret-scan",
+            "type": "string"
+          },
+          "enabled": {
+            "description": "Whether the connector runs under this setting",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "Setting id",
+            "format": "int64",
+            "type": "integer"
+          },
+          "marketplaceId": {
+            "description": "Marketplace this setting is scoped to, or null for the global setting",
+            "format": "int64",
+            "type": "integer"
+          },
+          "reason": {
+            "description": "The administrator's note for the setting, or null",
+            "type": "string"
+          },
+          "updatedAt": {
+            "description": "When it was last set",
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedBy": {
+            "description": "Identity that last set it",
+            "type": "string"
           }
         },
         "type": "object"
@@ -1810,6 +1861,24 @@
         },
         "type": "object"
       },
+      "ToggleRequest": {
+        "description": "Enable or disable a built-in vetting connector, globally or for one marketplace",
+        "properties": {
+          "enabled": {
+            "description": "Whether the connector should run under this setting",
+            "type": "boolean"
+          },
+          "marketplace": {
+            "description": "Marketplace to scope the setting to; omit for the global setting",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Optional note recorded with the change and on the audit ledger",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "TokenView": {
         "description": "A token without its secret; the cleartext is only returned at creation",
         "properties": {
@@ -1970,7 +2039,8 @@
               "WARN",
               "FAIL",
               "ERROR",
-              "PENDING"
+              "PENDING",
+              "DISABLED"
             ],
             "type": "string"
           },
@@ -1978,6 +2048,43 @@
             "description": "Verdict id",
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "VettingOverrideRecord": {
+        "description": "An administrator's override of a blocked vetting outcome on a snapshot",
+        "properties": {
+          "blockingConnectors": {
+            "description": "The connectors that were blocking, comma-separated",
+            "type": "string"
+          },
+          "id": {
+            "description": "Override id",
+            "format": "int64",
+            "type": "integer"
+          },
+          "overriddenAt": {
+            "description": "When the override was recorded",
+            "format": "date-time",
+            "type": "string"
+          },
+          "overriddenBy": {
+            "description": "Identity of the administrator who overrode the block",
+            "type": "string"
+          },
+          "reason": {
+            "description": "The administrator's stated reason",
+            "type": "string"
+          },
+          "snapshotId": {
+            "description": "The snapshot approved over the block",
+            "format": "int64",
+            "type": "integer"
+          },
+          "uncoveredFindings": {
+            "description": "Summary of the blocking findings no waiver covered",
+            "type": "string"
           }
         },
         "type": "object"
@@ -2000,6 +2107,10 @@
               "BLOCKED"
             ],
             "type": "string"
+          },
+          "override": {
+            "$ref": "#/components/schemas/VettingOverrideRecord",
+            "description": "Present when an administrator approved this snapshot over a blocked vetting outcome (GW_0142); its presence is what surfaces the override so it is never indistinguishable from a clean approval. Null otherwise."
           },
           "recordedOutcome": {
             "description": "What the connectors themselves concluded, before any waiver was applied",
@@ -3477,7 +3588,7 @@
     },
     "/api/snapshots/{id}/approve": {
       "post": {
-        "description": "Publishes the snapshot to the git facade and records the reviewer identity and timestamp. Takes no request body. Held snapshots and snapshots that re-vetting revoked can be approved; a revoked one is re-published only by this fresh decision, behind the same gate, which means the violation that revoked it must have been waived or fixed first. A snapshot whose effective vetting outcome is blocked — its chain run objects and at least one blocking finding is not covered by an active waiver, including a snapshot with no chain run at all — is refused, and the problem document names both the blocking connectors and the uncovered findings. Record a scoped, expiring waiver for each of those findings and approve again; every waiver that let the approval through is written to the ledger.",
+        "description": "Publishes the snapshot to the git facade and records the reviewer identity and timestamp. The request body is optional. Held snapshots and snapshots that re-vetting revoked can be approved; a revoked one is re-published only by this fresh decision, behind the same gate, which means the violation that revoked it must have been waived or fixed first. A snapshot whose effective vetting outcome is blocked — its chain run objects and at least one blocking finding is not covered by an active waiver, including a snapshot with no chain run at all — is refused, and the problem document names both the blocking connectors and the uncovered findings. Record a scoped, expiring waiver for each of those findings and approve again; every waiver that let the approval through is written to the ledger. Alternatively an administrator — and only an administrator — may set overrideVetting with a reason to approve over the block (GW_0142): the override lifts only the vetting gate, is written to the ledger as a distinct event with the failing verdicts, and marks the snapshot approved over a vetting failure.",
         "operationId": "approve",
         "parameters": [
           {
@@ -3490,6 +3601,15 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "content": {
@@ -3519,7 +3639,17 @@
                 }
               }
             },
-            "description": "Snapshot is neither held nor revoked, its effective vetting outcome is blocked, it has not yet reached the configured minimum release age, or - under an enforcing four-eyes rule - the reviewer is on the snapshot's supply side"
+            "description": "Snapshot is neither held nor revoked, its effective vetting outcome is blocked and no override was supplied, it has not yet reached the configured minimum release age, or - under an enforcing four-eyes rule - the reviewer is on the snapshot's supply side"
+          },
+          "422": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Snapshot"
+                }
+              }
+            },
+            "description": "An override was requested without a reason"
           }
         },
         "summary": "Approve a held or revoked snapshot",
@@ -4593,6 +4723,116 @@
         "summary": "Rotate a token",
         "tags": [
           "Tokens"
+        ]
+      }
+    },
+    "/api/vetting/connector-toggles": {
+      "get": {
+        "description": "Every administrative enable/disable setting for the built-in vetting connectors — the global settings and the per-marketplace overrides. Administrator-only: the switch that governs the vetting chain is not shown to marketplace-scoped approvers.",
+        "operationId": "toggles",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConnectorToggle"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The connector settings"
+          },
+          "403": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConnectorToggle"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Caller does not hold the administrative role"
+          }
+        },
+        "summary": "List connector enable/disable settings",
+        "tags": [
+          "Vetting"
+        ]
+      }
+    },
+    "/api/vetting/connectors/{name}/toggle": {
+      "put": {
+        "description": "Switches a specific built-in vetting connector on or off, globally or for one named marketplace, and records the change on the audit ledger. A per-marketplace setting overrides the global one; the absence of any setting means the connector runs. A disabled connector is not run at ingestion or re-vetting but is recorded as a distinct disabled verdict on the chain run, and disabling every connector leaves a run blocked rather than clear. Administrator-only.",
+        "operationId": "toggle",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToggleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorToggle"
+                }
+              }
+            },
+            "description": "The setting after the change"
+          },
+          "403": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorToggle"
+                }
+              }
+            },
+            "description": "Caller does not hold the administrative role"
+          },
+          "404": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorToggle"
+                }
+              }
+            },
+            "description": "Named marketplace not found"
+          },
+          "422": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorToggle"
+                }
+              }
+            },
+            "description": "Unknown connector, or the enabled field was omitted"
+          }
+        },
+        "summary": "Enable or disable a built-in connector",
+        "tags": [
+          "Vetting"
         ]
       }
     },
