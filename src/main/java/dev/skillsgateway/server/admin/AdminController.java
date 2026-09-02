@@ -207,6 +207,24 @@ public class AdminController {
         return snapshotContentService.content(id);
     }
 
+    @GetMapping("/snapshots/{id}/content-diff")
+    @Tag(name = "Snapshots")
+    @Operation(
+            summary = "Snapshot content inventory against the last approved snapshot",
+            description = "What approving this snapshot would add to what the marketplace already had approved:"
+                    + " every plugin and skill on either side, each marked added, removed, changed, moved or"
+                    + " unchanged, with a skill counted as changed when anything under its directory differs —"
+                    + " not only its SKILL.md. A skill a plugin gave up and another took over is reported once,"
+                    + " as moved, naming the plugin it came from. The baseline is the marketplace's newest live"
+                    + " approved snapshot other than this one; with nothing approved the baseline is null and"
+                    + " everything is added. Complements the file-level preview diff, which is against what the"
+                    + " facade currently serves and returns the text of the change.")
+    @ApiResponse(responseCode = "200", description = "The inventory delta a reviewer decides")
+    @ApiResponse(responseCode = "404", description = "Snapshot not found")
+    public SnapshotContentService.ContentDiff snapshotContentDiff(@PathVariable long id) {
+        return snapshotContentService.diff(id);
+    }
+
     @GetMapping("/snapshots/{id}/licenses")
     @Requirements({"GW_0095"})
     @Tag(name = "Snapshots")
