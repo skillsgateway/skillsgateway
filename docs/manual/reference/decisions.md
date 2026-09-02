@@ -133,6 +133,23 @@ read-only **forge mirror for browsing** is sequenced after, never as a serving
 surface. Availability of the facade is now explicitly a security property, with
 serving independent of ingestion.
 
+### [ADR 0009 — The external vetting connector contract: configured, synchronous, fail-closed](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0009-external-vetting-connector-contract.md)
+
+*Proposed, 2026-09-01.*
+
+An operator can add their own vetting connector — an LLM reviewer, a sandbox, a
+corporate scanner — as **configuration** (`skills-gateway.vetting.external[*]`),
+not API-managed state, so every chain run stays attributable to the exact
+connector and version that produced it (GW_0049). It is a **synchronous** HTTP
+participant in the existing chain: the gateway POSTs the snapshot bundle and reads
+back the normalized `{state, report-url, findings[]}`. The load-bearing half is
+**fail-closed** — an unreachable, slow, oversized, unparseable, unrecognised or
+partial answer is an `error` verdict that blocks, never a pass (GW_0145) — plus
+**worst-of** aggregation so an endpoint cannot pass content its own findings
+condemn (GW_0146). A `pending` answer is the **asynchronous seam** and blocks
+until resolved (GW_0147); the inbound resolution callback is deliberately a
+separate, sequenced piece of work.
+
 ## Related
 
 - [Architecture](../architecture.md)

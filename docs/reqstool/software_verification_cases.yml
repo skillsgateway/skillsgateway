@@ -1506,3 +1506,58 @@ cases:
       the files it scanned and the rules it applied — rather than being null and
       indistinguishable from a connector that never ran
     revision: "0.1.0"
+
+  - id: SVC_GW_0144
+    requirement_ids: ["GW_0144"]
+    title: A configured external connector joins the chain and runs in order
+    verification: automated-test
+    description: |
+      GIVEN a gateway configured with an external vetting connector at an ordered
+      position, endpoint URL and rule-set version
+      WHEN the chain is inspected and a snapshot is vetted
+      THEN the external connector appears in the chain at its configured position
+      alongside the unremoved built-ins, the chain identity names it and its version,
+      the snapshot bundle it is sent carries the snapshot identity and its scannable
+      file content, and a passing answer is recorded as a passing verdict that clears
+    revision: "0.1.0"
+
+  - id: SVC_GW_0145
+    requirement_ids: ["GW_0145"]
+    title: Every inconclusive answer from an external connector blocks
+    verification: automated-test
+    description: |
+      GIVEN an external vetting connector whose endpoint is in turn unreachable,
+      refusing the connection, hanging past the read timeout, returning a non-success
+      status, returning an empty, oversized or unparseable body, declaring an
+      unrecognised or missing verdict state, returning a malformed finding, and being
+      sent a snapshot whose content exceeds the request cap
+      WHEN each snapshot is vetted
+      THEN each case records an error verdict and a blocked outcome, none records a
+      passing or clearing verdict, and a snapshot so blocked stays held and cannot be
+      approved
+    revision: "0.1.0"
+
+  - id: SVC_GW_0146
+    requirement_ids: ["GW_0146"]
+    title: External verdicts take the worst of declared and derived, and carry their report link
+    verification: automated-test
+    description: |
+      GIVEN an external connector that returns a failing state with findings and a
+      report link, and separately one that declares a passing state alongside a
+      critical finding
+      WHEN each snapshot is vetted
+      THEN the failing verdict persists its findings and its report link through the
+      verdict model, and the declared pass alongside a critical finding is recorded as
+      a failing verdict that blocks, while informational findings alone still pass
+    revision: "0.1.0"
+
+  - id: SVC_GW_0147
+    requirement_ids: ["GW_0147"]
+    title: A pending answer from an external connector blocks as the async seam
+    verification: automated-test
+    description: |
+      GIVEN an external vetting connector whose endpoint answers with a pending state
+      WHEN the snapshot is vetted
+      THEN the verdict is recorded as pending, the run outcome is blocked, the pending
+      state does not clear, and the snapshot stays held and cannot be approved
+    revision: "0.1.0"
