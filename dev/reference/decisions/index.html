@@ -1983,6 +1983,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#adr-0011-external-plugin-sources-admission-before-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0011 — External plugin sources: admission before resolution
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2168,6 +2179,17 @@
     <span class="md-ellipsis">
       
         ADR 0010 — Admin override of vetting automation (the cockpit model)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-0011-external-plugin-sources-admission-before-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0011 — External plugin sources: admission before resolution
       
     </span>
   </a>
@@ -2415,6 +2437,21 @@ policy, release-age and four-eyes gates still run), writes a distinct
 it is never indistinguishable from a clean approval. The override does not
 replace scoped, expiring <strong>waivers</strong>; it is the rarer administrative act for a
 whole blocked outcome.</p>
+<h3 id="adr-0011-external-plugin-sources-admission-before-resolution"><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md">ADR 0011 — External plugin sources: admission before resolution</a><a class="headerlink" href="#adr-0011-external-plugin-sources-admission-before-resolution" title="Permanent link">&para;</a></h3>
+<p><em>Accepted, 2026-09-02.</em></p>
+<p>The staged reversal of the local-only stance. Support for external plugin
+sources lands in increments — <strong>admission</strong> (a typed source model and a
+configuration gate, disabled by default) before <strong>resolution</strong> (fetching and
+rewriting into a gateway-local composite snapshot) — separated by a standing
+invariant: a snapshot is <strong>held only when every plugin source it declares
+resolves inside the snapshot the gateway serves</strong> (GW_0152), so T4 stays closed
+for the whole reversal rather than reopening between increments. When the
+rewriter lands, snapshot identity becomes the <strong>served composite SHA</strong>, which is
+what leaves vetting, approval, the facade and retention unchanged by
+construction. Egress isolation — not URL validation — is named as the primary
+SSRF control for the resolution increment; the allowlists are defence in depth.
+<code>npm</code> and <code>archive</code> sources are refused permanently, above the configuration
+gate.</p>
 <h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../architecture/">Architecture</a>

@@ -2316,9 +2316,16 @@ page.</p>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w"> </span><span class="nt">"ingestedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"decidedBy"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"decidedAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">}</span>
 </code></pre></div>
 <h3 id="violations">Violations<a class="headerlink" href="#violations" title="Permanent link">&para;</a></h3>
-<p>If ingestion flagged the snapshot — an external plugin source, for instance,
-which is rejected fail-closed in the current scope — the reason is on the
-snapshot row and rendered in the portal as destructive text.</p>
+<p>If ingestion flagged the snapshot — an external plugin source, for instance —
+the reason is on the snapshot row and rendered in the portal as destructive text.</p>
+<p>An external source produces one of two violations, and they mean different
+things. <em>"has a non-local source"</em> means the gateway will not admit it: either
+external sources are not enabled, or the type, host or scheme is outside what is
+configured, or the type (<code>npm</code>, <code>archive</code>) is never admissible. <em>"admits but
+cannot yet resolve"</em> means the source passed admission and the gateway simply
+cannot fetch and rewrite it yet — a snapshot is held only when every source it
+declares resolves inside the snapshot the gateway serves. The first is a
+configuration question; the second is not, and neither snapshot can be approved.</p>
 <h3 id="vetting-verdicts">Vetting verdicts<a class="headerlink" href="#vetting-verdicts" title="Permanent link">&para;</a></h3>
 <p>Before anything else, read what the vetting chain concluded. The snapshot card
 on the marketplace detail page — and the approve dialog itself — shows the chain

@@ -2233,7 +2233,7 @@ hyphen and underscore, not starting with a hyphen or underscore. A violation is
 <p>The name is also a path segment on the facade (<code>/git/{name}</code>), which is why the
 character set is constrained.</p>
 <h2 id="plugin-sources-inside-a-marketplace">Plugin sources inside a marketplace<a class="headerlink" href="#plugin-sources-inside-a-marketplace" title="Permanent link">&para;</a></h2>
-<p>The current scope accepts <strong>local sources only</strong>.</p>
+<p>An unconfigured gateway accepts <strong>local sources only</strong>, and that is the default.</p>
 <table>
 <thead>
 <tr>
@@ -2247,16 +2247,31 @@ character set is constrained.</p>
 <td><strong>Accepted</strong></td>
 </tr>
 <tr>
-<td><code>github</code>, <code>url</code>, <code>git-subdir</code>, <code>npm</code>, <code>archive</code>, or any external source</td>
-<td><strong>Rejected fail-closed</strong> at ingestion, with the reason recorded as the snapshot's violation</td>
+<td><code>github</code>, <code>git</code>/<code>url</code>, <code>git-subdir</code></td>
+<td><strong>Rejected fail-closed</strong> unless <code>skills-gateway.ingestion.external-sources.enabled</code> is set, and rejected anyway until a resolver exists — see below</td>
+</tr>
+<tr>
+<td><code>npm</code>, <code>archive</code></td>
+<td><strong>Rejected fail-closed</strong>, permanently: no configuration admits them</td>
+</tr>
+<tr>
+<td>Anything else — an unrecognised type, an object with no type, a value that is neither a path nor an object</td>
+<td><strong>Rejected fail-closed</strong>, with the form named in the snapshot's violation</td>
 </tr>
 </tbody>
 </table>
-<p>This removes transitive resolution and source rewriting from the current scope
-entirely: relative sources resolve inside the served snapshot by themselves, so
-every URL a client dereferences already resolves inside the gateway.</p>
-<p>Supporting external sources means mirroring the closure and rewriting the
-manifest — a designed future capability, not a configuration flag.</p>
+<p>A relative source resolves inside the served snapshot by itself, so for a
+local-only marketplace every URL a client dereferences already resolves inside
+the gateway.</p>
+<p>External source support arrives in increments
+(<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md">ADR 0011</a>).
+Today's increment is <strong>admission</strong>: an enabled gateway parses and accepts an
+external source rather than refusing it for its shape, but cannot yet fetch it
+and rewrite the manifest, so the snapshot is still rejected — with a violation
+saying the source was admitted and is not yet resolvable, distinct from the one
+for a source that was not admitted. A snapshot is held, and therefore approvable,
+only when every source it declares resolves inside the snapshot the gateway
+serves.</p>
 <h2 id="clients">Clients<a class="headerlink" href="#clients" title="Permanent link">&para;</a></h2>
 <p>The facade is plain read-only git smart-HTTP, so anything that clones works.</p>
 <table>

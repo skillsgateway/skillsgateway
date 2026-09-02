@@ -2234,6 +2234,33 @@ declared marketplace faces the same name rules, reserved name and scheme
 allowlist as an API registration, has no ref key to declare, and a failing
 entry is reported rather than registered. Reconciliation is additive — the
 declaration can create and converge, never deregister.</p>
+<p><strong>A manifest's plugin sources reach for this boundary too.</strong> A registered
+upstream's <code>marketplace.json</code> is attacker-influenceable content that names
+further URLs. Those sources are parsed into a typed model, and an external one is
+admitted only when <code>skills-gateway.ingestion.external-sources</code> says so — a
+setting that defaults to admitting nothing. An admitted source's derived clone
+URL passes <strong>the same scheme allowlist</strong> as a registration, so there is one
+scheme policy for every URL the gateway will ever dereference, plus an optional
+exact-host allowlist and a cap on external sources per manifest. <code>npm</code> and
+<code>archive</code> are refused above that gate, by no configuration.</p>
+<p>The standing invariant, and the reason the reversal can be staged safely: <strong>a
+snapshot is held only when every plugin source it declares resolves inside the
+snapshot the gateway serves.</strong> Held is what makes a snapshot approvable and
+therefore publishable, so a manifest still pointing a client at an external URL
+never reaches it — that is threat T4, and it stays closed whether the gateway
+cannot admit a source or cannot yet resolve one it has admitted.</p>
+<div class="admonition danger">
+<p class="admonition-title">When resolution lands, the allowlists are not the control</p>
+<p>Manifest-driven fetching is gateway-originated traffic chosen by upstream
+data — the SSRF shape. The scheme, host and count checks above are <strong>defence
+in depth</strong>. The primary control is network topology: ingestion egress routed
+through a proxy or DMZ with no route to cloud metadata endpoints, internal
+APIs or anything holding corporate credentials. Post-DNS address validation,
+connect-to-the-validated-address, per-redirect re-validation, downgrade
+refusal and pack-inflation budgets are the in-application second layer, and
+arrive with the resolver. See
+<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md">ADR 0011</a>.</p>
+</div>
 <h2 id="2-the-facade-an-anonymous-network-peer-becomes-a-reader">2. The facade — an anonymous network peer becomes a reader<a class="headerlink" href="#2-the-facade-an-anonymous-network-peer-becomes-a-reader" title="Permanent link">&para;</a></h2>
 <p><code>/git/**</code> is served by its own Spring Security filter chain, ordered ahead of
 the web chain, and it is <strong>stateless</strong>:</p>
