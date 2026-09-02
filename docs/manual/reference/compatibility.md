@@ -142,6 +142,12 @@ Three mechanisms, and it is worth being clear about which is which.
 | A breaking change is declared | The same workflow requires the PR title — which becomes the squash commit subject, and so the release version — to carry `!` or `BREAKING CHANGE`. |
 | The prefix *was* moved | **Nobody.** No check can tell that a break should have been versioned instead; that is review's job. |
 
+Two of oasdiff's default severities are raised to errors in `.oasdiff.yaml`:
+removing a response field, and removing an optional response header. Both are
+warnings by default unless the schema marks them required, and no response
+schema here does — so the most ordinary breaking change there is used to pass a
+gate that fails on errors only.
+
 Deliberately breaking the contract takes two visible acts: the
 `⚠️ BREAKING CONTRACT` label on the pull request, and the break declared in its
 title. Both stay in the record. Keeping the old surface alongside the new one
