@@ -114,11 +114,11 @@ declaring the API stable by accident.
 ```mermaid
 flowchart TD
     prepare[prepare: resolve version and notes] --> checks[checks: the gates that guard main]
-    checks --> tag[tag: push the tag, create the prerelease]
-    tag --> approve{{approval: stable environment}}
-    approve --> image[image: build, smoke-test, push to GHCR]
-    approve --> docs[docs: publish the version, move stable]
-    approve --> package[package: build the jar and chart from the tag]
+    checks --> approve{{approval: stable environment}}
+    approve --> tag[tag: push the tag, create the prerelease]
+    tag --> image[image: build, smoke-test, push to GHCR]
+    tag --> docs[docs: publish the version, move stable]
+    tag --> package[package: build the jar and chart from the tag]
     package --> assets[assets: assert the version, attach]
     image --> verify[verify: re-check the published bytes]
     assets --> verify
@@ -127,11 +127,17 @@ flowchart TD
 
 Two properties of that order are deliberate:
 
-**The approval guards the publish, not the tag.** Everything before it is
-reversible and invisible — a tag can be deleted, and the release is created as
-a *prerelease*, which `/releases/latest` excludes. By the time you are asked to
-approve, the gates are green, the version is resolved and the notes are
-rendered, so you are approving evidence rather than a version string.
+**The approval decides whether the version exists.** Nothing before it is
+durable: `prepare` resolves and reports, `checks` runs the gates, and neither
+writes anything to the repository or the world. The tag is the first
+irreversible step — "the git tag is the only version" — so it is behind the
+gate along with everything it feeds.
+
+What you approve is the run itself, which is where the evidence is: `prepare`
+has written the resolved version, the version it derived, the previous tag and
+the rendered release notes into the run summary, and `checks` is green above
+it. The `stable` environment's link points there rather than at a release page,
+because at that moment there deliberately is no release to point at.
 
 **A release is not "latest" until its bytes have been checked.** `verify`
 downloads the published assets over the same unauthenticated path a consumer
@@ -152,10 +158,87 @@ tag, and its notes still span everything since that tag.
 
 ## If a release goes wrong
 
-Because nothing gates the tag, abandoning a release part-way leaves a tag and a
-prerelease behind. Either delete both, or — usually cleaner — fix forward with
-the next patch version. A prerelease that was never promoted is not serving
-anyone.
+Where a run stops decides what it leaves behind.
+
+**Stopped at `prepare`, at `checks`, or at the approval: nothing survives it.**
+Neither job writes anything to the repository or to the world. Cancel it, or
+reject the approval, and there is nothing to clean up.
+
+**Stopped after `tag`: the version exists**, and every publishing job that
+finished has added one more durable thing. Those three run in parallel, so a
+stopped run can have left any subset of them.
+
+| Job | What it leaves behind if it finished |
+| --- | --- |
+| `tag` | The tag `<version>`, and a GitHub prerelease that `/releases/latest` excludes |
+| `package` and `assets` | The jar, the Helm chart and the SBOM, attached to that prerelease |
+| `image` | `ghcr.io/skillsgateway/skillsgateway:<version>` in GHCR |
+| `docs` | That documentation version published, and the `stable` alias moved to it |
+| `promote` | The release marked latest — at which point the release is complete and there is nothing to recover |
+
+A run that gets past `tag` without reaching `promote` ends with a **Partial
+release** table in its run summary naming which of those steps succeeded, so the
+state does not have to be reconstructed from the job list. `verify` cannot
+report it: a failed publishing job skips `verify` along with everything after
+it.
+
+Two decisions follow, in this order.
+
+### Can this version be re-run?
+
+**No — not while its tag exists.** The tag job checks for the tag before it
+creates anything and fails with `Tag '<version>' already exists`, so
+re-dispatching the workflow for a version that is already tagged stops there.
+Re-running is only possible after the tag is deleted.
+
+!!! warning "Deleting a tag and re-running has not been exercised"
+
+    The refusal above is what the workflow does; what a *successful* second run
+    over a deleted tag and a deleted prerelease does has never been tried on
+    this repository. Treat it as unverified. Fixing forward has been, and is the
+    recommendation below.
+
+### Fix forward, or clean up?
+
+**Fix forward** unless the tag is genuinely private. Cut the next version once
+the cause is fixed; the abandoned prerelease is excluded from
+`/releases/latest`, so nothing that resolves "the latest release" ever sees it.
+The cost is a version number and a prerelease that stays visible in the releases
+list — which is also an honest record of what happened.
+
+The `0.1.0` release of this repository is exactly this case: tagged and
+pre-released with nothing behind it, deliberately left standing.
+
+!!! note "A skipped version is visible in the version arithmetic"
+
+    Nisse derives the version on `main` by incrementing the last tag, so an
+    abandoned `0.1.0` still moves `main` to `0.2.0-N-SNAPSHOT`. The snapshot
+    describes itself relative to a release that was never published. Harmless,
+    and worth knowing before it reads as a bug.
+
+**Clean up** only if you are certain nobody has fetched the tag — a tag someone
+already has does not stop existing when the remote's copy is deleted, and their
+copy may now point at a commit nobody else has. In practice that means within
+minutes, on a repository nobody is watching. Undo in the reverse of the order
+above:
+
+```bash
+# Documentation, if the docs job ran: remove the version and put `stable` back.
+mike delete --push <version>
+mike alias --push --update-aliases <previous-version> stable
+
+# The container image, if the image job ran: delete that package version in
+# Settings → Packages, or with the API.
+gh api --method DELETE \
+  /orgs/skillsgateway/packages/container/skillsgateway/versions/<id>
+
+# The release and its assets, then the tag.
+gh release delete <version> --repo skillsgateway/skillsgateway --yes
+git push origin :refs/tags/<version>
+```
+
+With the tag gone the workflow will accept the version again — which, as above,
+is the part nobody has yet done.
 
 !!! note "Hand-pushing a tag publishes nothing"
 
