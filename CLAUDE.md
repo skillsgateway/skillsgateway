@@ -82,6 +82,11 @@ generated annotation files.
 - Conventional Commits with DCO sign-off (`git commit -s`); branches
   `<type>/<kebab-description>`; PR titles are conventional commits (squash).
 - Work on branches, open PRs; merging is done manually by the owner.
+- If a PR implements or contributes to a tracked issue, its description
+  references that issue. When the PR fully resolves the issue, use a GitHub
+  closing keyword (`Closes #N`, `Fixes #N`) so merging into the default
+  branch closes it automatically; a PR that only partially addresses an
+  issue references it without a closing keyword, so the issue stays open.
 
 ## Boundaries
 
