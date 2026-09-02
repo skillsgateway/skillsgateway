@@ -23,4 +23,4 @@ permissions:
 
 jobs:
   validate:
-    uses: skillsgateway/.github/.github/workflows/common-validate-renovate.yml@5447da3b1e2d9a80a479baeeb02082fa4423c7f4 # main
+    uses: skillsgateway/.github/.github/workflows/common-validate-renovate.yml@9c928b66f9a93442d77a3ff833efeb334221fe81 # main
