@@ -1093,3 +1093,19 @@ requirements:
     rationale: Enforcing authorization unconditionally would otherwise break the documented local development loop, where the escape hatch replaces the identity provider entirely and there is no claim to map and no directory to grant from. Making its principal an administrator keeps that loop working without a second, quieter switch beside the one that already announces itself; the existing guard that refuses the escape hatch on anything resembling a real deployment is what keeps this from becoming a bypass. Attributing the role to the escape hatch matters because the session endpoint exists to answer why a session holds a role, and an operator who sees admin attributed to configuration would go looking for a configuration entry that does not exist. Refusing it to an identity-provider session of the same name closes the obvious impersonation.
     categories: ["security"]
     revision: 0.1.0
+
+  - id: GW_0142
+    title: A vetting ledger entry is self-describing and correctly attributed
+    significance: shall
+    description: The system shall append every connector verdict to the audit ledger carrying the connector name, its conclusion, the number of findings and the worst finding severity present, and a reference to the chain run the verdict belongs to; shall append the run-completed entry carrying that same run reference; and shall attribute every entry produced by the automated vetting chain to the gateway acting on its own rather than to a person.
+    rationale: An auditor asking what a snapshot's vetting did must be able to answer it from the ledger alone; an entry that records only that a connector passed forces the reader back into the vetting tables to learn how much was examined and how it relates to the rest of the run, which is exactly the derivation the ledger exists to remove. Carrying the run reference on both the verdict and the completion entry is what lets the scattered per-connector rows be reassembled into the one run they came from. Typing the chain as the automated subsystem it is stops the ledger from asserting that a machine verdict was a human act, which is itself a transparency defect on the surface whose whole purpose is transparency.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_0143
+    title: A clean vetting pass records what it examined
+    significance: shall
+    description: The system shall record on every connector verdict, including a pass that produced no findings, a non-empty statement of what the connector examined — the files it scanned and the rules it applied — so that a pass is distinguishable in the ledger and in the vetting report from a connector that did not run.
+    rationale: A pass with a null detail and no findings is indistinguishable from a connector that was never invoked, and on a fail-closed surface that ambiguity is dangerous — a reviewer reading "nothing found" cannot tell coverage from absence. Stating the coverage on the verdict itself makes a clean pass carry positive evidence of what was checked, the same way a finding carries positive evidence of what was wrong.
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0

@@ -239,7 +239,10 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
         int position = 0;
         for (VerdictState state : VerdictState.values()) {
             vettingRepository.recordVerdict(
-                    runId, "connector-" + state.stored(), position++, new Verdict(state, findingPerSeverity(), null));
+                    runId,
+                    "connector-" + state.stored(),
+                    position++,
+                    new Verdict(state, findingPerSeverity(), null, null));
         }
         var verdicts = vettingRepository.run(runId).orElseThrow().verdicts();
         assertThat(verdicts).extracting(v -> v.state()).containsExactlyElementsOf(List.of(VerdictState.values()));

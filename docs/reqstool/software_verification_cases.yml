@@ -1479,3 +1479,30 @@ cases:
       is refused, and an identity-provider session sharing that name gains nothing by
       this path
     revision: "0.1.0"
+
+  - id: SVC_GW_0142
+    requirement_ids: ["GW_0142"]
+    title: Vetting ledger entries carry the run, the finding count and severity, and a system actor
+    verification: automated-test
+    description: |
+      GIVEN a snapshot taken through a chain run that both fails and passes connectors
+      WHEN the audit ledger is read
+      THEN each vetting-verdict entry carries the connector name and conclusion, the
+      number of findings, the worst severity present or none, and the id of the chain
+      run it belongs to
+      AND the vetting-completed entry carries that same run id
+      AND every vetting entry is typed as the gateway acting on its own rather than as a
+      human actor
+    revision: "0.1.0"
+
+  - id: SVC_GW_0143
+    requirement_ids: ["GW_0143"]
+    title: A clean connector pass records the coverage it examined
+    verification: automated-test
+    description: |
+      GIVEN a snapshot whose content trips no secret-scan or prompt-injection rule
+      WHEN its recorded verdicts and the ledger are read
+      THEN each passing connector's detail is non-empty and states what it examined —
+      the files it scanned and the rules it applied — rather than being null and
+      indistinguishable from a connector that never ran
+    revision: "0.1.0"

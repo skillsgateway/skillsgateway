@@ -2373,7 +2373,7 @@ export interface components {
         VerdictView: {
             /** @description Connector name */
             connector?: string;
-            /** @description One-line summary of the findings, or null when there are none */
+            /** @description One-line summary: how many findings and the worst severity, or — for a clean pass with no findings — what the connector examined */
             detail?: string;
             /** @description What the connector found */
             findings?: components["schemas"]["Finding"][];
