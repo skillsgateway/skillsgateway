@@ -20,12 +20,45 @@ async function login(page: Page, username: string) {
   await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
 }
 
+/**
+ * Submits the register form's "Register" button — ticking the "Register anyway"
+ * acknowledgement first if the duplicate-URL warning is showing. Every test in this
+ * file points at the same small set of upstream fixtures (the E2E_*_UPSTREAM_URL
+ * envs), so once the first marketplace is registered against a given fixture, every
+ * later registration against that same fixture is a legitimate collision that the
+ * warning correctly flags — not a bug in the gating.
+ */
+async function submitRegister(page: Page) {
+  const registerAnyway = page.getByRole("checkbox", { name: "Register anyway" });
+  if (await registerAnyway.isVisible().catch(() => false)) {
+    await registerAnyway.check();
+  }
+  await page.getByRole("button", { name: "Register", exact: true }).click();
+}
+
 function uniqueName(prefix: string) {
   // A millisecond timestamp alone collides when parallel workers (CI shards,
   // --repeat-each) register in the same tick — the duplicate-name 500 then
   // leaves the register dialog open and the test times out on the Ingest
   // button. A random suffix keeps the name unique across workers.
   return `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/**
+ * The marketplaces page is a table: each row expands in place to its snapshot review sub-table,
+ * where Ingest and the Approve/Reject/Provenance actions live. Every test that acts on a
+ * marketplace's snapshots opens its row first.
+ */
+async function expandMarketplace(page: Page, name: string) {
+  await page.getByRole("button", { name: `Expand ${name}`, exact: true }).click();
+}
+
+/**
+ * The expanded snapshots region for one marketplace — the review sub-table. Scoping to it keeps
+ * a test off the held/approved snapshots other tests in the same run leave on the page.
+ */
+function marketplaceRegion(page: Page, name: string): Locator {
+  return page.getByRole("region", { name: `Snapshots of ${name}` });
 }
 
 /**
@@ -44,18 +77,21 @@ test("admin_registers_ingests_and_approves_a_marketplace_in_the_portal", async (
   await expect(page.getByRole("button", { name: "Register", exact: true })).toBeDisabled();
   await page.getByLabel("Name").fill(name);
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
-  await page.getByRole("button", { name: "Register", exact: true }).click();
+  await submitRegister(page);
   await expect(page.getByText(`Marketplace '${name}' registered`)).toBeVisible();
 
-  await page.getByRole("button", { name: `Ingest ${name}` }).click();
-  await expect(page.getByText("held", { exact: true })).toBeVisible();
+  // The review actions live in the row's expandable snapshot sub-table.
+  await expandMarketplace(page, name);
+  const region = marketplaceRegion(page, name);
+  await region.getByRole("button", { name: `Ingest ${name}` }).click();
+  await expect(region.getByText("held", { exact: true })).toBeVisible();
 
   // Approval goes through the review dialog: the reviewer sees the verdicts first (GW_0042).
-  await page.getByRole("button", { name: /Approve snapshot \d+/ }).click();
+  await region.getByRole("button", { name: /Approve snapshot \d+/ }).click();
   await page.getByRole("button", { name: /Confirm approval of snapshot \d+/ }).click();
-  await expect(page.getByText("approved", { exact: true })).toBeVisible();
+  await expect(region.getByText("approved", { exact: true })).toBeVisible();
 
-  await page.getByRole("button", { name: /Provenance of snapshot \d+/ }).click();
+  await region.getByRole("button", { name: /Provenance of snapshot \d+/ }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByText("Decided by")).toBeVisible();
   await expect(dialog.getByText("alice")).toBeVisible();
@@ -92,11 +128,12 @@ test("the_approve_dialog_warns_that_the_reviewer_supplied_the_content_and_still_
   await page.getByRole("button", { name: "Register marketplace" }).click();
   await page.getByLabel("Name").fill(name);
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
-  await page.getByRole("button", { name: "Register", exact: true }).click();
+  await submitRegister(page);
   await expect(page.getByText(`Marketplace '${name}' registered`)).toBeVisible();
-  await page.getByRole("button", { name: `Ingest ${name}` }).click();
+  await expandMarketplace(page, name);
+  const card = marketplaceRegion(page, name);
+  await card.getByRole("button", { name: `Ingest ${name}` }).click();
 
-  const card = page.locator("[data-slot=card]").filter({ hasText: name });
   await card.getByRole("button", { name: /Approve snapshot \d+/ }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByText(/Four-eyes rule/)).toContainText("registered this marketplace");
@@ -166,9 +203,11 @@ test("webhooks_page_lists_subscribers_and_delivery_attempts", async ({ page }) =
   await page.getByRole("button", { name: "Register marketplace" }).click();
   await page.getByLabel("Name").fill(marketplaceName);
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
-  await page.getByRole("button", { name: "Register", exact: true }).click();
-  await page.getByRole("button", { name: `Ingest ${marketplaceName}` }).click();
-  await expect(page.getByText("held", { exact: true })).toBeVisible();
+  await submitRegister(page);
+  await expandMarketplace(page, marketplaceName);
+  const marketplaceRow = marketplaceRegion(page, marketplaceName);
+  await marketplaceRow.getByRole("button", { name: `Ingest ${marketplaceName}` }).click();
+  await expect(marketplaceRow.getByText("held", { exact: true })).toBeVisible();
 
   await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Webhooks" }).click();
   await expect(
@@ -190,9 +229,11 @@ test("snapshot_soft_delete_and_restore_in_the_portal", async ({ page }) => {
   await page.getByRole("button", { name: "Register marketplace" }).click();
   await page.getByLabel("Name").fill(name);
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
-  await page.getByRole("button", { name: "Register", exact: true }).click();
-  await page.getByRole("button", { name: `Ingest ${name}` }).click();
-  await expect(page.getByText("held", { exact: true })).toBeVisible();
+  await submitRegister(page);
+  await expandMarketplace(page, name);
+  const region = marketplaceRegion(page, name);
+  await region.getByRole("button", { name: `Ingest ${name}` }).click();
+  await expect(region.getByText("held", { exact: true })).toBeVisible();
 
   // Retention lives with the snapshot, on the marketplace's own page.
   await page.getByRole("link", { name, exact: true }).click();
@@ -244,12 +285,13 @@ async function registerTainted(page: Page, prefix: string) {
   await page
     .getByLabel("Clone URL")
     .fill(process.env.E2E_TAINTED_UPSTREAM_URL ?? "file:///tmp/e2e-tainted");
-  await page.getByRole("button", { name: "Register", exact: true }).click();
-  await page.getByRole("button", { name: `Ingest ${name}` }).click();
+  await submitRegister(page);
+  await expandMarketplace(page, name);
 
-  // Scoped to this marketplace's own card: earlier tests in the run leave their
-  // own held snapshots on the page.
-  const card = page.locator("[data-slot=card]").filter({ hasText: name });
+  // Scoped to this marketplace's own expanded snapshots region: earlier tests in the run
+  // leave their own held snapshots on the page.
+  const card = marketplaceRegion(page, name);
+  await card.getByRole("button", { name: `Ingest ${name}` }).click();
   await expect(card.getByText("held", { exact: true })).toBeVisible();
   return card;
 }
@@ -440,9 +482,10 @@ test("adoption_page_shows_a_real_facade_fetch_and_its_identity", async ({ page }
   await page.getByRole("button", { name: "Register marketplace" }).click();
   await page.getByLabel("Name").fill(name);
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
-  await page.getByRole("button", { name: "Register", exact: true }).click();
-  await page.getByRole("button", { name: `Ingest ${name}` }).click();
-  const card = page.locator("[data-slot=card]").filter({ hasText: name });
+  await submitRegister(page);
+  await expandMarketplace(page, name);
+  const card = marketplaceRegion(page, name);
+  await card.getByRole("button", { name: `Ingest ${name}` }).click();
   await expect(card.getByText("held", { exact: true })).toBeVisible();
   await card.getByRole("button", { name: /Approve snapshot \d+/ }).click();
   await page.getByRole("button", { name: /Confirm approval of snapshot \d+/ }).click();
@@ -492,7 +535,7 @@ test("setup_wizard_composes_origin_derived_commands_and_holds_show_once", async 
   await page.getByRole("button", { name: "Register marketplace" }).click();
   await page.getByLabel("Name").fill(name);
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
-  await page.getByRole("button", { name: "Register", exact: true }).click();
+  await submitRegister(page);
   await page.getByRole("link", { name, exact: true }).click();
 
   await page.getByRole("button", { name: "Set up a client" }).click();
@@ -543,9 +586,10 @@ test("preview_pane_shows_tree_inert_skill_md_and_diff_vs_served", async ({ page 
   await page
     .getByLabel("Clone URL")
     .fill(process.env.E2E_PREVIEW_UPSTREAM_URL ?? `file://${upstream}`);
-  await page.getByRole("button", { name: "Register", exact: true }).click();
-  const card = page.locator("[data-slot=card]").filter({ hasText: name });
-  await page.getByRole("button", { name: `Ingest ${name}` }).click();
+  await submitRegister(page);
+  await expandMarketplace(page, name);
+  const card = marketplaceRegion(page, name);
+  await card.getByRole("button", { name: `Ingest ${name}` }).click();
   await expect(card.getByText("held", { exact: true })).toBeVisible();
   await card.getByRole("button", { name: /Approve snapshot \d+/ }).click();
   await page.getByRole("button", { name: /Confirm approval of snapshot \d+/ }).click();
@@ -574,7 +618,7 @@ test("preview_pane_shows_tree_inert_skill_md_and_diff_vs_served", async ({ page 
   git("-c", "commit.gpgsign=false", "commit", "-q", "-m", "e2e preview delta");
 
   // A second ingest pins the new commit as a held snapshot beside the served one.
-  await page.getByRole("button", { name: `Ingest ${name}` }).click();
+  await card.getByRole("button", { name: `Ingest ${name}` }).click();
   await expect(card.getByText("held", { exact: true })).toBeVisible();
 
   await page.getByRole("link", { name, exact: true }).click();

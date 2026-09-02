@@ -1,5 +1,17 @@
-import { Check, Copy, Download } from "lucide-react";
-import { useState } from "react";
+import {
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import { ArrowDown, ArrowUp, Check, ChevronsUpDown, Copy, Download } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import {
   AUDIT_EXPORT_URL,
@@ -10,6 +22,9 @@ import {
   useResetAuditSinkCursor,
   type CreatedSink,
 } from "@/api/queries";
+import { AuditStatusBadge, auditRowClass } from "@/components/audit-status";
+import { Timestamp } from "@/components/timestamp";
+import { auditStatus } from "@/lib/audit-status";
 import { GATEWAY_NAME_HINT, isAbsoluteUrl, isValidGatewayName } from "@/lib/form-rules";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -37,6 +52,265 @@ function cell(value: unknown): string {
     return "—";
   }
   return String(value);
+}
+
+type AuditRow = Record<string, unknown>;
+
+/** The empty/"—" marketplace marker the ledger writes for actions not tied to a marketplace. */
+const NO_MARKETPLACE = "-";
+
+/** A sortable header button; the arrow states which way the column is ordered, if at all. */
+function SortHeader({
+  label,
+  sorted,
+  onToggle,
+}: {
+  label: string;
+  sorted: false | "asc" | "desc";
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="-ml-1 inline-flex items-center gap-1 rounded px-1 py-0.5 hover:text-foreground"
+    >
+      {label}
+      {sorted === "asc" ? (
+        <ArrowUp className="size-3" aria-hidden />
+      ) : sorted === "desc" ? (
+        <ArrowDown className="size-3" aria-hidden />
+      ) : (
+        <ChevronsUpDown className="size-3 text-muted-foreground/50" aria-hidden />
+      )}
+    </button>
+  );
+}
+
+/**
+ * The in-portal ledger view: the same append-only entries, but legible. Every row carries a
+ * status derived from its event and detail (a blocked verdict reads red, matching the
+ * marketplace card — #221/#224), the marketplace column links to that marketplace's detail
+ * page, and the table sorts and filters per column. It paginates client-side over the JSON
+ * ledger; the NDJSON export above is the path for a full, cursor-resumable pull.
+ *
+ * @Requirements GW_0022, GW_0030
+ */
+function LedgerTable({ rows }: { rows: AuditRow[] }) {
+  const [sorting, setSorting] = useState<SortingState>([{ id: "id", desc: true }]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+
+  const columns = useMemo<ColumnDef<AuditRow>[]>(
+    () => [
+      {
+        id: "status",
+        header: "Status",
+        accessorFn: (row) => auditStatus(row),
+        enableColumnFilter: false,
+        cell: ({ row }) => <AuditStatusBadge status={auditStatus(row.original)} />,
+      },
+      {
+        id: "ts",
+        header: ({ column }) => (
+          <SortHeader
+            label="When"
+            sorted={column.getIsSorted()}
+            onToggle={() => column.toggleSorting()}
+          />
+        ),
+        accessorFn: (row) => (typeof row.ts === "string" ? row.ts : ""),
+        enableColumnFilter: false,
+        cell: ({ row }) => (
+          <span className="whitespace-nowrap text-xs text-muted-foreground">
+            <Timestamp value={row.original.ts as string | undefined} />
+          </span>
+        ),
+      },
+      {
+        id: "event",
+        header: ({ column }) => (
+          <SortHeader
+            label="Event"
+            sorted={column.getIsSorted()}
+            onToggle={() => column.toggleSorting()}
+          />
+        ),
+        accessorFn: (row) => cell(row.event),
+        filterFn: "includesString",
+        cell: ({ getValue }) => <span className="font-mono text-xs">{getValue<string>()}</span>,
+      },
+      {
+        id: "principal",
+        header: ({ column }) => (
+          <SortHeader
+            label="Principal"
+            sorted={column.getIsSorted()}
+            onToggle={() => column.toggleSorting()}
+          />
+        ),
+        accessorFn: (row) => cell(row.principal),
+        filterFn: "includesString",
+        cell: ({ getValue }) => <span className="text-xs">{getValue<string>()}</span>,
+      },
+      {
+        id: "marketplace",
+        header: ({ column }) => (
+          <SortHeader
+            label="Marketplace"
+            sorted={column.getIsSorted()}
+            onToggle={() => column.toggleSorting()}
+          />
+        ),
+        accessorFn: (row) => cell(row.marketplace),
+        filterFn: "includesString",
+        cell: ({ row }) => {
+          const value = cell(row.original.marketplace);
+          if (value === NO_MARKETPLACE || value === "—") {
+            return <span className="text-xs text-muted-foreground">—</span>;
+          }
+          // Links to the marketplace detail even if it was later removed; that page states the
+          // "not found" case rather than leaving the ledger a dead end (#221/#224).
+          return (
+            <Link
+              to={`/marketplaces/${encodeURIComponent(value)}`}
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              {value}
+            </Link>
+          );
+        },
+      },
+      {
+        id: "sha",
+        header: "Commit",
+        accessorFn: (row) => cell(row.sha),
+        filterFn: "includesString",
+        cell: ({ getValue }) => {
+          const value = getValue<string>();
+          return (
+            <span className="font-mono text-xs text-muted-foreground">
+              {value && value !== "—" ? value.slice(0, 12) : "—"}
+            </span>
+          );
+        },
+      },
+      {
+        id: "detail",
+        header: "Detail",
+        accessorFn: (row) => cell(row.detail),
+        enableColumnFilter: false,
+        enableSorting: false,
+        cell: ({ getValue }) => (
+          <span className="text-xs text-muted-foreground">{getValue<string>()}</span>
+        ),
+      },
+    ],
+    [],
+  );
+
+  const table = useReactTable({
+    data: rows,
+    columns,
+    state: { sorting, columnFilters },
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: { pagination: { pageSize: 25 } },
+  });
+
+  const filterable: { id: string; label: string }[] = [
+    { id: "event", label: "event" },
+    { id: "principal", label: "principal" },
+    { id: "marketplace", label: "marketplace" },
+    { id: "sha", label: "sha" },
+  ];
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2">
+        {filterable.map((f) => {
+          const column = table.getColumn(f.id);
+          return (
+            <Input
+              key={f.id}
+              className="h-8 w-40 text-xs"
+              aria-label={`Filter by ${f.label}`}
+              placeholder={`Filter ${f.label}…`}
+              value={(column?.getFilterValue() as string) ?? ""}
+              onChange={(event) => column?.setFilterValue(event.target.value)}
+            />
+          );
+        })}
+      </div>
+      <div className="overflow-x-auto rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((group) => (
+              <TableRow key={group.id}>
+                {group.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="text-sm text-muted-foreground">
+                  No rows match the current filters.
+                </TableCell>
+              </TableRow>
+            ) : (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} className={auditRowClass(row.original)}>
+                  {row.getVisibleCells().map((cellCtx) => (
+                    <TableCell key={cellCtx.id}>
+                      {flexRender(cellCtx.column.columnDef.cell, cellCtx.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>
+          {table.getFilteredRowModel().rows.length} of {rows.length} entries
+        </span>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            aria-label="Previous page"
+            disabled={!table.getCanPreviousPage()}
+            onClick={() => table.previousPage()}
+          >
+            Previous
+          </Button>
+          <span>
+            Page {table.getState().pagination.pageIndex + 1} of {Math.max(1, table.getPageCount())}
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            aria-label="Next page"
+            disabled={!table.getCanNextPage()}
+            onClick={() => table.nextPage()}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function SinkSecretDialog({
@@ -107,7 +381,6 @@ export function AuditPage() {
   const [url, setUrl] = useState("");
   const [created, setCreated] = useState<CreatedSink | null>(null);
   const rows = audit.data ?? [];
-  const columns = rows.length > 0 ? Object.keys(rows[0] ?? {}) : [];
 
   // Mirrors AuditController.createSink: the name must match the gateway name pattern
   // (422) and the URL must parse with a scheme (400). The scheme allowlist itself is
@@ -273,6 +546,11 @@ export function AuditPage() {
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Ledger</h2>
+        <p className="text-sm text-muted-foreground">
+          Every facade fetch and administrative action, in ledger order. A verdict row is
+          coloured — a blocked snapshot reads red, the same as its marketplace — and each
+          marketplace links to its detail page.
+        </p>
         {audit.isLoading ? <p>Loading…</p> : null}
         {audit.isError ? (
           <p role="alert" className="text-sm text-destructive">
@@ -282,28 +560,7 @@ export function AuditPage() {
         {rows.length === 0 && !audit.isLoading ? (
           <p className="text-sm text-muted-foreground">No fetches recorded yet.</p>
         ) : null}
-        {rows.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {columns.map((column) => (
-                  <TableHead key={column}>{column}</TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((row, index) => (
-                <TableRow key={index}>
-                  {columns.map((column) => (
-                    <TableCell key={column} className="font-mono text-xs">
-                      {cell(row[column])}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : null}
+        {rows.length > 0 ? <LedgerTable rows={rows} /> : null}
       </section>
 
       {created ? <SinkSecretDialog created={created} onClose={() => setCreated(null)} /> : null}
