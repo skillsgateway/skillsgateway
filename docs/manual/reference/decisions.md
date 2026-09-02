@@ -150,6 +150,24 @@ condemn (GW_0146). A `pending` answer is the **asynchronous seam** and blocks
 until resolved (GW_0147); the inbound resolution callback is deliberately a
 separate, sequenced piece of work.
 
+### [ADR 0010 — Admin override of vetting automation (the cockpit model)](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0010-admin-override-of-vetting-automation.md)
+
+*Accepted, 2026-09-01.*
+
+The airline-cockpit principle applied to vetting: automation can be
+**disconnected by the captain**, deliberately and audibly. Two stances taken on
+purpose are narrowly reversed for **admin-only, audited** acts. An administrator
+may **enable or disable a built-in connector**, globally or per marketplace
+(GW_0149) — a disabled connector is recorded as a distinct `disabled` verdict
+(fail-loud) and disabling every connector still leaves a run **blocked**, never
+cleared. An administrator may also **approve a snapshot over a blocked outcome**
+(GW_0148) with a required reason — the override lifts only the vetting gate (the
+policy, release-age and four-eyes gates still run), writes a distinct
+`snapshot-approved-over-vetting-failure` ledger event, and marks the snapshot so
+it is never indistinguishable from a clean approval. The override does not
+replace scoped, expiring **waivers**; it is the rarer administrative act for a
+whole blocked outcome.
+
 ## Related
 
 - [Architecture](../architecture.md)

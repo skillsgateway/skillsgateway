@@ -60,6 +60,9 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
     @Autowired
     private SkillsGatewayProperties properties;
 
+    @Autowired
+    private dev.skillsgateway.server.vetting.ConnectorToggleService connectorToggleService;
+
     private StubEndpoint endpoint;
 
     @BeforeEach
@@ -279,7 +282,13 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
 
     private VettingService chainOf(VettingConnector... connectors) {
         return new VettingService(
-                List.of(connectors), vettingRepository, storage, auditLogger, webhookService, properties);
+                List.of(connectors),
+                vettingRepository,
+                storage,
+                auditLogger,
+                webhookService,
+                connectorToggleService,
+                properties);
     }
 
     private VettingRepository.VerdictView verdictOf(Registered registered, String connector) {

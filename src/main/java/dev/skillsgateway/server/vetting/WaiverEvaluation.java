@@ -171,10 +171,22 @@ public final class WaiverEvaluation {
      * A verdict's state once its waived findings are removed. A verdict that already clears keeps
      * its state; one that does not, and has no findings to remove, keeps its state too — which is
      * how {@code PENDING} and an empty run stay blocking no matter what waivers exist.
+     *
+     * <p>{@link VerdictState#DISABLED} (GW_0149) is handled separately rather than run through
+     * {@link Verdict#of(List)} like every other state: it always carries an informational finding
+     * so the disablement is visible on the run, and that finding's {@code INFO} severity would
+     * otherwise re-derive to {@code PASS} on its own — an unwaived, purely bookkeeping finding
+     * turning a switched-off connector into positive clearing evidence it never produced, which is
+     * exactly the blanket-approval loophole GW_0149 forbids. Only when every finding on it has
+     * actually been waived — residual empty, so something was named and accepted — does it clear,
+     * the same "waiving everything clears the verdict" rule every other state gets.
      */
     private static VerdictState effectiveState(VettingRepository.VerdictView verdict, List<Finding> residual) {
         if (verdict.state().clearing() || verdict.findings().isEmpty()) {
             return verdict.state();
+        }
+        if (verdict.state() == VerdictState.DISABLED) {
+            return residual.isEmpty() ? VerdictState.PASS : VerdictState.DISABLED;
         }
         return Verdict.of(residual).state();
     }

@@ -78,6 +78,9 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             "POST /api/policy/rules",
             "PUT /api/policy/rules/{name}",
             "DELETE /api/policy/rules/{name}",
+            // The administrative connector on/off switch (GW_0149): admin-only, so it walks with
+            // the role-gated mutations and is denied to every non-admin.
+            "PUT /api/vetting/connectors/{name}/toggle",
             // Read-only by contract, but a POST and approver-gated: it walks as a mutation.
             "POST /api/policy/playground");
 
@@ -116,7 +119,10 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             "GET /api/retention/candidates",
             "GET /api/roles",
             "GET /api/estate",
-            "GET /api/policy/rules");
+            "GET /api/policy/rules",
+            // The connector settings are admin-only, not an auditor read (GW_0149): the switch that
+            // governs the vetting chain is not shown to marketplace-scoped approvers or auditors.
+            "GET /api/vetting/connector-toggles");
 
     @Test
     @SVCs({"SVC_GW_0068"})
@@ -270,9 +276,11 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         grant(root, carolName, "auditor", null);
 
         for (String route : PRIVILEGED_READS) {
-            if (route.equals("GET /api/roles") || route.equals("GET /api/tokens/machine")) {
-                // Grant administration (GW_0071) and the machine-credential listing (GW_0130)
-                // are admin-only, not auditor reads.
+            if (route.equals("GET /api/roles")
+                    || route.equals("GET /api/tokens/machine")
+                    || route.equals("GET /api/vetting/connector-toggles")) {
+                // Grant administration (GW_0071), the machine-credential listing (GW_0130) and the
+                // connector settings (GW_0149) are admin-only, not auditor reads.
                 continue;
             }
             mockMvc.perform(request(route).with(carol)).andExpect(status().isOk());
