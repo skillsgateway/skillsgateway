@@ -20,6 +20,22 @@ async function login(page: Page, username: string) {
   await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
 }
 
+/**
+ * Submits the register form's "Register" button — ticking the "Register anyway"
+ * acknowledgement first if the duplicate-URL warning is showing. Every test in this
+ * file points at the same small set of upstream fixtures (the E2E_*_UPSTREAM_URL
+ * envs), so once the first marketplace is registered against a given fixture, every
+ * later registration against that same fixture is a legitimate collision that the
+ * warning correctly flags — not a bug in the gating.
+ */
+async function submitRegister(page: Page) {
+  const registerAnyway = page.getByRole("checkbox", { name: "Register anyway" });
+  if (await registerAnyway.isVisible().catch(() => false)) {
+    await registerAnyway.check();
+  }
+  await page.getByRole("button", { name: "Register", exact: true }).click();
+}
+
 function uniqueName(prefix: string) {
   // A millisecond timestamp alone collides when parallel workers (CI shards,
   // --repeat-each) register in the same tick — the duplicate-name 500 then
@@ -61,7 +77,7 @@ test("admin_registers_ingests_and_approves_a_marketplace_in_the_portal", async (
   await expect(page.getByRole("button", { name: "Register", exact: true })).toBeDisabled();
   await page.getByLabel("Name").fill(name);
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
-  await page.getByRole("button", { name: "Register", exact: true }).click();
+  await submitRegister(page);
   await expect(page.getByText(`Marketplace '${name}' registered`)).toBeVisible();
 
   // The review actions live in the row's expandable snapshot sub-table.
@@ -112,7 +128,7 @@ test("the_approve_dialog_warns_that_the_reviewer_supplied_the_content_and_still_
   await page.getByRole("button", { name: "Register marketplace" }).click();
   await page.getByLabel("Name").fill(name);
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
-  await page.getByRole("button", { name: "Register", exact: true }).click();
+  await submitRegister(page);
   await expect(page.getByText(`Marketplace '${name}' registered`)).toBeVisible();
   await expandMarketplace(page, name);
   const card = marketplaceRegion(page, name);
@@ -187,7 +203,7 @@ test("webhooks_page_lists_subscribers_and_delivery_attempts", async ({ page }) =
   await page.getByRole("button", { name: "Register marketplace" }).click();
   await page.getByLabel("Name").fill(marketplaceName);
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
-  await page.getByRole("button", { name: "Register", exact: true }).click();
+  await submitRegister(page);
   await expandMarketplace(page, marketplaceName);
   const marketplaceRow = marketplaceRegion(page, marketplaceName);
   await marketplaceRow.getByRole("button", { name: `Ingest ${marketplaceName}` }).click();
@@ -213,7 +229,7 @@ test("snapshot_soft_delete_and_restore_in_the_portal", async ({ page }) => {
   await page.getByRole("button", { name: "Register marketplace" }).click();
   await page.getByLabel("Name").fill(name);
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
-  await page.getByRole("button", { name: "Register", exact: true }).click();
+  await submitRegister(page);
   await expandMarketplace(page, name);
   const region = marketplaceRegion(page, name);
   await region.getByRole("button", { name: `Ingest ${name}` }).click();
@@ -269,7 +285,7 @@ async function registerTainted(page: Page, prefix: string) {
   await page
     .getByLabel("Clone URL")
     .fill(process.env.E2E_TAINTED_UPSTREAM_URL ?? "file:///tmp/e2e-tainted");
-  await page.getByRole("button", { name: "Register", exact: true }).click();
+  await submitRegister(page);
   await expandMarketplace(page, name);
 
   // Scoped to this marketplace's own expanded snapshots region: earlier tests in the run
@@ -466,7 +482,7 @@ test("adoption_page_shows_a_real_facade_fetch_and_its_identity", async ({ page }
   await page.getByRole("button", { name: "Register marketplace" }).click();
   await page.getByLabel("Name").fill(name);
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
-  await page.getByRole("button", { name: "Register", exact: true }).click();
+  await submitRegister(page);
   await expandMarketplace(page, name);
   const card = marketplaceRegion(page, name);
   await card.getByRole("button", { name: `Ingest ${name}` }).click();
@@ -519,7 +535,7 @@ test("setup_wizard_composes_origin_derived_commands_and_holds_show_once", async 
   await page.getByRole("button", { name: "Register marketplace" }).click();
   await page.getByLabel("Name").fill(name);
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
-  await page.getByRole("button", { name: "Register", exact: true }).click();
+  await submitRegister(page);
   await page.getByRole("link", { name, exact: true }).click();
 
   await page.getByRole("button", { name: "Set up a client" }).click();
@@ -570,7 +586,7 @@ test("preview_pane_shows_tree_inert_skill_md_and_diff_vs_served", async ({ page 
   await page
     .getByLabel("Clone URL")
     .fill(process.env.E2E_PREVIEW_UPSTREAM_URL ?? `file://${upstream}`);
-  await page.getByRole("button", { name: "Register", exact: true }).click();
+  await submitRegister(page);
   await expandMarketplace(page, name);
   const card = marketplaceRegion(page, name);
   await card.getByRole("button", { name: `Ingest ${name}` }).click();
