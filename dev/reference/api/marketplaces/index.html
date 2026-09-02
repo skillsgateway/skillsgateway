@@ -1699,6 +1699,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#connector-enabledisable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connector enable/disable
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Connector enable/disable">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-vettingconnector-toggles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /vetting/connector-toggles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#put-vettingconnectorsnametoggle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PUT /vetting/connectors/{name}/toggle
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#vetting-waivers" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1806,6 +1845,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="POST /snapshots/{id}/approve">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#administrative-override-of-a-blocked-outcome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Administrative override of a blocked outcome
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2473,6 +2529,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#connector-enabledisable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connector enable/disable
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Connector enable/disable">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-vettingconnector-toggles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /vetting/connector-toggles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#put-vettingconnectorsnametoggle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PUT /vetting/connectors/{name}/toggle
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#vetting-waivers" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2581,6 +2676,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="POST /snapshots/{id}/approve">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#administrative-override-of-a-blocked-outcome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Administrative override of a blocked outcome
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2659,7 +2771,10 @@ paths are relative to <code>/api</code>.</p>
 registration and sync-mode changes require <strong>admin</strong>; ingest, approve, reject,
 re-vet, and waiver create/delete require <strong>approver of the marketplace</strong> (or
 admin) — resolved server-side from the addressed snapshot or waiver where the
-route carries an id; every <code>GET</code> on this page stays open to any session.</p>
+route carries an id; every <code>GET</code> on this page stays open to any session, except
+the connector settings, which are <strong>admin</strong>. Two administrative escape hatches
+require <strong>admin</strong> specifically: overriding a blocked vetting outcome on approve,
+and enabling or disabling a connector.</p>
 <p><strong>Machine reach.</strong> <code>marketplaces:read</code> covers <code>GET /marketplaces</code>, <code>GET
 /catalog</code> and a snapshot's <code>/content</code>, <code>/licenses</code>, <code>/provenance</code> and
 <code>/release-age</code>; <code>snapshots:read</code> covers <code>/diff</code>, <code>/file</code>, <code>/files</code>, <code>/vetting</code>,
@@ -3020,11 +3135,19 @@ chain has never run against reports <code>"outcome":"BLOCKED"</code> and <code>"
 <td><code>waivers</code></td>
 <td>The marketplace's waivers whose rule appears in this run, active and lapsed alike.</td>
 </tr>
+<tr>
+<td><code>override</code></td>
+<td>Present when an administrator approved this snapshot over a blocked outcome (<code>reason</code>, <code>blockingConnectors</code>, <code>uncoveredFindings</code>, <code>overriddenBy</code>, <code>overriddenAt</code>); <code>null</code> otherwise. Its presence is what surfaces the override so it is never indistinguishable from a clean approval. See <a href="#administrative-override-of-a-blocked-outcome">The vetting override</a>.</td>
+</tr>
 </tbody>
 </table>
-<p><code>state</code> is one of <code>PASS</code>, <code>WARN</code>, <code>FAIL</code>, <code>ERROR</code>, <code>PENDING</code>; <code>severity</code> is one
-of <code>INFO</code>, <code>LOW</code>, <code>MEDIUM</code>, <code>HIGH</code>, <code>CRITICAL</code>. What each means is described in
-<a href="../../../concepts/vetting/">Vetting — the connector chain</a>.</p>
+<p><code>state</code> is one of <code>PASS</code>, <code>WARN</code>, <code>FAIL</code>, <code>ERROR</code>, <code>PENDING</code>, <code>DISABLED</code>;
+<code>severity</code> is one of <code>INFO</code>, <code>LOW</code>, <code>MEDIUM</code>, <code>HIGH</code>, <code>CRITICAL</code>. A <code>DISABLED</code>
+verdict records that an administrator switched that connector off for the
+snapshot's marketplace (<a href="#connector-enabledisable">connector settings</a>); it is
+neither clearing nor blocking, but a run still needs one clearing verdict to
+clear, so disabling every connector leaves a run <code>BLOCKED</code>. What each state means
+is described in <a href="../../../concepts/vetting/">Vetting — the connector chain</a>.</p>
 <table>
 <thead>
 <tr>
@@ -3040,6 +3163,92 @@ of <code>INFO</code>, <code>LOW</code>, <code>MEDIUM</code>, <code>HIGH</code>, 
 <tr>
 <td>404</td>
 <td>Unknown snapshot.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="connector-enabledisable">Connector enable/disable<a class="headerlink" href="#connector-enabledisable" title="Permanent link">&para;</a></h2>
+<p>An administrator can switch a built-in connector (secret-scan, prompt-injection,
+license-scan) off or on, globally or for one marketplace. Both endpoints are
+<strong>admin-only</strong> — the switch that governs the vetting chain, and even the
+visibility of its settings, are not shown to marketplace-scoped approvers.</p>
+<p>A disabled connector is <strong>not run</strong> at ingestion or re-vetting; the chain records
+a <code>DISABLED</code> verdict in its place, so the disablement is part of the run's
+evidence rather than a silently shorter chain. Disabling every connector leaves a
+run <code>BLOCKED</code>, never cleared — the switch is not a blanket approval.</p>
+<h3 id="get-vettingconnector-toggles"><code>GET /vetting/connector-toggles</code><a class="headerlink" href="#get-vettingconnector-toggles" title="Permanent link">&para;</a></h3>
+<p>Lists every enable/disable setting — the global settings and the per-marketplace
+overrides.</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>The connector settings.</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Caller does not hold the administrative role.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="put-vettingconnectorsnametoggle"><code>PUT /vetting/connectors/{name}/toggle</code><a class="headerlink" href="#put-vettingconnectorsnametoggle" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>enabled</code></td>
+<td>yes</td>
+<td><code>true</code> to run the connector, <code>false</code> to switch it off.</td>
+</tr>
+<tr>
+<td><code>marketplace</code></td>
+<td>no</td>
+<td>Scope the setting to one marketplace; omit for the global setting. A per-marketplace setting overrides the global one.</td>
+</tr>
+<tr>
+<td><code>reason</code></td>
+<td>no</td>
+<td>A note recorded with the change and on the audit ledger.</td>
+</tr>
+</tbody>
+</table>
+<p>Each toggle is audited (<code>connector-disabled</code> / <code>connector-enabled</code>) naming the
+administrator, the connector, the scope and the new state.</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>The setting after the change.</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Caller does not hold the administrative role.</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Named marketplace not found.</td>
+</tr>
+<tr>
+<td>422</td>
+<td>Unknown connector, or <code>enabled</code> omitted.</td>
 </tr>
 </tbody>
 </table>
@@ -3288,9 +3497,9 @@ received anything, so counting it would name teams that never got the content.</
 <h2 id="post-snapshotsidapprove"><code>POST /snapshots/{id}/approve</code><a class="headerlink" href="#post-snapshotsidapprove" title="Permanent link">&para;</a></h2>
 <p><strong>The only endpoint that publishes.</strong> Fetches the pinned quarantine ref into the
 published repository and force-updates <code>refs/heads/main</code> to that SHA.</p>
-<p><strong>Takes no request body.</strong> A snapshot whose effective vetting outcome is blocked
-is refused, and the problem document carries both <code>blockingConnectors</code> and
-<code>uncoveredFindings</code>:</p>
+<p><strong>The request body is optional.</strong> A snapshot whose effective vetting outcome is
+blocked is refused, and the problem document carries both <code>blockingConnectors</code>
+and <code>uncoveredFindings</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">409</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Vetting chain blocked this snapshot"</span><span class="p">,</span>
 <a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"snapshot 12 cannot be approved: …"</span><span class="p">,</span>
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w"> </span><span class="nt">"blockingConnectors"</span><span class="p">:[</span><span class="s2">"secret-scan"</span><span class="p">],</span>
@@ -3348,7 +3557,11 @@ ledger beside <code>snapshot-approved</code>.</p>
 </tr>
 <tr>
 <td>409</td>
-<td>The snapshot is neither <code>held</code> nor <code>revoked</code>, its effective vetting outcome is blocked, a <a href="../policy/">policy rule</a> denied it, it has not reached the minimum release age, or an enforcing four-eyes rule refused it.</td>
+<td>The snapshot is neither <code>held</code> nor <code>revoked</code>, its effective vetting outcome is blocked and no override was supplied, a <a href="../policy/">policy rule</a> denied it, it has not reached the minimum release age, or an enforcing four-eyes rule refused it.</td>
+</tr>
+<tr>
+<td>422</td>
+<td>An override was requested (<code>overrideVetting: true</code>) without a <code>reason</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -3356,12 +3569,28 @@ ledger beside <code>snapshot-approved</code>.</p>
 is no un-revoke. The gate is unchanged, so the finding that revoked it must be
 waived or fixed first; the transition records a fresh reviewer and clears the
 revocation marks.</p>
+<h3 id="administrative-override-of-a-blocked-outcome">Administrative override of a blocked outcome<a class="headerlink" href="#administrative-override-of-a-blocked-outcome" title="Permanent link">&para;</a></h3>
+<p>The airline-cockpit escape hatch: an <strong>administrator — and only an
+administrator</strong> — may approve a snapshot whose effective outcome is blocked by
+sending a body:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="p">{</span><span class="nt">"overrideVetting"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"reason"</span><span class="p">:</span><span class="w"> </span><span class="s2">"vendor-signed key, accepted risk in TICKET-42"</span><span class="p">}</span>
+</code></pre></div>
+<p>The override <strong>lifts only the vetting gate</strong> — the policy, minimum-release-age
+and four-eyes gates still run. A <code>reason</code> is required (a reasonless override is
+<code>422</code>). The override writes a distinct audit event,
+<code>snapshot-approved-over-vetting-failure</code>, naming the administrator, the reason
+and the blocking verdicts, and it marks the snapshot so <code>GET
+/snapshots/{id}/vetting</code> reports an <code>override</code> — an override is never
+indistinguishable from an approval the chain cleared. A marketplace-scoped
+approver, who may approve a <em>clean</em> snapshot, cannot override a blocked one.</p>
 <div class="admonition warning">
 <p class="admonition-title">A blocked snapshot can still be published</p>
-<p>The gate is a set of written, attributed, expiring acceptances — not a
-prohibition. A fully waived snapshot publishes exactly as an ordinary
-approval does. The difference is that the ledger says which risk was
-accepted, by whom, and until when.</p>
+<p>There are two deliberate ways past a block, and each leaves its own trail. A
+<strong>waiver</strong> is a scoped, expiring acceptance of one finding that any reviewer
+may record; the ledger says which risk was accepted, by whom, and until when.
+An <strong>override</strong> is a one-off, whole-outcome act reserved to an administrator,
+who states a reason and is named on a distinct ledger event. Neither is a
+silent bypass.</p>
 </div>
 <hr />
 <h2 id="get-snapshotsidrelease-age"><code>GET /snapshots/{id}/release-age</code><a class="headerlink" href="#get-snapshotsidrelease-age" title="Permanent link">&para;</a></h2>
@@ -3369,9 +3598,9 @@ accepted, by whom, and until when.</p>
 <a href="../../configuration/#minimum-release-age">minimum release age</a>, and when it will
 if it has not. This is the same computation the approve endpoint gates on, so
 the two can never disagree.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"eligible"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w"> </span><span class="nt">"firstIngestedAt"</span><span class="p">:</span><span class="s2">"2026-08-16T09:00:00Z"</span><span class="p">,</span><span class="nt">"eligibleAt"</span><span class="p">:</span><span class="s2">"2026-08-19T09:00:00Z"</span><span class="p">,</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w"> </span><span class="nt">"ageSeconds"</span><span class="p">:</span><span class="mi">57600</span><span class="p">,</span><span class="nt">"remainingSeconds"</span><span class="p">:</span><span class="mi">187200</span><span class="p">,</span><span class="nt">"minimumReleaseAgeSeconds"</span><span class="p">:</span><span class="mi">259200</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"eligible"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w"> </span><span class="nt">"firstIngestedAt"</span><span class="p">:</span><span class="s2">"2026-08-16T09:00:00Z"</span><span class="p">,</span><span class="nt">"eligibleAt"</span><span class="p">:</span><span class="s2">"2026-08-19T09:00:00Z"</span><span class="p">,</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w"> </span><span class="nt">"ageSeconds"</span><span class="p">:</span><span class="mi">57600</span><span class="p">,</span><span class="nt">"remainingSeconds"</span><span class="p">:</span><span class="mi">187200</span><span class="p">,</span><span class="nt">"minimumReleaseAgeSeconds"</span><span class="p">:</span><span class="mi">259200</span><span class="p">}</span>
 </code></pre></div>
 <table>
 <thead>
@@ -3432,9 +3661,9 @@ the two can never disagree.</p>
 object to <strong>the calling identity</strong> approving this snapshot, and what the
 configured mode would do about it. Decides nothing; the approve endpoint
 enforces the rule independently.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="p">{</span><span class="nt">"mode"</span><span class="p">:</span><span class="s2">"ENFORCE"</span><span class="p">,</span><span class="nt">"refused"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w"> </span><span class="nt">"conflicts"</span><span class="p">:[{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"registered-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">},</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">              </span><span class="p">{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"ingested-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">}]}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="p">{</span><span class="nt">"mode"</span><span class="p">:</span><span class="s2">"ENFORCE"</span><span class="p">,</span><span class="nt">"refused"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="w"> </span><span class="nt">"conflicts"</span><span class="p">:[{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"registered-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">},</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">              </span><span class="p">{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"ingested-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">}]}</span>
 </code></pre></div>
 <table>
 <thead>
@@ -3496,10 +3725,10 @@ the gateway makes, not a caller.</p>
 <hr />
 <h2 id="get-snapshotsidprovenance"><code>GET /snapshots/{id}/provenance</code><a class="headerlink" href="#get-snapshotsidprovenance" title="Permanent link">&para;</a></h2>
 <p>Where the snapshot came from and who decided on it.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="w"> </span><span class="nt">"upstreamUrl"</span><span class="p">:</span><span class="s2">"https://github.com/acme/skills.git"</span><span class="p">,</span><span class="nt">"upstreamSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w"> </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"approved"</span><span class="p">,</span><span class="nt">"violation"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"ingestedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w"> </span><span class="nt">"decidedBy"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span><span class="nt">"decidedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w"> </span><span class="nt">"upstreamUrl"</span><span class="p">:</span><span class="s2">"https://github.com/acme/skills.git"</span><span class="p">,</span><span class="nt">"upstreamSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w"> </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"approved"</span><span class="p">,</span><span class="nt">"violation"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"ingestedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w"> </span><span class="nt">"decidedBy"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span><span class="nt">"decidedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}</span>
 </code></pre></div>
 <p><strong>200</strong> · <strong>404</strong> unknown snapshot.</p>
 <p>Every action on this page also appends an entry to the

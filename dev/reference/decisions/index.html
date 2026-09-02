@@ -1972,6 +1972,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#adr-0010-admin-override-of-vetting-automation-the-cockpit-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0010 — Admin override of vetting automation (the cockpit model)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2146,6 +2157,17 @@
     <span class="md-ellipsis">
       
         ADR 0009 — The external vetting connector contract: configured, synchronous, fail-closed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-0010-admin-override-of-vetting-automation-the-cockpit-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0010 — Admin override of vetting automation (the cockpit model)
       
     </span>
   </a>
@@ -2378,6 +2400,21 @@ partial answer is an <code>error</code> verdict that blocks, never a pass (GW_01
 condemn (GW_0146). A <code>pending</code> answer is the <strong>asynchronous seam</strong> and blocks
 until resolved (GW_0147); the inbound resolution callback is deliberately a
 separate, sequenced piece of work.</p>
+<h3 id="adr-0010-admin-override-of-vetting-automation-the-cockpit-model"><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0010-admin-override-of-vetting-automation.md">ADR 0010 — Admin override of vetting automation (the cockpit model)</a><a class="headerlink" href="#adr-0010-admin-override-of-vetting-automation-the-cockpit-model" title="Permanent link">&para;</a></h3>
+<p><em>Accepted, 2026-09-01.</em></p>
+<p>The airline-cockpit principle applied to vetting: automation can be
+<strong>disconnected by the captain</strong>, deliberately and audibly. Two stances taken on
+purpose are narrowly reversed for <strong>admin-only, audited</strong> acts. An administrator
+may <strong>enable or disable a built-in connector</strong>, globally or per marketplace
+(GW_0149) — a disabled connector is recorded as a distinct <code>disabled</code> verdict
+(fail-loud) and disabling every connector still leaves a run <strong>blocked</strong>, never
+cleared. An administrator may also <strong>approve a snapshot over a blocked outcome</strong>
+(GW_0148) with a required reason — the override lifts only the vetting gate (the
+policy, release-age and four-eyes gates still run), writes a distinct
+<code>snapshot-approved-over-vetting-failure</code> ledger event, and marks the snapshot so
+it is never indistinguishable from a clean approval. The override does not
+replace scoped, expiring <strong>waivers</strong>; it is the rarer administrative act for a
+whole blocked outcome.</p>
 <h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../architecture/">Architecture</a>
