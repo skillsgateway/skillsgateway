@@ -69,6 +69,11 @@ public final class MachineApiRegistry {
                         get("/api/marketplaces"),
                         get("/api/catalog"),
                         get("/api/snapshots/{id}/content"),
+                        // Beside the inventory rather than with the preview reads: it returns the
+                        // same plugin and skill names that /content already gives this scope, plus
+                        // those of an approved snapshot the facade is serving anyway, and no file
+                        // content at all.
+                        get("/api/snapshots/{id}/content-diff"),
                         get("/api/snapshots/{id}/licenses"),
                         get("/api/snapshots/{id}/provenance"),
                         get("/api/snapshots/{id}/release-age")));

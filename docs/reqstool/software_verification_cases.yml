@@ -1649,3 +1649,20 @@ cases:
       violation recorded when the same source is not admitted, the approval is refused,
       and the published repository is unchanged
     revision: "0.1.0"
+
+  - id: SVC_GW_0153
+    requirement_ids: ["GW_0153"]
+    title: A snapshot's inventory diff against the last approved snapshot
+    verification: automated-test
+    description: |
+      GIVEN a marketplace whose first snapshot is ingested and approved, and a second
+      snapshot that adds a skill to one plugin, edits a file beside another skill's
+      definition without touching that definition, drops a declared plugin, and moves a
+      third skill unchanged into a different plugin
+      WHEN each snapshot's content diff is requested
+      THEN the first snapshot reports no baseline with every plugin and skill added, and
+      the second reports the added skill as added, the skill with the edited neighbouring
+      file as changed, the dropped plugin and its skills as removed, and the relocated
+      skill exactly once as moved naming the plugin it came from, with an unknown
+      snapshot answered as not found
+    revision: "0.1.0"

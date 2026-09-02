@@ -584,6 +584,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/snapshots/{id}/content-diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Snapshot content inventory against the last approved snapshot
+         * @description What approving this snapshot would add to what the marketplace already had approved: every plugin and skill on either side, each marked added, removed, changed, moved or unchanged, with a skill counted as changed when anything under its directory differs — not only its SKILL.md. A skill a plugin gave up and another took over is reported once, as moved, naming the plugin it came from. The baseline is the marketplace's newest live approved snapshot other than this one; with nothing approved the baseline is null and everything is added. Complements the file-level preview diff, which is against what the facade currently serves and returns the text of the change.
+         */
+        get: operations["snapshotContentDiff"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/snapshots/{id}/diff": {
         parameters: {
             query?: never;
@@ -1303,6 +1323,29 @@ export interface components {
             /** @description Upstream commit SHA of its served snapshot */
             sha?: string;
         };
+        /** @description A snapshot's content inventory against the marketplace's last approved snapshot */
+        ContentDiff: {
+            /** @description Commit SHA compared against, or null when no snapshot is approved */
+            baselineSha?: string;
+            /**
+             * Format: int64
+             * @description Id of the approved snapshot compared against, or null when none is approved
+             */
+            baselineSnapshotId?: number;
+            /** @description Every plugin on either side, in manifest order, removed plugins last */
+            plugins?: components["schemas"]["PluginDiff"][];
+            /** @description Upstream commit SHA */
+            sha?: string;
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            snapshotId?: number;
+            /** @description held, approved, rejected, or revoked */
+            state?: string;
+            /** @description Skill counts per status */
+            summary?: components["schemas"]["DiffSummary"];
+        };
         /** @description Machine API credential request; every field below is required */
         CreateMachineCredentialRequest: {
             /**
@@ -1481,6 +1524,34 @@ export interface components {
              * @enum {string}
              */
             type?: "added" | "modified" | "removed";
+        };
+        /** @description How many skills fall into each status */
+        DiffSummary: {
+            /**
+             * Format: int32
+             * @description Skills the baseline does not have
+             */
+            added?: number;
+            /**
+             * Format: int32
+             * @description Skills whose content differs
+             */
+            changed?: number;
+            /**
+             * Format: int32
+             * @description Skills that kept their content and changed plugin
+             */
+            moved?: number;
+            /**
+             * Format: int32
+             * @description Skills the snapshot no longer has
+             */
+            removed?: number;
+            /**
+             * Format: int32
+             * @description Skills that are identical on both sides
+             */
+            unchanged?: number;
         };
         /** @description An effective role held by the current session */
         EffectiveRole: {
@@ -1955,6 +2026,22 @@ export interface components {
             /** @description Relative source path inside the marketplace repository */
             source?: string;
         };
+        /** @description One plugin of the snapshot or of the baseline, and how it differs */
+        PluginDiff: {
+            /** @description Plugin description; the baseline's for a removed plugin */
+            description?: string;
+            /** @description Plugin name */
+            name?: string;
+            /** @description Every skill of this plugin on either side, each with its own status */
+            skills?: components["schemas"]["SkillDiff"][];
+            /** @description Relative source path; the baseline's for a removed plugin */
+            source?: string;
+            /**
+             * @description How the plugin differs from the baseline. A plugin is changed when any skill under it differs or when its manifest entry does
+             * @enum {string}
+             */
+            status?: "added" | "removed" | "changed" | "unchanged";
+        };
         /** @description A CEL policy deny rule, evaluated fail-closed at approval time */
         PolicyRule: {
             /**
@@ -2189,6 +2276,20 @@ export interface components {
             name?: string;
             /** @description Target URL */
             url?: string;
+        };
+        /** @description One skill of the snapshot or of the baseline, and how it differs */
+        SkillDiff: {
+            /** @description Plugin the skill was declared under in the baseline, when it moved; else null */
+            movedFromPlugin?: string;
+            /** @description Skill directory name */
+            name?: string;
+            /** @description Path of the SKILL.md; the baseline's path for a removed skill */
+            path?: string;
+            /**
+             * @description How the skill differs from the baseline
+             * @enum {string}
+             */
+            status?: "added" | "removed" | "changed" | "moved" | "unchanged";
         };
         /** @description A skill found under a plugin's source tree */
         SkillInfo: {
@@ -3719,6 +3820,37 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["SnapshotContent"];
+                };
+            };
+        };
+    };
+    snapshotContentDiff: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The inventory delta a reviewer decides */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ContentDiff"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ContentDiff"];
                 };
             };
         };
