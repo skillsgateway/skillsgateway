@@ -216,6 +216,53 @@ because reviewing must not require serving.
 
 ---
 
+## `GET /snapshots/{id}/content-diff`
+
+The same inventory, against the marketplace's newest live `approved` snapshot
+other than this one: what approving this snapshot would add to what the
+organisation already accepted. Works on `held` snapshots for the same reason
+the inventory does.
+
+Every plugin and skill on either side is returned with a status, so a client
+can render either the whole inventory or only the changes.
+
+| Field | Meaning |
+| --- | --- |
+| `baselineSnapshotId`, `baselineSha` | The approved snapshot compared against, or `null` when the marketplace has none |
+| `plugins[].status` | `added`, `removed`, `changed` or `unchanged` — `changed` when any skill under it differs or when its manifest entry does |
+| `plugins[].skills[].status` | `added`, `removed`, `changed`, `moved` or `unchanged` |
+| `plugins[].skills[].movedFromPlugin` | The plugin the skill was declared under before it moved, else `null` |
+| `summary` | Skill counts per status |
+
+A skill is `changed` when anything under its directory differs — not only its
+`SKILL.md` — because the git tree object of the directory is what is compared.
+A skill one plugin gave up and another took over is reported once, on its new
+plugin, as `moved`; if its content changed too, the status is `changed` and
+`movedFromPlugin` is still set. With no approved snapshot, the baseline fields
+are `null` and everything is `added`.
+
+```json
+{"snapshotId":43,"sha":"7c1d4ef...","state":"held",
+ "baselineSnapshotId":42,"baselineSha":"3f9c2ab...",
+ "plugins":[{"name":"acme-tools","description":"...","source":"./plugins/acme-tools",
+             "status":"changed",
+             "skills":[{"name":"deploy","path":"plugins/acme-tools/skills/deploy/SKILL.md",
+                        "status":"unchanged","movedFromPlugin":null},
+                       {"name":"rollback","path":"plugins/acme-tools/skills/rollback/SKILL.md",
+                        "status":"moved","movedFromPlugin":"acme-legacy"}]}],
+ "summary":{"added":0,"removed":0,"changed":0,"moved":1,"unchanged":1}}
+```
+
+!!! note
+    This is not the [preview diff](#get-snapshotsiddiff). That one is a
+    file-level unified diff against the commit the facade is **currently
+    serving**; this one is an inventory diff against the last commit that was
+    **approved**, and returns no file text.
+
+**200** · **404** unknown snapshot.
+
+---
+
 ## `GET /snapshots/{id}/licenses`
 
 The licenses the snapshot declares, each with its standing under the

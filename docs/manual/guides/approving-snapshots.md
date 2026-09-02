@@ -48,6 +48,24 @@ $ curl localhost:8080/api/snapshots/1/content
 
 This works on `held` snapshots by design — reviewing must not require serving.
 
+### What it changes
+
+The inventory says what the snapshot ships; `GET
+/api/snapshots/{id}/content-diff` says what approving it would add to what you
+already approved. Every plugin and skill is marked `added`, `removed`,
+`changed`, `moved` or `unchanged` against the marketplace's last approved
+snapshot, and a skill counts as changed when anything under its directory
+differs — not only its `SKILL.md`.
+
+```console
+$ curl localhost:8080/api/snapshots/1/content-diff
+```
+
+On the tenth snapshot of a large marketplace this is the read worth starting
+from: it is the difference between reviewing two new skills and re-reading
+forty. In the portal it is the second half of the **Show contents** panel. See
+[the API reference](../reference/api/marketplaces.md#get-snapshotsidcontent-diff).
+
 ### Provenance
 
 Where it came from and who has touched it:
