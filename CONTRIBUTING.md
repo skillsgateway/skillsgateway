@@ -70,6 +70,11 @@ Two consequences worth knowing before you open a PR:
   checks that every glob in that file still matches a tracked path
   (`.github/verify-labeler.py`), because one that matches nothing applies no
   label and reports nothing.
+- **`⚠️ BREAKING CONTRACT` is applied by hand.** It is the API contract
+  workflow's escape hatch, so no glob in `.github/labeler.yml` applies it — a
+  person does, deliberately. Like every other label it has to be declared in the
+  admin repo, or the next sync deletes it and the escape hatch becomes
+  unreachable.
 
 ## Gates — all must pass
 
