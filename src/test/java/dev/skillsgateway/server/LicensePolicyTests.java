@@ -82,7 +82,7 @@ class LicensePolicyTests extends AbstractGatewayTest {
         // carries a digest of the lists, so this chain identity differs from a default deployment.
         assertThat(run.chain()).contains("license-scan@");
         String defaultVersion = new LicenseScanConnector(new SkillsGatewayProperties(
-                        null, null, null, null, null, null, null, null, null, null, null, null, null, null, null))
+                        null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null))
                 .version();
         String configuredVersion =
                 run.chain().lines().findFirst().orElseThrow().replaceAll(".*license-scan@([^,]*).*", "$1");

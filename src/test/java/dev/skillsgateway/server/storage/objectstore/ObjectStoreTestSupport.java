@@ -90,7 +90,7 @@ public final class ObjectStoreTestSupport {
         SkillsGatewayProperties.Storage storage = new SkillsGatewayProperties.Storage(
                 SkillsGatewayProperties.Storage.Backend.OBJECT_STORE, objectStore, null);
         return new SkillsGatewayProperties(
-                data, null, null, null, null, null, null, null, null, null, null, null, null, null, storage);
+                data, null, null, null, null, null, null, null, null, null, null, null, null, null, storage, null);
     }
 
     /** A backend on the shared bucket, under its own prefix, reading through {@code client}. */
