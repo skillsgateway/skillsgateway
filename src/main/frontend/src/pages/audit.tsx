@@ -19,6 +19,7 @@ import {
   useAuditSinks,
   useCreateAuditSink,
   useDeleteAuditSink,
+  useMarketplaces,
   useResetAuditSinkCursor,
   type CreatedSink,
 } from "@/api/queries";
@@ -58,6 +59,17 @@ type AuditRow = Record<string, unknown>;
 
 /** The empty/"—" marketplace marker the ledger writes for actions not tied to a marketplace. */
 const NO_MARKETPLACE = "-";
+
+/** Distinct, sorted, presentable values for a filter's completion list — placeholders dropped. */
+function distinctFacet(values: unknown[]): string[] {
+  return Array.from(
+    new Set(
+      values
+        .map((value) => cell(value))
+        .filter((value) => value !== "—" && value !== NO_MARKETPLACE && value.trim() !== ""),
+    ),
+  ).sort((a, b) => a.localeCompare(b));
+}
 
 /** A sortable header button; the arrow states which way the column is ordered, if at all. */
 function SortHeader({
@@ -99,6 +111,24 @@ function SortHeader({
 function LedgerTable({ rows }: { rows: AuditRow[] }) {
   const [sorting, setSorting] = useState<SortingState>([{ id: "id", desc: true }]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+
+  // Completion options for each free-text filter. The marketplace column is sourced from the
+  // authoritative marketplaces list so it completes beyond the loaded page; the rest are derived
+  // from the rows currently in hand (the ledger is paginated client-side over /api/audit, so
+  // event/principal/sha options only cover loaded rows). Filters stay free-text either way.
+  const marketplaces = useMarketplaces();
+  const facets = useMemo<Record<string, string[]>>(() => {
+    const marketplaceNames = (marketplaces.data ?? [])
+      .map((m) => m.name)
+      .filter((name): name is string => Boolean(name));
+    return {
+      event: distinctFacet(rows.map((row) => row.event)),
+      principal: distinctFacet(rows.map((row) => row.principal)),
+      // Prefer the registry; union with any marketplace seen only in the loaded rows.
+      marketplace: distinctFacet([...marketplaceNames, ...rows.map((row) => row.marketplace)]),
+      sha: distinctFacet(rows.map((row) => row.sha)),
+    };
+  }, [rows, marketplaces.data]);
 
   const columns = useMemo<ColumnDef<AuditRow>[]>(
     () => [
@@ -233,15 +263,23 @@ function LedgerTable({ rows }: { rows: AuditRow[] }) {
       <div className="flex flex-wrap gap-2">
         {filterable.map((f) => {
           const column = table.getColumn(f.id);
+          const options = facets[f.id] ?? [];
           return (
-            <Input
-              key={f.id}
-              className="h-8 w-40 text-xs"
-              aria-label={`Filter by ${f.label}`}
-              placeholder={`Filter ${f.label}…`}
-              value={(column?.getFilterValue() as string) ?? ""}
-              onChange={(event) => column?.setFilterValue(event.target.value)}
-            />
+            <div key={f.id}>
+              <Input
+                list={`facet-${f.id}`}
+                className="h-8 w-40 text-xs"
+                aria-label={`Filter by ${f.label}`}
+                placeholder={`Filter ${f.label}…`}
+                value={(column?.getFilterValue() as string) ?? ""}
+                onChange={(event) => column?.setFilterValue(event.target.value)}
+              />
+              <datalist id={`facet-${f.id}`}>
+                {options.map((option) => (
+                  <option key={option} value={option} />
+                ))}
+              </datalist>
+            </div>
           );
         })}
       </div>

@@ -1,6 +1,7 @@
 import {
   Home,
   KeyRound,
+  Monitor,
   Moon,
   ScrollText,
   Store,
@@ -10,6 +11,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
@@ -75,17 +77,36 @@ function BrandMark({ className }: { className?: string }) {
   );
 }
 
+/** Cycle order for the theme control: system (follow the OS) → light → dark → system. */
+const THEME_CYCLE = ["system", "light", "dark"] as const;
+const THEME_ICON = { system: Monitor, light: Sun, dark: Moon } as const;
+
+/**
+ * Three-state theme control. It cycles system → light → dark, defaulting to system (follow the
+ * OS), and shows an icon for the *chosen* state — the monitor when following the OS, not the
+ * resolved light/dark. next-themes persists the choice in localStorage.
+ */
 function ModeToggle() {
-  const { resolvedTheme, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
+  // next-themes only knows the stored theme after mount; render the default until then so the
+  // icon never flips on first paint.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const current = (mounted && theme && (THEME_CYCLE as readonly string[]).includes(theme)
+    ? theme
+    : "system") as (typeof THEME_CYCLE)[number];
+  const next = THEME_CYCLE[(THEME_CYCLE.indexOf(current) + 1) % THEME_CYCLE.length]!;
+  const Icon = THEME_ICON[current];
+  const label = `Theme: ${current}. Switch to ${next} theme.`;
   return (
     <Button
       variant="outline"
       size="icon"
-      aria-label="Toggle dark mode"
-      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+      aria-label={label}
+      title={label}
+      onClick={() => setTheme(next)}
     >
-      <Sun className="size-4 dark:hidden" aria-hidden />
-      <Moon className="hidden size-4 dark:block" aria-hidden />
+      <Icon className="size-4" aria-hidden />
     </Button>
   );
 }
