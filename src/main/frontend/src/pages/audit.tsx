@@ -1,13 +1,18 @@
 import {
   type ColumnDef,
   type ColumnFiltersState,
+  type FilterFn,
   type SortingState,
+  columnFilteringFeature,
+  columnVisibilityFeature,
+  createFilteredRowModel,
+  createPaginatedRowModel,
+  createSortedRowModel,
   flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
+  rowPaginationFeature,
+  rowSortingFeature,
+  tableFeatures,
+  useTable,
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, Check, ChevronsUpDown, Copy, Download } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -59,6 +64,28 @@ type AuditRow = Record<string, unknown>;
 
 /** The empty/"—" marketplace marker the ledger writes for actions not tied to a marketplace. */
 const NO_MARKETPLACE = "-";
+
+// v9 requires the row-model factories and their feature flags to be declared up front, in a
+// `features` object shared by the table's types (columns, filter fns) and its runtime config.
+const ledgerTableFeatures = tableFeatures({
+  columnFilteringFeature,
+  columnVisibilityFeature,
+  rowSortingFeature,
+  rowPaginationFeature,
+  filteredRowModel: createFilteredRowModel(),
+  sortedRowModel: createSortedRowModel(),
+  paginatedRowModel: createPaginatedRowModel(),
+});
+
+/** Case-insensitive substring match — the same behavior as v8's built-in "includesString". */
+const includesString: FilterFn<typeof ledgerTableFeatures, AuditRow> = (
+  row,
+  columnId,
+  filterValue,
+) => {
+  const value = String(row.getValue(columnId) ?? "").toLowerCase();
+  return value.includes(String(filterValue ?? "").toLowerCase());
+};
 
 /** Distinct, sorted, presentable values for a filter's completion list — placeholders dropped. */
 function distinctFacet(values: unknown[]): string[] {
@@ -130,7 +157,7 @@ function LedgerTable({ rows }: { rows: AuditRow[] }) {
     };
   }, [rows, marketplaces.data]);
 
-  const columns = useMemo<ColumnDef<AuditRow>[]>(
+  const columns = useMemo<ColumnDef<typeof ledgerTableFeatures, AuditRow, unknown>[]>(
     () => [
       {
         id: "status",
@@ -166,7 +193,7 @@ function LedgerTable({ rows }: { rows: AuditRow[] }) {
           />
         ),
         accessorFn: (row) => cell(row.event),
-        filterFn: "includesString",
+        filterFn: includesString,
         cell: ({ getValue }) => <span className="font-mono text-xs">{getValue<string>()}</span>,
       },
       {
@@ -179,7 +206,7 @@ function LedgerTable({ rows }: { rows: AuditRow[] }) {
           />
         ),
         accessorFn: (row) => cell(row.principal),
-        filterFn: "includesString",
+        filterFn: includesString,
         cell: ({ getValue }) => <span className="text-xs">{getValue<string>()}</span>,
       },
       {
@@ -192,7 +219,7 @@ function LedgerTable({ rows }: { rows: AuditRow[] }) {
           />
         ),
         accessorFn: (row) => cell(row.marketplace),
-        filterFn: "includesString",
+        filterFn: includesString,
         cell: ({ row }) => {
           const value = cell(row.original.marketplace);
           if (value === NO_MARKETPLACE || value === "—") {
@@ -214,7 +241,7 @@ function LedgerTable({ rows }: { rows: AuditRow[] }) {
         id: "sha",
         header: "Commit",
         accessorFn: (row) => cell(row.sha),
-        filterFn: "includesString",
+        filterFn: includesString,
         cell: ({ getValue }) => {
           const value = getValue<string>();
           return (
@@ -238,17 +265,14 @@ function LedgerTable({ rows }: { rows: AuditRow[] }) {
     [],
   );
 
-  const table = useReactTable({
+  const table = useTable({
+    features: ledgerTableFeatures,
     data: rows,
     columns,
     state: { sorting, columnFilters },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageSize: 25 } },
+    initialState: { pagination: { pageIndex: 0, pageSize: 25 } },
   });
 
   const filterable: { id: string; label: string }[] = [
@@ -334,7 +358,7 @@ function LedgerTable({ rows }: { rows: AuditRow[] }) {
             Previous
           </Button>
           <span>
-            Page {table.getState().pagination.pageIndex + 1} of {Math.max(1, table.getPageCount())}
+            Page {table.state.pagination.pageIndex + 1} of {Math.max(1, table.getPageCount())}
           </span>
           <Button
             size="sm"

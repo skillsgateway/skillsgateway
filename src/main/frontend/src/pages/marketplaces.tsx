@@ -3,11 +3,14 @@ import {
   type ColumnDef,
   type ExpandedState,
   type SortingState,
+  columnVisibilityFeature,
+  createExpandedRowModel,
+  createSortedRowModel,
   flexRender,
-  getCoreRowModel,
-  getExpandedRowModel,
-  getSortedRowModel,
-  useReactTable,
+  rowExpandingFeature,
+  rowSortingFeature,
+  tableFeatures,
+  useTable,
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, ChevronRight, ChevronsUpDown, TriangleAlert } from "lucide-react";
 import { Fragment, useMemo, useState } from "react";
@@ -55,6 +58,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+// v9 requires the row-model factories and their feature flags to be declared up front, in a
+// `features` object shared by the table's types and its runtime config.
+const marketplacesTableFeatures = tableFeatures({
+  columnVisibilityFeature,
+  rowSortingFeature,
+  rowExpandingFeature,
+  sortedRowModel: createSortedRowModel(),
+  expandedRowModel: createExpandedRowModel(),
+});
 
 const registerSchema = z.object({
   name: z
@@ -550,7 +563,7 @@ export function MarketplacesPage() {
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const data = useMemo(() => marketplaces.data ?? [], [marketplaces.data]);
 
-  const columns = useMemo<ColumnDef<MarketplaceView>[]>(
+  const columns = useMemo<ColumnDef<typeof marketplacesTableFeatures, MarketplaceView, unknown>[]>(
     () => [
       {
         id: "expander",
@@ -646,16 +659,17 @@ export function MarketplacesPage() {
     [],
   );
 
-  const table = useReactTable({
+  const table = useTable({
+    features: marketplacesTableFeatures,
     data,
     columns,
     state: { sorting, expanded },
     getRowId: (row) => String(row.id),
     onSortingChange: setSorting,
     onExpandedChange: setExpanded,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getExpandedRowModel: getExpandedRowModel(),
+    // Every row expands to its own snapshots table — there are no real sub-rows for the
+    // expanded row model to detect, so every row must report itself as expandable.
+    getRowCanExpand: () => true,
   });
 
   return (
