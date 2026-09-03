@@ -85,14 +85,39 @@ $ curl localhost:8080/api/snapshots/1/provenance
 If ingestion flagged the snapshot — an external plugin source, for instance —
 the reason is on the snapshot row and rendered in the portal as destructive text.
 
-An external source produces one of two violations, and they mean different
-things. *"has a non-local source"* means the gateway will not admit it: either
-external sources are not enabled, or the type, host or scheme is outside what is
-configured, or the type (`npm`, `archive`) is never admissible. *"admits but
-cannot yet resolve"* means the source passed admission and the gateway simply
-cannot fetch and rewrite it yet — a snapshot is held only when every source it
-declares resolves inside the snapshot the gateway serves. The first is a
-configuration question; the second is not, and neither snapshot can be approved.
+An external source produces one of three violations, and they mean different
+things.
+
+| The violation says | What happened | What to do |
+| --- | --- | --- |
+| *"has a non-local source"* | The gateway will not admit it: external sources are not enabled, or the type, host or scheme is outside what is configured, or the type (`npm`, `archive`) is never admissible | A configuration question — see [configuration](../reference/configuration.md#ingestion-external-plugin-sources). `npm` and `archive` are never admissible whatever the configuration says |
+| *"could not be resolved"* | The source was admitted and the fetch did not succeed: the repository is unreachable, an address or a redirect was refused, or the transfer failed. The reason follows | Read the reason. A refused address or redirect is normally the upstream's problem, not yours; an unreachable repository may be transient, and re-ingesting is safe |
+| *"exceeds a resolution budget"* | The source is larger, deeper or slower than this gateway permits. The message names the bound and the number | Decide whether the content is legitimate. If it is, raise that one bound; the others stay where they are |
+
+A fourth reads *"admits but cannot yet resolve"* and means the source passed
+admission and nothing resolved it — which today happens only if a source type is
+allowlisted before anything can resolve it.
+
+None of these snapshots can be approved, and that is the point: a snapshot is
+held only when every source it declares resolves inside the snapshot the gateway
+serves. Each is recorded against the commit ingested from upstream, so the
+content is still there to look at and diagnose.
+
+### Reviewing a resolved external plugin
+
+When a source *did* resolve, there is nothing special to review: the snapshot's
+manifest declares `./_plugins/<plugin name>` and the content is in the snapshot,
+so the content inventory, the diff and the vetting findings all cover it exactly
+as they cover a plugin the marketplace repository carries itself.
+
+Two things are worth knowing while reviewing one. The snapshot's SHA is a commit
+the gateway synthesised, not one you will find upstream — and its **parent** is
+the upstream commit, so `git diff <parent> <sha>` in the quarantine repository
+shows precisely what the gateway added and rewrote. And its commit message names
+the upstream commit and every external source with the commit it resolved to,
+which is the provenance to check before approving: an external repository that
+has moved produces a different snapshot, and approving one is a decision about
+that resolved commit and no other.
 
 ### Vetting verdicts
 

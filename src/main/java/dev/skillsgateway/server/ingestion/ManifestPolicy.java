@@ -2,9 +2,12 @@ package dev.skillsgateway.server.ingestion;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -35,60 +38,108 @@ public final class ManifestPolicy {
         this.admission = admission;
     }
 
-    /** Returns a violation message, or {@code null} when the manifest is acceptable. */
+    /**
+     * One external source the manifest declares and this gateway's configuration admits.
+     *
+     * @param index the plugin's position in the manifest's {@code plugins} array, so the rewrite is
+     *     positional rather than by name — two plugins may share a name, and a rewrite that matched
+     *     on one would have to guess which it meant
+     */
+    public record Admitted(int index, String pluginName, PluginSource source, String cloneUrl) {}
+
+    /**
+     * What the manifest is: a violation that rejects it outright, or the parsed manifest together
+     * with the external sources this gateway would resolve.
+     *
+     * <p>Note that an admitted source is <em>not</em> a violation here. It is one to
+     * {@link #validate}, which is the servability gate; this is the ingestion path's view, and
+     * ingestion's next step is to resolve what it found.
+     */
+    public record Evaluation(String violation, ObjectNode manifest, List<Admitted> admitted) {
+
+        public boolean rejected() {
+            return violation != null;
+        }
+    }
+
+    /**
+     * Returns a violation message, or {@code null} when the manifest is acceptable <em>as it
+     * stands</em> — which for an external source means resolved, not merely admitted.
+     *
+     * <p>This is the GW_0152 gate and it has exactly one meaning: {@code null} is what
+     * {@code IngestionService} maps to the held state, and held is what a reviewer may approve and
+     * therefore publish. A manifest still pointing a client at a URL outside the gateway must never
+     * reach it — that is threat T4 — so an admitted-but-unresolved source is still a violation,
+     * worded so an operator can tell "not admitted" (change the configuration) from "admitted, not
+     * resolved" (the resolution failed or has not run).
+     *
+     * <p>It is also the post-condition {@link ManifestRewriter} runs over the manifest it produced.
+     * A composite whose manifest does not pass this gate is not served, which makes the invariant
+     * structural rather than a property of the rewriter being correct.
+     */
     @Requirements({"GW_0003", "GW_0150", "GW_0151", "GW_0152"})
     public String validate(byte[] manifestBytes) {
+        Evaluation evaluation = evaluate(manifestBytes);
+        if (evaluation.rejected()) {
+            return evaluation.violation();
+        }
+        if (evaluation.admitted().isEmpty()) {
+            return null;
+        }
+        Admitted first = evaluation.admitted().getFirst();
+        return unresolved(first.pluginName(), first.cloneUrl());
+    }
+
+    /**
+     * Parses and decides the manifest, returning the external sources that were admitted rather
+     * than refusing them. Refusals still short-circuit: the first refused plugin ends the walk, so
+     * the default configuration produces the same violation string it always did.
+     */
+    @Requirements({"GW_0150", "GW_0151"})
+    public Evaluation evaluate(byte[] manifestBytes) {
         JsonNode root;
         try {
             root = MAPPER.readTree(manifestBytes);
         } catch (IOException e) {
-            return MANIFEST + " is not valid JSON";
+            return rejected(MANIFEST + " is not valid JSON");
         }
         if (root == null || !root.isObject()) {
-            return MANIFEST + " is not a JSON object";
+            return rejected(MANIFEST + " is not a JSON object");
         }
         JsonNode plugins = root.get("plugins");
         if (plugins == null || !plugins.isArray()) {
-            return MANIFEST + " has no \"plugins\" array";
+            return rejected(MANIFEST + " has no \"plugins\" array");
         }
-        int external = 0;
-        String unresolvable = null;
+        List<Admitted> admitted = new ArrayList<>();
+        int index = 0;
         for (JsonNode plugin : plugins) {
             if (!plugin.isObject()) {
-                return "plugin entry is not a JSON object";
+                return rejected("plugin entry is not a JSON object");
             }
             String name = plugin.path("name").isTextual() ? plugin.get("name").asText() : "<unnamed>";
-            switch (admission.decide(PluginSource.parse(plugin.get("source")), name, external)) {
+            switch (admission.decide(PluginSource.parse(plugin.get("source")), name, admitted.size())) {
                 case ExternalSourceAdmission.Decision.Local ignored -> {
                     /* resolves inside the served snapshot already */
                 }
-                // A refusal wins over an admitted-but-unresolvable source recorded earlier: it is
-                // the stronger statement, and the manifest is rejected either way.
                 case ExternalSourceAdmission.Decision.Refused refused -> {
-                    return refused.violation();
+                    return rejected(refused.violation());
                 }
-                case ExternalSourceAdmission.Decision.Admitted admitted -> {
-                    external++;
-                    if (unresolvable == null) {
-                        unresolvable = unresolvable(name, admitted.cloneUrl());
-                    }
-                }
+                case ExternalSourceAdmission.Decision.Admitted admittedSource ->
+                    admitted.add(new Admitted(index, name, admittedSource.source(), admittedSource.cloneUrl()));
             }
+            index++;
         }
-        return unresolvable;
+        return new Evaluation(null, (ObjectNode) root, List.copyOf(admitted));
     }
 
-    /**
-     * GW_0152. Held is the state that makes a snapshot approvable and therefore publishable, so a
-     * manifest still pointing a client at a URL outside the gateway must never reach it — that is
-     * threat T4. Until a resolver exists, an admitted source is a rejected snapshot, worded so an
-     * operator can tell "not admitted" (change the configuration) from "admitted, not resolvable"
-     * (capability this gateway does not have yet). The resolver replaces this branch.
-     */
-    private static String unresolvable(String pluginName, String cloneUrl) {
+    /** The violation for a source this gateway admitted and has not turned into content it serves. */
+    static String unresolved(String pluginName, String cloneUrl) {
         return ("plugin '%s' declares an external source (%s) that this gateway admits but cannot yet"
-                        + " resolve into content it serves; external plugin sources are admitted"
-                        + " before they can be resolved")
+                        + " resolve into content it serves")
                 .formatted(pluginName, cloneUrl);
+    }
+
+    private static Evaluation rejected(String violation) {
+        return new Evaluation(violation, null, List.of());
     }
 }

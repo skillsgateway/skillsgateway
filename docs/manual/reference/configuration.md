@@ -321,9 +321,10 @@ Sinks, cursors and replay are described in
 ## Ingestion — external plugin sources
 
 Whether a marketplace manifest may declare plugins that live outside the
-marketplace repository (GW_0151). Java-side defaults; nothing appears in
-`application.yaml`, and an absent block is the behaviour every existing
-deployment already has.
+marketplace repository, and — when it may — what resolving them is allowed to
+reach and to cost (GW_0151, GW_0155 – GW_0158, GW_0161). Java-side defaults; nothing
+appears in `application.yaml`, and an absent block is the behaviour every
+existing deployment already has.
 
 ```yaml
 skills-gateway:
@@ -331,11 +332,13 @@ skills-gateway:
     external-sources:
       # false is GW_0003's local-only rejection: a manifest declaring a github,
       # git, git-subdir, npm or archive source is refused, snapshot rejected.
+      # It is also the only setting under which the gateway makes no outbound
+      # request driven by manifest content.
       enabled: false
 
       # The types an enabled gateway will consider. Only types something can
       # resolve belong here — the allowlist never advertises a form nothing
-      # implements.
+      # implements, and today only github resolves.
       allowed-types: [github]
 
       # Exact hosts the derived clone URL may name; empty means any host. Never
@@ -344,42 +347,82 @@ skills-gateway:
 
       # How many external sources one manifest may declare.
       max-sources: 20
+
+      # Where an owner/repo shorthand is resolved, for GitHub Enterprise Server.
+      github-base-url: https://github.com
+
+      # Whether a source may resolve to a loopback, RFC1918, carrier-grade-NAT
+      # or unique-local address. It never permits a link-local address.
+      allow-private-networks: false
+
+      budgets:
+        max-received-bytes: 50MB      # per source, on the wire
+        max-inflated-bytes: 200MB     # per source, as objects
+        max-closure-bytes: 500MB      # every source of one manifest, as objects
+        max-inflation-ratio: 100      # uncompressed bytes per received byte
+        max-objects: 20000            # per source
+        max-blob-bytes: 10MB          # largest single file
+        max-tree-depth: 32
+        max-redirects: 3
+        deadline: 5m                  # whole resolution, wall clock
 ```
 
 | Key | Type | Default | Notes |
 | --- | --- | --- | --- |
-| `skills-gateway.ingestion.external-sources.enabled` | boolean | `false` | `false` is unchanged GW_0003 behaviour. |
-| `skills-gateway.ingestion.external-sources.allowed-types` | list | `[github]` | `npm` and `archive` are refused whatever this says. |
+| `skills-gateway.ingestion.external-sources.enabled` | boolean | `false` | `false` is unchanged GW_0003 behaviour, and no manifest-driven outbound request is made. |
+| `skills-gateway.ingestion.external-sources.allowed-types` | list | `[github]` | `npm` and `archive` are refused whatever this says; `git` and `git-subdir` are not resolved yet. |
 | `skills-gateway.ingestion.external-sources.allowed-hosts` | list | `[]` (any) | Exact-host matching on the derived clone URL. |
 | `skills-gateway.ingestion.external-sources.max-sources` | integer | `20` | Counts external sources, not plugins. |
+| `skills-gateway.ingestion.external-sources.github-base-url` | string | `https://github.com` | Trailing slashes are trimmed. The derived URL still faces the scheme and host allowlists. |
+| `skills-gateway.ingestion.external-sources.allow-private-networks` | boolean | `false` | Loopback, RFC1918, `100.64.0.0/10`, `fc00::/7`. Never link-local. |
+| `…external-sources.budgets.max-received-bytes` | size | `50MB` | Enforced on the response stream, so an endless transfer is cut off rather than measured. |
+| `…external-sources.budgets.max-inflated-bytes` | size | `200MB` | One source's content as objects. |
+| `…external-sources.budgets.max-closure-bytes` | size | `500MB` | Accumulated across every source one manifest declares. |
+| `…external-sources.budgets.max-inflation-ratio` | integer | `100` | Judged only once a source's content passes a quarter of `max-inflated-bytes`; below that the absolute bound already caps it. |
+| `…external-sources.budgets.max-objects` | integer | `20000` | Blobs and directories one source may contribute. |
+| `…external-sources.budgets.max-blob-bytes` | size | `10MB` | Largest single file. |
+| `…external-sources.budgets.max-tree-depth` | integer | `32` | Bounds every later walk of the content, not only the fetch. |
+| `…external-sources.budgets.max-redirects` | integer | `3` | Hops one request may take. |
+| `…external-sources.budgets.deadline` | duration | `5m` | Wall clock for resolving a whole manifest. |
 
 A source's derived clone URL must also satisfy `skills-gateway.allowed-url-schemes`
 — the same allowlist that governs registration, so there is one scheme policy for
-every URL the gateway will ever dereference. A `github` shorthand is expanded to
-`https://github.com/<owner>/<repo>` before the scheme and host checks, and a
-shorthand that is not exactly `owner/repo` is refused rather than expanded.
+every URL the gateway will ever dereference. A `github` shorthand is expanded
+against `github-base-url` before the scheme and host checks, and a shorthand that
+is not exactly `owner/repo` — or that contains a `.` or `..` segment — is refused
+rather than expanded.
 
-!!! warning "Enabling this admits sources; it does not yet resolve them"
+Every breach of a budget, of the address policy or of the redirect policy is a
+**rejected snapshot** whose violation names what was exceeded and which plugin
+caused it, so an operator is led to the number to change rather than to a log.
 
-    This is the first increment of external plugin source support. An enabled
-    gateway *understands and accepts* an external source, but cannot yet fetch it
-    and rewrite the manifest into content it serves — so the snapshot is still
-    recorded **rejected**, with a violation saying the source was admitted and is
-    not yet resolvable (distinct from the violation for a source that was not
-    admitted). That is deliberate: a snapshot is held — and therefore approvable
-    and publishable — only when every source it declares resolves inside the
-    snapshot the gateway serves (GW_0152). Serving a manifest that still points a
-    client at an external URL would reopen threat T4. See
-    [ADR 0011](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md).
+### What an enabled gateway does with a source
+
+An admitted `github` source is fetched into the marketplace's quarantine
+repository, grafted into the snapshot under `_plugins/<plugin name>/`, and the
+served `.claude-plugin/marketplace.json` is rewritten so that plugin's `source`
+is `./_plugins/<plugin name>`. The snapshot is that synthesised commit, and its
+parent is the commit ingested from upstream — see
+[Snapshots and the ledger](../concepts/snapshots-and-ledger.md).
+
+Refused, each with its own violation and no partial result: a marketplace whose
+repository already has a top-level `_plugins`; an external plugin whose name is
+not a single lowercase path segment; two external plugins sharing a name; and a
+source declaring a `ref` or a `sha`, which this gateway does not resolve at —
+refused rather than silently resolved somewhere else.
 
 !!! danger "Egress isolation is the control that matters, and it is not in this file"
 
-    When resolution lands, manifest content — attacker-influenced upstream data —
-    will drive gateway-originated fetches. The allowlists above are **defence in
-    depth, not the primary control**. Run ingestion egress through a proxy or DMZ
-    with no route to cloud metadata endpoints, internal APIs, or anything holding
-    corporate credentials. The gateway documents the topology; the network
-    enforces it.
+    With `enabled: true`, manifest content — attacker-influenced upstream data —
+    drives gateway-originated fetches. The allowlists and budgets above are
+    **defence in depth, not the primary control**. Run ingestion egress through a
+    proxy or DMZ with no route to cloud metadata endpoints, internal APIs, or
+    anything holding corporate credentials. The gateway documents the topology;
+    the network enforces it. See
+    [Trust boundaries](../concepts/trust-boundaries.md) for what the
+    in-application layer does and does not claim, and
+    [ADR 0011](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md)
+    for why that ordering was chosen.
 
 ---
 

@@ -1716,3 +1716,85 @@ cases:
       finding rule identifier, no finding location and no file name from the quarantined
       snapshot
     revision: "0.1.0"
+
+  - id: SVC_GW_0155
+    requirement_ids: ["GW_0155"]
+    title: Resolve an admitted external plugin source into quarantine
+    verification: automated-test
+    description: |
+      GIVEN a gateway configured to admit github plugin sources and a marketplace whose
+      manifest declares one, backed by a reachable upstream plugin repository
+      WHEN ingestion runs
+      THEN the plugin repository's content is fetched into that marketplace's quarantine
+      area at the commit the fetch resolved to, no reference the fetch used is left
+      behind, the same source declared twice in one manifest is fetched once, an
+      admitted source declaring a ref or a commit is refused with a violation naming
+      that field, and nothing fetched is reachable through the consumer facade
+    revision: "0.1.0"
+
+  - id: SVC_GW_0156
+    requirement_ids: ["GW_0156"]
+    title: Composite snapshot whose manifest is gateway-local and whose identity is deterministic
+    verification: automated-test
+    description: |
+      GIVEN an ingestion whose manifest declares one resolved external plugin source
+      WHEN the snapshot is recorded
+      THEN the snapshot is identified by a synthesised commit whose parent is the ingested
+      upstream commit, whose manifest declares only paths inside that commit while every
+      other manifest field and every local source is unchanged, whose reserved directory
+      holds the resolved external content, and whose message records the upstream commit,
+      each source with its resolved commit and the rewrite implementation's identity; the
+      same inputs produce the same commit and a changed resolved commit or rewrite
+      identity produces a different one; and a manifest whose upstream content already
+      occupies the reserved directory, an external plugin name that is not a single
+      lowercase path segment, and two external plugins sharing a name are each refused
+      with no commit synthesised
+    revision: "0.1.0"
+
+  - id: SVC_GW_0157
+    requirement_ids: ["GW_0157"]
+    title: Refuse source resolution to forbidden addresses, redirects and transports
+    verification: automated-test
+    description: |
+      GIVEN a gateway resolving an external plugin source
+      WHEN the target, or any redirect it answers with, resolves to a link-local,
+      multicast, unspecified or otherwise non-global-unicast address, encodes such an
+      address inside another address family, resolves to a loopback or private address
+      without private networks being permitted, resolves to a mixture of permitted and
+      forbidden addresses, is expressed as a decimal, octal or hexadecimal address
+      literal, carries embedded credentials, names a port other than the one originally
+      requested, leaves the host originally requested, downgrades from a secure to an
+      insecure scheme, or exceeds the configured redirect maximum
+      THEN the request is refused, the forbidden target is never contacted, and the
+      snapshot is rejected
+    revision: "0.1.0"
+
+  - id: SVC_GW_0158
+    requirement_ids: ["GW_0158"]
+    title: Refuse a source that exceeds a resolution resource bound
+    verification: automated-test
+    description: |
+      GIVEN a gateway with configured resolution bounds on received bytes per source and
+      per manifest, decompressed size per source and per manifest, expansion ratio,
+      object count, largest file, directory depth and wall-clock time
+      WHEN an external plugin source exceeds any one of them
+      THEN resolution stops, the ingestion is refused with a violation naming the bound
+      that was exceeded, content just inside every bound is still accepted, and the
+      process is not exhausted
+    revision: "0.1.0"
+
+  - id: SVC_GW_0161
+    requirement_ids: ["GW_0161"]
+    title: A failed resolution rejects the snapshot and leaves nothing half-resolved
+    verification: automated-test
+    description: |
+      GIVEN a marketplace with an approved and served snapshot, and a later manifest
+      declaring an external plugin source that is unreachable, refused by policy, over a
+      resource bound, past the time bound, cut off part-way through its transfer, or
+      whose rewrite is refused
+      WHEN ingestion runs
+      THEN the snapshot is recorded against the upstream commit in the rejected state
+      with the violation, it is not held and cannot be approved, no synthesised commit
+      and no resolved external content is reachable from any snapshot, and clients still
+      receive the previously approved snapshot
+    revision: "0.1.0"

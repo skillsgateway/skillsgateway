@@ -21,9 +21,11 @@ import org.junit.jupiter.api.Test;
 class ManifestPolicyTests {
 
     private static final Set<String> HTTPS = Set.of("http", "https");
+    private static final String BASE = "https://github.com";
 
     private static ManifestPolicy policy(boolean enabled, int maxSources) {
-        return new ManifestPolicy(new ExternalSourceAdmission(enabled, Set.of("github"), Set.of(), HTTPS, maxSources));
+        return new ManifestPolicy(
+                new ExternalSourceAdmission(enabled, Set.of("github"), Set.of(), HTTPS, maxSources, BASE));
     }
 
     private static String validate(ManifestPolicy policy, String manifest) {
