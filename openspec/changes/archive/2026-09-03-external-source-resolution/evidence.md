@@ -5,15 +5,25 @@ chosen by content the gateway does not control, so the old-coder discipline
 applies at **Tier 3**. The failure model is in `design.md`; this report records
 what was executed, what it produced, and where the loop was not followed.
 
-**Source state:** commit `069ba928d47001acb55c58b4cbefbd4af9ec6b42`, branch
+**Source state:** the implementation commit — the last code and documentation
+edit — with the tree of
+`069ba928d47001acb55c58b4cbefbd4af9ec6b42`, on branch
 `feat/external-source-resolution`, rebased onto `origin/main` at
-`f3b9d92af4e7102a2d62045f1639a3655dabdc15` (#254). That is the implementation
-commit — the last code and documentation edit — and **every number below comes
-from one pass run against exactly that tree**. Two commits follow it: this
-report, and the archive that moves the change into `openspec/specs/`. Neither
-touches anything a gate reads except `openspec validate`, which is therefore
-recorded both before the archive (31 items) and after it (30, one fewer because
-the change is no longer an open change).
+`f3b9d92af4e7102a2d62045f1639a3655dabdc15` (#254). **Every number below comes
+from one pass run against exactly that tree.**
+
+Two commits follow the implementation commit: this report, and the archive that
+moves the change into `openspec/specs/`. Neither touches anything a gate reads
+except `openspec validate`, which is therefore recorded both before the archive
+(31 items) and after it (30, one fewer because the change is no longer an open
+change) — and the mutation runner, which was re-run from its archived path with
+the same result.
+
+The branch was then rebased once more, onto
+[#256](https://github.com/skillsgateway/skillsgateway/pull/256), which changes
+`.github/workflows/release.yml` and nothing else. That advances the commit ids
+without changing a byte any gate reads, so the numbers stand; the tree hash above
+is what identifies what was actually tested.
 
 **Requirement ids.** GW_0155 — Resolution of admitted external plugin sources
 into quarantine through GW_0158 — Resource-bounded source resolution, plus

@@ -16,11 +16,14 @@
 #     run cannot leave a mutant in the tree.
 #
 # Usage, from the repository root:
-#   openspec/changes/external-source-resolution/mutants.sh
+#   openspec/changes/archive/2026-09-03-external-source-resolution/mutants.sh
 #
 set -uo pipefail
 
-cd "$(dirname "$0")/../../.." || exit 1
+cd "$(dirname "$0")/../../../.." || exit 1
+# Fail closed on the path: a wrong depth would make every mutant inapplicable,
+# which must not read as a clean run.
+[[ -x ./mvnw ]] || { echo "ABORT: not at the repository root"; exit 2; }
 
 MVN=(./mvnw -o -q -Dspotless.check.skip=true -Dcheckstyle.skip=true
      -Dskip.ui.verify=true -Dskip.pnpm=true -Dskip.installnodenpm=true
