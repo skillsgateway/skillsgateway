@@ -2309,7 +2309,7 @@ than as an operational log.</p>
 </tr>
 <tr>
 <td><code>ref</code></td>
-<td>The ref involved, when there is one.</td>
+<td>The ref involved, when there is one. For a fetch, a ref the facade advertised for that request.</td>
 </tr>
 <tr>
 <td><code>sha</code></td>
@@ -2320,7 +2320,11 @@ than as an operational log.</p>
 <h3 id="what-gets-recorded">What gets recorded<a class="headerlink" href="#what-gets-recorded" title="Permanent link">&para;</a></h3>
 <p><strong>Facade fetches</strong> — <code>info-refs</code> when a client asks what refs exist, carrying
 the resolved <code>main</code> SHA; and one <code>upload-pack</code> entry per wanted object when the
-packfile is served. Negotiation rounds are not recorded.</p>
+packfile is served, naming the advertised ref that object resolves to. A
+superseded snapshot stays fetchable by name, so a fetch of one is distinguishable
+in the ledger from a clone of the tip — see
+<a href="../../reference/git-facade/#auditing">Auditing</a> for the exact rule and its one
+unavoidable ambiguity. Negotiation rounds are not recorded.</p>
 <p><strong>Administrative actions</strong> — registration, ingestion, approve and reject, each
 carrying the acting OIDC principal.</p>
 <h3 id="reading-it">Reading it<a class="headerlink" href="#reading-it" title="Permanent link">&para;</a></h3>

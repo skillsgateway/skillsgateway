@@ -2185,21 +2185,36 @@ with a mode flag.</p>
 <tr>
 <th>Event</th>
 <th>When</th>
+<th><code>ref</code></th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>info-refs</code></td>
 <td>Ref advertisement, recording the resolved <code>main</code> SHA.</td>
+<td><code>refs/heads/main</code> — an advertisement is about the tip.</td>
 </tr>
 <tr>
 <td><code>upload-pack</code></td>
 <td>One entry per wanted object when the packfile is served.</td>
+<td>The advertised ref that object resolves to.</td>
 </tr>
 </tbody>
 </table>
 <p>Each entry carries the client address as <code>source</code>, the PAT's principal, the
 marketplace, the ref and the SHA. Negotiation rounds are not recorded.</p>
+<p>Because both namespaces above are legal wants, an <code>upload-pack</code> entry names
+which one the client received content through. A want that is not the tip can
+only have come from a <code>refs/snapshots/&lt;sha&gt;</code> advertisement and records that ref,
+so a fetch of a superseded snapshot is distinguishable in the ledger from a clone.</p>
+<p>A want <strong>equal</strong> to the tip records <code>refs/heads/main</code>. While a snapshot is
+current, <code>refs/heads/main</code> and its <code>refs/snapshots/&lt;sha&gt;</code> are the same commit and
+the smart protocol carries only object ids in a want, so a clone and a fetch by
+name are not separable here; the tip is the recorded answer. The <code>sha</code> column
+still pins the delivered content exactly, which is what
+<a href="../api/adoption/">adoption and staleness</a> aggregate on — they never read <code>ref</code>.</p>
+<p>See <a href="../api/audit/#events">Audit</a> for the full entry contract, including what
+entries written before this behaviour shipped record.</p>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

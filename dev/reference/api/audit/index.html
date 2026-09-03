@@ -2100,7 +2100,9 @@ enforcement enabled, the auditor role.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">[{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"ts"</span><span class="p">:</span><span class="s2">"2026-08-15T09:04:11Z"</span><span class="p">,</span><span class="nt">"source"</span><span class="p">:</span><span class="s2">"10.0.0.4"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"event"</span><span class="p">:</span><span class="s2">"info-refs"</span><span class="p">,</span><span class="nt">"ref"</span><span class="p">:</span><span class="s2">"refs/heads/main"</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">},</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w"> </span><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="nt">"ts"</span><span class="p">:</span><span class="s2">"2026-08-15T09:04:11Z"</span><span class="p">,</span><span class="nt">"source"</span><span class="p">:</span><span class="s2">"10.0.0.4"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"event"</span><span class="p">:</span><span class="s2">"upload-pack"</span><span class="p">,</span><span class="nt">"ref"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">}]</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"event"</span><span class="p">:</span><span class="s2">"upload-pack"</span><span class="p">,</span><span class="nt">"ref"</span><span class="p">:</span><span class="s2">"refs/heads/main"</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">},</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w"> </span><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span><span class="nt">"ts"</span><span class="p">:</span><span class="s2">"2026-08-15T11:22:07Z"</span><span class="p">,</span><span class="nt">"source"</span><span class="p">:</span><span class="s2">"10.0.0.9"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"team-payments"</span><span class="p">,</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"event"</span><span class="p">:</span><span class="s2">"upload-pack"</span><span class="p">,</span><span class="nt">"ref"</span><span class="p">:</span><span class="s2">"refs/snapshots/9d01c44..."</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"9d01c44..."</span><span class="p">}]</span>
 </code></pre></div>
 <p><strong>200.</strong> Rows are returned untyped, which is why the portal renders this table
 schema-lessly.</p>
@@ -2185,7 +2187,7 @@ polling, batch payload, signature, replay — is in
 </tr>
 <tr>
 <td><code>ref</code></td>
-<td>The ref involved, when there is one.</td>
+<td>The ref involved, when there is one. For a facade fetch this is a ref the facade <a href="../../git-facade/#what-is-served">advertised</a> for that request — see <a href="#events">Events</a>.</td>
 </tr>
 <tr>
 <td><code>sha</code></td>
@@ -2254,15 +2256,34 @@ which is what they have always implicitly claimed.</p>
 <tbody>
 <tr>
 <td><code>info-refs</code></td>
-<td>A client asked what refs exist. Carries the resolved <code>main</code> SHA.</td>
+<td>A client asked what refs exist. <code>ref</code> is <code>refs/heads/main</code> and <code>sha</code> its resolved SHA — an advertisement genuinely is about the tip.</td>
 </tr>
 <tr>
 <td><code>upload-pack</code></td>
-<td>One entry per wanted object when the packfile is served.</td>
+<td>One entry per wanted object when the packfile is served. <code>sha</code> is the object; <code>ref</code> is the advertised ref that object resolves to.</td>
 </tr>
 </tbody>
 </table>
 <p>Negotiation rounds are not recorded.</p>
+<div class="admonition note">
+<p class="admonition-title">Which ref an <code>upload-pack</code> entry names</p>
+<p>A want that is not the served tip can only have come from a
+<code>refs/snapshots/&lt;sha&gt;</code> advertisement, so it records that ref — this is how a
+fetch of a snapshot a later approval has superseded is distinguishable from a
+clone of the current tip.</p>
+<p>A want <strong>equal</strong> to the tip records <code>refs/heads/main</code>, even if the client
+named the snapshot ref. While a snapshot is current the two refs are the same
+commit, and the smart protocol carries only object ids in a want, so the two
+requests are not separable; the tip is the recorded answer, deterministically.
+Nothing is lost evidentially — <code>sha</code> pins the delivered content exactly.</p>
+<p><code>ref</code> is <code>null</code> if a want resolves to no advertised ref. Under the facade's
+request policy every want is an advertised tip, so this does not arise in
+practice; the column says it does not know rather than naming a ref the
+client did not ask for.</p>
+<p>Entries written before this behaviour shipped record <code>refs/heads/main</code> for
+every <code>upload-pack</code> want, including snapshot-ref fetches. The ledger is
+append-only and is not rewritten.</p>
+</div>
 <p><strong>From the API</strong> — registration, ingestion, approve and reject, each carrying
 the acting OIDC principal.</p>
 <table>
