@@ -1466,6 +1466,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Ingestion — external plugin sources">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-an-enabled-gateway-does-with-a-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What an enabled gateway does with a source
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2267,6 +2284,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Ingestion — external plugin sources">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-an-enabled-gateway-does-with-a-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What an enabled gateway does with a source
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -3092,27 +3126,48 @@ compliance feed with a hole in it is worse than one that is seconds behind.</p>
 <hr />
 <h2 id="ingestion-external-plugin-sources">Ingestion — external plugin sources<a class="headerlink" href="#ingestion-external-plugin-sources" title="Permanent link">&para;</a></h2>
 <p>Whether a marketplace manifest may declare plugins that live outside the
-marketplace repository (GW_0151). Java-side defaults; nothing appears in
-<code>application.yaml</code>, and an absent block is the behaviour every existing
-deployment already has.</p>
+marketplace repository, and — when it may — what resolving them is allowed to
+reach and to cost (GW_0151, GW_0155 – GW_0158, GW_0161). Java-side defaults; nothing
+appears in <code>application.yaml</code>, and an absent block is the behaviour every
+existing deployment already has.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">ingestion</span><span class="p">:</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">external-sources</span><span class="p">:</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">      </span><span class="c1"># false is GW_0003's local-only rejection: a manifest declaring a github,</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">      </span><span class="c1"># git, git-subdir, npm or archive source is refused, snapshot rejected.</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">      </span><span class="c1"># The types an enabled gateway will consider. Only types something can</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">      </span><span class="c1"># resolve belong here — the allowlist never advertises a form nothing</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">      </span><span class="c1"># implements.</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">      </span><span class="nt">allowed-types</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">github</span><span class="p p-Indicator">]</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">      </span><span class="c1"># Exact hosts the derived clone URL may name; empty means any host. Never</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">      </span><span class="c1"># a suffix or pattern match: github.com does not admit evil-github.com.</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">      </span><span class="nt">allowed-hosts</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
-<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>
-<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">      </span><span class="c1"># How many external sources one manifest may declare.</span>
-<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">      </span><span class="nt">max-sources</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">      </span><span class="c1"># It is also the only setting under which the gateway makes no outbound</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">      </span><span class="c1"># request driven by manifest content.</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">      </span><span class="c1"># The types an enabled gateway will consider. Only types something can</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">      </span><span class="c1"># resolve belong here — the allowlist never advertises a form nothing</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">      </span><span class="c1"># implements, and today only github resolves.</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">      </span><span class="nt">allowed-types</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">github</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">      </span><span class="c1"># Exact hosts the derived clone URL may name; empty means any host. Never</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="w">      </span><span class="c1"># a suffix or pattern match: github.com does not admit evil-github.com.</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">      </span><span class="nt">allowed-hosts</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="w">      </span><span class="c1"># How many external sources one manifest may declare.</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="w">      </span><span class="nt">max-sources</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="w">      </span><span class="c1"># Where an owner/repo shorthand is resolved, for GitHub Enterprise Server.</span>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="w">      </span><span class="nt">github-base-url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com</span>
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a><span class="w">      </span><span class="c1"># Whether a source may resolve to a loopback, RFC1918, carrier-grade-NAT</span>
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a><span class="w">      </span><span class="c1"># or unique-local address. It never permits a link-local address.</span>
+<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a><span class="w">      </span><span class="nt">allow-private-networks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>
+<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a><span class="w">      </span><span class="nt">budgets</span><span class="p">:</span>
+<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a><span class="w">        </span><span class="nt">max-received-bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50MB</span><span class="w">      </span><span class="c1"># per source, on the wire</span>
+<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a><span class="w">        </span><span class="nt">max-inflated-bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">200MB</span><span class="w">     </span><span class="c1"># per source, as objects</span>
+<a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a><span class="w">        </span><span class="nt">max-closure-bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500MB</span><span class="w">      </span><span class="c1"># every source of one manifest, as objects</span>
+<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a><span class="w">        </span><span class="nt">max-inflation-ratio</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span><span class="w">      </span><span class="c1"># uncompressed bytes per received byte</span>
+<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a><span class="w">        </span><span class="nt">max-objects</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20000</span><span class="w">            </span><span class="c1"># per source</span>
+<a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a><span class="w">        </span><span class="nt">max-blob-bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10MB</span><span class="w">          </span><span class="c1"># largest single file</span>
+<a id="__codelineno-4-36" name="__codelineno-4-36" href="#__codelineno-4-36"></a><span class="w">        </span><span class="nt">max-tree-depth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span>
+<a id="__codelineno-4-37" name="__codelineno-4-37" href="#__codelineno-4-37"></a><span class="w">        </span><span class="nt">max-redirects</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<a id="__codelineno-4-38" name="__codelineno-4-38" href="#__codelineno-4-38"></a><span class="w">        </span><span class="nt">deadline</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5m</span><span class="w">                  </span><span class="c1"># whole resolution, wall clock</span>
 </code></pre></div>
 <table>
 <thead>
@@ -3128,13 +3183,13 @@ deployment already has.</p>
 <td><code>skills-gateway.ingestion.external-sources.enabled</code></td>
 <td>boolean</td>
 <td><code>false</code></td>
-<td><code>false</code> is unchanged GW_0003 behaviour.</td>
+<td><code>false</code> is unchanged GW_0003 behaviour, and no manifest-driven outbound request is made.</td>
 </tr>
 <tr>
 <td><code>skills-gateway.ingestion.external-sources.allowed-types</code></td>
 <td>list</td>
 <td><code>[github]</code></td>
-<td><code>npm</code> and <code>archive</code> are refused whatever this says.</td>
+<td><code>npm</code> and <code>archive</code> are refused whatever this says; <code>git</code> and <code>git-subdir</code> are not resolved yet.</td>
 </tr>
 <tr>
 <td><code>skills-gateway.ingestion.external-sources.allowed-hosts</code></td>
@@ -3148,34 +3203,107 @@ deployment already has.</p>
 <td><code>20</code></td>
 <td>Counts external sources, not plugins.</td>
 </tr>
+<tr>
+<td><code>skills-gateway.ingestion.external-sources.github-base-url</code></td>
+<td>string</td>
+<td><code>https://github.com</code></td>
+<td>Trailing slashes are trimmed. The derived URL still faces the scheme and host allowlists.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.ingestion.external-sources.allow-private-networks</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Loopback, RFC1918, <code>100.64.0.0/10</code>, <code>fc00::/7</code>. Never link-local.</td>
+</tr>
+<tr>
+<td><code>…external-sources.budgets.max-received-bytes</code></td>
+<td>size</td>
+<td><code>50MB</code></td>
+<td>Enforced on the response stream, so an endless transfer is cut off rather than measured.</td>
+</tr>
+<tr>
+<td><code>…external-sources.budgets.max-inflated-bytes</code></td>
+<td>size</td>
+<td><code>200MB</code></td>
+<td>One source's content as objects.</td>
+</tr>
+<tr>
+<td><code>…external-sources.budgets.max-closure-bytes</code></td>
+<td>size</td>
+<td><code>500MB</code></td>
+<td>Accumulated across every source one manifest declares.</td>
+</tr>
+<tr>
+<td><code>…external-sources.budgets.max-inflation-ratio</code></td>
+<td>integer</td>
+<td><code>100</code></td>
+<td>Judged only once a source's content passes a quarter of <code>max-inflated-bytes</code>; below that the absolute bound already caps it.</td>
+</tr>
+<tr>
+<td><code>…external-sources.budgets.max-objects</code></td>
+<td>integer</td>
+<td><code>20000</code></td>
+<td>Blobs and directories one source may contribute.</td>
+</tr>
+<tr>
+<td><code>…external-sources.budgets.max-blob-bytes</code></td>
+<td>size</td>
+<td><code>10MB</code></td>
+<td>Largest single file.</td>
+</tr>
+<tr>
+<td><code>…external-sources.budgets.max-tree-depth</code></td>
+<td>integer</td>
+<td><code>32</code></td>
+<td>Bounds every later walk of the content, not only the fetch.</td>
+</tr>
+<tr>
+<td><code>…external-sources.budgets.max-redirects</code></td>
+<td>integer</td>
+<td><code>3</code></td>
+<td>Hops one request may take.</td>
+</tr>
+<tr>
+<td><code>…external-sources.budgets.deadline</code></td>
+<td>duration</td>
+<td><code>5m</code></td>
+<td>Wall clock for resolving a whole manifest.</td>
+</tr>
 </tbody>
 </table>
 <p>A source's derived clone URL must also satisfy <code>skills-gateway.allowed-url-schemes</code>
 — the same allowlist that governs registration, so there is one scheme policy for
-every URL the gateway will ever dereference. A <code>github</code> shorthand is expanded to
-<code>https://github.com/&lt;owner&gt;/&lt;repo&gt;</code> before the scheme and host checks, and a
-shorthand that is not exactly <code>owner/repo</code> is refused rather than expanded.</p>
-<div class="admonition warning">
-<p class="admonition-title">Enabling this admits sources; it does not yet resolve them</p>
-<p>This is the first increment of external plugin source support. An enabled
-gateway <em>understands and accepts</em> an external source, but cannot yet fetch it
-and rewrite the manifest into content it serves — so the snapshot is still
-recorded <strong>rejected</strong>, with a violation saying the source was admitted and is
-not yet resolvable (distinct from the violation for a source that was not
-admitted). That is deliberate: a snapshot is held — and therefore approvable
-and publishable — only when every source it declares resolves inside the
-snapshot the gateway serves (GW_0152). Serving a manifest that still points a
-client at an external URL would reopen threat T4. See
-<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md">ADR 0011</a>.</p>
-</div>
+every URL the gateway will ever dereference. A <code>github</code> shorthand is expanded
+against <code>github-base-url</code> before the scheme and host checks, and a shorthand that
+is not exactly <code>owner/repo</code> — or that contains a <code>.</code> or <code>..</code> segment — is refused
+rather than expanded.</p>
+<p>Every breach of a budget, of the address policy or of the redirect policy is a
+<strong>rejected snapshot</strong> whose violation names what was exceeded and which plugin
+caused it, so an operator is led to the number to change rather than to a log.</p>
+<h3 id="what-an-enabled-gateway-does-with-a-source">What an enabled gateway does with a source<a class="headerlink" href="#what-an-enabled-gateway-does-with-a-source" title="Permanent link">&para;</a></h3>
+<p>An admitted <code>github</code> source is fetched into the marketplace's quarantine
+repository, grafted into the snapshot under <code>_plugins/&lt;plugin name&gt;/</code>, and the
+served <code>.claude-plugin/marketplace.json</code> is rewritten so that plugin's <code>source</code>
+is <code>./_plugins/&lt;plugin name&gt;</code>. The snapshot is that synthesised commit, and its
+parent is the commit ingested from upstream — see
+<a href="../../concepts/snapshots-and-ledger/">Snapshots and the ledger</a>.</p>
+<p>Refused, each with its own violation and no partial result: a marketplace whose
+repository already has a top-level <code>_plugins</code>; an external plugin whose name is
+not a single lowercase path segment; two external plugins sharing a name; and a
+source declaring a <code>ref</code> or a <code>sha</code>, which this gateway does not resolve at —
+refused rather than silently resolved somewhere else.</p>
 <div class="admonition danger">
 <p class="admonition-title">Egress isolation is the control that matters, and it is not in this file</p>
-<p>When resolution lands, manifest content — attacker-influenced upstream data —
-will drive gateway-originated fetches. The allowlists above are <strong>defence in
-depth, not the primary control</strong>. Run ingestion egress through a proxy or DMZ
-with no route to cloud metadata endpoints, internal APIs, or anything holding
-corporate credentials. The gateway documents the topology; the network
-enforces it.</p>
+<p>With <code>enabled: true</code>, manifest content — attacker-influenced upstream data —
+drives gateway-originated fetches. The allowlists and budgets above are
+<strong>defence in depth, not the primary control</strong>. Run ingestion egress through a
+proxy or DMZ with no route to cloud metadata endpoints, internal APIs, or
+anything holding corporate credentials. The gateway documents the topology;
+the network enforces it. See
+<a href="../../concepts/trust-boundaries/">Trust boundaries</a> for what the
+in-application layer does and does not claim, and
+<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md">ADR 0011</a>
+for why that ordering was chosen.</p>
 </div>
 <hr />
 <h2 id="vetting">Vetting<a class="headerlink" href="#vetting" title="Permanent link">&para;</a></h2>

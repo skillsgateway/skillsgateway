@@ -554,6 +554,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#1a-resolution-a-manifests-url-becomes-an-outbound-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1a. Resolution — a manifest's URL becomes an outbound request
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2-the-facade-an-anonymous-network-peer-becomes-a-reader" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2049,6 +2060,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#1a-resolution-a-manifests-url-becomes-an-outbound-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1a. Resolution — a manifest's URL becomes an outbound request
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2-the-facade-an-anonymous-network-peer-becomes-a-reader" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2248,18 +2270,83 @@ snapshot is held only when every plugin source it declares resolves inside the
 snapshot the gateway serves.</strong> Held is what makes a snapshot approvable and
 therefore publishable, so a manifest still pointing a client at an external URL
 never reaches it — that is threat T4, and it stays closed whether the gateway
-cannot admit a source or cannot yet resolve one it has admitted.</p>
+cannot admit a source, cannot resolve one it has admitted, or failed part-way
+through resolving one. An enabled gateway satisfies the invariant by <em>rewriting</em>:
+the resolved content is grafted into the snapshot and the served manifest points
+at it, so the invariant holds by construction — and it is still checked, because
+the rewritten manifest is put back through the same local-only gate before the
+commit is used.</p>
+<h2 id="1a-resolution-a-manifests-url-becomes-an-outbound-request">1a. Resolution — a manifest's URL becomes an outbound request<a class="headerlink" href="#1a-resolution-a-manifests-url-becomes-an-outbound-request" title="Permanent link">&para;</a></h2>
+<p>This is the only outbound request the gateway makes whose target is chosen by
+content it does not control, and it exists only with
+<code>skills-gateway.ingestion.external-sources.enabled: true</code>. Its policy is applied
+to <strong>every</strong> request of a fetch, not only the first.</p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>What it refuses</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>URL policy</td>
+<td>a scheme outside the allowlist; embedded credentials; an address literal spelled in decimal, octal or hexadecimal, or with fewer than four dotted parts — spellings that exist to read one way to a filter and another to a resolver</td>
+</tr>
+<tr>
+<td>Origin pin</td>
+<td>any request whose scheme, host or port is not the source's own, so a request cannot be made anywhere else however the server answers</td>
+</tr>
+<tr>
+<td>Address policy, always</td>
+<td>link-local (<code>169.254.0.0/16</code>, <code>fe80::/10</code> — the cloud metadata endpoint), multicast, unspecified, broadcast, <code>0.0.0.0/8</code>, <code>240.0.0.0/4</code>, and IPv4-mapped or IPv4-compatible spellings of any of them. No setting permits these</td>
+</tr>
+<tr>
+<td>Address policy, by configuration</td>
+<td>loopback, RFC1918, <code>100.64.0.0/10</code> and <code>fc00::/7</code>, unless <code>allow-private-networks: true</code>. Checked against <strong>every</strong> address the host resolves to, so a name answering with one public and one private address is refused as a whole</td>
+</tr>
+<tr>
+<td>Redirect policy</td>
+<td>a target that leaves the origin host or port, an <code>https</code> → <code>http</code> downgrade, a target carrying credentials, and a chain longer than <code>max-redirects</code>. Decided from the <code>Location</code> header <strong>before</strong> the hop is taken, so a forbidden target is never contacted</td>
+</tr>
+<tr>
+<td>Budgets</td>
+<td>received bytes (on the stream, mid-transfer), uncompressed bytes, expansion ratio, object count, largest file, tree depth, and a wall-clock deadline</td>
+</tr>
+</tbody>
+</table>
+<p>The two-tier address policy is deliberate rather than tidy. A development or
+test topology legitimately needs loopback; nothing legitimately needs the
+metadata endpoint. Keeping the link-local class unconditional means permitting
+the first cannot unlock the second.</p>
+<p>Any refusal — and any failure, timeout or budget breach — records the snapshot
+against the <strong>upstream</strong> commit as rejected, synthesises no commit, and leaves
+the content the facade serves untouched. There is no partial outcome: a manifest
+resolves completely or not at all.</p>
 <div class="admonition danger">
-<p class="admonition-title">When resolution lands, the allowlists are not the control</p>
+<p class="admonition-title">The allowlists are not the control</p>
 <p>Manifest-driven fetching is gateway-originated traffic chosen by upstream
-data — the SSRF shape. The scheme, host and count checks above are <strong>defence
-in depth</strong>. The primary control is network topology: ingestion egress routed
-through a proxy or DMZ with no route to cloud metadata endpoints, internal
-APIs or anything holding corporate credentials. Post-DNS address validation,
-connect-to-the-validated-address, per-redirect re-validation, downgrade
-refusal and pack-inflation budgets are the in-application second layer, and
-arrive with the resolver. See
+data — the SSRF shape. Everything in the table above is <strong>defence in depth</strong>.
+The primary control is network topology: ingestion egress routed through a
+proxy or DMZ with no route to cloud metadata endpoints, internal APIs or
+anything holding corporate credentials. See
 <a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md">ADR 0011</a>.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">What this layer does not claim</p>
+<p>Two gaps, stated rather than implied.</p>
+<p><strong>The connection is made to the hostname, not to the address that was
+validated.</strong> A name that resolves differently between the check and the
+connect is not caught, because <code>HttpURLConnection</code> offers no way to pin an
+address without overriding a restricted request header process-wide. It is
+bounded today: a <code>github</code> source's host comes from <code>github-base-url</code>, which
+is operator configuration, and an <code>owner/repo</code> shorthand cannot carry a host
+— so no manifest chooses what is resolved. Address pinning belongs with the
+increment that admits manifest-supplied URLs.</p>
+<p><strong>The marketplace upstream fetch does not go through this policy.</strong> That URL
+is admin-supplied at registration and already scheme-checked, which is a
+different trust level from a manifest-derived one. Extending the policy to it
+is a deliberate follow-up rather than a side effect of this change.</p>
 </div>
 <h2 id="2-the-facade-an-anonymous-network-peer-becomes-a-reader">2. The facade — an anonymous network peer becomes a reader<a class="headerlink" href="#2-the-facade-an-anonymous-network-peer-becomes-a-reader" title="Permanent link">&para;</a></h2>
 <p><code>/git/**</code> is served by its own Spring Security filter chain, ordered ahead of

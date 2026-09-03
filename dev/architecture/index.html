@@ -2544,15 +2544,21 @@ naive mirroring is insufficient.</p>
   reaches no API endpoint, and an API credential reaches no marketplace — see
   <a href="../concepts/trust-boundaries/">Trust boundaries</a>.</li>
 <li><strong>Ingestion.</strong> Watches registered upstreams for new commits/tags, fetches the
-  marketplace repo, parses the manifest, <strong>recursively resolves every plugin
+  marketplace repo, parses the manifest, <strong>resolves every plugin
   source</strong> (relative paths, external git URLs, GitHub refs), and snapshots the
   whole closure into content-addressed storage keyed by commit SHA.
-  <strong>MVP scope: local sources only</strong> — plugins must live inside the marketplace
-  repo as relative paths; every external source type (<code>github</code>, <code>url</code>,
-  <code>git-subdir</code>, <code>npm</code>, <code>archive</code>) is rejected fail-closed at ingestion. This
-  removes transitive resolution and source rewriting from the MVP entirely
-  (relative sources resolve inside the served snapshot by themselves); the
-  closure/rewrite machinery arrives with external-source support in Phase 2.
+  <strong>Shipped scope: local sources by default, <code>github</code> when enabled.</strong> Plugins
+  must live inside the marketplace repo as relative paths unless
+  <code>skills-gateway.ingestion.external-sources</code> is enabled, which it is not by
+  default; <code>git</code>, <code>git-subdir</code>, <code>npm</code> and <code>archive</code> remain rejected fail-closed
+  at ingestion, and <code>npm</code> and <code>archive</code> permanently so. An enabled gateway
+  fetches an admitted <code>github</code> source into quarantine, grafts it under
+  <code>_plugins/&lt;name&gt;/</code> and rewrites <code>.claude-plugin/marketplace.json</code> so every
+  source is a path inside the snapshot — one deterministic composite commit,
+  parented on the ingested upstream commit so the manifest as upstream declared
+  it stays byte-exact and reachable. The composite <em>is</em> the snapshot, so vetting,
+  approval, the facade, retention and the ledger see the external content without
+  learning that it is external.
   That reversal is staged, and its shape is decided in
   <a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md">ADR 0011</a>:
   <strong>admission</strong> (a typed source model and a configuration gate that defaults to
@@ -2560,7 +2566,10 @@ naive mirroring is insufficient.</p>
   content into a gateway-local composite snapshot), the two separated by a
   standing invariant — a snapshot is held only when every source it declares
   resolves inside the snapshot the gateway serves (GW_0152). Local-only remains
-  the behaviour of an unconfigured gateway throughout.</li>
+  the behaviour of an unconfigured gateway throughout, and resolution's outbound
+  path is bounded in address space, redirects, bytes and time behind that gate
+  (see <a href="../concepts/trust-boundaries/">Trust boundaries</a>) — with network egress
+  isolation, not those bounds, as the primary control.</li>
 <li><strong>Vetting orchestrator (connector-based).</strong> The gateway does not vet
   content itself — it orchestrates. Per snapshot it emits a vetting trigger
   (webhook/queue event carrying snapshot metadata and a fetch URL for the
@@ -2859,11 +2868,16 @@ that would duplicate a sweep, and leader election is separate later work.</p>
   approve button). Even this closes T3/T4/T6 — T4 by rejection rather than
   rewriting — and gives Security eyes.</li>
 <li><strong>Phase 2 — governance.</strong> External plugin sources with transitive
-  resolution and source rewriting — <em>decided, staged, not yet implemented:</em>
+  resolution and source rewriting — <em>staged per</em>
   <a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md">ADR 0011</a>
-  splits it into admission (typed source model, configuration gate defaulting to
+  into admission (typed source model, configuration gate defaulting to
   disabled) then resolution (composite rewrite), separated by the
-  held-only-if-gateway-local invariant so T4 stays closed across the reversal —
+  held-only-if-gateway-local invariant so T4 stays closed across the reversal.
+  <em>Implemented:</em> admission, and resolution of the <code>github</code> type with its address,
+  redirect and resource policy, all behind <code>enabled: false</code>. <em>Remaining:</em> the
+  resolved closure as a queryable domain object (and the blast-radius re-vetting
+  it enables), <code>git</code> and <code>git-subdir</code>, the egress proxy, connect-time address
+  pinning, and declared-<code>ref</code>/<code>sha</code> pinning. Also in this phase: a
   connector framework with automated vetting
   (scanners, LLM review, sandbox), risk tiers, approval workflow with
   semantic diffs, policy-as-code, catalog/portal with request flow, per-team

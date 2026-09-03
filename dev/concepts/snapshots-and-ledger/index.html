@@ -538,6 +538,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#composite-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Composite snapshots
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#what-a-snapshot-contains" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2062,6 +2073,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#composite-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Composite snapshots
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#what-a-snapshot-contains" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2201,7 +2223,7 @@ retention.</p>
 <tbody>
 <tr>
 <td><code>sha</code></td>
-<td>The 40-hex upstream commit. This is the pin.</td>
+<td>The 40-hex commit the gateway serves. This is the pin: the upstream commit for a local-only manifest, and the synthesised composite for one with resolved external sources (see below).</td>
 </tr>
 <tr>
 <td><code>state</code></td>
@@ -2254,20 +2276,53 @@ snapshot is still whichever of the four it was. See
 </div>
 <h3 id="why-sha-pinning-is-the-point">Why SHA pinning is the point<a class="headerlink" href="#why-sha-pinning-is-the-point" title="Permanent link">&para;</a></h3>
 <p>Git refs are mutable; commit SHAs are not. Everything the gateway stores and
-serves is keyed by the upstream SHA:</p>
+serves is keyed by the snapshot's SHA:</p>
 <ul>
-<li>Quarantine holds <code>refs/snapshots/{sha}</code> — one immutable ref per ingested
-  commit.</li>
+<li>Quarantine holds <code>refs/snapshots/{sha}</code> — one immutable ref per snapshot.</li>
 <li>Approval force-updates the published <code>refs/heads/main</code> to <em>that exact SHA</em>.
   The published ref moves only because a human approved a specific commit.</li>
 <li>The ledger records the SHA on every fetch.</li>
 </ul>
 <p>The consequence: "what exactly ran on that laptop" reduces to a ledger lookup,
 and an upstream force-push cannot change the answer retroactively.</p>
+<h3 id="composite-snapshots">Composite snapshots<a class="headerlink" href="#composite-snapshots" title="Permanent link">&para;</a></h3>
+<p>For a local-only marketplace — every marketplace, under the shipped
+configuration — the snapshot's SHA <em>is</em> the upstream commit, and there is nothing
+more to say.</p>
+<p>When <a href="../../reference/configuration/#ingestion-external-plugin-sources">external plugin sources</a>
+are enabled and a manifest declares one, the snapshot is instead a <strong>synthesised
+commit</strong> the gateway assembles at ingestion:</p>
+<ul>
+<li>the upstream tree, unchanged;</li>
+<li>each resolved external plugin's content under <code>_plugins/&lt;plugin name&gt;/</code>;</li>
+<li><code>.claude-plugin/marketplace.json</code> rewritten so that plugin's <code>source</code> is
+  <code>./_plugins/&lt;plugin name&gt;</code>;</li>
+<li><strong>the upstream commit as its parent.</strong></li>
+</ul>
+<p>That commit is the snapshot. It is what vetting opens, what a reviewer approves,
+what the facade serves, what retention anchors on and what the ledger records —
+so nothing downstream of ingestion learns that external content exists, because
+the resolved content is not metadata beside the snapshot: it <em>is</em> the snapshot.</p>
+<p>The parent is what makes the transformation checkable by someone other than the
+gateway. The manifest as upstream declared it stays byte-exact and reachable
+from the served SHA, so</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="go">git diff &lt;parent&gt; &lt;snapshot sha&gt;</span>
+</code></pre></div>
+<p>is the whole of what the gateway changed, and the commit message names the
+upstream commit, every source with the commit it resolved to, and the version of
+the transformation that produced it.</p>
+<p>Identity follows from the inputs: the same upstream commit, the same resolved
+external commits and the same transformation give the same SHA, which is what
+makes re-ingesting unchanged content idempotent. An external repository moving on
+therefore produces a <em>different</em> snapshot, held for its own approval — the same
+rug-pull protection the upstream commit already gets, extended to the
+repositories the manifest points at.</p>
 <h3 id="what-a-snapshot-contains">What a snapshot contains<a class="headerlink" href="#what-a-snapshot-contains" title="Permanent link">&para;</a></h3>
 <p><code>GET /api/snapshots/{id}/content</code> parses the captured commit and lists what it
 declares: each plugin with its name, <code>source</code> and description, and the skills
-found under each.</p>
+found under each. A resolved external plugin appears like any other, with its
+<code>source</code> inside the snapshot, because by the time anything reads the snapshot
+that is what it is.</p>
 <p>This is the review surface, and it works on <code>held</code> snapshots — reviewing a
 snapshot must not require serving it.</p>
 <h2 id="the-audit-ledger">The audit ledger<a class="headerlink" href="#the-audit-ledger" title="Permanent link">&para;</a></h2>
@@ -2358,10 +2413,13 @@ append still in flight — bounded staleness in exchange for no gaps. See
 </ul>
 <h2 id="current-scope-limits">Current scope limits<a class="headerlink" href="#current-scope-limits" title="Permanent link">&para;</a></h2>
 <p>Both limits are enforced, not merely documented:</p>
-<p><strong>Local sources only.</strong> Plugins must live inside the marketplace repository as
-relative paths. External source types are rejected fail-closed at ingestion,
-which removes transitive resolution and source rewriting from the current scope
-entirely.</p>
+<p><strong>Local sources by default.</strong> Plugins must live inside the marketplace
+repository as relative paths unless external plugin sources are enabled, which
+they are not by default. An enabled gateway resolves a <code>github</code> source and
+rewrites the manifest so every source is local again; <code>git</code>, <code>git-subdir</code>, <code>npm</code>
+and <code>archive</code> are still rejected fail-closed. Whatever the setting, a snapshot is
+held only when every source it declares resolves inside the snapshot the gateway
+serves.</p>
 <p><strong>Default branch only.</strong> Registration accepts no ref other than <code>main</code>. Serving
 additional refs is a future feature, implemented as promotion per
 <code>(upstream, ref)</code>, with each ref advancing independently through the same gate.</p>

@@ -2247,12 +2247,20 @@ character set is constrained.</p>
 <td><strong>Accepted</strong></td>
 </tr>
 <tr>
-<td><code>github</code>, <code>git</code>/<code>url</code>, <code>git-subdir</code></td>
-<td><strong>Rejected fail-closed</strong> unless <code>skills-gateway.ingestion.external-sources.enabled</code> is set, and rejected anyway until a resolver exists — see below</td>
+<td><code>github</code></td>
+<td><strong>Rejected fail-closed</strong> unless <code>skills-gateway.ingestion.external-sources.enabled</code> is set; when it is, resolved and rewritten — see below</td>
+</tr>
+<tr>
+<td><code>git</code>/<code>url</code>, <code>git-subdir</code></td>
+<td><strong>Rejected fail-closed</strong>. Not in the shipped <code>allowed-types</code>, and nothing resolves them yet</td>
 </tr>
 <tr>
 <td><code>npm</code>, <code>archive</code></td>
 <td><strong>Rejected fail-closed</strong>, permanently: no configuration admits them</td>
+</tr>
+<tr>
+<td>A source declaring a <code>ref</code> or a <code>sha</code></td>
+<td><strong>Rejected fail-closed</strong>, naming the field. This gateway resolves at the remote's default branch head, and resolving a pinned source somewhere else would serve a commit the manifest did not name</td>
 </tr>
 <tr>
 <td>Anything else — an unrecognised type, an object with no type, a value that is neither a path nor an object</td>
@@ -2265,13 +2273,22 @@ local-only marketplace every URL a client dereferences already resolves inside
 the gateway.</p>
 <p>External source support arrives in increments
 (<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md">ADR 0011</a>).
-Today's increment is <strong>admission</strong>: an enabled gateway parses and accepts an
-external source rather than refusing it for its shape, but cannot yet fetch it
-and rewrite the manifest, so the snapshot is still rejected — with a violation
-saying the source was admitted and is not yet resolvable, distinct from the one
-for a source that was not admitted. A snapshot is held, and therefore approvable,
-only when every source it declares resolves inside the snapshot the gateway
-serves.</p>
+An enabled gateway now <strong>resolves</strong> an admitted <code>github</code> source: it fetches the
+repository into quarantine, grafts it under <code>_plugins/&lt;plugin name&gt;/</code>, and
+rewrites the served manifest so that plugin's <code>source</code> is
+<code>./_plugins/&lt;plugin name&gt;</code>. The snapshot is that composite commit, parented on
+the upstream commit. So the property above holds for an enabled gateway too —
+every URL a client dereferences resolves inside the gateway.</p>
+<p>The invariant that governs both cases: a snapshot is held, and therefore
+approvable, only when every source it declares resolves inside the snapshot the
+gateway serves. Anything that stops a source from resolving — an unreachable
+repository, a refused address or redirect, a breached budget, an exhausted
+deadline, a graft that cannot be made — is a rejected snapshot recorded against
+the upstream commit, never a held one.</p>
+<p>Three further refusals belong to the graft rather than to the source type, and
+each is fail-closed with no partial result: a marketplace repository that already
+has a top-level <code>_plugins</code>; an external plugin whose name is not
+<code>^[a-z0-9][a-z0-9_-]*$</code>; and two external plugins sharing a name.</p>
 <h2 id="clients">Clients<a class="headerlink" href="#clients" title="Permanent link">&para;</a></h2>
 <p>The facade is plain read-only git smart-HTTP, so anything that clones works.</p>
 <table>
