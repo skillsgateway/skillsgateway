@@ -55,7 +55,7 @@ manifest content — the exposure class ADR 0011 §3 exists to bound.
   inflated bytes, inflation ratio, object count, largest blob, tree depth, and a
   wall-clock deadline for the whole resolution. Every breach refuses; none
   exhausts the process.
-- **Atomic failure (GW_0159).** Any refusal, timeout, budget breach or mid-fetch
+- **Atomic failure (GW_0161).** Any refusal, timeout, budget breach or mid-fetch
   failure records the snapshot at the **upstream** SHA in `rejected`, with no
   composite commit, no graft, no scaffolding ref left behind, and nothing
   published. GW_0152 therefore holds through every failure path: there is no

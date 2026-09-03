@@ -35,7 +35,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * External plugin source resolution end to end (GW_0155, GW_0156, GW_0157, GW_0158, GW_0159),
+ * External plugin source resolution end to end (GW_0155, GW_0156, GW_0157, GW_0158, GW_0161),
  * against a real JGit fetch over a real HTTP transport served in this process by
  * {@link GitHttpFixture}.
  *
@@ -282,7 +282,7 @@ class ExternalSourceResolutionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0159"})
+    @SVCs({"SVC_GW_0161"})
     void an_unreachable_source_rejects_the_snapshot_at_the_upstream_commit_and_leaves_nothing_grafted()
             throws Exception {
         Path upstream = createUpstream(manifestWithExternal("acme/absent"));
@@ -300,7 +300,7 @@ class ExternalSourceResolutionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0159"})
+    @SVCs({"SVC_GW_0161"})
     void a_transfer_that_dies_part_way_through_rejects_the_snapshot() throws Exception {
         FORGE.publish("acme/tools", Map.of("skills/tool/SKILL.md", "# Tool\n"));
         FORGE.truncate("/acme/tools");
@@ -313,7 +313,7 @@ class ExternalSourceResolutionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0159"})
+    @SVCs({"SVC_GW_0161"})
     void a_failed_resolution_leaves_the_previously_approved_snapshot_served() throws Exception {
         FORGE.publish("acme/tools", Map.of("skills/tool/SKILL.md", "# Tool\n"));
         Path upstream = createUpstream(manifestWithExternal("acme/tools"));
@@ -438,7 +438,7 @@ class ExternalSourceResolutionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0155", "SVC_GW_0159"})
+    @SVCs({"SVC_GW_0155", "SVC_GW_0161"})
     void two_concurrent_ingestions_of_one_marketplace_produce_one_snapshot() throws Exception {
         FORGE.publish("acme/tools", Map.of("skills/tool/SKILL.md", "# Tool\n"));
         Path upstream = createUpstream(manifestWithExternal("acme/tools"));

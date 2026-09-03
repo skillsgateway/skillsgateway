@@ -1,6 +1,6 @@
 # ADR 0011 — External plugin sources: admission before resolution
 
-*Accepted, 2026-09-02.*
+*Accepted, 2026-09-02. Amended 2026-09-03: increments two and three shipped; three deviations recorded below.*
 
 ## Context
 
@@ -146,11 +146,11 @@ for.
 - The compatibility reference's "rejected fail-closed" row gains the
   default-configuration qualifier; it is not a breaking API change, as no
   endpoint or payload shape moves.
-- The staged plan leaves one honest rough edge: an operator who enables the flag
-  before the resolver exists gets rejections with a clearer message, not working
-  external plugins. The violation text and the configuration reference say so
-  plainly. A flag that silently did nothing would be worse; a flag that served
-  unresolved content would be unsafe.
+- The staged plan left one honest rough edge while admission shipped alone: an
+  operator who enabled the flag got rejections with a clearer message rather than
+  working external plugins. With resolution of the `github` type shipped, that
+  edge now applies only to a type nothing resolves yet, which is why the shipped
+  `allowed-types` lists only what does.
 - Determinism of the composite commit is only a durable claim if the
   transformation is itself an input, so the rewriter will carry an explicit
   transformer version and the admission policy will hash to a policy version,
@@ -162,6 +162,35 @@ for.
 
 | Increment | Requirements | State |
 | --- | --- | --- |
-| Admission: typed source model, configuration gate, held-only-if-local invariant | GW_0003 (rev. 0.2.0), GW_0150, GW_0151, GW_0152 | This change |
-| Resolution: closure fetch, deterministic composite rewrite, closure provenance, closure-wide vetting, full-closure approval invariant | to be assigned | #17, next |
-| Hardening: egress proxy, post-DNS and per-redirect address validation, inflation and size budgets, cycle detection, global deadline, negative cache | to be assigned | #17, with or after resolution |
+| Admission: typed source model, configuration gate, held-only-if-local invariant | GW_0003 (rev. 0.2.0), GW_0150, GW_0151, GW_0152 | Shipped |
+| Resolution of the `github` type: closure fetch into quarantine, deterministic composite rewrite parented on the upstream commit, closure-wide vetting by construction | GW_0155, GW_0156, GW_0161 | Shipped |
+| Hardening the resolution path: post-DNS and per-request address validation, redirect policy, inflation and size budgets, global deadline | GW_0157, GW_0158 | Shipped |
+| The closure as a queryable domain object, and the blast-radius re-vetting it enables | to be assigned | #17, next |
+| `git` and `git-subdir`, declared `ref`/`sha` pinning, the egress proxy, connect-time address pinning, the negative cache, portal provenance | to be assigned | #17, after |
+
+### Three deviations from this ADR, recorded rather than absorbed
+
+**`snapshots.upstream_sha` was not added.** §2 says the upstream commit is
+recorded alongside the composite as a column *and* retained as its parent. Only
+the parent exists. The parent is the authoritative record — one
+`RevCommit.getParent(0)`, and the commit message names it in text as well — and
+nothing in the system reads an upstream SHA today. The column earns its keep when
+the closure tables arrive and something has to query across snapshots, which is
+the increment that adds them.
+
+**The policy version is not an input to the composite SHA.** §Consequences says
+the admission policy hashes to a policy version stamped into the composite. Only
+the transformer version is. Hashing the admission configuration would make the
+served SHA depend on, for example, adding an unrelated host to the allowlist —
+forcing re-vetting and re-approval of content that did not change. The
+transformer version, which does decide the output bytes, is stamped and tested.
+
+**The connection is not made to the validated address.** §3 says the
+in-application layer "connects to the validated address so a second resolution
+cannot substitute a private target". Every resolved address is validated, and
+re-validated per request; the socket is still opened against the hostname,
+because `HttpURLConnection` offers no way to pin an address without overriding a
+restricted request header process-wide. The gap is bounded while only `github`
+resolves: the host comes from `github-base-url`, operator configuration, and an
+`owner/repo` shorthand cannot carry a host, so no manifest chooses what is
+resolved. Pinning belongs with the increment that admits manifest-supplied URLs.

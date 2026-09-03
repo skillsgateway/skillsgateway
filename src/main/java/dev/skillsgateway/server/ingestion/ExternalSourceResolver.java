@@ -43,7 +43,7 @@ import org.springframework.stereotype.Component;
  * <p>Every fetch goes through {@link GuardedHttpConnectionFactory}, installed on that one transport
  * rather than on JGit's JVM-wide static, and every source is measured against
  * {@link ResolutionBudget} before it is accepted. Any refusal ends the whole resolution: a manifest
- * is resolved completely or not at all, which is what GW_0159 turns into "the snapshot is rejected"
+ * is resolved completely or not at all, which is what GW_0161 turns into "the snapshot is rejected"
  * and GW_0152 relies on.
  */
 @Component

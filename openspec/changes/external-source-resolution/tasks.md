@@ -5,9 +5,9 @@
 - [ ] 1.1 Add GW_0155 (resolution into quarantine, pinned), GW_0156
       (deterministic composite snapshot with a gateway-local manifest), GW_0157
       (address, redirect and transport policy), GW_0158 (resource bounds) and
-      GW_0159 (failed resolution rejects, nothing half-resolved) to
+      GW_0161 (failed resolution rejects, nothing half-resolved) to
       `docs/reqstool/requirements.yml`
-- [ ] 1.2 Add SVC_GW_0155 – SVC_GW_0159 (GIVEN/WHEN/THEN) to
+- [ ] 1.2 Add SVC_GW_0155 – SVC_GW_0161 (GIVEN/WHEN/THEN) to
       `docs/reqstool/software_verification_cases.yml`
 - [ ] 1.3 GW_0003, GW_0150, GW_0151 and GW_0152 are left untouched: the default
       configuration is unchanged and GW_0152 keeps its wording, which still
@@ -36,7 +36,7 @@
 - [ ] 2.5 `ResolutionBudgetTests` (`@SVCs({"SVC_GW_0158"})`): every bound refuses
       at the boundary and passes just under it; an expired deadline refuses
 - [ ] 2.6 `ExternalSourceResolutionTests` (`@SVCs({"SVC_GW_0155", "SVC_GW_0156",
-      "SVC_GW_0159"})`), its own Spring context with `enabled: true` and
+      "SVC_GW_0161"})`), its own Spring context with `enabled: true` and
       `github-base-url` pointed at the in-process fixture: held composite
       snapshot, content inventory, facade clone with no external URL, planted
       secret in the external repository blocking vetting, idempotent
@@ -107,7 +107,7 @@
 - [ ] 6.1 `IngestionService.ingestLocked`: evaluate the manifest before pinning,
       resolve and rewrite when there are admitted sources, pin the served commit,
       and keep the existing dedupe, insert and vet steps unchanged;
-      `@Requirements({"GW_0155", "GW_0156", "GW_0159"})`
+      `@Requirements({"GW_0155", "GW_0156", "GW_0161"})`
 - [ ] 6.2 The failure path: a resolver or rewriter violation records the snapshot
       at the upstream SHA in `rejected`, with no composite ref written
 

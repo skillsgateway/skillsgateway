@@ -4,6 +4,24 @@ This is the executable specification for the change. It is the artifact to revie
 in place of the implementation (`.claude/skills/old-coder`, Tier 3: this opens
 the gateway's first manifest-driven outbound network path).
 
+## The requirements this change works against
+
+Named here once so every bare id below resolves to something. The text itself
+lives only in `docs/reqstool/requirements.yml`.
+
+| Id | Title | Role here |
+| --- | --- | --- |
+| GW_0155 | Resolution of admitted external plugin sources into quarantine | added |
+| GW_0156 | Deterministic composite snapshot with a gateway-local manifest | added |
+| GW_0157 | Address, redirect and transport policy for source resolution | added |
+| GW_0158 | Resource-bounded source resolution | added |
+| GW_0161 | A failed resolution leaves the snapshot rejected and nothing half-resolved | added |
+| GW_0152 | No snapshot is held while a plugin source is not gateway-local | unchanged; now satisfied by construction rather than by refusal |
+| GW_0151 | Configuration-gated admission of external plugin sources | unchanged; still decides admission with no network call |
+| GW_0150 | Typed plugin source model | unchanged, extended with a refusing variant for a declared pin |
+| GW_0003 | Local-only plugin sources unless external sources are enabled | unchanged; still the shipped default |
+| GW_0137 | An ingestion reports a pinned snapshot only when it is pinned | unchanged; the pin now names the served commit |
+
 ## Context
 
 - `ManifestPolicy.validate(byte[]) -> String` is the gate. `null` is what
@@ -306,7 +324,7 @@ Container-backed suite, its own Spring context with `enabled: true`,
 `allowed-types: [github]`, `github-base-url` pointed at an in-process JGit-backed
 smart-HTTP fixture on loopback, `allow-private-networks: true`:
 
-- `ExternalSourceResolutionTests` (SVC_GW_0155, SVC_GW_0156, SVC_GW_0159)
+- `ExternalSourceResolutionTests` (SVC_GW_0155, SVC_GW_0156, SVC_GW_0161)
   1. a manifest with one `github` source ⇒ snapshot **held**, its SHA is the
      composite, its manifest declares only local sources, and
      `_plugins/<name>/skills/…` is present in the served tree
@@ -391,9 +409,13 @@ which SVC_GW_0003 — unchanged — pins.
    `Transformer-Version`, because a policy digest would change the served SHA —
    and so force re-vetting and re-approval — when an operator allowlists an
    unrelated host. Confirm the deviation, or say the ADR's stricter reading wins.
-2. **Requirement id block.** GW_0155–GW_0159 claimed. GW_0153 is the highest in
-   `requirements.yml`; the four in-flight changes claim up to GW_0149 and no open
-   PR claims further ids.
+2. **Requirement id block.** GW_0155 – GW_0158 and GW_0161, which is not a
+   contiguous block and deliberately so: GW_0159 and GW_0160 were claimed by
+   [#251](https://github.com/skillsgateway/skillsgateway/pull/251) while this
+   change was in flight, and GW_0155 – GW_0158 were still free on `main`. Filling
+   the gap beats leaving four ids permanently unused. GW_0160 is the highest in
+   `requirements.yml`; no in-flight change under `openspec/changes/` claims
+   anything above GW_0149.
 3. **Deferring the closure tables.** Provenance is in the composite commit
    (parent + message trailers) rather than in `closures`/`closure_nodes`. That is
    enough for a reviewer and an auditor, and not enough for the blast-radius

@@ -25,7 +25,7 @@ retention.
 
 | Field | Meaning |
 | --- | --- |
-| `sha` | The 40-hex upstream commit. This is the pin. |
+| `sha` | The 40-hex commit the gateway serves. This is the pin: the upstream commit for a local-only manifest, and the synthesised composite for one with resolved external sources (see below). |
 | `state` | `held`, `approved`, `rejected`, or `revoked`. Set at ingestion and changed only by a decision or by an enforced re-vetting violation. |
 | `violation` | Why ingestion flagged the snapshot, or why re-vetting revoked it. Cleared by a fresh decision. |
 | `decidedBy` / `decidedAt` | The principal who decided, and when. Survives a revocation. |
@@ -69,10 +69,9 @@ and a rejected one cannot be approved.
 ### Why SHA pinning is the point
 
 Git refs are mutable; commit SHAs are not. Everything the gateway stores and
-serves is keyed by the upstream SHA:
+serves is keyed by the snapshot's SHA:
 
-- Quarantine holds `refs/snapshots/{sha}` — one immutable ref per ingested
-  commit.
+- Quarantine holds `refs/snapshots/{sha}` — one immutable ref per snapshot.
 - Approval force-updates the published `refs/heads/main` to *that exact SHA*.
   The published ref moves only because a human approved a specific commit.
 - The ledger records the SHA on every fetch.
@@ -80,11 +79,53 @@ serves is keyed by the upstream SHA:
 The consequence: "what exactly ran on that laptop" reduces to a ledger lookup,
 and an upstream force-push cannot change the answer retroactively.
 
+### Composite snapshots
+
+For a local-only marketplace — every marketplace, under the shipped
+configuration — the snapshot's SHA *is* the upstream commit, and there is nothing
+more to say.
+
+When [external plugin sources](../reference/configuration.md#ingestion-external-plugin-sources)
+are enabled and a manifest declares one, the snapshot is instead a **synthesised
+commit** the gateway assembles at ingestion:
+
+- the upstream tree, unchanged;
+- each resolved external plugin's content under `_plugins/<plugin name>/`;
+- `.claude-plugin/marketplace.json` rewritten so that plugin's `source` is
+  `./_plugins/<plugin name>`;
+- **the upstream commit as its parent.**
+
+That commit is the snapshot. It is what vetting opens, what a reviewer approves,
+what the facade serves, what retention anchors on and what the ledger records —
+so nothing downstream of ingestion learns that external content exists, because
+the resolved content is not metadata beside the snapshot: it *is* the snapshot.
+
+The parent is what makes the transformation checkable by someone other than the
+gateway. The manifest as upstream declared it stays byte-exact and reachable
+from the served SHA, so
+
+```console
+git diff <parent> <snapshot sha>
+```
+
+is the whole of what the gateway changed, and the commit message names the
+upstream commit, every source with the commit it resolved to, and the version of
+the transformation that produced it.
+
+Identity follows from the inputs: the same upstream commit, the same resolved
+external commits and the same transformation give the same SHA, which is what
+makes re-ingesting unchanged content idempotent. An external repository moving on
+therefore produces a *different* snapshot, held for its own approval — the same
+rug-pull protection the upstream commit already gets, extended to the
+repositories the manifest points at.
+
 ### What a snapshot contains
 
 `GET /api/snapshots/{id}/content` parses the captured commit and lists what it
 declares: each plugin with its name, `source` and description, and the skills
-found under each.
+found under each. A resolved external plugin appears like any other, with its
+`source` inside the snapshot, because by the time anything reads the snapshot
+that is what it is.
 
 This is the review surface, and it works on `held` snapshots — reviewing a
 snapshot must not require serving it.
@@ -160,10 +201,13 @@ append still in flight — bounded staleness in exchange for no gaps. See
 
 Both limits are enforced, not merely documented:
 
-**Local sources only.** Plugins must live inside the marketplace repository as
-relative paths. External source types are rejected fail-closed at ingestion,
-which removes transitive resolution and source rewriting from the current scope
-entirely.
+**Local sources by default.** Plugins must live inside the marketplace
+repository as relative paths unless external plugin sources are enabled, which
+they are not by default. An enabled gateway resolves a `github` source and
+rewrites the manifest so every source is local again; `git`, `git-subdir`, `npm`
+and `archive` are still rejected fail-closed. Whatever the setting, a snapshot is
+held only when every source it declares resolves inside the snapshot the gateway
+serves.
 
 **Default branch only.** Registration accepts no ref other than `main`. Serving
 additional refs is a future feature, implemented as promotion per

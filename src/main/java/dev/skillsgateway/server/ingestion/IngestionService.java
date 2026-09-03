@@ -95,7 +95,7 @@ public class IngestionService {
         }
     }
 
-    @Requirements({"GW_0137", "GW_0155", "GW_0156", "GW_0159"})
+    @Requirements({"GW_0137", "GW_0155", "GW_0156", "GW_0161"})
     private Snapshot ingestLocked(Marketplace marketplace, String actor) {
         try (Repository repo = storage.quarantine(marketplace.name())) {
             ObjectId upstream = fetchIncoming(repo, marketplace);
@@ -224,7 +224,7 @@ public class IngestionService {
     /**
      * Which commit this ingestion serves, and why it does not serve one.
      *
-     * <p>GW_0159 in one type: a failure carries the upstream commit, so the attempt is recorded
+     * <p>GW_0161 in one type: a failure carries the upstream commit, so the attempt is recorded
      * against reviewable content in the rejected state, and there is no third outcome in which some
      * of a manifest resolved. GW_0152 follows from that rather than from a check somewhere —
      * {@code violation != null} is what {@code ingestLocked} maps to rejected, and held is only
@@ -237,7 +237,7 @@ public class IngestionService {
      * otherwise byte-for-byte the path that shipped before: a local-only manifest is served as the
      * upstream commit, with no composite, no fetch and no new reference.
      */
-    @Requirements({"GW_0152", "GW_0155", "GW_0156", "GW_0159"})
+    @Requirements({"GW_0152", "GW_0155", "GW_0156", "GW_0161"})
     private Served serve(Repository repo, ObjectId upstreamSha) throws IOException {
         byte[] manifestBytes = manifestBytes(repo, upstreamSha);
         if (manifestBytes == null) {
