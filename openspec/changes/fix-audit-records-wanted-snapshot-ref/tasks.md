@@ -55,7 +55,7 @@
 
 ## 6. Gates and archive
 
-- [ ] 6.1 One fresh run of every gate after the last edit; paste real tails into
+- [x] 6.1 One fresh run of every gate after the last edit; paste real tails into
       `openspec/changes/fix-audit-records-wanted-snapshot-ref/evidence.md` with
       the commit SHA.
 - [ ] 6.2 Archive the change as the final commit of the PR.
