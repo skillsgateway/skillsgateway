@@ -131,13 +131,28 @@ with a mode flag.
 
 Two hooks append to the ledger:
 
-| Event | When |
-| --- | --- |
-| `info-refs` | Ref advertisement, recording the resolved `main` SHA. |
-| `upload-pack` | One entry per wanted object when the packfile is served. |
+| Event | When | `ref` |
+| --- | --- | --- |
+| `info-refs` | Ref advertisement, recording the resolved `main` SHA. | `refs/heads/main` — an advertisement is about the tip. |
+| `upload-pack` | One entry per wanted object when the packfile is served. | The advertised ref that object resolves to. |
 
 Each entry carries the client address as `source`, the PAT's principal, the
 marketplace, the ref and the SHA. Negotiation rounds are not recorded.
+
+Because both namespaces above are legal wants, an `upload-pack` entry names
+which one the client received content through. A want that is not the tip can
+only have come from a `refs/snapshots/<sha>` advertisement and records that ref,
+so a fetch of a superseded snapshot is distinguishable in the ledger from a clone.
+
+A want **equal** to the tip records `refs/heads/main`. While a snapshot is
+current, `refs/heads/main` and its `refs/snapshots/<sha>` are the same commit and
+the smart protocol carries only object ids in a want, so a clone and a fetch by
+name are not separable here; the tip is the recorded answer. The `sha` column
+still pins the delivered content exactly, which is what
+[adoption and staleness](api/adoption.md) aggregate on — they never read `ref`.
+
+See [Audit](api/audit.md#events) for the full entry contract, including what
+entries written before this behaviour shipped record.
 
 ## Troubleshooting
 

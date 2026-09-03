@@ -33,7 +33,9 @@ $ curl localhost:8080/api/audit
 [{"id":1,"ts":"2026-08-15T09:04:11Z","source":"10.0.0.4","principal":"alice@example.com",
   "marketplace":"acme","event":"info-refs","ref":"refs/heads/main","sha":"3f9c2ab..."},
  {"id":2,"ts":"2026-08-15T09:04:11Z","source":"10.0.0.4","principal":"alice@example.com",
-  "marketplace":"acme","event":"upload-pack","ref":null,"sha":"3f9c2ab..."}]
+  "marketplace":"acme","event":"upload-pack","ref":"refs/heads/main","sha":"3f9c2ab..."},
+ {"id":3,"ts":"2026-08-15T11:22:07Z","source":"10.0.0.9","principal":"team-payments",
+  "marketplace":"acme","event":"upload-pack","ref":"refs/snapshots/9d01c44...","sha":"9d01c44..."}]
 ```
 
 **200.** Rows are returned untyped, which is why the portal renders this table
@@ -73,7 +75,7 @@ polling, batch payload, signature, replay — is in
 | `actorType` / `actor_type` | What kind of actor acted: `human`, `machine` or `system` (GW_0128). See below. |
 | `marketplace` | The marketplace name, or `-` when not marketplace-scoped. |
 | `event` | What happened — see below. |
-| `ref` | The ref involved, when there is one. |
+| `ref` | The ref involved, when there is one. For a facade fetch this is a ref the facade [advertised](../git-facade.md#what-is-served) for that request — see [Events](#events). |
 | `sha` | The commit involved, when there is one. |
 | `detail` | Free-text qualifier, when the entry needs one: the vetting chain outcome, a connector's verdict, or the reason a reviewer gave when overriding a blocked outcome. |
 | `tokenId` / `token_id` | Id of the credential that authenticated a facade entry (GW_0067) or a machine API entry (GW_0128); null on interactive admin entries and on entries older than per-credential attribution. `GET /api/tokens` gives the owner the id→name mapping. |
@@ -107,10 +109,32 @@ against a list of names.
 
 | Event | When |
 | --- | --- |
-| `info-refs` | A client asked what refs exist. Carries the resolved `main` SHA. |
-| `upload-pack` | One entry per wanted object when the packfile is served. |
+| `info-refs` | A client asked what refs exist. `ref` is `refs/heads/main` and `sha` its resolved SHA — an advertisement genuinely is about the tip. |
+| `upload-pack` | One entry per wanted object when the packfile is served. `sha` is the object; `ref` is the advertised ref that object resolves to. |
 
 Negotiation rounds are not recorded.
+
+!!! note "Which ref an `upload-pack` entry names"
+
+    A want that is not the served tip can only have come from a
+    `refs/snapshots/<sha>` advertisement, so it records that ref — this is how a
+    fetch of a snapshot a later approval has superseded is distinguishable from a
+    clone of the current tip.
+
+    A want **equal** to the tip records `refs/heads/main`, even if the client
+    named the snapshot ref. While a snapshot is current the two refs are the same
+    commit, and the smart protocol carries only object ids in a want, so the two
+    requests are not separable; the tip is the recorded answer, deterministically.
+    Nothing is lost evidentially — `sha` pins the delivered content exactly.
+
+    `ref` is `null` if a want resolves to no advertised ref. Under the facade's
+    request policy every want is an advertised tip, so this does not arise in
+    practice; the column says it does not know rather than naming a ref the
+    client did not ask for.
+
+    Entries written before this behaviour shipped record `refs/heads/main` for
+    every `upload-pack` want, including snapshot-ref fetches. The ledger is
+    append-only and is not rewritten.
 
 **From the API** — registration, ingestion, approve and reject, each carrying
 the acting OIDC principal.

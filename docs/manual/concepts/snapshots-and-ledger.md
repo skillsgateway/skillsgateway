@@ -104,14 +104,18 @@ than as an operational log.
 | `principal` | The PAT principal for a fetch, the OIDC principal for an admin action. |
 | `marketplace` | The marketplace name, or `-` when not marketplace-scoped. |
 | `event` | What happened. |
-| `ref` | The ref involved, when there is one. |
+| `ref` | The ref involved, when there is one. For a fetch, a ref the facade advertised for that request. |
 | `sha` | The commit involved, when there is one. |
 
 ### What gets recorded
 
 **Facade fetches** — `info-refs` when a client asks what refs exist, carrying
 the resolved `main` SHA; and one `upload-pack` entry per wanted object when the
-packfile is served. Negotiation rounds are not recorded.
+packfile is served, naming the advertised ref that object resolves to. A
+superseded snapshot stays fetchable by name, so a fetch of one is distinguishable
+in the ledger from a clone of the tip — see
+[Auditing](../reference/git-facade.md#auditing) for the exact rule and its one
+unavoidable ambiguity. Negotiation rounds are not recorded.
 
 **Administrative actions** — registration, ingestion, approve and reject, each
 carrying the acting OIDC principal.

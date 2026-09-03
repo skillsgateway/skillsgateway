@@ -1666,3 +1666,18 @@ cases:
       skill exactly once as moved naming the plugin it came from, with an unknown
       snapshot answered as not found
     revision: "0.1.0"
+
+  - id: SVC_GW_0154
+    requirement_ids: ["GW_0154"]
+    title: A pack transfer names the advertised ref its want resolved to
+    verification: automated-test
+    description: |
+      GIVEN a marketplace serving a second approved snapshot, so that the first one is
+      superseded and advertised only by its own pinned reference
+      WHEN a client fetches the superseded snapshot through the facade, and another
+      client clones the served tip
+      THEN the ledger records the pinned snapshot reference for the superseded fetch and
+      the served tip for the clone, resolves a want that matches the tip and a snapshot
+      reference alike to the tip, never names the symbolic head, and records no
+      reference for a want that matches nothing the facade advertised
+    revision: "0.1.0"
