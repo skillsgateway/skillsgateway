@@ -1,0 +1,249 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-03T00:00:00Z",
+  "title": "Design System: Skills Gateway Portal",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Gateway Violet",
+        "canonical": "oklch(0.541 0.247 293.01)",
+        "darkCanonical": "oklch(0.606 0.25 292.717)",
+        "note": "Brightens in dark mode rather than dimming, so the single accent keeps equal presence on a dark field.",
+        "tonalRamp": [
+          "oklch(0.15 0.09 293.01)",
+          "oklch(0.26 0.14 293.01)",
+          "oklch(0.37 0.19 293.01)",
+          "oklch(0.48 0.23 293.01)",
+          "oklch(0.541 0.247 293.01)",
+          "oklch(0.66 0.19 293.01)",
+          "oklch(0.79 0.12 293.01)",
+          "oklch(0.95 0.04 293.01)"
+        ]
+      },
+      "destructive": {
+        "role": "tertiary",
+        "displayName": "Objection Red",
+        "canonical": "oklch(0.577 0.245 27.325)",
+        "darkCanonical": "oklch(0.704 0.191 22.216)",
+        "note": "Always text on a 10% tint, never a solid fill. See The Quiet Destruction Rule.",
+        "tonalRamp": [
+          "oklch(0.15 0.09 27.325)",
+          "oklch(0.26 0.14 27.325)",
+          "oklch(0.37 0.19 27.325)",
+          "oklch(0.48 0.23 27.325)",
+          "oklch(0.577 0.245 27.325)",
+          "oklch(0.69 0.19 27.325)",
+          "oklch(0.81 0.12 27.325)",
+          "oklch(0.95 0.04 27.325)"
+        ]
+      },
+      "foreground": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(0.145 0 0)",
+        "tonalRamp": [
+          "oklch(0.145 0 0)",
+          "oklch(0.205 0 0)",
+          "oklch(0.269 0 0)",
+          "oklch(0.371 0 0)",
+          "oklch(0.556 0 0)",
+          "oklch(0.708 0 0)",
+          "oklch(0.87 0 0)",
+          "oklch(0.97 0 0)"
+        ]
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "oklch(1 0 0)",
+        "darkCanonical": "oklch(0.145 0 0)",
+        "tonalRamp": [
+          "oklch(0.145 0 0)",
+          "oklch(0.205 0 0)",
+          "oklch(0.269 0 0)",
+          "oklch(0.439 0 0)",
+          "oklch(0.708 0 0)",
+          "oklch(0.922 0 0)",
+          "oklch(0.97 0 0)",
+          "oklch(1 0 0)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted Field",
+        "canonical": "oklch(0.97 0 0)",
+        "darkCanonical": "oklch(0.269 0 0)",
+        "note": "Fill behind stat chips, evidence panels, table hover and table footers."
+      },
+      "muted-foreground": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "oklch(0.556 0 0)",
+        "darkCanonical": "oklch(0.708 0 0)"
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "oklch(0.922 0 0)",
+        "darkCanonical": "oklch(1 0 0 / 10%)",
+        "note": "Translucent white in dark mode rather than a grey, so it reads against every surface tone."
+      },
+      "chart-1": {
+        "role": "neutral",
+        "displayName": "Chart Grey 1",
+        "canonical": "oklch(0.87 0 0)",
+        "note": "The chart ramp is five steps of pure grey. There is no categorical colour scale, by design.",
+        "tonalRamp": [
+          "oklch(0.269 0 0)",
+          "oklch(0.371 0 0)",
+          "oklch(0.439 0 0)",
+          "oklch(0.556 0 0)",
+          "oklch(0.708 0 0)",
+          "oklch(0.87 0 0)",
+          "oklch(0.94 0 0)",
+          "oklch(0.98 0 0)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The page h1, once per page, always followed by a single muted description line." },
+      "headline": { "displayName": "Headline", "purpose": "Section headings within a page — Subscribers, Export sinks, Ledger." },
+      "title": { "displayName": "Title", "purpose": "Control labels, table header cells, and the name column of a table row." },
+      "body": { "displayName": "Body", "purpose": "Everything the reader reads. Secondary body is the same size in muted ink." },
+      "label": { "displayName": "Micro Label", "purpose": "Sidebar group labels and the top-bar breadcrumb, uppercase at 11px. The system's signature type move." },
+      "mono": { "displayName": "Machine Value", "purpose": "SHAs, rule ids, locations, cursors, diff paths, show-once secrets — anything compared character by character." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "colour-transition", "value": "transition-all (Base UI primitive default)", "purpose": "The only ambient motion: colour and border shifts on hover and focus." },
+      { "name": "active-press", "value": "translate-y: 1px", "purpose": "Pressing a button moves it down one pixel — suppressed on aria-haspopup triggers so menus do not appear to jump." }
+    ],
+    "breakpoints": [
+      { "name": "md", "value": "768px", "purpose": "The one breakpoint the type scale respects: inputs drop from 16px to 14px above it, to stop iOS zooming on focus." },
+      { "name": "content-max", "value": "1152px", "purpose": "max-w-6xl content column inside the fixed 240px sidebar shell." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single offered action in a screen region. One per region.",
+      "html": "<button class=\"ds-btn-primary\">Approve snapshot</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 10px; border: 1px solid transparent; border-radius: var(--radius-lg, 10px); background: var(--primary, oklch(0.541 0.247 293.01)); color: var(--primary-foreground, oklch(0.985 0 0)); font-family: 'Geist Variable', sans-serif; font-size: 14px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: all 0.15s ease; outline: none; } .ds-btn-primary:hover { background: color-mix(in oklch, var(--primary, oklch(0.541 0.247 293.01)) 80%, transparent); } .ds-btn-primary:focus-visible { border-color: var(--ring, oklch(0.606 0.25 292.717)); box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring, oklch(0.606 0.25 292.717)) 50%, transparent); } .ds-btn-primary:active { transform: translateY(1px); } .ds-btn-primary:disabled { opacity: 0.5; pointer-events: none; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "The default for secondary and per-row actions — Ingest, Provenance, Replay, Restore.",
+      "html": "<button class=\"ds-btn-outline\">Provenance</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 10px; border: 1px solid var(--border, oklch(0.922 0 0)); border-radius: var(--radius-lg, 10px); background: var(--background, oklch(1 0 0)); color: var(--foreground, oklch(0.145 0 0)); font-family: 'Geist Variable', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.15s ease; outline: none; } .ds-btn-outline:hover { background: var(--muted, oklch(0.97 0 0)); } .ds-btn-outline:focus-visible { border-color: var(--ring, oklch(0.606 0.25 292.717)); box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring, oklch(0.606 0.25 292.717)) 50%, transparent); } .ds-btn-outline:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Destructive Button",
+      "kind": "button",
+      "refersTo": "button-destructive",
+      "description": "Red text on a faint red tint, never a solid fill. Available and deliberate, not an alarm.",
+      "html": "<button class=\"ds-btn-destructive\">Revoke token</button>",
+      "css": ".ds-btn-destructive { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 10px; border: 1px solid transparent; border-radius: var(--radius-lg, 10px); background: color-mix(in oklch, var(--destructive, oklch(0.577 0.245 27.325)) 10%, transparent); color: var(--destructive, oklch(0.577 0.245 27.325)); font-family: 'Geist Variable', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.15s ease; outline: none; } .ds-btn-destructive:hover { background: color-mix(in oklch, var(--destructive, oklch(0.577 0.245 27.325)) 20%, transparent); } .ds-btn-destructive:focus-visible { border-color: color-mix(in oklch, var(--destructive, oklch(0.577 0.245 27.325)) 40%, transparent); box-shadow: 0 0 0 3px color-mix(in oklch, var(--destructive, oklch(0.577 0.245 27.325)) 20%, transparent); } .ds-btn-destructive:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Status Pill",
+      "kind": "chip",
+      "refersTo": "badge-default",
+      "description": "Status is always a badge, never coloured body text. Lowercase, echoing the API's own state vocabulary. Violet for the healthy terminal state, grey for accepted risk, red-on-tint for revoked.",
+      "html": "<span class=\"ds-badge-default\">approved</span> <span class=\"ds-badge-secondary\">waived</span> <span class=\"ds-badge-destructive\">revoked</span>",
+      "css": ".ds-badge-default, .ds-badge-secondary, .ds-badge-destructive { display: inline-flex; align-items: center; justify-content: center; gap: 4px; height: 20px; width: fit-content; padding: 2px 8px; border: 1px solid transparent; border-radius: 26px; font-family: 'Geist Variable', sans-serif; font-size: 12px; font-weight: 500; white-space: nowrap; } .ds-badge-default { background: var(--primary, oklch(0.541 0.247 293.01)); color: var(--primary-foreground, oklch(0.985 0 0)); } .ds-badge-secondary { background: var(--secondary, oklch(0.97 0 0)); color: var(--secondary-foreground, oklch(0.205 0 0)); } .ds-badge-destructive { background: color-mix(in oklch, var(--destructive, oklch(0.577 0.245 27.325)) 10%, transparent); color: var(--destructive, oklch(0.577 0.245 27.325)); }"
+    },
+    {
+      "name": "Stat Chip",
+      "kind": "chip",
+      "refersTo": "stat-chip",
+      "description": "A count or machine value. Square-shouldered on purpose — the pill and the square shoulder are how a reader tells a state from a number.",
+      "html": "<span class=\"ds-stat-chip\">14 skills</span>",
+      "css": ".ds-stat-chip { display: inline-flex; align-items: center; padding: 2px 8px; border: 1px solid var(--border, oklch(0.922 0 0)); border-radius: var(--radius-md, 8px); background: var(--muted, oklch(0.97 0 0)); color: var(--foreground, oklch(0.145 0 0)); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; font-weight: 500; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Transparent field on a hairline. Renders at 16px below md and 14px above, solely to stop iOS zooming the viewport on focus.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"https://github.com/owner/repo.git\" />",
+      "css": ".ds-input { display: block; height: 32px; width: 100%; min-width: 0; padding: 4px 10px; border: 1px solid var(--input, oklch(0.922 0 0)); border-radius: var(--radius-lg, 10px); background: transparent; color: var(--foreground, oklch(0.145 0 0)); font-family: 'Geist Variable', sans-serif; font-size: 16px; transition: border-color 0.15s ease, box-shadow 0.15s ease; outline: none; } @media (min-width: 768px) { .ds-input { font-size: 14px; } } .ds-input::placeholder { color: var(--muted-foreground, oklch(0.556 0 0)); } .ds-input:focus-visible { border-color: var(--ring, oklch(0.606 0.25 292.717)); box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring, oklch(0.606 0.25 292.717)) 50%, transparent); } .ds-input[aria-invalid=\"true\"] { border-color: var(--destructive, oklch(0.577 0.245 27.325)); box-shadow: 0 0 0 3px color-mix(in oklch, var(--destructive, oklch(0.577 0.245 27.325)) 20%, transparent); } .ds-input:disabled { opacity: 0.5; cursor: not-allowed; background: color-mix(in oklch, var(--input, oklch(0.922 0 0)) 50%, transparent); }"
+    },
+    {
+      "name": "Active Nav Item",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Sidebar navigation. The active item is filled with the sidebar accent and keeps that fill on hover; groups are led by an 11px uppercase muted label.",
+      "html": "<div class=\"ds-nav\"><div class=\"ds-nav-group-label\">Marketplaces</div><a class=\"ds-nav-item ds-nav-item-active\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 3h18v18H3z\"/><path d=\"M3 9h18\"/></svg>Snapshots</a><a class=\"ds-nav-item\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 2v20\"/><path d=\"M2 12h20\"/></svg>Audit ledger</a></div>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 2px; width: 240px; padding: 8px; background: var(--sidebar, oklch(0.985 0 0)); font-family: 'Geist Variable', sans-serif; } .ds-nav-group-label { padding: 6px 10px; color: var(--muted-foreground, oklch(0.556 0 0)); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; } .ds-nav-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: var(--radius-md, 8px); color: var(--foreground, oklch(0.145 0 0)); font-size: 14px; font-weight: 500; text-decoration: none; cursor: pointer; } .ds-nav-item svg { width: 16px; height: 16px; flex-shrink: 0; } .ds-nav-item:hover { background: var(--muted, oklch(0.97 0 0)); } .ds-nav-item-active, .ds-nav-item-active:hover { background: var(--sidebar-primary, oklch(0.541 0.247 293.01)); color: var(--primary-foreground, oklch(0.985 0 0)); }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Separated by a 1px ring rather than a border — visually a hairline, mechanically a ring. No shadow: the portal contains no shadow utility at all.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-header\"><div class=\"ds-card-title\">acme-skills</div><span class=\"ds-badge-default-inline\">approved</span></div><div class=\"ds-card-content\">Pinned at <span class=\"ds-mono\">4acb629b815a</span></div></div>",
+      "css": ".ds-card { display: flex; flex-direction: column; gap: 16px; padding: 16px 0; border-radius: var(--radius-xl, 14px); background: var(--card, oklch(1 0 0)); color: var(--foreground, oklch(0.145 0 0)); font-family: 'Geist Variable', sans-serif; font-size: 14px; box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--foreground, oklch(0.145 0 0)) 10%, transparent); overflow: hidden; } .ds-card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 16px; } .ds-card-title { font-size: 16px; font-weight: 500; line-height: 1.4; } .ds-card-content { padding: 0 16px; color: var(--muted-foreground, oklch(0.556 0 0)); } .ds-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; } .ds-badge-default-inline { display: inline-flex; align-items: center; height: 20px; padding: 2px 8px; border-radius: 26px; background: var(--primary, oklch(0.541 0.247 293.01)); color: var(--primary-foreground, oklch(0.985 0 0)); font-size: 12px; font-weight: 500; }"
+    },
+    {
+      "name": "Dense Table",
+      "kind": "custom",
+      "refersTo": "table-header-cell",
+      "description": "The portal's densest surface. Header cells are 40px in full-strength foreground — not muted, because column names are read as often as the data. Rows expand in place and hold a muted fill while open.",
+      "html": "<table class=\"ds-table\"><thead><tr><th>Marketplace</th><th>State</th><th>Pinned at</th></tr></thead><tbody><tr><td>acme-skills</td><td><span class=\"ds-badge-default-inline\">approved</span></td><td><span class=\"ds-mono\">4acb629b815a</span></td></tr><tr aria-expanded=\"true\"><td>vendor-tools</td><td><span class=\"ds-badge-secondary-inline\">held</span></td><td><span class=\"ds-mono\">9d18b17c0a41</span></td></tr></tbody></table>",
+      "css": ".ds-table { width: 100%; border-collapse: collapse; font-family: 'Geist Variable', sans-serif; font-size: 14px; color: var(--foreground, oklch(0.145 0 0)); } .ds-table th { height: 40px; padding: 0 8px; text-align: left; vertical-align: middle; font-weight: 500; white-space: nowrap; color: var(--foreground, oklch(0.145 0 0)); border-bottom: 1px solid var(--border, oklch(0.922 0 0)); } .ds-table td { padding: 8px; border-bottom: 1px solid var(--border, oklch(0.922 0 0)); } .ds-table tbody tr:last-child td { border-bottom: 0; } .ds-table tbody tr:hover { background: color-mix(in oklch, var(--muted, oklch(0.97 0 0)) 50%, transparent); } .ds-table tbody tr[aria-expanded=\"true\"] { background: color-mix(in oklch, var(--muted, oklch(0.97 0 0)) 50%, transparent); } .ds-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; } .ds-badge-default-inline, .ds-badge-secondary-inline { display: inline-flex; align-items: center; height: 20px; padding: 2px 8px; border-radius: 26px; font-size: 12px; font-weight: 500; } .ds-badge-default-inline { background: var(--primary, oklch(0.541 0.247 293.01)); color: var(--primary-foreground, oklch(0.985 0 0)); } .ds-badge-secondary-inline { background: var(--secondary, oklch(0.97 0 0)); color: var(--secondary-foreground, oklch(0.205 0 0)); }"
+    },
+    {
+      "name": "Evidence Panel",
+      "kind": "custom",
+      "refersTo": "stat-chip",
+      "description": "Opens inline directly beneath the finding it belongs to, so a waiver justification is written while looking at what is being justified.",
+      "html": "<div class=\"ds-evidence\"><div class=\"ds-evidence-line\"><span class=\"ds-sev\">high</span><span class=\"ds-mono\">SECRET_SCAN_001</span><span class=\"ds-mono ds-muted\">_plugins/tools/DEPLOY.md:14</span></div><div class=\"ds-muted\">Possible credential in committed content.</div></div>",
+      "css": ".ds-evidence { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; padding: 12px; border: 1px solid var(--border, oklch(0.922 0 0)); border-radius: var(--radius-md, 8px); background: color-mix(in oklch, var(--muted, oklch(0.97 0 0)) 40%, transparent); font-family: 'Geist Variable', sans-serif; font-size: 14px; } .ds-evidence-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .ds-sev { display: inline-flex; align-items: center; height: 20px; padding: 2px 8px; border-radius: 26px; background: color-mix(in oklch, var(--destructive, oklch(0.577 0.245 27.325)) 10%, transparent); color: var(--destructive, oklch(0.577 0.245 27.325)); font-size: 12px; font-weight: 500; } .ds-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; } .ds-muted { color: var(--muted-foreground, oklch(0.556 0 0)); font-size: 12px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Control Room",
+    "overview": "This is the console of a checkpoint. Everything on screen exists to answer one of three questions — what came in, what is it, and who let it through — and the surface is built to be read at speed by someone who is accountable for the answer. There is no hero, no illustration, no persuasion. The chrome is quiet to the point of disappearing: a neutral greyscale field, hairline borders, flat surfaces, and type that sits close together because the reader wants more facts per screen, not more air.\n\nAgainst that greyscale, exactly one colour carries meaning. Violet marks where you are and what the system is offering you: the active navigation item, the breadcrumb, the primary action, the passing verdict. A second, red, marks what the system objects to. Nothing else is coloured — the chart ramp is deliberately five steps of grey, so even data visualisation cannot introduce a third voice. A screen that starts sprouting an accent has stopped being a control room and started being a dashboard skin.\n\nThe tone is unhedged. Copy states what happened and what will be refused, in the domain's own vocabulary — quarantine, held, revoked, waiver, ledger — with no softening. The one place the system permits itself emphasis is the moment risk is being accepted: a waived finding never renders as clean, and an approval that only cleared because of a waiver says so on its badge.",
+    "keyCharacteristics": [
+      "Greyscale field, single violet accent, red reserved for objection and destruction.",
+      "Flat: no shadow-* class appears anywhere in the portal. Structure comes from hairlines, tonal fills, and one 1px ring on cards.",
+      "Dense, small type (14px body, 32px controls, 40px table headers) — an operator's density, not a marketing site's.",
+      "Every state is designed: loading, empty, and error exist on every page.",
+      "Light, dark and system are equal citizens; nothing is legible in only one."
+    ],
+    "rules": [
+      { "name": "The One Voice Rule", "body": "Violet means \"the system is offering you this, or you are here\". It never decorates. A screen shows it on the active nav item, the breadcrumb, and at most one primary action; a second competing violet element is a bug.", "section": "colors" },
+      { "name": "The Quiet Destruction Rule", "body": "Destructive actions are red text on a faint red tint, never a solid red button. Deleting a snapshot or revoking a token should read as available and deliberate, not as an alarm the page is sounding at you.", "section": "colors" },
+      { "name": "The No Raw Colour Rule", "body": "Every colour comes from a token class (bg-muted, text-destructive, text-muted-foreground). Hardcoding a hex or a Tailwind palette step (text-red-500) breaks dark mode and is rejected in review.", "section": "colors" },
+      { "name": "The Grey Data Rule", "body": "Data visualisation uses the grey chart ramp. A chart that needs to distinguish more than five series needs a different chart, not a new hue.", "section": "colors" },
+      { "name": "The Machine Value Rule", "body": "If a value is produced by a machine and compared by a human — a SHA, a rule id, a path, a cursor — it is monospace and it is truncated visibly (sha.slice(0, 12)), never wrapped mid-token.", "section": "typography" },
+      { "name": "The One Description Rule", "body": "A page gets exactly one muted sentence under its h1. Anything longer belongs in the docs site, not on the console.", "section": "typography" },
+      { "name": "The Mobile Input Exception", "body": "Inputs render at 16px below the md breakpoint and 14px above it (text-base md:text-sm). This is the one place the type scale bends, and it exists solely to stop iOS zooming the viewport on focus.", "section": "typography" },
+      { "name": "The Flat Field Rule", "body": "If a surface needs to feel separate, give it a border, a ring, or a tonal fill. Adding a box-shadow to a card, table, or panel is a deviation from the system, not a refinement of it — and the absence of any shadow-* class in the portal is the test.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do take every colour from a token class, and verify all three theme states (system, light, dark) before calling a surface done.",
+      "Do render loading, empty, and error states on every page; error text is role=\"alert\" in text-destructive.",
+      "Do give every control an accessible name, and aria-label anything icon-only or repeated per row (Revoke token ci-runner, Approve snapshot 12).",
+      "Do disable a submit control until its form is valid, and explain the disabled state with an aria-describedby hint.",
+      "Do show machine values in monospace, truncated to a readable prefix.",
+      "Do use the Badge primitive for status and the stat chip for counts. The pill and the square shoulder are how a reader tells a state from a number.",
+      "Do surface the server's ProblemDetail message in a toast when a mutation fails; the server is authoritative and its wording is the truth."
+    ],
+    "donts": [
+      "Don't add a shadow, a gradient, a second accent colour, or a second typeface. The greyscale-plus-violet field is the identity.",
+      "Don't introduce a categorical colour scale for charts. The grey ramp is the answer.",
+      "Don't add a second component library or primitive layer beside shadcn/Base UI, and don't hand-roll a primitive that shadcn ships.",
+      "Don't soften domain vocabulary. It is \"quarantine\", \"revoked\" and \"waiver\" on screen because that is what it is in the ledger.",
+      "Don't render an accepted risk as a clean result, and don't offer an approval control without the evidence above it.",
+      "Don't let a control fail on press when it could have been disabled with a reason.",
+      "Don't colour a diff green and red. See the snapshot content diff.",
+      "Don't update a visual baseline or loosen a role/name assertion to make a test pass unless the change was the point of the work."
+    ]
+  }
+}
