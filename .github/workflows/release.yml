@@ -290,7 +290,7 @@ jobs:
           tar -xzOf "$CHART" skills-gateway/Chart.yaml > chart.yaml
           grep -qx "version: ${VERSION}" chart.yaml \
             || { echo "::error::Chart.yaml does not declare version ${VERSION}."; cat chart.yaml; exit 1; }
-          grep -qx "appVersion: \"${VERSION}\"" chart.yaml \
+          grep -qxE "appVersion: \"?${VERSION}\"?" chart.yaml \
             || { echo "::error::Chart.yaml does not declare appVersion ${VERSION}."; cat chart.yaml; exit 1; }
           echo "chart declares ${VERSION} ✓"
 
