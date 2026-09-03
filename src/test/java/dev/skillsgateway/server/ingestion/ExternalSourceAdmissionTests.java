@@ -20,10 +20,11 @@ class ExternalSourceAdmissionTests {
 
     private static final PluginSource.GitHub SOURCE = new PluginSource.GitHub("acme/tools");
     private static final Set<String> HTTPS = Set.of("http", "https");
+    private static final String BASE = "https://github.com";
 
     private static ExternalSourceAdmission admission(
             boolean enabled, Set<String> types, Set<String> hosts, int maxSources) {
-        return new ExternalSourceAdmission(enabled, types, hosts, HTTPS, maxSources);
+        return new ExternalSourceAdmission(enabled, types, hosts, HTTPS, maxSources, BASE);
     }
 
     private static ExternalSourceAdmission enabled() {
@@ -87,7 +88,7 @@ class ExternalSourceAdmissionTests {
     @Test
     @SVCs({"SVC_GW_0151"})
     void a_scheme_outside_the_gateways_url_allowlist_is_refused() {
-        ExternalSourceAdmission strict = new ExternalSourceAdmission(true, Set.of("git"), Set.of(), HTTPS, 20);
+        ExternalSourceAdmission strict = new ExternalSourceAdmission(true, Set.of("git"), Set.of(), HTTPS, 20, BASE);
 
         for (String url :
                 new String[] {"file:///etc/passwd", "ssh://git@evil.example/repo.git", "git://evil.example/repo.git"}) {
@@ -114,7 +115,7 @@ class ExternalSourceAdmissionTests {
     @SVCs({"SVC_GW_0151"})
     void npm_and_archive_are_refused_by_every_configuration_including_one_that_names_them() {
         ExternalSourceAdmission permissive = new ExternalSourceAdmission(
-                true, Set.of("github", "git", "git-subdir", "npm", "archive"), Set.of(), HTTPS, 100);
+                true, Set.of("github", "git", "git-subdir", "npm", "archive"), Set.of(), HTTPS, 100, BASE);
 
         assertThat(permissive.decide(new PluginSource.Npm("@acme/tools"), "tools", 0))
                 .isInstanceOf(Decision.Refused.class);
@@ -126,7 +127,7 @@ class ExternalSourceAdmissionTests {
     @SVCs({"SVC_GW_0151"})
     void an_unrecognised_source_is_refused_however_permissive_the_configuration() {
         ExternalSourceAdmission permissive =
-                new ExternalSourceAdmission(true, Set.of("github", "git", "git-subdir"), Set.of(), HTTPS, 100);
+                new ExternalSourceAdmission(true, Set.of("github", "git", "git-subdir"), Set.of(), HTTPS, 100, BASE);
 
         assertThat(permissive.decide(new PluginSource.Unrecognised("source type 'mercurial'"), "tools", 0))
                 .isInstanceOf(Decision.Refused.class);
