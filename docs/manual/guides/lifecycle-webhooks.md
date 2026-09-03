@@ -2,8 +2,8 @@
 
 The gateway records every vetting decision in the ledger. Webhooks push those
 same decisions outward, so CI, chat and inventory systems learn about a snapshot
-the moment it is ingested, approved or rejected instead of polling
-`/api/marketplaces`.
+the moment it is ingested, waiting for a review, approved or rejected instead of
+polling `/api/marketplaces`.
 
 ## Events
 
@@ -15,6 +15,7 @@ the moment it is ingested, approved or rejected instead of polling
 | `snapshot.soft_deleted` | A snapshot was marked deleted, by an administrator or by a retention policy. |
 | `snapshot.restored` | A soft-deleted snapshot's marks were cleared. |
 | `snapshot.vetted` | A vetting chain run finished. The verdicts are readable at `GET /api/snapshots/{id}/vetting`. |
+| `snapshot.approval_pending` | A chain run finished and the snapshot is still **held**: it is waiting for a person. Carries a vetting summary — see [Driving approvals from your own system](#driving-approvals-from-your-own-system). |
 | `snapshot.revet_violation` | A re-vetting run found a violation on a snapshot that is **already approved**. |
 | `snapshot.revoked` | A snapshot was retroactively quarantined; the facade no longer serves it. |
 
@@ -144,6 +145,65 @@ is emitted and stored, so every retry sends byte-identical content.
     before the body reaches any application logic. An unsigned or wrongly signed
     request is an unauthenticated request.
 
+## Driving approvals from your own system
+
+`snapshot.approval_pending` exists so the review can happen where your
+organization already does reviews — a ticketing system, a change-approval board,
+a bot — instead of in the portal. It fires when a vetting chain run finishes and
+the snapshot is still `held`, which is exactly the moment a person is needed, and
+it carries enough to open a review item without a follow-up call:
+
+```json
+{"event":"snapshot.approval_pending","occurredAt":"2026-08-15T09:14:22.481Z",
+ "marketplace":"acme","snapshotId":42,
+ "sha":"3f9c2ab9d1e4c7b6a5f80c3d2e1b0a9f8c7d6e5f",
+ "state":"held","actor":"vetting",
+ "vetting":{"runId":17,"outcome":"BLOCKED","recordedOutcome":"BLOCKED",
+            "blockingConnectors":["secret-scan"],
+            "uncoveredFindings":2,"waivedFindings":0}}
+```
+
+The first seven fields are the ones every event carries, unchanged. The
+`vetting` object is this event's own:
+
+| Field | Meaning |
+| --- | --- |
+| `runId` | The chain run being reported. Correlates with `GET /api/snapshots/{id}/vetting`. |
+| `outcome` | The **effective** outcome, the one that gates approval: `CLEAR`, `CLEAR_WITH_WAIVERS` or `BLOCKED`. |
+| `recordedOutcome` | What the connectors concluded before any waiver was applied: `CLEAR` or `BLOCKED`. |
+| `blockingConnectors` | Names of the connectors that are the reason it blocks. Empty when nothing objects. |
+| `uncoveredFindings` | How many blocking findings no active waiver covers — the reviewer's worklist size. |
+| `waivedFindings` | How many findings an active waiver is currently suppressing. |
+
+`outcome` is what tells your system what to offer. `CLEAR` means
+[`POST /api/snapshots/{id}/approve`](approving-snapshots.md) will succeed;
+`CLEAR_WITH_WAIVERS` means it will, and only because someone accepted a risk;
+`BLOCKED` means it will be refused until every uncovered finding is
+[waived](waiving-findings.md) or fixed upstream. Either decision goes
+back through the ordinary API, which emits `snapshot.approved` or
+`snapshot.rejected` in turn — so the round trip closes on the same webhook
+stream your system is already reading.
+
+!!! warning "The event announces; the API discloses"
+
+    The payload carries counts, connector names and identifiers — never a
+    finding's message, rule id or location, and never a file name from the
+    snapshot. A webhook target is authorized by a URL scheme allowlist, not by
+    an identity, and the point of quarantine is that unapproved content does not
+    leave it. Read the detail from
+    `GET /api/snapshots/{id}/vetting` as an authenticated caller; the
+    `snapshotId` and `runId` in the payload are what address it.
+
+Two things not to assume:
+
+- **It is not `snapshot.vetted`.** That one fires for *every* chain run,
+  including runs against content that is already approved, and says nothing
+  about a pending decision. Subscribe to `snapshot.approval_pending` if what you
+  want is "someone has to look at this".
+- **It says nothing about a revocation.** A snapshot that re-vetting revoked is
+  decidable again, but it is announced by `snapshot.revoked` and means something
+  else: content that was already in use has been retracted.
+
 ## Delivery, retry and backoff
 
 Emission is enqueue-only. The admin action writes one delivery row per matching
@@ -202,6 +262,16 @@ Tune all of this under
     process restart mid-attempt makes the delivery due again once its lease
     expires. **De-duplicate on `X-Skills-Gateway-Delivery`** — it is stable
     across every retry of the same delivery — and treat handlers as idempotent.
+
+!!! warning "Order is not promised, and one case makes that concrete"
+
+    Deliveries are claimed in batches and retried independently, so nothing
+    guarantees the order two events for the same snapshot arrive in. One
+    ingestion shows it plainly: the chain runs *inside* the ingestion, so
+    `snapshot.vetted` and `snapshot.approval_pending` are queued **before**
+    `snapshot.ingested` for the same snapshot. Treat every event as
+    self-describing — the payload carries the marketplace, the snapshot, the SHA
+    and the state — rather than as a step in a sequence.
 
 ## Watch what happened
 

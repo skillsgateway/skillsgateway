@@ -27,6 +27,7 @@ import dev.skillsgateway.server.policy.PolicyRuleService;
 import dev.skillsgateway.server.roles.RoleGrant;
 import dev.skillsgateway.server.roles.RoleGrantRepository;
 import dev.skillsgateway.server.roles.RoleService;
+import dev.skillsgateway.server.webhook.WebhookEvent;
 import io.github.reqstool.annotations.SVCs;
 import java.util.List;
 import java.util.Map;
@@ -355,6 +356,44 @@ class EstateReconciliationTests extends AbstractGatewayTest {
                 .getResponse()
                 .getContentAsString();
         assertThat(reportJson).doesNotContain(first).doesNotContain(second).doesNotContain(HOOK_SECRET);
+    }
+
+    /**
+     * A new subscribable event is not a new estate object type: what an operator declares is a
+     * subscriber, and its filter is validated against the same event registry the API uses
+     * (GW_0086, GW_0159). So the day the event exists it is declarable — and a typo in it is still
+     * a reconciliation failure rather than a filter that silently receives nothing.
+     */
+    @Test
+    @SVCs({"SVC_GW_0159"})
+    void a_declared_subscriber_may_filter_on_the_approval_pending_event() {
+        String declared = uniqueName("estate-pending");
+        String typo = uniqueName("estate-pending-typo");
+        Estate estate = new Estate(
+                null,
+                null,
+                List.of(
+                        new DeclaredWebhook(
+                                declared,
+                                "https://pending.invalid/hook",
+                                WebhookEvent.SNAPSHOT_APPROVAL_PENDING + ",snapshot.approved",
+                                "estate-pending-secret-0123456789"),
+                        new DeclaredWebhook(
+                                typo,
+                                "https://pending.invalid/hook",
+                                "snapshot.approval-pending",
+                                "estate-pending-secret-0123456789")),
+                null,
+                null);
+
+        EstateReconciliation report = reconciler.reconcile(estate, "api");
+
+        assertThat(actionOf(report, declared)).isEqualTo("created");
+        assertThat(subscriberRepository.findByName(declared).orElseThrow().events())
+                .isEqualTo(WebhookEvent.SNAPSHOT_APPROVAL_PENDING + ",snapshot.approved");
+        assertThat(actionOf(report, typo)).isEqualTo("failed");
+        assertThat(entryOf(report, typo).detail()).contains("unknown event");
+        assertThat(subscriberRepository.findByName(typo)).isEmpty();
     }
 
     @Test
