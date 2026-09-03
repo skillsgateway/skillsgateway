@@ -1065,8 +1065,8 @@ cases:
     description: |
       GIVEN the repository's release workflow definition
       WHEN the packaging test validates it
-      THEN the workflow is reachable only by manual dispatch, its preview input defaults to on, it offers the release-candidate modes alongside a plain release, it requires the override flag before a hand-entered version can disagree with the derived one, it runs the main-branch gates before the approval gate, it binds the publishing stage to a protected environment so a required reviewer holds it, it creates the release as a prerelease, and it orders promotion to latest after the published-artifact verification
-    revision: "0.1.0"
+      THEN the workflow is reachable only by manual dispatch, its preview input defaults to on, it offers the release-candidate modes alongside a plain release, it requires the override flag before a hand-entered version can disagree with the derived one, it runs the main-branch gates before the approval gate, it binds the approval to a protected environment so a required reviewer holds it, it orders the tag and every publishing step after that approval so the reviewer can prevent the version from existing, it creates the release as a prerelease, it orders promotion to latest after the published-artifact verification, and it reports the surviving state of any run that tagged without promoting, including a run that was cancelled
+    revision: "0.2.0"
 
   - id: SVC_GW_0109
     requirement_ids: ["GW_0109"]
@@ -1597,4 +1597,122 @@ cases:
       every toggle is on the ledger naming the administrator, the connector, the scope
       and the new state, and the snapshot ingested with every connector disabled is
       blocked rather than clear
+    revision: "0.1.0"
+
+  - id: SVC_GW_0150
+    requirement_ids: ["GW_0150"]
+    title: Every plugin source form is classified, and the unsupported ones fail closed by type
+    verification: automated-test
+    description: |
+      GIVEN manifests declaring in turn a relative local path, a github source, a git
+      url source, a git-subdir source, an npm source, an archive source, a source
+      carrying a type the gateway does not implement, a source that is neither a string
+      nor an object, and a local path that escapes the marketplace repository
+      WHEN each manifest is validated at ingestion
+      THEN the local path is classified local and accepted, each external form is
+      classified as its declared type rather than refused for not being a string, and
+      the npm, archive, unrecognised-type, unparseable and escaping-path manifests are
+      each refused with a violation naming the offending plugin and the form its source
+      took, with the snapshot recorded rejected
+    revision: "0.1.0"
+
+  - id: SVC_GW_0151
+    requirement_ids: ["GW_0151"]
+    title: External sources are admitted only when enabled, and only within the configured bounds
+    verification: automated-test
+    description: |
+      GIVEN a manifest declaring a github plugin source, and a gateway configured in turn
+      with external sources left at their default, with them enabled, with them enabled
+      but the source's type absent from the type allowlist, with them enabled but the
+      source's derived clone URL host absent from a non-empty host allowlist, with them
+      enabled but the derived clone URL carrying a scheme outside the gateway's URL
+      scheme allowlist, and with them enabled but the manifest declaring more external
+      sources than the configured maximum
+      WHEN each configuration validates the manifest at ingestion
+      THEN the default configuration refuses the source as not admitted, the enabled
+      configuration admits it, each of the type, host, scheme and count configurations
+      refuses it with a violation naming the plugin and which bound it exceeded, and no
+      configuration causes a network request to the source
+    revision: "0.1.0"
+
+  - id: SVC_GW_0152
+    requirement_ids: ["GW_0152"]
+    title: An admitted but unresolved external source is rejected, never held
+    verification: automated-test
+    description: |
+      GIVEN a gateway with external plugin sources enabled and a manifest declaring a
+      github plugin source the gateway admits but cannot yet resolve into gateway-local
+      content
+      WHEN ingestion runs, and an approver attempts to approve the resulting snapshot
+      THEN the snapshot is recorded rejected rather than held, its violation states that
+      the source was admitted but is not yet resolvable and is distinguishable from the
+      violation recorded when the same source is not admitted, the approval is refused,
+      and the published repository is unchanged
+    revision: "0.1.0"
+
+  - id: SVC_GW_0153
+    requirement_ids: ["GW_0153"]
+    title: A snapshot's inventory diff against the last approved snapshot
+    verification: automated-test
+    description: |
+      GIVEN a marketplace whose first snapshot is ingested and approved, and a second
+      snapshot that adds a skill to one plugin, edits a file beside another skill's
+      definition without touching that definition, drops a declared plugin, and moves a
+      third skill unchanged into a different plugin
+      WHEN each snapshot's content diff is requested
+      THEN the first snapshot reports no baseline with every plugin and skill added, and
+      the second reports the added skill as added, the skill with the edited neighbouring
+      file as changed, the dropped plugin and its skills as removed, and the relocated
+      skill exactly once as moved naming the plugin it came from, with an unknown
+      snapshot answered as not found
+    revision: "0.1.0"
+
+  - id: SVC_GW_0154
+    requirement_ids: ["GW_0154"]
+    title: A pack transfer names the advertised ref its want resolved to
+    verification: automated-test
+    description: |
+      GIVEN a marketplace serving a second approved snapshot, so that the first one is
+      superseded and advertised only by its own pinned reference
+      WHEN a client fetches the superseded snapshot through the facade, and another
+      client clones the served tip
+      THEN the ledger records the pinned snapshot reference for the superseded fetch and
+      the served tip for the clone, resolves a want that matches the tip and a snapshot
+      reference alike to the tip, never names the symbolic head, and records no
+      reference for a want that matches nothing the facade advertised
+    revision: "0.1.0"
+
+  - id: SVC_GW_0159
+    requirement_ids: ["GW_0159"]
+    title: A held snapshot announces itself to the subscribers that asked, and to no others
+    verification: automated-test
+    description: |
+      GIVEN a subscriber whose filter names only the approval-pending event, a second
+      subscriber filtering an unrelated event, and a subscriber declared as part of the
+      configured estate whose filter names the approval-pending event
+      WHEN a marketplace is registered and ingested so that its snapshot is held and the
+      vetting chain runs against it, and a second marketplace's snapshot is approved and
+      then re-vetted
+      THEN the registry of subscribable events offers the approval-pending event, the
+      first subscriber receives exactly one signed, pending delivery of it naming the
+      marketplace, the snapshot and its commit SHA, the second subscriber receives none,
+      the estate-declared subscriber is reconciled with that filter while a filter naming
+      an unknown event is refused, and no approval-pending delivery is produced for the
+      approved snapshot's re-vetting run
+    revision: "0.1.0"
+
+  - id: SVC_GW_0160
+    requirement_ids: ["GW_0160"]
+    title: The approval-pending payload carries the summary and none of the content behind it
+    verification: automated-test
+    description: |
+      GIVEN a marketplace whose snapshot the vetting chain blocks on real findings, and a
+      subscriber filtering the approval-pending event
+      WHEN that snapshot is ingested and the chain run finishes
+      THEN the delivery's payload carries exactly the documented field set at the top
+      level and within its vetting summary, reports the blocked effective outcome, the
+      recorded outcome, the run identifier, the name of the blocking connector and the
+      number of uncovered and waived findings, and contains no finding message, no
+      finding rule identifier, no finding location and no file name from the quarantined
+      snapshot
     revision: "0.1.0"

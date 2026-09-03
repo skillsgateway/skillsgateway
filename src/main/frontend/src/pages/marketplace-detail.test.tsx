@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { expect, test } from "vitest";
 import { MarketplaceDetailPage } from "./marketplace-detail";
@@ -59,4 +60,43 @@ test("revoked_snapshot_shows_the_violation_and_who_already_fetched_it", async ()
   expect(
     screen.queryByRole("region", { name: "Identities that fetched snapshot 1" }),
   ).not.toBeInTheDocument();
+});
+
+/**
+ * The reviewer's actual question is not "what is in this snapshot" but "what would approving it
+ * add to what we already approved". The contents panel answers both, and the changes half shows
+ * only what changed — an unchanged skill listed among the changes is the noise the panel exists
+ * to remove.
+ */
+test("content_panel_shows_the_inventory_and_only_what_changed_since_approval", async () => {
+  const user = userEvent.setup();
+  renderPage();
+
+  await user.click(await screen.findByRole("button", { name: "Show contents of snapshot 1" }));
+
+  const inventory = await screen.findByRole("region", { name: "Contents of snapshot 1" });
+  expect(within(inventory).getByText("greeting skills")).toBeInTheDocument();
+  // "hello" is both the plugin and one of its skills, so both nodes carry the name.
+  expect(within(inventory).getAllByText("hello").length).toBeGreaterThan(1);
+
+  const changes = await screen.findByRole("region", {
+    name: "Changes in snapshot 1 since the last approved snapshot",
+  });
+  expect(within(changes).getByText(/Compared with approved snapshot 2/)).toBeInTheDocument();
+  expect(within(changes).getByText("111122223333")).toBeInTheDocument();
+  expect(within(changes).getByText("1 added")).toBeInTheDocument();
+  expect(within(changes).getByText("1 moved")).toBeInTheDocument();
+  expect(within(changes).getByText("1 removed")).toBeInTheDocument();
+
+  // The relocated skill names where it came from instead of reading as a deletion plus an add.
+  expect(within(changes).getByText("critique")).toBeInTheDocument();
+  expect(within(changes).getByText("from hello")).toBeInTheDocument();
+  // The plugin the snapshot no longer declares is still shown, with its skills removed.
+  expect(within(changes).getByText("legacy")).toBeInTheDocument();
+  expect(within(changes).getByText("oldtool")).toBeInTheDocument();
+  // The unchanged skill is in the inventory above and nowhere in the changes: the hello plugin
+  // changed, but only one of its two skills did.
+  const helloChanges = within(changes).getByRole("list", { name: "Changed skills in hello" });
+  expect(within(helloChanges).getAllByRole("listitem")).toHaveLength(1);
+  expect(within(helloChanges).getByText("greet")).toBeInTheDocument();
 });

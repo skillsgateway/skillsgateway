@@ -22,7 +22,8 @@ public record SkillsGatewayProperties(
         Roles roles,
         Oidc oidc,
         Estate estate,
-        Storage storage) {
+        Storage storage,
+        Ingestion ingestion) {
 
     public SkillsGatewayProperties {
         if (dataDir == null) {
@@ -69,6 +70,61 @@ public record SkillsGatewayProperties(
         }
         if (storage == null) {
             storage = new Storage(null, null, null);
+        }
+        if (ingestion == null) {
+            ingestion = new Ingestion(null);
+        }
+    }
+
+    /**
+     * Ingestion-time policy (GW_0151). Its one block today is external plugin sources; it exists as
+     * a block of its own so the resolution and hardening knobs that follow have somewhere to land
+     * that is not the top level.
+     */
+    public record Ingestion(ExternalSources externalSources) {
+
+        public Ingestion {
+            if (externalSources == null) {
+                externalSources = new ExternalSources(null, null, null, null);
+            }
+        }
+    }
+
+    /**
+     * Admission of plugin sources that live outside the marketplace repository (GW_0151). Every
+     * default here is the behaviour that shipped before this block existed, so an absent block —
+     * which is every existing deployment — rejects external sources exactly as GW_0003 always did.
+     *
+     * <p>An enabled gateway does not yet <em>resolve</em> what it admits: an admitted source is
+     * still recorded as a rejected snapshot under GW_0152, with a violation that says so, until the
+     * resolver lands. Enabling this is therefore a deliberate step towards that, not a way to serve
+     * external content today.
+     *
+     * @param enabled whether any external source may be admitted at all; false is GW_0003's
+     *     local-only behaviour
+     * @param allowedTypes the source types an enabled gateway will consider. Only types something
+     *     can resolve belong here, so the allowlist never advertises a form nothing implements
+     * @param allowedHosts exact hosts the derived clone URL may name; empty means any host. Never a
+     *     suffix or pattern match — an entry of github.com must not admit evil-github.com
+     * @param maxSources how many external sources one manifest may declare, bounding the work a
+     *     hostile manifest can cause once each source becomes a fetch
+     */
+    public record ExternalSources(
+            Boolean enabled, List<String> allowedTypes, List<String> allowedHosts, Integer maxSources) {
+
+        public ExternalSources {
+            if (enabled == null) {
+                enabled = false;
+            }
+            if (allowedTypes == null) {
+                allowedTypes = List.of("github");
+            }
+            if (allowedHosts == null) {
+                allowedHosts = List.of();
+            }
+            if (maxSources == null || maxSources <= 0) {
+                maxSources = 20;
+            }
         }
     }
 

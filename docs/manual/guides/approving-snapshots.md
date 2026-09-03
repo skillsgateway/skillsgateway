@@ -48,6 +48,24 @@ $ curl localhost:8080/api/snapshots/1/content
 
 This works on `held` snapshots by design — reviewing must not require serving.
 
+### What it changes
+
+The inventory says what the snapshot ships; `GET
+/api/snapshots/{id}/content-diff` says what approving it would add to what you
+already approved. Every plugin and skill is marked `added`, `removed`,
+`changed`, `moved` or `unchanged` against the marketplace's last approved
+snapshot, and a skill counts as changed when anything under its directory
+differs — not only its `SKILL.md`.
+
+```console
+$ curl localhost:8080/api/snapshots/1/content-diff
+```
+
+On the tenth snapshot of a large marketplace this is the read worth starting
+from: it is the difference between reviewing two new skills and re-reading
+forty. In the portal it is the second half of the **Show contents** panel. See
+[the API reference](../reference/api/marketplaces.md#get-snapshotsidcontent-diff).
+
 ### Provenance
 
 Where it came from and who has touched it:
@@ -64,9 +82,17 @@ $ curl localhost:8080/api/snapshots/1/provenance
 
 ### Violations
 
-If ingestion flagged the snapshot — an external plugin source, for instance,
-which is rejected fail-closed in the current scope — the reason is on the
-snapshot row and rendered in the portal as destructive text.
+If ingestion flagged the snapshot — an external plugin source, for instance —
+the reason is on the snapshot row and rendered in the portal as destructive text.
+
+An external source produces one of two violations, and they mean different
+things. *"has a non-local source"* means the gateway will not admit it: either
+external sources are not enabled, or the type, host or scheme is outside what is
+configured, or the type (`npm`, `archive`) is never admissible. *"admits but
+cannot yet resolve"* means the source passed admission and the gateway simply
+cannot fetch and rewrite it yet — a snapshot is held only when every source it
+declares resolves inside the snapshot the gateway serves. The first is a
+configuration question; the second is not, and neither snapshot can be approved.
 
 ### Vetting verdicts
 
@@ -320,3 +346,11 @@ The content is live. Verify it and point clients at it —
 If the chain objected and you accepted the risk, see
 [Waiving a vetting finding](waiving-findings.md) for what the acceptance covers
 and when it lapses.
+
+## Reviewing somewhere else
+
+The decision does not have to be made in the portal. The gateway announces every
+snapshot that is waiting for a person as a `snapshot.approval_pending` webhook,
+with the vetting summary attached, and the approve and reject endpoints on this
+page are the ones an external system calls back — see
+[Driving approvals from your own system](lifecycle-webhooks.md#driving-approvals-from-your-own-system).

@@ -233,6 +233,77 @@ export const waivedVetting: Schemas["VettingView"] = {
   ],
 };
 
+export const snapshotContent: Schemas["SnapshotContent"] = {
+  snapshotId: 1,
+  sha: heldSnapshot.sha,
+  state: "held",
+  plugins: [
+    {
+      name: "hello",
+      description: "greeting skills",
+      source: "./plugins/hello",
+      skills: [
+        { name: "hello", path: "plugins/hello/skills/hello/SKILL.md" },
+        { name: "greet", path: "plugins/hello/skills/greet/SKILL.md" },
+      ],
+    },
+    {
+      name: "review",
+      description: "review skills",
+      source: "./plugins/review",
+      skills: [{ name: "critique", path: "plugins/review/skills/critique/SKILL.md" }],
+    },
+  ],
+};
+
+/**
+ * One of each status, so the panel's filtering is exercised: the unchanged skill must not appear
+ * among the changes, and the plugin that lost its skills must appear even though the snapshot no
+ * longer declares it.
+ */
+export const contentDiff: Schemas["ContentDiff"] = {
+  snapshotId: 1,
+  sha: heldSnapshot.sha,
+  state: "held",
+  baselineSnapshotId: 2,
+  baselineSha: "1111222233334444555566667777888899990000",
+  plugins: [
+    {
+      name: "hello",
+      description: "greeting skills",
+      source: "./plugins/hello",
+      status: "changed",
+      skills: [
+        { name: "hello", path: "plugins/hello/skills/hello/SKILL.md", status: "unchanged" },
+        { name: "greet", path: "plugins/hello/skills/greet/SKILL.md", status: "added" },
+      ],
+    },
+    {
+      name: "review",
+      description: "review skills",
+      source: "./plugins/review",
+      status: "changed",
+      skills: [
+        {
+          name: "critique",
+          path: "plugins/review/skills/critique/SKILL.md",
+          status: "moved",
+          movedFromPlugin: "hello",
+        },
+        { name: "summarize", path: "plugins/review/skills/summarize/SKILL.md", status: "changed" },
+      ],
+    },
+    {
+      name: "legacy",
+      description: "skills on their way out",
+      source: "./plugins/legacy",
+      status: "removed",
+      skills: [{ name: "oldtool", path: "plugins/legacy/skills/oldtool/SKILL.md", status: "removed" }],
+    },
+  ],
+  summary: { added: 1, removed: 1, changed: 1, moved: 1, unchanged: 1 },
+};
+
 export const fileTree: Schemas["FileTree"] = {
   snapshotId: 1,
   sha: heldSnapshot.sha,
@@ -375,6 +446,8 @@ export const handlers = [
     HttpResponse.json({ mode: "WARN", conflicts: [], refused: false }),
   ),
   http.get("/api/snapshots/:id/fetchers", () => HttpResponse.json(fetchers)),
+  http.get("/api/snapshots/:id/content", () => HttpResponse.json(snapshotContent)),
+  http.get("/api/snapshots/:id/content-diff", () => HttpResponse.json(contentDiff)),
   http.get("/api/snapshots/:id/files", () => HttpResponse.json(fileTree)),
   http.get("/api/snapshots/:id/file", ({ request }) =>
     HttpResponse.json(fileContent(new URL(request.url).searchParams.get("path") ?? "")),

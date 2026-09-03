@@ -56,19 +56,28 @@ character set is constrained.
 
 ## Plugin sources inside a marketplace
 
-The current scope accepts **local sources only**.
+An unconfigured gateway accepts **local sources only**, and that is the default.
 
 | Source type | Status |
 | --- | --- |
 | Relative path inside the marketplace repository | **Accepted** |
-| `github`, `url`, `git-subdir`, `npm`, `archive`, or any external source | **Rejected fail-closed** at ingestion, with the reason recorded as the snapshot's violation |
+| `github`, `git`/`url`, `git-subdir` | **Rejected fail-closed** unless `skills-gateway.ingestion.external-sources.enabled` is set, and rejected anyway until a resolver exists — see below |
+| `npm`, `archive` | **Rejected fail-closed**, permanently: no configuration admits them |
+| Anything else — an unrecognised type, an object with no type, a value that is neither a path nor an object | **Rejected fail-closed**, with the form named in the snapshot's violation |
 
-This removes transitive resolution and source rewriting from the current scope
-entirely: relative sources resolve inside the served snapshot by themselves, so
-every URL a client dereferences already resolves inside the gateway.
+A relative source resolves inside the served snapshot by itself, so for a
+local-only marketplace every URL a client dereferences already resolves inside
+the gateway.
 
-Supporting external sources means mirroring the closure and rewriting the
-manifest — a designed future capability, not a configuration flag.
+External source support arrives in increments
+([ADR 0011](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md)).
+Today's increment is **admission**: an enabled gateway parses and accepts an
+external source rather than refusing it for its shape, but cannot yet fetch it
+and rewrite the manifest, so the snapshot is still rejected — with a violation
+saying the source was admitted and is not yet resolvable, distinct from the one
+for a source that was not admitted. A snapshot is held, and therefore approvable,
+only when every source it declares resolves inside the snapshot the gateway
+serves.
 
 ## Clients
 
@@ -100,9 +109,12 @@ HTTP surface *promises*.
 !!! note "What this promise does not cover"
 
     It covers `/api/**`. It does **not** currently extend to the
-    `skills-gateway.*` configuration surface, the Helm chart's values, or the
-    declarative estate schema. Whether those should carry the same additive
-    obligation — and what would gate it — is open in
+    `skills-gateway.*` configuration surface, the Helm chart's values, the
+    declarative estate schema, or the
+    [lifecycle webhook payloads](../guides/lifecycle-webhooks.md) — those appear
+    nowhere in the OpenAPI document, so the diff below cannot see them, however
+    hard a renamed field there breaks a receiver. Whether those should carry the
+    same additive obligation — and what would gate it — is open in
     [#121](https://github.com/skillsgateway/skillsgateway/issues/121).
 
     One consequence is live today: `skills-gateway.roles.enabled` was removed,
@@ -141,6 +153,12 @@ Three mechanisms, and it is worth being clear about which is which.
 | A breaking change is detected | The **API contract** workflow diffs every pull request's contract against the one it forked from with [oasdiff](https://github.com/oasdiff/oasdiff), and fails on a breaking classification. |
 | A breaking change is declared | The same workflow requires the PR title — which becomes the squash commit subject, and so the release version — to carry `!` or `BREAKING CHANGE`. |
 | The prefix *was* moved | **Nobody.** No check can tell that a break should have been versioned instead; that is review's job. |
+
+Two of oasdiff's default severities are raised to errors in `.oasdiff.yaml`:
+removing a response field, and removing an optional response header. Both are
+warnings by default unless the schema marks them required, and no response
+schema here does — so the most ordinary breaking change there is used to pass a
+gate that fails on errors only.
 
 Deliberately breaking the contract takes two visible acts: the
 `⚠️ BREAKING CONTRACT` label on the pull request, and the break declared in its

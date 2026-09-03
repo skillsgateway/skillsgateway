@@ -1,0 +1,9 @@
+# Read automatically by oasdiff run from the repository root, and by the oasdiff
+# step in .github/workflows/api-contract.yml.
+#
+# The listed file raises the two response-side removals oasdiff rates WARN to
+# ERR. They are warnings only because the field or header is not in a `required`
+# array, and no response schema this gateway serves marks anything required — so
+# under `fail-on: ERR` every response-field removal passed the gate (#216), the
+# one thing the additive promise most obviously forbids.
+severity-levels: .oasdiff-severity-levels.txt

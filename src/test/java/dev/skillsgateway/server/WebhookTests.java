@@ -6,12 +6,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.persistence.WebhookDelivery;
 import dev.skillsgateway.server.persistence.WebhookDeliveryRepository;
+import dev.skillsgateway.server.vetting.RevetService;
 import dev.skillsgateway.server.webhook.WebhookDispatcher;
 import dev.skillsgateway.server.webhook.WebhookEvent;
 import dev.skillsgateway.server.webhook.WebhookService;
@@ -32,8 +34,29 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
-/** Lifecycle event webhooks: filtering (GW_0023), signing (GW_0024), retry with backoff (GW_0025). */
+/**
+ * Lifecycle event webhooks: filtering (GW_0023), signing (GW_0024), retry with backoff (GW_0025),
+ * and the approval-pending announcement (GW_0159, GW_0160).
+ */
 class WebhookTests extends AbstractGatewayTest {
+
+    /**
+     * A shaped AWS access key id that belongs to nobody — enough to make the secret-scan connector
+     * block, which is what gives the approval-pending payload a summary worth asserting on.
+     */
+    private static final String PLANTED_SECRET = """
+            # Deployment notes
+
+                AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+            """;
+
+    /** The payload's top-level field set: the contract a receiver writes its parser against. */
+    private static final List<String> PAYLOAD_FIELDS =
+            List.of("event", "occurredAt", "marketplace", "snapshotId", "sha", "state", "actor", "vetting");
+
+    /** The vetting summary's field set — counts, names and identifiers, and nothing else. */
+    private static final List<String> SUMMARY_FIELDS =
+            List.of("runId", "outcome", "recordedOutcome", "blockingConnectors", "uncoveredFindings", "waivedFindings");
 
     @Autowired
     private WebhookService webhookService;
@@ -46,6 +69,9 @@ class WebhookTests extends AbstractGatewayTest {
 
     @Autowired
     private SkillsGatewayProperties properties;
+
+    @Autowired
+    private RevetService revetService;
 
     /**
      * These tests drive the real dispatch pass, which takes the oldest {@code batchSize} due
@@ -139,6 +165,96 @@ class WebhookTests extends AbstractGatewayTest {
         // Every event the dispatcher can emit is offerable: a filter cannot be composed for an
         // event the registry hides, so a gap here is an event no subscriber could ever select.
         assertThat(served).contains("snapshot.ingested", "snapshot.approved", "snapshot.revoked");
+    }
+
+    /**
+     * The announcement an external review pipeline subscribes to (GW_0159). Three facts in one
+     * arrangement, because they are the same fact from three sides: the subscriber that asked for
+     * it gets exactly one delivery for a held snapshot, a subscriber that asked for something else
+     * gets none, and the same snapshot approved and then re-vetted produces no second announcement
+     * — "awaiting a human" is about the held state, not about a chain run having happened.
+     */
+    @Test
+    @SVCs({"SVC_GW_0159"})
+    void a_held_snapshot_announces_itself_only_to_the_subscribers_that_asked() throws Exception {
+        long pendingSubscriber = createSubscriber(
+                uniqueName("pending"), "https://receiver.invalid/hook", WebhookEvent.SNAPSHOT_APPROVAL_PENDING, null);
+        long elsewhereSubscriber =
+                createSubscriber(uniqueName("elsewhere"), "https://receiver.invalid/hook", "snapshot.rejected", null);
+
+        String served = mockMvc.perform(get("/api/webhooks/events").with(oidcLogin()))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat((List<String>) JsonPath.read(served, "$")).contains(WebhookEvent.SNAPSHOT_APPROVAL_PENDING);
+
+        String marketplace = uniqueName("pendinghook");
+        Registered registered = registerAndIngest(marketplace, createUpstream(DEFAULT_MANIFEST));
+
+        List<WebhookDelivery> announced = deliveryRepository.listBySubscriber(pendingSubscriber);
+        assertThat(announced).hasSize(1);
+        WebhookDelivery delivery = announced.getFirst();
+        assertThat(delivery.event()).isEqualTo(WebhookEvent.SNAPSHOT_APPROVAL_PENDING);
+        assertThat(delivery.state()).isEqualTo(WebhookDelivery.PENDING);
+        assertThat(delivery.payload())
+                .contains("\"marketplace\":\"%s\"".formatted(marketplace))
+                .contains("\"snapshotId\":%d".formatted(registered.snapshot().id()))
+                .contains("\"sha\":\"%s\"".formatted(registered.snapshot().sha()))
+                .contains("\"state\":\"held\"");
+        assertThat(deliveryRepository.listBySubscriber(elsewhereSubscriber)).isEmpty();
+
+        // The negative half: the chain runs again over the very same content, and the only thing
+        // that has changed is that a human already decided. No second announcement.
+        approve(registered.snapshot().id());
+        revetService.revetSnapshot(registered.snapshot().id(), "alice");
+        assertThat(deliveryRepository.listBySubscriber(pendingSubscriber))
+                .describedAs("an approved snapshot is not awaiting anyone")
+                .hasSize(1);
+    }
+
+    /**
+     * The trust-boundary half (GW_0160): the event says a blocked snapshot is waiting, in enough
+     * detail to triage it, and says nothing about what the connectors actually found. A webhook
+     * target is authorised by a URL scheme allowlist, not by an identity, so the finding messages
+     * and the paths they name stay behind the authenticated vetting endpoint.
+     */
+    @Test
+    @SVCs({"SVC_GW_0160"})
+    void the_approval_pending_payload_summarises_the_run_and_discloses_no_content() throws Exception {
+        long subscriber = createSubscriber(
+                uniqueName("summary"), "https://receiver.invalid/hook", WebhookEvent.SNAPSHOT_APPROVAL_PENDING, null);
+
+        Registered blocked = registerAndIngest(
+                uniqueName("blockedhook"),
+                createUpstream(DEFAULT_MANIFEST, Map.of("plugins/hello/DEPLOY.md", PLANTED_SECRET)));
+
+        List<WebhookDelivery> announced = deliveryRepository.listBySubscriber(subscriber);
+        assertThat(announced).hasSize(1);
+        String payload = announced.getFirst().payload();
+
+        Map<String, Object> body = new ObjectMapper().readValue(payload, Map.class);
+        // Exact, not "contains": a removed or renamed field fails here, and so does an added one,
+        // which is the point — the payload is a contract, so changing it is a decision.
+        assertThat(body).containsOnlyKeys(PAYLOAD_FIELDS.toArray(String[]::new));
+        assertThat(body.get("state")).isEqualTo("held");
+
+        Map<String, Object> vetting = (Map<String, Object>) body.get("vetting");
+        assertThat(vetting).containsOnlyKeys(SUMMARY_FIELDS.toArray(String[]::new));
+        assertThat(((Number) vetting.get("runId")).longValue()).isPositive();
+        assertThat(vetting.get("outcome")).isEqualTo("BLOCKED");
+        assertThat(vetting.get("recordedOutcome")).isEqualTo("BLOCKED");
+        assertThat((List<String>) vetting.get("blockingConnectors")).contains("secret-scan");
+        assertThat(((Number) vetting.get("uncoveredFindings")).intValue()).isPositive();
+        assertThat(((Number) vetting.get("waivedFindings")).intValue()).isZero();
+
+        // The adversarial assertion: nothing from inside quarantine reached the wire.
+        assertThat(payload)
+                .doesNotContain("AKIAIOSFODNN7EXAMPLE")
+                .doesNotContain("aws-access-key-id")
+                .doesNotContain("DEPLOY.md")
+                .doesNotContain("plugins/hello");
+        assertThat(blocked.snapshot().state()).isEqualTo("held");
     }
 
     @Test

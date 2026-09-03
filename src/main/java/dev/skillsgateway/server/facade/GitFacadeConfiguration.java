@@ -5,6 +5,7 @@ import io.github.reqstool.annotations.Requirements;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -127,6 +128,44 @@ public class GitFacadeConfiguration {
         return directory.endsWith(".git") ? directory.substring(0, directory.length() - 4) : directory;
     }
 
+    /**
+     * Which advertised ref a transferred {@code want} resolves to (GW_0154), or {@code null} when
+     * none does.
+     *
+     * <p>{@code PreUploadHook} is handed object ids, not ref names, and JGit exposes no
+     * {@code want-ref} line to it, so this mapping is the only derivation available — and it is
+     * taken over the set {@link #SERVED_REFS} already filtered, so the ledger cannot name a
+     * reference the facade did not advertise.
+     *
+     * <p><b>The tip wins the ambiguity.</b> While a snapshot is current, {@code refs/heads/main}
+     * and its {@code refs/snapshots/<sha>} are the same commit, so a clone and a fetch by name send
+     * an identical want list; no rule can separate them. Recording the tip keeps every entry that
+     * is already correct correct, and confines the new value to the case that is wrong today — a
+     * want that is <em>not</em> the tip, which can only have come from a snapshot reference the
+     * marketplace no longer serves through main. {@code HEAD} is advertised and points at the tip
+     * too, so this branch subsumes it and the ledger names the branch rather than the symref.
+     *
+     * <p><b>No match records nothing.</b> Under the default {@code RequestPolicy.ADVERTISED} every
+     * want is an advertised tip, so this is unreachable through the servlet — but falling back to a
+     * constant is the defect this replaces. A column whose purpose is to say what was asked for has
+     * to be able to say it does not know; {@code sha} still pins the delivered content exactly.
+     */
+    @Requirements({"GW_0154"})
+    static String wantedRef(Map<String, Ref> advertised, ObjectId want) {
+        Ref tip = advertised.get(SERVED_REF);
+        if (tip != null && want.equals(tip.getObjectId())) {
+            return SERVED_REF;
+        }
+        // Exactly one snapshot reference can match, since an approval pins refs/snapshots/<sha> at
+        // <sha>; min() makes the answer independent of map ordering rather than of that invariant.
+        return advertised.entrySet().stream()
+                .filter(entry -> entry.getKey().startsWith(SNAPSHOT_REF_PREFIX))
+                .filter(entry -> want.equals(entry.getValue().getObjectId()))
+                .map(Map.Entry::getKey)
+                .min(Comparator.naturalOrder())
+                .orElse(null);
+    }
+
     private final class AuditingPreUploadHook implements PreUploadHook {
 
         private final String source;
@@ -151,10 +190,13 @@ public class GitFacadeConfiguration {
         }
 
         @Override
+        @Requirements({"GW_0008", "GW_0154"})
         public void onSendPack(
                 UploadPack up, Collection<? extends ObjectId> wants, Collection<? extends ObjectId> haves) {
+            Map<String, Ref> advertised = up.getAdvertisedRefs();
             for (ObjectId want : wants) {
-                auditHook.record(source, principal, marketplace, "upload-pack", SERVED_REF, want.name());
+                String ref = advertised == null ? null : wantedRef(advertised, want);
+                auditHook.record(source, principal, marketplace, "upload-pack", ref, want.name());
             }
         }
     }

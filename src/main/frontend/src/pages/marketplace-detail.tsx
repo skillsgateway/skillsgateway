@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/table";
 import { RevocationNote, SnapshotStateBadge } from "@/components/snapshot-state";
 import { SetupWizard } from "@/components/setup-wizard";
+import { SnapshotContentDiff } from "@/components/snapshot-content-diff";
 import { SnapshotPreview } from "@/components/snapshot-preview";
 import { VettingReport } from "@/components/vetting-report";
 
@@ -247,8 +248,30 @@ function RevetPanel({ snapshot }: { snapshot: Snapshot }) {
   );
 }
 
+/**
+ * Everything the snapshot ships. Its companion below — the diff against the last approved
+ * snapshot — answers the other half of the reviewer's question, what approving it would add.
+ *
+ * @Requirements GW_0020
+ */
 function SnapshotContentView({ snapshotId }: { snapshotId: number }) {
   const content = useSnapshotContent(snapshotId);
+  return (
+    <section aria-label={`Contents of snapshot ${snapshotId}`} className="space-y-3">
+      <h3 className="flex items-center gap-2 text-sm font-medium">
+        <Puzzle className="size-4 text-primary" aria-hidden />
+        What this snapshot ships
+      </h3>
+      <SnapshotContentBody content={content} />
+    </section>
+  );
+}
+
+function SnapshotContentBody({
+  content,
+}: {
+  content: ReturnType<typeof useSnapshotContent>;
+}) {
   if (content.isLoading) return <p className="text-sm text-muted-foreground">Loading contents…</p>;
   if (content.isError)
     return (
@@ -419,6 +442,8 @@ export function MarketplaceDetailPage() {
                     <>
                       <Separator />
                       <SnapshotContentView snapshotId={id} />
+                      <Separator />
+                      <SnapshotContentDiff snapshotId={id} />
                     </>
                   ) : null}
                   {preview ? (

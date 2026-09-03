@@ -536,7 +536,7 @@ class GitStorageContractTests {
             // Every other field of the properties record normalises null to its default, so the
             // data directory is the only one this backend reads.
             SkillsGatewayProperties properties = new SkillsGatewayProperties(
-                    root, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                    root, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
             return new Backend("filesystem", new FilesystemGitStorage(properties), obstructOnDisk(root));
         } catch (IOException e) {
             throw new UncheckedIOException(e);

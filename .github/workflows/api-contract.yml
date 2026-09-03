@@ -36,10 +36,13 @@ jobs:
       - id: oasdiff
         name: Diff the contract
         continue-on-error: true
-        uses: oasdiff/oasdiff-action/breaking@2649ebe137aeb72a95707671204e829f86e091fc # v0.1.13
+        uses: oasdiff/oasdiff-action/breaking@54d7a752569cb30b644b7f27a362c1077973d1c0 # v0.1.14
         with:
           base: baseline-openapi.json
           revision: src/main/frontend/openapi.json
+          # Severities come from `.oasdiff.yaml` at the repository root, which the
+          # action reads: without it, removing a response field is a WARN and
+          # passes ERR (#216).
           fail-on: ERR
           # Do not upload the contract to oasdiff.com. Detection and the inline
           # annotations are unaffected; this only declines to send the document

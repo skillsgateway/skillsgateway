@@ -25,6 +25,7 @@ class OpenApiContractTests extends AbstractGatewayTest {
 
     private static final Path REPO_ROOT = Path.of(System.getProperty("user.dir"));
     private static final Path PUBLISHED = REPO_ROOT.resolve("src/main/frontend/openapi.json");
+    private static final String OASDIFF_SEVERITY_LEVELS = ".oasdiff-severity-levels.txt";
 
     private static final String REGENERATE =
             "cp target/openapi.json src/main/frontend/openapi.json && (cd src/main/frontend && "
@@ -109,5 +110,17 @@ class OpenApiContractTests extends AbstractGatewayTest {
 
         // a refusal that only refuses teaches nobody: the escape is named in the failure
         assertThat(workflow).contains("/api/v1");
+    }
+
+    @Test
+    @SVCs({"SVC_GW_0107"})
+    void removingAResponseFieldIsAnErrorNotAWarning() throws IOException {
+        // oasdiff rates removing a response field a warning unless the schema marks the field
+        // required, and no response schema here does — so fail-on: ERR let it through (#216).
+        assertThat(Files.readString(REPO_ROOT.resolve(".oasdiff.yaml")))
+                .as("the severity file the oasdiff step picks up from the repository root")
+                .contains("severity-levels: " + OASDIFF_SEVERITY_LEVELS);
+        assertThat(Files.readString(REPO_ROOT.resolve(OASDIFF_SEVERITY_LEVELS)))
+                .contains("response-optional-property-removed\terr");
     }
 }
