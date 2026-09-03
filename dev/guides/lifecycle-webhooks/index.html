@@ -1071,6 +1071,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#driving-approvals-from-your-own-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Driving approvals from your own system
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#delivery-retry-and-backoff" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2027,6 +2038,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#driving-approvals-from-your-own-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Driving approvals from your own system
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#delivery-retry-and-backoff" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2087,8 +2109,8 @@
 <h1 id="receiving-lifecycle-webhooks">Receiving lifecycle webhooks<a class="headerlink" href="#receiving-lifecycle-webhooks" title="Permanent link">&para;</a></h1>
 <p>The gateway records every vetting decision in the ledger. Webhooks push those
 same decisions outward, so CI, chat and inventory systems learn about a snapshot
-the moment it is ingested, approved or rejected instead of polling
-<code>/api/marketplaces</code>.</p>
+the moment it is ingested, waiting for a review, approved or rejected instead of
+polling <code>/api/marketplaces</code>.</p>
 <h2 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2121,6 +2143,10 @@ the moment it is ingested, approved or rejected instead of polling
 <tr>
 <td><code>snapshot.vetted</code></td>
 <td>A vetting chain run finished. The verdicts are readable at <code>GET /api/snapshots/{id}/vetting</code>.</td>
+</tr>
+<tr>
+<td><code>snapshot.approval_pending</code></td>
+<td>A chain run finished and the snapshot is still <strong>held</strong>: it is waiting for a person. Carries a vetting summary — see <a href="#driving-approvals-from-your-own-system">Driving approvals from your own system</a>.</td>
 </tr>
 <tr>
 <td><code>snapshot.revet_violation</code></td>
@@ -2279,6 +2305,84 @@ is emitted and stored, so every retry sends byte-identical content.</p>
 before the body reaches any application logic. An unsigned or wrongly signed
 request is an unauthenticated request.</p>
 </div>
+<h2 id="driving-approvals-from-your-own-system">Driving approvals from your own system<a class="headerlink" href="#driving-approvals-from-your-own-system" title="Permanent link">&para;</a></h2>
+<p><code>snapshot.approval_pending</code> exists so the review can happen where your
+organization already does reviews — a ticketing system, a change-approval board,
+a bot — instead of in the portal. It fires when a vetting chain run finishes and
+the snapshot is still <code>held</code>, which is exactly the moment a person is needed, and
+it carries enough to open a review item without a follow-up call:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">{</span><span class="nt">"event"</span><span class="p">:</span><span class="s2">"snapshot.approval_pending"</span><span class="p">,</span><span class="nt">"occurredAt"</span><span class="p">:</span><span class="s2">"2026-08-15T09:14:22.481Z"</span><span class="p">,</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w"> </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w"> </span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab9d1e4c7b6a5f80c3d2e1b0a9f8c7d6e5f"</span><span class="p">,</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w"> </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"held"</span><span class="p">,</span><span class="nt">"actor"</span><span class="p">:</span><span class="s2">"vetting"</span><span class="p">,</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w"> </span><span class="nt">"vetting"</span><span class="p">:{</span><span class="nt">"runId"</span><span class="p">:</span><span class="mi">17</span><span class="p">,</span><span class="nt">"outcome"</span><span class="p">:</span><span class="s2">"BLOCKED"</span><span class="p">,</span><span class="nt">"recordedOutcome"</span><span class="p">:</span><span class="s2">"BLOCKED"</span><span class="p">,</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">            </span><span class="nt">"blockingConnectors"</span><span class="p">:[</span><span class="s2">"secret-scan"</span><span class="p">],</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">            </span><span class="nt">"uncoveredFindings"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="nt">"waivedFindings"</span><span class="p">:</span><span class="mi">0</span><span class="p">}}</span>
+</code></pre></div>
+<p>The first seven fields are the ones every event carries, unchanged. The
+<code>vetting</code> object is this event's own:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>runId</code></td>
+<td>The chain run being reported. Correlates with <code>GET /api/snapshots/{id}/vetting</code>.</td>
+</tr>
+<tr>
+<td><code>outcome</code></td>
+<td>The <strong>effective</strong> outcome, the one that gates approval: <code>CLEAR</code>, <code>CLEAR_WITH_WAIVERS</code> or <code>BLOCKED</code>.</td>
+</tr>
+<tr>
+<td><code>recordedOutcome</code></td>
+<td>What the connectors concluded before any waiver was applied: <code>CLEAR</code> or <code>BLOCKED</code>.</td>
+</tr>
+<tr>
+<td><code>blockingConnectors</code></td>
+<td>Names of the connectors that are the reason it blocks. Empty when nothing objects.</td>
+</tr>
+<tr>
+<td><code>uncoveredFindings</code></td>
+<td>How many blocking findings no active waiver covers — the reviewer's worklist size.</td>
+</tr>
+<tr>
+<td><code>waivedFindings</code></td>
+<td>How many findings an active waiver is currently suppressing.</td>
+</tr>
+</tbody>
+</table>
+<p><code>outcome</code> is what tells your system what to offer. <code>CLEAR</code> means
+<a href="../approving-snapshots/"><code>POST /api/snapshots/{id}/approve</code></a> will succeed;
+<code>CLEAR_WITH_WAIVERS</code> means it will, and only because someone accepted a risk;
+<code>BLOCKED</code> means it will be refused until every uncovered finding is
+<a href="../waiving-findings/">waived</a> or fixed upstream. Either decision goes
+back through the ordinary API, which emits <code>snapshot.approved</code> or
+<code>snapshot.rejected</code> in turn — so the round trip closes on the same webhook
+stream your system is already reading.</p>
+<div class="admonition warning">
+<p class="admonition-title">The event announces; the API discloses</p>
+<p>The payload carries counts, connector names and identifiers — never a
+finding's message, rule id or location, and never a file name from the
+snapshot. A webhook target is authorized by a URL scheme allowlist, not by
+an identity, and the point of quarantine is that unapproved content does not
+leave it. Read the detail from
+<code>GET /api/snapshots/{id}/vetting</code> as an authenticated caller; the
+<code>snapshotId</code> and <code>runId</code> in the payload are what address it.</p>
+</div>
+<p>Two things not to assume:</p>
+<ul>
+<li><strong>It is not <code>snapshot.vetted</code>.</strong> That one fires for <em>every</em> chain run,
+  including runs against content that is already approved, and says nothing
+  about a pending decision. Subscribe to <code>snapshot.approval_pending</code> if what you
+  want is "someone has to look at this".</li>
+<li><strong>It says nothing about a revocation.</strong> A snapshot that re-vetting revoked is
+  decidable again, but it is announced by <code>snapshot.revoked</code> and means something
+  else: content that was already in use has been retracted.</li>
+</ul>
 <h2 id="delivery-retry-and-backoff">Delivery, retry and backoff<a class="headerlink" href="#delivery-retry-and-backoff" title="Permanent link">&para;</a></h2>
 <p>Emission is enqueue-only. The admin action writes one delivery row per matching
 subscriber and returns; an unreachable receiver can never fail or slow down an
@@ -2352,6 +2456,16 @@ process restart mid-attempt makes the delivery due again once its lease
 expires. <strong>De-duplicate on <code>X-Skills-Gateway-Delivery</code></strong> — it is stable
 across every retry of the same delivery — and treat handlers as idempotent.</p>
 </div>
+<div class="admonition warning">
+<p class="admonition-title">Order is not promised, and one case makes that concrete</p>
+<p>Deliveries are claimed in batches and retried independently, so nothing
+guarantees the order two events for the same snapshot arrive in. One
+ingestion shows it plainly: the chain runs <em>inside</em> the ingestion, so
+<code>snapshot.vetted</code> and <code>snapshot.approval_pending</code> are queued <strong>before</strong>
+<code>snapshot.ingested</code> for the same snapshot. Treat every event as
+self-describing — the payload carries the marketplace, the snapshot, the SHA
+and the state — rather than as a step in a sequence.</p>
+</div>
 <h2 id="watch-what-happened">Watch what happened<a class="headerlink" href="#watch-what-happened" title="Permanent link">&para;</a></h2>
 <div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Portal</label><label for="__tabbed_3_2">API</label></div>
 <div class="tabbed-content">
@@ -2361,7 +2475,7 @@ subscriber, state, attempt count and last response — see
 <a href="../../reference/portal/#webhooks">Admin portal</a>.</p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span><span class="s1">'localhost:8080/api/webhooks/deliveries?limit=20'</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>curl<span class="w"> </span><span class="s1">'localhost:8080/api/webhooks/deliveries?limit=20'</span>
 </code></pre></div>
 <p>Most recent first. <code>limit</code> defaults to 100 and is clamped to 500.</p>
 </div>
@@ -2370,7 +2484,7 @@ subscriber, state, attempt count and last response — see
 <p>Each row carries <code>state</code>, <code>attempts</code>, <code>lastStatus</code> and <code>lastError</code>, which is
 enough to tell a receiver that is down from one that is rejecting the payload.</p>
 <h2 id="remove-a-subscriber">Remove a subscriber<a class="headerlink" href="#remove-a-subscriber" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>localhost:8080/api/webhooks/1
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>localhost:8080/api/webhooks/1
 </code></pre></div>
 <p><strong>204</strong> on success, <strong>404</strong> if it never existed. The subscriber and its delivery
 history go with it, and no further events are queued for it. Subscriber creation
