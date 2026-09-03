@@ -109,9 +109,12 @@ HTTP surface *promises*.
 !!! note "What this promise does not cover"
 
     It covers `/api/**`. It does **not** currently extend to the
-    `skills-gateway.*` configuration surface, the Helm chart's values, or the
-    declarative estate schema. Whether those should carry the same additive
-    obligation — and what would gate it — is open in
+    `skills-gateway.*` configuration surface, the Helm chart's values, the
+    declarative estate schema, or the
+    [lifecycle webhook payloads](../guides/lifecycle-webhooks.md) — those appear
+    nowhere in the OpenAPI document, so the diff below cannot see them, however
+    hard a renamed field there breaks a receiver. Whether those should carry the
+    same additive obligation — and what would gate it — is open in
     [#121](https://github.com/skillsgateway/skillsgateway/issues/121).
 
     One consequence is live today: `skills-gateway.roles.enabled` was removed,

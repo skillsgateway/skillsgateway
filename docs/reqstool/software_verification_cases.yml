@@ -1681,3 +1681,38 @@ cases:
       reference alike to the tip, never names the symbolic head, and records no
       reference for a want that matches nothing the facade advertised
     revision: "0.1.0"
+
+  - id: SVC_GW_0159
+    requirement_ids: ["GW_0159"]
+    title: A held snapshot announces itself to the subscribers that asked, and to no others
+    verification: automated-test
+    description: |
+      GIVEN a subscriber whose filter names only the approval-pending event, a second
+      subscriber filtering an unrelated event, and a subscriber declared as part of the
+      configured estate whose filter names the approval-pending event
+      WHEN a marketplace is registered and ingested so that its snapshot is held and the
+      vetting chain runs against it, and a second marketplace's snapshot is approved and
+      then re-vetted
+      THEN the registry of subscribable events offers the approval-pending event, the
+      first subscriber receives exactly one signed, pending delivery of it naming the
+      marketplace, the snapshot and its commit SHA, the second subscriber receives none,
+      the estate-declared subscriber is reconciled with that filter while a filter naming
+      an unknown event is refused, and no approval-pending delivery is produced for the
+      approved snapshot's re-vetting run
+    revision: "0.1.0"
+
+  - id: SVC_GW_0160
+    requirement_ids: ["GW_0160"]
+    title: The approval-pending payload carries the summary and none of the content behind it
+    verification: automated-test
+    description: |
+      GIVEN a marketplace whose snapshot the vetting chain blocks on real findings, and a
+      subscriber filtering the approval-pending event
+      WHEN that snapshot is ingested and the chain run finishes
+      THEN the delivery's payload carries exactly the documented field set at the top
+      level and within its vetting summary, reports the blocked effective outcome, the
+      recorded outcome, the run identifier, the name of the blocking connector and the
+      number of uncovered and waived findings, and contains no finding message, no
+      finding rule identifier, no finding location and no file name from the quarantined
+      snapshot
+    revision: "0.1.0"

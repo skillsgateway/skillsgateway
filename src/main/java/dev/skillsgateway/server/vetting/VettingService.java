@@ -59,6 +59,7 @@ public class VettingService {
     private final GitStorage storage;
     private final AdminAuditLogger auditLogger;
     private final WebhookService webhookService;
+    private final WaiverService waiverService;
     private final ConnectorToggleService toggleService;
     private final SkillsGatewayProperties.Vetting properties;
     private final ExecutorService executor;
@@ -69,6 +70,7 @@ public class VettingService {
             GitStorage storage,
             AdminAuditLogger auditLogger,
             WebhookService webhookService,
+            WaiverService waiverService,
             ConnectorToggleService toggleService,
             SkillsGatewayProperties properties) {
         this.connectors = connectors.stream()
@@ -78,6 +80,7 @@ public class VettingService {
         this.storage = storage;
         this.auditLogger = auditLogger;
         this.webhookService = webhookService;
+        this.waiverService = waiverService;
         this.toggleService = toggleService;
         this.properties = properties.vetting();
         // Daemon threads: a connector that ignores interruption after a timeout must never keep
@@ -198,7 +201,42 @@ public class VettingService {
                         .formatted(trigger, outcome.stored(), states.size(), runId, chainIdentity()));
         webhookService.emit(
                 WebhookEvent.SNAPSHOT_VETTED, marketplace, snapshot.id(), snapshot.sha(), snapshot.state(), "vetting");
+        announceIfAwaitingApproval(snapshot, marketplace, runId);
         return new Run(runId, outcome);
+    }
+
+    /**
+     * The approval-pending announcement (GW_0159): a finished chain run over a snapshot that is
+     * still held is what "waiting for a person" means concretely, so it is said as its own event
+     * rather than left for a receiver to infer from {@code snapshot.vetted} — which also fires for
+     * runs against approved content.
+     *
+     * <p>The guard is the snapshot's state as the chain was handed it, which the chain is
+     * forbidden to change. An approved or revoked snapshot is announced by its own event.
+     *
+     * <p>What travels is the <em>effective</em> outcome, the one that gates approval, so a receiver
+     * can tell "approve will succeed" from "waive or fix first" without a follow-up call — and
+     * nothing beyond counts, connector names and identifiers (GW_0160).
+     */
+    @Requirements({"GW_0159"})
+    private void announceIfAwaitingApproval(Snapshot snapshot, String marketplace, long runId) {
+        if (!Snapshot.HELD.equals(snapshot.state())) {
+            return;
+        }
+        WaiverEvaluation.Effect effect = waiverService.evaluate(snapshot);
+        webhookService.emitApprovalPending(
+                marketplace,
+                snapshot.id(),
+                snapshot.sha(),
+                snapshot.state(),
+                VETTING_ACTOR,
+                new WebhookService.VettingSummary(
+                        runId,
+                        effect.outcome().name(),
+                        effect.recordedOutcome().name(),
+                        effect.blockingConnectors(),
+                        effect.uncovered().size(),
+                        effect.suppressions().size()));
     }
 
     private QuarantineSnapshot open(Snapshot snapshot, String marketplace) throws java.io.IOException {

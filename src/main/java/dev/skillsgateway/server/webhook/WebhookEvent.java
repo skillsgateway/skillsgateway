@@ -44,6 +44,18 @@ public final class WebhookEvent {
      */
     public static final String SNAPSHOT_REVOKED = "snapshot.revoked";
 
+    /**
+     * A chain run finished against a snapshot that is still held: it is waiting for a person
+     * (GW_0159). The event an external review pipeline subscribes to, and the reason it is not
+     * {@link #SNAPSHOT_VETTED} — that one fires for every run in every state, including runs
+     * against content that is already approved, and says nothing about a pending decision.
+     *
+     * <p>Emitted only while the snapshot is held. A retraction is announced by
+     * {@link #SNAPSHOT_REVOKED}, which leaves a snapshot decidable again but means something a
+     * receiver has to keep apart from a first review.
+     */
+    public static final String SNAPSHOT_APPROVAL_PENDING = "snapshot.approval_pending";
+
     public static final List<String> ALL = List.of(
             SNAPSHOT_INGESTED,
             SNAPSHOT_APPROVED,
@@ -52,7 +64,8 @@ public final class WebhookEvent {
             SNAPSHOT_RESTORED,
             SNAPSHOT_VETTED,
             SNAPSHOT_REVET_VIOLATION,
-            SNAPSHOT_REVOKED);
+            SNAPSHOT_REVOKED,
+            SNAPSHOT_APPROVAL_PENDING);
 
     /**
      * Event name carried by audit ledger export batches (GW_0028). Deliberately outside
