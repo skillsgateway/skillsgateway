@@ -63,6 +63,9 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
     @Autowired
     private dev.skillsgateway.server.vetting.ConnectorToggleService connectorToggleService;
 
+    @Autowired
+    private dev.skillsgateway.server.vetting.WaiverService waiverService;
+
     private StubEndpoint endpoint;
 
     @BeforeEach
@@ -287,6 +290,7 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
                 storage,
                 auditLogger,
                 webhookService,
+                waiverService,
                 connectorToggleService,
                 properties);
     }
