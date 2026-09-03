@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.util.unit.DataSize;
 
 @ConfigurationProperties(prefix = "skills-gateway")
 public record SkillsGatewayProperties(
@@ -85,7 +86,7 @@ public record SkillsGatewayProperties(
 
         public Ingestion {
             if (externalSources == null) {
-                externalSources = new ExternalSources(null, null, null, null);
+                externalSources = new ExternalSources(null, null, null, null, null, null, null);
             }
         }
     }
@@ -95,10 +96,11 @@ public record SkillsGatewayProperties(
      * default here is the behaviour that shipped before this block existed, so an absent block —
      * which is every existing deployment — rejects external sources exactly as GW_0003 always did.
      *
-     * <p>An enabled gateway does not yet <em>resolve</em> what it admits: an admitted source is
-     * still recorded as a rejected snapshot under GW_0152, with a violation that says so, until the
-     * resolver lands. Enabling this is therefore a deliberate step towards that, not a way to serve
-     * external content today.
+     * <p>An enabled gateway resolves what it admits (GW_0155, GW_0156): the source is fetched into
+     * quarantine and grafted into a composite snapshot whose manifest is entirely gateway-local.
+     * Enabling this therefore opens the gateway's only manifest-driven outbound network path, which
+     * is what {@link #allowPrivateNetworks} and {@link #budgets} bound — and why the primary control
+     * remains network egress isolation rather than anything in this block (ADR 0011).
      *
      * @param enabled whether any external source may be admitted at all; false is GW_0003's
      *     local-only behaviour
@@ -108,9 +110,25 @@ public record SkillsGatewayProperties(
      *     suffix or pattern match — an entry of github.com must not admit evil-github.com
      * @param maxSources how many external sources one manifest may declare, bounding the work a
      *     hostile manifest can cause once each source becomes a fetch
+     * @param githubBaseUrl where a {@code github} shorthand's {@code owner/repo} is resolved
+     *     against, for GitHub Enterprise Server. The derived URL still faces the scheme and host
+     *     allowlists, so this cannot widen what a manifest may reach beyond what an operator
+     *     allowed; and because the shorthand cannot contain a host, this is the only place the
+     *     host of a github source is ever decided
+     * @param allowPrivateNetworks whether a source may resolve to a loopback, RFC1918,
+     *     carrier-grade-NAT or unique-local address. False is the default. It never permits a
+     *     link-local address — the cloud metadata endpoint is link-local, and a development
+     *     topology that needs loopback must not unlock it as a side effect (GW_0157)
+     * @param budgets what one manifest may cost to resolve (GW_0158)
      */
     public record ExternalSources(
-            Boolean enabled, List<String> allowedTypes, List<String> allowedHosts, Integer maxSources) {
+            Boolean enabled,
+            List<String> allowedTypes,
+            List<String> allowedHosts,
+            Integer maxSources,
+            String githubBaseUrl,
+            Boolean allowPrivateNetworks,
+            ResolutionBudgets budgets) {
 
         public ExternalSources {
             if (enabled == null) {
@@ -122,8 +140,83 @@ public record SkillsGatewayProperties(
             if (allowedHosts == null) {
                 allowedHosts = List.of();
             }
+            if (githubBaseUrl == null || githubBaseUrl.isBlank()) {
+                githubBaseUrl = "https://github.com";
+            }
+            while (githubBaseUrl.endsWith("/")) {
+                githubBaseUrl = githubBaseUrl.substring(0, githubBaseUrl.length() - 1);
+            }
+            if (allowPrivateNetworks == null) {
+                allowPrivateNetworks = false;
+            }
+            if (budgets == null) {
+                budgets = new ResolutionBudgets(null, null, null, null, null, null, null, null, null);
+            }
             if (maxSources == null || maxSources <= 0) {
                 maxSources = 20;
+            }
+        }
+    }
+
+    /**
+     * What resolving one manifest's external plugin sources may cost (GW_0158).
+     *
+     * <p>A git fetch is decompression of a stream the gateway did not create, so an unbounded
+     * resolver turns any manifest the gateway will look at into a denial-of-service primitive
+     * against the gateway itself. Two byte bounds rather than one: the received bound stops a
+     * stream that never ends, and the inflated bound and the ratio stop a stream that ends quickly
+     * and expands enormously. Neither catches the other's case.
+     *
+     * @param maxReceivedBytes bytes one source may send on the wire before the transfer is aborted
+     * @param maxInflatedBytes total size of one source's content once it is objects on disk
+     * @param maxClosureBytes the same, accumulated over every source one manifest declares
+     * @param maxInflationRatio inflated bytes per received byte, which is what a pack bomb maximises
+     * @param maxObjects blobs and trees one source may contribute
+     * @param maxBlobBytes the largest single file one source may contribute
+     * @param maxTreeDepth how deep a directory tree the gateway will accept, bounding every later
+     *     walk of the content as well as the fetch
+     * @param maxRedirects redirect hops one request may take
+     * @param deadline wall-clock budget for resolving a whole manifest, so a resolution that is
+     *     slow rather than large still terminates
+     */
+    public record ResolutionBudgets(
+            DataSize maxReceivedBytes,
+            DataSize maxInflatedBytes,
+            DataSize maxClosureBytes,
+            Integer maxInflationRatio,
+            Integer maxObjects,
+            DataSize maxBlobBytes,
+            Integer maxTreeDepth,
+            Integer maxRedirects,
+            Duration deadline) {
+
+        public ResolutionBudgets {
+            if (maxReceivedBytes == null || maxReceivedBytes.toBytes() <= 0) {
+                maxReceivedBytes = DataSize.ofMegabytes(50);
+            }
+            if (maxInflatedBytes == null || maxInflatedBytes.toBytes() <= 0) {
+                maxInflatedBytes = DataSize.ofMegabytes(200);
+            }
+            if (maxClosureBytes == null || maxClosureBytes.toBytes() <= 0) {
+                maxClosureBytes = DataSize.ofMegabytes(500);
+            }
+            if (maxInflationRatio == null || maxInflationRatio <= 0) {
+                maxInflationRatio = 100;
+            }
+            if (maxObjects == null || maxObjects <= 0) {
+                maxObjects = 20000;
+            }
+            if (maxBlobBytes == null || maxBlobBytes.toBytes() <= 0) {
+                maxBlobBytes = DataSize.ofMegabytes(10);
+            }
+            if (maxTreeDepth == null || maxTreeDepth <= 0) {
+                maxTreeDepth = 32;
+            }
+            if (maxRedirects == null || maxRedirects < 0) {
+                maxRedirects = 3;
+            }
+            if (deadline == null || deadline.isNegative() || deadline.isZero()) {
+                deadline = Duration.ofMinutes(5);
             }
         }
     }

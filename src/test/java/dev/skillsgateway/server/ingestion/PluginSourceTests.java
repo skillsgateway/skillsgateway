@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 class PluginSourceTests {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final String GITHUB = "https://github.com";
 
     private static PluginSource parse(String json) {
         try {
@@ -87,14 +88,56 @@ class PluginSourceTests {
     @Test
     @SVCs({"SVC_GW_0150"})
     void a_github_shorthand_expands_only_when_it_is_exactly_owner_and_repo() {
-        assertThat(new PluginSource.GitHub("acme/tools").cloneUrl()).isEqualTo("https://github.com/acme/tools");
+        assertThat(shorthand("acme/tools").cloneUrl(GITHUB)).isEqualTo("https://github.com/acme/tools");
         // Nothing may smuggle a second path segment, a host, or traversal into the expansion.
-        for (String shorthand : new String[] {
+        for (String value : new String[] {
             "acme", "acme/tools/extra", "acme/../../evil", "evil.example/acme/tools", "acme/tools?x=1", "acme tools"
         }) {
-            assertThat(new PluginSource.GitHub(shorthand).cloneUrl())
-                    .as("shorthand %s", shorthand)
+            assertThat(shorthand(value).cloneUrl(GITHUB))
+                    .as("shorthand %s", value)
                     .isNull();
         }
+    }
+
+    @Test
+    @SVCs({"SVC_GW_0150"})
+    void a_relative_path_segment_in_the_shorthand_does_not_expand() {
+        // ".." matches the character class the shape check has always used, so "../.." expanded to
+        // a URL whose path climbs above the base — harmless against a bare https://github.com, and
+        // a real traversal against an enterprise base that carries a path prefix.
+        for (String value : new String[] {"../..", "./x", "x/.", "x/..", ".."}) {
+            assertThat(shorthand(value).cloneUrl(GITHUB))
+                    .as("shorthand %s", value)
+                    .isNull();
+        }
+    }
+
+    @Test
+    @SVCs({"SVC_GW_0150"})
+    void the_clone_url_is_derived_from_the_configured_base() {
+        assertThat(shorthand("acme/tools").cloneUrl("https://ghe.example.com"))
+                .isEqualTo("https://ghe.example.com/acme/tools");
+        assertThat(shorthand("acme/tools").cloneUrl("https://ghe.example.com/git"))
+                .isEqualTo("https://ghe.example.com/git/acme/tools");
+    }
+
+    @Test
+    @SVCs({"SVC_GW_0150"})
+    void a_source_pinned_to_a_ref_or_a_commit_is_refused_by_name() {
+        // Resolving such a source at the remote head instead would serve a commit the manifest did
+        // not name, which is worse than refusing it: the operator pinned something and would be
+        // told nothing about having got something else.
+        PluginSource pinnedSha =
+                parse("{\"source\":\"github\",\"repo\":\"acme/tools\",\"sha\":\"" + "a".repeat(40) + "\"}");
+        PluginSource pinnedRef = parse("{\"source\":\"github\",\"repo\":\"acme/tools\",\"ref\":\"v1.2.3\"}");
+
+        assertThat(pinnedSha).isInstanceOf(PluginSource.Unsupported.class);
+        assertThat(((PluginSource.Unsupported) pinnedSha).detail()).contains("sha");
+        assertThat(pinnedRef).isInstanceOf(PluginSource.Unsupported.class);
+        assertThat(((PluginSource.Unsupported) pinnedRef).detail()).contains("ref");
+    }
+
+    private static PluginSource.GitHub shorthand(String ownerRepo) {
+        return new PluginSource.GitHub(ownerRepo);
     }
 }

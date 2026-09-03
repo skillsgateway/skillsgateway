@@ -24,7 +24,9 @@ public record ExternalSourceAdmission(
         Set<String> allowedTypes,
         Set<String> allowedHosts,
         Set<String> allowedUrlSchemes,
-        int maxSources) {
+        int maxSources,
+        /* Where an owner/repo shorthand resolves; see ExternalSources.githubBaseUrl. */
+        String shorthandBaseUrl) {
 
     /** The outcome for one plugin entry. */
     public sealed interface Decision {
@@ -58,7 +60,8 @@ public record ExternalSourceAdmission(
                 lowercased(external.allowedTypes()),
                 lowercased(external.allowedHosts()),
                 lowercased(properties.allowedUrlSchemes()),
-                external.maxSources());
+                external.maxSources(),
+                external.githubBaseUrl());
     }
 
     private static Set<String> lowercased(List<String> values) {
@@ -89,7 +92,11 @@ public record ExternalSourceAdmission(
             case PluginSource.Archive ignored -> refuse(pluginName, "archive sources are not supported");
             case PluginSource.Unrecognised unrecognised ->
                 refuse(pluginName, "the gateway does not understand " + unrecognised.detail());
-            case PluginSource.GitHub github -> external(github, github.cloneUrl(), pluginName, externalSoFar);
+            // Understood and refused anyway, so it does not read as unrecognised: the two are
+            // different problems and only one of them is the operator's typo.
+            case PluginSource.Unsupported unsupported -> refuse(pluginName, unsupported.detail());
+            case PluginSource.GitHub shorthand ->
+                external(shorthand, shorthand.cloneUrl(shorthandBaseUrl), pluginName, externalSoFar);
             case PluginSource.GitUrl git -> external(git, git.url(), pluginName, externalSoFar);
             case PluginSource.GitSubdir subdir -> external(subdir, subdir.url(), pluginName, externalSoFar);
         };
