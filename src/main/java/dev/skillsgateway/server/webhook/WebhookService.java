@@ -18,6 +18,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,6 +88,99 @@ public class WebhookService {
             String state,
 
             @Schema(description = "Acting identity") String actor) {}
+
+    /**
+     * What the vetting chain concluded about a snapshot awaiting approval (GW_0160): counts,
+     * connector names and identifiers, and deliberately nothing else.
+     *
+     * <p>No finding message, rule id or location appears here. A webhook target is authorised by a
+     * URL scheme allowlist, not by an identity, and a finding's location is a path inside
+     * quarantined content while its message quotes what was found — so the event announces and
+     * {@code GET /api/snapshots/{id}/vetting} discloses, to an authenticated caller. The
+     * {@code snapshotId} and {@code runId} in the payload are what address that endpoint.
+     *
+     * <p>Every field is always present; {@code requiredMode = REQUIRED} says so on the wire, which
+     * is what gives a contract diff something to fail on when one is removed (#121).
+     */
+    @Schema(description = "Content-free summary of the vetting chain run a snapshot is waiting on")
+    public record VettingSummary(
+            @Schema(
+                    description = "Identifier of the chain run this event reports",
+                    requiredMode = Schema.RequiredMode.REQUIRED)
+            long runId,
+
+            @Schema(
+                    description = "The effective outcome, which is what gates approval: the run with every waived"
+                            + " finding removed. CLEAR means an approval will succeed; CLEAR_WITH_WAIVERS that it"
+                            + " will, and only because someone accepted a risk; BLOCKED that it will not.",
+                    allowableValues = {"CLEAR", "CLEAR_WITH_WAIVERS", "BLOCKED"},
+                    requiredMode = Schema.RequiredMode.REQUIRED)
+            String outcome,
+
+            @Schema(
+                    description = "What the connectors themselves concluded, before any waiver was applied",
+                    allowableValues = {"CLEAR", "BLOCKED"},
+                    requiredMode = Schema.RequiredMode.REQUIRED)
+            String recordedOutcome,
+
+            @Schema(
+                    description =
+                            "Names of the connectors that are the reason it blocks; empty when nothing" + " objects",
+                    requiredMode = Schema.RequiredMode.REQUIRED)
+            List<String> blockingConnectors,
+
+            @Schema(
+                    description = "How many blocking findings no active waiver covers",
+                    requiredMode = Schema.RequiredMode.REQUIRED)
+            int uncoveredFindings,
+
+            @Schema(
+                    description = "How many findings an active waiver is currently suppressing",
+                    requiredMode = Schema.RequiredMode.REQUIRED)
+            int waivedFindings) {
+
+        public VettingSummary {
+            blockingConnectors = blockingConnectors == null ? List.of() : List.copyOf(blockingConnectors);
+        }
+    }
+
+    /**
+     * The {@code snapshot.approval_pending} body (GW_0159, GW_0160): the seven fields every
+     * lifecycle event carries, in the same names and order as {@link EventPayload}, plus the
+     * vetting summary. Keeping the shared half identical is what makes the event free to adopt for
+     * a receiver already parsing another one — one unknown key, nothing else to change.
+     */
+    @Schema(description = "Payload of the approval-pending lifecycle event")
+    public record ApprovalPendingPayload(
+            @Schema(description = "Lifecycle event name", requiredMode = Schema.RequiredMode.REQUIRED)
+            String event,
+
+            @Schema(description = "Event time, ISO-8601", requiredMode = Schema.RequiredMode.REQUIRED)
+            String occurredAt,
+
+            @Schema(description = "Marketplace name", requiredMode = Schema.RequiredMode.REQUIRED)
+            String marketplace,
+
+            @Schema(description = "Snapshot id", requiredMode = Schema.RequiredMode.REQUIRED)
+            long snapshotId,
+
+            @Schema(
+                    description = "Upstream commit SHA the snapshot is pinned to",
+                    requiredMode = Schema.RequiredMode.REQUIRED)
+            String sha,
+
+            @Schema(
+                    description = "Snapshot state; always held for this event",
+                    requiredMode = Schema.RequiredMode.REQUIRED)
+            String state,
+
+            @Schema(description = "Acting identity", requiredMode = Schema.RequiredMode.REQUIRED)
+            String actor,
+
+            @Schema(
+                    description = "What the chain concluded about the snapshot being waited on",
+                    requiredMode = Schema.RequiredMode.REQUIRED)
+            VettingSummary vetting) {}
 
     /** The secret is stored recoverably because signing needs it, and is never read back over the API. */
     @Requirements({"GW_0024"})
@@ -204,24 +298,59 @@ public class WebhookService {
     @Requirements({"GW_0023"})
     public List<WebhookDelivery> emit(
             String event, String marketplace, long snapshotId, String sha, String state, String actor) {
+        return fanOut(
+                event,
+                () -> new EventPayload(event, Instant.now().toString(), marketplace, snapshotId, sha, state, actor));
+    }
+
+    /**
+     * The payload-rich emit (GW_0159, GW_0160): {@code snapshot.approval_pending} with the vetting
+     * summary a receiver triages on.
+     *
+     * <p>Typed to its payload rather than offered as a general {@code emit(String, Object)}. That is
+     * a security choice, not a style one: an {@code Object} payload is an open door for a later
+     * caller to hand the dispatcher something content-bearing, and keeping quarantined content off
+     * this wire is the one rule the event must never break.
+     */
+    @Requirements({"GW_0159", "GW_0160"})
+    public List<WebhookDelivery> emitApprovalPending(
+            String marketplace, long snapshotId, String sha, String state, String actor, VettingSummary vetting) {
+        return fanOut(
+                WebhookEvent.SNAPSHOT_APPROVAL_PENDING,
+                () -> new ApprovalPendingPayload(
+                        WebhookEvent.SNAPSHOT_APPROVAL_PENDING,
+                        Instant.now().toString(),
+                        marketplace,
+                        snapshotId,
+                        sha,
+                        state,
+                        actor,
+                        vetting));
+    }
+
+    /**
+     * The one fan-out: queue a delivery per enabled subscriber whose filter includes the event, and
+     * none for any other. The payload is built and serialized once, only when there is at least one
+     * receiver, so every retry of a delivery sends identical bytes.
+     */
+    private List<WebhookDelivery> fanOut(String event, Supplier<Object> payloadFactory) {
         List<WebhookSubscriber> subscribers = subscriberRepository.listEnabled().stream()
                 .filter(subscriber -> subscriber.subscribesTo(event))
                 .toList();
         if (subscribers.isEmpty()) {
             return List.of();
         }
-        String payload = serialize(
-                new EventPayload(event, Instant.now().toString(), marketplace, snapshotId, sha, state, actor));
+        String payload = serialize(event, payloadFactory.get());
         return subscribers.stream()
                 .map(subscriber -> deliveryRepository.enqueue(subscriber.id(), event, payload))
                 .toList();
     }
 
-    private String serialize(EventPayload payload) {
+    private String serialize(String event, Object payload) {
         try {
             return MAPPER.writeValueAsString(payload);
         } catch (JsonProcessingException e) {
-            log.error("webhook payload serialization failed for event {}", payload.event(), e);
+            log.error("webhook payload serialization failed for event {}", event, e);
             throw new IllegalStateException("webhook payload serialization failed", e);
         }
     }

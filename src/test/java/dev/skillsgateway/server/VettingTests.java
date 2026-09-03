@@ -426,6 +426,7 @@ class VettingTests extends AbstractGatewayTest {
                 storage,
                 auditLogger,
                 webhookService,
+                waiverService,
                 connectorToggleService,
                 properties);
     }
