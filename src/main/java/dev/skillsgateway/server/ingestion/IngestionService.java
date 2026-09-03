@@ -38,6 +38,8 @@ public class IngestionService {
     private final SnapshotRepository snapshotRepository;
     private final VettingService vettingService;
     private final ManifestPolicy manifestPolicy;
+    private final ExternalSourceResolver externalSourceResolver;
+    private final ManifestRewriter manifestRewriter;
 
     /**
      * One lock per marketplace: with sync modes (GW_0057, GW_0058) a manual ingest, a scheduler
@@ -56,11 +58,15 @@ public class IngestionService {
             SnapshotRepository snapshotRepository,
             VettingService vettingService,
             ManifestPolicy manifestPolicy,
+            ExternalSourceResolver externalSourceResolver,
+            ManifestRewriter manifestRewriter,
             GatewayMetrics metrics) {
         this.storage = storage;
         this.snapshotRepository = snapshotRepository;
         this.vettingService = vettingService;
         this.manifestPolicy = manifestPolicy;
+        this.externalSourceResolver = externalSourceResolver;
+        this.manifestRewriter = manifestRewriter;
         this.metrics = metrics;
     }
 
@@ -89,10 +95,17 @@ public class IngestionService {
         }
     }
 
-    @Requirements({"GW_0137"})
+    @Requirements({"GW_0137", "GW_0155", "GW_0156", "GW_0159"})
     private Snapshot ingestLocked(Marketplace marketplace, String actor) {
         try (Repository repo = storage.quarantine(marketplace.name())) {
-            ObjectId sha = fetchIncoming(repo, marketplace);
+            ObjectId upstream = fetchIncoming(repo, marketplace);
+            // The manifest is decided before anything is pinned, because which commit the snapshot
+            // *is* now depends on the answer: a manifest with resolved external sources is served
+            // as a composite, not as the upstream commit. The upstream commit stays reachable
+            // throughout via refs/quarantine/incoming, and permanently as the composite's parent,
+            // so nothing is unreachable at any point in between.
+            Served served = serve(repo, upstream);
+            ObjectId sha = served.sha();
             // Checked (GW_0137): the pin is what a later approval publishes from and what retention
             // treats as the snapshot's anchor. A refused pin that returned quietly would leave a
             // reviewable, approvable row whose objects only the transient staging reference holds.
@@ -101,7 +114,7 @@ public class IngestionService {
             if (existing.isPresent()) {
                 return existing.get();
             }
-            String violation = validateManifest(repo, sha);
+            String violation = served.violation();
             String state = violation == null ? Snapshot.HELD : Snapshot.REJECTED;
             Snapshot snapshot;
             try {
@@ -208,15 +221,59 @@ public class IngestionService {
                 .orElseThrow(() -> new IngestionException("cannot determine default branch of %s".formatted(url)));
     }
 
-    private String validateManifest(Repository repo, ObjectId sha) throws IOException {
+    /**
+     * Which commit this ingestion serves, and why it does not serve one.
+     *
+     * <p>GW_0159 in one type: a failure carries the upstream commit, so the attempt is recorded
+     * against reviewable content in the rejected state, and there is no third outcome in which some
+     * of a manifest resolved. GW_0152 follows from that rather than from a check somewhere —
+     * {@code violation != null} is what {@code ingestLocked} maps to rejected, and held is only
+     * reachable when the served commit's own manifest is entirely gateway-local.
+     */
+    private record Served(ObjectId sha, String violation) {}
+
+    /**
+     * Resolves and rewrites when the manifest declares external sources this gateway admits, and is
+     * otherwise byte-for-byte the path that shipped before: a local-only manifest is served as the
+     * upstream commit, with no composite, no fetch and no new reference.
+     */
+    @Requirements({"GW_0152", "GW_0155", "GW_0156", "GW_0159"})
+    private Served serve(Repository repo, ObjectId upstreamSha) throws IOException {
+        byte[] manifestBytes = manifestBytes(repo, upstreamSha);
+        if (manifestBytes == null) {
+            return new Served(upstreamSha, "missing " + MANIFEST_PATH);
+        }
+        ManifestPolicy.Evaluation evaluation = manifestPolicy.evaluate(manifestBytes);
+        if (evaluation.rejected()) {
+            return new Served(upstreamSha, evaluation.violation());
+        }
+        if (evaluation.admitted().isEmpty()) {
+            return new Served(upstreamSha, null);
+        }
+        ExternalSourceResolver.Resolution resolution = externalSourceResolver.resolve(repo, evaluation.admitted());
+        if (resolution.rejected()) {
+            return new Served(upstreamSha, resolution.violation());
+        }
+        List<ManifestRewriter.Graft> grafts = new java.util.ArrayList<>();
+        for (ExternalSourceResolver.Resolved resolved : resolution.resolved()) {
+            grafts.add(new ManifestRewriter.Graft(
+                    resolved.pluginName(), resolved.cloneUrl(), resolved.sha(), resolved.tree()));
+        }
+        try (RevWalk walk = new RevWalk(repo)) {
+            ManifestRewriter.Rewrite rewrite =
+                    manifestRewriter.rewrite(repo, walk.parseCommit(upstreamSha), List.copyOf(grafts));
+            if (rewrite.violation() != null) {
+                return new Served(upstreamSha, rewrite.violation());
+            }
+            return new Served(rewrite.commit(), null);
+        }
+    }
+
+    private static byte[] manifestBytes(Repository repo, ObjectId sha) throws IOException {
         try (RevWalk walk = new RevWalk(repo)) {
             RevCommit commit = walk.parseCommit(sha);
             try (TreeWalk tree = TreeWalk.forPath(repo, MANIFEST_PATH, commit.getTree())) {
-                if (tree == null) {
-                    return "missing " + MANIFEST_PATH;
-                }
-                byte[] bytes = repo.open(tree.getObjectId(0)).getBytes();
-                return manifestPolicy.validate(bytes);
+                return tree == null ? null : repo.open(tree.getObjectId(0)).getBytes();
             }
         }
     }
