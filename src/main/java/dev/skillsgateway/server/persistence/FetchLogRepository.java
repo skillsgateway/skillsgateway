@@ -254,7 +254,9 @@ public class FetchLogRepository {
             String marketplace,
 
             @Schema(description = "What happened") String event,
-            @Schema(description = "Served ref, for fetches") String ref,
+
+            @Schema(description = "For a fetch, the advertised ref the entry concerns (GW_0154); null when unknown")
+            String ref,
 
             @Schema(description = "Commit SHA, when the entry concerns one")
             String sha,
