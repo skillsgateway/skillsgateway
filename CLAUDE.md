@@ -45,6 +45,13 @@ generated annotation files.
 - Requirements live in `docs/reqstool/` (SSOT, `GW_*` / `SVC_GW_*`). Never state
   requirement text anywhere else; code carries `@Requirements`/`@SVCs`
   annotations (Java) or JSDoc tags (TypeScript).
+- **Always name a requirement alongside its id** in prose — commit messages, PR
+  bodies, issue comments, designs, chat — as `GW_0049 — Continuous re-vetting of
+  approved snapshots`, never a bare `GW_0049`. A reader should not have to open
+  `requirements.yml` to know what is being discussed. The *title* is the context;
+  the requirement's full wording still lives only in `docs/reqstool/`, so quote
+  the title and nothing more. This applies to prose only — `@Requirements` /
+  `@SVCs` annotations and reqstool YAML take bare ids, as their schemas require.
 - Never weaken or delete an existing SVC test to make a change pass.
 - Container-backed tests use **Arconia Dev Services** whenever one exists for the
   dependency. This project uses two: `arconia-dev-services-postgresql` (automatic
