@@ -15,7 +15,7 @@ Every setting the gateway reads, with its default and what consumes it.
 | [`skills-gateway.sync.*`](#upstream-sync) | Upstream sync: the polling sweep's schedule and batch, and the inbound webhook body bound. | No — all defaulted. |
 | [`skills-gateway.catalog.*`](#virtual-catalog) | The global virtual catalog and its reserved name. | No — all defaulted. |
 | [`skills-gateway.tokens.*`](#access-tokens) | Access-token policy: the maximum lifetime creation accepts. | No — defaulted (unlimited). |
-| [`skills-gateway.roles.*`](#delegated-administration) | Role enforcement and the bootstrap admins. **Off by default.** | No — all defaulted. |
+| [`skills-gateway.roles.*`](#delegated-administration) | The administrators and claim mappings the gateway derives roles from. **Enforcement is always on.** | **Yes** — a deployment that names no administrator refuses to start. |
 | [`skills-gateway.estate.*`](#declarative-estate) | The declared estate: marketplaces, role grants, webhook subscribers, audit sinks — reconciled at startup and on demand. **Empty by default.** | No — empty by default. |
 | [`spring.datasource.*`](#datasource) | PostgreSQL connection. Supplied entirely by environment. | **Yes** |
 | [`spring.security.oauth2.client.*`](#oidc-login) | OIDC login for the web surface. | **Yes** |
@@ -934,13 +934,27 @@ Scopes, expiry, and rotation are described in
 Role enforcement for the web surface (GW_0068, GW_0071). Java-side defaults;
 nothing appears in `application.yaml`.
 
+Enforcement is **unconditional** (GW_0138): every mutation and the ledger
+surface need a role, in every deployment. There is nothing to switch on.
+
+!!! warning "`skills-gateway.roles.enabled` was removed, and setting it refuses startup"
+
+    It used to switch enforcement off, and defaulted to off. A gateway that
+    was installed and left alone therefore granted full administrative access
+    to anyone who could complete a login. Enforcement is now unconditional, so
+    the property has nothing to turn on or off — and it is **refused rather
+    than ignored**, under any spelling the framework would resolve
+    (`SKILLSGATEWAY_ROLES_ENABLED` included). Quietly doing the opposite of
+    what a manifest says is not something an operator can see from inside the
+    deployment.
+
+    Remove the property. The refusal is a migration aid and is scheduled for
+    removal at the next major version — see
+    [Compatibility and allowlists](compatibility.md).
+
 ```yaml
 skills-gateway:
   roles:
-    # Off by default: every authorization check passes and an upgrade never
-    # locks anyone out. Once true, enforcement is deny-by-default: every
-    # mutation and the ledger surface need a role.
-    enabled: true
     # Admins by configuration: effective without a grant row and unrevocable
     # through the API — the escape hatch that survives a bad grant edit.
     admins:
@@ -961,10 +975,38 @@ skills-gateway:
 
 | Property | Type | Default | Notes |
 | --- | --- | --- | --- |
-| `skills-gateway.roles.admins` | list | empty | Principals that hold the admin role by configuration; no API call can revoke them. Naming an administrator here, in `roles.mappings`, or in `estate.grants` is required — authorization is always enforced, and a gateway that names none refuses to start. |
-| `skills-gateway.roles.admins` | list of strings | `[]` | Principals that are admins by configuration; DB grants add to them. |
+| `skills-gateway.roles.admins` | list of strings | `[]` | Principals that hold the admin role by configuration, matched exactly against the authenticated principal name. Effective without a grant row, and no API call can revoke them. Stored grants and claim-derived roles add to this list; they never replace it. |
 | `skills-gateway.roles.claim` | string | `groups` | Claim carrying membership. A dotted path walks nested claims (`realm_access.roles`). |
 | `skills-gateway.roles.mappings` | list | `[]` | Claim value → role. `approver` names a marketplace; `admin` and `auditor` must not. |
+
+Naming an administrator in `roles.admins`, in `roles.mappings`, or in
+`estate.grants` is **required**: enforcement is unconditional, so a gateway
+that names none could not be administered once it started, and it refuses to
+start instead. A grant made through the API does not satisfy the check —
+it is revocable through the API, so it says nothing about the *next* start.
+
+### `admins` or `mappings`?
+
+Both name administrators, and neither replaces the other.
+
+| | `roles.admins` | `roles.mappings` |
+| --- | --- | --- |
+| Matches on | the authenticated **principal name**, exactly | a **claim value** the provider emits, exactly |
+| Granularity | individuals only — a group name is not a principal name and would match nobody | whatever the claim carries, so typically a whole group or app role at once |
+| Roles it can confer | `admin` only | `admin`, `auditor`, and `approver` scoped to one marketplace |
+| Changing who holds it | edit configuration, restart | change directory membership; no gateway change |
+| `/api/me` source | `config` | `claim` |
+| Survives a directory outage, an unassigned role or a wrong claim name | yes | no |
+
+Prefer `mappings` for everyone whose access the directory already governs —
+the joiner/mover/leaver process then governs gateway access too, and there is
+no second list to keep in step. Keep at least one entry in `admins` regardless:
+it needs no group, no token and no directory, and it is what gets you back in
+when a group is renamed, a claim stops being emitted or a mapping is wrong.
+
+The third source, a row in the grants API, is described in
+[Delegated administration](../guides/delegated-administration.md); a session's
+effective roles are the union of all three.
 
 Claim values are matched **exactly**, after trimming surrounding whitespace: no
 prefix, glob or case-insensitive matching, because a looser match can only ever
