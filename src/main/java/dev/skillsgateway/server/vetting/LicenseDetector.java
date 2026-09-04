@@ -90,16 +90,22 @@ final class LicenseDetector {
         }
     }
 
+    /**
+     * The only paths that can carry a license declaration: the manifest, and license-shaped files.
+     * Declared to the walk rather than tested inside the visitor so that the rest of the tree — all
+     * of it, for the sake of two file kinds — is never inflated (GW_0162).
+     */
+    private static boolean declaresLicense(String path) {
+        return MANIFEST_PATH.equals(path) || LICENSE_FILE.matcher(path).find();
+    }
+
     /** Every license detection in the snapshot, in tree order; empty means no license information. */
     @Requirements({"GW_0093"})
     static List<Detection> detect(SnapshotUnderVetting snapshot) throws IOException {
         List<Detection> detections = new ArrayList<>();
-        snapshot.walk((path, content) -> {
+        snapshot.walk(LicenseDetector::declaresLicense, (path, content) -> {
             if (MANIFEST_PATH.equals(path)) {
                 detections.addAll(manifestDetections(path, content));
-                return;
-            }
-            if (!LICENSE_FILE.matcher(path).find()) {
                 return;
             }
             // An oversized or binary license file identifies nothing — explicitly unknown, never

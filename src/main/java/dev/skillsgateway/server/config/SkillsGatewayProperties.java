@@ -46,7 +46,7 @@ public record SkillsGatewayProperties(
             retention = new Retention(null, null, null, null, null, null);
         }
         if (vetting == null) {
-            vetting = new Vetting(null, null, null, null, null, null, null);
+            vetting = new Vetting(null, null, null, null, null, null, null, null);
         }
         if (approval == null) {
             approval = new Approval(null);
@@ -642,6 +642,11 @@ public record SkillsGatewayProperties(
      *     error, which blocks; a wedged connector must never wedge ingestion
      * @param maxFileBytes files larger than this are handed to connectors as unread, and reported
      *     as an informational finding rather than skipped in silence
+     * @param contentCacheBytes how much of a snapshot's content one chain run may hold so that the
+     *     connectors after the first read it instead of inflating it again (GW_0162). Past it
+     *     content is re-read rather than kept, so this is a speed setting and never a coverage
+     *     one. It is bounded rather than unlimited because the content is an upstream repository
+     *     the gateway does not control.
      * @param waiverSweepInterval how often lapsed waivers are noted in the ledger (GW_0048). This
      *     knob cannot open a hole: a waiver stops suppressing its finding the moment the effective
      *     outcome is next computed, whether or not the sweep has run, so the interval only decides
@@ -658,6 +663,7 @@ public record SkillsGatewayProperties(
     public record Vetting(
             Duration timeout,
             Long maxFileBytes,
+            Long contentCacheBytes,
             Duration waiverSweepInterval,
             Integer waiverSweepBatchSize,
             Duration minimumReleaseAge,
@@ -673,6 +679,9 @@ public record SkillsGatewayProperties(
             }
             if (maxFileBytes == null || maxFileBytes <= 0) {
                 maxFileBytes = 1024L * 1024L;
+            }
+            if (contentCacheBytes == null || contentCacheBytes <= 0) {
+                contentCacheBytes = 32L * 1024L * 1024L;
             }
             if (waiverSweepInterval == null) {
                 waiverSweepInterval = Duration.ofHours(1);

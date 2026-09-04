@@ -112,10 +112,7 @@ public class PromptInjectionConnector implements VettingConnector {
         List<Finding> findings = new ArrayList<>();
         int[] counts = new int[2]; // {scanned, skipped}
         try {
-            snapshot.walk((path, content) -> {
-                if (!instructionContent(path)) {
-                    return;
-                }
+            snapshot.walk(PromptInjectionConnector::instructionContent, (path, content) -> {
                 if (content == null) {
                     counts[1]++;
                     findings.add(new Finding(

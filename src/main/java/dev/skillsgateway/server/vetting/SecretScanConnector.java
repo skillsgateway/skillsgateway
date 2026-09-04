@@ -92,6 +92,8 @@ public class SecretScanConnector implements VettingConnector {
         List<Finding> findings = new ArrayList<>();
         int[] counts = new int[2]; // {scanned, skipped}
         try {
+            // No path selection: a credential is as likely in a script or a config file as in
+            // prose, so this connector is the one that genuinely wants the whole tree.
             snapshot.walk((path, content) -> {
                 if (content == null) {
                     counts[1]++;

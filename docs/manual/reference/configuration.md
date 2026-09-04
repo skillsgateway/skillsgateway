@@ -443,6 +443,12 @@ skills-gateway:
     # as an informational 'file-not-scanned' finding, never skipped in silence.
     max-file-bytes: 1048576
 
+    # How much of a snapshot's content one chain run may hold so that the
+    # connectors after the first read it instead of inflating it again. Past
+    # this, content is re-read rather than kept: a snapshot larger than the
+    # bound costs speed, never coverage.
+    content-cache-bytes: 33554432
+
     # How often lapsed waivers are noted in the audit ledger. This cannot open a
     # hole: a waiver stops suppressing its finding the moment the effective
     # outcome is next computed, whether or not this sweep has run.
@@ -470,6 +476,7 @@ skills-gateway:
 | --- | --- | --- | --- |
 | `skills-gateway.vetting.timeout` | duration | `30s` | Per connector, per run. Exceeding it is an `ERROR` verdict, which blocks. |
 | `skills-gateway.vetting.max-file-bytes` | integer | `1048576` | Zero or negative falls back to the default. |
+| `skills-gateway.vetting.content-cache-bytes` | integer | `33554432` | Content one chain run may retain for reuse across its connectors. Zero or negative falls back to the default. |
 | `skills-gateway.vetting.waiver-sweep-interval` | duration | `1h` | How often `waiver-expired` ledger entries are written. Has no effect on the gate. |
 | `skills-gateway.vetting.waiver-sweep-batch-size` | integer | `200` | Lapsed waivers recorded per pass. |
 | `skills-gateway.vetting.minimum-release-age` | duration | `0s` | How long the gateway must have held a commit before it may be approved. `0` disables the gate. |

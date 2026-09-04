@@ -1798,3 +1798,18 @@ cases:
       and no resolved external content is reachable from any snapshot, and clients still
       receive the previously approved snapshot
     revision: "0.1.0"
+
+  - id: SVC_GW_0162
+    requirement_ids: ["GW_0162"]
+    title: A chain run reads each selected blob once and never opens an unselected one
+    verification: automated-test
+    description: |
+      GIVEN a quarantined snapshot holding a file inside a connector's declared path
+      selection, a file outside it, a file over the per-file size cap, and content
+      larger than the configured per-run retention bound
+      WHEN connectors walk the snapshot with their declared selections
+      THEN the file outside the selection is never opened, a file two walks select is
+      inflated once and served from the retained content on the second walk, the file
+      over the per-file cap is still visited as unread, and content beyond the retention
+      bound is still served in full on every walk
+    revision: "0.1.0"

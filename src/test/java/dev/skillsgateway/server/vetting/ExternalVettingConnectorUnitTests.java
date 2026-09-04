@@ -268,9 +268,11 @@ class ExternalVettingConnectorUnitTests {
             }
 
             @Override
-            public void walk(FileVisitor visitor) {
+            public void walk(java.util.function.Predicate<String> wanted, FileVisitor visitor) {
                 for (Map.Entry<String, String> file : files.entrySet()) {
-                    visitor.visit(file.getKey(), file.getValue().getBytes(StandardCharsets.UTF_8));
+                    if (wanted.test(file.getKey())) {
+                        visitor.visit(file.getKey(), file.getValue().getBytes(StandardCharsets.UTF_8));
+                    }
                 }
             }
         };
@@ -294,8 +296,10 @@ class ExternalVettingConnectorUnitTests {
             }
 
             @Override
-            public void walk(FileVisitor visitor) {
-                visitor.visit(path, content);
+            public void walk(java.util.function.Predicate<String> wanted, FileVisitor visitor) {
+                if (wanted.test(path)) {
+                    visitor.visit(path, content);
+                }
             }
         };
     }

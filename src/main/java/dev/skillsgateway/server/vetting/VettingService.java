@@ -241,7 +241,12 @@ public class VettingService {
 
     private QuarantineSnapshot open(Snapshot snapshot, String marketplace) throws java.io.IOException {
         return new QuarantineSnapshot(
-                snapshot.id(), marketplace, snapshot.sha(), properties.maxFileBytes(), storage.quarantine(marketplace));
+                snapshot.id(),
+                marketplace,
+                snapshot.sha(),
+                properties.maxFileBytes(),
+                properties.contentCacheBytes(),
+                storage.quarantine(marketplace));
     }
 
     /**
