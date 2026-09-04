@@ -42,22 +42,19 @@ An approver grant must name a marketplace that exists; admin and auditor grants
 must not name one. See the [roles API reference](../reference/api/roles.md) for
 the full contract.
 
-!!! note "Inert until enabled"
-
-    While enforcement is disabled, grants are data with no effect — and any
-    session can write them. That is deliberate: flipping the switch is a
-    configuration decision, made by whoever controls deployment, which is
-    strictly more privileged than any API caller.
-
 ## Step 2 — name at least one bootstrap admin
 
 ```yaml
 skills-gateway:
   roles:
-    enabled: true
     admins:
       - admin@example.com
 ```
+
+Entries are matched exactly against the authenticated principal name, so this
+list names **individuals**. A group name or object id is not a principal name
+and would match nobody; groups reach the gateway through
+[claim mappings](identity-providers.md#groups-instead-of-grants) instead.
 
 Principals in `skills-gateway.roles.admins` are admins **by configuration**:
 they need no grant row, they appear on their own `/api/me` as a synthetic
@@ -65,9 +62,10 @@ they need no grant row, they appear on their own `/api/me` as a synthetic
 survives any bad grant edit. Admins granted through the API work exactly as
 well — the configuration list is the one you cannot lose.
 
-## Step 3 — enable and verify
+## Step 3 — verify
 
-Restart with the configuration above. Then verify from a browser session:
+Restart so the configuration above is read — there is no enforcement switch to
+flip, only the administrators it names. Then verify from a browser session:
 
 - `GET /api/me` reports your effective roles and where each came from.
 - A session with no role gets **403** from every mutation and from the ledger,

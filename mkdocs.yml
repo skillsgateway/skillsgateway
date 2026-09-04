@@ -129,6 +129,7 @@ nav:
       - Policy deny rules: guides/policy-rules.md
       - Choosing and migrating the storage backend: guides/storage-backends.md
       - Deploying on Kubernetes: guides/deploying-on-kubernetes.md
+      - Deploying without Kubernetes: guides/deploying-without-kubernetes.md
       - Cutting a release: guides/releasing.md
   - Reference:
       - Configuration: reference/configuration.md
