@@ -607,6 +607,8 @@
       
         
       
+        
+      
     
     
     
@@ -1144,10 +1146,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-3-enable-and-verify" class="md-nav__link">
+  <a href="#step-3-verify" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 3 — enable and verify
+        Step 3 — verify
       
     </span>
   </a>
@@ -1323,6 +1325,34 @@
     
   
     Deploying on Kubernetes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deploying-without-kubernetes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploying without Kubernetes
   
 
     
@@ -2016,10 +2046,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-3-enable-and-verify" class="md-nav__link">
+  <a href="#step-3-verify" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 3 — enable and verify
+        Step 3 — verify
       
     </span>
   </a>
@@ -2138,27 +2168,24 @@ to start without:</p>
 <p>An approver grant must name a marketplace that exists; admin and auditor grants
 must not name one. See the <a href="../../reference/api/roles/">roles API reference</a> for
 the full contract.</p>
-<div class="admonition note">
-<p class="admonition-title">Inert until enabled</p>
-<p>While enforcement is disabled, grants are data with no effect — and any
-session can write them. That is deliberate: flipping the switch is a
-configuration decision, made by whoever controls deployment, which is
-strictly more privileged than any API caller.</p>
-</div>
 <h2 id="step-2-name-at-least-one-bootstrap-admin">Step 2 — name at least one bootstrap admin<a class="headerlink" href="#step-2-name-at-least-one-bootstrap-admin" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">roles</span><span class="p">:</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="nt">admins</span><span class="p">:</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin@example.com</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">admins</span><span class="p">:</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin@example.com</span>
 </code></pre></div>
+<p>Entries are matched exactly against the authenticated principal name, so this
+list names <strong>individuals</strong>. A group name or object id is not a principal name
+and would match nobody; groups reach the gateway through
+<a href="../identity-providers/#groups-instead-of-grants">claim mappings</a> instead.</p>
 <p>Principals in <code>skills-gateway.roles.admins</code> are admins <strong>by configuration</strong>:
 they need no grant row, they appear on their own <code>/api/me</code> as a synthetic
 <code>admin</code> role, and no API call can revoke them. This is the escape hatch that
 survives any bad grant edit. Admins granted through the API work exactly as
 well — the configuration list is the one you cannot lose.</p>
-<h2 id="step-3-enable-and-verify">Step 3 — enable and verify<a class="headerlink" href="#step-3-enable-and-verify" title="Permanent link">&para;</a></h2>
-<p>Restart with the configuration above. Then verify from a browser session:</p>
+<h2 id="step-3-verify">Step 3 — verify<a class="headerlink" href="#step-3-verify" title="Permanent link">&para;</a></h2>
+<p>Restart so the configuration above is read — there is no enforcement switch to
+flip, only the administrators it names. Then verify from a browser session:</p>
 <ul>
 <li><code>GET /api/me</code> reports your effective roles and where each came from.</li>
 <li>A session with no role gets <strong>403</strong> from every mutation and from the ledger,

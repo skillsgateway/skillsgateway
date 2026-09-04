@@ -607,6 +607,8 @@
       
         
       
+        
+      
     
     
     
@@ -1162,10 +1164,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#dry-run-before-you-enforce" class="md-nav__link">
+  <a href="#check-the-mapping-before-you-rely-on-it" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Dry-run before you enforce
+        Check the mapping before you rely on it
       
     </span>
   </a>
@@ -1401,6 +1403,34 @@
     
   
     Deploying on Kubernetes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deploying-without-kubernetes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploying without Kubernetes
   
 
     
@@ -2084,10 +2114,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#dry-run-before-you-enforce" class="md-nav__link">
+  <a href="#check-the-mapping-before-you-rely-on-it" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Dry-run before you enforce
+        Check the mapping before you rely on it
       
     </span>
   </a>
@@ -2319,24 +2349,22 @@ knows three roles and, by default, two sources of them: the
 is the provider's own claims:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">roles</span><span class="p">:</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="nt">admins</span><span class="p">:</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">break-glass@example.com</span><span class="w">     </span><span class="c1"># keep this; see below</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">claim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">groups</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="nt">mappings</span><span class="p">:</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8f1c0a2e-0000-0000-0000-000000000000</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gateway-approvers-acme</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">approver</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">        </span><span class="nt">marketplace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">acme</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">security-auditors</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auditor</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">admins</span><span class="p">:</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">break-glass@example.com</span><span class="w">     </span><span class="c1"># an individual, not a group; see below</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="nt">claim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">groups</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">mappings</span><span class="p">:</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8f1c0a2e-0000-0000-0000-000000000000</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gateway-approvers-acme</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">approver</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">        </span><span class="nt">marketplace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">acme</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">security-auditors</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auditor</span>
 </code></pre></div>
 <p>A session's effective roles are the <strong>union</strong> of all three sources. Everything
-else about the role model is unchanged: enforcement is still deny-by-default
-once enabled, an approver is still confined to one marketplace including
-through bare snapshot and waiver ids, and an auditor still cannot mutate
-anything.</p>
+else about the role model is unchanged: enforcement is deny-by-default, an
+approver is still confined to one marketplace including through bare snapshot
+and waiver ids, and an auditor still cannot mutate anything.</p>
 <p>Three properties of the matching are worth knowing before you write mappings:</p>
 <ul>
 <li><strong><code>claim-value</code> is the provider's string, not a gateway role name.</strong> On an
@@ -2361,11 +2389,14 @@ endpoint.</p>
 is what gets you back in when a group is renamed, a claim stops being
 emitted, or a mapping is wrong.</p>
 </div>
-<h3 id="dry-run-before-you-enforce">Dry-run before you enforce<a class="headerlink" href="#dry-run-before-you-enforce" title="Permanent link">&para;</a></h3>
-<p>Configure the mappings before the gateway's first start.
-Nothing is enforced, but <code>/api/me</code> already reports what each session <em>would</em>
-hold — so you can confirm the claim arrives and the values match before the
-switch flips.</p>
+<h3 id="check-the-mapping-before-you-rely-on-it">Check the mapping before you rely on it<a class="headerlink" href="#check-the-mapping-before-you-rely-on-it" title="Permanent link">&para;</a></h3>
+<p>Enforcement is unconditional, so there is no unenforced window to rehearse in —
+configure the mappings and the break-glass admin together, before the gateway's
+first start. Then log in and read <code>GET /api/me</code>: it reports every effective
+role and its source, so a mapping that produces <code>claim</code> roles is confirmed
+working, and one that produces none tells you the claim did not arrive or the
+values do not match. The configuration admin is what keeps that a diagnosis
+rather than a lockout.</p>
 <h3 id="nested-claims">Nested claims<a class="headerlink" href="#nested-claims" title="Permanent link">&para;</a></h3>
 <p>Some providers nest membership. A dotted <code>claim</code> walks the path:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>

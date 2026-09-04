@@ -605,6 +605,8 @@
       
         
       
+        
+      
     
     
     
@@ -1217,6 +1219,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/deploying-without-kubernetes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploying without Kubernetes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/releasing/" class="md-nav__link">
         
   
@@ -1598,6 +1628,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Delegated administration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#admins-or-mappings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        admins or mappings?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2418,6 +2465,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Delegated administration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#admins-or-mappings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        admins or mappings?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2587,8 +2651,8 @@
 </tr>
 <tr>
 <td><a href="#delegated-administration"><code>skills-gateway.roles.*</code></a></td>
-<td>Role enforcement and the bootstrap admins. <strong>Off by default.</strong></td>
-<td>No — all defaulted.</td>
+<td>The administrators and claim mappings the gateway derives roles from. <strong>Enforcement is always on.</strong></td>
+<td><strong>Yes</strong> — a deployment that names no administrator refuses to start.</td>
 </tr>
 <tr>
 <td><a href="#declarative-estate"><code>skills-gateway.estate.*</code></a></td>
@@ -4062,28 +4126,40 @@ unset <code>max-ttl</code> is exactly what it was.</p>
 <h2 id="delegated-administration">Delegated administration<a class="headerlink" href="#delegated-administration" title="Permanent link">&para;</a></h2>
 <p>Role enforcement for the web surface (GW_0068, GW_0071). Java-side defaults;
 nothing appears in <code>application.yaml</code>.</p>
+<p>Enforcement is <strong>unconditional</strong> (GW_0138): every mutation and the ledger
+surface need a role, in every deployment. There is nothing to switch on.</p>
+<div class="admonition warning">
+<p class="admonition-title"><code>skills-gateway.roles.enabled</code> was removed, and setting it refuses startup</p>
+<p>It used to switch enforcement off, and defaulted to off. A gateway that
+was installed and left alone therefore granted full administrative access
+to anyone who could complete a login. Enforcement is now unconditional, so
+the property has nothing to turn on or off — and it is <strong>refused rather
+than ignored</strong>, under any spelling the framework would resolve
+(<code>SKILLSGATEWAY_ROLES_ENABLED</code> included). Quietly doing the opposite of
+what a manifest says is not something an operator can see from inside the
+deployment.</p>
+<p>Remove the property. The refusal is a migration aid and is scheduled for
+removal at the next major version — see
+<a href="../compatibility/">Compatibility and allowlists</a>.</p>
+</div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">roles</span><span class="p">:</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span><span class="c1"># Off by default: every authorization check passes and an upgrade never</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span><span class="c1"># locks anyone out. Once true, enforcement is deny-by-default: every</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span><span class="c1"># mutation and the ledger surface need a role.</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">    </span><span class="c1"># Admins by configuration: effective without a grant row and unrevocable</span>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">    </span><span class="c1"># through the API — the escape hatch that survives a bad grant edit.</span>
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="w">    </span><span class="nt">admins</span><span class="p">:</span>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin@example.com</span>
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">    </span><span class="c1"># Roles from the identity provider's own claims (GW_0098). The claim name</span>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="w">    </span><span class="c1"># and every value are yours: on a shared app registration the values are</span>
-<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="w">    </span><span class="c1"># the organisation's group ids or app-role values, not gateway role names.</span>
-<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="w">    </span><span class="nt">claim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">groups</span>
-<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="w">    </span><span class="nt">mappings</span><span class="p">:</span>
-<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8f1c0a2e-0000-0000-0000-000000000000</span>
-<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin</span>
-<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gateway-approvers-acme</span>
-<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">approver</span>
-<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="w">        </span><span class="nt">marketplace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">acme</span>
-<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">security-auditors</span>
-<a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auditor</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span><span class="c1"># Admins by configuration: effective without a grant row and unrevocable</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span><span class="c1"># through the API — the escape hatch that survives a bad grant edit.</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span><span class="nt">admins</span><span class="p">:</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin@example.com</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">    </span><span class="c1"># Roles from the identity provider's own claims (GW_0098). The claim name</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">    </span><span class="c1"># and every value are yours: on a shared app registration the values are</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="w">    </span><span class="c1"># the organisation's group ids or app-role values, not gateway role names.</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">    </span><span class="nt">claim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">groups</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">    </span><span class="nt">mappings</span><span class="p">:</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8f1c0a2e-0000-0000-0000-000000000000</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gateway-approvers-acme</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">approver</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="w">        </span><span class="nt">marketplace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">acme</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">security-auditors</span>
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auditor</span>
 </code></pre></div>
 <table>
 <thead>
@@ -4097,15 +4173,9 @@ nothing appears in <code>application.yaml</code>.</p>
 <tbody>
 <tr>
 <td><code>skills-gateway.roles.admins</code></td>
-<td>list</td>
-<td>empty</td>
-<td>Principals that hold the admin role by configuration; no API call can revoke them. Naming an administrator here, in <code>roles.mappings</code>, or in <code>estate.grants</code> is required — authorization is always enforced, and a gateway that names none refuses to start.</td>
-</tr>
-<tr>
-<td><code>skills-gateway.roles.admins</code></td>
 <td>list of strings</td>
 <td><code>[]</code></td>
-<td>Principals that are admins by configuration; DB grants add to them.</td>
+<td>Principals that hold the admin role by configuration, matched exactly against the authenticated principal name. Effective without a grant row, and no API call can revoke them. Stored grants and claim-derived roles add to this list; they never replace it.</td>
 </tr>
 <tr>
 <td><code>skills-gateway.roles.claim</code></td>
@@ -4121,6 +4191,62 @@ nothing appears in <code>application.yaml</code>.</p>
 </tr>
 </tbody>
 </table>
+<p>Naming an administrator in <code>roles.admins</code>, in <code>roles.mappings</code>, or in
+<code>estate.grants</code> is <strong>required</strong>: enforcement is unconditional, so a gateway
+that names none could not be administered once it started, and it refuses to
+start instead. A grant made through the API does not satisfy the check —
+it is revocable through the API, so it says nothing about the <em>next</em> start.</p>
+<h3 id="admins-or-mappings"><code>admins</code> or <code>mappings</code>?<a class="headerlink" href="#admins-or-mappings" title="Permanent link">&para;</a></h3>
+<p>Both name administrators, and neither replaces the other.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><code>roles.admins</code></th>
+<th><code>roles.mappings</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Matches on</td>
+<td>the authenticated <strong>principal name</strong>, exactly</td>
+<td>a <strong>claim value</strong> the provider emits, exactly</td>
+</tr>
+<tr>
+<td>Granularity</td>
+<td>individuals only — a group name is not a principal name and would match nobody</td>
+<td>whatever the claim carries, so typically a whole group or app role at once</td>
+</tr>
+<tr>
+<td>Roles it can confer</td>
+<td><code>admin</code> only</td>
+<td><code>admin</code>, <code>auditor</code>, and <code>approver</code> scoped to one marketplace</td>
+</tr>
+<tr>
+<td>Changing who holds it</td>
+<td>edit configuration, restart</td>
+<td>change directory membership; no gateway change</td>
+</tr>
+<tr>
+<td><code>/api/me</code> source</td>
+<td><code>config</code></td>
+<td><code>claim</code></td>
+</tr>
+<tr>
+<td>Survives a directory outage, an unassigned role or a wrong claim name</td>
+<td>yes</td>
+<td>no</td>
+</tr>
+</tbody>
+</table>
+<p>Prefer <code>mappings</code> for everyone whose access the directory already governs —
+the joiner/mover/leaver process then governs gateway access too, and there is
+no second list to keep in step. Keep at least one entry in <code>admins</code> regardless:
+it needs no group, no token and no directory, and it is what gets you back in
+when a group is renamed, a claim stops being emitted or a mapping is wrong.</p>
+<p>The third source, a row in the grants API, is described in
+<a href="../../guides/delegated-administration/">Delegated administration</a>; a session's
+effective roles are the union of all three.</p>
 <p>Claim values are matched <strong>exactly</strong>, after trimming surrounding whitespace: no
 prefix, glob or case-insensitive matching, because a looser match can only ever
 widen who is privileged. The claim may be a list of strings or a single string;

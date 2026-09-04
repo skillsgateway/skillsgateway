@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/dev/guides/policy-rules/">
+        <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/dev/guides/deploying-without-kubernetes/">
       
       
-        <link rel="prev" href="../declarative-estate/">
+        <link rel="prev" href="../deploying-on-kubernetes/">
       
       
-        <link rel="next" href="../storage-backends/">
+        <link rel="next" href="../releasing/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Policy deny rules - Skills Gateway</title>
+        <title>Deploying without Kubernetes - Skills Gateway</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#policy-deny-rules" class="md-skip">
+        <a href="#deploying-without-kubernetes" class="md-skip">
           Skip to content
         </a>
       
@@ -119,7 +119,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Policy deny rules
+              Deploying without Kubernetes
             
           </span>
         </div>
@@ -1134,37 +1134,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Policy deny rules
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../policy-rules/" class="md-nav__link">
         
   
   
@@ -1180,103 +1153,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#the-evaluation-variables" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The evaluation variables
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Examples
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#fail-closed-by-design" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fail-closed, by design
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#test-before-you-enforce-the-playground" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Test before you enforce: the playground
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-lands-in-the-ledger" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What lands in the ledger
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#declaring-rules-as-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Declaring rules as configuration
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#reading-further" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reading further
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1342,10 +1218,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../deploying-without-kubernetes/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploying without Kubernetes
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1361,6 +1264,142 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-minimum-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The minimum environment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-behind-a-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running behind a proxy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#property-names-as-environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Property names as environment variables
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Property names as environment variables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lists" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lists
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supplying-a-configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supplying a configuration file
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#health-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Health checks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-worked-example-plain-docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A worked example: plain Docker
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#egress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Egress
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -2013,10 +2052,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-evaluation-variables" class="md-nav__link">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The evaluation variables
+        Prerequisites
       
     </span>
   </a>
@@ -2024,10 +2063,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#examples" class="md-nav__link">
+  <a href="#the-minimum-environment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Examples
+        The minimum environment
       
     </span>
   </a>
@@ -2035,10 +2074,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#fail-closed-by-design" class="md-nav__link">
+  <a href="#running-behind-a-proxy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fail-closed, by design
+        Running behind a proxy
       
     </span>
   </a>
@@ -2046,10 +2085,38 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#test-before-you-enforce-the-playground" class="md-nav__link">
+  <a href="#property-names-as-environment-variables" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Test before you enforce: the playground
+        Property names as environment variables
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Property names as environment variables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lists" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lists
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supplying-a-configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supplying a configuration file
       
     </span>
   </a>
@@ -2057,10 +2124,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-lands-in-the-ledger" class="md-nav__link">
+  <a href="#storage" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What lands in the ledger
+        Storage
       
     </span>
   </a>
@@ -2068,10 +2135,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#declaring-rules-as-configuration" class="md-nav__link">
+  <a href="#health-checks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Declaring rules as configuration
+        Health checks
       
     </span>
   </a>
@@ -2079,10 +2146,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#reading-further" class="md-nav__link">
+  <a href="#a-worked-example-plain-docker" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Reading further
+        A worked example: plain Docker
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#egress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Egress
       
     </span>
   </a>
@@ -2106,7 +2184,7 @@
 
 
   
-    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/guides/policy-rules.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/guides/deploying-without-kubernetes.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -2114,194 +2192,298 @@
   
 
 
-<h1 id="policy-deny-rules">Policy deny rules<a class="headerlink" href="#policy-deny-rules" title="Permanent link">&para;</a></h1>
-<p>A policy rule is an organizational prohibition as data: a named
-<a href="https://cel.dev">CEL</a> expression over a snapshot's facts, evaluated at the
-moment an approval is requested. If any enabled rule <strong>matches</strong>, the approval
-is refused; the snapshot stays held and nothing is published. Rules tighten
-the human approval gate — they never open it: there is no auto-approval, and a
-policy denial has no per-snapshot override.</p>
+<h1 id="deploying-without-kubernetes">Deploying without Kubernetes<a class="headerlink" href="#deploying-without-kubernetes" title="Permanent link">&para;</a></h1>
+<p>The Helm chart is a convenience, not a requirement. The image is an ordinary
+Spring Boot application, so every setting it reads can be supplied as an
+environment variable, and anything awkward to express that way can be supplied
+as a configuration file the application is told to read. That is enough to run
+it on plain Docker, on a container platform such as ECS or Cloud Run, on Nomad,
+or from a systemd unit.</p>
+<p>This guide is the environment-only contract: what must be set, how property
+names map to variable names, how to supply the settings that are nested lists,
+and what the image's shape forces you to do differently.</p>
+<p>For Kubernetes, use <a href="../deploying-on-kubernetes/">Deploying on Kubernetes</a>
+instead — the chart already does everything below.</p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A PostgreSQL database</td>
+<td>Snapshots, the audit ledger, tokens and grants live there. Nothing here creates one.</td>
+</tr>
+<tr>
+<td>An OIDC client</td>
+<td>The whole web surface authenticates with OIDC. Client id, client secret and the three endpoint URIs — see <a href="../identity-providers/">Identity providers</a>.</td>
+</tr>
+<tr>
+<td>Persistent storage</td>
+<td>On the default <code>filesystem</code> backend, the repositories live on disk under the data directory and must outlive the container. See <a href="#storage">Storage</a>.</td>
+</tr>
+<tr>
+<td>A TLS-terminating proxy</td>
+<td>The application speaks plain HTTP on 8080. See <a href="#running-behind-a-proxy">Running behind a proxy</a> — this needs one setting, and logins fail without it.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition danger">
+<p class="admonition-title">Name an administrator, or the process will not start</p>
+<p>Authorization is always enforced, and a gateway whose configuration grants
+the admin role to nobody refuses to start rather than run as an estate
+nobody can administer. Name one in <code>skills-gateway.roles.admins</code>, in a
+<code>skills-gateway.roles.mappings</code> entry resolving <code>admin</code>, or in a declared
+<code>skills-gateway.estate.grants</code> entry. See
+<a href="../delegated-administration/">Delegated administration</a>.</p>
+</div>
+<h2 id="the-minimum-environment">The minimum environment<a class="headerlink" href="#the-minimum-environment" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Database</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nv">SPRING_DATASOURCE_URL</span><span class="o">=</span>jdbc:postgresql://postgres.example.com:5432/skillsgateway?sslmode<span class="o">=</span>require
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nv">SPRING_DATASOURCE_USERNAME</span><span class="o">=</span>skillsgateway
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nv">SPRING_DATASOURCE_PASSWORD</span><span class="o">=</span>…<span class="w">                     </span><span class="c1"># from your secret store</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># OIDC — see Identity providers for where these come from</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nv">SGW_OIDC_CLIENT_ID</span><span class="o">=</span>…
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="nv">SGW_OIDC_CLIENT_SECRET</span><span class="o">=</span>…<span class="w">                         </span><span class="c1"># from your secret store</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="nv">SGW_OIDC_AUTHORIZATION_URI</span><span class="o">=</span>https://idp.example.com/oauth2/v2.0/authorize
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="nv">SGW_OIDC_TOKEN_URI</span><span class="o">=</span>https://idp.example.com/oauth2/v2.0/token
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="nv">SGW_OIDC_JWK_SET_URI</span><span class="o">=</span>https://idp.example.com/discovery/v2.0/keys
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="nv">SGW_OIDC_USER_NAME_ATTRIBUTE</span><span class="o">=</span>preferred_username
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="nv">SGW_OIDC_SCOPE</span><span class="o">=</span>openid,profile,email
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="nv">SKILLSGATEWAY_OIDC_ISSUER</span><span class="o">=</span>https://idp.example.com/v2.0
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1"># Behind a TLS-terminating proxy</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="nv">SERVER_FORWARDHEADERSSTRATEGY</span><span class="o">=</span>framework
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="c1"># At least one administrator</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="nv">SKILLSGATEWAY_ROLES_ADMINS_0</span><span class="o">=</span>platform-admin@example.com
+</code></pre></div>
+<p><code>SKILLSGATEWAY_DATADIR</code> is already <code>/data</code> in the image; override it only if you
+mount somewhere else.</p>
 <div class="admonition note">
-<p class="admonition-title">Why can't rules auto-approve?</p>
-<p>Deliberately. The gateway's core guarantee is that <strong>nothing is served
-that a person did not approve</strong> — auto-approval ("docs-only change from a
-trusted publisher") would delegate that gate to an expression, which is a
-change to the trust model, not a feature. So rules can only <em>tighten</em> the
-human gate: a rule can refuse an approval, never grant one. The fuller
-rationale is in ADR 0006 (see
-<a href="../../reference/decisions/#adr-0006-embedded-cel-for-policy-rules-not-an-opa-sidecar">Architecture decisions</a>)
-and <a href="../../concepts/trust-boundaries/#3-approval-held-content-becomes-served-content">Trust boundaries</a>;
-if delegated approval is ever wanted, it will be decided there first —
-the engine, the playground and the provenance recording carry over
-unchanged.</p>
+<p class="admonition-title">Set the OIDC endpoints, not only an issuer</p>
+<p>The <code>application.yaml</code> baked into the image carries placeholder provider
+endpoints (<code>https://idp.invalid/…</code>). Spring applies explicitly configured
+provider URIs <em>on top of</em> anything discovered from an issuer, so setting
+only <code>spring.security.oauth2.client.provider.idp.issuer-uri</code> leaves the
+placeholders in force and no login can complete. Set the three <code>SGW_OIDC_*</code>
+endpoint variables above. Doing so also removes a discovery call from the
+startup path, which is one less thing to be reachable at boot.</p>
 </div>
-<p>Rules are managed through the <a href="../../reference/api/policy/">policy API</a>
-(admin-only mutations, auditor-or-admin reads) or declared in the
-<a href="../../reference/configuration/#declarative-estate">estate configuration</a>. An
-expression is compiled — parsed and type-checked to a boolean — when the rule
-is written, so a broken expression is the operator's error at edit time, never
-a surprise at review time.</p>
-<h2 id="the-evaluation-variables">The evaluation variables<a class="headerlink" href="#the-evaluation-variables" title="Permanent link">&para;</a></h2>
-<p>Every expression evaluates over four variables, built from exactly the pinned
-commit the snapshot identifies:</p>
+<h2 id="running-behind-a-proxy">Running behind a proxy<a class="headerlink" href="#running-behind-a-proxy" title="Permanent link">&para;</a></h2>
+<p>The application serves plain HTTP on port 8080 and terminates no TLS. Whatever
+sits in front of it — an ingress, a load balancer, a reverse proxy — must
+therefore tell it what the outside world sees, and the application must be told
+to believe it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">SERVER_FORWARDHEADERSSTRATEGY</span><span class="o">=</span>framework
+</code></pre></div>
+<p>Without this, Spring builds its external URLs from the container's own view of
+the request. The OIDC redirect URI becomes <code>http://&lt;container&gt;:8080/login/oauth2/code/idp</code>
+rather than the <code>https://&lt;your-host&gt;/login/oauth2/code/idp</code> you registered with
+the provider, and every login fails on a redirect-URI mismatch. Set it wherever
+TLS terminates somewhere other than the application itself, which in practice
+is everywhere.</p>
+<p>Make sure the proxy actually sends <code>X-Forwarded-Proto</code> and <code>X-Forwarded-Host</code>,
+and that it is the only thing that can — these headers are trusted once this
+setting is on.</p>
+<h2 id="property-names-as-environment-variables">Property names as environment variables<a class="headerlink" href="#property-names-as-environment-variables" title="Permanent link">&para;</a></h2>
+<p>Spring's relaxed binding maps a property to a variable by upper-casing it,
+replacing <code>.</code> with <code>_</code>, and <strong>removing</strong> hyphens:</p>
 <table>
 <thead>
 <tr>
-<th>Variable</th>
-<th>Shape</th>
-<th>Meaning</th>
+<th>Property</th>
+<th>Environment variable</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>snapshot</code></td>
-<td>map</td>
-<td><code>id</code> (int), <code>sha</code> (string), <code>marketplace</code> (string), <code>state</code> (string: <code>held</code>, <code>approved</code>, <code>rejected</code>, <code>revoked</code>).</td>
+<td><code>skills-gateway.data-dir</code></td>
+<td><code>SKILLSGATEWAY_DATADIR</code></td>
 </tr>
 <tr>
-<td><code>files</code></td>
-<td>list of maps</td>
-<td>Every path in the pinned tree: <code>path</code> (string), <code>size</code> (int).</td>
+<td><code>skills-gateway.roles.claim</code></td>
+<td><code>SKILLSGATEWAY_ROLES_CLAIM</code></td>
 </tr>
 <tr>
-<td><code>plugins</code></td>
-<td>list of maps</td>
-<td>The manifest's plugins: <code>name</code>, <code>description</code>, <code>source</code> (strings; absent manifest fields are <code>""</code>).</td>
+<td><code>skills-gateway.storage.backend</code></td>
+<td><code>SKILLSGATEWAY_STORAGE_BACKEND</code></td>
 </tr>
 <tr>
-<td><code>skills</code></td>
-<td>list of maps</td>
-<td>Every skill (a <code>SKILL.md</code> under a plugin's <code>skills/</code> tree): <code>name</code>, <code>path</code>, <code>plugin</code> (strings), <code>tools</code> (list of strings).</td>
+<td><code>skills-gateway.retention.enabled</code></td>
+<td><code>SKILLSGATEWAY_RETENTION_ENABLED</code></td>
+</tr>
+<tr>
+<td><code>server.forward-headers-strategy</code></td>
+<td><code>SERVER_FORWARDHEADERSSTRATEGY</code></td>
 </tr>
 </tbody>
 </table>
-<p><code>skills[].tools</code> is parsed from the SKILL.md YAML frontmatter key
-<code>allowed-tools</code>, accepting both the YAML-list and the comma-separated-string
-form (<code>Bash(git add:*, git commit:*), Read</code> splits on top-level commas only).
-No frontmatter, or frontmatter without <code>allowed-tools</code>, is honestly an empty
-list. <strong>Malformed</strong> frontmatter is not: tools that cannot be read must never
-read as "no tools", so it fails the facts and denies the approval (see
-fail-closed below).</p>
-<h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
-<p>Deny skills declaring shell tools — the issue's flagship rule:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">skills</span><span class="p">.</span><span class="n">exists</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">tools</span><span class="p">.</span><span class="n">exists</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">startsWith</span><span class="p">(</span><span class="s">"Bash"</span><span class="p">)))</span>
+<p>Hyphens are removed, not turned into underscores: <code>data-dir</code> becomes <code>DATADIR</code>,
+never <code>DATA_DIR</code>. Every setting in <a href="../../reference/configuration/">Configuration</a>
+is reachable this way.</p>
+<h3 id="lists">Lists<a class="headerlink" href="#lists" title="Permanent link">&para;</a></h3>
+<p>A list of scalars is indexed:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">SKILLSGATEWAY_ROLES_ADMINS_0</span><span class="o">=</span>first-admin@example.com
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nv">SKILLSGATEWAY_ROLES_ADMINS_1</span><span class="o">=</span>second-admin@example.com
 </code></pre></div>
-<p>Scope a rule to one marketplace (rules are global; the expression scopes):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">snapshot</span><span class="p">.</span><span class="n">marketplace</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">"corp-marketplace"</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">skills</span><span class="p">.</span><span class="n">exists</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">tools</span><span class="p">.</span><span class="n">exists</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">startsWith</span><span class="p">(</span><span class="s">"Bash"</span><span class="p">)))</span>
+<p>A list of objects indexes each field:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nv">SKILLSGATEWAY_ROLES_MAPPINGS_0_CLAIMVALUE</span><span class="o">=</span>SkillsGateway.Admin
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nv">SKILLSGATEWAY_ROLES_MAPPINGS_0_ROLE</span><span class="o">=</span>admin
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nv">SKILLSGATEWAY_ESTATE_MARKETPLACES_0_NAME</span><span class="o">=</span>corp-marketplace
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="nv">SKILLSGATEWAY_ESTATE_MARKETPLACES_0_URL</span><span class="o">=</span>https://git.example.com/skills/corp.git
 </code></pre></div>
-<p>Deny binaries by extension, or anything oversized:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">files</span><span class="p">.</span><span class="n">exists</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="n">endsWith</span><span class="p">(</span><span class="s">".exe"</span><span class="p">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">f</span><span class="p">.</span><span class="n">size</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="p">)</span>
+<p>This works, and for one or two entries it is the least machinery. It stops
+being reasonable somewhere around the <a href="../declarative-estate/">declarative estate</a>,
+which is nested lists of objects and reads as line noise in this form. For that,
+supply a file.</p>
+<h2 id="supplying-a-configuration-file">Supplying a configuration file<a class="headerlink" href="#supplying-a-configuration-file" title="Permanent link">&para;</a></h2>
+<p>The chart mounts a ConfigMap and points <code>SPRING_CONFIG_ADDITIONAL_LOCATION</code> at
+it. Outside Kubernetes the destination is the same; only the delivery differs.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nv">SPRING_CONFIG_ADDITIONAL_LOCATION</span><span class="o">=</span>optional:file:/config/
 </code></pre></div>
-<p>Deny a plugin namespace:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">plugins</span><span class="p">.</span><span class="n">exists</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="p">.</span><span class="n">startsWith</span><span class="p">(</span><span class="s">"internal-"</span><span class="p">))</span>
-</code></pre></div>
-<h2 id="fail-closed-by-design">Fail-closed, by design<a class="headerlink" href="#fail-closed-by-design" title="Permanent link">&para;</a></h2>
-<p>Anything that prevents a rule from producing <code>false</code> <strong>denies</strong> the approval:</p>
-<ul>
-<li>the expression evaluates <code>true</code> (<em>matched</em>);</li>
-<li>the expression errors at evaluation (a missing map key, an out-of-range
-  index, an exceeded evaluation bound);</li>
-<li>the facts cannot be built — malformed SKILL.md frontmatter, a SKILL.md over
-  256 KiB, a file inventory over 20 000 entries.</li>
-</ul>
-<p>The refusal (HTTP 409 on <code>POST /api/snapshots/{id}/approve</code>) names <strong>every</strong>
-deciding rule with its outcome — <code>matched</code>, or <code>error: …</code> — because the remedy
-differs: a match means the content is prohibited; an error means an admin
-fixes or disables the rule. The deliberate cost: a broken enabled rule blocks
-approvals until it is fixed or disabled. That is the point — an attacker who
-could provoke an evaluation error must not thereby switch the rule off.</p>
-<p>Evaluation is bounded (a comprehension-iteration cap and the inventory caps
-above), so a hostile expression or hostile content errors out instead of
-hanging the gate.</p>
+<p>The trailing slash matters: it names a directory, and Spring reads
+<code>application.yaml</code> from it. The file is layered <em>over</em> the <code>application.yaml</code>
+baked into the image, so it carries only what you are overriding.</p>
 <div class="admonition warning">
-<p class="admonition-title">No waivers for policy denials</p>
-<p>A <a href="../waiving-findings/">vetting waiver</a> accepts one finding, on one
-marketplace, with an expiry. A policy denial has no such per-snapshot
-exception on purpose: the rule <em>is</em> the decision, so the exception path is
-an admin editing or disabling the rule — audited on the ledger — or the
-content changing upstream and being re-ingested.</p>
+<p class="admonition-title">The image has no shell</p>
+<p>It is distroless: no shell, no <code>sh -c</code>, no <code>curl</code>, no package manager.
+Nothing inside the application container can write the file, template it,
+or fetch it before start. Whatever produces the file has to run somewhere
+else — the host, a volume populated ahead of time, or a separate container.</p>
 </div>
-<h2 id="test-before-you-enforce-the-playground">Test before you enforce: the playground<a class="headerlink" href="#test-before-you-enforce-the-playground" title="Permanent link">&para;</a></h2>
-<p><code>POST /api/policy/playground</code> evaluates any expression against a <strong>real</strong>
-snapshot — held, approved or revoked — and answers <code>matched</code> or the error,
-without storing anything, appending nothing to the ledger, and changing no
-state. Author the rule in the playground against the snapshots it should and
-should not catch, then create it enabled.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/policy/playground<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="err">'</span><span class="o">{</span><span class="s2">"snapshotId"</span>:<span class="w"> </span><span class="m">42</span>,
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="go">         "expression": "skills.exists(s, s.tools.exists(t, t.startsWith(\"Bash\")))"}'</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="go">{"matched":true}</span>
+<p>Three ways to get the file there, in rough order of how much machinery they add:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Mount it from the host or a volume</label><label for="__tabbed_1_2">Write it from a second container</label><label for="__tabbed_1_3">Skip the file: <code>SPRING_APPLICATION_JSON</code></label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>Simplest where you control the filesystem: write <code>application.yaml</code> next to
+your deployment definition and mount its directory read-only. This is the
+plain-Docker and systemd answer.</p>
+</div>
+<div class="tabbed-block">
+<p>On a container platform with no host filesystem to mount, run a small
+utility image as an init container that writes the file into a volume
+shared with the application container, and order the application to start
+after it completes. This is the ConfigMap pattern rebuilt from parts: the
+content can come from the deployment definition itself, or the init
+container can fetch it from a secret store or an object store.</p>
+</div>
+<div class="tabbed-block">
+<p>A single environment variable carrying the whole nested structure as JSON:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nv">SPRING_APPLICATION_JSON</span><span class="o">=</span><span class="s1">'{"skills-gateway":{"roles":{"claim":"roles","mappings":[{"claim-value":"SkillsGateway.Admin","role":"admin"}]}}}'</span>
 </code></pre></div>
-<p>The playground requires permission to approve the named snapshot: it
-evaluates quarantine-backed facts, so it is scoped exactly like the approval
-it rehearses.</p>
-<h2 id="what-lands-in-the-ledger">What lands in the ledger<a class="headerlink" href="#what-lands-in-the-ledger" title="Permanent link">&para;</a></h2>
+<p>No file and no second container, at the cost of a configuration that no
+longer diffs readably. Reasonable for a handful of nested settings, poor for
+a large estate.</p>
+</div>
+</div>
+</div>
+<p>Whichever you choose, <strong>the file is not a secret store</strong>. A client secret, a
+webhook secret or an audit-sink credential belongs in an environment variable
+sourced from your platform's secret manager, referenced from the declaration as
+described in <a href="../declarative-estate/">Declarative estate configuration</a>.</p>
+<h2 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">&para;</a></h2>
+<p>On the default <code>filesystem</code> backend the quarantine, the published content the
+facade serves, and any hosted marketplaces all live under the data directory —
+<code>/data</code> in the image. PostgreSQL records which snapshots exist and which are
+approved, so the volume and the database are one estate: a gateway that restarts
+onto an empty <code>/data</code> still reports its snapshots as published and can serve
+none of them. Give it storage that outlives the container.</p>
+<p>It also means <strong>exactly one instance</strong>. The filesystem backend has no
+cross-process locking, and the background schedulers are not cluster-aware. Two
+processes on one volume is not a supported configuration, and a rolling deploy
+that overlaps old and new is two processes. Configure your platform for
+stop-then-start rather than an overlapping replacement.</p>
+<p>Running more than one instance means the <code>object-store</code> backend — see
+<a href="../storage-backends/">Choosing and migrating the storage backend</a>, which also
+covers the background singletons that must be switched off first.</p>
+<h2 id="health-checks">Health checks<a class="headerlink" href="#health-checks" title="Permanent link">&para;</a></h2>
+<p><code>/actuator/health</code> on port 8080 is the readiness and liveness signal, and it is
+the only unauthenticated path. Probe the bare path, not the <code>/readiness</code> and
+<code>/liveness</code> subpaths.</p>
+<p>Because the image has no shell and no HTTP client, a <em>container-level</em> health
+check — the kind that runs a command inside the container — cannot be written.
+The probe has to come from outside: your load balancer's target health check,
+your platform's HTTP probe, or an external monitor.</p>
+<h2 id="a-worked-example-plain-docker">A worked example: plain Docker<a class="headerlink" href="#a-worked-example-plain-docker" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>docker<span class="w"> </span>volume<span class="w"> </span>create<span class="w"> </span>skills-gateway-data
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>skills-gateway<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">8080</span>:8080<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span>-v<span class="w"> </span>skills-gateway-data:/data<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">  </span>-v<span class="w"> </span><span class="s2">"</span><span class="nv">$PWD</span><span class="s2">/config:/config:ro"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SPRING_CONFIG_ADDITIONAL_LOCATION</span><span class="o">=</span>optional:file:/config/<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SPRING_DATASOURCE_URL</span><span class="o">=</span><span class="s1">'jdbc:postgresql://postgres.example.com:5432/skillsgateway?sslmode=require'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SPRING_DATASOURCE_USERNAME</span><span class="o">=</span>skillsgateway<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SPRING_DATASOURCE_PASSWORD</span><span class="o">=</span><span class="s2">"</span><span class="nv">$DB_PASSWORD</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_CLIENT_ID</span><span class="o">=</span><span class="s2">"</span><span class="nv">$OIDC_CLIENT_ID</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_CLIENT_SECRET</span><span class="o">=</span><span class="s2">"</span><span class="nv">$OIDC_CLIENT_SECRET</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_AUTHORIZATION_URI</span><span class="o">=</span>https://idp.example.com/oauth2/v2.0/authorize<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_TOKEN_URI</span><span class="o">=</span>https://idp.example.com/oauth2/v2.0/token<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_JWK_SET_URI</span><span class="o">=</span>https://idp.example.com/discovery/v2.0/keys<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_USER_NAME_ATTRIBUTE</span><span class="o">=</span>preferred_username<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_SCOPE</span><span class="o">=</span>openid,profile,email<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SKILLSGATEWAY_OIDC_ISSUER</span><span class="o">=</span>https://idp.example.com/v2.0<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SERVER_FORWARDHEADERSSTRATEGY</span><span class="o">=</span>framework<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="w">  </span>ghcr.io/skillsgateway/skillsgateway:&lt;released-version&gt;
+</code></pre></div>
+<p>With <code>config/application.yaml</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">roles</span><span class="p">:</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="nt">admins</span><span class="p">:</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">platform-admin@example.com</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="nt">claim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">roles</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span><span class="nt">mappings</span><span class="p">:</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SkillsGateway.Admin</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">  </span><span class="nt">estate</span><span class="p">:</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">    </span><span class="nt">marketplaces</span><span class="p">:</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">corp-marketplace</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://git.example.com/skills/corp.git</span>
+</code></pre></div>
+<p>Pin a released version or a digest rather than a moving tag — see
+<a href="../../reference/container-image/">Container image</a>.</p>
+<h2 id="egress">Egress<a class="headerlink" href="#egress" title="Permanent link">&para;</a></h2>
+<p>Two outbound destinations matter where egress is filtered:</p>
 <table>
 <thead>
 <tr>
-<th>Event</th>
-<th>Written when</th>
-<th>Detail carries</th>
+<th>Destination</th>
+<th>Used for</th>
+<th>Required</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>policy-rule-created</code></td>
-<td>a rule is created (API or estate)</td>
-<td><code>rule=&lt;name&gt; enabled=&lt;bool&gt;</code></td>
+<td>Each marketplace's git host, over HTTPS</td>
+<td>Ingesting and syncing upstream content, as git smart HTTP</td>
+<td><strong>Yes</strong> — ingestion is the product</td>
 </tr>
 <tr>
-<td><code>policy-rule-updated</code></td>
-<td>a rule is updated</td>
-<td><code>rule=&lt;name&gt; enabled=&lt;bool&gt;</code></td>
+<td>The forge's REST API host</td>
+<td>Best-effort project name, description and last-update at registration</td>
+<td>No — any failure resolves to empty and registration continues</td>
 </tr>
 <tr>
-<td><code>policy-rule-deleted</code></td>
-<td>a rule is deleted</td>
-<td><code>rule=&lt;name&gt;</code></td>
-</tr>
-<tr>
-<td><code>policy-denied</code></td>
-<td>a rule decides against an approval — one entry per deciding rule</td>
-<td><code>rule=&lt;name&gt; outcome=matched</code> or <code>outcome=error: …</code>, with the snapshot SHA, the marketplace, and the refused reviewer as the acting identity</td>
+<td>Your identity provider</td>
+<td>The OIDC token and JWKS endpoints</td>
+<td><strong>Yes</strong></td>
 </tr>
 </tbody>
 </table>
-<p>An auditor asking "why was this approval refused, and by which rule" answers
-it from the ledger alone. A successful approval records nothing new here: a
-rule that did not match did not decide, and <code>snapshot-approved</code> already
-carries the decision that was made.</p>
-<h2 id="declaring-rules-as-configuration">Declaring rules as configuration<a class="headerlink" href="#declaring-rules-as-configuration" title="Permanent link">&para;</a></h2>
-<p>Rules join the <a href="../declarative-estate/">declarative estate</a> under
-<code>skills-gateway.estate.policy-rules</code> — created or converged through the same
-compiled, audited path as the API, additively (an undeclared rule is never
-deleted) and idempotently (an identical rule reconciles with zero writes). A
-declared expression that does not compile is an isolated entry failure: loud
-in the log, on the ledger and in the reconciliation report, and never a
-stored rule.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">estate</span><span class="p">:</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="nt">policy-rules</span><span class="p">:</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">no-shell-tools</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deny skills declaring shell tools</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">        </span><span class="nt">expression</span><span class="p">:</span><span class="w"> </span><span class="s">'skills.exists(s,</span><span class="nv"> </span><span class="s">s.tools.exists(t,</span><span class="nv"> </span><span class="s">t.startsWith("Bash")))'</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">        </span><span class="c1"># enabled defaults to true: a declared rule is declared to enforce</span>
-</code></pre></div>
-<h2 id="reading-further">Reading further<a class="headerlink" href="#reading-further" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="../../reference/api/policy/">Policy API</a> — the endpoints.</li>
-<li><a href="../approving-snapshots/">Approving and rejecting snapshots</a> — the gate the
-  rules tighten.</li>
-<li><a href="../../concepts/vetting/">Vetting</a> — evidence about content; policy rules are
-  standing decisions about it. The two gates compose: vetting first, policy
-  second, both before any state transition.</li>
-<li><a href="../../concepts/trust-boundaries/">Trust boundaries</a> — why only
-  <code>ApprovalService</code> publishes.</li>
-<li>ADR 0006 in <a href="../../reference/decisions/">Architecture decisions</a> — why
-  embedded CEL and why deny-only.</li>
-</ul>
+<p>Ingestion is a plain clone and fetch, so a rule for the <strong>git host</strong> is what it
+needs — <code>github.com</code>, not <code>api.github.com</code>, and no archive host: nothing fetches
+tarballs. Registering a marketplace performs no clone, so registration succeeds
+with no git egress at all and only ingestion fails, which makes the two easy to
+commission separately.</p>
+<p>If your manifests declare <a href="../../reference/compatibility/">external plugin sources</a>,
+those clone URLs are additional destinations. They are refused by default;
+leaving <code>skills-gateway.ingestion.allow-external-sources</code> unset is what keeps
+the outbound set bounded to the marketplaces you registered.</p>
 
 
 
