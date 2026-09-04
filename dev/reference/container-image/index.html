@@ -2053,9 +2053,20 @@
 binary:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ghcr.io/skillsgateway/skillsgateway
 </code></pre></div>
+<p>It is published as a <strong>multi-arch image index</strong> covering <code>linux/amd64</code> and
+<code>linux/arm64</code> — a plain <code>docker pull</code>/<code>docker run</code> resolves the manifest for
+the caller's platform automatically, with no <code>--platform</code> flag needed on
+either architecture. Each platform's build is smoke-tested on its own native
+runner before either is published, since GraalVM native-image cannot
+cross-compile.</p>
 <p>Only images that passed the workflow's smoke test are published, and only from
 a push to <code>main</code> or from the <a href="../../guides/releasing/">release workflow</a> — the
 weekly scheduled rebuild and manually dispatched runs never move a tag.</p>
+<p>The publish pipeline also pushes arch-suffixed tags (<code>&lt;tag&gt;-amd64</code>,
+<code>&lt;tag&gt;-arm64</code>) as an internal step toward building the index. These are not a
+supported interface: they carry no stability contract and may change or
+disappear as the pipeline evolves. Pin by digest or by the unsuffixed tag, as
+below — never by an arch-suffixed one.</p>
 <h2 id="tags">Tags<a class="headerlink" href="#tags" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2095,9 +2106,11 @@ need a token with the <code>read:packages</code> scope:</p>
 <p>Package visibility can later be made public in the GHCR package settings,
 independently of the repository's visibility.</p>
 <h2 id="sbom-attestation">SBOM attestation<a class="headerlink" href="#sbom-attestation" title="Permanent link">&para;</a></h2>
-<p>Each published image carries the build's CycloneDX SBOM as a registry
-attestation (the same SBOM the running gateway serves at <code>/actuator/sbom</code>).
-Verify what a pinned digest contains with:</p>
+<p>Each published <strong>platform manifest</strong> — not just the index — carries the
+build's CycloneDX SBOM as a registry attestation (the same SBOM the running
+gateway serves at <code>/actuator/sbom</code>), so verification succeeds against the
+digest a puller's platform actually resolves to. Verify what a pinned digest
+contains with:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>gh<span class="w"> </span>attestation<span class="w"> </span>verify<span class="w"> </span>oci://ghcr.io/skillsgateway/skillsgateway@sha256:…<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span>--owner<span class="w"> </span>skillsgateway
 </code></pre></div>
