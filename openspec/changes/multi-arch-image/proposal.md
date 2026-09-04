@@ -15,38 +15,42 @@ one that plausibly takes 30–60+, on every push and every scheduled run. This
 needs a real second build on real arm64 hardware, which GitHub now offers as a
 hosted runner (`ubuntu-24.04-arm`).
 
+While implementing this, review of the resulting GHCR package page surfaced a
+second problem this change also fixes: every main-branch push has published a
+`sha-<sha>` tag with no retention, so the tagged-versions listing accumulates
+one entry per commit to `main` forever, and going multi-arch the naive way
+(an arch-suffixed tag per platform, per push) would have tripled that.
+
 ## What Changes
 
 - **`native.yml`'s `native` job becomes a matrix** over `ubuntu-latest`
-  (`linux/amd64`) and `ubuntu-24.04-arm` (`linux/arm64`). Each leg builds,
-  smoke-tests (natively — arm64 gets real hardware, not emulation) and, only
-  when the existing publish gate is true, pushes its own arch-suffixed tag
-  (`sha-<sha>-amd64`, `sha-<sha>-arm64`, or `<version>-amd64`/`<version>-arm64`
-  from `release.yml`) and attests the SBOM against its own per-arch digest.
-  Attesting each platform manifest individually is what makes the attestation
-  cover what actually runs; attesting only a combined index would leave the
-  per-arch images — the thing a puller actually receives — unattested.
-- **A new `publish` job combines the two arch-suffixed tags into a multi-arch
-  index** via `docker buildx imagetools create`, published under the same tag
-  names the single-arch build used to publish directly: `sha-<sha>` and
-  `latest` on a main push, `<version>` when `release.yml` drives it. The public
-  tag contract (`GW_0072`) is unchanged — a puller still asks for `latest` or a
-  version and gets one manifest reference back; only what is behind that
-  reference changes, from one platform manifest to an index over two.
-- **The arch-suffixed tags are a pipeline-internal detail, not a supported
-  interface.** They exist because `docker push` needs a tag and the combine
-  step needs something to reference; nothing documents them as pinnable, and
-  nothing guarantees they survive a future change to how the index gets built.
-  Consumers keep pinning by digest or by the unsuffixed tag, as `GW_0072`
-  already requires.
-- **The weekly scheduled rebuild and manual dispatch build both architectures**
-  (the matrix runs on every trigger, same as the single leg does today); only
-  the publish steps stay gated to a main push or `release.yml`, unchanged.
-
-Not breaking: the published tag names, the digest-pinning contract, and
-`release.yml`'s call into `native.yml` are all unchanged — `release.yml`'s
-`image` job already only depends on the caller's overall job status, not on any
-job name or output internal to `native.yml`.
+  (`linux/amd64`) and `ubuntu-24.04-arm` (`linux/arm64`). Each leg builds and
+  smoke-tests natively — arm64 gets real hardware, not emulation — on every
+  trigger (push, schedule, dispatch, release), proving the image works even
+  when nothing gets published.
+- **Only `release.yml` ever publishes.** A push to `main`, the weekly
+  scheduled rebuild and a bare `workflow_dispatch` build and smoke-test both
+  architectures but push nothing to GHCR. **BREAKING** for consumers of the
+  `sha-<sha>` and `latest` tags: neither is published any more. The published
+  tag namespace holds released versions only.
+- **Each leg pushes its own platform manifest addressed only by digest**
+  (`push-by-digest=true`, buildx's documented mechanism for exactly this
+  cross-job matrix shape), never under an arch-suffixed tag, and attests the
+  SBOM against that digest. A new `publish` job downloads both legs' digests
+  and combines them with `docker buildx imagetools create` into the multi-arch
+  index published under the released version's tag alone. This is what keeps
+  GHCR's tagged-versions listing to one entry per release: the platform
+  manifests exist in the registry, but as the untagged children of that one
+  tagged index — standard GHCR behavior for any properly-built multi-arch
+  image, and the reason a hand-tag-then-delete approach was rejected (see
+  `design.md`) in favor of never tagging them to begin with.
+- **A new dispatch-only `ghcr-cleanup.yml` workflow** sweeps the `sha-<sha>`
+  and `latest` tags the prior scheme already published. It defaults to a
+  dry-run preview, excludes every bare or prerelease semantic version tag
+  (release and release-candidate versions are never eligible for deletion),
+  and is triggered manually rather than on a schedule — a registry deletion
+  gets no equivalent of the release workflow's approval gate, so it stays a
+  deliberate, previewable act.
 
 ## Capabilities
 
@@ -56,30 +60,35 @@ None.
 
 ### Modified Capabilities
 
-- `release-packaging`: `GW_0072` — the publication contract now describes a
-  multi-arch image index (`linux/amd64` + `linux/arm64`) built from two
-  per-architecture legs and combined into the index published under the
-  existing tag names, with the SBOM attested against each platform manifest
-  rather than a single digest. `SVC_GW_0072` gains the matching assertions.
+- `release-packaging`: `GW_0072` — **BREAKING**: publication no longer happens
+  from a main-branch push; only `release.yml` publishes, as a multi-arch image
+  index (`linux/amd64` + `linux/arm64`) with each platform pushed by digest and
+  attested individually, combined into the index under the released version's
+  tag. `SVC_GW_0072` gains the matching assertions. A new requirement,
+  `GW_0162` (dispatch-only cleanup of non-release container tags), covers the
+  new `ghcr-cleanup.yml` workflow.
 
 ## Impact
 
 **Workflows**
 
-- `.github/workflows/native.yml` — the `native` job becomes a matrix; a new
-  `publish` job creates and pushes the multi-arch index.
+- `.github/workflows/native.yml` — the `native` job becomes a matrix that
+  never publishes on its own; a new `publish` job downloads the two per-arch
+  digests and creates the multi-arch index, only when `release.yml` drives it.
+- `.github/workflows/ghcr-cleanup.yml` — new, dispatch-only.
 
 **Code**
 
 - `src/test/java/dev/skillsgateway/server/PackagingTests.java` —
-  `SVC_GW_0072`'s test asserts the matrix, the per-arch attestation, and the
-  combine job.
+  `SVC_GW_0072`'s test asserts the matrix, the digest-only per-leg push, and
+  the combine job; a new test asserts `SVC_GW_0162`.
 - `docs/reqstool/requirements.yml`, `docs/reqstool/software_verification_cases.yml`.
 
 **Documentation**
 
-- `docs/manual/reference/container-image.md` — documents the multi-arch index
-  and the arch-suffixed tags' non-stable status.
+- `docs/manual/reference/container-image.md` — documents the multi-arch index,
+  that only a release publishes, and that the platform manifests are
+  intentionally untagged children of the release tag.
 
 **Explicitly out of scope**
 
@@ -88,3 +97,6 @@ None.
 - Index-level SBOM attestation — the per-platform attestations are the
   complete answer per the issue's own analysis; adding a third, index-level
   attestation would be redundant.
+- Deleting the `sha-*`/`latest` tags automatically as part of this PR's merge —
+  `ghcr-cleanup.yml` is shipped so the repository owner can run it (dry-run
+  first), not invoked by this change itself.

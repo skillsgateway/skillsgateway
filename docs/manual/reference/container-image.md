@@ -14,23 +14,26 @@ either architecture. Each platform's build is smoke-tested on its own native
 runner before either is published, since GraalVM native-image cannot
 cross-compile.
 
-Only images that passed the workflow's smoke test are published, and only from
-a push to `main` or from the [release workflow](../guides/releasing.md) — the
-weekly scheduled rebuild and manually dispatched runs never move a tag.
+**Only a release publishes.** A push to `main`, the weekly scheduled rebuild
+and a manually dispatched run all build and smoke-test both architectures —
+proving the image works — but publish nothing: only the
+[release workflow](../guides/releasing.md) ever reaches GHCR. The published
+tag namespace therefore holds released versions only; there is no per-commit
+or moving tag to track `main`.
 
-The publish pipeline also pushes arch-suffixed tags (`<tag>-amd64`,
-`<tag>-arm64`) as an internal step toward building the index. These are not a
-supported interface: they carry no stability contract and may change or
-disappear as the pipeline evolves. Pin by digest or by the unsuffixed tag, as
-below — never by an arch-suffixed one.
+Each platform's manifest is pushed to the registry addressed only by its own
+digest, never under a separate `-amd64`/`-arm64` tag — the two are combined
+into the index that is tagged with the released version. This is why the
+package's tagged-versions listing shows one entry per release rather than
+three: the platform manifests exist in the registry, but as the untagged
+children of that one tagged index, exactly as GitHub renders any properly
+multi-arch image.
 
 ## Tags
 
 | Tag | Meaning |
 | --- | --- |
-| `sha-<commit>` | Every push to `main`; immutable per commit. |
-| `latest` | Moving tag following `main`; a convenience, not a deployment target. |
-| `<version>` (e.g. `1.2.0`) | Releases. Bare semantic versions, no `v` prefix. |
+| `<version>` (e.g. `1.2.0`) | A release. Bare semantic version, no `v` prefix. |
 
 ## Pin by digest
 

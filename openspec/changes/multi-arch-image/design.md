@@ -4,7 +4,8 @@
 
 `native.yml` runs a single `runs-on: ubuntu-latest` job (`native`) that builds
 the GraalVM native binary, wraps it in a container, smoke-tests it, and — only
-when `github.event_name == 'push' || inputs.version != ''` — pushes it to GHCR
+when `github.event_name == 'push' || inputs.version != ''` — pushes a
+`sha-<sha>`/`latest` tag (or the released version, from `release.yml`) to GHCR
 and attests its SBOM. `release.yml` calls this workflow via `workflow_call`
 with `inputs.version` set and only reads the caller's overall job status; it
 does not reference any job id or output internal to `native.yml`.
@@ -15,27 +16,37 @@ on. GitHub's `ubuntu-24.04-arm` hosted runner gives a real arm64 host at the
 same trigger surface (push, schedule, `workflow_dispatch`, `workflow_call`) the
 amd64 build already uses.
 
+Reviewing the actual GHCR package page while implementing this surfaced that
+the existing `sha-<sha>` scheme has no retention — every main-branch push adds
+a tag, forever — and that publishing a naive arch-suffixed tag per platform per
+push would have tripled that. Both problems have the same root cause (tagging
+something other than a released version) and the same fix.
+
 ## Goals / Non-Goals
 
 **Goals:**
 - Publish `ghcr.io/skillsgateway/skillsgateway` as a multi-arch image index
-  covering `linux/amd64` and `linux/arm64`, under the same tag names as today.
+  covering `linux/amd64` and `linux/arm64`.
+- Publish only from `release.yml`; a main push, the schedule and a bare
+  dispatch build and smoke-test both platforms but push nothing.
 - Attest the SBOM against each platform manifest, so `gh attestation verify`
   against a pulled digest still finds an attestation for the bytes that
   actually run.
-- Keep the publish gate (main push or `release.yml`) and the schedule/dispatch
-  behavior (build, never publish) exactly as strict as they are today.
+- Keep the registry's tagged-versions listing to one entry per release, not
+  one per platform.
+- Provide a safe, manual way to remove the `sha-<sha>`/`latest` tags a prior
+  version of this pipeline already published.
 
 **Non-Goals:**
-- Cross-compilation or QEMU emulation for either architecture — ruled out in
-  the proposal on time-cost grounds.
-- A stable contract for the arch-suffixed tags. They are plumbing between the
-  matrix and the combine step, not a second tag scheme.
-- Attesting the index digest itself. The per-platform attestations are what a
-  puller's digest resolves to; an index-level attestation would describe a
-  reference, not bytes.
+- Cross-compilation or QEMU emulation for either architecture — ruled out on
+  time-cost grounds (a native-image build that already takes minutes would
+  plausibly take 30–60+ under emulation).
 - Any change to `release.yml`. It calls `native.yml` by `uses:` and reads only
   `needs.image.result`; nothing there names a job internal to `native.yml`.
+- Automatically running the cleanup workflow as part of this change landing.
+  It ships dispatch-only so the repository owner decides when to run it.
+- Retaining `sha-<sha>` or `latest` in any form. Both are dropped outright,
+  not replaced with a bounded-retention version of the same idea.
 
 ## Decisions
 
@@ -59,105 +70,165 @@ runs-on: ${{ matrix.runner }}
 Alternative considered: two separate jobs (`native-amd64`, `native-arm64`).
 Rejected — it duplicates every step twice in the file instead of once with a
 matrix variable, and `SVC_GW_0072`'s test already asserts against a job named
-`native`; a matrix keeps that job identity and its permissions block intact,
-so the assertions that don't concern the multi-arch behavior don't need to
-change at all.
+`native`; a matrix keeps that job identity and its permissions block intact.
 
-### Per-leg: build, smoke-test, push an arch-suffixed tag, attest that digest
+### Publish only from release.yml; drop sha-<sha> and latest entirely
 
-Each leg keeps the existing steps (native compile, container build, smoke
-test, Helm lint) unchanged — they were already architecture-correct, since
-Docker on a native runner produces a native-arch image without a `--platform`
-flag. Only the publish step changes: the tag it pushes gains a `-${{
-matrix.suffix }}` suffix (`sha-<sha>-amd64`, `latest-amd64`, `<version>-amd64`,
-and the `arm64` equivalents), and `Attest SBOM` runs per leg against that leg's
-own `steps.push.outputs.digest` — unchanged in shape, just now evaluated twice,
-once per matrix instance.
+The publish gate on every publishing step becomes `inputs.version != ''`,
+dropping the `github.event_name == 'push' ||` clause entirely — a main push no
+longer publishes anything. This is a deliberate behavior break, not a
+byproduct: it removes the per-commit tag whose absence of retention was the
+second problem this change fixes, and it removes `latest`'s meaning (there is
+no longer a continuous main-tracking image for it to track).
 
-Alternative considered: attest only the combined index's digest. Rejected per
-the proposal's reasoning — a puller resolving `linux/arm64` from the index
-receives the arm64 manifest's bytes, and `gh attestation verify` verifies a
-subject digest, so the arm64 digest is what needs an attestation for that
-verification to succeed against what was actually pulled.
+Alternative considered: keep publishing `sha-<sha>` (drop only `latest`, per
+the middle option weighed against the proposal). Rejected by explicit
+decision: a per-commit tag with no retention is the exact defect being fixed,
+and multi-arch would otherwise have doubled its volume (two platform legs per
+push instead of one).
 
-### A new `publish` job builds the index from the two arch tags
+### Per-leg: push the platform manifest by digest, never by an arch-suffixed tag
+
+```yaml
+- name: Push image by digest
+  if: inputs.version != ''
+  id: push
+  run: |
+    IMAGE=ghcr.io/skillsgateway/skillsgateway
+    docker buildx build --platform ${{ matrix.platform }} \
+      --metadata-file metadata.json \
+      --output type=image,name="$IMAGE",push=true,push-by-digest=true,name-canonical=true \
+      .
+    DIGEST=$(python3 -c '...containerimage.digest...')
+    echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+```
+
+`push-by-digest` is buildx's own documented mechanism for exactly this shape —
+building each platform on a separate runner in a matrix, then combining the
+results in a later job — and it is also how a single-node
+`docker buildx build --platform amd64,arm64 --push` already behaves today:
+platform children are pushed as manifests referenced only by their own digest,
+never under a tag, and only the index gets a human-readable tag. GHCR's
+package UI reflects that directly — the tagged-versions listing shows the one
+index tag; the digest-only children appear (if at all) under "untagged",
+exactly like any other multi-arch image.
+
+Alternative considered, and rejected: push each leg under an arch-suffixed tag
+(`<version>-amd64`/`-arm64`), combine via `imagetools create`, then delete the
+two arch-suffixed tags afterward to tidy the listing. Rejected on two grounds:
+1. **It doesn't reliably produce the same registry state.** GHCR ties a
+   container "version" to a tag; deleting a version by ID is documented (and
+   confirmed by community cleanup-tool authors) as risking the underlying
+   manifest a still-tagged index depends on, unlike a manifest that was never
+   tagged in the first place. The failure mode is a broken multi-arch image —
+   silent until someone pulls the platform GHCR could no longer serve.
+2. **It's strictly more moving parts** for the same end state:
+   push‑tag → combine → delete‑tag, versus push‑by‑digest → combine. The
+   digest-only path is also the one Docker's own official multi-platform
+   GitHub Actions guidance documents for split-runner builds, so it is the
+   well-trodden path, not a novel one.
+
+Each leg's digest is written to `/tmp/digests/<suffix>.txt` and uploaded as its
+own small artifact (`digest-amd64`, `digest-arm64`) — GitHub Actions matrix job
+outputs are not reliably aggregable across legs, so an artifact per leg,
+downloaded by the combine job, is the documented pattern for carrying a value
+out of one matrix instance into a later job.
+
+`Attest SBOM` is unchanged in shape from before this decision — it already
+attested `steps.push.outputs.digest`, a digest rather than a tag, so nothing
+about the attestation step's mechanics changes; only where that digest comes
+from does.
+
+### A new `publish` job downloads both digests and creates the index
 
 ```yaml
 publish:
   name: Publish multi-arch manifest
   needs: native
-  if: ${{ !cancelled() && needs.native.result == 'success' && (github.event_name == 'push' || inputs.version != '') }}
+  if: ${{ !cancelled() && needs.native.result == 'success' && inputs.version != '' }}
   runs-on: ubuntu-latest
   permissions:
     contents: read
     packages: write
   steps:
     - uses: docker/login-action@...
-      with: { registry: ghcr.io, username: ${{ github.actor }}, password: ${{ secrets.GITHUB_TOKEN }} }
+    - uses: actions/download-artifact@v7.0.0
+      with: { pattern: digest-*, path: /tmp/digests, merge-multiple: true }
     - run: |
         IMAGE=ghcr.io/skillsgateway/skillsgateway
-        TAGS="${VERSION:-sha-${SHA} latest}"
-        BASE="${TAGS%% *}"
-        TAG_ARGS=()
-        for tag in $TAGS; do TAG_ARGS+=(-t "$IMAGE:$tag"); done
-        docker buildx imagetools create "${TAG_ARGS[@]}" \
-          "$IMAGE:${BASE}-amd64" "$IMAGE:${BASE}-arm64"
+        docker buildx imagetools create -t "$IMAGE:$VERSION" \
+          "$IMAGE@$(cat /tmp/digests/amd64.txt)" \
+          "$IMAGE@$(cat /tmp/digests/arm64.txt)"
 ```
 
 The job's own `if` repeats the publish gate: it is a separate job from
-`native`, so a matrix leg's per-step `if` does not protect it, and `needs.
-native.result == 'success'` alone would still run the combine on a schedule or
-bare dispatch (where every leg's `native` job "succeeds" — it just skips its
-own publish steps).
+`native`, so a matrix leg's per-step `if` does not protect it, and
+`needs.native.result == 'success'` alone would still run the combine on a
+schedule or bare dispatch (where every leg's `native` job "succeeds" — it just
+skips its own push and attest steps).
 
-Alternative considered: pass the per-leg digests through job outputs (`docker
-buildx imagetools create` accepts digest-qualified references,
-`$IMAGE@sha256:...`, which would let `publish` reference exact bytes rather
-than a movable tag). Not needed here: `publish` runs immediately after `native`
-in the same run, so the arch-suffixed tag still points at the digest `native`
-just pushed — nothing else can have moved it in between. Digest references
-would remove a link that is momentarily true anyway, at the cost of plumbing
-two extra job outputs through a matrix job (matrix job outputs need an
-aggregation step of their own). Left as a possible hardening if the
-arch-suffixed tags ever become reused for something else.
+### A dispatch-only cleanup workflow for the tags this change retires
 
-### Arch-suffixed tags are not cleaned up
+`ghcr-cleanup.yml` wraps `dataaxiom/ghcr-cleanup-action` (pinned by commit SHA,
+per this repo's third-party action convention), configured with
+`delete-tags: 'sha-*,latest'` and `exclude-tags: '[0-9]*.[0-9]*.[0-9]*'` — the
+same bare/prerelease semantic-version shape `GW_0109` already defines as a
+release tag, so a release can never be swept. `dry-run` defaults to `true` and
+is dispatch-only: unlike the publish path, which trusts a prior code review or
+the release approval gate, a registry deletion has no equivalent upstream
+check, so it stays a manual, previewable act rather than something that runs
+on its own schedule.
 
-The proposal already settles this as a non-goal (deleting a GHCR package
-version needs a separate API call, `docker`/`buildx` cannot do it) — recorded
-here only to say why `publish` does not attempt it: it would add a GHCR API
-call and its own failure mode to a job whose only other job is a registry
-write that already succeeded, for a cleanup that `GW_0072` does not require.
+Alternative considered: hand-roll the deletion with `gh api` calls against the
+GitHub Packages REST API. Rejected — correctly discovering which package
+"versions" are safe to delete without breaking a multi-arch index they might
+still be a child of is exactly the kind of registry-relationship bookkeeping
+a purpose-built, community-maintained tool already does (and gets subtly wrong
+in hand-rolled scripts, per the tool landscape surveyed for this decision);
+writing that logic from scratch for a one-time sweep is a worse trade than
+depending on a pinned, single-purpose action.
 
 ## Risks / Trade-offs
 
 - **Build time and GHCR Actions minutes roughly double** for every trigger,
-  including the weekly schedule. Accepted: correctness (a real arm64 build) is
-  worth twice the minutes, and the schedule is weekly, not per-push.
+  including the weekly schedule, since both platforms build even when nothing
+  publishes. Accepted: correctness (a real arm64 build, proven working before
+  a release ever needs it) is worth twice the minutes.
 - **GitHub's arm64 hosted runners are a newer offering than amd64 runners** —
-  if `ubuntu-24.04-arm` has less capacity or availability than `ubuntu-latest`,
-  the matrix leg queues longer. No mitigation beyond GitHub's own runner
-  reliability; both legs already retry the same way any CI job does.
-- **`docker buildx imagetools create` needs buildx**, which is not installed by
-  default the same way `docker` itself is on every runner image — the
-  hosted `ubuntu-latest`/`ubuntu-24.04-arm` images bundle `docker-buildx-plugin`
-  today, so `publish` uses it as-is. If a future runner image drops it, `publish`
-  fails loudly (imagetools is a `docker` subcommand, not a silent no-op) rather
-  than pushing a wrong image.
+  if `ubuntu-24.04-arm` has less capacity or availability, the matrix leg
+  queues longer. No mitigation beyond GitHub's own runner reliability.
+- **`docker buildx build --output type=image,push-by-digest=true` needs the
+  `docker-container` buildx driver**, not the default `docker` driver — hence
+  the added `docker/setup-buildx-action` step. If a future runner image
+  changes what ships by default, the build fails loudly rather than silently
+  falling back to a single-platform push.
+- **Dropping `sha-<sha>` and `latest` is breaking** for anyone currently
+  pulling either. Accepted and called out as **BREAKING** in the proposal:
+  the API-contract-breaking-change convention this repository uses for its
+  REST API doesn't formally cover container tags, but the same discipline —
+  naming the break explicitly rather than letting it happen quietly — applies.
+- **The cleanup workflow, run for real, permanently deletes registry content.**
+  Mitigated by defaulting to `dry-run: true`, requiring manual dispatch, and
+  the version-tag exclusion pattern being asserted by `SVC_GW_0162` rather than
+  left to review alone.
 
 ## Migration Plan
 
 No data migration. The change is deploy-time (GitHub Actions) only:
-- First run of `native.yml` on `main` after merge publishes the first
-  multi-arch `sha-<sha>` and `latest` tags; nothing before that changes.
-- Existing single-arch tags (older `sha-<sha>`, `latest`, and released
-  versions) are untouched — they remain single-manifest images pointing at
-  their original digests. Nothing retroactively becomes multi-arch.
-- Rollback is reverting the workflow change; the next push publishes
-  single-arch again under the same tag names.
+- The next release after merge is the first multi-arch, digest-published
+  image; nothing before that changes.
+- Existing `sha-<sha>` and `latest` tags, and every released version's tag,
+  are untouched by merging this change — they remain single-manifest images
+  pointing at their original digests. `ghcr-cleanup.yml` is what removes the
+  first two, and only when the repository owner runs it.
+- Rollback is reverting the workflow changes; the next push behaves as it did
+  before this change (single-arch, publishing `sha-<sha>`/`latest` again).
 
 ## Open Questions
 
-None — the issue's "Things that need thought" are each resolved above (SBOM
-attestation: per-platform; schedule: builds both; release path: unaffected;
-arch-suffixed tags: deliberately not a stable interface).
+None. The issue's "Things that need thought" are resolved (SBOM attestation:
+per-platform; schedule: builds both, publishes neither; release path:
+unaffected), and the scope grew during implementation to also resolve the
+tag-retention problem the same registry-page review surfaced, per explicit
+direction: no publish outside a release, drop `latest`, and ship a cleanup
+workflow rather than a silent one-off deletion.
