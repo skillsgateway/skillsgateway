@@ -2059,14 +2059,19 @@ the caller's platform automatically, with no <code>--platform</code> flag needed
 either architecture. Each platform's build is smoke-tested on its own native
 runner before either is published, since GraalVM native-image cannot
 cross-compile.</p>
-<p>Only images that passed the workflow's smoke test are published, and only from
-a push to <code>main</code> or from the <a href="../../guides/releasing/">release workflow</a> — the
-weekly scheduled rebuild and manually dispatched runs never move a tag.</p>
-<p>The publish pipeline also pushes arch-suffixed tags (<code>&lt;tag&gt;-amd64</code>,
-<code>&lt;tag&gt;-arm64</code>) as an internal step toward building the index. These are not a
-supported interface: they carry no stability contract and may change or
-disappear as the pipeline evolves. Pin by digest or by the unsuffixed tag, as
-below — never by an arch-suffixed one.</p>
+<p><strong>Only a release publishes.</strong> A push to <code>main</code>, the weekly scheduled rebuild
+and a manually dispatched run all build and smoke-test both architectures —
+proving the image works — but publish nothing: only the
+<a href="../../guides/releasing/">release workflow</a> ever reaches GHCR. The published
+tag namespace therefore holds released versions only; there is no per-commit
+or moving tag to track <code>main</code>.</p>
+<p>Each platform's manifest is pushed to the registry addressed only by its own
+digest, never under a separate <code>-amd64</code>/<code>-arm64</code> tag — the two are combined
+into the index that is tagged with the released version. This is why the
+package's tagged-versions listing shows one entry per release rather than
+three: the platform manifests exist in the registry, but as the untagged
+children of that one tagged index, exactly as GitHub renders any properly
+multi-arch image.</p>
 <h2 id="tags">Tags<a class="headerlink" href="#tags" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2077,16 +2082,8 @@ below — never by an arch-suffixed one.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>sha-&lt;commit&gt;</code></td>
-<td>Every push to <code>main</code>; immutable per commit.</td>
-</tr>
-<tr>
-<td><code>latest</code></td>
-<td>Moving tag following <code>main</code>; a convenience, not a deployment target.</td>
-</tr>
-<tr>
 <td><code>&lt;version&gt;</code> (e.g. <code>1.2.0</code>)</td>
-<td>Releases. Bare semantic versions, no <code>v</code> prefix.</td>
+<td>A release. Bare semantic version, no <code>v</code> prefix.</td>
 </tr>
 </tbody>
 </table>
