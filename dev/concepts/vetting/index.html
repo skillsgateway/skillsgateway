@@ -2428,6 +2428,16 @@ takes the snapshot and returns a verdict. What it is given is deliberately
 narrow: the snapshot's id, its marketplace, its commit SHA, and a walk over the
 files in that commit. It is not given a repository handle, so a connector cannot
 move a ref, write to quarantine, or read another marketplace's content.</p>
+<p>The walk takes the connector's own selection of paths, and content is read only
+for the files that selection asks for. One chain run walks the commit's tree
+once and reads each selected file once however many connectors want it, so
+<code>license-scan</code> reading two file kinds no longer costs a full pass over the tree.
+What a connector sees is unchanged by this: a file over the size limit is still
+handed over unread rather than omitted. How much content a run keeps for that
+reuse is bounded by
+<a href="../../reference/configuration/#vetting"><code>skills-gateway.vetting.content-cache-bytes</code></a>;
+beyond the bound content is read again rather than kept, so the setting costs
+speed and never coverage.</p>
 <p>A verdict carries a state, an optional external report URL, and a list of
 findings. A finding has a <strong>stable rule id</strong> (<code>aws-access-key-id</code>), a severity,
 a location (normally <code>path:line</code>), and a reviewer-facing message. The rule id is

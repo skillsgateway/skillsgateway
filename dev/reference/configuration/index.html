@@ -3384,27 +3384,33 @@ in <code>application.yaml</code>.</p>
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">    </span><span class="c1"># as an informational 'file-not-scanned' finding, never skipped in silence.</span>
 <a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="nt">max-file-bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1048576</span>
 <a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">    </span><span class="c1"># How often lapsed waivers are noted in the audit ledger. This cannot open a</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">    </span><span class="c1"># hole: a waiver stops suppressing its finding the moment the effective</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">    </span><span class="c1"># outcome is next computed, whether or not this sweep has run.</span>
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">    </span><span class="nt">waiver-sweep-interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1h</span>
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">    </span><span class="nt">waiver-sweep-batch-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">200</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">    </span><span class="c1"># How much of a snapshot's content one chain run may hold so that the</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">    </span><span class="c1"># connectors after the first read it instead of inflating it again. Past</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">    </span><span class="c1"># this, content is re-read rather than kept: a snapshot larger than the</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">    </span><span class="c1"># bound costs speed, never coverage.</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">    </span><span class="nt">content-cache-bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">33554432</span>
 <a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>
-<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">    </span><span class="c1"># The cooling-off window: how long a commit must have been in quarantine</span>
-<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="w">    </span><span class="c1"># before it can be approved. 0 — the default — is no window at all.</span>
-<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="w">    </span><span class="nt">minimum-release-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
-<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>
-<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="w">    </span><span class="c1"># The organisation-level license policy, evaluated by the built-in</span>
-<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="w">    </span><span class="c1"># license-scan connector. Both lists default to empty, under which</span>
-<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="w">    </span><span class="c1"># identified licenses are informational and an unknown or missing license</span>
-<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="w">    </span><span class="c1"># only warns — an upgrade blocks nothing.</span>
-<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="w">    </span><span class="nt">license</span><span class="p">:</span>
-<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a><span class="w">      </span><span class="c1"># SPDX ids. Once non-empty, any license not on the list — and any</span>
-<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a><span class="w">      </span><span class="c1"># unknown or missing license — is a blocking finding.</span>
-<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a><span class="w">      </span><span class="nt">allowed</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">MIT</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">Apache-2.0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">BSD-3-Clause</span><span class="p p-Indicator">]</span>
-<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="w">      </span><span class="c1"># SPDX ids whose detection is a blocking finding. Checked before the</span>
-<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a><span class="w">      </span><span class="c1"># allow list: a license on both is reported as banned.</span>
-<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a><span class="w">      </span><span class="nt">banned</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">AGPL-3.0</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">    </span><span class="c1"># How often lapsed waivers are noted in the audit ledger. This cannot open a</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="w">    </span><span class="c1"># hole: a waiver stops suppressing its finding the moment the effective</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="w">    </span><span class="c1"># outcome is next computed, whether or not this sweep has run.</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="w">    </span><span class="nt">waiver-sweep-interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1h</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="w">    </span><span class="nt">waiver-sweep-batch-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">200</span>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="w">    </span><span class="c1"># The cooling-off window: how long a commit must have been in quarantine</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="w">    </span><span class="c1"># before it can be approved. 0 — the default — is no window at all.</span>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="w">    </span><span class="nt">minimum-release-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a><span class="w">    </span><span class="c1"># The organisation-level license policy, evaluated by the built-in</span>
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a><span class="w">    </span><span class="c1"># license-scan connector. Both lists default to empty, under which</span>
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="w">    </span><span class="c1"># identified licenses are informational and an unknown or missing license</span>
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a><span class="w">    </span><span class="c1"># only warns — an upgrade blocks nothing.</span>
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a><span class="w">    </span><span class="nt">license</span><span class="p">:</span>
+<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a><span class="w">      </span><span class="c1"># SPDX ids. Once non-empty, any license not on the list — and any</span>
+<a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a><span class="w">      </span><span class="c1"># unknown or missing license — is a blocking finding.</span>
+<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a><span class="w">      </span><span class="nt">allowed</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">MIT</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">Apache-2.0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">BSD-3-Clause</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a><span class="w">      </span><span class="c1"># SPDX ids whose detection is a blocking finding. Checked before the</span>
+<a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a><span class="w">      </span><span class="c1"># allow list: a license on both is reported as banned.</span>
+<a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a><span class="w">      </span><span class="nt">banned</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">AGPL-3.0</span><span class="p p-Indicator">]</span>
 </code></pre></div>
 <table>
 <thead>
@@ -3427,6 +3433,12 @@ in <code>application.yaml</code>.</p>
 <td>integer</td>
 <td><code>1048576</code></td>
 <td>Zero or negative falls back to the default.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.vetting.content-cache-bytes</code></td>
+<td>integer</td>
+<td><code>33554432</code></td>
+<td>Content one chain run may retain for reuse across its connectors. Zero or negative falls back to the default.</td>
 </tr>
 <tr>
 <td><code>skills-gateway.vetting.waiver-sweep-interval</code></td>
