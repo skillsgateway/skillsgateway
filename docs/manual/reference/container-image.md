@@ -7,9 +7,22 @@ binary:
 ghcr.io/skillsgateway/skillsgateway
 ```
 
+It is published as a **multi-arch image index** covering `linux/amd64` and
+`linux/arm64` — a plain `docker pull`/`docker run` resolves the manifest for
+the caller's platform automatically, with no `--platform` flag needed on
+either architecture. Each platform's build is smoke-tested on its own native
+runner before either is published, since GraalVM native-image cannot
+cross-compile.
+
 Only images that passed the workflow's smoke test are published, and only from
 a push to `main` or from the [release workflow](../guides/releasing.md) — the
 weekly scheduled rebuild and manually dispatched runs never move a tag.
+
+The publish pipeline also pushes arch-suffixed tags (`<tag>-amd64`,
+`<tag>-arm64`) as an internal step toward building the index. These are not a
+supported interface: they carry no stability contract and may change or
+disappear as the pipeline evolves. Pin by digest or by the unsuffixed tag, as
+below — never by an arch-suffixed one.
 
 ## Tags
 
@@ -46,9 +59,11 @@ independently of the repository's visibility.
 
 ## SBOM attestation
 
-Each published image carries the build's CycloneDX SBOM as a registry
-attestation (the same SBOM the running gateway serves at `/actuator/sbom`).
-Verify what a pinned digest contains with:
+Each published **platform manifest** — not just the index — carries the
+build's CycloneDX SBOM as a registry attestation (the same SBOM the running
+gateway serves at `/actuator/sbom`), so verification succeeds against the
+digest a puller's platform actually resolves to. Verify what a pinned digest
+contains with:
 
 ```console
 $ gh attestation verify oci://ghcr.io/skillsgateway/skillsgateway@sha256:… \
