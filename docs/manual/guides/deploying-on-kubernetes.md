@@ -6,6 +6,10 @@ application configuration. This guide covers what the chart needs from you
 before it will install, what it deliberately refuses to guess, and a worked
 example on serverless Kubernetes.
 
+For any other runtime — plain Docker, a container platform such as ECS or Cloud
+Run, Nomad, a systemd unit — see
+[Deploying without Kubernetes](deploying-without-kubernetes.md).
+
 ## Prerequisites
 
 | What | Why | Notes |
@@ -76,7 +80,6 @@ keeps the defaults; this file overrides them.
 config:
   skills-gateway:
     roles:
-      enabled: true
       admins:
         - platform-admin@example.com
     estate:
@@ -129,6 +132,24 @@ extraEnvFrom:
 
 Environment names are Spring's relaxed-binding form of the property:
 `skills-gateway.roles.claim` is `SKILLSGATEWAY_ROLES_CLAIM`.
+
+!!! warning "Terminating TLS at the Ingress needs one more setting"
+
+    The application serves plain HTTP and terminates no TLS, so where the
+    Ingress terminates it, the application must be told to trust what the proxy
+    reports:
+
+    ```yaml
+    extraEnv:
+      - name: SERVER_FORWARDHEADERSSTRATEGY
+        value: framework
+    ```
+
+    Without it Spring builds its external URLs from the pod's own view of the
+    request, the OIDC redirect URI becomes `http://<pod>:8080/login/oauth2/code/idp`
+    rather than the `https://` URI registered with the provider, and every login
+    fails on a redirect-URI mismatch. The chart has no value of its own for
+    this yet.
 
 ## Storage
 
