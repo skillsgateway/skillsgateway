@@ -39,7 +39,7 @@
         <native-plugin.version>1.1.11</native-plugin.version>
         <reqstool-plugin.version>1.1.0</reqstool-plugin.version>
         <arconia.version>0.30.0</arconia.version>
-        <awssdk.version>2.54.9</awssdk.version>
+        <awssdk.version>2.54.10</awssdk.version>
         <spring-cloud-aws.version>4.1.1</spring-cloud-aws.version>
         <cyclonedx-plugin.version>2.9.3</cyclonedx-plugin.version>
         <springdoc.version>3.1.0</springdoc.version>
