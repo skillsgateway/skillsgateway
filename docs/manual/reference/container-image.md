@@ -7,17 +7,33 @@ binary:
 ghcr.io/skillsgateway/skillsgateway
 ```
 
-Only images that passed the workflow's smoke test are published, and only from
-a push to `main` or from the [release workflow](../guides/releasing.md) — the
-weekly scheduled rebuild and manually dispatched runs never move a tag.
+It is published as a **multi-arch image index** covering `linux/amd64` and
+`linux/arm64` — a plain `docker pull`/`docker run` resolves the manifest for
+the caller's platform automatically, with no `--platform` flag needed on
+either architecture. Each platform's build is smoke-tested on its own native
+runner before either is published, since GraalVM native-image cannot
+cross-compile.
+
+**Only a release publishes.** A push to `main`, the weekly scheduled rebuild
+and a manually dispatched run all build and smoke-test both architectures —
+proving the image works — but publish nothing: only the
+[release workflow](../guides/releasing.md) ever reaches GHCR. The published
+tag namespace therefore holds released versions only; there is no per-commit
+or moving tag to track `main`.
+
+Each platform's manifest is pushed to the registry addressed only by its own
+digest, never under a separate `-amd64`/`-arm64` tag — the two are combined
+into the index that is tagged with the released version. This is why the
+package's tagged-versions listing shows one entry per release rather than
+three: the platform manifests exist in the registry, but as the untagged
+children of that one tagged index, exactly as GitHub renders any properly
+multi-arch image.
 
 ## Tags
 
 | Tag | Meaning |
 | --- | --- |
-| `sha-<commit>` | Every push to `main`; immutable per commit. |
-| `latest` | Moving tag following `main`; a convenience, not a deployment target. |
-| `<version>` (e.g. `1.2.0`) | Releases. Bare semantic versions, no `v` prefix. |
+| `<version>` (e.g. `1.2.0`) | A release. Bare semantic version, no `v` prefix. |
 
 ## Pin by digest
 
@@ -46,9 +62,11 @@ independently of the repository's visibility.
 
 ## SBOM attestation
 
-Each published image carries the build's CycloneDX SBOM as a registry
-attestation (the same SBOM the running gateway serves at `/actuator/sbom`).
-Verify what a pinned digest contains with:
+Each published **platform manifest** — not just the index — carries the
+build's CycloneDX SBOM as a registry attestation (the same SBOM the running
+gateway serves at `/actuator/sbom`), so verification succeeds against the
+digest a puller's platform actually resolves to. Verify what a pinned digest
+contains with:
 
 ```console
 $ gh attestation verify oci://ghcr.io/skillsgateway/skillsgateway@sha256:… \

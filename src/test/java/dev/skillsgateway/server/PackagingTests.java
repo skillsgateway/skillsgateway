@@ -297,32 +297,31 @@ class PackagingTests {
         Map<String, Object> wf = parse(file);
         String body = Files.readString(file);
 
-        // Publishes to the project namespace, by commit SHA and latest on main...
+        // Publishes to the project namespace, by the released version. There is no
+        // per-commit or moving tag any more: only release.yml ever reaches GHCR.
         assertThat(body).contains("ghcr.io/skillsgateway/skillsgateway");
-        assertThat(body).contains("sha-${SHA}");
 
-        // ...and by the released version when release.yml drives it. The version is
-        // an input, never parsed out of a ref.
+        // The version is an input, never parsed out of a ref.
         assertThat(triggers(wf)).containsKey("workflow_call");
         assertThat(inputNames(wf, "workflow_call")).contains("version");
         assertThat(body).as("the version is never derived from a ref name").doesNotContain("github.ref_name");
 
         // A hand-pushed tag must not publish: no tag filter survives on the push
-        // trigger, so the only way in is a main push or the release workflow.
+        // trigger, and a plain push builds and smoke-tests without publishing
+        // anything either way.
         Map<String, Object> push = section(triggers(wf), "push");
         assertThat(push).as("push trigger present").isNotNull();
         assertThat(push).as("a hand-pushed tag must not publish").doesNotContainKey("tags");
         assertThat(push.get("branches")).isEqualTo(List.of("main"));
 
-        // Every publish step is reachable only from a main push or from the release
-        // workflow. A bare `github.event_name == 'push'` test would be false under
-        // workflow_call -- the caller's event is workflow_dispatch -- so the release
-        // path needs the second clause, and a schedule or bare dispatch matches
-        // neither clause.
-        for (String step : List.of("Log in to GHCR", "Push image", "Attest SBOM")) {
+        // Every publish step is reachable only from the release workflow. Under
+        // workflow_call `github.event_name` is the CALLER's event
+        // (workflow_dispatch), so publication keys off `inputs.version` alone --
+        // a main push, a schedule and a bare dispatch all leave it empty.
+        for (String step : List.of("Log in to GHCR", "Push image by digest", "Attest SBOM")) {
             assertThat(stepCondition(wf, "native", step))
-                    .as("%s is gated to a main push or the release workflow", step)
-                    .isEqualTo("github.event_name == 'push' || inputs.version != ''");
+                    .as("%s is gated to the release workflow only", step)
+                    .isEqualTo("inputs.version != ''");
         }
 
         // Permissions publishing and attestation require.
@@ -334,12 +333,59 @@ class PackagingTests {
         // The digest is surfaced, and the SBOM attested against the pushed image
         // after the push rather than against something built alongside it.
         assertThat(body).contains("GITHUB_STEP_SUMMARY");
-        assertThat(stepNames(wf, "native")).containsSubsequence("Push image", "Attest SBOM");
+        assertThat(stepNames(wf, "native")).containsSubsequence("Push image by digest", "Attest SBOM");
         Map<String, Object> attest = step(wf, "native", "Attest SBOM");
         assertThat(String.valueOf(attest.get("uses"))).contains("attest-sbom");
         assertThat(section(attest, "with"))
                 .containsEntry("sbom-path", "target/classes/META-INF/sbom/application.cdx.json")
                 .containsEntry("subject-digest", "${{ steps.push.outputs.digest }}");
+
+        // Multi-arch: native-image cannot cross-compile, so each platform is a real
+        // leg on its own runner rather than a buildx target reusing one build.
+        Map<String, Object> strategy = section(job(wf, "native"), "strategy");
+        assertThat(strategy).as("the native job is a matrix").isNotNull();
+        Map<String, Object> matrix = section(strategy, "matrix");
+        List<Map<String, Object>> legs = matrixLegs(matrix);
+        assertThat(legs.stream().map(l -> l.get("platform")))
+                .as("both platforms are built")
+                .containsExactlyInAnyOrder("linux/amd64", "linux/arm64");
+        assertThat(legs.stream().map(l -> l.get("runner")))
+                .as("arm64 gets a real arm64 runner, not emulation")
+                .contains("ubuntu-24.04-arm");
+        assertThat(String.valueOf(job(wf, "native").get("runs-on"))).contains("matrix.runner");
+
+        // Each leg pushes its own platform manifest addressed by digest only --
+        // never a human-readable arch-suffixed tag, which is what keeps GHCR's
+        // tagged-versions listing to one entry per release rather than three.
+        Map<String, Object> pushStep = step(wf, "native", "Push image by digest");
+        String pushRun = String.valueOf(pushStep.get("run"));
+        assertThat(pushRun).contains("push-by-digest=true").contains("name-canonical=true");
+        assertThat(pushRun)
+                .as("the per-leg push must not create an arch-suffixed tag")
+                .doesNotContain("-amd64\"")
+                .doesNotContain("-arm64\"");
+        assertThat(stepNames(wf, "native")).contains("Upload digest");
+
+        // A downstream job combines the two per-arch digests into the published
+        // multi-arch index under the released version's tag, gated exactly like
+        // the per-leg publish steps -- restated rather than inherited, because it
+        // is a separate job.
+        Map<String, Object> publish = job(wf, "publish");
+        assertThat(needsOf(wf, "publish")).contains("native");
+        assertThat(String.valueOf(publish.get("if")))
+                .as("the combine job repeats the publish gate")
+                .contains("needs.native.result == 'success'")
+                .contains("inputs.version != ''");
+        assertThat(section(publish, "permissions")).containsEntry("packages", "write");
+        String publishBody = String.valueOf(steps(wf, "publish").stream()
+                .map(s -> s.get("run"))
+                .filter(java.util.Objects::nonNull)
+                .toList());
+        assertThat(publishBody)
+                .as("the combine job builds the index from the two downloaded digests")
+                .contains("imagetools create")
+                .contains("digests/amd64.txt")
+                .contains("digests/arm64.txt");
     }
 
     @Test
@@ -569,6 +615,15 @@ class PackagingTests {
         }
         Object value = parent.get(key);
         return value instanceof Map ? (Map<String, Object>) value : null;
+    }
+
+    /** A `strategy.matrix.include` list, normalised to a list of leg maps. */
+    @SuppressWarnings("unchecked")
+    private static List<Map<String, Object>> matrixLegs(Map<String, Object> matrix) {
+        assertThat(matrix).as("matrix present").isNotNull();
+        Object include = matrix.get("include");
+        assertThat(include).as("matrix.include present").isNotNull();
+        return (List<Map<String, Object>>) include;
     }
 
     private static List<String> inputNames(Map<String, Object> workflow, String trigger) {

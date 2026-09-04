@@ -46,9 +46,8 @@ is the provider's own claims:
 ```yaml
 skills-gateway:
   roles:
-    enabled: true
     admins:
-      - break-glass@example.com     # keep this; see below
+      - break-glass@example.com     # an individual, not a group; see below
     claim: groups
     mappings:
       - claim-value: 8f1c0a2e-0000-0000-0000-000000000000
@@ -61,10 +60,9 @@ skills-gateway:
 ```
 
 A session's effective roles are the **union** of all three sources. Everything
-else about the role model is unchanged: enforcement is still deny-by-default
-once enabled, an approver is still confined to one marketplace including
-through bare snapshot and waiver ids, and an auditor still cannot mutate
-anything.
+else about the role model is unchanged: enforcement is deny-by-default, an
+approver is still confined to one marketplace including through bare snapshot
+and waiver ids, and an auditor still cannot mutate anything.
 
 Three properties of the matching are worth knowing before you write mappings:
 
@@ -91,12 +89,15 @@ endpoint.
     is what gets you back in when a group is renamed, a claim stops being
     emitted, or a mapping is wrong.
 
-### Dry-run before you enforce
+### Check the mapping before you rely on it
 
-Configure the mappings before the gateway's first start.
-Nothing is enforced, but `/api/me` already reports what each session *would*
-hold — so you can confirm the claim arrives and the values match before the
-switch flips.
+Enforcement is unconditional, so there is no unenforced window to rehearse in —
+configure the mappings and the break-glass admin together, before the gateway's
+first start. Then log in and read `GET /api/me`: it reports every effective
+role and its source, so a mapping that produces `claim` roles is confirmed
+working, and one that produces none tells you the claim did not arrive or the
+values do not match. The configuration admin is what keeps that a diagnosis
+rather than a lockout.
 
 ### Nested claims
 

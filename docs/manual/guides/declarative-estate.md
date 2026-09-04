@@ -37,7 +37,6 @@ A working deployment declaration:
 ```yaml
 skills-gateway:
   roles:
-    enabled: true
     admins:
       - platform-team@example.com
   estate:

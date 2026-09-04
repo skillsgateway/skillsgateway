@@ -25,12 +25,32 @@ permissions:
 jobs:
   native:
     name: Native build, container & smoke test
-    runs-on: ubuntu-latest
+    # native-image compiles for the host it runs on -- there is no
+    # cross-compilation and no --platform flag that would make one runner
+    # produce both architectures, so each platform is a real leg on its own
+    # runner rather than a buildx target. GitHub's ubuntu-24.04-arm hosted
+    # runner gives the arm64 leg real hardware, which is also strictly better
+    # smoke-test coverage than emulation would be.
+    #
+    # A main push and a schedule/dispatch build and smoke-test both platforms
+    # exactly like a release does -- proving the image works -- but publish
+    # nothing. Only release.yml (`inputs.version` set) ever reaches GHCR: the
+    # published tag namespace holds released versions only, never a moving
+    # per-commit tag.
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            platform: linux/amd64
+            suffix: amd64
+          - runner: ubuntu-24.04-arm
+            platform: linux/arm64
+            suffix: arm64
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
-      # Publishing runs only from a main push or from release.yml (never from a
-      # schedule or a bare dispatch); these cover the GHCR push and the SBOM
-      # attestation.
+      # Publishing runs only from release.yml (never from a push, a schedule or
+      # a bare dispatch); these cover the GHCR push and the SBOM attestation.
       packages: write
       id-token: write
       attestations: write
@@ -53,7 +73,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: graalvm/setup-graalvm@5298d94fb55a4f185c602eeac5de1b553882abe2 # v1.6.4
+      - uses: graalvm/setup-graalvm@f60d4ea89f14098520aea588431217bbd9551570 # v1.6.5
         with:
           java-version: '25'
           distribution: graalvm-community
@@ -64,8 +84,10 @@ jobs:
         # skipped (no browsers here) while the UI bundle itself is still built.
         run: ./mvnw --batch-mode -Pnative -DskipTests -Dskip.ui.verify=true native:compile
 
+      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
       - name: Build container image
-        run: docker build -t skills-gateway:ci .
+        run: docker buildx build --platform ${{ matrix.platform }} --load -t skills-gateway:ci .
 
       - name: Smoke test container
         run: |
@@ -90,54 +112,56 @@ jobs:
       - name: Helm lint
         run: helm lint helm/skills-gateway
 
-      # --- Publication: only the smoke-tested image, and only from a main push
-      # or from release.yml ---
+      # --- Publication: only the smoke-tested image, and only from release.yml.
       #
-      # `inputs.version` is the release path: under workflow_call `github.event_name`
-      # is the CALLER's event (workflow_dispatch), so a bare `== 'push'` test would
-      # silently skip publication for every release. On a push, schedule or bare
-      # dispatch the `inputs` context is empty, so `inputs.version` is null and the
-      # second test is false -- which is what keeps a scheduled or manually
-      # dispatched build from ever moving a published tag.
+      # Each leg pushes its own platform manifest addressed by digest, never by a
+      # tag -- `push-by-digest` is buildx's documented mechanism for exactly
+      # this cross-job matrix shape, and it is what keeps GHCR from ever
+      # recording an `-amd64`/`-arm64` tag: the `publish` job below references
+      # these digests directly to build the one tagged multi-arch index a
+      # consumer sees. A hand-pushed tag then deleted after the fact was
+      # considered and rejected in design.md -- it risks detaching the very
+      # blob the index needs, where digest-only push never creates that tag to
+      # begin with.
       - name: Log in to GHCR
-        if: github.event_name == 'push' || inputs.version != ''
+        if: inputs.version != ''
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push image
-        if: github.event_name == 'push' || inputs.version != ''
+      - name: Push image by digest
+        if: inputs.version != ''
         id: push
-        env:
-          # The released version when release.yml called us, empty on a main push.
-          VERSION: ${{ inputs.version }}
-          SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           IMAGE=ghcr.io/skillsgateway/skillsgateway
-          if [[ -n "$VERSION" ]]; then
-            TAGS="$VERSION"
-          else
-            TAGS="sha-${SHA} latest"
-          fi
-          for tag in $TAGS; do
-            docker tag skills-gateway:ci "$IMAGE:$tag"
-            docker push "$IMAGE:$tag"
-          done
-          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE:${TAGS%% *}" | cut -d@ -f2)
+          docker buildx build --platform ${{ matrix.platform }} \
+            --metadata-file metadata.json \
+            --output type=image,name="$IMAGE",push=true,push-by-digest=true,name-canonical=true \
+            .
+          DIGEST=$(python3 -c 'import json,sys; print(json.load(open("metadata.json"))["containerimage.digest"])')
           echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          mkdir -p /tmp/digests
+          echo -n "$DIGEST" > "/tmp/digests/${{ matrix.suffix }}.txt"
           {
-            echo "## Published image"
+            echo "## Pushed platform manifest (${{ matrix.platform }})"
             echo '```'
             echo "$IMAGE@$DIGEST"
             echo '```'
-            echo "Tags: $TAGS"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Upload digest
+        if: inputs.version != ''
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: digest-${{ matrix.suffix }}
+          path: /tmp/digests/*
+          retention-days: 1
+
       - name: Attest SBOM
-        if: github.event_name == 'push' || inputs.version != ''
+        if: inputs.version != ''
         uses: actions/attest-sbom@v4.1.0
         with:
           subject-name: ghcr.io/skillsgateway/skillsgateway
@@ -156,14 +180,64 @@ jobs:
       - name: Upload image artifact
         uses: actions/upload-artifact@v7.0.1
         with:
-          name: skills-gateway-native-image
+          # Suffixed: one upload per matrix leg would otherwise collide on the
+          # same artifact name within a run.
+          name: skills-gateway-native-image-${{ matrix.suffix }}
           path: skills-gateway-image.tar.gz
           retention-days: 7
 
       - name: Upload native-build SBOM
         uses: actions/upload-artifact@v7.0.1
         with:
-          name: sbom-cyclonedx-native
+          name: sbom-cyclonedx-native-${{ matrix.suffix }}
           path: target/classes/META-INF/sbom/application.cdx.json
           if-no-files-found: error
           retention-days: 30
+
+  publish:
+    name: Publish multi-arch manifest
+    needs: native
+    # Restated: this is a separate job, so `native`'s per-step publish gate does
+    # not protect it. Every matrix leg "succeeds" on a push, a schedule or a
+    # bare dispatch too -- it just skips its own push and attest steps -- so
+    # `needs.native.result == 'success'` alone is not enough to keep this
+    # confined to release.yml.
+    if: ${{ !cancelled() && needs.native.result == 'success' && inputs.version != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download digests
+        uses: actions/download-artifact@v8.0.1
+        with:
+          pattern: digest-*
+          path: /tmp/digests
+          merge-multiple: true
+
+      - name: Create and push the multi-arch manifest
+        env:
+          # `inputs.*` is workflow-scoped, so it is readable here even though
+          # only `native` declared a dependency on it.
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          IMAGE=ghcr.io/skillsgateway/skillsgateway
+          docker buildx imagetools create -t "$IMAGE:$VERSION" \
+            "$IMAGE@$(cat /tmp/digests/amd64.txt)" \
+            "$IMAGE@$(cat /tmp/digests/arm64.txt)"
+          DIGEST=$(docker buildx imagetools inspect "$IMAGE:$VERSION" | awk '/^Digest:/{print $2}')
+          {
+            echo "## Published multi-arch image"
+            echo '```'
+            echo "$IMAGE@$DIGEST"
+            echo '```'
+            echo "Tag: $VERSION"
+            echo "Platforms: linux/amd64, linux/arm64"
+          } >> "$GITHUB_STEP_SUMMARY"
