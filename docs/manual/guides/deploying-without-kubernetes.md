@@ -260,7 +260,7 @@ docker run -d --name skills-gateway \
   -v skills-gateway-data:/data \
   -v "$PWD/config:/config:ro" \
   --read-only \
-  --tmpfs /tmp:uid=65532,gid=65532 \
+  --mount type=tmpfs,destination=/tmp,tmpfs-mode=1777 \
   -e SPRING_CONFIG_ADDITIONAL_LOCATION=optional:file:/config/ \
   -e SPRING_DATASOURCE_URL='jdbc:postgresql://postgres.example.com:5432/skillsgateway?sslmode=require' \
   -e SPRING_DATASOURCE_USERNAME=skillsgateway \
@@ -294,9 +294,17 @@ skills-gateway:
         url: https://git.example.com/skills/corp.git
 ```
 
-`--read-only` with a `--tmpfs /tmp` is the shape worth copying: the root
+!!! tip "`--mount`, not `--tmpfs`, if you might be on Podman"
+
+    Docker accepts `--tmpfs /tmp:uid=65532,gid=65532`; **Podman 6.1 rejects
+    it** with `unknown mount option "uid=65532"`. The `--mount
+    type=tmpfs,…,tmpfs-mode=1777` form above works on both, and the sticky
+    `1777` mode makes it writable by the image's uid without naming it —
+    which is also one less thing to update if that uid ever changes.
+
+`--read-only` with a tmpfs at `/tmp` is the shape worth copying: the root
 filesystem is sealed, `/data` holds the estate, `/config` is mounted read-only,
-and scratch is a tmpfs owned by the uid the image runs as. Drop the
+and scratch is a world-writable tmpfs the nonroot uid can use. Drop the
 `--read-only` and the tmpfs becomes unnecessary — but so does most of the point
 of a distroless image.
 
