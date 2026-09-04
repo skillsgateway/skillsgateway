@@ -1,6 +1,7 @@
 package dev.skillsgateway.server.vetting;
 
 import java.io.IOException;
+import java.util.function.Predicate;
 
 /**
  * What a connector is given: the snapshot's identity and read-only access to the bytes pinned to
@@ -23,12 +24,22 @@ public interface SnapshotUnderVetting {
     String sha();
 
     /**
-     * Visits every file in the snapshot tree, in tree order. Files larger than the configured cap
-     * are reported to the visitor as skipped rather than silently dropped.
+     * Visits the files of the snapshot tree whose paths {@code wanted} accepts, in tree order.
+     * Files larger than the configured cap are reported to the visitor as skipped rather than
+     * silently dropped.
+     *
+     * <p>A connector that reads only some file kinds says so here rather than filtering inside its
+     * visitor: the selection is applied before content is read, so a blob no connector asked for is
+     * never inflated (GW_0162).
      */
-    void walk(FileVisitor visitor) throws IOException;
+    void walk(Predicate<String> wanted, FileVisitor visitor) throws IOException;
 
-    /** Receiver for {@link #walk(FileVisitor)}. */
+    /** {@link #walk(Predicate, FileVisitor)} over the whole tree. */
+    default void walk(FileVisitor visitor) throws IOException {
+        walk(path -> true, visitor);
+    }
+
+    /** Receiver for {@link #walk(Predicate, FileVisitor)}. */
     @FunctionalInterface
     interface FileVisitor {
 

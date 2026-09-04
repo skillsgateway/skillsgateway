@@ -224,6 +224,8 @@ public class ExternalVettingConnector implements VettingConnector {
         List<ExternalVetRequest.File> files = new ArrayList<>();
         long[] total = {0};
         boolean[] overflow = {false};
+        // No path selection: the bundle is the whole snapshot, because what an operator's
+        // connector looks at is its business and not something this side may narrow.
         snapshot.walk((path, content) -> {
             if (overflow[0]) {
                 return;

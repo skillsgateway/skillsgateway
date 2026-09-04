@@ -55,6 +55,17 @@ narrow: the snapshot's id, its marketplace, its commit SHA, and a walk over the
 files in that commit. It is not given a repository handle, so a connector cannot
 move a ref, write to quarantine, or read another marketplace's content.
 
+The walk takes the connector's own selection of paths, and content is read only
+for the files that selection asks for. One chain run walks the commit's tree
+once and reads each selected file once however many connectors want it, so
+`license-scan` reading two file kinds no longer costs a full pass over the tree.
+What a connector sees is unchanged by this: a file over the size limit is still
+handed over unread rather than omitted. How much content a run keeps for that
+reuse is bounded by
+[`skills-gateway.vetting.content-cache-bytes`](../reference/configuration.md#vetting);
+beyond the bound content is read again rather than kept, so the setting costs
+speed and never coverage.
+
 A verdict carries a state, an optional external report URL, and a list of
 findings. A finding has a **stable rule id** (`aws-access-key-id`), a severity,
 a location (normally `path:line`), and a reviewer-facing message. The rule id is

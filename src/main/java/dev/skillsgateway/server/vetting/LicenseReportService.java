@@ -90,6 +90,7 @@ public class LicenseReportService {
                 marketplace.name(),
                 snapshot.sha(),
                 properties.vetting().maxFileBytes(),
+                properties.vetting().contentCacheBytes(),
                 storage.quarantine(marketplace.name()))) {
             List<LicenseView> licenses = LicenseDetector.detect(content).stream()
                     .map(detection -> new LicenseView(
