@@ -46,8 +46,8 @@
 
 ## 5. Gates and archive
 
-- [ ] 5.1 `./mvnw clean verify`, `pnpm test:stories`, `pnpm e2e`,
+- [x] 5.1 `./mvnw clean verify`, `pnpm test:stories`, `pnpm e2e`,
       `reqstool status local -p docs/reqstool`, `openspec validate --all
       --strict`, `mkdocs build --strict`
-- [ ] 5.2 `openspec/changes/collapse-vetting-content-reads/evidence.md`
+- [x] 5.2 `openspec/changes/collapse-vetting-content-reads/evidence.md`
 - [ ] 5.3 Archive the change as the final commit of the PR
