@@ -718,8 +718,8 @@ cases:
     description: |
       GIVEN the repository's release workflow definition
       WHEN the packaging test validates it
-      THEN the native build job is a matrix over a linux/amd64 and a linux/arm64 runner, each leg pushes its own arch-suffixed tag to the project's registry namespace with commit-SHA and latest tags on main and the released version's tag when invoked by the release workflow, declares no tag trigger of its own so a hand-pushed tag cannot publish, gates every publish step so that neither a scheduled nor a bare manually dispatched run can reach one, holds the permissions publishing and attestation require, attests the CycloneDX SBOM against each leg's own pushed digest after that leg's push, and a downstream job gated the same way combines both arch-suffixed tags into a multi-arch manifest naming the unsuffixed tags and surfaces the combined digest in the job summary
-    revision: "0.3.0"
+      THEN the native build job is a matrix over a linux/amd64 and a linux/arm64 runner, declares no tag trigger of its own so a hand-pushed tag cannot publish, gates every publish step to the release workflow alone so that neither a main-branch push, a schedule nor a bare manually dispatched run ever reaches one, holds the permissions publishing and attestation require, each leg pushes its own platform manifest to the project's registry namespace addressed only by digest rather than under an arch-suffixed tag and attests the CycloneDX SBOM against that digest, and a downstream job gated the same way downloads both legs' digests and combines them into a multi-arch manifest published under the released version's tag alone, surfacing the combined digest in the job summary
+    revision: "0.4.0"
 
   - id: SVC_GW_0073
     requirement_ids: ["GW_0073"]
