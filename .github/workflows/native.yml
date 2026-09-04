@@ -25,7 +25,22 @@ permissions:
 jobs:
   native:
     name: Native build, container & smoke test
-    runs-on: ubuntu-latest
+    # native-image compiles for the host it runs on -- there is no
+    # cross-compilation and no --platform flag that would make one runner
+    # produce both architectures, so each platform is a real leg on its own
+    # runner rather than a buildx target. GitHub's ubuntu-24.04-arm hosted
+    # runner gives the arm64 leg real hardware, which is also strictly better
+    # smoke-test coverage than emulation would be.
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            platform: linux/amd64
+            suffix: amd64
+          - runner: ubuntu-24.04-arm
+            platform: linux/arm64
+            suffix: arm64
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
       # Publishing runs only from a main push or from release.yml (never from a
@@ -114,6 +129,7 @@ jobs:
           # The released version when release.yml called us, empty on a main push.
           VERSION: ${{ inputs.version }}
           SHA: ${{ github.sha }}
+          SUFFIX: ${{ matrix.suffix }}
         run: |
           set -euo pipefail
           IMAGE=ghcr.io/skillsgateway/skillsgateway
@@ -122,18 +138,21 @@ jobs:
           else
             TAGS="sha-${SHA} latest"
           fi
+          # Arch-suffixed: this is the per-platform manifest the `publish` job
+          # below combines into the multi-arch index published under the
+          # unsuffixed names above. Pipeline-internal, not a pinnable tag.
           for tag in $TAGS; do
-            docker tag skills-gateway:ci "$IMAGE:$tag"
-            docker push "$IMAGE:$tag"
+            docker tag skills-gateway:ci "$IMAGE:${tag}-${SUFFIX}"
+            docker push "$IMAGE:${tag}-${SUFFIX}"
           done
-          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE:${TAGS%% *}" | cut -d@ -f2)
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE:${TAGS%% *}-${SUFFIX}" | cut -d@ -f2)
           echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
           {
-            echo "## Published image"
+            echo "## Published image (${{ matrix.platform }})"
             echo '```'
             echo "$IMAGE@$DIGEST"
             echo '```'
-            echo "Tags: $TAGS"
+            echo "Tags: $(echo "$TAGS" | sed "s/[^ ]*/&-${SUFFIX}/g")"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Attest SBOM
@@ -156,14 +175,65 @@ jobs:
       - name: Upload image artifact
         uses: actions/upload-artifact@v7.0.1
         with:
-          name: skills-gateway-native-image
+          # Suffixed: one upload per matrix leg would otherwise collide on the
+          # same artifact name within a run.
+          name: skills-gateway-native-image-${{ matrix.suffix }}
           path: skills-gateway-image.tar.gz
           retention-days: 7
 
       - name: Upload native-build SBOM
         uses: actions/upload-artifact@v7.0.1
         with:
-          name: sbom-cyclonedx-native
+          name: sbom-cyclonedx-native-${{ matrix.suffix }}
           path: target/classes/META-INF/sbom/application.cdx.json
           if-no-files-found: error
           retention-days: 30
+
+  publish:
+    name: Publish multi-arch manifest
+    needs: native
+    # Restated: this is a separate job, so `native`'s per-step publish gate
+    # does not protect it. Every matrix leg "succeeds" on a schedule or a bare
+    # dispatch too -- it just skips its own push and attest steps -- so
+    # `needs.native.result == 'success'` alone is not enough to keep this off
+    # a schedule.
+    if: ${{ !cancelled() && needs.native.result == 'success' && (github.event_name == 'push' || inputs.version != '') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push the multi-arch manifest
+        env:
+          VERSION: ${{ inputs.version }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          IMAGE=ghcr.io/skillsgateway/skillsgateway
+          if [[ -n "$VERSION" ]]; then
+            TAGS="$VERSION"
+          else
+            TAGS="sha-${SHA} latest"
+          fi
+          BASE="${TAGS%% *}"
+          TAG_ARGS=()
+          for tag in $TAGS; do
+            TAG_ARGS+=(-t "$IMAGE:$tag")
+          done
+          docker buildx imagetools create "${TAG_ARGS[@]}" \
+            "$IMAGE:${BASE}-amd64" "$IMAGE:${BASE}-arm64"
+          DIGEST=$(docker buildx imagetools inspect "$IMAGE:${BASE}" | awk '/^Digest:/{print $2}')
+          {
+            echo "## Published multi-arch image"
+            echo '```'
+            echo "$IMAGE@$DIGEST"
+            echo '```'
+            echo "Tags: $TAGS"
+            echo "Platforms: linux/amd64, linux/arm64"
+          } >> "$GITHUB_STEP_SUMMARY"

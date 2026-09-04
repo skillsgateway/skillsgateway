@@ -21,6 +21,7 @@ instead — the chart already does everything below.
 | A PostgreSQL database | Snapshots, the audit ledger, tokens and grants live there. Nothing here creates one. |
 | An OIDC client | The whole web surface authenticates with OIDC. Client id, client secret and the three endpoint URIs — see [Identity providers](identity-providers.md). |
 | Persistent storage | On the default `filesystem` backend, the repositories live on disk under the data directory and must outlive the container. See [Storage](#storage). |
+| Writable scratch at `/tmp` | Only if you run with a read-only root filesystem — Tomcat's work directory lives there and the process will not start without it. See [A writable `/tmp`](#a-writable-tmp-if-you-seal-the-root-filesystem). |
 | A TLS-terminating proxy | The application speaks plain HTTP on 8080. See [Running behind a proxy](#running-behind-a-proxy) — this needs one setting, and logins fail without it. |
 
 !!! danger "Name an administrator, or the process will not start"
@@ -205,6 +206,39 @@ Running more than one instance means the `object-store` backend — see
 [Choosing and migrating the storage backend](storage-backends.md), which also
 covers the background singletons that must be switched off first.
 
+### A writable `/tmp`, if you seal the root filesystem
+
+Sealing the container's root filesystem is worth doing, and this image is built
+for it — but the application still needs **one writable scratch directory**.
+Tomcat creates its work directory under `java.io.tmpdir` while the web server
+starts, so with nowhere to write it the process exits before serving anything:
+
+```
+Unable to create tempDir. java.io.tmpdir is set to /tmp
+Caused by: java.nio.file.FileSystemException:
+  /tmp/tomcat.8080.13526778125704680643: Read-only file system
+```
+
+Mount ephemeral scratch at `/tmp`. Nothing durable belongs there — it is
+discarded with the container, and losing it costs nothing.
+
+!!! warning "The mount must be writable by uid 65532, not just present"
+
+    The image runs as the distroless `nonroot` user. Several container
+    platforms mount an empty volume **root-owned**, which leaves `/tmp`
+    present and unwritable — and that fails with exactly the error above, so
+    a half-configured mount is indistinguishable from no mount at all.
+
+    Kubernetes handles this through `fsGroup` in the pod security context (the
+    chart sets it). Elsewhere, `chown` the directory before the application
+    starts — on a platform with init containers, that is what they are for.
+
+The `object-store` backend needs the same scratch, and one thing more: its
+local pack cache defaults to `{data-dir}/object-store-cache`. Where you run
+with no durable volume at all, point `skills-gateway.storage.object-store.cache.dir`
+at a path under your ephemeral mount — nothing in that cache is authoritative,
+and deleting it at any moment is safe.
+
 ## Health checks
 
 `/actuator/health` on port 8080 is the readiness and liveness signal, and it is
@@ -225,6 +259,8 @@ docker run -d --name skills-gateway \
   -p 8080:8080 \
   -v skills-gateway-data:/data \
   -v "$PWD/config:/config:ro" \
+  --read-only \
+  --tmpfs /tmp:uid=65532,gid=65532 \
   -e SPRING_CONFIG_ADDITIONAL_LOCATION=optional:file:/config/ \
   -e SPRING_DATASOURCE_URL='jdbc:postgresql://postgres.example.com:5432/skillsgateway?sslmode=require' \
   -e SPRING_DATASOURCE_USERNAME=skillsgateway \
@@ -257,6 +293,12 @@ skills-gateway:
       - name: corp-marketplace
         url: https://git.example.com/skills/corp.git
 ```
+
+`--read-only` with a `--tmpfs /tmp` is the shape worth copying: the root
+filesystem is sealed, `/data` holds the estate, `/config` is mounted read-only,
+and scratch is a tmpfs owned by the uid the image runs as. Drop the
+`--read-only` and the tmpfs becomes unnecessary — but so does most of the point
+of a distroless image.
 
 Pin a released version or a digest rather than a moving tag — see
 [Container image](../reference/container-image.md).

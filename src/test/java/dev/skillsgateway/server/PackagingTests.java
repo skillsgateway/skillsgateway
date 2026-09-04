@@ -340,6 +340,45 @@ class PackagingTests {
         assertThat(section(attest, "with"))
                 .containsEntry("sbom-path", "target/classes/META-INF/sbom/application.cdx.json")
                 .containsEntry("subject-digest", "${{ steps.push.outputs.digest }}");
+
+        // Multi-arch: native-image cannot cross-compile, so each platform is a real
+        // leg on its own runner rather than a buildx target reusing one build.
+        Map<String, Object> strategy = section(job(wf, "native"), "strategy");
+        assertThat(strategy).as("the native job is a matrix").isNotNull();
+        Map<String, Object> matrix = section(strategy, "matrix");
+        List<Map<String, Object>> legs = matrixLegs(matrix);
+        assertThat(legs.stream().map(l -> l.get("platform")))
+                .as("both platforms are built")
+                .containsExactlyInAnyOrder("linux/amd64", "linux/arm64");
+        assertThat(legs.stream().map(l -> l.get("runner")))
+                .as("arm64 gets a real arm64 runner, not emulation")
+                .contains("ubuntu-24.04-arm");
+        assertThat(String.valueOf(job(wf, "native").get("runs-on"))).contains("matrix.runner");
+
+        // Each leg pushes and attests its own arch-suffixed tag/digest.
+        Map<String, Object> pushStep = step(wf, "native", "Push image");
+        assertThat(String.valueOf(pushStep.get("run"))).contains("${SUFFIX}");
+        assertThat(section(pushStep, "env")).containsEntry("SUFFIX", "${{ matrix.suffix }}");
+
+        // A downstream job combines the arch-suffixed legs into the published
+        // multi-arch index, gated exactly like the per-leg publish steps -- restated
+        // rather than inherited, because it is a separate job.
+        Map<String, Object> publish = job(wf, "publish");
+        assertThat(needsOf(wf, "publish")).contains("native");
+        assertThat(String.valueOf(publish.get("if")))
+                .as("the combine job repeats the publish gate")
+                .contains("needs.native.result == 'success'")
+                .contains("github.event_name == 'push' || inputs.version != ''");
+        assertThat(section(publish, "permissions")).containsEntry("packages", "write");
+        String publishBody = String.valueOf(steps(wf, "publish").stream()
+                .map(s -> s.get("run"))
+                .filter(java.util.Objects::nonNull)
+                .toList());
+        assertThat(publishBody)
+                .as("the combine job builds the index from the arch-suffixed legs")
+                .contains("imagetools create")
+                .contains("-amd64")
+                .contains("-arm64");
     }
 
     @Test
@@ -569,6 +608,15 @@ class PackagingTests {
         }
         Object value = parent.get(key);
         return value instanceof Map ? (Map<String, Object>) value : null;
+    }
+
+    /** A `strategy.matrix.include` list, normalised to a list of leg maps. */
+    @SuppressWarnings("unchecked")
+    private static List<Map<String, Object>> matrixLegs(Map<String, Object> matrix) {
+        assertThat(matrix).as("matrix present").isNotNull();
+        Object include = matrix.get("include");
+        assertThat(include).as("matrix.include present").isNotNull();
+        return (List<Map<String, Object>>) include;
     }
 
     private static List<String> inputNames(Map<String, Object> workflow, String trigger) {
