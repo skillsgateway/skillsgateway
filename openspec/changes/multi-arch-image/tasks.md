@@ -65,10 +65,10 @@
 
 ## 6. Gates
 
-- [ ] 6.1 `./mvnw clean verify`
-- [ ] 6.2 `(cd src/main/frontend && pnpm test:stories)`
-- [ ] 6.3 `(cd src/main/frontend && pnpm e2e)`
-- [ ] 6.4 `reqstool status local -p docs/reqstool`
-- [ ] 6.5 `openspec validate --all --strict`
-- [ ] 6.6 `mkdocs build --strict`
-- [ ] 6.7 `evidence.md` with the pasted tails and the commit SHA.
+- [x] 6.1 `./mvnw clean verify`
+- [x] 6.2 `(cd src/main/frontend && pnpm test:stories)`
+- [x] 6.3 `(cd src/main/frontend && pnpm e2e)`
+- [x] 6.4 `reqstool status local -p docs/reqstool`
+- [x] 6.5 `openspec validate --all --strict`
+- [x] 6.6 `mkdocs build --strict`
+- [x] 6.7 `evidence.md` with the pasted tails and the commit SHA.
