@@ -110,5 +110,9 @@ derivation, no `tags:` trigger, the job's permissions, the digest surfaced in
 the step summary, the SBOM attestation shape) and adds new assertions for the
 matrix, the release-only gate, the digest-only per-leg push, and the combine
 job — it does not shrink. `SVC_GW_0072` and `GW_0072` both carry a bumped
-revision (`0.4.0`) reflecting the contract change; a new `GW_0162`/`SVC_GW_0162`
-pair, with its own new test, covers `ghcr-cleanup.yml`.
+revision (`0.4.0`) reflecting the contract change.
+
+A `ghcr-cleanup.yml` workflow and its `GW_0162`/`SVC_GW_0162` pair were drafted
+during this change (an earlier revision of this evidence file references them)
+and then withdrawn: cleaning up the `sha-<sha>`/`latest` tags the retired
+scheme already published is done by hand, not by a checked-in workflow.

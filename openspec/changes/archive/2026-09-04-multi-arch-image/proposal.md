@@ -30,9 +30,12 @@ one entry per commit to `main` forever, and going multi-arch the naive way
   when nothing gets published.
 - **Only `release.yml` ever publishes.** A push to `main`, the weekly
   scheduled rebuild and a bare `workflow_dispatch` build and smoke-test both
-  architectures but push nothing to GHCR. **BREAKING** for consumers of the
-  `sha-<sha>` and `latest` tags: neither is published any more. The published
-  tag namespace holds released versions only.
+  architectures but push nothing to GHCR. `sha-<sha>` and `latest` are
+  retired — neither was ever the supported pin-by contract (`latest` was
+  already documented as "a convenience, not a deployment target"), and every
+  released version keeps publishing under its own tag exactly as before, so
+  nothing that was a supported interface stops working. The published tag
+  namespace now holds released versions only.
 - **Each leg pushes its own platform manifest addressed only by digest**
   (`push-by-digest=true`, buildx's documented mechanism for exactly this
   cross-job matrix shape), never under an arch-suffixed tag, and attests the
@@ -44,13 +47,9 @@ one entry per commit to `main` forever, and going multi-arch the naive way
   tagged index — standard GHCR behavior for any properly-built multi-arch
   image, and the reason a hand-tag-then-delete approach was rejected (see
   `design.md`) in favor of never tagging them to begin with.
-- **A new dispatch-only `ghcr-cleanup.yml` workflow** sweeps the `sha-<sha>`
-  and `latest` tags the prior scheme already published. It defaults to a
-  dry-run preview, excludes every bare or prerelease semantic version tag
-  (release and release-candidate versions are never eligible for deletion),
-  and is triggered manually rather than on a schedule — a registry deletion
-  gets no equivalent of the release workflow's approval gate, so it stays a
-  deliberate, previewable act.
+- **The `sha-<sha>`/`latest` tags this pipeline already published are cleaned
+  up manually**, not by a checked-in workflow — deleting registry content is
+  a one-time, deliberate act better done by hand than automated.
 
 ## Capabilities
 
@@ -60,13 +59,11 @@ None.
 
 ### Modified Capabilities
 
-- `release-packaging`: `GW_0072` — **BREAKING**: publication no longer happens
-  from a main-branch push; only `release.yml` publishes, as a multi-arch image
-  index (`linux/amd64` + `linux/arm64`) with each platform pushed by digest and
+- `release-packaging`: `GW_0072` — publication no longer happens from a
+  main-branch push; only `release.yml` publishes, as a multi-arch image index
+  (`linux/amd64` + `linux/arm64`) with each platform pushed by digest and
   attested individually, combined into the index under the released version's
-  tag. `SVC_GW_0072` gains the matching assertions. A new requirement,
-  `GW_0162` (dispatch-only cleanup of non-release container tags), covers the
-  new `ghcr-cleanup.yml` workflow.
+  tag. `SVC_GW_0072` gains the matching assertions.
 
 ## Impact
 
@@ -75,13 +72,12 @@ None.
 - `.github/workflows/native.yml` — the `native` job becomes a matrix that
   never publishes on its own; a new `publish` job downloads the two per-arch
   digests and creates the multi-arch index, only when `release.yml` drives it.
-- `.github/workflows/ghcr-cleanup.yml` — new, dispatch-only.
 
 **Code**
 
 - `src/test/java/dev/skillsgateway/server/PackagingTests.java` —
   `SVC_GW_0072`'s test asserts the matrix, the digest-only per-leg push, and
-  the combine job; a new test asserts `SVC_GW_0162`.
+  the combine job.
 - `docs/reqstool/requirements.yml`, `docs/reqstool/software_verification_cases.yml`.
 
 **Documentation**
@@ -97,6 +93,5 @@ None.
 - Index-level SBOM attestation — the per-platform attestations are the
   complete answer per the issue's own analysis; adding a third, index-level
   attestation would be redundant.
-- Deleting the `sha-*`/`latest` tags automatically as part of this PR's merge —
-  `ghcr-cleanup.yml` is shipped so the repository owner can run it (dry-run
-  first), not invoked by this change itself.
+- A cleanup workflow for the retired `sha-*`/`latest` tags — decided against;
+  the repository owner sweeps them manually instead.

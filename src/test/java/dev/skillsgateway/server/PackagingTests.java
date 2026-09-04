@@ -389,32 +389,6 @@ class PackagingTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0162"})
-    void ghcrCleanupWorkflowIsDispatchOnlyAndProtectsReleaseTags() throws IOException {
-        Map<String, Object> wf = parse(REPO_ROOT.resolve(".github/workflows/ghcr-cleanup.yml"));
-
-        // Dispatch-only: never a push, never a schedule.
-        assertThat(triggers(wf)).containsOnlyKeys("workflow_dispatch");
-
-        // Dry-run previews by default; deleting is the deliberate opt-out.
-        Map<String, Object> inputs = section(section(triggers(wf), "workflow_dispatch"), "inputs");
-        assertThat(section(inputs, "dry-run")).containsEntry("default", true);
-
-        Map<String, Object> cleanup = job(wf, "cleanup");
-        assertThat(section(cleanup, "permissions")).containsEntry("packages", "write");
-
-        Map<String, Object> action = steps(wf, "cleanup").getFirst();
-        assertThat(String.valueOf(action.get("uses"))).contains("ghcr-cleanup-action");
-        Map<String, Object> with = section(action, "with");
-        assertThat(with).containsEntry("package", "skillsgateway");
-        assertThat(String.valueOf(with.get("delete-tags"))).contains("sha-*").contains("latest");
-        // Release and release-candidate tags (GW_0109) are the only thing this
-        // must never be able to delete.
-        assertThat(String.valueOf(with.get("exclude-tags"))).contains("[0-9]*.[0-9]*.[0-9]*");
-        assertThat(with).containsEntry("dry-run", "${{ inputs.dry-run }}");
-    }
-
-    @Test
     @SVCs({"SVC_GW_0108"})
     void releaseWorkflowIsDispatchOnlyPreviewsByDefaultAndGatesBeforePublishing() throws IOException {
         Map<String, Object> wf = parse(REPO_ROOT.resolve(".github/workflows/release.yml"));

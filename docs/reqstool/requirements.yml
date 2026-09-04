@@ -1253,12 +1253,3 @@ requirements:
     rationale: "The invariant that keeps threat T4 closed is that held is reachable only when every source resolves inside the served snapshot, and a resolver introduces many new ways to end up part-way there. A snapshot held with some sources resolved and others not would be approvable, and approving it would publish a marketplace instructing clients to clone repositories the gateway never fetched — the exact failure the rewrite exists to prevent, arrived at by a partial success rather than by a policy decision. Recording the failure against the upstream commit rather than discarding it keeps the attempt reviewable and diagnosable: an operator can see which source failed and why on the snapshot itself. Leaving served content untouched is what keeps a dead or hostile external source from being able to take a marketplace off the air; the last approved snapshot keeps being served because publication is a separate, reviewer-driven act and nothing on this path can reach it."
     categories: ["security", "reliability"]
     revision: 0.1.0
-
-  - id: GW_0162
-    title: Dispatch-only cleanup of non-release container tags
-    significance: shall
-    description: The system shall offer a manually-dispatched workflow that deletes container tags from the project's public registry namespace other than bare or prerelease semantic version tags, shall never run on a push or a schedule, shall default to a dry-run preview that deletes nothing, and shall never delete a tag matching a released version.
-    rationale: A prior revision of GW_0072 published a `sha-<sha>` tag on every main-branch push and a moving `latest` tag, which this change retires in favour of publishing only released versions; the tags that scheme already produced are not retroactively removed by that change and need a deliberate sweep. A registry deletion is not something to leave on autopilot -- unlike the publish path, which is gated only by trust in a prior review, a deletion has no equivalent upstream check, so it stays a manual, previewable act rather than a scheduled one, and the version-tag exclusion is what keeps it from ever being able to reach a released artifact.
-    categories: ["security", "flexibility"]
-    implementation: configuration
-    revision: 0.1.0

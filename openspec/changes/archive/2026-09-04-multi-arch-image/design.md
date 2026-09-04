@@ -34,8 +34,6 @@ something other than a released version) and the same fix.
   actually run.
 - Keep the registry's tagged-versions listing to one entry per release, not
   one per platform.
-- Provide a safe, manual way to remove the `sha-<sha>`/`latest` tags a prior
-  version of this pipeline already published.
 
 **Non-Goals:**
 - Cross-compilation or QEMU emulation for either architecture — ruled out on
@@ -43,8 +41,9 @@ something other than a released version) and the same fix.
   plausibly take 30–60+ under emulation).
 - Any change to `release.yml`. It calls `native.yml` by `uses:` and reads only
   `needs.image.result`; nothing there names a job internal to `native.yml`.
-- Automatically running the cleanup workflow as part of this change landing.
-  It ships dispatch-only so the repository owner decides when to run it.
+- A checked-in workflow to remove the `sha-<sha>`/`latest` tags the retired
+  scheme already published. Decided against — that cleanup is a one-time,
+  deliberate registry deletion the repository owner does by hand.
 - Retaining `sha-<sha>` or `latest` in any form. Both are dropped outright,
   not replaced with a bounded-retention version of the same idea.
 
@@ -167,26 +166,17 @@ The job's own `if` repeats the publish gate: it is a separate job from
 schedule or bare dispatch (where every leg's `native` job "succeeds" — it just
 skips its own push and attest steps).
 
-### A dispatch-only cleanup workflow for the tags this change retires
+### Cleaning up the retired tags is manual, not a checked-in workflow
 
-`ghcr-cleanup.yml` wraps `dataaxiom/ghcr-cleanup-action` (pinned by commit SHA,
-per this repo's third-party action convention), configured with
-`delete-tags: 'sha-*,latest'` and `exclude-tags: '[0-9]*.[0-9]*.[0-9]*'` — the
-same bare/prerelease semantic-version shape `GW_0109` already defines as a
-release tag, so a release can never be swept. `dry-run` defaults to `true` and
-is dispatch-only: unlike the publish path, which trusts a prior code review or
-the release approval gate, a registry deletion has no equivalent upstream
-check, so it stays a manual, previewable act rather than something that runs
-on its own schedule.
-
-Alternative considered: hand-roll the deletion with `gh api` calls against the
-GitHub Packages REST API. Rejected — correctly discovering which package
-"versions" are safe to delete without breaking a multi-arch index they might
-still be a child of is exactly the kind of registry-relationship bookkeeping
-a purpose-built, community-maintained tool already does (and gets subtly wrong
-in hand-rolled scripts, per the tool landscape surveyed for this decision);
-writing that logic from scratch for a one-time sweep is a worse trade than
-depending on a pinned, single-purpose action.
+`sha-<sha>` and `latest` from the retired scheme are not deleted by anything
+in this change. A `dataaxiom/ghcr-cleanup-action`-based workflow was drafted
+and then dropped by explicit decision: a registry deletion is a one-time act
+here (going forward, nothing publishes those tags again), and a checked-in,
+dispatchable workflow is a standing capability to delete production registry
+content that this repository doesn't otherwise need — the repository owner
+runs the equivalent cleanup by hand instead (`gh api` against the Packages
+REST API, or the GHCR web UI), scoped to the specific legacy tags found on
+the package page at the time.
 
 ## Risks / Trade-offs
 
@@ -202,15 +192,12 @@ depending on a pinned, single-purpose action.
   the added `docker/setup-buildx-action` step. If a future runner image
   changes what ships by default, the build fails loudly rather than silently
   falling back to a single-platform push.
-- **Dropping `sha-<sha>` and `latest` is breaking** for anyone currently
-  pulling either. Accepted and called out as **BREAKING** in the proposal:
-  the API-contract-breaking-change convention this repository uses for its
-  REST API doesn't formally cover container tags, but the same discipline —
-  naming the break explicitly rather than letting it happen quietly — applies.
-- **The cleanup workflow, run for real, permanently deletes registry content.**
-  Mitigated by defaulting to `dry-run: true`, requiring manual dispatch, and
-  the version-tag exclusion pattern being asserted by `SVC_GW_0162` rather than
-  left to review alone.
+- **Dropping `sha-<sha>` and `latest` changes behavior** for anyone currently
+  pulling either. Not treated as a breaking change to the product's supported
+  contract: neither tag was ever the documented pin-by interface (`latest` was
+  already described as "a convenience, not a deployment target"), and every
+  released version keeps publishing under its own tag exactly as before —
+  nothing that was a supported way to consume the image stops working.
 
 ## Migration Plan
 
@@ -219,8 +206,8 @@ No data migration. The change is deploy-time (GitHub Actions) only:
   image; nothing before that changes.
 - Existing `sha-<sha>` and `latest` tags, and every released version's tag,
   are untouched by merging this change — they remain single-manifest images
-  pointing at their original digests. `ghcr-cleanup.yml` is what removes the
-  first two, and only when the repository owner runs it.
+  pointing at their original digests. Removing the first two is a manual
+  follow-up for the repository owner, not something this change automates.
 - Rollback is reverting the workflow changes; the next push behaves as it did
   before this change (single-arch, publishing `sha-<sha>`/`latest` again).
 
@@ -230,5 +217,5 @@ None. The issue's "Things that need thought" are resolved (SBOM attestation:
 per-platform; schedule: builds both, publishes neither; release path:
 unaffected), and the scope grew during implementation to also resolve the
 tag-retention problem the same registry-page review surfaced, per explicit
-direction: no publish outside a release, drop `latest`, and ship a cleanup
-workflow rather than a silent one-off deletion.
+direction: no publish outside a release, drop `latest`, and clean up the
+retired tags by hand rather than with a checked-in workflow.

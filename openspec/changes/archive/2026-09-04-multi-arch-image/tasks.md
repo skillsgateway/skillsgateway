@@ -28,33 +28,20 @@
       digest-qualified references, writing the resulting index digest to the
       job summary.
 
-## 3. A dispatch-only cleanup workflow for the retired tags (GW_0162 / SVC_GW_0162)
+## 3. Requirements and the packaging test
 
-- [x] 3.1 New `.github/workflows/ghcr-cleanup.yml`: `workflow_dispatch` only,
-      a `dry-run` input defaulting to `true`, wrapping
-      `dataaxiom/ghcr-cleanup-action` (pinned by commit SHA) with
-      `delete-tags: 'sha-*,latest'` and
-      `exclude-tags: '[0-9]*.[0-9]*.[0-9]*'` so every release/release-candidate
-      tag is excluded from deletion.
-- [x] 3.2 Not dispatched by this change itself — the repository owner runs it
-      (dry-run first) after merge.
-
-## 4. Requirements and the packaging test
-
-- [x] 4.1 `GW_0072` in `requirements.yml`: describe release-only publication of
+- [x] 3.1 `GW_0072` in `requirements.yml`: describe release-only publication of
       a multi-arch index (`linux/amd64` + `linux/arm64`) with each platform
       pushed by digest and attested individually; revision `0.4.0`.
-- [x] 4.2 `SVC_GW_0072` in `software_verification_cases.yml`: matching
+- [x] 3.2 `SVC_GW_0072` in `software_verification_cases.yml`: matching
       description; revision `0.4.0`.
-- [x] 4.3 New `GW_0162` / `SVC_GW_0162`: the dispatch-only cleanup workflow's
-      contract.
-- [x] 4.4 `PackagingTests.releaseWorkflowCarriesThePublishByDigestContract`:
+- [x] 3.3 `PackagingTests.releaseWorkflowCarriesThePublishByDigestContract`:
       asserts the matrix, the release-only gate (`inputs.version != ''` alone,
       no `github.event_name == 'push'` clause), the digest-only per-leg push,
       and the combine job. Every existing assertion in this test that still
-      applies stays; none is weakened. A new
-      `ghcrCleanupWorkflowIsDispatchOnlyAndProtectsReleaseTags` test covers
-      `SVC_GW_0162`.
+      applies stays; none is weakened.
+- [x] 3.4 No checked-in cleanup workflow for the retired `sha-*`/`latest`
+      tags — decided against; the repository owner sweeps them manually.
 
 ## 5. Documentation
 
