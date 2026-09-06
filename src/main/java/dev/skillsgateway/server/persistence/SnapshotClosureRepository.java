@@ -13,7 +13,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
 /**
- * The persisted closure of a composite snapshot (GW_0163). Insert and read only: a closure is
+ * The persisted closure of a composite snapshot (GW_0164). Insert and read only: a closure is
  * never updated, and it is removed by the snapshot's purge through the cascade, so there is no
  * delete here either.
  */
@@ -59,7 +59,7 @@ public class SnapshotClosureRepository {
      * {@link SnapshotRepository#create(long, String, String, String, String, String,
      * SnapshotClosure)} — so a snapshot and its closure exist together or not at all.
      */
-    @Requirements({"GW_0163"})
+    @Requirements({"GW_0164"})
     public Closure record(long snapshotId, SnapshotClosure closure) {
         long id = jdbc.sql("INSERT INTO snapshot_closures (snapshot_id, digest, upstream_sha, transformer_version,"
                         + " created_at) VALUES (:snapshotId, :digest, :upstreamSha, :transformerVersion, :now)"
@@ -96,7 +96,7 @@ public class SnapshotClosureRepository {
     }
 
     /** The snapshot's closure, or empty for a snapshot that resolved nothing. */
-    @Requirements({"GW_0163"})
+    @Requirements({"GW_0164"})
     public Optional<Closure> findBySnapshot(long snapshotId) {
         return jdbc.sql("SELECT * FROM snapshot_closures WHERE snapshot_id = :snapshotId")
                 .param("snapshotId", snapshotId)
@@ -116,7 +116,7 @@ public class SnapshotClosureRepository {
      * {@code resolvedSha} when one is given and at any commit otherwise. What a compromised
      * external repository turns into: a list of snapshots to re-vet.
      */
-    @Requirements({"GW_0163"})
+    @Requirements({"GW_0164"})
     public List<Long> snapshotsContaining(String cloneUrl, String resolvedSha) {
         return jdbc.sql("SELECT DISTINCT c.snapshot_id FROM snapshot_closure_members m"
                         + " JOIN snapshot_closures c ON c.id = m.closure_id"

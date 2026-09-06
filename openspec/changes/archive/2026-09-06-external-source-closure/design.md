@@ -8,8 +8,8 @@ place of the implementation (`.claude/skills/old-coder`, Tier 3: it changes what
 
 | Id | Title | Role here |
 | --- | --- | --- |
-| GW_0163 | The resolved closure is recorded as an immutable domain object of the snapshot | added |
-| GW_0164 | Approval requires a complete closure | added |
+| GW_0164 | The resolved closure is recorded as an immutable domain object of the snapshot | added |
+| GW_0165 | Approval requires a complete closure | added |
 | GW_0009 | Snapshot provenance | unchanged; its response grows additively |
 | GW_0090 | Policy facts | unchanged; the fact set grows |
 | GW_0156 | Deterministic composite snapshot with a gateway-local manifest | unchanged; the closure is a second, queryable record of what its commit message already says |
@@ -109,7 +109,7 @@ place of the implementation (`.claude/skills/old-coder`, Tier 3: it changes what
    Against the review's field list: `closures.closure_digest` → `digest`;
    `closure_nodes` → `snapshot_closure_members` with every named field (plugin
    name, source type, declared url/ref/sha, resolved sha, size/object counts) plus
-   `tree_sha` and `graft_path`, which the assertion in GW_0164 needs;
+   `tree_sha` and `graft_path`, which the assertion in GW_0165 needs;
    `closure_edges` → `parent_member_id`, the adjacency form of the same
    relation: the closure is a tree by construction (each member is grafted at
    exactly one path), so adjacency is exact, it is `NULL` for every member at
@@ -150,7 +150,7 @@ place of the implementation (`.claude/skills/old-coder`, Tier 3: it changes what
    inserts the row, the closure and its members under one `@Transactional`. A
    `DuplicateKeyException` from the race the existing code already handles rolls
    the whole thing back. A composite snapshot without its closure is therefore
-   not a state the gateway can produce — which is exactly the state GW_0164
+   not a state the gateway can produce — which is exactly the state GW_0165
    exists to refuse if anything else ever produces it.
 
 6. **Members record the grafted tree, and the gate compares trees.** A member's
@@ -242,8 +242,8 @@ place of the implementation (`.claude/skills/old-coder`, Tier 3: it changes what
 
 | Requirement | Test(s) |
 | --- | --- |
-| GW_0163 — closure recorded, immutable, queryable, surfaced | `SnapshotClosureDigestTests` (unit), `SnapshotClosureTests` (integration) |
-| GW_0164 — approval requires a complete closure | `ClosureCompletenessTests` (integration, tamper-based) |
+| GW_0164 — closure recorded, immutable, queryable, surfaced | `SnapshotClosureDigestTests` (unit), `SnapshotClosureTests` (integration) |
+| GW_0165 — approval requires a complete closure | `ClosureCompletenessTests` (integration, tamper-based) |
 | GW_0009 — provenance (unchanged for local-only) | `ApprovalTests.provenanceOfApprovedSnapshotIsRetrievable`, unmodified |
 | GW_0156, GW_0161 — unchanged | `ExternalSourceResolutionTests`, unmodified |
 

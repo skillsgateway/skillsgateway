@@ -95,7 +95,7 @@ public class IngestionService {
         }
     }
 
-    @Requirements({"GW_0137", "GW_0155", "GW_0156", "GW_0161", "GW_0163"})
+    @Requirements({"GW_0137", "GW_0155", "GW_0156", "GW_0161", "GW_0164"})
     private Snapshot ingestLocked(Marketplace marketplace, String actor) {
         try (Repository repo = storage.quarantine(marketplace.name())) {
             ObjectId upstream = fetchIncoming(repo, marketplace);
@@ -118,7 +118,7 @@ public class IngestionService {
             String state = violation == null ? Snapshot.HELD : Snapshot.REJECTED;
             Snapshot snapshot;
             try {
-                // The closure goes in with the row (GW_0163): a composite and the record of what it
+                // The closure goes in with the row (GW_0164): a composite and the record of what it
                 // resolved are one fact, and the completeness gate at approval is what refuses the
                 // state in which they are not.
                 snapshot = snapshotRepository.create(
@@ -246,7 +246,7 @@ public class IngestionService {
      * otherwise byte-for-byte the path that shipped before: a local-only manifest is served as the
      * upstream commit, with no composite, no fetch and no new reference.
      */
-    @Requirements({"GW_0152", "GW_0155", "GW_0156", "GW_0161", "GW_0163"})
+    @Requirements({"GW_0152", "GW_0155", "GW_0156", "GW_0161", "GW_0164"})
     private Served serve(Repository repo, ObjectId upstreamSha) throws IOException {
         byte[] manifestBytes = manifestBytes(repo, upstreamSha);
         if (manifestBytes == null) {
@@ -278,7 +278,7 @@ public class IngestionService {
         }
     }
 
-    /** The closure as a value (GW_0163): what each source was declared as, and what it became. */
+    /** The closure as a value (GW_0164): what each source was declared as, and what it became. */
     private SnapshotClosure closure(ObjectId upstreamSha, List<ExternalSourceResolver.Resolved> resolved) {
         List<SnapshotClosure.Member> members = new java.util.ArrayList<>();
         for (ExternalSourceResolver.Resolved source : resolved) {

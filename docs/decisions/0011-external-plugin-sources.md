@@ -165,7 +165,7 @@ for.
 | Admission: typed source model, configuration gate, held-only-if-local invariant | GW_0003 (rev. 0.2.0), GW_0150, GW_0151, GW_0152 | Shipped |
 | Resolution of the `github` type: closure fetch into quarantine, deterministic composite rewrite parented on the upstream commit, closure-wide vetting by construction | GW_0155, GW_0156, GW_0161 | Shipped |
 | Hardening the resolution path: post-DNS and per-request address validation, redirect policy, inflation and size budgets, global deadline | GW_0157, GW_0158 | Shipped |
-| The closure as a queryable domain object: `snapshots.upstream_sha`, closure and member rows written with the snapshot, the closure in provenance and in the policy facts, and a closure-completeness gate ahead of every other approval gate | GW_0163, GW_0164 | Shipped |
+| The closure as a queryable domain object: `snapshots.upstream_sha`, closure and member rows written with the snapshot, the closure in provenance and in the policy facts, and a closure-completeness gate ahead of every other approval gate | GW_0164, GW_0165 | Shipped |
 | The blast-radius re-vetting the closure query enables (wiring `snapshotsContaining` into `RevetService`) | to be assigned | #17, next |
 | `git` and `git-subdir`, declared `ref`/`sha` pinning, the egress proxy, connect-time address pinning, the negative cache, the origin badge on the marketplace detail page | to be assigned | #17, after |
 

@@ -191,7 +191,7 @@ public class ApprovalService {
         Duration ingestionAge = Duration.ZERO;
         OverrideCapture override = null;
         if (current.decidable()) {
-            // Before every other gate (GW_0164), and before the override below can lift anything:
+            // Before every other gate (GW_0165), and before the override below can lift anything:
             // a snapshot whose recorded closure does not describe the commit it pins is refused
             // whatever vetting, policy or a reviewer say about it. The override lifts the vetting
             // gate; it is not a decision to publish content whose provenance is unknown.
@@ -342,12 +342,12 @@ public class ApprovalService {
     }
 
     /**
-     * The closure-completeness gate (GW_0164), with its refusal on the ledger before it is raised —
+     * The closure-completeness gate (GW_0165), with its refusal on the ledger before it is raised —
      * for the reason every refusing gate here records itself: a control that turns approvals away
      * silently cannot be audited, and this one firing at all means something other than the
      * gateway has been at the snapshot.
      */
-    @Requirements({"GW_0164"})
+    @Requirements({"GW_0165"})
     private void requireCompleteClosure(Snapshot snapshot, Marketplace marketplace, String reviewer) {
         try {
             closureGate.require(snapshot, marketplace);
@@ -413,7 +413,7 @@ public class ApprovalService {
                 "reject", () -> snapshotRepository.decide(snapshotId, Snapshot.REJECTED, reviewer));
     }
 
-    @Requirements({"GW_0009", "GW_0163"})
+    @Requirements({"GW_0009", "GW_0164"})
     public Optional<Provenance> provenance(long snapshotId) {
         return snapshotRepository.findById(snapshotId).map(snapshot -> {
             Marketplace marketplace =

@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * The closure of external plugin sources one snapshot serves (GW_0163): the upstream commit it
+ * The closure of external plugin sources one snapshot serves (GW_0164): the upstream commit it
  * was built from, the transformation that built it, and one member per resolved external plugin.
  *
  * <p>A value, and only values. Every field is a copy of what the manifest declared or what
@@ -106,7 +106,7 @@ public record SnapshotClosure(
      * member's canonical line in sorted order. Sorting is what makes member order irrelevant;
      * framing is what makes every field count and nothing else.
      */
-    @Requirements({"GW_0163"})
+    @Requirements({"GW_0164"})
     public String digest() {
         StringBuilder canonical = new StringBuilder();
         frame(canonical, upstreamSha);

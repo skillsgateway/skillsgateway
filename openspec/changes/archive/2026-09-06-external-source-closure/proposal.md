@@ -27,15 +27,20 @@ persisted at ingestion, and a **closure-completeness assertion** in
 
 ## What Changes
 
-- **Two requirements**, allocated at the next genuinely free ids (GW_0162 is the
-  highest on `main`; no in-flight change reserves anything above it):
-  - **GW_0163 — The resolved closure is recorded as an immutable domain object of
+- **Two requirements**. GW_0162 was the highest id on `main` and nothing under
+  `openspec/changes/` reserved above it, so this change first claimed GW_0163 and
+  GW_0164 — and then renumbered to **GW_0164 and GW_0165**, because
+  [#283](https://github.com/skillsgateway/skillsgateway/pull/283) had claimed
+  GW_0163 in a worktree neither branch could see and was opened first. Checking
+  `main` and the in-flight changes is not sufficient when two unpushed branches
+  allocate at once; the first PR opened keeps the id.
+  - **GW_0164 — The resolved closure is recorded as an immutable domain object of
     the snapshot.** `snapshots.upstream_sha`, a `snapshot_closures` row per
     composite snapshot with a digest, and `snapshot_closure_members` rows that are
     value copies of what was declared and what it resolved to, written in the
     snapshot's transaction. The closure surfaces in provenance, in the policy
     gate's facts, and through a blast-radius query.
-  - **GW_0164 — Approval requires a complete closure.** `doApprove` refuses, with a
+  - **GW_0165 — Approval requires a complete closure.** `doApprove` refuses, with a
     dedicated `ClosureIncompleteException` and a ledger entry, any snapshot whose
     served manifest, recorded closure and pinned tree do not agree, on every
     approval path.
@@ -59,8 +64,8 @@ persisted at ingestion, and a **closure-completeness assertion** in
 
 ## Capabilities touched
 
-- `marketplace-ingestion` — GW_0163 added.
-- `snapshot-approval` — GW_0164 added.
+- `marketplace-ingestion` — GW_0164 added.
+- `snapshot-approval` — GW_0165 added.
 
 ## Estate
 

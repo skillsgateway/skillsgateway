@@ -1814,8 +1814,8 @@ cases:
       bound is still served in full on every walk
     revision: "0.1.0"
 
-  - id: SVC_GW_0163
-    requirement_ids: ["GW_0163"]
+  - id: SVC_GW_0164
+    requirement_ids: ["GW_0164"]
     title: The resolved closure is recorded with the snapshot and queryable
     verification: automated-test
     description: |
@@ -1836,8 +1836,8 @@ cases:
       none; and purging the snapshot removes the closure with it
     revision: "0.1.0"
 
-  - id: SVC_GW_0164
-    requirement_ids: ["GW_0164"]
+  - id: SVC_GW_0165
+    requirement_ids: ["GW_0165"]
     title: Approval refuses a snapshot whose closure is incomplete
     verification: automated-test
     description: |

@@ -31,7 +31,7 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.junit.jupiter.api.Test;
 
 /**
- * The closure-completeness gate (GW_0164). Nothing in the gateway can produce an incomplete
+ * The closure-completeness gate (GW_0165). Nothing in the gateway can produce an incomplete
  * closure, so every refusal below is arranged by hand: rows removed or rewritten through SQL, and
  * a commit synthesised in quarantine that the closure does not describe. The gate exists so that
  * nothing ever can produce one — including the code that has not been written yet — and these
@@ -43,7 +43,7 @@ class ClosureCompletenessTests extends AbstractExternalSourceTest {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_0165"})
     void a_member_removed_from_the_closure_refuses_the_approval() throws Exception {
         Composite composite = ingestComposite("gate");
         deleteMembers(composite.snapshot().id());
@@ -52,7 +52,7 @@ class ClosureCompletenessTests extends AbstractExternalSourceTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_0165"})
     void a_composite_with_no_closure_at_all_refuses_the_approval() throws Exception {
         Composite composite = ingestComposite("gate");
         jdbc.sql("DELETE FROM snapshot_closures WHERE snapshot_id = :id")
@@ -63,7 +63,7 @@ class ClosureCompletenessTests extends AbstractExternalSourceTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_0165"})
     void a_member_whose_recorded_tree_differs_from_the_grafted_tree_refuses_the_approval() throws Exception {
         Composite composite = ingestComposite("gate");
         // A real tree — the upstream root — so this is "the wrong content", not "not a tree".
@@ -76,7 +76,7 @@ class ClosureCompletenessTests extends AbstractExternalSourceTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_0165"})
     void a_member_re_pathed_away_from_its_graft_refuses_the_approval() throws Exception {
         Composite composite = ingestComposite("gate");
         updateMembers(composite.snapshot().id(), "graft_path", "_plugins/elsewhere");
@@ -85,7 +85,7 @@ class ClosureCompletenessTests extends AbstractExternalSourceTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_0165"})
     void a_member_whose_resolved_commit_is_not_an_object_id_refuses_the_approval() throws Exception {
         Composite composite = ingestComposite("gate");
         updateMembers(composite.snapshot().id(), "resolved_sha", "not-a-commit");
@@ -94,7 +94,7 @@ class ClosureCompletenessTests extends AbstractExternalSourceTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_0165"})
     void a_snapshot_re_pointed_at_a_commit_without_the_grafts_refuses_the_approval() throws Exception {
         Composite composite = ingestComposite("gate");
         // The composite's parent: same marketplace, no _plugins tree, the manifest still external.
@@ -104,7 +104,7 @@ class ClosureCompletenessTests extends AbstractExternalSourceTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_0165"})
     void a_stray_entry_under_the_reserved_directory_refuses_the_approval() throws Exception {
         Composite composite = ingestComposite("gate");
         String withStray = commitWithStrayGraft(
@@ -115,7 +115,7 @@ class ClosureCompletenessTests extends AbstractExternalSourceTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_0165"})
     void a_manifest_grafting_a_plugin_nothing_resolved_refuses_the_approval() throws Exception {
         // The one direction the tree checks cannot see: the manifest points at a graft that neither
         // the closure nor the commit holds, so only manifest-against-closure notices.
@@ -134,7 +134,7 @@ class ClosureCompletenessTests extends AbstractExternalSourceTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_0165"})
     void a_manifest_that_no_longer_declares_a_recorded_member_refuses_the_approval() throws Exception {
         // The closure and the tree still agree about tools; the manifest has been turned to point
         // elsewhere. Provenance would then describe content the manifest no longer serves.
@@ -150,7 +150,7 @@ class ClosureCompletenessTests extends AbstractExternalSourceTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_0165"})
     void an_administrative_override_does_not_lift_the_gate() throws Exception {
         Composite composite = ingestComposite("gate");
         deleteMembers(composite.snapshot().id());
@@ -168,7 +168,7 @@ class ClosureCompletenessTests extends AbstractExternalSourceTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_0165"})
     void a_revoked_snapshot_is_checked_again_on_re_approval() throws Exception {
         Composite composite = ingestComposite("gate");
         long id = composite.snapshot().id();
@@ -182,7 +182,7 @@ class ClosureCompletenessTests extends AbstractExternalSourceTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_0165"})
     void an_untouched_composite_and_a_local_only_snapshot_still_approve() throws Exception {
         Composite composite = ingestComposite("gate");
         Registered local = registerAndIngest(uniqueName("gate"), createUpstream(DEFAULT_MANIFEST));

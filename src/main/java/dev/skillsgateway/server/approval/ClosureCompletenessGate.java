@@ -22,7 +22,7 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.springframework.stereotype.Component;
 
 /**
- * The closure-completeness assertion (GW_0164): before a snapshot is approved, its recorded
+ * The closure-completeness assertion (GW_0165): before a snapshot is approved, its recorded
  * closure, its served manifest and its pinned tree must agree with one another.
  *
  * <p>Three views of the same fact, checked as a bijection. Let <i>M</i> be the plugins the served
@@ -54,7 +54,7 @@ public class ClosureCompletenessGate {
     }
 
     /** Raises when the snapshot's closure does not describe the commit it pins. */
-    @Requirements({"GW_0164"})
+    @Requirements({"GW_0165"})
     public void require(Snapshot snapshot, Marketplace marketplace) {
         List<String> discrepancies = discrepancies(snapshot, marketplace);
         if (!discrepancies.isEmpty()) {

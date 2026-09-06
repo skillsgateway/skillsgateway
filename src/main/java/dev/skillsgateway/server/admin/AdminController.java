@@ -537,7 +537,7 @@ public class AdminController {
     }
 
     /**
-     * The closure-completeness gate (GW_0164). Every discrepancy is named, because a refusal here
+     * The closure-completeness gate (GW_0165). Every discrepancy is named, because a refusal here
      * means the snapshot's recorded closure and its pinned commit disagree — which nothing in the
      * gateway produces — and the shape of the disagreement is what an operator needs to see.
      */

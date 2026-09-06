@@ -74,7 +74,7 @@ CREATE TABLE snapshots (
     -- The commit the gateway serves: the upstream commit for a local-only manifest, the
     -- synthesised composite for one with resolved external sources (GW_0156).
     sha TEXT NOT NULL,
-    -- The commit ingested from upstream (GW_0163). Equal to `sha` unless a composite was
+    -- The commit ingested from upstream (GW_0164). Equal to `sha` unless a composite was
     -- synthesised, in which case it is also the composite's parent; the column exists so the
     -- question can be asked across snapshots without opening repository storage.
     upstream_sha TEXT NOT NULL,
@@ -110,7 +110,7 @@ CREATE TABLE snapshots (
     UNIQUE (marketplace_id, sha)
 );
 
--- The resolved closure of a composite snapshot (GW_0163): what each external plugin source was
+-- The resolved closure of a composite snapshot (GW_0164): what each external plugin source was
 -- declared as, what it resolved to, and where it was grafted, copied as values at ingestion.
 -- Never a foreign key into the marketplace or the manifest -- those are the mutable source; this
 -- is the immutable artifact that was vetted and approved, and it must keep meaning the same thing
@@ -149,7 +149,7 @@ CREATE TABLE snapshot_closure_members (
     declared_sha TEXT,
     clone_url TEXT NOT NULL,
     resolved_sha TEXT NOT NULL,
-    -- The tree grafted into the composite, and where. The approval gate (GW_0164) compares this
+    -- The tree grafted into the composite, and where. The approval gate (GW_0165) compares this
     -- against the pinned commit rather than resolving `resolved_sha`: the external commit object
     -- is reachable from nothing once scaffolding is pruned and may legitimately be collected.
     tree_sha TEXT NOT NULL,

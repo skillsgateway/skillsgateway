@@ -1262,7 +1262,7 @@ requirements:
     categories: ["performance-efficiency", "security"]
     revision: 0.1.0
 
-  - id: GW_0163
+  - id: GW_0164
     title: The resolved closure is recorded as an immutable domain object of the snapshot
     significance: shall
     description: "The system shall record, with every snapshot whose manifest declared external plugin sources it resolved, the closure those sources form: the ingested upstream commit, the identity of the rewrite implementation, a digest over the sorted set of resolved members together with those two values, and one member per resolved external plugin carrying the plugin name, the source type, the source exactly as the manifest declared it, any ref or commit the manifest pinned, the clone URL the source was resolved through, the commit it resolved to, the tree grafted into the snapshot, the path it was grafted at, and the object count and decompressed size measured at resolution — every value a copy taken at ingestion and none of them a reference into mutable configuration. The system shall record the upstream commit on every snapshot, equal to the snapshot's own commit when no composite was synthesised; shall record the closure in the same transaction as the snapshot so that neither can exist without the other; shall never modify a recorded closure and shall remove one only when its snapshot is purged; shall include the closure, the served commit and the upstream commit in the snapshot's provenance; shall present the number of resolved external sources and each plugin's origin, clone URL and resolved commit as facts to the policy gate; and shall make the snapshots whose closure contains a given clone URL, at any or at a given resolved commit, answerable by one query."
@@ -1270,7 +1270,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0164
+  - id: GW_0165
     title: Approval requires a complete closure
     significance: shall
     description: "The system shall, before evaluating any other approval gate and on every approval path including an administrator's override of a blocked vetting outcome and the re-approval of a revoked snapshot, refuse to approve a snapshot unless its recorded closure is complete against the commit it pins: every plugin whose source the served manifest declares under the reserved graft directory corresponds to exactly one closure member at that path, every closure member's graft path is present in the pinned commit as a tree identical to the tree the member records, every member carries a resolved commit, and no entry exists under the reserved graft directory that a member does not account for. The system shall refuse with a distinct outcome naming every discrepancy, shall record the refusal on the audit ledger, and shall leave the snapshot undecided with nothing published."
