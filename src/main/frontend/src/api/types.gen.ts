@@ -2124,6 +2124,51 @@ export interface components {
              */
             url?: string;
         };
+        /** @description A registered marketplace, plus any non-blocking warnings about the registration */
+        RegisteredMarketplace: {
+            /** Format: date-time */
+            createdAt?: string;
+            /** @description Project description from the forge */
+            description?: string;
+            /** @description Detected forge (github, gitlab, bitbucket, azure-devops, gitea) or null */
+            forge?: string;
+            /** @description Project path on the forge */
+            forgeProject?: string;
+            /** Format: int64 */
+            id?: number;
+            /**
+             * Format: date-time
+             * @description Last sync attempt (success or failure), or null before the first one
+             */
+            lastSyncAt?: string;
+            name?: string;
+            /**
+             * @description Where the content comes from
+             * @enum {string}
+             */
+            origin?: "upstream" | "hosted";
+            /**
+             * @description Whether a hosted marketplace's publisher may rewrite its lineage
+             * @enum {string}
+             */
+            pushPolicy?: "append-only" | "allow-rewrite";
+            /** @description Identity that registered the marketplace, or null when it was not recorded */
+            registeredBy?: string;
+            /**
+             * @description How upstream content reaches quarantine (GW_0056)
+             * @enum {string}
+             */
+            syncMode?: "on-demand" | "scheduled" | "webhook";
+            /**
+             * Format: date-time
+             * @description Last upstream update as reported by the forge
+             */
+            upstreamUpdatedAt?: string;
+            /** @description Upstream clone URL; null for a gateway-hosted marketplace */
+            url?: string;
+            /** @description Non-blocking warnings about this registration, e.g. the upstream url already being registered under another marketplace name (GW_0166) */
+            warnings?: string[];
+        };
         /** @description What one re-vetting run concluded about one approved snapshot */
         RevetResult: {
             /** @description Identities that fetched this commit through the facade before the violation */
@@ -3139,7 +3184,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Marketplace"];
+                    "*/*": components["schemas"]["RegisteredMarketplace"];
                 };
             };
             /** @description Disallowed URL scheme, or a ref other than the default branch */
@@ -3148,7 +3193,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Marketplace"];
+                    "*/*": components["schemas"]["RegisteredMarketplace"];
                 };
             };
             /** @description A marketplace with that name already exists */
@@ -3157,7 +3202,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Marketplace"];
+                    "*/*": components["schemas"]["RegisteredMarketplace"];
                 };
             };
             /** @description Invalid marketplace name */
@@ -3166,7 +3211,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Marketplace"];
+                    "*/*": components["schemas"]["RegisteredMarketplace"];
                 };
             };
         };

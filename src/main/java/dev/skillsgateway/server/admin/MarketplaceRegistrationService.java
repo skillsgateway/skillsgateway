@@ -9,6 +9,7 @@ import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -52,12 +53,15 @@ public class MarketplaceRegistrationService {
         this.storage = storage;
     }
 
+    /** A successful registration, plus any non-blocking warnings about it (GW_0166). */
+    public record RegistrationOutcome(Marketplace marketplace, List<String> warnings) {}
+
     /**
      * Validates, registers, and appends the ledger entry with the acting identity. Statuses match
      * the API contract; a non-HTTP caller (the estate reconciler) reports the reason instead.
      */
     @Requirements({"GW_0001"})
-    public Marketplace register(String name, String url, String actor) {
+    public RegistrationOutcome register(String name, String url, String actor) {
         return register(name, url, Marketplace.ORIGIN_UPSTREAM, null, actor);
     }
 
@@ -70,7 +74,7 @@ public class MarketplaceRegistrationService {
      * repository is created here so a publisher can push the moment registration returns.
      */
     @Requirements({"GW_0001", "GW_0096", "GW_0101"})
-    public Marketplace register(String name, String url, String origin, String pushPolicy, String actor) {
+    public RegistrationOutcome register(String name, String url, String origin, String pushPolicy, String actor) {
         if (name == null || !MARKETPLACE_NAME.matcher(name).matches()) {
             throw new ResponseStatusException(
                     HttpStatus.UNPROCESSABLE_CONTENT, "name must match " + MARKETPLACE_NAME.pattern());
@@ -83,6 +87,7 @@ public class MarketplaceRegistrationService {
         }
         boolean hosted = Marketplace.ORIGIN_HOSTED.equals(resolvedOrigin);
         String resolvedPolicy = requirePushPolicy(pushPolicy, hosted);
+        List<String> warnings = List.of();
         if (hosted) {
             if (url != null && !url.isBlank()) {
                 throw new ResponseStatusException(
@@ -90,6 +95,7 @@ public class MarketplaceRegistrationService {
             }
         } else {
             requireAllowlistedScheme(url);
+            warnings = duplicateUrlWarnings(url);
         }
         if (marketplaceRepository.findByName(name).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "marketplace '%s' already exists".formatted(name));
@@ -107,7 +113,26 @@ public class MarketplaceRegistrationService {
             createOriginRepository(marketplace.name());
         }
         auditLogger.record(actor, marketplace.name(), "marketplace-registered", null, "origin=" + resolvedOrigin);
-        return marketplace;
+        return new RegistrationOutcome(marketplace, warnings);
+    }
+
+    /**
+     * Non-blocking: tracking one upstream under two marketplace names is a legitimate way to test
+     * a marketplace before promoting it, so a collision here is surfaced, never refused. Compared
+     * by normalized URL (GW_0166) against every other upstream marketplace, so this also catches a
+     * duplicate that only case, a trailing slash or a {@code .git} suffix disguises.
+     */
+    @Requirements({"GW_0166"})
+    private List<String> duplicateUrlWarnings(String url) {
+        String normalized = CloneUrlNormalizer.normalize(url);
+        if (normalized == null) {
+            return List.of();
+        }
+        return marketplaceRepository.list().stream()
+                .filter(m -> m.url() != null)
+                .filter(m -> normalized.equals(CloneUrlNormalizer.normalize(m.url())))
+                .map(m -> "url already registered as " + m.name())
+                .toList();
     }
 
     /** A push policy is a hosted marketplace's decision; an upstream one has no lineage to rewrite. */
