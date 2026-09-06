@@ -97,7 +97,7 @@ fetch ledger records.
 
 The placeholder `${SGW_OIDC_REDIRECT_URI:{baseUrl}/login/oauth2/code/idp}`
 resolves to today's template when the variable is unset (Spring's placeholder
-parser balances the inner braces — proven by `ForwardedHeadersTests`, whose
+parser balances the inner braces — proven by `ForwardedHeadersRedirectUriTests`, whose
 context leaves `redirect-uri` to `application.yaml` rather than overriding
 it as the shared fixture does). Set, it replaces the derived URI outright and
 no header is consulted. The docs say plainly that it fixes the login and

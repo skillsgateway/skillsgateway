@@ -29,7 +29,8 @@
 
 ## 4. Tests (never weakening an existing SVC test)
 
-- [x] 4.1 `ForwardedHeadersTests`, `@SVCs({"SVC_GW_0163"})`: a real server per
+- [x] 4.1 `AbstractForwardedHeadersTest` and one `ForwardedHeaders*Tests` class per
+      posture, `@SVCs({"SVC_GW_0163"})`: a real server per
       posture — unset ignores the headers, `framework` and `native` honour
       them, exactly one filter is registered under `framework`, the absolute
       URI is immune to the headers
