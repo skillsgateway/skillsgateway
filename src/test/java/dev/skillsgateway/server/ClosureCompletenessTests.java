@@ -3,6 +3,9 @@ package dev.skillsgateway.server;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.skillsgateway.server.approval.ApprovalService;
 import dev.skillsgateway.server.approval.ClosureIncompleteException;
 import dev.skillsgateway.server.persistence.Snapshot;
@@ -10,6 +13,7 @@ import io.github.reqstool.annotations.SVCs;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.function.UnaryOperator;
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheBuilder;
 import org.eclipse.jgit.dircache.DirCacheEditor;
@@ -23,6 +27,7 @@ import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.treewalk.TreeWalk;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -35,6 +40,7 @@ import org.junit.jupiter.api.Test;
 class ClosureCompletenessTests extends AbstractExternalSourceTest {
 
     private static final String REFUSED = "snapshot-approval-refused";
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Test
     @SVCs({"SVC_GW_0164"})
@@ -106,6 +112,41 @@ class ClosureCompletenessTests extends AbstractExternalSourceTest {
         repoint(composite.snapshot().id(), withStray);
 
         assertRefused(composite, "_plugins/stray");
+    }
+
+    @Test
+    @SVCs({"SVC_GW_0164"})
+    void a_manifest_grafting_a_plugin_nothing_resolved_refuses_the_approval() throws Exception {
+        // The one direction the tree checks cannot see: the manifest points at a graft that neither
+        // the closure nor the commit holds, so only manifest-against-closure notices.
+        Composite composite = ingestComposite("gate");
+        String ghosted =
+                commitWithManifest(composite.marketplace(), composite.snapshot().sha(), manifest -> {
+                    ((ArrayNode) manifest.get("plugins"))
+                            .addObject()
+                            .put("name", "ghost")
+                            .put("source", "./_plugins/ghost");
+                    return manifest;
+                });
+        repoint(composite.snapshot().id(), ghosted);
+
+        assertRefused(composite, "ghost");
+    }
+
+    @Test
+    @SVCs({"SVC_GW_0164"})
+    void a_manifest_that_no_longer_declares_a_recorded_member_refuses_the_approval() throws Exception {
+        // The closure and the tree still agree about tools; the manifest has been turned to point
+        // elsewhere. Provenance would then describe content the manifest no longer serves.
+        Composite composite = ingestComposite("gate");
+        String redirected =
+                commitWithManifest(composite.marketplace(), composite.snapshot().sha(), manifest -> {
+                    ((ObjectNode) manifest.get("plugins").get(1)).put("source", "./plugins/tools");
+                    return manifest;
+                });
+        repoint(composite.snapshot().id(), redirected);
+
+        assertRefused(composite, "_plugins/tools");
     }
 
     @Test
@@ -209,6 +250,43 @@ class ClosureCompletenessTests extends AbstractExternalSourceTest {
      * {@code tools}; the commit now holds content neither accounts for.
      */
     private String commitWithStrayGraft(String marketplace, String compositeSha) throws IOException {
+        return derive(marketplace, compositeSha, (inserter, quarantine, composite) -> {
+            ObjectId blob = inserter.insert(Constants.OBJ_BLOB, "stray\n".getBytes(StandardCharsets.UTF_8));
+            return blobAt("_plugins/stray/README.md", blob);
+        });
+    }
+
+    /** The composite with its manifest rewritten, committed in quarantine with the composite as parent. */
+    private String commitWithManifest(String marketplace, String compositeSha, UnaryOperator<ObjectNode> change)
+            throws IOException {
+        return derive(marketplace, compositeSha, (inserter, quarantine, composite) -> {
+            try (TreeWalk manifest = TreeWalk.forPath(quarantine, MANIFEST_PATH, composite.getTree())) {
+                ObjectNode parsed = (ObjectNode)
+                        MAPPER.readTree(quarantine.open(manifest.getObjectId(0)).getBytes());
+                byte[] rewritten = MAPPER.writeValueAsBytes(change.apply(parsed));
+                return blobAt(MANIFEST_PATH, inserter.insert(Constants.OBJ_BLOB, rewritten));
+            }
+        });
+    }
+
+    private static DirCacheEditor.PathEdit blobAt(String path, ObjectId blob) {
+        return new DirCacheEditor.PathEdit(path) {
+            @Override
+            public void apply(DirCacheEntry entry) {
+                entry.setFileMode(FileMode.REGULAR_FILE);
+                entry.setObjectId(blob);
+            }
+        };
+    }
+
+    @FunctionalInterface
+    private interface Tampering {
+        DirCacheEditor.PathEdit edit(ObjectInserter inserter, Repository quarantine, RevCommit composite)
+                throws IOException;
+    }
+
+    /** A commit derived from the composite by one path edit, parented on it, in quarantine. */
+    private String derive(String marketplace, String compositeSha, Tampering tampering) throws IOException {
         try (Repository quarantine = storage.quarantine(marketplace);
                 ObjectReader reader = quarantine.newObjectReader();
                 ObjectInserter inserter = quarantine.newObjectInserter()) {
@@ -217,15 +295,8 @@ class ClosureCompletenessTests extends AbstractExternalSourceTest {
             DirCacheBuilder builder = cache.builder();
             builder.addTree(new byte[0], DirCacheEntry.STAGE_0, reader, composite.getTree());
             builder.finish();
-            ObjectId blob = inserter.insert(Constants.OBJ_BLOB, "stray\n".getBytes(StandardCharsets.UTF_8));
             DirCacheEditor editor = cache.editor();
-            editor.add(new DirCacheEditor.PathEdit("_plugins/stray/README.md") {
-                @Override
-                public void apply(DirCacheEntry entry) {
-                    entry.setFileMode(FileMode.REGULAR_FILE);
-                    entry.setObjectId(blob);
-                }
-            });
+            editor.add(tampering.edit(inserter, quarantine, composite));
             editor.finish();
             ObjectId tree = cache.writeTree(inserter);
             CommitBuilder commit = new CommitBuilder();
