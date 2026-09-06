@@ -200,29 +200,45 @@ public class AdminController {
     public record RegisteredMarketplace(
             long id,
             String name,
-            @Schema(description = "Upstream clone URL; null for a gateway-hosted marketplace") String url,
+
+            @Schema(description = "Upstream clone URL; null for a gateway-hosted marketplace")
+            String url,
+
             Instant createdAt,
+
             @Schema(description = "Identity that registered the marketplace, or null when it was not recorded")
             String registeredBy,
+
             @Schema(
                     description = "Where the content comes from",
                     allowableValues = {"upstream", "hosted"})
             String origin,
+
             @Schema(
                     description = "Whether a hosted marketplace's publisher may rewrite its lineage",
                     allowableValues = {"append-only", "allow-rewrite"})
             String pushPolicy,
+
             @Schema(description = "Detected forge (github, gitlab, bitbucket, azure-devops, gitea) or null")
             String forge,
-            @Schema(description = "Project path on the forge") String forgeProject,
-            @Schema(description = "Project description from the forge") String description,
-            @Schema(description = "Last upstream update as reported by the forge") Instant upstreamUpdatedAt,
+
+            @Schema(description = "Project path on the forge")
+            String forgeProject,
+
+            @Schema(description = "Project description from the forge")
+            String description,
+
+            @Schema(description = "Last upstream update as reported by the forge")
+            Instant upstreamUpdatedAt,
+
             @Schema(
                     description = "How upstream content reaches quarantine (GW_0056)",
                     allowableValues = {"on-demand", "scheduled", "webhook"})
             String syncMode,
+
             @Schema(description = "Last sync attempt (success or failure), or null before the first one")
             Instant lastSyncAt,
+
             @Schema(
                     description = "Non-blocking warnings about this registration, e.g. the upstream url"
                             + " already being registered under another marketplace name (GW_0166)")

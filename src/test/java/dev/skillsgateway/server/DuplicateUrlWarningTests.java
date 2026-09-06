@@ -69,7 +69,6 @@ class DuplicateUrlWarningTests extends AbstractGatewayTest {
         String created = register(third, url);
 
         assertThat(JsonPath.<List<String>>read(created, "$.warnings"))
-                .containsExactlyInAnyOrder(
-                        "url already registered as " + first, "url already registered as " + second);
+                .containsExactlyInAnyOrder("url already registered as " + first, "url already registered as " + second);
     }
 }

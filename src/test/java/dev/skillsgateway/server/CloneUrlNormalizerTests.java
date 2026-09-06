@@ -13,11 +13,16 @@ class CloneUrlNormalizerTests {
     @SVCs({"SVC_GW_0166"})
     void host_case_a_trailing_slash_and_a_git_suffix_all_normalize_the_same() {
         String canonical = "https://github.com/acme/marketplace";
-        assertThat(CloneUrlNormalizer.normalize("https://GitHub.com/acme/marketplace")).isEqualTo(canonical);
-        assertThat(CloneUrlNormalizer.normalize("https://github.com/acme/marketplace/")).isEqualTo(canonical);
-        assertThat(CloneUrlNormalizer.normalize("https://github.com/acme/marketplace.git")).isEqualTo(canonical);
-        assertThat(CloneUrlNormalizer.normalize("https://github.com/acme/marketplace.GIT")).isEqualTo(canonical);
-        assertThat(CloneUrlNormalizer.normalize("https://github.com/acme/marketplace/.git")).isEqualTo(canonical);
+        assertThat(CloneUrlNormalizer.normalize("https://GitHub.com/acme/marketplace"))
+                .isEqualTo(canonical);
+        assertThat(CloneUrlNormalizer.normalize("https://github.com/acme/marketplace/"))
+                .isEqualTo(canonical);
+        assertThat(CloneUrlNormalizer.normalize("https://github.com/acme/marketplace.git"))
+                .isEqualTo(canonical);
+        assertThat(CloneUrlNormalizer.normalize("https://github.com/acme/marketplace.GIT"))
+                .isEqualTo(canonical);
+        assertThat(CloneUrlNormalizer.normalize("https://github.com/acme/marketplace/.git"))
+                .isEqualTo(canonical);
         assertThat(CloneUrlNormalizer.normalize("https://GITHUB.COM/acme/marketplace.git/"))
                 .isEqualTo(canonical);
     }
