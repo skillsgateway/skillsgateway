@@ -95,7 +95,7 @@ public class IngestionService {
         }
     }
 
-    @Requirements({"GW_0137", "GW_0155", "GW_0156", "GW_0161"})
+    @Requirements({"GW_0137", "GW_0155", "GW_0156", "GW_0161", "GW_0163"})
     private Snapshot ingestLocked(Marketplace marketplace, String actor) {
         try (Repository repo = storage.quarantine(marketplace.name())) {
             ObjectId upstream = fetchIncoming(repo, marketplace);
@@ -118,7 +118,11 @@ public class IngestionService {
             String state = violation == null ? Snapshot.HELD : Snapshot.REJECTED;
             Snapshot snapshot;
             try {
-                snapshot = snapshotRepository.create(marketplace.id(), sha.name(), state, violation, actor);
+                // The closure goes in with the row (GW_0163): a composite and the record of what it
+                // resolved are one fact, and the completeness gate at approval is what refuses the
+                // state in which they are not.
+                snapshot = snapshotRepository.create(
+                        marketplace.id(), sha.name(), upstream.name(), state, violation, actor, served.closure());
             } catch (DuplicateKeyException raced) {
                 // Belt-and-braces under the per-marketplace lock: another instance of the gateway
                 // (or a path the lock cannot see) recorded the same commit first — same content,
@@ -230,14 +234,19 @@ public class IngestionService {
      * {@code violation != null} is what {@code ingestLocked} maps to rejected, and held is only
      * reachable when the served commit's own manifest is entirely gateway-local.
      */
-    private record Served(ObjectId sha, String violation) {}
+    private record Served(ObjectId sha, String violation, SnapshotClosure closure) {
+
+        Served(ObjectId sha, String violation) {
+            this(sha, violation, null);
+        }
+    }
 
     /**
      * Resolves and rewrites when the manifest declares external sources this gateway admits, and is
      * otherwise byte-for-byte the path that shipped before: a local-only manifest is served as the
      * upstream commit, with no composite, no fetch and no new reference.
      */
-    @Requirements({"GW_0152", "GW_0155", "GW_0156", "GW_0161"})
+    @Requirements({"GW_0152", "GW_0155", "GW_0156", "GW_0161", "GW_0163"})
     private Served serve(Repository repo, ObjectId upstreamSha) throws IOException {
         byte[] manifestBytes = manifestBytes(repo, upstreamSha);
         if (manifestBytes == null) {
@@ -265,8 +274,28 @@ public class IngestionService {
             if (rewrite.violation() != null) {
                 return new Served(upstreamSha, rewrite.violation());
             }
-            return new Served(rewrite.commit(), null);
+            return new Served(rewrite.commit(), null, closure(upstreamSha, resolution.resolved()));
         }
+    }
+
+    /** The closure as a value (GW_0163): what each source was declared as, and what it became. */
+    private SnapshotClosure closure(ObjectId upstreamSha, List<ExternalSourceResolver.Resolved> resolved) {
+        List<SnapshotClosure.Member> members = new java.util.ArrayList<>();
+        for (ExternalSourceResolver.Resolved source : resolved) {
+            members.add(new SnapshotClosure.Member(
+                    source.pluginName(),
+                    source.sourceType(),
+                    source.declaredSource(),
+                    null,
+                    null,
+                    source.cloneUrl(),
+                    source.sha().name(),
+                    source.tree().name(),
+                    ManifestRewriter.graftPath(source.pluginName()),
+                    source.objectCount(),
+                    source.inflatedBytes()));
+        }
+        return new SnapshotClosure(upstreamSha.name(), manifestRewriter.transformerVersion(), members);
     }
 
     private static byte[] manifestBytes(Repository repo, ObjectId sha) throws IOException {

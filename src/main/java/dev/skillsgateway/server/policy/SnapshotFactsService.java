@@ -1,9 +1,11 @@
 package dev.skillsgateway.server.policy;
 
 import dev.skillsgateway.server.ingestion.IngestionException;
+import dev.skillsgateway.server.ingestion.SnapshotClosure;
 import dev.skillsgateway.server.ingestion.SnapshotContentService;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.Snapshot;
+import dev.skillsgateway.server.persistence.SnapshotClosureRepository;
 import dev.skillsgateway.server.storage.GitStorage;
 import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
@@ -45,18 +47,36 @@ public class SnapshotFactsService {
 
     private final GitStorage storage;
     private final SnapshotContentService contentService;
+    private final SnapshotClosureRepository closures;
 
-    public SnapshotFactsService(GitStorage storage, SnapshotContentService contentService) {
+    public SnapshotFactsService(
+            GitStorage storage, SnapshotContentService contentService, SnapshotClosureRepository closures) {
         this.storage = storage;
         this.contentService = contentService;
+        this.closures = closures;
     }
 
-    /** The variables of one evaluation: {@code snapshot}, {@code files}, {@code plugins}, {@code skills}. */
-    @Requirements({"GW_0090"})
+    /**
+     * The variables of one evaluation: {@code snapshot}, {@code files}, {@code plugins}, {@code skills}.
+     *
+     * <p>The closure (GW_0163) is folded into the same variables rather than added as a fifth: a
+     * rule about external content is a rule about plugins, so each plugin carries its
+     * {@code origin}, {@code upstreamUrl} and {@code resolvedSha}, and the snapshot carries the
+     * count. New signal for the existing gate, not a new gate.
+     */
+    @Requirements({"GW_0090", "GW_0163"})
     public Map<String, Object> build(Snapshot snapshot, Marketplace marketplace) {
+        Map<String, SnapshotClosure.Member> closure = new HashMap<>();
+        closures.findBySnapshot(snapshot.id()).ifPresent(recorded -> {
+            for (SnapshotClosure.Member member : recorded.members()) {
+                closure.put(member.graftPath(), member);
+            }
+        });
         Map<String, Object> snapshotFacts = new HashMap<>();
         snapshotFacts.put("id", snapshot.id());
         snapshotFacts.put("sha", snapshot.sha());
+        snapshotFacts.put("upstreamSha", snapshot.upstreamSha());
+        snapshotFacts.put("externalSources", closure.size());
         snapshotFacts.put("marketplace", marketplace.name());
         snapshotFacts.put("state", snapshot.state());
 
@@ -78,6 +98,10 @@ public class SnapshotFactsService {
                 pluginFacts.put("name", Objects.toString(plugin.name(), ""));
                 pluginFacts.put("description", Objects.toString(plugin.description(), ""));
                 pluginFacts.put("source", Objects.toString(plugin.source(), ""));
+                SnapshotClosure.Member member = closure.get(graftPath(plugin.source()));
+                pluginFacts.put("origin", member == null ? "local" : "external");
+                pluginFacts.put("upstreamUrl", member == null ? "" : member.cloneUrl());
+                pluginFacts.put("resolvedSha", member == null ? "" : member.resolvedSha());
                 plugins.add(pluginFacts);
                 for (SnapshotContentService.SkillInfo skill : plugin.skills()) {
                     Map<String, Object> skillFacts = new HashMap<>();
@@ -98,6 +122,14 @@ public class SnapshotFactsService {
             throw new PolicyEvaluationException(
                     "facts for snapshot %d could not be built: %s".formatted(snapshot.id(), e.getMessage()), e);
         }
+    }
+
+    /** The manifest writes a grafted source as {@code ./_plugins/<name>}; the closure keys on the path. */
+    private static String graftPath(String source) {
+        if (source == null) {
+            return "";
+        }
+        return source.startsWith("./") ? source.substring(2) : source;
     }
 
     private static List<Map<String, Object>> files(Repository repo, RevCommit commit) throws IOException {

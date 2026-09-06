@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.persistence;
 
+import dev.skillsgateway.server.ingestion.SnapshotClosure;
 import io.github.reqstool.annotations.Requirements;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -23,9 +24,11 @@ public class SnapshotRepository {
     private static final String DELETABLE_STATES = "('held', 'rejected', 'revoked')";
 
     private final JdbcClient jdbc;
+    private final SnapshotClosureRepository closures;
 
-    public SnapshotRepository(JdbcClient jdbc) {
+    public SnapshotRepository(JdbcClient jdbc, SnapshotClosureRepository closures) {
         this.jdbc = jdbc;
+        this.closures = closures;
     }
 
     /**
@@ -36,12 +39,44 @@ public class SnapshotRepository {
      */
     @Requirements({"GW_0096", "GW_0125"})
     public Snapshot create(long marketplaceId, String sha, String state, String violation, String ingestedBy) {
-        return jdbc.sql("INSERT INTO snapshots (marketplace_id, sha, state, violation, created_at, ingested_by)"
-                        + " VALUES (:marketplaceId, :sha, :state::snapshot_state, :violation, :now, :ingestedBy)"
-                        + " RETURNING *")
+        return create(marketplaceId, sha, sha, state, violation, ingestedBy, null);
+    }
+
+    /**
+     * As above, for a snapshot whose served commit is not the ingested one: the upstream commit is
+     * recorded beside it, and the closure it resolved — when there is one — is written in the
+     * same transaction (GW_0163), so a snapshot with external content and no record of what that
+     * content is cannot come out of this method half-made. The duplicate-key race the caller
+     * already handles rolls the closure back with the row.
+     *
+     * @param closure the resolved closure, or null for a snapshot that resolved nothing
+     */
+    @Requirements({"GW_0096", "GW_0125", "GW_0163"})
+    @Transactional
+    public Snapshot create(
+            long marketplaceId,
+            String sha,
+            String upstreamSha,
+            String state,
+            String violation,
+            String ingestedBy,
+            SnapshotClosure closure) {
+        Snapshot snapshot = insert(marketplaceId, sha, upstreamSha, state, violation, ingestedBy);
+        if (closure != null && !closure.isEmpty()) {
+            closures.record(snapshot.id(), closure);
+        }
+        return snapshot;
+    }
+
+    private Snapshot insert(
+            long marketplaceId, String sha, String upstreamSha, String state, String violation, String ingestedBy) {
+        return jdbc.sql("INSERT INTO snapshots (marketplace_id, sha, upstream_sha, state, violation, created_at,"
+                        + " ingested_by) VALUES (:marketplaceId, :sha, :upstreamSha, :state::snapshot_state,"
+                        + " :violation, :now, :ingestedBy) RETURNING *")
                 .param("marketplaceId", marketplaceId)
                 .param("ingestedBy", ingestedBy)
                 .param("sha", sha)
+                .param("upstreamSha", upstreamSha)
                 .param("state", state)
                 .param("violation", violation)
                 .param("now", OffsetDateTime.now())
@@ -346,6 +381,7 @@ public class SnapshotRepository {
                 rs.getLong("id"),
                 rs.getLong("marketplace_id"),
                 rs.getString("sha"),
+                rs.getString("upstream_sha"),
                 rs.getString("state"),
                 rs.getString("violation"),
                 MarketplaceRepository.instant(rs, "created_at"),

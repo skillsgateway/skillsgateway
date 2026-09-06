@@ -8,8 +8,13 @@ public record Snapshot(
         @Schema(description = "Snapshot id") long id,
         @Schema(description = "Owning marketplace id") long marketplaceId,
 
-        @Schema(description = "Upstream commit SHA the snapshot is pinned to")
+        @Schema(
+                description = "Commit SHA the snapshot is pinned to and serves: the upstream commit, or the"
+                        + " synthesised composite when external plugin sources were resolved")
         String sha,
+
+        @Schema(description = "Commit SHA ingested from upstream; equal to sha unless a composite was synthesised")
+        String upstreamSha,
 
         @Schema(
                 description = "held, approved, rejected, or revoked (retroactively quarantined by re-vetting)",

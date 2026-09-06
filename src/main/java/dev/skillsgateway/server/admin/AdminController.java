@@ -1,6 +1,7 @@
 package dev.skillsgateway.server.admin;
 
 import dev.skillsgateway.server.approval.ApprovalService;
+import dev.skillsgateway.server.approval.ClosureIncompleteException;
 import dev.skillsgateway.server.approval.FourEyesConflictException;
 import dev.skillsgateway.server.approval.FourEyesGate;
 import dev.skillsgateway.server.approval.MissingOverrideReasonException;
@@ -532,6 +533,19 @@ public class AdminController {
         problem.setTitle("Vetting chain blocked this snapshot");
         problem.setProperty("blockingConnectors", e.blockingConnectors());
         problem.setProperty("uncoveredFindings", e.uncoveredFindings());
+        return problem;
+    }
+
+    /**
+     * The closure-completeness gate (GW_0164). Every discrepancy is named, because a refusal here
+     * means the snapshot's recorded closure and its pinned commit disagree — which nothing in the
+     * gateway produces — and the shape of the disagreement is what an operator needs to see.
+     */
+    @ExceptionHandler(ClosureIncompleteException.class)
+    public ProblemDetail closureIncomplete(ClosureIncompleteException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+        problem.setTitle("Snapshot closure is incomplete");
+        problem.setProperty("discrepancies", e.discrepancies());
         return problem;
     }
 
