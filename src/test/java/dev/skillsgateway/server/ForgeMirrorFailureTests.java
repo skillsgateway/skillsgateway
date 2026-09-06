@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 
 /**
@@ -35,7 +37,6 @@ import org.springframework.test.context.TestPropertySource;
 @TestPropertySource(
         properties = {
             "skills-gateway.mirror.enabled=true",
-            "skills-gateway.mirror.marketplace=" + ForgeMirrorFailureTests.MIRRORED,
             "skills-gateway.mirror.url=file:///nonexistent/skills-gateway-forge-mirror-target.git",
             "skills-gateway.mirror.max-attempts=2",
             "skills-gateway.mirror.retry-delay=10ms",
@@ -45,7 +46,13 @@ import org.springframework.test.context.TestPropertySource;
         })
 class ForgeMirrorFailureTests extends AbstractGatewayTest {
 
-    static final String MIRRORED = "unmirrorable";
+    /** Unique per JVM: the gateway's data directory outlives a run, its database does not. */
+    private static final String MIRRORED = "unmirrorable" + Long.toString(System.nanoTime(), 36);
+
+    @DynamicPropertySource
+    static void mirroredMarketplace(DynamicPropertyRegistry registry) {
+        registry.add("skills-gateway.mirror.marketplace", () -> MIRRORED);
+    }
 
     private static final String PLANTED_SECRET = """
             # Deployment notes

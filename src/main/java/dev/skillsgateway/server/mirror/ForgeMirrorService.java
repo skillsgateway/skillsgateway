@@ -288,9 +288,8 @@ public class ForgeMirrorService {
     /**
      * Make the mirror hold exactly the served reference set, and return the served tip.
      *
-     * <p>Deletions are computed only over the served namespaces, so a branch or tag that belongs to
-     * the forge repository rather than to the gateway — a README branch, a release tag somebody
-     * made — is left alone rather than being taken as drift the gateway should erase.
+     * <p>Both sides are read through the same served-reference filter, so a deletion can only ever
+     * remove a reference publication itself would have written.
      */
     @Requirements({"GW_0169", "GW_0171"})
     private String reconcile() throws IOException, URISyntaxException {
@@ -304,7 +303,7 @@ public class ForgeMirrorService {
                 }
             }
             for (String ref : mirrored.keySet()) {
-                if (GitStorage.isServedRef(ref) && !served.containsKey(ref)) {
+                if (!served.containsKey(ref)) {
                     updates.add(new RemoteRefUpdate(published, (String) null, ref, true, null, null));
                 }
             }
@@ -354,7 +353,15 @@ public class ForgeMirrorService {
         return served;
     }
 
-    /** The mirror's references, as an ls-remote sees them. The only read of the forge there is. */
+    /**
+     * The mirror's references in the served namespaces, as an ls-remote sees them. The only read of
+     * the forge there is.
+     *
+     * <p>Filtered by the same predicate as the served side, which is what keeps the gateway to its
+     * own business: {@code HEAD}, a README branch, a release tag somebody made on the forge are all
+     * outside the namespaces publication writes, so they are neither reported as drift nor deleted
+     * by a reconciliation.
+     */
     private Map<String, ObjectId> mirrorRefs() throws IOException {
         Map<String, ObjectId> refs = new LinkedHashMap<>();
         try {
@@ -364,7 +371,7 @@ public class ForgeMirrorService {
                     .setTimeout(target.timeoutSeconds())
                     .callAsMap()
                     .forEach((name, ref) -> {
-                        if (ref.getObjectId() != null) {
+                        if (ref.getObjectId() != null && GitStorage.isServedRef(name)) {
                             refs.put(name, ref.getObjectId());
                         }
                     });

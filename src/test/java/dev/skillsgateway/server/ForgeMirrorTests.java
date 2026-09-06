@@ -25,6 +25,7 @@ import java.util.Map;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +45,6 @@ import org.springframework.test.context.TestPropertySource;
 @TestPropertySource(
         properties = {
             "skills-gateway.mirror.enabled=true",
-            "skills-gateway.mirror.marketplace=" + ForgeMirrorTests.MIRRORED,
             // Compressed so a failed push is observable without the suite waiting on backoff.
             "skills-gateway.mirror.max-attempts=2",
             "skills-gateway.mirror.retry-delay=10ms",
@@ -58,7 +58,12 @@ import org.springframework.test.context.TestPropertySource;
         })
 class ForgeMirrorTests extends AbstractGatewayTest {
 
-    static final String MIRRORED = "mirrored";
+    /**
+     * Unique per JVM, because the gateway's data directory outlives a run: a fixed name would meet
+     * last run's published repository holding last run's snapshot references, against a database
+     * that had forgotten them.
+     */
+    private static final String MIRRORED = "mirrored" + Long.toString(System.nanoTime(), 36);
 
     private static final String PLANTED_SECRET = """
             # Deployment notes
@@ -75,6 +80,7 @@ class ForgeMirrorTests extends AbstractGatewayTest {
 
     @DynamicPropertySource
     static void mirrorTarget(DynamicPropertyRegistry registry) {
+        registry.add("skills-gateway.mirror.marketplace", () -> MIRRORED);
         registry.add("skills-gateway.mirror.url", () -> mirrorUrl());
     }
 
@@ -174,15 +180,13 @@ class ForgeMirrorTests extends AbstractGatewayTest {
         // Drift seeded behind the gateway's back: a served ref removed, one it never published left
         // behind. This is what a revocation that failed to reach the mirror looks like from outside.
         try (Repository bare = openMirror()) {
-            assertThat(bare.updateRef(GitStorage.SERVED_REF).delete())
-                    .isIn(
-                            org.eclipse.jgit.lib.RefUpdate.Result.FORCED,
-                            org.eclipse.jgit.lib.RefUpdate.Result.NEW,
-                            org.eclipse.jgit.lib.RefUpdate.Result.NO_CHANGE);
-            org.eclipse.jgit.lib.RefUpdate orphan = bare.updateRef(ORPHAN_REF);
+            RefUpdate removal = bare.updateRef(GitStorage.SERVED_REF);
+            removal.setForceUpdate(true);
+            assertThat(removal.delete()).isIn(RefUpdate.Result.FORCED, RefUpdate.Result.NEW);
+            RefUpdate orphan = bare.updateRef(ORPHAN_REF);
             orphan.setNewObjectId(ObjectId.fromString(sha));
             orphan.setForceUpdate(true);
-            orphan.forceUpdate();
+            assertThat(orphan.forceUpdate()).isIn(RefUpdate.Result.NEW, RefUpdate.Result.FORCED);
         }
         MirrorReport drifted = mirror.report();
         assertThat(drifted.reachable()).isTrue();
