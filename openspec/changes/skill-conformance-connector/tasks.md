@@ -71,5 +71,5 @@
 - [x] 6.1 `./mvnw clean verify`, `pnpm test:stories`, `pnpm e2e`,
       `reqstool status local -p docs/reqstool`, `openspec validate --all
       --strict`, `mkdocs build --strict`
-- [ ] 6.2 `openspec/changes/skill-conformance-connector/evidence.md`
-- [ ] 6.3 Archive the change as the final commit of the PR
+- [x] 6.2 `openspec/changes/skill-conformance-connector/evidence.md`
+- [x] 6.3 Archive the change as the final commit of the PR
