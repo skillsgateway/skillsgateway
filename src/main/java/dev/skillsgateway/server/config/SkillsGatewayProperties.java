@@ -46,7 +46,7 @@ public record SkillsGatewayProperties(
             retention = new Retention(null, null, null, null, null, null);
         }
         if (vetting == null) {
-            vetting = new Vetting(null, null, null, null, null, null, null, null);
+            vetting = new Vetting(null, null, null, null, null, null, null, null, null);
         }
         if (approval == null) {
             approval = new Approval(null);
@@ -659,6 +659,7 @@ public record SkillsGatewayProperties(
      *     the wait clears itself and no sweep can be late.
      * @param revet continuous re-vetting of approved content (GW_0049-GW_0054)
      * @param license the org-level license policy (GW_0094)
+     * @param conformance the posture of the built-in SKILL.md conformance connector (GW_0167)
      */
     public record Vetting(
             Duration timeout,
@@ -668,7 +669,8 @@ public record SkillsGatewayProperties(
             Integer waiverSweepBatchSize,
             Duration minimumReleaseAge,
             Revet revet,
-            License license) {
+            License license,
+            Conformance conformance) {
 
         public Vetting {
             if (minimumReleaseAge == null || minimumReleaseAge.isNegative()) {
@@ -694,6 +696,34 @@ public record SkillsGatewayProperties(
             }
             if (license == null) {
                 license = new License(null, null);
+            }
+            if (conformance == null) {
+                conformance = new Conformance(null);
+            }
+        }
+    }
+
+    /**
+     * The posture of the built-in {@code skill-conformance} connector (GW_0167).
+     *
+     * <p>Defaults to advisory, and the default is the load-bearing part. A verdict covers a whole
+     * snapshot, so a blocking default would let one malformed skill hold up every other skill in
+     * the marketplace beside it — and a formatting defect is not what the gateway's blocking
+     * states are for. An operator who has decided conformance is a publishing requirement turns
+     * this on after watching the advisory findings for a cycle, which is the same on-ramp the
+     * license lists and re-vetting enforcement offer.
+     *
+     * <p>Like the license lists this is configuration rather than API-managed runtime state: it is
+     * stamped into the connector's recorded version, so every run names the posture it ran under
+     * and a changed answer about unchanged content stays attributable (GW_0049).
+     *
+     * @param enforce whether conformance defects block approval instead of warning
+     */
+    public record Conformance(Boolean enforce) {
+
+        public Conformance {
+            if (enforce == null) {
+                enforce = false;
             }
         }
     }

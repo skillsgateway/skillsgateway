@@ -42,7 +42,15 @@ cat > "$UPSTREAM_DIR/.claude-plugin/marketplace.json" <<'EOF'
   ]
 }
 EOF
-echo "# Hello" > "$UPSTREAM_DIR/plugins/hello/skills/hello/SKILL.md"
+# Conformant with the Agent Skills specification the skill-conformance connector pins:
+# the clean fixture has to stay clean in the portal the acceptance tests drive.
+cat > "$UPSTREAM_DIR/plugins/hello/skills/hello/SKILL.md" <<'EOF'
+---
+name: hello
+description: Says hello. Use when an acceptance test needs a well-formed skill.
+---
+# Hello
+EOF
 git -C "$UPSTREAM_DIR" add -A
 git -C "$UPSTREAM_DIR" -c user.name=e2e -c user.email=e2e@example.com \
   -c commit.gpgsign=false commit -q -m "e2e marketplace fixture"

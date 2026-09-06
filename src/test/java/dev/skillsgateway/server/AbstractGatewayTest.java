@@ -109,6 +109,21 @@ abstract class AbstractGatewayTest {
 
     protected static final String MANIFEST_PATH = ".claude-plugin/marketplace.json";
 
+    /**
+     * The default fixture's skill, conformant with the Agent Skills specification the
+     * skill-conformance connector pins (GW_0167): a clean fixture has to mean a clean chain, or
+     * every test that asserts one would be asserting around a standing finding instead.
+     */
+    protected static final String CONFORMANT_SKILL = """
+            ---
+            name: hello
+            description: Says hello. Use when a test needs a trivial, well-formed skill.
+            ---
+            # Hello
+
+            A test skill that says hello.
+            """;
+
     private static final AtomicInteger COUNTER = new AtomicInteger();
 
     @LocalServerPort
@@ -170,7 +185,7 @@ abstract class AbstractGatewayTest {
             Files.writeString(manifest, manifestJson);
             Path skill = dir.resolve("plugins/hello/skills/hello/SKILL.md");
             Files.createDirectories(skill.getParent());
-            Files.writeString(skill, "# Hello\n\nA test skill that says hello.\n");
+            Files.writeString(skill, CONFORMANT_SKILL);
             commitAll(git, "initial marketplace content " + uniqueName("fixture"));
         }
         return dir;

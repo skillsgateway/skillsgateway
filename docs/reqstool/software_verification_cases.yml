@@ -1813,3 +1813,21 @@ cases:
       over the per-file cap is still visited as unread, and content beyond the retention
       bound is still served in full on every walk
     revision: "0.1.0"
+
+  - id: SVC_GW_0167
+    requirement_ids: ["GW_0167"]
+    title: SKILL.md frontmatter is validated against the pinned specification
+    verification: automated-test
+    description: |
+      GIVEN a quarantined snapshot holding a conformant skill, a skill with no
+      frontmatter, a skill missing a required field, a skill whose fields violate their
+      constraints, a skill carrying a field the pinned specification does not define,
+      and a skill whose frontmatter is hostile YAML
+      WHEN the vetting chain runs over the snapshot
+      THEN the conformant skill raises nothing, every departure is reported as its own
+      finding located at the file, the undefined field is informational, the hostile
+      frontmatter is refused as a finding rather than parsed or thrown out of the
+      connector, the verdict is advisory under the default posture and blocking under
+      configured enforcement, and the run records the pinned specification's version as
+      the connector's version
+    revision: "0.1.0"

@@ -123,7 +123,8 @@ Both record their runs with trigger `revet-manual`.
 !!! info "Scanner and advisory feeds"
 
     The built-in `secret-scan` and `prompt-injection` connectors have no
-    external feed to subscribe to: their rules ship with the gateway. So
+    external feed to subscribe to: their rules ship with the gateway, as does
+    the Agent Skills specification `skill-conformance` validates against. So
     "re-vet when the feed updates" is, today, an operator calling
     `POST /api/marketplaces/{name}/revet` after deploying a connector whose
     rules changed — and the run records the connector versions, so an answer
