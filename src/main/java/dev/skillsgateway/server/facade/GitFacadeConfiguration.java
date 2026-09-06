@@ -28,8 +28,7 @@ import org.springframework.context.annotation.Configuration;
 public class GitFacadeConfiguration {
 
     private static final Pattern MARKETPLACE_NAME = Pattern.compile("^[a-z0-9][a-z0-9_-]*$");
-    private static final String SERVED_REF = "refs/heads/main";
-    private static final String SNAPSHOT_REF_PREFIX = "refs/snapshots/";
+    private static final String SERVED_REF = GitStorage.SERVED_REF;
 
     /**
      * What the facade puts on the wire, stated rather than inherited (GW_0134).
@@ -52,7 +51,7 @@ public class GitFacadeConfiguration {
     private static final RefFilter SERVED_REFS = refs -> {
         Map<String, Ref> served = new LinkedHashMap<>();
         refs.forEach((name, ref) -> {
-            if (Constants.HEAD.equals(name) || SERVED_REF.equals(name) || name.startsWith(SNAPSHOT_REF_PREFIX)) {
+            if (Constants.HEAD.equals(name) || GitStorage.isServedRef(name)) {
                 served.put(name, ref);
             }
         });
@@ -159,7 +158,7 @@ public class GitFacadeConfiguration {
         // Exactly one snapshot reference can match, since an approval pins refs/snapshots/<sha> at
         // <sha>; min() makes the answer independent of map ordering rather than of that invariant.
         return advertised.entrySet().stream()
-                .filter(entry -> entry.getKey().startsWith(SNAPSHOT_REF_PREFIX))
+                .filter(entry -> entry.getKey().startsWith(GitStorage.SNAPSHOT_REF_PREFIX))
                 .filter(entry -> want.equals(entry.getValue().getObjectId()))
                 .map(Map.Entry::getKey)
                 .min(Comparator.naturalOrder())

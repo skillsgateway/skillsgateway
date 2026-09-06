@@ -10,6 +10,7 @@ import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotNotFoundException;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
 import dev.skillsgateway.server.storage.GitStorage;
+import dev.skillsgateway.server.storage.ServedContentChangedEvent;
 import dev.skillsgateway.server.webhook.WebhookEvent;
 import dev.skillsgateway.server.webhook.WebhookService;
 import io.github.reqstool.annotations.Requirements;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 /**
@@ -74,6 +76,7 @@ public class RevetService {
     private final WebhookService webhookService;
     private final CatalogService catalogService;
     private final SkillsGatewayProperties.Revet properties;
+    private final ApplicationEventPublisher events;
 
     public RevetService(
             VettingService vettingService,
@@ -85,7 +88,8 @@ public class RevetService {
             AdminAuditLogger auditLogger,
             WebhookService webhookService,
             CatalogService catalogService,
-            SkillsGatewayProperties properties) {
+            SkillsGatewayProperties properties,
+            ApplicationEventPublisher events) {
         this.vettingService = vettingService;
         this.waiverService = waiverService;
         this.snapshotRepository = snapshotRepository;
@@ -96,6 +100,7 @@ public class RevetService {
         this.webhookService = webhookService;
         this.catalogService = catalogService;
         this.properties = properties.vetting().revet();
+        this.events = events;
     }
 
     @Schema(description = "What one re-vetting run concluded about one approved snapshot")
@@ -364,6 +369,11 @@ public class RevetService {
         // The published set just shrank; the catalog re-derives so the retracted content leaves it
         // too (GW_0062). Never fails the revocation that triggered it.
         catalogService.rebuildQuietly();
+        // Announced unconditionally, including on the unpublish failure above (GW_0171): the
+        // reconciliation the mirror runs is over what is served now, so it repairs a mirror the
+        // failure would otherwise have left holding the revoked snapshot. Nothing here waits for
+        // it, and a mirror that stays behind is drift, never a revocation that did not happen.
+        events.publishEvent(new ServedContentChangedEvent(marketplace, "snapshot-revoked"));
         webhookService.emit(
                 WebhookEvent.SNAPSHOT_REVOKED, marketplace, snapshot.id(), snapshot.sha(), Snapshot.REVOKED, actor);
         return true;

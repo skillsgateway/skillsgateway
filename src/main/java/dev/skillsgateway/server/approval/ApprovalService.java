@@ -10,6 +10,7 @@ import dev.skillsgateway.server.persistence.SnapshotNotFoundException;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
 import dev.skillsgateway.server.policy.PolicyGate;
 import dev.skillsgateway.server.storage.GitStorage;
+import dev.skillsgateway.server.storage.ServedContentChangedEvent;
 import dev.skillsgateway.server.vetting.WaiverEvaluation;
 import dev.skillsgateway.server.vetting.WaiverService;
 import io.github.reqstool.annotations.Requirements;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -39,6 +41,7 @@ public class ApprovalService {
     private final FourEyesGate fourEyesGate;
     private final AdminAuditLogger auditLogger;
     private final VettingOverrideRepository vettingOverrideRepository;
+    private final ApplicationEventPublisher events;
 
     public ApprovalService(
             GitStorage storage,
@@ -51,7 +54,8 @@ public class ApprovalService {
             ReleaseAgeGate releaseAgeGate,
             FourEyesGate fourEyesGate,
             AdminAuditLogger auditLogger,
-            VettingOverrideRepository vettingOverrideRepository) {
+            VettingOverrideRepository vettingOverrideRepository,
+            ApplicationEventPublisher events) {
         this.storage = storage;
         this.snapshotRepository = snapshotRepository;
         this.marketplaceRepository = marketplaceRepository;
@@ -63,6 +67,7 @@ public class ApprovalService {
         this.fourEyesGate = fourEyesGate;
         this.auditLogger = auditLogger;
         this.vettingOverrideRepository = vettingOverrideRepository;
+        this.events = events;
     }
 
     /** Ledger event for an approval the cooling-off window refused (GW_0073). */
@@ -242,6 +247,11 @@ public class ApprovalService {
         // The published set just grew; the catalog re-derives from it (GW_0062). Never fails the
         // approval that triggered it.
         catalogService.rebuildQuietly();
+        // And it is announced, for whatever keeps a copy of what is served — today the read-only
+        // forge mirror (GW_0169). An event rather than a call because none of those consumers may
+        // affect this decision (GW_0170): the publication has already landed, and a listener that
+        // fails leaves it landed.
+        events.publishEvent(new ServedContentChangedEvent(marketplace.name(), "snapshot-approved"));
         return new Approved(decided, applied, ingestionAge, conflicts, overrideRecord);
     }
 

@@ -156,6 +156,10 @@ public final class MachineApiRegistry {
             delete("/api/tokens/machine/{id}"),
             // A session identity page; a machine has no session.
             get("/api/me"),
+            // The forge mirror's drift report (GW_0172): it names an outbound integration target
+            // and the state of its credential's last use, which is deployment infrastructure
+            // rather than anything the gateway serves. Administrator-only, and no scope reaches it.
+            get("/api/mirror/drift"),
             // The connector on/off switch (GW_0149): administrator judgement over the vetting
             // chain itself, and even seeing the current settings is reserved to administrators —
             // no scope may let a machine credential turn off the control that governs it.

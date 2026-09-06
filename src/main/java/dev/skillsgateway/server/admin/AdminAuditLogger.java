@@ -2,6 +2,7 @@ package dev.skillsgateway.server.admin;
 
 import dev.skillsgateway.server.auth.MachineApiAuthentication;
 import dev.skillsgateway.server.estate.EstateReconciler;
+import dev.skillsgateway.server.mirror.ForgeMirrorService;
 import dev.skillsgateway.server.persistence.ActorType;
 import dev.skillsgateway.server.persistence.FetchLogRepository;
 import dev.skillsgateway.server.sync.SyncService;
@@ -55,7 +56,10 @@ public class AdminAuditLogger {
             // The vetting chain is the gateway's own automated subsystem, not a person; without
             // this its verdict and run-completed entries fell through to HUMAN and the portal
             // showed an automated verdict as a human actor (GW_0128).
-            VettingService.VETTING_ACTOR);
+            VettingService.VETTING_ACTOR,
+            // The forge mirror (GW_0169) runs on its own thread with no authentication to derive
+            // from, so its entries declare themselves system here rather than defaulting to human.
+            ForgeMirrorService.MIRROR_ACTOR);
 
     private final FetchLogRepository fetchLogRepository;
 
