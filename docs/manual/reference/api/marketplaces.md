@@ -82,13 +82,22 @@ tips on the ledger. See
 
 | Status | Cause |
 | --- | --- |
-| 201 | Registered; returns the marketplace. |
+| 201 | Registered; returns the marketplace plus `warnings` (see below). |
 | 400 | URL scheme not allowlisted, `ref` present and not `main`, a hosted registration supplying a `url`, an upstream one omitting it, or a `pushPolicy` on an upstream marketplace. |
 | 409 | Name already exists. |
 | 422 | Name fails `^[a-z0-9][a-z0-9_-]*$`, or an unknown `origin`/`pushPolicy`. |
 
 The 400 cases are trust-boundary rejections — see
 [Compatibility and allowlists](../compatibility.md).
+
+**`warnings`** is a non-blocking, always-present array — empty when there is
+nothing to say. Today it carries at most one kind of entry: an upstream
+marketplace's clone URL matching another registered marketplace's, once both
+are normalized (lowercased scheme and host, no trailing slash, no `.git`
+suffix), reads `"url already registered as <name>"` for each match. Tracking
+one upstream under two names is a legitimate way to test a marketplace before
+promoting it, so this never refuses the registration — see [Registering a
+marketplace](../../guides/registering-a-marketplace.md#duplicate-upstream-urls).
 
 ---
 

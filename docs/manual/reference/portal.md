@@ -118,7 +118,12 @@ ticked. This is a warning, not a block: the same upstream under a different name
 a legitimate test setup, so the server still accepts it; the acknowledgement only
 makes the collision deliberate rather than silent.
 
-Submits `POST /api/marketplaces`; toasts *Marketplace '{name}' registered*.
+Submits `POST /api/marketplaces`; toasts *Marketplace '{name}' registered*. The
+server runs the identical duplicate-URL check independently against every
+registered marketplace, not only the list this dialog already had loaded, and
+returns what it found in the response's `warnings`; each one is shown as its
+own warning toast, so a collision this dialog's own check missed still reaches
+the operator.
 
 ### Marketplace table
 
