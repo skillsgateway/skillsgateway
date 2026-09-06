@@ -122,7 +122,11 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             "GET /api/policy/rules",
             // The connector settings are admin-only, not an auditor read (GW_0149): the switch that
             // governs the vetting chain is not shown to marketplace-scoped approvers or auditors.
-            "GET /api/vetting/connector-toggles");
+            "GET /api/vetting/connector-toggles",
+            // The forge mirror's drift report (GW_0172) is admin-only too: it names an outbound
+            // integration target and the state of its credential's last use, which is deployment
+            // infrastructure rather than a record of what the gateway served to whom.
+            "GET /api/mirror/drift");
 
     @Test
     @SVCs({"SVC_GW_0068"})
@@ -280,9 +284,11 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         for (String route : PRIVILEGED_READS) {
             if (route.equals("GET /api/roles")
                     || route.equals("GET /api/tokens/machine")
-                    || route.equals("GET /api/vetting/connector-toggles")) {
-                // Grant administration (GW_0071), the machine-credential listing (GW_0130) and the
-                // connector settings (GW_0149) are admin-only, not auditor reads.
+                    || route.equals("GET /api/vetting/connector-toggles")
+                    || route.equals("GET /api/mirror/drift")) {
+                // Grant administration (GW_0071), the machine-credential listing (GW_0130), the
+                // connector settings (GW_0149) and the mirror's drift report (GW_0172) are
+                // admin-only, not auditor reads.
                 continue;
             }
             mockMvc.perform(request(route).with(carol)).andExpect(status().isOk());
