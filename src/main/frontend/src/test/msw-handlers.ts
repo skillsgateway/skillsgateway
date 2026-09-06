@@ -400,8 +400,8 @@ export const handlers = [
   ),
   http.get("/api/marketplaces", () => HttpResponse.json([marketplace])),
   http.post("/api/marketplaces", () =>
-    HttpResponse.json<Schemas["Marketplace"]>(
-      { id: 2, name: "new-marketplace", url: "https://example.com/m.git" },
+    HttpResponse.json<Schemas["RegisteredMarketplace"]>(
+      { id: 2, name: "new-marketplace", url: "https://example.com/m.git", warnings: [] },
       { status: 201 },
     ),
   ),

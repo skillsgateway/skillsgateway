@@ -57,14 +57,21 @@ export function isAbsoluteUrl(value: string): boolean {
  * This is a client-side aid only — it powers the duplicate-URL *warning* on the register form,
  * not a block. Registering the same upstream under two names is legitimate (it is how one tests
  * a marketplace), so the server does not reject it; the portal only surfaces it so the collision
- * is a deliberate choice rather than a silent one.
+ * is a deliberate choice rather than a silent one. Mirrors the server's own normalization
+ * (`CloneUrlNormalizer`, GW_0166), which is what makes the two agree on what counts as a
+ * duplicate.
  */
 export function normalizeCloneUrl(value: string): string | null {
   const trimmed = value.trim();
   if (trimmed.length === 0) return null;
   try {
     const url = new URL(trimmed);
-    const path = url.pathname.replace(/\.git$/i, "").replace(/\/+$/, "");
+    // Order matters: "…/repo.git/" has the slash after the suffix, "…/repo/.git" before it, so a
+    // trailing slash is stripped both before and after the ".git" removal.
+    const path = url.pathname
+      .replace(/\/+$/, "")
+      .replace(/\.git$/i, "")
+      .replace(/\/+$/, "");
     return `${url.protocol.toLowerCase()}//${url.host.toLowerCase()}${path}`;
   } catch {
     return null;
