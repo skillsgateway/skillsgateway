@@ -1813,3 +1813,18 @@ cases:
       over the per-file cap is still visited as unread, and content beyond the retention
       bound is still served in full on every walk
     revision: "0.1.0"
+
+  - id: SVC_GW_0166
+    requirement_ids: ["GW_0166"]
+    title: Registering a normalized-duplicate URL warns and still succeeds
+    verification: automated-test
+    description: |
+      GIVEN an upstream marketplace already registered with a clone URL
+      WHEN a second marketplace is registered with a URL that normalizes to the
+      same value — differing only by host case, a trailing slash, or a '.git'
+      suffix
+      THEN the registration succeeds with 201, the second marketplace is
+      created, and the response carries a warning naming the first
+      marketplace; a registration whose URL normalizes to no existing
+      marketplace's carries no warning
+    revision: "0.1.0"
