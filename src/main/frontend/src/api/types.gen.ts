@@ -352,6 +352,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/mirror/drift": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Compare the read-only forge mirror against what the facade serves
+         * @description Reads the mirror's references now and diffs them against published storage. The mirror is a browsing convenience and never a serving surface, so a mirror that is missing, stale or unreachable says nothing about what clients receive. A mirror the gateway cannot read is reported as unreachable and never as in sync.
+         */
+        get: operations["drift"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/policy/playground": {
         parameters: {
             query?: never;
@@ -1982,6 +2002,44 @@ export interface components {
             /** @description Username of the session */
             username?: string;
         };
+        /** @description How the read-only forge mirror compares to what the facade serves */
+        MirrorReport: {
+            /** @description Whether a mirror is configured */
+            enabled?: boolean;
+            /** @description Why the comparison or the last attempt failed */
+            error?: string;
+            /** @description Whether the mirror holds exactly the served references; false whenever the mirror could not be read */
+            inSync?: boolean;
+            /**
+             * Format: date-time
+             * @description When the mirror was last updated or attempted
+             */
+            lastAttemptAt?: string;
+            /**
+             * @description Outcome of the last update attempt
+             * @enum {string}
+             */
+            lastAttemptOutcome?: "ok" | "failed" | "none";
+            /** @description The mirrored marketplace */
+            marketplace?: string;
+            /** @description Commit refs/heads/main resolves to on the mirror */
+            mirrorTip?: string;
+            /** @description Served references the mirror lacks or holds at another commit */
+            missingOnMirror?: string[];
+            /**
+             * Format: int32
+             * @description Mirror updates queued or in flight
+             */
+            pendingUpdates?: number;
+            /** @description Whether the mirror could be read for this report */
+            reachable?: boolean;
+            /** @description Commit refs/heads/main resolves to in published storage */
+            servedTip?: string;
+            /** @description References the mirror still holds that are no longer served */
+            staleOnMirror?: string[];
+            /** @description Mirror clone URL; never carries a credential */
+            url?: string;
+        };
         /** @description Outcome of a retention pass */
         PassResult: {
             /**
@@ -3333,6 +3391,35 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["MeView"];
+                };
+            };
+        };
+    };
+    drift: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The comparison, or a disabled report when no mirror is set up */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MirrorReport"];
+                };
+            };
+            /** @description Not an administrator */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MirrorReport"];
                 };
             };
         };
