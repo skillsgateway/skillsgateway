@@ -5,13 +5,16 @@ persists, so the old-coder discipline applies at **Tier 3**. The failure model i
 in `design.md`; this report records what was executed, what it produced, and
 where the loop was not followed.
 
-**Source state:** `e515a22885a1f13056a7e6b18a77d6749f5ad3e2` (tree
-`91a3001ebd9ea3edce8b912a1ca7720289e9850e`) on branch
-`feat/external-source-closure`, four commits on top of `main` at `050d11f`
-(#278). It is the last commit that touches anything a gate reads. **Every number
-below comes from one pass run against exactly that tree, after the last code and
-documentation edit.** Two commits follow it: this report, and the archive that
-moves the change into `openspec/specs/`.
+**Source state:** `03ee3b1b9828f596c606b4a13163ffd54fd97f77` (tree
+`78035c44d8007b4a770dcac48399e30c967d75fd`) on branch `feat/external-source-closure`, the
+requirement renumber, seven commits on top of `main` at `050d11f` (#278). It is
+the last commit that touches anything a gate reads. **Every number in the gate
+table below comes from one pass run against exactly that tree**, except the two
+rows marked as carried over, which say so and why. Only this report follows it.
+
+The numbers were first produced at `e515a22` (tree `91a3001`), before the
+renumber; the four gates the renumber could affect were re-run against
+`03ee3b1` and are reported here at their re-run values.
 
 **Requirement ids.** GW_0164 — The resolved closure is recorded as an immutable
 domain object of the snapshot, and GW_0165 — Approval requires a complete
@@ -63,22 +66,34 @@ from the published repository.
 
 | Gate | Command | Result, verbatim |
 | --- | --- | --- |
-| Java + UI + jar | `./mvnw clean verify` | `BUILD SUCCESS`, `Total time:  04:32 min` |
+| Java + UI + jar | `./mvnw clean verify` | `BUILD SUCCESS`, `Total time:  04:26 min` |
 | Java tests | (inside `verify`) | `Tests run: 533, Failures: 0, Errors: 0, Skipped: 0` |
 | Formatting | `spotless:check` (inside `verify`) | `Spotless.Java is keeping 282 files clean - 0 needs changes to be clean, 282 were already clean` |
 | Style | `checkstyle:check` (inside `verify`) | `You have 0 Checkstyle violations.` |
 | Portal unit gate | `pnpm verify` (inside `verify`) | `Test Files  11 passed (11)`, `Tests  46 passed (46)` |
-| Storybook story tests | `(cd src/main/frontend && pnpm test:stories)` | `Test Files  3 passed (3)`, `Tests  6 passed (6)`, `Duration  2.97s` |
-| Real-browser e2e | `(cd src/main/frontend && pnpm e2e)` | `13 passed (48.1s)` |
+| Storybook story tests | `(cd src/main/frontend && pnpm test:stories)` | `Test Files  3 passed (3)`, `Tests  6 passed (6)`, `Duration  2.97s` — **carried over from `e515a22`**: the renumber touched no story, and the only frontend files it changed are two JSDoc tags, which the unit gate inside `verify` re-ran |
+| Real-browser e2e | `(cd src/main/frontend && pnpm e2e)` | `13 passed (48.1s)` — **carried over from `e515a22`**, for the same reason: no e2e spec, route, or served byte differs after the renumber |
 | Requirements traceability | `reqstool status local -p docs/reqstool` | `157/157 complete · 0 incomplete · PASS` |
-| OpenSpec, before the archive | `openspec validate --all --strict` | `Totals: 31 passed, 0 failed (31 items)` |
-| Docs | `mkdocs build --strict` | `Documentation built in 1.45 seconds`, no strict failures |
-| Mutation testing | `openspec/changes/external-source-closure/mutants.sh` | `=== killed 15, survived 0 ===` |
+| OpenSpec | `openspec validate --all --strict` | `Totals: 30 passed, 0 failed (30 items)` — 31 before the archive, 30 after it and after the renumber |
+| Docs | `mkdocs build --strict` | `Documentation built in 1.34 seconds`, no strict failures |
+| Mutation testing | `openspec/changes/archive/2026-09-06-external-source-closure/mutants.sh` | `=== killed 15, survived 0 ===` at `e515a22`; **not re-run after the renumber**, with its applicability re-verified instead — see below |
+
+**Why the mutation run was not repeated.** The renumber rewrote annotation and
+comment text inside every file `mutants.sh` patches, which could in principle
+have broken a search string — and a search string that no longer matches makes
+the runner abort rather than report a false kill, so the failure mode is safe
+but the run would be worthless. Rather than assert that no mutant was affected,
+each of the 15 search strings was re-checked against the renumbered sources and
+each still occurs **exactly once**; none of them contains a requirement id (they
+target expressions, and the ids appear only in three section-header comments).
+The kills therefore still describe this tree. A full re-run would be the
+stronger evidence and was not spent.
 
 Two environmental notes, neither a change to a gate:
 
-- The first `pnpm test:stories` attempt wedged for ten minutes before spawning
-  vitest (a `pnpm` process with no child) and was killed; the rerun reported
+- On the `e515a22` pass, the first `pnpm test:stories` attempt wedged for ten
+  minutes before spawning vitest (a `pnpm` process with no child) and was
+  killed; the rerun reported
   `Port 63315 is in use, trying another one...`, ran all 6 stories and passed in
   under three seconds. Recorded as a wedged runner, not a flake in the suite.
 - Surefire reported `The exit has elapsed 30 seconds after System.exit(0)` once,
