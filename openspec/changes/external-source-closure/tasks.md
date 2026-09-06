@@ -1,0 +1,86 @@
+# Tasks: external-source-closure
+
+## 1. Requirements (SSOT first)
+
+- [ ] 1.1 Add GW_0163 (the closure as an immutable domain object) and GW_0164
+      (approval requires a complete closure) to `docs/reqstool/requirements.yml`
+- [ ] 1.2 Add SVC_GW_0163 and SVC_GW_0164 (GIVEN/WHEN/THEN) to
+      `docs/reqstool/software_verification_cases.yml`
+- [ ] 1.3 Spec deltas: `marketplace-ingestion` (GW_0163), `snapshot-approval`
+      (GW_0164)
+
+## 2. Tests (red before green)
+
+- [ ] 2.1 `SnapshotClosureDigestTests` (`@SVCs({"SVC_GW_0163"})`), pure unit:
+      digest is 64 hex, identical for identical closures regardless of member
+      order, and differs when the upstream commit, the transformer version or
+      any member field differs; the empty closure has a digest of its own
+- [ ] 2.2 `SnapshotClosureTests` (`@SVCs({"SVC_GW_0163"})`), the enabled Spring
+      context against the in-process forge: the recorded closure and its member
+      fields after a resolved ingestion; `upstream_sha` on composite, local-only
+      and rejected snapshots; no closure row for the latter two; the provenance
+      response; the policy facts; the blast-radius query; cascade on purge
+- [ ] 2.3 `ClosureCompletenessTests` (`@SVCs({"SVC_GW_0164"})`): each tampering
+      of the persisted state refuses with `ClosureIncompleteException`, is on the
+      ledger, leaves the snapshot held and publishes nothing — including under an
+      administrative override request; an untouched composite and a local-only
+      snapshot still approve
+- [ ] 2.4 Existing suites unmodified: `ApprovalTests` (SVC_GW_0005, SVC_GW_0009),
+      `ExternalSourceResolutionTests`, `IngestionTests`, `RetentionTests`
+
+## 3. Schema and domain object
+
+- [ ] 3.1 `V1__init.sql`: `snapshots.upstream_sha`, `snapshot_closures`,
+      `snapshot_closure_members`, the digest index and the `(clone_url,
+      resolved_sha)` index
+- [ ] 3.2 `SnapshotClosure` value object with `Member` and `digest()`;
+      `@Requirements({"GW_0163"})`
+- [ ] 3.3 `SnapshotClosureRepository`: `record` (called inside the snapshot
+      insert's transaction), `findBySnapshot`, `snapshotsContaining(cloneUrl,
+      resolvedSha)`; `@Requirements({"GW_0163"})`
+- [ ] 3.4 `Snapshot` gains `upstreamSha`; `SnapshotRepository.create` takes the
+      upstream commit and an optional closure and writes both transactionally
+
+## 4. Ingestion
+
+- [ ] 4.1 `ExternalSourceResolver.Resolved` carries the declared source, the
+      source type and the measurement; `IngestionService.serve` builds the
+      `SnapshotClosure` and `ingestLocked` records it with the snapshot;
+      `@Requirements({"GW_0163"})`
+
+## 5. Approval
+
+- [ ] 5.1 `ClosureCompletenessGate` and `ClosureIncompleteException`; the gate
+      runs first inside `doApprove`'s decidable branch, on every path, and its
+      refusal is written to the ledger; `@Requirements({"GW_0164"})`
+- [ ] 5.2 `AdminController` maps the exception to 409 with the discrepancies
+
+## 6. Surfaces
+
+- [ ] 6.1 `ApprovalService.Provenance`: `sha`, `upstreamSha` from the column,
+      `closure`; `@Requirements({"GW_0009", "GW_0163"})`
+- [ ] 6.2 `SnapshotFactsService`: `snapshot.upstreamSha`,
+      `snapshot.externalSources`, per-plugin `origin`, `upstreamUrl`,
+      `resolvedSha`; `@Requirements({"GW_0090", "GW_0163"})`
+- [ ] 6.3 `openapi.json` and `types.gen.ts` regenerated; provenance dialog in
+      `marketplaces.tsx` lists the served commit and the closure
+
+## 7. Documentation (same PR)
+
+- [ ] 7.1 `concepts/snapshots-and-ledger.md`: the closure record
+- [ ] 7.2 `reference/api/marketplaces.md`: provenance shape, the 409 on approve
+- [ ] 7.3 `guides/approving-snapshots.md`: what the closure shows a reviewer and
+      what the completeness refusal means
+- [ ] 7.4 `guides/policy-rules.md`: the new facts
+- [ ] 7.5 `reference/portal.md`, `concepts/glossary.md`, `architecture.md`
+- [ ] 7.6 ADR 0011: the increment row moves to shipped with its ids; the
+      `upstream_sha` deviation is closed
+
+## 8. Gates and evidence (old-coder gauntlet)
+
+- [ ] 8.1 `./mvnw clean verify`
+- [ ] 8.2 `(cd src/main/frontend && pnpm test:stories)` and `pnpm e2e`
+- [ ] 8.3 `reqstool status local -p docs/reqstool` ends `PASS`
+- [ ] 8.4 `openspec validate --all --strict`
+- [ ] 8.5 `mkdocs build --strict`
+- [ ] 8.6 `mutants.sh` and `evidence.md` with the commit SHA of one final fresh run

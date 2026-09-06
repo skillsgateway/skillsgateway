@@ -1813,3 +1813,41 @@ cases:
       over the per-file cap is still visited as unread, and content beyond the retention
       bound is still served in full on every walk
     revision: "0.1.0"
+
+  - id: SVC_GW_0163
+    requirement_ids: ["GW_0163"]
+    title: The resolved closure is recorded with the snapshot and queryable
+    verification: automated-test
+    description: |
+      GIVEN a gateway configured to admit github plugin sources and a marketplace whose
+      manifest declares one, backed by a reachable upstream plugin repository
+      WHEN ingestion records the composite snapshot
+      THEN a closure is recorded for it naming the upstream commit, the rewrite
+      implementation's identity and a digest, with one member carrying the plugin name,
+      source type, declared source, clone URL, resolved commit, grafted tree, graft path,
+      object count and decompressed size; the snapshot records the upstream commit as its
+      parent; a local-only snapshot and a rejected resolution record no closure and an
+      upstream commit equal to their own; the digest is the same for the same closure
+      regardless of member order and differs when any member field, the upstream commit
+      or the rewrite identity differs; the provenance response carries the served commit,
+      the upstream commit and the closure; the policy facts carry the external source
+      count and each plugin's origin, clone URL and resolved commit; the snapshots whose
+      closure contains the clone URL are returned by one query and a different URL returns
+      none; and purging the snapshot removes the closure with it
+    revision: "0.1.0"
+
+  - id: SVC_GW_0164
+    requirement_ids: ["GW_0164"]
+    title: Approval refuses a snapshot whose closure is incomplete
+    verification: automated-test
+    description: |
+      GIVEN a held composite snapshot whose recorded closure or pinned commit has been
+      altered so that they no longer agree — a member row removed, a member's grafted tree
+      or graft path changed, a snapshot re-pointed at a commit without the grafted content
+      — or a held composite snapshot with no closure at all
+      WHEN a reviewer approves it, with or without an administrative vetting override
+      THEN the approval is refused with the closure-incomplete outcome naming the
+      discrepancy, the refusal is on the audit ledger, the snapshot remains held and
+      nothing is published; and an unaltered composite snapshot and a local-only snapshot
+      are still approved
+    revision: "0.1.0"
