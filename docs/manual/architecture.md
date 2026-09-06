@@ -242,6 +242,15 @@ flowchart LR
 - **Audit ledger.** Append-only record of every fetch (who, what, which SHA,
   when), every approval (who, what diff, which scan report), every recall.
   Streams to the SIEM.
+- **Read-only forge mirror** (optional, off by default). Pushes a copy of what
+  the façade serves for one marketplace to a repository on an external code
+  host, so people can browse and search approved content there. It is the
+  visibility half of [ADR 0008](reference/decisions.md) and is deliberately *not* a
+  component anything else depends on: it reads published storage and writes to
+  the host, and no approval, revocation, authorization or fetch outcome consults
+  it. A mirror that is down, stale or wrong changes nothing about what clients
+  receive — see
+  [The read-only forge mirror](guides/read-only-forge-mirror.md).
 
 ## 5. Lifecycle of a skill
 
@@ -512,7 +521,13 @@ that would duplicate a sweep, and leader election is separate later work.
   a gateway-set lifetime the holder cannot extend, no publication authority,
   and a session-derived mark on the ledger — the identity half of ADR 0008,
   which declined serving from an external forge and keeps the audited facade
-  canonical. The forge mirror for browsing is sequenced after it. *Implemented:* scoped admin roles on the web surface — global
+  canonical. The visibility half — an optional
+  [read-only mirror](guides/read-only-forge-mirror.md) of approved content on an
+  external code host — is *implemented* in its first increment (GW_0169–GW_0172):
+  one marketplace behind a flag defaulting off, updated by reconciling against
+  what the façade serves, with a drift report. It is a browsing convenience and
+  never an enforcement path; auto-provisioning of the repository, more than one
+  marketplace and automatic drift repair are deferred. *Implemented:* scoped admin roles on the web surface — global
   admin, per-marketplace approver, read-only auditor; DB-managed audited
   grants with configuration-bootstrapped admins, deny-by-default once
   always enforced (GW_0068–GW_0071, GW_0138), and roles derived from the

@@ -464,6 +464,37 @@ is refuse to start against a store whose conditional writes are not faithful, so
 that its *own* concurrent writers cannot lose a transition. That is a different
 guarantee, and it is not a substitute for the policy.
 
+## The forge mirror — outbound, and outside the boundary
+
+The optional [read-only mirror](../guides/read-only-forge-mirror.md) puts a copy
+of approved content on a host the gateway does not control. That copy is
+**outside every boundary above**, and it is easier to reason about once that is
+said plainly:
+
+- **It is not a serving surface.** Nothing the gateway does consults it. A
+  mirror that is down, stale, empty or tampered with does not change which
+  snapshot the facade serves, whether an approval succeeds, or whether a
+  revocation takes effect. Content that appears on it because somebody pushed
+  there directly is on the mirror, not on the facade, and the next
+  reconciliation removes it.
+- **It is not on the ledger.** A fetch from the mirror is a fetch from another
+  system: no identity, no SHA, no row. The inventory and blast-radius answers the
+  ledger gives are answers about the facade, and they stay complete only while
+  people install through the facade — which is why the guide says so loudly.
+- **A revocation reaches it, but is not gated on it.** The gateway's own state
+  is authoritative: the facade stops serving whether or not the mirror can be
+  updated, and a mirror that could not be updated is recorded and reportable
+  rather than blocking. A copy on somebody else's host can be raced by caches,
+  forks and clones in any case, so it was never what makes a revocation
+  effective.
+
+What crosses *outward* here is a standing write credential to another system and
+the approved content itself. Both are bounded the same way: the credential is
+configuration that never reaches a log line, a ledger entry or an API response,
+and the content is exactly what the facade already serves to authenticated
+readers — never quarantined content, because the only repository the mirror reads
+is the published one.
+
 ## What is not a boundary yet
 
 A **second recorded approval** — a queue in which two identities each decide,

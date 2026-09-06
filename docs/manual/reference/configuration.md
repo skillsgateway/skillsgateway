@@ -266,6 +266,72 @@ skills-gateway:
 
 ---
 
+## Read-only forge mirror
+
+An optional copy of approved content on an external code host, so people can
+browse and search it with that host's own tools. Off by default: a deployment
+that sets none of this pushes nothing anywhere.
+
+The mirror is **visibility only**. It is never a serving surface, never an
+enforcement path, and nothing about approval, revocation or what the facade
+serves depends on it. See
+[The read-only forge mirror](../guides/read-only-forge-mirror.md).
+
+```yaml
+skills-gateway:
+  mirror:
+    # Nothing below is read until this is true.
+    enabled: false
+
+    # The single marketplace this mirrors. Required when enabled.
+    marketplace: corp-marketplace
+
+    # The mirror's clone URL. Its scheme must be on
+    # skills-gateway.allowed-url-schemes, the same allowlist that governs
+    # marketplace registration, and it may not embed a credential.
+    url: https://forge.example.com/mirrors/corp-marketplace.git
+
+    # The push credential. Configuration or environment; never committed.
+    username: ${SGW_MIRROR_USERNAME}
+    token: ${SGW_MIRROR_TOKEN}
+
+    # Per-operation transport timeout.
+    timeout: 30s
+
+    # Attempts per mirror update, first one included. Exhausting them leaves the
+    # mirror drifted until the next approval or revocation; it never affects the
+    # decision that triggered the update.
+    max-attempts: 3
+    retry-delay: 5s
+```
+
+| Property | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `skills-gateway.mirror.enabled` | boolean | `false` | Nothing else here is read while this is false. |
+| `skills-gateway.mirror.marketplace` | string | — | Required when enabled. Exactly one marketplace is mirrored. |
+| `skills-gateway.mirror.url` | URL | — | Required when enabled. Scheme must be on `skills-gateway.allowed-url-schemes`. |
+| `skills-gateway.mirror.username` | string | — | Omit for a target that needs no credential. |
+| `skills-gateway.mirror.token` | string | — | Never logged, audited or echoed by any API. |
+| `skills-gateway.mirror.timeout` | duration | `30s` | Per transport operation. |
+| `skills-gateway.mirror.max-attempts` | integer | `3` | Attempt budget per mirror update. |
+| `skills-gateway.mirror.retry-delay` | duration | `5s` | Delay between those attempts. |
+
+!!! warning "An enabled mirror with unusable configuration refuses to start"
+
+    A missing marketplace or URL, a scheme outside the allowlist, or a URL
+    embedding a credential fails startup. Nothing is contacted to decide that —
+    only the configuration is read — so a mirror that is merely *down* never
+    affects startup or anything else.
+
+!!! danger "Never install from the mirror"
+
+    Agent installs and CI must keep pointing at the facade. A fetch from the
+    mirror is not on the audit ledger, is not covered by the gateway's access
+    tokens, and a revoked snapshot stops being served by the facade whether or
+    not the mirror has caught up.
+
+---
+
 ## Audit export
 
 Tuning for the ledger export — the NDJSON pull endpoint and the scheduled
