@@ -187,9 +187,11 @@ Three mechanisms, and it is worth being clear about which is which.
 
 Two of oasdiff's default severities are raised to errors in `.oasdiff.yaml`:
 removing a response field, and removing an optional response header. Both are
-warnings by default unless the schema marks them required, and no response
+warnings by default unless the schema marks them required, and almost no response
 schema here does — so the most ordinary breaking change there is used to pass a
-gate that fails on errors only.
+gate that fails on errors only. The webhook delivery bodies are among the few that
+*do* mark their fields required, which is a statement about the wire (those fields
+are always populated) before it is anything about the gate.
 
 The webhook deliveries reach the same gate through the same document, and are
 caught from two directions:
