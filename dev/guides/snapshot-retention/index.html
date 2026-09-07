@@ -2222,11 +2222,19 @@ actually notice a mistake within — the default is 14 days.</p>
 <p><code>selected</code> is what was due; <code>acted</code> is what was actually removed. A snapshot
 whose quarantine ref could not be deleted is left in place for the next pass
 rather than removed from the table.</p>
+<p>The same pass also sweeps abandoned publication staging refs out of the
+<strong>published</strong> repositories — the leftovers of a gateway killed part-way through
+publishing a snapshot. They serve nothing, but they hold objects against
+collection. The counts above do not include them; the ledger entry
+<code>staging-refs-swept:count=&lt;n&gt;</code> does. Nothing is removed until it has been under
+observation for <code>staging-ref-max-age</code> (default <code>24h</code>), so a publication running
+right now is never disturbed. See
+<a href="../../reference/retention/#abandoned-publication-staging-references">Snapshot retention</a>.</p>
 <h2 id="6-watch-it">6. Watch it<a class="headerlink" href="#6-watch-it" title="Permanent link">&para;</a></h2>
 <p>Every retention action is in the append-only ledger with the acting identity:
-<code>retention-evaluated:…</code>, <code>snapshot-soft-deleted:&lt;reason&gt;</code>, <code>snapshot-restored</code>
-and <code>snapshot-purged</code>. Policy-driven deletions are attributed to
-<code>retention-policy</code> rather than to a person.</p>
+<code>retention-evaluated:…</code>, <code>snapshot-soft-deleted:&lt;reason&gt;</code>, <code>snapshot-restored</code>,
+<code>snapshot-purged</code> and <code>staging-refs-swept:count=&lt;n&gt;</code>. Policy-driven deletions are
+attributed to <code>retention-policy</code> rather than to a person.</p>
 <p>Soft delete and restore also fire the <code>snapshot.soft_deleted</code> and
 <code>snapshot.restored</code> webhook events, so an inventory system can follow deletions
 the same way it follows approvals — see

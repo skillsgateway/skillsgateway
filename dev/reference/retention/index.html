@@ -1809,6 +1809,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#abandoned-publication-staging-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Abandoned publication staging references
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#endpoints" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2135,6 +2146,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#abandoned-publication-staging-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Abandoned publication staging references
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#endpoints" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2281,9 +2303,11 @@ into a catalog inherits the protection instead of having to remember it.</p>
   anything is written.</li>
 </ul>
 <p>The guard is in SQL, not only in Java, which is why the check holds for the
-policy pass and the manual endpoint alike. As a consequence retention never
-touches the <strong>published</strong> repository — the only ref compaction removes lives in
-quarantine.</p>
+policy pass and the manual endpoint alike. No snapshot the facade serves is ever
+selected, and the only <em>snapshot</em> ref compaction removes lives in quarantine.
+The one thing retention does touch on the <strong>published</strong> side is the
+<a href="#abandoned-publication-staging-references">abandoned staging reference sweep</a>,
+which cannot reach a served ref at all.</p>
 <h3 id="revoked-snapshots">Revoked snapshots<a class="headerlink" href="#revoked-snapshots" title="Permanent link">&para;</a></h3>
 <p>A snapshot that <a href="../../guides/re-vetting/">re-vetting revoked</a> is <em>not</em> approved,
 so the guard above no longer covers it. That is deliberate, not a side effect:
@@ -2334,7 +2358,10 @@ The vetting <code>state</code> is untouched — a deleted snapshot was still <em
 snapshot whose <code>purge_after</code> has elapsed it deletes <code>refs/snapshots/&lt;sha&gt;</code> with
 JGit, clears <code>refs/quarantine/incoming</code> when it still points at that commit,
 deletes the row, and garbage-collects the quarantine repository <strong>once per
-marketplace per pass</strong> with the expiry set to now.</p>
+marketplace per pass</strong> with the expiry set to now. It then runs the
+<a href="#abandoned-publication-staging-references">staging reference sweep</a> on the
+published side. The two halves are independent: a sweep that fails does not fail
+the pass, and the <code>{selected, acted}</code> counts are about snapshots only.</p>
 <div class="admonition warning">
 <p class="admonition-title">Compaction is irreversible</p>
 <p>After compaction the row is gone and the objects the deleted tip made
@@ -2353,6 +2380,51 @@ is only possible before <code>purge_after</code>.</p>
 <li>If garbage collection fails the pass still succeeds; the refs are already gone
   so the space stays reclaimable by the next collection.</li>
 </ul>
+<h2 id="abandoned-publication-staging-references">Abandoned publication staging references<a class="headerlink" href="#abandoned-publication-staging-references" title="Permanent link">&para;</a></h2>
+<p>Publication copies a snapshot's objects into the published repository under an
+unadvertised <code>refs/staging/&lt;sha&gt;</code> and only then moves the served refs, so a
+transfer that completes and a transition that is then refused leaves nothing on
+the wire. A gateway killed between the two leaves the staging ref behind. It
+serves nothing — the facade advertises <code>refs/heads/main</code> and <code>refs/snapshots/*</code>
+and nothing else — but it holds its objects against collection, so the
+repository carries a whole snapshot that will never be served.</p>
+<p>The compaction pass removes such a ref when <strong>both</strong> of these hold:</p>
+<table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>No live snapshot row of that marketplace names the commit the ref points at.</td>
+<td>Approval writes the approved row <em>before</em> it publishes, so a publication in flight always has one.</td>
+</tr>
+<tr>
+<td>The ref has been under observation for longer than <code>staging-ref-max-age</code>.</td>
+<td>The ref listing and the database query are two reads taken at different instants. Without the bound, a publication starting between them presents a ref the query did not see.</td>
+</tr>
+</tbody>
+</table>
+<p>The second condition is what makes this safe. Deleting a live publication's
+staging ref and collecting its objects would leave the marketplace published at
+a commit whose content is gone — a disk leak turned into data loss. The gateway
+records the first time each pass sees a staging ref, in a table of its own,
+because a ref carries no creation time either storage backend can be asked for;
+the age that yields is an <em>under-estimate</em>, which only ever delays a sweep.</p>
+<p>Served refs are unreachable from the sweep by construction: it lists
+<code>refs/staging/*</code> and nothing else. Objects still reachable from
+<code>refs/heads/main</code> or <code>refs/snapshots/*</code> survive the garbage collection that
+follows, which is what keeps served content served.</p>
+<div class="admonition note">
+<p class="admonition-title">Set <code>staging-ref-max-age</code> above your slowest publication</p>
+<p>The two ways of being wrong are not symmetric. Too generous costs the disk
+of an abandoned snapshot for a while longer — the cost that exists today
+anyway. Too tight risks collecting a publication's objects mid-flight. The
+default of <code>24h</code> is far past any plausible object transfer. Zero or negative
+switches the sweep off entirely rather than making everything eligible.</p>
+</div>
 <h2 id="endpoints">Endpoints<a class="headerlink" href="#endpoints" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2457,6 +2529,10 @@ longer window.</p>
 <tr>
 <td><code>snapshot-purged</code></td>
 <td>Each compaction removal, carrying the SHA.</td>
+</tr>
+<tr>
+<td><code>staging-refs-swept:count=&lt;n&gt;</code></td>
+<td>Each compaction pass that removed abandoned staging refs from a marketplace's published repository.</td>
 </tr>
 </tbody>
 </table>
