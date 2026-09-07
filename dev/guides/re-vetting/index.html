@@ -2296,7 +2296,8 @@ toast says what the run concluded.</p>
 <div class="admonition info">
 <p class="admonition-title">Scanner and advisory feeds</p>
 <p>The built-in <code>secret-scan</code> and <code>prompt-injection</code> connectors have no
-external feed to subscribe to: their rules ship with the gateway. So
+external feed to subscribe to: their rules ship with the gateway, as does
+the Agent Skills specification <code>skill-conformance</code> validates against. So
 "re-vet when the feed updates" is, today, an operator calling
 <code>POST /api/marketplaces/{name}/revet</code> after deploying a connector whose
 rules changed — and the run records the connector versions, so an answer

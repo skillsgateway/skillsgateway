@@ -3438,6 +3438,16 @@ in <code>application.yaml</code>.</p>
 <a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a><span class="w">      </span><span class="c1"># SPDX ids whose detection is a blocking finding. Checked before the</span>
 <a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a><span class="w">      </span><span class="c1"># allow list: a license on both is reported as banned.</span>
 <a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a><span class="w">      </span><span class="nt">banned</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">AGPL-3.0</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a>
+<a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a><span class="w">    </span><span class="c1"># The posture of the built-in skill-conformance connector, which validates</span>
+<a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a><span class="w">    </span><span class="c1"># every SKILL.md against the Agent Skills specification vendored in the</span>
+<a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a><span class="w">    </span><span class="c1"># gateway. Advisory by default: defects are recorded and shown to the</span>
+<a id="__codelineno-5-43" name="__codelineno-5-43" href="#__codelineno-5-43"></a><span class="w">    </span><span class="c1"># reviewer, and block nothing.</span>
+<a id="__codelineno-5-44" name="__codelineno-5-44" href="#__codelineno-5-44"></a><span class="w">    </span><span class="nt">conformance</span><span class="p">:</span>
+<a id="__codelineno-5-45" name="__codelineno-5-45" href="#__codelineno-5-45"></a><span class="w">      </span><span class="c1"># true makes every conformance defect a blocking finding, waivable like</span>
+<a id="__codelineno-5-46" name="__codelineno-5-46" href="#__codelineno-5-46"></a><span class="w">      </span><span class="c1"># any other. A verdict covers a whole snapshot, so one malformed skill</span>
+<a id="__codelineno-5-47" name="__codelineno-5-47" href="#__codelineno-5-47"></a><span class="w">      </span><span class="c1"># then holds up every other skill in the marketplace.</span>
+<a id="__codelineno-5-48" name="__codelineno-5-48" href="#__codelineno-5-48"></a><span class="w">      </span><span class="nt">enforce</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </code></pre></div>
 <table>
 <thead>
@@ -3497,6 +3507,12 @@ in <code>application.yaml</code>.</p>
 <td>empty</td>
 <td>SPDX ids, case-insensitive. Evaluated before the allow list.</td>
 </tr>
+<tr>
+<td><code>skills-gateway.vetting.conformance.enforce</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Whether SKILL.md conformance defects block approval instead of warning.</td>
+</tr>
 </tbody>
 </table>
 <h3 id="minimum-release-age">Minimum release age<a class="headerlink" href="#minimum-release-age" title="Permanent link">&para;</a></h3>
@@ -3538,6 +3554,21 @@ changing them, trigger a re-vet to turn the new policy into fresh evidence.</p>
 switch would buy an estate of blocked snapshots with no findings to explain
 them. To get past a connector that is wrong about a snapshot, waive the
 findings it raised — scoped, justified and expiring, and on the record.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Conformance enforcement is a decision, not a default</p>
+<p><code>conformance.enforce</code> is <code>false</code> out of the box, and an upgrade therefore
+blocks nothing: the <code>skill-conformance</code> connector records every departure
+from the pinned Agent Skills specification as a warning the reviewer sees.
+Turning it on makes those same departures blocking — a snapshot with one
+malformed <code>SKILL.md</code> then needs a waiver per finding before any of its
+skills can be published, and a <code>SKILL.md</code> too large to read blocks too,
+because under enforcement "we could not check" must not read as "it
+conformed". Watch the advisory findings for a cycle first; they are exactly
+the set that would block.</p>
+<p>Like the license lists, the posture is stamped into the connector's recorded
+version, so every run names the posture it ran under. Changing it is a
+deploy, and a re-vet turns the new posture into fresh evidence.</p>
 </div>
 <div class="admonition warning">
 <p class="admonition-title">A shortened timeout silently converts slow connectors into blockers</p>
@@ -3596,7 +3627,7 @@ back a normalized <code>{state, reportUrl, findings[]}</code> where <code>state<
 <td><code>…external[n].name</code></td>
 <td>string</td>
 <td>—</td>
-<td>Required, unique; must not be a built-in (<code>secret-scan</code>, <code>prompt-injection</code>, <code>license-scan</code>).</td>
+<td>Required, unique; must not be a built-in (<code>secret-scan</code>, <code>prompt-injection</code>, <code>license-scan</code>, <code>skill-conformance</code>).</td>
 </tr>
 <tr>
 <td><code>…external[n].url</code></td>

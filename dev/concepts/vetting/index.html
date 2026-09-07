@@ -637,6 +637,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#skill-conformance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        skill-conformance
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2308,6 +2319,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#skill-conformance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        skill-conformance
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2402,7 +2424,7 @@ outcome that gates approval.</p>
 
     subgraph C["Vetting chain — ordered, all connectors run"]
         direction TB
-        C1["secret-scan (order 100)"] --&gt; C2["prompt-injection (order 200)"] --&gt; C3["license-scan (order 300)"]
+        C1["secret-scan (order 100)"] --&gt; C2["prompt-injection (order 200)"] --&gt; C3["license-scan (order 300)"] --&gt; C4["skill-conformance (order 400)"]
     end
 
     C --&gt; A["Aggregate verdicts&lt;br/&gt;clear iff every verdict is pass or warn"]
@@ -2636,7 +2658,8 @@ consequential thing a reviewer can write here, and the ledger names the rule
 so it can be found.</p>
 </div>
 <h2 id="the-built-in-connectors">The built-in connectors<a class="headerlink" href="#the-built-in-connectors" title="Permanent link">&para;</a></h2>
-<p>All three connectors ship in the gateway and run in every chain.</p>
+<p>All four connectors ship in the gateway and run in every chain. The first three ask
+whether the content is dangerous; the fourth asks whether it is well formed.</p>
 <h3 id="secret-scan"><code>secret-scan</code><a class="headerlink" href="#secret-scan" title="Permanent link">&para;</a></h3>
 <p>Regex and entropy rules over every UTF-8 text file in the snapshot: AWS access
 key ids and secret keys, PEM private-key blocks, GitHub, Slack and Google
@@ -2752,6 +2775,84 @@ reading the content is still the reviewer's job. Semantic review of skill
 instructions needs an LLM review connector, which the gateway does not ship
 but an operator can add as an <a href="#external-connectors">external connector</a>.</p>
 </div>
+<h3 id="skill-conformance"><code>skill-conformance</code><a class="headerlink" href="#skill-conformance" title="Permanent link">&para;</a></h3>
+<p>Validates every <code>SKILL.md</code> under a plugin's <code>skills/</code> directory against a
+<strong>vendored, dated</strong> copy of the <a href="https://agentskills.io/specification">Agent Skills specification</a>.
+This is the one connector that answers a question about correctness rather than
+danger: whether the skill carries the frontmatter an agent needs to load and
+select it.</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>What it means</th>
+<th>Blocks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>skill-frontmatter-missing</code></td>
+<td>The file does not open with a <code>---</code> frontmatter block</td>
+<td>only under enforcement</td>
+</tr>
+<tr>
+<td><code>skill-frontmatter-malformed</code></td>
+<td>The block is never closed, is not valid YAML, or is not a mapping</td>
+<td>only under enforcement</td>
+</tr>
+<tr>
+<td><code>skill-field-missing</code></td>
+<td>A required field — <code>name</code>, <code>description</code> — is absent</td>
+<td>only under enforcement</td>
+</tr>
+<tr>
+<td><code>skill-field-invalid</code></td>
+<td>A field is present and breaks its constraint: wrong type, over its length limit, a <code>name</code> that is not lowercase or does not match its directory</td>
+<td>only under enforcement</td>
+</tr>
+<tr>
+<td><code>skill-not-scanned</code></td>
+<td>The <code>SKILL.md</code> was over the size limit or not valid UTF-8, so conformance could not be checked</td>
+<td>only under enforcement</td>
+</tr>
+<tr>
+<td><code>skill-field-unknown</code></td>
+<td>A frontmatter field the pinned specification does not define</td>
+<td>never</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Advisory by default.</strong> With
+<a href="../../reference/configuration/#vetting"><code>skills-gateway.vetting.conformance.enforce</code></a>
+at its default <code>false</code>, every defect above is a <code>MEDIUM</code> finding: the reviewer
+sees it, and nothing is blocked. A verdict covers a whole snapshot, so a
+blocking default would let one malformed skill hold up every other skill beside
+it — and a formatting defect is not what the gateway's blocking states are for.
+Set the property to <code>true</code> and the same defects become <code>HIGH</code>, blocking and
+waivable like any other finding.</p>
+<p><code>skill-field-unknown</code> stays informational under both postures. The pinned
+specification is a snapshot of a document that still moves, and the
+specification defines a <code>metadata</code> mapping precisely so clients can carry
+properties it has no opinion about.</p>
+<p><strong>The specification is pinned, not fetched.</strong> The version in force is
+<code>agentskills-2026-08-04</code>, transcribed into
+<code>src/main/resources/vetting/agentskills-2026-08-04.json</code> and shipped inside the
+gateway. Nothing is retrieved over the network while vetting: a chain run has to
+be reproducible from the release alone, and
+<a href="../../guides/re-vetting/">continuous re-vetting</a> has to be able to say whether a
+changed answer about approved content came from the content or from the rules.
+The connector's recorded version names the pin, a digest of its constraint table
+and the posture in force — <code>skill-conformance@agentskills-2026-08-04+schema-2ae36a+advisory</code>
+— so a specification bump is visible in every run's chain identity.</p>
+<div class="admonition note">
+<p class="admonition-title">Upstream publishes no version number</p>
+<p>The Agent Skills specification has no tags, no version field and no
+changelog. The version the gateway records is therefore <em>its own</em> dated pin:
+the date of the upstream commit the constraint table was transcribed from.
+Provenance for the current pin, and the two places it deliberately follows
+the upstream reference validator rather than the prose, are recorded in
+<code>src/main/resources/vetting/README.md</code>.</p>
+</div>
 <h2 id="external-connectors">External connectors<a class="headerlink" href="#external-connectors" title="Permanent link">&para;</a></h2>
 <p>An operator can extend the chain with their own connectors — an LLM reviewer, a
 sandbox detonator, a corporate scanner — configured under
@@ -2773,9 +2874,15 @@ resolved.</p>
 <h2 id="coverage-gaps-are-reported-not-hidden">Coverage gaps are reported, not hidden<a class="headerlink" href="#coverage-gaps-are-reported-not-hidden" title="Permanent link">&para;</a></h2>
 <p>A file larger than the configured size limit, or one that is not valid UTF-8, is
 not silently skipped: the connector records an informational
-<code>file-not-scanned</code> finding naming the path. Informational findings do not change
-the verdict, but they are visible, so "the scanner did not look at this" is
-never invisible.</p>
+<code>file-not-scanned</code> finding naming the path — <code>skill-not-scanned</code> for
+<code>skill-conformance</code>, which reads only <code>SKILL.md</code> files. Informational findings do
+not change the verdict, but they are visible, so "the scanner did not look at
+this" is never invisible.</p>
+<p>The one exception is deliberate: under
+<a href="../../reference/configuration/#vetting">conformance enforcement</a>
+<code>skill-not-scanned</code> blocks rather than informs, because an operator who has made
+conformance a publishing requirement must not have "we could not check" read as
+"it conformed".</p>
 <h2 id="what-lands-in-the-ledger">What lands in the ledger<a class="headerlink" href="#what-lands-in-the-ledger" title="Permanent link">&para;</a></h2>
 <p>Every chain run writes to the append-only ledger: one entry per connector
 verdict (<code>vetting-verdict</code>) and one entry for the run outcome
