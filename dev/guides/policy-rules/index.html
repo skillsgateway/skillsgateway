@@ -2156,7 +2156,7 @@ commit the snapshot identifies:</p>
 <tr>
 <td><code>snapshot</code></td>
 <td>map</td>
-<td><code>id</code> (int), <code>sha</code> (string), <code>marketplace</code> (string), <code>state</code> (string: <code>held</code>, <code>approved</code>, <code>rejected</code>, <code>revoked</code>).</td>
+<td><code>id</code> (int), <code>sha</code> (string), <code>upstreamSha</code> (string), <code>externalSources</code> (int: how many external plugin sources were resolved into it), <code>marketplace</code> (string), <code>state</code> (string: <code>held</code>, <code>approved</code>, <code>rejected</code>, <code>revoked</code>).</td>
 </tr>
 <tr>
 <td><code>files</code></td>
@@ -2166,7 +2166,7 @@ commit the snapshot identifies:</p>
 <tr>
 <td><code>plugins</code></td>
 <td>list of maps</td>
-<td>The manifest's plugins: <code>name</code>, <code>description</code>, <code>source</code> (strings; absent manifest fields are <code>""</code>).</td>
+<td>The manifest's plugins: <code>name</code>, <code>description</code>, <code>source</code> (strings; absent manifest fields are <code>""</code>), <code>origin</code> (<code>local</code> or <code>external</code>), and for an external plugin <code>upstreamUrl</code> and <code>resolvedSha</code> (strings; <code>""</code> for a local one).</td>
 </tr>
 <tr>
 <td><code>skills</code></td>

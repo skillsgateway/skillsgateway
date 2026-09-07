@@ -2421,9 +2421,13 @@ forty. In the portal it is the second half of the <strong>Show contents</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/snapshots/1/provenance
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"upstreamUrl"</span><span class="p">:</span><span class="s2">"https://github.com/acme/skills.git"</span><span class="p">,</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w"> </span><span class="nt">"upstreamSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"held"</span><span class="p">,</span><span class="nt">"violation"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w"> </span><span class="nt">"ingestedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"decidedBy"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"decidedAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">}</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w"> </span><span class="nt">"upstreamSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"closure"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"held"</span><span class="p">,</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w"> </span><span class="nt">"violation"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"ingestedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"decidedBy"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"decidedAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">}</span>
 </code></pre></div>
+<p>For a snapshot with resolved external plugin sources, <code>sha</code> is the composite
+the gateway serves, <code>upstreamSha</code> its parent, and <code>closure</code> names every
+external source with the commit it resolved to — see
+<a href="../../concepts/snapshots-and-ledger/#the-closure-record">the closure record</a>.</p>
 <h3 id="violations">Violations<a class="headerlink" href="#violations" title="Permanent link">&para;</a></h3>
 <p>If ingestion flagged the snapshot — an external plugin source, for instance —
 the reason is on the snapshot row and rendered in the portal as destructive text.</p>
@@ -2470,11 +2474,18 @@ as they cover a plugin the marketplace repository carries itself.</p>
 <p>Two things are worth knowing while reviewing one. The snapshot's SHA is a commit
 the gateway synthesised, not one you will find upstream — and its <strong>parent</strong> is
 the upstream commit, so <code>git diff &lt;parent&gt; &lt;sha&gt;</code> in the quarantine repository
-shows precisely what the gateway added and rewrote. And its commit message names
-the upstream commit and every external source with the commit it resolved to,
-which is the provenance to check before approving: an external repository that
-has moved produces a different snapshot, and approving one is a decision about
-that resolved commit and no other.</p>
+shows precisely what the gateway added and rewrote. And its
+<a href="#provenance">provenance</a> carries the <strong>closure</strong>: every external source with
+the URL it was fetched through and the commit it resolved to, which is what to
+check before approving. An external repository that has moved produces a
+different snapshot, and approving one is a decision about that resolved commit
+and no other.</p>
+<p>Approval also checks the closure against the commit, before any other gate: the
+plugins the served manifest grafts, the closure's members and the trees under
+<code>_plugins/</code> must all agree. Nothing the gateway does can make them disagree, so
+a refusal titled <em>Snapshot closure is incomplete</em> means the snapshot's rows or
+its pinned commit were altered by something other than the gateway. There is no
+override; re-ingest the marketplace and review the new snapshot.</p>
 <h3 id="vetting-verdicts">Vetting verdicts<a class="headerlink" href="#vetting-verdicts" title="Permanent link">&para;</a></h3>
 <p>Before anything else, read what the vetting chain concluded. The snapshot card
 on the marketplace detail page — and the approve dialog itself — shows the chain

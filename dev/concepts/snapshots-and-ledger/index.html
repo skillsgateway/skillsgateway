@@ -549,6 +549,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-closure-record" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The closure record
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#what-a-snapshot-contains" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2114,6 +2125,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-closure-record" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The closure record
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#what-a-snapshot-contains" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2256,6 +2278,10 @@ retention.</p>
 <td>The 40-hex commit the gateway serves. This is the pin: the upstream commit for a local-only manifest, and the synthesised composite for one with resolved external sources (see below).</td>
 </tr>
 <tr>
+<td><code>upstreamSha</code></td>
+<td>The commit ingested from upstream. Equal to <code>sha</code> unless a composite was synthesised, in which case it is the composite's parent.</td>
+</tr>
+<tr>
 <td><code>state</code></td>
 <td><code>held</code>, <code>approved</code>, <code>rejected</code>, or <code>revoked</code>. Set at ingestion and changed only by a decision or by an enforced re-vetting violation.</td>
 </tr>
@@ -2347,6 +2373,56 @@ makes re-ingesting unchanged content idempotent. An external repository moving o
 therefore produces a <em>different</em> snapshot, held for its own approval — the same
 rug-pull protection the upstream commit already gets, extended to the
 repositories the manifest points at.</p>
+<h3 id="the-closure-record">The closure record<a class="headerlink" href="#the-closure-record" title="Permanent link">&para;</a></h3>
+<p>The commit message is one witness to what was resolved. The <strong>closure</strong> is the
+other, and the one that can be queried: a record written in the same database
+transaction as the composite snapshot, naming the upstream commit, the version
+of the transformation, a SHA-256 digest over the whole, and one <em>member</em> per
+resolved external plugin:</p>
+<table>
+<thead>
+<tr>
+<th>Member field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pluginName</code>, <code>sourceType</code>, <code>declaredSource</code></td>
+<td>What the manifest declared — the plugin, the source type (<code>github</code>), and the source exactly as written (<code>acme/tools</code>).</td>
+</tr>
+<tr>
+<td><code>declaredRef</code>, <code>declaredSha</code></td>
+<td>Any pin the manifest declared. Always <code>null</code> today: a declared pin is refused rather than resolved elsewhere.</td>
+</tr>
+<tr>
+<td><code>cloneUrl</code>, <code>resolvedSha</code></td>
+<td>The URL the source was fetched through and the commit it resolved to.</td>
+</tr>
+<tr>
+<td><code>treeSha</code>, <code>graftPath</code></td>
+<td>The tree grafted into the composite and where — <code>_plugins/&lt;plugin name&gt;</code>.</td>
+</tr>
+<tr>
+<td><code>objectCount</code>, <code>inflatedBytes</code></td>
+<td>What the grafted tree cost, measured at resolution.</td>
+</tr>
+</tbody>
+</table>
+<p>Every value is a copy taken at ingestion. Nothing in the closure points at the
+marketplace row or at configuration, because those change and the closure must
+not: the marketplace is the mutable <em>source</em>, the closure is the immutable
+<em>artifact</em> that was vetted and approved. A closure is never updated, and it
+leaves the database only when its snapshot is purged. A snapshot that resolved
+nothing — every local-only snapshot, and a rejected resolution — has no closure
+record; that absence is the empty closure.</p>
+<p>The closure is what makes <em>which approved snapshots include repository X, at
+any commit?</em> one indexed query rather than a walk over every quarantine
+repository. It appears in the snapshot's
+<a href="../../reference/api/marketplaces/#get-snapshotsidprovenance">provenance</a> and in
+the <a href="../../guides/policy-rules/#the-evaluation-variables">policy facts</a>, and the
+<a href="../../guides/approving-snapshots/#reviewing-a-resolved-external-plugin">approval gate</a>
+refuses any snapshot whose closure, served manifest and pinned tree disagree.</p>
 <h3 id="what-a-snapshot-contains">What a snapshot contains<a class="headerlink" href="#what-a-snapshot-contains" title="Permanent link">&para;</a></h3>
 <p><code>GET /api/snapshots/{id}/content</code> parses the captured commit and lists what it
 declares: each plugin with its name, <code>source</code> and description, and the skills

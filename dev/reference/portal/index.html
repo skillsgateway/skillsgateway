@@ -3020,7 +3020,9 @@ justification, approver and expiry. An active one carries
 <em>Revoke waiver {id}</em>, which calls <code>DELETE /api/waivers/{id}</code>.</p>
 <p><strong>Provenance</strong> is always available, opening a dialog fed by
 <code>GET /api/snapshots/{id}/provenance</code>: marketplace, upstream URL, upstream SHA,
-state, ingested time, decided by, decided at.</p>
+served SHA, state, ingested time, decided by, decided at — and, for a snapshot
+with resolved external plugin sources, the closure: each external plugin with
+the URL it was fetched through and the commit it resolved to.</p>
 <p>Empty states: "No marketplaces registered yet." and, in an expanded row, "No
 snapshots yet — ingest to fetch the upstream default branch."</p>
 <hr />

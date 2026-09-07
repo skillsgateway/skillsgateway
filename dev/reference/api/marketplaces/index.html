@@ -2845,10 +2845,13 @@ scope at all</strong> — they publish, refuse or retract content. See
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w"> </span><span class="nt">"snapshots"</span><span class="p">:[]}</span>
 </code></pre></div>
 <p><strong>Snapshot</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span><span class="nt">"marketplaceId"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"held"</span><span class="p">,</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"violation"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"2026-08-15T09:01:00Z"</span><span class="p">,</span><span class="nt">"ingestedBy"</span><span class="p">:</span><span class="s2">"ingrid"</span><span class="p">,</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w"> </span><span class="nt">"decidedBy"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"decidedAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span><span class="nt">"marketplaceId"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"upstreamSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"held"</span><span class="p">,</span><span class="nt">"violation"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"2026-08-15T09:01:00Z"</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w"> </span><span class="nt">"ingestedBy"</span><span class="p">:</span><span class="s2">"ingrid"</span><span class="p">,</span><span class="nt">"decidedBy"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"decidedAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">}</span>
 </code></pre></div>
+<p><code>sha</code> is the commit the gateway serves; <code>upstreamSha</code> is the commit ingested
+from upstream. They differ only for a snapshot whose external plugin sources
+were resolved into a composite, where <code>upstreamSha</code> is the composite's parent.</p>
 <p><code>registeredBy</code> and <code>ingestedBy</code> are the supply-side identities the
 <a href="../../../guides/approving-snapshots/#separation-of-duties">four-eyes rule</a>
 compares a reviewer against. <code>ingestedBy</code> is a principal for an on-demand
@@ -3653,6 +3656,17 @@ status, with the conflicting acts named:</p>
 approve. Under the default <code>warn</code> mode the same conflicts are detected, the
 approval succeeds, and a <code>four-eyes-conflict</code> entry is appended to the audit
 ledger beside <code>snapshot-approved</code>.</p>
+<p>Ahead of every gate above, a snapshot whose recorded
+<a href="../../../concepts/snapshots-and-ledger/#the-closure-record">closure</a> does not
+describe the commit it pins is refused, and every discrepancy is named:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">409</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Snapshot closure is incomplete"</span><span class="p">,</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"snapshot 12 cannot be approved: its recorded closure does not describe the commit it pins — …"</span><span class="p">,</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w"> </span><span class="nt">"discrepancies"</span><span class="p">:[</span><span class="s2">"the served manifest declares plugin 'tools' at _plugins/tools, which the recorded closure does not contain"</span><span class="p">]}</span>
+</code></pre></div>
+<p>Nothing the gateway does produces this state, so there is no override for it:
+it means something other than the gateway has altered the snapshot's rows or
+its pinned commit, and re-ingesting the marketplace is the remedy. The refusal
+is appended to the audit ledger as <code>snapshot-approval-refused</code>.</p>
 <table>
 <thead>
 <tr>
@@ -3671,7 +3685,7 @@ ledger beside <code>snapshot-approved</code>.</p>
 </tr>
 <tr>
 <td>409</td>
-<td>The snapshot is neither <code>held</code> nor <code>revoked</code>, its effective vetting outcome is blocked and no override was supplied, a <a href="../policy/">policy rule</a> denied it, it has not reached the minimum release age, or an enforcing four-eyes rule refused it.</td>
+<td>The snapshot is neither <code>held</code> nor <code>revoked</code>, its recorded closure does not describe the commit it pins, its effective vetting outcome is blocked and no override was supplied, a <a href="../policy/">policy rule</a> denied it, it has not reached the minimum release age, or an enforcing four-eyes rule refused it.</td>
 </tr>
 <tr>
 <td>422</td>
@@ -3687,7 +3701,7 @@ revocation marks.</p>
 <p>The airline-cockpit escape hatch: an <strong>administrator — and only an
 administrator</strong> — may approve a snapshot whose effective outcome is blocked by
 sending a body:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="p">{</span><span class="nt">"overrideVetting"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"reason"</span><span class="p">:</span><span class="w"> </span><span class="s2">"vendor-signed key, accepted risk in TICKET-42"</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="p">{</span><span class="nt">"overrideVetting"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"reason"</span><span class="p">:</span><span class="w"> </span><span class="s2">"vendor-signed key, accepted risk in TICKET-42"</span><span class="p">}</span>
 </code></pre></div>
 <p>The override <strong>lifts only the vetting gate</strong> — the policy, minimum-release-age
 and four-eyes gates still run. A <code>reason</code> is required (a reasonless override is
@@ -3712,9 +3726,9 @@ silent bypass.</p>
 <a href="../../configuration/#minimum-release-age">minimum release age</a>, and when it will
 if it has not. This is the same computation the approve endpoint gates on, so
 the two can never disagree.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"eligible"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="w"> </span><span class="nt">"firstIngestedAt"</span><span class="p">:</span><span class="s2">"2026-08-16T09:00:00Z"</span><span class="p">,</span><span class="nt">"eligibleAt"</span><span class="p">:</span><span class="s2">"2026-08-19T09:00:00Z"</span><span class="p">,</span>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w"> </span><span class="nt">"ageSeconds"</span><span class="p">:</span><span class="mi">57600</span><span class="p">,</span><span class="nt">"remainingSeconds"</span><span class="p">:</span><span class="mi">187200</span><span class="p">,</span><span class="nt">"minimumReleaseAgeSeconds"</span><span class="p">:</span><span class="mi">259200</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"eligible"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w"> </span><span class="nt">"firstIngestedAt"</span><span class="p">:</span><span class="s2">"2026-08-16T09:00:00Z"</span><span class="p">,</span><span class="nt">"eligibleAt"</span><span class="p">:</span><span class="s2">"2026-08-19T09:00:00Z"</span><span class="p">,</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w"> </span><span class="nt">"ageSeconds"</span><span class="p">:</span><span class="mi">57600</span><span class="p">,</span><span class="nt">"remainingSeconds"</span><span class="p">:</span><span class="mi">187200</span><span class="p">,</span><span class="nt">"minimumReleaseAgeSeconds"</span><span class="p">:</span><span class="mi">259200</span><span class="p">}</span>
 </code></pre></div>
 <table>
 <thead>
@@ -3775,9 +3789,9 @@ the two can never disagree.</p>
 object to <strong>the calling identity</strong> approving this snapshot, and what the
 configured mode would do about it. Decides nothing; the approve endpoint
 enforces the rule independently.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="p">{</span><span class="nt">"mode"</span><span class="p">:</span><span class="s2">"ENFORCE"</span><span class="p">,</span><span class="nt">"refused"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w"> </span><span class="nt">"conflicts"</span><span class="p">:[{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"registered-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">},</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">              </span><span class="p">{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"ingested-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">}]}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="p">{</span><span class="nt">"mode"</span><span class="p">:</span><span class="s2">"ENFORCE"</span><span class="p">,</span><span class="nt">"refused"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w"> </span><span class="nt">"conflicts"</span><span class="p">:[{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"registered-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">},</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">              </span><span class="p">{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"ingested-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">}]}</span>
 </code></pre></div>
 <table>
 <thead>
@@ -3839,11 +3853,24 @@ the gateway makes, not a caller.</p>
 <hr />
 <h2 id="get-snapshotsidprovenance"><code>GET /snapshots/{id}/provenance</code><a class="headerlink" href="#get-snapshotsidprovenance" title="Permanent link">&para;</a></h2>
 <p>Where the snapshot came from and who decided on it.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w"> </span><span class="nt">"upstreamUrl"</span><span class="p">:</span><span class="s2">"https://github.com/acme/skills.git"</span><span class="p">,</span><span class="nt">"upstreamSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span>
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w"> </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"approved"</span><span class="p">,</span><span class="nt">"violation"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"ingestedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w"> </span><span class="nt">"decidedBy"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span><span class="nt">"decidedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"origin"</span><span class="p">:</span><span class="s2">"upstream"</span><span class="p">,</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w"> </span><span class="nt">"upstreamUrl"</span><span class="p">:</span><span class="s2">"https://github.com/acme/skills.git"</span><span class="p">,</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w"> </span><span class="nt">"upstreamSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"9e1d77c..."</span><span class="p">,</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w"> </span><span class="nt">"closure"</span><span class="p">:{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span><span class="nt">"digest"</span><span class="p">:</span><span class="s2">"4c2a…"</span><span class="p">,</span><span class="nt">"upstreamSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="w">            </span><span class="nt">"transformerVersion"</span><span class="p">:</span><span class="s2">"1"</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span>
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="w">            </span><span class="nt">"members"</span><span class="p">:[{</span><span class="nt">"pluginName"</span><span class="p">:</span><span class="s2">"tools"</span><span class="p">,</span><span class="nt">"sourceType"</span><span class="p">:</span><span class="s2">"github"</span><span class="p">,</span>
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span class="w">                        </span><span class="nt">"declaredSource"</span><span class="p">:</span><span class="s2">"acme/tools"</span><span class="p">,</span><span class="nt">"declaredRef"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"declaredSha"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span class="w">                        </span><span class="nt">"cloneUrl"</span><span class="p">:</span><span class="s2">"https://github.com/acme/tools"</span><span class="p">,</span>
+<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="w">                        </span><span class="nt">"resolvedSha"</span><span class="p">:</span><span class="s2">"b7e0c1d..."</span><span class="p">,</span><span class="nt">"treeSha"</span><span class="p">:</span><span class="s2">"d41a9f2..."</span><span class="p">,</span>
+<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a><span class="w">                        </span><span class="nt">"graftPath"</span><span class="p">:</span><span class="s2">"_plugins/tools"</span><span class="p">,</span><span class="nt">"objectCount"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"inflatedBytes"</span><span class="p">:</span><span class="mi">4096</span><span class="p">}]},</span>
+<a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a><span class="w"> </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"approved"</span><span class="p">,</span><span class="nt">"violation"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"ingestedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span>
+<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a><span class="w"> </span><span class="nt">"decidedBy"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span><span class="nt">"decidedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}</span>
 </code></pre></div>
+<p><code>upstreamSha</code> is the commit ingested from upstream and <code>sha</code> the commit served;
+they differ only for a composite snapshot. <code>closure</code> is the
+<a href="../../../concepts/snapshots-and-ledger/#the-closure-record">resolved closure</a>
+of external plugin sources, and <code>null</code> for a snapshot that resolved none — which
+is every snapshot of a gateway that has not enabled external sources.</p>
 <p><strong>200</strong> · <strong>404</strong> unknown snapshot.</p>
 <p>Every action on this page also appends an entry to the
 <a href="../audit/">audit ledger</a> carrying the acting principal.</p>
