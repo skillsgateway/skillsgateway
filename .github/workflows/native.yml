@@ -121,7 +121,11 @@ jobs:
           location=$(curl -sS -o /dev/null -w '%{redirect_url}' \
             -H 'X-Forwarded-Proto: https' -H 'X-Forwarded-Host: gateway.example.com' \
             http://localhost:8080/oauth2/authorization/idp)
+          # curl's %{redirect_url} reports the Location decoded, so match both forms: the
+          # assertion is about the scheme and host the gateway derived, and percent-encoding
+          # is curl's presentation choice rather than anything the gateway decided.
           case "$location" in
+            *redirect_uri=https://gateway.example.com/login/oauth2/code/idp* | \
             *redirect_uri=https%3A%2F%2Fgateway.example.com%2Flogin%2Foauth2%2Fcode%2Fidp*)
               echo "forwarded headers honoured on the native image" ;;
             *)
