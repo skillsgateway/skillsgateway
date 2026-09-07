@@ -201,3 +201,12 @@ gate.
 New architecture-level choices get a new numbered ADR in `docs/decisions/`,
 referenced from the [architecture document](../architecture.md), and an entry
 on this page.
+
+
+### [ADR 0012 — The release artifact is a JVM container, not a native image](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0012-native-image-as-the-release-artifact.md)
+
+*Accepted.* The release artifact becomes a JVM container on a `jlink` runtime over
+`distroless/java-base`; the native image is dropped. Supersedes the release-profile
+decision in ADR 0002. Records the measurement that settled it — roughly 100 MB per
+instance, at a sizing where nothing is memory-bound — against three defects
+possible only on the native image, two of which shipped.
