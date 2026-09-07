@@ -473,6 +473,14 @@ skills-gateway:
 | `…external-sources.budgets.max-redirects` | integer | `3` | Hops one request may take. |
 | `…external-sources.budgets.deadline` | duration | `5m` | Wall clock for resolving a whole manifest. |
 
+Every `budgets.*` key except `max-redirects` is its own sub-requirement of
+GW_0158 — *Resource-bounded source resolution*, in the order the table lists
+them: `GW_0158.1` through `GW_0158.8`. Raising one of them is therefore a
+decision about one stated bound, and a traceability report names the bound that
+regressed rather than the whole budget. `max-redirects` belongs to GW_0157 —
+*Address, redirect and transport policy for source resolution*, which is where
+redirect policy lives.
+
 A source's derived clone URL must also satisfy `skills-gateway.allowed-url-schemes`
 — the same allowlist that governs registration, so there is one scheme policy for
 every URL the gateway will ever dereference. A `github` shorthand is expanded

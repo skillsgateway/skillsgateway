@@ -380,7 +380,7 @@ class ExternalSourceResolutionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0158"})
+    @SVCs({"SVC_GW_0158.1"})
     void a_source_that_sends_more_than_the_received_byte_budget_is_refused() throws Exception {
         FORGE.publish("acme/tools", Map.of("skills/tool/SKILL.md", "# Tool\n"));
         FORGE.flood("/acme/tools");
@@ -393,7 +393,7 @@ class ExternalSourceResolutionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0158"})
+    @SVCs({"SVC_GW_0158.6"})
     void a_source_with_a_file_over_the_blob_budget_is_refused() throws Exception {
         FORGE.publish("acme/heavy", Map.of("skills/heavy/SKILL.md", "x".repeat(128 * 1024)));
         Path upstream = createUpstream(manifestWithExternal("acme/heavy"));

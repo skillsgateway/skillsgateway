@@ -1241,9 +1241,89 @@ requirements:
   - id: GW_0158
     title: Resource-bounded source resolution
     significance: shall
-    description: "The system shall bound, by configuration, the work one manifest can cause it to perform while resolving external plugin sources: the bytes it will receive for one source and the bytes it will accept in total across a manifest's sources, the size that content may occupy once decompressed both for one source and in total, the ratio between decompressed and received size, the number of objects and the size of the largest file one source may contribute, the depth of the directory tree it will accept, and the wall-clock time the whole resolution may take. The system shall stop and refuse the ingestion, as a manifest policy violation naming the bound that was exceeded, on exceeding any of them, and shall do so without first materialising the content that exceeds them."
-    rationale: "A git fetch is decompression of a stream the gateway did not create, so a small amount of received data can expand to an arbitrary amount of memory and disk: an unbounded resolver turns any manifest the gateway will look at into a denial-of-service primitive against the gateway itself, and an ingestion that exhausts the process takes serving down with it even though serving never depends on ingestion. Bounding received bytes stops a stream that never ends; bounding decompressed size and the expansion ratio stops a stream that ends quickly and expands enormously; neither bound alone catches both, which is why both exist. Bounding object count, file size and tree depth bounds the cost of everything that later walks the content — vetting, the content inventory, the diff — rather than only the fetch. A wall-clock bound is what makes a resolution that is slow rather than large still terminate. Naming the exceeded bound in the violation is what makes the refusal actionable, since a legitimate marketplace that outgrows a default should lead an operator to a number rather than to a mystery."
+    description: "The system shall bound, by configuration, the work one manifest can cause it to perform while resolving external plugin sources, so that no manifest the gateway will look at can exhaust the gateway. The system shall accept a source that is inside every one of those bounds, and shall, on exceeding any of them, stop resolving and refuse the ingestion as a manifest policy violation naming both the plugin at fault and the bound that was exceeded."
+    rationale: "A git fetch is decompression of a stream the gateway did not create, so a small amount of received data can expand to an arbitrary amount of memory and disk: an unbounded resolver turns any manifest the gateway will look at into a denial-of-service primitive against the gateway itself, and an ingestion that exhausts the process takes serving down with it even though serving never depends on ingestion. The individual bounds are stated as sub-requirements because they defend against different things and can regress independently of one another — a resolver that still refuses an endless stream but no longer refuses a pack bomb is a materially different gateway, and one verdict over the whole set cannot say which of the two it is. Naming the exceeded bound in the violation is what makes the refusal actionable, since a legitimate marketplace that outgrows a default should lead an operator to a number rather than to a mystery, and accepting content that is inside every bound is what keeps the set of them a policy rather than an obstacle."
     categories: ["security", "performance-efficiency"]
+    revision: 0.1.0
+
+  - id: GW_0158.1
+    title: A bound on the bytes one source may send
+    significance: shall
+    description: "The system shall bound, by configuration, the bytes it will receive on the wire while resolving one external plugin source, and shall abort that transfer at the point the bound is crossed rather than judging the source once it has been received. The system shall make that bound available to the transfer itself, so that no arrangement of the other resolution bounds can cause a source's bytes to be taken in first and measured afterwards."
+    rationale: "A git fetch is a stream the gateway did not create and cannot see the end of, so a source that simply never stops sending exhausts the gateway before any measurement of its content is possible. This is the one bound that has to act while the bytes are still arriving; every other bound of this capability is measured against content that is already on disk, and it is this bound that makes having it on disk safe at all."
+    references:
+      requirement_ids: ["GW_0158"]
+    categories: ["security", "performance-efficiency"]
+    revision: 0.1.0
+
+  - id: GW_0158.2
+    title: A bound on one source's decompressed size
+    significance: shall
+    description: "The system shall bound, by configuration, the size one external plugin source's content may occupy once it is decompressed into the objects the gateway holds, measured over the tree that would be grafted into the snapshot."
+    rationale: "Received bytes and decompressed bytes are different quantities precisely because a fetch is decompression: a stream that ends quickly can still expand to more than the gateway can hold, so a bound on what arrives does not bound what the gateway ends up storing. Measuring the tree that would be grafted rather than the whole fetched history is what makes this bound the same quantity every later consumer pays, since vetting, the content inventory and the diff all walk that tree and nothing walks the discarded history."
+    references:
+      requirement_ids: ["GW_0158"]
+    categories: ["security", "performance-efficiency"]
+    revision: 0.1.0
+
+  - id: GW_0158.3
+    title: A bound on the decompressed size of a manifest's sources together
+    significance: shall
+    description: "The system shall bound, by configuration, the decompressed size of all the external plugin sources one manifest declares taken together, accumulating each source's contribution as that source is accepted and counting no refused source towards the total."
+    rationale: "A per-source bound is defeated by declaring many sources just under it, so without an accumulated bound the real limit on what one manifest costs is the per-source bound multiplied by the maximum number of sources — a number no operator sets and few would accept if it were written down. Advancing the accumulator only when a source is accepted is what keeps a refusal from charging a manifest for content the gateway never kept, so a manifest is refused for what it actually contributed and not for what it attempted."
+    references:
+      requirement_ids: ["GW_0158"]
+    categories: ["security", "performance-efficiency"]
+    revision: 0.1.0
+
+  - id: GW_0158.4
+    title: A bound on how far a source's content may expand
+    significance: shall
+    description: "The system shall bound, by configuration, the ratio between the decompressed size of one external plugin source's content and the bytes received for it. The system shall judge that ratio only once the decompressed content is material relative to the bound on one source's decompressed size, so that a small but highly compressible source is not refused by it."
+    rationale: "Both byte bounds can hold comfortably while the expansion between them is extreme, and that is exactly the shape of a pack bomb: a few bytes on the wire becoming everything the process can hold. Neither byte bound alone catches it, which is why the ratio is a bound of its own. The floor is not a softening of that bound: below it the absolute decompressed bound already caps what can be materialised, while an unfloored ratio would refuse ordinary repositories, where a small file of repeated text compresses just as hard as an attack does."
+    references:
+      requirement_ids: ["GW_0158"]
+    categories: ["security", "performance-efficiency"]
+    revision: 0.1.0
+
+  - id: GW_0158.5
+    title: A bound on the number of objects one source contributes
+    significance: shall
+    description: "The system shall bound, by configuration, the number of objects — files and directories — one external plugin source may contribute to a snapshot."
+    rationale: "Size alone does not bound the cost of walking content: a source of very many tiny files is cheap to store and expensive for everything that later traverses it, and every connector of a vetting chain, the content inventory and the diff all traverse it — at ingestion and again on every continuous re-vetting pass. Bounding the count is what keeps that standing cost proportional to what an operator agreed to admit rather than to how a publisher chose to lay out a repository."
+    references:
+      requirement_ids: ["GW_0158"]
+    categories: ["performance-efficiency", "security"]
+    revision: 0.1.0
+
+  - id: GW_0158.6
+    title: A bound on the largest single file one source contributes
+    significance: shall
+    description: "The system shall bound, by configuration, the size of the largest single file one external plugin source may contribute to a snapshot."
+    rationale: "A source can sit inside every aggregate bound and still hold one file that no consumer of the snapshot can handle, because a file is what a vetting connector reads whole. Bounding the largest file separately from the total is what keeps a single object from being the thing that fails a chain run, and it is the bound a legitimate marketplace shipping something genuinely large runs into first, which is why it has to be raisable on its own rather than only by raising every total beside it."
+    references:
+      requirement_ids: ["GW_0158"]
+    categories: ["performance-efficiency", "security"]
+    revision: 0.1.0
+
+  - id: GW_0158.7
+    title: A bound on the depth of a source's directory tree
+    significance: shall
+    description: "The system shall bound, by configuration, the depth of the directory tree it will accept from one external plugin source."
+    rationale: "Depth is the dimension that turns a small, cheap repository into an expensive one for anything that walks it recursively, and a deliberately deep tree costs an attacker almost nothing to construct or to transfer, so neither byte bound nor object count stands in its way. Refusing depth at resolution is what keeps some later recursive walk elsewhere in the gateway from being the place the depth is discovered."
+    references:
+      requirement_ids: ["GW_0158"]
+    categories: ["performance-efficiency", "security"]
+    revision: 0.1.0
+
+  - id: GW_0158.8
+    title: A bound on the time a whole resolution may take
+    significance: shall
+    description: "The system shall bound, by configuration, the wall-clock time that resolving the whole of one manifest's external plugin sources may take, and shall stop resolving and refuse the ingestion once that time has passed."
+    rationale: "Every other bound of this capability bounds a quantity, and none of them ends a resolution that is slow rather than large: a source trickling a byte at a time stays inside every size bound indefinitely, and a manifest declaring many individually fast sources can still occupy the gateway for as long as it likes. A wall-clock bound is the only one that makes termination a property of the resolution itself rather than of the sources' cooperation."
+    references:
+      requirement_ids: ["GW_0158"]
+    categories: ["performance-efficiency", "reliability"]
     revision: 0.1.0
 
   - id: GW_0161

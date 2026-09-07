@@ -1776,16 +1776,109 @@ cases:
 
   - id: SVC_GW_0158
     requirement_ids: ["GW_0158"]
-    title: Refuse a source that exceeds a resolution resource bound
+    title: Content inside every bound is accepted and a refusal names the plugin and the bound
     verification: automated-test
     description: |
-      GIVEN a gateway with configured resolution bounds on received bytes per source and
-      per manifest, decompressed size per source and per manifest, expansion ratio,
-      object count, largest file, directory depth and wall-clock time
-      WHEN an external plugin source exceeds any one of them
-      THEN resolution stops, the ingestion is refused with a violation naming the bound
-      that was exceeded, content just inside every bound is still accepted, and the
-      process is not exhausted
+      GIVEN a gateway with every resolution bound configured
+      WHEN a source measures exactly at each bound, and separately when a source exceeds
+      one of them
+      THEN the source at every bound is accepted, and the refusal names the plugin at
+      fault and the number it exceeded rather than reporting only that some budget was
+      breached
+    revision: "0.1.0"
+
+  - id: SVC_GW_0158.1
+    requirement_ids: ["GW_0158.1"]
+    title: A source is cut off at the received-byte bound rather than measured after it
+    verification: automated-test
+    description: |
+      GIVEN a gateway with a configured bound on the bytes one external plugin source may
+      send, and a source that sends without end
+      WHEN the source is resolved
+      THEN the transfer is aborted as the bound is crossed rather than after the source
+      has been received, the ingestion is refused with a violation naming received bytes,
+      the snapshot is rejected against the upstream commit, and the bound is readable by
+      the transfer so it can stop at it
+    revision: "0.1.0"
+
+  - id: SVC_GW_0158.2
+    requirement_ids: ["GW_0158.2"]
+    title: A source over the per-source decompressed bound is refused
+    verification: automated-test
+    description: |
+      GIVEN a gateway with a configured bound on one source's decompressed size
+      WHEN a source's grafted tree measures one byte over that bound
+      THEN the source is refused with a violation naming uncompressed size
+    revision: "0.1.0"
+
+  - id: SVC_GW_0158.3
+    requirement_ids: ["GW_0158.3"]
+    title: The decompressed bound accumulates across a manifest's sources
+    verification: automated-test
+    description: |
+      GIVEN a gateway with a configured bound on the decompressed size of all of one
+      manifest's sources together, and two sources each inside every per-source bound
+      WHEN the two are resolved in turn and their total exceeds the manifest bound
+      THEN the first is accepted, the second is refused with a violation naming the
+      manifest total, and no refused source has advanced the accumulator
+    revision: "0.1.0"
+
+  - id: SVC_GW_0158.4
+    requirement_ids: ["GW_0158.4"]
+    title: An extreme expansion is refused, and a small compressible source is not
+    verification: automated-test
+    description: |
+      GIVEN a gateway with a configured expansion ratio and a floor below which it is not
+      judged
+      WHEN a source expands beyond the ratio while inside both byte bounds, when it
+      expands as far but stays below the floor, and when it expands within the ratio
+      THEN the first is refused with a violation naming the ratio, and the second and
+      third are accepted
+    revision: "0.1.0"
+
+  - id: SVC_GW_0158.5
+    requirement_ids: ["GW_0158.5"]
+    title: A source over the object-count bound is refused
+    verification: automated-test
+    description: |
+      GIVEN a gateway with a configured bound on the objects one source may contribute
+      WHEN a source contributes one object more than the bound
+      THEN the source is refused with a violation naming objects
+    revision: "0.1.0"
+
+  - id: SVC_GW_0158.6
+    requirement_ids: ["GW_0158.6"]
+    title: A source holding a file over the largest-file bound is refused
+    verification: automated-test
+    description: |
+      GIVEN a gateway with a configured bound on the largest single file one source may
+      contribute
+      WHEN a source holds a file one byte over that bound, and separately when a real
+      repository fetched over a real transport holds a file over it
+      THEN both are refused with a violation naming the file, and the snapshot carrying
+      the real repository is rejected
+    revision: "0.1.0"
+
+  - id: SVC_GW_0158.7
+    requirement_ids: ["GW_0158.7"]
+    title: A source with a tree deeper than the bound is refused
+    verification: automated-test
+    description: |
+      GIVEN a gateway with a configured bound on directory tree depth
+      WHEN a source's tree is one level deeper than the bound
+      THEN the source is refused with a violation naming depth
+    revision: "0.1.0"
+
+  - id: SVC_GW_0158.8
+    requirement_ids: ["GW_0158.8"]
+    title: A resolution that outlives its wall-clock bound is refused
+    verification: automated-test
+    description: |
+      GIVEN a gateway resolving a manifest under a configured wall-clock bound
+      WHEN the bound has not yet passed, when it has been reached exactly, and when it
+      has been passed
+      THEN the resolution continues in the first two cases and in the third is stopped
+      with a violation naming the deadline
     revision: "0.1.0"
 
   - id: SVC_GW_0161
