@@ -33,6 +33,25 @@ public interface GitStorage {
      */
     String STAGING_REF_PREFIX = "refs/staging/";
 
+    /** The served tip: the reference a clone of a marketplace resolves to. */
+    String SERVED_REF = "refs/heads/main";
+
+    /** Approved snapshots stay fetchable by name under here, even once superseded. */
+    String SNAPSHOT_REF_PREFIX = "refs/snapshots/";
+
+    /**
+     * Whether a reference is one the facade puts on the wire.
+     *
+     * <p>Here rather than in the facade because a second reader has appeared: the forge mirror
+     * (GW_0169) copies exactly what is served and nothing else, and two independent spellings of
+     * "what is served" would be a mirror that drifts by construction. {@code HEAD} is deliberately
+     * not included — the facade keeps it so a clone knows which branch to check out, which is a
+     * property of an advertisement rather than of the served set.
+     */
+    static boolean isServedRef(String name) {
+        return SERVED_REF.equals(name) || name.startsWith(SNAPSHOT_REF_PREFIX);
+    }
+
     /**
      * The three repository roles, named so that a caller can talk about all of them at once.
      *

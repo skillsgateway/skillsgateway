@@ -24,7 +24,8 @@ public record SkillsGatewayProperties(
         Oidc oidc,
         Estate estate,
         Storage storage,
-        Ingestion ingestion) {
+        Ingestion ingestion,
+        Mirror mirror) {
 
     public SkillsGatewayProperties {
         if (dataDir == null) {
@@ -74,6 +75,66 @@ public record SkillsGatewayProperties(
         }
         if (ingestion == null) {
             ingestion = new Ingestion(null);
+        }
+        if (mirror == null) {
+            mirror = new Mirror(null, null, null, null, null, null, null, null);
+        }
+    }
+
+    /**
+     * The optional read-only forge mirror (GW_0169, GW_0170). Off by default, and off is the whole
+     * of an existing deployment's behaviour: nothing here is read until {@link #enabled} is true,
+     * and the gateway contacts the mirror only when something it serves has changed or an
+     * administrator asks for the drift report.
+     *
+     * <p>The mirror is a browsing convenience and never a serving surface (ADR 0008). Nothing about
+     * approval, publication, revocation or what the facade serves may come to depend on it, which
+     * is why there is no "wait for the push" or "fail the approval" knob here and why one cannot be
+     * added without contradicting GW_0170.
+     *
+     * @param enabled whether approved content is mirrored at all; false is the shipped behaviour
+     * @param marketplace the single marketplace this increment mirrors; required when enabled
+     * @param url the mirror's clone URL. Its scheme faces the same {@code allowed-url-schemes}
+     *     allowlist that governs registration, and it may not carry userinfo — a credential in a
+     *     URL ends up in every diagnostic that prints one, so it goes in {@link #username} and
+     *     {@link #token} instead
+     * @param username the forge account or token name the push authenticates as
+     * @param token the push credential. Configuration only, never committed, never logged
+     * @param timeout how long one mirror operation may take before it is abandoned as failed
+     * @param maxAttempts how many times one mirror update is attempted before it is left as drift
+     * @param retryDelay how long to wait between those attempts
+     */
+    public record Mirror(
+            Boolean enabled,
+            String marketplace,
+            String url,
+            String username,
+            String token,
+            Duration timeout,
+            Integer maxAttempts,
+            Duration retryDelay) {
+
+        public Mirror {
+            if (enabled == null) {
+                enabled = false;
+            }
+            if (timeout == null) {
+                timeout = Duration.ofSeconds(30);
+            }
+            if (maxAttempts == null || maxAttempts < 1) {
+                maxAttempts = 3;
+            }
+            if (retryDelay == null) {
+                retryDelay = Duration.ofSeconds(5);
+            }
+        }
+
+        /** The credential is deliberately absent: a record's generated toString would print it. */
+        @Override
+        public String toString() {
+            return "Mirror[enabled=%s, marketplace=%s, url=%s, username=%s, timeout=%s, maxAttempts=%d,"
+                    + " retryDelay=%s]"
+                            .formatted(enabled, marketplace, url, username, timeout, maxAttempts, retryDelay);
         }
     }
 

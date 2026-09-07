@@ -1918,3 +1918,62 @@ cases:
       nothing is published; and an unaltered composite snapshot and a local-only snapshot
       are still approved
     revision: "0.1.0"
+
+  - id: SVC_GW_0169
+    requirement_ids: ["GW_0169"]
+    title: Only approved, served content is mirrored, and only when the mirror is enabled
+    verification: automated-test
+    description: |
+      GIVEN a gateway whose mirror is disabled, a gateway whose mirror is enabled and
+      points at a local bare repository, and a marketplace holding a snapshot that has
+      been ingested into quarantine but not approved
+      WHEN the snapshot is approved
+      THEN the disabled gateway pushes nothing and the mirror repository stays empty,
+      the enabled gateway's mirror comes to hold the approved commit at the served
+      references, the mirror never holds a commit that was only ever quarantined, and no
+      configured mirror credential appears in any ledger entry or API response
+    revision: "0.1.0"
+
+  - id: SVC_GW_0170
+    requirement_ids: ["GW_0170"]
+    title: A mirror that cannot be pushed to changes neither the approval nor what is served
+    verification: automated-test
+    description: |
+      GIVEN a gateway with the mirror enabled and pointed at a target that cannot be
+      pushed to, and a marketplace with a held snapshot
+      WHEN the snapshot is approved and a client then fetches the marketplace through the
+      facade
+      THEN the approval succeeds and reports no mirror error to its caller, the facade
+      serves the approved commit exactly as it would with the mirror disabled, and the
+      failed mirror update is recorded and visible in the mirror report
+    revision: "0.1.0"
+
+  - id: SVC_GW_0171
+    requirement_ids: ["GW_0171"]
+    title: Revoking a snapshot removes it from the mirror, and a failed removal does not block it
+    verification: automated-test
+    description: |
+      GIVEN a gateway with the mirror enabled, a marketplace whose approved snapshot has
+      been mirrored, and in turn a reachable and an unreachable mirror target
+      WHEN re-vetting revokes the snapshot
+      THEN the reachable mirror stops holding the snapshot's references, the unreachable
+      one leaves the revocation and the facade's refusal to serve the snapshot unchanged,
+      and the divergence the unreachable target caused is recorded and reportable
+    revision: "0.1.0"
+
+  - id: SVC_GW_0172
+    requirement_ids: ["GW_0172"]
+    title: The drift report names exactly how the mirror and the served references differ
+    verification: automated-test
+    description: |
+      GIVEN a gateway with the mirror enabled and a marketplace whose approved snapshot
+      has been mirrored, and a mirror repository afterwards altered behind the gateway's
+      back so that a served reference is missing and a reference that is no longer served
+      remains
+      WHEN an administrator requests the mirror report
+      THEN the report says the mirror and the served references agree before the
+      alteration, names the missing and the no-longer-served references after it, carries
+      the outcome and time of the last update attempt, reports an unreachable mirror as a
+      failed comparison rather than as agreement, and is refused to a caller who is not an
+      administrator
+    revision: "0.1.0"

@@ -1309,6 +1309,77 @@
         },
         "type": "object"
       },
+      "MirrorReport": {
+        "description": "How the read-only forge mirror compares to what the facade serves",
+        "properties": {
+          "enabled": {
+            "description": "Whether a mirror is configured",
+            "type": "boolean"
+          },
+          "error": {
+            "description": "Why the comparison or the last attempt failed",
+            "type": "string"
+          },
+          "inSync": {
+            "description": "Whether the mirror holds exactly the served references; false whenever the mirror could not be read",
+            "type": "boolean"
+          },
+          "lastAttemptAt": {
+            "description": "When the mirror was last updated or attempted",
+            "format": "date-time",
+            "type": "string"
+          },
+          "lastAttemptOutcome": {
+            "description": "Outcome of the last update attempt",
+            "enum": [
+              "ok",
+              "failed",
+              "none"
+            ],
+            "type": "string"
+          },
+          "marketplace": {
+            "description": "The mirrored marketplace",
+            "type": "string"
+          },
+          "mirrorTip": {
+            "description": "Commit refs/heads/main resolves to on the mirror",
+            "type": "string"
+          },
+          "missingOnMirror": {
+            "description": "Served references the mirror lacks or holds at another commit",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "pendingUpdates": {
+            "description": "Mirror updates queued or in flight",
+            "format": "int32",
+            "type": "integer"
+          },
+          "reachable": {
+            "description": "Whether the mirror could be read for this report",
+            "type": "boolean"
+          },
+          "servedTip": {
+            "description": "Commit refs/heads/main resolves to in published storage",
+            "type": "string"
+          },
+          "staleOnMirror": {
+            "description": "References the mirror still holds that are no longer served",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "url": {
+            "description": "Mirror clone URL; never carries a credential",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "PassResult": {
         "description": "Outcome of a retention pass",
         "properties": {
@@ -3391,6 +3462,38 @@
         "summary": "Current user",
         "tags": [
           "Session"
+        ]
+      }
+    },
+    "/api/mirror/drift": {
+      "get": {
+        "description": "Reads the mirror's references now and diffs them against published storage. The mirror is a browsing convenience and never a serving surface, so a mirror that is missing, stale or unreachable says nothing about what clients receive. A mirror the gateway cannot read is reported as unreachable and never as in sync.",
+        "operationId": "drift",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MirrorReport"
+                }
+              }
+            },
+            "description": "The comparison, or a disabled report when no mirror is set up"
+          },
+          "403": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MirrorReport"
+                }
+              }
+            },
+            "description": "Not an administrator"
+          }
+        },
+        "summary": "Compare the read-only forge mirror against what the facade serves",
+        "tags": [
+          "Mirror"
         ]
       }
     },
