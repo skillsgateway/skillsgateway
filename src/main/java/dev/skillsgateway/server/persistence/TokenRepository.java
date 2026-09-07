@@ -1,8 +1,6 @@
 package dev.skillsgateway.server.persistence;
 
 import io.github.reqstool.annotations.Requirements;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -90,7 +88,7 @@ public class TokenRepository {
                 .param("scopes", scopes)
                 .param("expiresAt", expiresAt == null ? null : expiresAt.atOffset(ZoneOffset.UTC))
                 .param("rotatedFrom", rotatedFrom)
-                .query(TokenRepository::map)
+                .query(AccessToken.class)
                 .single();
     }
 
@@ -104,7 +102,7 @@ public class TokenRepository {
                         + " AND (expires_at IS NULL OR expires_at > :now)")
                 .param("hash", tokenHash)
                 .param("now", OffsetDateTime.now())
-                .query(TokenRepository::map)
+                .query(AccessToken.class)
                 .optional();
     }
 
@@ -112,14 +110,14 @@ public class TokenRepository {
         return jdbc.sql("SELECT * FROM access_tokens WHERE id = :id AND principal = :principal")
                 .param("id", id)
                 .param("principal", principal)
-                .query(TokenRepository::map)
+                .query(AccessToken.class)
                 .optional();
     }
 
     public List<AccessToken> listByPrincipal(String principal) {
         return jdbc.sql("SELECT * FROM access_tokens WHERE principal = :principal ORDER BY id")
                 .param("principal", principal)
-                .query(TokenRepository::map)
+                .query(AccessToken.class)
                 .list();
     }
 
@@ -132,7 +130,7 @@ public class TokenRepository {
     @Requirements({"GW_0131"})
     public List<AccessToken> listMachineCredentials() {
         return jdbc.sql("SELECT * FROM access_tokens WHERE api_scopes IS NOT NULL ORDER BY id")
-                .query(TokenRepository::map)
+                .query(AccessToken.class)
                 .list();
     }
 
@@ -141,7 +139,7 @@ public class TokenRepository {
     public Optional<AccessToken> findById(long id) {
         return jdbc.sql("SELECT * FROM access_tokens WHERE id = :id")
                 .param("id", id)
-                .query(TokenRepository::map)
+                .query(AccessToken.class)
                 .optional();
     }
 
@@ -163,24 +161,5 @@ public class TokenRepository {
                         .param("principal", principal)
                         .update()
                 > 0;
-    }
-
-    static AccessToken map(ResultSet rs, int rowNum) throws SQLException {
-        long rotatedFromValue = rs.getLong("rotated_from");
-        Long rotatedFrom = rs.wasNull() ? null : rotatedFromValue;
-        return new AccessToken(
-                rs.getLong("id"),
-                rs.getString("principal"),
-                rs.getString("name"),
-                rs.getString("token_hash"),
-                MarketplaceRepository.instant(rs, "created_at"),
-                MarketplaceRepository.instant(rs, "revoked_at"),
-                rs.getString("scopes"),
-                MarketplaceRepository.instant(rs, "expires_at"),
-                rotatedFrom,
-                rs.getString("push_scopes"),
-                rs.getBoolean("session_derived"),
-                rs.getString("api_scopes"),
-                rs.getString("machine_owner"));
     }
 }

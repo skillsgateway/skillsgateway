@@ -3,8 +3,6 @@ package dev.skillsgateway.server.persistence;
 import dev.skillsgateway.server.ingestion.SnapshotClosure;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -106,7 +104,7 @@ public class SnapshotClosureRepository {
                         rs.getString("digest"),
                         rs.getString("upstream_sha"),
                         rs.getString("transformer_version"),
-                        MarketplaceRepository.instant(rs, "created_at"),
+                        Timestamps.instant(rs, "created_at"),
                         members(rs.getLong("id"))))
                 .optional();
     }
@@ -132,22 +130,7 @@ public class SnapshotClosureRepository {
     private List<SnapshotClosure.Member> members(long closureId) {
         return jdbc.sql("SELECT * FROM snapshot_closure_members WHERE closure_id = :closureId ORDER BY graft_path")
                 .param("closureId", closureId)
-                .query(SnapshotClosureRepository::member)
+                .query(SnapshotClosure.Member.class)
                 .list();
-    }
-
-    private static SnapshotClosure.Member member(ResultSet rs, int rowNum) throws SQLException {
-        return new SnapshotClosure.Member(
-                rs.getString("plugin_name"),
-                rs.getString("source_type"),
-                rs.getString("declared_source"),
-                rs.getString("declared_ref"),
-                rs.getString("declared_sha"),
-                rs.getString("clone_url"),
-                rs.getString("resolved_sha"),
-                rs.getString("tree_sha"),
-                rs.getString("graft_path"),
-                rs.getLong("object_count"),
-                rs.getLong("inflated_bytes"));
     }
 }

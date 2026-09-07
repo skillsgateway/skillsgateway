@@ -1,8 +1,6 @@
 package dev.skillsgateway.server.roles;
 
 import io.github.reqstool.annotations.Requirements;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -50,20 +48,20 @@ public class RoleGrantRepository {
     public Optional<RoleGrant> findById(long id) {
         return jdbc.sql(SELECT + " WHERE g.id = :id")
                 .param("id", id)
-                .query(RoleGrantRepository::map)
+                .query(RoleGrant.class)
                 .optional();
     }
 
     public List<RoleGrant> findByPrincipal(String principal) {
         return jdbc.sql(SELECT + " WHERE g.principal = :principal ORDER BY g.id")
                 .param("principal", principal)
-                .query(RoleGrantRepository::map)
+                .query(RoleGrant.class)
                 .list();
     }
 
     public List<RoleGrant> list() {
         return jdbc.sql(SELECT + " ORDER BY g.principal, g.id")
-                .query(RoleGrantRepository::map)
+                .query(RoleGrant.class)
                 .list();
     }
 
@@ -72,16 +70,5 @@ public class RoleGrantRepository {
                         .param("id", id)
                         .update()
                 == 1;
-    }
-
-    static RoleGrant map(ResultSet rs, int rowNum) throws SQLException {
-        OffsetDateTime grantedAt = rs.getObject("granted_at", OffsetDateTime.class);
-        return new RoleGrant(
-                rs.getLong("id"),
-                rs.getString("principal"),
-                rs.getString("role"),
-                rs.getString("marketplace"),
-                rs.getString("granted_by"),
-                grantedAt == null ? null : grantedAt.toInstant());
     }
 }

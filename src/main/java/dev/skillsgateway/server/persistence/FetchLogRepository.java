@@ -112,9 +112,7 @@ public class FetchLogRepository {
                         + " GROUP BY principal ORDER BY MAX(ts) DESC")
                 .param("sha", sha)
                 .query((rs, rowNum) -> new Fetcher(
-                        rs.getString("principal"),
-                        rs.getLong("fetches"),
-                        MarketplaceRepository.instant(rs, "last_fetch")))
+                        rs.getString("principal"), rs.getLong("fetches"), Timestamps.instant(rs, "last_fetch")))
                 .list();
     }
 
@@ -146,7 +144,7 @@ public class FetchLogRepository {
                         rs.getString("sha"),
                         rs.getLong("fetches"),
                         rs.getLong("identities"),
-                        MarketplaceRepository.instant(rs, "last_fetch")))
+                        Timestamps.instant(rs, "last_fetch")))
                 .list();
     }
 
@@ -165,7 +163,7 @@ public class FetchLogRepository {
                         rs.getString("marketplace"),
                         rs.getLong("fetches"),
                         rs.getLong("identities"),
-                        MarketplaceRepository.instant(rs, "last_fetch")))
+                        Timestamps.instant(rs, "last_fetch")))
                 .list();
     }
 
@@ -183,7 +181,7 @@ public class FetchLogRepository {
                         rs.getString("principal"),
                         rs.getString("marketplace"),
                         rs.getString("sha"),
-                        MarketplaceRepository.instant(rs, "ts")))
+                        Timestamps.instant(rs, "ts")))
                 .list();
     }
 
@@ -272,7 +270,7 @@ public class FetchLogRepository {
                 rs.getLong("id"),
                 // Rendered here rather than as a java.time value: the exported line is serialized by
                 // a plain ObjectMapper, and ISO-8601 text is what a SIEM ingests anyway.
-                String.valueOf(MarketplaceRepository.instant(rs, "ts")),
+                String.valueOf(Timestamps.instant(rs, "ts")),
                 rs.getString("source"),
                 rs.getString("principal"),
                 rs.getString("marketplace"),

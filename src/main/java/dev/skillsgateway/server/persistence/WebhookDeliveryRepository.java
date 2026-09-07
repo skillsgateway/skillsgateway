@@ -1,7 +1,5 @@
 package dev.skillsgateway.server.persistence;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -28,7 +26,7 @@ public class WebhookDeliveryRepository {
                 .param("event", event)
                 .param("payload", payload)
                 .param("now", now)
-                .query(WebhookDeliveryRepository::map)
+                .query(WebhookDelivery.class)
                 .single();
     }
 
@@ -52,7 +50,7 @@ public class WebhookDeliveryRepository {
                 .param("lease", leaseUntil.atOffset(ZoneOffset.UTC))
                 .param("now", OffsetDateTime.now())
                 .param("id", id)
-                .query(WebhookDeliveryRepository::map)
+                .query(WebhookDelivery.class)
                 .optional();
     }
 
@@ -93,39 +91,21 @@ public class WebhookDeliveryRepository {
     public Optional<WebhookDelivery> findById(long id) {
         return jdbc.sql("SELECT * FROM webhook_deliveries WHERE id = :id")
                 .param("id", id)
-                .query(WebhookDeliveryRepository::map)
+                .query(WebhookDelivery.class)
                 .optional();
     }
 
     public List<WebhookDelivery> listRecent(int limit) {
         return jdbc.sql("SELECT * FROM webhook_deliveries ORDER BY id DESC LIMIT :limit")
                 .param("limit", limit)
-                .query(WebhookDeliveryRepository::map)
+                .query(WebhookDelivery.class)
                 .list();
     }
 
     public List<WebhookDelivery> listBySubscriber(long subscriberId) {
         return jdbc.sql("SELECT * FROM webhook_deliveries WHERE subscriber_id = :subscriberId ORDER BY id")
                 .param("subscriberId", subscriberId)
-                .query(WebhookDeliveryRepository::map)
+                .query(WebhookDelivery.class)
                 .list();
-    }
-
-    static WebhookDelivery map(ResultSet rs, int rowNum) throws SQLException {
-        int status = rs.getInt("last_status");
-        // wasNull() reflects the column just read, so it must be evaluated here.
-        Integer lastStatus = rs.wasNull() ? null : status;
-        return new WebhookDelivery(
-                rs.getLong("id"),
-                rs.getLong("subscriber_id"),
-                rs.getString("event"),
-                rs.getString("payload"),
-                rs.getString("state"),
-                rs.getInt("attempts"),
-                MarketplaceRepository.instant(rs, "next_attempt_at"),
-                lastStatus,
-                rs.getString("last_error"),
-                MarketplaceRepository.instant(rs, "created_at"),
-                MarketplaceRepository.instant(rs, "updated_at"));
     }
 }

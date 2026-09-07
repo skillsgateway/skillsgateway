@@ -1,7 +1,5 @@
 package dev.skillsgateway.server.persistence;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -25,33 +23,33 @@ public class WebhookSubscriberRepository {
                 .param("secret", secret)
                 .param("events", events)
                 .param("now", OffsetDateTime.now())
-                .query(WebhookSubscriberRepository::map)
+                .query(WebhookSubscriber.class)
                 .single();
     }
 
     public List<WebhookSubscriber> list() {
         return jdbc.sql("SELECT * FROM webhook_subscribers ORDER BY id")
-                .query(WebhookSubscriberRepository::map)
+                .query(WebhookSubscriber.class)
                 .list();
     }
 
     public List<WebhookSubscriber> listEnabled() {
         return jdbc.sql("SELECT * FROM webhook_subscribers WHERE enabled ORDER BY id")
-                .query(WebhookSubscriberRepository::map)
+                .query(WebhookSubscriber.class)
                 .list();
     }
 
     public Optional<WebhookSubscriber> findById(long id) {
         return jdbc.sql("SELECT * FROM webhook_subscribers WHERE id = :id")
                 .param("id", id)
-                .query(WebhookSubscriberRepository::map)
+                .query(WebhookSubscriber.class)
                 .optional();
     }
 
     public Optional<WebhookSubscriber> findByName(String name) {
         return jdbc.sql("SELECT * FROM webhook_subscribers WHERE name = :name")
                 .param("name", name)
-                .query(WebhookSubscriberRepository::map)
+                .query(WebhookSubscriber.class)
                 .optional();
     }
 
@@ -67,7 +65,7 @@ public class WebhookSubscriberRepository {
                 .param("secret", secret)
                 .param("events", events)
                 .param("id", id)
-                .query(WebhookSubscriberRepository::map)
+                .query(WebhookSubscriber.class)
                 .optional();
     }
 
@@ -76,16 +74,5 @@ public class WebhookSubscriberRepository {
                         .param("id", id)
                         .update()
                 > 0;
-    }
-
-    static WebhookSubscriber map(ResultSet rs, int rowNum) throws SQLException {
-        return new WebhookSubscriber(
-                rs.getLong("id"),
-                rs.getString("name"),
-                rs.getString("url"),
-                rs.getString("secret"),
-                rs.getString("events"),
-                rs.getBoolean("enabled"),
-                MarketplaceRepository.instant(rs, "created_at"));
     }
 }

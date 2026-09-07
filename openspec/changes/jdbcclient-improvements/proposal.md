@@ -60,6 +60,6 @@ questions closed with evidence instead of left open as folklore.
   `MarketplaceRepository`, `SnapshotRepository`, `TokenRepository`,
   `RoleGrantRepository`, `AuditSinkRepository`, `WebhookSubscriberRepository`,
   `WebhookDeliveryRepository`, `ConnectorToggleRepository`,
-  `SnapshotClosureRepository`.
+  `SnapshotClosureRepository`, `PolicyRuleRepository`.
 - No schema migration, no API change, no configuration change, no portal change.
 - No new requirement ids: this change introduces no new required behaviour.
