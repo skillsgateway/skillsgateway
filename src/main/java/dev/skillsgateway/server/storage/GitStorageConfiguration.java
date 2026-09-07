@@ -144,6 +144,7 @@ public class GitStorageConfiguration {
      * start nothing, and cannot be frozen out of any packaging.
      */
     @Bean
+    @Requirements({"GW_0114"})
     public ApplicationRunner storageMigrationRunner(
             SkillsGatewayProperties properties,
             GitStorage source,
