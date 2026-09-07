@@ -10,7 +10,7 @@ Every setting the gateway reads, with its default and what consumes it.
 | [`skills-gateway.ingestion.*`](#ingestion-external-plugin-sources) | Whether a manifest may declare plugin sources outside the marketplace repository, and within what bounds. **Admits nothing by default.** | No — all defaulted. |
 | [`skills-gateway.webhooks.*`](#webhooks) | Outbound lifecycle-webhook dispatch: poll interval, retry budget and backoff. | No — all defaulted. |
 | [`skills-gateway.audit-export.*`](#audit-export) | Ledger export: the commit-settling lag, batch and page sizes. | No — all defaulted. |
-| [`skills-gateway.retention.*`](#retention) | Snapshot retention policies and the schedules that apply them. **Off by default.** | No — all defaulted. |
+| [`skills-gateway.retention.*`](#retention) | Snapshot retention policies, the schedules that apply them, and the sweep of abandoned publication staging refs. **Off by default.** | No — all defaulted. |
 | [`skills-gateway.approval.*`](#separation-of-duties-four-eyes) | Separation of duties on approval: whether a reviewer may publish content they themselves supplied. **Records by default; enforcement is opt-in.** | No — all defaulted. |
 | [`skills-gateway.sync.*`](#upstream-sync) | Upstream sync: the polling sweep's schedule and batch, and the inbound webhook body bound. | No — all defaulted. |
 | [`skills-gateway.catalog.*`](#virtual-catalog) | The global virtual catalog and its reserved name. | No — all defaulted. |
@@ -765,6 +765,13 @@ skills-gateway:
     # Snapshots considered per marketplace per pass.
     batch-size: 200
 
+    # How long an abandoned publication staging ref must have been under
+    # observation before compaction may remove it. Not a tuning knob: it is what
+    # keeps the sweep from overtaking a publication that is still transferring
+    # objects. Set it above your slowest publication. Zero or negative switches
+    # the sweep off rather than sweeping everything.
+    staging-ref-max-age: 24h
+
     # The policy every marketplace inherits.
     defaults:
       # A snapshot still 'held' this long after ingestion is eligible.
@@ -796,6 +803,7 @@ skills-gateway:
 | `skills-gateway.retention.poll-interval` | duration | `1h` | Evaluation (soft delete) interval. |
 | `skills-gateway.retention.compaction-interval` | duration | `6h` | Compaction (hard delete) interval. |
 | `skills-gateway.retention.batch-size` | integer | `200` | Snapshots per marketplace per pass. |
+| `skills-gateway.retention.staging-ref-max-age` | duration | `24h` | How long an abandoned publication staging ref must be observed before compaction removes it. Zero or negative disables the sweep. |
 | `skills-gateway.retention.defaults.held-max-age` | duration | `90d` | Zero or negative disables the criterion. |
 | `skills-gateway.retention.defaults.superseded` | boolean | `true` | Enables the supersession criterion. |
 | `skills-gateway.retention.defaults.superseded-min-age` | duration | `30d` | Minimum age of a superseded snapshot. |

@@ -1262,6 +1262,14 @@ requirements:
     categories: ["performance-efficiency", "security"]
     revision: 0.1.0
 
+  - id: GW_0168
+    title: Abandoned publication staging references are swept from published repositories
+    significance: shall
+    description: "The system shall remove from a published repository a staging reference that publication left behind, and shall garbage-collect the repository so that the objects the reference alone kept reachable are reclaimed. The system shall remove such a reference only when no live snapshot record of that marketplace names the commit the reference points at, and the system has observed the reference continuously for longer than a configured bound on how long a publication may take; it shall leave the reference in place otherwise, and shall record what it removed on the append-only ledger. The system shall never, in doing so, remove a reference the facade advertises or make unreachable any content an approved snapshot is served from."
+    rationale: "Publication copies a snapshot's objects into the published repository under an unadvertised staging reference before the served references move, so that a completed transfer whose transition is then refused leaves nothing on the wire. A process killed between the two leaves that reference behind. It serves nothing — the facade advertises only the served tip and the pinned snapshot references — but it keeps its objects reachable, so garbage collection reclaims nothing and the published repository carries the whole size of a snapshot that will never be served, indefinitely and invisibly. Only the database knows which commits are still snapshots, which is why the sweep belongs with retention and not with the storage seam: that seam is deliberately ignorant of the database, and giving it a database dependency to close a disk leak would trade a bounded cost for an unbounded coupling. The age bound is the correctness argument and not a tuning knob. A publication in flight has staged its objects and has not yet moved the served references, so a sweep that acted on a database read alone could delete the staging reference and collect the objects out from under it, and the marketplace would then be published at a commit whose content is gone — a disk leak turned into data loss. Requiring the reference to have been under observation for longer than any publication can take is what makes the sweep unable to overtake one, and making the bound an operator setting rather than a constant is what keeps that guarantee true for an estate that publishes very large snapshots over slow storage."
+    categories: ["reliability", "performance-efficiency"]
+    revision: 0.1.0
+
   - id: GW_0163
     title: Proxy-reported scheme and host are honoured only when configured, identically on every packaging
     significance: shall
