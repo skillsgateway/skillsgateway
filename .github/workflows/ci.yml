@@ -39,7 +39,10 @@ jobs:
 
       # Storybook story tests run in their own job (#103), so this job needs
       # no browser: mvnw verify runs only the jsdom `unit` vitest project.
+      # A bound so that a hang is distinguishable from a lost runner: without it
+      # both surface as "The operation was canceled" with no further detail (#302).
       - name: Build and test (Java + UI gates, packaged jar)
+        timeout-minutes: 25
         run: ./mvnw --batch-mode verify
 
       # The traceability job joins these with the e2e job's Playwright results.
