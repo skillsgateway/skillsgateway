@@ -19,6 +19,7 @@ Every setting the gateway reads, with its default and what consumes it.
 | [`skills-gateway.estate.*`](#declarative-estate) | The declared estate: marketplaces, role grants, webhook subscribers, audit sinks — reconciled at startup and on demand. **Empty by default.** | No — empty by default. |
 | [`spring.datasource.*`](#datasource) | PostgreSQL connection. Supplied entirely by environment. | **Yes** |
 | [`spring.security.oauth2.client.*`](#oidc-login) | OIDC login for the web surface. | **Yes** |
+| [`server.forward-headers-strategy`](#forwarded-headers) | Whether the scheme and host a TLS-terminating proxy reports are believed. **Off by default.** | **Yes**, behind a proxy — which is every real deployment. |
 | [`management.endpoints.*`](#actuator) | Which actuator endpoints are exposed. | No |
 | [`scalar.*`](#api-documentation) | The bundled API reference UI. | No |
 
@@ -1195,6 +1196,7 @@ defaults are the placeholders below rather than being absent.
 | `…client.provider.idp.jwk-set-uri` | `SGW_OIDC_JWK_SET_URI` | `https://idp.invalid/jwks` |
 | `…client.provider.idp.user-name-attribute` | `SGW_OIDC_USER_NAME_ATTRIBUTE` | `sub` |
 | `…client.registration.idp.scope` | `SGW_OIDC_SCOPE` | `openid` |
+| `…client.registration.idp.redirect-uri` | `SGW_OIDC_REDIRECT_URI` | `{baseUrl}/login/oauth2/code/idp` |
 
 `user-name-attribute` decides what the principal is called everywhere else —
 grants, `roles.admins`, and every ledger row. On an app registration shared
@@ -1202,9 +1204,14 @@ between services, `sub` is an opaque per-application identifier, so set this to
 a readable claim such as `preferred_username` there. Widen `SGW_OIDC_SCOPE`
 when your provider needs a scope before it will emit group or role claims.
 
-Fixed, not intended for override: grant type `authorization_code`, redirect URI
-`{baseUrl}/login/oauth2/code/idp`. Register that redirect URI with your
-identity provider.
+The grant type is fixed at `authorization_code`. The redirect URI to register
+with the provider is `https://<your-host>/login/oauth2/code/idp`; by default
+the gateway derives it from the request (`{baseUrl}`), which behind a
+TLS-terminating proxy is right only with a
+[forwarded-header strategy](#forwarded-headers) in force. `SGW_OIDC_REDIRECT_URI`
+states it absolutely instead, trusting no header — the escape hatch when the
+derivation cannot be made to work, not a substitute for it, since every other
+URL the gateway builds from the request stays as the container sees it.
 
 Moving any of these off its placeholder is what tells the gateway an identity
 provider exists — and a gateway with one configured refuses to start with
@@ -1260,6 +1267,45 @@ scalar:
 ```
 
 Both paths sit behind the OIDC login like the rest of the web surface.
+
+---
+
+## Forwarded headers
+
+| Property | Environment variable | Default | Values |
+| --- | --- | --- | --- |
+| `server.forward-headers-strategy` | `SERVER_FORWARDHEADERSSTRATEGY` | _(unset)_ | `native`, `framework`, `none` |
+
+The gateway serves plain HTTP and terminates no TLS, so the request it sees
+names its own host and port over `http`. Every URL it builds from the request —
+the OIDC redirect URI above all — is therefore wrong behind a TLS-terminating
+proxy until it believes the scheme and host the proxy reports in
+`X-Forwarded-Proto` and `X-Forwarded-Host`. This is Spring Boot's own setting,
+with Spring Boot's own meanings:
+
+| Value | Effect |
+| --- | --- |
+| `native` | Tomcat's `RemoteIpValve`: the headers are honoured only from a peer whose address is in `server.tomcat.remoteip.internal-proxies` — by default the private ranges `10/8`, `172.16/12`, `192.168/16`, `100.64/10`, loopback and their IPv6 counterparts. `X-Forwarded-For` also replaces the remote address the fetch ledger records. Recommended. |
+| `framework` | Spring's `ForwardedHeaderFilter`: the headers, `X-Forwarded-Prefix` and RFC 7239 `Forwarded` are honoured from any peer. The remote address is left as the proxy's. |
+| `none` | The headers are ignored. |
+| _(unset)_ | `native` when Spring Boot detects a container platform from the environment (Kubernetes and ECS among them), otherwise `none`. |
+
+Trusting the headers is a security decision: the gateway cannot tell a proxy's
+header from a client's, so `framework` belongs only where nothing but the proxy
+can reach the listener and the proxy overwrites the headers, and `native`
+belongs where the proxy's address is inside the internal ranges. The Helm chart
+sets `native` through its `forwardHeadersStrategy` value; other runtimes set
+the variable — see
+[Running behind a proxy](../guides/deploying-without-kubernetes.md#running-behind-a-proxy).
+
+The gateway registers the `framework` filter itself and reads the setting at
+runtime (GW_0163 — Proxy-reported scheme and host are honoured only when
+configured, identically on every packaging). Spring Boot's own registration is
+behind a `@ConditionalOnProperty` that a GraalVM native image evaluates at
+build time, when the property is unset, so on the released image it was never
+compiled in and no runtime value could switch it on. `native` never had that
+problem: Tomcat's valve is installed by a customizer that reads the property at
+runtime.
 
 ---
 

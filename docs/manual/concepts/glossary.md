@@ -17,6 +17,12 @@ a narrower meaning here.
 :   One execution of the vetting chain against one snapshot, recorded with its
     verdicts, its findings, and a fail-closed `clear` or `blocked` outcome.
 
+**Closure**
+:   The set of external plugin sources one composite *snapshot* serves, recorded
+    with the snapshot as immutable value copies of what each source was declared
+    as, what it resolved to, and where it was grafted. Queryable by source URL;
+    checked against the pinned commit at approval.
+
 **Connector**
 :   A pluggable vetting component. It is handed a snapshot's identity and a
     read-only walk over its files, and answers with a verdict. The gateway

@@ -142,3 +142,14 @@ scaling out also requires those switches to be off in this deployment.
 {{- end -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Forwarded-header strategy, fail-closed: the three values Spring Boot knows.
+*/}}
+{{- define "skills-gateway.forwardHeadersStrategy" -}}
+{{- $strategy := .Values.forwardHeadersStrategy | default "" -}}
+{{- if not (has $strategy (list "native" "framework" "none")) -}}
+{{- fail (printf "forwardHeadersStrategy must be \"native\", \"framework\" or \"none\" (got %q). It decides whether the gateway believes the scheme and host a proxy reports in X-Forwarded-* headers; a value the gateway does not know would leave every login behind a TLS-terminating Ingress failing on a redirect-URI mismatch." $strategy) -}}
+{{- end -}}
+{{- $strategy -}}
+{{- end -}}

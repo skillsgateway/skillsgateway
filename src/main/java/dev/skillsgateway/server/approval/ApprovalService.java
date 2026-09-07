@@ -6,6 +6,7 @@ import dev.skillsgateway.server.observability.GatewayMetrics;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.Snapshot;
+import dev.skillsgateway.server.persistence.SnapshotClosureRepository;
 import dev.skillsgateway.server.persistence.SnapshotNotFoundException;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
 import dev.skillsgateway.server.policy.PolicyGate;
@@ -39,6 +40,8 @@ public class ApprovalService {
     private final FourEyesGate fourEyesGate;
     private final AdminAuditLogger auditLogger;
     private final VettingOverrideRepository vettingOverrideRepository;
+    private final ClosureCompletenessGate closureGate;
+    private final SnapshotClosureRepository closureRepository;
 
     public ApprovalService(
             GitStorage storage,
@@ -51,7 +54,9 @@ public class ApprovalService {
             ReleaseAgeGate releaseAgeGate,
             FourEyesGate fourEyesGate,
             AdminAuditLogger auditLogger,
-            VettingOverrideRepository vettingOverrideRepository) {
+            VettingOverrideRepository vettingOverrideRepository,
+            ClosureCompletenessGate closureGate,
+            SnapshotClosureRepository closureRepository) {
         this.storage = storage;
         this.snapshotRepository = snapshotRepository;
         this.marketplaceRepository = marketplaceRepository;
@@ -63,6 +68,8 @@ public class ApprovalService {
         this.fourEyesGate = fourEyesGate;
         this.auditLogger = auditLogger;
         this.vettingOverrideRepository = vettingOverrideRepository;
+        this.closureGate = closureGate;
+        this.closureRepository = closureRepository;
     }
 
     /** Ledger event for an approval the cooling-off window refused (GW_0073). */
@@ -184,6 +191,11 @@ public class ApprovalService {
         Duration ingestionAge = Duration.ZERO;
         OverrideCapture override = null;
         if (current.decidable()) {
+            // Before every other gate (GW_0165), and before the override below can lift anything:
+            // a snapshot whose recorded closure does not describe the commit it pins is refused
+            // whatever vetting, policy or a reviewer say about it. The override lifts the vetting
+            // gate; it is not a decision to publish content whose provenance is unknown.
+            requireCompleteClosure(current, marketplace, reviewer);
             WaiverEvaluation.Effect effect = waiverService.evaluate(current);
             if (effect.blocked()) {
                 // No blanket override existed here by design; GW_0148 adds one, and only for an
@@ -330,6 +342,27 @@ public class ApprovalService {
     }
 
     /**
+     * The closure-completeness gate (GW_0165), with its refusal on the ledger before it is raised —
+     * for the reason every refusing gate here records itself: a control that turns approvals away
+     * silently cannot be audited, and this one firing at all means something other than the
+     * gateway has been at the snapshot.
+     */
+    @Requirements({"GW_0165"})
+    private void requireCompleteClosure(Snapshot snapshot, Marketplace marketplace, String reviewer) {
+        try {
+            closureGate.require(snapshot, marketplace);
+        } catch (ClosureIncompleteException refused) {
+            auditLogger.record(
+                    reviewer,
+                    marketplace.name(),
+                    EVENT_REFUSED,
+                    snapshot.sha(),
+                    "closure-incomplete: " + String.join("; ", refused.discrepancies()));
+            throw refused;
+        }
+    }
+
+    /**
      * The four-eyes gate, with a refusal appended to the ledger before it is raised - for the same
      * reason the cooling-off refusal is: a control that turns approvals away invisibly cannot be
      * audited, and a refused self-approval is the one event an operator most needs to see.
@@ -380,7 +413,7 @@ public class ApprovalService {
                 "reject", () -> snapshotRepository.decide(snapshotId, Snapshot.REJECTED, reviewer));
     }
 
-    @Requirements({"GW_0009"})
+    @Requirements({"GW_0009", "GW_0164"})
     public Optional<Provenance> provenance(long snapshotId) {
         return snapshotRepository.findById(snapshotId).map(snapshot -> {
             Marketplace marketplace =
@@ -390,7 +423,9 @@ public class ApprovalService {
                     marketplace == null ? null : marketplace.name(),
                     marketplace == null ? null : marketplace.url(),
                     marketplace == null ? null : marketplace.origin(),
+                    snapshot.upstreamSha(),
                     snapshot.sha(),
+                    closureRepository.findBySnapshot(snapshot.id()).orElse(null),
                     snapshot.state(),
                     snapshot.violation(),
                     snapshot.createdAt(),
@@ -412,7 +447,17 @@ public class ApprovalService {
             /** {@code upstream} or {@code hosted}: tells "no upstream" from "not recorded". */
             String origin,
 
+            @Schema(description = "The commit ingested from upstream")
             String upstreamSha,
+
+            @Schema(
+                    description = "The commit the snapshot pins and serves; differs from upstreamSha only for a"
+                            + " composite with resolved external plugin sources")
+            String sha,
+
+            @Schema(description = "The resolved closure of external plugin sources, or null when there is none")
+            SnapshotClosureRepository.Closure closure,
+
             String state,
             String violation,
             Instant ingestedAt,
