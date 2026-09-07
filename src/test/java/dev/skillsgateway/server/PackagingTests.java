@@ -402,7 +402,8 @@ class PackagingTests {
         assertThat(section(job(wf, "image"), "strategy"))
                 .as("the image job is no longer a matrix over runners")
                 .isNull();
-        String pushRun = String.valueOf(step(wf, "image", "Push the multi-arch image").get("run"));
+        String pushRun =
+                String.valueOf(step(wf, "image", "Push the multi-arch image").get("run"));
         assertThat(pushRun)
                 .as("both platforms come out of the same build")
                 .contains("--platform linux/amd64,linux/arm64");
