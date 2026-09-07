@@ -4,9 +4,9 @@ spring:
   security:
     oauth2:
       client:
-        # Registration must exist at AOT build time (native-image evaluates
-        # auto-configuration conditions then); real deployments override the
-        # SGW_OIDC_* environment variables.
+        # Placeholders rather than absent values, so the registration always
+        # exists and a gateway with none of these set still starts; real
+        # deployments override the SGW_OIDC_* environment variables.
         registration:
           idp:
             client-id: ${SGW_OIDC_CLIENT_ID:change-me}

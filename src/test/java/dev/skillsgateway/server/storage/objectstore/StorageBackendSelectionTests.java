@@ -1,6 +1,8 @@
 package dev.skillsgateway.server.storage.objectstore;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.storage.FilesystemGitStorage;
@@ -8,6 +10,7 @@ import dev.skillsgateway.server.storage.GitStorage;
 import dev.skillsgateway.server.storage.GitStorageConfiguration;
 import io.github.reqstool.annotations.SVCs;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -167,5 +170,46 @@ class StorageBackendSelectionTests {
                         "skills-gateway.storage.object-store.credentials.token-file=/var/run/secrets/token")
                 .run(context ->
                         assertThat(context).getBean(GitStorage.class).isInstanceOf(ObjectStoreGitStorage.class));
+    }
+
+    /**
+     * The migration runner exists whether or not a migration was asked for, and decides at runtime.
+     *
+     * <p>This is the property, not an implementation detail: a bean guarded by a build-time
+     * condition is absent from an ahead-of-time image, where the flag is necessarily unset when the
+     * image is built, so the documented migration command would be accepted and would start an
+     * ordinary server instead of copying anything. Asserting the bean is present with the flag
+     * unset is what makes that shape impossible to reintroduce.
+     */
+    // the migration runner is present with no migration configured, so no packaging can drop it
+    @Test
+    @SVCs({"SVC_GW_0114"})
+    void theMigrationRunnerIsPresentEvenWhenNoMigrationWasAskedFor() {
+        contexts.run(context -> assertThat(context).hasSingleBean(ApplicationRunner.class));
+    }
+
+    // and it does nothing on a serving start, rather than being absent from one
+    @Test
+    @SVCs({"SVC_GW_0114"})
+    void theMigrationRunnerDoesNothingWhenTheFlagIsUnset() {
+        contexts.run(context -> assertThatCode(
+                        () -> context.getBean(ApplicationRunner.class).run(null))
+                .as("a serving start must not be turned into a migration")
+                .doesNotThrowAnyException());
+    }
+
+    /**
+     * And the runtime gate is a real gate: with the flag set the runner acts, which here means it
+     * refuses a migration that names no destination rather than returning quietly.
+     */
+    // asking for a migration with no destination is refused by the same runner
+    @Test
+    @SVCs({"SVC_GW_0114"})
+    void theMigrationRunnerActsWhenTheFlagIsSet() {
+        contexts.withPropertyValues("skills-gateway.storage.migration.enabled=true")
+                .run(context -> assertThatThrownBy(
+                                () -> context.getBean(ApplicationRunner.class).run(null))
+                        .isInstanceOf(IllegalStateException.class)
+                        .hasMessageContaining("skills-gateway.storage.migration.to"));
     }
 }

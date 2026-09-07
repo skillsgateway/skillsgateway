@@ -14,17 +14,22 @@ import org.springframework.core.Ordered;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 
 /**
- * Makes {@code server.forward-headers-strategy=framework} work on the native image (GW_0163).
+ * Makes {@code server.forward-headers-strategy=framework} mean the same thing on every
+ * packaging (GW_0163).
  *
  * <p>Spring Boot registers its {@link ForwardedHeaderFilter} behind {@code @ConditionalOnProperty},
- * and a GraalVM native image evaluates that condition once, when the image is built. The property
- * is unset then, so the bean is never compiled in and no runtime setting can bring it back —
- * the documented remedy for a TLS-terminating proxy is silently inert on the released image.
+ * and an ahead-of-time image evaluates that condition once, when the image is built. The property
+ * is unset then, so the bean is never compiled in and no runtime setting can bring it back — which
+ * is how the documented remedy for a TLS-terminating proxy came to be silently inert on the GraalVM
+ * native image the release used to publish (#272).
  *
  * <p>Declaring the registration here, unconditionally, compiles it in on every packaging. Whether
  * it does anything is decided at runtime from the same property, so the operator-facing contract
- * stays Spring's own ({@code none}, {@code native}, {@code framework}) and means the same on the
- * JVM jar and the native image. Boot's own registration backs off when one exists
+ * stays Spring's own ({@code none}, {@code native}, {@code framework}) and does not depend on how
+ * the artifact was built. The released artifact is a JVM container now (ADR 0012), where the
+ * condition would have been evaluated at runtime anyway; this stays because the property of not
+ * depending on that is worth more than the line it costs. Boot's own registration backs off when one
+ * exists
  * ({@code @ConditionalOnMissingFilterBean}), so the JVM never carries two. The {@code native}
  * strategy needs no help: Tomcat's {@code RemoteIpValve} is installed by a customizer that reads
  * the property at runtime.
@@ -33,7 +38,7 @@ import org.springframework.web.filter.ForwardedHeaderFilter;
  * one is the operator's decision, made where the proxy is.
  *
  * <p>Conditional on being a servlet web application — the only condition that is safe here,
- * because it is a constant of this application (true at the native build and at every start)
+ * because it is a constant of this application (true whenever it is built and at every start)
  * rather than a property, and because a context without a web server has no {@code
  * ServerProperties} to read.
  */
@@ -49,9 +54,10 @@ public class ForwardedHeadersConfig {
             ObjectProvider<ForwardedHeaderFilterCustomizer> customizers) {
         ForwardedHeaderFilter filter = new ForwardedHeaderFilter();
         // Boot applies this from a *second* bean, tomcatForwardedHeaderFilterCustomizer, which
-        // carries the same @ConditionalOnProperty and is therefore frozen out of the image
-        // alongside the filter. Taking over a bean from auto-configuration means inheriting
-        // everything the auto-configuration did to it, including the parts expressed elsewhere.
+        // carries the same @ConditionalOnProperty and would be frozen out alongside the filter by
+        // anything that evaluates it early. Taking over a bean from auto-configuration means
+        // inheriting everything the auto-configuration did to it, including the parts expressed
+        // elsewhere.
         // Read at runtime, never written as a literal: a constant here would freeze at build time
         // a value Boot resolves at runtime -- this very defect one layer down, surfacing as subtly
         // wrong Location headers rather than a failed login.

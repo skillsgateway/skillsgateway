@@ -159,13 +159,15 @@ should you ever need to bypass the derivation.
 
 !!! warning "Remove `SERVER_FORWARDHEADERSSTRATEGY: framework` from `extraEnv`"
 
-    Earlier versions of this guide set it there. On the native image that value
-    was inert — Spring Boot registers the filter behind a condition the image
-    evaluates at build time — and setting it also switched off the `native`
-    strategy Spring Boot would otherwise have deduced on Kubernetes, so
-    following the advice made logins fail rather than fixing them. The chart
-    value replaces it; an `extraEnv` entry of the same name would override the
-    chart's.
+    Earlier versions of this guide set it there. On the GraalVM native image the
+    release used to publish, that value was inert — Spring Boot registers the
+    filter behind a condition the image evaluates at build time — and setting it
+    also switched off the `native` strategy Spring Boot would otherwise have
+    deduced on Kubernetes, so following the advice made logins fail rather than
+    fixing them. The gateway registers the filter itself now, and the release
+    artifact is a JVM container, so both halves of that are gone. The chart value
+    replaces the `extraEnv` entry either way; an `extraEnv` entry of the same
+    name would override the chart's.
 
 ## Storage
 

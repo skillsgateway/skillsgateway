@@ -4,7 +4,7 @@ Get a gateway running on your machine, with or without an identity provider.
 
 ## Prerequisites
 
-- JDK 25 (Temurin; GraalVM CE 25 only for native builds)
+- JDK 25 (Temurin)
 - A container runtime — Testcontainers and the Arconia dev services for the
   build, Compose for running. Docker works out of the box; Podman works
   too, with the setup in [Running the gates on Podman](#running-the-gates-on-podman)
@@ -47,9 +47,8 @@ serves the portal at `/`.
 
     The Arconia dev services and the OpenTelemetry starter are declared
     `<optional>true</optional>`. Spring Boot's `repackage` leaves optional
-    dependencies out of the jar, and the `native` profile pins them to test
-    scope, so they reach neither the jar, the container image nor the native
-    binary — while `spring-boot:run` still sees them. Maven has no
+    dependencies out of the jar, so they reach neither the jar nor the container
+    image built from it — while `spring-boot:run` still sees them. Maven has no
     environment-oriented scope, so this is the closest equivalent to Gradle's
     `testAndDevelopmentOnly`.
 
@@ -81,9 +80,9 @@ $ export SGW_OIDC_TOKEN_URI=https://idp.example.com/token
 $ export SGW_OIDC_JWK_SET_URI=https://idp.example.com/jwks
 ```
 
-The client registration id is `idp` and must exist at build time for
-native-image, which is why the defaults are the placeholders `change-me` and
-`idp.invalid`. A gateway started without these will not complete a login.
+The client registration id is `idp`, and the defaults are the placeholders
+`change-me` and `idp.invalid` so that the registration always exists. A gateway
+started without real values will not complete a login.
 
 ### Without one — the escape hatch
 
@@ -342,9 +341,8 @@ working while tests that use Testcontainers directly fail in the same build.
 #### Give the machine enough memory
 
 The default machine is small. Under a parallel build the PostgreSQL, Floci and
-LGTM containers plus the native-image and CycloneDX steps hit container-startup
-timeouts and OOM kills. Raise it in place — stop, set, start; storage is
-preserved:
+LGTM containers plus the CycloneDX step hit container-startup timeouts and OOM
+kills. Raise it in place — stop, set, start; storage is preserved:
 
 ```console
 $ podman machine stop

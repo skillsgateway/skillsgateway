@@ -8,7 +8,7 @@
 # and logs to it over OTLP. The Grafana URL is logged at startup.
 #
 # The supporting dependencies are test scope, so nothing here is reachable from the
-# packaged jar, the container image or the native binary.
+# packaged jar or the container image built from it.
 arconia:
   dev:
     services:

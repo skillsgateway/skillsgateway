@@ -173,7 +173,7 @@ public class SkillConformanceConnector implements VettingConnector {
         return directory.substring(directory.lastIndexOf('/') + 1);
     }
 
-    /** The vendored specification is read from the classpath, so the native image has to keep it. */
+    /** The vendored specification is read from the classpath, so the packaged jar has to keep it. */
     static final class SpecResourceHints implements RuntimeHintsRegistrar {
 
         @Override

@@ -17,7 +17,6 @@ import org.eclipse.jgit.internal.storage.dfs.DfsBlockCacheConfig;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -135,9 +134,16 @@ public class GitStorageConfiguration {
      * refuses to migrate into — found before the copy rather than after it. The process exits with
      * the verification's own answer, so an operator's script cannot mistake "finished" for
      * "verified", and the source is left untouched either way.
+     *
+     * <p>The bean is declared unconditionally and decides at runtime whether it does anything.
+     * That is deliberate and is the remedy {@code ForwardedHeadersConfig} already applies: a
+     * {@code @ConditionalOnProperty} here would be evaluated when an ahead-of-time image is built,
+     * where the flag is necessarily unset, so the bean would not exist and no value supplied to
+     * the running process could bring it back — the migration would be asked for, accepted, and
+     * silently not run. A runner that returns immediately when the flag is absent costs a serving
+     * start nothing, and cannot be frozen out of any packaging.
      */
     @Bean
-    @ConditionalOnProperty(prefix = "skills-gateway.storage.migration", name = "enabled", havingValue = "true")
     public ApplicationRunner storageMigrationRunner(
             SkillsGatewayProperties properties,
             GitStorage source,
@@ -146,6 +152,9 @@ public class GitStorageConfiguration {
             ObjectProvider<MeterRegistry> meters,
             ConfigurableApplicationContext context) {
         return args -> {
+            if (!Boolean.TRUE.equals(properties.storage().migration().enabled())) {
+                return;
+            }
             SkillsGatewayProperties.Storage.Backend to =
                     properties.storage().migration().to();
             if (to == null) {

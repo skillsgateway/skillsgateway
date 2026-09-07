@@ -15,9 +15,10 @@ import org.yaml.snakeyaml.Yaml;
 
 /**
  * Validates that the packaging artifacts (Dockerfile, Helm chart) exist and stay consistent with
- * the application: the image runs the native binary and the chart wires the image, health probes,
- * and the PostgreSQL and OIDC configuration the application expects. The container itself is built
- * and smoke-tested in CI (native workflow).
+ * the application: the image runs the Spring Boot jar on a jlink runtime over a distroless base
+ * (ADR 0012), and the chart wires the image, health probes, and the PostgreSQL and OIDC
+ * configuration the application expects. The container itself is built and smoke-tested in CI
+ * (the container-image workflow).
  */
 class PackagingTests {
 
@@ -27,9 +28,30 @@ class PackagingTests {
     @SVCs({"SVC_GW_0015"})
     void packagingArtifactsAreConsistent() throws IOException {
         String dockerfile = Files.readString(REPO_ROOT.resolve("Dockerfile"));
-        assertThat(dockerfile).contains("COPY target/skills-gateway-server ");
-        assertThat(dockerfile).contains("ENTRYPOINT [\"/app/skills-gateway-server\"]");
+
+        // The artifact is the jar, staged out of a versioned filename the entrypoint cannot name.
+        assertThat(dockerfile).contains("COPY target/skills-gateway-server-*.jar ");
+        assertThat(dockerfile).contains("/app/skills-gateway-server.jar");
         assertThat(dockerfile).contains("EXPOSE 8080");
+
+        // The runtime under it is produced here rather than pulled in whole: `java-base` carries
+        // the OS libraries a JVM needs and no JDK, which is only a base at all because jlink
+        // supplies the runtime.
+        assertThat(dockerfile).as("the runtime is jlinked, not a whole JDK").contains("jlink");
+        assertThat(dockerfile)
+                .as("the entrypoint runs the jar on the jlinked runtime")
+                .contains("ENTRYPOINT [\"/opt/java/bin/java\"");
+
+        // The deployment posture the base was chosen for. `java-base` has no shell and no package
+        // manager, and the pod runs non-root on a read-only root filesystem; a base with a shell
+        // would satisfy every other assertion here while quietly giving that up.
+        assertThat(dockerfile)
+                .as("the published image derives from distroless java-base, which carries no shell")
+                .contains("FROM gcr.io/distroless/java-base-debian12:nonroot");
+        assertThat(dockerfile).as("the image runs as uid 65532").contains("USER nonroot");
+        assertThat(between(dockerfile, "FROM gcr.io/distroless/java-base-debian12:nonroot", "ENTRYPOINT"))
+                .as("nothing in the final stage may need a shell to run")
+                .doesNotContain("RUN ");
 
         Path chart = REPO_ROOT.resolve("helm/skills-gateway");
         assertThat(Files.readString(chart.resolve("Chart.yaml"))).contains("name: skills-gateway");
@@ -50,8 +72,8 @@ class PackagingTests {
     /**
      * The chart names the forwarded-header strategy the pod runs with and passes the absolute
      * redirect URI through (GW_0163): the Ingress the chart ships terminates TLS, so a chart that
-     * left this to Spring Boot's deduction would work by accident and fail silently when an
-     * operator set the one value the native image could not honour.
+     * left this to Spring Boot's deduction would work by accident and fail silently on the one
+     * value whose registration the framework itself puts behind a build-time condition.
      */
     @Test
     @SVCs({"SVC_GW_0015"})
@@ -326,7 +348,7 @@ class PackagingTests {
 
     @Test
     @SVCs({"SVC_GW_0072"})
-    void releaseWorkflowCarriesThePublishByDigestContract() throws IOException {
+    void releaseWorkflowCarriesTheMultiArchPublicationContract() throws IOException {
         Path file = REPO_ROOT.resolve(".github/workflows/native.yml");
         Map<String, Object> wf = parse(file);
         String body = Files.readString(file);
@@ -352,14 +374,14 @@ class PackagingTests {
         // workflow_call `github.event_name` is the CALLER's event
         // (workflow_dispatch), so publication keys off `inputs.version` alone --
         // a main push, a schedule and a bare dispatch all leave it empty.
-        for (String step : List.of("Log in to GHCR", "Push image by digest", "Attest SBOM")) {
-            assertThat(stepCondition(wf, "native", step))
+        for (String step : List.of("Log in to GHCR", "Push the multi-arch image", "Attest SBOM")) {
+            assertThat(stepCondition(wf, "image", step))
                     .as("%s is gated to the release workflow only", step)
                     .isEqualTo("inputs.version != ''");
         }
 
         // Permissions publishing and attestation require.
-        Map<String, Object> perms = section(job(wf, "native"), "permissions");
+        Map<String, Object> perms = section(job(wf, "image"), "permissions");
         assertThat(perms).containsEntry("packages", "write");
         assertThat(perms).containsEntry("id-token", "write");
         assertThat(perms).containsEntry("attestations", "write");
@@ -367,59 +389,42 @@ class PackagingTests {
         // The digest is surfaced, and the SBOM attested against the pushed image
         // after the push rather than against something built alongside it.
         assertThat(body).contains("GITHUB_STEP_SUMMARY");
-        assertThat(stepNames(wf, "native")).containsSubsequence("Push image by digest", "Attest SBOM");
-        Map<String, Object> attest = step(wf, "native", "Attest SBOM");
+        assertThat(stepNames(wf, "image")).containsSubsequence("Push the multi-arch image", "Attest SBOM");
+        Map<String, Object> attest = step(wf, "image", "Attest SBOM");
         assertThat(String.valueOf(attest.get("uses"))).contains("attest-sbom");
         assertThat(section(attest, "with"))
                 .containsEntry("sbom-path", "target/classes/META-INF/sbom/application.cdx.json")
                 .containsEntry("subject-digest", "${{ steps.push.outputs.digest }}");
 
-        // Multi-arch: native-image cannot cross-compile, so each platform is a real
-        // leg on its own runner rather than a buildx target reusing one build.
-        Map<String, Object> strategy = section(job(wf, "native"), "strategy");
-        assertThat(strategy).as("the native job is a matrix").isNotNull();
-        Map<String, Object> matrix = section(strategy, "matrix");
-        List<Map<String, Object>> legs = matrixLegs(matrix);
-        assertThat(legs.stream().map(l -> l.get("platform")))
-                .as("both platforms are built")
-                .containsExactlyInAnyOrder("linux/amd64", "linux/arm64");
-        assertThat(legs.stream().map(l -> l.get("runner")))
-                .as("arm64 gets a real arm64 runner, not emulation")
-                .contains("ubuntu-24.04-arm");
-        assertThat(String.valueOf(job(wf, "native").get("runs-on"))).contains("matrix.runner");
-
-        // Each leg pushes its own platform manifest addressed by digest only --
-        // never a human-readable arch-suffixed tag, which is what keeps GHCR's
-        // tagged-versions listing to one entry per release rather than three.
-        Map<String, Object> pushStep = step(wf, "native", "Push image by digest");
-        String pushRun = String.valueOf(pushStep.get("run"));
-        assertThat(pushRun).contains("push-by-digest=true").contains("name-canonical=true");
+        // Multi-arch from ONE build (ADR 0012). The jar is the same bytes on both
+        // architectures, so the cross-compilation constraint that forced a
+        // per-architecture runner is gone, and with it the matrix.
+        assertThat(section(job(wf, "image"), "strategy"))
+                .as("the image job is no longer a matrix over runners")
+                .isNull();
+        String pushRun = String.valueOf(step(wf, "image", "Push the multi-arch image").get("run"));
         assertThat(pushRun)
-                .as("the per-leg push must not create an arch-suffixed tag")
-                .doesNotContain("-amd64\"")
-                .doesNotContain("-arm64\"");
-        assertThat(stepNames(wf, "native")).contains("Upload digest");
+                .as("both platforms come out of the same build")
+                .contains("--platform linux/amd64,linux/arm64");
 
-        // A downstream job combines the two per-arch digests into the published
-        // multi-arch index under the released version's tag, gated exactly like
-        // the per-leg publish steps -- restated rather than inherited, because it
-        // is a separate job.
-        Map<String, Object> publish = job(wf, "publish");
-        assertThat(needsOf(wf, "publish")).contains("native");
-        assertThat(String.valueOf(publish.get("if")))
-                .as("the combine job repeats the publish gate")
-                .contains("needs.native.result == 'success'")
-                .contains("inputs.version != ''");
-        assertThat(section(publish, "permissions")).containsEntry("packages", "write");
-        String publishBody = String.valueOf(steps(wf, "publish").stream()
-                .map(s -> s.get("run"))
-                .filter(java.util.Objects::nonNull)
-                .toList());
-        assertThat(publishBody)
-                .as("the combine job builds the index from the two downloaded digests")
-                .contains("imagetools create")
-                .contains("digests/amd64.txt")
-                .contains("digests/arm64.txt");
+        // Exactly one tag is ever created, and it is the released version. The
+        // platform manifests reach the registry only as the untagged children of
+        // that index, which is what keeps GHCR's tagged-versions listing to one
+        // entry per release rather than three.
+        assertThat(pushRun).contains("--tag \"$IMAGE:$VERSION\"");
+        assertThat(pushRun)
+                .as("no arch-suffixed tag may be created")
+                .doesNotContain("-amd64")
+                .doesNotContain("-arm64");
+        assertThat(uncommented(body))
+                .as("there is no second, un-gated publishing job")
+                .doesNotContain("imagetools create");
+
+        // The published image is the smoke-tested one: the smoke test runs before
+        // anything is pushed, in the same job, so a broken image cannot be
+        // published by a job that merely depended on a green one.
+        assertThat(stepNames(wf, "image"))
+                .containsSubsequence("Build container image", "Smoke test container", "Push the multi-arch image");
     }
 
     @Test
@@ -649,15 +654,6 @@ class PackagingTests {
         }
         Object value = parent.get(key);
         return value instanceof Map ? (Map<String, Object>) value : null;
-    }
-
-    /** A `strategy.matrix.include` list, normalised to a list of leg maps. */
-    @SuppressWarnings("unchecked")
-    private static List<Map<String, Object>> matrixLegs(Map<String, Object> matrix) {
-        assertThat(matrix).as("matrix present").isNotNull();
-        Object include = matrix.get("include");
-        assertThat(include).as("matrix.include present").isNotNull();
-        return (List<Map<String, Object>>) include;
     }
 
     private static List<String> inputNames(Map<String, Object> workflow, String trigger) {

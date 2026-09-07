@@ -90,5 +90,5 @@ $ ./mvnw spring-boot:run -Dspring-boot.run.profiles=observability
 ```
 
 The Grafana URL is logged at startup. The supporting dependencies are optional,
-and test scope again under the `native` profile: nothing of the dev stack is
-reachable from the packaged jar, the container image or the native binary.
+so nothing of the dev stack is reachable from the packaged jar or the container
+image built from it.

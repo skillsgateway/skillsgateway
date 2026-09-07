@@ -23,6 +23,9 @@ maturing on schedule.
 Native-image also shrinks Java's classic dynamic attack surface through
 closed-world compilation, and gives single-artifact installs.
 
+*The packaging half of this was later reversed: see ADR 0012 below. The choice of
+Java, and the JGit reasoning it rests on, stands.*
+
 ### [ADR 0002 — Toolchain and product decisions](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0002-toolchain-and-product-decisions.md)
 
 *Accepted, 2026-08-13.*
@@ -37,7 +40,7 @@ The concrete stack that follows from 0001:
 | Git | **JGit from day one** — no subprocess-git phase, ever |
 | Data | JdbcClient + Flyway on PostgreSQL; **JPA/Hibernate rejected** as weight a small schema does not need |
 | Dev/test | Arconia Dev Services — zero-config Testcontainers for PostgreSQL |
-| Release | GraalVM native-image as the release profile |
+| Release | GraalVM native-image as the release profile — *superseded by ADR 0012* |
 | Auth | OIDC-only SSO for humans; the app is its own BFF; PATs for git clients |
 
 The JGit decision is the one with teeth: Java was chosen *for* JGit, so carrying
