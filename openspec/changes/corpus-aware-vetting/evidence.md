@@ -54,11 +54,11 @@ INCOMPLETE (0)
 
 ## Files changed
 
-- `docs/decisions/0014-corpus-questions-are-approval-gate-preconditions.md`
+- `docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md`
   (new, status *proposed*)
 - `docs/manual/reference/decisions.md` — index entry appended
 - `docs/manual/architecture.md` — a paragraph under the threat table pointing at
-  ADR 0014 and stating that T5 remains uncovered until it is implemented
+  ADR 0015 and stating that T5 remains uncovered until it is implemented
 - `openspec/changes/corpus-aware-vetting/` — `proposal.md`, `design.md`,
   `tasks.md`, `specs/{snapshot-facts,snapshot-approval,vetting-waivers,policy-rules,snapshot-vetting}/spec.md`,
   this file

@@ -24,9 +24,9 @@ records — and that purity is the entire answer to `GW_0049 — Continuous
 re-vetting of approved snapshots`. Adding corpus state as a third input to a run
 would make a changed verdict over unchanged content mean nothing in particular.
 
-[ADR 0014 — Corpus questions are approval-gate preconditions, not vetting
-connectors](../../../docs/decisions/0014-corpus-questions-are-approval-gate-preconditions.md)
-weighs that and decides it. **This change implements ADR 0014's first slice and
+[ADR 0015 — Corpus questions are approval-gate preconditions, not vetting
+connectors](../../../docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md)
+weighs that and decides it. **This change implements ADR 0015's first slice and
 is blocked on the ADR being accepted.**
 
 Issue [#253](https://github.com/skillsgateway/skillsgateway/issues/253), split
@@ -127,7 +127,7 @@ measurement: the pairs they match are the same name in any practical namespace.
 - **Trust boundary**: **crossed.** `ApprovalService` is a named trust boundary
   and this adds a gate to it. The `.claude/skills/old-coder` discipline and
   adversarial tests apply — specifically the concurrent-approval race named in
-  ADR 0014's consequences.
+  ADR 0015's consequences.
 - **Frontend**: the snapshot review surface shows a collision refusal and offers
   the waiver flow that already exists for a finding.
 - **Docs** (same PR): `concepts/vetting.md` (the precondition, beside the
@@ -144,9 +144,9 @@ measurement: the pairs they match are the same name in any practical namespace.
 - **Edit distance**, for the reason above.
 - **The marketplace-name half of T5** — a registration-time near-miss warning
   extending `GW_0166 — Duplicate upstream URL is reported as a registration
-  warning`. Endorsed by ADR 0014, cheaper, and independent of this change.
+  warning`. Endorsed by ADR 0015, cheaper, and independent of this change.
 - **The `mergePlugin` shadowing primitive** — that a marketplace name sorting
   earlier can silently displace an incumbent plugin from the virtual catalog is a
-  real T5 variant, described in ADR 0014's Context, and needs its own change.
-- **Anything corpus-aware inside the vetting chain.** That is what ADR 0014
+  real T5 variant, described in ADR 0015's Context, and needs its own change.
+- **Anything corpus-aware inside the vetting chain.** That is what ADR 0015
   decides against.

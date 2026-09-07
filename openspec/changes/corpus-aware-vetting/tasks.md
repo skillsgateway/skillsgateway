@@ -1,13 +1,13 @@
 # Tasks: corpus-aware-vetting
 
-**Blocked on ADR 0014 being accepted.** Nothing below is implemented. If the
-owner takes a different option from ADR 0014's "Decisions to confirm", most of
+**Blocked on ADR 0015 being accepted.** Nothing below is implemented. If the
+owner takes a different option from ADR 0015's "Decisions to confirm", most of
 sections 3–6 change shape and this list should be regenerated rather than
 patched.
 
 ## 0. Prerequisite
 
-- [ ] 0.1 ADR 0014 — Corpus questions are approval-gate preconditions, not
+- [ ] 0.1 ADR 0015 — Corpus questions are approval-gate preconditions, not
       vetting connectors — accepted, with the four "Decisions to confirm"
       answered (waivability, confusable fold aggressiveness, un-revocation,
       and whether a corpus-aware connector is wanted after all)
@@ -154,7 +154,7 @@ implementation lands. Never weaken an existing SVC test.
 - [ ] 8.5 `reference/api/snapshots.md`: the new `409` problem document type
 - [ ] 8.6 `architecture.md`: the T5 row moves off "No" — partially, and only for
       the plugin-name half
-- [ ] 8.7 `reference/decisions.md`: flip ADR 0014 to *Accepted*
+- [ ] 8.7 `reference/decisions.md`: flip ADR 0015 to *Accepted*
 
 ## 9. Gates and archive
 

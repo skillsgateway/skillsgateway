@@ -220,7 +220,7 @@ transactions or locking, and those stay native SQL under any ORM — so JPA woul
 take over only the part that was never the problem, at the cost of entities that
 cannot be records and a re-verification campaign at a trust boundary.
 
-### [ADR 0014 — Corpus questions are approval-gate preconditions, not vetting connectors](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0014-corpus-questions-are-approval-gate-preconditions.md)
+### [ADR 0015 — Corpus questions are approval-gate preconditions, not vetting connectors](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md)
 
 *Proposed.* The first mitigation for T5 (typosquatting) needs a rule that can ask a
 question of the approved estate, which a vetting connector structurally cannot be

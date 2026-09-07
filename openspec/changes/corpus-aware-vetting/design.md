@@ -2,7 +2,7 @@
 
 ## Context
 
-ADR 0014 decides *where* a corpus question may be asked. This document decides
+ADR 0015 decides *where* a corpus question may be asked. This document decides
 how to build the corpus and how the gate behaves, and it records the four places
 where the obvious implementation is wrong.
 
@@ -191,7 +191,7 @@ a number attached to it.
 
 ## Open questions
 
-- **Whether a collision refusal should be waivable at all** (ADR 0014, decision
+- **Whether a collision refusal should be waivable at all** (ADR 0015, decision
   to confirm 2). The release-age model — a refusal with no acceptance act — is
   stricter and simpler, and it means a legitimate fork can never be approved.
 - **How aggressive the confusable fold should be.** UTS #39 skeleton maps

@@ -1,4 +1,4 @@
-# ADR 0014 — Corpus questions are approval-gate preconditions, not vetting connectors
+# ADR 0015 — Corpus questions are approval-gate preconditions, not vetting connectors
 
 *Proposed, 2026-09-08.*
 
@@ -108,6 +108,11 @@ rationale: deriving state from the ledger *"would make an append-only
 observability surface load-bearing for an authorization decision"*, so the
 supply-side identities were put on the objects instead. Making a gating decision
 reproducible via the ledger is that same mistake with a different consumer.
+
+`GW_0034 — Scheduled hard-delete compaction` makes it worse than "not stored":
+purging a snapshot cascades its `vetting_runs`, verdicts and findings away with
+it, so a run recorded against a watermark can outlive neither the estate it saw
+nor, in the general case, its own evidence. Only `fetch_log` is never pruned.
 
 So the watermark would say *which* estate you would need without giving you any
 way to obtain it. That is bookkeeping shaped like reproducibility, and it is
