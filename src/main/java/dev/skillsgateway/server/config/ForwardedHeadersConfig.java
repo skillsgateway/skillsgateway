@@ -2,8 +2,11 @@ package dev.skillsgateway.server.config;
 
 import io.github.reqstool.annotations.Requirements;
 import jakarta.servlet.DispatcherType;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.boot.tomcat.autoconfigure.TomcatServerProperties;
 import org.springframework.boot.web.server.autoconfigure.ServerProperties;
+import org.springframework.boot.web.server.autoconfigure.servlet.ForwardedHeaderFilterCustomizer;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,9 +43,23 @@ public class ForwardedHeadersConfig {
 
     @Bean
     @Requirements({"GW_0163"})
-    public FilterRegistrationBean<ForwardedHeaderFilter> forwardedHeaderFilter(ServerProperties serverProperties) {
-        FilterRegistrationBean<ForwardedHeaderFilter> registration =
-                new FilterRegistrationBean<>(new ForwardedHeaderFilter());
+    public FilterRegistrationBean<ForwardedHeaderFilter> forwardedHeaderFilter(
+            ServerProperties serverProperties,
+            TomcatServerProperties tomcatServerProperties,
+            ObjectProvider<ForwardedHeaderFilterCustomizer> customizers) {
+        ForwardedHeaderFilter filter = new ForwardedHeaderFilter();
+        // Boot applies this from a *second* bean, tomcatForwardedHeaderFilterCustomizer, which
+        // carries the same @ConditionalOnProperty and is therefore frozen out of the image
+        // alongside the filter. Taking over a bean from auto-configuration means inheriting
+        // everything the auto-configuration did to it, including the parts expressed elsewhere.
+        // Read at runtime, never written as a literal: a constant here would freeze at build time
+        // a value Boot resolves at runtime -- this very defect one layer down, surfacing as subtly
+        // wrong Location headers rather than a failed login.
+        filter.setRelativeRedirects(tomcatServerProperties.isUseRelativeRedirects());
+        // Boot's documented extension point, kept working now that its registration is ours.
+        customizers.orderedStream().forEach(customizer -> customizer.customize(filter));
+
+        FilterRegistrationBean<ForwardedHeaderFilter> registration = new FilterRegistrationBean<>(filter);
         // Where Boot places it: ahead of everything, on every dispatch that can build a URL.
         registration.setDispatcherTypes(DispatcherType.REQUEST, DispatcherType.ASYNC, DispatcherType.ERROR);
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
