@@ -76,9 +76,14 @@ $ curl localhost:8080/api/snapshots/1/provenance
 
 ```json
 {"snapshotId":1,"marketplace":"acme","upstreamUrl":"https://github.com/acme/skills.git",
- "upstreamSha":"3f9c2ab...","state":"held","violation":null,
- "ingestedAt":"...","decidedBy":null,"decidedAt":null}
+ "upstreamSha":"3f9c2ab...","sha":"3f9c2ab...","closure":null,"state":"held",
+ "violation":null,"ingestedAt":"...","decidedBy":null,"decidedAt":null}
 ```
+
+For a snapshot with resolved external plugin sources, `sha` is the composite
+the gateway serves, `upstreamSha` its parent, and `closure` names every
+external source with the commit it resolved to — see
+[the closure record](../concepts/snapshots-and-ledger.md#the-closure-record).
 
 ### Violations
 
@@ -113,11 +118,19 @@ as they cover a plugin the marketplace repository carries itself.
 Two things are worth knowing while reviewing one. The snapshot's SHA is a commit
 the gateway synthesised, not one you will find upstream — and its **parent** is
 the upstream commit, so `git diff <parent> <sha>` in the quarantine repository
-shows precisely what the gateway added and rewrote. And its commit message names
-the upstream commit and every external source with the commit it resolved to,
-which is the provenance to check before approving: an external repository that
-has moved produces a different snapshot, and approving one is a decision about
-that resolved commit and no other.
+shows precisely what the gateway added and rewrote. And its
+[provenance](#provenance) carries the **closure**: every external source with
+the URL it was fetched through and the commit it resolved to, which is what to
+check before approving. An external repository that has moved produces a
+different snapshot, and approving one is a decision about that resolved commit
+and no other.
+
+Approval also checks the closure against the commit, before any other gate: the
+plugins the served manifest grafts, the closure's members and the trees under
+`_plugins/` must all agree. Nothing the gateway does can make them disagree, so
+a refusal titled *Snapshot closure is incomplete* means the snapshot's rows or
+its pinned commit were altered by something other than the gateway. There is no
+override; re-ingest the marketplace and review the new snapshot.
 
 ### Vetting verdicts
 

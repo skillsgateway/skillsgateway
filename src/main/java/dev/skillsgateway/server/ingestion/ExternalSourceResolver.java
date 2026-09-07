@@ -68,8 +68,20 @@ public class ExternalSourceResolver {
         this.clock = clock;
     }
 
-    /** One source, fetched and pinned. */
-    public record Resolved(String pluginName, String cloneUrl, ObjectId sha, ObjectId tree) {}
+    /**
+     * One source, fetched and pinned — with what the manifest declared and what the fetch
+     * measured, because the closure (GW_0164) records both and nothing downstream could
+     * reconstruct them.
+     */
+    public record Resolved(
+            String pluginName,
+            String sourceType,
+            String declaredSource,
+            String cloneUrl,
+            ObjectId sha,
+            ObjectId tree,
+            long objectCount,
+            long inflatedBytes) {}
 
     /**
      * Either every source resolved, or the reason none of them count. There is deliberately no
@@ -112,7 +124,15 @@ public class ExternalSourceResolver {
                 }
                 Resolved already = byUrl.get(source.cloneUrl());
                 if (already != null) {
-                    resolved.add(new Resolved(source.pluginName(), already.cloneUrl(), already.sha(), already.tree()));
+                    resolved.add(new Resolved(
+                            source.pluginName(),
+                            source.source().typeName(),
+                            declared(source.source()),
+                            already.cloneUrl(),
+                            already.sha(),
+                            already.tree(),
+                            already.objectCount(),
+                            already.inflatedBytes()));
                     continue;
                 }
                 Fetched fetched = fetch(quarantine, source, urlPolicy, addressPolicy, budget, byUrl.size());
@@ -187,9 +207,13 @@ public class ExternalSourceResolver {
                 return new Fetched(
                         new Resolved(
                                 source.pluginName(),
+                                source.source().typeName(),
+                                declared(source.source()),
                                 cloneUrl,
                                 sha,
-                                commit.getTree().getId()),
+                                commit.getTree().getId(),
+                                measurement.objects(),
+                                measurement.inflatedBytes()),
                         measurement,
                         null);
             }
@@ -269,6 +293,16 @@ public class ExternalSourceResolver {
             // serves nothing (quarantine is never served) and is overwritten by the next pass.
             log.warn("could not prune external source scaffolding refs: {}", e.toString());
         }
+    }
+
+    /** The source as the manifest wrote it, for the closure to keep beside what it became. */
+    private static String declared(PluginSource source) {
+        return switch (source) {
+            case PluginSource.GitHub github -> github.ownerRepo();
+            case PluginSource.GitUrl url -> url.url();
+            case PluginSource.GitSubdir subdir -> subdir.url() + " " + subdir.path();
+            default -> source.toString();
+        };
     }
 
     private static String refusal(ManifestPolicy.Admitted source, String reason) {
