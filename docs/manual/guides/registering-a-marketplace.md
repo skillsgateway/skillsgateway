@@ -28,14 +28,14 @@ $ curl -X POST localhost:8080/api/marketplaces \
 ```
 
 ```json
-{"id":1,"name":"acme","url":"https://github.com/acme/skills.git","createdAt":"..."}
+{"id":1,"name":"acme","url":"https://github.com/acme/skills.git","createdAt":"...","warnings":[]}
 ```
 
 Responses:
 
 | Status | Cause |
 | --- | --- |
-| 201 | Registered. |
+| 201 | Registered. `warnings` names any non-blocking issue with the registration (see below); empty when there is none. |
 | 400 | URL scheme not allowlisted, or a `ref` other than `main`. |
 | 409 | A marketplace with that name already exists. |
 | 422 | The name fails the pattern. |
@@ -53,6 +53,25 @@ no scheme at all, is rejected rather than passed through. This is what keeps
 
 **The name** doubles as a path segment on the facade (`/git/acme`), so it is
 constrained to a character set that cannot traverse directories.
+
+## Duplicate upstream URLs
+
+Tracking one upstream repository under two marketplace names is legitimate —
+it is how you test a marketplace before promoting it — so the gateway never
+refuses a repeated URL. It does warn: registering a clone URL that matches
+another registered upstream marketplace returns 201 with the new marketplace
+in `warnings`, naming every existing marketplace with the same URL, for
+example `"url already registered as acme"`.
+
+The comparison normalizes both URLs first — lowercased scheme and host, no
+trailing slash, and no `.git` suffix — so `https://github.com/acme/skills`,
+`https://GitHub.com/acme/skills/` and `https://github.com/acme/skills.git` are
+all the same registration as far as the warning is concerned. The repository
+path itself keeps its case, since most forges treat it as case-sensitive. The
+portal's own client-side check uses the identical rule and asks you to
+acknowledge the collision before it will submit the form; the warning in the
+response is what reaches every other caller, including a script calling the
+API directly.
 
 ## Ingesting the first snapshot
 

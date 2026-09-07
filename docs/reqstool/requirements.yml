@@ -1262,6 +1262,14 @@ requirements:
     categories: ["performance-efficiency", "security"]
     revision: 0.1.0
 
+  - id: GW_0166
+    title: Warning on a duplicate upstream URL at registration
+    significance: shall
+    description: "The system shall, when registering an upstream marketplace, compare its clone URL against every other upstream marketplace's clone URL after normalizing both to lowercase scheme and host, no trailing slash, and no '.git' suffix, and shall record in the registration response a warning naming each existing marketplace whose normalized URL matches, without refusing the registration on that basis."
+    rationale: "Tracking one upstream repository under two marketplace names is a legitimate way to test a marketplace before promoting it, so the gateway must not block it; but registering the same URL twice is far more often a mistake — a typo'd name, or forgetting an earlier registration already exists — that today succeeds silently with no signal anywhere. Normalizing before comparing is what catches the collision a bare string comparison misses: the same repository reached through a different case, a trailing slash, or a '.git' suffix. Surfacing the warning in the response itself, rather than only in the portal, is what makes it visible to every caller — the API directly, the estate reconciler, or a person clicking through the UI — not only the one client that happens to implement its own check."
+    categories: ["functional-suitability", "interaction-capability"]
+    revision: 0.1.0
+
   - id: GW_0168
     title: Abandoned publication staging references are swept from published repositories
     significance: shall

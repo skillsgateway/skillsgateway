@@ -1556,6 +1556,85 @@
         },
         "type": "object"
       },
+      "RegisteredMarketplace": {
+        "description": "A registered marketplace, plus any non-blocking warnings about the registration",
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "description": "Project description from the forge",
+            "type": "string"
+          },
+          "forge": {
+            "description": "Detected forge (github, gitlab, bitbucket, azure-devops, gitea) or null",
+            "type": "string"
+          },
+          "forgeProject": {
+            "description": "Project path on the forge",
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "lastSyncAt": {
+            "description": "Last sync attempt (success or failure), or null before the first one",
+            "format": "date-time",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "origin": {
+            "description": "Where the content comes from",
+            "enum": [
+              "upstream",
+              "hosted"
+            ],
+            "type": "string"
+          },
+          "pushPolicy": {
+            "description": "Whether a hosted marketplace's publisher may rewrite its lineage",
+            "enum": [
+              "append-only",
+              "allow-rewrite"
+            ],
+            "type": "string"
+          },
+          "registeredBy": {
+            "description": "Identity that registered the marketplace, or null when it was not recorded",
+            "type": "string"
+          },
+          "syncMode": {
+            "description": "How upstream content reaches quarantine (GW_0056)",
+            "enum": [
+              "on-demand",
+              "scheduled",
+              "webhook"
+            ],
+            "type": "string"
+          },
+          "upstreamUpdatedAt": {
+            "description": "Last upstream update as reported by the forge",
+            "format": "date-time",
+            "type": "string"
+          },
+          "url": {
+            "description": "Upstream clone URL; null for a gateway-hosted marketplace",
+            "type": "string"
+          },
+          "warnings": {
+            "description": "Non-blocking warnings about this registration, e.g. the upstream url already being registered under another marketplace name (GW_0166)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "RevetResult": {
         "description": "What one re-vetting run concluded about one approved snapshot",
         "properties": {
@@ -3046,7 +3125,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Marketplace"
+                  "$ref": "#/components/schemas/RegisteredMarketplace"
                 }
               }
             },
@@ -3056,7 +3135,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Marketplace"
+                  "$ref": "#/components/schemas/RegisteredMarketplace"
                 }
               }
             },
@@ -3066,7 +3145,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Marketplace"
+                  "$ref": "#/components/schemas/RegisteredMarketplace"
                 }
               }
             },
@@ -3076,7 +3155,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Marketplace"
+                  "$ref": "#/components/schemas/RegisteredMarketplace"
                 }
               }
             },
