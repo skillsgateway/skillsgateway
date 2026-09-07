@@ -1,6 +1,6 @@
-# ADR 0012 — Native image as the release artifact: reassessment
+# ADR 0012 — The release artifact is a JVM container, not a native image
 
-*Proposed, 2026-09-07. Not decided. Supplements [ADR 0002](0002-toolchain-and-product-decisions.md), which chose GraalVM native-image as the release profile and remains in force until this is decided either way.*
+*Accepted, 2026-09-07. Supersedes the release-profile decision in [ADR 0002](0002-toolchain-and-product-decisions.md); the rest of that ADR stands.*
 
 ## Context
 
@@ -157,6 +157,71 @@ Two honest limits on the figure:
   container running the same workload is the missing number, and it is a few hours
   of work rather than a query.
 
+## Both halves are now measured
+
+The two artifacts were run under the same 1 GiB container limit, idle, with the
+same configuration and a PostgreSQL of their own:
+
+| Artifact | Memory used | Conditions |
+| --- | ---: | --- |
+| Native image | **119 MB** average, **199 MB** peak | 24 h at five-minute resolution, real hardware |
+| JVM jar | **259 MB** | local container, same limit, host-native architecture |
+
+**The gap is roughly 60–140 MB per instance — about 1.3–2.2×**, far short of the
+3–5× native image is usually credited with. Two reasons specific to this service:
+JGit's buffers and the connection pool cost the same on either packaging, and a
+JVM under a container limit sizes its heap to fit rather than sprawling.
+
+Against a 1 GiB reservation both fit with room to spare — the JVM at about a
+quarter of it, the native image at an eighth. Neither is close to binding, and
+where instances are billed by reservation an artifact that is heavier but still
+fits costs nothing at current sizing.
+
+A third measurement was taken and **discarded as invalid**: the published native
+image is amd64-only, so running it on an arm64 host put it under emulation, where
+it reported 283 MB — higher than the JVM. That measures the emulator, not the
+artifact, and is recorded here only so nobody repeats it and believes it.
+
+Two limits remain on the honest reading. Both figures are **idle**: #293 means no
+ingest can succeed on the native image, so neither includes JGit packing a real
+repository, which is the dominant term for this service. And a same-host
+comparison would need an arm64 native build, which is a full native-image compile.
+Neither gap changes the conclusion, because both would raise both numbers.
+
+## Decision
+
+**The release artifact becomes a JVM container.** The native image is dropped.
+
+The measured benefit is ~100 MB per instance at a sizing where nothing is
+memory-bound. The measured cost is a defect class the test suite is structurally
+incapable of seeing — three instances known, two of which shipped and broke the
+login and ingest paths, and a third found by grep in a data-migration path that
+can report success without migrating. That trade does not hold.
+
+### The base image
+
+`gcr.io/distroless/java-base-debian12:nonroot` carrying a `jlink`-produced Java 25
+runtime.
+
+Measured alternatives:
+
+| Base | Size | Notes |
+| --- | ---: | --- |
+| `distroless/base-debian12:nonroot` | 32.7 MB | today's base; no JVM, native binary only |
+| **`distroless/java-base-debian12:nonroot`** | **46.1 MB** | OS libraries a JVM needs, no JDK — designed to receive a `jlink` runtime |
+| `eclipse-temurin:25-jre-noble` | 337 MB | full JRE on Ubuntu; a shell and a much larger package surface |
+| `distroless/java21-debian12:nonroot` | — | **unusable**: this project targets Java 25, and distroless publishes no Java 24 or 25 image |
+
+`java-base` plus `jlink` keeps every property the current posture depends on — no
+shell, non-root uid 65532, read-only root filesystem, small package surface — while
+supporting Java 25, which the prebuilt distroless Java images do not. Temurin is
+the fallback if `jlink` proves troublesome, at roughly seven times the base size
+and with a shell in the image.
+
+Startup regresses from ~0.3 s to seconds. Spring Boot's CDS and AOT-cache support
+can recover part of it and should be evaluated, but a rollout taking seconds
+longer is not a cost this service is sensitive to.
+
 ## What would settle it
 
 - **RSS per replica under load, for a JVM jar.** The native half is now measured
@@ -172,7 +237,17 @@ Two honest limits on the figure:
 
 ## Status
 
-**Proposed.** ADR 0002 stands until this is decided. No work should be started on
-option B on the strength of this document; the mitigations in option A are worth
-doing regardless of the outcome, since they are the difference between a defect
-class that is prevented and one that is discovered in production.
+**Accepted.** Option B. The release-profile decision in ADR 0002 is superseded;
+everything else in that ADR stands, including the rejection of JPA — whose
+recorded justification ("for a three-table schema") is stale at 18 tables and
+should be amended to rest on the argument that still holds.
+
+The `native` Maven profile is not deleted. Keeping it costs nothing and leaves the
+way back open should the measurements change — a deployment where memory genuinely
+binds, or a Spring Boot release that closes the frozen-condition class.
+
+One mitigation from option A survives the decision and should still be done: a
+smoke test that exercises a **real ingest and a real clone** against the built
+image. The present test asserts only that the container boots and reports healthy,
+which is why #293 — deterministic on every fetch — shipped. That gap is about the
+smoke test, not about native image, and changing the artifact does not close it.
