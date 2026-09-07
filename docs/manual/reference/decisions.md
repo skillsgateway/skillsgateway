@@ -219,3 +219,16 @@ lives in twenty guarded `UPDATE … RETURNING *` statements rather than in
 transactions or locking, and those stay native SQL under any ORM — so JPA would
 take over only the part that was never the problem, at the cost of entities that
 cannot be records and a re-verification campaign at a trust boundary.
+
+### [ADR 0016 — Client invocation telemetry is not ingested; the gateway publishes presence instead](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0016-client-invocation-telemetry-is-not-ingested.md)
+
+*Proposed.* The gateway accepts no client-reported telemetry on any surface, and
+no figure it reports is derived from data a client asserted. Two findings decide
+it: an invocation datapoint is self-reported by the population being measured,
+over a bearer credential distributed to every measured machine, so it is forgeable
+in both directions — and the client redacts third-party plugin and skill names to
+the literal `"third-party"`, which is precisely what a gateway-served marketplace
+is, so the join key does not arrive at all. Client telemetry goes to the
+organisation's own collector; the gateway publishes the half only it can produce
+unforgeably — which identities *hold* a skill, derived from the pinned commit tree
+and the fetch ledger. Adherence stays permanently out of scope.
