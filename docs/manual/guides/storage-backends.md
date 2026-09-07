@@ -55,19 +55,24 @@ discovered during an approval.
 | --- | --- |
 | Floci `1.5.33` | **Verified.** Every build runs the backend's contract and concurrency suites against it |
 | MinIO `RELEASE.2025-07-23T15-54-02Z` | **Verified by probe.** All the conditional-write assertions pass, repeatably. Not part of the build, because MinIO stopped publishing free container images around October 2025 |
-| AWS S3 | **Documented, not exercised by this project.** AWS documents `If-Match` and `If-None-Match` on `PutObject`, and it is the primary target — but nobody here has run the assertions against a real account, so it is believed rather than verified |
+| AWS S3 | **Verified against a real bucket.** All the conditional-write assertions pass, and both negative controls discriminate. Verified on a plain bucket — see the note below for what that leaves open. Not part of the build, because it needs an account no contributor should have to have |
 | Google Cloud Storage | **Out of scope.** It has generation preconditions rather than `If-Match`, which would need an adapter |
 | Ceph RGW and other on-prem S3 gateways | **Unverified.** Varies by version; the startup probe is what will tell you |
 
-!!! warning "The AWS S3 row is not a verified row"
+!!! note "What the AWS S3 row covers, and what it does not"
 
-    It is the production target and it is the row that has never been run. If
-    you are the first to run the gateway against a real S3 bucket, the startup
-    probe is doing real work for you rather than confirming something already
-    known.
+    The assertions were run against a scratch bucket created with defaults: **no
+    versioning and no SSE-KMS.** On a bucket with either of those an ETag is not
+    a content hash, and while the gateway never *computes* an expected ETag — it
+    only chains the one the store returned — that case has not been run. If your
+    bucket uses either, [run the suite against it](verifying-an-object-store.md)
+    rather than reading this row as covering it. Doing so needs no code change
+    and takes a few minutes.
 
-    Closing that row is tracked as
-    [issue #151](https://github.com/skillsgateway/skillsgateway/issues/151).
+    The row also says nothing about your account: a bucket policy, an object
+    lock or a service control policy can refuse writes the store itself would
+    have accepted. That is what the startup probe is for, and what the guide's
+    two negative controls will tell you apart.
 
 ## Credentials
 
@@ -302,6 +307,7 @@ exactly. If the volume is already gone, the same command with `backend` and
 
 ## See also
 
+- [Verifying conditional writes against a real bucket](verifying-an-object-store.md)
 - [Configuration reference — Git storage](../reference/configuration.md#git-storage)
 - [Deploying on Kubernetes](deploying-on-kubernetes.md)
 - [Trust boundaries](../concepts/trust-boundaries.md)
