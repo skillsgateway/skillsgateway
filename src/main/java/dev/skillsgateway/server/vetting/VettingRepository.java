@@ -7,7 +7,9 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -159,35 +161,56 @@ public class VettingRepository {
                         verdicts(r.runId())));
     }
 
+    /**
+     * The run's verdicts, each carrying its findings, in two statements whatever the chain length.
+     *
+     * <p>It used to be one findings query per verdict, so the cost of reading a run grew with the
+     * number of connectors in the chain — the one place ADR 0013 conceded an ORM's fetch join would
+     * genuinely have helped. The join below is that fetch join, written by hand: every finding of
+     * the run in one pass, grouped by verdict in memory. Grouping preserves id order within a
+     * verdict, which is the order the per-verdict query returned, and a verdict with no findings
+     * keeps an empty list rather than being dropped.
+     */
     private List<VerdictView> verdicts(long runId) {
         List<VerdictView> verdicts = jdbc.sql(
                         "SELECT * FROM vetting_verdicts WHERE run_id = :runId ORDER BY position, connector")
                 .param("runId", runId)
                 .query(VettingRepository::mapVerdict)
                 .list();
-        List<VerdictView> withFindings = new ArrayList<>(verdicts.size());
-        for (VerdictView verdict : verdicts) {
-            withFindings.add(new VerdictView(
-                    verdict.verdictId(),
-                    verdict.connector(),
-                    verdict.position(),
-                    verdict.state(),
-                    verdict.detail(),
-                    verdict.reportUrl(),
-                    findings(verdict.verdictId())));
+        if (verdicts.isEmpty()) {
+            return List.of();
         }
-        return List.copyOf(withFindings);
+        Map<Long, List<Finding>> findings = findingsByVerdict(runId);
+        return verdicts.stream()
+                .map(verdict -> new VerdictView(
+                        verdict.verdictId(),
+                        verdict.connector(),
+                        verdict.position(),
+                        verdict.state(),
+                        verdict.detail(),
+                        verdict.reportUrl(),
+                        findings.getOrDefault(verdict.verdictId(), List.of())))
+                .toList();
     }
 
-    private List<Finding> findings(long verdictId) {
-        return jdbc.sql("SELECT * FROM vetting_findings WHERE verdict_id = :verdictId ORDER BY id")
-                .param("verdictId", verdictId)
-                .query((rs, rowNum) -> new Finding(
-                        rs.getString("finding_id"),
-                        Severity.of(rs.getString("severity")),
-                        rs.getString("location"),
-                        rs.getString("message")))
-                .list();
+    /** Every finding of every verdict in one run, in one statement, keyed by verdict id. */
+    private Map<Long, List<Finding>> findingsByVerdict(long runId) {
+        Map<Long, List<Finding>> byVerdict = new HashMap<>();
+        jdbc.sql("SELECT f.* FROM vetting_findings f JOIN vetting_verdicts v ON v.id = f.verdict_id"
+                        + " WHERE v.run_id = :runId ORDER BY f.id")
+                .param("runId", runId)
+                .query((rs, rowNum) -> Map.entry(
+                        rs.getLong("verdict_id"),
+                        new Finding(
+                                rs.getString("finding_id"),
+                                Severity.of(rs.getString("severity")),
+                                rs.getString("location"),
+                                rs.getString("message"))))
+                .list()
+                .forEach(entry -> byVerdict
+                        .computeIfAbsent(entry.getKey(), key -> new ArrayList<>())
+                        .add(entry.getValue()));
+        return byVerdict;
     }
 
     @Schema(description = "One connector's recorded verdict within a chain run")
