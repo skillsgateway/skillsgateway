@@ -75,6 +75,12 @@ spec:
             - name: SKILLSGATEWAY_OIDC_ISSUER
               value: {{ .Values.oidc.issuer | quote }}
             {{- end }}
+            {{- if .Values.oidc.redirectUri }}
+            - name: SGW_OIDC_REDIRECT_URI
+              value: {{ .Values.oidc.redirectUri | quote }}
+            {{- end }}
+            - name: SERVER_FORWARDHEADERSSTRATEGY
+              value: {{ include "skills-gateway.forwardHeadersStrategy" . | quote }}
             # The storage backend is named, never inferred -- here as in the
             # gateway, so what the values file says and what the pod does are
             # the same statement.

@@ -1263,6 +1263,32 @@ export interface components {
              */
             mode?: "on-demand" | "scheduled" | "webhook";
         };
+        /** @description The resolved closure of external plugin sources recorded with a snapshot */
+        Closure: {
+            /**
+             * Format: date-time
+             * @description When the closure was recorded, which is when the snapshot was
+             */
+            createdAt?: string;
+            /** @description SHA-256 over the closure's content; equal for equal closures wherever they occur */
+            digest?: string;
+            /**
+             * Format: int64
+             * @description Closure id
+             */
+            id?: number;
+            /** @description One member per resolved external plugin */
+            members?: components["schemas"]["Member"][];
+            /**
+             * Format: int64
+             * @description The snapshot this closure belongs to
+             */
+            snapshotId?: number;
+            /** @description Identity of the rewrite implementation */
+            transformerVersion?: string;
+            /** @description The commit ingested from upstream */
+            upstreamSha?: string;
+        };
         /** @description A supply-side act by the reviewer that makes this approval a self-approval */
         Conflict: {
             /** @description The identity that performed it */
@@ -1982,6 +2008,36 @@ export interface components {
             /** @description Username of the session */
             username?: string;
         };
+        Member: {
+            /** @description The clone URL the source was resolved through */
+            cloneUrl?: string;
+            /** @description The ref the manifest pinned, or null */
+            declaredRef?: string;
+            /** @description The commit the manifest pinned, or null */
+            declaredSha?: string;
+            /** @description The source exactly as the manifest declared it, e.g. an owner/repo shorthand */
+            declaredSource?: string;
+            /** @description Where the content lives inside the composite, e.g. _plugins/tools */
+            graftPath?: string;
+            /**
+             * Format: int64
+             * @description Decompressed size of the grafted tree, measured at resolution
+             */
+            inflatedBytes?: number;
+            /**
+             * Format: int64
+             * @description Objects the grafted tree contains, measured at resolution
+             */
+            objectCount?: number;
+            /** @description Plugin name from the manifest */
+            pluginName?: string;
+            /** @description The commit of the external repository the source resolved to */
+            resolvedSha?: string;
+            /** @description Source type as declared: github, git, git-subdir */
+            sourceType?: string;
+            /** @description The tree grafted into the composite at graftPath */
+            treeSha?: string;
+        };
         /** @description Outcome of a retention pass */
         PassResult: {
             /**
@@ -2074,6 +2130,8 @@ export interface components {
         };
         /** @description Provenance of a snapshot: what was served, from where, and who approved it */
         Provenance: {
+            /** @description The resolved closure of external plugin sources, or null when there is none */
+            closure?: components["schemas"]["Closure"];
             /** Format: date-time */
             decidedAt?: string;
             decidedBy?: string;
@@ -2088,9 +2146,12 @@ export interface components {
             revokedAt?: string;
             /** @description Identity that revoked it, or null */
             revokedBy?: string;
+            /** @description The commit the snapshot pins and serves; differs from upstreamSha only for a composite with resolved external plugin sources */
+            sha?: string;
             /** Format: int64 */
             snapshotId?: number;
             state?: string;
+            /** @description The commit ingested from upstream */
             upstreamSha?: string;
             upstreamUrl?: string;
             violation?: string;
@@ -2388,13 +2449,15 @@ export interface components {
             revokedAt?: string;
             /** @description Identity that revoked it, or null */
             revokedBy?: string;
-            /** @description Upstream commit SHA the snapshot is pinned to */
+            /** @description Commit SHA the snapshot is pinned to and serves: the upstream commit, or the synthesised composite when external plugin sources were resolved */
             sha?: string;
             /**
              * @description held, approved, rejected, or revoked (retroactively quarantined by re-vetting)
              * @enum {string}
              */
             state?: "held" | "approved" | "rejected" | "revoked";
+            /** @description Commit SHA ingested from upstream; equal to sha unless a composite was synthesised */
+            upstreamSha?: string;
             /** @description Policy or vetting violation that rejected or revoked the snapshot, or null */
             violation?: string;
         };

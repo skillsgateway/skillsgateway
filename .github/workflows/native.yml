@@ -95,19 +95,38 @@ jobs:
           # nobody refuses to start (GW_0139), so the smoke test names one. It never logs in
           # as it: the assertion here is that the image boots and reports healthy, and the
           # startup guard is part of booting.
+          #
+          # The forwarded-header strategy is set to the one value only an explicit bean can
+          # honour on a native image (GW_0163): Spring Boot's own registration is behind a
+          # build-time condition, so this is the packaging on which the JVM test suite cannot
+          # see the defect, and the one place it is asserted against the real binary.
           docker run -d --name gateway --network host \
             -e SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/skillsgateway \
             -e SPRING_DATASOURCE_USERNAME=skillsgateway \
             -e SPRING_DATASOURCE_PASSWORD=skillsgateway \
             -e SKILLSGATEWAY_ROLES_ADMINS_0=smoke-test \
+            -e SERVER_FORWARDHEADERSSTRATEGY=framework \
             skills-gateway:ci
+          healthy=false
           for _ in $(seq 1 30); do
             if curl -fsS http://localhost:8080/actuator/health | grep -q '"UP"'; then
-              echo "gateway healthy"; exit 0
+              healthy=true; break
             fi
             sleep 2
           done
-          echo "gateway did not become healthy"; docker logs gateway; exit 1
+          if [ "$healthy" != true ]; then
+            echo "gateway did not become healthy"; docker logs gateway; exit 1
+          fi
+          echo "gateway healthy"
+          location=$(curl -sS -o /dev/null -w '%{redirect_url}' \
+            -H 'X-Forwarded-Proto: https' -H 'X-Forwarded-Host: gateway.example.com' \
+            http://localhost:8080/oauth2/authorization/idp)
+          case "$location" in
+            *redirect_uri=https%3A%2F%2Fgateway.example.com%2Flogin%2Foauth2%2Fcode%2Fidp*)
+              echo "forwarded headers honoured on the native image" ;;
+            *)
+              echo "forwarded headers ignored on the native image: $location"; docker logs gateway; exit 1 ;;
+          esac
 
       - name: Helm lint
         run: helm lint helm/skills-gateway

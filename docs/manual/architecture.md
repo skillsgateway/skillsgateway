@@ -186,7 +186,11 @@ flowchart LR
   parented on the ingested upstream commit so the manifest as upstream declared
   it stays byte-exact and reachable. The composite *is* the snapshot, so vetting,
   approval, the facade, retention and the ledger see the external content without
-  learning that it is external.
+  learning that it is external. The resolved closure is also recorded as rows
+  with the snapshot — immutable value copies of what each source was declared
+  as and what it became — so the blast radius of a compromised external
+  repository is one query, and approval refuses any snapshot whose recorded
+  closure does not describe the commit it pins.
   That reversal is staged, and its shape is decided in
   [ADR 0011](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md):
   **admission** (a typed source model and a configuration gate that defaults to
@@ -488,10 +492,11 @@ that would duplicate a sweep, and leader election is separate later work.
   into admission (typed source model, configuration gate defaulting to
   disabled) then resolution (composite rewrite), separated by the
   held-only-if-gateway-local invariant so T4 stays closed across the reversal.
-  *Implemented:* admission, and resolution of the `github` type with its address,
-  redirect and resource policy, all behind `enabled: false`. *Remaining:* the
-  resolved closure as a queryable domain object (and the blast-radius re-vetting
-  it enables), `git` and `git-subdir`, the egress proxy, connect-time address
+  *Implemented:* admission, resolution of the `github` type with its address,
+  redirect and resource policy, and the resolved closure as a queryable domain
+  object with a closure-completeness gate on approval, all behind
+  `enabled: false`. *Remaining:* the blast-radius re-vetting the closure query
+  enables, `git` and `git-subdir`, the egress proxy, connect-time address
   pinning, and declared-`ref`/`sha` pinning. Also in this phase: a
   connector framework with automated vetting
   (scanners, LLM review, sandbox), risk tiers, approval workflow with

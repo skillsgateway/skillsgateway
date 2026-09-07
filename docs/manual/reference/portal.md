@@ -214,7 +214,9 @@ justification, approver and expiry. An active one carries
 
 **Provenance** is always available, opening a dialog fed by
 `GET /api/snapshots/{id}/provenance`: marketplace, upstream URL, upstream SHA,
-state, ingested time, decided by, decided at.
+served SHA, state, ingested time, decided by, decided at — and, for a snapshot
+with resolved external plugin sources, the closure: each external plugin with
+the URL it was fetched through and the commit it resolved to.
 
 Empty states: "No marketplaces registered yet." and, in an expanded row, "No
 snapshots yet — ingest to fetch the upstream default branch."

@@ -35,9 +35,9 @@ commit the snapshot identifies:
 
 | Variable | Shape | Meaning |
 | --- | --- | --- |
-| `snapshot` | map | `id` (int), `sha` (string), `marketplace` (string), `state` (string: `held`, `approved`, `rejected`, `revoked`). |
+| `snapshot` | map | `id` (int), `sha` (string), `upstreamSha` (string), `externalSources` (int: how many external plugin sources were resolved into it), `marketplace` (string), `state` (string: `held`, `approved`, `rejected`, `revoked`). |
 | `files` | list of maps | Every path in the pinned tree: `path` (string), `size` (int). |
-| `plugins` | list of maps | The manifest's plugins: `name`, `description`, `source` (strings; absent manifest fields are `""`). |
+| `plugins` | list of maps | The manifest's plugins: `name`, `description`, `source` (strings; absent manifest fields are `""`), `origin` (`local` or `external`), and for an external plugin `upstreamUrl` and `resolvedSha` (strings; `""` for a local one). |
 | `skills` | list of maps | Every skill (a `SKILL.md` under a plugin's `skills/` tree): `name`, `path`, `plugin` (strings), `tools` (list of strings). |
 
 `skills[].tools` is parsed from the SKILL.md YAML frontmatter key

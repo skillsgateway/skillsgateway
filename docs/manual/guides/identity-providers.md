@@ -19,12 +19,19 @@ which team.
 | Principal claim | `SGW_OIDC_USER_NAME_ATTRIBUTE` | Which claim names the user. Default `sub`. |
 | Scopes | `SGW_OIDC_SCOPE` | Default `openid`. Widen if a scope is needed for group claims. |
 | Expected issuer | `SKILLSGATEWAY_OIDC_ISSUER` | The `iss` every ID token must carry. |
+| Redirect URI | `SGW_OIDC_REDIRECT_URI` | Optional. States the registered redirect URI outright instead of deriving it from the request. |
 
 The redirect URI to register is:
 
 ```
 https://<your-gateway-host>/login/oauth2/code/idp
 ```
+
+The gateway derives that URI from the request, which behind a TLS-terminating
+proxy is only right once it believes the scheme and host the proxy reports —
+see [Running behind a proxy](deploying-without-kubernetes.md#running-behind-a-proxy).
+A redirect-URI mismatch reported by the provider is almost always that, not the
+registration.
 
 !!! warning "Pin the issuer"
 
