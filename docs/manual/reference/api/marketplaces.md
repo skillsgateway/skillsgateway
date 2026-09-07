@@ -37,10 +37,14 @@ scope at all** — they publish, refuse or retract content. See
 **Snapshot**
 
 ```json
-{"id":42,"marketplaceId":1,"sha":"3f9c2ab...","state":"held",
- "violation":null,"createdAt":"2026-08-15T09:01:00Z","ingestedBy":"ingrid",
- "decidedBy":null,"decidedAt":null}
+{"id":42,"marketplaceId":1,"sha":"3f9c2ab...","upstreamSha":"3f9c2ab...",
+ "state":"held","violation":null,"createdAt":"2026-08-15T09:01:00Z",
+ "ingestedBy":"ingrid","decidedBy":null,"decidedAt":null}
 ```
+
+`sha` is the commit the gateway serves; `upstreamSha` is the commit ingested
+from upstream. They differ only for a snapshot whose external plugin sources
+were resolved into a composite, where `upstreamSha` is the composite's parent.
 
 `registeredBy` and `ingestedBy` are the supply-side identities the
 [four-eyes rule](../../guides/approving-snapshots.md#separation-of-duties)
@@ -651,11 +655,26 @@ approve. Under the default `warn` mode the same conflicts are detected, the
 approval succeeds, and a `four-eyes-conflict` entry is appended to the audit
 ledger beside `snapshot-approved`.
 
+Ahead of every gate above, a snapshot whose recorded
+[closure](../../concepts/snapshots-and-ledger.md#the-closure-record) does not
+describe the commit it pins is refused, and every discrepancy is named:
+
+```json
+{"status":409,"title":"Snapshot closure is incomplete",
+ "detail":"snapshot 12 cannot be approved: its recorded closure does not describe the commit it pins — …",
+ "discrepancies":["the served manifest declares plugin 'tools' at _plugins/tools, which the recorded closure does not contain"]}
+```
+
+Nothing the gateway does produces this state, so there is no override for it:
+it means something other than the gateway has altered the snapshot's rows or
+its pinned commit, and re-ingesting the marketplace is the remedy. The refusal
+is appended to the audit ledger as `snapshot-approval-refused`.
+
 | Status | Cause |
 | --- | --- |
 | 200 | Approved; returns the snapshot with `decidedBy` and `decidedAt`. |
 | 404 | Unknown snapshot. |
-| 409 | The snapshot is neither `held` nor `revoked`, its effective vetting outcome is blocked and no override was supplied, a [policy rule](policy.md) denied it, it has not reached the minimum release age, or an enforcing four-eyes rule refused it. |
+| 409 | The snapshot is neither `held` nor `revoked`, its recorded closure does not describe the commit it pins, its effective vetting outcome is blocked and no override was supplied, a [policy rule](policy.md) denied it, it has not reached the minimum release age, or an enforcing four-eyes rule refused it. |
 | 422 | An override was requested (`overrideVetting: true`) without a `reason`. |
 
 A `revoked` snapshot is approved through this same endpoint and no other — there
@@ -776,11 +795,25 @@ content is never something to wait for.
 Where the snapshot came from and who decided on it.
 
 ```json
-{"snapshotId":42,"marketplace":"acme",
- "upstreamUrl":"https://github.com/acme/skills.git","upstreamSha":"3f9c2ab...",
+{"snapshotId":42,"marketplace":"acme","origin":"upstream",
+ "upstreamUrl":"https://github.com/acme/skills.git",
+ "upstreamSha":"3f9c2ab...","sha":"9e1d77c...",
+ "closure":{"id":7,"snapshotId":42,"digest":"4c2a…","upstreamSha":"3f9c2ab...",
+            "transformerVersion":"1","createdAt":"...",
+            "members":[{"pluginName":"tools","sourceType":"github",
+                        "declaredSource":"acme/tools","declaredRef":null,"declaredSha":null,
+                        "cloneUrl":"https://github.com/acme/tools",
+                        "resolvedSha":"b7e0c1d...","treeSha":"d41a9f2...",
+                        "graftPath":"_plugins/tools","objectCount":12,"inflatedBytes":4096}]},
  "state":"approved","violation":null,"ingestedAt":"...",
  "decidedBy":"alice@example.com","decidedAt":"..."}
 ```
+
+`upstreamSha` is the commit ingested from upstream and `sha` the commit served;
+they differ only for a composite snapshot. `closure` is the
+[resolved closure](../../concepts/snapshots-and-ledger.md#the-closure-record)
+of external plugin sources, and `null` for a snapshot that resolved none — which
+is every snapshot of a gateway that has not enabled external sources.
 
 **200** · **404** unknown snapshot.
 

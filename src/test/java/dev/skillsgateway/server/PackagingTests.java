@@ -47,6 +47,40 @@ class PackagingTests {
         assertThat(Files.readString(REPO_ROOT.resolve("compose.yaml"))).contains("SPRING_DATASOURCE_URL");
     }
 
+    /**
+     * The chart names the forwarded-header strategy the pod runs with and passes the absolute
+     * redirect URI through (GW_0163): the Ingress the chart ships terminates TLS, so a chart that
+     * left this to Spring Boot's deduction would work by accident and fail silently when an
+     * operator set the one value the native image could not honour.
+     */
+    @Test
+    @SVCs({"SVC_GW_0015"})
+    void chartNamesTheForwardedHeaderStrategyAndPassesTheRedirectUriThrough() throws IOException {
+        Path chart = REPO_ROOT.resolve("helm/skills-gateway");
+        Map<String, Object> values = parse(chart.resolve("values.yaml"));
+        String deployment = Files.readString(chart.resolve("templates/deployment.yaml"));
+        String helpers = Files.readString(chart.resolve("templates/_helpers.tpl"));
+
+        // The proxy the chart itself installs sits inside the cluster's private ranges, so the
+        // default is the strategy that trusts exactly those peers and nobody else.
+        assertThat(values.get("forwardHeadersStrategy")).isEqualTo("native");
+        assertThat(section(values, "oidc")).containsEntry("redirectUri", "");
+
+        // The value reaches the pod in the variable the gateway reads, through a gate that refuses
+        // anything Spring Boot would not understand rather than rendering an inert setting.
+        assertThat(deployment)
+                .contains("SERVER_FORWARDHEADERSSTRATEGY")
+                .contains("skills-gateway.forwardHeadersStrategy");
+        assertThat(define(helpers, "skills-gateway.forwardHeadersStrategy"))
+                .contains("\"native\" \"framework\" \"none\"")
+                .contains("fail");
+        assertThat(deployment).contains("SGW_OIDC_REDIRECT_URI").contains(".Values.oidc.redirectUri");
+
+        // The variable the chart passes is one application.yaml actually reads.
+        assertThat(Files.readString(REPO_ROOT.resolve("src/main/resources/application.yaml")))
+                .contains("${SGW_OIDC_REDIRECT_URI:{baseUrl}/login/oauth2/code/idp}");
+    }
+
     @Test
     @SVCs({"SVC_GW_0120"})
     void chartRefusesToRenderWithoutAnExplicitStorageDurabilityChoice() throws IOException {

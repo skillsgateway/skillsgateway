@@ -109,6 +109,10 @@ oidc:
   # Comma-separated scopes to request; widen when the provider needs a scope to
   # emit group or role claims.
   scope: "openid"
+  # The redirect URI registered with the provider, stated outright. Empty lets
+  # the gateway derive it from the request, which is right only when
+  # `forwardHeadersStrategy` below tells it what the outside world sees.
+  redirectUri: ""
   # Expected ID-token issuer. Unset means the issuer is not checked at all —
   # on a multi-tenant endpoint that is the tenant boundary left open.
   issuer: ""
@@ -137,6 +141,25 @@ oidc:
 persistence:
   mode: ""
   existingClaim: ""
+
+# How the gateway learns the scheme and host the outside world sees. It serves
+# plain HTTP and terminates no TLS, so wherever TLS ends in front of it -- the
+# Ingress, or a load balancer before it -- its external URLs (the OIDC redirect
+# URI above all) are built from what that proxy reports in X-Forwarded-*.
+#
+#   native     -- Tomcat honours the headers only from a peer in a private
+#                 address range (10/8, 172.16/12, 192.168/16, 100.64/10,
+#                 loopback, and their IPv6 counterparts), which is where an
+#                 ingress controller or an in-VPC load balancer sits. Default.
+#   framework  -- Spring's filter honours them from any peer. For a proxy
+#                 outside those ranges, and only where nothing but the proxy
+#                 can reach the pod.
+#   none       -- ignore them. Right only when the pod terminates TLS itself.
+#
+# Named rather than inferred, like the storage backend: Spring Boot would deduce
+# `native` on Kubernetes by itself, and a setting that is written down is one an
+# operator can read and change.
+forwardHeadersStrategy: native
 
 # Ingress for the web portal and the git smart-HTTP facade.
 #
