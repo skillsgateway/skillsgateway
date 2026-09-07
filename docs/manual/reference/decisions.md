@@ -210,3 +210,12 @@ on this page.
 decision in ADR 0002. Records the measurement that settled it — roughly 100 MB per
 instance, at a sizing where nothing is memory-bound — against three defects
 possible only on the native image, two of which shipped.
+
+### [ADR 0013 — Data access stays on JdbcClient; JPA is not adopted](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0013-data-access-stays-on-jdbcclient.md)
+
+*Accepted.* Re-decides the data-access question after ADR 0012 removed the
+native-image argument that ADR 0002 had rested it on. Concurrency correctness here
+lives in twenty guarded `UPDATE … RETURNING *` statements rather than in
+transactions or locking, and those stay native SQL under any ORM — so JPA would
+take over only the part that was never the problem, at the cost of entities that
+cannot be records and a re-verification campaign at a trust boundary.
