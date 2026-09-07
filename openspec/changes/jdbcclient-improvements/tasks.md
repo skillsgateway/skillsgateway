@@ -31,15 +31,21 @@
 ## 4. Part 1 — implicit enum casts
 
 - [x] 4.1 Establish, against the real database, what the failure mode of a
-      missing cast actually is.
+      missing cast actually is, and what the implicit cast changes about it.
 - [x] 4.2 Decide on the error-class argument alone; record the decision and its
-      reasons in `design.md`. **Declined.**
+      reasons in `design.md`. **Declined** — the implicit cast fixes the write
+      side only, leaves every guarded predicate (including `undecide` and
+      `revoke`) failing exactly as before, and moves an invalid label's rejection
+      from planning time to row time.
 
 ## 5. Part 3 — batching the insert loops
 
 - [x] 5.1 Measure the loops at realistic and pessimistic sizes against the real
       database.
-- [x] 5.2 Decide; record the measurement in `design.md`. **Declined.**
+- [x] 5.2 Decide; record the measurement in `design.md`. **Declined** — the
+      saving is one round trip per member (3.6 ms at five members, 47 ms at a
+      hundred), and every member is a git clone or a connector scan that dwarfs
+      it.
 
 ## 6. Gates and evidence
 

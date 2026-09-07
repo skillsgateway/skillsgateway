@@ -117,9 +117,110 @@ the class that gave it its name no longer maps anything by hand.
 this system's concurrency control keep their text, their predicates and their
 plans; what changed is only how the row they return is materialised.
 
-<!-- PART1 -->
+## Part 1 — implicit enum casts (declined, and not on aesthetics)
 
-<!-- PART3 -->
+The issue asks that this be decided on the error-class argument alone: a missing
+cast is a runtime failure rather than a compile-time one, so an implicit cast
+would remove a *class* of error rather than a *quantity* of noise. That argument
+deserved a measurement rather than an opinion, so the cast was actually created
+against the real database and the behaviour recorded. It does not survive
+contact.
+
+**What a missing cast does today.** Two failures, both immediate and both
+precise:
+
+```
+-- UPDATE snapshots SET state = :state WHERE id = -1
+ERROR: column "state" is of type snapshot_state but expression is of type character varying
+
+-- SELECT count(*) FROM snapshots WHERE state = :approved
+ERROR: operator does not exist: snapshot_state = character varying
+```
+
+**What `CREATE CAST (varchar AS snapshot_state) WITH INOUT AS IMPLICIT` changes.**
+The first one. Only the first one:
+
+| after the implicit cast | result |
+| --- | --- |
+| `SET state = :state` (a write) | accepted |
+| `WHERE state = :approved` (a guarded predicate) | **still** `operator does not exist: snapshot_state = character varying` |
+
+**This is the finding that decides it.** PostgreSQL's operator-resolution rules
+do not reach across type categories, so an implicit varchar→enum cast never
+supplies an `=` operator for `enum = varchar`. Of the nine `::snapshot_state`
+casts, **four are writes and five are predicates** — and the five include both
+guarded updates, `undecide` and `revoke`, whose `AND state = :approved` is the
+concurrency control ADR 0013 documents. The migration would delete the four
+casts that were never the interesting ones and leave every cast that guards a
+state transition exactly where it is. It does not remove the error class it was
+proposed to remove; it removes part of one.
+
+**And it adds an error class of its own.** With the implicit cast in place, this
+statement is *accepted*:
+
+```
+UPDATE snapshots SET state = 'not-a-member-of-the-set' WHERE id = -1   -- bound as varchar
+```
+
+Today it is rejected while the statement is planned, because the type mismatch
+is a planning error. With the cast it plans cleanly and the label is only
+validated by the cast function, per row — so it touches no rows, reports zero
+updates, and raises nothing. The rejection moves from "always, at once" to "only
+when the statement happens to match a row". At a trust boundary where a guarded
+update matching zero rows is the *designed* outcome of a lost race, a second way
+to match zero rows that means something entirely different is precisely the wrong
+thing to introduce. `NativeEnumColumnTests` would not have caught it: it writes
+literals, which PostgreSQL still coerces at parse time.
+
+So the honest scorecard is: removes 4 of 21 casts, leaves all the load-bearing
+ones, and trades a planning-time rejection for a row-time one. **Declined.**
+Three smaller reasons that would not have been sufficient on their own but point
+the same way: PostgreSQL's own documentation counsels conservatism about
+implicit casts to and from string types; the explicit `::snapshot_state` is
+documentation at the point of use, telling a reader the column is a native enum;
+and twelve `CREATE CAST` statements are permanent catalog objects in every
+deployed estate.
+
+The driver-side alternative, `stringtype=unspecified` on the JDBC URL, is
+declined for the same reason and one more: it is the same coercion applied to
+*every* string parameter in the application rather than to enum columns, so its
+blast radius is larger, not smaller.
+
+## Part 3 — batching the insert loops (declined, with the numbers)
+
+Measured against the real database: `snapshot_closure_members` inserted one
+statement per member in a loop, versus one `JdbcTemplate.batchUpdate`, 30
+repetitions each after a warm-up.
+
+| members | loop | batch | saved |
+| ---: | ---: | ---: | ---: |
+| 1 | 0.91 ms | 1.16 ms | −0.25 ms |
+| 5 | 4.91 ms | 1.35 ms | 3.57 ms |
+| 20 | 14.70 ms | 1.64 ms | 13.06 ms |
+| 100 | 51.10 ms | 4.49 ms | 46.61 ms |
+
+So batching does save time, and the saving is roughly the round trip — about
+0.9 ms per member on this machine — times the member count. At one member it
+loses.
+
+**It is still not worth doing, because of what those members are.** A closure
+member exists because ingestion resolved and cloned an external plugin source; a
+finding exists because a connector scanned the content and had something to say.
+A hundred-member closure is a hundred git clones, and 47 ms against that is not
+a cost anyone can point at. The same holds for the findings loop, where the
+counts are smaller still. The loop is inside `SnapshotRepository.create`'s
+transaction, inside an ingest measured in seconds.
+
+Against that, `BatchPreparedStatementSetter` replaces twelve named parameters
+with twelve positional indices in a table whose columns are almost all `text` —
+the one shape where a transposed column is silent rather than a type error. That
+is a real readability and safety cost for an invisible saving.
+
+**Declined**, with the numbers recorded rather than an assertion, so the decision
+can be reopened on evidence. What would reopen it: a database that is not
+local — the saving is round trips, so it scales with network latency, and an
+estate running PostgreSQL across a link where a round trip is 5 ms would see
+these numbers multiply.
 
 ## What this change does not do
 

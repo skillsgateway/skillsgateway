@@ -14,6 +14,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.sql.DataSource;
@@ -49,31 +51,41 @@ class VettingRunReadTests extends AbstractGatewayTest {
         Marketplace marketplace = marketplaceRepository.register(uniqueName("nplus1"), "file:///upstream");
         Snapshot snapshot = snapshotRepository.create(marketplace.id(), uniqueName("sha"), Snapshot.HELD, null, null);
 
+        Meter meter = new Meter();
+        VettingRepository counted = new VettingRepository(countingClient(meter));
+
         long shortRun = runWith(snapshot.id(), 1);
+        Cost aloneCost = meter.measure(
+                () -> assertThat(counted.run(shortRun).orElseThrow().verdicts()).hasSize(1));
+
+        // A second, longer run in the same table. Reading the first one must not notice it.
         long longRun = runWith(snapshot.id(), LONG_CHAIN);
+        Cost besideCost = meter.measure(
+                () -> assertThat(counted.run(shortRun).orElseThrow().verdicts()).hasSize(1));
+        Cost longCost = meter.measure(
+                () -> assertThat(counted.run(longRun).orElseThrow().verdicts()).hasSize(LONG_CHAIN));
 
-        AtomicInteger counter = new AtomicInteger();
-        VettingRepository counted = new VettingRepository(countingClient(counter));
-
-        counter.set(0);
-        assertThat(counted.run(shortRun).orElseThrow().verdicts()).hasSize(1);
-        int forOneVerdict = counter.get();
-
-        counter.set(0);
-        assertThat(counted.run(longRun).orElseThrow().verdicts()).hasSize(LONG_CHAIN);
-        int forTwelveVerdicts = counter.get();
-
-        // Without this the assertion below is satisfied by 0 == 0, which is what a counter wired
+        // Without this the assertions below are satisfied by 0 == 0, which is what a counter wired
         // to a method the framework never calls reports. It is the control on the instrument.
-        assertThat(forOneVerdict)
-                .as("the statement counter observed the read at all")
+        assertThat(aloneCost.statements())
+                .as("the counter observed the read at all")
                 .isGreaterThan(0);
+        assertThat(aloneCost.rows()).as("the counter observed rows at all").isGreaterThan(0);
 
-        assertThat(forTwelveVerdicts)
+        assertThat(longCost.statements())
                 .as(
-                        "reading a %d-verdict run must not cost more statements than a 1-verdict run" + " (%d vs %d)",
-                        LONG_CHAIN, forTwelveVerdicts, forOneVerdict)
-                .isEqualTo(forOneVerdict);
+                        "reading a %d-verdict run must not cost more statements than a 1-verdict run (%d vs %d)",
+                        LONG_CHAIN, longCost.statements(), aloneCost.statements())
+                .isEqualTo(aloneCost.statements());
+
+        // Statements alone would accept one query that reads every finding in the table and throws
+        // most of them away: the grouping would still be right, and the growth curve would still be
+        // there — measured in stored data rather than chain length. Rows are what catch that.
+        assertThat(besideCost.rows())
+                .as(
+                        "reading a run must read only its own rows; %d before the longer run existed," + " %d after",
+                        aloneCost.rows(), besideCost.rows())
+                .isEqualTo(aloneCost.rows());
     }
 
     @Test
@@ -158,31 +170,56 @@ class VettingRunReadTests extends AbstractGatewayTest {
                 "examined " + prefix);
     }
 
+    /** What one read cost: statements prepared, and rows the driver handed back. */
+    private record Cost(int statements, int rows) {}
+
+    /** The counters the proxied datasource writes to, and the window that reads them. */
+    private static final class Meter {
+        private final AtomicInteger statements = new AtomicInteger();
+        private final AtomicInteger rows = new AtomicInteger();
+
+        Cost measure(Runnable read) {
+            statements.set(0);
+            rows.set(0);
+            read.run();
+            return new Cost(statements.get(), rows.get());
+        }
+    }
+
     /**
-     * A {@link JdbcClient} over the real datasource that counts the statements it prepares.
+     * A {@link JdbcClient} over the real datasource that counts the statements it prepares and the
+     * rows the driver hands back.
      *
-     * <p>The count is taken at the JDBC {@link Connection}, not inside {@code JdbcTemplate}: the
-     * template's internal funnel is a private overload, so an override of the public one is never
-     * called and the counter silently reports zero. Counting {@code prepareStatement} is
-     * independent of how Spring routes a call and cannot fail that way.
+     * <p>The count is taken at the JDBC layer, not inside {@code JdbcTemplate}: the template's
+     * internal funnel is a private overload, so an override of the public one is never called and
+     * the counter silently reports zero. Proxying {@link Connection}, {@link PreparedStatement} and
+     * {@link ResultSet} is independent of how Spring routes a call and cannot fail that way.
      */
-    private JdbcClient countingClient(AtomicInteger counter) {
-        DataSource counting = (DataSource) Proxy.newProxyInstance(
-                getClass().getClassLoader(), new Class<?>[] {DataSource.class}, (proxy, method, args) -> {
-                    Object result = invoke(method, dataSource, args);
-                    if (result instanceof Connection connection) {
-                        return Proxy.newProxyInstance(
-                                getClass().getClassLoader(), new Class<?>[] {Connection.class}, (c, m, a) -> {
-                                    if (m.getName().startsWith("prepare")
-                                            || m.getName().equals("createStatement")) {
-                                        counter.incrementAndGet();
-                                    }
-                                    return invoke(m, connection, a);
-                                });
-                    }
-                    return result;
-                });
-        return JdbcClient.create(counting);
+    private JdbcClient countingClient(Meter meter) {
+        return JdbcClient.create(proxy(DataSource.class, dataSource, meter));
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T proxy(Class<T> type, Object target, Meter meter) {
+        return (T) Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[] {type}, (p, method, args) -> {
+            if (type == Connection.class && method.getName().startsWith("prepare")) {
+                meter.statements.incrementAndGet();
+            }
+            Object result = invoke(method, target, args);
+            if (type == ResultSet.class && "next".equals(method.getName()) && Boolean.TRUE.equals(result)) {
+                meter.rows.incrementAndGet();
+            }
+            if (result instanceof Connection connection) {
+                return proxy(Connection.class, connection, meter);
+            }
+            if (result instanceof PreparedStatement statement) {
+                return proxy(PreparedStatement.class, statement, meter);
+            }
+            if (result instanceof ResultSet resultSet) {
+                return proxy(ResultSet.class, resultSet, meter);
+            }
+            return result;
+        });
     }
 
     private static Object invoke(Method method, Object target, Object[] args) throws Throwable {
