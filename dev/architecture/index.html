@@ -859,6 +859,8 @@
       
         
       
+        
+      
     
     
     
@@ -1227,6 +1229,34 @@
     
   
     Receiving lifecycle webhooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/read-only-forge-mirror/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The read-only forge mirror
   
 
     
@@ -1654,6 +1684,8 @@
       
         
       
+        
+      
     
     
     
@@ -1888,6 +1920,34 @@
     
   
     Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/api/mirror/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mirror
   
 
     
@@ -2647,7 +2707,16 @@ naive mirroring is insufficient.</p>
   signals; "request this upstream skill" button feeding the approval queue.
 - <strong>Audit ledger.</strong> Append-only record of every fetch (who, what, which SHA,
   when), every approval (who, what diff, which scan report), every recall.
-  Streams to the SIEM.</p>
+  Streams to the SIEM.
+- <strong>Read-only forge mirror</strong> (optional, off by default). Pushes a copy of what
+  the façade serves for one marketplace to a repository on an external code
+  host, so people can browse and search approved content there. It is the
+  visibility half of <a href="../reference/decisions/">ADR 0008</a> and is deliberately <em>not</em> a
+  component anything else depends on: it reads published storage and writes to
+  the host, and no approval, revocation, authorization or fetch outcome consults
+  it. A mirror that is down, stale or wrong changes nothing about what clients
+  receive — see
+  <a href="../guides/read-only-forge-mirror/">The read-only forge mirror</a>.</p>
 <h2 id="5-lifecycle-of-a-skill">5. Lifecycle of a skill<a class="headerlink" href="#5-lifecycle-of-a-skill" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>sequenceDiagram
     actor Dev as Developer
@@ -2932,7 +3001,13 @@ that would duplicate a sweep, and leader election is separate later work.</p>
   a gateway-set lifetime the holder cannot extend, no publication authority,
   and a session-derived mark on the ledger — the identity half of ADR 0008,
   which declined serving from an external forge and keeps the audited facade
-  canonical. The forge mirror for browsing is sequenced after it. <em>Implemented:</em> scoped admin roles on the web surface — global
+  canonical. The visibility half — an optional
+  <a href="../guides/read-only-forge-mirror/">read-only mirror</a> of approved content on an
+  external code host — is <em>implemented</em> in its first increment (GW_0169–GW_0172):
+  one marketplace behind a flag defaulting off, updated by reconciling against
+  what the façade serves, with a drift report. It is a browsing convenience and
+  never an enforcement path; auto-provisioning of the repository, more than one
+  marketplace and automatic drift repair are deferred. <em>Implemented:</em> scoped admin roles on the web surface — global
   admin, per-marketplace approver, read-only auditor; DB-managed audited
   grants with configuration-bootstrapped admins, deny-by-default once
   always enforced (GW_0068–GW_0071, GW_0138), and roles derived from the

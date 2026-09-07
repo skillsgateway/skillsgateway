@@ -653,6 +653,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-forge-mirror-outbound-and-outside-the-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The forge mirror — outbound, and outside the boundary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-not-a-boundary-yet" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -743,6 +754,8 @@
   
     
     
+      
+        
       
         
       
@@ -1176,6 +1189,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/read-only-forge-mirror/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The read-only forge mirror
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/exporting-the-audit-ledger/" class="md-nav__link">
         
   
@@ -1583,6 +1624,8 @@
       
         
       
+        
+      
     
     
     
@@ -1817,6 +1860,34 @@
     
   
     Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/mirror/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mirror
   
 
     
@@ -2182,6 +2253,17 @@
     <span class="md-ellipsis">
       
         The storage itself
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-forge-mirror-outbound-and-outside-the-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The forge mirror — outbound, and outside the boundary
       
     </span>
   </a>
@@ -2669,6 +2751,35 @@ anyone else's, and no way to detect one that already happened. What it does do
 is refuse to start against a store whose conditional writes are not faithful, so
 that its <em>own</em> concurrent writers cannot lose a transition. That is a different
 guarantee, and it is not a substitute for the policy.</p>
+<h2 id="the-forge-mirror-outbound-and-outside-the-boundary">The forge mirror — outbound, and outside the boundary<a class="headerlink" href="#the-forge-mirror-outbound-and-outside-the-boundary" title="Permanent link">&para;</a></h2>
+<p>The optional <a href="../../guides/read-only-forge-mirror/">read-only mirror</a> puts a copy
+of approved content on a host the gateway does not control. That copy is
+<strong>outside every boundary above</strong>, and it is easier to reason about once that is
+said plainly:</p>
+<ul>
+<li><strong>It is not a serving surface.</strong> Nothing the gateway does consults it. A
+  mirror that is down, stale, empty or tampered with does not change which
+  snapshot the facade serves, whether an approval succeeds, or whether a
+  revocation takes effect. Content that appears on it because somebody pushed
+  there directly is on the mirror, not on the facade, and the next
+  reconciliation removes it.</li>
+<li><strong>It is not on the ledger.</strong> A fetch from the mirror is a fetch from another
+  system: no identity, no SHA, no row. The inventory and blast-radius answers the
+  ledger gives are answers about the facade, and they stay complete only while
+  people install through the facade — which is why the guide says so loudly.</li>
+<li><strong>A revocation reaches it, but is not gated on it.</strong> The gateway's own state
+  is authoritative: the facade stops serving whether or not the mirror can be
+  updated, and a mirror that could not be updated is recorded and reportable
+  rather than blocking. A copy on somebody else's host can be raced by caches,
+  forks and clones in any case, so it was never what makes a revocation
+  effective.</li>
+</ul>
+<p>What crosses <em>outward</em> here is a standing write credential to another system and
+the approved content itself. Both are bounded the same way: the credential is
+configuration that never reaches a log line, a ledger entry or an API response,
+and the content is exactly what the facade already serves to authenticated
+readers — never quarantined content, because the only repository the mirror reads
+is the published one.</p>
 <h2 id="what-is-not-a-boundary-yet">What is not a boundary yet<a class="headerlink" href="#what-is-not-a-boundary-yet" title="Permanent link">&para;</a></h2>
 <p>A <strong>second recorded approval</strong> — a queue in which two identities each decide,
 rather than one deciding while the gateway checks who they are — is not

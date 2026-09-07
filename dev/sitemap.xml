@@ -93,6 +93,10 @@
          <lastmod>2026-09-07</lastmod>
     </url>
     <url>
+         <loc>https://skillsgateway.github.io/skillsgateway/dev/guides/read-only-forge-mirror/</loc>
+         <lastmod>2026-09-07</lastmod>
+    </url>
+    <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/guides/registering-a-marketplace/</loc>
          <lastmod>2026-09-07</lastmod>
     </url>
@@ -170,6 +174,10 @@
     </url>
     <url>
          <loc>https://skillsgateway.github.io/skillsgateway/dev/reference/api/marketplaces/</loc>
+         <lastmod>2026-09-07</lastmod>
+    </url>
+    <url>
+         <loc>https://skillsgateway.github.io/skillsgateway/dev/reference/api/mirror/</loc>
          <lastmod>2026-09-07</lastmod>
     </url>
     <url>
