@@ -505,3 +505,23 @@ CREATE TABLE connector_toggles (
 
 -- The chain's per-run lookup: every setting for one marketplace plus the globals.
 CREATE INDEX idx_connector_toggles_lookup ON connector_toggles (connector, marketplace_id);
+
+-- Publication stages a snapshot's objects in the published repository under an unadvertised
+-- refs/staging/<sha> and only then moves the served references (GW_0168). A process killed
+-- between the two leaves that reference behind, pinning objects nothing will ever serve. The
+-- retention sweep removes it, and this table is the clock the sweep needs: a git reference carries
+-- no portable creation time, and neither storage backend can be asked for one.
+--
+-- A row is written the first time a pass sees a staging reference and removed when the reference
+-- is gone, so "how long has this been here" is answerable as "at least since first_seen_at". That
+-- is an under-estimate of the reference's real age, which is the only safe direction to be wrong
+-- in: it can delay a sweep, never bring one forward into a publication that is still running.
+CREATE TABLE staging_ref_sightings (
+    id BIGSERIAL PRIMARY KEY,
+    -- The marketplace by name and not by id: the sweep enumerates published repositories off the
+    -- storage backend, so a repository whose marketplace row has gone still has to be swept.
+    marketplace TEXT NOT NULL CHECK (marketplace <> ''),
+    ref TEXT NOT NULL CHECK (ref <> ''),
+    first_seen_at TIMESTAMPTZ NOT NULL,
+    UNIQUE (marketplace, ref)
+);

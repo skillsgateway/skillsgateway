@@ -48,11 +48,13 @@ export function useMarketplaces() {
   });
 }
 
+export type RegisteredMarketplace = components["schemas"]["RegisteredMarketplace"];
+
 export function useRegisterMarketplace() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (request: { name: string; url: string }) =>
-      api<components["schemas"]["Marketplace"]>("/api/marketplaces", {
+      api<RegisteredMarketplace>("/api/marketplaces", {
         method: "POST",
         body: JSON.stringify(request),
       }),

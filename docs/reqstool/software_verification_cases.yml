@@ -1832,6 +1832,39 @@ cases:
       the connector's version
     revision: "0.1.0"
 
+  - id: SVC_GW_0166
+    requirement_ids: ["GW_0166"]
+    title: Registering a normalized-duplicate URL warns and still succeeds
+    verification: automated-test
+    description: |
+      GIVEN an upstream marketplace already registered with a clone URL
+      WHEN a second marketplace is registered with a URL that normalizes to the
+      same value — differing only by host case, a trailing slash, or a '.git'
+      suffix
+      THEN the registration succeeds with 201, the second marketplace is
+      created, and the response carries a warning naming the first
+      marketplace; a registration whose URL normalizes to no existing
+      marketplace's carries no warning
+    revision: "0.1.0"
+
+  - id: SVC_GW_0168
+    requirement_ids: ["GW_0168"]
+    title: An abandoned staging reference is swept and an in-flight publication is not
+    verification: automated-test
+    description: |
+      GIVEN a published repository, on either storage backend, holding a staging
+      reference for a commit that no live snapshot record names and that has been under
+      observation for longer than the configured bound, a second staging reference for
+      such a commit first observed only moments ago, a third staging reference for a
+      commit a live snapshot record does name, and the marketplace's served references
+      WHEN a retention compaction pass runs
+      THEN the first reference is removed and its commit is reachable from nothing, the
+      second reference survives and the publication that staged it still completes and
+      serves its content, the third reference survives however long it has been
+      observed, and the served references and the content an approved snapshot is
+      served from are untouched
+    revision: "0.1.0"
+
   - id: SVC_GW_0163
     requirement_ids: ["GW_0163"]
     title: The OIDC redirect URI follows forwarded headers only under a configured strategy

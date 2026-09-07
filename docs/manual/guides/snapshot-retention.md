@@ -143,12 +143,21 @@ $ curl -X POST localhost:8080/api/retention/compact
 whose quarantine ref could not be deleted is left in place for the next pass
 rather than removed from the table.
 
+The same pass also sweeps abandoned publication staging refs out of the
+**published** repositories — the leftovers of a gateway killed part-way through
+publishing a snapshot. They serve nothing, but they hold objects against
+collection. The counts above do not include them; the ledger entry
+`staging-refs-swept:count=<n>` does. Nothing is removed until it has been under
+observation for `staging-ref-max-age` (default `24h`), so a publication running
+right now is never disturbed. See
+[Snapshot retention](../reference/retention.md#abandoned-publication-staging-references).
+
 ## 6. Watch it
 
 Every retention action is in the append-only ledger with the acting identity:
-`retention-evaluated:…`, `snapshot-soft-deleted:<reason>`, `snapshot-restored`
-and `snapshot-purged`. Policy-driven deletions are attributed to
-`retention-policy` rather than to a person.
+`retention-evaluated:…`, `snapshot-soft-deleted:<reason>`, `snapshot-restored`,
+`snapshot-purged` and `staging-refs-swept:count=<n>`. Policy-driven deletions are
+attributed to `retention-policy` rather than to a person.
 
 Soft delete and restore also fire the `snapshot.soft_deleted` and
 `snapshot.restored` webhook events, so an inventory system can follow deletions

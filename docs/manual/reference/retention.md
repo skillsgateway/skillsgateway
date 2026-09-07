@@ -74,9 +74,11 @@ An `approved` snapshot is what the facade serves. It is never eligible:
   anything is written.
 
 The guard is in SQL, not only in Java, which is why the check holds for the
-policy pass and the manual endpoint alike. As a consequence retention never
-touches the **published** repository — the only ref compaction removes lives in
-quarantine.
+policy pass and the manual endpoint alike. No snapshot the facade serves is ever
+selected, and the only *snapshot* ref compaction removes lives in quarantine.
+The one thing retention does touch on the **published** side is the
+[abandoned staging reference sweep](#abandoned-publication-staging-references),
+which cannot reach a served ref at all.
 
 ### Revoked snapshots
 
@@ -137,7 +139,10 @@ The vetting `state` is untouched — a deleted snapshot was still *held* or
 snapshot whose `purge_after` has elapsed it deletes `refs/snapshots/<sha>` with
 JGit, clears `refs/quarantine/incoming` when it still points at that commit,
 deletes the row, and garbage-collects the quarantine repository **once per
-marketplace per pass** with the expiry set to now.
+marketplace per pass** with the expiry set to now. It then runs the
+[staging reference sweep](#abandoned-publication-staging-references) on the
+published side. The two halves are independent: a sweep that fails does not fail
+the pass, and the `{selected, acted}` counts are about snapshots only.
 
 !!! warning "Compaction is irreversible"
 
@@ -156,6 +161,43 @@ Edge cases worth knowing:
   nothing left to say what they were.
 - If garbage collection fails the pass still succeeds; the refs are already gone
   so the space stays reclaimable by the next collection.
+
+## Abandoned publication staging references
+
+Publication copies a snapshot's objects into the published repository under an
+unadvertised `refs/staging/<sha>` and only then moves the served refs, so a
+transfer that completes and a transition that is then refused leaves nothing on
+the wire. A gateway killed between the two leaves the staging ref behind. It
+serves nothing — the facade advertises `refs/heads/main` and `refs/snapshots/*`
+and nothing else — but it holds its objects against collection, so the
+repository carries a whole snapshot that will never be served.
+
+The compaction pass removes such a ref when **both** of these hold:
+
+| Condition | Why |
+| --- | --- |
+| No live snapshot row of that marketplace names the commit the ref points at. | Approval writes the approved row *before* it publishes, so a publication in flight always has one. |
+| The ref has been under observation for longer than `staging-ref-max-age`. | The ref listing and the database query are two reads taken at different instants. Without the bound, a publication starting between them presents a ref the query did not see. |
+
+The second condition is what makes this safe. Deleting a live publication's
+staging ref and collecting its objects would leave the marketplace published at
+a commit whose content is gone — a disk leak turned into data loss. The gateway
+records the first time each pass sees a staging ref, in a table of its own,
+because a ref carries no creation time either storage backend can be asked for;
+the age that yields is an *under-estimate*, which only ever delays a sweep.
+
+Served refs are unreachable from the sweep by construction: it lists
+`refs/staging/*` and nothing else. Objects still reachable from
+`refs/heads/main` or `refs/snapshots/*` survive the garbage collection that
+follows, which is what keeps served content served.
+
+!!! note "Set `staging-ref-max-age` above your slowest publication"
+
+    The two ways of being wrong are not symmetric. Too generous costs the disk
+    of an abandoned snapshot for a while longer — the cost that exists today
+    anyway. Too tight risks collecting a publication's objects mid-flight. The
+    default of `24h` is far past any plausible object transfer. Zero or negative
+    switches the sweep off entirely rather than making everything eligible.
 
 ## Endpoints
 
@@ -202,6 +244,7 @@ Every retention action lands in the append-only ledger with the acting identity:
 | `snapshot-soft-deleted:<reason>` | Each soft delete — reason `held-too-long`, `superseded`, or `manual`. |
 | `snapshot-restored` | Each restore. |
 | `snapshot-purged` | Each compaction removal, carrying the SHA. |
+| `staging-refs-swept:count=<n>` | Each compaction pass that removed abandoned staging refs from a marketplace's published repository. |
 
 Soft delete and restore also emit the `snapshot.soft_deleted` and
 `snapshot.restored` [lifecycle webhook events](../guides/lifecycle-webhooks.md).
