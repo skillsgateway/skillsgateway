@@ -2880,7 +2880,12 @@ the existing marketplace(s) and holds <strong>Register</strong> shut until <em>R
 ticked. This is a warning, not a block: the same upstream under a different name is
 a legitimate test setup, so the server still accepts it; the acknowledgement only
 makes the collision deliberate rather than silent.</p>
-<p>Submits <code>POST /api/marketplaces</code>; toasts <em>Marketplace '{name}' registered</em>.</p>
+<p>Submits <code>POST /api/marketplaces</code>; toasts <em>Marketplace '{name}' registered</em>. The
+server runs the identical duplicate-URL check independently against every
+registered marketplace, not only the list this dialog already had loaded, and
+returns what it found in the response's <code>warnings</code>; each one is shown as its
+own warning toast, so a collision this dialog's own check missed still reaches
+the operator.</p>
 <h3 id="marketplace-table">Marketplace table<a class="headerlink" href="#marketplace-table" title="Permanent link">&para;</a></h3>
 <p>One sortable row per marketplace:</p>
 <table>

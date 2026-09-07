@@ -782,6 +782,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#duplicate-upstream-urls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Duplicate upstream URLs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ingesting-the-first-snapshot" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2046,6 +2057,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#duplicate-upstream-urls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Duplicate upstream URLs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ingesting-the-first-snapshot" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2148,7 +2170,7 @@ selectable."</p>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"name":"acme","url":"https://github.com/acme/skills.git"}'</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"url"</span><span class="p">:</span><span class="s2">"https://github.com/acme/skills.git"</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"url"</span><span class="p">:</span><span class="s2">"https://github.com/acme/skills.git"</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"warnings"</span><span class="p">:[]}</span>
 </code></pre></div>
 <p>Responses:</p>
 <table>
@@ -2161,7 +2183,7 @@ selectable."</p>
 <tbody>
 <tr>
 <td>201</td>
-<td>Registered.</td>
+<td>Registered. <code>warnings</code> names any non-blocking issue with the registration (see below); empty when there is none.</td>
 </tr>
 <tr>
 <td>400</td>
@@ -2187,6 +2209,22 @@ no scheme at all, is rejected rather than passed through. This is what keeps
 <a href="../../reference/compatibility/">Compatibility and allowlists</a>.</p>
 <p><strong>The name</strong> doubles as a path segment on the facade (<code>/git/acme</code>), so it is
 constrained to a character set that cannot traverse directories.</p>
+<h2 id="duplicate-upstream-urls">Duplicate upstream URLs<a class="headerlink" href="#duplicate-upstream-urls" title="Permanent link">&para;</a></h2>
+<p>Tracking one upstream repository under two marketplace names is legitimate —
+it is how you test a marketplace before promoting it — so the gateway never
+refuses a repeated URL. It does warn: registering a clone URL that matches
+another registered upstream marketplace returns 201 with the new marketplace
+in <code>warnings</code>, naming every existing marketplace with the same URL, for
+example <code>"url already registered as acme"</code>.</p>
+<p>The comparison normalizes both URLs first — lowercased scheme and host, no
+trailing slash, and no <code>.git</code> suffix — so <code>https://github.com/acme/skills</code>,
+<code>https://GitHub.com/acme/skills/</code> and <code>https://github.com/acme/skills.git</code> are
+all the same registration as far as the warning is concerned. The repository
+path itself keeps its case, since most forges treat it as case-sensitive. The
+portal's own client-side check uses the identical rule and asks you to
+acknowledge the collision before it will submit the form; the warning in the
+response is what reaches every other caller, including a script calling the
+API directly.</p>
 <h2 id="ingesting-the-first-snapshot">Ingesting the first snapshot<a class="headerlink" href="#ingesting-the-first-snapshot" title="Permanent link">&para;</a></h2>
 <p>Registration captures nothing. Press <strong>Ingest</strong> on the marketplace card, or:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/marketplaces/acme/ingest

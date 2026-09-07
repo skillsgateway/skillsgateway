@@ -2906,7 +2906,7 @@ tips on the ledger. See
 <tbody>
 <tr>
 <td>201</td>
-<td>Registered; returns the marketplace.</td>
+<td>Registered; returns the marketplace plus <code>warnings</code> (see below).</td>
 </tr>
 <tr>
 <td>400</td>
@@ -2924,6 +2924,14 @@ tips on the ledger. See
 </table>
 <p>The 400 cases are trust-boundary rejections — see
 <a href="../../compatibility/">Compatibility and allowlists</a>.</p>
+<p><strong><code>warnings</code></strong> is a non-blocking, always-present array — empty when there is
+nothing to say. Today it carries at most one kind of entry: an upstream
+marketplace's clone URL matching another registered marketplace's, once both
+are normalized (lowercased scheme and host, no trailing slash, no <code>.git</code>
+suffix), reads <code>"url already registered as &lt;name&gt;"</code> for each match. Tracking
+one upstream under two names is a legitimate way to test a marketplace before
+promoting it, so this never refuses the registration — see <a href="../../../guides/registering-a-marketplace/#duplicate-upstream-urls">Registering a
+marketplace</a>.</p>
 <hr />
 <h2 id="get-marketplaces"><code>GET /marketplaces</code><a class="headerlink" href="#get-marketplaces" title="Permanent link">&para;</a></h2>
 <p>All marketplaces, each with its forge metadata and full snapshot list. This is
