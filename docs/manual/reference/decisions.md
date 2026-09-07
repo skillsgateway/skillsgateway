@@ -219,3 +219,27 @@ lives in twenty guarded `UPDATE … RETURNING *` statements rather than in
 transactions or locking, and those stay native SQL under any ORM — so JPA would
 take over only the part that was never the problem, at the cost of entities that
 cannot be records and a re-verification campaign at a trust boundary.
+
+### [ADR 0014 — Estate export: content and its attestations leave together; an import can only fill quarantine](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0014-estate-import-export.md)
+
+*Proposed, 2026-09-08.* Answers how an estate leaves a gateway, and on what
+terms one may enter. An export is **git bundles plus JSON and NDJSON in a
+directory**, readable by a plain git client and a text editor without a running
+gateway, in the same vocabulary the object-store backend already uses; content
+and attestation are one artefact by construction, because either half alone is
+worthless. One format, two selections — a marketplace to hand over, or the
+estate to archive. Secrets never leave: not tokens, and not the two HMAC keys
+that hide in `marketplaces.webhook_secret` and `webhook_subscribers.secret`.
+Revocations may never be omitted, because an omitted revocation reads as content
+that was never withdrawn. Verification inherits `StorageMigration`'s discipline —
+re-read both sides and compare, refuse rather than default to success — plus an
+offline mode that opens no database.
+
+The constraint that shapes the rest: **allow-shaped state never imports,
+deny-shaped state may.** An imported approval would be a way around the approval
+gate, so an approved snapshot imports as `held`, waivers and overrides and grants
+do not import at all, foreign verdicts are evidence rather than verdicts, and
+another instance's ledger is never grafted onto this one's. The consequence is
+that a round trip is lossy by design, which is why this ADR recommends building
+**export only** for now and leaving import to its own change — and why it says
+plainly that an export is not a backup.
