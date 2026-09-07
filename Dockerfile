@@ -45,6 +45,13 @@ COPY --from=runtime /app/skills-gateway-server.jar /app/skills-gateway-server.ja
 # SKILLSGATEWAY_DATADIR and mount a volume in real deployments.
 COPY --from=runtime --chown=65532:65532 /data /data
 ENV SKILLSGATEWAY_DATADIR=/data
+# JGit caches filesystem timestamp-resolution attributes under
+# $XDG_CONFIG_HOME/jgit/config, falling back to $HOME/.config/jgit when unset.
+# Neither HOME nor XDG_CONFIG_HOME is otherwise set for this user, so on a
+# read-only root filesystem JGit resolves a path it cannot create and logs a
+# caught (non-fatal) error on every fetch. Point it at the one writable mount
+# every deployment already provides (GW_0179).
+ENV XDG_CONFIG_HOME=/tmp/xdg-config
 
 WORKDIR /app
 USER nonroot

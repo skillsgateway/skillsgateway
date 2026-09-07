@@ -1414,6 +1414,14 @@ packaging rather than on the one that happens to ship.
 **Container storage.** The image sets `SKILLSGATEWAY_DATADIR=/data` — the
 relaxed-binding environment form of `skills-gateway.data-dir`.
 
+**JGit's own scratch.** The image sets `XDG_CONFIG_HOME=/tmp/xdg-config`, and
+the chart restates it in the Deployment (GW_0179 — The embedded git library's
+own scratch stays inside the writable temporary directory). JGit resolves a
+filesystem-timestamp-resolution cache file there the first time it touches a
+repository; left unset, it falls back to a home directory this user does not
+have under a read-only root filesystem, and fails — caught, not fatal, but
+logged — on every fetch.
+
 **Volume durability is a decision the chart makes you state.** There is no
 default: `persistence.mode` must be `existingClaim` (a PersistentVolumeClaim
 that already exists), `ephemeral` (an `emptyDir`, and everything on it is lost

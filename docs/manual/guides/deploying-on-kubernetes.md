@@ -275,6 +275,14 @@ filesystem; the chart mounts an `emptyDir` at `/tmp` so the runtime keeps
 somewhere to write. `podSecurityContext.fsGroup` is what makes the mounted data
 volume writable by that user.
 
+The embedded git library (JGit) needs to know about that scratch space too:
+it caches a filesystem-timestamp attribute in a user-level configuration file
+under `$XDG_CONFIG_HOME`, and with neither that variable nor `HOME` otherwise
+set, it would resolve to a home directory this user does not have on a sealed
+root filesystem — failing on every fetch with a caught (non-fatal) error that
+still drowns out real ones. The chart sets `XDG_CONFIG_HOME=/tmp/xdg-config`
+in the Deployment for exactly this reason.
+
 ## Storage options on serverless Kubernetes
 
 Serverless node pools — AWS Fargate and its equivalents — constrain storage

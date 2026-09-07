@@ -1341,3 +1341,12 @@ requirements:
     rationale: "Every other property of the mirror is asserted in the negative — a failure changes nothing, a revocation still takes effect, an outage is contained — and the cost of that safety is that divergence accumulates quietly. Something has to make it observable, or the mirror becomes a copy nobody knows the freshness of, which is how a stale forge copy ends up being trusted as if it were current. The comparison is stated against what the facade serves rather than against what the gateway last tried to push, because the question an operator actually has is whether the mirror shows people what the gateway is serving; a report derived from push history would answer a different question and would agree with itself even when the mirror had been changed underneath it. Reporting an unreachable mirror as a failed comparison rather than as agreement is the same fail-closed reasoning applied to the report itself: silence must never read as being in sync."
     categories: ["functional-suitability", "reliability"]
     revision: 0.1.0
+
+  - id: GW_0179
+    title: The embedded git library's own scratch stays inside the writable temporary directory
+    significance: shall
+    description: "The container image and the deployment chart shall point the embedded git library's own user-level configuration cache at a path under the writable temporary directory the read-only root filesystem posture already provides, rather than leaving it to fall back to a home directory no deployment makes writable."
+    rationale: "The embedded git library measures and caches a per-filesystem timestamp-resolution attribute the first time it touches a repository, writing it to a user-level configuration file it locates via an XDG environment variable, falling back to a home directory when that variable is unset. Neither the image nor the chart set it, and the image's user has no writable home directory under the read-only root filesystem the chart already enforces, so every fetch made the library try, fail, and log a caught error for a write nothing depends on — real errors got harder to see behind it, and the library never got the working cache the write was for. Pointing the variable at the temporary directory the read-only posture already carves out costs nothing the posture does not already provide."
+    categories: ["reliability", "maintainability"]
+    implementation: configuration
+    revision: 0.1.0

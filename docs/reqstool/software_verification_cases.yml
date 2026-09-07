@@ -1982,3 +1982,17 @@ cases:
       failed comparison rather than as agreement, and is refused to a caller who is not an
       administrator
     revision: "0.1.0"
+
+  - id: SVC_GW_0179
+    requirement_ids: ["GW_0179"]
+    title: The image and the chart point the embedded git library's cache at the writable scratch directory
+    verification: automated-test
+    description: |
+      GIVEN the container image and the deployment chart
+      WHEN the packaging test validates them
+      THEN the Dockerfile sets XDG_CONFIG_HOME to a path under /tmp and the rendered
+      Deployment carries the same environment variable, so the embedded git library
+      resolves its own configuration cache inside the writable temporary directory
+      instead of falling back to a home directory the read-only root filesystem does
+      not provide
+    revision: "0.1.0"
