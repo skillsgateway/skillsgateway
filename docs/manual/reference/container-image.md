@@ -27,8 +27,8 @@ before anything is published. That test runs on the runner's own architecture,
 the same jar in the same build but is not booted in CI.
 
 **Only a release publishes.** A push to `main`, the weekly scheduled rebuild
-and a manually dispatched run all build and smoke-test both architectures —
-proving the image works — but publish nothing: only the
+and a manually dispatched run all build the image and smoke-test it — proving it
+works — but publish nothing: only the
 [release workflow](../guides/releasing.md) ever reaches GHCR. The published
 tag namespace therefore holds released versions only; there is no per-commit
 or moving tag to track `main`.
@@ -44,16 +44,17 @@ any properly multi-arch image.
 Measured on the image this repository builds, so that a deployment can be sized
 from numbers rather than from expectations:
 
-| | |
-| --- | ---: |
-| Image, uncompressed | ~195 MB |
-| Image, compressed (what a pull transfers) | ~130 MB |
-| Application startup | ~3.6 s |
-| Resident memory, idle, under a 1 GiB limit | ~255 MB |
+| | `linux/amd64` | `linux/arm64` |
+| --- | ---: | ---: |
+| Image, uncompressed | 185 MB | 195 MB |
+| Image, compressed (what a pull transfers) | ~131 MB | ~130 MB |
+| Application startup | | 3.6 s |
+| Resident memory, idle, under a 1 GiB limit | | 255 MB |
 
 The image is roughly the distroless base (46 MB), the `jlink` runtime (79 MB)
 and the application jar (69 MB). The jar carries the built portal, so it does not
-shrink much.
+shrink much. Startup and memory were measured on `linux/arm64`, on real
+hardware; a figure taken under emulation would measure the emulator.
 
 The entrypoint sets `-XX:MaxRAMPercentage=75.0` on purpose. The JVM's default
 ceiling is a quarter of the container's limit; the heap that matters here is the

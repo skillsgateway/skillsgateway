@@ -30,8 +30,8 @@ deploys), against a real PostgreSQL.
 
 | | Native image (ADR 0012) | This image |
 | --- | ---: | ---: |
-| Image, compressed (pull) | 70.1 MB | ~130 MB |
-| Image, uncompressed | — | ~195 MB |
+| Image, compressed (pull) | 70.1 MB (amd64) | 131.2 MB (amd64) / 130.2 MB (arm64) |
+| Image, uncompressed | — | 185 MB (amd64) / 195 MB (arm64) |
 | Startup | ~0.3 s | 3.61 s to `Started`, ~5 s to healthy |
 | Resident memory, idle | 119 MB avg / 199 MB peak | 255 MB |
 
@@ -39,6 +39,11 @@ The compressed figure for the native image is the sum of the published
 `0.2.0-b2` manifest's layer sizes, read from GHCR. The image here is the base
 (46.1 MB), the `jlink` runtime (79.4 MB) and the jar (69.2 MB); the jar carries
 the built portal, so it does not shrink much.
+
+Both platforms were built locally from the same `Dockerfile`, the amd64 one
+under emulation — which is why only its *size* is quoted from that build.
+Startup and memory are the arm64 figures, taken on real hardware; ADR 0012
+already records an emulated measurement being discarded as invalid.
 
 **Against the chart's reservation.** `helm/skills-gateway/values.yaml` requests
 512 MiB and limits 1 GiB. 255 MB idle is half the request and a quarter of the
