@@ -201,3 +201,12 @@ gate.
 New architecture-level choices get a new numbered ADR in `docs/decisions/`,
 referenced from the [architecture document](../architecture.md), and an entry
 on this page.
+
+
+### [ADR 0012 — Native image as the release artifact: reassessment](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0012-native-image-as-the-release-artifact.md)
+
+*Proposed.* Whether a release ships a GraalVM native binary, a JVM jar, or both.
+Supplements ADR 0002, which stands until this is decided. Records three defects
+that are possible only on the native image, the mitigations that would contain
+them, and the measurements — per-replica memory above all — that nobody has taken
+and that would settle it either way.
