@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.TestPropertySource;
 
 /**
  * The default mode (GW_0097): a conflict is recorded and the approval proceeds.
@@ -28,13 +27,12 @@ import org.springframework.test.context.TestPropertySource;
  * gap is measurable before anyone decides to close it. That is the whole content of warn mode, and
  * it is asserted here rather than assumed.
  *
- * <p>No {@code TestPropertySource}: the point of the class is that this is what an operator gets
- * without configuring anything.
+ * <p>Nothing about four-eyes is configured here, and that is the point of the class: this is what
+ * an operator gets without configuring anything. The four principals it acts as are named for the
+ * whole family in {@link AbstractNamedAdminsTest}, because authorization is always enforced
+ * (GW_0138) and somebody has to hold the role — not because the mode is set.
  */
-@TestPropertySource(
-        // Authorization is always enforced (GW_0138), so this suite names the principal it acts as.
-        properties = {"skills-gateway.roles.admins=dana,ingrid,rachel,solo"})
-class FourEyesTests extends AbstractGatewayTest {
+class FourEyesTests extends AbstractNamedAdminsTest {
 
     @Autowired
     private FourEyesGate fourEyesGate;

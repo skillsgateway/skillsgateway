@@ -13,7 +13,6 @@ import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.TestPropertySource;
 
 /**
  * What the fetch facade puts on the wire, asserted as a stated set rather than as a consequence of
@@ -24,8 +23,13 @@ import org.springframework.test.context.TestPropertySource;
  * advertisement allowlist cannot silently over-restrict. The catalog-ref test is the exposure: the
  * catalog repository is served by the ordinary facade, its internal scaffolding refs live in it, and
  * nothing but a discarded prune result keeps them off the wire.
+ *
+ * <p>This suite used to declare {@code skills-gateway.catalog.name=catalog}, which is the value
+ * {@code SkillsGatewayProperties.Catalog} substitutes for an unset name. It configured nothing and
+ * cost a whole application context, so it is gone and the catalog is reached by the same default
+ * name it always had. Every assertion below is scoped to a marketplace this suite named itself, or
+ * to a reference it wrote itself, so the shared context is not something they can see.
  */
-@TestPropertySource(properties = {"skills-gateway.catalog.name=catalog"})
 class RefAdvertisementTests extends AbstractGatewayTest {
 
     @Autowired

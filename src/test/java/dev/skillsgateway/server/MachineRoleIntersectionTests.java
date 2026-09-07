@@ -19,16 +19,18 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
 
 /**
  * Effective authority is the <b>intersection</b> — the allowlist ∧ the credential's named scopes ∧
- * the principal's roles — never any two of them (GW_0130). Its own context, with role enforcement
- * genuinely enabled, so the one-sided cases below can actually be observed: with the flag at its
- * default of off, every {@code require*} passes and the role half of the intersection is invisible.
+ * the principal's roles — never any two of them (GW_0130). The one-sided cases below are observable
+ * because authorization is always enforced (GW_0138): each of them names a principal of its own
+ * that holds exactly one half of the intersection, so the half it lacks is what refuses it.
+ *
+ * <p>The grantor it acts as, {@code owner}, is named for the whole family in {@link
+ * AbstractNamedAdminsTest}; the principals under test are generated per test and are deliberately
+ * not administrators.
  */
-@TestPropertySource(properties = {"skills-gateway.roles.admins=owner"})
-class MachineRoleIntersectionTests extends AbstractGatewayTest {
+class MachineRoleIntersectionTests extends AbstractNamedAdminsTest {
 
     @Autowired
     private RoleService roleService;
