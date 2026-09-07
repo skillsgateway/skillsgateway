@@ -23,7 +23,7 @@ flowchart TD
 
     subgraph C["Vetting chain — ordered, all connectors run"]
         direction TB
-        C1["secret-scan (order 100)"] --> C2["prompt-injection (order 200)"] --> C3["license-scan (order 300)"]
+        C1["secret-scan (order 100)"] --> C2["prompt-injection (order 200)"] --> C3["license-scan (order 300)"] --> C4["skill-conformance (order 400)"]
     end
 
     C --> A["Aggregate verdicts<br/>clear iff every verdict is pass or warn"]
@@ -224,7 +224,8 @@ rather than merely observable in it.
 
 ## The built-in connectors
 
-All three connectors ship in the gateway and run in every chain.
+All four connectors ship in the gateway and run in every chain. The first three ask
+whether the content is dangerous; the fourth asks whether it is well formed.
 
 ### `secret-scan`
 
@@ -291,6 +292,57 @@ detection is readable per snapshot at
     instructions needs an LLM review connector, which the gateway does not ship
     but an operator can add as an [external connector](#external-connectors).
 
+### `skill-conformance`
+
+Validates every `SKILL.md` under a plugin's `skills/` directory against a
+**vendored, dated** copy of the [Agent Skills specification](https://agentskills.io/specification).
+This is the one connector that answers a question about correctness rather than
+danger: whether the skill carries the frontmatter an agent needs to load and
+select it.
+
+| Rule | What it means | Blocks |
+| --- | --- | --- |
+| `skill-frontmatter-missing` | The file does not open with a `---` frontmatter block | only under enforcement |
+| `skill-frontmatter-malformed` | The block is never closed, is not valid YAML, or is not a mapping | only under enforcement |
+| `skill-field-missing` | A required field — `name`, `description` — is absent | only under enforcement |
+| `skill-field-invalid` | A field is present and breaks its constraint: wrong type, over its length limit, a `name` that is not lowercase or does not match its directory | only under enforcement |
+| `skill-not-scanned` | The `SKILL.md` was over the size limit or not valid UTF-8, so conformance could not be checked | only under enforcement |
+| `skill-field-unknown` | A frontmatter field the pinned specification does not define | never |
+
+**Advisory by default.** With
+[`skills-gateway.vetting.conformance.enforce`](../reference/configuration.md#vetting)
+at its default `false`, every defect above is a `MEDIUM` finding: the reviewer
+sees it, and nothing is blocked. A verdict covers a whole snapshot, so a
+blocking default would let one malformed skill hold up every other skill beside
+it — and a formatting defect is not what the gateway's blocking states are for.
+Set the property to `true` and the same defects become `HIGH`, blocking and
+waivable like any other finding.
+
+`skill-field-unknown` stays informational under both postures. The pinned
+specification is a snapshot of a document that still moves, and the
+specification defines a `metadata` mapping precisely so clients can carry
+properties it has no opinion about.
+
+**The specification is pinned, not fetched.** The version in force is
+`agentskills-2026-08-04`, transcribed into
+`src/main/resources/vetting/agentskills-2026-08-04.json` and shipped inside the
+gateway. Nothing is retrieved over the network while vetting: a chain run has to
+be reproducible from the release alone, and
+[continuous re-vetting](../guides/re-vetting.md) has to be able to say whether a
+changed answer about approved content came from the content or from the rules.
+The connector's recorded version names the pin, a digest of its constraint table
+and the posture in force — `skill-conformance@agentskills-2026-08-04+schema-2ae36a+advisory`
+— so a specification bump is visible in every run's chain identity.
+
+!!! note "Upstream publishes no version number"
+
+    The Agent Skills specification has no tags, no version field and no
+    changelog. The version the gateway records is therefore *its own* dated pin:
+    the date of the upstream commit the constraint table was transcribed from.
+    Provenance for the current pin, and the two places it deliberately follows
+    the upstream reference validator rather than the prose, are recorded in
+    `src/main/resources/vetting/README.md`.
+
 ## External connectors
 
 An operator can extend the chain with their own connectors — an LLM reviewer, a
@@ -316,9 +368,16 @@ resolved.
 
 A file larger than the configured size limit, or one that is not valid UTF-8, is
 not silently skipped: the connector records an informational
-`file-not-scanned` finding naming the path. Informational findings do not change
-the verdict, but they are visible, so "the scanner did not look at this" is
-never invisible.
+`file-not-scanned` finding naming the path — `skill-not-scanned` for
+`skill-conformance`, which reads only `SKILL.md` files. Informational findings do
+not change the verdict, but they are visible, so "the scanner did not look at
+this" is never invisible.
+
+The one exception is deliberate: under
+[conformance enforcement](../reference/configuration.md#vetting)
+`skill-not-scanned` blocks rather than informs, because an operator who has made
+conformance a publishing requirement must not have "we could not check" read as
+"it conformed".
 
 ## What lands in the ledger
 

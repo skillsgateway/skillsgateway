@@ -471,6 +471,16 @@ skills-gateway:
       # SPDX ids whose detection is a blocking finding. Checked before the
       # allow list: a license on both is reported as banned.
       banned: [AGPL-3.0]
+
+    # The posture of the built-in skill-conformance connector, which validates
+    # every SKILL.md against the Agent Skills specification vendored in the
+    # gateway. Advisory by default: defects are recorded and shown to the
+    # reviewer, and block nothing.
+    conformance:
+      # true makes every conformance defect a blocking finding, waivable like
+      # any other. A verdict covers a whole snapshot, so one malformed skill
+      # then holds up every other skill in the marketplace.
+      enforce: false
 ```
 
 | Property | Type | Default | Notes |
@@ -483,6 +493,7 @@ skills-gateway:
 | `skills-gateway.vetting.minimum-release-age` | duration | `0s` | How long the gateway must have held a commit before it may be approved. `0` disables the gate. |
 | `skills-gateway.vetting.license.allowed` | string list | empty | SPDX ids, case-insensitive. Empty means no allow list is enforced. |
 | `skills-gateway.vetting.license.banned` | string list | empty | SPDX ids, case-insensitive. Evaluated before the allow list. |
+| `skills-gateway.vetting.conformance.enforce` | boolean | `false` | Whether SKILL.md conformance defects block approval instead of warning. |
 
 ### Minimum release age
 
@@ -528,6 +539,22 @@ someone reviews.
     switch would buy an estate of blocked snapshots with no findings to explain
     them. To get past a connector that is wrong about a snapshot, waive the
     findings it raised — scoped, justified and expiring, and on the record.
+
+!!! note "Conformance enforcement is a decision, not a default"
+
+    `conformance.enforce` is `false` out of the box, and an upgrade therefore
+    blocks nothing: the `skill-conformance` connector records every departure
+    from the pinned Agent Skills specification as a warning the reviewer sees.
+    Turning it on makes those same departures blocking — a snapshot with one
+    malformed `SKILL.md` then needs a waiver per finding before any of its
+    skills can be published, and a `SKILL.md` too large to read blocks too,
+    because under enforcement "we could not check" must not read as "it
+    conformed". Watch the advisory findings for a cycle first; they are exactly
+    the set that would block.
+
+    Like the license lists, the posture is stamped into the connector's recorded
+    version, so every run names the posture it ran under. Changing it is a
+    deploy, and a re-vet turns the new posture into fresh evidence.
 
 !!! warning "A shortened timeout silently converts slow connectors into blockers"
 
@@ -580,7 +607,7 @@ back a normalized `{state, reportUrl, findings[]}` where `state` is one of
 
 | Property | Type | Default | Notes |
 | --- | --- | --- | --- |
-| `…external[n].name` | string | — | Required, unique; must not be a built-in (`secret-scan`, `prompt-injection`, `license-scan`). |
+| `…external[n].name` | string | — | Required, unique; must not be a built-in (`secret-scan`, `prompt-injection`, `license-scan`, `skill-conformance`). |
 | `…external[n].url` | url | — | Required; `http` or `https` only. |
 | `…external[n].order` | integer | `1000` | Chain position; ties broken by name. Built-ins start at `100`. |
 | `…external[n].version` | string | `1` | Stamped into the chain identity (GW_0049). Bump when the external rules change. |

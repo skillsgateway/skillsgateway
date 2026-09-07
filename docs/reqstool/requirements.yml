@@ -1262,6 +1262,14 @@ requirements:
     categories: ["performance-efficiency", "security"]
     revision: 0.1.0
 
+  - id: GW_0167
+    title: SKILL.md conformance against a pinned Agent Skills specification
+    significance: shall
+    description: "The system shall validate every skill's SKILL.md in a quarantined snapshot against an Agent Skills specification pinned in the gateway's own distribution, reporting each departure from it — an absent or unreadable frontmatter block, a missing required field, a field that violates its constraint, and a field the pinned specification does not define — as a vetting finding on its own stable rule identifier, located at the file it was found in. The system shall record the pinned specification's version as the connector's version on every run it takes part in, and shall never retrieve the specification over the network while vetting. The system shall treat conformance findings as advisory by default, and as blocking only when an operator has configured enforcement."
+    rationale: "The chain's existing connectors all ask whether content is dangerous; none asks whether it is well formed, so a skill that no agent can load is served without comment and the first person to discover it is whoever installed the marketplace. A conformance defect is also the one thing a reviewer can act on without judgement — a named missing field is a fact the publisher can fix, where a heuristic scanner's objection is a probability — so producing it improves the quality of every rejection the gateway issues. Pinning the specification inside the distribution rather than fetching it is what keeps a chain run reproducible: continuous re-vetting exists to ask whether a changed answer about approved content came from the content or from the rules, and a rule set that can change between two runs makes that question unanswerable while also placing a remote document inside the approval gate. Recording the pinned version as the connector version is what makes a specification bump attributable in exactly the way a rule change in any other connector is. Defaulting to advisory is what makes the connector safe to upgrade into: a verdict covers a whole snapshot, so a single malformed skill would otherwise block every other skill beside it, and blocking on a formatting defect would devalue the blocking states the gateway reserves for content it believes is unsafe."
+    categories: ["functional-suitability", "maintainability"]
+    revision: 0.1.0
+
   - id: GW_0166
     title: Warning on a duplicate upstream URL at registration
     significance: shall

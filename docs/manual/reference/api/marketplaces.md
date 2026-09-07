@@ -437,7 +437,7 @@ is described in [Vetting — the connector chain](../../concepts/vetting.md).
 ## Connector enable/disable
 
 An administrator can switch a built-in connector (secret-scan, prompt-injection,
-license-scan) off or on, globally or for one marketplace. Both endpoints are
+license-scan, skill-conformance) off or on, globally or for one marketplace. Both endpoints are
 **admin-only** — the switch that governs the vetting chain, and even the
 visibility of its settings, are not shown to marketplace-scoped approvers.
 
