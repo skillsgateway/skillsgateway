@@ -1262,6 +1262,14 @@ requirements:
     categories: ["performance-efficiency", "security"]
     revision: 0.1.0
 
+  - id: GW_0163
+    title: Proxy-reported scheme and host are honoured only when configured, identically on every packaging
+    significance: shall
+    description: "The system shall build the URLs it presents to the outside world — the OIDC redirect URI among them — from the scheme, host and port a proxy reports in forwarded headers only when an operator has configured it to, by one setting that carries the same meaning on the JVM and on the native image; shall by default build them from the request as the container itself sees it; and shall let an operator state the OIDC redirect URI absolutely, by environment, in the same form as the other identity-provider settings."
+    rationale: "Every real deployment terminates TLS in front of the container, so the request the gateway sees says http on its own port while the identity provider was registered with https on the public host; unless the gateway can be told what the outside world sees, every login fails on a redirect-URI mismatch. Trusting forwarded headers is a security decision — the gateway cannot tell a proxy's header from a client's, and a client that reaches the listener directly could name any scheme or host — so it stays with the operator and is off by default. Carrying the same meaning on every packaging matters because the native image evaluates bean conditions when it is built: a setting that works on the JVM jar and is silently inert on the released image is a documented remedy that does not work, failing with an error that points at the identity provider rather than at the gateway. The absolute redirect URI is the escape hatch that needs no header trust at all."
+    categories: ["security", "flexibility"]
+    revision: 0.1.0
+
   - id: GW_0164
     title: The resolved closure is recorded as an immutable domain object of the snapshot
     significance: shall

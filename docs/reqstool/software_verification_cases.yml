@@ -1814,6 +1814,22 @@ cases:
       bound is still served in full on every walk
     revision: "0.1.0"
 
+  - id: SVC_GW_0163
+    requirement_ids: ["GW_0163"]
+    title: The OIDC redirect URI follows forwarded headers only under a configured strategy
+    verification: automated-test
+    description: |
+      GIVEN a gateway whose OIDC redirect URI is the shipped template and whose
+      forwarded-header strategy is unset, set to framework and set to native in turn, and
+      a fourth gateway whose redirect URI is supplied absolutely by environment
+      WHEN each is asked to start an OIDC login by a request carrying X-Forwarded-Proto: https
+      and an X-Forwarded-Host naming the public host
+      THEN the unset gateway redirects with a redirect URI naming http and its own host and
+      port, the framework and native gateways redirect with one naming https and the
+      forwarded host, exactly one forwarded-header filter is registered under framework, and
+      the fourth redirects with the supplied URI regardless of the headers
+    revision: "0.1.0"
+
   - id: SVC_GW_0164
     requirement_ids: ["GW_0164"]
     title: The resolved closure is recorded with the snapshot and queryable
