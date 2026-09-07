@@ -120,14 +120,16 @@ HTTP surface *promises*.
 
 !!! note "What this promise does not cover"
 
-    It covers `/api/**`. It does **not** currently extend to the
-    `skills-gateway.*` configuration surface, the Helm chart's values, the
-    declarative estate schema, or the
-    [lifecycle webhook payloads](../guides/lifecycle-webhooks.md) — those appear
-    nowhere in the OpenAPI document, so the diff below cannot see them, however
-    hard a renamed field there breaks a receiver. Whether those should carry the
-    same additive obligation — and what would gate it — is open in
-    [#121](https://github.com/skillsgateway/skillsgateway/issues/121).
+    It covers `/api/**` **and the lifecycle webhook deliveries**. It does **not**
+    currently extend to the `skills-gateway.*` configuration surface, the Helm
+    chart's values, or the declarative estate schema — those appear nowhere in
+    the OpenAPI document, so the diff below cannot see them, however hard a
+    renamed key there breaks a checked-in estate file. Whether those should carry
+    the same additive obligation — and what would gate it — is open in
+    [#121](https://github.com/skillsgateway/skillsgateway/issues/121). Their blast
+    radius is at least different in kind: a renamed configuration key fails at
+    startup, loudly, for the one operator who owns the file, rather than silently
+    in somebody's receiver.
 
     One consequence is live today: `skills-gateway.roles.enabled` was removed,
     and a deployment that still sets it is **refused at startup** rather than
@@ -142,11 +144,28 @@ renamed. A breaking change is allowed — it is not free. It moves the path pref
 **and** ships as a major release, so a client that pinned neither is never
 surprised.
 
+**The same promise covers what the gateway *sends*.** The
+[lifecycle webhook deliveries](../guides/lifecycle-webhooks.md) — the set of
+events, each delivery's body fields and its `X-Skills-Gateway-*` transport
+headers — are described in the same document, under its top-level `webhooks`
+object, generated from the registry and the types the dispatcher uses. They only
+grow too.
+
 | Change | Additive? |
 | --- | --- |
 | A new endpoint, a new optional field, a new enum value | **Yes.** Ships as a minor. |
 | `/api/v2/...` added while `/api/v1/...` remains | **Yes** — nothing was taken away. Deprecate first, remove in a later major. |
 | Removing or renaming an endpoint or field, making an optional field required, narrowing a type | **No.** New prefix, and a major. |
+| A new lifecycle event | **Yes.** A subscriber's filter is exact-match, so nothing starts receiving it uninvited. |
+| A new field in a delivery body — added **optional** | **Yes.** Receivers must ignore keys they do not recognise. |
+| Removing or renaming an event, a delivery body field, or a transport header | **No.** |
+
+!!! note "A payload field added later is added optional"
+
+    Not a concession to the diff tool — an honest statement. A receiver cannot
+    rely on a field that only exists from release *N* onward, and every field the
+    schema marks required is one the gateway populates on every delivery, without
+    exception.
 
 !!! note "The prefix does not exist yet"
 
@@ -171,6 +190,19 @@ removing a response field, and removing an optional response header. Both are
 warnings by default unless the schema marks them required, and no response
 schema here does — so the most ordinary breaking change there is used to pass a
 gate that fails on errors only.
+
+The webhook deliveries reach the same gate through the same document, and are
+caught from two directions:
+
+| Read from | What only it catches |
+| --- | --- |
+| The `webhooks` entries | An event **disappearing**, and the transport headers. Each entry is also the human-readable per-event contract a receiver author reads. |
+| The events endpoint's `200` response | A body field **removed, renamed or retyped**. The bodies hang off a response there, which is what makes such a change an error: a `webhooks` entry describes a request the gateway *sends*, and on the request side a removed field is only a warning — the single most likely break, rated as advice. |
+
+What it still does not catch: that the *meaning* of a field changed, that an
+enum-like `state` string gained a value a receiver will not understand, or that
+the signature scheme changed — the document constrains the signature header's
+shape, not how it is computed.
 
 Deliberately breaking the contract takes two visible acts: the
 `⚠️ BREAKING CONTRACT` label on the pull request, and the break declared in its

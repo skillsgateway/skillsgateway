@@ -1,19 +1,34 @@
+> **Re-validated against `main` at implementation time (2026-09-08).** Five facts
+> moved since this was written; each is corrected in place below and in design.md,
+> and the route is unchanged. In summary: the requirement ids GW_0145/GW_0146 were
+> taken by another change and became **GW_0181/GW_0182**; `WebhookEvent.ALL` now
+> holds **nine** events, not eight; a **second** payload shape
+> (`ApprovalPendingPayload`, GW_0159/GW_0160) exists and already carries
+> `requiredMode = REQUIRED`; `.oasdiff.yaml` with a `severity-levels` file now
+> exists on `main` (#216), which retires one of design.md's rejected alternatives
+> as written; and **two pre-release tags now exist** (`0.2.0-b1`, `0.2.0-b2`), so
+> the premise "no tags and no releases" is no longer literally true — see
+> design.md, "The events endpoint changes shape rather than gaining a sibling".
+
 ## Why
 
 The REST half of issue #121 shipped (archived as
 `2026-08-24-add-api-compatibility-gates`): the compatibility promise is written
 down, the published `openapi.json` is checked against the document the build
 serves, and a pull request whose contract diff is breaking is refused unless it
-is declared. The webhook event payload surface got none of that. Eight lifecycle
+is declared. The webhook event payload surface got none of that. Nine lifecycle
 events ship a signed JSON body to operator-registered receivers, and that body is
 described **nowhere outside the Java record that produces it** —
-`WebhookService.EventPayload`. Renaming `sha` to `commit` breaks every receiver
+`WebhookService.EventPayload` and `WebhookService.ApprovalPendingPayload`. Renaming `sha` to `commit` breaks every receiver
 exactly as hard as renaming a REST field, and passes every gate this repository
 runs, because there is no document to diff.
 
-Now, for the same reason the REST half landed now: there are no tags and no
-releases, so the payload has no deployed receivers and breaking it costs nothing
-today. `docs/manual/reference/compatibility.md` promises additivity for `/api/**`
+Now, for the same reason the REST half landed now: the only tags are two
+pre-releases on the `0.x` line (`0.2.0-b1`, `0.2.0-b2`), both excluded from
+`/releases/latest`, on a line the releasing guide says does not declare API
+stability — so the payload has no deployed receivers and breaking it is still
+about as cheap as it will ever be.
+`docs/manual/reference/compatibility.md` promises additivity for `/api/**`
 and says nothing at all about webhooks.
 
 ## What Changes
@@ -22,11 +37,14 @@ and says nothing at all about webhooks.
   OpenAPI document (already `openapi: 3.1.0`, springdoc 3.1.0) gains a top-level
   `webhooks` object with one entry per name in `WebhookEvent.ALL`, each describing
   the delivery the gateway sends: the four `X-Skills-Gateway-*` headers, the
-  `application/json` body, and `EventPayload` as a component schema. The entries
+  `application/json` body, and the payload that event actually carries
+  (`ApprovalPendingPayload` for `snapshot.approval_pending`, `EventPayload` for
+  the other eight) as a component schema. The entries
   are generated from `WebhookEvent.ALL` by an `OpenApiCustomizer`, so an event
   added to the registry cannot fail to appear in the contract.
 - **`GET /api/webhooks/events` returns the payload shape, not only the event
-  names.** It becomes a typed record referencing `EventPayload` instead of a bare
+  names.** It becomes a typed record — `EventRegistry`: the event names, plus one
+  worked example of each of the two delivery bodies — instead of a bare
   `List<String>`. This is a better endpoint — a subscriber discovers what it will
   receive, not just what it may filter on — and it is also what gives the gate its
   correct polarity (design — Decisions: oasdiff classifies a removed *response*
@@ -36,13 +54,19 @@ and says nothing at all about webhooks.
   Impact.
 - **The payload's fields are marked required** in the schema, because they always
   are. That is what turns a removed field into `response-required-property-removed`
-  (an oasdiff error) rather than a warning the gate ignores.
+  (an oasdiff error) rather than a warning. `ApprovalPendingPayload` already does
+  this; `EventPayload` did not. Since #216 the repository also raises
+  `response-optional-property-removed` to an error, so this is now belt *and*
+  braces rather than the only thing standing between a renamed field and a green
+  gate — but it is the half that makes the published document honest.
 - **The existing gate covers all of it, unchanged.** No new workflow, no new
   format, no new dependency, no new CLI. `api-contract.yml` already diffs
   `src/main/frontend/openapi.json` against the fork point with oasdiff and already
   demands the `⚠️ BREAKING CONTRACT` label plus a breaking PR title. Verified
-  empirically that oasdiff v1.29.1 — the version the pinned action runs —
-  traverses the 3.1 `webhooks` object; see design.md.
+  empirically that oasdiff v1.29.1 — the version the pinned action then ran —
+  traverses the 3.1 `webhooks` object; see design.md. (The action has since moved
+  to v0.1.14 on `main`; the traversal result is a property of the oasdiff binary,
+  not of the action wrapper.)
 - **The promise is written down.** `docs/manual/reference/compatibility.md` extends
   "The API contract" to the payload surface; `docs/manual/guides/lifecycle-webhooks.md`
   points receivers at the published shape and states the additive rule they may
@@ -71,26 +95,24 @@ None.
 
 ### Modified Capabilities
 
-- `lifecycle-webhooks`: two new requirements — the contract document describes
-  every lifecycle event, its payload and its transport headers, generated from the
-  same registry that produces the deliveries (GW_0145); and a breaking change to
-  that payload surface is detected on a pull request and refused unless declared,
-  on the same terms as the REST surface (GW_0146).
+- `lifecycle-webhooks`: two new requirements — GW_0181 — The lifecycle event
+  deliveries are part of the published contract document; and GW_0182 — Breaking
+  changes to the lifecycle event payload surface are detected and declared.
 
 ## Impact
 
 - **Requirements**: `docs/reqstool/requirements.yml` and
-  `software_verification_cases.yml` gain GW_0145/GW_0146 and SVC_GW_0145/SVC_GW_0146.
-  Ids are deliberately **not** contiguous with GW_0131, the highest currently
-  committed: two changes in flight on other branches are claiming GW_0132–GW_0137
-  (`fix-discarded-ref-update-results`) and GW_0138 onward
-  (`remove-roles-enabled-toggle`). Starting at GW_0145 leaves those room and
-  avoids a merge collision in the SSOT, which is the one file where a collision is
-  silent. GW_0132–GW_0144 stay unallocated by this change.
+  `software_verification_cases.yml` gain GW_0181/GW_0182 and
+  SVC_GW_0181/SVC_GW_0182. GW_0145/GW_0146 as originally proposed were taken while
+  this sat unmerged — they are now external-vetting-connector requirements on
+  `main`, which is exactly the silent SSOT collision the original id gap was meant
+  to avoid. GW_0172 is the highest committed; GW_0173–GW_0180 are left to changes
+  in flight.
 - **Java**: `WebhookService.EventPayload` gains `requiredMode = REQUIRED` on its
-  components; a new `OpenApiCustomizer` (alongside the existing `documentVersion`
-  bean in `api/OpenAPI.java`) builds the `webhooks` map from `WebhookEvent.ALL`;
-  `WebhookController.events` returns a new record instead of `List<String>`.
+  seven components; a new `OpenApiCustomizer` (alongside the existing
+  `documentVersion` bean in `api/OpenAPI.java`) builds the `webhooks` map from
+  `WebhookEvent.ALL`; `WebhookController.events` returns the new `EventRegistry`
+  record instead of `List<String>`.
 - **API**: `GET /api/webhooks/events` response shape changes from a JSON array to
   an object. On the wire this **is** a breaking REST change, so this PR carries
   the `⚠️ BREAKING CONTRACT` label and a breaking title — the gate it is extending
@@ -100,9 +122,13 @@ None.
 - **Frontend**: `src/main/frontend/openapi.json` and `src/api/types.gen.ts`
   regenerated; any portal caller of the events endpoint and its MSW mock updated.
 - **Tests**: `OpenApiContractTests` gains assertions that every `WebhookEvent.ALL`
-  entry appears under `webhooks`, that `EventPayload` is a component schema with
-  its fields required, and that the headers are described — each with a negative
-  counterpart in the style of `theStalenessCheckCanActuallyFail`.
+  entry appears under `webhooks` and nothing else does, that each entry references
+  the body its event actually carries, that both payloads are component schemas
+  with their fields required, that the headers are described, and that a really
+  emitted delivery carries every field the document promises — each with a
+  negative counterpart in the style of `theStalenessCheckCanActuallyFail`. Two
+  existing SVC tests in `WebhookTests` read the events endpoint as a bare array
+  and move to `$.events`; their assertions are unchanged.
 - **CI**: no workflow change. `api-contract.yml` is unmodified; the point of the
   design is that it already does the work.
 - **Docs**: `docs/manual/reference/compatibility.md`,

@@ -2156,3 +2156,37 @@ cases:
       and deleted, records the second as a repair of divergence naming the same, records
       nothing at all for the third, and carries the mirror credential in none of them
     revision: "0.1.0"
+  - id: SVC_GW_0181
+    requirement_ids: ["GW_0181"]
+    title: The served document describes every lifecycle event, its body and its headers
+    verification: automated-test
+    description: |
+      GIVEN the contract document the running application serves
+      WHEN it is read against the event registry, the delivery body types and the header
+      constants the dispatcher sends with
+      THEN the document describes exactly the subscribable lifecycle events and no other,
+      the audit export event among the ones absent
+      AND each described delivery references the body type that event actually carries,
+      present as a schema whose always-present fields are marked as always present
+      AND each described delivery names all four transport headers, taken from the same
+      constants the dispatcher sets rather than spelled again
+      AND a serialized delivery carries every field the document marks always present
+      AND each of those checks is shown to fail against a document from which the event,
+      the field, the header or the body reference has been removed
+    revision: "0.1.0"
+
+  - id: SVC_GW_0182
+    requirement_ids: ["GW_0182"]
+    title: A removed delivery field or event is refused unless the change declares the break
+    verification: automated-test
+    description: |
+      GIVEN the contract comparison the change process runs on every proposed change
+      WHEN the proposed contract removes a lifecycle event, a delivery body field or a
+      transport header
+      THEN the comparison classifies it as breaking rather than advisory, because the
+      delivery bodies are reachable from the part of the document compared with
+      response-side severities
+      AND the change is refused unless it is both marked as a deliberate break and
+      declared as breaking by the commit that ships it, on the same terms and through the
+      same configuration as the rest of the contract
+    revision: "0.1.0"

@@ -4,6 +4,13 @@ See proposal.md — Why. Issue #121; the REST half is archived as
 `2026-08-24-add-api-compatibility-gates`, whose design.md this one deliberately
 mirrors.
 
+> **Re-validated against `main` on 2026-09-08, before implementing.** The route
+> and every measured oasdiff result below stand. Five facts moved; each is marked
+> **[MOVED]** inline where it appears, and the two that change an argument rather
+> than a number are argued out where they land. Nothing here was rewritten to
+> match the implementation — where the implementation went further than the design
+> said, it says so.
+
 Facts established before designing, each checked against the tree rather than
 recalled:
 
@@ -12,6 +19,14 @@ recalled:
   `snapshotId` (`long`), `sha`, `state`, `actor`. All eight names in
   `WebhookEvent.ALL` ship this identical shape; only `event` varies. It already
   carries springdoc `@Schema` annotations.
+  **[MOVED]** `WebhookEvent.ALL` now holds **nine** names — `snapshot.approval_pending`
+  (GW_0159) was added — and that ninth one ships a *second* record,
+  `WebhookService.ApprovalPendingPayload`: `EventPayload`'s seven fields in the same
+  names and order, plus a `vetting` summary. It and `VettingSummary` already carry
+  `requiredMode = REQUIRED` on every component, added with a comment naming #121.
+  The consequence for this design is one line of it: the `webhooks` entries map an
+  event to *its own* payload rather than all to one, and the events response has to
+  reach both so both get response severities. Nothing else changes.
 - Transport, from `WebhookDispatcher` and `WebhookSigner`:
   `X-Skills-Gateway-Signature` (`sha256=<hex>`, HMAC-SHA256 over the exact body),
   `X-Skills-Gateway-Event`, `X-Skills-Gateway-Delivery` (the receiver's
@@ -27,17 +42,28 @@ recalled:
   on the classpath either. Both routes #121 floats are greenfield toolchains.
 - The gate: `.github/workflows/api-contract.yml` diffs
   `src/main/frontend/openapi.json` against the PR's **fork point** using
-  `oasdiff/oasdiff-action/breaking@2649ebe…` (v0.1.13) with `fail-on: ERR`, and
+  `oasdiff/oasdiff-action/breaking@2649ebe…` (v0.1.13 — **[MOVED]** now v0.1.14,
+  `54d7a75…`) with `fail-on: ERR`, and
   requires a break to carry both the `⚠️ BREAKING CONTRACT` label and a
   breaking PR title. That action's `breaking/Dockerfile` pins
   `FROM tufin/oasdiff:v1.29.1` — the exact binary the verification below used.
 - springdoc emits **no** `required` array for response records: of 64 committed
   schemas, exactly three have one, and all three are request DTOs.
+  **[MOVED]** Still true of records that do not ask for it; several now do
+  (`ApprovalPendingPayload`, `VettingSummary`). And the repository now carries
+  `.oasdiff.yaml` pointing at `.oasdiff-severity-levels.txt`, which raises
+  `response-optional-property-removed` and `optional-response-header-removed` to
+  `err` (#216) — see "The payload's fields are marked required" below, where it
+  retires a rejected alternative as written.
 - `OpenApiContractTests` asserts the committed document equals the served one and
   carries `theStalenessCheckCanActuallyFail`, a negative test proving the real
   assertion can go red. That is the pattern any new contract assertion here copies.
 - `GET /api/webhooks/events` (`WebhookController`, GW_0088) returns a bare
   `List<String>`.
+- **[MOVED]** Two pre-release tags now exist: `0.2.0-b1` and `0.2.0-b2`
+  (2026-09-03), both GitHub *pre-releases*, both excluded from `/releases/latest`
+  by the release workflow's own design. There is still no stable release. See
+  "The events endpoint changes shape rather than gaining a sibling".
 
 ## Goals / Non-Goals
 
@@ -199,6 +225,34 @@ and the archived design was explicit that it is where a *recurring false positiv
 goes, not a place to reshape policy. Keeping the default severities means the gate
 still means what its documentation says it means.
 
+**[MOVED] — this rejection needs re-arguing, and half of it survives.** #216
+landed exactly that file: `.oasdiff.yaml` → `.oasdiff-severity-levels.txt`, with
+`response-optional-property-removed` and `optional-response-header-removed` at
+`err`. So "the repository has no `.oasdiff.yaml` today" is simply false now, and
+with it the objection that adding one would be novel. Two consequences, in
+opposite directions:
+
+- *Against this design's `paths` reference:* the cheapest route to correct
+  polarity is now one line — add `request-property-removed err` to the existing
+  file — and it breaks nothing, needs no label, and needs no title. That is a
+  genuinely attractive option that did not exist when this was written, and it is
+  the alternative the owner should weigh against the declared break.
+- *For it, still:* `request-property-removed` at `err` is a **global** policy
+  change of a different kind from #216's. #216 raised removals from what the
+  gateway *returns*, which the additive promise plainly forbids; removing an
+  optional property a client *may send* is usually harmless, so promoting it buys
+  webhook polarity at the price of false positives across every request DTO — and
+  those false positives would be paid by unrelated PRs, in a file with no context
+  explaining why. The `paths` reference keeps the gate's severities meaning what
+  the documentation says they mean, and it buys a receiver a discoverable
+  contract that a severity line does not.
+
+One thing #216 does change outright: `requiredMode = REQUIRED` on `EventPayload`
+is no longer the *only* thing standing between a renamed field and a green gate,
+because an optional response property's removal is already an error here. It stays
+because it makes the published document true — every one of those fields is always
+populated — and truth in the document is the half a severity file cannot supply.
+
 Rejected alternative: an `err-ignore` file scoped to the webhook operations. Same
 objection the archived design raised against ignore entries — a checked-in ignore
 keeps suppressing its class of change in every later PR, and stays green long
@@ -211,6 +265,12 @@ An `OpenApiCustomizer` bean beside the existing `documentVersion` one in
 with a `PathItem` whose `POST` operation carries the four headers, the
 `application/json` request body referencing `#/components/schemas/EventPayload`,
 and a `2xx` response the receiver is expected to return.
+
+**[MOVED]** With two payload shapes, the body reference is the one that event
+actually carries — `ApprovalPendingPayload` for `snapshot.approval_pending`,
+`EventPayload` for the other eight. The mapping is one conditional in the
+customizer and a test asserts, per event, that the reference names the schema the
+service emits for it, so the two cannot part company silently.
 
 Not the `@Webhook`/`@Webhooks` annotations, though they exist in
 swagger-annotations-jakarta 2.2.52. Eight annotations would be eight copies of the
@@ -268,6 +328,31 @@ being extended is exercised on its own change — with the escape path walked on
 in the open, by the person who built it. The archived design called an unexercised
 gate untrustworthy; this is the cheapest possible exercise of it.
 
+**[MOVED] — "there are no releases" is no longer literally true, and the
+conclusion survives anyway.** `0.2.0-b1` and `0.2.0-b2` were tagged on
+2026-09-03. Both are GitHub *pre-releases*, which the release workflow
+deliberately excludes from `/releases/latest`; there is still no stable release
+and nothing that a consumer following the latest-release pointer would have
+picked up. More decisively, the project's own releasing guide settles what the
+`0.x` line promises: `zeroMajorDemotion` holds a breaking change to a **minor**
+bump before 1.0, and reaching `1.0.0` needs `version` and `force` together
+precisely "because a breaking change before 1.0 bumps the minor rather than
+declaring the API stable by accident". A line that has to be forced into
+declaring stability has not declared it.
+
+`docs/manual/reference/compatibility.md` reads "a breaking change moves the path
+prefix **and** ships as a major", and the prefix cannot be moved — that page's own
+note says the version segment does not exist yet. So the promise as written cannot
+be satisfied literally by any breaking change made today, whichever route is taken;
+what the repository actually offers instead is the workflow's stated escape,
+`⚠️ BREAKING CONTRACT` plus a `!` title, which the gate's own failure message
+presents as the legitimate second option. This PR takes that route, in the open,
+with both marks permanent in the record.
+
+That said: the non-breaking alternative is now cheaper than it was (see the
+severity-file discussion above), so the owner has two live routes rather than one
+and a fallback. Both are stated in Open Questions.
+
 The alternative — a new `GET /api/webhooks/events/payload` alongside the
 unchanged array — is purely additive and would need no label. It is in Open
 Questions, because it is the owner's call whether to spend a declared break here.
@@ -319,10 +404,19 @@ response shape.
 
 ## Open Questions
 
-- **Spend a declared break on `GET /api/webhooks/events`, or add a sibling
-  endpoint?** The design assumes the break (rationale above). The owner may prefer
-  the additive route; it changes tasks 3.x and the PR's label/title only, not the
-  gate design.
+- **Spend a declared break on `GET /api/webhooks/events`, or take one of the two
+  additive routes?** The design assumes the break, and the implementation ships it
+  (rationale above). Two additive alternatives exist, and the second is new since
+  #216:
+  1. A sibling `GET /api/webhooks/events/payload` beside the unchanged array. No
+     label, no title, two endpoints answering one question forever.
+  2. Add `request-property-removed err` to the existing
+     `.oasdiff-severity-levels.txt` and keep the payload reachable only from the
+     `webhooks` entries. One line, no label, no break — at the price of a global
+     severity change that will fire on unrelated request DTOs.
+  Either changes tasks 2.2/3.x and the PR's label and title. Neither changes the
+  `webhooks` half of the design, which is the part that publishes a contract to
+  receivers rather than merely gating one.
 - **`skills-gateway.estate.*`** — recommendation is a follow-up issue, not this
   change (rationale above). Owner's call before #121 is closed, since #121 lists
   it as open.

@@ -107,6 +107,33 @@ Each delivery is a `POST` of a JSON body with four headers:
 `state` is the snapshot state *after* the event, and `actor` is the principal
 that performed the admin action.
 
+### The shape is published, and it only grows
+
+Every delivery above is described in the gateway's own OpenAPI document, under
+its top-level `webhooks` object — one entry per event, carrying the four headers
+and the body schema, rendered alongside the REST surface in the
+[API reference](../reference/api/index.md). `GET /api/webhooks/events` serves the
+same vocabulary with a worked example of each body, so a receiver can be
+generated or hand-written against the contract rather than against a sample
+somebody pasted into a ticket.
+
+Those descriptions are generated from the registry and the types the dispatcher
+actually sends, so they cannot drift from what arrives.
+
+What you may rely on, and what you must not:
+
+- **Every field shown above is always present.** The schema marks them required.
+- **Fields are only ever added**, and an added field is added *optional* — a
+  receiver written today keeps working, and a receiver cannot assume a field that
+  only exists from some release onward. Parse permissively: ignore keys you do
+  not recognise.
+- **Removing or renaming an event, a field or a header is a breaking change**,
+  refused by the same gate that guards `/api/**` unless it is declared. See
+  [Compatibility](../reference/compatibility.md#the-api-contract).
+- **The signature scheme is not in the document.** A schema can say the header
+  exists and constrain its shape; how the HMAC is computed and compared is
+  written out below, and that is where it stays.
+
 ## 3. Verify the signature
 
 Compute the HMAC over the raw request body — the bytes as received, before any

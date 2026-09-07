@@ -158,7 +158,9 @@ class WebhookTests extends AbstractGatewayTest {
                 .getResponse()
                 .getContentAsString();
 
-        List<String> served = JsonPath.read(body, "$");
+        // The registry answers with an object, not a bare array: it carries the vocabulary and an
+        // example of each delivery body, so a receiver author reads both from one place (GW_0181).
+        List<String> served = JsonPath.read(body, "$.events");
 
         assertThat(served).containsExactlyElementsOf(WebhookEvent.ALL);
         assertThat(served).doesNotContain(WebhookEvent.AUDIT_EXPORT);
@@ -187,7 +189,7 @@ class WebhookTests extends AbstractGatewayTest {
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        assertThat((List<String>) JsonPath.read(served, "$")).contains(WebhookEvent.SNAPSHOT_APPROVAL_PENDING);
+        assertThat((List<String>) JsonPath.read(served, "$.events")).contains(WebhookEvent.SNAPSHOT_APPROVAL_PENDING);
 
         String marketplace = uniqueName("pendinghook");
         Registered registered = registerAndIngest(marketplace, createUpstream(DEFAULT_MANIFEST));
