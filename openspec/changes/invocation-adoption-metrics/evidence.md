@@ -25,18 +25,33 @@ INFO    -  Documentation built in 1.29 seconds
 
 No retries were needed; neither command touches a container.
 
-**What was deliberately not run, and why:**
+**What was not run locally, and why:** `./mvnw clean verify`,
+`pnpm test:stories`, `pnpm e2e` and `reqstool status local -p docs/reqstool`. No
+source, build or `docs/reqstool/` file is touched by this change, and the
+container runtime was saturated by other work in flight at the time of the run.
 
-- `./mvnw clean verify`, `pnpm test:stories`, `pnpm e2e` — no source file is
-  touched by this change, and the container runtime was saturated by other work
-  in flight at the time of the run. Stated plainly rather than implied: these
-  were **not** executed, so this change carries no evidence about them.
-- `reqstool status local -p docs/reqstool` — not run, because
-  `docs/reqstool/*.yml` is untouched. The reserved ids GW_0213, GW_0214 and
-  GW_0215 are deliberately **not** entered on `main`: a requirement with no
-  `@Requirements` annotation and no passing verification case fails the
-  traceability gate by construction, so they land in the implementing PR with the
-  code that satisfies them (`tasks.md` §1).
+**They were run by CI instead**, on the merge of this branch with `main` —
+[run 34171033324](https://github.com/skillsgateway/skillsgateway/actions/runs/34171033324),
+all fourteen checks green:
+
+| Check | Result |
+| --- | --- |
+| Build & gates (`./mvnw clean verify`) | pass, 9m21s |
+| Portal e2e | pass, 2m31s |
+| Storybook tests | pass, 38s |
+| Traceability & spec gates (reqstool, openspec) | pass, 13s |
+| Documentation (strict) | pass |
+| Breaking change detection | pass |
+| CodeQL — actions, java-kotlin, javascript-typescript | pass |
+| DCO, semantic PR title, single-file docs render, subsystem labels | pass |
+
+That is a stronger result than a local run for a change of this shape: it proves
+the design PR moves nothing, which is precisely its claim.
+
+The reserved ids GW_0213, GW_0214 and GW_0215 are deliberately **not** entered on
+`main`: a requirement with no `@Requirements` annotation and no passing
+verification case fails the traceability gate by construction, so they land in
+the implementing PR with the code that satisfies them (`tasks.md` §1).
 
 **Commit under test:** the tip of `docs/invocation-metrics-design`, branched from
 `331cf68` — the tip of `main` at the time of the run.
