@@ -64,7 +64,7 @@ public class ManifestRewriter {
     public static final String TRANSFORMER_VERSION = "1";
 
     /** Where resolved external content lives in the composite. Reserved: a collision is refused. */
-    static final String GRAFT_DIR = "_plugins";
+    public static final String GRAFT_DIR = "_plugins";
 
     private static final String MANIFEST_PATH = ".claude-plugin/marketplace.json";
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -94,6 +94,16 @@ public class ManifestRewriter {
      */
     ManifestRewriter withTransformerVersion(String version) {
         return new ManifestRewriter(policy, version);
+    }
+
+    /** The version this instance stamps: what the closure records as the transformation's identity. */
+    public String transformerVersion() {
+        return transformerVersion;
+    }
+
+    /** The path inside the composite at which a plugin's resolved content is grafted. */
+    public static String graftPath(String pluginName) {
+        return GRAFT_DIR + "/" + pluginName;
     }
 
     /** One external plugin's resolved content, ready to graft. */
@@ -240,7 +250,7 @@ public class ManifestRewriter {
             builder.addTree(new byte[0], DirCacheEntry.STAGE_0, reader, upstream.getTree());
             for (Graft graft : grafts) {
                 builder.addTree(
-                        (GRAFT_DIR + "/" + graft.pluginName()).getBytes(StandardCharsets.UTF_8),
+                        graftPath(graft.pluginName()).getBytes(StandardCharsets.UTF_8),
                         DirCacheEntry.STAGE_0,
                         reader,
                         graft.tree());

@@ -88,6 +88,46 @@
         },
         "type": "object"
       },
+      "Closure": {
+        "description": "The resolved closure of external plugin sources recorded with a snapshot",
+        "properties": {
+          "createdAt": {
+            "description": "When the closure was recorded, which is when the snapshot was",
+            "format": "date-time",
+            "type": "string"
+          },
+          "digest": {
+            "description": "SHA-256 over the closure's content; equal for equal closures wherever they occur",
+            "type": "string"
+          },
+          "id": {
+            "description": "Closure id",
+            "format": "int64",
+            "type": "integer"
+          },
+          "members": {
+            "description": "One member per resolved external plugin",
+            "items": {
+              "$ref": "#/components/schemas/Member"
+            },
+            "type": "array"
+          },
+          "snapshotId": {
+            "description": "The snapshot this closure belongs to",
+            "format": "int64",
+            "type": "integer"
+          },
+          "transformerVersion": {
+            "description": "Identity of the rewrite implementation",
+            "type": "string"
+          },
+          "upstreamSha": {
+            "description": "The commit ingested from upstream",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "Conflict": {
         "description": "A supply-side act by the reviewer that makes this approval a self-approval",
         "properties": {
@@ -1218,6 +1258,57 @@
         },
         "type": "object"
       },
+      "Member": {
+        "properties": {
+          "cloneUrl": {
+            "description": "The clone URL the source was resolved through",
+            "type": "string"
+          },
+          "declaredRef": {
+            "description": "The ref the manifest pinned, or null",
+            "type": "string"
+          },
+          "declaredSha": {
+            "description": "The commit the manifest pinned, or null",
+            "type": "string"
+          },
+          "declaredSource": {
+            "description": "The source exactly as the manifest declared it, e.g. an owner/repo shorthand",
+            "type": "string"
+          },
+          "graftPath": {
+            "description": "Where the content lives inside the composite, e.g. _plugins/tools",
+            "type": "string"
+          },
+          "inflatedBytes": {
+            "description": "Decompressed size of the grafted tree, measured at resolution",
+            "format": "int64",
+            "type": "integer"
+          },
+          "objectCount": {
+            "description": "Objects the grafted tree contains, measured at resolution",
+            "format": "int64",
+            "type": "integer"
+          },
+          "pluginName": {
+            "description": "Plugin name from the manifest",
+            "type": "string"
+          },
+          "resolvedSha": {
+            "description": "The commit of the external repository the source resolved to",
+            "type": "string"
+          },
+          "sourceType": {
+            "description": "Source type as declared: github, git, git-subdir",
+            "type": "string"
+          },
+          "treeSha": {
+            "description": "The tree grafted into the composite at graftPath",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "PassResult": {
         "description": "Outcome of a retention pass",
         "properties": {
@@ -1372,6 +1463,10 @@
       "Provenance": {
         "description": "Provenance of a snapshot: what was served, from where, and who approved it",
         "properties": {
+          "closure": {
+            "$ref": "#/components/schemas/Closure",
+            "description": "The resolved closure of external plugin sources, or null when there is none"
+          },
           "decidedAt": {
             "format": "date-time",
             "type": "string"
@@ -1398,6 +1493,10 @@
             "description": "Identity that revoked it, or null",
             "type": "string"
           },
+          "sha": {
+            "description": "The commit the snapshot pins and serves; differs from upstreamSha only for a composite with resolved external plugin sources",
+            "type": "string"
+          },
           "snapshotId": {
             "format": "int64",
             "type": "integer"
@@ -1406,6 +1505,7 @@
             "type": "string"
           },
           "upstreamSha": {
+            "description": "The commit ingested from upstream",
             "type": "string"
           },
           "upstreamUrl": {
@@ -1785,7 +1885,7 @@
             "type": "string"
           },
           "sha": {
-            "description": "Upstream commit SHA the snapshot is pinned to",
+            "description": "Commit SHA the snapshot is pinned to and serves: the upstream commit, or the synthesised composite when external plugin sources were resolved",
             "type": "string"
           },
           "state": {
@@ -1796,6 +1896,10 @@
               "rejected",
               "revoked"
             ],
+            "type": "string"
+          },
+          "upstreamSha": {
+            "description": "Commit SHA ingested from upstream; equal to sha unless a composite was synthesised",
             "type": "string"
           },
           "violation": {

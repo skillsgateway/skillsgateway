@@ -103,6 +103,15 @@ final class GitHttpFixture implements AutoCloseable {
         return ownerRepo;
     }
 
+    /** The commit {@code owner/repo} currently serves as its head: what a resolver should pin. */
+    String headSha(String ownerRepo) throws IOException {
+        Repository repository = repositories.get(ownerRepo);
+        if (repository == null) {
+            throw new IllegalArgumentException("nothing published as " + ownerRepo);
+        }
+        return repository.resolve(org.eclipse.jgit.lib.Constants.HEAD).name();
+    }
+
     /** Every request from now on answers 302 to {@code target}, {@code times} times over. */
     void redirectTo(String target, int times) {
         this.redirectTo = target;
