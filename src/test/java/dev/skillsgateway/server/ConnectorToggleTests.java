@@ -11,11 +11,13 @@ import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.vetting.ConnectorToggleService;
 import dev.skillsgateway.server.vetting.VettingChain;
+import dev.skillsgateway.server.vetting.VettingConnector;
+import dev.skillsgateway.server.vetting.VettingService;
 import io.github.reqstool.annotations.SVCs;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.OidcLoginRequestPostProcessor;
 
 /**
@@ -33,6 +35,9 @@ class ConnectorToggleTests extends AbstractGatewayTest {
             """;
 
     private final OidcLoginRequestPostProcessor root = oidcLogin().idToken(token -> token.subject("root"));
+
+    @Autowired
+    private VettingService vettingService;
 
     @Test
     @SVCs({"SVC_GW_0149"})
@@ -98,7 +103,10 @@ class ConnectorToggleTests extends AbstractGatewayTest {
         // case, exercised through the real chain rather than the aggregate function alone.
         String name = uniqueName("disable-all");
         Marketplace c = register(name, plantedUpstream());
-        for (String connector : List.of("secret-scan", "prompt-injection", "license-scan")) {
+        // The real chain, not a list to keep in step: "every connector" has to stay literally true
+        // as connectors are added, or this test quietly stops testing what it names.
+        for (String connector :
+                vettingService.connectors().stream().map(VettingConnector::name).toList()) {
             mockMvc.perform(put("/api/vetting/connectors/{name}/toggle", connector)
                             .with(root)
                             .contentType(org.springframework.http.MediaType.APPLICATION_JSON)

@@ -1,6 +1,7 @@
 package dev.skillsgateway.server.admin;
 
 import dev.skillsgateway.server.approval.ApprovalService;
+import dev.skillsgateway.server.approval.ClosureIncompleteException;
 import dev.skillsgateway.server.approval.FourEyesConflictException;
 import dev.skillsgateway.server.approval.FourEyesGate;
 import dev.skillsgateway.server.approval.MissingOverrideReasonException;
@@ -186,13 +187,81 @@ public class AdminController {
     @ApiResponse(responseCode = "400", description = "Disallowed URL scheme, or a ref other than the default branch")
     @ApiResponse(responseCode = "409", description = "A marketplace with that name already exists")
     @ApiResponse(responseCode = "422", description = "Invalid marketplace name")
-    public ResponseEntity<Marketplace> registerMarketplace(
+    public ResponseEntity<RegisteredMarketplace> registerMarketplace(
             @RequestBody RegisterMarketplaceRequest request, Authentication authentication) {
         roleService.requireAdmin(authentication);
         requireDefaultBranchRef(request.ref());
-        Marketplace marketplace = registrationService.register(
+        MarketplaceRegistrationService.RegistrationOutcome outcome = registrationService.register(
                 request.name(), request.url(), request.origin(), request.pushPolicy(), authentication.getName());
-        return ResponseEntity.status(HttpStatus.CREATED).body(marketplace);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(RegisteredMarketplace.of(outcome.marketplace(), outcome.warnings()));
+    }
+
+    @Schema(description = "A registered marketplace, plus any non-blocking warnings about the registration")
+    public record RegisteredMarketplace(
+            long id,
+            String name,
+
+            @Schema(description = "Upstream clone URL; null for a gateway-hosted marketplace")
+            String url,
+
+            Instant createdAt,
+
+            @Schema(description = "Identity that registered the marketplace, or null when it was not recorded")
+            String registeredBy,
+
+            @Schema(
+                    description = "Where the content comes from",
+                    allowableValues = {"upstream", "hosted"})
+            String origin,
+
+            @Schema(
+                    description = "Whether a hosted marketplace's publisher may rewrite its lineage",
+                    allowableValues = {"append-only", "allow-rewrite"})
+            String pushPolicy,
+
+            @Schema(description = "Detected forge (github, gitlab, bitbucket, azure-devops, gitea) or null")
+            String forge,
+
+            @Schema(description = "Project path on the forge")
+            String forgeProject,
+
+            @Schema(description = "Project description from the forge")
+            String description,
+
+            @Schema(description = "Last upstream update as reported by the forge")
+            Instant upstreamUpdatedAt,
+
+            @Schema(
+                    description = "How upstream content reaches quarantine (GW_0056)",
+                    allowableValues = {"on-demand", "scheduled", "webhook"})
+            String syncMode,
+
+            @Schema(description = "Last sync attempt (success or failure), or null before the first one")
+            Instant lastSyncAt,
+
+            @Schema(
+                    description = "Non-blocking warnings about this registration, e.g. the upstream url"
+                            + " already being registered under another marketplace name (GW_0166)")
+            List<String> warnings) {
+
+        static RegisteredMarketplace of(Marketplace marketplace, List<String> warnings) {
+            return new RegisteredMarketplace(
+                    marketplace.id(),
+                    marketplace.name(),
+                    marketplace.url(),
+                    marketplace.createdAt(),
+                    marketplace.registeredBy(),
+                    marketplace.origin(),
+                    marketplace.pushPolicy(),
+                    marketplace.forge(),
+                    marketplace.forgeProject(),
+                    marketplace.description(),
+                    marketplace.upstreamUpdatedAt(),
+                    marketplace.syncMode(),
+                    marketplace.lastSyncAt(),
+                    warnings);
+        }
     }
 
     @GetMapping("/snapshots/{id}/content")
@@ -532,6 +601,19 @@ public class AdminController {
         problem.setTitle("Vetting chain blocked this snapshot");
         problem.setProperty("blockingConnectors", e.blockingConnectors());
         problem.setProperty("uncoveredFindings", e.uncoveredFindings());
+        return problem;
+    }
+
+    /**
+     * The closure-completeness gate (GW_0165). Every discrepancy is named, because a refusal here
+     * means the snapshot's recorded closure and its pinned commit disagree — which nothing in the
+     * gateway produces — and the shape of the disagreement is what an operator needs to see.
+     */
+    @ExceptionHandler(ClosureIncompleteException.class)
+    public ProblemDetail closureIncomplete(ClosureIncompleteException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+        problem.setTitle("Snapshot closure is incomplete");
+        problem.setProperty("discrepancies", e.discrepancies());
         return problem;
     }
 

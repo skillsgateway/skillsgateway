@@ -26,6 +26,7 @@ retention.
 | Field | Meaning |
 | --- | --- |
 | `sha` | The 40-hex commit the gateway serves. This is the pin: the upstream commit for a local-only manifest, and the synthesised composite for one with resolved external sources (see below). |
+| `upstreamSha` | The commit ingested from upstream. Equal to `sha` unless a composite was synthesised, in which case it is the composite's parent. |
 | `state` | `held`, `approved`, `rejected`, or `revoked`. Set at ingestion and changed only by a decision or by an enforced re-vetting violation. |
 | `violation` | Why ingestion flagged the snapshot, or why re-vetting revoked it. Cleared by a fresh decision. |
 | `decidedBy` / `decidedAt` | The principal who decided, and when. Survives a revocation. |
@@ -118,6 +119,38 @@ makes re-ingesting unchanged content idempotent. An external repository moving o
 therefore produces a *different* snapshot, held for its own approval — the same
 rug-pull protection the upstream commit already gets, extended to the
 repositories the manifest points at.
+
+### The closure record
+
+The commit message is one witness to what was resolved. The **closure** is the
+other, and the one that can be queried: a record written in the same database
+transaction as the composite snapshot, naming the upstream commit, the version
+of the transformation, a SHA-256 digest over the whole, and one *member* per
+resolved external plugin:
+
+| Member field | Meaning |
+| --- | --- |
+| `pluginName`, `sourceType`, `declaredSource` | What the manifest declared — the plugin, the source type (`github`), and the source exactly as written (`acme/tools`). |
+| `declaredRef`, `declaredSha` | Any pin the manifest declared. Always `null` today: a declared pin is refused rather than resolved elsewhere. |
+| `cloneUrl`, `resolvedSha` | The URL the source was fetched through and the commit it resolved to. |
+| `treeSha`, `graftPath` | The tree grafted into the composite and where — `_plugins/<plugin name>`. |
+| `objectCount`, `inflatedBytes` | What the grafted tree cost, measured at resolution. |
+
+Every value is a copy taken at ingestion. Nothing in the closure points at the
+marketplace row or at configuration, because those change and the closure must
+not: the marketplace is the mutable *source*, the closure is the immutable
+*artifact* that was vetted and approved. A closure is never updated, and it
+leaves the database only when its snapshot is purged. A snapshot that resolved
+nothing — every local-only snapshot, and a rejected resolution — has no closure
+record; that absence is the empty closure.
+
+The closure is what makes *which approved snapshots include repository X, at
+any commit?* one indexed query rather than a walk over every quarantine
+repository. It appears in the snapshot's
+[provenance](../reference/api/marketplaces.md#get-snapshotsidprovenance) and in
+the [policy facts](../guides/policy-rules.md#the-evaluation-variables), and the
+[approval gate](../guides/approving-snapshots.md#reviewing-a-resolved-external-plugin)
+refuses any snapshot whose closure, served manifest and pinned tree disagree.
 
 ### What a snapshot contains
 

@@ -1,0 +1,60 @@
+{
+  "version": "agentskills-2026-08-04",
+  "source": {
+    "specification": "https://agentskills.io/specification",
+    "repository": "https://github.com/agentskills/agentskills",
+    "specificationFile": "docs/specification.mdx",
+    "specificationCommit": "217be548739f21d6008915c29aefe320ea1a90af",
+    "specificationCommitDate": "2026-08-04",
+    "referenceValidatorFile": "skills-ref/src/skills_ref/validator.py",
+    "referenceValidatorCommit": "547831f3a23724ba64a9b79bbf59c5e0bc8f2d1a",
+    "pinnedOn": "2026-09-06",
+    "note": "Upstream publishes no specification version identifier, no tags and no changelog. The version above is this repository's dated pin: the date of the upstream commit this table was transcribed from."
+  },
+  "fields": [
+    {
+      "name": "name",
+      "required": true,
+      "type": "string",
+      "maxLength": 64,
+      "lowercase": true,
+      "alphanumericOrHyphen": true,
+      "noLeadingOrTrailingHyphen": true,
+      "noConsecutiveHyphens": true,
+      "mustMatchDirectoryName": true,
+      "description": "Skill identifier; 1-64 characters, lowercase letters, digits and hyphens, matching the parent directory name"
+    },
+    {
+      "name": "description",
+      "required": true,
+      "type": "string",
+      "maxLength": 1024,
+      "description": "What the skill does and when to use it; 1-1024 characters"
+    },
+    {
+      "name": "license",
+      "required": false,
+      "type": "string",
+      "description": "License name, or a reference to a bundled license file"
+    },
+    {
+      "name": "compatibility",
+      "required": false,
+      "type": "string",
+      "maxLength": 500,
+      "description": "Environment requirements: intended product, system packages, network access"
+    },
+    {
+      "name": "metadata",
+      "required": false,
+      "type": "map",
+      "description": "Arbitrary mapping of string keys to string values for properties the specification does not define"
+    },
+    {
+      "name": "allowed-tools",
+      "required": false,
+      "type": "string-or-list",
+      "description": "Space-separated string of pre-approved tools (experimental)"
+    }
+  ]
+}

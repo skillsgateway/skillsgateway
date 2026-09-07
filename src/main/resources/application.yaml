@@ -13,7 +13,10 @@ spring:
             client-secret: ${SGW_OIDC_CLIENT_SECRET:change-me}
             scope: ${SGW_OIDC_SCOPE:openid}
             authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/idp"
+            # {baseUrl} is the request as the container sees it; behind a TLS-terminating
+            # proxy that is only right with server.forward-headers-strategy set (GW_0163).
+            # The variable states the registered URI outright when it is not.
+            redirect-uri: ${SGW_OIDC_REDIRECT_URI:{baseUrl}/login/oauth2/code/idp}
         provider:
           idp:
             # A shared registration's `sub` is an opaque per-application id, so this has to be

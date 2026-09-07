@@ -51,8 +51,8 @@ SGW_OIDC_USER_NAME_ATTRIBUTE=preferred_username
 SGW_OIDC_SCOPE=openid,profile,email
 SKILLSGATEWAY_OIDC_ISSUER=https://idp.example.com/v2.0
 
-# Behind a TLS-terminating proxy
-SERVER_FORWARDHEADERSSTRATEGY=framework
+# Behind a TLS-terminating proxy — see Running behind a proxy
+SERVER_FORWARDHEADERSSTRATEGY=native
 
 # At least one administrator
 SKILLSGATEWAY_ROLES_ADMINS_0=platform-admin@example.com
@@ -74,24 +74,60 @@ mount somewhere else.
 ## Running behind a proxy
 
 The application serves plain HTTP on port 8080 and terminates no TLS. Whatever
-sits in front of it — an ingress, a load balancer, a reverse proxy — must
-therefore tell it what the outside world sees, and the application must be told
-to believe it:
+sits in front of it — a load balancer, an ingress, a reverse proxy — sees
+`https://<your-host>`; the application sees `http://<container>:8080`. Every
+URL it builds from the request is wrong until it is told what the proxy sees,
+and the proxy says so in `X-Forwarded-Proto` and `X-Forwarded-Host`:
 
 ```bash
-SERVER_FORWARDHEADERSSTRATEGY=framework
+SERVER_FORWARDHEADERSSTRATEGY=native
 ```
 
-Without this, Spring builds its external URLs from the container's own view of
-the request. The OIDC redirect URI becomes `http://<container>:8080/login/oauth2/code/idp`
-rather than the `https://<your-host>/login/oauth2/code/idp` you registered with
-the provider, and every login fails on a redirect-URI mismatch. Set it wherever
-TLS terminates somewhere other than the application itself, which in practice
-is everywhere.
+Without it the OIDC redirect URI arrives at the identity provider as
+`http://<container>:8080/login/oauth2/code/idp` rather than the
+`https://<your-host>/login/oauth2/code/idp` you registered, and every login
+fails on a redirect-URI mismatch — reported by the provider against its own
+application registration, not against the gateway. Set it wherever TLS
+terminates somewhere other than the application itself, which in practice is
+everywhere.
 
-Make sure the proxy actually sends `X-Forwarded-Proto` and `X-Forwarded-Host`,
-and that it is the only thing that can — these headers are trusted once this
-setting is on.
+The setting is a trust decision, because the application cannot tell a proxy's
+header from a client's. Its three values differ in whom they believe:
+
+| Value | Who is believed | When |
+| --- | --- | --- |
+| `native` | Tomcat honours the headers only from a peer in a private address range: `10/8`, `172.16/12`, `192.168/16`, `100.64/10`, loopback, and their IPv6 counterparts. | The proxy is in your VPC or cluster — where a cloud load balancer or an ingress controller sits. The recommended value. |
+| `framework` | Spring's filter honours the headers from any peer. | The proxy has a public address, or you need `X-Forwarded-Prefix` or RFC 7239 `Forwarded`. Only where nothing but the proxy can reach port 8080, and where the proxy overwrites the headers rather than passing a client's through. |
+| `none` | Nobody. The container's own view of the request. | The application terminates TLS itself. |
+
+A proxy outside the private ranges can be named rather than trusting everyone:
+`server.tomcat.remoteip.internal-proxies` (`SERVER_TOMCAT_REMOTEIP_INTERNALPROXIES`)
+replaces the list above, as CIDRs or a regular expression, and `native` then
+believes those peers.
+
+Leaving the variable unset is not the same as `none`: Spring Boot then deduces
+`native` on a container platform it recognises from the environment —
+Kubernetes and ECS among them — and `none` anywhere else. Name the value; a
+deployment that works because of a deduction is one nobody can read.
+
+!!! note "`framework` was inert on the released image until it was registered explicitly"
+
+    Spring Boot registers its forwarded-header filter behind a condition that a
+    GraalVM native image evaluates once, when the image is built, and the
+    property is not set then — so `SERVER_FORWARDHEADERSSTRATEGY=framework` did
+    nothing on the released image, however correctly it was deployed. The
+    gateway now registers the filter itself and reads the setting at runtime,
+    so every value means the same on the JVM jar and on the native image. Do
+    not go back to relying on Spring Boot's own registration.
+
+The redirect URI can also be stated outright, with no header trusted at all:
+
+```bash
+SGW_OIDC_REDIRECT_URI=https://<your-host>/login/oauth2/code/idp
+```
+
+It fixes the login and nothing else — every other URL built from the request
+still names the container — so it is the escape hatch, not the fix.
 
 ## Property names as environment variables
 
@@ -273,7 +309,7 @@ docker run -d --name skills-gateway \
   -e SGW_OIDC_USER_NAME_ATTRIBUTE=preferred_username \
   -e SGW_OIDC_SCOPE=openid,profile,email \
   -e SKILLSGATEWAY_OIDC_ISSUER=https://idp.example.com/v2.0 \
-  -e SERVER_FORWARDHEADERSSTRATEGY=framework \
+  -e SERVER_FORWARDHEADERSSTRATEGY=native \
   ghcr.io/skillsgateway/skillsgateway:<released-version>
 ```
 

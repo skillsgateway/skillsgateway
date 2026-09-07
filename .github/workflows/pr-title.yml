@@ -20,4 +20,4 @@ permissions:
 
 jobs:
   semantic-pr:
-    uses: skillsgateway/.github/.github/workflows/common-check-semantic-pr.yml@9c928b66f9a93442d77a3ff833efeb334221fe81 # main
+    uses: skillsgateway/.github/.github/workflows/common-check-semantic-pr.yml@fe4855c9d5e2fb00e77a2dc1737a2c9c128994de # main

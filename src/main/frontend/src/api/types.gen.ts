@@ -1283,6 +1283,32 @@ export interface components {
              */
             mode?: "on-demand" | "scheduled" | "webhook";
         };
+        /** @description The resolved closure of external plugin sources recorded with a snapshot */
+        Closure: {
+            /**
+             * Format: date-time
+             * @description When the closure was recorded, which is when the snapshot was
+             */
+            createdAt?: string;
+            /** @description SHA-256 over the closure's content; equal for equal closures wherever they occur */
+            digest?: string;
+            /**
+             * Format: int64
+             * @description Closure id
+             */
+            id?: number;
+            /** @description One member per resolved external plugin */
+            members?: components["schemas"]["Member"][];
+            /**
+             * Format: int64
+             * @description The snapshot this closure belongs to
+             */
+            snapshotId?: number;
+            /** @description Identity of the rewrite implementation */
+            transformerVersion?: string;
+            /** @description The commit ingested from upstream */
+            upstreamSha?: string;
+        };
         /** @description A supply-side act by the reviewer that makes this approval a self-approval */
         Conflict: {
             /** @description The identity that performed it */
@@ -2002,6 +2028,36 @@ export interface components {
             /** @description Username of the session */
             username?: string;
         };
+        Member: {
+            /** @description The clone URL the source was resolved through */
+            cloneUrl?: string;
+            /** @description The ref the manifest pinned, or null */
+            declaredRef?: string;
+            /** @description The commit the manifest pinned, or null */
+            declaredSha?: string;
+            /** @description The source exactly as the manifest declared it, e.g. an owner/repo shorthand */
+            declaredSource?: string;
+            /** @description Where the content lives inside the composite, e.g. _plugins/tools */
+            graftPath?: string;
+            /**
+             * Format: int64
+             * @description Decompressed size of the grafted tree, measured at resolution
+             */
+            inflatedBytes?: number;
+            /**
+             * Format: int64
+             * @description Objects the grafted tree contains, measured at resolution
+             */
+            objectCount?: number;
+            /** @description Plugin name from the manifest */
+            pluginName?: string;
+            /** @description The commit of the external repository the source resolved to */
+            resolvedSha?: string;
+            /** @description Source type as declared: github, git, git-subdir */
+            sourceType?: string;
+            /** @description The tree grafted into the composite at graftPath */
+            treeSha?: string;
+        };
         /** @description How the read-only forge mirror compares to what the facade serves */
         MirrorReport: {
             /** @description Whether a mirror is configured */
@@ -2132,6 +2188,8 @@ export interface components {
         };
         /** @description Provenance of a snapshot: what was served, from where, and who approved it */
         Provenance: {
+            /** @description The resolved closure of external plugin sources, or null when there is none */
+            closure?: components["schemas"]["Closure"];
             /** Format: date-time */
             decidedAt?: string;
             decidedBy?: string;
@@ -2146,9 +2204,12 @@ export interface components {
             revokedAt?: string;
             /** @description Identity that revoked it, or null */
             revokedBy?: string;
+            /** @description The commit the snapshot pins and serves; differs from upstreamSha only for a composite with resolved external plugin sources */
+            sha?: string;
             /** Format: int64 */
             snapshotId?: number;
             state?: string;
+            /** @description The commit ingested from upstream */
             upstreamSha?: string;
             upstreamUrl?: string;
             violation?: string;
@@ -2181,6 +2242,51 @@ export interface components {
              * @example https://github.com/acme/skills-marketplace.git
              */
             url?: string;
+        };
+        /** @description A registered marketplace, plus any non-blocking warnings about the registration */
+        RegisteredMarketplace: {
+            /** Format: date-time */
+            createdAt?: string;
+            /** @description Project description from the forge */
+            description?: string;
+            /** @description Detected forge (github, gitlab, bitbucket, azure-devops, gitea) or null */
+            forge?: string;
+            /** @description Project path on the forge */
+            forgeProject?: string;
+            /** Format: int64 */
+            id?: number;
+            /**
+             * Format: date-time
+             * @description Last sync attempt (success or failure), or null before the first one
+             */
+            lastSyncAt?: string;
+            name?: string;
+            /**
+             * @description Where the content comes from
+             * @enum {string}
+             */
+            origin?: "upstream" | "hosted";
+            /**
+             * @description Whether a hosted marketplace's publisher may rewrite its lineage
+             * @enum {string}
+             */
+            pushPolicy?: "append-only" | "allow-rewrite";
+            /** @description Identity that registered the marketplace, or null when it was not recorded */
+            registeredBy?: string;
+            /**
+             * @description How upstream content reaches quarantine (GW_0056)
+             * @enum {string}
+             */
+            syncMode?: "on-demand" | "scheduled" | "webhook";
+            /**
+             * Format: date-time
+             * @description Last upstream update as reported by the forge
+             */
+            upstreamUpdatedAt?: string;
+            /** @description Upstream clone URL; null for a gateway-hosted marketplace */
+            url?: string;
+            /** @description Non-blocking warnings about this registration, e.g. the upstream url already being registered under another marketplace name (GW_0166) */
+            warnings?: string[];
         };
         /** @description What one re-vetting run concluded about one approved snapshot */
         RevetResult: {
@@ -2401,13 +2507,15 @@ export interface components {
             revokedAt?: string;
             /** @description Identity that revoked it, or null */
             revokedBy?: string;
-            /** @description Upstream commit SHA the snapshot is pinned to */
+            /** @description Commit SHA the snapshot is pinned to and serves: the upstream commit, or the synthesised composite when external plugin sources were resolved */
             sha?: string;
             /**
              * @description held, approved, rejected, or revoked (retroactively quarantined by re-vetting)
              * @enum {string}
              */
             state?: "held" | "approved" | "rejected" | "revoked";
+            /** @description Commit SHA ingested from upstream; equal to sha unless a composite was synthesised */
+            upstreamSha?: string;
             /** @description Policy or vetting violation that rejected or revoked the snapshot, or null */
             violation?: string;
         };
@@ -3197,7 +3305,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Marketplace"];
+                    "*/*": components["schemas"]["RegisteredMarketplace"];
                 };
             };
             /** @description Disallowed URL scheme, or a ref other than the default branch */
@@ -3206,7 +3314,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Marketplace"];
+                    "*/*": components["schemas"]["RegisteredMarketplace"];
                 };
             };
             /** @description A marketplace with that name already exists */
@@ -3215,7 +3323,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Marketplace"];
+                    "*/*": components["schemas"]["RegisteredMarketplace"];
                 };
             };
             /** @description Invalid marketplace name */
@@ -3224,7 +3332,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Marketplace"];
+                    "*/*": components["schemas"]["RegisteredMarketplace"];
                 };
             };
         };

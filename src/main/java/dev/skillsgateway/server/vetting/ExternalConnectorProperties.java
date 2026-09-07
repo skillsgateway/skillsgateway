@@ -23,7 +23,7 @@ import java.util.Set;
  *
  * @param name stable connector identity, recorded on every verdict and shown to reviewers; must be
  *     unique across the chain and must not collide with a built-in ({@code secret-scan},
- *     {@code prompt-injection}, {@code license-scan})
+ *     {@code prompt-injection}, {@code license-scan}, {@code skill-conformance})
  * @param url endpoint the gateway POSTs the snapshot bundle to; required
  * @param order ascending chain position, in the same space as the built-ins; ties broken by name
  * @param version rule-set identity stamped into the chain identity (GW_0049); bump it when the
@@ -57,7 +57,8 @@ public record ExternalConnectorProperties(
         Long maxFileBytes) {
 
     /** Built-in connector names an external connector may not shadow. */
-    public static final Set<String> RESERVED_NAMES = Set.of("secret-scan", "prompt-injection", "license-scan");
+    public static final Set<String> RESERVED_NAMES =
+            Set.of("secret-scan", "prompt-injection", "license-scan", "skill-conformance");
 
     public ExternalConnectorProperties {
         if (name == null || name.isBlank()) {

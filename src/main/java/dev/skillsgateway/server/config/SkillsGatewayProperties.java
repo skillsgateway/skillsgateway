@@ -44,10 +44,10 @@ public record SkillsGatewayProperties(
             auditExport = new AuditExport(null, null, null, null, null, null);
         }
         if (retention == null) {
-            retention = new Retention(null, null, null, null, null, null);
+            retention = new Retention(null, null, null, null, null, null, null);
         }
         if (vetting == null) {
-            vetting = new Vetting(null, null, null, null, null, null, null, null);
+            vetting = new Vetting(null, null, null, null, null, null, null, null, null);
         }
         if (approval == null) {
             approval = new Approval(null);
@@ -720,6 +720,7 @@ public record SkillsGatewayProperties(
      *     the wait clears itself and no sweep can be late.
      * @param revet continuous re-vetting of approved content (GW_0049-GW_0054)
      * @param license the org-level license policy (GW_0094)
+     * @param conformance the posture of the built-in SKILL.md conformance connector (GW_0167)
      */
     public record Vetting(
             Duration timeout,
@@ -729,7 +730,8 @@ public record SkillsGatewayProperties(
             Integer waiverSweepBatchSize,
             Duration minimumReleaseAge,
             Revet revet,
-            License license) {
+            License license,
+            Conformance conformance) {
 
         public Vetting {
             if (minimumReleaseAge == null || minimumReleaseAge.isNegative()) {
@@ -755,6 +757,34 @@ public record SkillsGatewayProperties(
             }
             if (license == null) {
                 license = new License(null, null);
+            }
+            if (conformance == null) {
+                conformance = new Conformance(null);
+            }
+        }
+    }
+
+    /**
+     * The posture of the built-in {@code skill-conformance} connector (GW_0167).
+     *
+     * <p>Defaults to advisory, and the default is the load-bearing part. A verdict covers a whole
+     * snapshot, so a blocking default would let one malformed skill hold up every other skill in
+     * the marketplace beside it — and a formatting defect is not what the gateway's blocking
+     * states are for. An operator who has decided conformance is a publishing requirement turns
+     * this on after watching the advisory findings for a cycle, which is the same on-ramp the
+     * license lists and re-vetting enforcement offer.
+     *
+     * <p>Like the license lists this is configuration rather than API-managed runtime state: it is
+     * stamped into the connector's recorded version, so every run names the posture it ran under
+     * and a changed answer about unchanged content stays attributable (GW_0049).
+     *
+     * @param enforce whether conformance defects block approval instead of warning
+     */
+    public record Conformance(Boolean enforce) {
+
+        public Conformance {
+            if (enforce == null) {
+                enforce = false;
             }
         }
     }
@@ -913,12 +943,18 @@ public record SkillsGatewayProperties(
      * Snapshot retention (GW_0031–GW_0034). {@code enabled=false} — the default — stops both
      * scheduled passes: an upgrade never deletes anything until an operator opts in, while the
      * on-demand endpoints stay available for a dry run.
+     *
+     * <p>{@code stagingRefMaxAge} belongs to the compaction pass's sweep of publication staging
+     * references (GW_0168) rather than to any per-marketplace policy: it describes how long a
+     * publication may take, which is a property of the storage and the estate's snapshot sizes,
+     * not of what any one marketplace is allowed to keep.
      */
     public record Retention(
             Boolean enabled,
             Duration pollInterval,
             Duration compactionInterval,
             Integer batchSize,
+            Duration stagingRefMaxAge,
             Policy defaults,
             Map<String, Policy> marketplaces) {
 
@@ -938,8 +974,24 @@ public record SkillsGatewayProperties(
             if (batchSize == null) {
                 batchSize = 200;
             }
+            // A day, because the only cost of being wrong upwards is disk and the cost of being
+            // wrong downwards is a publication losing its objects mid-flight (GW_0168). Nothing
+            // needs it to be small: the reference reclaims nothing while it waits either way.
+            if (stagingRefMaxAge == null) {
+                stagingRefMaxAge = Duration.ofHours(24);
+            }
             defaults = merge(defaults, FALLBACK);
             marketplaces = marketplaces == null ? Map.of() : Map.copyOf(marketplaces);
+        }
+
+        /**
+         * Whether the staging-reference sweep runs at all. Zero or negative switches it off rather
+         * than making every staging reference instantly eligible — the same fail-safe reading
+         * {@code held-max-age} gets, and for the same reason: the mis-typed value must not be the
+         * one that deletes.
+         */
+        public boolean stagingSweepEnabled() {
+            return !stagingRefMaxAge.isZero() && !stagingRefMaxAge.isNegative();
         }
 
         /** The policy in force for a marketplace: its overrides over the global defaults. */

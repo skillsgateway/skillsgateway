@@ -17,6 +17,39 @@ export const heldSnapshot: Schemas["Snapshot"] = {
   createdAt: "2026-08-14T10:00:00Z",
 };
 
+/** Provenance of a composite snapshot: the served commit differs from upstream, and the closure names why. */
+export const compositeProvenance: Schemas["Provenance"] = {
+  snapshotId: heldSnapshot.id,
+  marketplace: "corp-marketplace",
+  origin: "upstream",
+  upstreamUrl: "https://github.com/corp/marketplace.git",
+  upstreamSha: "3f9c2ab3f9c2ab3f9c2ab3f9c2ab3f9c2ab3f9c2",
+  sha: heldSnapshot.sha,
+  state: "held",
+  ingestedAt: "2026-08-14T10:00:00Z",
+  closure: {
+    id: 7,
+    snapshotId: heldSnapshot.id,
+    digest: "4c2a".repeat(16),
+    upstreamSha: "3f9c2ab3f9c2ab3f9c2ab3f9c2ab3f9c2ab3f9c2",
+    transformerVersion: "1",
+    createdAt: "2026-08-14T10:00:00Z",
+    members: [
+      {
+        pluginName: "tools",
+        sourceType: "github",
+        declaredSource: "acme/tools",
+        cloneUrl: "https://github.com/acme/tools",
+        resolvedSha: "b7e0c1db7e0c1db7e0c1db7e0c1db7e0c1db7e0c",
+        treeSha: "d41a9f2d41a9f2d41a9f2d41a9f2d41a9f2d41a9",
+        graftPath: "_plugins/tools",
+        objectCount: 12,
+        inflatedBytes: 4096,
+      },
+    ],
+  },
+};
+
 /** Soft-deleted by retention: still listed, still rejected, restorable until purgeAfter. */
 export const deletedSnapshot: Schemas["Snapshot"] = {
   id: 2,
@@ -400,8 +433,8 @@ export const handlers = [
   ),
   http.get("/api/marketplaces", () => HttpResponse.json([marketplace])),
   http.post("/api/marketplaces", () =>
-    HttpResponse.json<Schemas["Marketplace"]>(
-      { id: 2, name: "new-marketplace", url: "https://example.com/m.git" },
+    HttpResponse.json<Schemas["RegisteredMarketplace"]>(
+      { id: 2, name: "new-marketplace", url: "https://example.com/m.git", warnings: [] },
       { status: 201 },
     ),
   ),
@@ -447,6 +480,7 @@ export const handlers = [
   ),
   http.get("/api/snapshots/:id/fetchers", () => HttpResponse.json(fetchers)),
   http.get("/api/snapshots/:id/content", () => HttpResponse.json(snapshotContent)),
+  http.get("/api/snapshots/:id/provenance", () => HttpResponse.json(compositeProvenance)),
   http.get("/api/snapshots/:id/content-diff", () => HttpResponse.json(contentDiff)),
   http.get("/api/snapshots/:id/files", () => HttpResponse.json(fileTree)),
   http.get("/api/snapshots/:id/file", ({ request }) =>

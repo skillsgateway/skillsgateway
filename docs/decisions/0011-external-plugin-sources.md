@@ -1,6 +1,6 @@
 # ADR 0011 — External plugin sources: admission before resolution
 
-*Accepted, 2026-09-02. Amended 2026-09-03: increments two and three shipped; three deviations recorded below.*
+*Accepted, 2026-09-02. Amended 2026-09-03: increments two and three shipped; three deviations recorded below. Amended 2026-09-06: the closure increment shipped and closed the first deviation.*
 
 ## Context
 
@@ -165,18 +165,22 @@ for.
 | Admission: typed source model, configuration gate, held-only-if-local invariant | GW_0003 (rev. 0.2.0), GW_0150, GW_0151, GW_0152 | Shipped |
 | Resolution of the `github` type: closure fetch into quarantine, deterministic composite rewrite parented on the upstream commit, closure-wide vetting by construction | GW_0155, GW_0156, GW_0161 | Shipped |
 | Hardening the resolution path: post-DNS and per-request address validation, redirect policy, inflation and size budgets, global deadline | GW_0157, GW_0158 | Shipped |
-| The closure as a queryable domain object, and the blast-radius re-vetting it enables | to be assigned | #17, next |
-| `git` and `git-subdir`, declared `ref`/`sha` pinning, the egress proxy, connect-time address pinning, the negative cache, portal provenance | to be assigned | #17, after |
+| The closure as a queryable domain object: `snapshots.upstream_sha`, closure and member rows written with the snapshot, the closure in provenance and in the policy facts, and a closure-completeness gate ahead of every other approval gate | GW_0164, GW_0165 | Shipped |
+| The blast-radius re-vetting the closure query enables (wiring `snapshotsContaining` into `RevetService`) | to be assigned | #17, next |
+| `git` and `git-subdir`, declared `ref`/`sha` pinning, the egress proxy, connect-time address pinning, the negative cache, the origin badge on the marketplace detail page | to be assigned | #17, after |
 
 ### Three deviations from this ADR, recorded rather than absorbed
 
-**`snapshots.upstream_sha` was not added.** §2 says the upstream commit is
-recorded alongside the composite as a column *and* retained as its parent. Only
-the parent exists. The parent is the authoritative record — one
-`RevCommit.getParent(0)`, and the commit message names it in text as well — and
-nothing in the system reads an upstream SHA today. The column earns its keep when
-the closure tables arrive and something has to query across snapshots, which is
-the increment that adds them.
+**`snapshots.upstream_sha` was not added** — *closed by the closure increment.*
+§2 says the upstream commit is recorded alongside the composite as a column
+*and* retained as its parent. The resolution increment kept only the parent,
+because nothing read an upstream SHA. The closure increment adds the column,
+`NOT NULL` and equal to `sha` for every snapshot that is not a composite, and
+the closure tables beside it. One further departure from the review's sketch
+is recorded in that change's design: the closure is owned by its snapshot
+(`snapshot_closures.snapshot_id`, cascading with the purge) rather than shared
+between snapshots through a `snapshots.closure_id`, and the digest is the
+cross-snapshot *query* key, not a storage key.
 
 **The policy version is not an input to the composite SHA.** §Consequences says
 the admission policy hashes to a policy version stamped into the composite. Only

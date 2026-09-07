@@ -71,7 +71,13 @@ CREATE INDEX idx_marketplaces_sync_queue ON marketplaces (last_sync_at) WHERE sy
 CREATE TABLE snapshots (
     id BIGSERIAL PRIMARY KEY,
     marketplace_id BIGINT NOT NULL REFERENCES marketplaces (id),
+    -- The commit the gateway serves: the upstream commit for a local-only manifest, the
+    -- synthesised composite for one with resolved external sources (GW_0156).
     sha TEXT NOT NULL,
+    -- The commit ingested from upstream (GW_0164). Equal to `sha` unless a composite was
+    -- synthesised, in which case it is also the composite's parent; the column exists so the
+    -- question can be asked across snapshots without opening repository storage.
+    upstream_sha TEXT NOT NULL,
     -- held -> approved | rejected, approved -> revoked, revoked -> approved | rejected.
     -- 'revoked' is retroactive quarantine (GW_0050): a snapshot that was approved and published,
     -- and whose later re-vetting run found a violation the active waivers do not cover. It is a
@@ -103,6 +109,59 @@ CREATE TABLE snapshots (
     purge_after TIMESTAMPTZ,
     UNIQUE (marketplace_id, sha)
 );
+
+-- The resolved closure of a composite snapshot (GW_0164): what each external plugin source was
+-- declared as, what it resolved to, and where it was grafted, copied as values at ingestion.
+-- Never a foreign key into the marketplace or the manifest -- those are the mutable source; this
+-- is the immutable artifact that was vetted and approved, and it must keep meaning the same thing
+-- after either of them changes. One row per composite snapshot, owned by it: a local-only
+-- snapshot has no row, and no row is the empty closure. Written in the snapshot's transaction
+-- and removed only by the snapshot's purge, through the cascade.
+
+CREATE TABLE snapshot_closures (
+    id BIGSERIAL PRIMARY KEY,
+    snapshot_id BIGINT NOT NULL UNIQUE REFERENCES snapshots (id) ON DELETE CASCADE,
+    -- SHA-256 over the upstream commit, the transformer version and the sorted members: the
+    -- identity of the closure independent of which snapshot carries it, so two marketplaces
+    -- resolving the same thing can be found by one lookup, and the value a future signature
+    -- would be over.
+    digest TEXT NOT NULL,
+    upstream_sha TEXT NOT NULL,
+    transformer_version TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX idx_snapshot_closures_digest ON snapshot_closures (digest);
+
+CREATE TABLE snapshot_closure_members (
+    id BIGSERIAL PRIMARY KEY,
+    closure_id BIGINT NOT NULL REFERENCES snapshot_closures (id) ON DELETE CASCADE,
+    -- Adjacency: NULL is the root (the upstream commit). Every member is at depth one today,
+    -- so this is NULL on every row; it is the column a deeper closure would fill.
+    parent_member_id BIGINT REFERENCES snapshot_closure_members (id),
+    plugin_name TEXT NOT NULL,
+    source_type TEXT NOT NULL,
+    -- The source as the manifest declared it (an owner/repo shorthand, a URL), and any ref or
+    -- commit it pinned. A declared pin is refused today (GW_0155), so both are NULL until the
+    -- increment that honours one lands.
+    declared_source TEXT NOT NULL,
+    declared_ref TEXT,
+    declared_sha TEXT,
+    clone_url TEXT NOT NULL,
+    resolved_sha TEXT NOT NULL,
+    -- The tree grafted into the composite, and where. The approval gate (GW_0165) compares this
+    -- against the pinned commit rather than resolving `resolved_sha`: the external commit object
+    -- is reachable from nothing once scaffolding is pruned and may legitimately be collected.
+    tree_sha TEXT NOT NULL,
+    graft_path TEXT NOT NULL,
+    object_count BIGINT NOT NULL,
+    inflated_bytes BIGINT NOT NULL,
+    UNIQUE (closure_id, graft_path)
+);
+
+-- The blast-radius query: every snapshot whose closure contains this source, at any commit or
+-- at one in particular.
+CREATE INDEX idx_snapshot_closure_members_source ON snapshot_closure_members (clone_url, resolved_sha);
 
 -- The compaction pass's only query: soft-deleted snapshots whose window has elapsed.
 CREATE INDEX idx_snapshots_purge_queue ON snapshots (purge_after) WHERE deleted_at IS NOT NULL;
@@ -446,3 +505,23 @@ CREATE TABLE connector_toggles (
 
 -- The chain's per-run lookup: every setting for one marketplace plus the globals.
 CREATE INDEX idx_connector_toggles_lookup ON connector_toggles (connector, marketplace_id);
+
+-- Publication stages a snapshot's objects in the published repository under an unadvertised
+-- refs/staging/<sha> and only then moves the served references (GW_0168). A process killed
+-- between the two leaves that reference behind, pinning objects nothing will ever serve. The
+-- retention sweep removes it, and this table is the clock the sweep needs: a git reference carries
+-- no portable creation time, and neither storage backend can be asked for one.
+--
+-- A row is written the first time a pass sees a staging reference and removed when the reference
+-- is gone, so "how long has this been here" is answerable as "at least since first_seen_at". That
+-- is an under-estimate of the reference's real age, which is the only safe direction to be wrong
+-- in: it can delay a sweep, never bring one forward into a publication that is still running.
+CREATE TABLE staging_ref_sightings (
+    id BIGSERIAL PRIMARY KEY,
+    -- The marketplace by name and not by id: the sweep enumerates published repositories off the
+    -- storage backend, so a repository whose marketplace row has gone still has to be swept.
+    marketplace TEXT NOT NULL CHECK (marketplace <> ''),
+    ref TEXT NOT NULL CHECK (ref <> ''),
+    first_seen_at TIMESTAMPTZ NOT NULL,
+    UNIQUE (marketplace, ref)
+);

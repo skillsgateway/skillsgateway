@@ -82,6 +82,12 @@ const registerSchema = z.object({
 
 type RegisterForm = z.infer<typeof registerSchema>;
 
+/**
+ * Warns rather than blocks on a duplicate upstream URL, client-side against the marketplaces
+ * already loaded here and again from the server's authoritative check on the response.
+ *
+ * @Requirements GW_0166
+ */
 function RegisterMarketplaceDialog({ existing }: { existing: MarketplaceView[] }) {
   const [open, setOpen] = useState(false);
   const [acknowledgedDuplicate, setAcknowledgedDuplicate] = useState(false);
@@ -108,8 +114,17 @@ function RegisterMarketplaceDialog({ existing }: { existing: MarketplaceView[] }
 
   const onSubmit = form.handleSubmit((values) => {
     register.mutate(values, {
-      onSuccess: () => {
+      onSuccess: (registered) => {
         toast.success(`Marketplace '${values.name}' registered`);
+        // The client-side check above catches most collisions before submission, but only
+        // against the marketplace list already loaded here — the server checks again,
+        // authoritatively, against every marketplace, and this is what a caller that skips the
+        // portal entirely (the estate reconciler, a direct API client) relies on to see it at
+        // all. Surfacing it here too closes the gap where this page's own check missed a
+        // registration that landed between the page loading and this submission.
+        for (const warning of registered.warnings ?? []) {
+          toast.warning(warning);
+        }
         form.reset();
         setAcknowledgedDuplicate(false);
         setOpen(false);
@@ -218,9 +233,17 @@ function RegisterMarketplaceDialog({ existing }: { existing: MarketplaceView[] }
   );
 }
 
+/**
+ * What was served, from where, and who approved it — and, for a snapshot with resolved external
+ * plugin sources, the closure: each external plugin with the URL it was fetched through and the
+ * commit it resolved to, as recorded with the snapshot at ingestion.
+ *
+ * @Requirements GW_0164
+ */
 function ProvenanceDialog({ snapshotId, onClose }: { snapshotId: number; onClose: () => void }) {
   const provenance = useProvenance(snapshotId);
   const p = provenance.data;
+  const members = p?.closure?.members ?? [];
   return (
     <Dialog open onOpenChange={(open) => (open ? undefined : onClose())}>
       <DialogContent>
@@ -242,6 +265,8 @@ function ProvenanceDialog({ snapshotId, onClose }: { snapshotId: number; onClose
             <dd className="break-all">{p.upstreamUrl}</dd>
             <dt className="font-medium">Upstream SHA</dt>
             <dd className="font-mono break-all">{p.upstreamSha}</dd>
+            <dt className="font-medium">Served SHA</dt>
+            <dd className="font-mono break-all">{p.sha}</dd>
             <dt className="font-medium">State</dt>
             <dd>{p.state}</dd>
             <dt className="font-medium">Ingested</dt>
@@ -251,6 +276,28 @@ function ProvenanceDialog({ snapshotId, onClose }: { snapshotId: number; onClose
             <dt className="font-medium">Decided at</dt>
             <dd><Timestamp value={p.decidedAt} /></dd>
           </dl>
+        ) : null}
+        {members.length > 0 ? (
+          <section aria-labelledby={`closure-${snapshotId}`} className="text-sm">
+            <h3 id={`closure-${snapshotId}`} className="font-medium">
+              External plugin sources
+            </h3>
+            <p className="text-muted-foreground">
+              Resolved at ingestion and recorded with the snapshot; the served commit contains
+              exactly these.
+            </p>
+            <ul className="mt-1 space-y-1">
+              {members.map((member) => (
+                <li key={member.graftPath} className="grid grid-cols-[max-content_1fr] gap-x-4">
+                  <span className="font-medium">{member.pluginName}</span>
+                  <span className="break-all">
+                    <span>{member.cloneUrl}</span>{" "}
+                    <span className="font-mono">{member.resolvedSha}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
         ) : null}
       </DialogContent>
     </Dialog>

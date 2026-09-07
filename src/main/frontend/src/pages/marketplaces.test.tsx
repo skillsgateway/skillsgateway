@@ -3,10 +3,15 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { MemoryRouter } from "react-router-dom";
-import { expect, test } from "vitest";
-import { tooYoung } from "@/test/msw-handlers";
+import { toast } from "sonner";
+import { expect, test, vi } from "vitest";
+import { compositeProvenance, tooYoung } from "@/test/msw-handlers";
 import { server } from "@/test/msw-server";
 import { MarketplacesPage } from "./marketplaces";
+
+vi.mock("sonner", () => ({
+  toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
+}));
 
 function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -30,6 +35,25 @@ test("lists_registered_marketplaces_and_reveals_snapshots_on_expand", async () =
   await user.click(screen.getByRole("button", { name: "Expand corp-marketplace" }));
   expect(await screen.findByRole("button", { name: "Approve snapshot 1" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Reject snapshot 1" })).toBeInTheDocument();
+});
+
+/**
+ * The provenance dialog carries the closure (GW_0164): a reviewer sees the served commit beside
+ * the upstream one, and each external plugin with the URL it was fetched through and the commit it
+ * resolved to. Untagged for the reason given below: SVC_GW_0164 is verified by the Java suite.
+ */
+test("provenance_dialog_lists_the_served_commit_and_the_resolved_closure", async () => {
+  const user = userEvent.setup();
+  renderPage();
+  await user.click(await screen.findByRole("button", { name: "Expand corp-marketplace" }));
+  await user.click(await screen.findByRole("button", { name: "Provenance of snapshot 1" }));
+  const dialog = await screen.findByRole("dialog", { name: "Provenance of snapshot 1" });
+  const member = compositeProvenance.closure!.members![0]!;
+  expect(await within(dialog).findByText(member.cloneUrl!)).toBeInTheDocument();
+  expect(within(dialog).getByText(member.resolvedSha!)).toBeInTheDocument();
+  expect(within(dialog).getByText(compositeProvenance.sha!)).toBeInTheDocument();
+  expect(within(dialog).getByText(compositeProvenance.upstreamSha!)).toBeInTheDocument();
+  expect(within(dialog).getByRole("heading", { name: "External plugin sources" })).toBeInTheDocument();
 });
 
 /**
@@ -161,4 +185,36 @@ test("register_warns_and_gates_on_a_duplicate_clone_url", async () => {
 
   await user.click(screen.getByRole("checkbox", { name: "Register anyway" }));
   expect(register).toBeEnabled();
+});
+
+/**
+ * The client-side check above only ever sees the marketplace list already loaded on this page —
+ * the server checks again, authoritatively, against every marketplace, and returns what it found
+ * in the registration response. A registration this page's own check missed (a race, a stale
+ * list) still has to reach the operator, so a warning in that response is shown here too.
+ */
+test("a_warning_in_the_registration_response_is_shown_even_when_the_client_missed_it", async () => {
+  const user = userEvent.setup();
+  server.use(
+    http.post("/api/marketplaces", () =>
+      HttpResponse.json(
+        {
+          id: 9,
+          name: "corp-second",
+          url: "https://github.com/corp/other.git",
+          warnings: ["url already registered as corp-marketplace"],
+        },
+        { status: 201 },
+      ),
+    ),
+  );
+  renderPage();
+  await user.click(await screen.findByRole("button", { name: "Register marketplace" }));
+  await user.type(screen.getByLabelText("Name"), "corp-second");
+  await user.type(screen.getByLabelText("Clone URL"), "https://github.com/corp/other.git");
+  await user.click(screen.getByRole("button", { name: "Register" }));
+
+  await waitFor(() =>
+    expect(toast.warning).toHaveBeenCalledWith("url already registered as corp-marketplace"),
+  );
 });

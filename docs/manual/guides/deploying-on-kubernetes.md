@@ -133,23 +133,39 @@ extraEnvFrom:
 Environment names are Spring's relaxed-binding form of the property:
 `skills-gateway.roles.claim` is `SKILLSGATEWAY_ROLES_CLAIM`.
 
-!!! warning "Terminating TLS at the Ingress needs one more setting"
+### Behind the Ingress: `forwardHeadersStrategy`
 
-    The application serves plain HTTP and terminates no TLS, so where the
-    Ingress terminates it, the application must be told to trust what the proxy
-    reports:
+The application serves plain HTTP and terminates no TLS, so where the Ingress
+(or a load balancer in front of it) terminates it, the application learns the
+scheme and host the outside world sees from the `X-Forwarded-*` headers that
+proxy sends. The chart names how far those headers are believed:
 
-    ```yaml
-    extraEnv:
-      - name: SERVER_FORWARDHEADERSSTRATEGY
-        value: framework
-    ```
+```yaml
+forwardHeadersStrategy: native   # the default
+```
 
-    Without it Spring builds its external URLs from the pod's own view of the
-    request, the OIDC redirect URI becomes `http://<pod>:8080/login/oauth2/code/idp`
-    rather than the `https://` URI registered with the provider, and every login
-    fails on a redirect-URI mismatch. The chart has no value of its own for
-    this yet.
+`native` honours the headers only from a peer in a private address range,
+which is where an ingress controller sits; `framework` honours them from any
+peer, for a proxy outside those ranges; `none` ignores them. A value the
+gateway does not know fails the render. The choice and its consequences are
+spelled out in
+[Running behind a proxy](deploying-without-kubernetes.md#running-behind-a-proxy).
+
+Without a working strategy the OIDC redirect URI becomes
+`http://<pod>:8080/login/oauth2/code/idp` rather than the `https://` URI
+registered with the provider, and every login fails on a redirect-URI mismatch.
+`oidc.redirectUri` states the registered URI outright, trusting no header,
+should you ever need to bypass the derivation.
+
+!!! warning "Remove `SERVER_FORWARDHEADERSSTRATEGY: framework` from `extraEnv`"
+
+    Earlier versions of this guide set it there. On the native image that value
+    was inert — Spring Boot registers the filter behind a condition the image
+    evaluates at build time — and setting it also switched off the `native`
+    strategy Spring Boot would otherwise have deduced on Kubernetes, so
+    following the advice made logins fail rather than fixing them. The chart
+    value replaces it; an `extraEnv` entry of the same name would override the
+    chart's.
 
 ## Storage
 
