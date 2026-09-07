@@ -2109,6 +2109,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Adding one">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adr-0012-the-release-artifact-is-a-jvm-container-not-a-native-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0012 — The release artifact is a JVM container, not a native image
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -2310,6 +2327,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Adding one">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adr-0012-the-release-artifact-is-a-jvm-container-not-a-native-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0012 — The release artifact is a JVM container, not a native image
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2556,6 +2590,12 @@ gate.</p>
 <p>New architecture-level choices get a new numbered ADR in <code>docs/decisions/</code>,
 referenced from the <a href="../../architecture/">architecture document</a>, and an entry
 on this page.</p>
+<h3 id="adr-0012-the-release-artifact-is-a-jvm-container-not-a-native-image"><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0012-native-image-as-the-release-artifact.md">ADR 0012 — The release artifact is a JVM container, not a native image</a><a class="headerlink" href="#adr-0012-the-release-artifact-is-a-jvm-container-not-a-native-image" title="Permanent link">&para;</a></h3>
+<p><em>Accepted.</em> The release artifact becomes a JVM container on a <code>jlink</code> runtime over
+<code>distroless/java-base</code>; the native image is dropped. Supersedes the release-profile
+decision in ADR 0002. Records the measurement that settled it — roughly 100 MB per
+instance, at a sizing where nothing is memory-bound — against three defects
+possible only on the native image, two of which shipped.</p>
 
 
 
