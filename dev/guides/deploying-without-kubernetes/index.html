@@ -2294,8 +2294,8 @@ nobody can administer. Name one in <code>skills-gateway.roles.admins</code>, in 
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="nv">SGW_OIDC_SCOPE</span><span class="o">=</span>openid,profile,email
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="nv">SKILLSGATEWAY_OIDC_ISSUER</span><span class="o">=</span>https://idp.example.com/v2.0
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1"># Behind a TLS-terminating proxy</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="nv">SERVER_FORWARDHEADERSSTRATEGY</span><span class="o">=</span>framework
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1"># Behind a TLS-terminating proxy — see Running behind a proxy</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="nv">SERVER_FORWARDHEADERSSTRATEGY</span><span class="o">=</span>native
 <a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
 <a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="c1"># At least one administrator</span>
 <a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="nv">SKILLSGATEWAY_ROLES_ADMINS_0</span><span class="o">=</span>platform-admin@example.com
@@ -2314,20 +2314,70 @@ startup path, which is one less thing to be reachable at boot.</p>
 </div>
 <h2 id="running-behind-a-proxy">Running behind a proxy<a class="headerlink" href="#running-behind-a-proxy" title="Permanent link">&para;</a></h2>
 <p>The application serves plain HTTP on port 8080 and terminates no TLS. Whatever
-sits in front of it — an ingress, a load balancer, a reverse proxy — must
-therefore tell it what the outside world sees, and the application must be told
-to believe it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">SERVER_FORWARDHEADERSSTRATEGY</span><span class="o">=</span>framework
+sits in front of it — a load balancer, an ingress, a reverse proxy — sees
+<code>https://&lt;your-host&gt;</code>; the application sees <code>http://&lt;container&gt;:8080</code>. Every
+URL it builds from the request is wrong until it is told what the proxy sees,
+and the proxy says so in <code>X-Forwarded-Proto</code> and <code>X-Forwarded-Host</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">SERVER_FORWARDHEADERSSTRATEGY</span><span class="o">=</span>native
 </code></pre></div>
-<p>Without this, Spring builds its external URLs from the container's own view of
-the request. The OIDC redirect URI becomes <code>http://&lt;container&gt;:8080/login/oauth2/code/idp</code>
-rather than the <code>https://&lt;your-host&gt;/login/oauth2/code/idp</code> you registered with
-the provider, and every login fails on a redirect-URI mismatch. Set it wherever
-TLS terminates somewhere other than the application itself, which in practice
-is everywhere.</p>
-<p>Make sure the proxy actually sends <code>X-Forwarded-Proto</code> and <code>X-Forwarded-Host</code>,
-and that it is the only thing that can — these headers are trusted once this
-setting is on.</p>
+<p>Without it the OIDC redirect URI arrives at the identity provider as
+<code>http://&lt;container&gt;:8080/login/oauth2/code/idp</code> rather than the
+<code>https://&lt;your-host&gt;/login/oauth2/code/idp</code> you registered, and every login
+fails on a redirect-URI mismatch — reported by the provider against its own
+application registration, not against the gateway. Set it wherever TLS
+terminates somewhere other than the application itself, which in practice is
+everywhere.</p>
+<p>The setting is a trust decision, because the application cannot tell a proxy's
+header from a client's. Its three values differ in whom they believe:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Who is believed</th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>native</code></td>
+<td>Tomcat honours the headers only from a peer in a private address range: <code>10/8</code>, <code>172.16/12</code>, <code>192.168/16</code>, <code>100.64/10</code>, loopback, and their IPv6 counterparts.</td>
+<td>The proxy is in your VPC or cluster — where a cloud load balancer or an ingress controller sits. The recommended value.</td>
+</tr>
+<tr>
+<td><code>framework</code></td>
+<td>Spring's filter honours the headers from any peer.</td>
+<td>The proxy has a public address, or you need <code>X-Forwarded-Prefix</code> or RFC 7239 <code>Forwarded</code>. Only where nothing but the proxy can reach port 8080, and where the proxy overwrites the headers rather than passing a client's through.</td>
+</tr>
+<tr>
+<td><code>none</code></td>
+<td>Nobody. The container's own view of the request.</td>
+<td>The application terminates TLS itself.</td>
+</tr>
+</tbody>
+</table>
+<p>A proxy outside the private ranges can be named rather than trusting everyone:
+<code>server.tomcat.remoteip.internal-proxies</code> (<code>SERVER_TOMCAT_REMOTEIP_INTERNALPROXIES</code>)
+replaces the list above, as CIDRs or a regular expression, and <code>native</code> then
+believes those peers.</p>
+<p>Leaving the variable unset is not the same as <code>none</code>: Spring Boot then deduces
+<code>native</code> on a container platform it recognises from the environment —
+Kubernetes and ECS among them — and <code>none</code> anywhere else. Name the value; a
+deployment that works because of a deduction is one nobody can read.</p>
+<div class="admonition note">
+<p class="admonition-title"><code>framework</code> was inert on the released image until it was registered explicitly</p>
+<p>Spring Boot registers its forwarded-header filter behind a condition that a
+GraalVM native image evaluates once, when the image is built, and the
+property is not set then — so <code>SERVER_FORWARDHEADERSSTRATEGY=framework</code> did
+nothing on the released image, however correctly it was deployed. The
+gateway now registers the filter itself and reads the setting at runtime,
+so every value means the same on the JVM jar and on the native image. Do
+not go back to relying on Spring Boot's own registration.</p>
+</div>
+<p>The redirect URI can also be stated outright, with no header trusted at all:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">SGW_OIDC_REDIRECT_URI</span><span class="o">=</span>https://&lt;your-host&gt;/login/oauth2/code/idp
+</code></pre></div>
+<p>It fixes the login and nothing else — every other URL built from the request
+still names the container — so it is the escape hatch, not the fix.</p>
 <h2 id="property-names-as-environment-variables">Property names as environment variables<a class="headerlink" href="#property-names-as-environment-variables" title="Permanent link">&para;</a></h2>
 <p>Spring's relaxed binding maps a property to a variable by upper-casing it,
 replacing <code>.</code> with <code>_</code>, and <strong>removing</strong> hyphens:</p>
@@ -2366,14 +2416,14 @@ never <code>DATA_DIR</code>. Every setting in <a href="../../reference/configura
 is reachable this way.</p>
 <h3 id="lists">Lists<a class="headerlink" href="#lists" title="Permanent link">&para;</a></h3>
 <p>A list of scalars is indexed:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">SKILLSGATEWAY_ROLES_ADMINS_0</span><span class="o">=</span>first-admin@example.com
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nv">SKILLSGATEWAY_ROLES_ADMINS_1</span><span class="o">=</span>second-admin@example.com
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nv">SKILLSGATEWAY_ROLES_ADMINS_0</span><span class="o">=</span>first-admin@example.com
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nv">SKILLSGATEWAY_ROLES_ADMINS_1</span><span class="o">=</span>second-admin@example.com
 </code></pre></div>
 <p>A list of objects indexes each field:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nv">SKILLSGATEWAY_ROLES_MAPPINGS_0_CLAIMVALUE</span><span class="o">=</span>SkillsGateway.Admin
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nv">SKILLSGATEWAY_ROLES_MAPPINGS_0_ROLE</span><span class="o">=</span>admin
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nv">SKILLSGATEWAY_ESTATE_MARKETPLACES_0_NAME</span><span class="o">=</span>corp-marketplace
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="nv">SKILLSGATEWAY_ESTATE_MARKETPLACES_0_URL</span><span class="o">=</span>https://git.example.com/skills/corp.git
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nv">SKILLSGATEWAY_ROLES_MAPPINGS_0_CLAIMVALUE</span><span class="o">=</span>SkillsGateway.Admin
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nv">SKILLSGATEWAY_ROLES_MAPPINGS_0_ROLE</span><span class="o">=</span>admin
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nv">SKILLSGATEWAY_ESTATE_MARKETPLACES_0_NAME</span><span class="o">=</span>corp-marketplace
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nv">SKILLSGATEWAY_ESTATE_MARKETPLACES_0_URL</span><span class="o">=</span>https://git.example.com/skills/corp.git
 </code></pre></div>
 <p>This works, and for one or two entries it is the least machinery. It stops
 being reasonable somewhere around the <a href="../declarative-estate/">declarative estate</a>,
@@ -2382,7 +2432,7 @@ supply a file.</p>
 <h2 id="supplying-a-configuration-file">Supplying a configuration file<a class="headerlink" href="#supplying-a-configuration-file" title="Permanent link">&para;</a></h2>
 <p>The chart mounts a ConfigMap and points <code>SPRING_CONFIG_ADDITIONAL_LOCATION</code> at
 it. Outside Kubernetes the destination is the same; only the delivery differs.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nv">SPRING_CONFIG_ADDITIONAL_LOCATION</span><span class="o">=</span>optional:file:/config/
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nv">SPRING_CONFIG_ADDITIONAL_LOCATION</span><span class="o">=</span>optional:file:/config/
 </code></pre></div>
 <p>The trailing slash matters: it names a directory, and Spring reads
 <code>application.yaml</code> from it. The file is layered <em>over</em> the <code>application.yaml</code>
@@ -2412,7 +2462,7 @@ container can fetch it from a secret store or an object store.</p>
 </div>
 <div class="tabbed-block">
 <p>A single environment variable carrying the whole nested structure as JSON:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nv">SPRING_APPLICATION_JSON</span><span class="o">=</span><span class="s1">'{"skills-gateway":{"roles":{"claim":"roles","mappings":[{"claim-value":"SkillsGateway.Admin","role":"admin"}]}}}'</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nv">SPRING_APPLICATION_JSON</span><span class="o">=</span><span class="s1">'{"skills-gateway":{"roles":{"claim":"roles","mappings":[{"claim-value":"SkillsGateway.Admin","role":"admin"}]}}}'</span>
 </code></pre></div>
 <p>No file and no second container, at the cost of a configuration that no
 longer diffs readably. Reasonable for a handful of nested settings, poor for
@@ -2444,9 +2494,9 @@ covers the background singletons that must be switched off first.</p>
 for it — but the application still needs <strong>one writable scratch directory</strong>.
 Tomcat creates its work directory under <code>java.io.tmpdir</code> while the web server
 starts, so with nowhere to write it the process exits before serving anything:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>Unable to create tempDir. java.io.tmpdir is set to /tmp
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>Caused by: java.nio.file.FileSystemException:
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>  /tmp/tomcat.8080.13526778125704680643: Read-only file system
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Unable to create tempDir. java.io.tmpdir is set to /tmp
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>Caused by: java.nio.file.FileSystemException:
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  /tmp/tomcat.8080.13526778125704680643: Read-only file system
 </code></pre></div>
 <p>Mount ephemeral scratch at <code>/tmp</code>. Nothing durable belongs there — it is
 discarded with the container, and losing it costs nothing.</p>
@@ -2474,42 +2524,42 @@ check — the kind that runs a command inside the container — cannot be writte
 The probe has to come from outside: your load balancer's target health check,
 your platform's HTTP probe, or an external monitor.</p>
 <h2 id="a-worked-example-plain-docker">A worked example: plain Docker<a class="headerlink" href="#a-worked-example-plain-docker" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>docker<span class="w"> </span>volume<span class="w"> </span>create<span class="w"> </span>skills-gateway-data
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>skills-gateway<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">8080</span>:8080<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span>-v<span class="w"> </span>skills-gateway-data:/data<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">  </span>-v<span class="w"> </span><span class="s2">"</span><span class="nv">$PWD</span><span class="s2">/config:/config:ro"</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">  </span>--read-only<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">  </span>--mount<span class="w"> </span><span class="nv">type</span><span class="o">=</span>tmpfs,destination<span class="o">=</span>/tmp,tmpfs-mode<span class="o">=</span><span class="m">1777</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SPRING_CONFIG_ADDITIONAL_LOCATION</span><span class="o">=</span>optional:file:/config/<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SPRING_DATASOURCE_URL</span><span class="o">=</span><span class="s1">'jdbc:postgresql://postgres.example.com:5432/skillsgateway?sslmode=require'</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SPRING_DATASOURCE_USERNAME</span><span class="o">=</span>skillsgateway<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SPRING_DATASOURCE_PASSWORD</span><span class="o">=</span><span class="s2">"</span><span class="nv">$DB_PASSWORD</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_CLIENT_ID</span><span class="o">=</span><span class="s2">"</span><span class="nv">$OIDC_CLIENT_ID</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_CLIENT_SECRET</span><span class="o">=</span><span class="s2">"</span><span class="nv">$OIDC_CLIENT_SECRET</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_AUTHORIZATION_URI</span><span class="o">=</span>https://idp.example.com/oauth2/v2.0/authorize<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_TOKEN_URI</span><span class="o">=</span>https://idp.example.com/oauth2/v2.0/token<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_JWK_SET_URI</span><span class="o">=</span>https://idp.example.com/discovery/v2.0/keys<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_USER_NAME_ATTRIBUTE</span><span class="o">=</span>preferred_username<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_SCOPE</span><span class="o">=</span>openid,profile,email<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SKILLSGATEWAY_OIDC_ISSUER</span><span class="o">=</span>https://idp.example.com/v2.0<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SERVER_FORWARDHEADERSSTRATEGY</span><span class="o">=</span>framework<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="w">  </span>ghcr.io/skillsgateway/skillsgateway:&lt;released-version&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>docker<span class="w"> </span>volume<span class="w"> </span>create<span class="w"> </span>skills-gateway-data
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>skills-gateway<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">8080</span>:8080<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span>-v<span class="w"> </span>skills-gateway-data:/data<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">  </span>-v<span class="w"> </span><span class="s2">"</span><span class="nv">$PWD</span><span class="s2">/config:/config:ro"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">  </span>--read-only<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">  </span>--mount<span class="w"> </span><span class="nv">type</span><span class="o">=</span>tmpfs,destination<span class="o">=</span>/tmp,tmpfs-mode<span class="o">=</span><span class="m">1777</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SPRING_CONFIG_ADDITIONAL_LOCATION</span><span class="o">=</span>optional:file:/config/<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SPRING_DATASOURCE_URL</span><span class="o">=</span><span class="s1">'jdbc:postgresql://postgres.example.com:5432/skillsgateway?sslmode=require'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SPRING_DATASOURCE_USERNAME</span><span class="o">=</span>skillsgateway<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SPRING_DATASOURCE_PASSWORD</span><span class="o">=</span><span class="s2">"</span><span class="nv">$DB_PASSWORD</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_CLIENT_ID</span><span class="o">=</span><span class="s2">"</span><span class="nv">$OIDC_CLIENT_ID</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_CLIENT_SECRET</span><span class="o">=</span><span class="s2">"</span><span class="nv">$OIDC_CLIENT_SECRET</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_AUTHORIZATION_URI</span><span class="o">=</span>https://idp.example.com/oauth2/v2.0/authorize<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_TOKEN_URI</span><span class="o">=</span>https://idp.example.com/oauth2/v2.0/token<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_JWK_SET_URI</span><span class="o">=</span>https://idp.example.com/discovery/v2.0/keys<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_USER_NAME_ATTRIBUTE</span><span class="o">=</span>preferred_username<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_SCOPE</span><span class="o">=</span>openid,profile,email<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SKILLSGATEWAY_OIDC_ISSUER</span><span class="o">=</span>https://idp.example.com/v2.0<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SERVER_FORWARDHEADERSSTRATEGY</span><span class="o">=</span>native<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="w">  </span>ghcr.io/skillsgateway/skillsgateway:&lt;released-version&gt;
 </code></pre></div>
 <p>With <code>config/application.yaml</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">roles</span><span class="p">:</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="nt">admins</span><span class="p">:</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">platform-admin@example.com</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span><span class="nt">claim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">roles</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="nt">mappings</span><span class="p">:</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SkillsGateway.Admin</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">  </span><span class="nt">estate</span><span class="p">:</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">    </span><span class="nt">marketplaces</span><span class="p">:</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">corp-marketplace</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://git.example.com/skills/corp.git</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">roles</span><span class="p">:</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="nt">admins</span><span class="p">:</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">platform-admin@example.com</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="nt">claim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">roles</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span><span class="nt">mappings</span><span class="p">:</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SkillsGateway.Admin</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">  </span><span class="nt">estate</span><span class="p">:</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">    </span><span class="nt">marketplaces</span><span class="p">:</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">corp-marketplace</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://git.example.com/skills/corp.git</span>
 </code></pre></div>
 <div class="admonition tip">
 <p class="admonition-title"><code>--mount</code>, not <code>--tmpfs</code>, if you might be on Podman</p>

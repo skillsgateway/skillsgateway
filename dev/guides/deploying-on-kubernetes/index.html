@@ -1308,6 +1308,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#behind-the-ingress-forwardheadersstrategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Behind the Ingress: forwardHeadersStrategy
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2152,6 +2163,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#behind-the-ingress-forwardheadersstrategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Behind the Ingress: forwardHeadersStrategy
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2418,20 +2440,33 @@ from the estate declaration as described in
 </code></pre></div>
 <p>Environment names are Spring's relaxed-binding form of the property:
 <code>skills-gateway.roles.claim</code> is <code>SKILLSGATEWAY_ROLES_CLAIM</code>.</p>
-<div class="admonition warning">
-<p class="admonition-title">Terminating TLS at the Ingress needs one more setting</p>
-<p>The application serves plain HTTP and terminates no TLS, so where the
-Ingress terminates it, the application must be told to trust what the proxy
-reports:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">extraEnv</span><span class="p">:</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SERVER_FORWARDHEADERSSTRATEGY</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">framework</span>
+<h3 id="behind-the-ingress-forwardheadersstrategy">Behind the Ingress: <code>forwardHeadersStrategy</code><a class="headerlink" href="#behind-the-ingress-forwardheadersstrategy" title="Permanent link">&para;</a></h3>
+<p>The application serves plain HTTP and terminates no TLS, so where the Ingress
+(or a load balancer in front of it) terminates it, the application learns the
+scheme and host the outside world sees from the <code>X-Forwarded-*</code> headers that
+proxy sends. The chart names how far those headers are believed:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">forwardHeadersStrategy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">native</span><span class="w">   </span><span class="c1"># the default</span>
 </code></pre></div>
-<p>Without it Spring builds its external URLs from the pod's own view of the
-request, the OIDC redirect URI becomes <code>http://&lt;pod&gt;:8080/login/oauth2/code/idp</code>
-rather than the <code>https://</code> URI registered with the provider, and every login
-fails on a redirect-URI mismatch. The chart has no value of its own for
-this yet.</p>
+<p><code>native</code> honours the headers only from a peer in a private address range,
+which is where an ingress controller sits; <code>framework</code> honours them from any
+peer, for a proxy outside those ranges; <code>none</code> ignores them. A value the
+gateway does not know fails the render. The choice and its consequences are
+spelled out in
+<a href="../deploying-without-kubernetes/#running-behind-a-proxy">Running behind a proxy</a>.</p>
+<p>Without a working strategy the OIDC redirect URI becomes
+<code>http://&lt;pod&gt;:8080/login/oauth2/code/idp</code> rather than the <code>https://</code> URI
+registered with the provider, and every login fails on a redirect-URI mismatch.
+<code>oidc.redirectUri</code> states the registered URI outright, trusting no header,
+should you ever need to bypass the derivation.</p>
+<div class="admonition warning">
+<p class="admonition-title">Remove <code>SERVER_FORWARDHEADERSSTRATEGY: framework</code> from <code>extraEnv</code></p>
+<p>Earlier versions of this guide set it there. On the native image that value
+was inert — Spring Boot registers the filter behind a condition the image
+evaluates at build time — and setting it also switched off the <code>native</code>
+strategy Spring Boot would otherwise have deduced on Kubernetes, so
+following the advice made logins fail rather than fixing them. The chart
+value replaces it; an <code>extraEnv</code> entry of the same name would override the
+chart's.</p>
 </div>
 <h2 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">&para;</a></h2>
 <p>The gateway keeps three sets of repositories on disk under <code>/data</code>: the

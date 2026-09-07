@@ -2327,11 +2327,21 @@ which team.</p>
 <td><code>SKILLSGATEWAY_OIDC_ISSUER</code></td>
 <td>The <code>iss</code> every ID token must carry.</td>
 </tr>
+<tr>
+<td>Redirect URI</td>
+<td><code>SGW_OIDC_REDIRECT_URI</code></td>
+<td>Optional. States the registered redirect URI outright instead of deriving it from the request.</td>
+</tr>
 </tbody>
 </table>
 <p>The redirect URI to register is:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>https://&lt;your-gateway-host&gt;/login/oauth2/code/idp
 </code></pre></div>
+<p>The gateway derives that URI from the request, which behind a TLS-terminating
+proxy is only right once it believes the scheme and host the proxy reports —
+see <a href="../deploying-without-kubernetes/#running-behind-a-proxy">Running behind a proxy</a>.
+A redirect-URI mismatch reported by the provider is almost always that, not the
+registration.</p>
 <div class="admonition warning">
 <p class="admonition-title">Pin the issuer</p>
 <p>The gateway configures its endpoints explicitly rather than by issuer
