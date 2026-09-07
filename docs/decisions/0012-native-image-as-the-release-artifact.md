@@ -122,10 +122,46 @@ worth having on their own merits.
 Both agree on one thing: **the decision cannot be defended on current evidence in
 either direction.**
 
+## One half of the measurement now exists
+
+Taken 2026-09-07 from a running deployment of the published native image, over a
+full 24 hours at five-minute resolution (288 datapoints):
+
+| | |
+| --- | ---: |
+| Memory reserved for the instance | 1024 MiB |
+| Memory used — 24 h average | 119 MiB |
+| Memory used — 24 h peak | 199 MiB |
+
+The native image is using **12–19% of what is reserved for it**, leaving roughly
+fivefold headroom.
+
+**This weakens the density argument rather than supporting it.** Per-replica
+footprint only pays when memory is the binding constraint, and here it is not
+close to binding. A JVM jar for this application would plausibly sit in the low
+hundreds of MiB — inside the same reservation. Where instances are billed by
+reservation rather than by use, an artifact that is heavier but still fits costs
+nothing. On these numbers the native image's memory advantage is headroom nobody
+is consuming.
+
+Two honest limits on the figure:
+
+- **It is almost certainly an idle measurement.** [#293](https://github.com/skillsgateway/skillsgateway/issues/293)
+  means every ingest fails on the published image, so no successful ingest has run
+  on the instance measured. JGit packing an upstream repository is the dominant
+  memory term in this application and none of it is in that 199 MiB peak. The real
+  working set is higher for **both** packagings — and since JGit's buffers cost the
+  same either way, the *proportional* gap between them is likely smaller than these
+  idle numbers suggest. That cuts against native image again, not for it.
+- **The JVM half is still unmeasured.** This is one side of a comparison. A jar
+  container running the same workload is the missing number, and it is a few hours
+  of work rather than a query.
+
 ## What would settle it
 
-- **RSS per replica under load, JVM versus native.** The measurement that decides
-  the density argument. A large gap justifies option A; a small one does not.
+- **RSS per replica under load, for a JVM jar.** The native half is now measured
+  (above). The jar half is not, and it is what closes the comparison. If a jar also
+  fits well inside the current reservation, the density argument is finished.
 - **JVM container image size and startup.** Cuts weakly toward native; a one-time
   pull cost for a long-lived server.
 - **How many unregistered reflection sites remain** on paths the service uses.
