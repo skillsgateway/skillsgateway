@@ -103,10 +103,20 @@ makes a guarded transition ORM-native without moving the guard into application
 code and adopting locking — which is a downgrade at a trust boundary, not a
 modernisation.
 
-One schema change is worth making regardless, and is not about this decision:
-`CREATE CAST (varchar AS <enum>) WITH INOUT AS IMPLICIT` per enum type removes the
-`::snapshot_state` noise transparently, for every statement, while keeping the
-native enums.
+A schema change was floated during this discussion and is **not** endorsed here:
+`CREATE CAST (varchar AS <enum>) WITH INOUT AS IMPLICIT` per enum type, which
+would let PostgreSQL cast transparently and remove the explicit `::snapshot_state`
+casts. It was proposed on the strength of a cast count that turned out to be
+wrong by an order of magnitude — the figure quoted was 189, the real number is
+**21**, because the grep had matched Java method references (`::map`, `::name`,
+`::new`) rather than SQL casts. Twenty-one casts across 2,600 lines is not a
+boilerplate problem.
+
+A narrower argument for it survives — a missing cast fails at runtime rather than
+at compile time, so an implicit cast removes an error class rather than a quantity
+of noise — but that is a judgement to make on its own merits, not a consequence of
+this decision. It is carried in the linked improvement issue, explicitly flagged as
+optional.
 
 ## What would reopen this
 
