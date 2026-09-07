@@ -47,12 +47,18 @@
       hundred), and every member is a git clone or a connector scan that dwarfs
       it.
 
-## 6. Gates and evidence
+## 6. Gauntlet
 
-- [x] 6.1 `./mvnw clean verify`
-- [x] 6.2 `pnpm test:stories`
-- [x] 6.3 `pnpm e2e`
-- [x] 6.4 `reqstool status local -p docs/reqstool` ends `PASS`
-- [x] 6.5 `openspec validate --all --strict`
-- [x] 6.6 `mkdocs build --strict`
-- [x] 6.7 `evidence.md` written from one final fresh run
+- [x] 6.0 Manual mutation pass, five plausible bugs, each applied and reverted
+      individually. One survived on the first round and the test was strengthened
+      rather than the mutant excused; all five are killed on the final source.
+
+## 7. Gates and evidence
+
+- [x] 7.1 `./mvnw clean verify`
+- [x] 7.2 `pnpm test:stories`
+- [x] 7.3 `pnpm e2e`
+- [x] 7.4 `reqstool status local -p docs/reqstool` ends `PASS`
+- [x] 7.5 `openspec validate --all --strict`
+- [x] 7.6 `mkdocs build --strict`
+- [x] 7.7 `evidence.md` written from one final fresh run

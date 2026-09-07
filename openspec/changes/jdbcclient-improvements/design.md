@@ -67,6 +67,16 @@ so the public one is never called, the counter stays at zero, and the assertion
 a call — and carries a control assertion that the count is greater than zero, so
 the same failure cannot recur silently.
 
+**And counting statements was still not enough**, which the mutation pass is how
+we know. Dropping the `run_id` filter from the join *survived*: grouping by
+verdict id makes the filter redundant for correctness, so the returned value is
+identical — while the read now scans every finding in the table. That is the same
+growth curve this change exists to close, measured in stored data instead of
+chain length, so it was killed rather than excused as an equivalent mutant. The
+proxy counts rows the driver hands back as well as statements it prepares, and
+the test reads the same short run twice: once alone, once after a longer run
+exists beside it, asserting the row count does not move.
+
 Ordering and grouping are preserved rather than assumed: findings ascend by id
 within a verdict exactly as the per-verdict query returned them, a verdict with
 no findings keeps an empty list instead of borrowing its neighbour's, and the
