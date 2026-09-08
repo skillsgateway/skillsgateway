@@ -221,7 +221,7 @@ export interface paths {
          * Reconcile the declared estate now
          * @description Runs the same additive, idempotent reconciliation as startup against the current declaration and returns its report. A converged estate reconciles with zero writes and zero ledger entries; the trigger itself is an administrative action and is always recorded with the acting identity. Admin-only while role enforcement is enabled.
          */
-        post: operations["reconcile"];
+        post: operations["reconcileEstate"];
         delete?: never;
         options?: never;
         head?: never;
@@ -366,6 +366,26 @@ export interface paths {
         get: operations["drift"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mirror/reconcile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reconcile the read-only forge mirror with what the facade serves
+         * @description Pushes the served reference set and removes whatever the mirror still holds outside it, then answers with the resulting comparison. Use it after fixing a forge outage or rotating a rejected credential rather than waiting for the recurring reconciliation. It cannot affect what the facade serves, and a mirror that stays unreachable is reported as unreachable rather than failing the request.
+         */
+        post: operations["reconcileMirror"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3499,7 +3519,7 @@ export interface operations {
             };
         };
     };
-    reconcile: {
+    reconcileEstate: {
         parameters: {
             query?: never;
             header?: never;
@@ -3775,6 +3795,35 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description The comparison, or a disabled report when no mirror is set up */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MirrorReport"];
+                };
+            };
+            /** @description Not an administrator */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MirrorReport"];
+                };
+            };
+        };
+    };
+    reconcileMirror: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The comparison after reconciling, or a disabled report */
             200: {
                 headers: {
                     [name: string]: unknown;
