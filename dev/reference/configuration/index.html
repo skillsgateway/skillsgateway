@@ -3589,6 +3589,13 @@ existing deployment already has.</p>
 </tr>
 </tbody>
 </table>
+<p>Every <code>budgets.*</code> key except <code>max-redirects</code> is its own sub-requirement of
+GW_0158 — <em>Resource-bounded source resolution</em>, in the order the table lists
+them: <code>GW_0158.1</code> through <code>GW_0158.8</code>. Raising one of them is therefore a
+decision about one stated bound, and a traceability report names the bound that
+regressed rather than the whole budget. <code>max-redirects</code> belongs to GW_0157 —
+<em>Address, redirect and transport policy for source resolution</em>, which is where
+redirect policy lives.</p>
 <p>A source's derived clone URL must also satisfy <code>skills-gateway.allowed-url-schemes</code>
 — the same allowlist that governs registration, so there is one scheme policy for
 every URL the gateway will ever dereference. A <code>github</code> shorthand is expanded
