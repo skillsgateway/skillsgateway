@@ -273,3 +273,25 @@ is, so the join key does not arrive at all. Client telemetry goes to the
 organisation's own collector; the gateway publishes the half only it can produce
 unforgeably — which identities *hold* a skill, derived from the pinned commit tree
 and the fetch ledger. Adherence stays permanently out of scope.
+
+### [ADR 0017 — Virtual catalogs stay derived views: they may subtract, never substitute](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0017-virtual-catalogs-are-derived-views.md)
+
+*Proposed, 2026-09-08.* Decomposes
+[#11](https://github.com/skillsgateway/skillsgateway/issues/11) — per-team
+catalogs, federation, per-plugin limiting and multi-ref publication — into
+separable slices, and states the invariant every one of them is checked against:
+a catalog is **derived content**, and a view **may omit but may never present
+content under a name that denotes something else**. What is approved stays a
+snapshot served byte-identical at `/git/{marketplace}`, so filtering never puts
+the approval record and the served artifact out of correspondence. Two defects in
+the shipped global catalog are named and made the recommended first slice: the
+`<marketplace>-<plugin>` name map is not injective and its "first in
+marketplace-name order wins" rule is a **content-substitution path**, which
+becomes fail-closed and audible; and a catalog revision's composition lives only
+in a commit that the next rebuild makes unreachable, which becomes a persisted
+record keyed by commit SHA. Exclusion is settled as **curation, not containment**
+— revocation stays the security control — and entitlement is identified as the
+gateway's **first per-identity deny on the facade** (token scopes are
+self-chosen, so they are not one), deferred until a deployment has two audiences.
+Multi-ref publication is ruled out of this issue: it re-decides `GW_0017 —
+Gateway-pinned ingestion ref` and needs its own ADR.
