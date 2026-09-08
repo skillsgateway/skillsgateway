@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -43,4 +44,38 @@ public class MirrorController {
         roleService.requireAdmin(authentication);
         return mirror.report();
     }
+
+    /**
+     * Reconcile the mirror now and answer with the result (GW_0192).
+     *
+     * <p>The concrete answer to "what does an operator do about drift", which before this was
+     * "approve or revoke something, or restart the gateway" — both worse than the problem. It is
+     * the one mirror path that waits for the forge, because waiting is the request: an operator who
+     * has just fixed an outage or rotated a rejected credential is asking whether the mirror is
+     * right <em>now</em>. Nothing about approval, revocation or what the facade serves is on this
+     * path, so GW_0170 is untouched, and the wait is bounded by the mirror's own timeout and
+     * attempt count.
+     *
+     * <p>{@code POST} because it changes a remote system; administrator-only and unreachable by any
+     * machine-credential scope for the same reason the drift report is.
+     */
+    @PostMapping("/mirror/reconcile")
+    @Tag(name = "Mirror")
+    @Operation(
+            summary = "Reconcile the read-only forge mirror with what the facade serves",
+            description = "Pushes the served reference set and removes whatever the mirror still holds outside it,"
+                    + " then answers with the resulting comparison. Use it after fixing a forge outage or rotating"
+                    + " a rejected credential rather than waiting for the recurring reconciliation. It cannot"
+                    + " affect what the facade serves, and a mirror that stays unreachable is reported as"
+                    + " unreachable rather than failing the request.")
+    @ApiResponse(responseCode = "200", description = "The comparison after reconciling, or a disabled report")
+    @ApiResponse(responseCode = "403", description = "Not an administrator")
+    @Requirements({"GW_0192"})
+    public MirrorReport reconcile(Authentication authentication) {
+        roleService.requireAdmin(authentication);
+        return mirror.reconcileNow(REASON);
+    }
+
+    /** The reason recorded on the ledger for a reconciliation an administrator asked for. */
+    private static final String REASON = "administrator-request";
 }

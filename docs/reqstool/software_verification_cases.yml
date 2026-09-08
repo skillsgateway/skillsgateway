@@ -1996,3 +1996,70 @@ cases:
       instead of falling back to a home directory the read-only root filesystem does
       not provide
     revision: "0.1.0"
+  - id: SVC_GW_0190
+    requirement_ids: ["GW_0190"]
+    title: The schedule removes a revoked reference the revocation's own push could not
+    verification: automated-test
+    description: |
+      GIVEN a gateway with the mirror enabled and a marketplace whose approved snapshot
+      has been mirrored, and a mirror made unreachable before that snapshot is revoked so
+      that the reconciliation the revocation triggers exhausts its retries and leaves the
+      revoked reference on the mirror
+      WHEN the mirror becomes reachable again and the scheduled reconciliation runs, with
+      nothing approved, revoked or restarted in between
+      THEN the revoked reference is gone from the mirror, the report says the mirror and
+      the served references agree, the revocation's effect on what the facade serves was
+      neither delayed nor reversed at any point, and a gateway whose mirror is disabled
+      contacts nothing when the same schedule runs
+
+      AND GIVEN the same gateway with a mirrored marketplace whose published repository is
+      afterwards left answering short — readable, but no longer holding the served
+      reference the system's own record says that marketplace has approved content for
+      WHEN the scheduled reconciliation runs against it
+      THEN the mirror is not emptied and not changed at all, the refusal is recorded on
+      the ledger and reported as the outcome of the last attempt rather than as agreement
+      or as a successful update, and a later reconciliation against a repository that
+      reads correctly again reconciles normally
+    revision: "0.1.0"
+  - id: SVC_GW_0191
+    requirement_ids: ["GW_0191"]
+    title: The mirror's divergence is readable as metrics without asking the mirror
+    verification: automated-test
+    description: |
+      GIVEN a gateway with the mirror enabled, a mirrored marketplace, and a mirror
+      afterwards altered behind the gateway's back so that a served reference is missing
+      and a reference that is no longer served remains
+      WHEN a reconciliation runs and the gateway's meters are read
+      THEN the meters report the number of references no longer served that the mirror
+      still holds, the number of served references it lacks, whether the last
+      reconciliation reached it, how long since one last succeeded, and the outcomes of
+      the reconciliations attempted; no meter carries the marketplace, a commit, a
+      principal or the mirror credential; and reading them contacts the mirror not at all
+    revision: "0.1.0"
+  - id: SVC_GW_0192
+    requirement_ids: ["GW_0192"]
+    title: An administrator's reconcile request repairs the mirror and answers with the result
+    verification: automated-test
+    description: |
+      GIVEN a gateway with the mirror enabled and a mirror altered behind the gateway's
+      back so that it holds a reference the facade no longer serves
+      WHEN an administrator asks the gateway to reconcile the mirror
+      THEN the mirror is brought into line with what the facade serves, the answer is the
+      resulting comparison and carries no mirror credential, what the facade serves is
+      unchanged, the same request is refused to a caller who is not an administrator, no
+      machine-credential scope reaches it, and a gateway with no mirror configured answers
+      that none is configured rather than failing
+    revision: "0.1.0"
+  - id: SVC_GW_0193
+    requirement_ids: ["GW_0193"]
+    title: The ledger names what a reconciliation changed, and says nothing when it changed nothing
+    verification: automated-test
+    description: |
+      GIVEN a gateway with the mirror enabled and a mirrored marketplace
+      WHEN a reconciliation follows a publication or a revocation, and separately when a
+      reconciliation neither followed one repairs a mirror altered behind the gateway's
+      back, and separately when a reconciliation finds the mirror already correct
+      THEN the ledger records the first as a mirror update naming the references pushed
+      and deleted, records the second as a repair of divergence naming the same, records
+      nothing at all for the third, and carries the mirror credential in none of them
+    revision: "0.1.0"

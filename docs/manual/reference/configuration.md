@@ -300,10 +300,19 @@ skills-gateway:
     timeout: 30s
 
     # Attempts per mirror update, first one included. Exhausting them leaves the
-    # mirror drifted until the next approval or revocation; it never affects the
-    # decision that triggered the update.
+    # mirror drifted until the next reconciliation; it never affects the decision
+    # that triggered the update.
     max-attempts: 3
     retry-delay: 5s
+
+    # The recurring reconciliation: on with the mirror, and the bound on how long
+    # a reference the facade no longer serves can stay on the mirror.
+    sweep-enabled: true
+    sweep-interval: 15m
+
+    # Short on purpose. A restart is when a queued update is lost, so the first
+    # reconciliation after startup is the one that closes that gap.
+    sweep-initial-delay: 1m
 ```
 
 | Property | Type | Default | Notes |
@@ -316,6 +325,9 @@ skills-gateway:
 | `skills-gateway.mirror.timeout` | duration | `30s` | Per transport operation. |
 | `skills-gateway.mirror.max-attempts` | integer | `3` | Attempt budget per mirror update. |
 | `skills-gateway.mirror.retry-delay` | duration | `5s` | Delay between those attempts. |
+| `skills-gateway.mirror.sweep-enabled` | boolean | `true` | The recurring reconciliation. Irrelevant while the mirror is disabled; turning it off with the mirror on means drift is corrected only by the next approval or revocation. |
+| `skills-gateway.mirror.sweep-interval` | duration | `15m` | How often it runs, and therefore the bound on how long the mirror may hold a reference the facade no longer serves. |
+| `skills-gateway.mirror.sweep-initial-delay` | duration | `1m` | How long after startup the first one runs. |
 
 !!! warning "An enabled mirror with unusable configuration refuses to start"
 
@@ -330,6 +342,15 @@ skills-gateway:
     mirror is not on the audit ledger, is not covered by the gateway's access
     tokens, and a revoked snapshot stops being served by the facade whether or
     not the mirror has caught up.
+
+!!! warning "`sweep-interval` is a security setting"
+
+    It is how long a mirror may keep showing a snapshot the gateway has revoked
+    when the revocation's own push failed. Lengthening it lengthens that window;
+    turning the sweep off removes the bound entirely and leaves the mirror
+    correct only as often as something is approved or revoked. Watch
+    `skills_gateway.mirror.stale_refs` either way — see
+    [Observability](observability.md#the-read-only-forge-mirror).
 
 ---
 

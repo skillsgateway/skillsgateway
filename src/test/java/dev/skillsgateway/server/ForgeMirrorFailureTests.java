@@ -41,6 +41,11 @@ import org.springframework.test.context.TestPropertySource;
             "skills-gateway.mirror.max-attempts=2",
             "skills-gateway.mirror.retry-delay=10ms",
             "skills-gateway.mirror.timeout=2s",
+            // The recurring reconciliation (GW_0190) would keep attempting this deliberately broken
+            // mirror underneath the walk, so the last attempt this suite reads would not be the one
+            // it caused. Turned off for determinism, not to weaken anything: what is asserted here
+            // is the approval, the revocation and the bytes the facade serves, all unchanged.
+            "skills-gateway.mirror.sweep-enabled=false",
             "skills-gateway.vetting.revet.mode=enforce",
             "skills-gateway.roles.admins=alice"
         })

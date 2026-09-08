@@ -27,7 +27,10 @@ import java.util.List;
  *     revocation that did not reach the mirror leaves behind
  * @param pendingUpdates mirror updates queued or in flight right now
  * @param lastAttemptAt when the mirror was last updated, or attempted
- * @param lastAttemptOutcome {@code ok}, {@code failed}, or {@code none} if it has never been tried
+ * @param lastAttemptOutcome {@code ok}, {@code failed}, or {@code none} if it has never been
+ *     tried. A reconciliation that refused to act on a served reference set it could not believe
+ *     (GW_0190) is a {@code failed} attempt whose {@link #error} begins {@code refused:} — see
+ *     {@link #FAILED}
  * @param error why the comparison or the last attempt failed, or null
  */
 @Schema(description = "How the read-only forge mirror compares to what the facade serves")
@@ -77,7 +80,25 @@ public record MirrorReport(
     /** Outcome of an attempt that succeeded. */
     public static final String OK = "ok";
 
-    /** Outcome of an attempt that exhausted its retries; the mirror is drifted until the next one. */
+    /**
+     * Outcome of an attempt that did not leave the mirror confirmed correct; it is drifted until
+     * the next one succeeds.
+     *
+     * <p>It covers two causes, and deliberately does not split them at this surface. One is a push
+     * that exhausted its retries — the forge. The other is a reconciliation that refused to act on
+     * a served reference set the gateway's own records contradicted (GW_0190) — the gateway's own
+     * storage. {@link #error} names which, beginning {@code refused:} for the second, and the
+     * ledger separates them precisely (`mirror-push-failed` against
+     * `mirror-reconciliation-refused`).
+     *
+     * <p>Keeping one value here is a fail-closed choice rather than a cosmetic one. A new outcome
+     * value is a breaking change to every client already reading this field, and the dangerous
+     * shape of that break is a client whose {@code switch} falls through to "fine" on a value it
+     * does not know — which would silently swallow a refusal, the one signal that most needs to be
+     * seen. Under {@code failed}, a client written before the guard existed already treats a
+     * refusal as not-ok. It is the same reasoning that makes {@code inSync} false on an unreachable
+     * mirror: silence must never read as agreement.
+     */
     public static final String FAILED = "failed";
 
     /** No attempt has been made since this gateway started. */

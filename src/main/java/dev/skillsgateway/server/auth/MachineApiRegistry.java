@@ -160,6 +160,10 @@ public final class MachineApiRegistry {
             // and the state of its credential's last use, which is deployment infrastructure
             // rather than anything the gateway serves. Administrator-only, and no scope reaches it.
             get("/api/mirror/drift"),
+            // Reconciling that mirror on demand (GW_0192): the same outbound integration, and the
+            // route that actually exercises its credential against the forge. If the report is
+            // reserved to administrators, the button that acts on it cannot be less so.
+            post("/api/mirror/reconcile"),
             // The connector on/off switch (GW_0149): administrator judgement over the vetting
             // chain itself, and even seeing the current settings is reserved to administrators —
             // no scope may let a machine credential turn off the control that governs it.

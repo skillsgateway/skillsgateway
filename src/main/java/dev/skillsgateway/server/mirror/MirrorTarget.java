@@ -28,6 +28,7 @@ public final class MirrorTarget {
     private final Duration timeout;
     private final int maxAttempts;
     private final Duration retryDelay;
+    private final boolean sweepEnabled;
 
     private MirrorTarget(
             String marketplace,
@@ -36,7 +37,8 @@ public final class MirrorTarget {
             String token,
             Duration timeout,
             int maxAttempts,
-            Duration retryDelay) {
+            Duration retryDelay,
+            boolean sweepEnabled) {
         this.marketplace = marketplace;
         this.url = url;
         this.username = username;
@@ -44,6 +46,7 @@ public final class MirrorTarget {
         this.timeout = timeout;
         this.maxAttempts = maxAttempts;
         this.retryDelay = retryDelay;
+        this.sweepEnabled = sweepEnabled;
     }
 
     /**
@@ -75,7 +78,8 @@ public final class MirrorTarget {
                 mirror.token(),
                 mirror.timeout(),
                 mirror.maxAttempts(),
-                mirror.retryDelay());
+                mirror.retryDelay(),
+                mirror.sweepEnabled());
     }
 
     public String marketplace() {
@@ -97,6 +101,21 @@ public final class MirrorTarget {
 
     public Duration retryDelay() {
         return retryDelay;
+    }
+
+    /** Whether the recurring reconciliation runs (GW_0190). On by default, with the mirror. */
+    public boolean sweepEnabled() {
+        return sweepEnabled;
+    }
+
+    /**
+     * How long a caller asking for a reconciliation now should be willing to wait (GW_0192): every
+     * attempt's transport timeout plus every delay between them. Bounded by construction — the
+     * settings are validated at startup — so an administrator's request cannot hang on a forge that
+     * has stopped answering.
+     */
+    Duration attemptBudget() {
+        return timeout.plus(retryDelay).multipliedBy(maxAttempts);
     }
 
     /** Null when no credential is configured, which is what an anonymous or local transport wants. */

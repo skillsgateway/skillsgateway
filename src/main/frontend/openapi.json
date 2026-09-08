@@ -3125,7 +3125,7 @@
     "/api/estate/reconcile": {
       "post": {
         "description": "Runs the same additive, idempotent reconciliation as startup against the current declaration and returns its report. A converged estate reconciles with zero writes and zero ledger entries; the trigger itself is an administrative action and is always recorded with the acting identity. Admin-only while role enforcement is enabled.",
-        "operationId": "reconcile",
+        "operationId": "reconcile_1",
         "responses": {
           "200": {
             "content": {
@@ -3492,6 +3492,38 @@
           }
         },
         "summary": "Compare the read-only forge mirror against what the facade serves",
+        "tags": [
+          "Mirror"
+        ]
+      }
+    },
+    "/api/mirror/reconcile": {
+      "post": {
+        "description": "Pushes the served reference set and removes whatever the mirror still holds outside it, then answers with the resulting comparison. Use it after fixing a forge outage or rotating a rejected credential rather than waiting for the recurring reconciliation. It cannot affect what the facade serves, and a mirror that stays unreachable is reported as unreachable rather than failing the request.",
+        "operationId": "reconcile",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MirrorReport"
+                }
+              }
+            },
+            "description": "The comparison after reconciling, or a disabled report"
+          },
+          "403": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MirrorReport"
+                }
+              }
+            },
+            "description": "Not an administrator"
+          }
+        },
+        "summary": "Reconcile the read-only forge mirror with what the facade serves",
         "tags": [
           "Mirror"
         ]
