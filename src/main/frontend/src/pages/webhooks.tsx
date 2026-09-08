@@ -203,7 +203,7 @@ export function WebhooksPage() {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const eventRegistry = useWebhookEvents();
-  const registry = useMemo(() => eventRegistry.data ?? [], [eventRegistry.data]);
+  const registry = useMemo(() => eventRegistry.data?.events ?? [], [eventRegistry.data]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // Default to every event, matching the wildcard the field used to default to. Runs
   // when the registry arrives, and again if it changes.

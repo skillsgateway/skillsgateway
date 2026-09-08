@@ -61,6 +61,7 @@ public class EstateController {
     @Requirements({"GW_0083", "GW_0087"})
     @Tag(name = "Estate")
     @Operation(
+            operationId = "reconcileEstate",
             summary = "Reconcile the declared estate now",
             description = "Runs the same additive, idempotent reconciliation as startup against the current"
                     + " declaration and returns its report. A converged estate reconciles with zero writes and"

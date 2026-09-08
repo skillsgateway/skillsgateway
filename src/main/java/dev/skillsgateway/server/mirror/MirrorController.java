@@ -62,6 +62,7 @@ public class MirrorController {
     @PostMapping("/mirror/reconcile")
     @Tag(name = "Mirror")
     @Operation(
+            operationId = "reconcileMirror",
             summary = "Reconcile the read-only forge mirror with what the facade serves",
             description = "Pushes the served reference set and removes whatever the mirror still holds outside it,"
                     + " then answers with the resulting comparison. Use it after fixing a forge outage or rotating"

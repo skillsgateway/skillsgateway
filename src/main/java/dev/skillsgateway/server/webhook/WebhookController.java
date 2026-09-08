@@ -107,21 +107,75 @@ public class WebhookController {
     }
 
     /**
+     * The subscribable vocabulary <em>and</em> the shape of what arrives — a subscriber that reads
+     * this knows what it may filter on and what it will have to parse.
+     *
+     * <p>The two example bodies are what put {@code EventPayload} and {@code ApprovalPendingPayload}
+     * inside the {@code paths} surface the contract gate diffs, where a removed field is an error
+     * rather than the warning it is on the request side of a {@code webhooks} entry. That placement
+     * is the code half of GW_0182 — the other half is the workflow and its severity file, which no
+     * annotation can carry. They are illustrative constants, never a real delivery: a delivery
+     * arrives at the subscriber's own URL, signed, and nothing about it is readable here.
+     */
+    @Schema(description = "The subscribable lifecycle events and the shape of the deliveries that carry them")
+    @Requirements({"GW_0182"})
+    public record EventRegistry(
+            @Schema(
+                    description = "Every snapshot lifecycle event a subscriber may filter on",
+                    requiredMode = Schema.RequiredMode.REQUIRED)
+            List<String> events,
+
+            @Schema(
+                    description = "An illustrative body of the kind every event other than"
+                            + " snapshot.approval_pending delivers. Example values, not a real delivery.",
+                    requiredMode = Schema.RequiredMode.REQUIRED)
+            WebhookService.EventPayload examplePayload,
+
+            @Schema(
+                    description = "An illustrative body of the kind snapshot.approval_pending delivers: the"
+                            + " same fields plus the vetting summary. Example values, not a real delivery.",
+                    requiredMode = Schema.RequiredMode.REQUIRED)
+            WebhookService.ApprovalPendingPayload exampleApprovalPendingPayload) {}
+
+    private static final WebhookService.EventPayload EXAMPLE_PAYLOAD = new WebhookService.EventPayload(
+            WebhookEvent.SNAPSHOT_APPROVED,
+            "2026-01-01T00:00:00Z",
+            "example-marketplace",
+            1,
+            "0000000000000000000000000000000000000000",
+            "approved",
+            "reviewer@example.com");
+
+    private static final WebhookService.ApprovalPendingPayload EXAMPLE_APPROVAL_PENDING_PAYLOAD =
+            new WebhookService.ApprovalPendingPayload(
+                    WebhookEvent.SNAPSHOT_APPROVAL_PENDING,
+                    "2026-01-01T00:00:00Z",
+                    "example-marketplace",
+                    1,
+                    "0000000000000000000000000000000000000000",
+                    "held",
+                    "scheduler",
+                    new WebhookService.VettingSummary(1, "BLOCKED", "BLOCKED", List.of("example-connector"), 1, 0));
+
+    /**
      * The filter vocabulary, served so the portal can offer it instead of asking an operator to
      * spell it. {@link WebhookEvent#AUDIT_EXPORT} is absent by construction: it is not in
      * {@code ALL}, and subscribing to it is not how an export sink is provisioned.
      */
     @GetMapping("/events")
-    @Requirements({"GW_0088"})
+    @Requirements({"GW_0088", "GW_0181"})
     @Tag(name = "Webhooks")
     @Operation(
-            summary = "List the subscribable lifecycle events",
-            description = "Every snapshot lifecycle event a subscriber may filter on. Read-only, records"
-                    + " nothing. The audit export event is not subscribable and never appears here.")
+            summary = "List the subscribable lifecycle events and the shape they deliver",
+            description = "Every snapshot lifecycle event a subscriber may filter on, together with an"
+                    + " illustrative example of each delivery body — so a receiver can be written against"
+                    + " what it will actually parse. The per-event deliveries are described in full under"
+                    + " the document's top-level `webhooks` object. Read-only, records nothing. The audit"
+                    + " export event is not subscribable and never appears here.")
     @ApiResponse(responseCode = "200", description = "The event registry")
-    public List<String> events(Authentication authentication) {
+    public EventRegistry events(Authentication authentication) {
         roleService.requireAuditor(authentication);
-        return WebhookEvent.ALL;
+        return new EventRegistry(WebhookEvent.ALL, EXAMPLE_PAYLOAD, EXAMPLE_APPROVAL_PENDING_PAYLOAD);
     }
 
     @DeleteMapping("/{id}")

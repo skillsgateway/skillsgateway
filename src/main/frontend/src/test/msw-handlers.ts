@@ -147,6 +147,40 @@ export const delivery: Schemas["WebhookDelivery"] = {
   updatedAt: "2026-08-14T10:00:01Z",
 };
 
+/**
+ * The subscribable vocabulary and the shape each delivery carries. Typed from the contract, so
+ * a field renamed in the payload fails typechecking here rather than at a receiver (ADR 0003).
+ */
+export const eventRegistry: Schemas["EventRegistry"] = {
+  events: ["snapshot.ingested", "snapshot.approved", "snapshot.rejected", "snapshot.revoked"],
+  examplePayload: {
+    event: "snapshot.approved",
+    occurredAt: "2026-08-14T10:00:00Z",
+    marketplace: "example-marketplace",
+    snapshotId: 1,
+    sha: "aaaabbbbccccddddeeeeffff0000111122223333",
+    state: "approved",
+    actor: "reviewer@example.com",
+  },
+  exampleApprovalPendingPayload: {
+    event: "snapshot.approval_pending",
+    occurredAt: "2026-08-14T10:00:00Z",
+    marketplace: "example-marketplace",
+    snapshotId: 1,
+    sha: "aaaabbbbccccddddeeeeffff0000111122223333",
+    state: "held",
+    actor: "scheduler",
+    vetting: {
+      runId: 1,
+      outcome: "BLOCKED",
+      recordedOutcome: "BLOCKED",
+      blockingConnectors: ["example-connector"],
+      uncoveredFindings: 1,
+      waivedFindings: 0,
+    },
+  },
+};
+
 export const createdSubscriber: Schemas["CreatedSubscriber"] = {
   id: 4,
   name: "new-bot",
@@ -493,9 +527,7 @@ export const handlers = [
   http.get("/api/audit/sinks", () => HttpResponse.json<Schemas["SinkView"][]>([auditSink])),
   http.post("/api/audit/sinks", () => HttpResponse.json(createdAuditSink, { status: 201 })),
   http.get("/api/webhooks", () => HttpResponse.json<Schemas["SubscriberView"][]>([subscriber])),
-  http.get("/api/webhooks/events", () =>
-    HttpResponse.json(["snapshot.ingested", "snapshot.approved", "snapshot.rejected", "snapshot.revoked"]),
-  ),
+  http.get("/api/webhooks/events", () => HttpResponse.json(eventRegistry)),
   http.get("/api/webhooks/deliveries", () => HttpResponse.json<Schemas["WebhookDelivery"][]>([delivery])),
   http.post("/api/webhooks", () => HttpResponse.json(createdSubscriber, { status: 201 })),
 ];

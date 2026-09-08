@@ -10,6 +10,7 @@ export type IssuedToken = components["schemas"]["IssuedToken"];
 export type SubscriberView = components["schemas"]["SubscriberView"];
 export type CreatedSubscriber = components["schemas"]["CreatedSubscriber"];
 export type WebhookDelivery = components["schemas"]["WebhookDelivery"];
+export type WebhookEventRegistry = components["schemas"]["EventRegistry"];
 export type SinkView = components["schemas"]["SinkView"];
 export type VettingView = components["schemas"]["VettingView"];
 export type VettingRun = components["schemas"]["Run"];
@@ -433,11 +434,15 @@ export function useWebhookSubscribers() {
   });
 }
 
-/** The server-owned filter vocabulary; the portal never hardcodes event names. */
+/**
+ * The server-owned filter vocabulary; the portal never hardcodes event names. The registry
+ * also carries an example of each delivery body — published for receiver authors, not used
+ * here.
+ */
 export function useWebhookEvents() {
   return useQuery({
     queryKey: ["webhook-events"],
-    queryFn: () => api<string[]>("/api/webhooks/events"),
+    queryFn: () => api<WebhookEventRegistry>("/api/webhooks/events"),
     staleTime: Infinity,
   });
 }

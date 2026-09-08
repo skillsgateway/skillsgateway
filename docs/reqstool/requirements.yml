@@ -1431,6 +1431,22 @@ requirements:
     implementation: configuration
     revision: 0.1.0
 
+  - id: GW_0181
+    title: The lifecycle event deliveries are part of the published contract document
+    significance: shall
+    description: "The system shall describe, in the same contract document it serves for its HTTP API, every snapshot lifecycle event a subscriber may filter on, the body that event's delivery carries with each of that body's always-present fields marked as always present, and the transport headers the delivery is sent with; shall derive those descriptions from the same event registry, the same body types and the same header constants the dispatcher uses to produce a delivery, so that an event, a field or a header cannot exist in one and be absent from the other; and shall keep the event that carries audit ledger content out of that description, as it is out of the subscribable registry."
+    rationale: "A delivery body that is described nowhere but the Java record producing it can be renamed without anything noticing: no document exists to diff, so the change that breaks every receiver passes every gate the repository runs, and a receiver author has nothing to read but the source. Publishing the deliveries in the document the API already serves gives receivers a human-readable contract and gives the existing compatibility diff something to compare, without a second document, a second format or a second toolchain to keep in step. Generating the descriptions from the registry and the types themselves rather than authoring them beside those types is the whole point: a hand-maintained parallel description drifts, and a contract that has drifted is worse than none because it is still believed. Marking the always-present fields as such is what makes the document accurate about what a receiver may rely on, and it is also what lets a diff tell a field being removed from a field never having been promised."
+    categories: ["functional-suitability", "maintainability"]
+    revision: 0.1.0
+
+  - id: GW_0182
+    title: Breaking changes to the lifecycle event payload surface are detected and declared
+    significance: shall
+    description: "The system's change process shall subject the described lifecycle event deliveries to the same comparison it applies to the rest of the contract: it shall compare every proposed change to the events, their delivery bodies and their transport headers against the contract the change branched from, shall classify the removal or renaming of an event, of a delivery body field, or of a transport header as breaking, and shall refuse such a change unless it is both explicitly marked as a deliberate break and declared as breaking by the commit that ships it. The system shall place the delivery bodies in the contract document in a position where the comparison classifies a removed body field as breaking rather than as advisory."
+    rationale: "Describing the deliveries buys a reader a contract; it buys the change process nothing until something refuses a change that removes part of it. Reusing the comparison that already guards the HTTP surface means one gate, one escape route and one thing to explain rather than a parallel mechanism that would need its own baseline, its own configuration and its own reasons to be trusted. The requirement is explicit about where the bodies sit because it is not incidental: a delivery is a request the gateway sends, and a diff of it applies request-side severities under which the single most likely break — a renamed field — is only advisory. A gate that stays green on the change it exists to catch is worse than no gate, so the placement that produces the correct classification is part of what is required, not an implementation detail left to whoever writes it."
+    categories: ["maintainability", "functional-suitability"]
+    revision: 0.1.0
+
   - id: GW_0190
     title: Bounded mirror staleness
     significance: shall

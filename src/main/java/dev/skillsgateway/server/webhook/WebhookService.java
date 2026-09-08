@@ -73,21 +73,38 @@ public class WebhookService {
 
             @Schema(description = "Creation time") Instant createdAt) {}
 
-    /** The event body: what happened, to which snapshot of which marketplace, and who decided. */
+    /**
+     * The event body: what happened, to which snapshot of which marketplace, and who decided.
+     *
+     * <p>Every field is always populated, and {@code requiredMode = REQUIRED} says so on the wire.
+     * That is what makes the published contract accurate about this body and what gives a contract
+     * diff something to fail on when a field is removed or renamed (#121).
+     */
     @Schema(description = "Webhook event payload")
+    @Requirements({"GW_0181"})
     public record EventPayload(
-            @Schema(description = "Lifecycle event name") String event,
-            @Schema(description = "Event time, ISO-8601") String occurredAt,
-            @Schema(description = "Marketplace name") String marketplace,
-            @Schema(description = "Snapshot id") long snapshotId,
+            @Schema(description = "Lifecycle event name", requiredMode = Schema.RequiredMode.REQUIRED)
+            String event,
 
-            @Schema(description = "Upstream commit SHA the snapshot is pinned to")
+            @Schema(description = "Event time, ISO-8601", requiredMode = Schema.RequiredMode.REQUIRED)
+            String occurredAt,
+
+            @Schema(description = "Marketplace name", requiredMode = Schema.RequiredMode.REQUIRED)
+            String marketplace,
+
+            @Schema(description = "Snapshot id", requiredMode = Schema.RequiredMode.REQUIRED)
+            long snapshotId,
+
+            @Schema(
+                    description = "Upstream commit SHA the snapshot is pinned to",
+                    requiredMode = Schema.RequiredMode.REQUIRED)
             String sha,
 
-            @Schema(description = "Snapshot state after the event")
+            @Schema(description = "Snapshot state after the event", requiredMode = Schema.RequiredMode.REQUIRED)
             String state,
 
-            @Schema(description = "Acting identity") String actor) {}
+            @Schema(description = "Acting identity", requiredMode = Schema.RequiredMode.REQUIRED)
+            String actor) {}
 
     /**
      * What the vetting chain concluded about a snapshot awaiting approval (GW_0160): counts,

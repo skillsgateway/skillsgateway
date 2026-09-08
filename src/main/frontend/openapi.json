@@ -1,6 +1,55 @@
 {
   "components": {
     "schemas": {
+      "ApprovalPendingPayload": {
+        "description": "Payload of the approval-pending lifecycle event",
+        "properties": {
+          "actor": {
+            "description": "Acting identity",
+            "type": "string"
+          },
+          "event": {
+            "description": "Lifecycle event name",
+            "type": "string"
+          },
+          "marketplace": {
+            "description": "Marketplace name",
+            "type": "string"
+          },
+          "occurredAt": {
+            "description": "Event time, ISO-8601",
+            "type": "string"
+          },
+          "sha": {
+            "description": "Upstream commit SHA the snapshot is pinned to",
+            "type": "string"
+          },
+          "snapshotId": {
+            "description": "Snapshot id",
+            "format": "int64",
+            "type": "integer"
+          },
+          "state": {
+            "description": "Snapshot state; always held for this event",
+            "type": "string"
+          },
+          "vetting": {
+            "$ref": "#/components/schemas/VettingSummary",
+            "description": "What the chain concluded about the snapshot being waited on"
+          }
+        },
+        "required": [
+          "actor",
+          "event",
+          "marketplace",
+          "occurredAt",
+          "sha",
+          "snapshotId",
+          "state",
+          "vetting"
+        ],
+        "type": "object"
+      },
       "ApproveRequest": {
         "description": "Optional approval body carrying an administrative override of a blocked vetting outcome",
         "properties": {
@@ -700,6 +749,76 @@
             "type": "integer"
           }
         },
+        "type": "object"
+      },
+      "EventPayload": {
+        "description": "Webhook event payload",
+        "properties": {
+          "actor": {
+            "description": "Acting identity",
+            "type": "string"
+          },
+          "event": {
+            "description": "Lifecycle event name",
+            "type": "string"
+          },
+          "marketplace": {
+            "description": "Marketplace name",
+            "type": "string"
+          },
+          "occurredAt": {
+            "description": "Event time, ISO-8601",
+            "type": "string"
+          },
+          "sha": {
+            "description": "Upstream commit SHA the snapshot is pinned to",
+            "type": "string"
+          },
+          "snapshotId": {
+            "description": "Snapshot id",
+            "format": "int64",
+            "type": "integer"
+          },
+          "state": {
+            "description": "Snapshot state after the event",
+            "type": "string"
+          }
+        },
+        "required": [
+          "actor",
+          "event",
+          "marketplace",
+          "occurredAt",
+          "sha",
+          "snapshotId",
+          "state"
+        ],
+        "type": "object"
+      },
+      "EventRegistry": {
+        "description": "The subscribable lifecycle events and the shape of the deliveries that carry them",
+        "properties": {
+          "events": {
+            "description": "Every snapshot lifecycle event a subscriber may filter on",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "exampleApprovalPendingPayload": {
+            "$ref": "#/components/schemas/ApprovalPendingPayload",
+            "description": "An illustrative body of the kind snapshot.approval_pending delivers: the same fields plus the vetting summary. Example values, not a real delivery."
+          },
+          "examplePayload": {
+            "$ref": "#/components/schemas/EventPayload",
+            "description": "An illustrative body of the kind every event other than snapshot.approval_pending delivers. Example values, not a real delivery."
+          }
+        },
+        "required": [
+          "events",
+          "exampleApprovalPendingPayload",
+          "examplePayload"
+        ],
         "type": "object"
       },
       "Fetcher": {
@@ -2477,6 +2596,59 @@
         },
         "type": "object"
       },
+      "VettingSummary": {
+        "description": "Content-free summary of the vetting chain run a snapshot is waiting on",
+        "properties": {
+          "blockingConnectors": {
+            "description": "Names of the connectors that are the reason it blocks; empty when nothing objects",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "outcome": {
+            "description": "The effective outcome, which is what gates approval: the run with every waived finding removed. CLEAR means an approval will succeed; CLEAR_WITH_WAIVERS that it will, and only because someone accepted a risk; BLOCKED that it will not.",
+            "enum": [
+              "CLEAR",
+              "CLEAR_WITH_WAIVERS",
+              "BLOCKED"
+            ],
+            "type": "string"
+          },
+          "recordedOutcome": {
+            "description": "What the connectors themselves concluded, before any waiver was applied",
+            "enum": [
+              "CLEAR",
+              "BLOCKED"
+            ],
+            "type": "string"
+          },
+          "runId": {
+            "description": "Identifier of the chain run this event reports",
+            "format": "int64",
+            "type": "integer"
+          },
+          "uncoveredFindings": {
+            "description": "How many blocking findings no active waiver covers",
+            "format": "int32",
+            "type": "integer"
+          },
+          "waivedFindings": {
+            "description": "How many findings an active waiver is currently suppressing",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "blockingConnectors",
+          "outcome",
+          "recordedOutcome",
+          "runId",
+          "uncoveredFindings",
+          "waivedFindings"
+        ],
+        "type": "object"
+      },
       "VettingView": {
         "description": "A snapshot's latest vetting chain run, the waivers over it, and the chain that produced it",
         "properties": {
@@ -3125,7 +3297,7 @@
     "/api/estate/reconcile": {
       "post": {
         "description": "Runs the same additive, idempotent reconciliation as startup against the current declaration and returns its report. A converged estate reconciles with zero writes and zero ledger entries; the trigger itself is an administrative action and is always recorded with the acting identity. Admin-only while role enforcement is enabled.",
-        "operationId": "reconcile_1",
+        "operationId": "reconcileEstate",
         "responses": {
           "200": {
             "content": {
@@ -3500,7 +3672,7 @@
     "/api/mirror/reconcile": {
       "post": {
         "description": "Pushes the served reference set and removes whatever the mirror still holds outside it, then answers with the resulting comparison. Use it after fixing a forge outage or rotating a rejected credential rather than waiting for the recurring reconciliation. It cannot affect what the facade serves, and a mirror that stays unreachable is reported as unreachable rather than failing the request.",
-        "operationId": "reconcile",
+        "operationId": "reconcileMirror",
         "responses": {
           "200": {
             "content": {
@@ -5498,24 +5670,21 @@
     },
     "/api/webhooks/events": {
       "get": {
-        "description": "Every snapshot lifecycle event a subscriber may filter on. Read-only, records nothing. The audit export event is not subscribable and never appears here.",
+        "description": "Every snapshot lifecycle event a subscriber may filter on, together with an illustrative example of each delivery body — so a receiver can be written against what it will actually parse. The per-event deliveries are described in full under the document's top-level `webhooks` object. Read-only, records nothing. The audit export event is not subscribable and never appears here.",
         "operationId": "events",
         "responses": {
           "200": {
             "content": {
               "*/*": {
                 "schema": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
+                  "$ref": "#/components/schemas/EventRegistry"
                 }
               }
             },
             "description": "The event registry"
           }
         },
-        "summary": "List the subscribable lifecycle events",
+        "summary": "List the subscribable lifecycle events and the shape they deliver",
         "tags": [
           "Webhooks"
         ]
@@ -5662,8 +5831,599 @@
       "name": "Session"
     },
     {
+      "description": "Receivers for snapshot lifecycle events, and the deliveries the gateway sends them. Each event the gateway posts is described under this document's top-level `webhooks` object; `GET /api/webhooks/events` serves the same vocabulary with an example of each body.",
+      "name": "Webhooks"
+    },
+    {
       "description": "CEL deny rules evaluated fail-closed at approval time, and the read-only playground that tests an expression against a real snapshot before it is enforced.",
       "name": "Policy"
     }
-  ]
+  ],
+  "webhooks": {
+    "snapshot.approval_pending": {
+      "post": {
+        "description": "Sent by the gateway to every enabled subscriber whose event filter includes `snapshot.approval_pending`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.",
+        "operationId": "webhook-snapshot.approval_pending",
+        "parameters": [
+          {
+            "description": "The lifecycle event name, identical to the payload's `event` field.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Event",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Delivery id — stable across retries of the same delivery, and the receiver's de-duplication key.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Delivery",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Time this attempt was sent, ISO-8601.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Timestamp",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "HMAC of the exact request body under the subscriber's signing secret, in the form `sha256=<hex>`. The guide states how it is computed and compared.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Signature",
+            "required": true,
+            "schema": {
+              "pattern": "^sha256=[0-9a-f]{64}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovalPendingPayload"
+              }
+            }
+          },
+          "description": "The event body, serialized once so every retry sends identical bytes.",
+          "required": true
+        },
+        "responses": {
+          "2XX": {
+            "description": "Accepted. Any 2xx marks the delivery delivered; the body is not read. Anything else is retried."
+          }
+        },
+        "summary": "Delivery of snapshot.approval_pending",
+        "tags": [
+          "Webhooks"
+        ]
+      }
+    },
+    "snapshot.approved": {
+      "post": {
+        "description": "Sent by the gateway to every enabled subscriber whose event filter includes `snapshot.approved`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.",
+        "operationId": "webhook-snapshot.approved",
+        "parameters": [
+          {
+            "description": "The lifecycle event name, identical to the payload's `event` field.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Event",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Delivery id — stable across retries of the same delivery, and the receiver's de-duplication key.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Delivery",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Time this attempt was sent, ISO-8601.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Timestamp",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "HMAC of the exact request body under the subscriber's signing secret, in the form `sha256=<hex>`. The guide states how it is computed and compared.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Signature",
+            "required": true,
+            "schema": {
+              "pattern": "^sha256=[0-9a-f]{64}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventPayload"
+              }
+            }
+          },
+          "description": "The event body, serialized once so every retry sends identical bytes.",
+          "required": true
+        },
+        "responses": {
+          "2XX": {
+            "description": "Accepted. Any 2xx marks the delivery delivered; the body is not read. Anything else is retried."
+          }
+        },
+        "summary": "Delivery of snapshot.approved",
+        "tags": [
+          "Webhooks"
+        ]
+      }
+    },
+    "snapshot.ingested": {
+      "post": {
+        "description": "Sent by the gateway to every enabled subscriber whose event filter includes `snapshot.ingested`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.",
+        "operationId": "webhook-snapshot.ingested",
+        "parameters": [
+          {
+            "description": "The lifecycle event name, identical to the payload's `event` field.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Event",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Delivery id — stable across retries of the same delivery, and the receiver's de-duplication key.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Delivery",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Time this attempt was sent, ISO-8601.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Timestamp",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "HMAC of the exact request body under the subscriber's signing secret, in the form `sha256=<hex>`. The guide states how it is computed and compared.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Signature",
+            "required": true,
+            "schema": {
+              "pattern": "^sha256=[0-9a-f]{64}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventPayload"
+              }
+            }
+          },
+          "description": "The event body, serialized once so every retry sends identical bytes.",
+          "required": true
+        },
+        "responses": {
+          "2XX": {
+            "description": "Accepted. Any 2xx marks the delivery delivered; the body is not read. Anything else is retried."
+          }
+        },
+        "summary": "Delivery of snapshot.ingested",
+        "tags": [
+          "Webhooks"
+        ]
+      }
+    },
+    "snapshot.rejected": {
+      "post": {
+        "description": "Sent by the gateway to every enabled subscriber whose event filter includes `snapshot.rejected`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.",
+        "operationId": "webhook-snapshot.rejected",
+        "parameters": [
+          {
+            "description": "The lifecycle event name, identical to the payload's `event` field.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Event",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Delivery id — stable across retries of the same delivery, and the receiver's de-duplication key.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Delivery",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Time this attempt was sent, ISO-8601.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Timestamp",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "HMAC of the exact request body under the subscriber's signing secret, in the form `sha256=<hex>`. The guide states how it is computed and compared.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Signature",
+            "required": true,
+            "schema": {
+              "pattern": "^sha256=[0-9a-f]{64}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventPayload"
+              }
+            }
+          },
+          "description": "The event body, serialized once so every retry sends identical bytes.",
+          "required": true
+        },
+        "responses": {
+          "2XX": {
+            "description": "Accepted. Any 2xx marks the delivery delivered; the body is not read. Anything else is retried."
+          }
+        },
+        "summary": "Delivery of snapshot.rejected",
+        "tags": [
+          "Webhooks"
+        ]
+      }
+    },
+    "snapshot.restored": {
+      "post": {
+        "description": "Sent by the gateway to every enabled subscriber whose event filter includes `snapshot.restored`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.",
+        "operationId": "webhook-snapshot.restored",
+        "parameters": [
+          {
+            "description": "The lifecycle event name, identical to the payload's `event` field.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Event",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Delivery id — stable across retries of the same delivery, and the receiver's de-duplication key.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Delivery",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Time this attempt was sent, ISO-8601.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Timestamp",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "HMAC of the exact request body under the subscriber's signing secret, in the form `sha256=<hex>`. The guide states how it is computed and compared.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Signature",
+            "required": true,
+            "schema": {
+              "pattern": "^sha256=[0-9a-f]{64}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventPayload"
+              }
+            }
+          },
+          "description": "The event body, serialized once so every retry sends identical bytes.",
+          "required": true
+        },
+        "responses": {
+          "2XX": {
+            "description": "Accepted. Any 2xx marks the delivery delivered; the body is not read. Anything else is retried."
+          }
+        },
+        "summary": "Delivery of snapshot.restored",
+        "tags": [
+          "Webhooks"
+        ]
+      }
+    },
+    "snapshot.revet_violation": {
+      "post": {
+        "description": "Sent by the gateway to every enabled subscriber whose event filter includes `snapshot.revet_violation`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.",
+        "operationId": "webhook-snapshot.revet_violation",
+        "parameters": [
+          {
+            "description": "The lifecycle event name, identical to the payload's `event` field.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Event",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Delivery id — stable across retries of the same delivery, and the receiver's de-duplication key.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Delivery",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Time this attempt was sent, ISO-8601.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Timestamp",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "HMAC of the exact request body under the subscriber's signing secret, in the form `sha256=<hex>`. The guide states how it is computed and compared.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Signature",
+            "required": true,
+            "schema": {
+              "pattern": "^sha256=[0-9a-f]{64}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventPayload"
+              }
+            }
+          },
+          "description": "The event body, serialized once so every retry sends identical bytes.",
+          "required": true
+        },
+        "responses": {
+          "2XX": {
+            "description": "Accepted. Any 2xx marks the delivery delivered; the body is not read. Anything else is retried."
+          }
+        },
+        "summary": "Delivery of snapshot.revet_violation",
+        "tags": [
+          "Webhooks"
+        ]
+      }
+    },
+    "snapshot.revoked": {
+      "post": {
+        "description": "Sent by the gateway to every enabled subscriber whose event filter includes `snapshot.revoked`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.",
+        "operationId": "webhook-snapshot.revoked",
+        "parameters": [
+          {
+            "description": "The lifecycle event name, identical to the payload's `event` field.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Event",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Delivery id — stable across retries of the same delivery, and the receiver's de-duplication key.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Delivery",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Time this attempt was sent, ISO-8601.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Timestamp",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "HMAC of the exact request body under the subscriber's signing secret, in the form `sha256=<hex>`. The guide states how it is computed and compared.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Signature",
+            "required": true,
+            "schema": {
+              "pattern": "^sha256=[0-9a-f]{64}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventPayload"
+              }
+            }
+          },
+          "description": "The event body, serialized once so every retry sends identical bytes.",
+          "required": true
+        },
+        "responses": {
+          "2XX": {
+            "description": "Accepted. Any 2xx marks the delivery delivered; the body is not read. Anything else is retried."
+          }
+        },
+        "summary": "Delivery of snapshot.revoked",
+        "tags": [
+          "Webhooks"
+        ]
+      }
+    },
+    "snapshot.soft_deleted": {
+      "post": {
+        "description": "Sent by the gateway to every enabled subscriber whose event filter includes `snapshot.soft_deleted`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.",
+        "operationId": "webhook-snapshot.soft_deleted",
+        "parameters": [
+          {
+            "description": "The lifecycle event name, identical to the payload's `event` field.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Event",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Delivery id — stable across retries of the same delivery, and the receiver's de-duplication key.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Delivery",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Time this attempt was sent, ISO-8601.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Timestamp",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "HMAC of the exact request body under the subscriber's signing secret, in the form `sha256=<hex>`. The guide states how it is computed and compared.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Signature",
+            "required": true,
+            "schema": {
+              "pattern": "^sha256=[0-9a-f]{64}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventPayload"
+              }
+            }
+          },
+          "description": "The event body, serialized once so every retry sends identical bytes.",
+          "required": true
+        },
+        "responses": {
+          "2XX": {
+            "description": "Accepted. Any 2xx marks the delivery delivered; the body is not read. Anything else is retried."
+          }
+        },
+        "summary": "Delivery of snapshot.soft_deleted",
+        "tags": [
+          "Webhooks"
+        ]
+      }
+    },
+    "snapshot.vetted": {
+      "post": {
+        "description": "Sent by the gateway to every enabled subscriber whose event filter includes `snapshot.vetted`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.",
+        "operationId": "webhook-snapshot.vetted",
+        "parameters": [
+          {
+            "description": "The lifecycle event name, identical to the payload's `event` field.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Event",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Delivery id — stable across retries of the same delivery, and the receiver's de-duplication key.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Delivery",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Time this attempt was sent, ISO-8601.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Timestamp",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "HMAC of the exact request body under the subscriber's signing secret, in the form `sha256=<hex>`. The guide states how it is computed and compared.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Signature",
+            "required": true,
+            "schema": {
+              "pattern": "^sha256=[0-9a-f]{64}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventPayload"
+              }
+            }
+          },
+          "description": "The event body, serialized once so every retry sends identical bytes.",
+          "required": true
+        },
+        "responses": {
+          "2XX": {
+            "description": "Accepted. Any 2xx marks the delivery delivered; the body is not read. Anything else is retried."
+          }
+        },
+        "summary": "Delivery of snapshot.vetted",
+        "tags": [
+          "Webhooks"
+        ]
+      }
+    }
+  }
 }

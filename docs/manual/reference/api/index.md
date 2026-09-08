@@ -23,6 +23,13 @@ This section documents the first. For the second see
     OIDC login. These pages describe the same surface with the surrounding
     reasoning.
 
+    The document describes more than the paths the gateway answers on. Its
+    top-level `webhooks` object describes the deliveries the gateway *sends* —
+    one entry per [lifecycle event](../../guides/lifecycle-webhooks.md), with its
+    transport headers and body schema — so a receiver is written against the same
+    contract, and against the same
+    [additive promise](../compatibility.md#the-api-contract), as a client.
+
 ## Conventions
 
 **Authentication.** Every `/api/**` endpoint is reached by exactly one of two
