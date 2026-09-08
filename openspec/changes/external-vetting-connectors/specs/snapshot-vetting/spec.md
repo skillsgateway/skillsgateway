@@ -2,26 +2,26 @@
 
 ## ADDED Requirements
 
-### Requirement: GW_0144
-The system SHALL implement GW_0144.
+### Requirement: GW_VETTING_0024
+The system SHALL implement GW_VETTING_0024.
 
-#### Scenario: SVC_GW_0144
-The system SHALL pass SVC_GW_0144.
+#### Scenario: SVC_GW_VETTING_0024
+The system SHALL pass SVC_GW_VETTING_0024.
 
-### Requirement: GW_0145
-The system SHALL implement GW_0145.
+### Requirement: GW_VETTING_0025
+The system SHALL implement GW_VETTING_0025.
 
-#### Scenario: SVC_GW_0145
-The system SHALL pass SVC_GW_0145.
+#### Scenario: SVC_GW_VETTING_0025
+The system SHALL pass SVC_GW_VETTING_0025.
 
-### Requirement: GW_0146
-The system SHALL implement GW_0146.
+### Requirement: GW_VETTING_0026
+The system SHALL implement GW_VETTING_0026.
 
-#### Scenario: SVC_GW_0146
-The system SHALL pass SVC_GW_0146.
+#### Scenario: SVC_GW_VETTING_0026
+The system SHALL pass SVC_GW_VETTING_0026.
 
-### Requirement: GW_0147
-The system SHALL implement GW_0147.
+### Requirement: GW_VETTING_0027
+The system SHALL implement GW_VETTING_0027.
 
-#### Scenario: SVC_GW_0147
-The system SHALL pass SVC_GW_0147.
+#### Scenario: SVC_GW_VETTING_0027
+The system SHALL pass SVC_GW_VETTING_0027.

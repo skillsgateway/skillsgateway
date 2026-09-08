@@ -1,19 +1,19 @@
 ## ADDED Requirements
 
-### Requirement: GW_0120
-The system SHALL implement GW_0120.
+### Requirement: GW_FACADE_0008
+The system SHALL implement GW_FACADE_0008.
 
-#### Scenario: SVC_GW_0120
-The system SHALL pass SVC_GW_0120.
+#### Scenario: SVC_GW_FACADE_0008
+The system SHALL pass SVC_GW_FACADE_0008.
 
-### Requirement: GW_0121
-The system SHALL implement GW_0121.
+### Requirement: GW_RELEASE_0005
+The system SHALL implement GW_RELEASE_0005.
 
-#### Scenario: SVC_GW_0121
-The system SHALL pass SVC_GW_0121.
+#### Scenario: SVC_GW_RELEASE_0005
+The system SHALL pass SVC_GW_RELEASE_0005.
 
-### Requirement: GW_0122
-The system SHALL implement GW_0122.
+### Requirement: GW_RELEASE_0006
+The system SHALL implement GW_RELEASE_0006.
 
-#### Scenario: SVC_GW_0122
-The system SHALL pass SVC_GW_0122.
+#### Scenario: SVC_GW_RELEASE_0006
+The system SHALL pass SVC_GW_RELEASE_0006.

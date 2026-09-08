@@ -19,7 +19,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.springframework.stereotype.Service;
 
 /**
- * Read-only adoption and staleness reporting (GW_0075, GW_0076): aggregation over the append-only
+ * Read-only adoption and staleness reporting (GW_OBSERVABILITY_0001, GW_OBSERVABILITY_0002): aggregation over the append-only
  * fetch ledger the gateway has been keeping all along, compared against the served tips the facade
  * itself answers from. Nothing here writes anything.
  */
@@ -44,7 +44,7 @@ public class AdoptionService {
      * <p>Two ledger aggregations rather than one folded in Java: the marketplace-level distinct
      * identity count cannot be summed from per-SHA rows (one identity, two SHAs, one identity).
      */
-    @Requirements({"GW_0075"})
+    @Requirements({"GW_OBSERVABILITY_0001"})
     public List<MarketplaceAdoption> adoption(int days) {
         Instant since = Instant.now().minus(Duration.ofDays(days));
         Map<String, List<FetchLogRepository.ShaAdoption>> bySha = new LinkedHashMap<>();
@@ -80,7 +80,7 @@ public class AdoptionService {
      * {@code servedSha}, identities holding content of a marketplace that stopped serving
      * entirely, which is exactly what a revocation leaves behind.
      */
-    @Requirements({"GW_0076"})
+    @Requirements({"GW_OBSERVABILITY_0002"})
     public List<StaleIdentity> staleness() {
         Map<String, Optional<String>> tips = new HashMap<>();
         List<StaleIdentity> stale = new ArrayList<>();

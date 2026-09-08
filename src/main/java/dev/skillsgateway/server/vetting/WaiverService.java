@@ -14,8 +14,8 @@ import org.springframework.stereotype.Service;
 
 /**
  * Waivers: creation with the fields that make an acceptance reviewable, revocation, and the
- * effective-outcome evaluation the approval gate and the reviewer surface both read (GW_0044,
- * GW_0045, GW_0046, GW_0048).
+ * effective-outcome evaluation the approval gate and the reviewer surface both read (GW_VETTING_0007,
+ * GW_VETTING_0008, GW_VETTING_0009, GW_VETTING_0011).
  *
  * <p>The service owns three things the pure {@link WaiverEvaluation} cannot: the clock, the
  * database, and the ledger. Everything that decides whether a waiver applies stays in the pure
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 public class WaiverService {
 
     /**
-     * The gateway expiring a waiver on its own (GW_0128). Named rather than spelled inline, so
+     * The gateway expiring a waiver on its own (GW_AUDIT_0007). Named rather than spelled inline, so
      * {@code AdminAuditLogger} can declare it as one of the gateway's own actors and type its
      * ledger entries {@code system} instead of leaving a magic string in the identity column.
      */
@@ -58,7 +58,7 @@ public class WaiverService {
     }
 
     /**
-     * Records a waiver against a finding seen on a snapshot (GW_0044, GW_0048).
+     * Records a waiver against a finding seen on a snapshot (GW_VETTING_0007, GW_VETTING_0011).
      *
      * <p>Anchoring creation to the snapshot rather than to a marketplace name is what makes
      * mis-scoping unrepresentable: the marketplace and — for a snapshot-scoped waiver — the commit
@@ -68,7 +68,7 @@ public class WaiverService {
      * @param scopeValue the path for a path-scoped waiver; ignored for a snapshot-scoped one,
      *     which always takes the snapshot's own SHA
      */
-    @Requirements({"GW_0044", "GW_0048"})
+    @Requirements({"GW_VETTING_0007", "GW_VETTING_0011"})
     public Waiver create(
             long snapshotId,
             String ruleId,
@@ -115,8 +115,8 @@ public class WaiverService {
         return waiver;
     }
 
-    /** Withdraws a waiver and says so in the ledger (GW_0046, GW_0048). */
-    @Requirements({"GW_0046", "GW_0048"})
+    /** Withdraws a waiver and says so in the ledger (GW_VETTING_0009, GW_VETTING_0011). */
+    @Requirements({"GW_VETTING_0009", "GW_VETTING_0011"})
     public Optional<Waiver> revoke(long waiverId, String principal) {
         Optional<Waiver> existing = waiverRepository.findById(waiverId);
         if (existing.isEmpty() || !waiverRepository.revoke(waiverId, principal)) {
@@ -143,17 +143,17 @@ public class WaiverService {
     }
 
     /**
-     * The snapshot's effective vetting outcome as of now (GW_0045, GW_0046) — the value the
+     * The snapshot's effective vetting outcome as of now (GW_VETTING_0008, GW_VETTING_0009) — the value the
      * approval gate and the reviewer surface both consult. Read at every call, never cached: that
      * is what makes an expired waiver stop suppressing without a scheduler.
      */
-    @Requirements({"GW_0045", "GW_0046"})
+    @Requirements({"GW_VETTING_0008", "GW_VETTING_0009"})
     public WaiverEvaluation.Effect evaluate(long snapshotId) {
         return snapshotRepository.findById(snapshotId).map(this::evaluate).orElseGet(WaiverEvaluation::noRun);
     }
 
     /** {@link #evaluate(long)} for a snapshot already in hand. */
-    @Requirements({"GW_0045", "GW_0046"})
+    @Requirements({"GW_VETTING_0008", "GW_VETTING_0009"})
     public WaiverEvaluation.Effect evaluate(Snapshot snapshot) {
         return WaiverEvaluation.evaluate(
                 vettingRepository.latestRun(snapshot.id()).orElse(null),
@@ -164,10 +164,10 @@ public class WaiverService {
 
     /**
      * Appends one {@code waiver-applied} entry per waiver that suppressed a finding for this
-     * approval (GW_0048) — the "use" half of the lifecycle, and the entry that lets an auditor
+     * approval (GW_VETTING_0011) — the "use" half of the lifecycle, and the entry that lets an auditor
      * answer "why is a snapshot with a critical finding being served" from the ledger alone.
      */
-    @Requirements({"GW_0048"})
+    @Requirements({"GW_VETTING_0011"})
     public void recordUse(String marketplace, String sha, String principal, List<WaiverEvaluation.Suppression> used) {
         for (WaiverEvaluation.Suppression suppression : used) {
             auditLogger.record(
@@ -186,13 +186,13 @@ public class WaiverService {
     }
 
     /**
-     * Notes newly-lapsed waivers in the ledger, once each (GW_0048). Carries no gate authority:
+     * Notes newly-lapsed waivers in the ledger, once each (GW_VETTING_0011). Carries no gate authority:
      * expiry is already in force the moment {@link #evaluate(long)} next runs, so this pass only
      * decides whether the lapse is *visible* in the ledger, never whether it applies.
      *
      * @return how many waivers were recorded as expired
      */
-    @Requirements({"GW_0048"})
+    @Requirements({"GW_VETTING_0011"})
     public int sweepExpired(int batchSize) {
         List<Waiver> expired = waiverRepository.newlyExpired(Instant.now(), batchSize);
         for (Waiver waiver : expired) {

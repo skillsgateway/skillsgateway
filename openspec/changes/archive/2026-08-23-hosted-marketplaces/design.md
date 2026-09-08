@@ -48,7 +48,7 @@ guide and the lifecycle concept. That is why this change carries ADR 0007.
   is out of scope by ADR 0006, which parked auto-approval until the
   delegated-approval question is decided deliberately. See `proposal.md`.
 - **No multi-branch or tag publication.** One lineage per marketplace, the same
-  guarantee GW_0017 makes for upstreams.
+  guarantee GW_INGEST_0006 makes for upstreams.
 - **No web upload, no admin CLI push.** Git is the interface; the CLI is a
   later convenience over the same endpoint.
 - **No conversion between origins.** A marketplace is hosted or upstream at
@@ -75,7 +75,7 @@ guide and the lifecycle concept. That is why this change carries ADR 0007.
 2. **A separate endpoint, not a mode on the existing one.** `/publish/**` is its
    own `ServletRegistrationBean<GitServlet>` with its own resolver and its own
    `SecurityFilterChain`, ordered beside `gitChain`. `GitFacadeConfiguration` is
-   not edited at all, so `setReceivePackFactory(null)` and GW_0006/GW_0007 stay
+   not edited at all, so `setReceivePackFactory(null)` and GW_FACADE_0001/GW_FACADE_0002 stay
    exactly as they are and no reviewer has to reason about whether a mode flag
    could flip on the consumer path.
 
@@ -88,19 +88,19 @@ guide and the lifecycle concept. That is why this change carries ADR 0007.
 
 4. **Push scopes are a separate column with no wildcard.**
    `access_tokens.push_scopes` is a comma-delimited marketplace list like
-   `scopes`, but where `scopes IS NULL` means *every* marketplace (GW_0064's
+   `scopes`, but where `scopes IS NULL` means *every* marketplace (GW_AUTH_0006's
    compatibility rule for pre-scoping tokens), `push_scopes IS NULL` means
    **none**. Every token that exists today therefore cannot push, and no token
    can ever be granted push to everything by omission. A push to a marketplace
    outside the scope answers exactly as it does for one that does not exist,
-   following GW_0064's precedent.
+   following GW_AUTH_0006's precedent.
 
 5. **`/publish` serves upload-pack as well as receive-pack, to the same scope.**
    A publisher needs to clone their own source of record onto a new machine or
    into CI. The repository being read is the one that credential can already
    write, so upload-pack adds no reach; it is gated by the same push scope, and
    it is not the quarantine repository, so no unapproved *snapshot* content
-   becomes fetchable through it. GW_0007 speaks about the facade and is
+   becomes fetchable through it. GW_FACADE_0002 speaks about the facade and is
    untouched.
 
 6. **Lineage and immutability are enforced in a `PreReceiveHook`, before any
@@ -129,7 +129,7 @@ guide and the lifecycle concept. That is why this change carries ADR 0007.
 | --- | --- | --- |
 | F1 | A push reaches a *published* repository and serves content nobody approved | `/git/**` keeps `setReceivePackFactory(null)` and is not edited; a test pushes to `/git/{name}` and asserts refusal |
 | F2 | A token with only fetch scopes can push | Push authority derives from `push_scopes` alone; negative tests for a fetch-scoped token, a wildcard-fetch (`scopes IS NULL`) token, and an unscoped legacy token |
-| F3 | A push-scoped token pushes to another marketplace | Scope checked in the resolver before the repository is opened; answers not-found, as GW_0064 requires |
+| F3 | A push-scoped token pushes to another marketplace | Scope checked in the resolver before the repository is opened; answers not-found, as GW_AUTH_0006 requires |
 | F4 | A publisher rewrites history under a snapshot that was already approved | `append-only` `PreReceiveHook` refuses non-fast-forward; the `allow-rewrite` case is ledger-recorded with both tips |
 | F5 | A push creates a second lineage (another branch or a tag) and a later ingest picks the wrong one | The hook refuses every ref but `refs/heads/main`; test pushes a branch and a tag |
 | F6 | A ref delete empties the origin and the next ingest fails or, worse, ingests nothing | Deletes always refused, under both policies |

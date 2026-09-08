@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Synthesises the commit the gateway serves for a manifest with resolved external sources
- * (GW_0156): the upstream tree, each resolved source grafted under {@code _plugins/<name>}, and a
+ * (GW_INGEST_0024): the upstream tree, each resolved source grafted under {@code _plugins/<name>}, and a
  * manifest in which every plugin source is a path inside that same commit.
  *
  * <p>Three properties are what the rest of the system rests on.
@@ -50,7 +50,7 @@ import org.springframework.stereotype.Component;
  *
  * <p>Everywhere a manifest-supplied name would decide where content is written, this fails closed —
  * and then checks its own work: the rewritten manifest is put back through {@link ManifestPolicy}'s
- * local-only gate, so GW_0152 holds because the commit could not otherwise be used, rather than
+ * local-only gate, so GW_INGEST_0021 holds because the commit could not otherwise be used, rather than
  * because this class is believed to be correct.
  */
 @Component
@@ -117,7 +117,7 @@ public class ManifestRewriter {
         }
     }
 
-    @Requirements({"GW_0152", "GW_0156"})
+    @Requirements({"GW_INGEST_0021", "GW_INGEST_0024"})
     public Rewrite rewrite(Repository repository, RevCommit upstream, List<Graft> grafts) throws IOException {
         String hazard = graftHazard(repository, upstream, grafts);
         if (hazard != null) {
@@ -136,7 +136,7 @@ public class ManifestRewriter {
             return Rewrite.refused(undeclared);
         }
         byte[] rewritten = rewriteManifest(evaluation, grafts);
-        // The post-condition, and the whole reason GW_0152 is structural: the manifest this class
+        // The post-condition, and the whole reason GW_INGEST_0021 is structural: the manifest this class
         // just produced goes through the same gate that rejected the original. A rewrite that
         // missed a source cannot become a commit, whatever this class believes it did.
         String stillExternal = policy.validate(rewritten);

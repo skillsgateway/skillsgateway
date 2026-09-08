@@ -31,7 +31,7 @@ public class FetchLogRepository {
         append(source, principal, marketplace, event, ref, sha, detail, null);
     }
 
-    /** As {@link #append}, attributing a facade entry to the token that authenticated it (GW_0067). */
+    /** As {@link #append}, attributing a facade entry to the token that authenticated it (GW_AUTH_0009). */
     public void append(
             String source,
             String principal,
@@ -45,7 +45,7 @@ public class FetchLogRepository {
     }
 
     /**
-     * As {@link #append}, typing the actor explicitly (GW_0128). The value is written through a
+     * As {@link #append}, typing the actor explicitly (GW_AUDIT_0007). The value is written through a
      * cast to the {@code fetch_log_actor_type} enum, so a value outside the set is a type error
      * in the database rather than a string nobody checked.
      */
@@ -81,7 +81,7 @@ public class FetchLogRepository {
     }
 
     /**
-     * The ledger's entries of one actor kind (GW_0128). An indexable predicate on a typed column,
+     * The ledger's entries of one actor kind (GW_AUDIT_0007). An indexable predicate on a typed column,
      * with no string parsing of {@code principal} and no join to {@code access_tokens} — which is
      * the whole reason the column is denormalised: a row must still say what it meant after the
      * credential it names has been revoked and its row deleted.
@@ -95,7 +95,7 @@ public class FetchLogRepository {
 
     /**
      * Every identity that has fetched one commit through the facade, with how often and when it
-     * last did (GW_0053) — the blast-radius report of ARCHITECTURE.md §5, answered from the ledger
+     * last did (GW_VETTING_0016) — the blast-radius report of ARCHITECTURE.md §5, answered from the ledger
      * the gateway has been keeping all along rather than from anything new.
      *
      * <p>Only {@code upload-pack} entries count. A ref advertisement ({@code info-refs}) happens on
@@ -129,7 +129,7 @@ public class FetchLogRepository {
             Instant lastFetch) {}
 
     /**
-     * The adoption report's per-snapshot rows (GW_0075): content-transferring fetches since the
+     * The adoption report's per-snapshot rows (GW_OBSERVABILITY_0001): content-transferring fetches since the
      * window start, grouped by (marketplace, sha). Only {@code upload-pack} entries count, for the
      * same reason {@link #fetchersOf(String)} gives: a ref advertisement is not a delivery.
      */
@@ -149,7 +149,7 @@ public class FetchLogRepository {
     }
 
     /**
-     * The same window aggregated per marketplace (GW_0075). Its own query rather than a sum over
+     * The same window aggregated per marketplace (GW_OBSERVABILITY_0001). Its own query rather than a sum over
      * {@link #adoptionSince(Instant)}: an identity that fetched two SHAs of one marketplace is one
      * identity, which no summation over per-SHA rows can know.
      */
@@ -168,7 +168,7 @@ public class FetchLogRepository {
     }
 
     /**
-     * Each identity's most recent content-transferring fetch per marketplace (GW_0076) — the row
+     * Each identity's most recent content-transferring fetch per marketplace (GW_OBSERVABILITY_0002) — the row
      * staleness compares against the served tip. Window-free on purpose: staleness is a property
      * of an identity's latest state, not of a reporting period.
      */
@@ -196,7 +196,7 @@ public class FetchLogRepository {
 
     /**
      * The page of ledger entries an export consumer sees next: everything after its cursor, in
-     * ledger order, bounded by {@code limit} (GW_0027, GW_0028).
+     * ledger order, bounded by {@code limit} (GW_AUDIT_0003, GW_AUDIT_0004).
      *
      * <p>{@code cutoff} excludes entries younger than the commit-settling lag. {@code id} comes
      * from a {@code BIGSERIAL}, which is assigned before commit, so without the cutoff a reader
@@ -253,7 +253,9 @@ public class FetchLogRepository {
 
             @Schema(description = "What happened") String event,
 
-            @Schema(description = "For a fetch, the advertised ref the entry concerns (GW_0154); null when unknown")
+            @Schema(
+                    description =
+                            "For a fetch, the advertised ref the entry concerns (GW_FACADE_0018); null when unknown")
             String ref,
 
             @Schema(description = "Commit SHA, when the entry concerns one")
@@ -262,7 +264,7 @@ public class FetchLogRepository {
             @Schema(description = "Free-text qualifier, such as the reason given for a vetting override")
             String detail,
 
-            @Schema(description = "Id of the token that authenticated a facade entry, or null (GW_0067)")
+            @Schema(description = "Id of the token that authenticated a facade entry, or null (GW_AUTH_0009)")
             Long tokenId) {}
 
     private static AuditEntry map(ResultSet rs, int rowNum) throws SQLException {

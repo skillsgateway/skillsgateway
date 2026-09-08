@@ -71,36 +71,36 @@ got past an authorization check that was no longer there.
 ## Adversarial coverage
 
 - A no-role session is refused every mutation, the audit surface and the grants
-  API, with no enforcement property present anywhere (`SVC_GW_0138`).
+  API, with no enforcement property present anywhere (`SVC_GW_AUTH_0025`).
 - A configuration naming no administrator refuses to start, and the refusal names
   all three configuration paths and the escape hatch. A mapping or declared grant
   resolving only a *lesser* role is still no administrator — without that case the
-  check would be satisfied by any mapping at all (`SVC_GW_0139`).
+  check would be satisfied by any mapping at all (`SVC_GW_AUTH_0026`).
 - The removed property is refused set to `false`, to `true`, and as the real
   environment variable `SKILLSGATEWAY_ROLES_ENABLED` through a genuine
   `SystemEnvironmentPropertySource` — not `withPropertyValues`, which installs
   literal names and would have proved only that an oddly-named property is absent
-  (`SVC_GW_0140`).
+  (`SVC_GW_AUTH_0027`).
 - The escape hatch's principal performs an administrative mutation and is
   attributed to `dev-insecure-auth`, not to `config`. Both impersonation routes are
   closed separately, because a single test would pass with either condition
   removed: a principal named `dev` with the hatch **off** holds nothing, and an
-  identity-provider session named `dev` gains nothing by that path (`SVC_GW_0141`).
+  identity-provider session named `dev` gains nothing by that path (`SVC_GW_AUTH_0028`).
 
 ## No SVC lost
 
 Two suites verified a state that no longer exists. Neither was deleted before its
 coverage moved:
 
-- `RolesDisabledTests` (`SVC_GW_0068`) — deleted. `SVC_GW_0068` remains carried by
+- `RolesDisabledTests` (`SVC_GW_AUTH_0010`) — deleted. `SVC_GW_AUTH_0010` remains carried by
   `RoleEnforcementTests`, whose route-table completeness walk is the assertion that
   actually protects the surface. Read plainly, the deleted test asserted that the
   default deployment had no authorization.
-- `ClaimRolesDisabledTests` (`SVC_GW_0098`) — became
+- `ClaimRolesDisabledTests` (`SVC_GW_AUTH_0015`) — became
   `ClaimMappedRoleIsEnforcedTests`, asserting the opposite half: the mapped auditor
-  reads the ledger and is refused an admin mutation. `SVC_GW_0098` is also carried
+  reads the ledger and is refused an admin mutation. `SVC_GW_AUTH_0015` is also carried
   by `ClaimRoleMappingTests`, `ClaimRoleMapperTests` and the e2e suite.
-- `MachineCredentialAdminTests` (`SVC_GW_0130`) kept its SVC and lost only its
+- `MachineCredentialAdminTests` (`SVC_GW_AUTH_0023`) kept its SVC and lost only its
   premise: it ran with enforcement off so that a check which still refused stood
   out. It now pins the narrower thing that survives — provisioning takes the
   administrative role and not a lesser one.

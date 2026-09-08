@@ -133,7 +133,7 @@ function SortHeader({
  * page, and the table sorts and filters per column. It paginates client-side over the JSON
  * ledger; the NDJSON export above is the path for a full, cursor-resumable pull.
  *
- * @Requirements GW_0022, GW_0030
+ * @Requirements GW_AUDIT_0002, GW_AUDIT_0006
  */
 function LedgerTable({ rows }: { rows: AuditRow[] }) {
   const [sorting, setSorting] = useState<SortingState>([{ id: "id", desc: true }]);
@@ -431,7 +431,7 @@ export function SinkSecretDialog({
  * export surface — the NDJSON download and the sinks that stream the ledger onwards, each
  * with its position in it.
  *
- * @Requirements GW_0018, GW_0030
+ * @Requirements GW_INGEST_0007, GW_AUDIT_0006
  */
 export function AuditPage() {
   const audit = useAudit();

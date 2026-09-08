@@ -391,13 +391,13 @@ a one-replica system it buys nothing a maintenance window does not.
 
 ### 7. The chart's ephemeral default — already fixed; this change only adds `none`
 
-**Superseded in part by #134 (GW_0120), merged while this was in review.** The
+**Superseded in part by #134 (GW_FACADE_0008), merged while this was in review.** The
 chart no longer defaults to `emptyDir`: `persistence.mode` is explicit and must
 be `existingClaim` (with `persistence.existingClaim` set — the EFS
 static-provisioning path on Fargate, and any RWO claim elsewhere) or `ephemeral`,
 and anything else fails template rendering with a message that spells out the
 data-loss consequence. The defect this change was going to fix is fixed, and the
-requirement it was going to raise is GW_0120's.
+requirement it was going to raise is GW_FACADE_0008's.
 
 What is left for this change is one mode: **`none`**, valid only when
 `storage.backend` is `object-store`, for a deployment that keeps no durable

@@ -25,7 +25,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
  * Reading a chain run back costs the same number of statements whatever the chain length
- * (GW_0037), and the findings it returns belong to the verdict that produced them.
+ * (GW_VETTING_0001), and the findings it returns belong to the verdict that produced them.
  *
  * <p>The two properties are tested together on purpose. A per-verdict findings query is correct
  * and grows with the chain; one grouped query is constant and can group wrongly. Asserting only
@@ -46,7 +46,7 @@ class VettingRunReadTests extends AbstractGatewayTest {
     private VettingRepository vettingRepository;
 
     @Test
-    @SVCs({"SVC_GW_0037"})
+    @SVCs({"SVC_GW_VETTING_0001"})
     void reading_a_run_costs_the_same_statements_whatever_the_chain_length() {
         Marketplace marketplace = marketplaceRepository.register(uniqueName("nplus1"), "file:///upstream");
         Snapshot snapshot = snapshotRepository.create(marketplace.id(), uniqueName("sha"), Snapshot.HELD, null, null);
@@ -89,7 +89,7 @@ class VettingRunReadTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0037"})
+    @SVCs({"SVC_GW_VETTING_0001"})
     void every_finding_reads_back_against_the_verdict_that_produced_it() {
         Marketplace marketplace = marketplaceRepository.register(uniqueName("grouping"), "file:///upstream");
         Snapshot snapshot = snapshotRepository.create(marketplace.id(), uniqueName("sha"), Snapshot.HELD, null, null);
@@ -137,7 +137,7 @@ class VettingRunReadTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0037"})
+    @SVCs({"SVC_GW_VETTING_0001"})
     void a_run_with_no_verdicts_reads_back_empty() {
         Marketplace marketplace = marketplaceRepository.register(uniqueName("emptyrun"), "file:///upstream");
         Snapshot snapshot = snapshotRepository.create(marketplace.id(), uniqueName("sha"), Snapshot.HELD, null, null);

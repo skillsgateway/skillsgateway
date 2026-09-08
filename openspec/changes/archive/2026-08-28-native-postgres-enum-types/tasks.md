@@ -15,12 +15,12 @@
       `AuditSinkRepository`, `VettingRepository`, `WaiverRepository` and
       `RoleGrantRepository` (`:state::snapshot_state`); leave the mappers alone, the driver
       returns a `String`
-- [x] 2.2 Add `@Requirements({"GW_0125"})` to every method that writes an enumerated value,
+- [x] 2.2 Add `@Requirements({"GW_FACADE_0009"})` to every method that writes an enumerated value,
       so the annotation set is exactly the enum write paths
 
 ## 3. Requirements
 
-- [x] 3.1 Add GW_0125 to `docs/reqstool/requirements.yml` and SVC_GW_0125 to
+- [x] 3.1 Add GW_FACADE_0009 to `docs/reqstool/requirements.yml` and SVC_GW_FACADE_0009 to
       `docs/reqstool/software_verification_cases.yml`
 
 ## 4. Tests
@@ -30,7 +30,7 @@
 - [x] 4.2 A round trip per type through the repository that owns it, every value of the set
 - [x] 4.3 A refusal per column of a value outside the set, and proof that the marketplace
       constraint reading two enum columns still fires
-- [x] 4.4 Add `@SVCs({"SVC_GW_0125"})` to each test method from 4.1–4.3
+- [x] 4.4 Add `@SVCs({"SVC_GW_FACADE_0009"})` to each test method from 4.1–4.3
 - [x] 4.5 Prove red before green: drop one cast (round trips fail), then revert one column to
       `TEXT ... CHECK` (the type and refusal cases fail); restore and re-run green
 

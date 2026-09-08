@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * The closure as a domain object (GW_0164): recorded with the snapshot, a value copy of what was
+ * The closure as a domain object (GW_INGEST_0030): recorded with the snapshot, a value copy of what was
  * declared and what it resolved to, gone with the snapshot, and surfaced wherever the snapshot's
  * origin already is.
  */
@@ -27,7 +27,7 @@ class SnapshotClosureTests extends AbstractExternalSourceTest {
     private SnapshotFactsService factsService;
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_INGEST_0030"})
     void a_resolved_ingestion_records_the_closure_with_the_snapshot() throws Exception {
         Composite composite = ingestComposite("clo");
         Snapshot snapshot = composite.snapshot();
@@ -66,7 +66,7 @@ class SnapshotClosureTests extends AbstractExternalSourceTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_INGEST_0030"})
     void a_local_only_snapshot_records_no_closure_and_its_own_commit_as_upstream() throws Exception {
         Registered registered = registerAndIngest(uniqueName("clo"), createUpstream(DEFAULT_MANIFEST));
         Snapshot snapshot = registered.snapshot();
@@ -77,7 +77,7 @@ class SnapshotClosureTests extends AbstractExternalSourceTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_INGEST_0030"})
     void a_rejected_resolution_records_no_closure() throws Exception {
         Path upstream = createUpstream(manifestWithExternal("acme/absent"));
         Registered registered = registerAndIngest(uniqueName("clo"), upstream);
@@ -89,7 +89,7 @@ class SnapshotClosureTests extends AbstractExternalSourceTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164", "SVC_GW_0009"})
+    @SVCs({"SVC_GW_INGEST_0030", "SVC_GW_INGEST_0004"})
     void the_provenance_carries_the_served_commit_the_upstream_commit_and_the_closure() throws Exception {
         Composite composite = ingestComposite("clo");
         Snapshot snapshot = composite.snapshot();
@@ -116,7 +116,7 @@ class SnapshotClosureTests extends AbstractExternalSourceTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_INGEST_0030"})
     @SuppressWarnings("unchecked")
     void the_policy_facts_carry_the_closure() throws Exception {
         Composite composite = ingestComposite("clo");
@@ -145,7 +145,7 @@ class SnapshotClosureTests extends AbstractExternalSourceTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_INGEST_0030"})
     void the_snapshots_containing_a_source_are_one_query_away() throws Exception {
         Composite composite = ingestComposite("clo");
         long id = composite.snapshot().id();
@@ -162,7 +162,7 @@ class SnapshotClosureTests extends AbstractExternalSourceTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_INGEST_0030"})
     void the_same_closure_in_two_marketplaces_has_the_same_digest() throws Exception {
         FORGE.publish("acme/tools", Map.of("skills/tool/SKILL.md", "# Tool\n"));
         Path upstream = createUpstream(manifestWithExternal("acme/tools"));
@@ -178,7 +178,7 @@ class SnapshotClosureTests extends AbstractExternalSourceTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_INGEST_0030"})
     void purging_the_snapshot_removes_its_closure() throws Exception {
         Composite composite = ingestComposite("clo");
         long id = composite.snapshot().id();

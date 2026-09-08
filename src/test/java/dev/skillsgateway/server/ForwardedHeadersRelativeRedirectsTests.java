@@ -11,7 +11,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 
 /**
- * Relative redirects follow {@code server.tomcat.use-relative-redirects} at runtime (GW_0163).
+ * Relative redirects follow {@code server.tomcat.use-relative-redirects} at runtime (GW_AUTH_0029).
  *
  * <p>Boot applies this from a second bean, {@code tomcatForwardedHeaderFilterCustomizer}, which
  * carries the same build-time condition as the filter and is therefore absent from the native image
@@ -34,7 +34,7 @@ class ForwardedHeadersRelativeRedirectsTests extends AbstractForwardedHeadersTes
     FilterRegistrationBean<ForwardedHeaderFilter> registration;
 
     @Test
-    @SVCs({"SVC_GW_0163"})
+    @SVCs({"SVC_GW_AUTH_0029"})
     void the_filter_takes_relative_redirects_from_the_property() {
         // Boot's default is false, so a literal would not survive this.
         assertThat(ReflectionTestUtils.getField(registration.getFilter(), "relativeRedirects"))

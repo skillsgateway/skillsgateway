@@ -38,7 +38,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * The sweep of publication staging references a crash left behind (GW_0168), on both backends.
+ * The sweep of publication staging references a crash left behind (GW_FACADE_0019), on both backends.
  *
  * <p>Publication stages a snapshot's objects in the published repository under
  * {@code refs/staging/<sha>} and only then moves the served references. A process killed between
@@ -127,7 +127,7 @@ class StagingRefSweepTests extends AbstractGatewayTest {
      */
     @ParameterizedTest
     @MethodSource("backends")
-    @SVCs({"SVC_GW_0168"})
+    @SVCs({"SVC_GW_FACADE_0019"})
     void anAbandonedStagingReferencePastTheBoundIsSweptAndItsCommitBecomesUnreachable(Backend backend)
             throws IOException {
         String name = uniqueName("abandoned");
@@ -162,7 +162,7 @@ class StagingRefSweepTests extends AbstractGatewayTest {
      */
     @ParameterizedTest
     @MethodSource("backends")
-    @SVCs({"SVC_GW_0168"})
+    @SVCs({"SVC_GW_FACADE_0019"})
     void anInFlightPublicationInsideTheBoundSurvivesAndStillCompletes(Backend backend) throws IOException {
         String name = uniqueName("inflight");
         ObjectId staged;
@@ -200,7 +200,7 @@ class StagingRefSweepTests extends AbstractGatewayTest {
      */
     @ParameterizedTest
     @MethodSource("backends")
-    @SVCs({"SVC_GW_0168"})
+    @SVCs({"SVC_GW_FACADE_0019"})
     void aStagingReferenceALiveSnapshotRowNamesSurvivesHoweverOldItIs(Backend backend) throws IOException {
         String name = uniqueName("claimed");
         ObjectId claimed;
@@ -224,7 +224,7 @@ class StagingRefSweepTests extends AbstractGatewayTest {
      */
     @ParameterizedTest
     @MethodSource("backends")
-    @SVCs({"SVC_GW_0168"})
+    @SVCs({"SVC_GW_FACADE_0019"})
     void aPublishedRepositoryWithNothingAbandonedIsUntouched(Backend backend) throws IOException {
         String name = uniqueName("intact");
         Map<String, ObjectId> before;
@@ -254,7 +254,7 @@ class StagingRefSweepTests extends AbstractGatewayTest {
      * unreachability rather than absence.
      */
     @Test
-    @SVCs({"SVC_GW_0168"})
+    @SVCs({"SVC_GW_FACADE_0019"})
     void onTheFilesystemTheSweptObjectsAreReclaimedByTheSamePass() throws IOException {
         String name = uniqueName("reclaimed");
         ObjectId abandoned;
@@ -277,7 +277,7 @@ class StagingRefSweepTests extends AbstractGatewayTest {
      * assertion that covers the whole of "approved content untouched", advertisement included.
      */
     @Test
-    @SVCs({"SVC_GW_0168"})
+    @SVCs({"SVC_GW_FACADE_0019"})
     void compactionRunsTheSweepAndLeavesApprovedContentServed() throws Exception {
         Path upstream = createUpstream(DEFAULT_MANIFEST);
         String name = uniqueName("swept");
@@ -311,7 +311,7 @@ class StagingRefSweepTests extends AbstractGatewayTest {
      * the fail-safe reading, because the mis-typed value must not be the one that deletes.
      */
     @Test
-    @SVCs({"SVC_GW_0168"})
+    @SVCs({"SVC_GW_FACADE_0019"})
     void aZeroBoundSwitchesTheSweepOffRatherThanSweepingEverything() throws IOException {
         String name = uniqueName("disabled");
         ObjectId abandoned;

@@ -21,7 +21,7 @@ to override it deliberately — but every override is **admin-only** and **duly
 noted in the audit ledger**. This is the human-in-command escape hatch, not a
 way to route around governance quietly. The admin role model was hardened to
 unconditional enforcement in
-[#210](https://github.com/skillsgateway/skillsgateway/issues/210) (GW_0138),
+[#210](https://github.com/skillsgateway/skillsgateway/issues/210) (GW_AUTH_0025),
 which is what makes "admin-only" a load-bearing guarantee rather than a
 configurable one.
 
@@ -37,14 +37,14 @@ Two mechanisms are in scope, and they are different kinds of act:
 **Both mechanisms exist, both are admin-only, both are audited distinctly, and
 both are fail-loud. Neither weakens the gate silently.**
 
-### 1. Connector enable/disable (GW_0149)
+### 1. Connector enable/disable (GW_VETTING_0029)
 
 An administrator may switch a built-in connector off — globally or for one
 marketplace — through `PUT /api/vetting/connectors/{name}/toggle`. A disabled
 connector is **not run** at ingestion or re-vetting; in its place the chain
 records a distinct `disabled` verdict, so the disablement is part of the run's
 evidence rather than a silently shorter chain. The fail-closed aggregation
-(GW_0038) is extended, not loosened: a `disabled` verdict is neither clearing nor
+(GW_VETTING_0002) is extended, not loosened: a `disabled` verdict is neither clearing nor
 blocking, **and a run still requires at least one clearing verdict to clear** —
 so disabling every connector leaves a run *blocked*, never cleared. The switch
 can therefore never become a blanket approval by omission.
@@ -56,7 +56,7 @@ disablement is **recorded per run** (fail-loud), and disabling everything still
 **blocks** (no free pass). What an operator gains is the ability to answer a
 too-noisy or wrong connector for one marketplace without redeploying.
 
-### 2. Override of a blocked outcome (GW_0148)
+### 2. Override of a blocked outcome (GW_VETTING_0028)
 
 An administrator — and only an administrator — may approve a held or revoked
 snapshot whose effective outcome is blocked, by setting `overrideVetting` with a
@@ -74,7 +74,7 @@ override is never indistinguishable from an approval the chain cleared.
 The override does **not** replace waivers, and the two are deliberately different
 tools:
 
-| | Waiver (GW_0044–0048) | Override (GW_0148) |
+| | Waiver (GW_VETTING_0007–0048) | Override (GW_VETTING_0028) |
 | --- | --- | --- |
 | Who | any reviewer/approver | administrator only |
 | Scope | one finding, one rule, scoped and **expiring** | one snapshot, the whole blocked outcome, one-off |

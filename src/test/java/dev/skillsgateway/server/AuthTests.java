@@ -21,7 +21,7 @@ import org.springframework.http.MediaType;
 class AuthTests extends AbstractGatewayTest {
 
     @Test
-    @SVCs({"SVC_GW_0011"})
+    @SVCs({"SVC_GW_AUTH_0002"})
     void webAccessRequiresOidcSession() throws Exception {
         // A browser sends Accept: text/html; that is what routes to the login redirect.
         mockMvc.perform(get("/").accept(MediaType.TEXT_HTML))
@@ -34,7 +34,7 @@ class AuthTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0012"})
+    @SVCs({"SVC_GW_AUTH_0003"})
     void gitFacadeRequiresValidPersonalAccessToken() throws Exception {
         String name = uniqueName("corp");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
@@ -63,7 +63,7 @@ class AuthTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0013"})
+    @SVCs({"SVC_GW_AUTH_0004"})
     void tokensAreShownOnceStoredHashedAndRevocable() throws Exception {
         String name = uniqueName("corp");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
@@ -93,9 +93,9 @@ class AuthTests extends AbstractGatewayTest {
         List<Map<String, Object>> entries = JsonPath.read(listBody, "$[?(@.id == " + id + ")]");
         assertThat(entries).hasSize(1);
         // Closed enumeration on purpose: a leaked hash or secret would fail this, and any new
-        // field must be added here deliberately. scopes/expiresAt/rotatedFrom joined in GW_0064-66,
-        // pushScopes in GW_0102 and sessionDerived in GW_0104 — both facts about the grant, and
-        // neither a secret. apiScopes joined in GW_0126: on a personal access token it is always
+        // field must be added here deliberately. scopes/expiresAt/rotatedFrom joined in GW_AUTH_0006-66,
+        // pushScopes in GW_FACADE_0007 and sessionDerived in GW_AUTH_0018 — both facts about the grant, and
+        // neither a secret. apiScopes joined in GW_AUTH_0020: on a personal access token it is always
         // empty, and asserting its presence here is what would catch it silently becoming
         // populated on a credential nobody provisioned as a machine one.
         assertThat(entries.get(0).keySet())

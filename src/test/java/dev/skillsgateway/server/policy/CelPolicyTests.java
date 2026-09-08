@@ -9,7 +9,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 /**
- * The pure CEL core (GW_0089 write-time compilation, GW_0090 bounded fail-closed evaluation). No
+ * The pure CEL core (GW_APPROVAL_0006 write-time compilation, GW_APPROVAL_0007 bounded fail-closed evaluation). No
  * Spring, no database: exactly the compile/evaluate contract the service and the gate build on.
  */
 class CelPolicyTests {

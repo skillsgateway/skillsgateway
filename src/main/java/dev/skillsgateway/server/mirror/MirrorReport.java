@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * What the mirror holds against what the facade serves (GW_0172).
+ * What the mirror holds against what the facade serves (GW_FACADE_0023).
  *
  * <p>The comparison is made against published storage, not against what the gateway last tried to
  * push. A report derived from push history would answer a different question — "did my last push
@@ -29,7 +29,7 @@ import java.util.List;
  * @param lastAttemptAt when the mirror was last updated, or attempted
  * @param lastAttemptOutcome {@code ok}, {@code failed}, or {@code none} if it has never been
  *     tried. A reconciliation that refused to act on a served reference set it could not believe
- *     (GW_0190) is a {@code failed} attempt whose {@link #error} begins {@code refused:} — see
+ *     (GW_FACADE_0025) is a {@code failed} attempt whose {@link #error} begins {@code refused:} — see
  *     {@link #FAILED}
  * @param error why the comparison or the last attempt failed, or null
  */
@@ -86,7 +86,7 @@ public record MirrorReport(
      *
      * <p>It covers two causes, and deliberately does not split them at this surface. One is a push
      * that exhausted its retries — the forge. The other is a reconciliation that refused to act on
-     * a served reference set the gateway's own records contradicted (GW_0190) — the gateway's own
+     * a served reference set the gateway's own records contradicted (GW_FACADE_0025) — the gateway's own
      * storage. {@link #error} names which, beginning {@code refused:} for the second, and the
      * ledger separates them precisely (`mirror-push-failed` against
      * `mirror-reconciliation-refused`).

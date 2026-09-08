@@ -40,7 +40,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * Verification of auto-quarantine under enforcement (GW_0050, GW_0052, GW_0053, GW_0054).
+ * Verification of auto-quarantine under enforcement (GW_VETTING_0013, GW_VETTING_0015, GW_VETTING_0016, GW_VETTING_0017).
  *
  * <p>Enforcement is the one thing in the gateway that takes content away from consumers without a
  * person in the loop, so these tests attack it from both directions at once: that it does retract
@@ -52,7 +52,7 @@ import org.springframework.test.context.TestPropertySource;
  */
 @TestPropertySource(properties = "skills-gateway.vetting.revet.mode=enforce")
 @TestPropertySource(
-        // Authorization is always enforced (GW_0138), so this suite names the principal it acts as.
+        // Authorization is always enforced (GW_AUTH_0025), so this suite names the principal it acts as.
         properties = {"skills-gateway.roles.admins=bob"})
 class RevetEnforceTests extends AbstractGatewayTest {
 
@@ -109,7 +109,7 @@ class RevetEnforceTests extends AbstractGatewayTest {
      * fetchable by anyone who knows its SHA, which is everyone who ever cloned it.
      */
     @Test
-    @SVCs({"SVC_GW_0050"})
+    @SVCs({"SVC_GW_VETTING_0013"})
     void enforcedRevettingRevokesTheSnapshotAndStopsTheFacadeServingIt() throws Exception {
         assertThat(revetService.mode()).isEqualTo(SkillsGatewayProperties.RevetMode.ENFORCE);
         Registered registered = approvedWithLapsedWaiver("revetenf");
@@ -179,7 +179,7 @@ class RevetEnforceTests extends AbstractGatewayTest {
      * degenerate runs a misconfiguration produces (no verdicts, no run).
      */
     @Test
-    @SVCs({"SVC_GW_0052"})
+    @SVCs({"SVC_GW_VETTING_0015"})
     void aConnectorErrorDuringRevettingNeverRevokesTheSnapshot() throws Exception {
         Registered registered = registerAndIngest(uniqueName("revetinconc"), createUpstream(DEFAULT_MANIFEST));
         String name = registered.marketplace().name();
@@ -221,7 +221,7 @@ class RevetEnforceTests extends AbstractGatewayTest {
             } else if (state == VerdictState.FAIL) {
                 assertThat(classification).as("state %s", state).isEqualTo(RevetVerdict.Classification.VIOLATION);
             } else {
-                // ERROR and PENDING: the chain did not answer. DISABLED (GW_0149): an administrator
+                // ERROR and PENDING: the chain did not answer. DISABLED (GW_VETTING_0029): an administrator
                 // switched the connector off, which says nothing about the content. None of the
                 // three names a fault, so nothing is retracted.
                 assertThat(classification).as("state %s", state).isEqualTo(RevetVerdict.Classification.INCONCLUSIVE);
@@ -241,7 +241,7 @@ class RevetEnforceTests extends AbstractGatewayTest {
      * the refs must not — it never got the content, and naming it would bury the ones that did.
      */
     @Test
-    @SVCs({"SVC_GW_0053"})
+    @SVCs({"SVC_GW_VETTING_0016"})
     void aViolationNamesTheIdentitiesThatFetchedTheSnapshot() throws Exception {
         webhookService.createSubscriber(uniqueName("revetsub"), "http://127.0.0.1:1/hook", "*");
         Registered registered = approvedWithLapsedWaiver("revetblast");
@@ -278,7 +278,7 @@ class RevetEnforceTests extends AbstractGatewayTest {
 
     /** Every step of a retraction and its reversal, readable from the ledger alone. */
     @Test
-    @SVCs({"SVC_GW_0054"})
+    @SVCs({"SVC_GW_VETTING_0017"})
     void theLedgerRecordsTheRetroactiveViolationAndEveryTransition() throws Exception {
         Registered registered = approvedWithLapsedWaiver("revetledger");
         String name = registered.marketplace().name();

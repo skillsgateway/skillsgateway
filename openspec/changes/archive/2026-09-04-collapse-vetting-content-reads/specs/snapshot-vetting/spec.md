@@ -2,8 +2,8 @@
 
 ## ADDED Requirements
 
-### Requirement: GW_0162
-The system SHALL implement GW_0162.
+### Requirement: GW_VETTING_0030
+The system SHALL implement GW_VETTING_0030.
 
-#### Scenario: SVC_GW_0162
-The system SHALL pass SVC_GW_0162.
+#### Scenario: SVC_GW_VETTING_0030
+The system SHALL pass SVC_GW_VETTING_0030.

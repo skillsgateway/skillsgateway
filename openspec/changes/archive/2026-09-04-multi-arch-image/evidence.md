@@ -103,16 +103,16 @@ INFO    -  Documentation built in 0.81 seconds
 
 ## Not weakened
 
-`SVC_GW_0072`'s test (`releaseWorkflowCarriesThePublishByDigestContract`) keeps
+`SVC_GW_RELEASE_0002`'s test (`releaseWorkflowCarriesThePublishByDigestContract`) keeps
 every assertion from before this change that still describes true behavior
 (the registry namespace, the `workflow_call` input, no `github.ref_name`
 derivation, no `tags:` trigger, the job's permissions, the digest surfaced in
 the step summary, the SBOM attestation shape) and adds new assertions for the
 matrix, the release-only gate, the digest-only per-leg push, and the combine
-job — it does not shrink. `SVC_GW_0072` and `GW_0072` both carry a bumped
+job — it does not shrink. `SVC_GW_RELEASE_0002` and `GW_RELEASE_0002` both carry a bumped
 revision (`0.4.0`) reflecting the contract change.
 
-A `ghcr-cleanup.yml` workflow and its `GW_0162`/`SVC_GW_0162` pair were drafted
+A `ghcr-cleanup.yml` workflow and its `GW_VETTING_0030`/`SVC_GW_VETTING_0030` pair were drafted
 during this change (an earlier revision of this evidence file references them)
 and then withdrawn: cleaning up the `sha-<sha>`/`latest` tags the retired
 scheme already published is done by hand, not by a checked-in workflow.

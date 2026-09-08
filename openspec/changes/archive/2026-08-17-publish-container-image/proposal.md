@@ -6,7 +6,7 @@ The native workflow builds the distroless container image and smoke-tests it, bu
 never publishes it — downstream platforms that consume images by digest and mirror
 them into their own registry (whose invariant is mirrored images pinned by
 `sha256:…` digest) have nothing to pull
-(issue #67). Publication is the missing last step of GW_0015's container
+(issue #67). Publication is the missing last step of GW_RELEASE_0001's container
 distribution story.
 
 ## What Changes
@@ -35,18 +35,18 @@ distribution story.
 
 ### Modified Capabilities
 
-- `release-packaging`: new requirement (GW_0072) — the built container image is
+- `release-packaging`: new requirement (GW_RELEASE_0002) — the built container image is
   published to a public registry addressable by immutable digest, with tags for
   main commits and release versions, the digest surfaced in build output, and the
-  SBOM attached as an attestation. Verified by SVC_GW_0072.
+  SBOM attached as an attestation. Verified by SVC_GW_RELEASE_0002.
 
 ## Impact
 
 - `.github/workflows/native.yml`: registry login, push, digest summary, SBOM
   attestation; job gains `packages: write` (and `id-token`/`attestations` if
   using GitHub's attestation action) permissions on the publish path.
-- `docs/reqstool/requirements.yml` / `software_verification_cases.yml`: GW_0072,
-  SVC_GW_0072 (verification: automated-test — workflow-level assertions where
+- `docs/reqstool/requirements.yml` / `software_verification_cases.yml`: GW_RELEASE_0002,
+  SVC_GW_RELEASE_0002 (verification: automated-test — workflow-level assertions where
   testable; otherwise the packaging consistency test extends to the workflow file).
 - `docs/manual/`: installation/reference docs gain the image coordinates and
   how to pin by digest.

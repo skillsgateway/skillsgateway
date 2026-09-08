@@ -7,11 +7,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * The two retention passes on their own schedules (GW_0031, GW_0034). Both are no-ops while
+ * The two retention passes on their own schedules (GW_RETENTION_0001, GW_RETENTION_0004). Both are no-ops while
  * {@code skills-gateway.retention.enabled} is false, which is the default: the gateway never
  * deletes its own content because of an upgrade, only because an operator asked it to.
  *
- * <p>The compaction pass also sweeps abandoned publication staging references (GW_0168), and is
+ * <p>The compaction pass also sweeps abandoned publication staging references (GW_FACADE_0019), and is
  * behind the same switch for the same reason.
  */
 @Component

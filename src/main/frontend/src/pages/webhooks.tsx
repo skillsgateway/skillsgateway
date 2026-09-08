@@ -95,7 +95,7 @@ function deliveryBadge(state: string | undefined) {
  * Webhook administration: registered subscribers with their event filters, and the
  * recent delivery attempts with state, attempt count, and last response.
  *
- * @Requirements GW_0026
+ * @Requirements GW_WEBHOOK_0004
  */
 /** Every event selected is the wildcard, not an enumeration: a filter written as `*` keeps
  *  receiving events added to the registry after the subscriber was registered. */

@@ -35,7 +35,7 @@ the mirror consistent now.
 
 ## What Changes
 
-- **A scheduled reconciliation (GW_0190).** `MirrorReconciliationSweep` queues
+- **A scheduled reconciliation (GW_FACADE_0025).** `MirrorReconciliationSweep` queues
   the same reconciliation on an interval, independently of whether anything was
   approved or revoked. Because reconciliation was already idempotent and already
   computes the served set fresh, this needs no new state and no second code
@@ -44,7 +44,7 @@ the mirror consistent now.
   retry queue the first increment deferred — a durable queue would replay the
   gateway's own triggers and would still do nothing about the other two cases,
   nor about a forge that is down for longer than the retries last.
-- **And a guard, because that deletion now runs unattended (GW_0190).** A
+- **And a guard, because that deletion now runs unattended (GW_FACADE_0025).** A
   reconciliation deletes whatever the mirror holds that the served set does not,
   which is correct exactly as long as the served set is true. A read of published
   storage that *succeeds* but answers short — a transient backend failure, a
@@ -57,7 +57,7 @@ the mirror consistent now.
   `refused` rather than agreement. `GitStorage.isServedRef` does not cover this:
   it bounds which kinds of reference may be deleted, not how many, and an empty
   served set passes it trivially.
-- **Telemetry, not just an endpoint (GW_0191).** A `MirrorMetrics` binder
+- **Telemetry, not just an endpoint (GW_FACADE_0026).** A `MirrorMetrics` binder
   publishes the number of references the mirror holds that are no longer served,
   the number it is missing, whether the last reconciliation reached it, seconds
   since one last succeeded, and a reconciliation outcome counter. `stale_refs`
@@ -66,12 +66,12 @@ the mirror consistent now.
   as `GatewayMetrics` and `ObjectStoreMetrics` are, so a deployment that turns
   export on gets them with no gateway change. No meter carries a marketplace, a
   SHA or a principal.
-- **Reconcile on demand (GW_0192).** `POST /api/mirror/reconcile`,
+- **Reconcile on demand (GW_FACADE_0027).** `POST /api/mirror/reconcile`,
   administrator-only, queues a reconciliation, waits a bounded time for it, and
   answers with the resulting comparison. This is the concrete answer to "what
   does an operator do about drift", which until now was "approve or revoke
   something, or restart the gateway".
-- **A repair is never silent (GW_0193).** The ledger entry for a reconciliation
+- **A repair is never silent (GW_FACADE_0028).** The ledger entry for a reconciliation
   now names what changed — the references pushed and the references deleted —
   and a reconciliation that changed the mirror when nothing was approved or
   revoked is recorded as `mirror-drift-repaired`, distinct from the
@@ -83,7 +83,7 @@ Repairing rather than only reporting is deliberate and is argued in `design.md`:
 for a reference the mirror holds and the facade no longer serves, leaving it in
 place *is* the failure, and the reconciliation can only ever delete references
 publication itself would have written. What repair must not be is quiet — hence
-GW_0193.
+GW_FACADE_0028.
 
 ## Capabilities
 

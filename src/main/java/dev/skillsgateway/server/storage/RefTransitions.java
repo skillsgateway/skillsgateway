@@ -9,7 +9,7 @@ import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
 
 /**
- * Reference transitions that report what they did (GW_0132, GW_0133).
+ * Reference transitions that report what they did (GW_FACADE_0015, GW_APPROVAL_0012).
  *
  * <p>{@code RefUpdate} does not throw when an update is refused: {@code LOCK_FAILURE} while another
  * writer holds the lock, {@code IO_FAILURE} underneath it and {@code REJECTED} are all
@@ -35,7 +35,7 @@ public final class RefTransitions {
     private RefTransitions() {}
 
     /** Points {@code ref} at {@code id}, raising when the update did not take effect. */
-    @Requirements({"GW_0133"})
+    @Requirements({"GW_APPROVAL_0012"})
     public static void write(Repository repository, String ref, ObjectId id) throws IOException {
         RefUpdate update = repository.updateRef(ref);
         update.setNewObjectId(id);
@@ -51,7 +51,7 @@ public final class RefTransitions {
      * required because the reference is not being fast-forwarded to anything — the whole point is
      * that nothing replaces it.
      */
-    @Requirements({"GW_0133"})
+    @Requirements({"GW_APPROVAL_0012"})
     public static void delete(Repository repository, String ref) throws IOException {
         if (repository.exactRef(ref) == null) {
             return;
@@ -69,7 +69,7 @@ public final class RefTransitions {
      * take effect. Detached, so the update names the symbolic reference itself rather than whatever
      * it currently resolves to.
      */
-    @Requirements({"GW_0133"})
+    @Requirements({"GW_APPROVAL_0012"})
     public static void link(Repository repository, String ref, String target) throws IOException {
         RefUpdate.Result result = repository.updateRef(ref, true).link(target);
         if (!WRITTEN.contains(result)) {

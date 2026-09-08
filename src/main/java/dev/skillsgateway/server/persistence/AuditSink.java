@@ -5,7 +5,7 @@ import java.time.Instant;
 /**
  * A registered consumer of the append-only audit ledger. The sink owns nothing but a cursor:
  * {@code cursorPosition} is the id of the last ledger entry handed to it, and no ledger entry is
- * ever copied into a per-sink queue (GW_0028).
+ * ever copied into a per-sink queue (GW_AUDIT_0004).
  *
  * <p>{@code subscriberId} points at an ordinary {@link WebhookSubscriber}, so batches are signed,
  * retried, and recorded by the lifecycle webhook machinery rather than a second delivery engine.

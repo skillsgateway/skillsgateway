@@ -4,7 +4,7 @@
 
 `POST /api/marketplaces` accepts `{name, url}` and persists after a name-pattern check
 only. Ingestion (`IngestionService`) already fetches exclusively the upstream HEAD /
-default branch — the consumer has no ref input today; GW_0017 makes that a stated,
+default branch — the consumer has no ref input today; GW_INGEST_0006 makes that a stated,
 tested contract at the HTTP boundary so it survives future API evolution. SVC tests
 register local upstream fixtures: service-level via absolute paths, HTTP-level via a
 scheme-less path string.
@@ -22,7 +22,7 @@ credential/URL userinfo policing beyond the scheme; changes to the git facade.
 - **Validate at the HTTP boundary (`AdminController`)**, not in the repository or
   `IngestionService`: registration is the trust boundary, and service-level test
   arrangement (local-path fixtures) keeps working. The JGit fetch itself never sees an
-  unvetted URL because only registered marketplaces are ingested (GW_0001).
+  unvetted URL because only registered marketplaces are ingested (GW_INGEST_0001).
 - **Allowlist configurable** via `skills-gateway.allowed-url-schemes` (default
   `http,https`). Tests add `file` and register `file://` URIs over HTTP. A URL with no
   scheme or an unparseable URL is rejected — fail closed. JGit lacks C-git's `ext::`
@@ -33,7 +33,7 @@ credential/URL userinfo policing beyond the scheme; changes to the git facade.
   problem detail explaining the ref is set by the gateway. Chosen over ignoring the
   field silently: silent ignoring would let a consumer believe a pinned ref was
   honored. HTTP 400 (not 422) per owner directive.
-- **Both checks annotated `@Requirements({"GW_0016"}) / ({"GW_0017"})`** on dedicated
+- **Both checks annotated `@Requirements({"GW_INGEST_0005"}) / ({"GW_INGEST_0006"})`** on dedicated
   validation methods so the traceability maps to the exact enforcement code.
 
 ## Risks / Trade-offs

@@ -29,7 +29,7 @@ records, pushed instead of polled.
 - Admin API: create/list/delete subscribers, list recent delivery attempts.
 - Portal: a Webhooks page listing subscribers (with their event filters) and their
   recent delivery attempts with status and attempt count.
-- New requirements GW_0023–GW_0026 with SVC_GW_0023–SVC_GW_0026.
+- New requirements GW_WEBHOOK_0001–GW_WEBHOOK_0004 with SVC_GW_WEBHOOK_0001–SVC_GW_WEBHOOK_0004.
 
 ## Capabilities
 
@@ -37,7 +37,7 @@ records, pushed instead of polled.
 
 - `lifecycle-webhooks`: outbound, HMAC-signed, per-subscriber-filtered delivery of
   snapshot lifecycle events with retry/backoff and a durable delivery record
-  (GW_0023, GW_0024, GW_0025), plus its portal surface (GW_0026).
+  (GW_WEBHOOK_0001, GW_WEBHOOK_0002, GW_WEBHOOK_0003), plus its portal surface (GW_WEBHOOK_0004).
 
 ### Modified Capabilities
 

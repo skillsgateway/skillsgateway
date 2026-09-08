@@ -20,7 +20,7 @@ import java.util.Set;
 import org.springframework.core.io.ClassPathResource;
 
 /**
- * The Agent Skills SKILL.md specification this gateway validates against (GW_0167), read from a
+ * The Agent Skills SKILL.md specification this gateway validates against (GW_INGEST_0028), read from a
  * vendored, dated copy in its own distribution — never from the network. A chain run has to be
  * reproducible from the repository alone, and continuous re-vetting has to be able to say whether
  * a changed answer about unchanged content came from the content or from the rules.
@@ -112,7 +112,7 @@ final class SkillSpec {
      * order. A conformant skill yields an empty list; nothing here throws, because a defect is
      * something to report rather than something to refuse.
      */
-    @Requirements({"GW_0167"})
+    @Requirements({"GW_INGEST_0028"})
     List<Defect> validate(String directoryName, SkillFrontmatter.Parsed parsed) {
         if (parsed.malformed()) {
             return List.of(new Defect(FRONTMATTER_MALFORMED, parsed.error()));

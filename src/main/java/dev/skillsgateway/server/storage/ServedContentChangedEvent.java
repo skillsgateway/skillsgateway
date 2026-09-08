@@ -6,9 +6,9 @@ package dev.skillsgateway.server.storage;
  *
  * <p>An event rather than a call, because of what it is allowed to cost. The publication and the
  * revocation that raise it are the gateway's two enforcement acts, and the things that want to know
- * about them — today the forge mirror (GW_0169) — are conveniences whose failures must not reach
+ * about them — today the forge mirror (GW_FACADE_0020) — are conveniences whose failures must not reach
  * either. A listener that cannot see the decision it is reacting to cannot fail it, which is what
- * makes GW_0170 a property of the wiring rather than of a reviewer's care.
+ * makes GW_FACADE_0021 a property of the wiring rather than of a reviewer's care.
  *
  * <p>It carries no snapshot and no SHA on purpose. A consumer's job is to bring some copy of the
  * marketplace into line with what is served <em>now</em>, which it reads from published storage; a

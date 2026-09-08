@@ -115,7 +115,7 @@ function ModeToggle() {
  * Portal shell: grouped sidebar navigation, breadcrumb top bar, session surface,
  * and dark-mode toggle.
  *
- * @Requirements GW_0018
+ * @Requirements GW_INGEST_0007
  */
 export function AppLayout() {
   const me = useMe();

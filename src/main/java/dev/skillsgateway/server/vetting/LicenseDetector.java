@@ -12,7 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Deterministic license detection over a pinned snapshot (GW_0093): SPDX identifiers resolved from
+ * Deterministic license detection over a pinned snapshot (GW_VETTING_0019): SPDX identifiers resolved from
  * license/copying files anywhere in the tree, {@code SPDX-License-Identifier} tags inside them, and
  * the license metadata fields of the marketplace manifest. Exact fingerprint matching only — no
  * scoring, no thresholds — so the same content under the same {@link #VERSION} always yields the
@@ -93,14 +93,14 @@ final class LicenseDetector {
     /**
      * The only paths that can carry a license declaration: the manifest, and license-shaped files.
      * Declared to the walk rather than tested inside the visitor so that the rest of the tree — all
-     * of it, for the sake of two file kinds — is never inflated (GW_0162).
+     * of it, for the sake of two file kinds — is never inflated (GW_VETTING_0030).
      */
     private static boolean declaresLicense(String path) {
         return MANIFEST_PATH.equals(path) || LICENSE_FILE.matcher(path).find();
     }
 
     /** Every license detection in the snapshot, in tree order; empty means no license information. */
-    @Requirements({"GW_0093"})
+    @Requirements({"GW_VETTING_0019"})
     static List<Detection> detect(SnapshotUnderVetting snapshot) throws IOException {
         List<Detection> detections = new ArrayList<>();
         snapshot.walk(LicenseDetector::declaresLicense, (path, content) -> {

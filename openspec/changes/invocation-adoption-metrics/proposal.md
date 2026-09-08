@@ -6,9 +6,9 @@ Issue [#85](https://github.com/skillsgateway/skillsgateway/issues/85) is Phase 3
 of [architecture.md §13](https://github.com/skillsgateway/skillsgateway/blob/main/docs/manual/architecture.md),
 and it carries a framing from an internal security review: **distribution ≠
 invocation ≠ adherence.** The gateway measures distribution precisely —
-GW_0075 — *Adoption reporting from the fetch ledger*,
-GW_0076 — *Staleness reporting against the served tip*,
-GW_0078 — *Adoption page in the admin portal* — and measures the other two not at
+GW_OBSERVABILITY_0001 — *Adoption reporting from the fetch ledger*,
+GW_OBSERVABILITY_0002 — *Staleness reporting against the served tip*,
+GW_OBSERVABILITY_0004 — *Adoption page in the admin portal* — and measures the other two not at
 all. The issue asks for the middle one: ingest client OpenTelemetry so the
 fetch-derived install inventory says who *uses* a skill, not only who *has* it.
 
@@ -43,8 +43,8 @@ as a requirement so it is checkable rather than a paragraph in a document.
   skills and plugins that SHA's pinned commit tree contains, and aggregates the
   existing ledger measures against them. Derived from two things the gateway
   already owns — the append-only ledger and the pinned commit tree that
-  GW_0080 — *Snapshot file inspection* already reads — and recording nothing new,
-  exactly as GW_0075 records nothing new. Gated like the ledger: auditor or admin,
+  GW_INGEST_0015 — *Snapshot file inspection* already reads — and recording nothing new,
+  exactly as GW_OBSERVABILITY_0001 records nothing new. Gated like the ledger: auditor or admin,
   because it enumerates identities.
 
   It answers the recall query §9 names — *all identities that hold `skill-x`* —
@@ -77,11 +77,11 @@ a boundary on the existing observability capability.
 
 - `adoption-reporting`: gains a presence report at skill and plugin granularity
   (GW_0213) and the join-and-caveat contract that keeps it from being read as a
-  usage measure (GW_0214). GW_0075, GW_0076 and GW_0078 are unchanged — the new
+  usage measure (GW_0214). GW_OBSERVABILITY_0001, GW_OBSERVABILITY_0002 and GW_OBSERVABILITY_0004 are unchanged — the new
   report sits alongside them and shares their shape: ledger-derived, read-only,
   auditor-gated.
 - `observability`: gains the standing refusal to ingest client-reported telemetry
-  (GW_0215). GW_0077 — *Always-recorded gateway metrics and observations* is
+  (GW_0215). GW_OBSERVABILITY_0003 — *Always-recorded gateway metrics and observations* is
   untouched; it governs telemetry flowing outward.
 
 ## Requirement ids
@@ -111,7 +111,7 @@ remain free.
 - **A portal chart of invocation.** There is no invocation figure to chart. The
   portal surface here is the presence report on the existing adoption page.
 - **Per-team aggregation.** The gateway has no team concept, deliberately
-  (GW_0075's rationale). Unchanged.
+  (GW_OBSERVABILITY_0001's rationale). Unchanged.
 
 ## Impact
 
@@ -120,7 +120,7 @@ remain free.
   performance decision for the implementing PR, not a behaviour change, and is
   argued in `design.md`.
 - **Backend**: the adoption service and controller gain one report. Snapshot
-  content resolution reuses the commit-tree reads GW_0080 already performs.
+  content resolution reuses the commit-tree reads GW_INGEST_0015 already performs.
 - **API**: additive — one new path under `/api/adoption`, one new schema, one new
   machine scope value or a reuse of `adoption:read`. No existing path, DTO or
   field changes.

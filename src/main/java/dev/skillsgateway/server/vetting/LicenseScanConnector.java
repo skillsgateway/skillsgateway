@@ -6,7 +6,7 @@ import java.io.IOException;
 import org.springframework.stereotype.Component;
 
 /**
- * Built-in connector: license compliance (GW_0093, GW_0094).
+ * Built-in connector: license compliance (GW_VETTING_0019, GW_VETTING_0020).
  *
  * <p>Detects the licenses a snapshot declares — deterministically, via {@link LicenseDetector} —
  * and evaluates them against the organisation's configured allow/ban lists. Violations are ordinary
@@ -38,11 +38,11 @@ public class LicenseScanConnector implements VettingConnector {
 
     /**
      * Table version plus a digest of the policy in force: a changed allow/ban list changes the
-     * recorded chain identity (GW_0049), so a changed answer about unchanged content is
+     * recorded chain identity (GW_VETTING_0012), so a changed answer about unchanged content is
      * attributable to the policy rather than guessed at.
      */
     @Override
-    @Requirements({"GW_0094"})
+    @Requirements({"GW_VETTING_0020"})
     public String version() {
         return LicenseDetector.VERSION + "+policy-" + policy.digest();
     }
@@ -55,7 +55,7 @@ public class LicenseScanConnector implements VettingConnector {
     }
 
     @Override
-    @Requirements({"GW_0093", "GW_0094", "GW_0143"})
+    @Requirements({"GW_VETTING_0019", "GW_VETTING_0020", "GW_VETTING_0023"})
     public Verdict vet(SnapshotUnderVetting snapshot) {
         try {
             var detections = LicenseDetector.detect(snapshot);

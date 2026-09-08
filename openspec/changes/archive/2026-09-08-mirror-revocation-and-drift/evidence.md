@@ -13,7 +13,7 @@ stand as the spec and were written and committed before the implementation; the
 correlation-breaking human review of the spec never happened, so this report
 claims correspondingly lower confidence and the spec is the artifact to review
 after the fact. One substantive spec revision *was* made mid-task and is visible
-in the history: the credibility guard (design decision 3) was added to GW_0190
+in the history: the credibility guard (design decision 3) was added to GW_FACADE_0025
 after a reviewer pointed out that a scheduled deletion turns a degraded read of
 published storage into a silent total wipe.
 
@@ -39,10 +39,10 @@ All six gates below were run **fresh, in order, after the last code edit**.
 
 | Requirement | What is proved | Test(s) |
 | --- | --- | --- |
-| GW_0190 — Bounded mirror staleness | a revoked reference the revocation's own push could not remove is gone after only the sweep runs; the reconciliation is genuinely on the application's schedule; a gateway with no mirror sweeps nothing; **and** a readable-but-short published repository makes the reconciliation refuse rather than empty the mirror, recoverably | `ForgeMirrorSweepTests` (2 cases, SVC_GW_0190), `ForgeMirrorDisabledTests` (SVC_GW_0190) |
-| GW_0191 — Mirror divergence is observable without being asked | `stale_refs` is above zero while the mirror holds the withdrawn snapshot and zero after the repair; `reachable`, `seconds_since_success` and both outcome counters move; no mirror meter carries any tag, and no meter name carries the marketplace or the commit | `ForgeMirrorSweepTests` (SVC_GW_0191) |
-| GW_0192 — An administrator can reconcile the mirror on demand | drift written straight to the forge is gone after the request, the answer is the fresh comparison and carries no credential, a non-administrator is refused, and a gateway with no mirror answers rather than failing | `ForgeMirrorSweepTests` (SVC_GW_0192), `ForgeMirrorDisabledTests` (SVC_GW_0192), `RoleEnforcementTests` (role-gated mutation walk), `MachineApiRegistryTests` |
-| GW_0193 — A mirror repair is never silent | the publication-triggered entry names the references pushed; the sweep-triggered one is `mirror-drift-repaired` and names what it deleted; a reconciliation that changed nothing writes no row at all | `ForgeMirrorSweepTests` (SVC_GW_0193) |
+| GW_FACADE_0025 — Bounded mirror staleness | a revoked reference the revocation's own push could not remove is gone after only the sweep runs; the reconciliation is genuinely on the application's schedule; a gateway with no mirror sweeps nothing; **and** a readable-but-short published repository makes the reconciliation refuse rather than empty the mirror, recoverably | `ForgeMirrorSweepTests` (2 cases, SVC_GW_FACADE_0025), `ForgeMirrorDisabledTests` (SVC_GW_FACADE_0025) |
+| GW_FACADE_0026 — Mirror divergence is observable without being asked | `stale_refs` is above zero while the mirror holds the withdrawn snapshot and zero after the repair; `reachable`, `seconds_since_success` and both outcome counters move; no mirror meter carries any tag, and no meter name carries the marketplace or the commit | `ForgeMirrorSweepTests` (SVC_GW_FACADE_0026) |
+| GW_FACADE_0027 — An administrator can reconcile the mirror on demand | drift written straight to the forge is gone after the request, the answer is the fresh comparison and carries no credential, a non-administrator is refused, and a gateway with no mirror answers rather than failing | `ForgeMirrorSweepTests` (SVC_GW_FACADE_0027), `ForgeMirrorDisabledTests` (SVC_GW_FACADE_0027), `RoleEnforcementTests` (role-gated mutation walk), `MachineApiRegistryTests` |
+| GW_FACADE_0028 — A mirror repair is never silent | the publication-triggered entry names the references pushed; the sweep-triggered one is `mirror-drift-repaired` and names what it deleted; a reconciliation that changed nothing writes no row at all | `ForgeMirrorSweepTests` (SVC_GW_FACADE_0028) |
 
 ## What the adversarial suite actually does
 
@@ -120,7 +120,7 @@ observed the mirror being emptied by a bad read.
   specific way: it proves each assertion can fail, not that it failed before the
   implementation existed.
 - **The credibility guard was added mid-task, after review**, not designed in
-  from the start. `design.md` decision 3 and the added clause in GW_0190 record
+  from the start. `design.md` decision 3 and the added clause in GW_FACADE_0025 record
   it; the change is visible in the commit history rather than smoothed over.
 - **Two existing suites gained one property each**
   (`skills-gateway.mirror.sweep-enabled=false` in `ForgeMirrorTests` and
@@ -171,12 +171,12 @@ All commands run from the worktree root at `8f21434df5dcfeca903e3a894507df541009
 ### 4. `reqstool status local -p docs/reqstool`
 
 ```
-  GW_0171             skills-gateway
-  GW_0172             skills-gateway
-  GW_0190             skills-gateway
-  GW_0191             skills-gateway
-  GW_0192             skills-gateway
-  GW_0193             skills-gateway
+  GW_FACADE_0022             skills-gateway
+  GW_FACADE_0023             skills-gateway
+  GW_FACADE_0025             skills-gateway
+  GW_FACADE_0026             skills-gateway
+  GW_FACADE_0027             skills-gateway
+  GW_FACADE_0028             skills-gateway
 
 INCOMPLETE (0)
 169/169 complete · 0 incomplete · PASS

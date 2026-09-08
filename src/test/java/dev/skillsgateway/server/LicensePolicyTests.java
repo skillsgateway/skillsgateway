@@ -27,8 +27,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * Verification of the configured license policy (GW_0094) and its surfacing on the report endpoint
- * (GW_0095). Its own Spring context via {@link TestPropertySource}: the allow/ban lists are a
+ * Verification of the configured license policy (GW_VETTING_0020) and its surfacing on the report endpoint
+ * (GW_VETTING_0021). Its own Spring context via {@link TestPropertySource}: the allow/ban lists are a
  * deployment decision, deliberately not settable per call — which is exactly what makes them
  * attributable per chain run.
  */
@@ -51,7 +51,7 @@ class LicensePolicyTests extends AbstractGatewayTest {
     private SkillsGatewayProperties properties;
 
     @Test
-    @SVCs({"SVC_GW_0094"})
+    @SVCs({"SVC_GW_VETTING_0020"})
     void aBannedLicenseBlocksApprovalThroughTheStandardGateUntilWaived() throws Exception {
         String name = uniqueName("licban");
         Registered registered =
@@ -78,7 +78,7 @@ class LicensePolicyTests extends AbstractGatewayTest {
             assertThat(finding.severity()).isEqualTo(Severity.CRITICAL);
             assertThat(finding.message()).contains("AGPL-3.0");
         });
-        // The policy in force is attributable from the run itself (GW_0049): the connector version
+        // The policy in force is attributable from the run itself (GW_VETTING_0012): the connector version
         // carries a digest of the lists, so this chain identity differs from a default deployment.
         assertThat(run.chain()).contains("license-scan@");
         String defaultVersion = new LicenseScanConnector(new SkillsGatewayProperties(
@@ -111,7 +111,7 @@ class LicensePolicyTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0094"})
+    @SVCs({"SVC_GW_VETTING_0020"})
     void theAllowListBlocksAbsentUnknownAndMissingLicensesAndPassesListedOnes() throws Exception {
         // Not on the allow list (and not banned): blocked as license-not-allowed.
         Registered gpl = registerAndIngest(
@@ -135,7 +135,7 @@ class LicensePolicyTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0095"})
+    @SVCs({"SVC_GW_VETTING_0021"})
     void theLicenseEndpointMarksTheBannedLicenseUnderTheConfiguredPolicy() throws Exception {
         Registered registered = registerAndIngest(
                 uniqueName("licbanapi"), createUpstream(DEFAULT_MANIFEST, Map.of("LICENSE", LicenseFixtures.AGPL_3_0)));

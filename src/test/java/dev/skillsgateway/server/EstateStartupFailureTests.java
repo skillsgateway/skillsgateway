@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * The headline failure-isolation claim of GW_0087, at the only place it can be claimed honestly:
+ * The headline failure-isolation claim of GW_ESTATE_0005, at the only place it can be claimed honestly:
  * a context whose declared estate contains an invalid entry, booted for real. The application
  * must start and serve; a broken declaration must never take a working estate down.
  */
@@ -27,7 +27,7 @@ class EstateStartupFailureTests extends AbstractGatewayTest {
     private EstateReconciler reconciler;
 
     @Test
-    @SVCs({"SVC_GW_0087"})
+    @SVCs({"SVC_GW_ESTATE_0005"})
     void a_gateway_with_an_invalid_declared_entry_starts_applies_the_rest_and_reports_the_failure() {
         // Reaching this line at all is the claim: the context booted with the broken declaration.
         assertThat(marketplaceRepository.findByName("estate-good")).isPresent();

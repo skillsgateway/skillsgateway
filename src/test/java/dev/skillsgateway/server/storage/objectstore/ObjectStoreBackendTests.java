@@ -59,7 +59,7 @@ class ObjectStoreBackendTests {
      */
     // a writer that loses the manifest race to a disjoint reference retries and succeeds
     @Test
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void aDisjointWriterLosingTheManifestRaceRetriesAndSucceeds() throws Exception {
         String marketplace = marketplace();
         String prefix = ObjectStoreTestSupport.isolatedPrefix("disjoint");
@@ -98,7 +98,7 @@ class ObjectStoreBackendTests {
      */
     // a reference that moved under the writer is a lock failure, not a retry
     @Test
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void aReferenceThatMovedIsALockFailure() throws Exception {
         String marketplace = marketplace();
         String prefix = ObjectStoreTestSupport.isolatedPrefix("moved");
@@ -136,7 +136,7 @@ class ObjectStoreBackendTests {
      */
     // a whole push of many references is one manifest transition
     @Test
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void aWholePushIsOneManifestTransition() throws Exception {
         String marketplace = marketplace();
         String prefix = ObjectStoreTestSupport.isolatedPrefix("push");
@@ -165,7 +165,7 @@ class ObjectStoreBackendTests {
 
     // an atomic push with one refused command writes nothing at all
     @Test
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void anAtomicPushWithOneRefusedCommandWritesNothing() throws Exception {
         String marketplace = marketplace();
         String prefix = ObjectStoreTestSupport.isolatedPrefix("atomic");
@@ -203,7 +203,7 @@ class ObjectStoreBackendTests {
      */
     // a snapshot revoked on one replica stops being served by another within the bound
     @Test
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void aRevokedSnapshotStopsBeingServedByAnotherReplicaWithinTheBound() throws Exception {
         String marketplace = marketplace();
         String prefix = ObjectStoreTestSupport.isolatedPrefix("replicas");
@@ -241,7 +241,7 @@ class ObjectStoreBackendTests {
      */
     // a pack nothing references is kept for the grace period and deleted after it
     @Test
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void aPackNothingReferencesIsKeptForTheGracePeriod() throws Exception {
         String marketplace = marketplace();
         String prefix = ObjectStoreTestSupport.isolatedPrefix("grace");
@@ -284,7 +284,7 @@ class ObjectStoreBackendTests {
 
     // write-ahead entries the manifest has absorbed are collected
     @Test
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void foldedWriteAheadEntriesAreCollected() throws Exception {
         String marketplace = marketplace();
         String prefix = ObjectStoreTestSupport.isolatedPrefix("wal");
@@ -312,7 +312,7 @@ class ObjectStoreBackendTests {
 
     // a pack is durable in the bucket before any reference can reach it
     @Test
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void aPackIsDurableBeforeAnyReferenceReachesIt() throws Exception {
         String marketplace = marketplace();
         String prefix = ObjectStoreTestSupport.isolatedPrefix("durability");
@@ -344,7 +344,7 @@ class ObjectStoreBackendTests {
      */
     // exactly one of many concurrent revocations reports that it stopped the serving
     @Test
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void exactlyOneConcurrentRevocationReportsThatItStoppedTheServing() throws Exception {
         String marketplace = marketplace();
         String prefix = ObjectStoreTestSupport.isolatedPrefix("revocations");
@@ -392,7 +392,7 @@ class ObjectStoreBackendTests {
 
     // concurrent publications of distinct snapshots all survive
     @Test
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void concurrentPublicationsOfDistinctSnapshotsAllSurvive() throws Exception {
         String marketplace = marketplace();
         String prefix = ObjectStoreTestSupport.isolatedPrefix("publications");

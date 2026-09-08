@@ -20,7 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.OidcLoginRequestPostProcessor;
 
 /**
- * Provisioning is admin-only (GW_0130).
+ * Provisioning is admin-only (GW_AUTH_0023).
  *
  * <p>This suite used to make its point by running with role enforcement at its default of
  * disabled — the state in which every other {@code require*} check passed, so that a check which
@@ -55,7 +55,7 @@ class MachineCredentialAdminTests extends AbstractNamedAdminsTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0130"})
+    @SVCs({"SVC_GW_AUTH_0023"})
     void minting_listing_and_revoking_require_the_admin_role() throws Exception {
         // An ordinary session is refused here for the same reason it is refused everywhere else
         // now. What this suite still pins is narrower and worth keeping: provisioning is admin-only
@@ -91,7 +91,7 @@ class MachineCredentialAdminTests extends AbstractNamedAdminsTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0130"})
+    @SVCs({"SVC_GW_AUTH_0023"})
     void a_machine_credential_derives_no_role_from_identity_provider_claims() {
         TokenService.IssuedToken machine = tokenService.createMachineCredential(
                 uniqueName("claimless"),

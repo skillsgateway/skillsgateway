@@ -22,11 +22,11 @@ public class FetchAuditHook {
     }
 
     /**
-     * Facade entries carry the id of the token that authenticated them (GW_0067): a principal
+     * Facade entries carry the id of the token that authenticated them (GW_AUTH_0009): a principal
      * with several tokens is several distinct credentials, and a leak trace needs to know which
      * one fetched.
      */
-    @Requirements({"GW_0008", "GW_0067", "GW_0128"})
+    @Requirements({"GW_AUDIT_0001", "GW_AUTH_0009", "GW_AUDIT_0007"})
     public void record(String source, String principal, String marketplace, String event, String ref, String sha) {
         AccessToken token = currentToken();
         fetchLogRepository.append(
@@ -39,13 +39,13 @@ public class FetchAuditHook {
                 null,
                 token == null ? null : token.id(),
                 actorType(token));
-        // Counter only (GW_0077), tagged by the closed event vocabulary — never by marketplace,
+        // Counter only (GW_OBSERVABILITY_0003), tagged by the closed event vocabulary — never by marketplace,
         // SHA or principal; those dimensions live in the ledger and the adoption API.
         metrics.facadeFetch(event);
     }
 
     /**
-     * What kind of actor a facade fetch was (GW_0128), typed by the credential that authenticated
+     * What kind of actor a facade fetch was (GW_AUDIT_0007), typed by the credential that authenticated
      * it: a credential holding any administrative scope writes {@code machine}, anything else
      * writes {@code human}.
      *
@@ -55,7 +55,7 @@ public class FetchAuditHook {
      * only distinction the data actually supports, and inventing a better-sounding guess would
      * put a lie in the one column whose whole purpose is honesty about who acted.
      */
-    @Requirements({"GW_0128"})
+    @Requirements({"GW_AUDIT_0007"})
     private static ActorType actorType(AccessToken token) {
         return token != null && token.machineCredential() ? ActorType.MACHINE : ActorType.HUMAN;
     }

@@ -4,7 +4,7 @@ import java.util.List;
 
 /**
  * Approval refused because the snapshot's recorded closure and the commit it pins do not agree
- * (GW_0165): a plugin the served manifest grafts that no closure member records, a member whose
+ * (GW_APPROVAL_0013): a plugin the served manifest grafts that no closure member records, a member whose
  * tree is not what the commit holds at its path, a member the manifest does not declare, content
  * under the reserved directory that no member accounts for, or a member with no usable resolved
  * commit. Raised before any other gate and before the state transition, so nothing was decided

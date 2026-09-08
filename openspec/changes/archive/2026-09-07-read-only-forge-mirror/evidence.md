@@ -15,10 +15,10 @@ All six gates below were run **fresh, in order, after the last code edit**.
 
 | Requirement | What is proved | Test(s) |
 | --- | --- | --- |
-| GW_0169 — Read-only forge mirror of approved content | the shipped default pushes nothing; an enabled mirror comes to hold exactly the served references; a snapshot that only ever reached quarantine never appears; the credential is in no ledger entry or API response; the URL faces registration's scheme allowlist and may not embed a credential | `ForgeMirrorDisabledTests` (SVC_GW_0169), `ForgeMirrorTests` (SVC_GW_0169), `MirrorUrlPolicyTests` (3 cases, SVC_GW_0169) |
-| GW_0170 — The mirror is never an enforcement path | with the mirror pointed at something that cannot be pushed to, the approval returns the approved snapshot, a **real `git clone` through the facade** gets the approved commit, and the failure is only visible in the report and the ledger | `ForgeMirrorFailureTests` (SVC_GW_0170) |
-| GW_0171 — Revocation propagates to the mirror | a reachable mirror stops holding the revoked snapshot's references; an unreachable one leaves the revocation, the snapshot's `revoked` state and the facade's refusal to serve it untouched, and the divergence is recorded | `ForgeMirrorTests` (SVC_GW_0171), `ForgeMirrorFailureTests` (SVC_GW_0171) |
-| GW_0172 — Mirror drift is reportable | the report agrees before an alteration and names the missing and no-longer-served references after it; an unreachable mirror reports `reachable=false, inSync=false`; the endpoint is refused to a non-administrator | `ForgeMirrorTests` (2 cases, SVC_GW_0172), `ForgeMirrorFailureTests` (SVC_GW_0172), `RoleEnforcementTests` (privileged-read walk) |
+| GW_FACADE_0020 — Read-only forge mirror of approved content | the shipped default pushes nothing; an enabled mirror comes to hold exactly the served references; a snapshot that only ever reached quarantine never appears; the credential is in no ledger entry or API response; the URL faces registration's scheme allowlist and may not embed a credential | `ForgeMirrorDisabledTests` (SVC_GW_FACADE_0020), `ForgeMirrorTests` (SVC_GW_FACADE_0020), `MirrorUrlPolicyTests` (3 cases, SVC_GW_FACADE_0020) |
+| GW_FACADE_0021 — The mirror is never an enforcement path | with the mirror pointed at something that cannot be pushed to, the approval returns the approved snapshot, a **real `git clone` through the facade** gets the approved commit, and the failure is only visible in the report and the ledger | `ForgeMirrorFailureTests` (SVC_GW_FACADE_0021) |
+| GW_FACADE_0022 — Revocation propagates to the mirror | a reachable mirror stops holding the revoked snapshot's references; an unreachable one leaves the revocation, the snapshot's `revoked` state and the facade's refusal to serve it untouched, and the divergence is recorded | `ForgeMirrorTests` (SVC_GW_FACADE_0022), `ForgeMirrorFailureTests` (SVC_GW_FACADE_0022) |
+| GW_FACADE_0023 — Mirror drift is reportable | the report agrees before an alteration and names the missing and no-longer-served references after it; an unreachable mirror reports `reachable=false, inSync=false`; the endpoint is refused to a non-administrator | `ForgeMirrorTests` (2 cases, SVC_GW_FACADE_0023), `ForgeMirrorFailureTests` (SVC_GW_FACADE_0023), `RoleEnforcementTests` (privileged-read walk) |
 
 ## What the tests actually push to
 
@@ -106,10 +106,10 @@ All commands run from the repository root at
 ### 4. `reqstool status local -p docs/reqstool`
 
 ```
-  GW_0169             skills-gateway
-  GW_0170             skills-gateway
-  GW_0171             skills-gateway
-  GW_0172             skills-gateway
+  GW_FACADE_0020             skills-gateway
+  GW_FACADE_0021             skills-gateway
+  GW_FACADE_0022             skills-gateway
+  GW_FACADE_0023             skills-gateway
 
 INCOMPLETE (0)
 159/159 complete · 0 incomplete · PASS

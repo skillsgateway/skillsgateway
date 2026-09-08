@@ -8,7 +8,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
 
 /**
- * Authenticates a bearer credential on the machine API chain (GW_0127).
+ * Authenticates a bearer credential on the machine API chain (GW_AUTH_0021).
  *
  * <p>The negative guarantee lives here, as a <b>precondition of authentication</b> rather than as
  * an authorization rule a controller could forget to call: a credential is authenticated only
@@ -33,7 +33,7 @@ public class MachineApiAuthenticationProvider implements AuthenticationProvider 
     }
 
     @Override
-    @Requirements({"GW_0127"})
+    @Requirements({"GW_AUTH_0021"})
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         Object credentials = authentication.getCredentials();
         if (credentials == null || credentials.toString().isBlank()) {
@@ -41,7 +41,7 @@ public class MachineApiAuthenticationProvider implements AuthenticationProvider 
         }
         return tokenService
                 .authenticate(credentials.toString())
-                // Revocation and expiry are already applied by the lookup (GW_0065), so a
+                // Revocation and expiry are already applied by the lookup (GW_AUTH_0007), so a
                 // revoked or expired credential never reaches this filter.
                 .filter(token -> token.machineCredential())
                 .<Authentication>map(MachineApiAuthentication::new)

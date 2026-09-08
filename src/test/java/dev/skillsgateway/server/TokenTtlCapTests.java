@@ -14,14 +14,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * The configured lifetime cap (GW_0065) in force — its own context, because the cap is a
+ * The configured lifetime cap (GW_AUTH_0007) in force — its own context, because the cap is a
  * deployment decision and the shared fixture's tokens are deliberately unlimited.
  */
 @TestPropertySource(properties = "skills-gateway.tokens.max-ttl=30d")
 class TokenTtlCapTests extends AbstractGatewayTest {
 
     @Test
-    @SVCs({"SVC_GW_0065"})
+    @SVCs({"SVC_GW_AUTH_0007"})
     void a_lifetime_beyond_the_cap_is_refused_rather_than_shortened() {
         // Within the cap: accepted, and the requested deadline is stored untouched. Microsecond
         // precision: TIMESTAMPTZ stores micros, and the round-trip equality must not depend on

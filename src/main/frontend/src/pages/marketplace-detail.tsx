@@ -39,7 +39,7 @@ import { VettingReport } from "@/components/vetting-report";
  * and the marketplace row use. It answers "what has happened to this marketplace" without
  * making the reader scan the whole ledger and pick its name out by eye (#221/#224).
  *
- * @Requirements GW_0022, GW_0018
+ * @Requirements GW_AUDIT_0002, GW_INGEST_0007
  */
 function MarketplaceAudit({ name }: { name: string }) {
   const audit = useAudit();
@@ -112,9 +112,9 @@ function MarketplaceAudit({ name }: { name: string }) {
 /**
  * Retention state of one snapshot: whether it is deleted, until when it can be restored, and
  * the control that does it. An approved snapshot is served by the facade and the gateway
- * refuses to delete it (GW_0033), so no delete control is offered for one.
+ * refuses to delete it (GW_RETENTION_0003), so no delete control is offered for one.
  *
- * @Requirements GW_0036
+ * @Requirements GW_RETENTION_0006
  */
 function RetentionControls({ snapshot }: { snapshot: Snapshot }) {
   const softDelete = useSoftDeleteSnapshot();
@@ -174,7 +174,7 @@ function RetentionControls({ snapshot }: { snapshot: Snapshot }) {
  * next action is about them, not about the ref. It is fetched only for a revoked snapshot, so an
  * ordinary review never asks the ledger a question it does not need answered.
  *
- * @Requirements GW_0055
+ * @Requirements GW_VETTING_0018
  */
 function RevetPanel({ snapshot }: { snapshot: Snapshot }) {
   const id = snapshot.id ?? 0;
@@ -252,7 +252,7 @@ function RevetPanel({ snapshot }: { snapshot: Snapshot }) {
  * Everything the snapshot ships. Its companion below — the diff against the last approved
  * snapshot — answers the other half of the reviewer's question, what approving it would add.
  *
- * @Requirements GW_0020
+ * @Requirements GW_INGEST_0008
  */
 function SnapshotContentView({ snapshotId }: { snapshotId: number }) {
   const content = useSnapshotContent(snapshotId);
@@ -315,7 +315,7 @@ function SnapshotContentBody({
  * Marketplace detail: forge metadata, snapshots, and each snapshot's plugin/skill
  * inventory — the future surface for limiting individual plugins or skills.
  *
- * @Requirements GW_0018
+ * @Requirements GW_INGEST_0007
  */
 export function MarketplaceDetailPage() {
   const { name } = useParams<{ name: string }>();
@@ -380,7 +380,7 @@ export function MarketplaceDetailPage() {
             <dd><Timestamp value={marketplace.upstreamUpdatedAt} /></dd>
             <dt className="font-medium">Registered</dt>
             <dd><Timestamp value={marketplace.createdAt} /></dd>
-            {/* Who chose this upstream is provenance, and the four-eyes rule reads it (GW_0096). */}
+            {/* Who chose this upstream is provenance, and the four-eyes rule reads it (GW_APPROVAL_0010). */}
             <dt className="font-medium">Registered by</dt>
             <dd>{marketplace.registeredBy ?? "—"}</dd>
           </dl>

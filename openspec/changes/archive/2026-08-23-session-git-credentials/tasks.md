@@ -2,18 +2,18 @@
 
 ## 1. Requirements (SSOT first)
 
-- [x] 1.1 Add GW_0104 (a git credential derived from an authenticated browser
+- [x] 1.1 Add GW_AUTH_0018 (a git credential derived from an authenticated browser
       session: lifetime set by the gateway and not by the caller, no
       publication authority, marked as session-derived wherever the credential
       appears, and rotation that can neither extend it nor launder the mark) to
       `docs/reqstool/requirements.yml`
-- [x] 1.2 Add SVC_GW_0104 (GIVEN/WHEN/THEN) to
+- [x] 1.2 Add SVC_GW_AUTH_0018 (GIVEN/WHEN/THEN) to
       `docs/reqstool/software_verification_cases.yml`
 
 ## 2. Tests first — observed failing before the implementation exists
 
 - [x] 2.1 `SessionCredentialTests` (extends `AbstractGatewayTest`),
-      `@SVCs({"SVC_GW_0104"})`: the endpoint mints a token whose expiry is the
+      `@SVCs({"SVC_GW_AUTH_0018"})`: the endpoint mints a token whose expiry is the
       configured TTL; supplying `expiresAt` in the body does not move it (F1);
       the credential is reported `sessionDerived` while an ordinary token is not
       (F3); it fetches through the facade like any token
@@ -36,7 +36,7 @@
 
 - [x] 4.1 `TokenService.createSessionCredential(principal, name, scopes)`: the
       expiry is `now + sessionTtl`, no push scopes, `session_derived` set;
-      `@Requirements({"GW_0104"})`
+      `@Requirements({"GW_AUTH_0018"})`
 - [x] 4.2 `TokenService.rotate` copies `session_derived` alongside the deadline
 - [x] 4.3 `TokenController`: `POST /api/tokens/session` with a body carrying a
       name and optional scopes and nothing else; audit detail says

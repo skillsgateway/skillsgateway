@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * The shipped default (GW_0169): no mirror configuration, therefore no outbound push at all.
+ * The shipped default (GW_FACADE_0020): no mirror configuration, therefore no outbound push at all.
  *
  * <p>Deliberately in the shared context rather than one of its own, because the shared context is
  * the one that carries no mirror settings — which is the state every existing deployment is in, and
@@ -36,7 +36,7 @@ class ForgeMirrorDisabledTests extends AbstractGatewayTest {
     private FetchLogRepository ledger;
 
     @Test
-    @SVCs({"SVC_GW_0169"})
+    @SVCs({"SVC_GW_FACADE_0020"})
     void a_gateway_with_no_mirror_configured_pushes_nothing_when_a_snapshot_is_approved() throws Exception {
         assertThat(mirror.enabled()).isFalse();
         String name = uniqueName("nomirror");
@@ -62,8 +62,8 @@ class ForgeMirrorDisabledTests extends AbstractGatewayTest {
     }
 
     /**
-     * The recurring reconciliation and the on-demand one, on a gateway with no mirror (GW_0190,
-     * GW_0192).
+     * The recurring reconciliation and the on-demand one, on a gateway with no mirror (GW_FACADE_0025,
+     * GW_FACADE_0027).
      *
      * <p>The sweep is on by default — it is on with the mirror — so "off by default" now has a
      * second thing to mean: a timer that exists in every deployment and must contact nothing in
@@ -71,7 +71,7 @@ class ForgeMirrorDisabledTests extends AbstractGatewayTest {
      * "nothing was recorded and nothing was reported" amounts to.
      */
     @Test
-    @SVCs({"SVC_GW_0190", "SVC_GW_0192"})
+    @SVCs({"SVC_GW_FACADE_0025", "SVC_GW_FACADE_0027"})
     void a_gateway_with_no_mirror_configured_sweeps_nothing_and_reconciles_nothing() throws Exception {
         assertThat(mirror.enabled()).isFalse();
 

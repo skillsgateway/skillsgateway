@@ -2,10 +2,10 @@
 
 ## 1. Traceability (SSOT first)
 
-- [x] 1.1 Add GW_0061–GW_0063 to `docs/reqstool/requirements.yml`
+- [x] 1.1 Add GW_FACADE_0003–GW_FACADE_0005 to `docs/reqstool/requirements.yml`
       (catalog composition; freshness on publication changes; provenance,
       audit and the reserved name).
-- [x] 1.2 Add SVC_GW_0061–SVC_GW_0063 to
+- [x] 1.2 Add SVC_GW_FACADE_0003–SVC_GW_FACADE_0005 to
       `docs/reqstool/software_verification_cases.yml`.
 
 ## 2. Backend

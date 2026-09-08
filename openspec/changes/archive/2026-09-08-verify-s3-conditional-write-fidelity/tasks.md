@@ -1,16 +1,16 @@
 # Tasks: verify-s3-conditional-write-fidelity
 
 Verification-only change. No production code, no new requirement, no new SVC —
-GW_0112 — Reference transitions are the same on every storage backend is the
+GW_FACADE_0011 — Reference transitions are the same on every storage backend is the
 requirement whose foundation this proves, and its text and SVC are untouched.
 
 ## 1. Requirements (SSOT first)
 
 - [x] 1.1 **No requirement added.** GW_0226 and GW_0227 were reserved for this
       change and are deliberately **not consumed** — they stay free. This change
-      introduces no required behaviour; it extends the verification of GW_0112.
+      introduces no required behaviour; it extends the verification of GW_FACADE_0011.
       Confirmed against `docs/reqstool/requirements.yml` on this branch and
-      against `origin/main`, whose highest id is GW_0172
+      against `origin/main`, whose highest id is GW_FACADE_0023
 - [x] 1.2 **No SVC added.** Both fidelity suites carry no `@SVCs`, as the
       original did not: they verify the store, not the gateway. A suite that is
       skipped unless a bucket is configured could not satisfy one anyway —

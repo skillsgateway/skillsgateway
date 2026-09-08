@@ -2,11 +2,11 @@
 
 ## 1. Requirements SSOT first
 
-- [x] 1.1 Add GW_0093 (deterministic license detection connector), GW_0094
-      (allow/ban policy through the standard vetting path), GW_0095
+- [x] 1.1 Add GW_VETTING_0019 (deterministic license detection connector), GW_VETTING_0020
+      (allow/ban policy through the standard vetting path), GW_VETTING_0021
       (per-snapshot license report endpoint) to
       `docs/reqstool/requirements.yml`.
-- [x] 1.2 Add SVC_GW_0093–SVC_GW_0095 to
+- [x] 1.2 Add SVC_GW_VETTING_0019–SVC_GW_VETTING_0021 to
       `docs/reqstool/software_verification_cases.yml`.
 
 ## 2. Tests first (record that they fail)
@@ -14,11 +14,11 @@
 - [x] 2.1 `LicenseTests` (extends `AbstractGatewayTest`):
       detection of common licenses from LICENSE/COPYING files and SPDX tags,
       manifest `license` metadata, unknown-license and missing-license states
-      (SVC_GW_0093); ban list blocks, allow list blocks absentees and
+      (SVC_GW_VETTING_0019); ban list blocks, allow list blocks absentees and
       unknown, defaults warn only, banned finding waivable through the
       standard gate, policy digest visible in the chain identity
-      (SVC_GW_0094); licenses endpoint reports detections and policy
-      evaluation, 404 for a missing snapshot (SVC_GW_0095).
+      (SVC_GW_VETTING_0020); licenses endpoint reports detections and policy
+      evaluation, 404 for a missing snapshot (SVC_GW_VETTING_0021).
 - [x] 2.2 Run the new tests and record that they fail before implementation.
 
 ## 3. Implementation

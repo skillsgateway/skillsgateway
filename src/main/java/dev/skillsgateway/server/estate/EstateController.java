@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-/** The declarative estate's API surface (GW_0087): the last report, and the on-demand trigger. */
+/** The declarative estate's API surface (GW_ESTATE_0005): the last report, and the on-demand trigger. */
 @RestController
 @RequestMapping("/api/estate")
 public class EstateController {
@@ -40,7 +40,7 @@ public class EstateController {
     }
 
     @GetMapping
-    @Requirements({"GW_0087"})
+    @Requirements({"GW_ESTATE_0005"})
     @Tag(name = "Estate")
     @Operation(
             summary = "Last estate reconciliation report",
@@ -58,7 +58,7 @@ public class EstateController {
     }
 
     @PostMapping("/reconcile")
-    @Requirements({"GW_0083", "GW_0087"})
+    @Requirements({"GW_ESTATE_0001", "GW_ESTATE_0005"})
     @Tag(name = "Estate")
     @Operation(
             operationId = "reconcileEstate",

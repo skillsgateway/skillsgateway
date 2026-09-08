@@ -1,16 +1,16 @@
 ## 1. Requirements (SSOT first)
 
-- [x] 1.1 Add GW_0181 (the contract document describes every lifecycle event, its
+- [x] 1.1 Add GW_API_0005 (the contract document describes every lifecycle event, its
       payload and its transport headers, generated from the registry that produces
-      the deliveries) and GW_0182 (a breaking change to the webhook event payload
+      the deliveries) and GW_API_0006 (a breaking change to the webhook event payload
       surface is detected on a pull request and refused unless declared) to
       `docs/reqstool/requirements.yml` — title, significance, description,
       rationale, categories, revision, in the style of the surrounding entries.
-      Ids: GW_0145/GW_0146 were taken on main while this sat unmerged, so the change uses GW_0181/GW_0182; see proposal — Impact.
-- [x] 1.2 Add SVC_GW_0181 and SVC_GW_0182 to
+      Ids: GW_VETTING_0025/GW_VETTING_0026 were taken on main while this sat unmerged, so the change uses GW_API_0005/GW_API_0006; see proposal — Impact.
+- [x] 1.2 Add SVC_GW_API_0005 and SVC_GW_API_0006 to
       `docs/reqstool/software_verification_cases.yml`, GIVEN/WHEN/THEN in the
-      style of SVC_GW_0106/SVC_GW_0107.
-- [x] 1.3 Confirm no other branch has since claimed GW_0181/GW_0182 (`grep`
+      style of SVC_GW_API_0003/SVC_GW_API_0004.
+- [x] 1.3 Confirm no other branch has since claimed GW_API_0005/GW_API_0006 (`grep`
       `docs/reqstool/requirements.yml` on `main` and on the in-flight branches
       named in the proposal) before writing them.
 
@@ -20,11 +20,11 @@
       to all seven components (`event`, `occurredAt`, `marketplace`, `snapshotId`,
       `sha`, `state`, `actor`) — they are always populated, and required-ness is
       what makes a removal an oasdiff error (design — Decisions). Add
-      `@Requirements({"GW_0181"})`.
+      `@Requirements({"GW_API_0005"})`.
 - [x] 2.2 Add a response record for the event registry (event names plus the
       payload schema) and change `WebhookController.events` to return it instead of
-      `List<String>`. Keep the existing `@Requirements({"GW_0088"})` and add
-      `GW_0181`; keep `WebhookEvent.AUDIT_EXPORT` out by construction. Update the
+      `List<String>`. Keep the existing `@Requirements({"GW_WEBHOOK_0005"})` and add
+      `GW_API_0005`; keep `WebhookEvent.AUDIT_EXPORT` out by construction. Update the
       `@Operation` description to say the payload shape is included.
 - [x] 2.3 Confirm `EventPayload` now appears in `components.schemas` of the served
       document with a `required` array (it is absent today — nothing referenced it).
@@ -36,7 +36,7 @@
       `addWebhooks(name, pathItem)`. Each `PathItem` gets a `POST` operation with
       the `application/json` request body `$ref`-ing
       `#/components/schemas/EventPayload` and a `2xx` response. Annotate
-      `@Requirements({"GW_0181"})`.
+      `@Requirements({"GW_API_0005"})`.
 - [x] 3.2 Describe the four transport headers on each operation as request headers
       with descriptions, and give `X-Skills-Gateway-Signature` the `sha256=<hex>`
       pattern. Source the header names from the `WebhookSigner` constants, never
@@ -61,17 +61,17 @@
 - [x] 5.1 `OpenApiContractTests`: every name in `WebhookEvent.ALL` appears as a key
       of the served document's `webhooks` object, and nothing else does — so
       `AUDIT_EXPORT` cannot leak in and an added event cannot be forgotten.
-      `@SVCs({"SVC_GW_0181"})`.
+      `@SVCs({"SVC_GW_API_0005"})`.
 - [x] 5.2 `OpenApiContractTests`: `EventPayload` is a component schema whose
       `required` array names all seven fields, and whose `snapshotId` is
       `integer/int64` — the two properties the gate's error-level classifications
-      depend on. Part of `SVC_GW_0181`.
+      depend on. Part of `SVC_GW_API_0005`.
 - [x] 5.3 `OpenApiContractTests`: each `webhooks` operation describes all four
       `X-Skills-Gateway-*` headers, asserted against the `WebhookSigner` constants
-      rather than string literals. Part of `SVC_GW_0181`.
+      rather than string literals. Part of `SVC_GW_API_0005`.
 - [x] 5.4 `OpenApiContractTests`: the events endpoint's `200` response schema
       reaches `EventPayload`, so the payload stays inside the `paths` surface the
-      gate diffs with response severities. Part of `SVC_GW_0181`.
+      gate diffs with response severities. Part of `SVC_GW_API_0005`.
 - [x] 5.5 **Negative counterparts**, in the style of
       `theStalenessCheckCanActuallyFail` — extract each assertion above into a
       private method and drive it from a mutated document, asserting it throws:
@@ -82,10 +82,10 @@
       `contractWorkflowCarriesTheBreakingChangeContract`, or add a sibling, so the
       workflow's coverage of the payload surface is asserted — that the diffed
       document is the one carrying `webhooks`, and that the label and title rules
-      apply to it identically. `@SVCs({"SVC_GW_0182"})`.
+      apply to it identically. `@SVCs({"SVC_GW_API_0006"})`.
 - [x] 5.7 A dispatcher-side test that the serialised body actually carries every
       field the schema declares required — the contract is worthless if the
-      document promises a field the wire omits. Part of `SVC_GW_0181` (it verifies
+      document promises a field the wire omits. Part of `SVC_GW_API_0005` (it verifies
       the document, not the gate).
 - [x] 5.8 Confirm no existing SVC test was weakened or deleted to make any of the
       above pass (CLAUDE.md).

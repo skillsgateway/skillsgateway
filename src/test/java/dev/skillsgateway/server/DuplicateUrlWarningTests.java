@@ -13,7 +13,7 @@ import org.springframework.http.MediaType;
 
 /**
  * Registering the same upstream twice under different names is a legitimate way to test a
- * marketplace before promoting it (GW_0166), so the gateway warns rather than refuses. The warning
+ * marketplace before promoting it (GW_INGEST_0029), so the gateway warns rather than refuses. The warning
  * lives in the registration response itself, so it reaches every caller — not only the portal's
  * own client-side check.
  */
@@ -31,7 +31,7 @@ class DuplicateUrlWarningTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0166"})
+    @SVCs({"SVC_GW_INGEST_0029"})
     void a_normalized_duplicate_url_warns_and_still_registers() throws Exception {
         String first = uniqueName("dup-first");
         String second = uniqueName("dup-second");
@@ -47,7 +47,7 @@ class DuplicateUrlWarningTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0166"})
+    @SVCs({"SVC_GW_INGEST_0029"})
     void a_url_matching_no_existing_marketplace_carries_no_warning() throws Exception {
         String name = uniqueName("nodup");
 
@@ -57,7 +57,7 @@ class DuplicateUrlWarningTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0166"})
+    @SVCs({"SVC_GW_INGEST_0029"})
     void a_warning_names_every_marketplace_sharing_the_normalized_url() throws Exception {
         String first = uniqueName("dup-multi-a");
         String second = uniqueName("dup-multi-b");

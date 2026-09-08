@@ -6,7 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.Test;
 
 /**
- * SKILL.md frontmatter parsing for the skill facts (GW_0090). Tools that cannot be read must
+ * SKILL.md frontmatter parsing for the skill facts (GW_APPROVAL_0007). Tools that cannot be read must
  * never read as "no tools": every malformed shape raises, and the gate turns that into a denial.
  */
 class SkillFrontmatterTests {

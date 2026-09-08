@@ -1,8 +1,8 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/reqstool/reqstool-client/main/src/reqstool/resources/schemas/v1/software_verification_cases.schema.json
 
 cases:
-  - id: SVC_GW_0001
-    requirement_ids: ["GW_0001"]
+  - id: SVC_GW_INGEST_0001
+    requirement_ids: ["GW_INGEST_0001"]
     title: Register a marketplace via the admin interface
     verification: automated-test
     description: |
@@ -11,8 +11,8 @@ cases:
       THEN the marketplace is listed as registered with that URL
     revision: "0.1.0"
 
-  - id: SVC_GW_0002
-    requirement_ids: ["GW_0002"]
+  - id: SVC_GW_INGEST_0002
+    requirement_ids: ["GW_INGEST_0002"]
     title: Ingest a marketplace into a held snapshot
     verification: automated-test
     description: |
@@ -21,8 +21,8 @@ cases:
       THEN a snapshot identified by the upstream head commit SHA exists in state held
     revision: "0.1.0"
 
-  - id: SVC_GW_0003
-    requirement_ids: ["GW_0003"]
+  - id: SVC_GW_INGEST_0003
+    requirement_ids: ["GW_INGEST_0003"]
     title: Reject manifests with external plugin sources
     verification: automated-test
     description: |
@@ -31,8 +31,8 @@ cases:
       THEN the snapshot is rejected with a policy violation and cannot be approved
     revision: "0.1.0"
 
-  - id: SVC_GW_0004
-    requirement_ids: ["GW_0004"]
+  - id: SVC_GW_APPROVAL_0001
+    requirement_ids: ["GW_APPROVAL_0001"]
     title: Upstream changes never alter served content
     verification: automated-test
     description: |
@@ -41,8 +41,8 @@ cases:
       THEN clients still receive the previously approved snapshot and the new snapshot is held
     revision: "0.1.0"
 
-  - id: SVC_GW_0005
-    requirement_ids: ["GW_0005"]
+  - id: SVC_GW_APPROVAL_0002
+    requirement_ids: ["GW_APPROVAL_0002"]
     title: Approve a held snapshot with a recorded decision
     verification: automated-test
     description: |
@@ -51,8 +51,8 @@ cases:
       THEN the snapshot state becomes approved and the decision record contains the reviewer identity and timestamp
     revision: "0.1.0"
 
-  - id: SVC_GW_0006
-    requirement_ids: ["GW_0006"]
+  - id: SVC_GW_FACADE_0001
+    requirement_ids: ["GW_FACADE_0001"]
     title: Clone an approved snapshot with a standard git client
     verification: automated-test
     description: |
@@ -61,8 +61,8 @@ cases:
       THEN the clone succeeds and the content equals the approved snapshot
     revision: "0.1.0"
 
-  - id: SVC_GW_0007
-    requirement_ids: ["GW_0007"]
+  - id: SVC_GW_FACADE_0002
+    requirement_ids: ["GW_FACADE_0002"]
     title: Held content is not fetchable from the facade
     verification: automated-test
     description: |
@@ -71,8 +71,8 @@ cases:
       THEN only the approved refs are advertised and held objects cannot be fetched
     revision: "0.1.0"
 
-  - id: SVC_GW_0008
-    requirement_ids: ["GW_0008"]
+  - id: SVC_GW_AUDIT_0001
+    requirement_ids: ["GW_AUDIT_0001"]
     title: Every facade fetch is audit-logged
     verification: automated-test
     description: |
@@ -81,8 +81,8 @@ cases:
       THEN an audit record with source address, repository, ref, commit SHA, and timestamp is appended
     revision: "0.1.0"
 
-  - id: SVC_GW_0009
-    requirement_ids: ["GW_0009"]
+  - id: SVC_GW_INGEST_0004
+    requirement_ids: ["GW_INGEST_0004"]
     title: Provenance of an approved snapshot is retrievable
     verification: automated-test
     description: |
@@ -91,8 +91,8 @@ cases:
       THEN the upstream URL, upstream commit SHA, approver, and approval timestamp are returned
     revision: "0.1.0"
 
-  - id: SVC_GW_0010
-    requirement_ids: ["GW_0010"]
+  - id: SVC_GW_AUTH_0001
+    requirement_ids: ["GW_AUTH_0001"]
     title: List marketplaces and snapshot states via the admin interface
     verification: automated-test
     description: |
@@ -101,8 +101,8 @@ cases:
       THEN all marketplaces and their snapshots are returned with their states
     revision: "0.1.0"
 
-  - id: SVC_GW_0011
-    requirement_ids: ["GW_0011"]
+  - id: SVC_GW_AUTH_0002
+    requirement_ids: ["GW_AUTH_0002"]
     title: Web access requires an OIDC session
     verification: automated-test
     description: |
@@ -111,8 +111,8 @@ cases:
       THEN it is redirected to the identity provider login, and the same request with an authenticated session succeeds
     revision: "0.1.0"
 
-  - id: SVC_GW_0012
-    requirement_ids: ["GW_0012"]
+  - id: SVC_GW_AUTH_0003
+    requirement_ids: ["GW_AUTH_0003"]
     title: Git facade requires a valid personal access token
     verification: automated-test
     description: |
@@ -121,8 +121,8 @@ cases:
       THEN the unauthenticated fetches are rejected and the valid-token fetch succeeds with the identity recorded in the audit log
     revision: "0.1.0"
 
-  - id: SVC_GW_0013
-    requirement_ids: ["GW_0013"]
+  - id: SVC_GW_AUTH_0004
+    requirement_ids: ["GW_AUTH_0004"]
     title: Tokens are shown once and stored hashed; revocation takes effect
     verification: automated-test
     description: |
@@ -131,8 +131,8 @@ cases:
       THEN the cleartext is returned only at creation, only a hash is persisted, and fetches with the revoked token are rejected
     revision: "0.1.0"
 
-  - id: SVC_GW_0014
-    requirement_ids: ["GW_0014"]
+  - id: SVC_GW_API_0001
+    requirement_ids: ["GW_API_0001"]
     title: SBOM endpoint serves the CycloneDX BOM
     verification: automated-test
     description: |
@@ -141,8 +141,8 @@ cases:
       THEN a CycloneDX document is returned listing the application's components
     revision: "0.1.0"
 
-  - id: SVC_GW_0015
-    requirement_ids: ["GW_0015"]
+  - id: SVC_GW_RELEASE_0001
+    requirement_ids: ["GW_RELEASE_0001"]
     title: Packaging artifacts are present and mutually consistent
     verification: automated-test
     description: |
@@ -154,8 +154,8 @@ cases:
       wires the image, the actuator health probes, and the PostgreSQL and OIDC configuration
     revision: "0.2.0"
 
-  - id: SVC_GW_0016
-    requirement_ids: ["GW_0016"]
+  - id: SVC_GW_INGEST_0005
+    requirement_ids: ["GW_INGEST_0005"]
     title: Non-allowlisted URL schemes are rejected at registration
     verification: automated-test
     description: |
@@ -164,8 +164,8 @@ cases:
       THEN each registration is rejected with HTTP 400 and no marketplace is persisted
     revision: "0.1.0"
 
-  - id: SVC_GW_0017
-    requirement_ids: ["GW_0017"]
+  - id: SVC_GW_INGEST_0006
+    requirement_ids: ["GW_INGEST_0006"]
     title: Consumer-supplied refs other than the default branch are rejected
     verification: automated-test
     description: |
@@ -174,8 +174,8 @@ cases:
       THEN it is rejected with HTTP 400 and no marketplace is persisted, while omitting the ref or supplying the default branch registers normally
     revision: "0.1.0"
 
-  - id: SVC_GW_0018
-    requirement_ids: ["GW_0018"]
+  - id: SVC_GW_INGEST_0007
+    requirement_ids: ["GW_INGEST_0007"]
     title: Admin completes the register-ingest-approve workflow in the portal
     verification: automated-test
     description: |
@@ -184,8 +184,8 @@ cases:
       THEN the portal shows the snapshot as approved and the underlying state matches
     revision: "0.1.0"
 
-  - id: SVC_GW_0019
-    requirement_ids: ["GW_0019"]
+  - id: SVC_GW_AUTH_0005
+    requirement_ids: ["GW_AUTH_0005"]
     title: User creates and revokes a token in the portal with show-once cleartext
     verification: automated-test
     description: |
@@ -194,8 +194,8 @@ cases:
       THEN the cleartext is displayed exactly once at creation, never again afterwards, and the revoked token is marked revoked
     revision: "0.1.0"
 
-  - id: SVC_GW_0020
-    requirement_ids: ["GW_0020"]
+  - id: SVC_GW_INGEST_0008
+    requirement_ids: ["GW_INGEST_0008"]
     title: Snapshot content lists plugins and their skills
     verification: automated-test
     description: |
@@ -204,8 +204,8 @@ cases:
       THEN every declared plugin is returned with the skills found under it and the snapshot's commit SHA
     revision: "0.1.0"
 
-  - id: SVC_GW_0021
-    requirement_ids: ["GW_0021"]
+  - id: SVC_GW_INGEST_0009
+    requirement_ids: ["GW_INGEST_0009"]
     title: Forge metadata is captured at registration when available
     verification: automated-test
     description: |
@@ -214,8 +214,8 @@ cases:
       THEN the project name, description, and last update time are stored with the marketplace
     revision: "0.1.0"
 
-  - id: SVC_GW_0022
-    requirement_ids: ["GW_0022"]
+  - id: SVC_GW_AUDIT_0002
+    requirement_ids: ["GW_AUDIT_0002"]
     title: Admin actions appear in the audit ledger with the acting identity
     verification: automated-test
     description: |
@@ -224,8 +224,8 @@ cases:
       THEN the ledger contains a record for each action with the administrator's identity
     revision: "0.1.0"
 
-  - id: SVC_GW_0023
-    requirement_ids: ["GW_0023"]
+  - id: SVC_GW_WEBHOOK_0001
+    requirement_ids: ["GW_WEBHOOK_0001"]
     title: Lifecycle events reach only the subscribers that filter for them
     verification: automated-test
     description: |
@@ -234,8 +234,8 @@ cases:
       THEN a delivery exists for the approved subscriber carrying the event name, marketplace, snapshot id, and commit SHA, and none exists for the rejected-only subscriber
     revision: "0.1.0"
 
-  - id: SVC_GW_0024
-    requirement_ids: ["GW_0024"]
+  - id: SVC_GW_WEBHOOK_0002
+    requirement_ids: ["GW_WEBHOOK_0002"]
     title: Deliveries carry a verifiable HMAC-SHA256 signature and secrets are shown once
     verification: automated-test
     description: |
@@ -244,8 +244,8 @@ cases:
       THEN the signature header equals the HMAC-SHA256 of the exact request body under that secret, and no later API response exposes the secret
     revision: "0.1.0"
 
-  - id: SVC_GW_0025
-    requirement_ids: ["GW_0025"]
+  - id: SVC_GW_WEBHOOK_0003
+    requirement_ids: ["GW_WEBHOOK_0003"]
     title: A failing delivery is retried with backoff and finally marked failed
     verification: automated-test
     description: |
@@ -254,8 +254,8 @@ cases:
       THEN each attempt is recorded with its outcome, the next attempt is scheduled later than the previous one, and the delivery ends in the failed state
     revision: "0.1.0"
 
-  - id: SVC_GW_0026
-    requirement_ids: ["GW_0026"]
+  - id: SVC_GW_WEBHOOK_0004
+    requirement_ids: ["GW_WEBHOOK_0004"]
     title: Portal shows webhook subscribers and their delivery attempts
     verification: automated-test
     description: |
@@ -264,8 +264,8 @@ cases:
       THEN the subscriber is listed with its event filter and the delivery attempt is listed with its event and state
     revision: "0.1.0"
 
-  - id: SVC_GW_0027
-    requirement_ids: ["GW_0027"]
+  - id: SVC_GW_AUDIT_0003
+    requirement_ids: ["GW_AUDIT_0003"]
     title: Ledger entries stream as newline-delimited JSON from a cursor
     verification: automated-test
     description: |
@@ -274,8 +274,8 @@ cases:
       THEN the first response carries one JSON object per line in ascending sequence with the resume cursor, and the second response contains only entries appended after it
     revision: "0.1.0"
 
-  - id: SVC_GW_0028
-    requirement_ids: ["GW_0028"]
+  - id: SVC_GW_AUDIT_0004
+    requirement_ids: ["GW_AUDIT_0004"]
     title: A sink receives the entries after its position exactly once per pass
     verification: automated-test
     description: |
@@ -284,8 +284,8 @@ cases:
       THEN the first pass durably records one signed delivery carrying the entries after the position and advances the position to the last of them, and the second pass records no further delivery
     revision: "0.1.0"
 
-  - id: SVC_GW_0029
-    requirement_ids: ["GW_0029"]
+  - id: SVC_GW_AUDIT_0005
+    requirement_ids: ["GW_AUDIT_0005"]
     title: Resetting a sink position re-delivers the entries after it
     verification: automated-test
     description: |
@@ -294,8 +294,8 @@ cases:
       THEN a new delivery is recorded carrying the entries following that sequence
     revision: "0.1.0"
 
-  - id: SVC_GW_0030
-    requirement_ids: ["GW_0030"]
+  - id: SVC_GW_AUDIT_0006
+    requirement_ids: ["GW_AUDIT_0006"]
     title: Portal audit page offers the export download and lists sinks
     verification: automated-test
     description: |
@@ -304,8 +304,8 @@ cases:
       THEN the ledger export download control is present and the sink is listed with its target and current ledger position
     revision: "0.1.0"
 
-  - id: SVC_GW_0031
-    requirement_ids: ["GW_0031"]
+  - id: SVC_GW_RETENTION_0001
+    requirement_ids: ["GW_RETENTION_0001"]
     title: Retention selects the aged and superseded snapshots and nothing else
     verification: automated-test
     description: |
@@ -314,8 +314,8 @@ cases:
       THEN the aged snapshot and the superseded snapshot are selected, each with the criterion that selected it, and the recent snapshot is not
     revision: "0.1.0"
 
-  - id: SVC_GW_0032
-    requirement_ids: ["GW_0032"]
+  - id: SVC_GW_RETENTION_0002
+    requirement_ids: ["GW_RETENTION_0002"]
     title: A deleted snapshot is marked, keeps its state, and is restorable within the window
     verification: automated-test
     description: |
@@ -324,8 +324,8 @@ cases:
       THEN the deletion carries a reason and a purge time in the future while the vetting state is unchanged, and after the restore the deletion marks are cleared
     revision: "0.1.0"
 
-  - id: SVC_GW_0033
-    requirement_ids: ["GW_0033"]
+  - id: SVC_GW_RETENTION_0003
+    requirement_ids: ["GW_RETENTION_0003"]
     title: An approved snapshot is never selected and cannot be deleted
     verification: automated-test
     description: |
@@ -334,8 +334,8 @@ cases:
       THEN the snapshot is not among the selected candidates, the deletion request is refused, and the snapshot remains undeleted
     revision: "0.1.0"
 
-  - id: SVC_GW_0034
-    requirement_ids: ["GW_0034"]
+  - id: SVC_GW_RETENTION_0004
+    requirement_ids: ["GW_RETENTION_0004"]
     title: Compaction removes expired soft deletions and their quarantine reference
     verification: automated-test
     description: |
@@ -344,8 +344,8 @@ cases:
       THEN the expired snapshot's record and its pinned reference in the quarantine repository are gone, and the snapshot still inside its window is untouched
     revision: "0.1.0"
 
-  - id: SVC_GW_0035
-    requirement_ids: ["GW_0035"]
+  - id: SVC_GW_RETENTION_0005
+    requirement_ids: ["GW_RETENTION_0005"]
     title: The ledger records the retention decision, deletion, restore, and removal
     verification: automated-test
     description: |
@@ -354,8 +354,8 @@ cases:
       THEN it contains an entry for each of the evaluation outcome, the soft deletion with its reason, the restore, and the permanent removal, each with the acting identity and the snapshot commit SHA
     revision: "0.1.0"
 
-  - id: SVC_GW_0036
-    requirement_ids: ["GW_0036"]
+  - id: SVC_GW_RETENTION_0006
+    requirement_ids: ["GW_RETENTION_0006"]
     title: Portal deletes a snapshot and restores it
     verification: automated-test
     description: |
@@ -364,8 +364,8 @@ cases:
       THEN the snapshot is shown as deleted with its restore deadline, and after the restore it is shown as not deleted again
     revision: "0.1.0"
 
-  - id: SVC_GW_0037
-    requirement_ids: ["GW_0037"]
+  - id: SVC_GW_VETTING_0001
+    requirement_ids: ["GW_VETTING_0001"]
     title: Ingestion records a chain run with a verdict per connector
     verification: automated-test
     description: |
@@ -374,8 +374,8 @@ cases:
       THEN a chain run exists for the snapshot's commit SHA holding one verdict per configured connector, in chain order, each with its findings
     revision: "0.1.0"
 
-  - id: SVC_GW_0038
-    requirement_ids: ["GW_0038"]
+  - id: SVC_GW_VETTING_0002
+    requirement_ids: ["GW_VETTING_0002"]
     title: A connector that throws blocks the snapshot instead of being skipped
     verification: automated-test
     description: |
@@ -384,8 +384,8 @@ cases:
       THEN the failing connector has an error verdict carrying the failure, the run outcome is blocked, and the snapshot is still held and unserved
     revision: "0.1.0"
 
-  - id: SVC_GW_0039
-    requirement_ids: ["GW_0039"]
+  - id: SVC_GW_VETTING_0003
+    requirement_ids: ["GW_VETTING_0003"]
     title: The secret scanner finds planted credentials and clears clean content
     verification: automated-test
     description: |
@@ -394,8 +394,8 @@ cases:
       THEN the first snapshot's secret-scanning verdict fails with a finding per planted credential naming the file it was found in, and the second snapshot's verdict passes
     revision: "0.1.0"
 
-  - id: SVC_GW_0040
-    requirement_ids: ["GW_0040"]
+  - id: SVC_GW_VETTING_0004
+    requirement_ids: ["GW_VETTING_0004"]
     title: The prompt-injection scanner finds planted markers in skill instructions
     verification: automated-test
     description: |
@@ -404,8 +404,8 @@ cases:
       THEN the prompt-injection verdict fails with a finding for each marker naming the instruction file, and a clean upstream's verdict passes
     revision: "0.1.0"
 
-  - id: SVC_GW_0041
-    requirement_ids: ["GW_0041"]
+  - id: SVC_GW_APPROVAL_0003
+    requirement_ids: ["GW_APPROVAL_0003"]
     title: A blocked snapshot is approved only once waivers cover every blocking finding
     verification: automated-test
     description: |
@@ -414,8 +414,8 @@ cases:
       THEN the first two requests are refused naming the findings still uncovered, the snapshot is neither approved nor served after either, and the third approves it
     revision: "0.2.0"
 
-  - id: SVC_GW_0042
-    requirement_ids: ["GW_0042"]
+  - id: SVC_GW_VETTING_0005
+    requirement_ids: ["GW_VETTING_0005"]
     title: Portal shows the verdicts and refuses approval while the outcome is blocked
     verification: automated-test
     description: |
@@ -424,8 +424,8 @@ cases:
       THEN the connector verdicts and their findings are shown and the approval control is refused while the effective outcome is blocked
     revision: "0.2.0"
 
-  - id: SVC_GW_0043
-    requirement_ids: ["GW_0043"]
+  - id: SVC_GW_VETTING_0006
+    requirement_ids: ["GW_VETTING_0006"]
     title: The ledger records the chain run and the verdicts
     verification: automated-test
     description: |
@@ -434,8 +434,8 @@ cases:
       THEN it holds an entry for the chain run outcome and an entry per connector verdict, each with the marketplace, the commit SHA, and the acting identity
     revision: "0.2.0"
 
-  - id: SVC_GW_0044
-    requirement_ids: ["GW_0044"]
+  - id: SVC_GW_VETTING_0007
+    requirement_ids: ["GW_VETTING_0007"]
     title: A waiver without justification, approver or a future expiry is refused
     verification: automated-test
     description: |
@@ -444,8 +444,8 @@ cases:
       THEN each of the first three is refused and no waiver is recorded for it, and the fourth is recorded carrying the acting identity as its approver
     revision: "0.1.0"
 
-  - id: SVC_GW_0045
-    requirement_ids: ["GW_0045"]
+  - id: SVC_GW_VETTING_0008
+    requirement_ids: ["GW_VETTING_0008"]
     title: A waiver suppresses only the finding its scope names
     verification: automated-test
     description: |
@@ -454,8 +454,8 @@ cases:
       THEN the effective outcome stays blocked for the first three and becomes cleared-with-waivers for the last, while the recorded run outcome stays blocked throughout
     revision: "0.1.0"
 
-  - id: SVC_GW_0046
-    requirement_ids: ["GW_0046"]
+  - id: SVC_GW_VETTING_0009
+    requirement_ids: ["GW_VETTING_0009"]
     title: An expired or revoked waiver stops suppressing its finding
     verification: automated-test
     description: |
@@ -464,8 +464,8 @@ cases:
       THEN in both cases the effective outcome is blocked again and approval is refused, with no scheduled pass having run
     revision: "0.1.0"
 
-  - id: SVC_GW_0047
-    requirement_ids: ["GW_0047"]
+  - id: SVC_GW_VETTING_0010
+    requirement_ids: ["GW_VETTING_0010"]
     title: Portal waives a finding and lists the waiver
     verification: automated-test
     description: |
@@ -474,8 +474,8 @@ cases:
       THEN the finding is shown as waived, the waiver is listed with its rule, scope, approver and expiry, the outcome is shown as cleared with waivers, and the approval succeeds
     revision: "0.1.0"
 
-  - id: SVC_GW_0048
-    requirement_ids: ["GW_0048"]
+  - id: SVC_GW_VETTING_0011
+    requirement_ids: ["GW_VETTING_0011"]
     title: The ledger records waiver creation, use and revocation
     verification: automated-test
     description: |
@@ -484,8 +484,8 @@ cases:
       THEN it holds an entry for each waiver's creation carrying the rule, the scope and the expiry, an entry for the waiver that let the approval through, and an entry for the revocation, each with the marketplace and the acting identity
     revision: "0.1.0"
 
-  - id: SVC_GW_0049
-    requirement_ids: ["GW_0049"]
+  - id: SVC_GW_VETTING_0012
+    requirement_ids: ["GW_VETTING_0012"]
     title: The sweep re-vets the least recently vetted approved snapshots in bounded batches
     verification: automated-test
     description: |
@@ -494,8 +494,8 @@ cases:
       THEN only approved snapshots are selected, the oldest-vetted ones are taken first, no more than the batch size are re-vetted, each pass records a new chain run carrying its trigger and the chain's connector versions, and the snapshots' own states are unchanged by the runs
     revision: "0.1.0"
 
-  - id: SVC_GW_0050
-    requirement_ids: ["GW_0050"]
+  - id: SVC_GW_VETTING_0013
+    requirement_ids: ["GW_VETTING_0013"]
     title: Enforced re-vetting revokes an approved snapshot and stops the facade serving it
     verification: automated-test
     description: |
@@ -504,8 +504,8 @@ cases:
       THEN the snapshot moves to the revoked state, a clone of the marketplace fails and the revoked commit can no longer be fetched by reference, the quarantined copy is still present, and re-publishing it succeeds only after a waiver covers the finding and a fresh approve decision is recorded
     revision: "0.1.0"
 
-  - id: SVC_GW_0051
-    requirement_ids: ["GW_0051"]
+  - id: SVC_GW_VETTING_0014
+    requirement_ids: ["GW_VETTING_0014"]
     title: Warn mode records the violation and never unpublishes
     verification: automated-test
     description: |
@@ -514,8 +514,8 @@ cases:
       THEN the violation is recorded in the ledger and announced as a lifecycle event, the snapshot stays approved, and a git client can still clone the marketplace at the same commit
     revision: "0.1.0"
 
-  - id: SVC_GW_0052
-    requirement_ids: ["GW_0052"]
+  - id: SVC_GW_VETTING_0015
+    requirement_ids: ["GW_VETTING_0015"]
     title: A connector error during re-vetting never revokes the snapshot
     verification: automated-test
     description: |
@@ -524,8 +524,8 @@ cases:
       THEN each run is recorded as inconclusive, the snapshot stays approved and served, and the recorded run still blocks that snapshot's approval
     revision: "0.1.0"
 
-  - id: SVC_GW_0053
-    requirement_ids: ["GW_0053"]
+  - id: SVC_GW_VETTING_0016
+    requirement_ids: ["GW_VETTING_0016"]
     title: A violation names the identities that fetched the snapshot
     verification: automated-test
     description: |
@@ -534,8 +534,8 @@ cases:
       THEN the reported affected identities are exactly the two that received content, each with its fetch count and last fetch time, and the violation and revocation lifecycle events are emitted to a subscriber
     revision: "0.1.0"
 
-  - id: SVC_GW_0054
-    requirement_ids: ["GW_0054"]
+  - id: SVC_GW_VETTING_0017
+    requirement_ids: ["GW_VETTING_0017"]
     title: The ledger records the retroactive violation and every state transition
     verification: automated-test
     description: |
@@ -544,8 +544,8 @@ cases:
       THEN it holds the re-vetting run's outcome with its trigger, the violation with the objecting connectors and the mode in force, an entry naming the affected identity, the revocation, the unpublication, and the fresh approval, each with the marketplace and the acting identity
     revision: "0.1.0"
 
-  - id: SVC_GW_0055
-    requirement_ids: ["GW_0055"]
+  - id: SVC_GW_VETTING_0018
+    requirement_ids: ["GW_VETTING_0018"]
     title: Portal shows a revoked snapshot, its violation and who fetched it
     verification: automated-test
     description: |
@@ -554,8 +554,8 @@ cases:
       THEN the snapshot is shown as revoked with the reason, the blocking findings of the re-vetting run and the identities that had fetched it are listed, and a control re-vets the snapshot on demand
     revision: "0.1.0"
 
-  - id: SVC_GW_0056
-    requirement_ids: ["GW_0056"]
+  - id: SVC_GW_INGEST_0010
+    requirement_ids: ["GW_INGEST_0010"]
     title: Sync mode is per marketplace, defaulted, changeable, and never bypasses approval
     verification: automated-test
     description: |
@@ -564,8 +564,8 @@ cases:
       THEN the mode defaults to on-demand, each change is applied and an invalid mode is refused, and every sync-triggered snapshot lands held (or rejected on policy violation) and is never approved or published by any sync path
     revision: "0.1.0"
 
-  - id: SVC_GW_0057
-    requirement_ids: ["GW_0057"]
+  - id: SVC_GW_INGEST_0011
+    requirement_ids: ["GW_INGEST_0011"]
     title: Scheduled sweep polls only scheduled marketplaces, oldest first, bounded, and survives one failure
     verification: automated-test
     description: |
@@ -574,8 +574,8 @@ cases:
       THEN only scheduled marketplaces are ingested, selection is least-recently-attempted first and respects the bound, the unreachable marketplace's failure is recorded without stopping the rest, and its attempt stamp makes it eligible again on a later pass
     revision: "0.1.0"
 
-  - id: SVC_GW_0058
-    requirement_ids: ["GW_0058"]
+  - id: SVC_GW_INGEST_0012
+    requirement_ids: ["GW_INGEST_0012"]
     title: Webhook endpoint accepts only a validly signed request and never trusts the payload
     verification: automated-test
     description: |
@@ -584,8 +584,8 @@ cases:
       THEN only the validly signed request triggers ingestion of the registered upstream's default branch (a foreign URL or ref in the payload is ignored), a held snapshot appears for it, and every other request is rejected with no snapshot created
     revision: "0.1.0"
 
-  - id: SVC_GW_0059
-    requirement_ids: ["GW_0059"]
+  - id: SVC_GW_INGEST_0013
+    requirement_ids: ["GW_INGEST_0013"]
     title: A failing upstream never affects what the facade serves
     verification: automated-test
     description: |
@@ -594,8 +594,8 @@ cases:
       THEN both attempts fail internally without changing any snapshot state or published reference, and a real git clone through the facade still serves the approved SHA
     revision: "0.1.0"
 
-  - id: SVC_GW_0060
-    requirement_ids: ["GW_0060"]
+  - id: SVC_GW_INGEST_0014
+    requirement_ids: ["GW_INGEST_0014"]
     title: Mode changes and sync-triggered ingestions are on the ledger
     verification: automated-test
     description: |
@@ -604,8 +604,8 @@ cases:
       THEN it contains the mode change with the acting identity and each sync-triggered ingestion with the snapshot SHA and a trigger identity distinguishing scheduler and webhook from a human, and a snapshot-ingested lifecycle event was emitted for each
     revision: "0.1.0"
 
-  - id: SVC_GW_0061
-    requirement_ids: ["GW_0061"]
+  - id: SVC_GW_FACADE_0003
+    requirement_ids: ["GW_FACADE_0003"]
     title: The catalog aggregates exactly the served estate under namespaced paths
     verification: automated-test
     description: |
@@ -614,8 +614,8 @@ cases:
       THEN the clone contains each approved marketplace's content under a subdirectory named after it, the merged manifest lists their plugins with marketplace-prefixed names and relative sources into those subdirectories, and the held-only marketplace appears nowhere
     revision: "0.1.0"
 
-  - id: SVC_GW_0062
-    requirement_ids: ["GW_0062"]
+  - id: SVC_GW_FACADE_0004
+    requirement_ids: ["GW_FACADE_0004"]
     title: Publications and revocations reshape the catalog on their own
     verification: automated-test
     description: |
@@ -624,8 +624,8 @@ cases:
       THEN the revoked marketplace's subtree and plugins are gone and its SHA is unreachable from every advertised catalog reference, the newly approved marketplace is present, and with nothing serving at all the catalog still serves a manifest with an empty plugin list
     revision: "0.1.0"
 
-  - id: SVC_GW_0063
-    requirement_ids: ["GW_0063"]
+  - id: SVC_GW_FACADE_0005
+    requirement_ids: ["GW_FACADE_0005"]
     title: Catalog constituents, fetch audit, manual rebuild, and the reserved name
     verification: automated-test
     description: |
@@ -634,8 +634,8 @@ cases:
       THEN the API lists exactly the marketplace-and-SHA pairs the clone contains, the clone is on the fetch ledger under the catalog's name, the manual regeneration lands on the ledger with the acting identity, and the registration is refused
     revision: "0.1.0"
 
-  - id: SVC_GW_0064
-    requirement_ids: ["GW_0064"]
+  - id: SVC_GW_AUTH_0006
+    requirement_ids: ["GW_AUTH_0006"]
     title: Scoped tokens fetch only their marketplaces and cannot probe the rest
     verification: automated-test
     description: |
@@ -644,8 +644,8 @@ cases:
       THEN in-scope clones succeed, an out-of-scope clone fails with the same answer as a marketplace that does not exist, the unscoped token clones everything, and creating a token naming an unknown scope is refused
     revision: "0.1.0"
 
-  - id: SVC_GW_0065
-    requirement_ids: ["GW_0065"]
+  - id: SVC_GW_AUTH_0007
+    requirement_ids: ["GW_AUTH_0007"]
     title: An expired token is refused at authentication with no sweep involved
     verification: automated-test
     description: |
@@ -654,8 +654,8 @@ cases:
       THEN the expired token is refused exactly like a revoked one with no background process having run, the over-cap creation is refused rather than shortened, and a token within the cap works until its deadline
     revision: "0.1.0"
 
-  - id: SVC_GW_0066
-    requirement_ids: ["GW_0066"]
+  - id: SVC_GW_AUTH_0008
+    requirement_ids: ["GW_AUTH_0008"]
     title: Rotation changes the secret and nothing else
     verification: automated-test
     description: |
@@ -664,8 +664,8 @@ cases:
       THEN the new secret authenticates with the identical name, scopes and expiry deadline and records its predecessor, the old secret is refused immediately, and the foreign and dead-token rotations are refused
     revision: "0.1.0"
 
-  - id: SVC_GW_0067
-    requirement_ids: ["GW_0067"]
+  - id: SVC_GW_AUTH_0009
+    requirement_ids: ["GW_AUTH_0009"]
     title: Every fetch names its token and the token lifecycle is on the ledger
     verification: automated-test
     description: |
@@ -674,8 +674,8 @@ cases:
       THEN each facade entry carries the id of the token that authenticated it, the export rows carry the same attribution, and the tokens' creation, rotation and revocation appear with the acting identity, name and scopes
     revision: "0.1.0"
 
-  - id: SVC_GW_0068
-    requirement_ids: ["GW_0068"]
+  - id: SVC_GW_AUTH_0010
+    requirement_ids: ["GW_AUTH_0010"]
     title: Deny-by-default walk of every mutation and privileged read, and the disabled default
     verification: automated-test
     description: |
@@ -684,8 +684,8 @@ cases:
       THEN on the enforcing gateway every mutation and privileged read is refused with an authorization error while the browsing surface and the session's own tokens still work, and on the disabled gateway everything works exactly as before enforcement existed
     revision: "0.1.0"
 
-  - id: SVC_GW_0069
-    requirement_ids: ["GW_0069"]
+  - id: SVC_GW_AUTH_0011
+    requirement_ids: ["GW_AUTH_0011"]
     title: An approver acts on its marketplace and is refused every other, including by id
     verification: automated-test
     description: |
@@ -694,8 +694,8 @@ cases:
       THEN every operation on A succeeds, and every operation on B is refused with an authorization error regardless of whether the route named the marketplace or only carried an id
     revision: "0.1.0"
 
-  - id: SVC_GW_0070
-    requirement_ids: ["GW_0070"]
+  - id: SVC_GW_AUTH_0012
+    requirement_ids: ["GW_AUTH_0012"]
     title: An auditor reads the ledger and listings and is refused every mutation
     verification: automated-test
     description: |
@@ -704,8 +704,8 @@ cases:
       THEN every read succeeds and every mutation is refused with an authorization error
     revision: "0.1.0"
 
-  - id: SVC_GW_0071
-    requirement_ids: ["GW_0071"]
+  - id: SVC_GW_AUTH_0013
+    requirement_ids: ["GW_AUTH_0013"]
     title: Grant lifecycle is admin-only, validated, audited, and cannot revoke a config admin
     verification: automated-test
     description: |
@@ -714,8 +714,8 @@ cases:
       THEN the no-role grant is refused with an authorization error, the admin's grant and revocation succeed and each lands on the append-only ledger with actor, target, role and marketplace, the malformed and duplicate grants are refused, the configuration-bootstrapped admin holds admin with no database row an API call could revoke, and the identity endpoint reports enforcement state and each caller's effective roles
     revision: "0.1.0"
 
-  - id: SVC_GW_0072
-    requirement_ids: ["GW_0072"]
+  - id: SVC_GW_RELEASE_0002
+    requirement_ids: ["GW_RELEASE_0002"]
     title: The release workflow carries the multi-arch publication contract
     verification: automated-test
     description: |
@@ -724,8 +724,8 @@ cases:
       THEN the image job builds linux/amd64 and linux/arm64 from one build rather than a matrix over runners, declares no tag trigger of its own so a hand-pushed tag cannot publish, gates every publish step to the release workflow alone so that neither a main-branch push, a schedule nor a bare manually dispatched run ever reaches one, holds the permissions publishing and attestation require, smoke-tests the image before anything is pushed, publishes to the project's registry namespace under the released version and under no other tag, surfaces the published index digest in the job summary, and attests the CycloneDX SBOM against that digest
     revision: "0.5.0"
 
-  - id: SVC_GW_0073
-    requirement_ids: ["GW_0073"]
+  - id: SVC_GW_APPROVAL_0004
+    requirement_ids: ["GW_APPROVAL_0004"]
     title: A snapshot younger than the configured age is unapprovable, on the gateway's own clock
     verification: automated-test
     description: |
@@ -737,8 +737,8 @@ cases:
   # SVC_GW_0074 is deliberately unused — see the matching note on GW_0074 in
   # requirements.yml. The id is retired, not awaiting a change.
 
-  - id: SVC_GW_0075
-    requirement_ids: ["GW_0075"]
+  - id: SVC_GW_OBSERVABILITY_0001
+    requirement_ids: ["GW_OBSERVABILITY_0001"]
     title: The adoption report aggregates the windowed ledger per marketplace, SHA and identity
     verification: automated-test
     description: |
@@ -747,8 +747,8 @@ cases:
       THEN each marketplace carries its content-transferring fetch count, its distinct identity count and its most recent fetch time, the per-SHA breakdown marks the served tip as current, the too-old entry is not counted at the narrow window and is counted at the wide one, and the deny-by-default authorization walk classifies both adoption reads as privileged like the ledger itself
     revision: "0.1.0"
 
-  - id: SVC_GW_0076
-    requirement_ids: ["GW_0076"]
+  - id: SVC_GW_OBSERVABILITY_0002
+    requirement_ids: ["GW_OBSERVABILITY_0002"]
     title: Staleness names exactly the identities not on the served tip, retracted content included
     verification: automated-test
     description: |
@@ -757,8 +757,8 @@ cases:
       THEN the first report names only the superseded identity with its last-received SHA and the served tip it diverges from, and the second names every holder of the retracted content with an absent served tip
     revision: "0.1.0"
 
-  - id: SVC_GW_0077
-    requirement_ids: ["GW_0077"]
+  - id: SVC_GW_OBSERVABILITY_0003
+    requirement_ids: ["GW_OBSERVABILITY_0003"]
     title: The skills_gateway metrics are recorded with export left at its disabled default
     verification: automated-test
     description: |
@@ -767,8 +767,8 @@ cases:
       THEN the meter registry carries the ingestion timing observation tagged with its outcome, the approval observation tagged per decision, and the facade fetch counter tagged per event kind, all under the skills_gateway prefix, and an approval the vetting gate blocks still surfaces its refusal unchanged
     revision: "0.1.0"
 
-  - id: SVC_GW_0078
-    requirement_ids: ["GW_0078"]
+  - id: SVC_GW_OBSERVABILITY_0004
+    requirement_ids: ["GW_OBSERVABILITY_0004"]
     title: The portal adoption page shows a real facade fetch and its identity
     verification: automated-test
     description: |
@@ -777,8 +777,8 @@ cases:
       THEN the marketplace's fetch appears in the adoption report with the fetching identity counted, and the page presented its loading-to-loaded transition without an error state
     revision: "0.1.0"
 
-  - id: SVC_GW_0079
-    requirement_ids: ["GW_0079"]
+  - id: SVC_GW_AUTH_0014
+    requirement_ids: ["GW_AUTH_0014"]
     title: The setup wizard composes origin-derived commands and holds show-once
     verification: automated-test
     description: |
@@ -787,8 +787,8 @@ cases:
       THEN the marketplace-add command and credential configuration carry the page's own origin and the marketplace's facade clone path, the minted cleartext appears in the snippets only while the wizard stays open, and after reopening the snippets carry a placeholder and no previously issued secret is displayed
     revision: "0.1.0"
 
-  - id: SVC_GW_0080
-    requirement_ids: ["GW_0080"]
+  - id: SVC_GW_INGEST_0015
+    requirement_ids: ["GW_INGEST_0015"]
     title: File inspection is tree-addressed, capped, binary-aware, and approver-scoped
     verification: automated-test
     description: |
@@ -797,8 +797,8 @@ cases:
       THEN the tree lists the pinned commit's paths, the text file returns its content, the oversized file returns truncated content with an explicit marker, the binary file returns metadata without text, the absent and traversal-shaped paths answer not-found, and under enforcement the reads succeed only for the owning approver and the admin
     revision: "0.1.0"
 
-  - id: SVC_GW_0081
-    requirement_ids: ["GW_0081"]
+  - id: SVC_GW_INGEST_0016
+    requirement_ids: ["GW_INGEST_0016"]
     title: The diff names the served baseline and the exact delta, or the absence of a baseline
     verification: automated-test
     description: |
@@ -807,8 +807,8 @@ cases:
       THEN the held snapshot's diff names the served commit as its baseline and reports exactly the modified, added and removed paths with a textual diff for text files, and the unserved marketplace's diff reports no baseline with every path reported as added
     revision: "0.1.0"
 
-  - id: SVC_GW_0082
-    requirement_ids: ["GW_0082"]
+  - id: SVC_GW_APPROVAL_0005
+    requirement_ids: ["GW_APPROVAL_0005"]
     title: The preview pane walks a held snapshot's tree and diff in a real browser
     verification: automated-test
     description: |
@@ -817,8 +817,8 @@ cases:
       THEN the file tree lists the snapshot's paths, the SKILL.md renders as formatted text with embedded HTML shown as text rather than interpreted, and the diff view names the modified and added paths against the served baseline
     revision: "0.1.0"
 
-  - id: SVC_GW_0083
-    requirement_ids: ["GW_0083"]
+  - id: SVC_GW_ESTATE_0001
+    requirement_ids: ["GW_ESTATE_0001"]
     title: Startup reconciliation converges the declared estate additively and idempotently
     verification: automated-test
     description: |
@@ -827,8 +827,8 @@ cases:
       THEN the declared objects exist as if created through the API with every applied change on the ledger under its API event name and the reconciler actor, the undeclared API-created objects are untouched, and the second reconciliation performs no writes and appends nothing to the ledger
     revision: "0.1.0"
 
-  - id: SVC_GW_0084
-    requirement_ids: ["GW_0084"]
+  - id: SVC_GW_ESTATE_0002
+    requirement_ids: ["GW_ESTATE_0002"]
     title: Declared marketplaces face the same registration gate as the API
     verification: automated-test
     description: |
@@ -837,8 +837,8 @@ cases:
       THEN the invalid entries each fail with a ledger record and create or change nothing, the registered marketplace keeps its stored URL, and the valid entry is registered with its sync mode applied through the audited sync-mode path
     revision: "0.1.0"
 
-  - id: SVC_GW_0085
-    requirement_ids: ["GW_0085"]
+  - id: SVC_GW_ESTATE_0003
+    requirement_ids: ["GW_ESTATE_0003"]
     title: Declared grants reconcile through the audited grant path
     verification: automated-test
     description: |
@@ -847,8 +847,8 @@ cases:
       THEN the valid grants exist and take effect under role enforcement with ledger entries naming the reconciler actor, the grant for the unknown marketplace fails as an isolated entry, the API-created grant survives, and re-running the reconciliation grants nothing twice
     revision: "0.1.0"
 
-  - id: SVC_GW_0086
-    requirement_ids: ["GW_0086"]
+  - id: SVC_GW_ESTATE_0004
+    requirement_ids: ["GW_ESTATE_0004"]
     title: Declared receiver secrets are write-only, rotated idempotently, floored in length
     verification: automated-test
     description: |
@@ -857,8 +857,8 @@ cases:
       THEN the stored secrets match the declaration with the sink's cursor set only at creation, the changed value rotates the stored secret with a ledger record that does not contain it, the unchanged values cause no write, the blank and too-short secrets each fail as isolated entries, and no secret value appears in the reconciliation report or on the ledger
     revision: "0.1.0"
 
-  - id: SVC_GW_0087
-    requirement_ids: ["GW_0087"]
+  - id: SVC_GW_ESTATE_0005
+    requirement_ids: ["GW_ESTATE_0005"]
     title: A failing entry is loud but never fatal, and the report is answerable
     verification: automated-test
     description: |
@@ -867,8 +867,8 @@ cases:
       THEN the application serves with the valid entries applied, the invalid entry is on the ledger and in the report with its reason, the report endpoint answers auditors and admins and refuses sessions with no role, and the trigger endpoint refuses non-admins and records each admin trigger on the ledger with the acting identity
     revision: "0.1.0"
 
-  - id: SVC_GW_0088
-    requirement_ids: ["GW_0088"]
+  - id: SVC_GW_WEBHOOK_0005
+    requirement_ids: ["GW_WEBHOOK_0005"]
     title: The registry is served, excludes the export event, and the portal composes a filter from it
     verification: automated-test
     description: |
@@ -877,8 +877,8 @@ cases:
       THEN the response lists every event the dispatcher can emit and does not contain the audit export event, the read is refused below auditor and allowed for the auditor, the type-ahead narrows the offered list, selecting every event submits the wildcard filter and a partial selection submits the comma-delimited names, and a stored filter naming an event absent from the registry is marked as unknown
     revision: "0.1.0"
 
-  - id: SVC_GW_0089
-    requirement_ids: ["GW_0089"]
+  - id: SVC_GW_APPROVAL_0006
+    requirement_ids: ["GW_APPROVAL_0006"]
     title: Rule lifecycle is compiled, gated, audited, and declarable
     verification: automated-test
     description: |
@@ -886,8 +886,8 @@ cases:
       WHEN rules are created, listed, updated and deleted through the API with valid, syntactically invalid, non-boolean and duplicate-named expressions, and reconciliation runs
       THEN valid mutations succeed with a ledger entry each and reads answer auditors and admins, invalid and non-boolean expressions are refused with a validation error and are not stored, a duplicate name is refused as a conflict, mutations and reads below their required role are refused, the valid declared rule is created and enforced, the identical declared rule reconciles with zero writes, and the non-compiling declared rule fails as an isolated entry without blocking the others
     revision: "0.1.0"
-  - id: SVC_GW_0090
-    requirement_ids: ["GW_0090"]
+  - id: SVC_GW_APPROVAL_0007
+    requirement_ids: ["GW_APPROVAL_0007"]
     title: The policy gate denies on match and on every error path, publishing nothing
     verification: automated-test
     description: |
@@ -895,8 +895,8 @@ cases:
       WHEN approval is requested for each snapshot
       THEN a matching rule refuses the approval with a conflict naming the rule, the snapshot stays held and the marketplace's served tip is unchanged, a non-matching enabled rule and a disabled matching rule do not refuse, a rule that errors at runtime refuses naming the rule, the comprehension bomb refuses within the evaluation bound rather than hanging, malformed frontmatter refuses under a tools rule, and with no deciding rule the approval succeeds and is served
     revision: "0.1.0"
-  - id: SVC_GW_0091
-    requirement_ids: ["GW_0091"]
+  - id: SVC_GW_APPROVAL_0008
+    requirement_ids: ["GW_APPROVAL_0008"]
     title: Every deciding rule lands on the ledger with its outcome
     verification: automated-test
     description: |
@@ -904,8 +904,8 @@ cases:
       WHEN approval is requested and refused
       THEN the ledger carries one policy-denied entry per deciding rule naming the rule, the snapshot SHA, the marketplace and the acting reviewer, the matched rule's entry records a match and the erroring rule's entry records the evaluation failure, and no snapshot-approved entry is written
     revision: "0.1.0"
-  - id: SVC_GW_0092
-    requirement_ids: ["GW_0092"]
+  - id: SVC_GW_APPROVAL_0009
+    requirement_ids: ["GW_APPROVAL_0009"]
     title: The playground evaluates real snapshots and is provably inert
     verification: automated-test
     description: |
@@ -913,8 +913,8 @@ cases:
       WHEN expressions that match, do not match, fail to compile and fail to evaluate are submitted to the playground, and the unauthorized session submits one
       THEN the answers report matched, not matched, the compile error and the evaluation error respectively without echoing snapshot content, the unauthorized session is refused, and after all calls the ledger row count, the rule set, the snapshot state and the marketplace's served state are exactly what they were before
     revision: "0.1.0"
-  - id: SVC_GW_0093
-    requirement_ids: ["GW_0093"]
+  - id: SVC_GW_VETTING_0019
+    requirement_ids: ["GW_VETTING_0019"]
     title: License detection is deterministic and names unknown and missing states
     verification: automated-test
     description: |
@@ -922,8 +922,8 @@ cases:
       WHEN each snapshot is ingested and the license connector's verdict is read
       THEN each identified license is a finding naming its SPDX identifier and located at its file path or manifest field, the unrecognizable file yields an unknown-license finding at its path, the snapshot without license information yields a missing-license finding, and re-running the chain over the same content yields the same findings
     revision: "0.1.0"
-  - id: SVC_GW_0094
-    requirement_ids: ["GW_0094"]
+  - id: SVC_GW_VETTING_0020
+    requirement_ids: ["GW_VETTING_0020"]
     title: Ban and allow lists block through the ordinary gate, defaults only warn
     verification: automated-test
     description: |
@@ -931,8 +931,8 @@ cases:
       WHEN the fixtures are ingested and approval is attempted
       THEN under defaults identified licenses are informational and unknown or missing ones warn without blocking approval, the banned license and the allow-list misses each block approval naming their finding through the standard vetting-blocked refusal, a scoped expiring waiver on the finding's rule identifier is what lets the approval through, the verdicts are on the append-only ledger, and the recorded chain identity reflects the policy in force
     revision: "0.1.0"
-  - id: SVC_GW_0095
-    requirement_ids: ["GW_0095"]
+  - id: SVC_GW_VETTING_0021
+    requirement_ids: ["GW_VETTING_0021"]
     title: The licenses endpoint reports detections with their policy evaluation
     verification: automated-test
     description: |
@@ -940,8 +940,8 @@ cases:
       WHEN its license report endpoint is requested, and a report is requested for a snapshot id that does not exist
       THEN the response lists each detection with its SPDX identifier or unknown state, its file path or manifest field source, and its evaluation under the configured policy including the banned entry marked as banned, and the unknown snapshot id answers not-found
     revision: "0.1.0"
-  - id: SVC_GW_0096
-    requirement_ids: ["GW_0096"]
+  - id: SVC_GW_APPROVAL_0010
+    requirement_ids: ["GW_APPROVAL_0010"]
     title: The supply side of a snapshot cannot approve it under enforcement, and an independent reviewer is not obstructed
     verification: automated-test
     description: |
@@ -950,8 +950,8 @@ cases:
       THEN each conflicted attempt is refused with a conflict response naming the conflicting acts, every refused snapshot remains undecided with no reviewer recorded and nothing served by the facade, the independent reviewer's approval succeeds and is served, and the automated-trigger and unrecorded-actor snapshots are approved by anyone the role model allows
     revision: "0.1.0"
 
-  - id: SVC_GW_0097
-    requirement_ids: ["GW_0097"]
+  - id: SVC_GW_APPROVAL_0011
+    requirement_ids: ["GW_APPROVAL_0011"]
     title: The recording mode is the default, publishes the approval, and puts the conflict on the ledger
     verification: automated-test
     description: |
@@ -960,8 +960,8 @@ cases:
       THEN the default mode is the recording one, the conflicted approval succeeds and its content is served, a conflict entry naming the acting identity, the snapshot, the mode and each conflicting act is appended to the ledger beside the approval entry, the independent approval appends no such entry, and the enforced refusal appends its own conflict entry recording that the approval did not proceed
     revision: "0.1.0"
 
-  - id: SVC_GW_0098
-    requirement_ids: ["GW_0098"]
+  - id: SVC_GW_AUTH_0015
+    requirement_ids: ["GW_AUTH_0015"]
     title: Claim-mapped roles grant, compose and never widen, and a malformed mapping refuses startup
     verification: automated-test
     description: |
@@ -970,8 +970,8 @@ cases:
       THEN each mapped session may do exactly what its role allows and no more, the near-miss values and the claimless credentials hold nothing, the derived roles union with configured admins and stored grants without altering deny-by-default or approver scoping, the identity endpoint names the source of every effective role, and each malformed mapping refuses startup while a mapping naming an unregistered marketplace starts and matches nothing
     revision: "0.1.0"
 
-  - id: SVC_GW_0099
-    requirement_ids: ["GW_0099"]
+  - id: SVC_GW_AUTH_0016
+    requirement_ids: ["GW_AUTH_0016"]
     title: A truncated claim is reported, not mistaken for an empty one
     verification: automated-test
     description: |
@@ -980,8 +980,8 @@ cases:
       THEN the truncated session is reported as truncated on the session identity endpoint, the detection is logged, and it holds no derived role, while the session with no memberships is not reported truncated
     revision: "0.1.0"
 
-  - id: SVC_GW_0100
-    requirement_ids: ["GW_0100"]
+  - id: SVC_GW_AUTH_0017
+    requirement_ids: ["GW_AUTH_0017"]
     title: The principal claim is configurable and a foreign issuer establishes no session
     verification: automated-test
     description: |
@@ -989,8 +989,8 @@ cases:
       WHEN an identity token from a different issuer is presented, one from the expected issuer is presented, and the session identity endpoint is read on both gateways
       THEN the foreign-issuer token is refused and establishes no session, the matching one succeeds and the identity endpoint reports the configured claim's value which the role lookups key on, and the default gateway behaves exactly as before while logging that no expected issuer is configured
     revision: "0.1.0"
-  - id: SVC_GW_0101
-    requirement_ids: ["GW_0101"]
+  - id: SVC_GW_FACADE_0006
+    requirement_ids: ["GW_FACADE_0006"]
     title: A hosted marketplace registers without an upstream and is never fetched from one
     verification: automated-test
     description: |
@@ -999,8 +999,8 @@ cases:
       THEN the hosted registration succeeds and creates its origin repository, the registration supplying a URL and the one omitting one are both refused, the refresh-strategy change is refused, the description names the origin, the rewrite policy and the publish location, and every surface that would have reported an upstream answers without one rather than failing
     revision: "0.1.0"
 
-  - id: SVC_GW_0102
-    requirement_ids: ["GW_0102"]
+  - id: SVC_GW_FACADE_0007
+    requirement_ids: ["GW_FACADE_0007"]
     title: Only an explicitly push-scoped token publishes, and only the single lineage, forward
     verification: automated-test
     description: |
@@ -1009,8 +1009,8 @@ cases:
       THEN only the push-scoped token publishes to the marketplace it names, every other token is refused, the second marketplace and the escaping name answer as not found, the second branch, the tag and the deletion are refused, the non-fast-forward is refused under the default policy leaving the tip unchanged and accepted under the permissive one with both tips on the append-only ledger, and the serving endpoint refuses the push outright
     revision: "0.1.0"
 
-  - id: SVC_GW_0103
-    requirement_ids: ["GW_0103"]
+  - id: SVC_GW_INGEST_0017
+    requirement_ids: ["GW_INGEST_0017"]
     title: A push is quarantined, vetted, held, and served only once approved
     verification: automated-test
     description: |
@@ -1018,8 +1018,8 @@ cases:
       WHEN each fixture is pushed, the served endpoint is cloned before and after approval, and an approved snapshot is subsequently revoked
       THEN each push produces a snapshot identified by the pushed commit SHA, the clean one is held with a passing vetting chain, the planted credential is held with findings, the non-local manifest is rejected, the clone before approval fails as it does for a marketplace that serves nothing, the clone after approval returns exactly the pushed content, and the clone after revocation fails again
     revision: "0.1.0"
-  - id: SVC_GW_0104
-    requirement_ids: ["GW_0104"]
+  - id: SVC_GW_AUTH_0018
+    requirement_ids: ["GW_AUTH_0018"]
     title: A session credential's life is the gateway's to set, and it can never publish
     verification: automated-test
     description: |
@@ -1028,8 +1028,8 @@ cases:
       THEN every session credential expires at the configured lifetime regardless of what the caller asked for, none may publish, a narrowed one is refused the marketplace it does not name, the rotated one keeps both its deadline and its session-derived mark, the session credentials are reported as session-derived while the ordinary token is not, and the elapsed one fails authentication by comparison at use rather than by any scheduled process
     revision: "0.1.0"
 
-  - id: SVC_GW_0105
-    requirement_ids: ["GW_0105"]
+  - id: SVC_GW_API_0002
+    requirement_ids: ["GW_API_0002"]
     title: The served contract declares the build's version
     verification: automated-test
     description: |
@@ -1038,8 +1038,8 @@ cases:
       THEN the version it declares is that build's version, and not a fixed literal
     revision: "0.1.0"
 
-  - id: SVC_GW_0106
-    requirement_ids: ["GW_0106"]
+  - id: SVC_GW_API_0003
+    requirement_ids: ["GW_API_0003"]
     title: The published contract matches the served contract
     verification: automated-test
     description: |
@@ -1049,8 +1049,8 @@ cases:
       AND a divergence fails the build, naming the command that regenerates the published copy
     revision: "0.1.0"
 
-  - id: SVC_GW_0107
-    requirement_ids: ["GW_0107"]
+  - id: SVC_GW_API_0004
+    requirement_ids: ["GW_API_0004"]
     title: Breaking contract changes are refused unless declared
     verification: automated-test
     description: |
@@ -1061,8 +1061,8 @@ cases:
       AND the refusal states what a deliberate breaking change is required to do instead
     revision: "0.1.0"
 
-  - id: SVC_GW_0108
-    requirement_ids: ["GW_0108"]
+  - id: SVC_GW_RELEASE_0003
+    requirement_ids: ["GW_RELEASE_0003"]
     title: The release workflow is dispatch-only, previews by default and gates before publishing
     verification: automated-test
     description: |
@@ -1071,8 +1071,8 @@ cases:
       THEN the workflow is reachable only by manual dispatch, its preview input defaults to on, it offers the release-candidate modes alongside a plain release, it requires the override flag before a hand-entered version can disagree with the derived one, it runs the main-branch gates before the approval gate, it binds the approval to a protected environment so a required reviewer holds it, it orders the tag and every publishing step after that approval so the reviewer can prevent the version from existing, it creates the release as a prerelease, it orders promotion to latest after the published-artifact verification, and it reports the surviving state of any run that tagged without promoting, including a run that was cancelled
     revision: "0.2.0"
 
-  - id: SVC_GW_0109
-    requirement_ids: ["GW_0109"]
+  - id: SVC_GW_RELEASE_0004
+    requirement_ids: ["GW_RELEASE_0004"]
     title: Release tags are bare semantic versions and cut only from reachable untagged commits
     verification: automated-test
     description: |
@@ -1081,8 +1081,8 @@ cases:
       THEN no workflow matches or strips a prefixed tag, the changelog configuration recognises only bare three-part semantic versions as release tags, and the release workflow refuses a commit that is unreachable from the main branch or that already carries a release tag
     revision: "0.1.0"
 
-  - id: SVC_GW_0110
-    requirement_ids: ["GW_0110"]
+  - id: SVC_GW_AUTH_0019
+    requirement_ids: ["GW_AUTH_0019"]
     title: A configured deployment refuses to start with the development escape hatch on
     verification: automated-test
     description: |
@@ -1095,8 +1095,8 @@ cases:
       AND a gateway with the mode enabled and no identity provider configured still starts
     revision: "0.1.0"
 
-  - id: SVC_GW_0120
-    requirement_ids: ["GW_0120"]
+  - id: SVC_GW_FACADE_0008
+    requirement_ids: ["GW_FACADE_0008"]
     title: The chart fails closed when the storage durability choice is missing
     verification: automated-test
     description: |
@@ -1105,8 +1105,8 @@ cases:
       THEN the chart ships no default storage choice, refuses to render when the choice is absent, unrecognised, or names durable storage without a volume claim, states the data-loss consequence in the refusal, and renders the durable volume from the named claim once the choice is made
     revision: "0.1.0"
 
-  - id: SVC_GW_0121
-    requirement_ids: ["GW_0121"]
+  - id: SVC_GW_RELEASE_0005
+    requirement_ids: ["GW_RELEASE_0005"]
     title: The chart carries registry credentials, an optional ingress, default reservations, its own service account and a non-root security context
     verification: automated-test
     description: |
@@ -1115,8 +1115,8 @@ cases:
       THEN the pod specification carries the configured image pull secrets, names a service account the chart creates and can annotate, and defaults to running as a non-root user with no privilege escalation, all capabilities dropped and a read-only root filesystem alongside a writable temporary directory; the ingress renders only when enabled and carries its class, annotations, host and path rules and TLS block; and the container declares default processor and memory reservations and limits
     revision: "0.1.0"
 
-  - id: SVC_GW_0122
-    requirement_ids: ["GW_0122"]
+  - id: SVC_GW_RELEASE_0006
+    requirement_ids: ["GW_RELEASE_0006"]
     title: The chart passes arbitrary application configuration through to the container
     verification: automated-test
     description: |
@@ -1125,8 +1125,8 @@ cases:
       THEN extra environment entries and projected environment sources reach the container verbatim, structured configuration is rendered into a configuration object that is mounted into the container and layered over the image's own configuration, and a change to that configuration changes the pod specification so the estate is reconciled again
     revision: "0.1.0"
 
-  - id: SVC_GW_0125
-    requirement_ids: ["GW_0125"]
+  - id: SVC_GW_FACADE_0009
+    requirement_ids: ["GW_FACADE_0009"]
     title: Every enumerated column is a database type that refuses values outside its set
     verification: automated-test
     description: |
@@ -1138,8 +1138,8 @@ cases:
       rather than stored
     revision: "0.1.0"
 
-  - id: SVC_GW_0126
-    requirement_ids: ["GW_0126"]
+  - id: SVC_GW_AUTH_0020
+    requirement_ids: ["GW_AUTH_0020"]
     title: Administrative scope is its own dimension with its own empty default
     verification: automated-test
     description: |
@@ -1153,8 +1153,8 @@ cases:
       granting anything
     revision: "0.1.0"
 
-  - id: SVC_GW_0127
-    requirement_ids: ["GW_0127"]
+  - id: SVC_GW_AUTH_0021
+    requirement_ids: ["GW_AUTH_0021"]
     title: Only an administratively scoped bearer credential reaches the administrative interface
     verification: automated-test
     description: |
@@ -1174,8 +1174,8 @@ cases:
       no bearer credential reaches the interface exactly as before
     revision: "0.1.0"
 
-  - id: SVC_GW_0128
-    requirement_ids: ["GW_0128"]
+  - id: SVC_GW_AUDIT_0007
+    requirement_ids: ["GW_AUDIT_0007"]
     title: The ledger types its actors explicitly and outlives the credentials it names
     verification: automated-test
     description: |
@@ -1194,8 +1194,8 @@ cases:
       ledger appends none
     revision: "0.1.0"
 
-  - id: SVC_GW_0129
-    requirement_ids: ["GW_0129"]
+  - id: SVC_GW_AUTH_0022
+    requirement_ids: ["GW_AUTH_0022"]
     title: Every endpoint is classified and no scope reaches an unclassified or excluded one
     verification: automated-test
     description: |
@@ -1215,8 +1215,8 @@ cases:
       even to the credential holding all of them
     revision: "0.1.0"
 
-  - id: SVC_GW_0130
-    requirement_ids: ["GW_0130"]
+  - id: SVC_GW_AUTH_0023
+    requirement_ids: ["GW_AUTH_0023"]
     title: A machine principal's authority is the intersection of scope and declared role
     verification: automated-test
     description: |
@@ -1234,8 +1234,8 @@ cases:
       administrative role
     revision: "0.1.0"
 
-  - id: SVC_GW_0131
-    requirement_ids: ["GW_0131"]
+  - id: SVC_GW_AUTH_0024
+    requirement_ids: ["GW_AUTH_0024"]
     title: A machine credential expires, rotates without widening, and is centrally administered
     verification: automated-test
     description: |
@@ -1252,8 +1252,8 @@ cases:
       their own
     revision: "0.1.0"
 
-  - id: SVC_GW_0111
-    requirement_ids: ["GW_0111"]
+  - id: SVC_GW_FACADE_0010
+    requirement_ids: ["GW_FACADE_0010"]
     title: The storage backend is the one that was named, or the gateway does not start
     verification: automated-test
     description: |
@@ -1270,8 +1270,8 @@ cases:
       and passes conditional writes through faithfully
     revision: "0.1.0"
 
-  - id: SVC_GW_0112
-    requirement_ids: ["GW_0112"]
+  - id: SVC_GW_FACADE_0011
+    requirement_ids: ["GW_FACADE_0011"]
     title: Every storage backend satisfies the same reference-transition contract
     verification: automated-test
     description: |
@@ -1289,8 +1289,8 @@ cases:
       is advertised identically by every backend
     revision: "0.1.0"
 
-  - id: SVC_GW_0116
-    requirement_ids: ["GW_0116"]
+  - id: SVC_GW_FACADE_0012
+    requirement_ids: ["GW_FACADE_0012"]
     title: The storage backend's contention, levels, latency and reachability are observable
     verification: automated-test
     description: |
@@ -1307,8 +1307,8 @@ cases:
       down rather than up
     revision: "0.1.0"
 
-  - id: SVC_GW_0114
-    requirement_ids: ["GW_0114"]
+  - id: SVC_GW_FACADE_0013
+    requirement_ids: ["GW_FACADE_0013"]
     title: A migration between backends copies everything and proves it, or refuses
     verification: automated-test
     description: |
@@ -1326,8 +1326,8 @@ cases:
       the flag as the running process reads it — so that no packaging can compile it out
     revision: "0.2.0"
 
-  - id: SVC_GW_0115
-    requirement_ids: ["GW_0115"]
+  - id: SVC_GW_FACADE_0014
+    requirement_ids: ["GW_FACADE_0014"]
     title: The chart refuses a storage backend or a replica count it cannot honour
     verification: automated-test
     description: |
@@ -1344,8 +1344,8 @@ cases:
       singleton is still enabled
     revision: "0.1.0"
 
-  - id: SVC_GW_0132
-    requirement_ids: ["GW_0132"]
+  - id: SVC_GW_FACADE_0015
+    requirement_ids: ["GW_FACADE_0015"]
     title: Publication lands both references or neither, on every backend
     verification: automated-test
     description: |
@@ -1362,8 +1362,8 @@ cases:
       survives it
     revision: "0.1.0"
 
-  - id: SVC_GW_0133
-    requirement_ids: ["GW_0133"]
+  - id: SVC_GW_APPROVAL_0012
+    requirement_ids: ["GW_APPROVAL_0012"]
     title: A refused publication yields no approval, no ledger entry and nothing served
     verification: automated-test
     description: |
@@ -1380,8 +1380,8 @@ cases:
       own sources
     revision: "0.1.0"
 
-  - id: SVC_GW_0134
-    requirement_ids: ["GW_0134"]
+  - id: SVC_GW_FACADE_0016
+    requirement_ids: ["GW_FACADE_0016"]
     title: The facade advertises the served branch, the snapshot pins, and nothing else
     verification: automated-test
     description: |
@@ -1393,8 +1393,8 @@ cases:
       staging reference appears on the wire
     revision: "0.1.0"
 
-  - id: SVC_GW_0135
-    requirement_ids: ["GW_0135"]
+  - id: SVC_GW_FACADE_0017
+    requirement_ids: ["GW_FACADE_0017"]
     title: The catalog rebuild removes its scaffolding and reports only a served commit
     verification: automated-test
     description: |
@@ -1406,8 +1406,8 @@ cases:
       reference resolves to
     revision: "0.1.0"
 
-  - id: SVC_GW_0136
-    requirement_ids: ["GW_0136"]
+  - id: SVC_GW_RETENTION_0007
+    requirement_ids: ["GW_RETENTION_0007"]
     title: A purge that cannot remove the pin keeps the record and writes no ledger entry
     verification: automated-test
     description: |
@@ -1419,8 +1419,8 @@ cases:
       no purge for it
     revision: "0.1.0"
 
-  - id: SVC_GW_0137
-    requirement_ids: ["GW_0137"]
+  - id: SVC_GW_INGEST_0018
+    requirement_ids: ["GW_INGEST_0018"]
     title: An ingestion whose pin is refused records no snapshot
     verification: automated-test
     description: |
@@ -1431,8 +1431,8 @@ cases:
       that commit for a reviewer to approve
     revision: "0.1.0"
 
-  - id: SVC_GW_0138
-    requirement_ids: ["GW_0138"]
+  - id: SVC_GW_AUTH_0025
+    requirement_ids: ["GW_AUTH_0025"]
     title: A session holding no role is refused everywhere, with no enforcement switch present
     verification: automated-test
     description: |
@@ -1444,8 +1444,8 @@ cases:
       the build, and the session identity endpoint carries no enforcement flag
     revision: "0.1.0"
 
-  - id: SVC_GW_0139
-    requirement_ids: ["GW_0139"]
+  - id: SVC_GW_AUTH_0026
+    requirement_ids: ["GW_AUTH_0026"]
     title: A configuration naming no administrator refuses to start
     verification: automated-test
     description: |
@@ -1458,8 +1458,8 @@ cases:
       reads the database to decide
     revision: "0.1.0"
 
-  - id: SVC_GW_0140
-    requirement_ids: ["GW_0140"]
+  - id: SVC_GW_AUTH_0027
+    requirement_ids: ["GW_AUTH_0027"]
     title: The removed enforcement property is refused in every spelling
     verification: automated-test
     description: |
@@ -1470,8 +1470,8 @@ cases:
       enforcement is now unconditional
     revision: "0.1.0"
 
-  - id: SVC_GW_0141
-    requirement_ids: ["GW_0141"]
+  - id: SVC_GW_AUTH_0028
+    requirement_ids: ["GW_AUTH_0028"]
     title: The escape hatch's principal administers, and nothing else does by that path
     verification: automated-test
     description: |
@@ -1485,8 +1485,8 @@ cases:
       this path
     revision: "0.1.0"
 
-  - id: SVC_GW_0142
-    requirement_ids: ["GW_0142"]
+  - id: SVC_GW_VETTING_0022
+    requirement_ids: ["GW_VETTING_0022"]
     title: Vetting ledger entries carry the run, the finding count and severity, and a system actor
     verification: automated-test
     description: |
@@ -1500,8 +1500,8 @@ cases:
       human actor
     revision: "0.1.0"
 
-  - id: SVC_GW_0143
-    requirement_ids: ["GW_0143"]
+  - id: SVC_GW_VETTING_0023
+    requirement_ids: ["GW_VETTING_0023"]
     title: A clean connector pass records the coverage it examined
     verification: automated-test
     description: |
@@ -1512,8 +1512,8 @@ cases:
       indistinguishable from a connector that never ran
     revision: "0.1.0"
 
-  - id: SVC_GW_0144
-    requirement_ids: ["GW_0144"]
+  - id: SVC_GW_VETTING_0024
+    requirement_ids: ["GW_VETTING_0024"]
     title: A configured external connector joins the chain and runs in order
     verification: automated-test
     description: |
@@ -1526,8 +1526,8 @@ cases:
       file content, and a passing answer is recorded as a passing verdict that clears
     revision: "0.1.0"
 
-  - id: SVC_GW_0145
-    requirement_ids: ["GW_0145"]
+  - id: SVC_GW_VETTING_0025
+    requirement_ids: ["GW_VETTING_0025"]
     title: Every inconclusive answer from an external connector blocks
     verification: automated-test
     description: |
@@ -1542,8 +1542,8 @@ cases:
       approved
     revision: "0.1.0"
 
-  - id: SVC_GW_0146
-    requirement_ids: ["GW_0146"]
+  - id: SVC_GW_VETTING_0026
+    requirement_ids: ["GW_VETTING_0026"]
     title: External verdicts take the worst of declared and derived, and carry their report link
     verification: automated-test
     description: |
@@ -1556,8 +1556,8 @@ cases:
       a failing verdict that blocks, while informational findings alone still pass
     revision: "0.1.0"
 
-  - id: SVC_GW_0147
-    requirement_ids: ["GW_0147"]
+  - id: SVC_GW_VETTING_0027
+    requirement_ids: ["GW_VETTING_0027"]
     title: A pending answer from an external connector blocks as the async seam
     verification: automated-test
     description: |
@@ -1567,8 +1567,8 @@ cases:
       state does not clear, and the snapshot stays held and cannot be approved
     revision: "0.1.0"
 
-  - id: SVC_GW_0148
-    requirement_ids: ["GW_0148"]
+  - id: SVC_GW_VETTING_0028
+    requirement_ids: ["GW_VETTING_0028"]
     title: An administrator overrides a blocked vetting outcome, audibly and no one else can
     verification: automated-test
     description: |
@@ -1585,8 +1585,8 @@ cases:
       vetting surface reports it approved over a vetting failure rather than clear
     revision: "0.1.0"
 
-  - id: SVC_GW_0149
-    requirement_ids: ["GW_0149"]
+  - id: SVC_GW_VETTING_0029
+    requirement_ids: ["GW_VETTING_0029"]
     title: An administrator disables a connector globally and per marketplace, audibly and alone
     verification: automated-test
     description: |
@@ -1604,8 +1604,8 @@ cases:
       blocked rather than clear
     revision: "0.1.0"
 
-  - id: SVC_GW_0150
-    requirement_ids: ["GW_0150"]
+  - id: SVC_GW_INGEST_0019
+    requirement_ids: ["GW_INGEST_0019"]
     title: Every plugin source form is classified, and the unsupported ones fail closed by type
     verification: automated-test
     description: |
@@ -1621,8 +1621,8 @@ cases:
       took, with the snapshot recorded rejected
     revision: "0.1.0"
 
-  - id: SVC_GW_0151
-    requirement_ids: ["GW_0151"]
+  - id: SVC_GW_INGEST_0020
+    requirement_ids: ["GW_INGEST_0020"]
     title: External sources are admitted only when enabled, and only within the configured bounds
     verification: automated-test
     description: |
@@ -1640,8 +1640,8 @@ cases:
       configuration causes a network request to the source
     revision: "0.1.0"
 
-  - id: SVC_GW_0152
-    requirement_ids: ["GW_0152"]
+  - id: SVC_GW_INGEST_0021
+    requirement_ids: ["GW_INGEST_0021"]
     title: An admitted but unresolved external source is rejected, never held
     verification: automated-test
     description: |
@@ -1655,8 +1655,8 @@ cases:
       and the published repository is unchanged
     revision: "0.1.0"
 
-  - id: SVC_GW_0153
-    requirement_ids: ["GW_0153"]
+  - id: SVC_GW_INGEST_0022
+    requirement_ids: ["GW_INGEST_0022"]
     title: A snapshot's inventory diff against the last approved snapshot
     verification: automated-test
     description: |
@@ -1672,8 +1672,8 @@ cases:
       snapshot answered as not found
     revision: "0.1.0"
 
-  - id: SVC_GW_0154
-    requirement_ids: ["GW_0154"]
+  - id: SVC_GW_FACADE_0018
+    requirement_ids: ["GW_FACADE_0018"]
     title: A pack transfer names the advertised ref its want resolved to
     verification: automated-test
     description: |
@@ -1687,8 +1687,8 @@ cases:
       reference for a want that matches nothing the facade advertised
     revision: "0.1.0"
 
-  - id: SVC_GW_0159
-    requirement_ids: ["GW_0159"]
+  - id: SVC_GW_WEBHOOK_0006
+    requirement_ids: ["GW_WEBHOOK_0006"]
     title: A held snapshot announces itself to the subscribers that asked, and to no others
     verification: automated-test
     description: |
@@ -1706,8 +1706,8 @@ cases:
       approved snapshot's re-vetting run
     revision: "0.1.0"
 
-  - id: SVC_GW_0160
-    requirement_ids: ["GW_0160"]
+  - id: SVC_GW_WEBHOOK_0007
+    requirement_ids: ["GW_WEBHOOK_0007"]
     title: The approval-pending payload carries the summary and none of the content behind it
     verification: automated-test
     description: |
@@ -1722,8 +1722,8 @@ cases:
       snapshot
     revision: "0.1.0"
 
-  - id: SVC_GW_0155
-    requirement_ids: ["GW_0155"]
+  - id: SVC_GW_INGEST_0023
+    requirement_ids: ["GW_INGEST_0023"]
     title: Resolve an admitted external plugin source into quarantine
     verification: automated-test
     description: |
@@ -1737,8 +1737,8 @@ cases:
       that field, and nothing fetched is reachable through the consumer facade
     revision: "0.1.0"
 
-  - id: SVC_GW_0156
-    requirement_ids: ["GW_0156"]
+  - id: SVC_GW_INGEST_0024
+    requirement_ids: ["GW_INGEST_0024"]
     title: Composite snapshot whose manifest is gateway-local and whose identity is deterministic
     verification: automated-test
     description: |
@@ -1756,8 +1756,8 @@ cases:
       with no commit synthesised
     revision: "0.1.0"
 
-  - id: SVC_GW_0157
-    requirement_ids: ["GW_0157"]
+  - id: SVC_GW_INGEST_0025
+    requirement_ids: ["GW_INGEST_0025"]
     title: Refuse source resolution to forbidden addresses, redirects and transports
     verification: automated-test
     description: |
@@ -1774,8 +1774,8 @@ cases:
       snapshot is rejected
     revision: "0.1.0"
 
-  - id: SVC_GW_0158
-    requirement_ids: ["GW_0158"]
+  - id: SVC_GW_INGEST_0026
+    requirement_ids: ["GW_INGEST_0026"]
     title: Content inside every bound is accepted and a refusal names the plugin and the bound
     verification: automated-test
     description: |
@@ -1787,8 +1787,8 @@ cases:
       breached
     revision: "0.1.0"
 
-  - id: SVC_GW_0158.1
-    requirement_ids: ["GW_0158.1"]
+  - id: SVC_GW_INGEST_0026.1
+    requirement_ids: ["GW_INGEST_0026.1"]
     title: A source is cut off at the received-byte bound rather than measured after it
     verification: automated-test
     description: |
@@ -1801,8 +1801,8 @@ cases:
       the transfer so it can stop at it
     revision: "0.1.0"
 
-  - id: SVC_GW_0158.2
-    requirement_ids: ["GW_0158.2"]
+  - id: SVC_GW_INGEST_0026.2
+    requirement_ids: ["GW_INGEST_0026.2"]
     title: A source over the per-source decompressed bound is refused
     verification: automated-test
     description: |
@@ -1811,8 +1811,8 @@ cases:
       THEN the source is refused with a violation naming uncompressed size
     revision: "0.1.0"
 
-  - id: SVC_GW_0158.3
-    requirement_ids: ["GW_0158.3"]
+  - id: SVC_GW_INGEST_0026.3
+    requirement_ids: ["GW_INGEST_0026.3"]
     title: The decompressed bound accumulates across a manifest's sources
     verification: automated-test
     description: |
@@ -1823,8 +1823,8 @@ cases:
       manifest total, and no refused source has advanced the accumulator
     revision: "0.1.0"
 
-  - id: SVC_GW_0158.4
-    requirement_ids: ["GW_0158.4"]
+  - id: SVC_GW_INGEST_0026.4
+    requirement_ids: ["GW_INGEST_0026.4"]
     title: An extreme expansion is refused, and a small compressible source is not
     verification: automated-test
     description: |
@@ -1836,8 +1836,8 @@ cases:
       third are accepted
     revision: "0.1.0"
 
-  - id: SVC_GW_0158.5
-    requirement_ids: ["GW_0158.5"]
+  - id: SVC_GW_INGEST_0026.5
+    requirement_ids: ["GW_INGEST_0026.5"]
     title: A source over the object-count bound is refused
     verification: automated-test
     description: |
@@ -1846,8 +1846,8 @@ cases:
       THEN the source is refused with a violation naming objects
     revision: "0.1.0"
 
-  - id: SVC_GW_0158.6
-    requirement_ids: ["GW_0158.6"]
+  - id: SVC_GW_INGEST_0026.6
+    requirement_ids: ["GW_INGEST_0026.6"]
     title: A source holding a file over the largest-file bound is refused
     verification: automated-test
     description: |
@@ -1859,8 +1859,8 @@ cases:
       the real repository is rejected
     revision: "0.1.0"
 
-  - id: SVC_GW_0158.7
-    requirement_ids: ["GW_0158.7"]
+  - id: SVC_GW_INGEST_0026.7
+    requirement_ids: ["GW_INGEST_0026.7"]
     title: A source with a tree deeper than the bound is refused
     verification: automated-test
     description: |
@@ -1869,8 +1869,8 @@ cases:
       THEN the source is refused with a violation naming depth
     revision: "0.1.0"
 
-  - id: SVC_GW_0158.8
-    requirement_ids: ["GW_0158.8"]
+  - id: SVC_GW_INGEST_0026.8
+    requirement_ids: ["GW_INGEST_0026.8"]
     title: A resolution that outlives its wall-clock bound is refused
     verification: automated-test
     description: |
@@ -1881,8 +1881,8 @@ cases:
       with a violation naming the deadline
     revision: "0.1.0"
 
-  - id: SVC_GW_0161
-    requirement_ids: ["GW_0161"]
+  - id: SVC_GW_INGEST_0027
+    requirement_ids: ["GW_INGEST_0027"]
     title: A failed resolution rejects the snapshot and leaves nothing half-resolved
     verification: automated-test
     description: |
@@ -1897,8 +1897,8 @@ cases:
       receive the previously approved snapshot
     revision: "0.1.0"
 
-  - id: SVC_GW_0162
-    requirement_ids: ["GW_0162"]
+  - id: SVC_GW_VETTING_0030
+    requirement_ids: ["GW_VETTING_0030"]
     title: A chain run reads each selected blob once and never opens an unselected one
     verification: automated-test
     description: |
@@ -1912,8 +1912,8 @@ cases:
       bound is still served in full on every walk
     revision: "0.1.0"
 
-  - id: SVC_GW_0167
-    requirement_ids: ["GW_0167"]
+  - id: SVC_GW_INGEST_0028
+    requirement_ids: ["GW_INGEST_0028"]
     title: SKILL.md frontmatter is validated against the pinned specification
     verification: automated-test
     description: |
@@ -1930,8 +1930,8 @@ cases:
       the connector's version
     revision: "0.1.0"
 
-  - id: SVC_GW_0166
-    requirement_ids: ["GW_0166"]
+  - id: SVC_GW_INGEST_0029
+    requirement_ids: ["GW_INGEST_0029"]
     title: Registering a normalized-duplicate URL warns and still succeeds
     verification: automated-test
     description: |
@@ -1945,8 +1945,8 @@ cases:
       marketplace's carries no warning
     revision: "0.1.0"
 
-  - id: SVC_GW_0168
-    requirement_ids: ["GW_0168"]
+  - id: SVC_GW_FACADE_0019
+    requirement_ids: ["GW_FACADE_0019"]
     title: An abandoned staging reference is swept and an in-flight publication is not
     verification: automated-test
     description: |
@@ -1963,8 +1963,8 @@ cases:
       served from are untouched
     revision: "0.1.0"
 
-  - id: SVC_GW_0163
-    requirement_ids: ["GW_0163"]
+  - id: SVC_GW_AUTH_0029
+    requirement_ids: ["GW_AUTH_0029"]
     title: The OIDC redirect URI follows forwarded headers only under a configured strategy
     verification: automated-test
     description: |
@@ -1979,8 +1979,8 @@ cases:
       the fourth redirects with the supplied URI regardless of the headers
     revision: "0.1.0"
 
-  - id: SVC_GW_0164
-    requirement_ids: ["GW_0164"]
+  - id: SVC_GW_INGEST_0030
+    requirement_ids: ["GW_INGEST_0030"]
     title: The resolved closure is recorded with the snapshot and queryable
     verification: automated-test
     description: |
@@ -2001,8 +2001,8 @@ cases:
       none; and purging the snapshot removes the closure with it
     revision: "0.1.0"
 
-  - id: SVC_GW_0165
-    requirement_ids: ["GW_0165"]
+  - id: SVC_GW_APPROVAL_0013
+    requirement_ids: ["GW_APPROVAL_0013"]
     title: Approval refuses a snapshot whose closure is incomplete
     verification: automated-test
     description: |
@@ -2017,8 +2017,8 @@ cases:
       are still approved
     revision: "0.1.0"
 
-  - id: SVC_GW_0169
-    requirement_ids: ["GW_0169"]
+  - id: SVC_GW_FACADE_0020
+    requirement_ids: ["GW_FACADE_0020"]
     title: Only approved, served content is mirrored, and only when the mirror is enabled
     verification: automated-test
     description: |
@@ -2032,8 +2032,8 @@ cases:
       configured mirror credential appears in any ledger entry or API response
     revision: "0.1.0"
 
-  - id: SVC_GW_0170
-    requirement_ids: ["GW_0170"]
+  - id: SVC_GW_FACADE_0021
+    requirement_ids: ["GW_FACADE_0021"]
     title: A mirror that cannot be pushed to changes neither the approval nor what is served
     verification: automated-test
     description: |
@@ -2046,8 +2046,8 @@ cases:
       failed mirror update is recorded and visible in the mirror report
     revision: "0.1.0"
 
-  - id: SVC_GW_0171
-    requirement_ids: ["GW_0171"]
+  - id: SVC_GW_FACADE_0022
+    requirement_ids: ["GW_FACADE_0022"]
     title: Revoking a snapshot removes it from the mirror, and a failed removal does not block it
     verification: automated-test
     description: |
@@ -2059,8 +2059,8 @@ cases:
       and the divergence the unreachable target caused is recorded and reportable
     revision: "0.1.0"
 
-  - id: SVC_GW_0172
-    requirement_ids: ["GW_0172"]
+  - id: SVC_GW_FACADE_0023
+    requirement_ids: ["GW_FACADE_0023"]
     title: The drift report names exactly how the mirror and the served references differ
     verification: automated-test
     description: |
@@ -2076,8 +2076,8 @@ cases:
       administrator
     revision: "0.1.0"
 
-  - id: SVC_GW_0179
-    requirement_ids: ["GW_0179"]
+  - id: SVC_GW_FACADE_0024
+    requirement_ids: ["GW_FACADE_0024"]
     title: The image and the chart point the embedded git library's cache at the writable scratch directory
     verification: automated-test
     description: |
@@ -2089,8 +2089,8 @@ cases:
       instead of falling back to a home directory the read-only root filesystem does
       not provide
     revision: "0.1.0"
-  - id: SVC_GW_0190
-    requirement_ids: ["GW_0190"]
+  - id: SVC_GW_FACADE_0025
+    requirement_ids: ["GW_FACADE_0025"]
     title: The schedule removes a revoked reference the revocation's own push could not
     verification: automated-test
     description: |
@@ -2114,8 +2114,8 @@ cases:
       or as a successful update, and a later reconciliation against a repository that
       reads correctly again reconciles normally
     revision: "0.1.0"
-  - id: SVC_GW_0191
-    requirement_ids: ["GW_0191"]
+  - id: SVC_GW_FACADE_0026
+    requirement_ids: ["GW_FACADE_0026"]
     title: The mirror's divergence is readable as metrics without asking the mirror
     verification: automated-test
     description: |
@@ -2129,8 +2129,8 @@ cases:
       the reconciliations attempted; no meter carries the marketplace, a commit, a
       principal or the mirror credential; and reading them contacts the mirror not at all
     revision: "0.1.0"
-  - id: SVC_GW_0192
-    requirement_ids: ["GW_0192"]
+  - id: SVC_GW_FACADE_0027
+    requirement_ids: ["GW_FACADE_0027"]
     title: An administrator's reconcile request repairs the mirror and answers with the result
     verification: automated-test
     description: |
@@ -2143,8 +2143,8 @@ cases:
       machine-credential scope reaches it, and a gateway with no mirror configured answers
       that none is configured rather than failing
     revision: "0.1.0"
-  - id: SVC_GW_0193
-    requirement_ids: ["GW_0193"]
+  - id: SVC_GW_FACADE_0028
+    requirement_ids: ["GW_FACADE_0028"]
     title: The ledger names what a reconciliation changed, and says nothing when it changed nothing
     verification: automated-test
     description: |
@@ -2156,8 +2156,8 @@ cases:
       and deleted, records the second as a repair of divergence naming the same, records
       nothing at all for the third, and carries the mirror credential in none of them
     revision: "0.1.0"
-  - id: SVC_GW_0181
-    requirement_ids: ["GW_0181"]
+  - id: SVC_GW_API_0005
+    requirement_ids: ["GW_API_0005"]
     title: The served document describes every lifecycle event, its body and its headers
     verification: automated-test
     description: |
@@ -2175,8 +2175,8 @@ cases:
       the field, the header or the body reference has been removed
     revision: "0.1.0"
 
-  - id: SVC_GW_0182
-    requirement_ids: ["GW_0182"]
+  - id: SVC_GW_API_0006
+    requirement_ids: ["GW_API_0006"]
     title: A removed delivery field or event is refused unless the change declares the break
     verification: automated-test
     description: |

@@ -2,7 +2,7 @@
 
 ## Why
 
-GW_0112 — Reference transitions are the same on every storage backend — is the
+GW_FACADE_0011 — Reference transitions are the same on every storage backend — is the
 requirement the object-store backend exists to satisfy, and its whole weight
 rests on one behaviour of the store underneath: a conditional `PutObject` whose
 `If-Match` precondition no longer holds must fail with 412 rather than
@@ -58,7 +58,7 @@ inference is now made on evidence.
 
 ### Modified Capabilities
 
-_None._ GW_0112's text is unchanged and its SVC is unchanged. `git-storage`
+_None._ GW_FACADE_0011's text is unchanged and its SVC is unchanged. `git-storage`
 appears in this change's spec delta only to name the requirement whose
 verification was extended.
 

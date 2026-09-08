@@ -55,12 +55,12 @@ fully defined as code.
 - `declarative-estate`: the declarative estate block and its reconciliation —
   additive idempotent convergence, trust-boundary reuse, operator-supplied
   secrets by reference, failure isolation and reporting
-  (GW_0083–GW_0087).
+  (GW_ESTATE_0001–GW_ESTATE_0005).
 
 ### Modified Capabilities
 
-<!-- none: registration (GW_0016/GW_0017), grants (GW_0071), receivers
-     (GW_0024, GW_0028) are unchanged; the reconciler goes through them -->
+<!-- none: registration (GW_INGEST_0005/GW_INGEST_0006), grants (GW_AUTH_0013), receivers
+     (GW_WEBHOOK_0002, GW_AUDIT_0004) are unchanged; the reconciler goes through them -->
 
 ## Impact
 
@@ -80,5 +80,5 @@ fully defined as code.
   `guides/declarative-estate.md`, new `reference/api/estate.md`,
   trust-boundaries note, glossary; CLAUDE.md note recording #65/#66 as
   continuous obligations.
-- **Traceability**: GW_0083–GW_0087 + SVC_GW_0083–SVC_GW_0087
-  (GW_0073–GW_0082 are taken by in-flight changes).
+- **Traceability**: GW_ESTATE_0001–GW_ESTATE_0005 + SVC_GW_ESTATE_0001–SVC_GW_ESTATE_0005
+  (GW_APPROVAL_0004–GW_APPROVAL_0005 are taken by in-flight changes).

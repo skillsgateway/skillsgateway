@@ -19,8 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * The one registration path (GW_0016, GW_0063): every marketplace — registered interactively
- * through the API or declared in the estate configuration (GW_0084) — enters through this gate.
+ * The one registration path (GW_INGEST_0005, GW_FACADE_0005): every marketplace — registered interactively
+ * through the API or declared in the estate configuration (GW_ESTATE_0002) — enters through this gate.
  * The validations live here precisely so no second caller can grow a second, drifting copy of the
  * trust boundary.
  */
@@ -53,14 +53,14 @@ public class MarketplaceRegistrationService {
         this.storage = storage;
     }
 
-    /** A successful registration, plus any non-blocking warnings about it (GW_0166). */
+    /** A successful registration, plus any non-blocking warnings about it (GW_INGEST_0029). */
     public record RegistrationOutcome(Marketplace marketplace, List<String> warnings) {}
 
     /**
      * Validates, registers, and appends the ledger entry with the acting identity. Statuses match
      * the API contract; a non-HTTP caller (the estate reconciler) reports the reason instead.
      */
-    @Requirements({"GW_0001"})
+    @Requirements({"GW_INGEST_0001"})
     public RegistrationOutcome register(String name, String url, String actor) {
         return register(name, url, Marketplace.ORIGIN_UPSTREAM, null, actor);
     }
@@ -69,11 +69,11 @@ public class MarketplaceRegistrationService {
      * Validates, registers, and appends the ledger entry with the acting identity. Statuses match
      * the API contract; a non-HTTP caller (the estate reconciler) reports the reason instead.
      *
-     * <p>A hosted marketplace (GW_0101) has no upstream, so the scheme allowlist has nothing to
+     * <p>A hosted marketplace (GW_FACADE_0006) has no upstream, so the scheme allowlist has nothing to
      * check and a supplied URL is a contradiction rather than an unused field; its origin
      * repository is created here so a publisher can push the moment registration returns.
      */
-    @Requirements({"GW_0001", "GW_0096", "GW_0101"})
+    @Requirements({"GW_INGEST_0001", "GW_APPROVAL_0010", "GW_FACADE_0006"})
     public RegistrationOutcome register(String name, String url, String origin, String pushPolicy, String actor) {
         if (name == null || !MARKETPLACE_NAME.matcher(name).matches()) {
             throw new ResponseStatusException(
@@ -106,7 +106,7 @@ public class MarketplaceRegistrationService {
                 hosted ? null : forgeMetadataService.resolve(url).orElse(null),
                 resolvedOrigin,
                 resolvedPolicy,
-                // The registrant is a column, not only a ledger row (GW_0096): the four-eyes rule
+                // The registrant is a column, not only a ledger row (GW_APPROVAL_0010): the four-eyes rule
                 // reads it when this marketplace's snapshots are approved.
                 actor);
         if (hosted) {
@@ -119,10 +119,10 @@ public class MarketplaceRegistrationService {
     /**
      * Non-blocking: tracking one upstream under two marketplace names is a legitimate way to test
      * a marketplace before promoting it, so a collision here is surfaced, never refused. Compared
-     * by normalized URL (GW_0166) against every other upstream marketplace, so this also catches a
+     * by normalized URL (GW_INGEST_0029) against every other upstream marketplace, so this also catches a
      * duplicate that only case, a trailing slash or a {@code .git} suffix disguises.
      */
-    @Requirements({"GW_0166"})
+    @Requirements({"GW_INGEST_0029"})
     private List<String> duplicateUrlWarnings(String url) {
         String normalized = CloneUrlNormalizer.normalize(url);
         if (normalized == null) {
@@ -136,7 +136,7 @@ public class MarketplaceRegistrationService {
     }
 
     /** A push policy is a hosted marketplace's decision; an upstream one has no lineage to rewrite. */
-    @Requirements({"GW_0101"})
+    @Requirements({"GW_FACADE_0006"})
     private String requirePushPolicy(String pushPolicy, boolean hosted) {
         if (pushPolicy == null || pushPolicy.isBlank()) {
             return Marketplace.PUSH_APPEND_ONLY;
@@ -157,7 +157,7 @@ public class MarketplaceRegistrationService {
      * decide whether an unknown marketplace means "not registered" or "not pushed to yet" — it
      * answers not-found for both, and the answer is the same either way.
      */
-    @Requirements({"GW_0101"})
+    @Requirements({"GW_FACADE_0006"})
     private void createOriginRepository(String name) {
         try (Repository ignored = storage.hosted(name)) {
             // Opening creates it; nothing else to do.
@@ -168,7 +168,7 @@ public class MarketplaceRegistrationService {
     }
 
     /** Fails closed: scheme-less and unparseable URLs are rejected along with non-allowlisted schemes. */
-    @Requirements({"GW_0016"})
+    @Requirements({"GW_INGEST_0005"})
     private void requireAllowlistedScheme(String url) {
         String scheme = null;
         if (url != null) {
@@ -184,8 +184,8 @@ public class MarketplaceRegistrationService {
         }
     }
 
-    /** The virtual catalog occupies its facade path; a marketplace there would collide (GW_0063). */
-    @Requirements({"GW_0063"})
+    /** The virtual catalog occupies its facade path; a marketplace there would collide (GW_FACADE_0005). */
+    @Requirements({"GW_FACADE_0005"})
     private void requireNotReservedName(String name) {
         if (name.equals(properties.catalog().name())) {
             throw new ResponseStatusException(

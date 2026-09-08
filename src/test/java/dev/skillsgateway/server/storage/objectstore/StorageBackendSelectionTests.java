@@ -39,14 +39,14 @@ class StorageBackendSelectionTests {
 
     // no selection at all is the filesystem, so an upgrade changes nothing
     @Test
-    @SVCs({"SVC_GW_0111"})
+    @SVCs({"SVC_GW_FACADE_0010"})
     void absentSelectionIsTheFilesystem() {
         contexts.run(context -> assertThat(context).getBean(GitStorage.class).isInstanceOf(FilesystemGitStorage.class));
     }
 
     // naming the filesystem resolves the filesystem and nothing else
     @Test
-    @SVCs({"SVC_GW_0111"})
+    @SVCs({"SVC_GW_FACADE_0010"})
     void namingTheFilesystemResolvesTheFilesystem() {
         contexts.withPropertyValues("skills-gateway.storage.backend=filesystem")
                 .run(context -> assertThat(context).getBean(GitStorage.class).isInstanceOf(FilesystemGitStorage.class));
@@ -54,7 +54,7 @@ class StorageBackendSelectionTests {
 
     // naming the object store resolves the object store and nothing else
     @Test
-    @SVCs({"SVC_GW_0111"})
+    @SVCs({"SVC_GW_FACADE_0010"})
     void namingTheObjectStoreResolvesTheObjectStore() {
         contexts.withBean(ObjectStoreClient.class, NonWritingObjectStoreClient::new)
                 .withPropertyValues(
@@ -67,7 +67,7 @@ class StorageBackendSelectionTests {
 
     // an unrecognised backend fails the start, naming the setting and the value
     @Test
-    @SVCs({"SVC_GW_0111"})
+    @SVCs({"SVC_GW_FACADE_0010"})
     void anUnrecognisedBackendFailsTheStart() {
         contexts.withPropertyValues("skills-gateway.storage.backend=magic").run(context -> assertThat(context)
                 .hasFailed()
@@ -83,7 +83,7 @@ class StorageBackendSelectionTests {
      */
     // an unrecognised backend names every value it would have accepted
     @Test
-    @SVCs({"SVC_GW_0111"})
+    @SVCs({"SVC_GW_FACADE_0010"})
     void anUnrecognisedBackendNamesTheAcceptedValues() {
         contexts.withPropertyValues("skills-gateway.storage.backend=magic").run(context -> assertThat(context)
                 .hasFailed()
@@ -94,7 +94,7 @@ class StorageBackendSelectionTests {
 
     // the object store without a bucket fails the start rather than falling back to disk
     @Test
-    @SVCs({"SVC_GW_0111"})
+    @SVCs({"SVC_GW_FACADE_0010"})
     void theObjectStoreWithoutABucketFailsTheStart() {
         contexts.withBean(ObjectStoreClient.class, NonWritingObjectStoreClient::new)
                 .withPropertyValues(
@@ -108,7 +108,7 @@ class StorageBackendSelectionTests {
 
     // the object store without a region fails the start
     @Test
-    @SVCs({"SVC_GW_0111"})
+    @SVCs({"SVC_GW_FACADE_0010"})
     void theObjectStoreWithoutARegionFailsTheStart() {
         contexts.withBean(ObjectStoreClient.class, NonWritingObjectStoreClient::new)
                 .withPropertyValues(
@@ -122,7 +122,7 @@ class StorageBackendSelectionTests {
 
     // static credentials without keys fail the start, naming the missing key
     @Test
-    @SVCs({"SVC_GW_0111"})
+    @SVCs({"SVC_GW_FACADE_0010"})
     void staticCredentialsWithoutKeysFailTheStart() {
         contexts.withBean(ObjectStoreClient.class, NonWritingObjectStoreClient::new)
                 .withPropertyValues(
@@ -142,7 +142,7 @@ class StorageBackendSelectionTests {
      */
     // web identity with neither configuration nor environment fails the start
     @Test
-    @SVCs({"SVC_GW_0111"})
+    @SVCs({"SVC_GW_FACADE_0010"})
     void webIdentityWithoutARoleFailsTheStart() {
         contexts.withBean(ObjectStoreClient.class, NonWritingObjectStoreClient::new)
                 .withPropertyValues(
@@ -158,7 +158,7 @@ class StorageBackendSelectionTests {
 
     // web identity configured explicitly starts, holding no secret at all
     @Test
-    @SVCs({"SVC_GW_0111"})
+    @SVCs({"SVC_GW_FACADE_0010"})
     void webIdentityConfiguredExplicitlyStarts() {
         contexts.withBean(ObjectStoreClient.class, NonWritingObjectStoreClient::new)
                 .withPropertyValues(
@@ -183,14 +183,14 @@ class StorageBackendSelectionTests {
      */
     // the migration runner is present with no migration configured, so no packaging can drop it
     @Test
-    @SVCs({"SVC_GW_0114"})
+    @SVCs({"SVC_GW_FACADE_0013"})
     void theMigrationRunnerIsPresentEvenWhenNoMigrationWasAskedFor() {
         contexts.run(context -> assertThat(context).hasSingleBean(ApplicationRunner.class));
     }
 
     // and it does nothing on a serving start, rather than being absent from one
     @Test
-    @SVCs({"SVC_GW_0114"})
+    @SVCs({"SVC_GW_FACADE_0013"})
     void theMigrationRunnerDoesNothingWhenTheFlagIsUnset() {
         contexts.run(context -> assertThatCode(
                         () -> context.getBean(ApplicationRunner.class).run(null))
@@ -204,7 +204,7 @@ class StorageBackendSelectionTests {
      */
     // asking for a migration with no destination is refused by the same runner
     @Test
-    @SVCs({"SVC_GW_0114"})
+    @SVCs({"SVC_GW_FACADE_0013"})
     void theMigrationRunnerActsWhenTheFlagIsSet() {
         contexts.withPropertyValues("skills-gateway.storage.migration.enabled=true")
                 .run(context -> assertThatThrownBy(

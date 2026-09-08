@@ -27,7 +27,7 @@ Issue [#239](https://github.com/skillsgateway/skillsgateway/issues/239).
 - **The server checks too, authoritatively**, in
   `MarketplaceRegistrationService.register`, next to the existing URL-scheme
   allowlist check: every other upstream marketplace's clone URL is compared
-  against the one being registered, both normalized the same way — GW_0166.
+  against the one being registered, both normalized the same way — GW_INGEST_0029.
 - **Normalization** (`CloneUrlNormalizer`, new): lowercase scheme and host, no
   trailing slash, no `.git` suffix. The path keeps its case — most forges
   treat it as case-sensitive. Mirrors the portal's existing
@@ -44,7 +44,7 @@ Issue [#239](https://github.com/skillsgateway/skillsgateway/issues/239).
   response's `warnings` is shown as its own toast. The existing pre-submission
   dialog and acknowledgement checkbox are unchanged — this closes the gap
   where they miss a collision, it does not replace them.
-- Requirement GW_0166 with SVC_GW_0166.
+- Requirement GW_INGEST_0029 with SVC_GW_INGEST_0029.
 
 ## Capabilities
 

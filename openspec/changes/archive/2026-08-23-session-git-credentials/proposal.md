@@ -34,7 +34,7 @@ forge to answer it.
   token listing reports it, and the ledger entry says so — so an auditor can
   tell "this fetch used a credential derived from an SSO login that had just
   happened" from "this fetch used a standing token".
-- Requirement GW_0104 with SVC_GW_0104.
+- Requirement GW_AUTH_0018 with SVC_GW_AUTH_0018.
 
 ## Explicitly not in this change
 

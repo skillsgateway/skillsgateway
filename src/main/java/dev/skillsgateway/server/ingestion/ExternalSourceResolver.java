@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Fetches the external plugin sources a manifest declares and this gateway's configuration admits
- * (GW_0155), into the quarantine repository of the marketplace being ingested.
+ * (GW_INGEST_0023), into the quarantine repository of the marketplace being ingested.
  *
  * <p>Quarantine is the only place unapproved content may land, and it is never served, so the
  * fetched content is invisible to clients until {@link ManifestRewriter} has grafted it into a
@@ -43,8 +43,8 @@ import org.springframework.stereotype.Component;
  * <p>Every fetch goes through {@link GuardedHttpConnectionFactory}, installed on that one transport
  * rather than on JGit's JVM-wide static, and every source is measured against
  * {@link ResolutionBudget} before it is accepted. Any refusal ends the whole resolution: a manifest
- * is resolved completely or not at all, which is what GW_0161 turns into "the snapshot is rejected"
- * and GW_0152 relies on.
+ * is resolved completely or not at all, which is what GW_INGEST_0027 turns into "the snapshot is rejected"
+ * and GW_INGEST_0021 relies on.
  */
 @Component
 public class ExternalSourceResolver {
@@ -70,7 +70,7 @@ public class ExternalSourceResolver {
 
     /**
      * One source, fetched and pinned — with what the manifest declared and what the fetch
-     * measured, because the closure (GW_0164) records both and nothing downstream could
+     * measured, because the closure (GW_INGEST_0030) records both and nothing downstream could
      * reconstruct them.
      */
     public record Resolved(
@@ -98,7 +98,7 @@ public class ExternalSourceResolver {
         }
     }
 
-    @Requirements({"GW_0155", "GW_0157", "GW_0158"})
+    @Requirements({"GW_INGEST_0023", "GW_INGEST_0025", "GW_INGEST_0026"})
     public Resolution resolve(Repository quarantine, List<ManifestPolicy.Admitted> admitted) {
         if (admitted.isEmpty()) {
             return new Resolution(List.of(), null);

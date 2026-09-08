@@ -5,9 +5,9 @@
 The scaffold (branch `feat/scaffold`) builds green: Spring Boot 4.1, Java 25,
 JGit 7.7 on the classpath, JdbcClient/Flyway/PostgreSQL, Arconia dev
 services, Spotless+Checkstyle, Nisse versioning, `native` profile wired.
-Behavior to implement is fixed by the reqstool SSOT (GW_0001–GW_0014) and by
+Behavior to implement is fixed by the reqstool SSOT (GW_INGEST_0001–GW_API_0001) and by
 the archived Python prototype (`../skills-gateway-python-mvp`) as the
-reference implementation for GW_0001–GW_0010. ADR 0001/0002 constrain the
+reference implementation for GW_INGEST_0001–GW_AUTH_0001. ADR 0001/0002 constrain the
 stack; see proposal.md for scope.
 
 ## Goals / Non-Goals
@@ -46,10 +46,10 @@ stack; see proposal.md for scope.
     `RefUpdate` of `refs/heads/main`. Rejected/held history never becomes
     reachable in published.
   - *Serving:* `GitServlet` registered at `/git/*` with a repository
-    resolver that only opens published repos (GW_0007 by construction);
+    resolver that only opens published repos (GW_FACADE_0002 by construction);
     `setReceivePackFactory(null)` — receive-pack does not exist (read-only).
     Audit via JGit's `PostUploadHook` (`onPostUpload` exposes wants/stats)
-    → fetch ledger with authenticated identity (GW_0008, GW_0012).
+    → fetch ledger with authenticated identity (GW_AUDIT_0001, GW_AUTH_0003).
 - **Storage seam:** `GitStorage` interface — `quarantine(name)`,
   `published(name)` returning JGit `Repository` handles + lifecycle.
   V1 implementation: bare repos on a configured data directory. The
@@ -70,7 +70,7 @@ stack; see proposal.md for scope.
     appropriate for high-entropy random tokens (they are not passwords);
     record shows-once at creation, revocation immediate.
   - PAT management endpoints under the web chain (`POST/DELETE
-    /api/tokens`), authenticated by OIDC session (GW_0013).
+    /api/tokens`), authenticated by OIDC session (GW_AUTH_0004).
   - Tests: OIDC via Spring Security's test support (`oidcLogin()`) for the
     web chain plus one redirect assertion for unauthenticated requests;
     the git chain is tested with real tokens end-to-end.
@@ -78,7 +78,7 @@ stack; see proposal.md for scope.
   `package`) writes the CycloneDX BOM into the jar where the actuator SBOM
   endpoint auto-detects it; expose `health,sbom` via management properties.
   Test asserts `/actuator/sbom` (and `/actuator/sbom/application`) returns
-  the CycloneDX document (GW_0014). SBOM endpoint access: permitted without
+  the CycloneDX document (GW_API_0001). SBOM endpoint access: permitted without
   auth? No — behind the web chain like other actuator endpoints except
   `health`.
 - **Testing approach:** `@SpringBootTest(webEnvironment = RANDOM_PORT)` with

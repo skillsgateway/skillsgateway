@@ -13,7 +13,7 @@
  * `human` actor-type on automated `vetting` principals are backend concerns tracked in #221 —
  * this only makes the existing text legible, it does not correct it.
  *
- * @Requirements GW_0030
+ * @Requirements GW_AUDIT_0006
  */
 
 export type AuditStatus = "clear" | "warn" | "blocked" | "neutral";

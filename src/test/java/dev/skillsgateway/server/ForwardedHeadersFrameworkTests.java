@@ -10,7 +10,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 
-/** Spring's filter, which is the strategy the native image used to lose (GW_0163). */
+/** Spring's filter, which is the strategy the native image used to lose (GW_AUTH_0029). */
 @TestPropertySource(properties = "server.forward-headers-strategy=framework")
 class ForwardedHeadersFrameworkTests extends AbstractForwardedHeadersTest {
 
@@ -18,14 +18,14 @@ class ForwardedHeadersFrameworkTests extends AbstractForwardedHeadersTest {
     ApplicationContext context;
 
     @Test
-    @SVCs({"SVC_GW_0163"})
+    @SVCs({"SVC_GW_AUTH_0029"})
     void the_forwarded_scheme_and_host_are_honoured() {
         assertThat(redirectUriSeenByTheIdp(forwardedByTheProxy())).isEqualTo("https://" + PUBLIC_HOST + LOGIN_PATH);
     }
 
     /** Boot's own registration must back off, or the JVM would run the filter twice. */
     @Test
-    @SVCs({"SVC_GW_0163"})
+    @SVCs({"SVC_GW_AUTH_0029"})
     void exactly_one_forwarded_header_filter_is_registered() {
         long registrations = context.getBeansOfType(FilterRegistrationBean.class).values().stream()
                 .filter(registration -> registration.getFilter() instanceof ForwardedHeaderFilter)

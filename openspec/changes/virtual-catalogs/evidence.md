@@ -69,7 +69,7 @@ The ADR asserts facts about shipped code. Each was read at `331cf68`
 | The content inventory is derived live from **quarantine** and is not persisted | `ingestion/SnapshotContentService`; `src/main/resources/db/migration/V1__init.sql` has no inventory table |
 | Estate reconciles five object types, additively, never destructively | `config/SkillsGatewayProperties.Estate`, `estate/EstateReconciler`, `docs/manual/guides/declarative-estate.md` |
 | Group-to-role mapping shipped (#66 closed) | `roles/ClaimRoleMapper`, `openspec/changes/archive/2026-08-23-idp-group-role-mapping/` |
-| Registration refuses a supplied ref | `GW_0017 — Gateway-pinned ingestion ref`; `AdminController.DEFAULT_BRANCH`; `DeclaredMarketplace` has no `ref` field |
+| Registration refuses a supplied ref | `GW_INGEST_0006 — Gateway-pinned ingestion ref`; `AdminController.DEFAULT_BRANCH`; `DeclaredMarketplace` has no `ref` field |
 | `CatalogService.vendor` assumes a filesystem repository | `CatalogService` — `published.getDirectory().getAbsolutePath()`; a `DfsRepository` returns `null` there |
 
 The last row is a defect in shipped code that this change does **not** fix. It is

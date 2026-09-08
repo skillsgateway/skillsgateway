@@ -22,12 +22,12 @@ cannot yet serve its content. Held is the state that makes a snapshot
 approvable and therefore publishable, so a snapshot admitted-but-unresolved must
 never reach it — otherwise threat **T4** is reopened for exactly as long as the
 resolver takes to land. This change turns that into a standing requirement
-(GW_0152) rather than a temporary property of one release, which is what makes
+(GW_INGEST_0021) rather than a temporary property of one release, which is what makes
 shipping admission on its own safe.
 
 ## What Changes
 
-- **Typed plugin source model (GW_0150).** `ManifestPolicy`'s string-shape check
+- **Typed plugin source model (GW_INGEST_0019).** `ManifestPolicy`'s string-shape check
   is replaced by a parse into a sealed `PluginSource` — `Local`, `GitHub`,
   `GitUrl`, `GitSubdir`, `Npm`, `Archive` — and admission is decided from the
   parsed type, not from whether the JSON value happened to be a string. Anything
@@ -37,21 +37,21 @@ shipping admission on its own safe.
   took. `npm` and `archive` are refused permanently, not pending: package-manager
   content belongs to the repository manager the gateway complements
   (architecture principle 6), and an archive has no commit identity to pin.
-- **Config-gated admission (GW_0151).** A new `skills-gateway.ingestion.external-sources`
+- **Config-gated admission (GW_INGEST_0020).** A new `skills-gateway.ingestion.external-sources`
   block, `enabled: false` by default, with an admissible-type allowlist, a host
   allowlist, and a `max-sources` cap. A `github` shorthand is expanded to its
   clone URL *before* the checks, and the URL then has to satisfy the same
   `skills-gateway.allowed-url-schemes` allowlist that governs registration — one
   scheme policy for every URL the gateway will ever dereference. Every check is
   decided from the manifest alone, with no network call.
-- **Held only if gateway-local (GW_0152).** A snapshot reaches `held` only when
+- **Held only if gateway-local (GW_INGEST_0021).** A snapshot reaches `held` only when
   every declared source resolves inside the served snapshot. An admitted but
   unresolved external source is recorded `rejected` with a violation that reads
   differently from "not admitted" — the operator action differs (configuration
   versus capability the gateway does not have yet).
-- **GW_0003 evolves rather than being contradicted** (revision 0.1.0 → 0.2.0):
+- **GW_INGEST_0003 evolves rather than being contradicted** (revision 0.1.0 → 0.2.0):
   the local-only rejection becomes the *default-configuration* behaviour, with
-  the admission path named as the exception. SVC_GW_0003 is untouched and is now
+  the admission path named as the exception. SVC_GW_INGEST_0003 is untouched and is now
   also the regression test pinning that default.
 - **ADR 0011** records the architecture-level half: the staged reversal of the
   local-only stance, why admission ships before resolution, that the served

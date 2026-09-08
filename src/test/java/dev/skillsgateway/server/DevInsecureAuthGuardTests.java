@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 
 /**
- * The fail-fast guard on the development escape hatch (GW_0110), exercised as a real Spring context
+ * The fail-fast guard on the development escape hatch (GW_AUTH_0019), exercised as a real Spring context
  * that either starts or refuses to. Each case boots the guard alongside Boot's own OAuth2 client
  * auto-configuration, so the client registrations the guard inspects are the ones Boot builds from
  * configuration rather than a hand-made stand-in.
@@ -45,7 +45,7 @@ class DevInsecureAuthGuardTests {
             .withPropertyValues(PLACEHOLDER_IDP);
 
     @Test
-    @SVCs({"SVC_GW_0110"})
+    @SVCs({"SVC_GW_AUTH_0019"})
     void the_escape_hatch_refuses_to_start_where_an_identity_provider_is_configured() {
         // The local development loop: the escape hatch on, no identity provider configured.
         contexts.withPropertyValues("skills-gateway.dev-insecure-auth=true").run(context -> assertThat(context)
@@ -87,7 +87,7 @@ class DevInsecureAuthGuardTests {
      * default as a placeholder and stop refusing anything.
      */
     @Test
-    @SVCs({"SVC_GW_0110"})
+    @SVCs({"SVC_GW_AUTH_0019"})
     void the_placeholders_the_guard_trusts_are_the_ones_the_application_ships() throws IOException {
         String applicationYaml = Files.readString(REPO_ROOT.resolve("src/main/resources/application.yaml"));
         assertThat(applicationYaml)

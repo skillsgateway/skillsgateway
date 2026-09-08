@@ -6,7 +6,7 @@ import org.springframework.test.context.TestPropertySource;
  * One context for the suites whose only configuration difference was the <em>name</em> of their
  * administrator.
  *
- * <p>A gateway with no configured administrator refuses to start (GW_0139 — A gateway with no
+ * <p>A gateway with no configured administrator refuses to start (GW_AUTH_0026 — A gateway with no
  * administrator refuses to start), so a suite that acts as a principal of its own has to name it.
  * Declaring that name per class made each of them a distinct context cache key, and so a distinct
  * application context, connection pool, embedded Tomcat and PostgreSQL container — for a difference

@@ -17,22 +17,22 @@ public class MarketplaceRepository {
         this.jdbc = jdbc;
     }
 
-    @Requirements({"GW_0001"})
+    @Requirements({"GW_INGEST_0001"})
     public Marketplace register(String name, String url) {
         return register(name, url, null);
     }
 
-    @Requirements({"GW_0021"})
+    @Requirements({"GW_INGEST_0009"})
     public Marketplace register(String name, String url, ForgeMetadata metadata) {
         return register(name, url, metadata, Marketplace.ORIGIN_UPSTREAM, Marketplace.PUSH_APPEND_ONLY, null);
     }
 
     /**
-     * The full insert. A hosted marketplace (GW_0101) passes a null url and carries a push policy;
+     * The full insert. A hosted marketplace (GW_FACADE_0006) passes a null url and carries a push policy;
      * the table's CHECK constraints are what make the two shapes mutually exclusive rather than
      * anything here.
      */
-    @Requirements({"GW_0021", "GW_0096", "GW_0101", "GW_0125"})
+    @Requirements({"GW_INGEST_0009", "GW_APPROVAL_0010", "GW_FACADE_0006", "GW_FACADE_0009"})
     public Marketplace register(
             String name, String url, ForgeMetadata metadata, String origin, String pushPolicy, String registeredBy) {
         return jdbc.sql("INSERT INTO marketplaces"
@@ -87,9 +87,9 @@ public class MarketplaceRepository {
     /**
      * Sets the sync mode, and with it the webhook secret: the caller passes the freshly generated
      * secret when the new mode is webhook and null otherwise, so leaving webhook mode always
-     * discards the key (GW_0056, GW_0058).
+     * discards the key (GW_INGEST_0010, GW_INGEST_0012).
      */
-    @Requirements({"GW_0056", "GW_0125"})
+    @Requirements({"GW_INGEST_0010", "GW_FACADE_0009"})
     public Optional<Marketplace> updateSyncMode(String name, String mode, String webhookSecret) {
         return jdbc.sql("UPDATE marketplaces SET sync_mode = :mode::marketplace_sync_mode, webhook_secret = :secret"
                         + " WHERE name = :name RETURNING *")
@@ -108,8 +108,8 @@ public class MarketplaceRepository {
                 .optional();
     }
 
-    /** The scheduled sweep's queue: scheduled marketplaces, least recently attempted first (GW_0057). */
-    @Requirements({"GW_0057"})
+    /** The scheduled sweep's queue: scheduled marketplaces, least recently attempted first (GW_INGEST_0011). */
+    @Requirements({"GW_INGEST_0011"})
     public List<Marketplace> dueScheduledSync(int limit) {
         return jdbc.sql("SELECT * FROM marketplaces WHERE sync_mode = 'scheduled'"
                         + " ORDER BY last_sync_at ASC NULLS FIRST, id ASC LIMIT :limit")

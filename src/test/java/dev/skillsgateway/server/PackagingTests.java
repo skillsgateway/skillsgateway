@@ -25,7 +25,7 @@ class PackagingTests {
     private static final Path REPO_ROOT = Path.of(System.getProperty("user.dir"));
 
     @Test
-    @SVCs({"SVC_GW_0015"})
+    @SVCs({"SVC_GW_RELEASE_0001"})
     void packagingArtifactsAreConsistent() throws IOException {
         String dockerfile = Files.readString(REPO_ROOT.resolve("Dockerfile"));
 
@@ -71,12 +71,12 @@ class PackagingTests {
 
     /**
      * The chart names the forwarded-header strategy the pod runs with and passes the absolute
-     * redirect URI through (GW_0163): the Ingress the chart ships terminates TLS, so a chart that
+     * redirect URI through (GW_AUTH_0029): the Ingress the chart ships terminates TLS, so a chart that
      * left this to Spring Boot's deduction would work by accident and fail silently on the one
      * value whose registration the framework itself puts behind a build-time condition.
      */
     @Test
-    @SVCs({"SVC_GW_0015"})
+    @SVCs({"SVC_GW_RELEASE_0001"})
     void chartNamesTheForwardedHeaderStrategyAndPassesTheRedirectUriThrough() throws IOException {
         Path chart = REPO_ROOT.resolve("helm/skills-gateway");
         Map<String, Object> values = parse(chart.resolve("values.yaml"));
@@ -104,7 +104,7 @@ class PackagingTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0120"})
+    @SVCs({"SVC_GW_FACADE_0008"})
     void chartRefusesToRenderWithoutAnExplicitStorageDurabilityChoice() throws IOException {
         Path chart = REPO_ROOT.resolve("helm/skills-gateway");
         Map<String, Object> persistence = section(parse(chart.resolve("values.yaml")), "persistence");
@@ -157,7 +157,7 @@ class PackagingTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0121"})
+    @SVCs({"SVC_GW_RELEASE_0005"})
     void chartCarriesRegistryCredentialsAnOptionalIngressAndDefaultReservations() throws IOException {
         Path chart = REPO_ROOT.resolve("helm/skills-gateway");
         Map<String, Object> values = parse(chart.resolve("values.yaml"));
@@ -230,11 +230,11 @@ class PackagingTests {
      * repository, in a user-level configuration file it locates via {@code XDG_CONFIG_HOME},
      * falling back to {@code $HOME/.config} when that variable is unset. Neither is otherwise set
      * for this image's user, so under the read-only root filesystem above JGit resolved a path it
-     * could not create and logged a caught error on every fetch (GW_0179). Both the image and the
+     * could not create and logged a caught error on every fetch (GW_FACADE_0024). Both the image and the
      * chart point it at the writable temporary directory instead.
      */
     @Test
-    @SVCs({"SVC_GW_0179"})
+    @SVCs({"SVC_GW_FACADE_0024"})
     void imageAndChartPointJGitsOwnConfigCacheAtTheWritableTemporaryDirectory() throws IOException {
         String dockerfile = Files.readString(REPO_ROOT.resolve("Dockerfile"));
         assertThat(dockerfile).contains("ENV XDG_CONFIG_HOME=/tmp/xdg-config");
@@ -244,7 +244,7 @@ class PackagingTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0122"})
+    @SVCs({"SVC_GW_RELEASE_0006"})
     void chartPassesArbitraryApplicationConfigurationThrough() throws IOException {
         Path chart = REPO_ROOT.resolve("helm/skills-gateway");
         Map<String, Object> values = parse(chart.resolve("values.yaml"));
@@ -288,7 +288,7 @@ class PackagingTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0115"})
+    @SVCs({"SVC_GW_FACADE_0014"})
     void chartRefusesAStorageShapeTheGatewayCannotHonour() throws IOException {
         Path chart = REPO_ROOT.resolve("helm/skills-gateway");
         Map<String, Object> values = parse(chart.resolve("values.yaml"));
@@ -365,7 +365,7 @@ class PackagingTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0072"})
+    @SVCs({"SVC_GW_RELEASE_0002"})
     void releaseWorkflowCarriesTheMultiArchPublicationContract() throws IOException {
         Path file = REPO_ROOT.resolve(".github/workflows/native.yml");
         Map<String, Object> wf = parse(file);
@@ -447,7 +447,7 @@ class PackagingTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0108"})
+    @SVCs({"SVC_GW_RELEASE_0003"})
     void releaseWorkflowIsDispatchOnlyPreviewsByDefaultAndGatesBeforePublishing() throws IOException {
         Map<String, Object> wf = parse(REPO_ROOT.resolve(".github/workflows/release.yml"));
 
@@ -518,7 +518,7 @@ class PackagingTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0109"})
+    @SVCs({"SVC_GW_RELEASE_0004"})
     void releaseTagsAreBareSemanticVersionsCutOnlyFromReachableUntaggedCommits() throws IOException {
         // No workflow filters on, or strips, a prefixed tag any more. Asserted
         // against the parsed triggers rather than the file text, so prose about the

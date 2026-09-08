@@ -111,13 +111,13 @@ handed the filtered advertised set at the moment the pack is sent.
 
 ## Requirement
 
-`GW_0154` (git-facade): the fetch ledger records, for each transferred want, the
-advertised ref that want resolves to. `SVC_GW_0154` verifies the
+`GW_FACADE_0018` (git-facade): the fetch ledger records, for each transferred want, the
+advertised ref that want resolves to. `SVC_GW_FACADE_0018` verifies the
 superseded-snapshot case, the current-tip case, and the deterministic resolution
 of the ambiguity.
 
-`GW_0008` is not amended. It already requires the ref of every facade fetch to be
-recorded; `GW_0154` states which ref that is when more than one is advertised.
+`GW_AUDIT_0001` is not amended. It already requires the ref of every facade fetch to be
+recorded; `GW_FACADE_0018` states which ref that is when more than one is advertised.
 
 ## Ledger history
 

@@ -446,12 +446,12 @@ mutation reverted.
 
 ### What section 4 did not write, and why
 
-Tasks 4.3 and 4.4 verify GW_0114 and GW_0115, whose requirement text task 1.1
+Tasks 4.3 and 4.4 verify GW_FACADE_0013 and GW_FACADE_0014, whose requirement text task 1.1
 reserves for sections 7 and 8. `reqstool status` counts a requirement with no
 `@Requirements` annotation and no passing SVC as incomplete and fails the gate, so
 writing either SVC before its implementation would break traceability to prove a
 point about ordering. They land with the sections that implement them, exactly as
-GW_0111 landed with section 5.
+GW_FACADE_0010 landed with section 5.
 
 ## Section 7 — migration
 
@@ -520,7 +520,7 @@ $ ./mvnw -o test -Dtest=PackagingTests
           [storage block present]
 ```
 
-`SVC_GW_0120` — #134's fail-closed durability case — was neither weakened nor
+`SVC_GW_FACADE_0008` — #134's fail-closed durability case — was neither weakened nor
 touched, and passes unchanged in the same run.
 
 ### The eight refusals, exercised through a real `helm template`
@@ -560,18 +560,18 @@ summary line:
 
 ```
 $ reqstool status --format json local -p docs/reqstool
-"skills-gateway:GW_0114": {"completed": true, "implementations": 1,
+"skills-gateway:GW_FACADE_0013": {"completed": true, "implementations": 1,
     "implementation_type": "in-code",
     "automated_tests": {"total": 8, "passed": 8, "failed": 0, "missing": 0}}
-"skills-gateway:GW_0115": {"completed": true, "implementations": 0,
+"skills-gateway:GW_FACADE_0014": {"completed": true, "implementations": 0,
     "implementation_type": "configuration",
     "automated_tests": {"total": 1, "passed": 1, "failed": 0, "missing": 0}}
 ```
 
 `missing: 0` is the assertion that matters: reqstool found the actual junit
-cases behind both SVCs. GW_0115's `implementations: 0` is correct and expected —
+cases behind both SVCs. GW_FACADE_0014's `implementations: 0` is correct and expected —
 it is `implementation_type: configuration`, verified against the chart, exactly
-as GW_0120–GW_0122 are.
+as GW_FACADE_0008–GW_RELEASE_0006 are.
 
 ## Gate run
 
@@ -628,7 +628,7 @@ $ reqstool status local -p docs/reqstool
 118/118 complete · 0 incomplete · PASS
 ```
 
-113 → 118: GW_0114 and GW_0115 here, and GW_0116 plus two from earlier in the
+113 → 118: GW_FACADE_0013 and GW_FACADE_0014 here, and GW_FACADE_0012 plus two from earlier in the
 stack.
 
 ```

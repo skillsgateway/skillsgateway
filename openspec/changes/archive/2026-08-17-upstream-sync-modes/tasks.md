@@ -2,10 +2,10 @@
 
 ## 1. Traceability (SSOT first)
 
-- [x] 1.1 Add GW_0056–GW_0060 to `docs/reqstool/requirements.yml`
+- [x] 1.1 Add GW_INGEST_0010–GW_INGEST_0014 to `docs/reqstool/requirements.yml`
       (sync mode policy; scheduled sweep; webhook trigger with HMAC; upstream-outage
       resilience; sync audit trail).
-- [x] 1.2 Add SVC_GW_0056–SVC_GW_0060 to
+- [x] 1.2 Add SVC_GW_INGEST_0010–SVC_GW_INGEST_0014 to
       `docs/reqstool/software_verification_cases.yml`.
 
 ## 2. Schema
@@ -72,7 +72,7 @@
       body → 403 and no snapshot; unknown marketplace and non-webhook mode → 404 and
       no snapshot; oversized body → 413; payload contents (foreign URL/ref) are
       ignored — ingested SHA is the registered upstream's HEAD.
-- [x] 6.4 Outage resilience (GW_0059): approve a snapshot, kill the upstream, run a
+- [x] 6.4 Outage resilience (GW_INGEST_0013): approve a snapshot, kill the upstream, run a
       scheduled sweep + a signed webhook trigger → both fail internally, a real git
       clone through the facade still serves the approved SHA.
 - [x] 6.5 Approval unchanged: no sync path ever produces an APPROVED snapshot or

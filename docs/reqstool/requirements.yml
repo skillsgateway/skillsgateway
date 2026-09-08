@@ -7,7 +7,7 @@ metadata:
   url: https://github.com/skillsgateway/skillsgateway
 
 requirements:
-  - id: GW_0001
+  - id: GW_INGEST_0001
     title: Marketplace registration
     significance: shall
     description: The system shall allow an administrator to register an upstream git skill marketplace by its clone URL.
@@ -15,7 +15,7 @@ requirements:
     categories: ["functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0002
+  - id: GW_INGEST_0002
     title: Immutable snapshot ingestion
     significance: shall
     description: The system shall fetch a registered marketplace's default branch into a quarantine area and record an immutable snapshot identified by the upstream commit SHA.
@@ -23,15 +23,15 @@ requirements:
     categories: ["functional-suitability", "security"]
     revision: 0.1.0
 
-  - id: GW_0003
+  - id: GW_INGEST_0003
     title: Local-only plugin sources unless external sources are enabled
     significance: shall
-    description: The system shall reject a snapshot whose marketplace manifest declares any plugin source other than a relative path within the marketplace repository, except where that source is an external source the gateway has been configured to admit under GW_0151; and shall admit no external source under its default configuration, so that a gateway carrying no external-source configuration rejects every external plugin source exactly as one that has never been configured for them.
-    rationale: External sources (github, url, git-subdir, npm, archive) let installs fetch content that was never vetted (threat T4), so the gateway fails closed on them rather than resolving them blindly. Admitting one is an act an operator has to perform deliberately, which is why the exception is a configured admission rather than a relaxation of the rule — the shipped default is still local-only, and this requirement remains the statement of what happens when nothing has been enabled. What an admitted source is then allowed to become is GW_0150 through GW_0152; nothing may be served that a client would have to dereference outside the gateway.
+    description: The system shall reject a snapshot whose marketplace manifest declares any plugin source other than a relative path within the marketplace repository, except where that source is an external source the gateway has been configured to admit under GW_INGEST_0020; and shall admit no external source under its default configuration, so that a gateway carrying no external-source configuration rejects every external plugin source exactly as one that has never been configured for them.
+    rationale: External sources (github, url, git-subdir, npm, archive) let installs fetch content that was never vetted (threat T4), so the gateway fails closed on them rather than resolving them blindly. Admitting one is an act an operator has to perform deliberately, which is why the exception is a configured admission rather than a relaxation of the rule — the shipped default is still local-only, and this requirement remains the statement of what happens when nothing has been enabled. What an admitted source is then allowed to become is GW_INGEST_0019 through GW_INGEST_0021; nothing may be served that a client would have to dereference outside the gateway.
     categories: ["security"]
     revision: 0.2.0
 
-  - id: GW_0004
+  - id: GW_APPROVAL_0001
     title: Snapshots held until approved
     significance: shall
     description: The system shall not serve any snapshot until it has been explicitly approved; upstream changes shall never automatically alter served content.
@@ -39,7 +39,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0005
+  - id: GW_APPROVAL_0002
     title: Manual approval decision
     significance: shall
     description: The system shall allow an authorized reviewer to approve or reject a held snapshot and record the decision, reviewer identity, and timestamp.
@@ -47,7 +47,7 @@ requirements:
     categories: ["functional-suitability", "security"]
     revision: 0.1.0
 
-  - id: GW_0006
+  - id: GW_FACADE_0001
     title: Git smart-HTTP facade
     significance: shall
     description: The system shall serve approved snapshots as read-only git repositories over HTTP such that standard git clients (including claude plugin marketplace add) can clone and fetch them.
@@ -55,7 +55,7 @@ requirements:
     categories: ["functional-suitability", "compatibility"]
     revision: 0.1.0
 
-  - id: GW_0007
+  - id: GW_FACADE_0002
     title: Only approved content fetchable
     significance: shall
     description: The facade shall expose only approved refs and objects; quarantined or rejected snapshot content shall not be fetchable.
@@ -63,7 +63,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0008
+  - id: GW_AUDIT_0001
     title: Fetch audit log
     significance: shall
     description: The system shall record every facade fetch with client source address (and identity when available), repository, ref, commit SHA, and timestamp in an append-only audit log.
@@ -71,7 +71,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0009
+  - id: GW_INGEST_0004
     title: Snapshot provenance record
     significance: shall
     description: The system shall record for each approved snapshot the upstream URL, upstream commit SHA, approver, and approval timestamp, and keep the record retrievable after the fact.
@@ -79,7 +79,7 @@ requirements:
     categories: ["security", "maintainability"]
     revision: 0.1.0
 
-  - id: GW_0010
+  - id: GW_AUTH_0001
     title: Administrative interface
     significance: shall
     description: The system shall provide an administrative HTTP interface to register marketplaces, list snapshots and their states, and approve or reject held snapshots.
@@ -87,7 +87,7 @@ requirements:
     categories: ["functional-suitability", "interaction-capability"]
     revision: 0.1.0
 
-  - id: GW_0011
+  - id: GW_AUTH_0002
     title: Web authentication via OIDC
     significance: shall
     description: The system shall require an authenticated OIDC (OAuth2) session for all web and administrative HTTP interface access; unauthenticated requests shall be redirected to the identity provider for login.
@@ -95,15 +95,15 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0012
+  - id: GW_AUTH_0003
     title: Git client authentication via personal access tokens
     significance: shall
     description: The system shall require personal access token authentication on the git facade and shall reject unauthenticated or invalid-token fetches; the authenticated identity shall be recorded in the fetch audit log.
-    rationale: Git clients cannot perform interactive OIDC; token auth over the standard credential-helper flow is the only workable mechanism, and it upgrades the audit ledger from IP-level to identity-level (GW_0008).
+    rationale: Git clients cannot perform interactive OIDC; token auth over the standard credential-helper flow is the only workable mechanism, and it upgrades the audit ledger from IP-level to identity-level (GW_AUDIT_0001).
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0013
+  - id: GW_AUTH_0004
     title: Personal access token management
     significance: shall
     description: The system shall allow an authenticated user to create and revoke personal access tokens; tokens shall be stored only as cryptographic hashes and the cleartext value shall be shown exactly once at creation.
@@ -111,7 +111,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0014
+  - id: GW_API_0001
     title: SBOM endpoint
     significance: shall
     description: The system shall expose its own CycloneDX software bill of materials over an HTTP endpoint.
@@ -119,7 +119,7 @@ requirements:
     categories: ["security", "maintainability"]
     revision: 0.1.0
 
-  - id: GW_0015
+  - id: GW_RELEASE_0001
     title: Container distribution
     significance: shall
     description: The system shall be distributable as an OCI container image that runs the application on a Java runtime the image itself carries, over a base image holding no shell and no package manager, as a non-root user and on a root filesystem it never needs to write to, and shall be deployable via a provided Helm chart.
@@ -128,7 +128,7 @@ requirements:
     implementation: configuration
     revision: 0.2.0
 
-  - id: GW_0016
+  - id: GW_INGEST_0005
     title: Marketplace URL scheme allowlist
     significance: shall
     description: The system shall reject registration of a marketplace whose clone URL scheme is not on the configured allowlist (default http and https); scheme-less or unparseable URLs shall be rejected.
@@ -136,7 +136,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0017
+  - id: GW_INGEST_0006
     title: Gateway-pinned ingestion ref
     significance: shall
     description: The gateway shall determine the git ref that is ingested (the upstream default branch); a registration request that supplies a ref other than the default branch shall be rejected with HTTP 400.
@@ -144,23 +144,23 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0018
+  - id: GW_INGEST_0007
     title: Portal marketplace and snapshot administration
     significance: shall
     description: The system shall provide a browser portal, served by the gateway itself behind the OIDC session, where an administrator can register marketplaces, trigger ingestion, list snapshots with their states, and approve or reject held snapshots.
-    rationale: The administrative interface (GW_0010) needs a human-usable surface; serving the portal from the gateway keeps the app its own BFF (ADR 0002) so tokens never reach the browser.
+    rationale: The administrative interface (GW_AUTH_0001) needs a human-usable surface; serving the portal from the gateway keeps the app its own BFF (ADR 0002) so tokens never reach the browser.
     categories: ["functional-suitability", "interaction-capability"]
     revision: 0.1.0
 
-  - id: GW_0019
+  - id: GW_AUTH_0005
     title: Portal token self-service
     significance: shall
     description: The system shall provide a portal page where an authenticated user can create and revoke personal access tokens, with the cleartext value shown exactly once at creation.
-    rationale: Token lifecycle (GW_0013) must be usable without raw HTTP calls; show-once in the UI preserves the hash-at-rest guarantee end to end.
+    rationale: Token lifecycle (GW_AUTH_0004) must be usable without raw HTTP calls; show-once in the UI preserves the hash-at-rest guarantee end to end.
     categories: ["functional-suitability", "security"]
     revision: 0.1.0
 
-  - id: GW_0020
+  - id: GW_INGEST_0008
     title: Snapshot content inventory
     significance: shall
     description: The system shall expose, for any snapshot, the plugins declared by its marketplace manifest and the skills found under each plugin's source tree.
@@ -168,7 +168,7 @@ requirements:
     categories: ["functional-suitability", "security"]
     revision: 0.1.0
 
-  - id: GW_0021
+  - id: GW_INGEST_0009
     title: Forge metadata at registration
     significance: should
     description: On registration of a marketplace hosted on a supported forge (GitHub, GitLab, Bitbucket Cloud, Bitbucket Server/Data Center, Azure DevOps, Gitea/Forgejo), the system should retrieve and store the project name, description, and last upstream update time; registration shall succeed regardless of whether the lookup does.
@@ -176,7 +176,7 @@ requirements:
     categories: ["functional-suitability"]
     revision: 0.2.0
 
-  - id: GW_0022
+  - id: GW_AUDIT_0002
     title: Administrative actions are audit-logged
     significance: shall
     description: The system shall append administrative actions — marketplace registration, snapshot ingestion, approval decisions, and token creation/revocation — to the append-only audit ledger with the acting identity and timestamp.
@@ -184,7 +184,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0023
+  - id: GW_WEBHOOK_0001
     title: Snapshot lifecycle event webhooks
     significance: shall
     description: The system shall deliver a snapshot lifecycle event (ingestion, approval, rejection) by HTTP POST to every registered webhook subscriber whose event filter includes that event, and to no other subscriber.
@@ -192,15 +192,15 @@ requirements:
     categories: ["functional-suitability", "interaction-capability"]
     revision: 0.1.0
 
-  - id: GW_0024
+  - id: GW_WEBHOOK_0002
     title: Signed webhook payloads
     significance: shall
     description: The system shall sign every webhook request with an HMAC-SHA256 over the exact request body using the subscriber's secret, transmitted in a signature header, and shall return the subscriber secret in cleartext exactly once at subscriber creation.
-    rationale: A receiver must be able to prove a delivery came from the gateway and was not tampered with; show-once mirrors the personal access token contract (GW_0013) so secrets are never re-readable from the API.
+    rationale: A receiver must be able to prove a delivery came from the gateway and was not tampered with; show-once mirrors the personal access token contract (GW_AUTH_0004) so secrets are never re-readable from the API.
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0025
+  - id: GW_WEBHOOK_0003
     title: Webhook delivery retry with backoff
     significance: shall
     description: The system shall persist every webhook delivery and retry a failed delivery with exponential backoff up to a configured maximum number of attempts, recording the outcome of each attempt and marking the delivery failed when the attempts are exhausted.
@@ -208,7 +208,7 @@ requirements:
     categories: ["reliability", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0026
+  - id: GW_WEBHOOK_0004
     title: Portal webhook administration
     significance: shall
     description: The system shall provide a portal page, behind the OIDC session, listing the registered webhook subscribers with their event filters and the recent delivery attempts with their state, attempt count, and response status.
@@ -216,7 +216,7 @@ requirements:
     categories: ["functional-suitability", "interaction-capability"]
     revision: 0.1.0
 
-  - id: GW_0027
+  - id: GW_AUDIT_0003
     title: Audit ledger streaming export
     significance: shall
     description: The system shall expose an authenticated endpoint that streams audit ledger entries as newline-delimited JSON in ascending ledger sequence, accepting a cursor that excludes every entry up to and including that sequence and a bounded page size, and returning the sequence to resume from.
@@ -224,7 +224,7 @@ requirements:
     categories: ["functional-suitability", "security"]
     revision: 0.1.0
 
-  - id: GW_0028
+  - id: GW_AUDIT_0004
     title: Audit export sinks with at-least-once delivery
     significance: shall
     description: The system shall support registering audit export sinks, each tracking its own position in the append-only ledger, and shall deliver the entries after a sink's position to that sink at least once, advancing the position only after the delivery has been durably recorded.
@@ -232,7 +232,7 @@ requirements:
     categories: ["functional-suitability", "reliability", "security"]
     revision: 0.1.0
 
-  - id: GW_0029
+  - id: GW_AUDIT_0005
     title: Audit export cursor replay
     significance: shall
     description: The system shall allow an administrator to set an audit export sink's position to any earlier ledger sequence, after which the entries following that sequence are delivered to the sink again.
@@ -240,7 +240,7 @@ requirements:
     categories: ["functional-suitability", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0030
+  - id: GW_AUDIT_0006
     title: Portal audit export surface
     significance: shall
     description: The system shall provide, on the portal audit page behind the OIDC session, a control that downloads the ledger export stream and a listing of the registered audit export sinks with their target and current ledger position.
@@ -248,7 +248,7 @@ requirements:
     categories: ["functional-suitability", "interaction-capability"]
     revision: 0.1.0
 
-  - id: GW_0031
+  - id: GW_RETENTION_0001
     title: Snapshot retention policy evaluation
     significance: shall
     description: The system shall evaluate snapshots against a retention policy, configurable globally and per marketplace, that selects a snapshot held in quarantine longer than a configured age and a non-approved snapshot superseded by a later approved snapshot of the same marketplace, and shall exclude any snapshot served through the git facade within a configured idle period.
@@ -256,7 +256,7 @@ requirements:
     categories: ["functional-suitability", "maintainability"]
     revision: 0.1.0
 
-  - id: GW_0032
+  - id: GW_RETENTION_0002
     title: Snapshot soft delete with restore window
     significance: shall
     description: The system shall delete a snapshot selected by retention, or by an administrator, by marking it deleted with the reason and the time after which it may be purged, leaving its vetting state unchanged, and shall restore the snapshot on request at any time before that purge time.
@@ -264,7 +264,7 @@ requirements:
     categories: ["functional-suitability", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0033
+  - id: GW_RETENTION_0003
     title: Approved snapshots are never eligible for deletion
     significance: shall
     description: The system shall never select an approved snapshot for retention deletion and shall refuse an administrator's request to delete one, so that content published to the git facade cannot be removed by any retention path.
@@ -272,7 +272,7 @@ requirements:
     categories: ["security", "reliability", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0034
+  - id: GW_RETENTION_0004
     title: Scheduled hard-delete compaction
     significance: shall
     description: The system shall run a scheduled compaction that permanently removes each soft-deleted snapshot whose restore window has elapsed, deleting both its record and the pinned commit reference in the marketplace's quarantine repository so the unreachable git objects are reclaimed, and shall leave soft-deleted snapshots whose window has not elapsed untouched.
@@ -280,7 +280,7 @@ requirements:
     categories: ["functional-suitability", "performance-efficiency"]
     revision: 0.1.0
 
-  - id: GW_0035
+  - id: GW_RETENTION_0005
     title: Retention actions are audit-logged
     significance: shall
     description: The system shall append every retention action — the outcome of a policy evaluation, a soft deletion with its reason, a restore, and a permanent removal — to the append-only audit ledger with the acting identity, the marketplace, and the snapshot commit SHA.
@@ -288,7 +288,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0036
+  - id: GW_RETENTION_0006
     title: Portal snapshot deletion surface
     significance: shall
     description: The system shall show, on the portal page listing a marketplace's snapshots behind the OIDC session, whether a snapshot is deleted together with the time until which it can be restored, and shall offer controls to delete a snapshot and to restore a deleted one.
@@ -296,7 +296,7 @@ requirements:
     categories: ["functional-suitability", "interaction-capability"]
     revision: 0.1.0
 
-  - id: GW_0037
+  - id: GW_VETTING_0001
     title: Ordered vetting connector chain at ingestion
     significance: shall
     description: The system shall run, at ingestion of a snapshot, an ordered chain of vetting connectors against the quarantined content pinned to the snapshot's commit SHA, and shall record for that chain run each connector's verdict together with its findings, each finding carrying a rule identifier, a severity, a location and a message.
@@ -304,7 +304,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0038
+  - id: GW_VETTING_0002
     title: Fail-closed vetting chain aggregation
     significance: shall
     description: The system shall aggregate a chain run to a cleared outcome only when every connector in the chain returned a passing or warning verdict, and shall aggregate to a blocked outcome otherwise, counting a connector that fails, that reports an unfinished verdict, that raises an error, or that exceeds its time limit as blocking, and counting a snapshot with no recorded chain run as blocked.
@@ -312,7 +312,7 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0039
+  - id: GW_VETTING_0003
     title: Secret scanning connector
     significance: shall
     description: The system shall provide a built-in vetting connector that scans the textual content of a snapshot for credential material — including cloud access keys, private key blocks, forge and messaging service tokens, and assignment-shaped high-entropy values — and returns a failing verdict with a finding located at the offending path for each match of high severity.
@@ -320,7 +320,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0040
+  - id: GW_VETTING_0004
     title: Prompt-injection heuristic connector
     significance: shall
     description: The system shall provide a built-in vetting connector that scans a snapshot's Markdown instruction content for known prompt-injection markers — including instruction-override phrasing, attempts to disclose the system prompt, references to credential file locations, instructions to conceal actions from the user or reviewer, and invisible or bidirectional control characters — and returns a failing verdict with a finding located at the offending path for each match of high severity.
@@ -328,7 +328,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0041
+  - id: GW_APPROVAL_0003
     title: Approval gate on the vetting outcome
     significance: shall
     description: The system shall refuse to approve a snapshot whose effective vetting outcome is blocked, shall name in the refusal both the connectors that blocked and every blocking finding that no active waiver covers, and shall approve such a snapshot only once an active waiver covers each of those findings.
@@ -336,7 +336,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.2.0
 
-  - id: GW_0042
+  - id: GW_VETTING_0005
     title: Portal vetting surface
     significance: shall
     description: The system shall show, in the portal behind the OIDC session, each snapshot's effective chain outcome together with every connector's verdict and its findings, marking each finding a waiver currently suppresses, and shall refuse approval of a snapshot whose effective outcome is blocked.
@@ -344,7 +344,7 @@ requirements:
     categories: ["interaction-capability", "security"]
     revision: 0.2.0
 
-  - id: GW_0043
+  - id: GW_VETTING_0006
     title: Vetting actions are audit-logged
     significance: shall
     description: The system shall append every chain run outcome and every connector verdict to the append-only audit ledger with the marketplace, the snapshot commit SHA, and the acting identity.
@@ -352,7 +352,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.2.0
 
-  - id: GW_0044
+  - id: GW_VETTING_0007
     title: Scoped, expiring vetting waivers
     significance: shall
     description: The system shall allow a reviewer to record a waiver that accepts one vetting finding rule identifier on one marketplace, scoped either to a single snapshot commit SHA or to a path within the marketplace, and shall reject a waiver that omits a justification, an approving identity, or an expiry instant in the future.
@@ -360,7 +360,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0045
+  - id: GW_VETTING_0008
     title: Waivers suppress findings in the effective vetting outcome
     significance: shall
     description: The system shall compute a snapshot's effective vetting outcome from its latest recorded chain run with every finding covered by an active waiver excluded from the verdict it belongs to, shall leave the recorded run itself unchanged, shall report the outcome as cleared-with-waivers rather than cleared whenever a waiver suppressed a finding of that run, and shall keep a non-clearing verdict that carries no findings blocking.
@@ -368,7 +368,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0046
+  - id: GW_VETTING_0009
     title: Waiver expiry and revocation restore the block
     significance: shall
     description: The system shall decide whether a waiver is active at the instant a snapshot's effective vetting outcome is computed, and shall treat a waiver whose expiry has passed or that has been revoked as suppressing nothing, so that the snapshot's effective outcome reverts to blocked and approval is refused again without any scheduled pass having to run.
@@ -376,7 +376,7 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0047
+  - id: GW_VETTING_0010
     title: Portal waiver management surface
     significance: shall
     description: The system shall let a reviewer, in the portal behind the OIDC session, create a waiver for a specific finding from the snapshot review surface by supplying a justification, a scope and an expiry, and shall list a marketplace's waivers with their rule, scope, justification, approver, expiry, and whether each is still active.
@@ -384,7 +384,7 @@ requirements:
     categories: ["interaction-capability", "security"]
     revision: 0.1.0
 
-  - id: GW_0048
+  - id: GW_VETTING_0011
     title: Waiver lifecycle is audit-logged
     significance: shall
     description: The system shall append to the append-only audit ledger the creation of every waiver with its rule, scope and expiry, the revocation of a waiver, the first observation that a waiver has expired, and every waiver that suppressed a finding for an approval, each with the marketplace and the acting identity.
@@ -392,7 +392,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0049
+  - id: GW_VETTING_0012
     title: Continuous re-vetting of approved snapshots
     significance: shall
     description: The system shall re-run the vetting chain over already-approved snapshots on a configurable schedule, selecting the snapshots whose most recent chain run is oldest in bounded batches so that no pass re-vets the whole estate, shall record each pass as a new chain run carrying its trigger and the identity and version of every connector in the chain, shall leave the snapshot's own state unchanged by the run itself, and shall additionally re-vet a named snapshot or every approved snapshot of a named marketplace on demand.
@@ -400,7 +400,7 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0050
+  - id: GW_VETTING_0013
     title: Auto-quarantine of a violating approved snapshot
     significance: shall
     description: The system shall, when a re-vetting run's effective outcome computed against the waivers active at that instant objects to the content of an approved snapshot and the configured re-vetting mode is enforcing, move that snapshot to a revoked state, remove every published git reference through which its content was reachable so that the git facade no longer serves it, leave the quarantined copy untouched, and refuse to serve or re-publish it again until a fresh approve decision is recorded against it through the ordinary approval gate.
@@ -408,7 +408,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0051
+  - id: GW_VETTING_0014
     title: Warn-only re-vetting mode
     significance: shall
     description: The system shall provide a re-vetting mode, and shall use it by default, in which a re-vetting violation on an approved snapshot is recorded and announced in full but the snapshot keeps its approved state and its published references, so that no snapshot is ever unpublished while that mode is in force.
@@ -416,7 +416,7 @@ requirements:
     categories: ["reliability", "security"]
     revision: 0.1.0
 
-  - id: GW_0052
+  - id: GW_VETTING_0015
     title: An inconclusive re-vetting run never revokes
     significance: shall
     description: The system shall distinguish a re-vetting run that blocks because a connector objected to the content from one that blocks only because a connector errored, timed out, has not answered, or produced no verdict at all, shall record the latter as inconclusive and leave the snapshot approved and served whatever the re-vetting mode, and shall continue to treat every such run as blocking for the purposes of approving, re-approving or publishing that snapshot.
@@ -424,7 +424,7 @@ requirements:
     categories: ["reliability", "security"]
     revision: 0.1.0
 
-  - id: GW_0053
+  - id: GW_VETTING_0016
     title: Re-vetting violations are announced with their affected consumers
     significance: shall
     description: The system shall emit a lifecycle event when a re-vetting run finds a violation on an approved snapshot and a further lifecycle event when a snapshot is revoked, and shall report, from the append-only fetch ledger, every authenticated identity that received that snapshot's content through the git facade together with how often and when it last did.
@@ -432,7 +432,7 @@ requirements:
     categories: ["security", "interaction-capability"]
     revision: 0.1.0
 
-  - id: GW_0054
+  - id: GW_VETTING_0017
     title: Re-vetting and revocation are audit-logged
     significance: shall
     description: The system shall append to the append-only audit ledger the outcome of every re-vetting run with its trigger, each retroactive violation with the objecting connectors, the rules behind it and the mode in force, one entry per identity affected by that violation, and every revocation and unpublication with the acting identity and the marketplace.
@@ -440,7 +440,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0055
+  - id: GW_VETTING_0018
     title: Portal re-vetting and revocation surface
     significance: shall
     description: The system shall show, in the portal behind the OIDC session, that a snapshot has been revoked and why, the findings of the re-vetting run that revoked it, the identities that had fetched its content, and a control that re-vets a snapshot on demand.
@@ -448,7 +448,7 @@ requirements:
     categories: ["interaction-capability", "security"]
     revision: 0.1.0
 
-  - id: GW_0056
+  - id: GW_INGEST_0010
     title: Per-marketplace sync mode
     significance: shall
     description: The system shall record for every marketplace exactly one sync mode of on-demand, scheduled, or webhook, shall default a newly registered marketplace to on-demand, shall let an authorized operator change the mode at any time, and shall route every sync-triggered ingestion through the same quarantine pipeline as a manual one, so that a snapshot lands held or rejected and no sync mode can approve, publish, or otherwise bypass the approval gate.
@@ -456,7 +456,7 @@ requirements:
     categories: ["functional-suitability", "security"]
     revision: 0.1.0
 
-  - id: GW_0057
+  - id: GW_INGEST_0011
     title: Scheduled upstream polling
     significance: shall
     description: The system shall, on a configurable interval that an operator can disable, ingest the marketplaces whose sync mode is scheduled in bounded batches ordered by the least recently attempted first, shall stamp every attempt whether it succeeded or failed so one unreachable upstream cannot monopolize the batch order, shall continue the batch when one marketplace's ingestion fails, and shall retry a failed marketplace on a later pass.
@@ -464,7 +464,7 @@ requirements:
     categories: ["functional-suitability", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0058
+  - id: GW_INGEST_0012
     title: Webhook-triggered ingestion
     significance: shall
     description: The system shall expose, for a marketplace whose sync mode is webhook, an inbound endpoint that a forge push webhook can call, shall authenticate each request solely by an HMAC-SHA256 signature of the exact raw request body verified in constant time against a per-marketplace secret that the gateway generated and returned exactly once when the mode was enabled, shall treat a valid signature only as a trigger to ingest the registered upstream URL's default branch and never read a URL, ref, or commit from the request payload, shall bound the accepted body size, and shall reject a request with a missing or invalid signature, for an unknown marketplace, or for a marketplace not in webhook mode without ingesting anything.
@@ -472,7 +472,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0059
+  - id: GW_INGEST_0013
     title: Upstream outage resilience
     significance: shall
     description: The system shall serve the last approved snapshot through the git facade regardless of upstream health — a scheduled or webhook-triggered ingestion that fails because the upstream is unreachable shall be logged and retried later, and shall not alter any snapshot state, any published reference, or the outcome of any concurrent facade fetch.
@@ -480,7 +480,7 @@ requirements:
     categories: ["reliability", "security"]
     revision: 0.1.0
 
-  - id: GW_0060
+  - id: GW_INGEST_0014
     title: Sync activity is audit-logged
     significance: shall
     description: The system shall append to the append-only audit ledger every sync mode change with the acting identity and the new mode, and every sync-triggered ingestion with the snapshot SHA and a trigger identity that distinguishes the scheduler and the webhook from a human operator, and shall emit the ordinary snapshot-ingested lifecycle event for every sync-triggered ingestion.
@@ -488,7 +488,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0061
+  - id: GW_FACADE_0003
     title: Global virtual catalog
     significance: shall
     description: The system shall synthesize and serve through the git facade, under a configurable reserved name, a catalog repository whose tree contains the currently served snapshot of every marketplace under a subdirectory named after that marketplace, together with one merged marketplace manifest whose plugin names are prefixed with their marketplace's name and whose plugin sources are all relative paths into those subdirectories, and shall compose the catalog exclusively from content each marketplace's published repository is serving at that moment, so that nothing held, rejected, or revoked can appear in it.
@@ -496,7 +496,7 @@ requirements:
     categories: ["functional-suitability", "security"]
     revision: 0.1.0
 
-  - id: GW_0062
+  - id: GW_FACADE_0004
     title: Catalog freshness on publication changes
     significance: shall
     description: The system shall regenerate the catalog when a snapshot is published by an approval and when a snapshot's published references are removed by a revocation, without operator action in either case, shall keep every earlier catalog composition unreachable from the catalog's advertised references so that retracted content stops being fetchable from the catalog as well, shall serve a catalog with an empty plugin list rather than nothing when no marketplace is serving, and shall additionally regenerate on demand, with a regeneration failure never failing the approval or revocation that triggered it.
@@ -504,7 +504,7 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0063
+  - id: GW_FACADE_0005
     title: Catalog provenance, audit, and the reserved name
     significance: shall
     description: The system shall record in each catalog revision the marketplace name and upstream commit SHA of every constituent and answer them through the API for the revision currently served, shall record fetches of the catalog through the git facade in the append-only ledger under the catalog's name like any marketplace, shall append manual catalog regenerations to the ledger with the acting identity, and shall refuse to register a marketplace under the catalog's reserved name.
@@ -512,7 +512,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0064
+  - id: GW_AUTH_0006
     title: Marketplace-scoped access tokens
     significance: shall
     description: The system shall let a personal access token carry a list of marketplace names — the virtual catalog's name being a valid entry — shall validate every scope against the registered marketplaces and the catalog name when the token is created, shall refuse a git facade request from a scoped token for any marketplace outside its list with an answer indistinguishable from that for a marketplace that does not exist, and shall treat a token without scopes as granting every marketplace, so that existing tokens keep their behavior.
@@ -520,7 +520,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0065
+  - id: GW_AUTH_0007
     title: Access token expiry
     significance: shall
     description: The system shall let a token carry an expiry timestamp, shall refuse an expired token at authentication time exactly as it refuses a revoked one, deciding by comparing the stamp to the current instant with no scheduled process involved, shall let an operator cap the maximum lifetime accepted at creation through configuration, and shall refuse a creation request beyond the cap rather than silently shortening it.
@@ -528,7 +528,7 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0066
+  - id: GW_AUTH_0008
     title: Access token rotation
     significance: shall
     description: The system shall let a token's owner, and only its owner, rotate a live token — producing a new secret returned exactly once while keeping the name, the scopes and the same expiry deadline, revoking the old token before the new one is issued so a failure between the two steps leaves no live secret rather than two, recording which token the new one replaced — and shall refuse to rotate a revoked or expired token.
@@ -536,7 +536,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0067
+  - id: GW_AUTH_0009
     title: Per-token fetch attribution
     significance: shall
     description: The system shall record, in every git facade entry of the append-only ledger, the identity of the token that authenticated the request alongside the principal, shall carry that attribution through the ledger listing and the audit export, and shall append token creation, revocation and rotation to the ledger with the acting identity, the token's name and its scopes.
@@ -544,7 +544,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0068
+  - id: GW_AUTH_0010
     title: Scoped admin roles with deny-by-default enforcement
     significance: shall
     description: The system shall provide three delegated-administration roles for the web surface — a global admin, an approver scoped to one marketplace, and a read-only auditor, composing upward so an admin may do everything either other role may — behind a configuration switch that defaults to off with every authorization check passing, and shall, once the switch is enabled, refuse with an authorization error every REST API mutation and every audit-ledger and operational-listing read to a session holding no applicable role, while leaving the browsing surface and a session's own token management open to any authenticated session.
@@ -552,7 +552,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0069
+  - id: GW_AUTH_0011
     title: Per-marketplace approver scoping
     significance: shall
     description: The system shall scope an approver grant to exactly one marketplace and accept from its holder ingestion, approval, rejection, re-vetting and waiver operations only for content of that marketplace, resolving the owning marketplace on the gateway's side from the addressed snapshot or waiver where the route carries an id rather than a marketplace name, and shall refuse the holder the same operations for any other marketplace.
@@ -560,7 +560,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0070
+  - id: GW_AUTH_0012
     title: Auditor read-only guarantee
     significance: shall
     description: The system shall accept from an auditor reads of the append-only ledger, its export stream, the webhook subscriber, delivery and audit sink listings, and the retention candidates, and shall refuse an auditor every REST API mutation.
@@ -568,7 +568,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0071
+  - id: GW_AUTH_0013
     title: Audited role grants with configuration-bootstrapped admins
     significance: shall
     description: The system shall store role grants in its database and let only admins read and manage them through the API while enforcement is enabled, shall require an approver grant to name a marketplace registered at grant time and forbid admin and auditor grants from naming one, shall refuse a duplicate grant, shall append every grant and revocation to the append-only ledger with the acting identity, the target principal, the role and the marketplace, shall additionally treat principals listed in configuration as admins that no API call can revoke, and shall report a session's effective roles and whether enforcement is enabled through the session identity endpoint.
@@ -576,7 +576,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0072
+  - id: GW_RELEASE_0002
     title: Container image publication by digest
     significance: shall
     description: The system's release automation shall build the container image for both linux/amd64 and linux/arm64 on every push, schedule and dispatch, shall smoke-test the built image before anything is published, shall publish nothing to the project's public registry namespace except from an invocation by the gated release workflow, shall then publish the released version as a single multi-arch image index addressable by immutable digest and carrying no tag other than that version, shall surface the published index digest in the build output, and shall attach the build's CycloneDX SBOM to the published image as a registry attestation.
@@ -585,7 +585,7 @@ requirements:
     implementation: configuration
     revision: 0.5.0
 
-  - id: GW_0073
+  - id: GW_APPROVAL_0004
     title: Minimum release age before approval
     significance: shall
     description: The system shall let an operator configure a global minimum age a snapshot must reach before it can be approved, shall measure that age from the instant the gateway itself first ingested the snapshot's commit and never from any timestamp the upstream commit carries, shall keep that instant unchanged when the same commit is ingested again, shall evaluate the age at the instant of each approval request with no scheduled process involved, shall refuse an approval of a snapshot that has not reached the configured age with a conflict naming the configured setting, the snapshot's current age and the time remaining, shall report the same eligibility and remaining time for a snapshot on request so a reviewer sees it before deciding, shall record the snapshot's age on every approval it allows and the refusal on every one it blocks in the append-only ledger, and shall apply no age gate at all when the setting is zero, which is the default.
@@ -593,12 +593,12 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  # GW_0074 is deliberately unused. It was reserved alongside GW_0073 while the
+  # GW_0074 is deliberately unused. It was reserved alongside GW_APPROVAL_0004 while the
   # minimum-release-age change was in flight; that change shipped needing only
-  # GW_0073, so the id is retired rather than recycled — renumbering would
+  # GW_APPROVAL_0004, so the id is retired rather than recycled — renumbering would
   # silently move an id that archived changes already refer to.
 
-  - id: GW_0075
+  - id: GW_OBSERVABILITY_0001
     title: Adoption reporting from the fetch ledger
     significance: shall
     description: The system shall answer, from the append-only fetch ledger alone and without recording anything new, an adoption report aggregating the facade fetches of a caller-chosen bounded time window into, per marketplace, the number of content-transferring fetches, the number of distinct fetching identities, the time of the most recent fetch, and a per-snapshot-SHA breakdown carrying the same measures with each SHA marked as the currently served tip or not, counting only entries that transferred content and attributing by the authenticated identity the ledger records, and shall restrict the report to callers permitted to read the ledger.
@@ -606,7 +606,7 @@ requirements:
     categories: ["functional-suitability", "security"]
     revision: 0.1.0
 
-  - id: GW_0076
+  - id: GW_OBSERVABILITY_0002
     title: Staleness reporting against the served tip
     significance: shall
     description: The system shall report, from the append-only fetch ledger and the published repositories' currently served references, every identity whose most recent content-transferring fetch of a marketplace received a commit SHA that is not that marketplace's currently served tip, including — with an absent tip — identities whose most recent fetch is of a marketplace that is no longer serving at all, each entry carrying the identity, the marketplace, the SHA last received, when it was received, and the served tip it diverges from, and shall restrict the report to callers permitted to read the ledger.
@@ -614,7 +614,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0077
+  - id: GW_OBSERVABILITY_0003
     title: Always-recorded gateway metrics and observations
     significance: shall
     description: The system shall record, through its metrics and observation registries and regardless of whether telemetry export is enabled, an ingestion timing observation tagged with its outcome, an approval-decision observation tagged with the decision taken, and a facade fetch counter tagged with the fetch event kind, all named under the skills_gateway prefix and carrying only fixed-vocabulary tags, so that enabling OpenTelemetry export in a deployment publishes them without any code or configuration change to the gateway itself, and shall not attempt any telemetry export unless a deployment explicitly enables it.
@@ -622,7 +622,7 @@ requirements:
     categories: ["functional-suitability", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0078
+  - id: GW_OBSERVABILITY_0004
     title: Adoption page in the admin portal
     significance: shall
     description: The system's admin portal shall present, on a page of its own, the adoption report — the windowed per-marketplace fetch measures with their per-snapshot-SHA breakdown, over a caller-selectable window — and the staleness report of identities not on the served tip, each with explicit loading, empty and error states, so that an operator can read both without leaving the portal.
@@ -630,7 +630,7 @@ requirements:
     categories: ["functional-suitability", "interaction-capability"]
     revision: 0.1.0
 
-  - id: GW_0079
+  - id: GW_AUTH_0014
     title: Client setup wizard
     significance: shall
     description: The system's portal shall offer, on a marketplace's detail page, a client setup wizard that composes for that marketplace the client marketplace-add command, a git credential-helper configuration block and a personal-access-token usage snippet, deriving every URL from the browsing origin and the marketplace's facade clone path with no additional server configuration, shall let the user mint a personal access token from inside the wizard through the existing show-once token flow with the cleartext substituted into the snippets only while the wizard remains open, and shall never display the secret of any previously issued token.
@@ -638,7 +638,7 @@ requirements:
     categories: ["interaction-capability", "security"]
     revision: 0.1.0
 
-  - id: GW_0080
+  - id: GW_INGEST_0015
     title: Snapshot file inspection
     significance: shall
     description: The system shall let a reviewer read, for any snapshot, the file tree and individual file contents of exactly the commit the snapshot pins, resolved through the quarantine repository's object store with paths addressed only within the pinned commit's tree, shall bound the tree listing and mark it when cut, shall return a file exceeding a fixed size limit truncated with an explicit truncation marker and a file detected as binary as metadata without text content, shall answer a path absent from the tree — including any traversal-shaped path — with not-found, and shall, while role enforcement is enabled, refuse these reads to a session that is neither an admin nor an approver of the snapshot's marketplace.
@@ -646,7 +646,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0081
+  - id: GW_INGEST_0016
     title: Snapshot diff against the served baseline
     significance: shall
     description: The system shall report, for any snapshot, the difference between the commit it pins and the marketplace's currently served commit as resolved from the published repository's served tip — the added, modified and removed paths, and for text files a per-file textual diff subject to the same size and binary limits as file inspection — shall report, when the marketplace serves nothing, the absence of a baseline and every path as added, and shall apply the same role rule as file inspection.
@@ -654,7 +654,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0082
+  - id: GW_APPROVAL_0005
     title: Reviewer preview pane in the portal
     significance: shall
     description: The system's portal shall present, for a snapshot on the marketplace detail page, a preview pane with the snapshot's file tree, the content of a selected file — rendering Markdown, including a skill's SKILL.md and the marketplace manifest, without interpreting embedded HTML and without executing or navigating into any fetched content — explicit indications for truncated and binary files, and a diff view against the served baseline distinguishing added, modified and removed paths and stating when no baseline is served, presenting loading, empty and error states throughout.
@@ -662,7 +662,7 @@ requirements:
     categories: ["interaction-capability", "security"]
     revision: 0.1.0
 
-  - id: GW_0083
+  - id: GW_ESTATE_0001
     title: Declarative estate reconciliation
     significance: shall
     description: The system shall accept a declarative configuration block naming marketplaces, role grants, webhook subscribers and audit export sinks, shall reconcile the running estate to that declaration at application startup — after schema migration and before the web surface serves requests — and on demand through an administrative endpoint, shall apply only the differences between declared and actual state so that reconciling a converged estate performs no writes and appends nothing to the ledger, shall never delete, deregister or revoke an object absent from the declaration, and shall append every applied change to the append-only ledger under the same event name as its API equivalent, attributed to a distinct reconciler actor identity.
@@ -670,7 +670,7 @@ requirements:
     categories: ["security", "flexibility"]
     revision: 0.1.0
 
-  - id: GW_0084
+  - id: GW_ESTATE_0002
     title: Declared marketplaces pass the registration trust boundary
     significance: shall
     description: The system shall register a declared marketplace through the same validation as the administrative API — the marketplace name rules, the reserved catalog name, and the URL scheme allowlist — with the ingested ref remaining the gateway's decision because the declaration cannot express one, shall accept a declared sync mode of on-demand or scheduled applied through the same audited path as the API and refuse webhook mode as an entry failure, shall leave the stored sync mode untouched when the declaration omits one, and shall treat a declared marketplace whose stored upstream URL differs from the declared URL as a reconciliation failure rather than an update.
@@ -678,7 +678,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0085
+  - id: GW_ESTATE_0003
     title: Declared role grants through the audited grant path
     significance: shall
     description: The system shall apply declared role grants through the same validation and the same audited path as the grants API — the role vocabulary, approver grants scoped to exactly one marketplace that exists at reconcile time whether declared in the same configuration or registered through the API, and global roles forbidding one — shall treat a grant whose marketplace does not exist as an isolated entry failure, and shall never revoke a grant absent from the declaration.
@@ -686,7 +686,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0086
+  - id: GW_ESTATE_0004
     title: Operator-supplied secrets for declared receivers
     significance: shall
     description: The system shall require a declared webhook subscriber or audit export sink to carry an operator-supplied signing secret, refusing a blank secret or one shorter than sixteen characters as an entry failure, shall never write a declared secret value to the log, the ledger, the reconciliation report or any API response, shall update the stored secret idempotently when the declared value changes — recording the rotation on the ledger without the value and making no write when the value is unchanged — and shall set an audit sink's ledger cursor only at creation, never on a later reconciliation.
@@ -694,7 +694,7 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0087
+  - id: GW_ESTATE_0005
     title: Reconciliation failure isolation and reporting
     significance: shall
     description: The system shall start and serve even when a declared entry fails validation, shall continue reconciling the remaining entries when one fails, shall report each failed entry with its reason in the application log and as an entry on the append-only ledger for every reconciliation run in which it fails, shall answer the most recent reconciliation report — per entry, what was created, updated, unchanged or failed and why — through the API to auditors and admins, and shall restrict the on-demand reconciliation trigger to admins under role enforcement, recording each trigger on the ledger with the acting identity.
@@ -702,7 +702,7 @@ requirements:
     categories: ["reliability", "security"]
     revision: 0.1.0
 
-  - id: GW_0088
+  - id: GW_WEBHOOK_0005
     title: Served webhook event registry
     significance: shall
     description: The system shall answer, read-only and without recording anything, the registry of snapshot lifecycle event names a webhook subscriber may filter on — exactly the set the dispatcher can emit, excluding the audit export event that only an export sink provisions — restricted to callers permitted to read webhook administration, and the system's portal shall compose a subscriber's event filter by selection from that served registry rather than free text, offering selection of every event at once and a type-ahead narrowing of the list, submitting the existing wire format unchanged, and shall mark a stored filter naming an event the registry does not contain.
@@ -710,7 +710,7 @@ requirements:
     categories: ["functional-suitability", "interaction-capability"]
     revision: 0.1.0
 
-  - id: GW_0089
+  - id: GW_APPROVAL_0006
     title: CEL policy deny rules as managed, declarable estate objects
     significance: shall
     description: The system shall manage named policy deny rules — each a name, a description, a CEL expression and an enabled flag — through an administrative API restricted to admins for mutation and to auditors and admins for reading, shall parse and type-check every submitted expression against the documented evaluation variables and refuse with a validation error any expression that does not compile to a boolean so that a non-compiling expression is never stored, shall refuse a duplicate rule name, shall append every rule creation, update and deletion to the append-only ledger with the acting identity, and shall accept declared policy rules in the declarative estate configuration reconciled additively and idempotently through the same validated, audited path as the API with a non-compiling declared expression isolated as an entry failure.
@@ -718,7 +718,7 @@ requirements:
     categories: ["security", "flexibility"]
     revision: 0.1.0
 
-  - id: GW_0090
+  - id: GW_APPROVAL_0007
     title: Fail-closed CEL policy gate at approval
     significance: shall
     description: The system shall evaluate every enabled policy rule at the moment an approval is requested — after the vetting gate and before any state transition — over the snapshot's facts comprising its metadata, its file inventory, and its plugin and skill inventory including each skill's declared tools parsed from SKILL.md frontmatter, shall refuse the approval when any enabled rule evaluates to true, when any enabled rule fails to evaluate, or when the facts cannot be built — including malformed skill frontmatter and a file inventory exceeding its bound — naming every deciding rule in the refusal, shall leave a refused snapshot held and publish nothing, shall never let a disabled rule decide, and shall bound evaluation so that no expression or content can make the gate run unbounded.
@@ -726,7 +726,7 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0091
+  - id: GW_APPROVAL_0008
     title: Policy decisions recorded in provenance
     significance: shall
     description: The system shall append, for every approval refused by the policy gate, one entry per deciding rule to the append-only ledger naming the rule, the snapshot's commit SHA, the marketplace, the acting reviewer, and whether the rule matched or failed to evaluate, so that an auditor can answer from the ledger alone why an approval was refused and which rule decided it.
@@ -734,7 +734,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0092
+  - id: GW_APPROVAL_0009
     title: Read-only policy rule playground
     significance: shall
     description: The system shall evaluate, for callers permitted to approve the named snapshot, an arbitrary submitted CEL expression against a real snapshot's facts and answer whether it matched or why it failed to compile or evaluate, shall persist nothing, append nothing to the ledger and change no snapshot, rule or served state in doing so — on success and on every error path alike — and shall never echo snapshot content in the answer beyond the match outcome and the error description.
@@ -742,7 +742,7 @@ requirements:
     categories: ["security", "interaction-capability"]
     revision: 0.1.0
 
-  - id: GW_0093
+  - id: GW_VETTING_0019
     title: Deterministic license detection at ingestion
     significance: shall
     description: The system shall provide a built-in vetting connector that detects, over the quarantined content pinned to the snapshot's commit SHA, the licenses the snapshot declares — identifying license and copying files anywhere in the tree by a fixed fingerprint table of SPDX license identifiers, honoring an SPDX-License-Identifier tag inside such a file, and reading the license metadata fields of the marketplace manifest — recording every identified license as a finding located at its source, recording a license source that matches no known identifier as an unknown-license finding, and recording a snapshot carrying no license information at all as a missing-license finding, with detection deterministic so that the same content under the same connector version always yields the same findings.
@@ -750,7 +750,7 @@ requirements:
     categories: ["functional-suitability", "security"]
     revision: 0.1.0
 
-  - id: GW_0094
+  - id: GW_VETTING_0020
     title: License allow and ban lists through the standard vetting path
     significance: shall
     description: The system shall evaluate every detected license against an organisation-level configured ban list and allow list of SPDX identifiers, producing a blocking finding for a license on the ban list, and — when a non-empty allow list is configured — a blocking finding for an identified license absent from it and for an unknown or missing license, while with neither list configured recording identified licenses informationally and unknown or missing licenses as non-blocking warnings; every such finding shall flow through the standard vetting chain, so that it aggregates fail-closed, gates approval, is acceptable only by a scoped expiring waiver on its rule identifier, is re-examined by continuous re-vetting, and lands on the append-only ledger like any other verdict, and the connector's recorded version shall reflect the policy in force so a changed list is attributable in the chain identity.
@@ -758,7 +758,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0095
+  - id: GW_VETTING_0021
     title: Per-snapshot license report endpoint
     significance: shall
     description: The system shall answer, for any snapshot over an authenticated HTTP endpoint, a license report computed deterministically from the content pinned to the snapshot's commit SHA — each detected license with its SPDX identifier or its unknown state, the file path or manifest field it came from, and its evaluation under the license policy currently configured — and shall answer not-found for a snapshot that does not exist.
@@ -766,7 +766,7 @@ requirements:
     categories: ["functional-suitability", "security"]
     revision: 0.1.0
 
-  - id: GW_0096
+  - id: GW_APPROVAL_0010
     title: Separation of duties on snapshot approval
     significance: shall
     description: The system shall record, as attributes of the objects themselves, the identity that registered each marketplace and the identity that triggered each snapshot's ingestion, and shall determine at approval time whether the reviewer is the snapshot's ingestion actor, its marketplace's registrant, or the author of a waiver the approval relies on, treating the automated sync triggers and an unrecorded actor as no conflict; where the configured mode enforces the rule the system shall refuse such an approval before any state transition, leaving the snapshot undecided and nothing published, and shall answer the refusal naming each conflicting act; and it shall gate no rejection, no role decision and no other operation on this rule.
@@ -774,7 +774,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0097
+  - id: GW_APPROVAL_0011
     title: Four-eyes mode configuration and ledger visibility
     significance: shall
     description: The system shall offer exactly two modes for the approval separation-of-duties rule — one that records a detected conflict and lets the approval proceed and one that refuses it — shall default to the recording mode so that a deployment holding a single approving identity keeps working across an upgrade, shall offer no mode that disables detection, and shall append every detected conflict to the audit ledger in both modes, naming the acting identity, the snapshot, the mode in force, whether the approval proceeded, and each conflicting act.
@@ -782,7 +782,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0098
+  - id: GW_AUTH_0015
     title: Identity-provider claim to role mapping
     significance: shall
     description: The system shall derive a browser session's delegated-administration roles from a configured claim of its identity-provider token in addition to the roles it holds by configuration and by stored grant, matching each claim value exactly against a configured list of mappings from claim value to role — an approver mapping naming the marketplace it is scoped to and the global roles naming none — shall union the derived roles with the configured and granted ones without changing deny-by-default enforcement, approver scoping or the auditor's read-only guarantee, shall refuse to start when a mapping names an unknown role, carries no claim value, scopes a global role or leaves an approver unscoped, shall derive no role at all for a credential that carries no identity-provider claims, and shall report on the session identity endpoint which of the three sources each effective role came from.
@@ -790,7 +790,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0099
+  - id: GW_AUTH_0016
     title: Truncated group claim made visible
     significance: shall
     description: The system shall detect that an identity provider omitted the configured claim from a token while indicating that the claim was truncated rather than empty, shall record that detection in its logs and report it on the session identity endpoint, and shall distinguish it from a session that genuinely carries no membership.
@@ -798,7 +798,7 @@ requirements:
     categories: ["security", "interaction-capability"]
     revision: 0.1.0
 
-  - id: GW_0100
+  - id: GW_AUTH_0017
     title: Enterprise identity-provider session integrity
     significance: shall
     description: The system shall let an operator configure which claim of the identity-provider token names the principal and which scopes the login requests, defaulting to the subject claim and the openid scope so an existing deployment is unchanged, and shall, when an expected issuer is configured, refuse any identity token whose issuer claim differs from it and establish no session, warning at startup whenever a deployment that is not in the insecure development mode leaves the expected issuer unconfigured.
@@ -806,7 +806,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0101
+  - id: GW_FACADE_0006
     title: Gateway-hosted marketplace origin
     significance: shall
     description: The system shall allow an administrator to register a marketplace that the gateway itself hosts — accepting no clone URL for it, refusing a registration that supplies one, and refusing as before a non-hosted registration that omits one — shall create for it a gateway-owned origin repository that is neither the quarantine area nor the served area, shall never fetch such a marketplace from any external location, shall keep its refresh strategy fixed at on-demand and refuse to change it, and shall report the marketplace's origin, its history-rewrite policy and the location publishers push to wherever it describes the marketplace.
@@ -814,7 +814,7 @@ requirements:
     categories: ["functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0102
+  - id: GW_FACADE_0007
     title: Authenticated publication over a separate write endpoint
     significance: shall
     description: The system shall accept authenticated git pushes into a hosted marketplace's origin repository over an endpoint separate from the one that serves approved content, shall authorize such a push only by a token scope granted explicitly per marketplace with no form of that scope meaning every marketplace, shall answer a push for a marketplace outside the token's scope indistinguishably from one that does not exist, shall accept an update only to the marketplace's single lineage reference and refuse every other reference, shall refuse every reference deletion, shall refuse an update that is not a fast-forward unless the marketplace's policy permits rewriting and shall append the old and new tip to the append-only ledger when it does, and shall continue to accept no push whatsoever on the endpoint that serves approved content.
@@ -822,7 +822,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0103
+  - id: GW_INGEST_0017
     title: Pushed content traverses the unchanged pipeline
     significance: shall
     description: The system shall ingest a commit pushed to a hosted marketplace into the quarantine area, identify it by its commit SHA, validate its manifest, vet it and hold it exactly as it does content fetched from an upstream, and shall not serve it until it has been explicitly approved.
@@ -830,7 +830,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0104
+  - id: GW_AUTH_0018
     title: Session-derived short-lived git credentials
     significance: shall
     description: The system shall issue, to a principal holding an authenticated browser session, a git facade credential whose lifetime the gateway sets from configuration and which the requester can neither choose nor extend, shall grant such a credential no publication authority whatsoever, shall let it be narrowed to named marketplaces exactly as any other credential, shall record and report that the credential was derived from a session so it is distinguishable everywhere a credential appears including the append-only ledger, and shall carry both that mark and the unchanged expiry deadline through a rotation.
@@ -838,7 +838,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0105
+  - id: GW_API_0002
     title: Contract document declares the release it describes
     significance: shall
     description: The system shall declare, in the API contract document it serves, the version of the release that document describes, derived from the build rather than maintained by hand.
@@ -846,7 +846,7 @@ requirements:
     categories: ["functional-suitability", "maintainability"]
     revision: 0.1.0
 
-  - id: GW_0106
+  - id: GW_API_0003
     title: Published contract matches the served contract
     significance: shall
     description: The system shall keep the API contract document published in its repository identical to the document the running application serves, apart from the release version that document declares, and shall fail its own build when the two diverge.
@@ -855,7 +855,7 @@ requirements:
     implementation: configuration
     revision: 0.1.0
 
-  - id: GW_0107
+  - id: GW_API_0004
     title: Breaking contract changes are detected and declared
     significance: shall
     description: The system's change process shall compare every proposed change to the API contract against the contract that change branched from, shall refuse a change that removes or narrows what the contract already offered unless that change is both explicitly marked as a deliberate break and declared as breaking by the commit that ships it, and shall state in the refusal what a deliberate breaking change is required to do instead.
@@ -864,7 +864,7 @@ requirements:
     implementation: configuration
     revision: 0.1.0
 
-  - id: GW_0108
+  - id: GW_RELEASE_0003
     title: Gated release automation
     significance: shall
     description: The system's release automation shall cut a release only from a manual dispatch, shall default to a preview that resolves and reports the release without creating a tag or publishing anything, shall derive the version to release from the Conventional Commits since the previous tag and require an explicit override flag before accepting a hand-entered version that disagrees with the derived one, shall offer a release-candidate mode that is verified like any release but never promoted, shall run the same gates that guard the main branch and then hold for approval by a required reviewer before the version's tag is created and before every other publicly visible or irreversible step, shall create the release as a prerelease that is excluded from the latest-release resolution until its published artifacts have been downloaded and verified over the same unauthenticated path a consumer uses, shall promote a release to latest only after that verification passes, and shall report at the end of any run that created the tag without reaching promotion which parts of the release exist and which do not.
@@ -873,7 +873,7 @@ requirements:
     implementation: configuration
     revision: 0.2.0
 
-  - id: GW_0109
+  - id: GW_RELEASE_0004
     title: Release version tag format
     significance: shall
     description: The system's release tags shall be bare three-part semantic versions carrying no prefix, the tag shall be the single source of the released version so that no version is recorded by hand anywhere in the build, and the release automation shall refuse to release from a commit that is not reachable from the main branch or that already carries a release tag.
@@ -882,7 +882,7 @@ requirements:
     implementation: configuration
     revision: 0.1.0
 
-  - id: GW_0110
+  - id: GW_AUTH_0019
     title: Development escape hatch refuses a configured deployment
     significance: shall
     description: The system shall refuse to start when its development-only unauthenticated authentication mode is enabled on a deployment that has an identity provider configured, and the refusal shall state which configuration it was decided by and how to resolve it.
@@ -890,7 +890,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0120
+  - id: GW_FACADE_0008
     title: Deliberate storage durability choice
     significance: shall
     description: The deployment chart shall require every installation to state explicitly whether the gateway's git storage is durable or ephemeral, shall refuse to render when that statement is absent or unrecognised, shall refuse to render when durable storage is chosen without naming the volume claim that provides it, and shall state in the refusal that ephemeral storage loses all quarantined, published and hosted repository content when the pod restarts.
@@ -899,7 +899,7 @@ requirements:
     implementation: configuration
     revision: 0.1.0
 
-  - id: GW_0121
+  - id: GW_RELEASE_0005
     title: Deployable chart surface
     significance: shall
     description: The deployment chart shall accept credentials for pulling the container image from a private registry, shall offer an ingress that is disabled by default and that carries an ingress class, annotations, host and path rules and TLS configuration when enabled, shall declare default processor and memory reservations and limits for the container, shall run the workload under a named and annotatable service account of its own rather than the namespace default, and shall run it by default as a non-root user with no privilege escalation, no retained capabilities and a read-only root filesystem.
@@ -908,7 +908,7 @@ requirements:
     implementation: configuration
     revision: 0.1.0
 
-  - id: GW_0122
+  - id: GW_RELEASE_0006
     title: Chart configuration passthrough
     significance: shall
     description: The deployment chart shall allow an installation to set any of the application's configuration properties without a chart change, by both individual environment entries whose values may be taken from a secret and structured configuration rendered into a configuration object that is mounted and layered over the configuration built into the image before the estate is reconciled, and its documentation shall state that role enforcement is disabled by default and must be enabled for any shared deployment.
@@ -917,7 +917,7 @@ requirements:
     implementation: configuration
     revision: 0.1.0
 
-  - id: GW_0125
+  - id: GW_FACADE_0009
     title: Enumerated persisted values are database types
     significance: shall
     description: The system shall persist every closed set of enumerated values as a database type that admits exactly that set, so that the permitted values are readable from the column's declared type and the database refuses a value outside them.
@@ -925,7 +925,7 @@ requirements:
     categories: ["maintainability", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0126
+  - id: GW_AUTH_0020
     title: Machine credential authority is a distinct scope dimension
     significance: shall
     description: The system shall model a credential's authority over the administrative interface as a list of named scope values held on the credential itself, independent of the lists that govern what it may fetch and what it may publish, whose empty value shall grant no administrative reach at all; and it shall refuse at issue time a scope value it does not know, offering no value that grants every scope and no value that grants another.
@@ -933,7 +933,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0127
+  - id: GW_AUTH_0021
     title: Fetch and publication credentials cannot reach the administrative interface
     significance: shall
     description: The system shall authenticate a credential on the administrative interface only when that credential holds at least one administrative scope, shall reject there every credential holding only fetch or publication authority including the every-marketplace fetch form and every credential derived from a browser session, shall refuse to derive an administrative scope onto a session-derived credential at issue time, shall grant no fetch and no publication authority to a credential holding administrative scope, shall accept only a bearer credential presented in its own request without creating or honouring a session, shall refuse a request that presents both a bearer credential and a session cookie rather than resolving it to either, and shall keep all of this in force when the development-only unauthenticated authentication mode is enabled.
@@ -941,7 +941,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0128
+  - id: GW_AUDIT_0007
     title: The ledger records what kind of actor acted
     significance: shall
     description: The system shall record on every ledger entry an explicit actor kind distinguishing an interactive person, a machine credential and the gateway acting on its own, stored on the entry itself rather than derived from any record that can later change or be deleted, and shall record on an entry produced by a machine credential which credential produced it. It shall record every authorized read of the role grants as a ledger entry carrying that actor kind and the reading identity, and shall record no entry for a read of the ledger itself.
@@ -949,7 +949,7 @@ requirements:
     categories: ["security", "maintainability"]
     revision: 0.1.0
 
-  - id: GW_0129
+  - id: GW_AUTH_0022
     title: Machine reach is an allowlist that excludes judgement and retraction
     significance: shall
     description: The system shall classify every administrative endpoint it serves as reachable under exactly one named scope or as unreachable by any credential, shall refuse to start or to build when an endpoint is classified as neither, and shall admit no combination of scopes and no role to any endpoint classified unreachable — which shall include every decision to publish, reject or override vetting, every operation that retracts or republishes content, every grant of privilege, and every path that mints a credential. This enforcement shall not depend on whether role enforcement is enabled.
@@ -957,7 +957,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0130
+  - id: GW_AUTH_0023
     title: A machine principal's roles come from configuration and declaration only
     significance: shall
     description: The system shall derive no role for a machine credential from identity-provider claims, shall let its principal hold a role only through the deployment's configuration or a declared or stored grant, shall require both a scope and the corresponding role before an operation is permitted once role enforcement is enabled, and shall require the administrative role for minting, listing and revoking a machine credential whether or not role enforcement is enabled.
@@ -965,7 +965,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0131
+  - id: GW_AUTH_0024
     title: A machine credential must expire and is administered centrally
     significance: shall
     description: The system shall refuse to issue a machine credential without an expiry and shall refuse rather than shorten one whose requested lifetime exceeds the applicable cap, applying a built-in cap when the deployment configures none; shall preserve on rotation the credential's identity, its expiry deadline and all of its scope dimensions while leaving no moment at which two of its secrets are live; and shall offer an administrator a listing and a revocation path covering machine credentials regardless of which identity provisioned them, without widening the listing through which a person sees their own credentials.
@@ -973,7 +973,7 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0111
+  - id: GW_FACADE_0010
     title: Named git storage backend
     significance: shall
     description: The system shall take the storage that holds its git repositories from an explicitly named backend rather than inferring one from whichever settings happen to be present, shall use the local filesystem when no backend is named, shall refuse to start when the named backend is not one it implements or when the settings that backend requires are absent or incomplete, shall state in every such refusal which setting it was decided by, shall never resolve a backend other than the one named, and shall offer a credential mechanism for remote storage that needs no instance metadata service and refuse to start when that mechanism is named but cannot be resolved.
@@ -981,7 +981,7 @@ requirements:
     categories: ["reliability", "security", "flexibility"]
     revision: 0.1.0
 
-  - id: GW_0112
+  - id: GW_FACADE_0011
     title: Reference transitions are the same on every storage backend
     significance: shall
     description: The system shall keep the quarantine, hosted and published roles of a repository separate on every storage backend it supports, shall create each repository with its head reference resolving to the branch it publishes on, shall put a snapshot on the wire and take it off again through the same reference transitions with the same observable outcome whichever backend holds the repositories, shall apply each such transition as a single all-or-nothing change that a concurrent writer can neither lose nor observe half of, shall raise a reference transition that did not take effect rather than reporting it as done, and shall advertise the same push capabilities to a publisher on every backend.
@@ -989,7 +989,7 @@ requirements:
     categories: ["reliability", "security"]
     revision: 0.1.0
 
-  - id: GW_0116
+  - id: GW_FACADE_0012
     title: The storage backend reports its own contention, levels and reachability
     significance: shall
     description: The system shall record, through its metrics registry and regardless of whether telemetry export is enabled, the conditional writes its storage backend had refused because another writer had moved the state on, the transition attempts it made after such a refusal, the transitions it abandoned when its bounded retry ran out, the depth of the write-ahead log and the number of live packs its compaction exists to hold down, the pack opens it served from local disk against the packs it fetched from the store, and the duration of each object-store request by operation and outcome, all named under the skills_gateway prefix and carrying only fixed-vocabulary tags; and shall expose a health indicator naming the storage backend in use, reporting whether that backend can be reached without writing to it, and reporting the result of the conditional-write check that gated startup.
@@ -997,7 +997,7 @@ requirements:
     categories: ["reliability", "maintainability"]
     revision: 0.1.0
 
-  - id: GW_0114
+  - id: GW_FACADE_0013
     title: Verified migration between storage backends
     significance: shall
     description: The system shall copy every repository it holds, in every repository role, from the storage backend it is configured to use into another backend it implements; shall stream that copy rather than requiring any repository to fit in memory; shall then re-read both backends independently and compare, for each repository, the resolved reference set and the branch the head reference names; shall report the migration as failed and name every repository whose destination does not match its source; shall leave the source backend unchanged, byte for byte; shall change nothing about what any repository contains, so that nothing is re-approved and nothing is re-ingested; and shall decide whether a start is a migration from the configuration the running process is given, never from configuration fixed when the artifact was built.
@@ -1005,7 +1005,7 @@ requirements:
     categories: ["reliability", "maintainability"]
     revision: 0.2.0
 
-  - id: GW_0115
+  - id: GW_FACADE_0014
     title: Deployment refuses a storage and replication shape the gateway cannot honour
     significance: shall
     description: The deployment chart shall take the storage backend from an explicitly named value and refuse to render when that name is not one the gateway implements or when the settings the named backend requires are absent; shall refuse to render a deployment that mounts no storage volume unless the named backend is one whose repositories live outside the pod; shall take access keys only from a secret that already exists and offer nowhere in its own values to write one; shall refuse to render more than one replica on a backend that supports only a single writer; and shall refuse to render more than one replica while any of the gateway's uncoordinated background sweeps and pollers remains enabled, naming each one that does.
@@ -1014,7 +1014,7 @@ requirements:
     implementation: configuration
     revision: 0.1.0
 
-  - id: GW_0132
+  - id: GW_FACADE_0015
     title: Publication is one verified transition on every storage backend
     significance: shall
     description: The system shall put a snapshot's content on the wire through a single operation of the storage seam that both transfers the objects the snapshot needs and moves every reference through which it becomes reachable; shall make that reference movement all-or-nothing, so an observer sees either every such reference on the snapshot or none of them; shall transfer objects without requiring either repository to have a filesystem location; shall stage transferred objects outside every reference namespace the gateway serves until the transition commits; shall raise a transition that did not take effect rather than reporting it as done; shall leave nothing reachable on the served surface when a transition is refused; and shall report whether the call is what started the marketplace serving.
@@ -1022,7 +1022,7 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0133
+  - id: GW_APPROVAL_0012
     title: An approval reports success only when the publication happened
     significance: shall
     description: The system shall report a snapshot as approved only after its publication has taken effect; shall record no approval on the audit ledger, apply no waiver use, and emit no lifecycle event for an approval whose publication was refused; shall return the snapshot's record to the state it held before the decision, including any revocation it carried, when publication does not take effect; shall not record a failed publication as a revocation; shall leave a record it cannot return alone rather than overwrite a decision made in the meantime; and shall report a repair it could not perform rather than discarding it.
@@ -1030,7 +1030,7 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0134
+  - id: GW_FACADE_0016
     title: The facade advertises only the references it serves
     significance: shall
     description: The read-only git facade shall advertise only the served branch of a published repository, the references that pin its approved snapshots, and the symbolic reference a client reads to learn which branch to check out; shall advertise no other reference a repository happens to hold, whatever the gateway keeps it for; and shall keep every fetch of an approved snapshot by name working.
@@ -1038,7 +1038,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0135
+  - id: GW_FACADE_0017
     title: The served catalog repository keeps no scaffolding references
     significance: shall
     description: The system shall remove every internal reference the catalog rebuild creates once the rebuild has committed; shall raise a removal that did not take effect rather than reporting the rebuild as done; and shall report a catalog commit as the served catalog only when the reference that serves it moved.
@@ -1046,7 +1046,7 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0136
+  - id: GW_RETENTION_0007
     title: A purge reports a deletion only when the snapshot's reference is gone
     significance: shall
     description: The system shall remove a snapshot's quarantine reference before deleting its record; shall raise a removal that did not take effect; shall leave the record in place and record no deletion on the audit ledger when the reference could not be removed; and shall count such a snapshot as not acted on, so a later pass attempts it again.
@@ -1054,7 +1054,7 @@ requirements:
     categories: ["reliability", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0137
+  - id: GW_INGEST_0018
     title: An ingestion reports a pinned snapshot only when it is pinned
     significance: shall
     description: The system shall pin an ingested commit in the quarantine repository before recording the snapshot; shall raise a pin that did not take effect; and shall record no snapshot whose pin was refused.
@@ -1062,7 +1062,7 @@ requirements:
     categories: ["reliability"]
     revision: 0.1.0
 
-  - id: GW_0138
+  - id: GW_AUTH_0025
     title: Authorization on the web surface is always enforced
     significance: shall
     description: The system shall evaluate every authorization check on its web surface against the roles the calling session actually holds, and shall offer no configuration that disables those checks or causes them to pass for a principal holding no role.
@@ -1070,7 +1070,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0139
+  - id: GW_AUTH_0026
     title: A gateway with no administrator refuses to start
     significance: shall
     description: The system shall determine from its configuration alone, before serving any request, whether any principal could hold the administrative role; shall refuse to start when none could; shall name in that refusal every configuration path that would resolve it; and shall not consult stored state when making this determination.
@@ -1078,7 +1078,7 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0140
+  - id: GW_AUTH_0027
     title: The removed enforcement property is refused rather than ignored
     significance: shall
     description: The system shall refuse to start when the removed authorization-enforcement property is present in its configuration in any form the framework resolves, including the relaxed and environment-variable spellings, and shall state in the refusal that the property was removed and that enforcement is now unconditional.
@@ -1086,7 +1086,7 @@ requirements:
     categories: ["security", "maintainability"]
     revision: 0.1.0
 
-  - id: GW_0141
+  - id: GW_AUTH_0028
     title: The development escape hatch confers the administrative role on its own principal
     significance: shall
     description: While the development authentication escape hatch is enabled, the system shall confer the administrative role on the synthetic principal that escape hatch creates, shall attribute that role to the escape hatch rather than to configuration or to a stored grant when reporting the session's effective roles, and shall confer nothing by this path while the escape hatch is disabled or to an identity-provider session that merely shares the synthetic principal's name.
@@ -1094,7 +1094,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0142
+  - id: GW_VETTING_0022
     title: A vetting ledger entry is self-describing and correctly attributed
     significance: shall
     description: The system shall append every connector verdict to the audit ledger carrying the connector name, its conclusion, the number of findings and the worst finding severity present, and a reference to the chain run the verdict belongs to; shall append the run-completed entry carrying that same run reference; and shall attribute every entry produced by the automated vetting chain to the gateway acting on its own rather than to a person.
@@ -1102,7 +1102,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0143
+  - id: GW_VETTING_0023
     title: A clean vetting pass records what it examined
     significance: shall
     description: The system shall record on every connector verdict, including a pass that produced no findings, a non-empty statement of what the connector examined — the files it scanned and the rules it applied — so that a pass is distinguishable in the ledger and in the vetting report from a connector that did not run.
@@ -1110,7 +1110,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0144
+  - id: GW_VETTING_0024
     title: Operator-configured external vetting connectors join the ordered chain
     significance: shall
     description: The system shall allow an operator to configure external vetting connectors that each take a position in the ordered connector chain, run against the quarantined SHA-pinned snapshot alongside the built-in connectors, and have their verdicts recorded and aggregated by the same fail-closed rules; and shall stamp each configured external connector's identity and rule-set version into the chain identity recorded on every run.
@@ -1118,7 +1118,7 @@ requirements:
     categories: ["functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0145
+  - id: GW_VETTING_0025
     title: An external vetting connector fails closed on any inconclusive answer
     significance: shall
     description: The system shall record an external vetting connector's verdict as an error — which blocks — whenever the connector's endpoint is unreachable, refuses the connection, or does not answer within the configured connect or read timeout; whenever it returns a non-success HTTP status, an empty body, a body larger than the configured response cap, or a body that cannot be parsed; whenever it declares a verdict state the system does not recognise or a finding the system cannot validate; and whenever the snapshot's scannable content exceeds the configured request cap so that no complete evidence bundle can be sent. In none of these cases shall the system record a passing or clearing verdict.
@@ -1126,7 +1126,7 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0146
+  - id: GW_VETTING_0026
     title: An external verdict is never weaker than its own findings, and its report link is recorded
     significance: shall
     description: The system shall record an external vetting connector's verdict state as the more severe of the state the connector declared and the state its own returned findings imply; and shall persist the connector's findings and its external report link through the same verdict model the built-in connectors use, so that both are surfaced wherever a snapshot's vetting evidence is shown.
@@ -1134,7 +1134,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0147
+  - id: GW_VETTING_0027
     title: An external vetting connector may answer asynchronously, which blocks until resolved
     significance: shall
     description: The system shall accept a pending answer from an external vetting connector, record it as a pending verdict that blocks the snapshot exactly as every other non-verdict does, and shall never treat a pending answer as a passing or clearing verdict.
@@ -1142,7 +1142,7 @@ requirements:
     categories: ["functional-suitability", "security"]
     revision: 0.1.0
 
-  - id: GW_0148
+  - id: GW_VETTING_0028
     title: Administrative override of a blocked vetting outcome
     significance: shall
     description: The system shall allow an administrator, and only an administrator, to approve a held or revoked snapshot whose effective vetting outcome is blocked by supplying a non-empty reason, shall refuse such an override to a principal that is not an administrator and refuse it to an administrator who supplies no reason, shall leave every other approval precondition — the policy gate, the minimum release age and the separation-of-duties rule — in force so that the override lifts only the vetting block, shall record the override as a distinct audit-ledger event naming the acting administrator, the reason, and the connectors and uncovered findings that were blocking, and shall mark the approved snapshot as approved over a vetting failure so that the override is surfaced wherever the snapshot's vetting is shown and is never indistinguishable from an approval the chain cleared.
@@ -1150,7 +1150,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0149
+  - id: GW_VETTING_0029
     title: Administrative enable and disable of a built-in vetting connector
     significance: shall
     description: The system shall allow an administrator, and only an administrator, to disable or re-enable a specific built-in vetting connector either globally or for one named marketplace, resolving the effective state of a connector for a marketplace as its per-marketplace setting when one exists and otherwise its global setting and otherwise enabled, shall skip a connector that is disabled for a snapshot's marketplace when the chain runs at ingestion or re-vetting rather than running it, recording a distinct disabled verdict against that chain run in the connector's place so the disablement is part of the run's evidence, shall count a disabled verdict as neither clearing nor blocking while still requiring at least one clearing verdict for a run to clear so that disabling every connector leaves the run blocked rather than cleared, shall record every toggle as an administrator-only, audited action naming the acting administrator, the connector, the scope and the new state, and shall neither show connector settings to nor accept a toggle from a principal that is not an administrator.
@@ -1158,7 +1158,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0150
+  - id: GW_INGEST_0019
     title: Typed plugin source model
     significance: shall
     description: The system shall parse every plugin entry of a marketplace manifest into a typed plugin source — a repository-relative local path, or one of the external forms the manifest format defines (a GitHub owner/repository shorthand, a git clone URL, a git URL with a subdirectory, an npm package, a downloadable archive) — and shall decide whether that source is admissible from its parsed type and fields rather than from the JSON shape of the manifest value alone. The system shall treat as a violation, naming the offending plugin, any source it cannot parse into one of those forms, any source declaring a type it does not implement, any source whose type is npm or archive, and any local path that escapes the marketplace repository; and shall record the snapshot rejected in each case.
@@ -1166,7 +1166,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0151
+  - id: GW_INGEST_0020
     title: Configuration-gated admission of external plugin sources
     significance: shall
     description: The system shall admit an external plugin source only when external plugin sources are enabled in its configuration, and shall default that setting to disabled. When they are enabled the system shall additionally refuse, as a manifest policy violation naming the plugin and the reason, a source whose parsed type is not in the configured allowlist of admissible types, a source whose derived clone URL carries a scheme outside the gateway's URL scheme allowlist, a source whose derived clone URL names a host outside the configured host allowlist when that allowlist is not empty, and any external source beyond the configured maximum number of external sources one manifest may declare. The system shall derive the clone URL of a GitHub shorthand source before applying the scheme and host checks, and shall apply every one of these checks without contacting the source.
@@ -1174,7 +1174,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0152
+  - id: GW_INGEST_0021
     title: No snapshot is held while a plugin source is not gateway-local
     significance: shall
     description: The system shall place a snapshot in the held state only when every plugin source its manifest declares resolves inside the snapshot the gateway itself serves. A snapshot whose manifest declares an external plugin source that the system has admitted but has not resolved and rewritten into gateway-local content shall be recorded rejected, carrying a violation that distinguishes a source that was not admitted from one that was admitted but is not yet resolvable, and shall remain unapprovable and unservable exactly as any other rejected snapshot.
@@ -1182,7 +1182,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0153
+  - id: GW_INGEST_0022
     title: Snapshot content diff against the last approved snapshot
     significance: shall
     description: The system shall expose, for any snapshot, a diff of its content inventory against the inventory of the newest live approved snapshot of the same marketplace other than itself, classifying every plugin and every skill as added, removed, changed, moved or unchanged; shall classify a skill as changed whenever anything under its directory differs between the two snapshots rather than only its skill definition file; shall report a skill that a plugin no longer declares but another plugin now does exactly once, naming the plugin it came from, rather than as an unrelated removal and addition; shall report a plugin the baseline declared and the snapshot does not, together with the skills it had, as removed; and shall report the absence of any approved snapshot to compare against explicitly, with every plugin and skill added.
@@ -1190,7 +1190,7 @@ requirements:
     categories: ["functional-suitability", "security"]
     revision: 0.1.0
 
-  - id: GW_0154
+  - id: GW_FACADE_0018
     title: Fetch ledger records the advertised ref a want resolves to
     significance: shall
     description: The system shall record, for each object a facade pack transfer serves, the advertised reference that object resolves to, resolved against the set of references the facade advertised for that request; shall record the served tip when the object is the tip, and the pinned snapshot reference when the object is that snapshot and not the tip; and shall record no reference at all, rather than any other reference, when the object resolves to none of the advertised references.
@@ -1198,7 +1198,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0159
+  - id: GW_WEBHOOK_0006
     title: Approval-pending lifecycle event
     significance: shall
     description: The system shall emit a distinct subscribable lifecycle event announcing that a snapshot is awaiting a human approval decision, whenever a vetting chain run finishes against a snapshot that is held, and shall not emit it for a snapshot in any other state. The event shall be selectable by name in a webhook subscriber's event filter, whether that subscriber is registered through the API or declared as part of the configured estate, shall be offered by the registry of subscribable events, and shall be delivered under the same enqueue-only, at-least-once, retried and signed contract as every other lifecycle event, such that a subscriber whose filter does not name it receives nothing and no other event's name, shape or meaning changes.
@@ -1206,7 +1206,7 @@ requirements:
     categories: ["functional-suitability", "compatibility"]
     revision: 0.1.0
 
-  - id: GW_0160
+  - id: GW_WEBHOOK_0007
     title: The approval-pending event announces without disclosing
     significance: shall
     description: The system shall carry, in the approval-pending event's payload, the marketplace, the snapshot identifier, the commit SHA the snapshot is pinned to, the snapshot's state, the identifier of the chain run being reported, the effective vetting outcome that gates approval, the outcome the connectors themselves recorded, the names of the connectors that block, and how many findings are uncovered and how many are suppressed by an active waiver. The system shall not carry in that payload any finding message, finding rule identifier, finding location, file name or other content of the quarantined snapshot, and shall keep the payload's remaining fields identical in name and meaning to those of every other lifecycle event.
@@ -1214,7 +1214,7 @@ requirements:
     categories: ["security", "compatibility"]
     revision: 0.1.0
 
-  - id: GW_0155
+  - id: GW_INGEST_0023
     title: Resolution of admitted external plugin sources into quarantine
     significance: shall
     description: "The system shall, for every external plugin source a marketplace manifest declares and its configuration admits, fetch that source's repository into the quarantine area of the marketplace being ingested and pin the commit the fetch resolved to, before any snapshot of that manifest is recorded. The system shall resolve two identical admitted sources within one manifest once. The system shall refuse, as a manifest policy violation naming the plugin and the field, an admitted source that declares a specific ref or commit the system does not resolve at, rather than resolving that source at a different commit. The system shall remove the references it used to hold the fetched content once that content is reachable from the snapshot it records, and shall never expose the quarantine area through the consumer facade."
@@ -1222,7 +1222,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0156
+  - id: GW_INGEST_0024
     title: Deterministic composite snapshot with a gateway-local manifest
     significance: shall
     description: "The system shall record a snapshot of a manifest declaring resolved external plugin sources as a synthesised commit that contains the ingested upstream content, each resolved external source's content under a reserved directory of that commit, and a rewritten marketplace manifest in which every plugin source is a path inside that commit; shall identify the snapshot by that synthesised commit; and shall make the ingested upstream commit the synthesised commit's parent so that the manifest as upstream declared it stays byte-exact and reachable from the identified commit. The system shall produce the same synthesised commit for the same upstream commit, the same resolved external commits and the same rewrite implementation, and shall record in that commit the upstream commit, each plugin's source and resolved commit, and the identity of the rewrite implementation. The system shall refuse, as a manifest policy violation and without synthesising a commit, a manifest whose upstream content already occupies the reserved directory, an external plugin whose name is not a single lowercase path segment, and two external plugins sharing a name. The system shall verify that the rewritten manifest satisfies the local-only manifest policy before the synthesised commit is used."
@@ -1230,7 +1230,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0157
+  - id: GW_INGEST_0025
     title: Address, redirect and transport policy for source resolution
     significance: shall
     description: "The system shall, for every outbound request it makes while resolving an external plugin source, including every request that follows a redirect, resolve the target host to addresses and refuse the request unless every resolved address is permitted. The system shall always refuse a link-local, multicast, unspecified, broadcast or otherwise non-global-unicast address, and any address that encodes one of those within another address family, under every configuration; and shall refuse a loopback, private, carrier-grade-NAT or unique-local address unless its configuration explicitly permits private networks. The system shall apply the same checks to every redirect target, and shall additionally refuse a redirect that leaves the host originally requested, a redirect from a secure to an insecure scheme, a redirect to a scheme outside the gateway's URL scheme allowlist, a target carrying embedded credentials, a target naming a port the system does not permit, and a redirect chain longer than the configured maximum. The system shall bound the time it will wait to establish a connection and the time it will wait for data."
@@ -1238,7 +1238,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0158
+  - id: GW_INGEST_0026
     title: Resource-bounded source resolution
     significance: shall
     description: "The system shall bound, by configuration, the work one manifest can cause it to perform while resolving external plugin sources, so that no manifest the gateway will look at can exhaust the gateway. The system shall accept a source that is inside every one of those bounds, and shall, on exceeding any of them, stop resolving and refuse the ingestion as a manifest policy violation naming both the plugin at fault and the bound that was exceeded."
@@ -1246,87 +1246,87 @@ requirements:
     categories: ["security", "performance-efficiency"]
     revision: 0.1.0
 
-  - id: GW_0158.1
+  - id: GW_INGEST_0026.1
     title: A bound on the bytes one source may send
     significance: shall
     description: "The system shall bound, by configuration, the bytes it will receive on the wire while resolving one external plugin source, and shall abort that transfer at the point the bound is crossed rather than judging the source once it has been received. The system shall make that bound available to the transfer itself, so that no arrangement of the other resolution bounds can cause a source's bytes to be taken in first and measured afterwards."
     rationale: "A git fetch is a stream the gateway did not create and cannot see the end of, so a source that simply never stops sending exhausts the gateway before any measurement of its content is possible. This is the one bound that has to act while the bytes are still arriving; every other bound of this capability is measured against content that is already on disk, and it is this bound that makes having it on disk safe at all."
     references:
-      requirement_ids: ["GW_0158"]
+      requirement_ids: ["GW_INGEST_0026"]
     categories: ["security", "performance-efficiency"]
     revision: 0.1.0
 
-  - id: GW_0158.2
+  - id: GW_INGEST_0026.2
     title: A bound on one source's decompressed size
     significance: shall
     description: "The system shall bound, by configuration, the size one external plugin source's content may occupy once it is decompressed into the objects the gateway holds, measured over the tree that would be grafted into the snapshot."
     rationale: "Received bytes and decompressed bytes are different quantities precisely because a fetch is decompression: a stream that ends quickly can still expand to more than the gateway can hold, so a bound on what arrives does not bound what the gateway ends up storing. Measuring the tree that would be grafted rather than the whole fetched history is what makes this bound the same quantity every later consumer pays, since vetting, the content inventory and the diff all walk that tree and nothing walks the discarded history."
     references:
-      requirement_ids: ["GW_0158"]
+      requirement_ids: ["GW_INGEST_0026"]
     categories: ["security", "performance-efficiency"]
     revision: 0.1.0
 
-  - id: GW_0158.3
+  - id: GW_INGEST_0026.3
     title: A bound on the decompressed size of a manifest's sources together
     significance: shall
     description: "The system shall bound, by configuration, the decompressed size of all the external plugin sources one manifest declares taken together, accumulating each source's contribution as that source is accepted and counting no refused source towards the total."
     rationale: "A per-source bound is defeated by declaring many sources just under it, so without an accumulated bound the real limit on what one manifest costs is the per-source bound multiplied by the maximum number of sources — a number no operator sets and few would accept if it were written down. Advancing the accumulator only when a source is accepted is what keeps a refusal from charging a manifest for content the gateway never kept, so a manifest is refused for what it actually contributed and not for what it attempted."
     references:
-      requirement_ids: ["GW_0158"]
+      requirement_ids: ["GW_INGEST_0026"]
     categories: ["security", "performance-efficiency"]
     revision: 0.1.0
 
-  - id: GW_0158.4
+  - id: GW_INGEST_0026.4
     title: A bound on how far a source's content may expand
     significance: shall
     description: "The system shall bound, by configuration, the ratio between the decompressed size of one external plugin source's content and the bytes received for it. The system shall judge that ratio only once the decompressed content is material relative to the bound on one source's decompressed size, so that a small but highly compressible source is not refused by it."
     rationale: "Both byte bounds can hold comfortably while the expansion between them is extreme, and that is exactly the shape of a pack bomb: a few bytes on the wire becoming everything the process can hold. Neither byte bound alone catches it, which is why the ratio is a bound of its own. The floor is not a softening of that bound: below it the absolute decompressed bound already caps what can be materialised, while an unfloored ratio would refuse ordinary repositories, where a small file of repeated text compresses just as hard as an attack does."
     references:
-      requirement_ids: ["GW_0158"]
+      requirement_ids: ["GW_INGEST_0026"]
     categories: ["security", "performance-efficiency"]
     revision: 0.1.0
 
-  - id: GW_0158.5
+  - id: GW_INGEST_0026.5
     title: A bound on the number of objects one source contributes
     significance: shall
     description: "The system shall bound, by configuration, the number of objects — files and directories — one external plugin source may contribute to a snapshot."
     rationale: "Size alone does not bound the cost of walking content: a source of very many tiny files is cheap to store and expensive for everything that later traverses it, and every connector of a vetting chain, the content inventory and the diff all traverse it — at ingestion and again on every continuous re-vetting pass. Bounding the count is what keeps that standing cost proportional to what an operator agreed to admit rather than to how a publisher chose to lay out a repository."
     references:
-      requirement_ids: ["GW_0158"]
+      requirement_ids: ["GW_INGEST_0026"]
     categories: ["performance-efficiency", "security"]
     revision: 0.1.0
 
-  - id: GW_0158.6
+  - id: GW_INGEST_0026.6
     title: A bound on the largest single file one source contributes
     significance: shall
     description: "The system shall bound, by configuration, the size of the largest single file one external plugin source may contribute to a snapshot."
     rationale: "A source can sit inside every aggregate bound and still hold one file that no consumer of the snapshot can handle, because a file is what a vetting connector reads whole. Bounding the largest file separately from the total is what keeps a single object from being the thing that fails a chain run, and it is the bound a legitimate marketplace shipping something genuinely large runs into first, which is why it has to be raisable on its own rather than only by raising every total beside it."
     references:
-      requirement_ids: ["GW_0158"]
+      requirement_ids: ["GW_INGEST_0026"]
     categories: ["performance-efficiency", "security"]
     revision: 0.1.0
 
-  - id: GW_0158.7
+  - id: GW_INGEST_0026.7
     title: A bound on the depth of a source's directory tree
     significance: shall
     description: "The system shall bound, by configuration, the depth of the directory tree it will accept from one external plugin source."
     rationale: "Depth is the dimension that turns a small, cheap repository into an expensive one for anything that walks it recursively, and a deliberately deep tree costs an attacker almost nothing to construct or to transfer, so neither byte bound nor object count stands in its way. Refusing depth at resolution is what keeps some later recursive walk elsewhere in the gateway from being the place the depth is discovered."
     references:
-      requirement_ids: ["GW_0158"]
+      requirement_ids: ["GW_INGEST_0026"]
     categories: ["performance-efficiency", "security"]
     revision: 0.1.0
 
-  - id: GW_0158.8
+  - id: GW_INGEST_0026.8
     title: A bound on the time a whole resolution may take
     significance: shall
     description: "The system shall bound, by configuration, the wall-clock time that resolving the whole of one manifest's external plugin sources may take, and shall stop resolving and refuse the ingestion once that time has passed."
     rationale: "Every other bound of this capability bounds a quantity, and none of them ends a resolution that is slow rather than large: a source trickling a byte at a time stays inside every size bound indefinitely, and a manifest declaring many individually fast sources can still occupy the gateway for as long as it likes. A wall-clock bound is the only one that makes termination a property of the resolution itself rather than of the sources' cooperation."
     references:
-      requirement_ids: ["GW_0158"]
+      requirement_ids: ["GW_INGEST_0026"]
     categories: ["performance-efficiency", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0161
+  - id: GW_INGEST_0027
     title: A failed resolution leaves the snapshot rejected and nothing half-resolved
     significance: shall
     description: "The system shall, when resolving a manifest's external plugin sources fails for any reason — an unreachable or refused source, a policy refusal, an exceeded resource bound, an exhausted time bound, a failure part-way through a transfer, or a refused rewrite — record the snapshot against the ingested upstream commit in the rejected state carrying the violation, synthesise no commit, leave no resolved external content reachable from any snapshot, and leave the content the facade serves unchanged. The system shall not place such a snapshot in the held state."
@@ -1334,7 +1334,7 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0162
+  - id: GW_VETTING_0030
     title: Bounded single-pass snapshot content access for a vetting chain run
     significance: shall
     description: "The system shall walk a quarantined snapshot's tree once per vetting chain run, and shall read a file's content only when the path selection a connector declares asks for it. The system shall retain content it has read for reuse by the other connectors of the same run, within a configured bound on the bytes one run may retain, and shall re-read rather than retain content once that bound is reached. The system shall present each connector with the content an independent walk would have given it, including visiting a file that exceeds the per-file size cap as unread rather than omitting it, and shall retain nothing beyond the end of the run."
@@ -1342,7 +1342,7 @@ requirements:
     categories: ["performance-efficiency", "security"]
     revision: 0.1.0
 
-  - id: GW_0167
+  - id: GW_INGEST_0028
     title: SKILL.md conformance against a pinned Agent Skills specification
     significance: shall
     description: "The system shall validate every skill's SKILL.md in a quarantined snapshot against an Agent Skills specification pinned in the gateway's own distribution, reporting each departure from it — an absent or unreadable frontmatter block, a missing required field, a field that violates its constraint, and a field the pinned specification does not define — as a vetting finding on its own stable rule identifier, located at the file it was found in. The system shall record the pinned specification's version as the connector's version on every run it takes part in, and shall never retrieve the specification over the network while vetting. The system shall treat conformance findings as advisory by default, and as blocking only when an operator has configured enforcement."
@@ -1350,7 +1350,7 @@ requirements:
     categories: ["functional-suitability", "maintainability"]
     revision: 0.1.0
 
-  - id: GW_0166
+  - id: GW_INGEST_0029
     title: Warning on a duplicate upstream URL at registration
     significance: shall
     description: "The system shall, when registering an upstream marketplace, compare its clone URL against every other upstream marketplace's clone URL after normalizing both to lowercase scheme and host, no trailing slash, and no '.git' suffix, and shall record in the registration response a warning naming each existing marketplace whose normalized URL matches, without refusing the registration on that basis."
@@ -1358,7 +1358,7 @@ requirements:
     categories: ["functional-suitability", "interaction-capability"]
     revision: 0.1.0
 
-  - id: GW_0168
+  - id: GW_FACADE_0019
     title: Abandoned publication staging references are swept from published repositories
     significance: shall
     description: "The system shall remove from a published repository a staging reference that publication left behind, and shall garbage-collect the repository so that the objects the reference alone kept reachable are reclaimed. The system shall remove such a reference only when no live snapshot record of that marketplace names the commit the reference points at, and the system has observed the reference continuously for longer than a configured bound on how long a publication may take; it shall leave the reference in place otherwise, and shall record what it removed on the append-only ledger. The system shall never, in doing so, remove a reference the facade advertises or make unreachable any content an approved snapshot is served from."
@@ -1366,7 +1366,7 @@ requirements:
     categories: ["reliability", "performance-efficiency"]
     revision: 0.1.0
 
-  - id: GW_0163
+  - id: GW_AUTH_0029
     title: Proxy-reported scheme and host are honoured only when configured, identically on every packaging
     significance: shall
     description: "The system shall build the URLs it presents to the outside world — the OIDC redirect URI among them — from the scheme, host and port a proxy reports in forwarded headers only when an operator has configured it to, by one setting that carries the same meaning on the JVM and on the native image; shall by default build them from the request as the container itself sees it; and shall let an operator state the OIDC redirect URI absolutely, by environment, in the same form as the other identity-provider settings."
@@ -1374,7 +1374,7 @@ requirements:
     categories: ["security", "flexibility"]
     revision: 0.1.0
 
-  - id: GW_0164
+  - id: GW_INGEST_0030
     title: The resolved closure is recorded as an immutable domain object of the snapshot
     significance: shall
     description: "The system shall record, with every snapshot whose manifest declared external plugin sources it resolved, the closure those sources form: the ingested upstream commit, the identity of the rewrite implementation, a digest over the sorted set of resolved members together with those two values, and one member per resolved external plugin carrying the plugin name, the source type, the source exactly as the manifest declared it, any ref or commit the manifest pinned, the clone URL the source was resolved through, the commit it resolved to, the tree grafted into the snapshot, the path it was grafted at, and the object count and decompressed size measured at resolution — every value a copy taken at ingestion and none of them a reference into mutable configuration. The system shall record the upstream commit on every snapshot, equal to the snapshot's own commit when no composite was synthesised; shall record the closure in the same transaction as the snapshot so that neither can exist without the other; shall never modify a recorded closure and shall remove one only when its snapshot is purged; shall include the closure, the served commit and the upstream commit in the snapshot's provenance; shall present the number of resolved external sources and each plugin's origin, clone URL and resolved commit as facts to the policy gate; and shall make the snapshots whose closure contains a given clone URL, at any or at a given resolved commit, answerable by one query."
@@ -1382,7 +1382,7 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0165
+  - id: GW_APPROVAL_0013
     title: Approval requires a complete closure
     significance: shall
     description: "The system shall, before evaluating any other approval gate and on every approval path including an administrator's override of a blocked vetting outcome and the re-approval of a revoked snapshot, refuse to approve a snapshot unless its recorded closure is complete against the commit it pins: every plugin whose source the served manifest declares under the reserved graft directory corresponds to exactly one closure member at that path, every closure member's graft path is present in the pinned commit as a tree identical to the tree the member records, every member carries a resolved commit, and no entry exists under the reserved graft directory that a member does not account for. The system shall refuse with a distinct outcome naming every discrepancy, shall record the refusal on the audit ledger, and shall leave the snapshot undecided with nothing published."
@@ -1390,7 +1390,7 @@ requirements:
     categories: ["security"]
     revision: 0.1.0
 
-  - id: GW_0169
+  - id: GW_FACADE_0020
     title: Read-only forge mirror of approved content
     significance: shall
     description: "The system shall be able to push a copy of the content it serves for a configured marketplace to an external git repository, and shall default that capability to disabled so that a deployment carrying no mirror configuration performs no outbound push at all. When it is enabled the system shall push only content that is approved and currently served, shall never push quarantined content or the origin repository of a gateway-hosted marketplace, shall refuse at startup a mirror URL whose scheme is outside the same URL scheme allowlist that governs marketplace registration, shall take the mirror credential from configuration rather than from any stored or committed material, and shall not disclose that credential in a log record, an API response or a ledger entry."
@@ -1398,7 +1398,7 @@ requirements:
     categories: ["functional-suitability", "security"]
     revision: 0.1.0
 
-  - id: GW_0170
+  - id: GW_FACADE_0021
     title: The mirror is never an enforcement path
     significance: shall
     description: "The system shall not make the outcome of any approval, publication, revocation, authorization decision or facade fetch depend on the mirror. The system shall perform the mirror update outside the decision that triggers it, so that a mirror that is unreachable, that refuses the credential, that is stale, or that holds content differing from the served content leaves every such outcome and the bytes the facade serves unchanged. The system shall record a failed mirror update and shall not propagate it to the caller of the decision that triggered it."
@@ -1406,7 +1406,7 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0171
+  - id: GW_FACADE_0022
     title: Revocation propagates to the mirror
     significance: shall
     description: "The system shall update the mirror when content stops being served, so that a snapshot that has been revoked or unpublished ceases to be reachable on the mirror as well as through the facade. The system shall treat its own record of what is served as authoritative: a mirror update that fails during a revocation shall neither block nor reverse the revocation, and the resulting divergence shall be recorded and reportable rather than silently accepted."
@@ -1414,7 +1414,7 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0172
+  - id: GW_FACADE_0023
     title: Mirror drift is reportable
     significance: shall
     description: "The system shall let an authorized administrator ask it to compare the references the mirror holds against the references the facade serves for the mirrored marketplace, and shall report whether the two agree, which served references the mirror is missing or holds at a different commit, which references the mirror holds that are no longer served, and the outcome and time of the most recent mirror update attempt. The system shall report a mirror it cannot reach as a failure of the comparison rather than as agreement."
@@ -1422,7 +1422,7 @@ requirements:
     categories: ["functional-suitability", "reliability"]
     revision: 0.1.0
 
-  - id: GW_0179
+  - id: GW_FACADE_0024
     title: The embedded git library's own scratch stays inside the writable temporary directory
     significance: shall
     description: "The container image and the deployment chart shall point the embedded git library's own user-level configuration cache at a path under the writable temporary directory the read-only root filesystem posture already provides, rather than leaving it to fall back to a home directory no deployment makes writable."
@@ -1431,7 +1431,7 @@ requirements:
     implementation: configuration
     revision: 0.1.0
 
-  - id: GW_0181
+  - id: GW_API_0005
     title: The lifecycle event deliveries are part of the published contract document
     significance: shall
     description: "The system shall describe, in the same contract document it serves for its HTTP API, every snapshot lifecycle event a subscriber may filter on, the body that event's delivery carries with each of that body's always-present fields marked as always present, and the transport headers the delivery is sent with; shall derive those descriptions from the same event registry, the same body types and the same header constants the dispatcher uses to produce a delivery, so that an event, a field or a header cannot exist in one and be absent from the other; and shall keep the event that carries audit ledger content out of that description, as it is out of the subscribable registry."
@@ -1439,7 +1439,7 @@ requirements:
     categories: ["functional-suitability", "maintainability"]
     revision: 0.1.0
 
-  - id: GW_0182
+  - id: GW_API_0006
     title: Breaking changes to the lifecycle event payload surface are detected and declared
     significance: shall
     description: "The system's change process shall subject the described lifecycle event deliveries to the same comparison it applies to the rest of the contract: it shall compare every proposed change to the events, their delivery bodies and their transport headers against the contract the change branched from, shall classify the removal or renaming of an event, of a delivery body field, or of a transport header as breaking, and shall refuse such a change unless it is both explicitly marked as a deliberate break and declared as breaking by the commit that ships it. The system shall place the delivery bodies in the contract document in a position where the comparison classifies a removed body field as breaking rather than as advisory."
@@ -1447,28 +1447,28 @@ requirements:
     categories: ["maintainability", "functional-suitability"]
     revision: 0.1.0
 
-  - id: GW_0190
+  - id: GW_FACADE_0025
     title: Bounded mirror staleness
     significance: shall
     description: "The system shall reconcile the read-only forge mirror against the references the facade serves on a recurring schedule, independently of whether anything has been approved or revoked, so that a reference the mirror holds and the facade no longer serves is removed from the mirror within a bounded interval — including when the reconciliation the revocation itself triggered exhausted its retries, was never queued, or was lost to a restart. The schedule shall do nothing while the mirror is disabled, and shall never delay, block or reverse an approval, a revocation or what the facade serves. A reconciliation shall refuse to change the mirror at all when the set of served references it read is not credible against the system's own record of what that marketplace has approved, and shall report the refusal rather than treating it as agreement or as a successful update."
     rationale: "Revocation propagation as first shipped is event-driven and best-effort: a push that exhausts its retries leaves the revoked reference on the mirror until the next approval or revocation of that marketplace, which on a marketplace nobody touches again is never. ADR 0008 keeps the facade canonical precisely so the gateway can withdraw content, so a mirror that keeps showing a snapshot the gateway revoked is a way to obtain withdrawn content — the bypass that decision exists to prevent — arrived at through inaction rather than through a bug. Bounding the divergence is therefore a property of the revocation, not a convenience. A schedule is the cheapest way to buy it because reconciliation was already defined as making the mirror equal what is served now: running it on a timer is the same operation with a different trigger, and needs no durable queue, no replay ordering and no new persistent state. It also covers the two failure modes a durable queue would not: a forge unreachable for longer than the retries last, and drift somebody pushed to the mirror by hand. The credibility check is the price of running that deletion automatically and unattended. Reconciliation deletes whatever the mirror holds and the served set does not, so a read of the published repository that succeeds but answers short — a transient backend read failure, a partially applied migration, a backend pointed at the wrong prefix, a marketplace consulted before publication is fully in place — has an honest conclusion of 'delete everything on the mirror', and on a timer that becomes a silent, total wipe recorded as a successful repair. That is a worse outcome than the staleness the schedule exists to bound. The check is stated against the system's own record of approved content rather than against a fraction of the mirror because there is no proportion that separates a legitimate bulk revocation from a degraded read, and refusing a legitimate one would leave revoked content on the mirror — the exact failure this requirement exists to prevent. Refusing rather than repairing is right here for the same reason repairing is right elsewhere: the deletion is only safe while the served set is known, and a reconciliation that cannot trust what it read has nothing to be authoritative with."
     categories: ["security", "reliability"]
     revision: 0.1.0
-  - id: GW_0191
+  - id: GW_FACADE_0026
     title: Mirror divergence is observable without being asked
     significance: shall
     description: "The system shall record, as telemetry published unconditionally through its metric registry, how many references the mirror holds that the facade no longer serves, how many served references the mirror lacks or holds at a different commit, whether the mirror could be reached at the most recent reconciliation, how long it has been since a reconciliation last succeeded, and the outcomes of reconciliations attempted. No such metric shall carry a marketplace, a commit, a principal or the mirror credential as a dimension, and none shall contact the mirror at the moment it is read."
     rationale: "A divergence nobody notices is the same as one that was never detected. As first shipped, the only signals were a log line, a ledger row and an endpoint an administrator has to think to visit; none of them can raise an alert, and the number that matters — references the mirror still holds that the gateway has withdrawn — was reachable only by asking. Publishing it as a metric is what lets a deployment be told rather than having to look. The dimensions are excluded for the reason every other gateway metric excludes them: per-marketplace and per-commit cardinality belongs in the adoption endpoints and the ledger, where it is a query result rather than a time series. Computing the values at reconciliation time rather than at scrape time keeps a network call to a third party off the scrape path and stops a monitoring system's polling interval from deciding how often the gateway talks to a forge."
     categories: ["reliability", "security"]
     revision: 0.1.0
-  - id: GW_0192
+  - id: GW_FACADE_0027
     title: An administrator can reconcile the mirror on demand
     significance: shall
     description: "The system shall let an authorized administrator ask it to reconcile the mirror with what the facade serves immediately, and shall answer with the resulting comparison. The request shall be refused to a caller who is not an administrator, shall not be reachable by any machine-credential scope, shall carry no mirror credential in its answer, and shall neither fail nor be delayed in a way that affects an approval, a revocation or what the facade serves."
     rationale: "Bounding staleness by a schedule still leaves an operator who has just fixed a forge outage, rotated a rejected credential, or read a drift report waiting for a timer with nothing to do about it — and the previously available answers were to approve or revoke something, or to restart the gateway, both of which are worse than the problem. Making the reconciliation something an administrator can ask for turns the drift report from a diagnosis into an action. It is an administrator's read-and-repair of deployment infrastructure rather than anything the gateway serves, which is why it is reserved the same way the drift report is and why no scope reaches it. Answering with the fresh comparison rather than an acknowledgement is what makes it useful: the operator asked whether the mirror is right now, and a stale answer would defeat the request."
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
-  - id: GW_0193
+  - id: GW_FACADE_0028
     title: A mirror repair is never silent
     significance: shall
     description: "The system shall record on the audit ledger what each reconciliation changed on the mirror — the references it pushed and the references it deleted — and shall record a reconciliation that changed the mirror without a publication or a revocation having triggered it as a repair of divergence, distinctly from an update that followed one. A reconciliation that changed nothing shall record nothing."

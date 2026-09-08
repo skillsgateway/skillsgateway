@@ -19,12 +19,12 @@ resolution keeps both — main's pin and this change's condition.
 
 Both times the reqstool files were rebuilt from `main` verbatim plus this
 branch's own blocks rather than hand-merged — a first attempt at resolving them
-by hand dropped `GW_0100`'s `revision` field, which is why the rebuild is
+by hand dropped `GW_AUTH_0017`'s `revision` field, which is why the rebuild is
 scripted. After each rebuild both files were re-validated (106 requirements, 106
 SVCs at the final state; no duplicates, every `requirement_ids` resolving, every
 block carrying a `revision`) and the diff against `main` confirmed to add
-exactly `GW_0108`, `GW_0109`, `SVC_GW_0108`, `SVC_GW_0109` plus the
-`GW_0072`/`SVC_GW_0072` revision.
+exactly `GW_RELEASE_0003`, `GW_RELEASE_0004`, `SVC_GW_RELEASE_0003`, `SVC_GW_RELEASE_0004` plus the
+`GW_RELEASE_0002`/`SVC_GW_RELEASE_0002` revision.
 
 `DOCKER_HOST` was exported from `podman machine inspect` for the runs that need a
 container runtime; the value in the ambient shell points at a socket that does
@@ -97,7 +97,7 @@ and someone should chase it.
 
 ## The negative runs
 
-`SVC_GW_0072`, `SVC_GW_0108` and `SVC_GW_0109` were each proved to fail against
+`SVC_GW_RELEASE_0002`, `SVC_GW_RELEASE_0003` and `SVC_GW_RELEASE_0004` were each proved to fail against
 the contract they replace, before being accepted. Not part of the gate sequence
 above — recorded because a workflow assertion that cannot fail is worth nothing.
 
@@ -112,7 +112,7 @@ An earlier draft of these tests grepped the workflow text, and three assertions
 passed or failed on `PackagingTests.java`'s own comments rather than on the YAML
 they described. They now parse the workflow with SnakeYAML and assert on
 structure — triggers, job `needs`, step conditions, the `environment` block —
-and the `SVC_GW_0109` text checks strip comment lines first.
+and the `SVC_GW_RELEASE_0004` text checks strip comment lines first.
 
 ## The dry-run exercises (tasks 9.2–9.4), run after the fact
 

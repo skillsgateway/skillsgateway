@@ -75,7 +75,7 @@ const registerSchema = z.object({
   name: z
     .string()
     .regex(GATEWAY_NAME, "lowercase letters, digits, - and _; must not start with - or _"),
-  // Scheme policy is enforced server-side (GW_0016, configurable allowlist);
+  // Scheme policy is enforced server-side (GW_INGEST_0005, configurable allowlist);
   // the client only requires a well-formed absolute URL.
   url: z.url({ error: "must be a valid URL" }),
 });
@@ -86,7 +86,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
  * Warns rather than blocks on a duplicate upstream URL, client-side against the marketplaces
  * already loaded here and again from the server's authoritative check on the response.
  *
- * @Requirements GW_0166
+ * @Requirements GW_INGEST_0029
  */
 function RegisterMarketplaceDialog({ existing }: { existing: MarketplaceView[] }) {
   const [open, setOpen] = useState(false);
@@ -238,7 +238,7 @@ function RegisterMarketplaceDialog({ existing }: { existing: MarketplaceView[] }
  * plugin sources, the closure: each external plugin with the URL it was fetched through and the
  * commit it resolved to, as recorded with the snapshot at ingestion.
  *
- * @Requirements GW_0164
+ * @Requirements GW_INGEST_0030
  */
 function ProvenanceDialog({ snapshotId, onClose }: { snapshotId: number; onClose: () => void }) {
   const provenance = useProvenance(snapshotId);
@@ -320,7 +320,7 @@ function ProvenanceDialog({ snapshotId, onClose }: { snapshotId: number; onClose
  * nobody else to ask; under enforce it shuts the button and names the person who has to press it
  * instead. The server enforces all three independently.
  *
- * @Requirements GW_0042, GW_0047, GW_0073, GW_0096, GW_0097
+ * @Requirements GW_VETTING_0005, GW_VETTING_0010, GW_APPROVAL_0004, GW_APPROVAL_0010, GW_APPROVAL_0011
  */
 function ApproveDialog({ snapshotId, onClose }: { snapshotId: number; onClose: () => void }) {
   const vetting = useSnapshotVetting(snapshotId);
@@ -604,7 +604,7 @@ function MarketHeader({
  * and when upstream last moved — that expands in place to the snapshot review table. The name
  * links to the marketplace's full detail page.
  *
- * @Requirements GW_0018
+ * @Requirements GW_INGEST_0007
  */
 export function MarketplacesPage() {
   const marketplaces = useMarketplaces();

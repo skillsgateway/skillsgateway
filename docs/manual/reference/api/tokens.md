@@ -38,7 +38,7 @@ $ curl -X POST localhost:8080/api/tokens \
  "pushScopes":[]}
 ```
 
-`scopes` (GW_0064) lists marketplace names the token may fetch — the
+`scopes` (GW_AUTH_0006) lists marketplace names the token may fetch — the
 [virtual catalog](../../guides/virtual-catalog.md)'s name is a valid entry —
 and every entry is validated against the registered marketplaces at creation.
 Empty or omitted grants every marketplace, which is what every pre-scoping
@@ -46,7 +46,7 @@ token meant. An out-of-scope fetch answers exactly like a marketplace that
 does not exist, so a scoped token is not a directory of what else the gateway
 governs.
 
-`pushScopes` (GW_0102) lists **hosted** marketplaces the token may publish to
+`pushScopes` (GW_FACADE_0007) lists **hosted** marketplaces the token may publish to
 through [`/publish/{name}`](../../guides/publishing-first-party-skills.md), and
 is a different grant from `scopes` in the one way that matters: omitting it
 grants **none**, not all. There is no every-marketplace push scope, so no token
@@ -59,7 +59,7 @@ exactly like a marketplace that does not exist, as an out-of-scope fetch does.
 [`POST /api/tokens/session`](#post-apitokenssession) rather than from a
 deliberate provisioning.
 
-`expiresAt` (GW_0065): an expired token fails authentication exactly like a
+`expiresAt` (GW_AUTH_0007): an expired token fails authentication exactly like a
 revoked one, decided by comparing the stamp at authentication time — no
 background process is involved. When
 [`skills-gateway.tokens.max-ttl`](../configuration.md#access-tokens) is set,
@@ -104,7 +104,7 @@ rows.
 
 ## `POST /tokens/{id}/rotate`
 
-Retire a possibly-exposed secret without renegotiating the grant (GW_0066).
+Retire a possibly-exposed secret without renegotiating the grant (GW_AUTH_0008).
 Issues a fresh secret with the **identical** grant — name, scopes (fetch and
 push alike), and the same
 expiry deadline — records which token it replaced (`rotatedFrom`), and revokes
@@ -145,7 +145,7 @@ helper setup.
 ## `POST /api/tokens/session`
 
 Mint a short-lived git credential from the calling principal's browser session
-(GW_0104). The identity half of
+(GW_AUTH_0018). The identity half of
 [ADR 0008](../decisions.md): a human who has just proved who they are should
 not have to create a second, standing credential in order to fetch.
 

@@ -9,7 +9,7 @@ import java.time.Instant;
 import org.springframework.stereotype.Component;
 
 /**
- * The cooling-off window before a snapshot can be approved (GW_0073): an operator-configured
+ * The cooling-off window before a snapshot can be approved (GW_APPROVAL_0004): an operator-configured
  * minimum age, measured from the instant the gateway <em>itself</em> first ingested the snapshot's
  * commit.
  *
@@ -47,7 +47,7 @@ public class ReleaseAgeGate {
      * current instant on every call: nothing is cached, so the answer changes on its own the moment
      * the window elapses.
      */
-    @Requirements({"GW_0073"})
+    @Requirements({"GW_APPROVAL_0004"})
     public Eligibility evaluate(Snapshot snapshot) {
         return evaluate(snapshot.id(), snapshot.createdAt(), Instant.now(), minimum);
     }
@@ -80,7 +80,7 @@ public class ReleaseAgeGate {
      *
      * @return the age the snapshot had when the gate let it through, for the ledger
      */
-    @Requirements({"GW_0073"})
+    @Requirements({"GW_APPROVAL_0004"})
     public Duration require(Snapshot snapshot) {
         Eligibility eligibility = evaluate(snapshot);
         if (!eligibility.eligible()) {

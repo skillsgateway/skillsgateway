@@ -9,20 +9,20 @@ and the portal preview pane presenting it to reviewers.
 
 ## ADDED Requirements
 
-### Requirement: GW_0080
-The system SHALL implement GW_0080.
+### Requirement: GW_INGEST_0015
+The system SHALL implement GW_INGEST_0015.
 
-#### Scenario: SVC_GW_0080
-The system SHALL pass SVC_GW_0080.
+#### Scenario: SVC_GW_INGEST_0015
+The system SHALL pass SVC_GW_INGEST_0015.
 
-### Requirement: GW_0081
-The system SHALL implement GW_0081.
+### Requirement: GW_INGEST_0016
+The system SHALL implement GW_INGEST_0016.
 
-#### Scenario: SVC_GW_0081
-The system SHALL pass SVC_GW_0081.
+#### Scenario: SVC_GW_INGEST_0016
+The system SHALL pass SVC_GW_INGEST_0016.
 
-### Requirement: GW_0082
-The system SHALL implement GW_0082.
+### Requirement: GW_APPROVAL_0005
+The system SHALL implement GW_APPROVAL_0005.
 
-#### Scenario: SVC_GW_0082
-The system SHALL pass SVC_GW_0082.
+#### Scenario: SVC_GW_APPROVAL_0005
+The system SHALL pass SVC_GW_APPROVAL_0005.

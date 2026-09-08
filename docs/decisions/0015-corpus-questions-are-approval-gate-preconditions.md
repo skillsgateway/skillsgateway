@@ -25,7 +25,7 @@ vetted again and the answer changed" can be told apart from "a different chain
 looked at it" without re-deriving anything*.
 
 That property is not decoration. It is the entire answer to
-`GW_0049 — Continuous re-vetting of approved snapshots`. A re-vetting sweep is
+`GW_VETTING_0012 — Continuous re-vetting of approved snapshots`. A re-vetting sweep is
 worth running only because a changed verdict over unchanged content means the
 chain learned something. Add a third input that nobody recorded and a changed
 verdict means nothing in particular.
@@ -102,14 +102,14 @@ holds current state with `decided_at` / `revoked_at` overwritten in place, and
 the state machine permits `revoked → approved`, so a snapshot that cycled has
 lost its earlier transitions. Retention purges rows outright. The estate is not a
 temporal table and nothing reconstructs it. What survives is the append-only
-ledger — and `GW_0096 — Four-eyes separation of duties on approval` already
+ledger — and `GW_APPROVAL_0010 — Four-eyes separation of duties on approval` already
 refused exactly this move for a structurally identical reason, recorded in its
 rationale: deriving state from the ledger *"would make an append-only
 observability surface load-bearing for an authorization decision"*, so the
 supply-side identities were put on the objects instead. Making a gating decision
 reproducible via the ledger is that same mistake with a different consumer.
 
-`GW_0034 — Scheduled hard-delete compaction` makes it worse than "not stored":
+`GW_RETENTION_0004 — Scheduled hard-delete compaction` makes it worse than "not stored":
 purging a snapshot cascades its `vetting_runs`, verdicts and findings away with
 it, so a run recorded against a watermark can outlive neither the estate it saw
 nor, in the general case, its own evidence. Only `fetch_log` is never pruned.
@@ -122,7 +122,7 @@ as load-bearing state — a much larger change than a vetting rule, and one that
 should be decided on its own merits if it is ever wanted.
 
 **It makes the re-vetting sweep able to empty the estate.** `RevetService` selects
-oldest-first bounded batches and, under `GW_0050 — Auto-quarantine of a violating
+oldest-first bounded batches and, under `GW_VETTING_0013 — Auto-quarantine of a violating
 approved snapshot` in enforcing mode, revokes inline inside the per-snapshot loop
 rather than in a second pass. A corpus rule turns that into two failure modes at
 once. Within a sweep, the estate a snapshot is judged against depends on its
@@ -143,7 +143,7 @@ inventing an ordering the chain does not have.
 `ExternalVettingConnector` POSTs a bounded bundle to an operator-configured URL
 and structurally cannot. Closing the gap means shipping estate extracts to that
 endpoint — and ADR 0009's own disclosure reasoning, plus
-`GW_0157 — Lifecycle event payloads carry no snapshot content`, both say that what
+`GW_INGEST_0025 — Lifecycle event payloads carry no snapshot content`, both say that what
 the gateway pushes outward to a URL-authorised target is disclosed to whoever
 holds the URL. Leaving the gap means two classes of connector, permanently.
 
@@ -174,7 +174,7 @@ request, alongside the minimum release age, not in the chain.
 
 ### Option D — Cover T5 only at registration and in the catalog
 
-Extend the `GW_0166 — Duplicate upstream URL is reported as a registration
+Extend the `GW_INGEST_0029 — Duplicate upstream URL is reported as a registration
 warning` precedent: warn at registration when a marketplace *name* is a near-miss
 of an existing one, and turn `CatalogService.mergePlugin`'s log line into a
 refusal.
@@ -278,7 +278,7 @@ matters.
 
 ## Consequences
 
-- **`GW_0049 — Continuous re-vetting of approved snapshots` keeps its meaning
+- **`GW_VETTING_0012 — Continuous re-vetting of approved snapshots` keeps its meaning
   intact.** No run consumes corpus state, so no watermark is needed and a changed
   verdict over unchanged content still means the chain learned something. This is
   the whole payoff of the option chosen, and the reason to prefer it over a

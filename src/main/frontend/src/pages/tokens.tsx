@@ -71,7 +71,7 @@ export function IssuedTokenDialog({ issued, onClose }: { issued: IssuedToken; on
 /**
  * Personal access token self-service: create with show-once cleartext, revoke.
  *
- * @Requirements GW_0019
+ * @Requirements GW_AUTH_0005
  */
 export function TokensPage() {
   const tokens = useTokens();

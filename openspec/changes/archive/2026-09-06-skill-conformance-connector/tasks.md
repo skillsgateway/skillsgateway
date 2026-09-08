@@ -2,12 +2,12 @@
 
 ## 1. Requirements (SSOT first)
 
-- [x] 1.1 Add GW_0167 (validate each skill's SKILL.md frontmatter against a
+- [x] 1.1 Add GW_INGEST_0028 (validate each skill's SKILL.md frontmatter against a
       specification pinned in the repository; record that specification's
       version as the connector version; advisory by default and blocking only
       when configured; never fetch the specification at vet time) to
       `docs/reqstool/requirements.yml`
-- [x] 1.2 Add SVC_GW_0167 (GIVEN/WHEN/THEN) to
+- [x] 1.2 Add SVC_GW_INGEST_0028 (GIVEN/WHEN/THEN) to
       `docs/reqstool/software_verification_cases.yml`
 
 ## 2. The pinned specification
@@ -22,7 +22,7 @@
       version string carrying the dated pin and a digest of the table;
       registers the resource for native image
 
-## 3. Backend (SVC_GW_0167)
+## 3. Backend (SVC_GW_INGEST_0028)
 
 - [x] 3.1 `policy/SkillFrontmatter`: non-throwing `parse` returning
       fields / absent / malformed; `tools(...)` reimplemented on it with its
@@ -31,14 +31,14 @@
 - [x] 3.2 `SkillConformanceConnector` implementing `VettingConnector` —
       `name()` `skill-conformance`, `order()` 400, `version()` from `SkillSpec`
       plus the posture, `description()`, `vet(...)` producing per-file findings.
-      Annotated `@Requirements({"GW_0167"})`
+      Annotated `@Requirements({"GW_INGEST_0028"})`
 - [x] 3.3 `SkillsGatewayProperties.Vetting`: `conformance.enforce`, default
       `false`, documented on the record
 - [x] 3.4 `ExternalConnectorProperties.RESERVED_NAMES`: add `skill-conformance`
 
 ## 4. Tests (never weakening an existing SVC test)
 
-- [x] 4.1 `SkillConformanceConnectorTests` (unit, `@SVCs({"SVC_GW_0167"})`): a
+- [x] 4.1 `SkillConformanceConnectorTests` (unit, `@SVCs({"SVC_GW_INGEST_0028"})`): a
       conformant skill passes; each required field missing or malformed yields
       its own finding; unknown fields are informational; a snapshot with no
       skills passes with a summary that says so; malformed YAML is a finding and
@@ -46,11 +46,11 @@
 - [x] 4.2 Adversarial YAML in the same class: alias bomb, deep nesting, oversize
       frontmatter — each refused as a finding, proved to be refused by the
       loader limits rather than assumed
-- [x] 4.3 `SkillConformanceTests` (integration, `@SVCs({"SVC_GW_0167"})`): the
+- [x] 4.3 `SkillConformanceTests` (integration, `@SVCs({"SVC_GW_INGEST_0028"})`): the
       connector runs in the real chain, the verdict warns and does not block by
       default, and the recorded chain identity names the pinned specification
 - [x] 4.4 `SkillConformanceEnforceTests` (integration, own context with
-      `enforce=true`, `@SVCs({"SVC_GW_0167"})`): the same defect blocks
+      `enforce=true`, `@SVCs({"SVC_GW_INGEST_0028"})`): the same defect blocks
       approval and is cleared by an ordinary scoped waiver
 - [x] 4.5 Make the shared `AbstractGatewayTest` and e2e upstream fixtures
       conformant, so "clean fixture" keeps meaning a clean chain

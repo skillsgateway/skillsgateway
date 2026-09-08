@@ -83,7 +83,7 @@ the size of the slice is visible while the decision is still reviewable.
 - [ ] 6.7 The registration warning does not refuse, and does not fail the
       declarative estate reconciler
 - [ ] 6.8 `RefAdvertisementTests` still passes — no new reference reaches the
-      wire (GW_0134, GW_0135)
+      wire (GW_FACADE_0016, GW_FACADE_0017)
 
 ## 7. Docs (same PR)
 

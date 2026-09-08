@@ -69,12 +69,12 @@ None.
 
 - `release-packaging`: the chart is the deployable half of distribution, so its
   installability belongs with the artifacts it installs.
-  - **GW_0120** (new) — the storage durability choice is explicit and the chart
+  - **GW_FACADE_0008** (new) — the storage durability choice is explicit and the chart
     fails closed without it.
-  - **GW_0121** (new) — the deployable surface: registry credentials, the
+  - **GW_RELEASE_0005** (new) — the deployable surface: registry credentials, the
     optional ingress, default reservations, an own service account, non-root
     least-privilege defaults.
-  - **GW_0122** (new) — configuration passthrough, so every application property
+  - **GW_RELEASE_0006** (new) — configuration passthrough, so every application property
     is reachable from the chart.
 
 ## Impact
@@ -84,7 +84,7 @@ None.
   `serviceaccount.yaml`.
 - `src/test/java/dev/skillsgateway/server/PackagingTests.java` — three new tests;
   no existing assertion weakened.
-- `docs/reqstool/` — `GW_0120`–`GW_0122`, `SVC_GW_0120`–`SVC_GW_0122`.
+- `docs/reqstool/` — `GW_FACADE_0008`–`GW_RELEASE_0006`, `SVC_GW_FACADE_0008`–`SVC_GW_RELEASE_0006`.
 - `docs/manual/guides/deploying-on-kubernetes.md` (new), a pointer from
   `declarative-estate.md`, one `mkdocs.yml` nav line.
 - **Breaking for existing installs of the chart** (not the API): an install that

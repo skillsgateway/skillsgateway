@@ -19,14 +19,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
 /**
- * Token scopes, expiry, rotation and attribution (GW_0064–GW_0067). The facade is the trust
+ * Token scopes, expiry, rotation and attribution (GW_AUTH_0006–GW_AUTH_0009). The facade is the trust
  * boundary these land on, so every access decision is verified with a real git client against the
  * wire, not a repository field.
  */
 class TokenLifecycleTests extends AbstractGatewayTest {
 
     @Test
-    @SVCs({"SVC_GW_0064"})
+    @SVCs({"SVC_GW_AUTH_0006"})
     void scoped_tokens_fetch_only_their_marketplaces_and_cannot_probe_the_rest() throws Exception {
         Registered inScope = registerAndIngest(uniqueName("scin"), createUpstream(DEFAULT_MANIFEST));
         Registered outOfScope = registerAndIngest(uniqueName("scout"), createUpstream(DEFAULT_MANIFEST));
@@ -76,7 +76,7 @@ class TokenLifecycleTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0065"})
+    @SVCs({"SVC_GW_AUTH_0007"})
     void an_expired_token_is_refused_at_authentication_with_no_sweep_involved() throws Exception {
         Registered registered = registerAndIngest(uniqueName("exp"), createUpstream(DEFAULT_MANIFEST));
         approve(registered.snapshot().id());
@@ -99,7 +99,7 @@ class TokenLifecycleTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0066"})
+    @SVCs({"SVC_GW_AUTH_0008"})
     void rotation_changes_the_secret_and_nothing_else() throws Exception {
         Registered registered = registerAndIngest(uniqueName("rot"), createUpstream(DEFAULT_MANIFEST));
         approve(registered.snapshot().id());
@@ -137,7 +137,7 @@ class TokenLifecycleTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0067"})
+    @SVCs({"SVC_GW_AUTH_0009"})
     void every_fetch_names_its_token_and_the_token_lifecycle_is_on_the_ledger() throws Exception {
         Registered registered = registerAndIngest(uniqueName("attr"), createUpstream(DEFAULT_MANIFEST));
         approve(registered.snapshot().id());

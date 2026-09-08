@@ -7,7 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * The bound on how long the mirror may disagree with what the facade serves (GW_0190).
+ * The bound on how long the mirror may disagree with what the facade serves (GW_FACADE_0025).
  *
  * <p>Everything else about the mirror is stated in the negative: a push that fails changes nothing,
  * a revocation still takes effect, an outage is contained. The cost of that safety is <b>duration</b>
@@ -46,7 +46,7 @@ public class MirrorReconciliationSweep {
     @Scheduled(
             fixedDelayString = "${skills-gateway.mirror.sweep-interval:15m}",
             initialDelayString = "${skills-gateway.mirror.sweep-initial-delay:1m}")
-    @Requirements({"GW_0190"})
+    @Requirements({"GW_FACADE_0025"})
     public void sweep() {
         if (!mirror.sweepEnabled()) {
             return;

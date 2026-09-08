@@ -12,7 +12,7 @@ Implementation commit: `3c6312bb8921badaca6c1829a51e963efba4da8a`.
 
 | Requirement | Verifies | Test |
 | --- | --- | --- |
-| GW_0162 — Bounded single-pass snapshot content access for a vetting chain run | unselected blob never opened; selected blob inflated once; identical blobs share one entry; oversize file still visited unread; content past the bound still served in full | `QuarantineSnapshotTests` (SVC_GW_0162), 6 tests |
+| GW_VETTING_0030 — Bounded single-pass snapshot content access for a vetting chain run | unselected blob never opened; selected blob inflated once; identical blobs share one entry; oversize file still visited unread; content past the bound still served in full | `QuarantineSnapshotTests` (SVC_GW_VETTING_0030), 6 tests |
 
 "Never opened" is asserted the only way that cannot be faked: the blob is
 **removed from the object database** before the snapshot is constructed, so an
@@ -54,7 +54,7 @@ predicate:
 
 Nothing else about the visit changed: a blob over `max-file-bytes` is still
 visited with `null` content rather than omitted, so the `file-not-scanned`
-findings behind `GW_0143 — A clean vetting pass records what it examined` and
+findings behind `GW_VETTING_0023 — A clean vetting pass records what it examined` and
 `license-scan`'s explicit unknown for an oversized `LICENSE` are untouched. The
 existing connector SVC tests are the standing evidence for that, and they pass
 unchanged — none was modified, weakened or deleted.
@@ -100,7 +100,7 @@ and passed.
 
 ```
 $ reqstool status local -p docs/reqstool
-  GW_0162             skills-gateway
+  GW_VETTING_0030             skills-gateway
 155/155 complete · 0 incomplete · PASS
 ```
 

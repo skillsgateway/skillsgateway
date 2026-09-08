@@ -2,20 +2,20 @@
 
 ## 1. Requirements (SSOT first)
 
-- [x] 1.1 Amend `GW_0015 — Container distribution` in
+- [x] 1.1 Amend `GW_RELEASE_0001 — Container distribution` in
       `docs/reqstool/requirements.yml`: the image runs the application on a
       runtime it carries, over a base with no shell and no package manager, as a
       non-root user, on a root filesystem it never writes to (revision 0.2.0)
-- [x] 1.2 Amend `GW_0072 — Container image publication by digest`: both
+- [x] 1.2 Amend `GW_RELEASE_0002 — Container image publication by digest`: both
       platforms from one build, smoke-tested before publication, one tagged
       multi-arch index per release, SBOM attested against the published digest
       (revision 0.5.0)
-- [x] 1.3 Amend `GW_0114 — Verified migration between storage backends`:
+- [x] 1.3 Amend `GW_FACADE_0013 — Verified migration between storage backends`:
       whether a start is a migration is decided from the configuration the
       running process is given (revision 0.2.0)
-- [x] 1.4 Amend SVC_GW_0015, SVC_GW_0072 and SVC_GW_0114 to match
+- [x] 1.4 Amend SVC_GW_RELEASE_0001, SVC_GW_RELEASE_0002 and SVC_GW_FACADE_0013 to match
 
-## 2. The image (SVC_GW_0015)
+## 2. The image (SVC_GW_RELEASE_0001)
 
 - [x] 2.1 `Dockerfile`: a `jlink` stage on `eclipse-temurin:25-jdk` producing a
       Java 25 runtime, an explicit module set, the jar staged out of its
@@ -32,7 +32,7 @@
 - [x] 2.6 Evaluate Spring Boot CDS / the Java 25 AOT cache and record the number
       rather than an opinion (design.md)
 
-## 3. Publication (SVC_GW_0072)
+## 3. Publication (SVC_GW_RELEASE_0002)
 
 - [x] 3.1 `native.yml`: one job, `actions/setup-java`, `./mvnw package` instead
       of `native:compile`
@@ -47,7 +47,7 @@
       shape — no matrix, both platforms in one build, one tag, no arch-suffixed
       tag, no second combine job, smoke test before push
 
-## 4. The frozen migration runner (#308, SVC_GW_0114)
+## 4. The frozen migration runner (#308, SVC_GW_FACADE_0013)
 
 - [x] 4.1 Audit every `@ConditionalOnProperty` and `@Profile` on an application
       bean in `src/main/java` — one site, the migration runner

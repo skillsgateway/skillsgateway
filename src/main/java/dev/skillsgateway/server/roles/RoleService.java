@@ -23,12 +23,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * The authorization surface of the web chain (GW_0068–GW_0071): explicit {@code require*} calls
+ * The authorization surface of the web chain (GW_AUTH_0010–GW_AUTH_0013): explicit {@code require*} calls
  * at the first line of every privileged controller method, deny-by-default once enabled. The
  * whole surface is greppable as {@code requireA}; the facade is out of scope (its authorization
- * is token scopes, GW_0064).
+ * is token scopes, GW_AUTH_0006).
  *
- * <p>Enforcement is unconditional (GW_0138): there is no configuration that makes a check pass for
+ * <p>Enforcement is unconditional (GW_AUTH_0025): there is no configuration that makes a check pass for
  * a principal holding no role. A deployment that configures no administrator is refused at startup
  * by {@link RoleBootstrapGuard} rather than started in a state nobody can administer. Roles compose
  * upward: admin ⊇ approver, admin ⊇ auditor.
@@ -66,7 +66,7 @@ public class RoleService {
         public static final String CLAIM = "claim";
 
         /**
-         * Conferred by the development escape hatch on its own synthetic principal (GW_0141).
+         * Conferred by the development escape hatch on its own synthetic principal (GW_AUTH_0028).
          *
          * <p>Named separately from {@link #CONFIG} on purpose: the session endpoint exists to
          * answer why a session holds a role, and an operator told that this admin came from
@@ -106,11 +106,11 @@ public class RoleService {
     }
 
     /**
-     * The one grant path (GW_0071, GW_0085): validates, inserts, and appends the ledger entry with
+     * The one grant path (GW_AUTH_0013, GW_ESTATE_0003): validates, inserts, and appends the ledger entry with
      * the acting identity — whether the caller is the grants API or the estate reconciler. Statuses
      * match the API contract; a non-HTTP caller reports the reason instead.
      */
-    @Requirements({"GW_0071"})
+    @Requirements({"GW_AUTH_0013"})
     public RoleGrant grant(String principal, String role, String marketplace, String actor) {
         if (principal == null || principal.isBlank()) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, "a principal is required");
@@ -134,7 +134,7 @@ public class RoleService {
     }
 
     /** An approver grant is scoped to one existing marketplace; the global roles must not be. */
-    @Requirements({"GW_0071"})
+    @Requirements({"GW_AUTH_0013"})
     private Long resolveScope(String role, String marketplace) {
         boolean approver = RoleGrant.APPROVER.equals(role);
         boolean scoped = marketplace != null && !marketplace.isBlank();
@@ -159,7 +159,7 @@ public class RoleService {
 
     /**
      * Global mutations: registration, sync modes, catalog, retention, receivers, sinks, grants, and
-     * machine-credential provisioning (GW_0068, GW_0130, GW_0138).
+     * machine-credential provisioning (GW_AUTH_0010, GW_AUTH_0023, GW_AUTH_0025).
      *
      * <p>This used to have a twin, {@code requireAdminRegardlessOfEnforcement}, which existed only
      * because the other {@code require*} methods could be switched off and machine-credential
@@ -168,7 +168,7 @@ public class RoleService {
      * deprovisioned. With enforcement unconditional the distinction it drew no longer exists, and
      * keeping two methods that do the same thing would invite a caller to pick the wrong one.
      */
-    @Requirements({"GW_0068", "GW_0130", "GW_0138"})
+    @Requirements({"GW_AUTH_0010", "GW_AUTH_0023", "GW_AUTH_0025"})
     public void requireAdmin(Authentication authentication) {
         if (isAdmin(authentication)) {
             return;
@@ -176,8 +176,8 @@ public class RoleService {
         throw denied();
     }
 
-    /** The ledger, its export, and the operational listings: auditor or admin (GW_0070). */
-    @Requirements({"GW_0068", "GW_0070", "GW_0138"})
+    /** The ledger, its export, and the operational listings: auditor or admin (GW_AUTH_0012). */
+    @Requirements({"GW_AUTH_0010", "GW_AUTH_0012", "GW_AUTH_0025"})
     public void requireAuditor(Authentication authentication) {
         List<EffectiveRole> roles = effectiveRoles(authentication);
         if (isAdmin(roles) || hasGlobalRole(roles, RoleGrant.AUDITOR)) {
@@ -187,7 +187,7 @@ public class RoleService {
     }
 
     /** Marketplace-named routes: an approver of exactly this marketplace, or an admin. */
-    @Requirements({"GW_0069", "GW_0138"})
+    @Requirements({"GW_AUTH_0011", "GW_AUTH_0025"})
     public void requireApprover(Authentication authentication, String marketplaceName) {
         List<EffectiveRole> roles = effectiveRoles(authentication);
         if (isAdmin(roles) || approves(roles, marketplaceName)) {
@@ -198,11 +198,11 @@ public class RoleService {
 
     /**
      * Snapshot-id routes: the owning marketplace is resolved on the gateway's side, never from
-     * the route, closing the confused-deputy path through a bare id (GW_0069). A snapshot that
+     * the route, closing the confused-deputy path through a bare id (GW_AUTH_0011). A snapshot that
      * does not exist denies a non-admin rather than answering 404, so an unauthorized caller
      * cannot probe which ids exist; an admin falls through to the controller's own 404.
      */
-    @Requirements({"GW_0069"})
+    @Requirements({"GW_AUTH_0011"})
     public void requireApproverOfSnapshot(Authentication authentication, long snapshotId) {
         requireApproverOf(
                 authentication,
@@ -213,7 +213,7 @@ public class RoleService {
     }
 
     /** Waiver-id routes: as {@link #requireApproverOfSnapshot}, resolved through the waiver. */
-    @Requirements({"GW_0069"})
+    @Requirements({"GW_AUTH_0011"})
     public void requireApproverOfWaiver(Authentication authentication, long waiverId) {
         requireApproverOf(authentication, waiverRepository.findById(waiverId).map(waiver -> waiver.marketplace()));
     }
@@ -231,11 +231,11 @@ public class RoleService {
 
     /**
      * Everything a session may do: configuration admin, stored grants, and the roles its
-     * identity-provider claims confer (GW_0071, GW_0098). The same (role, marketplace) pair is
+     * identity-provider claims confer (GW_AUTH_0013, GW_AUTH_0015). The same (role, marketplace) pair is
      * reported once, attributed to the most durable source that produced it — a grant outranks a
      * claim, because a grant survives the user leaving the group.
      */
-    @Requirements({"GW_0071", "GW_0098", "GW_0141"})
+    @Requirements({"GW_AUTH_0013", "GW_AUTH_0015", "GW_AUTH_0028"})
     public List<EffectiveRole> effectiveRoles(Authentication authentication) {
         Map<String, EffectiveRole> roles = new LinkedHashMap<>();
         if (escapeHatchPrincipal(authentication)) {
@@ -252,7 +252,7 @@ public class RoleService {
     }
 
     /** Whether the provider dropped the membership claim rather than the session having none. */
-    @Requirements({"GW_0099"})
+    @Requirements({"GW_AUTH_0016"})
     public boolean claimsTruncated(Authentication authentication) {
         return claimRoleMapper.truncated(authentication);
     }
@@ -264,7 +264,7 @@ public class RoleService {
      * in here would make a group membership suppress a declared grant, so losing the group would
      * silently lose the grant too.
      */
-    @Requirements({"GW_0071"})
+    @Requirements({"GW_AUTH_0013"})
     public List<EffectiveRole> rolesOf(String principal) {
         List<EffectiveRole> roles = new ArrayList<>();
         if (properties.roles().admins().contains(principal)) {
@@ -280,7 +280,7 @@ public class RoleService {
     }
 
     /**
-     * Whether this session is the one the development escape hatch invents (GW_0141).
+     * Whether this session is the one the development escape hatch invents (GW_AUTH_0028).
      *
      * <p>Three conditions, each closing a way this could become more than a local convenience. The
      * flag must be on, so nothing is conferred in a deployment that never opened the hatch. The
@@ -305,8 +305,8 @@ public class RoleService {
         return role.role() + "\u0000" + Objects.toString(role.marketplace(), "");
     }
 
-    /** Admins by configuration cannot be revoked through the API: they are never rows (GW_0071). */
-    @Requirements({"GW_0071"})
+    /** Admins by configuration cannot be revoked through the API: they are never rows (GW_AUTH_0013). */
+    @Requirements({"GW_AUTH_0013"})
     private boolean isAdmin(Authentication authentication) {
         return isAdmin(effectiveRoles(authentication));
     }

@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 
 /**
- * A scoped, expiring accepted-risk exception against one vetting rule (GW_0044).
+ * A scoped, expiring accepted-risk exception against one vetting rule (GW_VETTING_0007).
  *
  * <p>Every field that makes the acceptance reviewable is mandatory at construction, not merely at
  * the REST edge: a waiver with no justification, no approver, or no expiry cannot be built, so no
@@ -80,7 +80,7 @@ public record Waiver(
     }
 
     /**
-     * Whether this waiver suppresses anything at {@code now} (GW_0046). Revocation and expiry are
+     * Whether this waiver suppresses anything at {@code now} (GW_VETTING_0009). Revocation and expiry are
      * the same answer — "not active" — because the gate does not care why an acceptance stopped
      * applying, only that it did.
      */

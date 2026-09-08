@@ -20,7 +20,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
- * The negative guarantee (GW_0127), written adversarially: for every capability the machine chain
+ * The negative guarantee (GW_AUTH_0021), written adversarially: for every capability the machine chain
  * grants, the assertion that it is <em>not</em> granted elsewhere comes first.
  *
  * <p>The headline case leads: a token with an <b>empty fetch scope list</b> — the every-marketplace
@@ -62,7 +62,7 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0127"})
+    @SVCs({"SVC_GW_AUTH_0021"})
     void an_every_marketplace_fetch_token_reaches_no_api_endpoint() throws Exception {
         // The most permissive fetch grant that exists: no scopes at all, which means every
         // marketplace through the facade.
@@ -78,7 +78,7 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0127"})
+    @SVCs({"SVC_GW_AUTH_0021"})
     void a_named_fetch_scope_token_reaches_no_api_endpoint() throws Exception {
         String name = uniqueName("fetchscope");
         registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
@@ -91,7 +91,7 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0127"})
+    @SVCs({"SVC_GW_AUTH_0021"})
     void a_push_scoped_token_reaches_no_api_endpoint() throws Exception {
         String name = uniqueName("hosted");
         marketplaceRepository.register(name, null, null, Marketplace.ORIGIN_HOSTED, "append-only", null);
@@ -106,7 +106,7 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0127"})
+    @SVCs({"SVC_GW_AUTH_0021"})
     void a_session_derived_credential_reaches_no_api_endpoint() throws Exception {
         TokenService.IssuedToken session = tokenService.createSessionCredential("alice", "laptop", List.of());
 
@@ -117,7 +117,7 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0127"})
+    @SVCs({"SVC_GW_AUTH_0021"})
     void an_api_only_credential_is_refused_by_the_facade_and_the_publication_chain() throws Exception {
         String name = uniqueName("facade");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
@@ -145,7 +145,7 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0064"})
+    @SVCs({"SVC_GW_AUTH_0006"})
     void an_ordinary_fetch_token_with_an_empty_scope_list_still_clones_every_marketplace() throws Exception {
         // The regression guard on the conditional fetch default (task 6.5c) at the facade: the
         // pre-existing every-marketplace meaning is preserved for every credential holding no
@@ -159,7 +159,7 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0127", "SVC_GW_0131"})
+    @SVCs({"SVC_GW_AUTH_0021", "SVC_GW_AUTH_0024"})
     void a_revoked_or_expired_machine_credential_is_refused() throws Exception {
         TokenService.IssuedToken revoked = machineCredential(List.of("marketplaces:read"));
         mockMvc.perform(bearer(get("/api/marketplaces"), revoked.token())).andExpect(status().isOk());
@@ -179,7 +179,7 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0127"})
+    @SVCs({"SVC_GW_AUTH_0021"})
     void a_request_carrying_both_a_bearer_credential_and_a_cookie_is_refused() throws Exception {
         TokenService.IssuedToken machine = machineCredential(List.of("marketplaces:read"));
 
@@ -191,7 +191,7 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0127"})
+    @SVCs({"SVC_GW_AUTH_0021"})
     void a_bearer_request_creates_no_session_and_sets_no_cookie() throws Exception {
         TokenService.IssuedToken machine = machineCredential(List.of("marketplaces:read"));
 
@@ -205,7 +205,7 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0011"})
+    @SVCs({"SVC_GW_AUTH_0002"})
     void a_browser_session_without_a_bearer_header_reaches_the_api_exactly_as_before() throws Exception {
         // The session chain is untouched: unauthenticated is still 401, and a login still works.
         mockMvc.perform(get("/api/marketplaces")).andExpect(status().isUnauthorized());
@@ -213,7 +213,7 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0127"})
+    @SVCs({"SVC_GW_AUTH_0021"})
     void a_garbage_an_empty_and_a_valid_facade_bearer_value_are_indistinguishable() throws Exception {
         TokenService.IssuedToken facadeToken = tokenService.create("alice", "facade-only");
 
@@ -239,7 +239,7 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0127"})
+    @SVCs({"SVC_GW_AUTH_0021"})
     void a_facade_token_presented_as_basic_does_not_authenticate_the_api() throws Exception {
         TokenService.IssuedToken facadeToken = tokenService.create("alice", "basic-attempt");
 

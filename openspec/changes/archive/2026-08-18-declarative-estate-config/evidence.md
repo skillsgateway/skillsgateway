@@ -40,7 +40,7 @@ SHA at the bottom.
   marketplace, blank and sub-16-character secrets — each an isolated `failed`
   entry with a ledger record and no partial row; secret values asserted absent
   from the report JSON (HTTP response) and the full ledger dump.
-- The deny-by-default walk (`SVC_GW_0068`) now classifies
+- The deny-by-default walk (`SVC_GW_AUTH_0010`) now classifies
   `POST /api/estate/reconcile` (role-gated mutation) and `GET /api/estate`
   (auditor read); the walk's route-table completeness assertion forced the
   classification and re-verifies it on every run.

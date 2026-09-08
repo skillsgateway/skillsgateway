@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * The one validated, audited lifecycle path for policy rules (GW_0089), shared by the REST API and
+ * The one validated, audited lifecycle path for policy rules (GW_APPROVAL_0006), shared by the REST API and
  * the estate reconciler. Every expression is compiled — parsed and type-checked to a boolean —
  * before a row is written; a rule that does not compile is refused, never stored.
  */
@@ -35,7 +35,7 @@ public class PolicyRuleService {
         this.auditLogger = auditLogger;
     }
 
-    @Requirements({"GW_0089"})
+    @Requirements({"GW_APPROVAL_0006"})
     public PolicyRule create(String name, String description, String expression, boolean enabled, String actor) {
         if (name == null || !NAME_PATTERN.matcher(name).matches()) {
             throw new ResponseStatusException(
@@ -51,7 +51,7 @@ public class PolicyRuleService {
         return rule;
     }
 
-    @Requirements({"GW_0089"})
+    @Requirements({"GW_APPROVAL_0006"})
     public PolicyRule update(String name, String description, String expression, boolean enabled, String actor) {
         PolicyRule existing = repository
                 .findByName(name)
@@ -63,7 +63,7 @@ public class PolicyRuleService {
         return rule;
     }
 
-    @Requirements({"GW_0089"})
+    @Requirements({"GW_APPROVAL_0006"})
     public void delete(String name, String actor) {
         PolicyRule existing = repository
                 .findByName(name)
@@ -81,7 +81,7 @@ public class PolicyRuleService {
         return repository.findByName(name);
     }
 
-    /** Write-time compilation (GW_0089): the operator gets the error, not the reviewer. */
+    /** Write-time compilation (GW_APPROVAL_0006): the operator gets the error, not the reviewer. */
     private static void compileOrRefuse(String expression) {
         if (expression == null || expression.isBlank()) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, "expression must not be blank");

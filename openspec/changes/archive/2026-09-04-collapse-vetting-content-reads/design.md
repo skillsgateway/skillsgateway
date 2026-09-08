@@ -15,7 +15,7 @@ Three existing properties constrain the shape:
   connector's thread can still be inside `walk` while the next one starts.
 - **Coverage gaps are reported, never dropped.** A blob over `max-file-bytes` is
   visited with `null` content so the connector can raise `file-not-scanned`
-  (`GW_0143 — A clean vetting pass records what it examined`). Any change that
+  (`GW_VETTING_0023 — A clean vetting pass records what it examined`). Any change that
   skips files must not skip those.
 - **Quarantined content is attacker-supplied.** Nothing in the vetting path may
   hold an amount of it proportional to what an upstream repository chose to

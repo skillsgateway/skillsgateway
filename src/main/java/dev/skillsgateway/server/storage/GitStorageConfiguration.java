@@ -96,7 +96,7 @@ public class GitStorageConfiguration {
     }
 
     @Bean
-    @Requirements({"GW_0111"})
+    @Requirements({"GW_FACADE_0010"})
     public GitStorage gitStorage(
             SkillsGatewayProperties properties,
             ObjectStoreStatistics statistics,
@@ -125,7 +125,7 @@ public class GitStorageConfiguration {
     }
 
     /**
-     * The offline one-shot migration (GW_0114), which is a start the gateway makes instead of
+     * The offline one-shot migration (GW_FACADE_0013), which is a start the gateway makes instead of
      * serving rather than alongside it.
      *
      * <p>It exists as a runner in the same artifact on purpose: the destination backend is built
@@ -144,7 +144,7 @@ public class GitStorageConfiguration {
      * start nothing, and cannot be frozen out of any packaging.
      */
     @Bean
-    @Requirements({"GW_0114"})
+    @Requirements({"GW_FACADE_0013"})
     public ApplicationRunner storageMigrationRunner(
             SkillsGatewayProperties properties,
             GitStorage source,

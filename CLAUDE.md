@@ -46,8 +46,8 @@ generated annotation files.
   requirement text anywhere else; code carries `@Requirements`/`@SVCs`
   annotations (Java) or JSDoc tags (TypeScript).
 - **Always name a requirement alongside its id** in prose — commit messages, PR
-  bodies, issue comments, designs, chat — as `GW_0049 — Continuous re-vetting of
-  approved snapshots`, never a bare `GW_0049`. A reader should not have to open
+  bodies, issue comments, designs, chat — as `GW_VETTING_0012 — Continuous re-vetting of
+  approved snapshots`, never a bare `GW_VETTING_0012`. A reader should not have to open
   `requirements.yml` to know what is being discussed. The *title* is the context;
   the requirement's full wording still lives only in `docs/reqstool/`, so quote
   the title and nothing more. This applies to prose only — `@Requirements` /

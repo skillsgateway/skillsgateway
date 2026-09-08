@@ -95,7 +95,7 @@ jobs:
       - name: Smoke test container
         run: |
           # Authorization is always enforced and a gateway that grants the admin role to
-          # nobody refuses to start (GW_0139), so the smoke test names one. It never logs in
+          # nobody refuses to start (GW_AUTH_0026), so the smoke test names one. It never logs in
           # as it: the assertion here is that the image boots and reports healthy, and the
           # startup guard is part of booting.
           #
@@ -103,7 +103,7 @@ jobs:
           # the jar is a jlink module set chosen by hand, so a missing module surfaces here
           # rather than in a deployment.
           #
-          # The forwarded-header strategy is set because it is the setting GW_0163 is about,
+          # The forwarded-header strategy is set because it is the setting GW_AUTH_0029 is about,
           # and this is the one place it is asserted against the real image rather than
           # against a test context.
           #

@@ -23,7 +23,7 @@ Issue [#237](https://github.com/skillsgateway/skillsgateway/issues/237).
 
 ## What Changes
 
-- **A fourth built-in connector, `skill-conformance` (order 400)** — `GW_0167 —
+- **A fourth built-in connector, `skill-conformance` (order 400)** — `GW_INGEST_0028 —
   SKILL.md conformance against a pinned Agent Skills specification`. It reads
   every `<source>/skills/*/SKILL.md` the snapshot's manifest leads to and
   validates its YAML frontmatter against a **vendored, dated** copy of the
@@ -39,7 +39,7 @@ Issue [#237](https://github.com/skillsgateway/skillsgateway/issues/237).
 - **The recorded connector version names the specification version.**
   `version()` answers `agentskills-2026-08-04+schema-<digest>+<posture>`, so a
   snapshot that cleared under one specification and is flagged under the next is
-  attributable to the specification bump (`GW_0049 — Continuous re-vetting of
+  attributable to the specification bump (`GW_VETTING_0012 — Continuous re-vetting of
   approved snapshots`).
 - **Advisory by default, blocking on request.** With
   `skills-gateway.vetting.conformance.enforce` at its default `false`, every
@@ -61,7 +61,7 @@ exists.
 
 ### Modified Capabilities
 
-- `snapshot-vetting`: the built-in chain established by `GW_0037 — Ordered
+- `snapshot-vetting`: the built-in chain established by `GW_VETTING_0001 — Ordered
   vetting connector chain at ingestion` gains a conformance connector that
   validates each skill's `SKILL.md` frontmatter against a pinned, dated
   specification and records that specification's version as its connector

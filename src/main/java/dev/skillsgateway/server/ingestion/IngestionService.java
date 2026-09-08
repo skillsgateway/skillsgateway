@@ -42,7 +42,7 @@ public class IngestionService {
     private final ManifestRewriter manifestRewriter;
 
     /**
-     * One lock per marketplace: with sync modes (GW_0057, GW_0058) a manual ingest, a scheduler
+     * One lock per marketplace: with sync modes (GW_INGEST_0011, GW_INGEST_0012) a manual ingest, a scheduler
      * tick and a webhook trigger can arrive together, and a concurrent same-marketplace ingest
      * races both JGit's ref lockfile on the incoming ref and the exists-check-then-insert against
      * the (marketplace_id, sha) unique constraint. Serializing at this one choke point covers
@@ -75,7 +75,7 @@ public class IngestionService {
      * Never touches the published repository: upstream changes cannot alter served content until a
      * reviewer approves (publication happens only in ApprovalService).
      *
-     * <p>The trigger's identity is recorded on the snapshot (GW_0096) — a principal for an
+     * <p>The trigger's identity is recorded on the snapshot (GW_APPROVAL_0010) — a principal for an
      * on-demand ingest or a push, one of the constant sync actors for an automated trigger — so
      * that the approval gate can later tell a reviewer apart from whoever supplied the content. It
      * is a required argument rather than an optional one precisely so that a new ingestion path
@@ -83,19 +83,19 @@ public class IngestionService {
      *
      * @param actor the identity that triggered this ingestion
      */
-    @Requirements({"GW_0002", "GW_0004", "GW_0037", "GW_0096"})
+    @Requirements({"GW_INGEST_0002", "GW_APPROVAL_0001", "GW_VETTING_0001", "GW_APPROVAL_0010"})
     public Snapshot ingest(Marketplace marketplace, String actor) {
         ReentrantLock lock = ingestLocks.computeIfAbsent(marketplace.id(), id -> new ReentrantLock());
         lock.lock();
         try {
-            // Observation only (GW_0077): timing and outcome around the unchanged ingestion.
+            // Observation only (GW_OBSERVABILITY_0003): timing and outcome around the unchanged ingestion.
             return metrics.observeIngestion(() -> ingestLocked(marketplace, actor));
         } finally {
             lock.unlock();
         }
     }
 
-    @Requirements({"GW_0137", "GW_0155", "GW_0156", "GW_0161", "GW_0164"})
+    @Requirements({"GW_INGEST_0018", "GW_INGEST_0023", "GW_INGEST_0024", "GW_INGEST_0027", "GW_INGEST_0030"})
     private Snapshot ingestLocked(Marketplace marketplace, String actor) {
         try (Repository repo = storage.quarantine(marketplace.name())) {
             ObjectId upstream = fetchIncoming(repo, marketplace);
@@ -106,7 +106,7 @@ public class IngestionService {
             // so nothing is unreachable at any point in between.
             Served served = serve(repo, upstream);
             ObjectId sha = served.sha();
-            // Checked (GW_0137): the pin is what a later approval publishes from and what retention
+            // Checked (GW_INGEST_0018): the pin is what a later approval publishes from and what retention
             // treats as the snapshot's anchor. A refused pin that returned quietly would leave a
             // reviewable, approvable row whose objects only the transient staging reference holds.
             RefTransitions.write(repo, "refs/snapshots/" + sha.name(), sha);
@@ -118,7 +118,7 @@ public class IngestionService {
             String state = violation == null ? Snapshot.HELD : Snapshot.REJECTED;
             Snapshot snapshot;
             try {
-                // The closure goes in with the row (GW_0164): a composite and the record of what it
+                // The closure goes in with the row (GW_INGEST_0030): a composite and the record of what it
                 // resolved are one fact, and the completeness gate at approval is what refuses the
                 // state in which they are not.
                 snapshot = snapshotRepository.create(
@@ -145,12 +145,12 @@ public class IngestionService {
 
     /**
      * Where the incoming commit comes from — the only thing that differs between an upstream
-     * marketplace and a gateway-hosted one (GW_0103). A hosted marketplace's source is its own
+     * marketplace and a gateway-hosted one (GW_INGEST_0017). A hosted marketplace's source is its own
      * origin repository, fetched by filesystem path with the same JGit fetch, so everything from
      * the snapshot pin down is literally the same code and pushed content faces the same manifest
      * validation, the same vetting chain and the same approval gate as fetched content.
      */
-    @Requirements({"GW_0103"})
+    @Requirements({"GW_INGEST_0017"})
     private ObjectId fetchIncoming(Repository repo, Marketplace marketplace) throws GitAPIException, IOException {
         if (!marketplace.hosted()) {
             return fetchUpstreamHead(repo, marketplace.url());
@@ -228,9 +228,9 @@ public class IngestionService {
     /**
      * Which commit this ingestion serves, and why it does not serve one.
      *
-     * <p>GW_0161 in one type: a failure carries the upstream commit, so the attempt is recorded
+     * <p>GW_INGEST_0027 in one type: a failure carries the upstream commit, so the attempt is recorded
      * against reviewable content in the rejected state, and there is no third outcome in which some
-     * of a manifest resolved. GW_0152 follows from that rather than from a check somewhere —
+     * of a manifest resolved. GW_INGEST_0021 follows from that rather than from a check somewhere —
      * {@code violation != null} is what {@code ingestLocked} maps to rejected, and held is only
      * reachable when the served commit's own manifest is entirely gateway-local.
      */
@@ -246,7 +246,7 @@ public class IngestionService {
      * otherwise byte-for-byte the path that shipped before: a local-only manifest is served as the
      * upstream commit, with no composite, no fetch and no new reference.
      */
-    @Requirements({"GW_0152", "GW_0155", "GW_0156", "GW_0161", "GW_0164"})
+    @Requirements({"GW_INGEST_0021", "GW_INGEST_0023", "GW_INGEST_0024", "GW_INGEST_0027", "GW_INGEST_0030"})
     private Served serve(Repository repo, ObjectId upstreamSha) throws IOException {
         byte[] manifestBytes = manifestBytes(repo, upstreamSha);
         if (manifestBytes == null) {
@@ -278,7 +278,7 @@ public class IngestionService {
         }
     }
 
-    /** The closure as a value (GW_0164): what each source was declared as, and what it became. */
+    /** The closure as a value (GW_INGEST_0030): what each source was declared as, and what it became. */
     private SnapshotClosure closure(ObjectId upstreamSha, List<ExternalSourceResolver.Resolved> resolved) {
         List<SnapshotClosure.Member> members = new java.util.ArrayList<>();
         for (ExternalSourceResolver.Resolved source : resolved) {

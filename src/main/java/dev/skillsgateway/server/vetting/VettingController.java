@@ -89,12 +89,12 @@ public class VettingController {
 
             @Schema(
                     description = "Present when an administrator approved this snapshot over a blocked vetting"
-                            + " outcome (GW_0148); its presence is what surfaces the override so it is never"
+                            + " outcome (GW_VETTING_0028); its presence is what surfaces the override so it is never"
                             + " indistinguishable from a clean approval. Null otherwise.")
             VettingOverrideRecord override) {}
 
     @GetMapping("/snapshots/{id}/vetting")
-    @Requirements({"GW_0037", "GW_0038", "GW_0045"})
+    @Requirements({"GW_VETTING_0001", "GW_VETTING_0002", "GW_VETTING_0008"})
     @Tag(name = "Vetting")
     @Operation(
             summary = "Snapshot vetting verdicts",
@@ -112,7 +112,7 @@ public class VettingController {
         VettingRepository.Run run = vettingService.latestRun(id).orElse(null);
         // Evaluated here rather than read from a column: the effective outcome is a function of
         // the run and the waivers active at this instant, so an expired waiver stops suppressing
-        // on this very request without anything having had to run in the background (GW_0046).
+        // on this very request without anything having had to run in the background (GW_VETTING_0009).
         WaiverEvaluation.Effect effect = waiverService.evaluate(snapshot);
         List<Waiver> waivers = waiverService.forSnapshot(snapshot);
         List<String> rulesInRun = run == null

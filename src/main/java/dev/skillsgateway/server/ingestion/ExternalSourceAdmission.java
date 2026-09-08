@@ -10,7 +10,7 @@ import java.util.Set;
 
 /**
  * Whether a parsed {@link PluginSource} may be admitted, decided from configuration alone
- * (GW_0151).
+ * (GW_INGEST_0020).
  *
  * <p>Pure by construction: no network call, no repository access, no clock. A refused manifest must
  * not be able to cause traffic merely by being refused, and admission that is a function of its
@@ -36,7 +36,7 @@ public record ExternalSourceAdmission(
 
         /**
          * An external source this gateway is configured to accept. It is not yet servable — see
-         * {@link ManifestPolicy}, which turns it into a violation under GW_0152 until a resolver
+         * {@link ManifestPolicy}, which turns it into a violation under GW_INGEST_0021 until a resolver
          * exists.
          */
         record Admitted(PluginSource source, String cloneUrl) implements Decision {}
@@ -78,7 +78,7 @@ public record ExternalSourceAdmission(
      * @param externalSoFar how many external sources this manifest has already declared, so the
      *     {@code max-sources} bound is on the external sources rather than on the plugin count
      */
-    @Requirements({"GW_0003", "GW_0151"})
+    @Requirements({"GW_INGEST_0003", "GW_INGEST_0020"})
     public Decision decide(PluginSource source, String pluginName, int externalSoFar) {
         return switch (source) {
             case PluginSource.Local local ->
@@ -141,7 +141,7 @@ public record ExternalSourceAdmission(
 
     /**
      * Every refusal says "non-local source", whatever the specific reason: it is the phrase
-     * GW_0003's behaviour has always been recorded under, and the detail follows it.
+     * GW_INGEST_0003's behaviour has always been recorded under, and the detail follows it.
      */
     private static Decision refuse(String pluginName, String reason) {
         return new Decision.Refused("plugin '%s' has a non-local source: %s".formatted(pluginName, reason));

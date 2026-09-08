@@ -22,7 +22,7 @@ import org.springframework.test.context.TestPropertySource;
 
 /**
  * A gateway with external sources enabled against the in-process forge: the arrangement every
- * closure test needs (GW_0164, GW_0165). Its own Spring context for the reason
+ * closure test needs (GW_INGEST_0030, GW_APPROVAL_0013). Its own Spring context for the reason
  * {@code ExternalSourceResolutionTests} gives — the shared context keeps the shipped default.
  *
  * <p>The forge is started in a static initialiser because the context reads

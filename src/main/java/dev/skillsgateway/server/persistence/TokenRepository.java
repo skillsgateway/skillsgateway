@@ -22,13 +22,13 @@ public class TokenRepository {
         return create(principal, name, tokenHash, null, null, null);
     }
 
-    @Requirements({"GW_0064", "GW_0065"})
+    @Requirements({"GW_AUTH_0006", "GW_AUTH_0007"})
     public AccessToken create(
             String principal, String name, String tokenHash, String scopes, Instant expiresAt, Long rotatedFrom) {
         return create(principal, name, tokenHash, scopes, expiresAt, rotatedFrom, null);
     }
 
-    @Requirements({"GW_0064", "GW_0065", "GW_0102"})
+    @Requirements({"GW_AUTH_0006", "GW_AUTH_0007", "GW_FACADE_0007"})
     public AccessToken create(
             String principal,
             String name,
@@ -40,7 +40,7 @@ public class TokenRepository {
         return create(principal, name, tokenHash, scopes, expiresAt, rotatedFrom, pushScopes, false);
     }
 
-    @Requirements({"GW_0064", "GW_0065", "GW_0102", "GW_0104"})
+    @Requirements({"GW_AUTH_0006", "GW_AUTH_0007", "GW_FACADE_0007", "GW_AUTH_0018"})
     public AccessToken create(
             String principal,
             String name,
@@ -55,11 +55,11 @@ public class TokenRepository {
     }
 
     /**
-     * As above, plus the administrative scope list and the provisioning identity (GW_0126,
-     * GW_0131). A NULL {@code apiScopes} is the pre-change meaning — no administrative reach —
+     * As above, plus the administrative scope list and the provisioning identity (GW_AUTH_0020,
+     * GW_AUTH_0024). A NULL {@code apiScopes} is the pre-change meaning — no administrative reach —
      * which is what every credential that already exists keeps.
      */
-    @Requirements({"GW_0064", "GW_0065", "GW_0102", "GW_0104", "GW_0126", "GW_0131"})
+    @Requirements({"GW_AUTH_0006", "GW_AUTH_0007", "GW_FACADE_0007", "GW_AUTH_0018", "GW_AUTH_0020", "GW_AUTH_0024"})
     public AccessToken create(
             String principal,
             String name,
@@ -94,9 +94,9 @@ public class TokenRepository {
 
     /**
      * Live tokens only: revoked and expired are both dead. Expiry is a comparison against now at
-     * lookup time (GW_0065) — no sweep is involved, so none can be late.
+     * lookup time (GW_AUTH_0007) — no sweep is involved, so none can be late.
      */
-    @Requirements({"GW_0065"})
+    @Requirements({"GW_AUTH_0007"})
     public Optional<AccessToken> findActiveByHash(String tokenHash) {
         return jdbc.sql("SELECT * FROM access_tokens WHERE token_hash = :hash AND revoked_at IS NULL"
                         + " AND (expires_at IS NULL OR expires_at > :now)")
@@ -122,12 +122,12 @@ public class TokenRepository {
     }
 
     /**
-     * Every machine credential, whoever provisioned it (GW_0131). Deliberately not filtered by
+     * Every machine credential, whoever provisioned it (GW_AUTH_0024). Deliberately not filtered by
      * the caller's principal: a credential's own principal is not a person anyone can log in as,
      * so scoping the listing the way {@link #listByPrincipal} does would leave every machine
      * credential invisible to everyone — nobody could revoke one during an incident.
      */
-    @Requirements({"GW_0131"})
+    @Requirements({"GW_AUTH_0024"})
     public List<AccessToken> listMachineCredentials() {
         return jdbc.sql("SELECT * FROM access_tokens WHERE api_scopes IS NOT NULL ORDER BY id")
                 .query(AccessToken.class)
@@ -135,7 +135,7 @@ public class TokenRepository {
     }
 
     /** A single credential by id, unscoped; the administrative paths resolve through this. */
-    @Requirements({"GW_0131"})
+    @Requirements({"GW_AUTH_0024"})
     public Optional<AccessToken> findById(long id) {
         return jdbc.sql("SELECT * FROM access_tokens WHERE id = :id")
                 .param("id", id)
@@ -144,7 +144,7 @@ public class TokenRepository {
     }
 
     /** Administrative revocation: by id alone, for the reason {@link #listMachineCredentials} gives. */
-    @Requirements({"GW_0131"})
+    @Requirements({"GW_AUTH_0024"})
     public boolean revoke(long id) {
         return jdbc.sql("UPDATE access_tokens SET revoked_at = :now WHERE id = :id AND revoked_at IS NULL")
                         .param("now", OffsetDateTime.now())

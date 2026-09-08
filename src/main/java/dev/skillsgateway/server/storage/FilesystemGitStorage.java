@@ -92,7 +92,7 @@ public class FilesystemGitStorage implements GitStorage {
     }
 
     @Override
-    @Requirements({"GW_0112"})
+    @Requirements({"GW_FACADE_0011"})
     public boolean unpublish(String marketplace, String sha) throws IOException {
         Path path = publishedDir.resolve(marketplace + ".git");
         if (!Files.isDirectory(path)) {
@@ -112,7 +112,7 @@ public class FilesystemGitStorage implements GitStorage {
     }
 
     @Override
-    @Requirements({"GW_0132", "GW_0112"})
+    @Requirements({"GW_FACADE_0015", "GW_FACADE_0011"})
     public boolean commitPublication(String marketplace, String sha) throws IOException {
         try (Repository published = openOrCreate(publishedDir.resolve(marketplace + GIT_SUFFIX))) {
             ObjectId tip = ObjectId.fromString(sha);
@@ -146,7 +146,7 @@ public class FilesystemGitStorage implements GitStorage {
      * Deletes a ref if it is there. Force is required because the ref is not being fast-forwarded
      * to anything — the whole point is that nothing replaces it.
      *
-     * <p>The result is checked rather than discarded (GW_0112). A ref update can be refused —
+     * <p>The result is checked rather than discarded (GW_FACADE_0011). A ref update can be refused —
      * {@code LOCK_FAILURE} when another writer holds the lock, {@code IO_FAILURE} underneath it —
      * and this is the revocation path, so a refusal that returned quietly would have
      * {@code unpublish} report that a snapshot stopped being served while it is still advertised.
@@ -157,7 +157,7 @@ public class FilesystemGitStorage implements GitStorage {
         RefTransitions.delete(repository, ref);
     }
 
-    @Requirements({"GW_0112"})
+    @Requirements({"GW_FACADE_0011"})
     private static Repository openOrCreate(Path path) throws IOException {
         Repository repository = open(path);
         if (!repository.getObjectDatabase().exists()) {

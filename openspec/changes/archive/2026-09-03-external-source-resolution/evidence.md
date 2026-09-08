@@ -25,16 +25,16 @@ The branch was then rebased once more, onto
 without changing a byte any gate reads, so the numbers stand; the tree hash above
 is what identifies what was actually tested.
 
-**Requirement ids.** GW_0155 — Resolution of admitted external plugin sources
-into quarantine through GW_0158 — Resource-bounded source resolution, plus
-GW_0161 — A failed resolution leaves the snapshot rejected and nothing
-half-resolved. Deliberately not a contiguous block: GW_0159 — Approval-pending
-lifecycle event and GW_0160 — The approval-pending event announces without
+**Requirement ids.** GW_INGEST_0023 — Resolution of admitted external plugin sources
+into quarantine through GW_INGEST_0026 — Resource-bounded source resolution, plus
+GW_INGEST_0027 — A failed resolution leaves the snapshot rejected and nothing
+half-resolved. Deliberately not a contiguous block: GW_WEBHOOK_0006 — Approval-pending
+lifecycle event and GW_WEBHOOK_0007 — The approval-pending event announces without
 disclosing were claimed by
 [#251](https://github.com/skillsgateway/skillsgateway/pull/251) while this change
-was in flight, and GW_0154 — Fetch ledger records the advertised ref a want
+was in flight, and GW_FACADE_0018 — Fetch ledger records the advertised ref a want
 resolves to by
-[#249](https://github.com/skillsgateway/skillsgateway/pull/249). GW_0155 – GW_0158
+[#249](https://github.com/skillsgateway/skillsgateway/pull/249). GW_INGEST_0023 – GW_INGEST_0026
 were still free on `main`, so the gap is filled rather than left permanently
 unused.
 
@@ -42,14 +42,14 @@ unused.
 
 | Requirement | What is proved | Test(s) |
 | --- | --- | --- |
-| **GW_0155 — Resolution of admitted external plugin sources into quarantine** | an admitted `github` source is fetched into the marketplace's quarantine and pinned; identical sources fetch once; the scaffolding refs are gone afterwards; a declared `ref`/`sha` is refused by name | `ExternalSourceResolutionTests` (SVC_GW_0155): `an_admitted_source_becomes_a_held_composite_whose_manifest_is_gateway_local`, `the_scaffolding_references_the_fetch_used_are_not_left_behind`, `a_source_pinned_to_a_commit_is_refused_rather_than_resolved_elsewhere`, `re_ingesting_unchanged_content_produces_the_same_snapshot`; `PluginSourceTests.a_source_pinned_to_a_ref_or_a_commit_is_refused_by_name` |
-| **GW_0156 — Deterministic composite snapshot with a gateway-local manifest** | the rewritten manifest points only inside the commit; the upstream commit is the parent and its manifest is byte-exact; determinism, and the three inputs that change the SHA; every graft hazard refuses with no commit; the composite passes the local-only gate | `ManifestRewriterTests` (12 cases, SVC_GW_0156); `ExternalSourceResolutionTests`: composite/parent, content inventory, facade clone, planted secret, moved head, reserved-directory collision |
-| **GW_0157 — Address, redirect and transport policy for source resolution** | both address tiers, IPv4-mapped/compatible unwrapping, mixed-resolution refusal, ambiguous literals, embedded credentials, and every redirect transition | `SourceAddressPolicyTests` (11 cases, SVC_GW_0157); `SourceUrlPolicyTests` (15 cases, SVC_GW_0157); `ExternalSourceResolutionTests`: off-host redirect (target never contacted), metadata-endpoint redirect, over-long chain |
-| **GW_0158 — Resource-bounded source resolution** | each bound refuses at the boundary and passes just under it; the ratio floor; the closure accumulation; the deadline | `ResolutionBudgetTests` (12 cases, SVC_GW_0158); `ExternalSourceResolutionTests`: received-byte flood, over-budget file |
-| **GW_0161 — A failed resolution leaves the snapshot rejected and nothing half-resolved** | unreachable source, mid-transfer death, and every policy refusal record the snapshot at the **upstream** SHA in `rejected`, unapprovable, with no graft; the previously approved snapshot is still served; concurrent ingestion yields one row | `ExternalSourceResolutionTests` (SVC_GW_0161): `an_unreachable_source_rejects_the_snapshot_at_the_upstream_commit_and_leaves_nothing_grafted`, `a_transfer_that_dies_part_way_through_rejects_the_snapshot`, `a_failed_resolution_leaves_the_previously_approved_snapshot_served`, `two_concurrent_ingestions_of_one_marketplace_produce_one_snapshot` |
-| **GW_0152 — No snapshot is held while a plugin source is not gateway-local** (unchanged) | the gate still refuses an admitted-but-unresolved source, **and** the rewriter runs its own output back through that same gate | `ManifestPolicyTests` (4 cases, unchanged); `ManifestRewriterTests.the_composite_manifest_is_put_back_through_the_local_only_gate` |
-| **GW_0137 — An ingestion reports a pinned snapshot only when it is pinned** (unchanged) | quarantine holds exactly `refs/snapshots/<composite sha>` for a resolved snapshot — the ref approval publishes from | `ExternalSourceResolutionTests.an_admitted_source_becomes_a_held_composite_whose_manifest_is_gateway_local` |
-| **GW_0003 — Local-only plugin sources unless external sources are enabled** (rev. 0.2.0) | unchanged behaviour for an unconfigured gateway | `IngestionTests.externalPluginSourceIsRejectedAndCannotBeApproved`, `HostedLifecycleTests.a_pushed_manifest_declaring_a_non_local_source_is_rejected` — **both unmodified** |
+| **GW_INGEST_0023 — Resolution of admitted external plugin sources into quarantine** | an admitted `github` source is fetched into the marketplace's quarantine and pinned; identical sources fetch once; the scaffolding refs are gone afterwards; a declared `ref`/`sha` is refused by name | `ExternalSourceResolutionTests` (SVC_GW_INGEST_0023): `an_admitted_source_becomes_a_held_composite_whose_manifest_is_gateway_local`, `the_scaffolding_references_the_fetch_used_are_not_left_behind`, `a_source_pinned_to_a_commit_is_refused_rather_than_resolved_elsewhere`, `re_ingesting_unchanged_content_produces_the_same_snapshot`; `PluginSourceTests.a_source_pinned_to_a_ref_or_a_commit_is_refused_by_name` |
+| **GW_INGEST_0024 — Deterministic composite snapshot with a gateway-local manifest** | the rewritten manifest points only inside the commit; the upstream commit is the parent and its manifest is byte-exact; determinism, and the three inputs that change the SHA; every graft hazard refuses with no commit; the composite passes the local-only gate | `ManifestRewriterTests` (12 cases, SVC_GW_INGEST_0024); `ExternalSourceResolutionTests`: composite/parent, content inventory, facade clone, planted secret, moved head, reserved-directory collision |
+| **GW_INGEST_0025 — Address, redirect and transport policy for source resolution** | both address tiers, IPv4-mapped/compatible unwrapping, mixed-resolution refusal, ambiguous literals, embedded credentials, and every redirect transition | `SourceAddressPolicyTests` (11 cases, SVC_GW_INGEST_0025); `SourceUrlPolicyTests` (15 cases, SVC_GW_INGEST_0025); `ExternalSourceResolutionTests`: off-host redirect (target never contacted), metadata-endpoint redirect, over-long chain |
+| **GW_INGEST_0026 — Resource-bounded source resolution** | each bound refuses at the boundary and passes just under it; the ratio floor; the closure accumulation; the deadline | `ResolutionBudgetTests` (12 cases, SVC_GW_INGEST_0026); `ExternalSourceResolutionTests`: received-byte flood, over-budget file |
+| **GW_INGEST_0027 — A failed resolution leaves the snapshot rejected and nothing half-resolved** | unreachable source, mid-transfer death, and every policy refusal record the snapshot at the **upstream** SHA in `rejected`, unapprovable, with no graft; the previously approved snapshot is still served; concurrent ingestion yields one row | `ExternalSourceResolutionTests` (SVC_GW_INGEST_0027): `an_unreachable_source_rejects_the_snapshot_at_the_upstream_commit_and_leaves_nothing_grafted`, `a_transfer_that_dies_part_way_through_rejects_the_snapshot`, `a_failed_resolution_leaves_the_previously_approved_snapshot_served`, `two_concurrent_ingestions_of_one_marketplace_produce_one_snapshot` |
+| **GW_INGEST_0021 — No snapshot is held while a plugin source is not gateway-local** (unchanged) | the gate still refuses an admitted-but-unresolved source, **and** the rewriter runs its own output back through that same gate | `ManifestPolicyTests` (4 cases, unchanged); `ManifestRewriterTests.the_composite_manifest_is_put_back_through_the_local_only_gate` |
+| **GW_INGEST_0018 — An ingestion reports a pinned snapshot only when it is pinned** (unchanged) | quarantine holds exactly `refs/snapshots/<composite sha>` for a resolved snapshot — the ref approval publishes from | `ExternalSourceResolutionTests.an_admitted_source_becomes_a_held_composite_whose_manifest_is_gateway_local` |
+| **GW_INGEST_0003 — Local-only plugin sources unless external sources are enabled** (rev. 0.2.0) | unchanged behaviour for an unconfigured gateway | `IngestionTests.externalPluginSourceIsRejectedAndCannotBeApproved`, `HostedLifecycleTests.a_pushed_manifest_declaring_a_non_local_source_is_rejected` — **both unmodified** |
 
 ## The adversarial cases, one by one
 
@@ -114,7 +114,7 @@ None of these exhausts the process: the received-byte bound is enforced on the
 response stream as it is read, and everything else is measured from the objects a
 completed fetch produced.
 
-### Failure atomicity — GW_0161, and GW_0152 through every path
+### Failure atomicity — GW_INGEST_0027, and GW_INGEST_0021 through every path
 
 | Case | Result |
 | --- | --- |
@@ -125,7 +125,7 @@ completed fetch produced.
 | A refused graft (reserved directory, bad name, duplicate name) | same, and no commit synthesised |
 | A marketplace already serving an approved snapshot, whose next ingest fails | the rejected snapshot is recorded and a real `git clone` through the facade still receives the previously approved SHA |
 
-No path reaches `held` with an unresolved source, which is GW_0152.
+No path reaches `held` with an unresolved source, which is GW_INGEST_0021.
 
 ### Concurrency and repetition
 
@@ -140,7 +140,7 @@ No path reaches `held` with an unresolved source, which is GW_0152.
 `enabled: false` is the default and nothing in this change alters it. The two
 suites that pin it were run **unmodified**:
 
-- `IngestionTests.externalPluginSourceIsRejectedAndCannotBeApproved` (SVC_GW_0003)
+- `IngestionTests.externalPluginSourceIsRejectedAndCannotBeApproved` (SVC_GW_INGEST_0003)
 - `HostedLifecycleTests.a_pushed_manifest_declaring_a_non_local_source_is_rejected`
 
 `ManifestPolicyTests` and `ExternalSourceAdmissionTests` keep every existing
@@ -214,10 +214,10 @@ real holes in the suite, and each was closed:
 
 | Survivor | Why it survived | Resolution |
 | --- | --- | --- |
-| *the GW_0152 post-condition over the rewritten manifest is dropped* | `ManifestRewriter` also compared the admitted-source names against the graft names, so every path that could reach a non-local composite manifest was refused earlier. The post-condition was unreachable — a safety net nothing could land in | Removed that half of the name comparison and made the rewriter leave an unresolved source **as declared**. The post-condition is now the single enforcement point, over the actual output instead of over a description of it. **Killed** |
+| *the GW_INGEST_0021 post-condition over the rewritten manifest is dropped* | `ManifestRewriter` also compared the admitted-source names against the graft names, so every path that could reach a non-local composite manifest was refused earlier. The post-condition was unreachable — a safety net nothing could land in | Removed that half of the name comparison and made the rewriter leave an unresolved source **as declared**. The post-condition is now the single enforcement point, over the actual output instead of over a description of it. **Killed** |
 | *plugin names may be paths or contain traversal* | the test grafted bad names into a manifest that did not declare them, so the *graft-is-declared* check answered first and the name pattern was never exercised | The test now builds a manifest declaring each bad name, so only the pattern can refuse, and asserts the pattern's own message. **Killed** |
 | *redirect targets are not checked before the hop is taken* | the assertion was `contains("host")`, and the second-layer origin-pin message contains "host" inside "local**host**" | Tightened to `contains("redirect that leaves the host")`. **Killed** |
-| *the pinned ref is the upstream commit rather than the served one* | nothing asserted that `refs/snapshots/<sha>` exists for the composite | Added an assertion that quarantine holds exactly `refs/snapshots/<composite sha>` — the GW_0137 pin approval publishes from. **Killed** |
+| *the pinned ref is the upstream commit rather than the served one* | nothing asserted that `refs/snapshots/<sha>` exists for the composite | Added an assertion that quarantine holds exactly `refs/snapshots/<composite sha>` — the GW_INGEST_0018 pin approval publishes from. **Killed** |
 
 Final run, on the rebased tree: **15 mutants, 15 killed, 0 survivors.** No
 survivor is left unexplained, and none was classified as equivalent.
@@ -245,7 +245,7 @@ Two real defects, both fixed, both now regression-covered:
 ### Capability diff, stated plainly
 
 This change starts using the network from a path that did not use it. That is the
-whole point of the increment and the reason GW_0157 and GW_0158 exist. Nothing
+whole point of the increment and the reason GW_INGEST_0025 and GW_INGEST_0026 exist. Nothing
 else changed: no new dependency, no new subprocess (JGit only — never the git
 binary in production code), no new filesystem or environment access, no schema
 change, no API change, no portal change. The test fixture is built from the JDK's

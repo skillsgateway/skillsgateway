@@ -10,7 +10,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * The two knobs an enterprise identity provider needs the gateway to have (GW_0100), asserted
+ * The two knobs an enterprise identity provider needs the gateway to have (GW_AUTH_0017), asserted
  * against the shipped {@code application.yaml} rather than against Spring's binder: the test sets
  * the environment variables an operator would set, and reads back the registration the application
  * actually built.
@@ -27,7 +27,7 @@ class OidcRegistrationConfigurationTests extends AbstractGatewayTest {
     private ClientRegistrationRepository clientRegistrationRepository;
 
     @Test
-    @SVCs({"SVC_GW_0100"})
+    @SVCs({"SVC_GW_AUTH_0017"})
     void the_principal_claim_and_the_requested_scopes_come_from_configuration() {
         ClientRegistration registration = clientRegistrationRepository.findByRegistrationId("idp");
 

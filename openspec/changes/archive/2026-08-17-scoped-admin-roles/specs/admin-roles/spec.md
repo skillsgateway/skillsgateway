@@ -9,26 +9,26 @@ grant lifecycle with configuration-bootstrapped admins.
 
 ## ADDED Requirements
 
-### Requirement: GW_0068
-The system SHALL implement GW_0068.
+### Requirement: GW_AUTH_0010
+The system SHALL implement GW_AUTH_0010.
 
-#### Scenario: SVC_GW_0068
-The system SHALL pass SVC_GW_0068.
+#### Scenario: SVC_GW_AUTH_0010
+The system SHALL pass SVC_GW_AUTH_0010.
 
-### Requirement: GW_0069
-The system SHALL implement GW_0069.
+### Requirement: GW_AUTH_0011
+The system SHALL implement GW_AUTH_0011.
 
-#### Scenario: SVC_GW_0069
-The system SHALL pass SVC_GW_0069.
+#### Scenario: SVC_GW_AUTH_0011
+The system SHALL pass SVC_GW_AUTH_0011.
 
-### Requirement: GW_0070
-The system SHALL implement GW_0070.
+### Requirement: GW_AUTH_0012
+The system SHALL implement GW_AUTH_0012.
 
-#### Scenario: SVC_GW_0070
-The system SHALL pass SVC_GW_0070.
+#### Scenario: SVC_GW_AUTH_0012
+The system SHALL pass SVC_GW_AUTH_0012.
 
-### Requirement: GW_0071
-The system SHALL implement GW_0071.
+### Requirement: GW_AUTH_0013
+The system SHALL implement GW_AUTH_0013.
 
-#### Scenario: SVC_GW_0071
-The system SHALL pass SVC_GW_0071.
+#### Scenario: SVC_GW_AUTH_0013
+The system SHALL pass SVC_GW_AUTH_0013.

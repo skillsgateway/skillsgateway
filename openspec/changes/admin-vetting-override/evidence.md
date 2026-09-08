@@ -7,8 +7,8 @@ records what was executed locally and what is deferred, honestly.
 
 | Requirement | Verifies | Test(s) |
 | --- | --- | --- |
-| GW_0148 — admin override of a blocked outcome | admin-only, reason-required, distinct ledger event, fail-loud marker, lifts only the vetting gate | `VettingOverrideTests.an_admin_overrides_a_blocked_outcome_with_a_reason_and_no_one_else_can` (SVC_GW_0148) |
-| GW_0149 — connector enable/disable | disabled verdict non-blocking, positive evidence still required, admin-only, audited | `VettingChainDisabledTests` (5 cases, SVC_GW_0149); `ConnectorToggleTests` (2 cases, SVC_GW_0149) |
+| GW_VETTING_0028 — admin override of a blocked outcome | admin-only, reason-required, distinct ledger event, fail-loud marker, lifts only the vetting gate | `VettingOverrideTests.an_admin_overrides_a_blocked_outcome_with_a_reason_and_no_one_else_can` (SVC_GW_VETTING_0028) |
+| GW_VETTING_0029 — connector enable/disable | disabled verdict non-blocking, positive evidence still required, admin-only, audited | `VettingChainDisabledTests` (5 cases, SVC_GW_VETTING_0029); `ConnectorToggleTests` (2 cases, SVC_GW_VETTING_0029) |
 
 Negative/adversarial cases (the guardrails):
 

@@ -39,11 +39,11 @@ working exactly as before.
 ### New Capabilities
 
 - `admin-roles`: the role model and grants, deny-by-default enforcement, the
-  auditor's read-only guarantee, and the grant audit trail (GW_0068–GW_0071).
+  auditor's read-only guarantee, and the grant audit trail (GW_AUTH_0010–GW_AUTH_0013).
 
 ### Modified Capabilities
 
-<!-- none: GW_0011 (OIDC-only web surface) is unchanged; authorization layers
+<!-- none: GW_AUTH_0002 (OIDC-only web surface) is unchanged; authorization layers
      on top of the unchanged authentication -->
 
 ## Impact
@@ -62,4 +62,4 @@ working exactly as before.
 - **Docs**: new guide, configuration + API reference, trust-boundaries
   concept (replacing its "no role model yet" section), glossary,
   ARCHITECTURE note.
-- **Traceability**: GW_0068–GW_0071 + SVC_GW_0068–SVC_GW_0071.
+- **Traceability**: GW_AUTH_0010–GW_AUTH_0013 + SVC_GW_AUTH_0010–SVC_GW_AUTH_0013.

@@ -40,7 +40,7 @@ letting an existing facade credential become one.
 - **The negative guarantee.** A token holding only fetch scope — including the
   every-marketplace form, which is the most permissive fetch grant that exists
   — or only push scope reaches no `/api/**` endpoint. Session-derived
-  credentials (`GW_0104`) can never hold API scope at all. The guarantee holds
+  credentials (`GW_AUTH_0018`) can never hold API scope at all. The guarantee holds
   in the other direction too: API scope confers no fetch and no push.
 - **Per-concern scopes, never one coarse "admin".** Around twenty named scopes
   derived from the actual controller inventory — `marketplaces:register`,
@@ -67,7 +67,7 @@ letting an existing facade credential become one.
 - **Mandatory expiry.** A machine credential cannot be issued without one, and
   the configured lifetime cap applies. Rotation and revocation reuse the
   existing PAT lineage unchanged.
-- Requirements GW_0126–GW_0131 with SVC_GW_0126–SVC_GW_0131.
+- Requirements GW_AUTH_0020–GW_AUTH_0024 with SVC_GW_AUTH_0020–SVC_GW_AUTH_0024.
 
 ## Explicitly not in this change
 

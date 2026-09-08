@@ -14,9 +14,9 @@ extend the adoption dashboards with an invocation measure per served skill.
 
 The first gate is measured precisely for a reason that is easy to lose sight of.
 Every figure behind
-GW_0075 — *Adoption reporting from the fetch ledger*,
-GW_0076 — *Staleness reporting against the served tip* and
-GW_0078 — *Adoption page in the admin portal*
+GW_OBSERVABILITY_0001 — *Adoption reporting from the fetch ledger*,
+GW_OBSERVABILITY_0002 — *Staleness reporting against the served tip* and
+GW_OBSERVABILITY_0004 — *Adoption page in the admin portal*
 is derived from bytes this gateway served, to an identity this gateway
 authenticated, appended to the ledger before the response left. They are not
 reports *about* fetches. They are reports *of the gateway's own actions*, which is
@@ -137,7 +137,7 @@ consumers** — today consumers only read, and every write path (registration,
 approval, publication, the machine API) is an operator or publisher behind OIDC or
 a deliberately minted scope. Authentication has no good answer inside the stated
 boundary: the facade is PATs only, the web surface is OIDC only, and the machine
-API credential (GW_0126–GW_0131) was designed for pipelines, minted per concern
+API credential (GW_AUTH_0020–GW_AUTH_0024) was designed for pipelines, minted per concern
 over an allowlist. A telemetry write scope would have to be handed to every
 developer workstation — a standing gateway write credential on every measured
 machine, which is the forgery premise above and a large increase in what one lost
@@ -172,7 +172,7 @@ on its own.
 
 A note on a tempting shortcut: `arconia-dev-services-lgtm` under the
 `observability` profile is a **development** stack for the gateway's own
-instruments (GW_0077 — *Always-recorded gateway metrics and observations*). A
+instruments (GW_OBSERVABILITY_0003 — *Always-recorded gateway metrics and observations*). A
 Grafana container the build starts for local work is not a fleet ingest and must
 not be reached for as one.
 
@@ -241,7 +241,7 @@ already carried in [architecture.md §14](../manual/architecture.md).
   something changes are checked against, or it decays into a sentence nobody
   reads. It is written as a requirement rather than a paragraph here for exactly
   that reason.
-- **`arconia.otel.enabled` and GW_0077 are untouched.** The gateway keeps
+- **`arconia.otel.enabled` and GW_OBSERVABILITY_0003 are untouched.** The gateway keeps
   recording and optionally exporting its *own* instruments; this ADR is about
   data flowing the other way.
 

@@ -21,9 +21,9 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0 -- dev.skillsgateway.server.Lic
 BUILD SUCCESS
 ```
 
-`VettingTests` includes the two new SVC tests (`SVC_GW_0142`,
-`SVC_GW_0143`) and the amended `SVC_GW_0043` ledger test.
-`MachineLedgerTests` (the `GW_0128` actor-typing suite) still passes, confirming
+`VettingTests` includes the two new SVC tests (`SVC_GW_VETTING_0022`,
+`SVC_GW_VETTING_0023`) and the amended `SVC_GW_VETTING_0006` ledger test.
+`MachineLedgerTests` (the `GW_AUDIT_0007` actor-typing suite) still passes, confirming
 the vetting actor addition did not disturb machine/human classification.
 
 ### OpenAPI contract
@@ -42,13 +42,13 @@ it.
 ### reqstool traceability (the two new requirements)
 
 ```
-GW_0142   skills-gateway     (implemented + tested — no "not implemented" suffix)
-GW_0143   skills-gateway     (implemented + tested)
+GW_VETTING_0022   skills-gateway     (implemented + tested — no "not implemented" suffix)
+GW_VETTING_0023   skills-gateway     (implemented + tested)
 8/136 complete · 128 incomplete · FAIL
 ```
 
 The overall FAIL is expected: only the vetting/audit slice ran, so the other 128
-requirements have no fresh test results this run. `GW_0142` and `GW_0143` trace
+requirements have no fresh test results this run. `GW_VETTING_0022` and `GW_VETTING_0023` trace
 cleanly to their implementing annotations and passing SVC tests. Full reqstool
 PASS follows the serial `./mvnw clean verify`.
 

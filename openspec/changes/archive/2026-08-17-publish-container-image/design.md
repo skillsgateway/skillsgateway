@@ -47,7 +47,7 @@ Q53). The repo is private, so the GHCR package will start private.
 5. **Digest from `docker inspect --format='{{index .RepoDigests 0}}'` after the
    push**, written to `$GITHUB_STEP_SUMMARY` and exposed as a step output —
    consumers copy the pin without pulling.
-6. **Verification (SVC_GW_0072) extends the packaging consistency test** to the
+6. **Verification (SVC_GW_RELEASE_0002) extends the packaging consistency test** to the
    workflow file: assert native.yml contains the GHCR image name, tags for both
    channels, a publish condition restricted to push events, and the required
    permissions. The push itself is only exercisable in CI; the test pins the

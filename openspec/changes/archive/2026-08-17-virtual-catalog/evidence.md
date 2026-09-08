@@ -10,7 +10,7 @@ bottom.
   the owner agreed to in issue #11's comments ("agreed. do that.").
 - Non-vacuity mutant (killed, then restored — verified via git diff): the
   catalog rebuild hook removed from the revocation path
-  (`RevetService.quarantine`) → `SVC_GW_0062` test failed (revoked
+  (`RevetService.quarantine`) → `SVC_GW_FACADE_0004` test failed (revoked
   marketplace stayed in the catalog). All four tests passed on their first
   full run otherwise; the mutant is the proof the load-bearing freshness
   assertion can fail.

@@ -17,7 +17,7 @@ inverse. The catalog composes on top of exactly these primitives.
 - One URL (`/git/catalog`) serving the whole governed, approved estate.
 - Contains only what marketplaces are *serving right now*; retracted content
   disappears without operator action.
-- Approval gate, GW_0003 (local-only sources), and the ledger untouched in
+- Approval gate, GW_INGEST_0003 (local-only sources), and the ledger untouched in
   their guarantees.
 
 **Non-Goals:**

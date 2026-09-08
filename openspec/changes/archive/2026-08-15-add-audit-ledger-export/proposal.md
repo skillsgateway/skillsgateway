@@ -2,8 +2,8 @@
 
 ## Why
 
-The append-only ledger already records every facade fetch (GW_0008) and every
-administrative action (GW_0022), but it can only be read by an authenticated human
+The append-only ledger already records every facade fetch (GW_AUDIT_0001) and every
+administrative action (GW_AUDIT_0002), but it can only be read by an authenticated human
 through `GET /api/audit`, which returns the whole table at once. Compliance teams do
 not read portals: they want the ledger inside their SIEM (Splunk, Elastic, Sentinel),
 continuously and without gaps. Issue #29 asks for a compliance export path — distinct
@@ -36,16 +36,16 @@ store — with at-least-once delivery and a cursor so a consumer can resume or r
   cursor contract.
 - Portal: the existing Audit log page gains an export affordance (a download link for the
   NDJSON stream) and a table of registered sinks with their cursors and lag.
-- New requirements GW_0027–GW_0030 with SVC_GW_0027–SVC_GW_0030.
+- New requirements GW_AUDIT_0003–GW_AUDIT_0006 with SVC_GW_AUDIT_0003–SVC_GW_AUDIT_0006.
 
 ## Capabilities
 
 ### New Capabilities
 
 - `audit-export`: cursor-based export of the append-only ledger to external compliance
-  systems — the NDJSON pull endpoint (GW_0027), push sinks reusing the signed webhook
-  delivery machinery with at-least-once semantics (GW_0028), cursor replay (GW_0029),
-  and the portal export surface (GW_0030).
+  systems — the NDJSON pull endpoint (GW_AUDIT_0003), push sinks reusing the signed webhook
+  delivery machinery with at-least-once semantics (GW_AUDIT_0004), cursor replay (GW_AUDIT_0005),
+  and the portal export surface (GW_AUDIT_0006).
 
 ### Modified Capabilities
 

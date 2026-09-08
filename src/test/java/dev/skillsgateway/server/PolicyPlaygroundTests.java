@@ -16,7 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 /**
- * The rule playground (GW_0092): evaluates any expression against a real snapshot and is provably
+ * The rule playground (GW_APPROVAL_0009): evaluates any expression against a real snapshot and is provably
  * inert — no ledger append, no rule stored, no state change, on success and on every error path.
  */
 class PolicyPlaygroundTests extends AbstractGatewayTest {
@@ -40,7 +40,7 @@ class PolicyPlaygroundTests extends AbstractGatewayTest {
     private GitStorage storage;
 
     @Test
-    @SVCs({"SVC_GW_0092"})
+    @SVCs({"SVC_GW_APPROVAL_0009"})
     void the_playground_answers_and_changes_nothing() throws Exception {
         String name = uniqueName("playground");
         Registered registered = registerAndIngest(

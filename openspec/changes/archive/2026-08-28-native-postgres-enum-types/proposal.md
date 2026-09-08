@@ -31,7 +31,7 @@ columns already in `V1__init.sql` should not be the exception.
 ### New Capabilities
 
 - `persistence-schema`: how the schema represents a closed set of values.
-  - **GW_0125** (new) — enumerated persisted values are database types: the permitted set is
+  - **GW_FACADE_0009** (new) — enumerated persisted values are database types: the permitted set is
     readable from the column's declared type, and the database refuses anything outside it.
 
 ### Modified Capabilities
@@ -40,7 +40,7 @@ None.
 
 The honest reading is that this is a refactor of *how* the existing requirements are
 satisfied, not of *what* they require: what a caller may send and what the gateway answers
-are byte-identical. What GW_0125 states is not new behaviour but the invariant the `CHECK`
+are byte-identical. What GW_FACADE_0009 states is not new behaviour but the invariant the `CHECK`
 constraints were quietly providing — write it as a requirement or the guarantee lives only in
 eleven constraint expressions that no requirement names, and the tests proving it belong to
 nothing. Requiring it also gives the *next* enumerated column somewhere to be wrong against.

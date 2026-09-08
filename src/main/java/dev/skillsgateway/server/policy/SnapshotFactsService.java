@@ -26,7 +26,7 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.springframework.stereotype.Service;
 
 /**
- * Builds the facts a policy expression evaluates over (GW_0090): the snapshot's metadata, its
+ * Builds the facts a policy expression evaluates over (GW_APPROVAL_0007): the snapshot's metadata, its
  * file inventory, and its plugin/skill inventory with each skill's declared tools parsed from
  * SKILL.md frontmatter. Everything is read from exactly the pinned commit's tree through JGit
  * object walks — never the filesystem, so there is no traversal surface, and quarantine content
@@ -59,12 +59,12 @@ public class SnapshotFactsService {
     /**
      * The variables of one evaluation: {@code snapshot}, {@code files}, {@code plugins}, {@code skills}.
      *
-     * <p>The closure (GW_0164) is folded into the same variables rather than added as a fifth: a
+     * <p>The closure (GW_INGEST_0030) is folded into the same variables rather than added as a fifth: a
      * rule about external content is a rule about plugins, so each plugin carries its
      * {@code origin}, {@code upstreamUrl} and {@code resolvedSha}, and the snapshot carries the
      * count. New signal for the existing gate, not a new gate.
      */
-    @Requirements({"GW_0090", "GW_0164"})
+    @Requirements({"GW_APPROVAL_0007", "GW_INGEST_0030"})
     public Map<String, Object> build(Snapshot snapshot, Marketplace marketplace) {
         Map<String, SnapshotClosure.Member> closure = new HashMap<>();
         closures.findBySnapshot(snapshot.id()).ifPresent(recorded -> {

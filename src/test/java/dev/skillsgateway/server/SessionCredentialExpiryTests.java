@@ -14,7 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * A session credential dies on its own (GW_0104, GW_0065). The lifetime here is one millisecond,
+ * A session credential dies on its own (GW_AUTH_0018, GW_AUTH_0007). The lifetime here is one millisecond,
  * so the credential is already past it by the time it is presented — which is the point: expiry is
  * a comparison at authentication time, so nothing has to run for it to take effect.
  */
@@ -25,7 +25,7 @@ class SessionCredentialExpiryTests extends AbstractGatewayTest {
     private TokenService tokenService;
 
     @Test
-    @SVCs({"SVC_GW_0104"})
+    @SVCs({"SVC_GW_AUTH_0018"})
     void an_elapsed_session_credential_fails_authentication_with_no_sweep_involved() throws Exception {
         String minted = mockMvc.perform(post("/api/tokens/session")
                         .with(oidcLogin())

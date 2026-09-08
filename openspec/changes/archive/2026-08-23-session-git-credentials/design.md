@@ -5,7 +5,7 @@
 `TokenService.create(principal, name, scopes, expiresAt, pushScopes)` is the one
 issuing path. `expiresAt` is the caller's, bounded only by
 `skills-gateway.tokens.max-ttl` when an operator sets one — and refused rather
-than clamped when it exceeds the cap (GW_0065). That is the right shape for a
+than clamped when it exceeds the cap (GW_AUTH_0007). That is the right shape for a
 personal access token: the holder asks for a lifetime and the policy either
 allows it or says no.
 
@@ -58,7 +58,7 @@ URL.
    obtained*, and that is a fact to record, not to reconstruct.
 
 4. **Rotation is allowed and cannot extend.** `rotate` copies the expiry
-   deadline (GW_0066), so rotating a session credential re-secrets it without
+   deadline (GW_AUTH_0008), so rotating a session credential re-secrets it without
    moving its death. The `session_derived` mark is copied too, so a rotation
    cannot launder a session credential into a standing one.
 
@@ -75,7 +75,7 @@ URL.
 | F2 | A session credential can publish | The service path passes no push scopes; a test asserts a real `git push` with one is refused |
 | F3 | It is indistinguishable from a standing PAT on the ledger | `session_derived` column, reported on the listing; test asserts a standing token is not marked and a session one is |
 | F4 | Rotation launders it into a standing or longer-lived token | `rotate` copies both the deadline and the mark; test asserts both survive rotation |
-| F5 | It outlives its TTL because expiry is swept rather than compared | Unchanged from GW_0065 — expiry is a comparison at authentication time; test mints one with a near-zero configured TTL and asserts it fails authentication |
+| F5 | It outlives its TTL because expiry is swept rather than compared | Unchanged from GW_AUTH_0007 — expiry is a comparison at authentication time; test mints one with a near-zero configured TTL and asserts it fails authentication |
 | F6 | It works without a session | The endpoint is on the web chain, which is OIDC-only; the existing 401 behaviour covers it |
 | F7 | Scope narrowing is lost, so a session credential silently grants every marketplace | Same `validateScopes` path as any token; test asserts a narrowed session credential is refused another marketplace |
 

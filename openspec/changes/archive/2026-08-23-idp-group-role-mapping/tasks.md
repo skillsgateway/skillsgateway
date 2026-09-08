@@ -2,21 +2,21 @@
 
 ## 1. Requirements (SSOT first)
 
-- [x] 1.1 Add GW_0098 (configuration-declared mapping from identity-provider
+- [x] 1.1 Add GW_AUTH_0015 (configuration-declared mapping from identity-provider
       claim values to gateway roles: union with configuration admins and stored
       grants, approver scoping preserved, exact matching, malformed mapping
       refuses startup, a credential without OIDC claims derives nothing, role
-      provenance on the session endpoint), GW_0099 (truncated group claim
+      provenance on the session endpoint), GW_AUTH_0016 (truncated group claim
       detected, logged and reported rather than silently under-privileging) and
-      GW_0100 (configurable principal-name attribute and scope set, and an
+      GW_AUTH_0017 (configurable principal-name attribute and scope set, and an
       enforced expected ID-token issuer) to `docs/reqstool/requirements.yml`
-- [x] 1.2 Add SVC_GW_0098, SVC_GW_0099 and SVC_GW_0100 (GIVEN/WHEN/THEN) to
+- [x] 1.2 Add SVC_GW_AUTH_0015, SVC_GW_AUTH_0016 and SVC_GW_AUTH_0017 (GIVEN/WHEN/THEN) to
       `docs/reqstool/software_verification_cases.yml`
 
 ## 2. Failing tests first (old-coder: prove they fail)
 
 - [x] 2.1 `ClaimRoleMappingTests` (extends `AbstractGatewayTest`), `@SVCs({
-      "SVC_GW_0098"})`: with enforcement on and no grant rows at all — a
+      "SVC_GW_AUTH_0015"})`: with enforcement on and no grant rows at all — a
       session whose claim carries a mapped admin value may register a
       marketplace; a mapped approver value may approve only its own
       marketplace; a mapped auditor value reads the ledger and is refused every
@@ -29,30 +29,30 @@
       principal, and a non-OIDC `Authentication` carrying a forged `groups`
       value all derive nothing (F2); mappings are inert for enforcement while
       `roles.enabled=false` yet still reported (F11)
-- [x] 2.3 `ClaimRoleMapperTests`, `@SVCs({"SVC_GW_0098"})`: generative sweep
+- [x] 2.3 `ClaimRoleMapperTests`, `@SVCs({"SVC_GW_AUTH_0015"})`: generative sweep
       over arbitrary claim payloads (nested maps, nulls, numbers, wrong
       types, large lists) — never throws, and never yields a role without an
       exact match (F1, F9)
 - [x] 2.4 Overage cases in `ClaimRoleMappingTests` and `ClaimRoleMapperTests`,
-      `@SVCs({"SVC_GW_0099"})`: a session whose token
+      `@SVCs({"SVC_GW_AUTH_0016"})`: a session whose token
       omits the configured claim but carries an overage indicator
       (`hasgroups`, `_claim_names`) is reported truncated on `/api/me`, logs a
       warning, and holds no derived role; a session that simply has no
       memberships is *not* reported truncated (F4)
 - [x] 2.5 Mapping-validation cases in `ClaimRoleMapperTests`,
-      `@SVCs({"SVC_GW_0098"})`: an unknown role, a blank claim-value, an
+      `@SVCs({"SVC_GW_AUTH_0015"})`: an unknown role, a blank claim-value, an
       `approver` mapping with no marketplace and an `admin`/`auditor` mapping
       naming one each throw from the mapper's constructor, which is what
       refuses startup; a mapping naming an unregistered marketplace boots
       (asserted by the `ClaimRoleMappingTests` context) and matches nothing (F5)
 - [x] 2.6 `OidcIdTokenValidationTests` and `OidcRegistrationConfigurationTests`,
-      `@SVCs({"SVC_GW_0100"})`: with an issuer configured, an ID token from a
+      `@SVCs({"SVC_GW_AUTH_0017"})`: with an issuer configured, an ID token from a
       different issuer fails validation and one from a prefix of it does too,
       while the standard checks still run; unset keeps today's behaviour (F3).
       Plus the registration test: with `SGW_OIDC_USER_NAME_ATTRIBUTE` and
       `SGW_OIDC_SCOPE` set as an operator would, the `ClientRegistration` the
       application built from the shipped `application.yaml` carries them
-- [x] 2.7 `ClaimRoleMappingTests` addition, `@SVCs({"SVC_GW_0085"})`: a
+- [x] 2.7 `ClaimRoleMappingTests` addition, `@SVCs({"SVC_GW_ESTATE_0003"})`: a
       declared grant is still created for a principal who already holds the
       same role via a claim mapping (F6)
 - [ ] 2.8 ~~Confirm every new test FAILS before any implementation~~ — **not
@@ -65,7 +65,7 @@
 - [x] 3.1 `SkillsGatewayProperties.Roles`: add `claim` (default `groups`) and
       `mappings` (`List<ClaimMapping>`, default empty); new record
       `ClaimMapping(String claimValue, String role, String marketplace)`;
-      `@Requirements({"GW_0098"})` on the enclosing documentation
+      `@Requirements({"GW_AUTH_0015"})` on the enclosing documentation
 - [x] 3.2 `SkillsGatewayProperties`: new `Oidc(String issuer)` block, default
       null, with the compact-constructor default alongside the others
 - [x] 3.3 `application.yaml`: `user-name-attribute: ${SGW_OIDC_USER_NAME_
@@ -79,22 +79,22 @@
       returning claim-derived `EffectiveRole`s; dotted claim-path resolution;
       `Collection`-or-`String` claim shapes; exact trimmed match;
       `truncated(Authentication)` overage detection;
-      `@Requirements({"GW_0098", "GW_0099"})`
+      `@Requirements({"GW_AUTH_0015", "GW_AUTH_0016"})`
 - [x] 4.2 `RoleService`: add `effectiveRoles(Authentication)` (configuration
       admin ∪ stored grants ∪ claim roles, deduped on role+marketplace with
       `config` > `grant` > `claim` provenance) and route every `require*`
       through it; leave `rolesOf(String)` stored-only with a comment saying why
       (the estate reconciler); extend `EffectiveRole` with `source`;
-      `@Requirements({"GW_0098"})`
+      `@Requirements({"GW_AUTH_0015"})`
 - [x] 4.3 `MeController`: report `source` per role and a `claimsTruncated`
-      flag, with `@Schema` descriptions; `@Requirements({"GW_0098", "GW_0099"})`
+      flag, with `@Schema` descriptions; `@Requirements({"GW_AUTH_0015", "GW_AUTH_0016"})`
 
 ## 5. Issuer pinning and principal attribute
 
 - [x] 5.1 `SecurityConfig`: `JwtDecoderFactory<ClientRegistration>` bean
       wrapping `OidcIdTokenDecoderFactory` with a `JwtIssuerValidator` when
       `skills-gateway.oidc.issuer` is set; startup WARN when it is unset and
-      `dev-insecure-auth` is off; `@Requirements({"GW_0100"})`
+      `dev-insecure-auth` is off; `@Requirements({"GW_AUTH_0017"})`
 
 ## 6. Ops wiring
 
@@ -105,7 +105,7 @@
       value to `admin` (fallback per design Decision 8 if the mock server
       cannot carry the claim alongside interactive login — record which
       arrangement shipped in the evidence report)
-- [x] 6.3 Playwright: `@SVCs SVC_GW_0098` test asserting `/api/me` reports the
+- [x] 6.3 Playwright: `@SVCs SVC_GW_AUTH_0015` test asserting `/api/me` reports the
       admin role with source `claim` after a real login
 
 ## 7. Portal types

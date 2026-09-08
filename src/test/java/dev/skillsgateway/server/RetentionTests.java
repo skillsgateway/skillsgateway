@@ -23,9 +23,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * Snapshot retention: criteria evaluation (GW_0031), soft deletion with a restore window
- * (GW_0032), the approved-snapshot guard (GW_0033), hard-delete compaction including the git
- * storage (GW_0034), and the ledger record of all of it (GW_0035).
+ * Snapshot retention: criteria evaluation (GW_RETENTION_0001), soft deletion with a restore window
+ * (GW_RETENTION_0002), the approved-snapshot guard (GW_RETENTION_0003), hard-delete compaction including the git
+ * storage (GW_RETENTION_0004), and the ledger record of all of it (GW_RETENTION_0005).
  */
 class RetentionTests extends AbstractGatewayTest {
 
@@ -60,7 +60,7 @@ class RetentionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0031"})
+    @SVCs({"SVC_GW_RETENTION_0001"})
     void policySelectsTheAgedAndSupersededSnapshotsAndNothingElse() throws Exception {
         Path upstream = createUpstream(DEFAULT_MANIFEST);
         String name = uniqueName("aged");
@@ -99,7 +99,7 @@ class RetentionTests extends AbstractGatewayTest {
      * would otherwise hold it in quarantine for as long as the other marketplace stays in use.
      */
     @Test
-    @SVCs({"SVC_GW_0031"})
+    @SVCs({"SVC_GW_RETENTION_0001"})
     void aFetchOfAnotherMarketplaceSharingTheCommitDoesNotVetoSelection() throws Exception {
         Path upstream = createUpstream(DEFAULT_MANIFEST);
         String mine = uniqueName("shared");
@@ -122,7 +122,7 @@ class RetentionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0032"})
+    @SVCs({"SVC_GW_RETENTION_0002"})
     void deletionMarksTheSnapshotAndARestoreInsideTheWindowClearsIt() throws Exception {
         Path upstream = createUpstream(DEFAULT_MANIFEST);
         Registered registered = registerAndIngest(uniqueName("softdel"), upstream);
@@ -147,7 +147,7 @@ class RetentionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0033"})
+    @SVCs({"SVC_GW_RETENTION_0003"})
     void anApprovedSnapshotIsNeverSelectedAndCannotBeDeleted() throws Exception {
         Path upstream = createUpstream(DEFAULT_MANIFEST);
         String name = uniqueName("served");
@@ -178,7 +178,7 @@ class RetentionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0034"})
+    @SVCs({"SVC_GW_RETENTION_0004"})
     void compactionRemovesExpiredDeletionsAndTheirQuarantineReference() throws Exception {
         Path upstream = createUpstream(DEFAULT_MANIFEST);
         String name = uniqueName("compact");
@@ -204,7 +204,7 @@ class RetentionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0035"})
+    @SVCs({"SVC_GW_RETENTION_0005"})
     void theLedgerRecordsEveryRetentionAction() throws Exception {
         Path upstream = createUpstream(DEFAULT_MANIFEST);
         String name = uniqueName("audited");

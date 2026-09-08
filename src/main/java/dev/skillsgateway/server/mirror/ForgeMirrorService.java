@@ -35,11 +35,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 /**
- * The optional read-only forge mirror (GW_0169–GW_0172): a copy of exactly what the facade serves,
+ * The optional read-only forge mirror (GW_FACADE_0020–GW_FACADE_0023): a copy of exactly what the facade serves,
  * pushed to an external repository so people can browse and search it with the tools a forge is
  * better at.
  *
- * <p><b>It is never a serving surface and never an enforcement path</b> (ADR 0008, GW_0170).
+ * <p><b>It is never a serving surface and never an enforcement path</b> (ADR 0008, GW_FACADE_0021).
  * Nothing here is consulted by the facade, by authorization or by an approval, and nothing here can
  * fail one: the mirror reacts to a {@code ServedContentChangedEvent} that has already happened, on
  * a thread that is not the one that raised it, and its worst outcome is a recorded failure and a
@@ -49,7 +49,7 @@ import org.springframework.stereotype.Service;
  * storage's current served reference set and deletes whatever the mirror still holds outside it,
  * which makes the operation idempotent and self-healing: a lost, duplicated or reordered task
  * cannot corrupt the mirror, and any later approval or revocation repairs whatever an earlier
- * failure left behind. It is also what makes revocation propagate (GW_0171) without a second code
+ * failure left behind. It is also what makes revocation propagate (GW_FACADE_0022) without a second code
  * path — a snapshot that is no longer served is, by construction, a reference the next
  * reconciliation deletes.
  *
@@ -59,7 +59,7 @@ import org.springframework.stereotype.Service;
  * unreachable forge keep known-bad content on the wire, which inverts the control it was meant to
  * support.
  *
- * <p><b>Drift is bounded, not merely reported</b> (GW_0190). Because a failed push is a designed
+ * <p><b>Drift is bounded, not merely reported</b> (GW_FACADE_0025). Because a failed push is a designed
  * end state, something has to stop the divergence it leaves from lasting forever:
  * {@code MirrorReconciliationSweep} queues the same reconciliation on a timer, so a revocation
  * whose push gave up, a queue lost to a restart, and a change somebody made on the forge by hand
@@ -67,7 +67,7 @@ import org.springframework.stereotype.Service;
  * That is a security property and not a nicety — a mirror still showing a snapshot the gateway
  * revoked is a way to obtain withdrawn content, which is the bypass ADR 0008 exists to prevent.
  *
- * <p><b>A repair is never silent</b> (GW_0193). A reconciliation records what it changed, and one
+ * <p><b>A repair is never silent</b> (GW_FACADE_0028). A reconciliation records what it changed, and one
  * that changed the mirror when nothing was approved or revoked is recorded under its own event: the
  * same deletion means "the revocation reached the mirror" in one case and "the mirror had diverged"
  * in the other, and automatic repair would otherwise erase the difference. A reconciliation that
@@ -85,7 +85,7 @@ public class ForgeMirrorService {
     public static final String EVENT_UPDATED = "mirror-updated";
 
     /**
-     * Ledger event for a mirror that a reconciliation nothing asked for had to change (GW_0193).
+     * Ledger event for a mirror that a reconciliation nothing asked for had to change (GW_FACADE_0028).
      *
      * <p>Distinct from {@link #EVENT_UPDATED} because the two mean different things. An update
      * following an approval or a revocation is the mirror doing its job. A change made by the sweep
@@ -108,7 +108,7 @@ public class ForgeMirrorService {
     public static final String REFUSAL = "refused: ";
 
     /**
-     * Ledger event for a reconciliation that would not act on what it read (GW_0190).
+     * Ledger event for a reconciliation that would not act on what it read (GW_FACADE_0025).
      *
      * <p>The one place this component declines to be authoritative, and it is the price of deleting
      * automatically. A reconciliation removes whatever the mirror holds that the served set does
@@ -156,7 +156,7 @@ public class ForgeMirrorService {
 
     /**
      * Why a reconciliation is running, which is the whole of what separates the two ledger events
-     * (GW_0193). A content change is a publication or a revocation announcing itself; a drift check
+     * (GW_FACADE_0028). A content change is a publication or a revocation announcing itself; a drift check
      * is the sweep or an administrator asking, with no transition behind it — so anything a drift
      * check has to change was divergence.
      */
@@ -178,7 +178,7 @@ public class ForgeMirrorService {
     /**
      * What one reconciliation actually changed on the mirror.
      *
-     * <p>It exists so the ledger can name it (GW_0193) and so "nothing changed" is a value rather
+     * <p>It exists so the ledger can name it (GW_FACADE_0028) and so "nothing changed" is a value rather
      * than an inference. That second use is load-bearing once a sweep runs on a timer: a
      * reconciliation that found the mirror already correct must write nothing, or ninety-six rows a
      * day per gateway would drown the two mirror events that mean something.
@@ -202,12 +202,12 @@ public class ForgeMirrorService {
         return target != null;
     }
 
-    /** Whether the recurring reconciliation should run at all (GW_0190). */
+    /** Whether the recurring reconciliation should run at all (GW_FACADE_0025). */
     boolean sweepEnabled() {
         return target != null && target.sweepEnabled();
     }
 
-    /** The counters {@code MirrorMetrics} publishes (GW_0191); nothing else reads them. */
+    /** The counters {@code MirrorMetrics} publishes (GW_FACADE_0026); nothing else reads them. */
     public MirrorStatistics statistics() {
         return statistics;
     }
@@ -216,11 +216,11 @@ public class ForgeMirrorService {
      * Queue a reconciliation of the mirror with what the marketplace now serves.
      *
      * <p>Returns immediately and throws nothing. Both properties are load-bearing: this is called
-     * from the thread that just approved or revoked a snapshot, and GW_0170 says that thread's
+     * from the thread that just approved or revoked a snapshot, and GW_FACADE_0021 says that thread's
      * outcome does not depend on the mirror. A marketplace other than the configured one, and a
      * gateway with no mirror at all, do nothing here.
      */
-    @Requirements({"GW_0169", "GW_0170", "GW_0171"})
+    @Requirements({"GW_FACADE_0020", "GW_FACADE_0021", "GW_FACADE_0022"})
     public void reconcileLater(String marketplace, String reason) {
         if (target == null || !target.marketplace().equals(marketplace)) {
             return;
@@ -229,14 +229,14 @@ public class ForgeMirrorService {
     }
 
     /**
-     * Queue a reconciliation that no content transition asked for (GW_0190).
+     * Queue a reconciliation that no content transition asked for (GW_FACADE_0025).
      *
      * <p>This is the sweep's and the administrator's door, and the only difference from
      * {@link #reconcileLater} is the trigger it carries: anything a reconciliation has to change
      * here is divergence, because nothing was approved or revoked. Does nothing, and contacts
      * nothing, when the mirror is disabled.
      */
-    @Requirements({"GW_0190"})
+    @Requirements({"GW_FACADE_0025"})
     public void checkForDriftLater(String reason) {
         if (target == null) {
             return;
@@ -246,16 +246,16 @@ public class ForgeMirrorService {
 
     /**
      * Reconcile now, on an administrator's behalf, and answer with the resulting comparison
-     * (GW_0192).
+     * (GW_FACADE_0027).
      *
      * <p>This is the one path that waits for the forge, and waiting is the request: an operator who
      * has just fixed an outage or rotated a credential is asking whether the mirror is right
-     * <em>now</em>, and a stale answer would defeat it. GW_0170 is untouched — approval, revocation
+     * <em>now</em>, and a stale answer would defeat it. GW_FACADE_0021 is untouched — approval, revocation
      * and what the facade serves are none of them on this path — and the wait is bounded by the
      * mirror's own timeout and attempt count, so a forge that has stopped answering costs a
      * request thread and a report that says {@code pendingUpdates} is not zero.
      */
-    @Requirements({"GW_0192"})
+    @Requirements({"GW_FACADE_0027"})
     public MirrorReport reconcileNow(String reason) {
         if (target == null) {
             return MirrorReport.disabled();
@@ -308,13 +308,13 @@ public class ForgeMirrorService {
     }
 
     /**
-     * Compare what the mirror holds against what the facade serves (GW_0172).
+     * Compare what the mirror holds against what the facade serves (GW_FACADE_0023).
      *
      * <p>Reads both sides now. An unreachable mirror is reported as an unreachable mirror and never
      * as agreement, because a report that fell back to "in sync" on failure would be worse than no
      * report: it would make a mirror nobody could contact look current.
      */
-    @Requirements({"GW_0172"})
+    @Requirements({"GW_FACADE_0023"})
     public MirrorReport report() {
         if (target == null) {
             return MirrorReport.disabled();
@@ -346,7 +346,7 @@ public class ForgeMirrorService {
             }
         });
         // An administrator's read is also a look at the mirror, so the gauges learn from it
-        // (GW_0191). It never contacts the mirror on their behalf — the report already did.
+        // (GW_FACADE_0026). It never contacts the mirror on their behalf — the report already did.
         statistics.observed(stale.size(), missing.size());
         return new MirrorReport(
                 true,
@@ -390,7 +390,7 @@ public class ForgeMirrorService {
      * failure costs freshness until then and nothing else. What it must never do is escape — this
      * runs on the mirror's own thread precisely so that there is nothing above it to fail.
      */
-    @Requirements({"GW_0170", "GW_0171", "GW_0190", "GW_0193"})
+    @Requirements({"GW_FACADE_0021", "GW_FACADE_0022", "GW_FACADE_0025", "GW_FACADE_0028"})
     private void reconcileWithRetries(String reason, Trigger trigger) {
         for (int attempt = 1; attempt <= target.maxAttempts(); attempt++) {
             try {
@@ -420,7 +420,7 @@ public class ForgeMirrorService {
     }
 
     /**
-     * Put on the ledger what this reconciliation changed, or nothing at all (GW_0193).
+     * Put on the ledger what this reconciliation changed, or nothing at all (GW_FACADE_0028).
      *
      * <p>The silence is the deliberate half. Once the sweep runs on a timer, a gateway whose mirror
      * is simply correct would otherwise write a row every interval forever, and the ledger is the
@@ -464,7 +464,7 @@ public class ForgeMirrorService {
     }
 
     /**
-     * Records a reconciliation that declined to act, and returns having changed nothing (GW_0190).
+     * Records a reconciliation that declined to act, and returns having changed nothing (GW_FACADE_0025).
      *
      * <p>Not retried: there is no forge to wait for, and a second read a few milliseconds later
      * would tell the same story. The next scheduled reconciliation is the retry. It is recorded as
@@ -534,7 +534,7 @@ public class ForgeMirrorService {
      * <p>Both sides are read through the same served-reference filter, so a deletion can only ever
      * remove a reference publication itself would have written.
      */
-    @Requirements({"GW_0169", "GW_0171", "GW_0191", "GW_0193"})
+    @Requirements({"GW_FACADE_0020", "GW_FACADE_0022", "GW_FACADE_0026", "GW_FACADE_0028"})
     private Reconciliation reconcile() throws IOException, URISyntaxException {
         try (Repository published = storage.published(target.marketplace())) {
             Map<String, ObjectId> served = servedRefs(published);
@@ -575,7 +575,7 @@ public class ForgeMirrorService {
     }
 
     /**
-     * Refuse to act on a served reference set that the gateway's own records contradict (GW_0190).
+     * Refuse to act on a served reference set that the gateway's own records contradict (GW_FACADE_0025).
      *
      * <p>This is the guard that makes automatic deletion safe to run unattended. A reconciliation
      * deletes whatever the mirror holds and the served set does not, so a read of published storage
@@ -598,7 +598,7 @@ public class ForgeMirrorService {
      * deleted, the refusal is recorded, the next reconciliation succeeds — which is the direction
      * this must err in.
      */
-    @Requirements({"GW_0190"})
+    @Requirements({"GW_FACADE_0025"})
     private void requireCredible(Map<String, ObjectId> served) {
         if (served.containsKey(GitStorage.SERVED_REF)) {
             return;
@@ -637,7 +637,7 @@ public class ForgeMirrorService {
             transport.setTimeout(target.timeoutSeconds());
             PushResult result = transport.push(NullProgressMonitor.INSTANCE, updates);
             // JGit reports a refused ref update as a status on the update rather than as an
-            // exception, exactly as RefUpdate does locally (GW_0133): a caller that only catches
+            // exception, exactly as RefUpdate does locally (GW_APPROVAL_0012): a caller that only catches
             // would call a wholly rejected push a success and record a mirror that never moved.
             for (RemoteRefUpdate update : result.getRemoteUpdates()) {
                 if (update.getStatus() != RemoteRefUpdate.Status.OK

@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The effective-outcome rule (GW_0045, GW_0046), and the only place it lives.
+ * The effective-outcome rule (GW_VETTING_0008, GW_VETTING_0009), and the only place it lives.
  *
  * <p>A recorded run is raw evidence: it says what the connectors said, and no waiver ever rewrites
  * it. What gates an approval is the <em>effective</em> outcome, derived here from that run plus the
@@ -115,7 +115,7 @@ public final class WaiverEvaluation {
      * @param sha the commit SHA the snapshot is pinned to, matched by snapshot-scoped waivers
      * @param now the instant expiry is decided against
      */
-    @Requirements({"GW_0045", "GW_0046"})
+    @Requirements({"GW_VETTING_0008", "GW_VETTING_0009"})
     public static Effect evaluate(VettingRepository.Run run, List<Waiver> waivers, String sha, Instant now) {
         if (run == null) {
             return noRun();
@@ -172,12 +172,12 @@ public final class WaiverEvaluation {
      * its state; one that does not, and has no findings to remove, keeps its state too — which is
      * how {@code PENDING} and an empty run stay blocking no matter what waivers exist.
      *
-     * <p>{@link VerdictState#DISABLED} (GW_0149) is handled separately rather than run through
+     * <p>{@link VerdictState#DISABLED} (GW_VETTING_0029) is handled separately rather than run through
      * {@link Verdict#of(List)} like every other state: it always carries an informational finding
      * so the disablement is visible on the run, and that finding's {@code INFO} severity would
      * otherwise re-derive to {@code PASS} on its own — an unwaived, purely bookkeeping finding
      * turning a switched-off connector into positive clearing evidence it never produced, which is
-     * exactly the blanket-approval loophole GW_0149 forbids. Only when every finding on it has
+     * exactly the blanket-approval loophole GW_VETTING_0029 forbids. Only when every finding on it has
      * actually been waived — residual empty, so something was named and accepted — does it clear,
      * the same "waiving everything clears the verdict" rule every other state gets.
      */

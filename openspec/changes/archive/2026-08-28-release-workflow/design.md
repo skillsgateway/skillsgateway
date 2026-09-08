@@ -13,7 +13,7 @@ Constraints that shape the design:
 - **Nisse derives the Maven version from git** (ADR 0002); nothing hand-edits a version.
   Its tag regex is `refs/tags/v?((\d+\.\d+\.\d+)(.*))` — the prefix is optional, so the
   tag can be unprefixed, but a `tags: ['v*']` trigger then matches nothing.
-- **`GW_0072` already specifies image publication** and binds every publish step to
+- **`GW_RELEASE_0002` already specifies image publication** and binds every publish step to
   `push` events. This change replaces that binding, so the requirement is revised rather
   than worked around; `PackagingTests` asserts the current text and must be rewritten.
 - **`protect-main`'s required status checks are job names**, not workflow names:
@@ -109,12 +109,12 @@ triggers stay, so nightly native builds and rolling `dev` docs are unaffected. T
 version arrives as an input rather than being parsed from `github.ref_name`, which also
 retires `docs.yml`'s `${GITHUB_REF_NAME#v}` prefix strip.
 
-This is what forces the `GW_0072` revision: "publish only from push events" was the old
+This is what forces the `GW_RELEASE_0002` revision: "publish only from push events" was the old
 mechanism for ensuring a published tag always traces to a reviewed commit. The new
 mechanism is stronger — publication happens only from a `main` push or from behind the
 release workflow's approval gate, and never from a schedule or a bare dispatch — but it
 is a different sentence, so the requirement and its SVC are revised together and
-`SVC_GW_0072` gains assertions rather than losing them.
+`SVC_GW_RELEASE_0002` gains assertions rather than losing them.
 
 ### Pages moves to Actions deployment, `mike` keeps the branch
 

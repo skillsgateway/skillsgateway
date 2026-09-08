@@ -99,7 +99,7 @@ public class TokenController {
             List<String> scopes) {}
 
     @PostMapping("/session")
-    @Requirements({"GW_0104"})
+    @Requirements({"GW_AUTH_0018"})
     @Tag(name = "Tokens")
     @Operation(
             summary = "Mint a git credential from this session",
@@ -123,7 +123,7 @@ public class TokenController {
     }
 
     @PostMapping
-    @Requirements({"GW_0067"})
+    @Requirements({"GW_AUTH_0009"})
     @Tag(name = "Tokens")
     @Operation(
             summary = "Create a token",
@@ -156,7 +156,7 @@ public class TokenController {
     }
 
     @PostMapping("/{id}/rotate")
-    @Requirements({"GW_0066", "GW_0067"})
+    @Requirements({"GW_AUTH_0008", "GW_AUTH_0009"})
     @Tag(name = "Tokens")
     @Operation(
             summary = "Rotate a token",
@@ -178,7 +178,7 @@ public class TokenController {
     }
 
     @DeleteMapping("/{id}")
-    @Requirements({"GW_0067"})
+    @Requirements({"GW_AUTH_0009"})
     @Tag(name = "Tokens")
     @Operation(summary = "Revoke a token", description = "Immediate and permanent; audit-logged.")
     @ApiResponse(responseCode = "204", description = "Revoked")
@@ -201,7 +201,7 @@ public class TokenController {
     }
 
     /** A session credential's ledger entry says so: the origin is what an auditor needs. */
-    @Requirements({"GW_0104"})
+    @Requirements({"GW_AUTH_0018"})
     private void auditSession(Authentication authentication, TokenService.IssuedToken issued) {
         String detail = "token %d '%s' scopes=%s session-derived expires=%s"
                 .formatted(
@@ -212,7 +212,7 @@ public class TokenController {
         auditLogger.record(authentication.getName(), NO_MARKETPLACE, "token-created", null, detail);
     }
 
-    /** Lifecycle entries carry the token's identity, name and scopes (GW_0067). */
+    /** Lifecycle entries carry the token's identity, name and scopes (GW_AUTH_0009). */
     private void audit(Authentication authentication, String event, long tokenId, String name, List<String> scopes) {
         audit(authentication, event, tokenId, name, scopes, List.of());
     }

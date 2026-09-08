@@ -58,7 +58,7 @@ class RefRefusalTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0136"})
+    @SVCs({"SVC_GW_RETENTION_0007"})
     void a_purge_that_cannot_remove_the_pin_keeps_the_row_and_says_nothing() throws Exception {
         String name = uniqueName("retain");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
@@ -105,7 +105,7 @@ class RefRefusalTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0137"})
+    @SVCs({"SVC_GW_INGEST_0018"})
     void an_ingestion_that_cannot_pin_the_snapshot_fails() throws Exception {
         String name = uniqueName("pin");
         Path upstream = createUpstream(DEFAULT_MANIFEST);
@@ -131,7 +131,7 @@ class RefRefusalTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0135"})
+    @SVCs({"SVC_GW_FACADE_0017"})
     void a_rebuild_that_cannot_prune_its_scaffolding_fails() throws Exception {
         String name = uniqueName("cat");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));

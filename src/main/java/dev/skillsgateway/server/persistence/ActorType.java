@@ -3,7 +3,7 @@ package dev.skillsgateway.server.persistence;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * What kind of actor produced a ledger entry (GW_0128), stored explicitly on the entry rather
+ * What kind of actor produced a ledger entry (GW_AUDIT_0007), stored explicitly on the entry rather
  * than inferred from the identity it names.
  *
  * <p>The ledger already had this vocabulary before this type existed — {@code config-reconciler},

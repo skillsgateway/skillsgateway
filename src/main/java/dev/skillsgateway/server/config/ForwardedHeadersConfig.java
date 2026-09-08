@@ -15,7 +15,7 @@ import org.springframework.web.filter.ForwardedHeaderFilter;
 
 /**
  * Makes {@code server.forward-headers-strategy=framework} mean the same thing on every
- * packaging (GW_0163).
+ * packaging (GW_AUTH_0029).
  *
  * <p>Spring Boot registers its {@link ForwardedHeaderFilter} behind {@code @ConditionalOnProperty},
  * and an ahead-of-time image evaluates that condition once, when the image is built. The property
@@ -47,7 +47,7 @@ import org.springframework.web.filter.ForwardedHeaderFilter;
 public class ForwardedHeadersConfig {
 
     @Bean
-    @Requirements({"GW_0163"})
+    @Requirements({"GW_AUTH_0029"})
     public FilterRegistrationBean<ForwardedHeaderFilter> forwardedHeaderFilter(
             ServerProperties serverProperties,
             TomcatServerProperties tomcatServerProperties,

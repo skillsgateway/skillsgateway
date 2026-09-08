@@ -121,13 +121,13 @@ codebase; the losing branch is recorded where it was a near call.
    `roleService.requireApproverOfSnapshot(...)` (the existing confused-deputy-
    safe resolver for id routes). RoleEnforcementTests gains a dedicated
    approver-scoped-reads method: denied to the no-role session,
-   denied to the auditor (whose charter, GW_0070, enumerates ledger and
+   denied to the auditor (whose charter, GW_AUTH_0012, enumerates ledger and
    listings, not content), allowed to the owning approver and the admin, and
    denied to an approver of a different marketplace through the bare id.
    With enforcement disabled (the default) every check passes, as everywhere.
    *Rejected branch:* classifying them with the open snapshot-metadata reads
    for symmetry — metadata symmetry loses to content sensitivity; the
-   requirement text (GW_0080) states the denial so the SSOT, not a test's
+   requirement text (GW_INGEST_0015) states the denial so the SSOT, not a test's
    set membership, owns the rule.
 
 7. **Markdown renders inertly, with no new dependency.** A ~100-line
@@ -171,9 +171,9 @@ codebase; the losing branch is recorded where it was a near call.
 - [A huge upstream tree makes the listing useless] → the 2 000-entry cap with
   an explicit marker keeps the response bounded; a marketplace that large has
   bigger review problems, and the marker says so instead of silently lying.
-- [Two SVC methods share SVC_GW_0080 (content contract in PreviewTests,
+- [Two SVC methods share SVC_GW_INGEST_0015 (content contract in PreviewTests,
   enforcement in RoleEnforcementTests' context)] → established pattern
-  (SVC_GW_0068 et al. already annotate two methods); reqstool aggregates.
+  (SVC_GW_AUTH_0010 et al. already annotate two methods); reqstool aggregates.
 - [The wizard's origin-derived URL is wrong behind a rewriting proxy that
   serves the portal and facade on different hosts] → no such deployment shape
   exists in the docs or config today; if one appears, that is the moment an

@@ -42,16 +42,16 @@ gateway may never delete content it is serving.
   `snapshot.soft_deleted` and `snapshot.restored` join the lifecycle webhook events.
 - Portal: the marketplace detail page shows a snapshot's deleted state with its restore
   deadline, and offers delete/restore controls.
-- New requirements GW_0031–GW_0036 with SVC_GW_0031–SVC_GW_0036.
+- New requirements GW_RETENTION_0001–GW_RETENTION_0006 with SVC_GW_RETENTION_0001–SVC_GW_RETENTION_0006.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `snapshot-retention`: criteria-based retention evaluation (GW_0031), soft delete with a
-  restore window (GW_0032), the approved/served eligibility guard (GW_0033), scheduled
-  hard-delete compaction including git storage (GW_0034), audit records for every retention
-  action (GW_0035), and the portal delete/restore surface (GW_0036).
+- `snapshot-retention`: criteria-based retention evaluation (GW_RETENTION_0001), soft delete with a
+  restore window (GW_RETENTION_0002), the approved/served eligibility guard (GW_RETENTION_0003), scheduled
+  hard-delete compaction including git storage (GW_RETENTION_0004), audit records for every retention
+  action (GW_RETENTION_0005), and the portal delete/restore surface (GW_RETENTION_0006).
 
 ### Modified Capabilities
 

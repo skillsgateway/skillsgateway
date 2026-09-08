@@ -15,7 +15,7 @@ gateway process (Helm chart, one replica).
 
 **Goals:** at-least-once, durable, signed delivery of the three lifecycle events to
 operator-registered subscribers, with per-subscriber filtering, bounded retry with
-exponential backoff, and an operator-visible delivery record (GW_0023–GW_0026).
+exponential backoff, and an operator-visible delivery record (GW_WEBHOOK_0001–GW_WEBHOOK_0004).
 
 **Non-Goals:** a `snapshot.revoked` event (no revocation capability exists); fan-out
 across multiple gateway replicas; per-subscriber custom headers, mTLS, or payload
@@ -69,7 +69,7 @@ templates; replay/redelivery from the portal; webhook receipt (inbound hooks).
   `whsec_` prefix) and returned in cleartext exactly once at creation. Unlike a PAT it
   must be stored recoverably — signing needs the key — so it is stored as-is and no read
   endpoint ever returns it (`SubscriberView` has no secret field). This trade-off is
-  stated in GW_0024 rather than hidden.
+  stated in GW_WEBHOOK_0002 rather than hidden.
 
 - **Subscriber URLs go through the same scheme allowlist as marketplace URLs**
   (`SkillsGatewayProperties.allowedUrlSchemes`), failing closed on unparseable or

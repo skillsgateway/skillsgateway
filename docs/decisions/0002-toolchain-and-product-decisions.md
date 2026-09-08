@@ -48,7 +48,7 @@ discussion, so the scaffold and the upcoming port have one reference.
 - **Auth is in the port's scope from the beginning:** OIDC (OAuth2) login
   for the web portal + hashed personal access tokens for git clients
   (git cannot do interactive OIDC). OAuth device flow deferred. No SAML,
-  ever. New requirements (GW_0011+) to be added with the port change.
+  ever. New requirements (GW_AUTH_0002+) to be added with the port change.
 - **Frontend: SPA served by the app acting as its own BFF** (token-handler
   pattern: browser holds only a session cookie, tokens stay server-side;
   same-origin `/api`). No separate BFF service until more frontends or
@@ -82,7 +82,7 @@ discussion, so the scaffold and the upcoming port have one reference.
   (`SGW_OIDC_*`) rather than being supplied purely at runtime. The
   Quarkus fallback clause is retired.
 - Next change: `port-gateway-to-java` — JGit-based ingestion/approval/façade
-  against the existing GW_*/SVC_GW_* contract, auth requirements GW_0011+,
+  against the existing GW_*/SVC_GW_* contract, auth requirements GW_AUTH_0002+,
   and a storage seam JGit-DFS can implement later (local disk in v1,
   object-storage-as-truth on the roadmap; see docs/manual/architecture.md §12).
 - The Python prototype is archived with full history in the sibling

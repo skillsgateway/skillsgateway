@@ -16,12 +16,12 @@ The numbers were first produced at `e515a22` (tree `91a3001`), before the
 renumber; the four gates the renumber could affect were re-run against
 `03ee3b1` and are reported here at their re-run values.
 
-**Requirement ids.** GW_0164 — The resolved closure is recorded as an immutable
-domain object of the snapshot, and GW_0165 — Approval requires a complete
-closure. GW_0162 was the highest id on `main` and no in-flight change under
+**Requirement ids.** GW_INGEST_0030 — The resolved closure is recorded as an immutable
+domain object of the snapshot, and GW_APPROVAL_0013 — Approval requires a complete
+closure. GW_VETTING_0030 was the highest id on `main` and no in-flight change under
 `openspec/changes/` reserved anything above it, so this change originally claimed
-GW_0163 and GW_0164. [#283](https://github.com/skillsgateway/skillsgateway/pull/283)
-had claimed GW_0163 in an unpushed worktree and was opened first, so this branch
+GW_AUTH_0029 and GW_INGEST_0030. [#283](https://github.com/skillsgateway/skillsgateway/pull/283)
+had claimed GW_AUTH_0029 in an unpushed worktree and was opened first, so this branch
 renumbered both ids upward, preserving their order. The gate results below are
 from the renumbered tree.
 
@@ -29,11 +29,11 @@ from the renumbered tree.
 
 | Requirement | What is proved | Test(s) |
 | --- | --- | --- |
-| **GW_0164 — The resolved closure is recorded as an immutable domain object of the snapshot** | the digest is SHA-256 hex, order-independent over members, sensitive to the upstream commit, the transformer version and every one of the eleven member fields, and framed so field boundaries cannot collide; a resolved ingestion records the closure with every field the review asked for, the grafted *tree* rather than the external commit, and `upstream_sha` equal to the composite's parent; a local-only snapshot and a rejected resolution record no closure and `upstream_sha = sha`; the provenance response carries `sha`, the true `upstreamSha` and the closure (`null` for local-only); the policy facts carry `snapshot.externalSources`, `snapshot.upstreamSha` and per-plugin `origin`/`upstreamUrl`/`resolvedSha`; the blast-radius query answers by URL, by URL and commit, and returns nothing for the wrong commit or URL; the same closure in two marketplaces has one digest; purging the snapshot removes the closure and its members | `SnapshotClosureDigestTests` (17 cases, SVC_GW_0164); `SnapshotClosureTests` (8 cases, SVC_GW_0164; the provenance case also SVC_GW_0009) |
-| **GW_0165 — Approval requires a complete closure** | every tampering below is refused with `ClosureIncompleteException` naming the discrepancy, written to the ledger as `snapshot-approval-refused` / `closure-incomplete: …`, leaves the snapshot held with no `refs/heads/main` in published; the administrative override does not lift the gate; a revoked snapshot is checked again on re-approval; an untouched composite and a local-only snapshot still approve with no refusal on the ledger | `ClosureCompletenessTests` (12 cases, SVC_GW_0165) |
-| **GW_0009 — Snapshot provenance** (unchanged for local-only) | `upstreamSha` still equals the snapshot's commit for a local-only snapshot | `ApprovalTests.provenanceOfApprovedSnapshotIsRetrievable`, **unmodified** |
-| **GW_0156, GW_0161** (unchanged) | the composite, its parent, determinism and every failure-atomicity path | `ExternalSourceResolutionTests` (19 cases), **unmodified** |
-| **GW_0034 — compaction** (unchanged) | purge still works with the cascade in place | `RetentionTests` (6 cases), **unmodified** |
+| **GW_INGEST_0030 — The resolved closure is recorded as an immutable domain object of the snapshot** | the digest is SHA-256 hex, order-independent over members, sensitive to the upstream commit, the transformer version and every one of the eleven member fields, and framed so field boundaries cannot collide; a resolved ingestion records the closure with every field the review asked for, the grafted *tree* rather than the external commit, and `upstream_sha` equal to the composite's parent; a local-only snapshot and a rejected resolution record no closure and `upstream_sha = sha`; the provenance response carries `sha`, the true `upstreamSha` and the closure (`null` for local-only); the policy facts carry `snapshot.externalSources`, `snapshot.upstreamSha` and per-plugin `origin`/`upstreamUrl`/`resolvedSha`; the blast-radius query answers by URL, by URL and commit, and returns nothing for the wrong commit or URL; the same closure in two marketplaces has one digest; purging the snapshot removes the closure and its members | `SnapshotClosureDigestTests` (17 cases, SVC_GW_INGEST_0030); `SnapshotClosureTests` (8 cases, SVC_GW_INGEST_0030; the provenance case also SVC_GW_INGEST_0004) |
+| **GW_APPROVAL_0013 — Approval requires a complete closure** | every tampering below is refused with `ClosureIncompleteException` naming the discrepancy, written to the ledger as `snapshot-approval-refused` / `closure-incomplete: …`, leaves the snapshot held with no `refs/heads/main` in published; the administrative override does not lift the gate; a revoked snapshot is checked again on re-approval; an untouched composite and a local-only snapshot still approve with no refusal on the ledger | `ClosureCompletenessTests` (12 cases, SVC_GW_APPROVAL_0013) |
+| **GW_INGEST_0004 — Snapshot provenance** (unchanged for local-only) | `upstreamSha` still equals the snapshot's commit for a local-only snapshot | `ApprovalTests.provenanceOfApprovedSnapshotIsRetrievable`, **unmodified** |
+| **GW_INGEST_0024, GW_INGEST_0027** (unchanged) | the composite, its parent, determinism and every failure-atomicity path | `ExternalSourceResolutionTests` (19 cases), **unmodified** |
+| **GW_RETENTION_0004 — compaction** (unchanged) | purge still works with the cascade in place | `RetentionTests` (6 cases), **unmodified** |
 | Portal: the provenance dialog | the dialog shows the served SHA, the upstream SHA, and each closure member's clone URL and resolved commit under an *External plugin sources* heading | `marketplaces.test.tsx` `provenance_dialog_lists_the_served_commit_and_the_resolved_closure` (vitest, jsdom; untagged because only Playwright results are matched to SVC ids) |
 
 ## The adversarial cases, one by one

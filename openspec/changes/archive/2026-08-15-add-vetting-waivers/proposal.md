@@ -1,6 +1,6 @@
 ## Why
 
-The vetting chain (GW_0037–GW_0043) gates approval fail-closed, but its only
+The vetting chain (GW_VETTING_0001–GW_VETTING_0006) gates approval fail-closed, but its only
 escape hatch is a **blanket override**: one free-text `overrideReason` that
 clears an entire snapshot, covers every finding at once, is scoped to nothing,
 and never expires. A reviewer who wants to accept one documented dummy key in
@@ -54,10 +54,10 @@ comes back for review when it expires.
 - `vetting-waivers`: scoped, expiring accepted-risk exceptions against vetting
   findings — the waiver model and its scoping, the effective-outcome
   computation, expiry semantics, the management surface, the portal surface,
-  and the ledger record (GW_0044–GW_0049).
+  and the ledger record (GW_VETTING_0007–GW_VETTING_0012).
 
 ### Modified Capabilities
-- `snapshot-vetting`: GW_0041 (the approval gate) changes from "refuse unless
+- `snapshot-vetting`: GW_APPROVAL_0003 (the approval gate) changes from "refuse unless
   the request carries an override reason" to "refuse unless every blocking
   finding is covered by an active waiver". The requirement's rationale is
   unchanged — accepting a blocked snapshot must be a deliberate, attributed,
@@ -82,6 +82,6 @@ comes back for review when it expires.
 - **Docs**: `concepts/vetting.md`, a new `guides/waiving-findings.md`,
   `reference/api/marketplaces.md`, `reference/portal.md`,
   `reference/configuration.md`.
-- **Traceability**: new GW_0044–GW_0049 with SVC_GW_0044–SVC_GW_0049; GW_0041,
-  SVC_GW_0041, SVC_GW_0042 and SVC_GW_0043 revised in place to the new
+- **Traceability**: new GW_VETTING_0007–GW_VETTING_0012 with SVC_GW_VETTING_0007–SVC_GW_VETTING_0012; GW_APPROVAL_0003,
+  SVC_GW_APPROVAL_0003, SVC_GW_VETTING_0005 and SVC_GW_VETTING_0006 revised in place to the new
   mechanism, keeping their verification intent.

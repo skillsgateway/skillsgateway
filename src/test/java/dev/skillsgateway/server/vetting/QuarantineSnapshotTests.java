@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
- * Container-free verification that a chain run reads a snapshot once (GW_0162), driven against a
+ * Container-free verification that a chain run reads a snapshot once (GW_VETTING_0030), driven against a
  * real JGit repository.
  *
  * <p>"Never opened" is asserted the only way that cannot be faked: the blob is removed from the
@@ -55,7 +55,7 @@ class QuarantineSnapshotTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0162"})
+    @SVCs({"SVC_GW_VETTING_0030"})
     void aBlobOutsideTheSelectionIsNeverOpened() throws Exception {
         removeFromObjectDatabase("unselected.bin");
 
@@ -70,7 +70,7 @@ class QuarantineSnapshotTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0162"})
+    @SVCs({"SVC_GW_VETTING_0030"})
     void aBlobInsideTheSelectionIsStillRequired() throws Exception {
         removeFromObjectDatabase("unselected.bin");
 
@@ -82,7 +82,7 @@ class QuarantineSnapshotTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0162"})
+    @SVCs({"SVC_GW_VETTING_0030"})
     void aBlobTwoConnectorsSelectIsInflatedOnce() throws Exception {
         try (QuarantineSnapshot snapshot = open(MAX_FILE_BYTES, CACHE_BYTES)) {
             byte[] first = walk(snapshot, "LICENSE"::equals).get("LICENSE");
@@ -94,7 +94,7 @@ class QuarantineSnapshotTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0162"})
+    @SVCs({"SVC_GW_VETTING_0030"})
     void anOversizeFileIsStillVisitedAsUnread() throws Exception {
         try (QuarantineSnapshot snapshot = open(MAX_FILE_BYTES, CACHE_BYTES)) {
             Map<String, byte[]> visited = walk(snapshot, path -> true);
@@ -105,7 +105,7 @@ class QuarantineSnapshotTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0162"})
+    @SVCs({"SVC_GW_VETTING_0030"})
     void contentBeyondTheRetentionBoundIsStillServedInFull() throws Exception {
         try (QuarantineSnapshot snapshot = open(MAX_FILE_BYTES, 0)) {
             byte[] first = walk(snapshot, path -> true).get("LICENSE");
@@ -117,7 +117,7 @@ class QuarantineSnapshotTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0162"})
+    @SVCs({"SVC_GW_VETTING_0030"})
     void identicalFilesShareOneCacheEntry() throws Exception {
         write("copy/LICENSE", LICENSE);
         try (Git git = Git.open(work.toFile())) {

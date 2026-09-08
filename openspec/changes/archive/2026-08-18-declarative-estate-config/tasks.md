@@ -2,8 +2,8 @@
 
 ## 1. Traceability (SSOT first)
 
-- [x] 1.1 GW_0083–GW_0087 in `docs/reqstool/requirements.yml`.
-- [x] 1.2 SVC_GW_0083–SVC_GW_0087 in
+- [x] 1.1 GW_ESTATE_0001–GW_ESTATE_0005 in `docs/reqstool/requirements.yml`.
+- [x] 1.2 SVC_GW_ESTATE_0001–SVC_GW_ESTATE_0005 in
       `docs/reqstool/software_verification_cases.yml`.
 
 ## 2. Config
@@ -14,19 +14,19 @@
 ## 3. Shared creation paths (extraction, behavior unchanged)
 
 - [x] 3.1 `admin/MarketplaceRegistrationService.register(name, url, actor)`
-      — name pattern, reserved catalog name (GW_0063), scheme allowlist
-      (GW_0016), duplicate check, forge metadata, ledger entry;
-      `AdminController` delegates (keeps the GW_0017 ref check on the
+      — name pattern, reserved catalog name (GW_FACADE_0005), scheme allowlist
+      (GW_INGEST_0005), duplicate check, forge metadata, ledger entry;
+      `AdminController` delegates (keeps the GW_INGEST_0006 ref check on the
       request shape).
 - [x] 3.2 `RoleService.grant(principal, role, marketplace, actor)` — role
       vocabulary, approver scoping, marketplace existence, duplicate 409,
-      ledger entry (GW_0071); `RoleController` delegates.
+      ledger entry (GW_AUTH_0013); `RoleController` delegates.
 - [x] 3.3 `WebhookService.register(name, url, events, secret, actor)` —
       name pattern, scheme allowlist, event validation, null secret →
-      generated (GW_0024); `WebhookController` delegates.
+      generated (GW_WEBHOOK_0002); `WebhookController` delegates.
 - [x] 3.4 `AuditExportService.registerSink(name, url, after, batchSize,
       secret, actor)` — name pattern, scheme allowlist, cross-namespace
-      duplicate check (GW_0028); `AuditController` delegates.
+      duplicate check (GW_AUDIT_0004); `AuditController` delegates.
 - [x] 3.5 Repository update methods:
       `WebhookSubscriberRepository.update(id, url, secret, events)`,
       `AuditSinkRepository.updateBatchSize(id, batchSize)`.
@@ -36,7 +36,7 @@
 - [x] 4.1 `estate/EstateReconciler`: synchronized diff-then-write convergence
       over marketplaces → grants → subscribers → sinks; per-entry failure
       isolation; `config-reconciler` actor; last-report holder
-      (SVC_GW_0083–SVC_GW_0087, `@Requirements` on the implementing
+      (SVC_GW_ESTATE_0001–SVC_GW_ESTATE_0005, `@Requirements` on the implementing
       methods).
 - [x] 4.2 `estate/EstateBootstrap` (`SmartInitializingSingleton`): reconcile
       at startup, after migrations, before the web surface serves.
@@ -55,23 +55,23 @@
 - [x] 6.1 `EstateReconciliationTests` (own context: roles enabled, declared
       estate): startup applied the declaration — marketplace with sync mode,
       grants effective, subscriber and sink rows with the declared secrets
-      (SVC_GW_0083, SVC_GW_0084, SVC_GW_0085, SVC_GW_0086).
+      (SVC_GW_ESTATE_0001, SVC_GW_ESTATE_0002, SVC_GW_ESTATE_0003, SVC_GW_ESTATE_0004).
 - [x] 6.2 Converged no-op: a second reconcile makes zero writes and appends
       zero ledger entries; the endpoint trigger appends exactly its own
-      admin-actor entry (SVC_GW_0083).
+      admin-actor entry (SVC_GW_ESTATE_0001).
 - [x] 6.3 Secret rotation: changed declared secret updates the row, audits
       `webhook-subscriber-updated`/`audit-sink-updated` without the value;
-      same secret again → no write; sink cursor untouched (SVC_GW_0086).
-- [x] 6.4 Adversarial (SVC_GW_0084, SVC_GW_0085, SVC_GW_0086, SVC_GW_0087):
+      same secret again → no write; sink cursor untouched (SVC_GW_ESTATE_0004).
+- [x] 6.4 Adversarial (SVC_GW_ESTATE_0002, SVC_GW_ESTATE_0003, SVC_GW_ESTATE_0004, SVC_GW_ESTATE_0005):
       disallowed scheme, reserved name, URL drift, `webhook` sync mode,
       grant for an unknown marketplace, blank/short secret — each an
       isolated `failed` entry with a ledger record, other entries applied,
       no partial row; secret value absent from report and ledger.
 - [x] 6.5 Additive guarantee: API-created objects and grants absent from the
-      declaration survive a reconcile untouched (SVC_GW_0083).
+      declaration survive a reconcile untouched (SVC_GW_ESTATE_0001).
 - [x] 6.6 `EstateStartupFailureTests` (own context with one invalid entry):
       the application starts, the valid entry is applied, the invalid one is
-      on the ledger and in the report (SVC_GW_0087).
+      on the ledger and in the report (SVC_GW_ESTATE_0005).
 - [x] 6.7 Trust-boundary mutants (kill + restore, recorded in evidence):
       scheme validation bypassed for declared marketplaces; diff check
       removed (always-update); secret value included in the update detail.

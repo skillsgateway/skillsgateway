@@ -18,7 +18,7 @@ public class SnapshotRepository {
 
     /**
      * The states retention may remove, spelled out rather than expressed as "not approved"
-     * (GW_0033, GW_0050). Every future state must be added here on purpose to become deletable;
+     * (GW_RETENTION_0003, GW_VETTING_0013). Every future state must be added here on purpose to become deletable;
      * a negation would have let {@code revoked} in without anyone deciding that it should be.
      */
     private static final String DELETABLE_STATES = "('held', 'rejected', 'revoked')";
@@ -39,12 +39,12 @@ public class SnapshotRepository {
     }
 
     /**
-     * Records a snapshot together with the identity that triggered its ingestion (GW_0096). The
+     * Records a snapshot together with the identity that triggered its ingestion (GW_APPROVAL_0010). The
      * actor is a column rather than a ledger lookup because the four-eyes rule reads it as an
      * authorization input, and null is a legitimate value: a snapshot whose actor was never
      * recorded conflicts with nobody.
      */
-    @Requirements({"GW_0096", "GW_0125"})
+    @Requirements({"GW_APPROVAL_0010", "GW_FACADE_0009"})
     public Snapshot create(long marketplaceId, String sha, String state, String violation, String ingestedBy) {
         return create(marketplaceId, sha, sha, state, violation, ingestedBy, null);
     }
@@ -52,13 +52,13 @@ public class SnapshotRepository {
     /**
      * As above, for a snapshot whose served commit is not the ingested one: the upstream commit is
      * recorded beside it, and the closure it resolved — when there is one — is written in the
-     * same transaction (GW_0164), so a snapshot with external content and no record of what that
+     * same transaction (GW_INGEST_0030), so a snapshot with external content and no record of what that
      * content is cannot come out of this method half-made. The duplicate-key race the caller
      * already handles rolls the closure back with the row.
      *
      * @param closure the resolved closure, or null for a snapshot that resolved nothing
      */
-    @Requirements({"GW_0096", "GW_0125", "GW_0164"})
+    @Requirements({"GW_APPROVAL_0010", "GW_FACADE_0009", "GW_INGEST_0030"})
     @Transactional
     public Snapshot create(
             long marketplaceId,
@@ -119,13 +119,13 @@ public class SnapshotRepository {
      * become approved, and an approved snapshot is never re-decided in place — only revocation
      * moves it, and only {@link #revoke} does that.
      *
-     * <p>A revoked snapshot is decidable again on purpose (GW_0050): retraction must be reversible
+     * <p>A revoked snapshot is decidable again on purpose (GW_VETTING_0013): retraction must be reversible
      * by a person, and the only route back is this method — a fresh decision with a fresh reviewer
      * and timestamp, behind the same effective-vetting gate every approval passes. The revocation
      * stamps are cleared by the transition, so a re-published snapshot never carries a revocation
      * marker that no longer holds; what it was revoked for stays in the ledger.
      */
-    @Requirements({"GW_0125"})
+    @Requirements({"GW_FACADE_0009"})
     @Transactional
     public Snapshot decide(long id, String newState, String reviewer) {
         Snapshot snapshot = findById(id).orElseThrow(() -> new SnapshotNotFoundException(id));
@@ -148,7 +148,7 @@ public class SnapshotRepository {
     }
 
     /**
-     * Puts a row back exactly as it was before an approval that could not be published (GW_0133).
+     * Puts a row back exactly as it was before an approval that could not be published (GW_APPROVAL_0012).
      *
      * <p>{@code decide} commits before publication, and it also clears {@code revoked_at},
      * {@code revoked_by} and {@code violation} — so an approval that then fails to publish leaves a
@@ -169,7 +169,7 @@ public class SnapshotRepository {
      *     means something else decided it in the meantime and the caller must not claim to have
      *     repaired anything
      */
-    @Requirements({"GW_0133"})
+    @Requirements({"GW_APPROVAL_0012"})
     @Transactional
     public Optional<Snapshot> undecide(Snapshot before) {
         return jdbc.sql("UPDATE snapshots SET state = :state::snapshot_state, violation = :violation,"
@@ -193,7 +193,7 @@ public class SnapshotRepository {
     }
 
     /**
-     * Retroactive quarantine (GW_0050): the one transition out of {@code approved}. The
+     * Retroactive quarantine (GW_VETTING_0013): the one transition out of {@code approved}. The
      * {@code state = 'approved'} predicate is in the statement rather than in the caller, so a
      * concurrent revocation or a second sweep pass cannot revoke the same snapshot twice, and
      * nothing that is not currently approved can be revoked at all.
@@ -201,7 +201,7 @@ public class SnapshotRepository {
      * @return the revoked snapshot, or empty when it was not approved (already revoked, or never
      *     approved) — which the caller must treat as "someone else got there first", not an error
      */
-    @Requirements({"GW_0125"})
+    @Requirements({"GW_FACADE_0009"})
     public Optional<Snapshot> revoke(long id, String actor, String violation) {
         return jdbc.sql("UPDATE snapshots SET state = :state::snapshot_state, revoked_at = :now, revoked_by = :actor,"
                         + " violation = :violation WHERE id = :id AND state = :approved::snapshot_state RETURNING *")
@@ -216,7 +216,7 @@ public class SnapshotRepository {
     }
 
     /**
-     * The continuous re-vetting queue (GW_0049): live approved snapshots whose most recent chain
+     * The continuous re-vetting queue (GW_VETTING_0012): live approved snapshots whose most recent chain
      * run is older than {@code cutoff}, oldest first, and a snapshot that has never been vetted
      * before all of them.
      *
@@ -252,14 +252,14 @@ public class SnapshotRepository {
 
     /**
      * The newest live approved snapshot of one marketplace other than {@code excludingId}: the
-     * baseline a content diff is taken against (GW_0153).
+     * baseline a content diff is taken against (GW_INGEST_0022).
      *
      * <p>"Approved and not deleted" is the same predicate {@link #approvedByMarketplace} uses, so
      * approved means one thing in this repository. The exclusion is what keeps a snapshot from
      * being its own baseline — a revoked-then-re-reviewed snapshot is approved history, and
      * diffing it against itself would report a review with nothing in it.
      */
-    @Requirements({"GW_0153"})
+    @Requirements({"GW_INGEST_0022"})
     public Optional<Snapshot> latestApprovedByMarketplace(long marketplaceId, long excludingId) {
         return jdbc.sql("SELECT * FROM snapshots WHERE marketplace_id = :marketplaceId"
                         + " AND state = :approved::snapshot_state AND deleted_at IS NULL"
@@ -273,10 +273,10 @@ public class SnapshotRepository {
 
     /**
      * Snapshots a retention policy would delete for one marketplace, each with the criterion that
-     * selected it (GW_0031).
+     * selected it (GW_RETENTION_0001).
      *
      * <p>Three guarantees are in the SQL rather than in the caller, so no code path can lose them:
-     * an {@code approved} snapshot is never returned (GW_0033), an already-deleted snapshot is
+     * an {@code approved} snapshot is never returned (GW_RETENTION_0003), an already-deleted snapshot is
      * never returned twice, and a snapshot served through the facade since {@code idleCutoff} is
      * vetoed regardless of which criterion matched it.
      *
@@ -287,7 +287,7 @@ public class SnapshotRepository {
      * still in use. Vetoing on the SHA alone let any marketplace's traffic hold every other
      * marketplace's snapshots in quarantine indefinitely.
      *
-     * <p>Deletable states are named explicitly rather than written as "not approved" (GW_0050):
+     * <p>Deletable states are named explicitly rather than written as "not approved" (GW_VETTING_0013):
      * {@code revoked} joined the state machine after retention did, and a categorical guard phrased
      * as a negation would have admitted it silently. It <em>is</em> admitted — a revoked snapshot is
      * not served, so removing it destroys nothing anyone can fetch — but only through the
@@ -331,9 +331,9 @@ public class SnapshotRepository {
     }
 
     /**
-     * Marks the snapshot deleted, restorable until {@code purgeAfter} (GW_0032). Approved snapshots
+     * Marks the snapshot deleted, restorable until {@code purgeAfter} (GW_RETENTION_0002). Approved snapshots
      * are excluded in the statement itself, so this cannot delete served content whatever the
-     * caller believes (GW_0033); an already-deleted snapshot keeps its original marks.
+     * caller believes (GW_RETENTION_0003); an already-deleted snapshot keeps its original marks.
      */
     public Optional<Snapshot> softDelete(long id, String reason, Instant purgeAfter) {
         return jdbc.sql("UPDATE snapshots SET deleted_at = :now, deleted_reason = :reason,"
@@ -357,7 +357,7 @@ public class SnapshotRepository {
                 .optional();
     }
 
-    /** Soft-deleted snapshots whose restore window has elapsed: the compaction queue (GW_0034). */
+    /** Soft-deleted snapshots whose restore window has elapsed: the compaction queue (GW_RETENTION_0004). */
     public List<Snapshot> duePurge(Instant now, int limit) {
         return jdbc.sql("SELECT * FROM snapshots WHERE deleted_at IS NOT NULL AND purge_after <= :now"
                         + " AND state IN " + DELETABLE_STATES + " ORDER BY id LIMIT :limit")

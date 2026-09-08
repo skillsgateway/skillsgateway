@@ -7,7 +7,7 @@ import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 /**
- * A validated mirror configuration (GW_0169): the one marketplace this increment mirrors, where it
+ * A validated mirror configuration (GW_FACADE_0020): the one marketplace this increment mirrors, where it
  * is pushed, and with what.
  *
  * <p>Not a record, because a record's generated {@code toString} would print the push credential
@@ -17,7 +17,7 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
  * <p>Validation happens once, when the target is built at startup, and nothing here contacts the
  * mirror: what is checked is the operator's configuration, not the forge's availability. That
  * distinction is what keeps an invalid configuration a loud startup failure while an unreachable
- * mirror stays a contained runtime event (GW_0170).
+ * mirror stays a contained runtime event (GW_FACADE_0021).
  */
 public final class MirrorTarget {
 
@@ -58,7 +58,7 @@ public final class MirrorTarget {
      *     leaves an operator who asked for a mirror with no mirror and no signal, and a
      *     configuration mistake is not the outage this class is otherwise built to absorb.
      */
-    @Requirements({"GW_0169"})
+    @Requirements({"GW_FACADE_0020"})
     public static MirrorTarget from(SkillsGatewayProperties properties) {
         SkillsGatewayProperties.Mirror mirror = properties.mirror();
         if (!mirror.enabled()) {
@@ -103,13 +103,13 @@ public final class MirrorTarget {
         return retryDelay;
     }
 
-    /** Whether the recurring reconciliation runs (GW_0190). On by default, with the mirror. */
+    /** Whether the recurring reconciliation runs (GW_FACADE_0025). On by default, with the mirror. */
     public boolean sweepEnabled() {
         return sweepEnabled;
     }
 
     /**
-     * How long a caller asking for a reconciliation now should be willing to wait (GW_0192): every
+     * How long a caller asking for a reconciliation now should be willing to wait (GW_FACADE_0027): every
      * attempt's transport timeout plus every delay between them. Bounded by construction — the
      * settings are validated at startup — so an administrator's request cannot hang on a forge that
      * has stopped answering.

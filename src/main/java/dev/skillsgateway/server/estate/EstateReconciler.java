@@ -33,7 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Converges the running estate to the declared one (GW_0083–GW_0087): additively — an object
+ * Converges the running estate to the declared one (GW_ESTATE_0001–GW_ESTATE_0005): additively — an object
  * absent from the declaration is never deleted, deregistered or revoked — and idempotently — a
  * converged estate reconciles with zero writes and zero ledger entries. Every applied change goes
  * through the same validated, audited service path as its API equivalent, attributed to
@@ -47,11 +47,11 @@ public class EstateReconciler {
     /** The reconciler's ledger identity: how declarative changes are told from interactive ones. */
     public static final String ACTOR = "config-reconciler";
 
-    /** Sync modes a declaration may set; webhook mode's show-once HMAC secret is API-only (GW_0084). */
+    /** Sync modes a declaration may set; webhook mode's show-once HMAC secret is API-only (GW_ESTATE_0002). */
     private static final Set<String> DECLARABLE_SYNC_MODES =
             Set.of(Marketplace.SYNC_ON_DEMAND, Marketplace.SYNC_SCHEDULED);
 
-    /** Below this, an operator-supplied HMAC key is a typo, not a secret (GW_0086). */
+    /** Below this, an operator-supplied HMAC key is a typo, not a secret (GW_ESTATE_0004). */
     private static final int MIN_SECRET_LENGTH = 16;
 
     /** Failure entries are not tied to a marketplace; the ledger column is NOT NULL. */
@@ -94,10 +94,10 @@ public class EstateReconciler {
      * declared in the same configuration), then webhook subscribers, then audit sinks.
      * Synchronized so startup and the on-demand endpoint can never interleave; the database's
      * unique constraints backstop any other writer. Entry validation failures are isolated and
-     * reported (GW_0087); infrastructure failures propagate — a broken declaration must not brick
+     * reported (GW_ESTATE_0005); infrastructure failures propagate — a broken declaration must not brick
      * the gateway, but a broken database must not be papered over.
      */
-    @Requirements({"GW_0083", "GW_0087"})
+    @Requirements({"GW_ESTATE_0001", "GW_ESTATE_0005"})
     public synchronized EstateReconciliation reconcile(Estate estate, String trigger) {
         List<Entry> entries = new ArrayList<>();
         for (DeclaredMarketplace declared : estate.marketplaces()) {
@@ -150,7 +150,7 @@ public class EstateReconciler {
      * (what every shared validation path throws) is a validation failure; anything else is
      * infrastructure and propagates.
      */
-    @Requirements({"GW_0087"})
+    @Requirements({"GW_ESTATE_0005"})
     private Entry isolated(String kind, String name, EntryReconciliation reconciliation) {
         try {
             return reconciliation.run();
@@ -168,13 +168,13 @@ public class EstateReconciler {
     }
 
     /**
-     * A declared marketplace enters through the exact registration gate the API uses (GW_0084):
+     * A declared marketplace enters through the exact registration gate the API uses (GW_ESTATE_0002):
      * name rules, reserved catalog name, URL scheme allowlist. The declaration has no ref field,
-     * so the gateway-pinned ref (GW_0017) cannot be overridden; a stored URL that differs from the
+     * so the gateway-pinned ref (GW_INGEST_0006) cannot be overridden; a stored URL that differs from the
      * declared one is a failure, never an update — the API deliberately has no URL update, and the
      * reconciler must not acquire a power the API refuses to have.
      */
-    @Requirements({"GW_0084"})
+    @Requirements({"GW_ESTATE_0002"})
     private Entry reconcileMarketplace(DeclaredMarketplace declared) {
         String mode = declared.syncMode();
         if (mode != null && !DECLARABLE_SYNC_MODES.contains(mode)) {
@@ -191,7 +191,7 @@ public class EstateReconciler {
             return Entry.created("marketplace", declared.name(), null);
         }
         Marketplace stored = existing.get();
-        // Null-safe on both sides: a hosted marketplace has no url at all (GW_0101), and declaring
+        // Null-safe on both sides: a hosted marketplace has no url at all (GW_FACADE_0006), and declaring
         // one for it — or dropping the one an upstream marketplace was registered with — is the
         // same supply-chain swap the immutability rule exists to refuse.
         if (!Objects.equals(stored.url(), declared.url())) {
@@ -213,10 +213,10 @@ public class EstateReconciler {
 
     /**
      * A declared grant goes through the same validation and audited insert as the grants API
-     * (GW_0085); an identical existing grant — declared or interactively created — is converged
+     * (GW_ESTATE_0003); an identical existing grant — declared or interactively created — is converged
      * state, so the reconciler checks before it writes and a duplicate is unchanged, not an error.
      */
-    @Requirements({"GW_0085"})
+    @Requirements({"GW_ESTATE_0003"})
     private Entry reconcileGrant(DeclaredGrant declared) {
         String name = "%s/%s/%s"
                 .formatted(declared.principal(), declared.role(), Objects.toString(declared.marketplace(), "-"));
@@ -233,11 +233,11 @@ public class EstateReconciler {
 
     /**
      * A declared subscriber is created through the same path as the webhooks API, with the
-     * operator-supplied secret in place of a generated one (GW_0086); an existing one converges
+     * operator-supplied secret in place of a generated one (GW_ESTATE_0004); an existing one converges
      * url, event filter and secret in place — rotation is a config edit away, audited without the
      * value. Update targets are re-validated against the same scheme allowlist as creation.
      */
-    @Requirements({"GW_0086"})
+    @Requirements({"GW_ESTATE_0004"})
     private Entry reconcileWebhook(DeclaredWebhook declared) {
         requireUsableSecret(declared.secret());
         Optional<WebhookSubscriber> existing = webhookService.findSubscriber(declared.name());
@@ -269,12 +269,12 @@ public class EstateReconciler {
 
     /**
      * A declared sink is created through the same path as the audit API, with the operator's
-     * secret (GW_0086). An existing one converges the target URL, the secret (via its delivery
+     * secret (GW_ESTATE_0004). An existing one converges the target URL, the secret (via its delivery
      * channel, a webhook subscriber) and the batch size; {@code after} seeds the cursor at
      * creation only — the cursor is runtime progress, and re-applying it would re-deliver the
      * ledger on every deploy.
      */
-    @Requirements({"GW_0086"})
+    @Requirements({"GW_ESTATE_0004"})
     private Entry reconcileSink(DeclaredAuditSink declared) {
         requireUsableSecret(declared.secret());
         Optional<AuditSink> existing = auditExportService.findSinkByName(declared.name());
@@ -315,11 +315,11 @@ public class EstateReconciler {
 
     /**
      * A declared policy rule goes through the same compiled, audited lifecycle path as the policy
-     * API (GW_0089): an expression that does not compile to a boolean is an isolated entry
+     * API (GW_APPROVAL_0006): an expression that does not compile to a boolean is an isolated entry
      * failure, an identical stored rule converges with zero writes, and drift in expression,
      * description or the enabled flag is an update through the service — never a direct write.
      */
-    @Requirements({"GW_0089"})
+    @Requirements({"GW_APPROVAL_0006"})
     private Entry reconcilePolicyRule(DeclaredPolicyRule declared) {
         boolean enabled = declared.enabled() == null || declared.enabled();
         Optional<PolicyRule> existing = policyRuleService.find(declared.name());
@@ -345,8 +345,8 @@ public class EstateReconciler {
         return Entry.updated("policy-rule", declared.name(), "changed=" + String.join(",", changes));
     }
 
-    /** A blank or trivially short HMAC key would silently weaken every signature (GW_0086). */
-    @Requirements({"GW_0086"})
+    /** A blank or trivially short HMAC key would silently weaken every signature (GW_ESTATE_0004). */
+    @Requirements({"GW_ESTATE_0004"})
     private static void requireUsableSecret(String secret) {
         if (secret == null || secret.isBlank() || secret.length() < MIN_SECRET_LENGTH) {
             throw validationFailure("a declared secret must be at least %d characters; supply it by"

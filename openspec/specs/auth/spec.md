@@ -7,63 +7,63 @@ web/admin surface — including which claim names the principal, which scopes th
 login requests, and the expected identity-token issuer — and personal access
 tokens for git clients, including the token lifecycle.
 ## Requirements
-### Requirement: GW_0011
-The system SHALL implement GW_0011.
+### Requirement: GW_AUTH_0002
+The system SHALL implement GW_AUTH_0002.
 
-#### Scenario: SVC_GW_0011
-The system SHALL pass SVC_GW_0011.
+#### Scenario: SVC_GW_AUTH_0002
+The system SHALL pass SVC_GW_AUTH_0002.
 
-### Requirement: GW_0012
-The system SHALL implement GW_0012.
+### Requirement: GW_AUTH_0003
+The system SHALL implement GW_AUTH_0003.
 
-#### Scenario: SVC_GW_0012
-The system SHALL pass SVC_GW_0012.
+#### Scenario: SVC_GW_AUTH_0003
+The system SHALL pass SVC_GW_AUTH_0003.
 
-### Requirement: GW_0013
-The system SHALL implement GW_0013.
+### Requirement: GW_AUTH_0004
+The system SHALL implement GW_AUTH_0004.
 
-#### Scenario: SVC_GW_0013
-The system SHALL pass SVC_GW_0013.
+#### Scenario: SVC_GW_AUTH_0004
+The system SHALL pass SVC_GW_AUTH_0004.
 
-### Requirement: GW_0100
-The system SHALL implement GW_0100.
+### Requirement: GW_AUTH_0017
+The system SHALL implement GW_AUTH_0017.
 
-#### Scenario: SVC_GW_0100
-The system SHALL pass SVC_GW_0100.
+#### Scenario: SVC_GW_AUTH_0017
+The system SHALL pass SVC_GW_AUTH_0017.
 
-### Requirement: GW_0110
-The system SHALL implement GW_0110.
+### Requirement: GW_AUTH_0019
+The system SHALL implement GW_AUTH_0019.
 
-#### Scenario: SVC_GW_0110
-The system SHALL pass SVC_GW_0110.
+#### Scenario: SVC_GW_AUTH_0019
+The system SHALL pass SVC_GW_AUTH_0019.
 
-### Requirement: GW_0126
-The system SHALL implement GW_0126.
+### Requirement: GW_AUTH_0020
+The system SHALL implement GW_AUTH_0020.
 
-#### Scenario: SVC_GW_0126
-The system SHALL pass SVC_GW_0126.
+#### Scenario: SVC_GW_AUTH_0020
+The system SHALL pass SVC_GW_AUTH_0020.
 
-### Requirement: GW_0127
-The system SHALL implement GW_0127.
+### Requirement: GW_AUTH_0021
+The system SHALL implement GW_AUTH_0021.
 
-#### Scenario: SVC_GW_0127
-The system SHALL pass SVC_GW_0127.
+#### Scenario: SVC_GW_AUTH_0021
+The system SHALL pass SVC_GW_AUTH_0021.
 
-### Requirement: GW_0128
-The system SHALL implement GW_0128.
+### Requirement: GW_AUDIT_0007
+The system SHALL implement GW_AUDIT_0007.
 
-#### Scenario: SVC_GW_0128
-The system SHALL pass SVC_GW_0128.
+#### Scenario: SVC_GW_AUDIT_0007
+The system SHALL pass SVC_GW_AUDIT_0007.
 
-### Requirement: GW_0141
-The system SHALL implement GW_0141.
+### Requirement: GW_AUTH_0028
+The system SHALL implement GW_AUTH_0028.
 
-#### Scenario: SVC_GW_0141
-The system SHALL pass SVC_GW_0141.
+#### Scenario: SVC_GW_AUTH_0028
+The system SHALL pass SVC_GW_AUTH_0028.
 
-### Requirement: GW_0163
-The system SHALL implement GW_0163.
+### Requirement: GW_AUTH_0029
+The system SHALL implement GW_AUTH_0029.
 
-#### Scenario: SVC_GW_0163
-The system SHALL pass SVC_GW_0163.
+#### Scenario: SVC_GW_AUTH_0029
+The system SHALL pass SVC_GW_AUTH_0029.
 

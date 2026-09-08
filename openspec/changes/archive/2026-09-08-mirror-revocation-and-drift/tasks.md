@@ -2,65 +2,65 @@
 
 ## 1. Requirements (SSOT first)
 
-- [ ] 1.1 Add GW_0190 (bounded mirror staleness), GW_0191 (mirror divergence is
-      observable without being asked), GW_0192 (an administrator can reconcile
-      the mirror on demand) and GW_0193 (a mirror repair is never silent) to
+- [ ] 1.1 Add GW_FACADE_0025 (bounded mirror staleness), GW_FACADE_0026 (mirror divergence is
+      observable without being asked), GW_FACADE_0027 (an administrator can reconcile
+      the mirror on demand) and GW_FACADE_0028 (a mirror repair is never silent) to
       `docs/reqstool/requirements.yml`
-- [ ] 1.2 Add SVC_GW_0190, SVC_GW_0191, SVC_GW_0192 and SVC_GW_0193
+- [ ] 1.2 Add SVC_GW_FACADE_0025, SVC_GW_FACADE_0026, SVC_GW_FACADE_0027 and SVC_GW_FACADE_0028
       (GIVEN/WHEN/THEN) to `docs/reqstool/software_verification_cases.yml`
 
 ## 2. Configuration
 
 - [ ] 2.1 `SkillsGatewayProperties.Mirror` gains `sweepEnabled` (default true),
       `sweepInterval` (default 15m) and `sweepInitialDelay` (default 1m), with
-      the positional construction in the outer record updated (GW_0190)
-- [ ] 2.2 `MirrorTarget` carries `sweepEnabled` (GW_0190)
+      the positional construction in the outer record updated (GW_FACADE_0025)
+- [ ] 2.2 `MirrorTarget` carries `sweepEnabled` (GW_FACADE_0025)
 
 ## 3. The reconciliation itself
 
 - [ ] 3.1 `ForgeMirrorService.Reconciliation` — what one reconciliation changed:
-      the served tip, the references pushed, the references deleted (GW_0193)
+      the served tip, the references pushed, the references deleted (GW_FACADE_0028)
 - [ ] 3.2 `reconcileWithRetries` records `mirror-updated` for a
       publication-triggered change and `mirror-drift-repaired` for a
       sweep- or administrator-triggered one, names the references in the detail
-      (capped), and records nothing when nothing changed (GW_0193)
+      (capped), and records nothing when nothing changed (GW_FACADE_0028)
 - [ ] 3.3 `ForgeMirrorService` keeps drift statistics — stale, missing,
       reachable, last success — updated by every reconciliation and by
-      `report()` (GW_0191)
+      `report()` (GW_FACADE_0026)
 - [ ] 3.4 `ForgeMirrorService.reconcileNow(reason, limit)`: enqueue, wait
-      bounded, return the fresh report (GW_0192)
+      bounded, return the fresh report (GW_FACADE_0027)
 - [ ] 3.5 `requireCredible`: refuse the whole reconciliation — no push, no
       deletion — when published storage answers with no served tip while the
       database still holds live approved snapshots for that marketplace;
       `mirror-reconciliation-refused` on the ledger and `refused` on the report,
-      not retried (GW_0190)
+      not retried (GW_FACADE_0025)
 
 ## 4. The sweep
 
 - [ ] 4.1 `MirrorReconciliationSweep` — `@Scheduled` on the configured interval,
       a no-op while the mirror or the sweep is disabled, throwing nothing
-      (GW_0190)
+      (GW_FACADE_0025)
 
 ## 5. Telemetry
 
 - [ ] 5.1 `MirrorMetrics implements MeterBinder` in `observability`, following
       `ObjectStoreMetrics`: `stale_refs`, `missing_refs`, `reachable`,
       `seconds_since_success`, `reconciliations{outcome}` — no marketplace, SHA
-      or principal tag anywhere (GW_0191)
+      or principal tag anywhere (GW_FACADE_0026)
 - [ ] 5.2 Registered as a bean from `MirrorConfiguration`
 
 ## 6. The endpoint
 
 - [ ] 6.1 `MirrorController` — `POST /api/mirror/reconcile`,
-      `roleService.requireAdmin`, `@Tag`/`@Operation`/`@ApiResponse` (GW_0192)
+      `roleService.requireAdmin`, `@Tag`/`@Operation`/`@ApiResponse` (GW_FACADE_0027)
 - [ ] 6.2 Classify the route on `MachineApiRegistry`'s unreachable list, and add
       it to `RoleEnforcementTests`' privileged walk
 - [ ] 6.3 Regenerate `src/main/frontend/openapi.json` and `src/api/types.gen.ts`
 
 ## 7. Tests
 
-- [ ] 7.1 `ForgeMirrorSweepTests` (`@SVCs({"SVC_GW_0190", "SVC_GW_0191",
-      "SVC_GW_0192", "SVC_GW_0193"})`): against a real bare repository over
+- [ ] 7.1 `ForgeMirrorSweepTests` (`@SVCs({"SVC_GW_FACADE_0025", "SVC_GW_FACADE_0026",
+      "SVC_GW_FACADE_0027", "SVC_GW_FACADE_0028"})`): against a real bare repository over
       `file://` — the mirror made unreachable *before* the revocation so the
       revocation's own push exhausts its retries, the forge restored, and only
       the sweep allowed to run; **and** the published repository left answering
@@ -68,7 +68,7 @@
       rather than empties the mirror; then the no-change case writing nothing, a
       sweep against a still-unreachable forge, and the on-demand endpoint
 - [ ] 7.2 `ForgeMirrorDisabledTests` gains the sweep and the endpoint against a
-      gateway with no mirror configured (`SVC_GW_0190`, `SVC_GW_0192`)
+      gateway with no mirror configured (`SVC_GW_FACADE_0025`, `SVC_GW_FACADE_0027`)
 - [ ] 7.3 `ForgeMirrorTests` and `ForgeMirrorFailureTests` set
       `skills-gateway.mirror.sweep-enabled=false`, with the reason written where
       they set it — they assert on drift they seed themselves, and a background

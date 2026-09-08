@@ -2,8 +2,8 @@
 
 ## MODIFIED Requirements
 
-### Requirement: GW_0112
-The system SHALL implement GW_0112.
+### Requirement: GW_FACADE_0011
+The system SHALL implement GW_FACADE_0011.
 
-#### Scenario: SVC_GW_0112
-The system SHALL pass SVC_GW_0112.
+#### Scenario: SVC_GW_FACADE_0011
+The system SHALL pass SVC_GW_FACADE_0011.

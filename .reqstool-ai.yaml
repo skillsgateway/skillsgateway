@@ -15,8 +15,16 @@ system:
 
 # Single-module project: the gateway service shares the system reqstool dir
 # (split into system + per-service modules when more services are added)
+#
+# Ids are domain-prefixed (GW_<DOMAIN>_NNNN / SVC_GW_<DOMAIN>_NNNN) and minted
+# manually — each domain keeps its own sequence, so there is no single counter
+# for this tool to append to. req_prefix/svc_prefix are blank per the
+# reqstool-conventions skill's guidance for domain-specific prefixes.
+#
+# Domains in use: INGEST, VETTING, AUTH, FACADE, APPROVAL, AUDIT, WEBHOOK,
+# RETENTION, RELEASE, ESTATE, OBSERVABILITY, API. See ADR 0018.
 modules:
   gateway:
     path: docs/reqstool
-    req_prefix: GW_
-    svc_prefix: SVC_GW_
+    req_prefix: ""
+    svc_prefix: "SVC_"

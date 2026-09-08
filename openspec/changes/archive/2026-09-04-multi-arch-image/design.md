@@ -68,7 +68,7 @@ runs-on: ${{ matrix.runner }}
 
 Alternative considered: two separate jobs (`native-amd64`, `native-arm64`).
 Rejected — it duplicates every step twice in the file instead of once with a
-matrix variable, and `SVC_GW_0072`'s test already asserts against a job named
+matrix variable, and `SVC_GW_RELEASE_0002`'s test already asserts against a job named
 `native`; a matrix keeps that job identity and its permissions block intact.
 
 ### Publish only from release.yml; drop sha-<sha> and latest entirely

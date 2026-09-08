@@ -19,12 +19,12 @@ import org.springframework.web.client.RestClient;
 
 /**
  * An operator-configured {@link VettingConnector} that delegates the verdict to an external HTTP
- * service — an LLM reviewer, a sandbox, a corporate scanner (GW_0144, GW_0145, GW_0146, GW_0147).
+ * service — an LLM reviewer, a sandbox, a corporate scanner (GW_VETTING_0024, GW_VETTING_0025, GW_VETTING_0026, GW_VETTING_0027).
  *
  * <p>The gateway POSTs the snapshot bundle ({@link ExternalVetRequest}) and reads back the
  * normalized {@link ExternalVetResponse}. It never trusts the network: <b>every</b> way the call
  * can fail to produce a verdict the gateway can stand behind is turned into an
- * {@link VerdictState#ERROR} verdict, which blocks (GW_0145). That is the whole point of this class
+ * {@link VerdictState#ERROR} verdict, which blocks (GW_VETTING_0025). That is the whole point of this class
  * and the {@code RevetVerdict} fail-closed note applied to a hostile dependency:
  *
  * <ul>
@@ -41,10 +41,10 @@ import org.springframework.web.client.RestClient;
  *
  * <ul>
  *   <li><b>Worst-of.</b> The recorded state is the worse of the state the endpoint declared and the
- *       state its own findings imply (GW_0146): an endpoint that returns {@code pass} alongside a
+ *       state its own findings imply (GW_VETTING_0026): an endpoint that returns {@code pass} alongside a
  *       {@code critical} finding cannot pass content its own evidence condemns.
  *   <li><b>Async seam.</b> A {@code pending} state is recorded as {@link VerdictState#PENDING},
- *       which blocks until it is resolved (GW_0147) — never a silent pass. The inbound resolution
+ *       which blocks until it is resolved (GW_VETTING_0027) — never a silent pass. The inbound resolution
  *       callback is a separate capability; until it exists a {@code pending} answer simply blocks.
  * </ul>
  *
@@ -93,7 +93,7 @@ public class ExternalVettingConnector implements VettingConnector {
     }
 
     @Override
-    @Requirements({"GW_0144", "GW_0145", "GW_0146", "GW_0147"})
+    @Requirements({"GW_VETTING_0024", "GW_VETTING_0025", "GW_VETTING_0026", "GW_VETTING_0027"})
     public Verdict vet(SnapshotUnderVetting snapshot) {
         ExternalVetRequest request;
         try {
@@ -176,7 +176,7 @@ public class ExternalVettingConnector implements VettingConnector {
     }
 
     /**
-     * What this connector examined (GW_0143): the endpoint it delegated to and the version of the
+     * What this connector examined (GW_VETTING_0023): the endpoint it delegated to and the version of the
      * external rule set it declared, recorded even for a clean pass so a pass is distinguishable
      * from a connector that never ran.
      */

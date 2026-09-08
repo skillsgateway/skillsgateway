@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * What the mirror last looked like, kept as plain counters so the mirror needs no meter registry to
- * work (GW_0191). {@code MirrorMetrics} is what turns these into telemetry, and it is the only
+ * work (GW_FACADE_0026). {@code MirrorMetrics} is what turns these into telemetry, and it is the only
  * thing that does — the same split {@code ObjectStoreStatistics} uses, and for the same reason: the
  * meter names stay in one place and this class stays free of a dependency it would only have for
  * observability's sake.

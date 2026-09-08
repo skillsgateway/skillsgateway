@@ -33,7 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * Verification of the external vetting connector (GW_0144-GW_0147). This connector reaches a network
+ * Verification of the external vetting connector (GW_VETTING_0024-GW_VETTING_0027). This connector reaches a network
  * dependency the gateway does not control, so these tests are adversarial where it counts: a hostile
  * or unreachable endpoint, a malformed answer, an oversized answer, and an endpoint that tries to
  * pass content its own findings condemn. The one property under test throughout is fail-closed —
@@ -81,7 +81,7 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0144"})
+    @SVCs({"SVC_GW_VETTING_0024"})
     void anExternalConnectorPassIsRecordedAndClears() throws Exception {
         endpoint.respond(200, "{\"state\":\"pass\"}");
         String name = uniqueName("extpass");
@@ -99,7 +99,7 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0146"})
+    @SVCs({"SVC_GW_VETTING_0026"})
     void aFailWithFindingsBlocksAndPersistsFindingsAndReportUrl() throws Exception {
         endpoint.respond(200, """
                 {"state":"fail","reportUrl":"https://review.example/report/42","findings":[
@@ -122,11 +122,11 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
     }
 
     /**
-     * Worst-of (GW_0146): an endpoint that returns {@code pass} alongside a critical finding cannot
+     * Worst-of (GW_VETTING_0026): an endpoint that returns {@code pass} alongside a critical finding cannot
      * pass content its own evidence condemns. The recorded state is the worse of the two.
      */
     @Test
-    @SVCs({"SVC_GW_0146"})
+    @SVCs({"SVC_GW_VETTING_0026"})
     void aPassDeclaredAlongsideACriticalFindingIsRecordedAsFailAndBlocks() throws Exception {
         endpoint.respond(200, """
                 {"state":"pass","findings":[
@@ -143,11 +143,11 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
     }
 
     /**
-     * The async seam (GW_0147): a {@code pending} answer is recorded as PENDING, which blocks. It is
+     * The async seam (GW_VETTING_0027): a {@code pending} answer is recorded as PENDING, which blocks. It is
      * never a pass, and — like every non-verdict — it gates the approval.
      */
     @Test
-    @SVCs({"SVC_GW_0147"})
+    @SVCs({"SVC_GW_VETTING_0027"})
     void aPendingAnswerBlocksAsTheAsyncSeam() throws Exception {
         endpoint.respond(200, "{\"state\":\"pending\"}");
         String name = uniqueName("extpending");
@@ -169,11 +169,11 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
     }
 
     /**
-     * Fail-closed, adversarially (GW_0145): every way the call can fail to produce a verdict the
+     * Fail-closed, adversarially (GW_VETTING_0025): every way the call can fail to produce a verdict the
      * gateway can stand behind must record an ERROR and block. None of them may clear.
      */
     @Test
-    @SVCs({"SVC_GW_0145"})
+    @SVCs({"SVC_GW_VETTING_0025"})
     void everyInconclusiveAnswerFromTheEndpointBlocks() throws Exception {
         String name = uniqueName("extclosed");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));

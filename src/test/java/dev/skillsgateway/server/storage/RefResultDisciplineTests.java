@@ -30,7 +30,7 @@ class RefResultDisciplineTests {
     private static final String CHECKER = "RefTransitions.java";
 
     @Test
-    @SVCs({"SVC_GW_0133"})
+    @SVCs({"SVC_GW_APPROVAL_0012"})
     void onlyTheCheckedHelperPerformsReferenceTransitions() throws IOException {
         try (Stream<Path> sources = Files.walk(MAIN_SOURCES)) {
             List<String> offenders = sources.filter(path -> path.toString().endsWith(".java"))

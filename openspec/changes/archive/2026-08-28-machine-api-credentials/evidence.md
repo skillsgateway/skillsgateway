@@ -43,9 +43,9 @@ skill's guidance for Tier 3.
 
 ## Requirement ids
 
-`GW_0126`–`GW_0131` and `SVC_GW_0126`–`SVC_GW_0131` were **free** on the merged
+`GW_AUTH_0020`–`GW_AUTH_0024` and `SVC_GW_AUTH_0020`–`SVC_GW_AUTH_0024` were **free** on the merged
 tree. Checked before authoring: `docs/reqstool/requirements.yml` on the merged
-tree carries `GW_0125` as its highest id, and neither file contained any id in
+tree carries `GW_FACADE_0009` as its highest id, and neither file contained any id in
 the `0126`–`0131` range. No collision.
 
 ---
@@ -149,7 +149,7 @@ javadoc rather than left to be inferred from the guard's existence.
 ## Deviations from the design, and why
 
 1. **`fetch_log.actor_type` is a native PostgreSQL enum, not `TEXT`.** The design
-   said `TEXT`. `CLAUDE.md` and `GW_0125` — merged into `main` as #139, *after*
+   said `TEXT`. `CLAUDE.md` and `GW_FACADE_0009` — merged into `main` as #139, *after*
    this design was written — require every closed set of enumerated values to be
    a database type. Three values, closed set: `CREATE TYPE fetch_log_actor_type
    AS ENUM ('human','machine','system')`. This satisfies the design's intent
@@ -217,17 +217,17 @@ and `catalog:rebuild` should be one scope) are likewise untouched.
 
 | Clause | Verified by |
 | --- | --- |
-| GW_0126 — API scope is its own dimension; empty grants nothing; unknown and wildcard values refused | `MachineCredentialShapeTests` (3), `MachineCredentialLifecycleTests.an_unknown_api_scope_is_refused_at_issue_time`, `.there_is_no_wildcard_and_an_empty_scope_list_grants_nothing` |
-| GW_0127 — only an API-scoped bearer credential reaches `/api/**`; symmetric; no cookie; no session; dev mode unaffected | `MachineCredentialNegativeTests` (12), `DevAuthTests.dev_insecure_auth_does_not_open_the_bearer_path`, `MachineCredentialLifecycleTests.a_session_derived_credential_can_never_hold_an_api_scope` |
-| GW_0128 — explicit actor kind, denormalised, credential id, roles-read logged uniformly, ledger read not logged | `MachineLedgerTests` (7) |
-| GW_0129 — every route classified; allowlist excludes judgement, retraction, granting and minting; independent of `roles.enabled` | `MachineApiRegistryTests` (3), `MachineApiScopeTests` (8) |
-| GW_0130 — no claim-derived role; intersection of scope and role; grants API unreachable; estate is the only route; admin required regardless of the flag | `MachineCredentialAdminTests` (2), `MachineRoleIntersectionTests` (3) |
-| GW_0131 — mandatory expiry under a cap that applies with `max-ttl` unset; rotation preserves everything; central administration | `MachineCredentialLifecycleTests` (8) |
-| **Invariant** SVC_GW_0011 — the browser session reaches `/api/**` unchanged | `AuthTests.webAccessRequiresOidcSession`, `MachineCredentialNegativeTests.a_browser_session_without_a_bearer_header_reaches_the_api_exactly_as_before` |
-| **Invariant** SVC_GW_0012 — the facade still requires a valid PAT | `AuthTests.gitFacadeRequiresValidPersonalAccessToken` |
-| **Invariant** SVC_GW_0064 — an empty fetch list on a non-machine token still grants every marketplace | `MachineCredentialShapeTests.an_ordinary_fetch_token_with_an_empty_fetch_list_still_reaches_every_marketplace`, `MachineCredentialNegativeTests.an_ordinary_fetch_token_with_an_empty_scope_list_still_clones_every_marketplace` |
-| **Invariant** SVC_GW_0102 — push semantics unchanged | `HostedPushTests` (unmodified), `MachineCredentialNegativeTests.a_push_scoped_token_reaches_no_api_endpoint` |
-| **Invariant** SVC_GW_0104 — session-derived credentials unchanged | `SessionCredentialTests`, `SessionCredentialExpiryTests` (both unmodified) |
+| GW_AUTH_0020 — API scope is its own dimension; empty grants nothing; unknown and wildcard values refused | `MachineCredentialShapeTests` (3), `MachineCredentialLifecycleTests.an_unknown_api_scope_is_refused_at_issue_time`, `.there_is_no_wildcard_and_an_empty_scope_list_grants_nothing` |
+| GW_AUTH_0021 — only an API-scoped bearer credential reaches `/api/**`; symmetric; no cookie; no session; dev mode unaffected | `MachineCredentialNegativeTests` (12), `DevAuthTests.dev_insecure_auth_does_not_open_the_bearer_path`, `MachineCredentialLifecycleTests.a_session_derived_credential_can_never_hold_an_api_scope` |
+| GW_AUDIT_0007 — explicit actor kind, denormalised, credential id, roles-read logged uniformly, ledger read not logged | `MachineLedgerTests` (7) |
+| GW_AUTH_0022 — every route classified; allowlist excludes judgement, retraction, granting and minting; independent of `roles.enabled` | `MachineApiRegistryTests` (3), `MachineApiScopeTests` (8) |
+| GW_AUTH_0023 — no claim-derived role; intersection of scope and role; grants API unreachable; estate is the only route; admin required regardless of the flag | `MachineCredentialAdminTests` (2), `MachineRoleIntersectionTests` (3) |
+| GW_AUTH_0024 — mandatory expiry under a cap that applies with `max-ttl` unset; rotation preserves everything; central administration | `MachineCredentialLifecycleTests` (8) |
+| **Invariant** SVC_GW_AUTH_0002 — the browser session reaches `/api/**` unchanged | `AuthTests.webAccessRequiresOidcSession`, `MachineCredentialNegativeTests.a_browser_session_without_a_bearer_header_reaches_the_api_exactly_as_before` |
+| **Invariant** SVC_GW_AUTH_0003 — the facade still requires a valid PAT | `AuthTests.gitFacadeRequiresValidPersonalAccessToken` |
+| **Invariant** SVC_GW_AUTH_0006 — an empty fetch list on a non-machine token still grants every marketplace | `MachineCredentialShapeTests.an_ordinary_fetch_token_with_an_empty_fetch_list_still_reaches_every_marketplace`, `MachineCredentialNegativeTests.an_ordinary_fetch_token_with_an_empty_scope_list_still_clones_every_marketplace` |
+| **Invariant** SVC_GW_FACADE_0007 — push semantics unchanged | `HostedPushTests` (unmodified), `MachineCredentialNegativeTests.a_push_scoped_token_reaches_no_api_endpoint` |
+| **Invariant** SVC_GW_AUTH_0018 — session-derived credentials unchanged | `SessionCredentialTests`, `SessionCredentialExpiryTests` (both unmodified) |
 | **Invariant** — no existing SVC test weakened or deleted (task 13.3) | See below |
 
 ### Task 13.3 — no SVC test was weakened

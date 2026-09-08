@@ -6,11 +6,11 @@ import dev.skillsgateway.server.admin.CloneUrlNormalizer;
 import io.github.reqstool.annotations.SVCs;
 import org.junit.jupiter.api.Test;
 
-/** The normalizer alone, away from HTTP and persistence: the exact rule GW_0166 states. */
+/** The normalizer alone, away from HTTP and persistence: the exact rule GW_INGEST_0029 states. */
 class CloneUrlNormalizerTests {
 
     @Test
-    @SVCs({"SVC_GW_0166"})
+    @SVCs({"SVC_GW_INGEST_0029"})
     void host_case_a_trailing_slash_and_a_git_suffix_all_normalize_the_same() {
         String canonical = "https://github.com/acme/marketplace";
         assertThat(CloneUrlNormalizer.normalize("https://GitHub.com/acme/marketplace"))

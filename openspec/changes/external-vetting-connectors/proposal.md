@@ -41,10 +41,10 @@ answer or truncated request must never be indistinguishable from a clean pass
   blocks until resolved. The inbound resolution callback is deliberately a
   separate, later capability; an unresolved `pending` simply keeps the snapshot
   held, which is the correct default.
-- **ADR 0009** records the contract; new requirements **GW_0144**–**GW_0147**
+- **ADR 0009** records the contract; new requirements **GW_VETTING_0024**–**GW_VETTING_0027**
   with SVCs cover it.
 
-Requirement ids start at GW_0144 because GW_0132–GW_0141 are claimed by in-flight
+Requirement ids start at GW_VETTING_0024 because GW_FACADE_0015–GW_AUTH_0028 are claimed by in-flight
 changes on other branches (`fix-discarded-ref-update-results`,
 `remove-roles-enabled-toggle`).
 
@@ -56,10 +56,10 @@ _None._ The behaviour extends `snapshot-vetting`.
 
 ### Modified Capabilities
 
-- `snapshot-vetting`: gains GW_0144 (operator-configured external connectors join
-  the ordered chain), GW_0145 (an external connector fails closed on any
-  inconclusive answer), GW_0146 (worst-of, and the report link and findings are
-  recorded through the existing verdict model), GW_0147 (a `pending` answer is
+- `snapshot-vetting`: gains GW_VETTING_0024 (operator-configured external connectors join
+  the ordered chain), GW_VETTING_0025 (an external connector fails closed on any
+  inconclusive answer), GW_VETTING_0026 (worst-of, and the report link and findings are
+  recorded through the existing verdict model), GW_VETTING_0027 (a `pending` answer is
   the asynchronous seam and blocks until resolved).
 
 ## Impact
@@ -82,7 +82,7 @@ _None._ The behaviour extends `snapshot-vetting`.
   `concepts/vetting.md` (external connectors; the LLM-review note), ADR 0009 and
   `reference/decisions.md`.
 - **Requirements**: `docs/reqstool/requirements.yml` and
-  `software_verification_cases.yml` — GW_0144–GW_0147 and their SVCs.
+  `software_verification_cases.yml` — GW_VETTING_0024–GW_VETTING_0027 and their SVCs.
 - **Trust boundary**: this is vetting-chain evidence, so the
   `.claude/skills/old-coder` discipline applies — adversarial/negative tests
   proving a hostile or unreachable endpoint fails closed, manual mutation, and an

@@ -51,7 +51,7 @@ class StorageMigrationTests {
     private static final AtomicInteger COUNTER = new AtomicInteger();
 
     @Test
-    @SVCs({"SVC_GW_0114"})
+    @SVCs({"SVC_GW_FACADE_0013"})
     void everyRepositoryInEveryRoleIsCopiedAndVerified() throws IOException {
         Path root = filesystemRoot();
         GitStorage source = filesystem(root);
@@ -79,7 +79,7 @@ class StorageMigrationTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0114"})
+    @SVCs({"SVC_GW_FACADE_0013"})
     void theServedTipAndThePinnedSnapshotBothSurviveTheCopy() throws IOException {
         Path root = filesystemRoot();
         GitStorage source = filesystem(root);
@@ -106,7 +106,7 @@ class StorageMigrationTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0114"})
+    @SVCs({"SVC_GW_FACADE_0013"})
     void aHeadPointingSomewhereOtherThanTheDefaultIsCarriedAcross() throws IOException {
         Path root = filesystemRoot();
         GitStorage source = filesystem(root);
@@ -130,7 +130,7 @@ class StorageMigrationTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0114"})
+    @SVCs({"SVC_GW_FACADE_0013"})
     void aDestinationMissingAReferenceIsRefusedAndTheRepositoryNamed() throws IOException {
         Path root = filesystemRoot();
         GitStorage source = filesystem(root);
@@ -160,7 +160,7 @@ class StorageMigrationTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0114"})
+    @SVCs({"SVC_GW_FACADE_0013"})
     void aDestinationWhoseHeadNamesAnotherBranchIsRefused() throws IOException {
         Path root = filesystemRoot();
         GitStorage source = filesystem(root);
@@ -184,7 +184,7 @@ class StorageMigrationTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0114"})
+    @SVCs({"SVC_GW_FACADE_0013"})
     void theSourceIsLeftByteIdentical() throws IOException {
         Path root = filesystemRoot();
         GitStorage source = filesystem(root);
@@ -202,7 +202,7 @@ class StorageMigrationTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0114"})
+    @SVCs({"SVC_GW_FACADE_0013"})
     void theReverseDirectionRestoresThePreviousState() throws IOException {
         Path root = filesystemRoot();
         GitStorage source = filesystem(root);
@@ -226,7 +226,7 @@ class StorageMigrationTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0114"})
+    @SVCs({"SVC_GW_FACADE_0013"})
     void aRepositoryTheSourceDoesNotHoldIsNotInventedAtTheDestination() throws IOException {
         GitStorage source = filesystem(filesystemRoot());
         source.quarantine("only-quarantined").close();

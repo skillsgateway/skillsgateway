@@ -4,7 +4,7 @@ import dev.skillsgateway.server.vetting.WaiverEvaluation;
 import java.util.List;
 
 /**
- * Approval refused because the snapshot's effective vetting outcome is blocked (GW_0041): its
+ * Approval refused because the snapshot's effective vetting outcome is blocked (GW_APPROVAL_0003): its
  * latest chain run objects, and at least one blocking finding is not covered by an active waiver.
  * Thrown before the state transition, so nothing was decided and nothing was published.
  *

@@ -14,7 +14,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * How the gateway learns what the outside world sees when TLS terminates in front of it
- * (GW_0163). Each subclass is one deployment posture, booted as a real server so the request
+ * (GW_AUTH_0029). Each subclass is one deployment posture, booted as a real server so the request
  * reaches Tomcat's valves and the servlet filter chain — the two places a forwarded header can be
  * honoured — rather than a MockMvc that has neither. One class per posture rather than
  * {@code @Nested} classes, because the traceability gate matches annotated tests to surefire

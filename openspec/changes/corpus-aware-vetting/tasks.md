@@ -137,7 +137,7 @@ implementation lands. Never weaken an existing SVC test.
       `MAX_FILES` stores `unavailable_reason` and its approval is refused
 - [ ] 7.7 `SVC_GW_0198`: a chain run over unchanged content produces an
       identical `vetting_runs.chain` and identical verdicts before and after an
-      unrelated approval changes the estate — the purity `GW_0049` depends on
+      unrelated approval changes the estate — the purity `GW_VETTING_0012` depends on
 - [ ] 7.8 `SVC_GW_0197`: the ledger carries the refusal and the warning with the
       incumbent named
 - [ ] 7.9 Annotate every test above with `@SVCs({...})`

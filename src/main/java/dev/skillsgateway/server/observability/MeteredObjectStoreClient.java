@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Times every object-store request, and nothing else (GW_0116).
+ * Times every object-store request, and nothing else (GW_FACADE_0012).
  *
  * <p>This backend's latency is not its own: it is the store's, and on the first deployment target
  * it is a network away across a NAT gateway. When an approval is slow, or a fetch is, the question
@@ -74,7 +74,7 @@ public final class MeteredObjectStoreClient implements ObjectStoreClient, AutoCl
     }
 
     @Override
-    @Requirements({"GW_0116"})
+    @Requirements({"GW_FACADE_0012"})
     public Optional<String> putIfMatch(String key, byte[] body, String etag) throws IOException {
         return time("conditional-put", () -> delegate.putIfMatch(key, body, etag));
     }

@@ -39,7 +39,7 @@ leaves open is **duration**. Enumerated:
 | Sweep itself throws | — | Caught in the scheduled method; a `@Scheduled` method that throws is logged and the schedule continues, but relying on that is relying on a framework we do not own |
 | Two replicas sweeping at once | — | Both compute the same served set and converge; the push is a force-update to a value both agree on |
 | Sweep floods the forge | — | One `ls-remote` per interval when nothing differs, and nothing is pushed when nothing differs |
-| The sweep buries the ledger | — | A reconciliation that changed nothing writes no ledger entry (GW_0193) |
+| The sweep buries the ledger | — | A reconciliation that changed nothing writes no ledger entry (GW_FACADE_0028) |
 | **Published storage answers, and answers wrong** — a transient backend read failure, a half-applied migration, a backend pointed at the wrong prefix or bucket, a marketplace consulted before publication is fully in place | The reconciliation's honest conclusion is "delete every reference on the mirror", and it would do so | Refused before anything is pushed or deleted, recorded as `mirror-reconciliation-refused`, reported as outcome `refused` (decision 3) |
 
 ## Decisions
@@ -86,7 +86,7 @@ component:
   and are neither touched nor reported.
 
 What repair must not be is **silent**, and that is where the "surface it" half
-of the concern lands instead: GW_0193. A reconciliation records what it changed;
+of the concern lands instead: GW_FACADE_0028. A reconciliation records what it changed;
 one that changed the mirror when nothing was approved or revoked is recorded as
 drift that was repaired, under its own ledger event, so an operator reading the
 ledger can see that somebody pushed to the mirror — which is a security-relevant
@@ -117,7 +117,7 @@ not *how many*, and an empty served set passes it trivially.
 forge, the reconciliation asks the gateway's own records how many live approved snapshots the
 mirrored marketplace has. If that number is above zero and the served set it just read has no
 `refs/heads/main`, the answer is not credible: publication moves the served tip and writes
-`refs/snapshots/<sha>` as one all-or-nothing transition (GW_0133), so a marketplace with live
+`refs/snapshots/<sha>` as one all-or-nothing transition (GW_APPROVAL_0012), so a marketplace with live
 approved snapshots has a tip. The reconciliation then pushes nothing, deletes nothing, records
 `mirror-reconciliation-refused`, and reports `refused` as the outcome of the last attempt.
 
@@ -242,14 +242,14 @@ What a race cannot do is push content that is not served, because the served set
 is read fresh inside the reconciliation from the only repository the mirror ever
 opens.
 
-### 7. `POST /api/mirror/reconcile` blocks, bounded, and that is not a GW_0170 problem
+### 7. `POST /api/mirror/reconcile` blocks, bounded, and that is not a GW_FACADE_0021 problem
 
 The endpoint enqueues a reconciliation and waits for quiescence up to
 `max-attempts × (timeout + retry-delay)`, capped, then answers with a fresh
 report. If the wait runs out, the report says so through `pendingUpdates`; the
 request never fails because the mirror did.
 
-GW_0170 — *The mirror is never an enforcement path* — is about approval,
+GW_FACADE_0021 — *The mirror is never an enforcement path* — is about approval,
 revocation and what the facade serves. None of them are on this path. An
 administrator who asks the gateway to reconcile a mirror is asking to wait for a
 forge, and answering with a stale report instead would defeat the purpose. It is

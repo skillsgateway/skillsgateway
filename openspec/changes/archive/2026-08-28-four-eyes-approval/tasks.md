@@ -2,23 +2,23 @@
 
 ## 1. Requirements (SSOT first)
 
-- [x] 1.1 Add GW_0096 (approval separation of duties: conflict detection for
+- [x] 1.1 Add GW_APPROVAL_0010 (approval separation of duties: conflict detection for
       ingestion actor, registrant, waiver authors; enforce refuses fail-closed)
-      and GW_0097 (warn/enforce mode configuration, default warn; conflicts
+      and GW_APPROVAL_0011 (warn/enforce mode configuration, default warn; conflicts
       recorded on the ledger in both modes) to `docs/reqstool/requirements.yml`
-- [x] 1.2 Add SVC_GW_0096 and SVC_GW_0097 (GIVEN/WHEN/THEN) to
+- [x] 1.2 Add SVC_GW_APPROVAL_0010 and SVC_GW_APPROVAL_0011 (GIVEN/WHEN/THEN) to
       `docs/reqstool/software_verification_cases.yml`
 
 ## 2. Failing tests first (old-coder: prove they fail)
 
 - [x] 2.1 `FourEyesTests` (extends `AbstractGatewayTest`), annotated
-      `@SVCs({"SVC_GW_0096"})`: enforce mode — approval by the ingestion actor
+      `@SVCs({"SVC_GW_APPROVAL_0010"})`: enforce mode — approval by the ingestion actor
       is refused, by the marketplace registrant is refused, and by the author
       of an applied waiver is refused; in every refusal the snapshot remains
       `HELD`, nothing is published (`storage.publishedIfServing` empty), and
       `decided_by` stays NULL; a different reviewer then approves successfully;
       `scheduler`/`webhook`/NULL actors never conflict
-- [x] 2.2 Warn-mode tests, annotated `@SVCs({"SVC_GW_0097"})`: conflicted
+- [x] 2.2 Warn-mode tests, annotated `@SVCs({"SVC_GW_APPROVAL_0011"})`: conflicted
       approval proceeds, snapshot published, and a `four-eyes-conflict` ledger
       row exists naming the conflict; non-conflicted approval writes no such
       row; default mode is warn
@@ -39,10 +39,10 @@
 
 - [x] 4.1 `SkillsGatewayProperties`: `Approval(FourEyes fourEyes)` /
       `FourEyesMode { WARN, ENFORCE }`, default WARN, `enforcing()`;
-      `@Requirements({"GW_0097"})`
+      `@Requirements({"GW_APPROVAL_0011"})`
 - [x] 4.2 `FourEyesConflictException` with `Conflict(role, principal, waiverId)`
       records; conflict detection in `ApprovalService.doApprove` after waiver
-      evaluation, before `decide(...)`; `@Requirements({"GW_0096"})`; extend
+      evaluation, before `decide(...)`; `@Requirements({"GW_APPROVAL_0010"})`; extend
       `Approved` with detected conflicts for warn mode
 - [x] 4.3 `AdminController`: 409 `@ExceptionHandler` ("Four-eyes rule refused
       this approval", `conflicts` property); warn-mode `four-eyes-conflict`
@@ -52,12 +52,12 @@
 
 - [x] 5.1 Expose `ingestedBy` in the snapshot row type and `registeredBy` in
       the marketplace type (`src/main/frontend/src/api/types`), JSDoc
-      `@Requirements GW_0096`
+      `@Requirements GW_APPROVAL_0010`
 - [x] 5.2 `ApproveDialog`: compare `/api/me` username against the snapshot's
       conflict identities — enforce: disable Approve with explanation (existing
       `blocked` pattern); warn: non-blocking warning copy; 409 → toast
 - [x] 5.3 Playwright e2e: enforce-mode refusal visible in a real browser
-      (JSDoc `@SVCs SVC_GW_0096`)
+      (JSDoc `@SVCs SVC_GW_APPROVAL_0010`)
 
 ## 6. Documentation (same PR)
 
@@ -68,7 +68,7 @@
       behavior; `docs/manual/concepts/trust-boundaries.md`: the rule as part of
       the approval boundary; `docs/manual/reference/api/marketplaces.md`: new
       fields + 409
-- [x] 6.3 `docs/manual/architecture.md`: implemented-today note (GW_0096–0084)
+- [x] 6.3 `docs/manual/architecture.md`: implemented-today note (GW_APPROVAL_0010–0084)
 
 ## 7. Gates and evidence (old-coder gauntlet)
 

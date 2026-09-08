@@ -6,7 +6,7 @@ The web chain authenticates (OIDC) but never authorizes: every `/api` endpoint
 is open to any session. Controllers already take `Authentication` and the
 codebase style is explicit calls over annotations (fail-closed gates like the
 vetting check live as first-line service calls). The facade is out of scope —
-its authorization is token scopes (GW_0064), a different credential for a
+its authorization is token scopes (GW_AUTH_0006), a different credential for a
 different surface.
 
 ## Goals / Non-Goals

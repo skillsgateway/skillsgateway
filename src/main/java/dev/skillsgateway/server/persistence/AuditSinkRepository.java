@@ -16,7 +16,7 @@ public class AuditSinkRepository {
         this.jdbc = jdbc;
     }
 
-    @Requirements({"GW_0125"})
+    @Requirements({"GW_FACADE_0009"})
     public AuditSink create(String name, String kind, long subscriberId, long cursorPosition, int batchSize) {
         OffsetDateTime now = OffsetDateTime.now();
         return jdbc.sql("INSERT INTO audit_sinks"
@@ -61,7 +61,7 @@ public class AuditSinkRepository {
 
     /**
      * Moves the sink's cursor. Used both to advance after a durable delivery and to rewind for a
-     * replay (GW_0029) — the same single-column write in both directions.
+     * replay (GW_AUDIT_0005) — the same single-column write in both directions.
      */
     public Optional<AuditSink> updateCursor(long id, long cursorPosition) {
         return jdbc.sql("UPDATE audit_sinks SET cursor_position = :cursor, updated_at = :now"
@@ -73,7 +73,7 @@ public class AuditSinkRepository {
                 .optional();
     }
 
-    /** Converges a sink's batch size to a declared state (GW_0086); the cursor is never touched here. */
+    /** Converges a sink's batch size to a declared state (GW_ESTATE_0004); the cursor is never touched here. */
     public Optional<AuditSink> updateBatchSize(long id, int batchSize) {
         return jdbc.sql("UPDATE audit_sinks SET batch_size = :batchSize, updated_at = :now"
                         + " WHERE id = :id RETURNING *")

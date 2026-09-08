@@ -1,10 +1,10 @@
 ## 1. Requirements (reqstool SSOT first)
 
-- [x] 1.1 Add `GW_0108` (gated release automation) to `docs/reqstool/requirements.yml` with `implementation: configuration`, following the `GW_0072` style
-- [x] 1.2 Add `GW_0109` (release version tag format — unprefixed three-part semver, tag as the sole source of the released version, releases only from a ref reachable from `main`) to `docs/reqstool/requirements.yml`
-- [x] 1.3 Revise `GW_0072`: replace the "publish only from push events" clause with publication only from a `main` push or the gated release workflow, never from a schedule or a bare dispatch; bump its `revision`
-- [x] 1.4 Add `SVC_GW_0108` and `SVC_GW_0109` to `docs/reqstool/software_verification_cases.yml` as `verification: automated-test`
-- [x] 1.5 Strengthen `SVC_GW_0072`'s description so every assertion this change removes is replaced by a stronger one (release path gated, tag unprefixed) — never a net loss of coverage
+- [x] 1.1 Add `GW_RELEASE_0003` (gated release automation) to `docs/reqstool/requirements.yml` with `implementation: configuration`, following the `GW_RELEASE_0002` style
+- [x] 1.2 Add `GW_RELEASE_0004` (release version tag format — unprefixed three-part semver, tag as the sole source of the released version, releases only from a ref reachable from `main`) to `docs/reqstool/requirements.yml`
+- [x] 1.3 Revise `GW_RELEASE_0002`: replace the "publish only from push events" clause with publication only from a `main` push or the gated release workflow, never from a schedule or a bare dispatch; bump its `revision`
+- [x] 1.4 Add `SVC_GW_RELEASE_0003` and `SVC_GW_RELEASE_0004` to `docs/reqstool/software_verification_cases.yml` as `verification: automated-test`
+- [x] 1.5 Strengthen `SVC_GW_RELEASE_0002`'s description so every assertion this change removes is replaced by a stronger one (release path gated, tag unprefixed) — never a net loss of coverage
 
 ## 2. Port the release commons to `skillsgateway/.github` (separate PR, merges first)
 
@@ -17,12 +17,12 @@
 
 - [x] 3.1 Add `cliff.toml` at the repo root so `setup-cliff-config` takes the repo branch and never fetches at runtime; verify its commit types match the org's semantic-PR list and its `tag_pattern` is unprefixed
 - [x] 3.2 Add `.github/workflows/release.yml` (`name: Release`) with `workflow_dispatch` inputs `version`, `prerelease` (choice `none|rc|b|a`), `ref`, `force`, `dry-run` (default `true`), and `concurrency: {group: release, cancel-in-progress: false}`
-- [x] 3.3 Wire `prepare → checks → [approve] → tag → publish → verify → promote`, pinning every `uses:` to the SHA from 2.4; put the `stable` environment gate on the publish job, not on `tag` (covers `SVC_GW_0108`)
+- [x] 3.3 Wire `prepare → checks → [approve] → tag → publish → verify → promote`, pinning every `uses:` to the SHA from 2.4; put the `stable` environment gate on the publish job, not on `tag` (covers `SVC_GW_RELEASE_0003`)
 - [x] 3.4 Guard `promote` on "no job failed" rather than "all succeeded", so a release candidate that skips publish jobs does not cascade a skip into every real release
 
 ## 4. Convert the publication workflows
 
-- [x] 4.1 `native.yml`: add `workflow_call` with a `version` input, remove `tags: ['v*']`, keep `push: branches: [main]` + `schedule` + `workflow_dispatch`; take the image tag from the input instead of `github.ref_name`; SHA-pin the actions touched, matching PR #124's style (covers revised `SVC_GW_0072`)
+- [x] 4.1 `native.yml`: add `workflow_call` with a `version` input, remove `tags: ['v*']`, keep `push: branches: [main]` + `schedule` + `workflow_dispatch`; take the image tag from the input instead of `github.ref_name`; SHA-pin the actions touched, matching PR #124's style (covers revised `SVC_GW_RELEASE_0002`)
 - [x] 4.2 `docs.yml`: add `workflow_call` with a `version` input, remove `tags: ['v*']`, delete the `${GITHUB_REF_NAME#v}` strip, and retarget the `startsWith(github.ref, 'refs/tags/v')` condition to the input
 - [x] 4.3 `docs.yml`: after `mike` commits to `gh-pages`, upload that branch as a Pages artifact and deploy with `actions/deploy-pages`; add `pages: write` and `id-token: write`
 - [x] 4.4 Stamp `helm/skills-gateway/Chart.yaml`'s `version` and `appVersion` from the resolved release version instead of the hand-pinned `0.1.0`
@@ -38,10 +38,10 @@
 
 ## 6. Tests
 
-- [x] 6.1 Rewrite `PackagingTests.releaseWorkflowCarriesThePublishByDigestContract` against the revised `GW_0072`, keeping `@SVCs({"SVC_GW_0072"})`: drop the `tags: ['v*']` and bare `github.event_name == 'push'` assertions and replace them with stricter ones proving publication is reachable only from a `main` push or `workflow_call`, and never from `schedule`
-- [x] 6.2 Add a test asserting `release.yml`'s gated shape — dispatch-only, `dry-run` defaulting to `true`, the `prerelease` choice options, the `stable` environment on the publish job, and `promote` ordered after `verify` — annotated `@SVCs({"SVC_GW_0108"})`
+- [x] 6.1 Rewrite `PackagingTests.releaseWorkflowCarriesThePublishByDigestContract` against the revised `GW_RELEASE_0002`, keeping `@SVCs({"SVC_GW_RELEASE_0002"})`: drop the `tags: ['v*']` and bare `github.event_name == 'push'` assertions and replace them with stricter ones proving publication is reachable only from a `main` push or `workflow_call`, and never from `schedule`
+- [x] 6.2 Add a test asserting `release.yml`'s gated shape — dispatch-only, `dry-run` defaulting to `true`, the `prerelease` choice options, the `stable` environment on the publish job, and `promote` ordered after `verify` — annotated `@SVCs({"SVC_GW_RELEASE_0003"})`
 - [x] 6.3 (each of 6.1–6.3 proved to fail against the old contract before being accepted: reintroducing `tags: ['v*']` fails 6.1+6.3; flipping the `dry-run` default or removing the `stable` gate fails 6.2)
-- [x] 6.3 Add a test asserting the tag format contract — no `v`-prefixed tag pattern in any workflow, `cliff.toml`'s `tag_pattern` unprefixed, and the reachable-from-`main` check present — annotated `@SVCs({"SVC_GW_0109"})`
+- [x] 6.3 Add a test asserting the tag format contract — no `v`-prefixed tag pattern in any workflow, `cliff.toml`'s `tag_pattern` unprefixed, and the reachable-from-`main` check present — annotated `@SVCs({"SVC_GW_RELEASE_0004"})`
 - [x] 6.4 Run `reqstool status local -p docs/reqstool` after `./mvnw clean verify` and confirm it ends `PASS` (annotations are truncated without `clean`)
 
 ## 7. Documentation

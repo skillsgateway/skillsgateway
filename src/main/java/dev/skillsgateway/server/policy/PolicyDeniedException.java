@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Approval refused by the policy gate (GW_0090): at least one enabled rule matched, errored, or
+ * Approval refused by the policy gate (GW_APPROVAL_0007): at least one enabled rule matched, errored, or
  * could not see the facts. Thrown before the state transition, so nothing was decided and nothing
  * was published. Every deciding rule travels with the exception — a deny rule's exception path is
  * editing or disabling the rule itself, audited; there is no per-snapshot waiver.

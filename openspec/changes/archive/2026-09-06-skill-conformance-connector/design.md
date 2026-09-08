@@ -12,7 +12,7 @@ Three facts about the existing system shape everything below.
   worst severity present to a state: `HIGH`/`CRITICAL` → `FAIL`, `LOW`/`MEDIUM`
   → `WARN`, `INFO` alone → `PASS`. Picking a severity *is* picking whether a
   marketplace is blocked. There is no third lever.
-- **The chain must be reproducible.** `GW_0049 — Continuous re-vetting of
+- **The chain must be reproducible.** `GW_VETTING_0012 — Continuous re-vetting of
   approved snapshots` re-runs the chain over already-approved content and asks
   whether a changed answer came from the content or from the connector. That
   question is answerable only because `version()` is recorded per run and the
@@ -64,7 +64,7 @@ documented as such rather than dressed up as a spec version.
 *Alternative rejected — fetch the schema at vet time.* It makes a chain run
 depend on the network and on a document that can change between two runs over
 identical content, which destroys both reproducibility and the attribution
-`GW_0049` exists to provide. It also puts a remote document inside the approval
+`GW_VETTING_0012` exists to provide. It also puts a remote document inside the approval
 gate, which is a supply-chain surface the gateway spends the rest of its design
 closing.
 
@@ -202,7 +202,7 @@ Skills are `<plugin source>/skills/<name>/SKILL.md`, which is the shape
 `SnapshotContentService` already walks. The connector cannot call that service —
 it is handed a `SnapshotUnderVetting`, not a repository — so it applies the same
 shape as its `walk` selection: a path is wanted when it ends in `/SKILL.md` and
-its parent's parent segment is `skills`. That keeps `GW_0162 — Bounded
+its parent's parent segment is `skills`. That keeps `GW_VETTING_0030 — Bounded
 single-pass snapshot content access for a vetting chain run` honest: no other
 blob is opened on this connector's behalf.
 
@@ -220,7 +220,7 @@ alone.
 
 An empty answer is the one a coverage requirement cares about most. The verdict
 is a `PASS` whose summary states "scanned 0 SKILL.md file(s)", so
-`GW_0143 — A clean vetting pass records what it examined` keeps a snapshot with
+`GW_VETTING_0023 — A clean vetting pass records what it examined` keeps a snapshot with
 no skills distinguishable in the ledger from a connector that did not run. The
 connector does *not* raise a finding for a marketplace with no skills: whether
 an empty marketplace is acceptable is a policy question, and the CEL policy

@@ -39,7 +39,7 @@ class RefAdvertisementTests extends AbstractGatewayTest {
     private CatalogService catalogService;
 
     @Test
-    @SVCs({"SVC_GW_0134"})
+    @SVCs({"SVC_GW_FACADE_0016"})
     void an_approved_snapshot_stays_fetchable_by_name() throws Exception {
         String name = uniqueName("corp");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
@@ -70,7 +70,7 @@ class RefAdvertisementTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0134"})
+    @SVCs({"SVC_GW_FACADE_0016"})
     void a_staging_ref_is_never_advertised() throws Exception {
         String name = uniqueName("corp");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
@@ -94,7 +94,7 @@ class RefAdvertisementTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0134"})
+    @SVCs({"SVC_GW_FACADE_0016"})
     void no_internal_catalog_ref_is_advertised() throws Exception {
         String name = uniqueName("corp");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));

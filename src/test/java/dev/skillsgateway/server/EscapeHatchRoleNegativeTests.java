@@ -12,19 +12,19 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * The two ways the escape hatch's administrative role must <em>not</em> be reachable (GW_0141).
+ * The two ways the escape hatch's administrative role must <em>not</em> be reachable (GW_AUTH_0028).
  *
  * <p>Conferring a role on a principal by name is the kind of shortcut that quietly becomes a
  * privilege escalation, so both of the obvious routes are closed here rather than argued about in a
  * comment. This context leaves the escape hatch off, which is every real deployment.
  */
 @TestPropertySource(
-        // Someone has to be an admin for the gateway to start (GW_0139), and it is not "dev".
+        // Someone has to be an admin for the gateway to start (GW_AUTH_0026), and it is not "dev".
         properties = {"skills-gateway.roles.admins=real-admin"})
 class EscapeHatchRoleNegativeTests extends AbstractGatewayTest {
 
     @Test
-    @SVCs({"SVC_GW_0141"})
+    @SVCs({"SVC_GW_AUTH_0028"})
     void a_principal_named_dev_holds_nothing_while_the_escape_hatch_is_off() throws Exception {
         var pretender = oidcLogin().idToken(token -> token.subject("dev"));
 
@@ -46,7 +46,7 @@ class EscapeHatchRoleNegativeTests extends AbstractGatewayTest {
      * {@code dev} must not be a way in.
      */
     @Test
-    @SVCs({"SVC_GW_0141"})
+    @SVCs({"SVC_GW_AUTH_0028"})
     void an_identity_provider_session_named_dev_gains_nothing_by_that_path() throws Exception {
         // Same name, real OIDC principal. Asserted separately from the case above because the two
         // are closed by different conditions in the check, and a single test would pass with either

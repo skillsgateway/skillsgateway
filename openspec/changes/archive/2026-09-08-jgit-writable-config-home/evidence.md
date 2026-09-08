@@ -149,7 +149,7 @@ vs. ~17 min per prior contended attempt) — corroborating that attempts 2–5
 above were genuinely external contention, not a defect in this change.
 `dev.skillsgateway.server.PackagingTests` (10 tests, including the new
 `imageAndChartPointJGitsOwnConfigCacheAtTheWritableTemporaryDirectory`
-covering SVC_GW_0179) passed.
+covering SVC_GW_FACADE_0024) passed.
 
 ## 4. `pnpm test:stories`
 
@@ -192,14 +192,14 @@ compilation:
 ```
 $ reqstool status local -p docs/reqstool
   ...
-  GW_0179             skills-gateway
+  GW_FACADE_0024             skills-gateway
   ...
 
 INCOMPLETE (0)
 166/166 complete · 0 incomplete · PASS
 ```
 
-Last line: `166/166 complete · 0 incomplete · PASS`. GW_0179 and its SVC are
+Last line: `166/166 complete · 0 incomplete · PASS`. GW_FACADE_0024 and its SVC are
 present and complete.
 
 ## 7. `openspec validate --all --strict`

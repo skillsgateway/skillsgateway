@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
 /**
- * Rule lifecycle through the API (GW_0089): compiled at write time, refused when it does not
+ * Rule lifecycle through the API (GW_APPROVAL_0006): compiled at write time, refused when it does not
  * compile to a boolean, unique by name, audited on the ledger.
  */
 class PolicyRuleApiTests extends AbstractGatewayTest {
@@ -29,7 +29,7 @@ class PolicyRuleApiTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0089"})
+    @SVCs({"SVC_GW_APPROVAL_0006"})
     void rule_lifecycle_is_compiled_gated_and_audited() throws Exception {
         String name = uniqueName("rule");
         try {

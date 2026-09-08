@@ -5,14 +5,14 @@ best-effort forge metadata at registration.
 
 ## ADDED Requirements
 
-### Requirement: GW_0020
-The system SHALL implement GW_0020.
+### Requirement: GW_INGEST_0008
+The system SHALL implement GW_INGEST_0008.
 
-#### Scenario: SVC_GW_0020
-The system SHALL pass SVC_GW_0020.
+#### Scenario: SVC_GW_INGEST_0008
+The system SHALL pass SVC_GW_INGEST_0008.
 
-### Requirement: GW_0021
-The system SHALL implement GW_0021.
+### Requirement: GW_INGEST_0009
+The system SHALL implement GW_INGEST_0009.
 
-#### Scenario: SVC_GW_0021
-The system SHALL pass SVC_GW_0021.
+#### Scenario: SVC_GW_INGEST_0009
+The system SHALL pass SVC_GW_INGEST_0009.

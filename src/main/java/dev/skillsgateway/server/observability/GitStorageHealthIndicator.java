@@ -12,7 +12,7 @@ import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.stereotype.Component;
 
 /**
- * Whether the storage the gateway was told to use is actually there (GW_0116).
+ * Whether the storage the gateway was told to use is actually there (GW_FACADE_0012).
  *
  * <p>The storage is where every byte the gateway serves lives, and it is the one dependency whose
  * absence the gateway cannot report by failing a request in any legible way: a facade fetch
@@ -39,7 +39,7 @@ public class GitStorageHealthIndicator implements HealthIndicator {
     }
 
     @Override
-    @Requirements({"GW_0116"})
+    @Requirements({"GW_FACADE_0012"})
     public Health health() {
         if (storage instanceof ObjectStoreGitStorage objectStore) {
             return objectStoreHealth(objectStore);

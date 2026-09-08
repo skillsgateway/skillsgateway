@@ -19,11 +19,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * What a publisher may do to a hosted marketplace's origin repository (GW_0102), and what happens
- * once they have done it (GW_0103).
+ * What a publisher may do to a hosted marketplace's origin repository (GW_FACADE_0007), and what happens
+ * once they have done it (GW_INGEST_0017).
  *
  * <p>Three rules, all refusing rather than repairing. Only the single lineage ref may be updated —
- * the same one-history guarantee GW_0017 makes for an upstream's default branch, which is what
+ * the same one-history guarantee GW_INGEST_0006 makes for an upstream's default branch, which is what
  * makes a snapshot's provenance a straight line. No ref may be deleted. And history may not be
  * rewritten unless the marketplace was registered saying it may, in which case both tips land on
  * the append-only ledger, so "what was approved has since been rewritten" stays answerable.
@@ -63,7 +63,7 @@ public class HostedPushHook implements PreReceiveHook, PostReceiveHook {
     }
 
     @Override
-    @Requirements({"GW_0102"})
+    @Requirements({"GW_FACADE_0007"})
     public void onPreReceive(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
         Optional<Marketplace> marketplace = marketplaceOf(receivePack);
         boolean rewritable = marketplace
@@ -90,7 +90,7 @@ public class HostedPushHook implements PreReceiveHook, PostReceiveHook {
     }
 
     @Override
-    @Requirements({"GW_0102", "GW_0103"})
+    @Requirements({"GW_FACADE_0007", "GW_INGEST_0017"})
     public void onPostReceive(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
         Optional<Marketplace> found = marketplaceOf(receivePack);
         if (found.isEmpty()) {
@@ -124,7 +124,7 @@ public class HostedPushHook implements PreReceiveHook, PostReceiveHook {
      * pushed and un-ingested, recoverable by the ordinary ingest endpoint, and is logged rather
      * than turned into a push failure the publisher cannot act on.
      */
-    @Requirements({"GW_0103"})
+    @Requirements({"GW_INGEST_0017"})
     private void ingest(Marketplace marketplace, String principal) {
         try {
             ingestionService.ingest(marketplace, principal);

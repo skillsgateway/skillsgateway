@@ -41,7 +41,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * The recurring reconciliation, and the two things it must never become (GW_0190–GW_0193).
+ * The recurring reconciliation, and the two things it must never become (GW_FACADE_0025–GW_FACADE_0028).
  *
  * <p>Against a real bare repository over {@code file://}, so every push, deletion and
  * {@code ls-remote} is the transport a forge would see and nothing here touches the network. The
@@ -156,7 +156,7 @@ class ForgeMirrorSweepTests extends AbstractGatewayTest {
     private ScheduledTaskHolder scheduledTasks;
 
     @Test
-    @SVCs({"SVC_GW_0190", "SVC_GW_0191", "SVC_GW_0192", "SVC_GW_0193"})
+    @SVCs({"SVC_GW_FACADE_0025", "SVC_GW_FACADE_0026", "SVC_GW_FACADE_0027", "SVC_GW_FACADE_0028"})
     void the_schedule_bounds_drift_without_ever_emptying_a_mirror_on_a_bad_read() throws Exception {
         assertThat(mirror.enabled()).isTrue();
 
@@ -179,7 +179,7 @@ class ForgeMirrorSweepTests extends AbstractGatewayTest {
         assertThat(mirror.awaitQuiescence(Duration.ofSeconds(30))).isTrue();
         assertThat(mirrorRefs()).containsOnlyKeys(GitStorage.SERVED_REF, snapshotRef);
         assertThat(mirrorEvents()).contains(ForgeMirrorService.EVENT_UPDATED);
-        // What the mirror-updated entry says it did, rather than merely that it happened (GW_0193).
+        // What the mirror-updated entry says it did, rather than merely that it happened (GW_FACADE_0028).
         assertThat(mirrorDetails(ForgeMirrorService.EVENT_UPDATED))
                 .anySatisfy(detail -> assertThat(detail).contains("pushed=2").contains(snapshotRef));
 
@@ -209,7 +209,7 @@ class ForgeMirrorSweepTests extends AbstractGatewayTest {
                 .doesNotContain(ForgeMirrorService.EVENT_REPAIRED, ForgeMirrorService.EVENT_UPDATED);
 
         // Restored, and the guard proves to be a refusal rather than a jam: the very next
-        // reconciliation succeeds, finds nothing to do, and therefore writes nothing (GW_0193).
+        // reconciliation succeeds, finds nothing to do, and therefore writes nothing (GW_FACADE_0028).
         restoreServedTipInPublishedStorage(tip);
         int quietRowsBefore = mirrorEvents().size();
         sweep.sweep();
@@ -228,7 +228,7 @@ class ForgeMirrorSweepTests extends AbstractGatewayTest {
         assertThat(result.revoked()).isTrue();
         assertThat(mirror.awaitQuiescence(Duration.ofSeconds(30))).isTrue();
 
-        // The gateway's own state moved regardless of the forge — that is GW_0170 holding.
+        // The gateway's own state moved regardless of the forge — that is GW_FACADE_0021 holding.
         assertThat(storage.publishedIfServing(MIRRORED)).isEmpty();
         assertThat(mirrorEvents()).contains(ForgeMirrorService.EVENT_FAILED);
 
@@ -255,7 +255,7 @@ class ForgeMirrorSweepTests extends AbstractGatewayTest {
                 .contains(MirrorReconciliationSweep.REASON)
                 .contains(snapshotRef));
 
-        // ---- Metrics (GW_0191): the divergence is readable without asking the mirror, and the
+        // ---- Metrics (GW_FACADE_0026): the divergence is readable without asking the mirror, and the
         // meters carry no marketplace, commit, principal or credential.
         assertThat(gauge(MirrorMetrics.STALE_REFS)).isZero();
         assertThat(gauge(MirrorMetrics.REACHABLE)).isEqualTo(1.0);
@@ -266,7 +266,7 @@ class ForgeMirrorSweepTests extends AbstractGatewayTest {
         assertThat(mirrorMeterNames())
                 .allSatisfy(name -> assertThat(name).doesNotContain(MIRRORED).doesNotContain(sha));
 
-        // ---- Phase D: the administrator's own reconciliation (GW_0192), against drift written to
+        // ---- Phase D: the administrator's own reconciliation (GW_FACADE_0027), against drift written to
         // the forge directly — which is the case no approval or revocation would ever notice.
         seedOrphanOnMirror(sha);
         assertThat(mirrorRefs()).containsKey(ORPHAN_REF);
@@ -291,7 +291,7 @@ class ForgeMirrorSweepTests extends AbstractGatewayTest {
      * against the container's task registry rather than against the annotation source.
      */
     @Test
-    @SVCs({"SVC_GW_0190"})
+    @SVCs({"SVC_GW_FACADE_0025"})
     void the_reconciliation_is_registered_on_the_applications_schedule() {
         assertThat(scheduledTasks.getScheduledTasks().stream()
                         .map(ScheduledTask::toString)

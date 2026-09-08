@@ -31,7 +31,7 @@ class ContentTests extends AbstractGatewayTest {
             """;
 
     @Test
-    @SVCs({"SVC_GW_0020"})
+    @SVCs({"SVC_GW_INGEST_0008"})
     void snapshotContentListsPluginsAndTheirSkills() throws Exception {
         Path upstream = createUpstream(TWO_PLUGIN_MANIFEST);
         // hello has one skill from the fixture; add a second plugin with two skills.
@@ -63,7 +63,7 @@ class ContentTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0021"})
+    @SVCs({"SVC_GW_INGEST_0009"})
     void forgeMetadataIsCapturedAtRegistrationWhenAvailable() throws Exception {
         HttpServer forge = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         String json = """

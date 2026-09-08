@@ -8,7 +8,7 @@ import io.github.reqstool.annotations.SVCs;
 import org.junit.jupiter.api.Test;
 
 /**
- * The typed source model (GW_0150) as the pure, total function it is — no database, no Spring
+ * The typed source model (GW_INGEST_0019) as the pure, total function it is — no database, no Spring
  * context, no repository.
  *
  * <p>The point being proved is that the <em>type</em> is what the parser produces, not a verdict:
@@ -33,7 +33,7 @@ class PluginSourceTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0150"})
+    @SVCs({"SVC_GW_INGEST_0019"})
     void a_textual_source_is_a_local_path() {
         assertThat(parse("\"./plugins/hello\"")).isEqualTo(new PluginSource.Local("./plugins/hello"));
         assertThat(((PluginSource.Local) parse("\"./plugins/hello\"")).isRepositoryRelative())
@@ -41,7 +41,7 @@ class PluginSourceTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0150"})
+    @SVCs({"SVC_GW_INGEST_0019"})
     void every_external_form_is_classified_as_its_declared_type() {
         assertThat(parse("{\"source\":\"github\",\"repo\":\"acme/tools\"}"))
                 .isEqualTo(new PluginSource.GitHub("acme/tools"));
@@ -58,7 +58,7 @@ class PluginSourceTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0150"})
+    @SVCs({"SVC_GW_INGEST_0019"})
     void anything_the_parser_cannot_place_becomes_a_named_refusal() {
         // The key-per-type object shape: one canonical shape is understood and the other is refused
         // loudly, rather than the parser guessing at intent on the input class that matters most.
@@ -74,7 +74,7 @@ class PluginSourceTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0150"})
+    @SVCs({"SVC_GW_INGEST_0019"})
     void a_local_path_that_escapes_the_repository_is_not_repository_relative() {
         for (String path : new String[] {
             "", "/etc/passwd", "~/secrets", "\\\\host\\share", "../elsewhere", "a/../../b", "https://example/x"
@@ -86,7 +86,7 @@ class PluginSourceTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0150"})
+    @SVCs({"SVC_GW_INGEST_0019"})
     void a_github_shorthand_expands_only_when_it_is_exactly_owner_and_repo() {
         assertThat(shorthand("acme/tools").cloneUrl(GITHUB)).isEqualTo("https://github.com/acme/tools");
         // Nothing may smuggle a second path segment, a host, or traversal into the expansion.
@@ -100,7 +100,7 @@ class PluginSourceTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0150"})
+    @SVCs({"SVC_GW_INGEST_0019"})
     void a_relative_path_segment_in_the_shorthand_does_not_expand() {
         // ".." matches the character class the shape check has always used, so "../.." expanded to
         // a URL whose path climbs above the base — harmless against a bare https://github.com, and
@@ -113,7 +113,7 @@ class PluginSourceTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0150"})
+    @SVCs({"SVC_GW_INGEST_0019"})
     void the_clone_url_is_derived_from_the_configured_base() {
         assertThat(shorthand("acme/tools").cloneUrl("https://ghe.example.com"))
                 .isEqualTo("https://ghe.example.com/acme/tools");
@@ -122,7 +122,7 @@ class PluginSourceTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0150"})
+    @SVCs({"SVC_GW_INGEST_0019"})
     void a_source_pinned_to_a_ref_or_a_commit_is_refused_by_name() {
         // Resolving such a source at the remote head instead would serve a commit the manifest did
         // not name, which is worse than refusing it: the operator pinned something and would be

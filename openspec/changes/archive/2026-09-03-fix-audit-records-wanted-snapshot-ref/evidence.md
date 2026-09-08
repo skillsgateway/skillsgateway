@@ -46,7 +46,7 @@ reintroduced as an early return):
 
 **Mutation 2: the snapshot ref wins instead of the tip** — the rejected
 alternative from `design.md`. It fails the other four, including the *existing*
-`SVC_GW_0008` assertion, which is the check that the ambiguity rule is not free
+`SVC_GW_AUDIT_0001` assertion, which is the check that the ambiguity rule is not free
 to change:
 
 ```
@@ -114,8 +114,8 @@ JUNIT report written to .../src/main/frontend/test-results/storybook-junit.xml
 ## `reqstool status local -p docs/reqstool`
 
 ```
-  GW_0153             skills-gateway
-  GW_0154             skills-gateway
+  GW_INGEST_0022             skills-gateway
+  GW_FACADE_0018             skills-gateway
 
 INCOMPLETE (0)
 147/147 complete · 0 incomplete · PASS

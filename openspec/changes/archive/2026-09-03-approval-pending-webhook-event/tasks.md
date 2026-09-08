@@ -2,29 +2,29 @@
 
 ## 1. Requirements (SSOT first)
 
-- [x] 1.1 Add GW_0159 (the approval-pending lifecycle event) and GW_0160 (its
+- [x] 1.1 Add GW_WEBHOOK_0006 (the approval-pending lifecycle event) and GW_WEBHOOK_0007 (its
       content-free payload) to `docs/reqstool/requirements.yml`
-- [x] 1.2 Add SVC_GW_0159 and SVC_GW_0160 to
+- [x] 1.2 Add SVC_GW_WEBHOOK_0006 and SVC_GW_WEBHOOK_0007 to
       `docs/reqstool/software_verification_cases.yml`
 
-## 2. Failing tests first (SVC_GW_0159, SVC_GW_0160)
+## 2. Failing tests first (SVC_GW_WEBHOOK_0006, SVC_GW_WEBHOOK_0007)
 
 - [x] 2.1 In `WebhookTests`, add the event test: a subscriber filtering only
       `snapshot.approval_pending` receives exactly one delivery for an ingested
       held snapshot, with the vetting summary in the payload; a subscriber
       filtering another event receives none; the registry offers the new name
-      (SVC_GW_0159)
+      (SVC_GW_WEBHOOK_0006)
 - [x] 2.2 In `WebhookTests`, add the adversarial payload test: the payload of a
       snapshot with real blocking findings carries no finding message, rule id,
       location or file name — only counts, connector names and identifiers; and
       the exact top-level and nested key sets are asserted, so a removed or
-      renamed field fails the build (SVC_GW_0160)
+      renamed field fails the build (SVC_GW_WEBHOOK_0007)
 - [x] 2.3 Add the estate test: a subscriber declared in
       `skills-gateway.estate.webhooks` may name the new event in its filter, and
-      a typo is still a reconciliation failure (SVC_GW_0159)
+      a typo is still a reconciliation failure (SVC_GW_WEBHOOK_0006)
 - [x] 2.4 Add the negative-state test: a re-vetting run against an **approved**
       snapshot emits `snapshot.revet_violation`/`snapshot.vetted` but never
-      `snapshot.approval_pending` (SVC_GW_0159)
+      `snapshot.approval_pending` (SVC_GW_WEBHOOK_0006)
 - [x] 2.5 Run the new tests and record them failing before any production code
       changes
 
@@ -35,10 +35,10 @@
 - [x] 3.2 `WebhookService`: add `ApprovalPendingPayload` and `VettingSummary`
       records with `@Schema(requiredMode = REQUIRED)` on every field, factor the
       fan-out into one private helper, and add `emitApprovalPending(...)` with
-      `@Requirements({"GW_0159", "GW_0160"})`
+      `@Requirements({"GW_WEBHOOK_0006", "GW_WEBHOOK_0007"})`
 - [x] 3.3 `VettingService`: inject `WaiverService`, and after the existing
       `SNAPSHOT_VETTED` emit, emit the new event when the snapshot is held —
-      annotated `@Requirements({"GW_0159"})`
+      annotated `@Requirements({"GW_WEBHOOK_0006"})`
 - [x] 3.4 Update the two test-side `new VettingService(...)` call sites for the
       new constructor argument
 

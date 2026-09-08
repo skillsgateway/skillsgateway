@@ -38,7 +38,7 @@ Three facts make the blast radius larger than the returned code suggests.
    their own work. Putting a snapshot on the wire is two unsynchronized writes;
    taking the same pair off is one atomic transaction.
 
-`GW_0112` already requires that a reference transition which did not take effect
+`GW_FACADE_0011` already requires that a reference transition which did not take effect
 be raised rather than reported as done. It is scoped to the storage seam, and
 publication is the one transition that escapes it.
 
@@ -64,7 +64,7 @@ current behavior.
 
 - Make partial serving unreachable rather than detected: both published refs land
   or neither does.
-- Bring publication under the seam, so `GW_0112` and the storage contract suite
+- Bring publication under the seam, so `GW_FACADE_0011` and the storage contract suite
   cover it on both backends and the object-store backend gets the same
   compare-and-swap retry revocation already has.
 - Make the served surface an explicit allowlist rather than whatever a repository
@@ -220,14 +220,14 @@ storage substitutability.
 ### 6. Requirements
 
 Six requirements, one per affected capability, so each is owned by exactly one
-spec: `GW_0132` (git-storage — publication is one atomic, verified transition on
-every backend), `GW_0133` (snapshot-approval — an approval reports success only
+spec: `GW_FACADE_0015` (git-storage — publication is one atomic, verified transition on
+every backend), `GW_APPROVAL_0012` (snapshot-approval — an approval reports success only
 when publication took effect, and a refusal leaves nothing published and the row
-as it was), `GW_0134` (git-facade — the facade advertises only the refs it
-serves), `GW_0135` (virtual-catalog), `GW_0136` (snapshot-retention) and
-`GW_0137` (marketplace-ingestion).
+as it was), `GW_FACADE_0016` (git-facade — the facade advertises only the refs it
+serves), `GW_FACADE_0017` (virtual-catalog), `GW_RETENTION_0007` (snapshot-retention) and
+`GW_INGEST_0018` (marketplace-ingestion).
 
-`GW_0112`'s existing clause then covers publication by construction once it is on
+`GW_FACADE_0011`'s existing clause then covers publication by construction once it is on
 the seam, so the storage contract and concurrency suites gain publication cases
 rather than a parallel suite.
 

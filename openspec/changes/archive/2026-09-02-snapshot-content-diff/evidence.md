@@ -8,7 +8,7 @@ it returns no file bytes, and nothing in the approval path reads it.
 
 | Requirement | Verifies | Test |
 | --- | --- | --- |
-| GW_0153 — inventory diff against the last approved snapshot | no baseline, added, changed-by-neighbouring-file, removed plugin, skill moved between plugins, unknown snapshot | `ContentDiffTests.snapshotContentDiffAgainstTheLastApprovedSnapshot` (SVC_GW_0153) |
+| GW_INGEST_0022 — inventory diff against the last approved snapshot | no baseline, added, changed-by-neighbouring-file, removed plugin, skill moved between plugins, unknown snapshot | `ContentDiffTests.snapshotContentDiffAgainstTheLastApprovedSnapshot` (SVC_GW_INGEST_0022) |
 
 The one test walks every case the requirement names, in one fixture, because
 they interact — a move is only correct if the skill is *not* also reported
@@ -59,7 +59,7 @@ requirement was renumbered (see below).
 | OpenSpec | `openspec validate --all --strict` | `Totals: 31 passed, 0 failed (31 items)` |
 | Docs | `mkdocs build --strict` | `Documentation built in 2.46 seconds`, no warnings |
 | Design harness | `/impeccable audit` + `harden` on the changed surface; `detect.mjs --json` | detector `[]`; one real finding fixed (see below) |
-| Traceability | `reqstool status local -p docs/reqstool` | `129/143 complete · 14 incomplete · FAIL` — **GW_0153 is COMPLETE**; see below |
+| Traceability | `reqstool status local -p docs/reqstool` | `129/143 complete · 14 incomplete · FAIL` — **GW_INGEST_0022 is COMPLETE**; see below |
 
 The impeccable harden pass found one genuine defect: a plugin reported `removed`
 whose skills had all moved to other plugins reached the "the manifest entry
@@ -68,18 +68,18 @@ the note is now status-aware. No finding was dismissed.
 
 ## Renumbering, after the fact
 
-The requirement first shipped here as GW_0150, which collided with #244
+The requirement first shipped here as GW_INGEST_0019, which collided with #244
 (`feat/external-plugin-sources`), already green and ahead of this change. It is
-now **GW_0153 / SVC_GW_0153**, verified free against `origin/main` (highest
-GW_0149), against #244 (GW_0150-GW_0152) and against the other open PRs (#242
-and #245 add none above GW_0149).
+now **GW_INGEST_0022 / SVC_GW_INGEST_0022**, verified free against `origin/main` (highest
+GW_VETTING_0029), against #244 (GW_INGEST_0019-GW_INGEST_0021) and against the other open PRs (#242
+and #245 add none above GW_VETTING_0029).
 
 The rename is identifier-only — no behaviour, no test, no endpoint changed — and
 the gates above were re-run over it: `./mvnw clean verify` **BUILD SUCCESS**
 (`Tests run: 388, Failures: 0, Errors: 0, Skipped: 0`), `openspec validate --all
 --strict` 30 passed, `mkdocs build --strict` clean, and `reqstool status local -p
 docs/reqstool` unchanged in shape at `129/143 complete · 14 incomplete · FAIL`
-with GW_0153 COMPLETE in GW_0150's place.
+with GW_INGEST_0022 COMPLETE in GW_INGEST_0019's place.
 
 ## Gates that could not complete in this environment
 
@@ -103,9 +103,9 @@ remaining suites bind fixed host ports.
   changes none.
 
 **Why reqstool ends FAIL, and why it is not this change.** The 14 requirements
-it reports incomplete — GW_0018, GW_0019, GW_0026, GW_0030, GW_0036, GW_0042,
-GW_0047, GW_0055, GW_0078, GW_0079, GW_0082, GW_0097, GW_0098, GW_0138 — are
+it reports incomplete — GW_INGEST_0007, GW_AUTH_0005, GW_WEBHOOK_0004, GW_AUDIT_0006, GW_RETENTION_0006, GW_VETTING_0005,
+GW_VETTING_0010, GW_VETTING_0018, GW_OBSERVABILITY_0004, GW_AUTH_0014, GW_APPROVAL_0005, GW_APPROVAL_0011, GW_AUTH_0015, GW_AUTH_0025 — are
 *exactly* the 14 whose SVCs are carried by `e2e/portal.spec.ts`, and they are
 incomplete solely because that suite produced no JUnit results. None of them
-belongs to this change, and GW_0153 is reported COMPLETE. With the e2e suite's
+belongs to this change, and GW_INGEST_0022 is reported COMPLETE. With the e2e suite's
 results present the gate reaches 143/143.

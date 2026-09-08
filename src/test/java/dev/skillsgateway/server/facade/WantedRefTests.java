@@ -13,7 +13,7 @@ import org.eclipse.jgit.lib.SymbolicRef;
 import org.junit.jupiter.api.Test;
 
 /**
- * The want-to-ref resolution behind the fetch ledger's {@code ref} column (GW_0154), as pure logic:
+ * The want-to-ref resolution behind the fetch ledger's {@code ref} column (GW_FACADE_0018), as pure logic:
  * no container, no git client, no {@code UploadPack}.
  *
  * <p>These are the cases a real-client test cannot reach or cannot distinguish. The ambiguous case
@@ -29,7 +29,7 @@ class WantedRefTests {
     private static final ObjectId UNADVERTISED = ObjectId.fromString("3333333333333333333333333333333333333333");
 
     @Test
-    @SVCs({"SVC_GW_0154"})
+    @SVCs({"SVC_GW_FACADE_0018"})
     void the_tip_wins_when_a_snapshot_ref_names_the_same_commit() {
         Map<String, Ref> advertised = advertised(TIP, SUPERSEDED);
 
@@ -39,7 +39,7 @@ class WantedRefTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0154"})
+    @SVCs({"SVC_GW_FACADE_0018"})
     void a_superseded_snapshot_resolves_to_its_own_ref() {
         Map<String, Ref> advertised = advertised(TIP, SUPERSEDED);
 
@@ -48,7 +48,7 @@ class WantedRefTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0154"})
+    @SVCs({"SVC_GW_FACADE_0018"})
     void a_want_matching_no_advertised_ref_resolves_to_nothing() {
         Map<String, Ref> advertised = advertised(TIP, SUPERSEDED);
 
@@ -58,7 +58,7 @@ class WantedRefTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0154"})
+    @SVCs({"SVC_GW_FACADE_0018"})
     void head_is_never_the_recorded_name() {
         // HEAD is advertised so a clone can learn which branch to check out, and it points at the
         // tip. The ledger names the branch, which is what a reader of it can act on.
@@ -69,7 +69,7 @@ class WantedRefTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0154"})
+    @SVCs({"SVC_GW_FACADE_0018"})
     void a_marketplace_with_no_served_tip_still_resolves_a_snapshot_ref() {
         // What revocation of the tip leaves behind: the snapshot references survive without main.
         Map<String, Ref> advertised = new LinkedHashMap<>();

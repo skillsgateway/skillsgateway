@@ -52,14 +52,14 @@ None.
 ### Modified Capabilities
 
 - `admin-api`: three new requirements — the contract document declares the
-  release version (GW_0105), the committed contract stays identical to the
-  generated one (GW_0106), and breaking changes to the contract are detected and
-  must be declared (GW_0107).
+  release version (GW_API_0002), the committed contract stays identical to the
+  generated one (GW_API_0003), and breaking changes to the contract are detected and
+  must be declared (GW_API_0004).
 
 ## Impact
 
-- **Requirements**: `docs/reqstool/requirements.yml` gains GW_0105–GW_0107 and
-  their SVCs. Ids through GW_0104 are already allocated; GW_0105 is the next free id.
+- **Requirements**: `docs/reqstool/requirements.yml` gains GW_API_0002–GW_API_0004 and
+  their SVCs. Ids through GW_AUTH_0018 are already allocated; GW_API_0002 is the next free id.
 - **Build**: `spring-boot-maven-plugin` gains the `build-info` goal so
   `BuildProperties` carries the version into the served document.
 - **Java**: a new `OpenApiCustomizer` sets `info.version`; `OpenAPI.java` drops

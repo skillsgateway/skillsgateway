@@ -48,7 +48,7 @@ as separate pieces of work:
    with a gateway-capped lifetime they cannot extend, distinguishable on the
    ledger from a standing personal access token. This is the natural evolution
    of issue #13 and closes the "second credential system" objection without
-   moving a single fetch off the ledger. **Implemented here** (GW_0104).
+   moving a single fetch off the ledger. **Implemented here** (GW_AUTH_0018).
 
 2. **Visibility — a read-only forge mirror.** `ApprovalService` additionally
    pushing approved content to a forge repository, labelled a mirror, for

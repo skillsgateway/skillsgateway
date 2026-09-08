@@ -21,9 +21,9 @@ import org.springframework.web.context.WebApplicationContext;
 
 /**
  * Development-only escape hatch: with dev-insecure-auth the web surface needs no OIDC session and
- * requests act as the synthetic user "dev". Off by default — GW_0011 governs default deployments.
+ * requests act as the synthetic user "dev". Off by default — GW_AUTH_0002 governs default deployments.
  *
- * <p>This context also boots the escape hatch's startup guard (GW_0110) against the shipped
+ * <p>This context also boots the escape hatch's startup guard (GW_AUTH_0019) against the shipped
  * identity-provider placeholders, which is the local development loop the guard must never refuse:
  * the guard is autowired below, so it being absent — or having refused — fails this test.
  */
@@ -54,14 +54,14 @@ class DevAuthTests {
     }
 
     /**
-     * The escape hatch opens the web chain, never the machine chain (GW_0127). It follows the git
+     * The escape hatch opens the web chain, never the machine chain (GW_AUTH_0021). It follows the git
      * facade's posture, which stays strict in this mode for the same reason: a mode in which every
      * bearer value authenticated would be a very quiet way to lose the control plane in a copied
      * configuration — and unlike a browser session, a machine credential leaves no clue that it
      * was ever needed.
      */
     @Test
-    @SVCs({"SVC_GW_0127"})
+    @SVCs({"SVC_GW_AUTH_0021"})
     void dev_insecure_auth_does_not_open_the_bearer_path() throws Exception {
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
                 .apply(SecurityMockMvcConfigurers.springSecurity())
@@ -86,12 +86,12 @@ class DevAuthTests {
     }
 
     /**
-     * The escape hatch's principal can administer (GW_0141), because otherwise making enforcement
+     * The escape hatch's principal can administer (GW_AUTH_0028), because otherwise making enforcement
      * unconditional would break the documented local loop: the hatch replaces the identity provider
      * entirely, so there is no claim to map and no directory to grant from.
      */
     @Test
-    @SVCs({"SVC_GW_0141"})
+    @SVCs({"SVC_GW_AUTH_0028"})
     void the_escape_hatch_principal_administers_and_says_where_that_came_from() throws Exception {
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
                 .apply(SecurityMockMvcConfigurers.springSecurity())

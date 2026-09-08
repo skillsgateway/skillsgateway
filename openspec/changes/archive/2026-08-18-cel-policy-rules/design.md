@@ -5,13 +5,13 @@
 The approval gate (`ApprovalService.doApprove`) already composes two checks
 before the state transition: the state machine (`Snapshot.decidable()`) and
 the fail-closed vetting gate (`WaiverService.evaluate` →
-`VettingBlockedException`, GW_0041). The content inventory exists as
+`VettingBlockedException`, GW_APPROVAL_0003). The content inventory exists as
 read-on-demand services over the quarantine object store
 (`SnapshotContentService` for the manifest's plugins/skills,
 `SnapshotPreviewService` for the file tree); nothing parses SKILL.md
 frontmatter yet. `docs/manual/architecture.md` §4 sketches a policy engine
 "OPA-style"; the issue's assessment comment recommends embedded cel-java
-instead and deny-rules-only scope. Estate reconciliation (GW_0083–GW_0087)
+instead and deny-rules-only scope. Estate reconciliation (GW_ESTATE_0001–GW_ESTATE_0005)
 defines the contract every new API-managed object kind must join.
 
 ## Goals / Non-Goals
@@ -115,7 +115,7 @@ OPA sidecar; per-marketplace rule scoping as a first-class field
    Evaluating against *real* snapshots rather than synthetic fixtures is the
    issue's explicit ask.
 
-8. **Estate kind `policy-rule`, same contract as GW_0083.**
+8. **Estate kind `policy-rule`, same contract as GW_ESTATE_0001.**
    `skills-gateway.estate.policy-rules[]` = {name, description, expression,
    enabled}; the reconciler creates or converges rules through
    `PolicyRuleService` (the exact API path), attributed to
@@ -138,12 +138,12 @@ the owner reviews in the PR. Failure model driving the test plan:
 
 | Failure mode | Countermeasure (test) |
 | --- | --- |
-| Hostile expression: syntax/type error at write time | 422, nothing stored (SVC_GW_0089) |
-| Hostile expression: runtime error at approval | deny naming the rule (SVC_GW_0090) |
-| Hostile expression: comprehension bomb | iteration cap → error → deny, bounded time (SVC_GW_0090) |
-| Hostile content: malformed frontmatter hides tools | facts failure → deny (SVC_GW_0090) |
-| Fail-open drift: rule errors treated as pass | negative test asserts denial, snapshot stays held, facade unchanged (SVC_GW_0090) |
-| Bypass: approval outside the gate | gate lives inside the only publisher (`ApprovalService`); test asserts refused approval publishes nothing (SVC_GW_0090) |
-| Playground mutates or approves | test asserts identical DB/ledger/served state after playground calls, including error paths (SVC_GW_0092) |
-| Denial invisible to audit | ledger entries asserted per deciding rule (SVC_GW_0091) |
-| Unauthorized rule management | role-enforcement walk classifies every new route (SVC_GW_0089/0092) |
+| Hostile expression: syntax/type error at write time | 422, nothing stored (SVC_GW_APPROVAL_0006) |
+| Hostile expression: runtime error at approval | deny naming the rule (SVC_GW_APPROVAL_0007) |
+| Hostile expression: comprehension bomb | iteration cap → error → deny, bounded time (SVC_GW_APPROVAL_0007) |
+| Hostile content: malformed frontmatter hides tools | facts failure → deny (SVC_GW_APPROVAL_0007) |
+| Fail-open drift: rule errors treated as pass | negative test asserts denial, snapshot stays held, facade unchanged (SVC_GW_APPROVAL_0007) |
+| Bypass: approval outside the gate | gate lives inside the only publisher (`ApprovalService`); test asserts refused approval publishes nothing (SVC_GW_APPROVAL_0007) |
+| Playground mutates or approves | test asserts identical DB/ledger/served state after playground calls, including error paths (SVC_GW_APPROVAL_0009) |
+| Denial invisible to audit | ledger entries asserted per deciding rule (SVC_GW_APPROVAL_0008) |
+| Unauthorized rule management | role-enforcement walk classifies every new route (SVC_GW_APPROVAL_0006/0092) |

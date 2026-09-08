@@ -14,7 +14,7 @@ spring:
             scope: ${SGW_OIDC_SCOPE:openid}
             authorization-grant-type: authorization_code
             # {baseUrl} is the request as the container sees it; behind a TLS-terminating
-            # proxy that is only right with server.forward-headers-strategy set (GW_0163).
+            # proxy that is only right with server.forward-headers-strategy set (GW_AUTH_0029).
             # The variable states the registered URI outright when it is not.
             redirect-uri: ${SGW_OIDC_REDIRECT_URI:{baseUrl}/login/oauth2/code/idp}
         provider:

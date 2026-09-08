@@ -52,7 +52,7 @@ public record Marketplace(
 
     /**
      * The one history a marketplace has, on both sides of the gateway: what a hosted publisher
-     * may push and what the facade serves. Its single-lineage guarantee (GW_0017) is what makes a
+     * may push and what the facade serves. Its single-lineage guarantee (GW_INGEST_0006) is what makes a
      * snapshot's provenance a straight line rather than a choice of branches.
      */
     public static final String LINEAGE_REF = "refs/heads/main";
@@ -60,7 +60,7 @@ public record Marketplace(
     /** Fetched from an upstream clone URL — the original and default kind. */
     public static final String ORIGIN_UPSTREAM = "upstream";
 
-    /** Pushed by the organisation into a gateway-owned origin repository (GW_0101). */
+    /** Pushed by the organisation into a gateway-owned origin repository (GW_FACADE_0006). */
     public static final String ORIGIN_HOSTED = "hosted";
 
     /** A push must fast-forward the lineage; the default. */

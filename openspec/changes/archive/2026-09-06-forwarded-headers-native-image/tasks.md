@@ -2,14 +2,14 @@
 
 ## 1. Requirements (SSOT first)
 
-- [x] 1.1 Add GW_0163 (forwarded scheme and host honoured only when configured,
+- [x] 1.1 Add GW_AUTH_0029 (forwarded scheme and host honoured only when configured,
       by one setting meaning the same on the JVM and the native image; off by
       default; an absolute redirect URI by environment) to
       `docs/reqstool/requirements.yml`
-- [x] 1.2 Add SVC_GW_0163 (GIVEN/WHEN/THEN) to
+- [x] 1.2 Add SVC_GW_AUTH_0029 (GIVEN/WHEN/THEN) to
       `docs/reqstool/software_verification_cases.yml`
 
-## 2. Investigate option 1 from the issue (SVC_GW_0163, evidence.md)
+## 2. Investigate option 1 from the issue (SVC_GW_AUTH_0029, evidence.md)
 
 - [x] 2.1 Read Spring Boot 4.1.1's `ServletWebServerConfiguration`,
       `TomcatWebServerFactoryCustomizer` and `CloudPlatform`: the filter is
@@ -18,10 +18,10 @@
 - [x] 2.2 Build the native binary and probe every posture against it, before
       and after the fix
 
-## 3. Backend (SVC_GW_0163)
+## 3. Backend (SVC_GW_AUTH_0029)
 
 - [x] 3.1 `ForwardedHeadersConfig` in `dev.skillsgateway.server.config`,
-      `@Requirements({"GW_0163"})`: an unconditional
+      `@Requirements({"GW_AUTH_0029"})`: an unconditional
       `FilterRegistrationBean<ForwardedHeaderFilter>` enabled at runtime when
       `server.forward-headers-strategy` is `framework`
 - [x] 3.2 `application.yaml`: `redirect-uri:
@@ -30,7 +30,7 @@
 ## 4. Tests (never weakening an existing SVC test)
 
 - [x] 4.1 `AbstractForwardedHeadersTest` and one `ForwardedHeaders*Tests` class per
-      posture, `@SVCs({"SVC_GW_0163"})`: a real server per
+      posture, `@SVCs({"SVC_GW_AUTH_0029"})`: a real server per
       posture — unset ignores the headers, `framework` and `native` honour
       them, exactly one filter is registered under `framework`, the absolute
       URI is immune to the headers

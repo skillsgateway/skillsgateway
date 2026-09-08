@@ -27,7 +27,7 @@ if (enabled == null) {
 
 `application.yaml` never mentions the property, so `false` is the default for
 every profile, production included. The consequence is documented rather than
-mitigated: `RoleService`'s class javadoc, `GW_0068`'s rationale
+mitigated: `RoleService`'s class javadoc, `GW_AUTH_0010`'s rationale
 ("defaulting the switch to off means an upgrade can never lock an existing
 deployment out of its own gateway"), a `!!! danger` admonition in the
 Kubernetes guide, and an `IMPORTANT:` comment in the Helm chart all say the same
@@ -73,8 +73,8 @@ escape hatch. This document designs it; it does not re-argue it.
   `admin ⊇ auditor` are untouched, as are the grant lifecycle, claim mapping
   and approver scoping.
 - Changing the facade (`/git/**`) or the machine-credential chain. Both already
-  authorize without consulting the flag (token scopes, GW_0064; the
-  `MachineApiRegistry` allowlist, GW_0129); this change only deletes the
+  authorize without consulting the flag (token scopes, GW_AUTH_0006; the
+  `MachineApiRegistry` allowlist, GW_AUTH_0022); this change only deletes the
   javadoc sentences that explained *why* they did not consult it.
 - Introducing a first-run bootstrap UI, an invite flow, or a "first login
   becomes admin" rule. Those are designs of their own; a configured admin is
@@ -117,12 +117,12 @@ property would exist only to be refused.
 `enabled()` is deleted along with the `if (!enabled()) return;` prologue in
 `requireAdmin`, `requireAuditor`, `requireApprover` and `requireApproverOf`.
 
-`requireAdminRegardlessOfEnforcement` (GW_0130) collapses into `requireAdmin`
+`requireAdminRegardlessOfEnforcement` (GW_AUTH_0023) collapses into `requireAdmin`
 and the method disappears. It exists only to draw a distinction against a
 default that is going away; keeping it would leave a name asserting a contrast
 with nothing. Its callers (`MachineTokenController`'s minting, listing and
 revocation paths) switch to `requireAdmin`, which is now strictly stronger than
-what the old method promised. The requirement text for GW_0130 keeps the
+what the old method promised. The requirement text for GW_AUTH_0023 keeps the
 *substance* — minting requires the administrative role — and loses only the
 "whether or not role enforcement is enabled" qualifier.
 
@@ -140,7 +140,7 @@ It deliberately does **not** query `role_grants`. Reasons, in order of weight:
 - The stable property is "somebody can administer this gateway *by
   configuration*", which is exactly what `roles.admins` was introduced to
   guarantee — `RoleService` calls it "the escape hatch that survives a bad grant
-  edit", and GW_0071 makes config admins unrevokable by any API call. A stored
+  edit", and GW_AUTH_0013 makes config admins unrevokable by any API call. A stored
   grant is revocable, so a startup check satisfied by one can be invalidated
   while the process runs; it would prove nothing after the first `DELETE`.
 - A database-reading guard has an ordering problem against `EstateReconciler`,
@@ -207,7 +207,7 @@ come for free: `Environment.containsProperty("skills-gateway.roles.enabled")`
 resolves `SKILLSGATEWAY_ROLES_ENABLED`, `skills-gateway.roles.enabled` and
 `skills_gateway.roles.enabled` alike, because Boot's system-environment property
 source does the relaxed lookup itself. This also matches the precedent the
-project already accepts for configuration mistakes: GW_0111 has the gateway
+project already accepts for configuration mistakes: GW_FACADE_0010 has the gateway
 refuse to start on a storage backend it cannot honour and "state in every such
 refusal which setting it was decided by".
 
@@ -327,10 +327,10 @@ promises, and the `!` is the only place that fact reaches the release notes.
   bootstraps an admin (`skills-gateway.roles.admins=user`). Doing so makes every
   inherited context administratively privileged, which could hide a controller
   method that forgot its `require*` call. → Mitigation: the armor already
-  exists and must be kept honest. SVC_GW_0068's walk asserts its route set
+  exists and must be kept honest. SVC_GW_AUTH_0010's walk asserts its route set
   **complete against the running application's own route table** with a no-role
   session, so a forgotten check surfaces there rather than in the suites that
-  inherit the admin. The revision of SVC_GW_0068 must preserve that
+  inherit the admin. The revision of SVC_GW_AUTH_0010 must preserve that
   completeness assertion word for word in substance; a task calls that out.
 - **The bootstrap guard refuses a deployment administered only by stored
   grants** (Decision 3). → Mitigation: no such deployment exists yet; the
@@ -339,7 +339,7 @@ promises, and the `!` is the only place that fact reaches the release notes.
   ever weakens.** The bootstrap check is skipped on the strength of another
   guard's refusal. → Mitigation: an adversarial test asserts that
   `dev-insecure-auth=true` plus a configured identity provider still refuses to
-  start (SVC_GW_0110 already covers this; the new SVC must not create a path
+  start (SVC_GW_AUTH_0019 already covers this; the new SVC must not create a path
   around it), and the two guards stay in the same package so the coupling is
   visible.
 - **A real OIDC principal named `dev`.** → Mitigation: constraint 2 of

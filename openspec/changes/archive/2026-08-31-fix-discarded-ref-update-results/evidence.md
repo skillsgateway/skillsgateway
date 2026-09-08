@@ -41,7 +41,7 @@ JUNIT report written to .../test-results/storybook-junit.xml
 ## `reqstool status local -p docs/reqstool`
 
 ```
-  GW_0137             skills-gateway
+  GW_INGEST_0018             skills-gateway
 
 INCOMPLETE (0)
 130/130 complete · 0 incomplete · PASS

@@ -17,12 +17,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Persistence of chain runs, their per-connector verdicts, and the findings behind them
- * (GW_0037).
+ * (GW_VETTING_0001).
  *
  * <p>Runs are append-only: a re-vetting pass inserts a new run rather than updating the previous
  * one, so a snapshot's vetting history is the list of its runs, and nothing ever edits what a
  * connector said. Accepting a finding is a waiver ({@link WaiverRepository}) layered over the run
- * at evaluation time, never an edit to the run itself (GW_0045).
+ * at evaluation time, never an edit to the run itself (GW_VETTING_0008).
  */
 @Repository
 public class VettingRepository {
@@ -30,13 +30,13 @@ public class VettingRepository {
     /** A run the ingestion of a new snapshot caused. */
     public static final String TRIGGER_INGESTION = "ingestion";
 
-    /** A run the continuous re-vetting sweep caused (GW_0049). */
+    /** A run the continuous re-vetting sweep caused (GW_VETTING_0012). */
     public static final String TRIGGER_REVET_SCHEDULED = "revet-scheduled";
 
     /**
      * A run an operator asked for. This is also how a scanner or advisory feed update is turned
      * into fresh evidence today: the built-in connectors have no external feed to subscribe to, so
-     * "the feed moved" is an operator calling the re-vet endpoint (GW_0049).
+     * "the feed moved" is an operator calling the re-vet endpoint (GW_VETTING_0012).
      */
     public static final String TRIGGER_REVET_MANUAL = "revet-manual";
 
@@ -50,7 +50,7 @@ public class VettingRepository {
      * Starts a run, already carrying the fail-closed outcome it has before anything ran, and
      * stamped with the identity of the chain that is about to produce it.
      */
-    @Requirements({"GW_0125"})
+    @Requirements({"GW_FACADE_0009"})
     public long startRun(long snapshotId, String trigger, String chain) {
         return jdbc.sql("INSERT INTO vetting_runs (snapshot_id, trigger, started_at, outcome, chain)"
                         + " VALUES (:snapshotId, :trigger, :now, :outcome::vetting_run_outcome, :chain) RETURNING id")
@@ -64,7 +64,7 @@ public class VettingRepository {
     }
 
     /** Records one connector's verdict and its findings. */
-    @Requirements({"GW_0125"})
+    @Requirements({"GW_FACADE_0009"})
     @Transactional
     public void recordVerdict(long runId, String connector, int position, Verdict verdict) {
         long verdictId = jdbc.sql(
@@ -94,7 +94,7 @@ public class VettingRepository {
     }
 
     /**
-     * A one-line summary so the verdict row is readable without joining the findings (GW_0143).
+     * A one-line summary so the verdict row is readable without joining the findings (GW_VETTING_0023).
      * When there are findings it names how many and the worst severity; when there are none it
      * falls back to the connector's coverage summary — what it examined — so a clean pass records
      * substance rather than a null that reads the same as "the connector never ran".
@@ -113,7 +113,7 @@ public class VettingRepository {
                                 .stored());
     }
 
-    @Requirements({"GW_0125"})
+    @Requirements({"GW_FACADE_0009"})
     public void finishRun(long runId, VettingChain.Outcome outcome) {
         jdbc.sql("UPDATE vetting_runs SET finished_at = :now, outcome = :outcome::vetting_run_outcome"
                         + " WHERE id = :id")
@@ -125,7 +125,7 @@ public class VettingRepository {
 
     /**
      * The snapshot's most recent chain run with its verdicts and findings, or empty when the chain
-     * has never run for it — which callers must treat as blocked (GW_0038).
+     * has never run for it — which callers must treat as blocked (GW_VETTING_0002).
      */
     public Optional<Run> latestRun(long snapshotId) {
         Optional<Run> run = jdbc.sql(

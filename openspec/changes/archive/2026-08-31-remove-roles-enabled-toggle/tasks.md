@@ -10,73 +10,73 @@ section-4 checkbox for the behaviour it implements is unticked.
 
 ## 1. Executable spec and owner sign-off (old-coder SPEC)
 
-- [ ] 1.1 Write the executable spec to `openspec/changes/remove-roles-enabled-toggle/spec-approval.md`: the named test list for GW_0138–GW_0141 with concrete inputs and expected outcomes, plus the negative constraints that must survive (SVC_GW_0068's route-table completeness walk, SVC_GW_0110's refusal, approver scoping, the facade's and machine chain's independent authorization). Name it by absolute path in the message to the owner.
+- [ ] 1.1 Write the executable spec to `openspec/changes/remove-roles-enabled-toggle/spec-approval.md`: the named test list for GW_AUTH_0025–GW_AUTH_0028 with concrete inputs and expected outcomes, plus the negative constraints that must survive (SVC_GW_AUTH_0010's route-table completeness walk, SVC_GW_AUTH_0019's refusal, approver scoping, the facade's and machine chain's independent authorization). Name it by absolute path in the message to the owner.
 - [x] 1.2 Resolve the four Open Questions in `design.md` with the owner — Decision 3's strictness, Decision 6 (`/api/me.rolesEnabled` removed vs. kept deprecated), whether this PR settles issue #121, and the lifetime of the removed-property refusal. Fold the answers into `design.md` and `spec-approval.md` visibly (answers change the spec; they are not approval of it).
 - [ ] 1.3 Re-present the revised spec and obtain explicit approval. Record the approving words, or record `spec approval: not obtained (autonomous run)` in `evidence.md` and claim correspondingly lower confidence.
 - [x] 1.4 Confirm no new dependency is needed (the guard uses `Environment` and `SkillsGatewayProperties` only); state that in the spec so approval covers the setup plan.
 
 ## 2. Requirements (reqstool SSOT, before any code)
 
-- [x] 2.1 Add GW_0138 to `docs/reqstool/requirements.yml` — authorization on the web surface is always enforced, with no configuration that disables it. Categories `["security"]`.
-- [x] 2.2 Add GW_0139 — refuse to start when no configured principal could hold the administrative role, with a refusal naming every configuration path that would resolve it.
-- [x] 2.3 Add GW_0140 — refuse to start when the removed enforcement property is set in any relaxed form, naming the removal.
-- [x] 2.4 Add GW_0141 — the development escape hatch confers the administrative role on its synthetic principal, attributed to its own source, and confers nothing while the escape hatch is off or to an identity-provider session that merely shares the synthetic name.
-- [x] 2.5 Add SVC_GW_0138–SVC_GW_0141 to `docs/reqstool/software_verification_cases.yml` with GIVEN/WHEN/THEN covering the adversarial cases from section 7.
-- [x] 2.6 Revise GW_0068's description and rationale: drop the configuration switch and the "defaults to off with every authorization check passing" clause; the rationale's compatibility argument is replaced by the bootstrap refusal (cross-reference GW_0139). Bump `revision`.
-- [x] 2.7 Revise GW_0071: drop "while enforcement is enabled" and the "whether enforcement is enabled" clause of the session identity endpoint. Bump `revision`.
-- [x] 2.8 Revise GW_0130: drop the "once role enforcement is enabled" and "whether or not role enforcement is enabled" qualifiers while keeping the substance (scope ∧ role; the administrative role for minting, listing and revoking). Bump `revision`.
-- [x] 2.9 Revise GW_0129: drop the closing sentence "This enforcement shall not depend on whether role enforcement is enabled" and the rationale sentence that leans on the default-off flag. Bump `revision`.
-- [x] 2.10 Revise SVC_GW_0068 — remove the second, disabled gateway from GIVEN/WHEN/THEN. **Preserve the route-table completeness assertion in substance**: the no-role walk must still assert its route set complete against the running application's own route table (this is the armor named in `design.md` → Risks). Bump `revision`.
-- [x] 2.11 Revise SVC_GW_0069, SVC_GW_0070, SVC_GW_0098, SVC_GW_0129 and SVC_GW_0130 to drop "role enforcement enabled/disabled" preconditions, which are no longer variables. Bump each `revision`.
+- [x] 2.1 Add GW_AUTH_0025 to `docs/reqstool/requirements.yml` — authorization on the web surface is always enforced, with no configuration that disables it. Categories `["security"]`.
+- [x] 2.2 Add GW_AUTH_0026 — refuse to start when no configured principal could hold the administrative role, with a refusal naming every configuration path that would resolve it.
+- [x] 2.3 Add GW_AUTH_0027 — refuse to start when the removed enforcement property is set in any relaxed form, naming the removal.
+- [x] 2.4 Add GW_AUTH_0028 — the development escape hatch confers the administrative role on its synthetic principal, attributed to its own source, and confers nothing while the escape hatch is off or to an identity-provider session that merely shares the synthetic name.
+- [x] 2.5 Add SVC_GW_AUTH_0025–SVC_GW_AUTH_0028 to `docs/reqstool/software_verification_cases.yml` with GIVEN/WHEN/THEN covering the adversarial cases from section 7.
+- [x] 2.6 Revise GW_AUTH_0010's description and rationale: drop the configuration switch and the "defaults to off with every authorization check passing" clause; the rationale's compatibility argument is replaced by the bootstrap refusal (cross-reference GW_AUTH_0026). Bump `revision`.
+- [x] 2.7 Revise GW_AUTH_0013: drop "while enforcement is enabled" and the "whether enforcement is enabled" clause of the session identity endpoint. Bump `revision`.
+- [x] 2.8 Revise GW_AUTH_0023: drop the "once role enforcement is enabled" and "whether or not role enforcement is enabled" qualifiers while keeping the substance (scope ∧ role; the administrative role for minting, listing and revoking). Bump `revision`.
+- [x] 2.9 Revise GW_AUTH_0022: drop the closing sentence "This enforcement shall not depend on whether role enforcement is enabled" and the rationale sentence that leans on the default-off flag. Bump `revision`.
+- [x] 2.10 Revise SVC_GW_AUTH_0010 — remove the second, disabled gateway from GIVEN/WHEN/THEN. **Preserve the route-table completeness assertion in substance**: the no-role walk must still assert its route set complete against the running application's own route table (this is the armor named in `design.md` → Risks). Bump `revision`.
+- [x] 2.11 Revise SVC_GW_AUTH_0011, SVC_GW_AUTH_0012, SVC_GW_AUTH_0015, SVC_GW_AUTH_0022 and SVC_GW_AUTH_0023 to drop "role enforcement enabled/disabled" preconditions, which are no longer variables. Bump each `revision`.
 - [x] 2.12 Run `reqstool status local -p docs/reqstool` and confirm the new ids are registered and unimplemented (expected FAIL at this point; note reqstool prints FAIL but exits 0).
 
 ## 3. Verify no id collision
 
-- [x] 3.1 Confirm GW_0132–GW_0137 and their SVCs are still claimed by the in-flight change `fix-discarded-ref-update-results` and that nothing in this branch uses them; confirm GW_0138–GW_0141 are unused anywhere in `docs/reqstool/`, `openspec/` or `src/`.
+- [x] 3.1 Confirm GW_FACADE_0015–GW_INGEST_0018 and their SVCs are still claimed by the in-flight change `fix-discarded-ref-update-results` and that nothing in this branch uses them; confirm GW_AUTH_0025–GW_AUTH_0028 are unused anywhere in `docs/reqstool/`, `openspec/` or `src/`.
 
 ## 4. RED — prove every new test fails first (old-coder RED)
 
 Each checkbox is one observed failing run, recorded in `evidence.md` with the
 command and the failure tail. Tests written here, implementation in 5–6.
 
-- [x] 4.1 Write `RolesAlwaysEnforcedTests` (SVC_GW_0138): a no-role OIDC session is refused on every mutation and on the audit surface with **no** `skills-gateway.roles.enabled` present anywhere. Observe it fail against the current default-off code.
-- [x] 4.2 Write `RoleBootstrapGuardTests` (SVC_GW_0139): a context with no `roles.admins`, no `admin` claim mapping and no declared `admin` estate grant refuses to start, and the refusal text names all three paths plus the escape hatch. Observe failure (today it starts).
+- [x] 4.1 Write `RolesAlwaysEnforcedTests` (SVC_GW_AUTH_0025): a no-role OIDC session is refused on every mutation and on the audit surface with **no** `skills-gateway.roles.enabled` present anywhere. Observe it fail against the current default-off code.
+- [x] 4.2 Write `RoleBootstrapGuardTests` (SVC_GW_AUTH_0026): a context with no `roles.admins`, no `admin` claim mapping and no declared `admin` estate grant refuses to start, and the refusal text names all three paths plus the escape hatch. Observe failure (today it starts).
 - [x] 4.3 Write the three positive bootstrap cases in the same class — `roles.admins` non-empty, an `admin` claim mapping, a declared `admin` estate grant — each starting cleanly. Observe failure.
-- [x] 4.4 Write `RemovedRolesPropertyTests` (SVC_GW_0140): a context setting `skills-gateway.roles.enabled=false` refuses to start naming the removal; the same for `=true`; the same for the relaxed environment form `SKILLSGATEWAY_ROLES_ENABLED`. Observe failure.
-- [x] 4.5 Extend `DevAuthTests` (SVC_GW_0141): under `dev-insecure-auth=true` the `dev` principal performs an administrative mutation and `/api/me` reports admin with source `dev-insecure-auth`. Observe failure.
-- [x] 4.6 Write the two adversarial cases for GW_0141: (a) with `dev-insecure-auth` off, a principal named `dev` holds nothing and is refused; (b) an `OidcUser` whose name is `dev` holds nothing from the escape-hatch path. Observe both fail.
+- [x] 4.4 Write `RemovedRolesPropertyTests` (SVC_GW_AUTH_0027): a context setting `skills-gateway.roles.enabled=false` refuses to start naming the removal; the same for `=true`; the same for the relaxed environment form `SKILLSGATEWAY_ROLES_ENABLED`. Observe failure.
+- [x] 4.5 Extend `DevAuthTests` (SVC_GW_AUTH_0028): under `dev-insecure-auth=true` the `dev` principal performs an administrative mutation and `/api/me` reports admin with source `dev-insecure-auth`. Observe failure.
+- [x] 4.6 Write the two adversarial cases for GW_AUTH_0028: (a) with `dev-insecure-auth` off, a principal named `dev` holds nothing and is refused; (b) an `OidcUser` whose name is `dev` holds nothing from the escape-hatch path. Observe both fail.
 - [x] 4.7 Write the adversarial bootstrap-skip case: `dev-insecure-auth=true` **plus** a configured identity provider still refuses to start (the existing `DevInsecureAuthGuard` refusal must win, and the bootstrap skip must not open a path around it). Observe the current behaviour and record whether this is pre-existing armor kept as regression cover — if it passes immediately, break `DevInsecureAuthGuard` with a throwaway mutant, watch it fail, restore, and record that in `evidence.md`.
-- [x] 4.8 Add `@SVCs` annotations to each test method written above: `SVC_GW_0138`, `SVC_GW_0139`, `SVC_GW_0140`, `SVC_GW_0141`. Test method names stay snake_case identifiers.
+- [x] 4.8 Add `@SVCs` annotations to each test method written above: `SVC_GW_AUTH_0025`, `SVC_GW_AUTH_0026`, `SVC_GW_AUTH_0027`, `SVC_GW_AUTH_0028`. Test method names stay snake_case identifiers.
 
 ## 5. GREEN — remove the property (old-coder GREEN)
 
 - [x] 5.1 `SkillsGatewayProperties.Roles`: delete the `enabled` component and its compact-constructor default; update the record javadoc — it currently documents the default-off rationale that no longer exists.
 - [x] 5.2 `RoleService`: delete `enabled()` and the `if (!enabled()) return;` prologue from `requireAdmin`, `requireAuditor`, `requireApprover` and `requireApproverOf`; rewrite the class javadoc (it documents the default-off consequence).
-- [x] 5.3 `RoleService`: collapse `requireAdminRegardlessOfEnforcement` into `requireAdmin` and delete the method; keep its `@Requirements({"GW_0130"})` coverage by annotating `requireAdmin` with `GW_0068`, `GW_0130` and `GW_0138`.
+- [x] 5.3 `RoleService`: collapse `requireAdminRegardlessOfEnforcement` into `requireAdmin` and delete the method; keep its `@Requirements({"GW_AUTH_0023"})` coverage by annotating `requireAdmin` with `GW_AUTH_0010`, `GW_AUTH_0023` and `GW_AUTH_0025`.
 - [x] 5.4 Update the callers in `MachineTokenController` (mint, list, revoke) to `requireAdmin`.
-- [x] 5.5 Add `@Requirements({"GW_0138"})` to the `require*` methods that now carry unconditional enforcement.
-- [x] 5.6 `ClaimRoleMapper`: update the javadoc sentence about the `dev-insecure-auth` principal to state the new interaction (it derives nothing from claims, and its admin role comes from `RoleService`, GW_0141).
+- [x] 5.5 Add `@Requirements({"GW_AUTH_0025"})` to the `require*` methods that now carry unconditional enforcement.
+- [x] 5.6 `ClaimRoleMapper`: update the javadoc sentence about the `dev-insecure-auth` principal to state the new interaction (it derives nothing from claims, and its admin role comes from `RoleService`, GW_AUTH_0028).
 - [x] 5.7 `SecurityConfig`: remove the javadoc sentences on the machine chain and the web chain that explain why they do not consult `skills-gateway.roles.enabled`.
 - [x] 5.8 Grep `src/` for any remaining `roles.enabled`, `rolesEnabled`, `enabled()` on `Roles`, or `RegardlessOfEnforcement` and confirm zero hits outside the removed-property guard.
 
 ## 6. GREEN — the two startup refusals and the dev principal
 
 - [x] 6.1 Add the guard bean in `dev.skillsgateway.server.roles` (same package as `RoleService`, sibling in spirit to `DevInsecureAuthGuard`), constructor-injected with `SkillsGatewayProperties` and `Environment`, throwing `IllegalStateException` from its constructor.
-- [x] 6.2 Implement the removed-property refusal (GW_0140): `Environment.containsProperty("skills-gateway.roles.enabled")` — which resolves the relaxed and environment-variable forms — with a message naming the removal, the release, and that enforcement is now unconditional. Annotate `@Requirements({"GW_0140"})`.
-- [x] 6.3 Implement the bootstrap refusal (GW_0139): satisfied by a non-empty `roles.admins`, any `roles.mappings[*]` with `role: admin`, or any `estate.grants[*]` with `role: admin`; skipped when `devInsecureAuth()` is true. No database access. Annotate `@Requirements({"GW_0139"})`.
+- [x] 6.2 Implement the removed-property refusal (GW_AUTH_0027): `Environment.containsProperty("skills-gateway.roles.enabled")` — which resolves the relaxed and environment-variable forms — with a message naming the removal, the release, and that enforcement is now unconditional. Annotate `@Requirements({"GW_AUTH_0027"})`.
+- [x] 6.3 Implement the bootstrap refusal (GW_AUTH_0026): satisfied by a non-empty `roles.admins`, any `roles.mappings[*]` with `role: admin`, or any `estate.grants[*]` with `role: admin`; skipped when `devInsecureAuth()` is true. No database access. Annotate `@Requirements({"GW_AUTH_0026"})`.
 - [x] 6.4 Write the refusal text following `design.md`'s draft and `DevInsecureAuthGuard`'s shape: what was detected, why it matters, each way to resolve it, property names in full.
-- [x] 6.5 `RoleService`: add the `EffectiveRole` source constant `dev-insecure-auth` and contribute a global `admin` role for the synthetic principal while `devInsecureAuth()` is true — only for a non-`OidcUser` principal whose name is exactly the synthetic name. Annotate `@Requirements({"GW_0141"})`. Extend the `@Schema(allowableValues=...)` on `EffectiveRole.source`.
+- [x] 6.5 `RoleService`: add the `EffectiveRole` source constant `dev-insecure-auth` and contribute a global `admin` role for the synthetic principal while `devInsecureAuth()` is true — only for a non-`OidcUser` principal whose name is exactly the synthetic name. Annotate `@Requirements({"GW_AUTH_0028"})`. Extend the `@Schema(allowableValues=...)` on `EffectiveRole.source`.
 - [x] 6.6 Run the full Java suite; every test from section 4 goes green and nothing else regresses.
 
 ## 7. REFACTOR and adversarial hardening (old-coder REFACTOR)
 
 - [x] 7.1 Under green, with assertions frozen: tidy the guard, extract the bootstrap-path predicate, and confirm the suite is green before and after.
-- [x] 7.2 Replace `RolesDisabledTests` (currently carrying SVC_GW_0068) — the state it verifies no longer exists. Its SVC coverage moves to the revised SVC_GW_0068 walk in `RoleEnforcementTests`; the class is deleted only once that coverage is in place and observed. Never leave SVC_GW_0068 uncovered.
-- [x] 7.3 Replace `ClaimRolesDisabledTests` (SVC_GW_0098) the same way: the "mappings are reported but enforce nothing while the switch is off" case is replaced by a case asserting mappings enforce, folded into `ClaimRoleMappingTests` under SVC_GW_0098.
+- [x] 7.2 Replace `RolesDisabledTests` (currently carrying SVC_GW_AUTH_0010) — the state it verifies no longer exists. Its SVC coverage moves to the revised SVC_GW_AUTH_0010 walk in `RoleEnforcementTests`; the class is deleted only once that coverage is in place and observed. Never leave SVC_GW_AUTH_0010 uncovered.
+- [x] 7.3 Replace `ClaimRolesDisabledTests` (SVC_GW_AUTH_0015) the same way: the "mappings are reported but enforce nothing while the switch is off" case is replaced by a case asserting mappings enforce, folded into `ClaimRoleMappingTests` under SVC_GW_AUTH_0015.
 - [x] 7.4 `AbstractGatewayTest`: add `skills-gateway.roles.admins=user` so the default `oidcLogin()` principal can administer, with a comment explaining why (the bootstrap check, and that negative suites override it). Verify Spring's subclass `@TestPropertySource` override still lets `RoleEnforcementTests` (`admins=root`) and the other role suites win.
 - [x] 7.5 Drop `skills-gateway.roles.enabled` from the `@TestPropertySource` of `RoleEnforcementTests`, `ClaimRoleMappingTests`, `EstateReconciliationTests`, `MachineRoleIntersectionTests`, `MachineApiScopeTests`, `RolesDisabledTests` and `ClaimRolesDisabledTests` (the last two as part of 7.2/7.3).
-- [x] 7.6 Update `MachineApiScopeTests` / `SVC_GW_0129` coverage: the walk that ran "with role enforcement disabled" now runs under enforcement with an explicitly admin-roled principal, so the assertion stays "no scope reaches an excluded endpoint" rather than becoming "no role does".
-- [x] 7.7 Re-run the SVC_GW_0068 route-table completeness walk and confirm it still fails when a `require*` call is deliberately removed from one controller method (throwaway mutant, restored) — this is the check that the section 7.4 base-class admin has not blunted the suite. Record it in `evidence.md`.
+- [x] 7.6 Update `MachineApiScopeTests` / `SVC_GW_AUTH_0022` coverage: the walk that ran "with role enforcement disabled" now runs under enforcement with an explicitly admin-roled principal, so the assertion stays "no scope reaches an excluded endpoint" rather than becoming "no role does".
+- [x] 7.7 Re-run the SVC_GW_AUTH_0010 route-table completeness walk and confirm it still fails when a `require*` call is deliberately removed from one controller method (throwaway mutant, restored) — this is the check that the section 7.4 base-class admin has not blunted the suite. Record it in `evidence.md`.
 
 ## 8. API and portal
 
@@ -90,7 +90,7 @@ command and the failure tail. Tests written here, implementation in 5–6.
 ## 9. e2e and local run
 
 - [x] 9.1 `src/main/frontend/e2e/run-e2e.sh`: remove `SKILLSGATEWAY_ROLES_ENABLED=true`; keep `SKILLSGATEWAY_ROLES_CLAIM` and the `sg-gateway-admins → admin` mapping, and add a comment that the mapping is now what satisfies the bootstrap check, so removing it turns into a startup refusal.
-- [x] 9.2 Add or adjust one e2e assertion (`@SVCs SVC_GW_0138`, snake_case test title) proving a real login through the mock IdP reaches the admin surface and that `/api/me` no longer carries `rolesEnabled`.
+- [x] 9.2 Add or adjust one e2e assertion (`@SVCs SVC_GW_AUTH_0025`, snake_case test title) proving a real login through the mock IdP reaches the admin surface and that `/api/me` no longer carries `rolesEnabled`.
 - [x] 9.3 Verify the documented local loop still works: `bootRun` with `skills-gateway.dev-insecure-auth=true` starts (bootstrap check skipped) and the `dev` principal can perform an administrative mutation in the portal.
 
 ## 10. Helm chart

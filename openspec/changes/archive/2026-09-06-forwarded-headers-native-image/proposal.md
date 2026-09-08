@@ -19,8 +19,8 @@ Issue [#272](https://github.com/skillsgateway/skillsgateway/issues/272).
 
 ## What Changes
 
-- **`GW_0163 — Proxy-reported scheme and host are honoured only when
-  configured, identically on every packaging`**, with SVC_GW_0163. The gateway
+- **`GW_AUTH_0029 — Proxy-reported scheme and host are honoured only when
+  configured, identically on every packaging`**, with SVC_GW_AUTH_0029. The gateway
   registers the `ForwardedHeaderFilter` itself, unconditionally, and enables it
   at runtime when `server.forward-headers-strategy` is `framework`. Spring's
   property keeps Spring's meanings — `none`, `native`, `framework` — and now

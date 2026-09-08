@@ -8,7 +8,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
- * The manifest gate over whole manifests (GW_0152), exercised without a database or a Spring
+ * The manifest gate over whole manifests (GW_INGEST_0021), exercised without a database or a Spring
  * context so the invariant can be stated as a property of the function rather than of one wiring.
  *
  * <p>The invariant under test is the one that keeps threat T4 closed while external source support
@@ -41,14 +41,14 @@ class ManifestPolicyTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0152"})
+    @SVCs({"SVC_GW_INGEST_0021"})
     void a_local_only_manifest_passes_the_gate() {
         assertThat(validate(policy(true, 20), manifest("{\"name\":\"hello\",\"source\":\"./plugins/hello\"}")))
                 .isNull();
     }
 
     @Test
-    @SVCs({"SVC_GW_0152"})
+    @SVCs({"SVC_GW_INGEST_0021"})
     void an_admitted_source_is_still_a_violation_and_reads_differently_from_a_refusal() {
         String notAdmitted = validate(policy(false, 20), manifest(github("tools", "acme/tools")));
         String admitted = validate(policy(true, 20), manifest(github("tools", "acme/tools")));
@@ -64,7 +64,7 @@ class ManifestPolicyTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0151"})
+    @SVCs({"SVC_GW_INGEST_0020"})
     void the_max_sources_bound_is_reached_through_a_whole_manifest() {
         String tooMany = manifest(github("a", "acme/a"), github("b", "acme/b"), github("c", "acme/c"));
 
@@ -74,7 +74,7 @@ class ManifestPolicyTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0152"})
+    @SVCs({"SVC_GW_INGEST_0021"})
     void a_manifest_the_gate_cannot_read_is_a_violation_whatever_the_configuration() {
         for (boolean enabled : new boolean[] {false, true}) {
             ManifestPolicy policy = policy(enabled, 20);

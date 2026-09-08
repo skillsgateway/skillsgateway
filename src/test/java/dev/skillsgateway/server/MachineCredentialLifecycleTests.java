@@ -23,7 +23,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.OidcLoginRequestPostProcessor;
 
 /**
- * Issuance and lifecycle (GW_0126, GW_0131). Every rule here is a refusal rather than a default,
+ * Issuance and lifecycle (GW_AUTH_0020, GW_AUTH_0024). Every rule here is a refusal rather than a default,
  * because every default this surface could offer produces a weaker credential than the caller
  * asked for — and the never-expiring credential in a pipeline variable is the failure mode the
  * whole capability would otherwise introduce.
@@ -35,7 +35,7 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
 
     /**
-     * Provisioning requires the admin role whether or not role enforcement is enabled (GW_0130),
+     * Provisioning requires the admin role whether or not role enforcement is enabled (GW_AUTH_0023),
      * and this suite deliberately leaves enforcement at its default of <b>disabled</b> — the state
      * in which every other {@code require*} passes. A configuration-bootstrapped admin is the
      * session every call below uses; {@code MachineCredentialAdminTests} asserts the refusal for
@@ -65,7 +65,7 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0126"})
+    @SVCs({"SVC_GW_AUTH_0020"})
     void an_unknown_api_scope_is_refused_at_issue_time() throws Exception {
         // Misspelled: it must fail loudly, exactly as a fetch scope does, rather than silently
         // never matching anything.
@@ -77,7 +77,7 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0126"})
+    @SVCs({"SVC_GW_AUTH_0020"})
     void there_is_no_wildcard_and_an_empty_scope_list_grants_nothing() throws Exception {
         for (String wildcard : List.of("*", "all", "admin", "api")) {
             mockMvc.perform(post("/api/tokens/machine")
@@ -96,7 +96,7 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0131"})
+    @SVCs({"SVC_GW_AUTH_0024"})
     void issuance_without_an_expiry_is_refused_and_never_defaulted() throws Exception {
         mockMvc.perform(post("/api/tokens/machine")
                         .with(admin())
@@ -111,7 +111,7 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
      * never-expiring credential, spelled differently. This suite configures no cap.
      */
     @Test
-    @SVCs({"SVC_GW_0131"})
+    @SVCs({"SVC_GW_AUTH_0024"})
     void a_lifetime_beyond_the_built_in_cap_is_refused_rather_than_shortened() throws Exception {
         Instant aCentury = Instant.now().plus(365L * 100, ChronoUnit.DAYS);
 
@@ -141,7 +141,7 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0127"})
+    @SVCs({"SVC_GW_AUTH_0021"})
     void a_session_derived_credential_can_never_hold_an_api_scope() {
         // Enforced by the schema, not only by the one service method that mints them, so no
         // future call site can launder a browser session into a standing control-plane credential.
@@ -168,7 +168,7 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
      * feature could have, so the assertion is per scope value rather than "the list is equal".
      */
     @Test
-    @SVCs({"SVC_GW_0131"})
+    @SVCs({"SVC_GW_AUTH_0024"})
     void rotation_preserves_the_identity_the_deadline_and_every_api_scope_value() throws Exception {
         String principal = uniqueName("rotating");
         List<String> scopes = List.of("marketplaces:read", "estate:read", "policy:write");
@@ -200,7 +200,7 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0131"})
+    @SVCs({"SVC_GW_AUTH_0024"})
     void revocation_takes_effect_on_the_very_next_request() throws Exception {
         TokenService.IssuedToken machine = tokenService.createMachineCredential(
                 uniqueName("revoked"), "doomed", List.of("marketplaces:read"), soon(), "admin@example.invalid");
@@ -216,7 +216,7 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0131"})
+    @SVCs({"SVC_GW_AUTH_0024"})
     void the_administrative_listing_covers_every_machine_credential_and_leaves_own_tokens_alone() throws Exception {
         String principal = uniqueName("listed");
         tokenService.createMachineCredential(

@@ -14,9 +14,9 @@ Implementation commit: `38ea4277ef8328d291cfd0095defa0209c71337d`.
 
 | Requirement | Verifies | Test |
 | --- | --- | --- |
-| GW_0167 — SKILL.md conformance against a pinned Agent Skills specification | conformant skill passes; every required field missing or malformed is its own finding; unknown fields informational; no skills at all handled; hostile YAML refused as a finding; posture decides blocking; the pin is in the recorded chain identity | `SkillConformanceConnectorTests` (SVC_GW_0167), 15 tests |
-| GW_0167 | the connector in the real chain: advisory verdict does not block, findings are deterministic across runs, the run's chain identity names the pin | `SkillConformanceTests` (SVC_GW_0167), 3 tests |
-| GW_0167 | under `enforce`, the same defect blocks approval and is cleared only by an ordinary scoped, expiring waiver | `SkillConformanceEnforceTests` (SVC_GW_0167), 2 tests |
+| GW_INGEST_0028 — SKILL.md conformance against a pinned Agent Skills specification | conformant skill passes; every required field missing or malformed is its own finding; unknown fields informational; no skills at all handled; hostile YAML refused as a finding; posture decides blocking; the pin is in the recorded chain identity | `SkillConformanceConnectorTests` (SVC_GW_INGEST_0028), 15 tests |
+| GW_INGEST_0028 | the connector in the real chain: advisory verdict does not block, findings are deterministic across runs, the run's chain identity names the pin | `SkillConformanceTests` (SVC_GW_INGEST_0028), 3 tests |
+| GW_INGEST_0028 | under `enforce`, the same defect blocks approval and is cleared only by an ordinary scoped, expiring waiver | `SkillConformanceEnforceTests` (SVC_GW_INGEST_0028), 2 tests |
 
 ## The specification is pinned, and the pin is stated
 
@@ -141,7 +141,7 @@ $ (cd src/main/frontend && pnpm e2e)
 
 ```
 $ reqstool status local -p docs/reqstool
-  GW_0167             skills-gateway
+  GW_INGEST_0028             skills-gateway
 156/156 complete · 0 incomplete · PASS
 ```
 
@@ -163,9 +163,9 @@ Storybook/vitest runner wedge — did not occur.
 The only failing run in this change's history was an earlier, deliberate one:
 before the fixtures above were corrected, `./mvnw clean verify` failed on
 `VettingTests.aCleanPassRecordsTheCoverageItExamined` (the new connector's
-coverage summary did not use the word the GW_0143 ledger assertion looks for) and
+coverage summary did not use the word the GW_VETTING_0023 ledger assertion looks for) and
 on `ConnectorToggleTests.disabling_every_connector_leaves_a_run_blocked_not_clear`
 (a fourth connector was still running after the hardcoded three were switched
 off). Both were fixed by changing the new code and generalising the toggle test,
 never by relaxing an assertion — and they are useful evidence in their own right
-that the existing GW_0143 and GW_0149 tests genuinely constrain a new connector.
+that the existing GW_VETTING_0023 and GW_VETTING_0029 tests genuinely constrain a new connector.

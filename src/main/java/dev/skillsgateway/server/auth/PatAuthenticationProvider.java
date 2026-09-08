@@ -21,7 +21,7 @@ public class PatAuthenticationProvider implements AuthenticationProvider {
     }
 
     @Override
-    @Requirements({"GW_0012"})
+    @Requirements({"GW_AUTH_0003"})
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         Object credentials = authentication.getCredentials();
         if (credentials == null) {
@@ -34,8 +34,8 @@ public class PatAuthenticationProvider implements AuthenticationProvider {
                             UsernamePasswordAuthenticationToken.authenticated(
                                     accessToken.principal(), "n/a", List.of(new SimpleGrantedAuthority("ROLE_GIT")));
                     // The token rides with the authentication so the facade can enforce its
-                    // scopes (GW_0064) and the audit hook can attribute the fetch to it
-                    // (GW_0067) without a second lookup.
+                    // scopes (GW_AUTH_0006) and the audit hook can attribute the fetch to it
+                    // (GW_AUTH_0009) without a second lookup.
                     authenticated.setDetails(accessToken);
                     return (Authentication) authenticated;
                 })

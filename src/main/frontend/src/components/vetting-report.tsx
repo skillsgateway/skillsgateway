@@ -333,7 +333,7 @@ function WaiverList({ waivers }: { waivers: Waiver[] }) {
  * findings behind it, and which of those findings an accepted risk is currently suppressing.
  * Rendered before any approve/reject decision.
  *
- * @Requirements GW_0042, GW_0047
+ * @Requirements GW_VETTING_0005, GW_VETTING_0010
  */
 export function VettingReport({ snapshotId }: { snapshotId: number }) {
   const vetting = useSnapshotVetting(snapshotId);

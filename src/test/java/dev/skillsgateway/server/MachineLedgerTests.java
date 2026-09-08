@@ -19,13 +19,13 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * The ledger's explicit actor kind (GW_0128). The vocabulary existed before this column did — as
+ * The ledger's explicit actor kind (GW_AUDIT_0007). The vocabulary existed before this column did — as
  * three magic strings in the identity column, distinguishable only by string comparison against
  * values that also look like ordinary principals. What changes here is that no consumer compares
  * strings at all.
  */
 @TestPropertySource(
-        // Authorization is always enforced (GW_0138), so this suite names every principal it acts
+        // Authorization is always enforced (GW_AUTH_0025), so this suite names every principal it acts
         // as -- the human and each machine credential. The machine principals are fixed rather than
         // unique because this suite has its own context, and therefore its own database.
         properties = {
@@ -48,7 +48,7 @@ class MachineLedgerTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0128"})
+    @SVCs({"SVC_GW_AUDIT_0007"})
     void a_machine_credentials_entries_carry_its_actor_kind_its_name_and_its_credential_id() throws Exception {
         String principal = "ledger-machine";
         TokenService.IssuedToken machine = credential(principal, List.of("roles:read"));
@@ -65,7 +65,7 @@ class MachineLedgerTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0128"})
+    @SVCs({"SVC_GW_AUDIT_0007"})
     void the_ledger_separates_actor_kinds_without_string_parsing_or_a_join() throws Exception {
         String principal = "ledger-machine-kinds";
         TokenService.IssuedToken machine = credential(principal, List.of("roles:read"));
@@ -93,7 +93,7 @@ class MachineLedgerTests extends AbstractGatewayTest {
      * deleted. A join to {@code access_tokens} could not survive this.
      */
     @Test
-    @SVCs({"SVC_GW_0128"})
+    @SVCs({"SVC_GW_AUDIT_0007"})
     void a_ledger_row_still_reports_its_actor_after_the_credential_it_names_is_deleted() throws Exception {
         String principal = "ledger-ephemeral";
         TokenService.IssuedToken machine = credential(principal, List.of("roles:read"));
@@ -113,7 +113,7 @@ class MachineLedgerTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0128"})
+    @SVCs({"SVC_GW_AUDIT_0007"})
     void no_entry_a_machine_credential_produces_names_the_provisioning_human() throws Exception {
         String principal = "ledger-owned";
         TokenService.IssuedToken machine = credential(principal, List.of("roles:read"));
@@ -133,7 +133,7 @@ class MachineLedgerTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0128"})
+    @SVCs({"SVC_GW_AUDIT_0007"})
     void every_authorized_read_of_the_role_grants_writes_exactly_one_entry_of_its_own_kind() throws Exception {
         String principal = "ledger-reader";
         TokenService.IssuedToken machine = credential(principal, List.of("roles:read"));
@@ -165,7 +165,7 @@ class MachineLedgerTests extends AbstractGatewayTest {
      * permanent floor of self-referential rows.
      */
     @Test
-    @SVCs({"SVC_GW_0128"})
+    @SVCs({"SVC_GW_AUDIT_0007"})
     void a_machine_read_of_the_ledger_writes_no_entry() throws Exception {
         String principal = "ledger-exporter";
         TokenService.IssuedToken machine = credential(principal, List.of("audit:read"));
@@ -179,7 +179,7 @@ class MachineLedgerTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0128"})
+    @SVCs({"SVC_GW_AUDIT_0007"})
     void an_unauthorized_read_of_the_role_grants_writes_no_entry() throws Exception {
         String principal = uniqueName("unscoped-reader");
         // A machine credential scoped elsewhere: the allowlist refuses it before the controller.

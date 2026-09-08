@@ -2,8 +2,8 @@
 
 ## 1. Traceability (SSOT first)
 
-- [x] 1.1 Add GW_0049–GW_0055 to `docs/reqstool/requirements.yml`.
-- [x] 1.2 Add SVC_GW_0049–SVC_GW_0055 to `docs/reqstool/software_verification_cases.yml`.
+- [x] 1.1 Add GW_VETTING_0012–GW_VETTING_0018 to `docs/reqstool/requirements.yml`.
+- [x] 1.2 Add SVC_GW_VETTING_0012–SVC_GW_VETTING_0018 to `docs/reqstool/software_verification_cases.yml`.
 
 ## 2. Schema
 
@@ -48,7 +48,7 @@
       revokes, plus the exhaustive pure classification rule; blast radius excludes ref-only clients;
       the full ledger trail; retention's treatment of `revoked`.
 - [x] 6.3 Frontend: revoked snapshot shows its violation and who fetched it.
-- [x] 6.4 Playwright `SVC_GW_0055`: waive → approve → revoke waivers → re-vet → revoked, with the
+- [x] 6.4 Playwright `SVC_GW_VETTING_0018`: waive → approve → revoke waivers → re-vet → revoked, with the
       violation and the affected list on the page. E2E gateway runs in `enforce`.
 
 ## 7. Documentation

@@ -2,8 +2,8 @@
 
 ## ADDED Requirements
 
-### Requirement: GW_0130
-The system SHALL implement GW_0130.
+### Requirement: GW_AUTH_0023
+The system SHALL implement GW_AUTH_0023.
 
-#### Scenario: SVC_GW_0130
-The system SHALL pass SVC_GW_0130.
+#### Scenario: SVC_GW_AUTH_0023
+The system SHALL pass SVC_GW_AUTH_0023.

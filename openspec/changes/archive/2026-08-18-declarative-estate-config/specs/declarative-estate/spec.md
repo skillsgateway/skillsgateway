@@ -10,32 +10,32 @@ isolation.
 
 ## ADDED Requirements
 
-### Requirement: GW_0083
-The system SHALL implement GW_0083.
+### Requirement: GW_ESTATE_0001
+The system SHALL implement GW_ESTATE_0001.
 
-#### Scenario: SVC_GW_0083
-The system SHALL pass SVC_GW_0083.
+#### Scenario: SVC_GW_ESTATE_0001
+The system SHALL pass SVC_GW_ESTATE_0001.
 
-### Requirement: GW_0084
-The system SHALL implement GW_0084.
+### Requirement: GW_ESTATE_0002
+The system SHALL implement GW_ESTATE_0002.
 
-#### Scenario: SVC_GW_0084
-The system SHALL pass SVC_GW_0084.
+#### Scenario: SVC_GW_ESTATE_0002
+The system SHALL pass SVC_GW_ESTATE_0002.
 
-### Requirement: GW_0085
-The system SHALL implement GW_0085.
+### Requirement: GW_ESTATE_0003
+The system SHALL implement GW_ESTATE_0003.
 
-#### Scenario: SVC_GW_0085
-The system SHALL pass SVC_GW_0085.
+#### Scenario: SVC_GW_ESTATE_0003
+The system SHALL pass SVC_GW_ESTATE_0003.
 
-### Requirement: GW_0086
-The system SHALL implement GW_0086.
+### Requirement: GW_ESTATE_0004
+The system SHALL implement GW_ESTATE_0004.
 
-#### Scenario: SVC_GW_0086
-The system SHALL pass SVC_GW_0086.
+#### Scenario: SVC_GW_ESTATE_0004
+The system SHALL pass SVC_GW_ESTATE_0004.
 
-### Requirement: GW_0087
-The system SHALL implement GW_0087.
+### Requirement: GW_ESTATE_0005
+The system SHALL implement GW_ESTATE_0005.
 
-#### Scenario: SVC_GW_0087
-The system SHALL pass SVC_GW_0087.
+#### Scenario: SVC_GW_ESTATE_0005
+The system SHALL pass SVC_GW_ESTATE_0005.

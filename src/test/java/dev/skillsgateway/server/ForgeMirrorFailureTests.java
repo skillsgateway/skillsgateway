@@ -23,7 +23,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * The mirror failing, which is the case the whole design is arranged around (GW_0170, GW_0171).
+ * The mirror failing, which is the case the whole design is arranged around (GW_FACADE_0021, GW_FACADE_0022).
  *
  * <p>Its own context, pointed at a path that is not a repository, because "the mirror is broken" is
  * a property of a deployment rather than of a call: there is no way to break the mirror from inside
@@ -41,7 +41,7 @@ import org.springframework.test.context.TestPropertySource;
             "skills-gateway.mirror.max-attempts=2",
             "skills-gateway.mirror.retry-delay=10ms",
             "skills-gateway.mirror.timeout=2s",
-            // The recurring reconciliation (GW_0190) would keep attempting this deliberately broken
+            // The recurring reconciliation (GW_FACADE_0025) would keep attempting this deliberately broken
             // mirror underneath the walk, so the last attempt this suite reads would not be the one
             // it caused. Turned off for determinism, not to weaken anything: what is asserted here
             // is the approval, the revocation and the bytes the facade serves, all unchanged.
@@ -83,7 +83,7 @@ class ForgeMirrorFailureTests extends AbstractGatewayTest {
     private FetchLogRepository ledger;
 
     @Test
-    @SVCs({"SVC_GW_0170", "SVC_GW_0171", "SVC_GW_0172"})
+    @SVCs({"SVC_GW_FACADE_0021", "SVC_GW_FACADE_0022", "SVC_GW_FACADE_0023"})
     void a_mirror_that_cannot_be_pushed_to_changes_neither_the_decisions_nor_what_is_served() throws Exception {
         assertThat(mirror.enabled()).isTrue();
         Registered registered = registerAndIngest(

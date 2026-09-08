@@ -5,10 +5,10 @@
 - [x] 1.1 No new requirement ids: the change introduces no new required
       behaviour. Verified against `docs/reqstool/requirements.yml` and
       `origin/main`.
-- [x] 1.2 The new tests attach to the existing SVC_GW_0037 and SVC_GW_0125,
+- [x] 1.2 The new tests attach to the existing SVC_GW_VETTING_0001 and SVC_GW_FACADE_0009,
       both of which they genuinely verify a further case of.
 
-## 2. Part 4 — the N+1 in the vetting run read (GW_0037, SVC_GW_0037)
+## 2. Part 4 — the N+1 in the vetting run read (GW_VETTING_0001, SVC_GW_VETTING_0001)
 
 - [x] 2.1 RED: `VettingRunReadTests` asserts that reading a run issues a
       constant number of statements whatever the verdict count, and that
@@ -16,9 +16,9 @@
       Observed failing against the unfixed repository.
 - [x] 2.2 GREEN: `VettingRepository.verdicts` reads every finding of the run in
       one join query and groups in memory; `findings(long)` is removed.
-- [x] 2.3 `@SVCs({"SVC_GW_0037"})` on the new test.
+- [x] 2.3 `@SVCs({"SVC_GW_VETTING_0001"})` on the new test.
 
-## 3. Part 2 — spike `DataClassRowMapper`, then roll out (GW_0125, SVC_GW_0125)
+## 3. Part 2 — spike `DataClassRowMapper`, then roll out (GW_FACADE_0009, SVC_GW_FACADE_0009)
 
 - [x] 3.1 Spike on `MarketplaceRepository` answering the four questions from
       issue #314; results recorded in `design.md`.

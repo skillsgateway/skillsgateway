@@ -130,7 +130,7 @@ price of outsourcing **enforcement and audit**, which are the product — a
 forge-served repository makes the approval gate bypassable by anyone with
 repository write, and forge logs do not record per-user fetches. The two things
 a forge was wanted for are addressed at the gateway instead: **SSO-derived
-short-lived git credentials** (GW_0104, implemented) close the
+short-lived git credentials** (GW_AUTH_0018, implemented) close the
 second-credential-system gap without moving a fetch off the ledger, and a
 read-only **forge mirror for browsing** is sequenced after, never as a serving
 surface. Availability of the facade is now explicitly a security property, with
@@ -143,14 +143,14 @@ serving independent of ingestion.
 An operator can add their own vetting connector — an LLM reviewer, a sandbox, a
 corporate scanner — as **configuration** (`skills-gateway.vetting.external[*]`),
 not API-managed state, so every chain run stays attributable to the exact
-connector and version that produced it (GW_0049). It is a **synchronous** HTTP
+connector and version that produced it (GW_VETTING_0012). It is a **synchronous** HTTP
 participant in the existing chain: the gateway POSTs the snapshot bundle and reads
 back the normalized `{state, report-url, findings[]}`. The load-bearing half is
 **fail-closed** — an unreachable, slow, oversized, unparseable, unrecognised or
-partial answer is an `error` verdict that blocks, never a pass (GW_0145) — plus
+partial answer is an `error` verdict that blocks, never a pass (GW_VETTING_0025) — plus
 **worst-of** aggregation so an endpoint cannot pass content its own findings
-condemn (GW_0146). A `pending` answer is the **asynchronous seam** and blocks
-until resolved (GW_0147); the inbound resolution callback is deliberately a
+condemn (GW_VETTING_0026). A `pending` answer is the **asynchronous seam** and blocks
+until resolved (GW_VETTING_0027); the inbound resolution callback is deliberately a
 separate, sequenced piece of work.
 
 ### [ADR 0010 — Admin override of vetting automation (the cockpit model)](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0010-admin-override-of-vetting-automation.md)
@@ -161,10 +161,10 @@ The airline-cockpit principle applied to vetting: automation can be
 **disconnected by the captain**, deliberately and audibly. Two stances taken on
 purpose are narrowly reversed for **admin-only, audited** acts. An administrator
 may **enable or disable a built-in connector**, globally or per marketplace
-(GW_0149) — a disabled connector is recorded as a distinct `disabled` verdict
+(GW_VETTING_0029) — a disabled connector is recorded as a distinct `disabled` verdict
 (fail-loud) and disabling every connector still leaves a run **blocked**, never
 cleared. An administrator may also **approve a snapshot over a blocked outcome**
-(GW_0148) with a required reason — the override lifts only the vetting gate (the
+(GW_VETTING_0028) with a required reason — the override lifts only the vetting gate (the
 policy, release-age and four-eyes gates still run), writes a distinct
 `snapshot-approved-over-vetting-failure` ledger event, and marks the snapshot so
 it is never indistinguishable from a clean approval. The override does not
@@ -180,7 +180,7 @@ sources lands in increments — **admission** (a typed source model and a
 configuration gate, disabled by default) before **resolution** (fetching and
 rewriting into a gateway-local composite snapshot) — separated by a standing
 invariant: a snapshot is **held only when every plugin source it declares
-resolves inside the snapshot the gateway serves** (GW_0152), so T4 stays closed
+resolves inside the snapshot the gateway serves** (GW_INGEST_0021), so T4 stays closed
 for the whole reversal rather than reopening between increments. When the
 rewriter lands, snapshot identity becomes the **served composite SHA**, which is
 what leaves vetting, approval, the facade and retention unchanged by
@@ -252,10 +252,10 @@ plainly that an export is not a backup.
 *Proposed.* The first mitigation for T5 (typosquatting) needs a rule that can ask a
 question of the approved estate, which a vetting connector structurally cannot be
 allowed to ask. A chain run is a pure function of (pinned content, chain identity),
-and that is the entire answer to `GW_0049 — Continuous re-vetting of approved
+and that is the entire answer to `GW_VETTING_0012 — Continuous re-vetting of approved
 snapshots`. Recording a corpus watermark as a third input was weighed and rejected:
 the estate is not a temporal table, so the watermark would name a state the system
-cannot reconstruct — and reconstructing it from the ledger is the move `GW_0096 —
+cannot reconstruct — and reconstructing it from the ledger is the move `GW_APPROVAL_0010 —
 Four-eyes separation of duties on approval` already refused. A corpus rule inside
 the chain is also symmetric where the threat is not, so the first enforcing sweep
 over an estate that already contains collisions would revoke both sides of each.
@@ -296,5 +296,21 @@ record keyed by commit SHA. Exclusion is settled as **curation, not containment*
 — revocation stays the security control — and entitlement is identified as the
 gateway's **first per-identity deny on the facade** (token scopes are
 self-chosen, so they are not one), deferred until a deployment has two audiences.
-Multi-ref publication is ruled out of this issue: it re-decides `GW_0017 —
+Multi-ref publication is ruled out of this issue: it re-decides `GW_INGEST_0006 —
 Gateway-pinned ingestion ref` and needs its own ADR.
+
+### [ADR 0018 — Requirement ids carry a domain: `GW_<DOMAIN>_NNNN`, minted manually](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0018-domain-prefixed-requirement-ids.md)
+
+*Accepted, 2026-09-08.* Extends [issue #299](https://github.com/skillsgateway/skillsgateway/issues/299).
+Every requirement and SVC id gains a domain segment — `GW_INGEST_`, `GW_VETTING_`,
+`GW_AUTH_`, `GW_FACADE_`, `GW_APPROVAL_`, `GW_AUDIT_`, `GW_WEBHOOK_`,
+`GW_RETENTION_`, `GW_API_`, `GW_RELEASE_`, `GW_ESTATE_`, `GW_OBSERVABILITY_` —
+each keeping its own sequence, per the reqstool-conventions skill's
+domain-specific-prefix guidance. Renumbered wholesale rather than grown
+incrementally: the project is pre-`1.0.0`, no other branch had an open PR
+against `docs/reqstool/`, and every mention of an old id moved in the same
+change — the SSOT, every annotation, every doc, every ADR, and every archived
+and active OpenSpec change. Ids reserved and then abandoned, and provisional
+ids in still-unimplemented change proposals, were never real and stay as
+historical bare numbers. `.reqstool-ai.yaml` sets `req_prefix`/`svc_prefix`
+blank — ids are minted manually now, one domain sequence at a time.

@@ -8,7 +8,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 /**
- * The only wire between the gateway's enforcement acts and the mirror (GW_0170).
+ * The only wire between the gateway's enforcement acts and the mirror (GW_FACADE_0021).
  *
  * <p>It is one line, and the {@code catch} around it is the point. Spring's default multicaster
  * runs a listener on the publishing thread and lets its exceptions escape into the publisher, so
@@ -28,7 +28,7 @@ public class MirrorPublicationListener {
     }
 
     @EventListener
-    @Requirements({"GW_0169", "GW_0170", "GW_0171"})
+    @Requirements({"GW_FACADE_0020", "GW_FACADE_0021", "GW_FACADE_0022"})
     public void onServedContentChanged(ServedContentChangedEvent event) {
         try {
             mirror.reconcileLater(event.marketplace(), event.reason());

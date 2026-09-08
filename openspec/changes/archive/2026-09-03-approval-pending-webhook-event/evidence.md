@@ -80,9 +80,9 @@ fixtures and the compose infrastructure are untouched.
 ## Gate 4 — `reqstool status local -p docs/reqstool`
 
 ```
-  GW_0154             skills-gateway
-  GW_0159             skills-gateway
-  GW_0160             skills-gateway
+  GW_FACADE_0018             skills-gateway
+  GW_WEBHOOK_0006             skills-gateway
+  GW_WEBHOOK_0007             skills-gateway
 
 INCOMPLETE (0)
 149/149 complete · 0 incomplete · PASS

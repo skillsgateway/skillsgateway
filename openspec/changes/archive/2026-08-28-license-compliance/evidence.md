@@ -13,17 +13,17 @@ whose `src/`, `docs/reqstool/` and `docs/manual/` content for this capability is
 exactly what `a6b0567` landed. Tasks 1–4 were re-verified against the tree
 before running the gates:
 
-- `GW_0093`–`GW_0095` in `docs/reqstool/requirements.yml` and
-  `SVC_GW_0093`–`SVC_GW_0095` in `docs/reqstool/software_verification_cases.yml`
+- `GW_VETTING_0019`–`GW_VETTING_0021` in `docs/reqstool/requirements.yml` and
+  `SVC_GW_VETTING_0019`–`SVC_GW_VETTING_0021` in `docs/reqstool/software_verification_cases.yml`
 - `LicenseDetector`, `LicensePolicy`, `LicenseEvaluation`, `LicenseScanConnector`,
   `LicenseReportService` under `src/main/java/dev/skillsgateway/server/vetting/`,
-  carrying `@Requirements` for GW_0093–GW_0095
+  carrying `@Requirements` for GW_VETTING_0019–GW_VETTING_0021
 - `SkillsGatewayProperties.Vetting.License` (`allowed`, `banned`, both defaulting
   to empty)
 - `GET /api/snapshots/{id}/licenses` on `AdminController`, present in
   `src/main/frontend/openapi.json` and `types.gen.ts`
 - `LicenseTests` and `LicensePolicyTests` carrying `@SVCs` for
-  SVC_GW_0093–SVC_GW_0095
+  SVC_GW_VETTING_0019–SVC_GW_VETTING_0021
 - `VettingTests` derives its chain-position assertion from
   `vettingService.connectors()` rather than hard-coding two connectors
 - docs: `docs/manual/reference/configuration.md`,

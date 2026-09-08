@@ -33,7 +33,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
  * The enumerated columns are PostgreSQL types rather than {@code TEXT} with a {@code CHECK}
- * (GW_0125): the column carries the set, every value of it survives a write and a read through the
+ * (GW_FACADE_0009): the column carries the set, every value of it survives a write and a read through the
  * repository that owns it, and a value outside the set is refused by the database.
  *
  * <p>The refusal cases update no row on purpose ({@code WHERE id = -1}). PostgreSQL coerces the
@@ -92,7 +92,7 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
     private RoleGrantRepository roleGrantRepository;
 
     @Test
-    @SVCs({"SVC_GW_0125"})
+    @SVCs({"SVC_GW_FACADE_0009"})
     void every_enumerated_column_is_a_native_enum_type_carrying_exactly_its_value_set() {
         for (EnumColumn column : COLUMNS) {
             Map<String, Object> declared = jdbc.sql("SELECT data_type, udt_name FROM information_schema.columns"
@@ -120,7 +120,7 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0125"})
+    @SVCs({"SVC_GW_FACADE_0009"})
     void every_enumerated_column_refuses_a_value_outside_its_set() {
         for (EnumColumn column : COLUMNS) {
             assertThatThrownBy(() -> jdbc.sql("UPDATE " + column.table() + " SET " + column.column() + " = '"
@@ -133,7 +133,7 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0125"})
+    @SVCs({"SVC_GW_FACADE_0009"})
     void a_marketplace_origin_push_policy_and_sync_mode_round_trip() {
         Marketplace upstream = marketplaceRepository.register(
                 uniqueName("enum-up"),
@@ -165,14 +165,14 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
                     .isEqualTo(mode);
         }
 
-        // The table-level constraint that reads both enum columns still holds (GW_0101).
+        // The table-level constraint that reads both enum columns still holds (GW_FACADE_0006).
         assertThatThrownBy(() -> marketplaceRepository.updateSyncMode(hosted.name(), Marketplace.SYNC_SCHEDULED, null))
                 .isInstanceOf(DataAccessException.class)
                 .hasMessageContaining("marketplaces_hosted_is_on_demand");
     }
 
     @Test
-    @SVCs({"SVC_GW_0125"})
+    @SVCs({"SVC_GW_FACADE_0009"})
     void every_snapshot_state_round_trips() {
         Marketplace marketplace = marketplaceRepository.register(uniqueName("enum-snap"), "file:///upstream");
         for (String state : List.of(Snapshot.HELD, Snapshot.APPROVED, Snapshot.REJECTED, Snapshot.REVOKED)) {
@@ -184,7 +184,7 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0125"})
+    @SVCs({"SVC_GW_FACADE_0009"})
     void every_webhook_delivery_state_round_trips() {
         WebhookSubscriber subscriber =
                 webhookSubscriberRepository.create(uniqueName("enum-sub"), "http://localhost/hook", "secret", "*");
@@ -209,7 +209,7 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0125"})
+    @SVCs({"SVC_GW_FACADE_0009"})
     void the_audit_sink_kind_round_trips() {
         WebhookSubscriber subscriber =
                 webhookSubscriberRepository.create(uniqueName("enum-sink-sub"), "http://localhost/hook", "s", "*");
@@ -225,7 +225,7 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0125"})
+    @SVCs({"SVC_GW_FACADE_0009"})
     void every_vetting_outcome_verdict_state_and_severity_round_trips() {
         Marketplace marketplace = marketplaceRepository.register(uniqueName("enum-vet"), "file:///upstream");
         Snapshot snapshot = snapshotRepository.create(marketplace.id(), "sha-vetting", Snapshot.HELD, null, null);
@@ -254,7 +254,7 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0125"})
+    @SVCs({"SVC_GW_FACADE_0009"})
     void every_waiver_scope_round_trips() {
         Marketplace marketplace = marketplaceRepository.register(uniqueName("enum-waiver"), "file:///upstream");
         for (WaiverScope scope : WaiverScope.values()) {
@@ -273,7 +273,7 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0125"})
+    @SVCs({"SVC_GW_FACADE_0009"})
     void every_role_grant_role_round_trips() {
         Marketplace marketplace = marketplaceRepository.register(uniqueName("enum-role"), "file:///upstream");
         String principal = uniqueName("enum-principal");

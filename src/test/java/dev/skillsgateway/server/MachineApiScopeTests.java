@@ -20,7 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
- * Scopes and the allowlist (GW_0129), with role enforcement at its <b>default of disabled</b> —
+ * Scopes and the allowlist (GW_AUTH_0022), with role enforcement at its <b>default of disabled</b> —
  * the state in which every {@code require*} check passes. That is deliberate and is the trap this
  * change exists to avoid: if scope enforcement consulted that flag, a machine credential would
  * inherit "everything passes" under a default nobody set.
@@ -30,7 +30,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
  * registry holds.
  */
 // The scope walk holds the administrative role, so every refusal it observes is the scope
-// allowlist's and never a missing role (GW_0138, SVC_GW_0129). "scope-walk-machine" is named for
+// allowlist's and never a missing role (GW_AUTH_0025, SVC_GW_AUTH_0022). "scope-walk-machine" is named for
 // the whole family in AbstractNamedAdminsTest.
 class MachineApiScopeTests extends AbstractNamedAdminsTest {
 
@@ -39,7 +39,7 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
 
     /**
      * One named principal for every credential this suite mints, so the class can grant it the
-     * administrative role (GW_0138). The walk is about scopes, not roles: holding admin is what
+     * administrative role (GW_AUTH_0025). The walk is about scopes, not roles: holding admin is what
      * makes a refusal here attributable to the scope allowlist and to nothing else.
      */
     private static final String MACHINE_PRINCIPAL = "scope-walk-machine";
@@ -74,7 +74,7 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0129"})
+    @SVCs({"SVC_GW_AUTH_0022"})
     void scope_enforcement_is_independent_of_the_role_the_principal_holds() throws Exception {
         // The credential's principal is an admin, so nothing but the allowlist and the scopes stand
         // between it and the endpoints it was not scoped for. Scope and role are separate gates and
@@ -94,7 +94,7 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
      * exists; this proves the granularity is real rather than decorative.
      */
     @Test
-    @SVCs({"SVC_GW_0129"})
+    @SVCs({"SVC_GW_AUTH_0022"})
     void each_scope_reaches_its_own_routes_and_is_refused_on_every_other_scopes_routes() throws Exception {
         for (String scope : MachineApiRegistry.scopes()) {
             String secret = credential(List.of(scope)).token();
@@ -121,7 +121,7 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0129"})
+    @SVCs({"SVC_GW_AUTH_0022"})
     void no_scope_implies_another() throws Exception {
         String writer = credential(List.of("policy:write")).token();
         // Writing policy rules does not confer reading them: implication chains are how coarse
@@ -137,7 +137,7 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0129"})
+    @SVCs({"SVC_GW_AUTH_0022"})
     void scopes_compose_additively_and_reach_exactly_the_union() throws Exception {
         String both = credential(List.of("marketplaces:read", "estate:read")).token();
 
@@ -156,7 +156,7 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
      * of privilege, and every credential-minting path including the ones this change added.
      */
     @Test
-    @SVCs({"SVC_GW_0129"})
+    @SVCs({"SVC_GW_AUTH_0022"})
     void a_credential_holding_every_scope_is_still_refused_on_every_unreachable_route() throws Exception {
         String all = credential(List.copyOf(MachineApiRegistry.scopes())).token();
 
@@ -176,7 +176,7 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
      * built around.
      */
     @Test
-    @SVCs({"SVC_GW_0129"})
+    @SVCs({"SVC_GW_AUTH_0022"})
     void the_load_bearing_exclusions_are_named_and_refused_one_by_one() throws Exception {
         String all = credential(List.copyOf(MachineApiRegistry.scopes())).token();
 
@@ -218,7 +218,7 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
      * other way.
      */
     @Test
-    @SVCs({"SVC_GW_0129"})
+    @SVCs({"SVC_GW_AUTH_0022"})
     void a_revet_is_reachable_and_leaves_the_snapshot_state_untouched() throws Exception {
         Registered fixture = registerAndIngest(uniqueName("revet"), createUpstream(DEFAULT_MANIFEST));
         long snapshotId = fixture.snapshot().id();
@@ -247,7 +247,7 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
      * soft-delete: {@code evaluate} deletes every candidate it finds, which retracts content.
      */
     @Test
-    @SVCs({"SVC_GW_0129"})
+    @SVCs({"SVC_GW_AUTH_0022"})
     void retention_candidates_is_reachable_while_evaluate_is_not() throws Exception {
         String reader = credential(List.of("retention:read")).token();
 

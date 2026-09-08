@@ -47,7 +47,7 @@ itself.
 
 ### Modified Capabilities
 
-- `snapshot-approval`: the gate gains an age precondition (GW_0073).
+- `snapshot-approval`: the gate gains an age precondition (GW_APPROVAL_0004).
 
 ## Impact
 
@@ -64,7 +64,7 @@ itself.
   snapshot row and in the approve dialog.
 - **Docs**: `reference/configuration.md`, `guides/approving-snapshots.md`,
   `concepts/vetting.md` cross-reference, ARCHITECTURE §5 note.
-- **Traceability**: GW_0073 + SVC_GW_0073.
+- **Traceability**: GW_APPROVAL_0004 + SVC_GW_APPROVAL_0004.
 - **Deferred**: per-marketplace and per-tier ages ride on #12 (CEL); an
   audited per-approval override is a separate change; auto-promotion (the
   eventual consumer of this window) stays out of scope.

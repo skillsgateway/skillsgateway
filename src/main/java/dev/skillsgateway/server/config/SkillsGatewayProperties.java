@@ -82,7 +82,7 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * The optional read-only forge mirror (GW_0169, GW_0170). Off by default, and off is the whole
+     * The optional read-only forge mirror (GW_FACADE_0020, GW_FACADE_0021). Off by default, and off is the whole
      * of an existing deployment's behaviour: nothing here is read until {@link #enabled} is true,
      * and the gateway contacts the mirror only when something it serves has changed or an
      * administrator asks for the drift report.
@@ -90,7 +90,7 @@ public record SkillsGatewayProperties(
      * <p>The mirror is a browsing convenience and never a serving surface (ADR 0008). Nothing about
      * approval, publication, revocation or what the facade serves may come to depend on it, which
      * is why there is no "wait for the push" or "fail the approval" knob here and why one cannot be
-     * added without contradicting GW_0170.
+     * added without contradicting GW_FACADE_0021.
      *
      * @param enabled whether approved content is mirrored at all; false is the shipped behaviour
      * @param marketplace the single marketplace this increment mirrors; required when enabled
@@ -103,7 +103,7 @@ public record SkillsGatewayProperties(
      * @param timeout how long one mirror operation may take before it is abandoned as failed
      * @param maxAttempts how many times one mirror update is attempted before it is left as drift
      * @param retryDelay how long to wait between those attempts
-     * @param sweepEnabled whether the recurring reconciliation runs (GW_0190). True by default, and
+     * @param sweepEnabled whether the recurring reconciliation runs (GW_FACADE_0025). True by default, and
      *     irrelevant while {@link #enabled} is false. It is on with the mirror because a mirror that
      *     tracks what is served only when an approval happens to occur — unless you also find and
      *     set a second flag — is a trap; the flag exists so that a suite seeding its own drift can
@@ -171,7 +171,7 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * Ingestion-time policy (GW_0151). Its one block today is external plugin sources; it exists as
+     * Ingestion-time policy (GW_INGEST_0020). Its one block today is external plugin sources; it exists as
      * a block of its own so the resolution and hardening knobs that follow have somewhere to land
      * that is not the top level.
      */
@@ -185,17 +185,17 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * Admission of plugin sources that live outside the marketplace repository (GW_0151). Every
+     * Admission of plugin sources that live outside the marketplace repository (GW_INGEST_0020). Every
      * default here is the behaviour that shipped before this block existed, so an absent block —
-     * which is every existing deployment — rejects external sources exactly as GW_0003 always did.
+     * which is every existing deployment — rejects external sources exactly as GW_INGEST_0003 always did.
      *
-     * <p>An enabled gateway resolves what it admits (GW_0155, GW_0156): the source is fetched into
+     * <p>An enabled gateway resolves what it admits (GW_INGEST_0023, GW_INGEST_0024): the source is fetched into
      * quarantine and grafted into a composite snapshot whose manifest is entirely gateway-local.
      * Enabling this therefore opens the gateway's only manifest-driven outbound network path, which
      * is what {@link #allowPrivateNetworks} and {@link #budgets} bound — and why the primary control
      * remains network egress isolation rather than anything in this block (ADR 0011).
      *
-     * @param enabled whether any external source may be admitted at all; false is GW_0003's
+     * @param enabled whether any external source may be admitted at all; false is GW_INGEST_0003's
      *     local-only behaviour
      * @param allowedTypes the source types an enabled gateway will consider. Only types something
      *     can resolve belong here, so the allowlist never advertises a form nothing implements
@@ -211,8 +211,8 @@ public record SkillsGatewayProperties(
      * @param allowPrivateNetworks whether a source may resolve to a loopback, RFC1918,
      *     carrier-grade-NAT or unique-local address. False is the default. It never permits a
      *     link-local address — the cloud metadata endpoint is link-local, and a development
-     *     topology that needs loopback must not unlock it as a side effect (GW_0157)
-     * @param budgets what one manifest may cost to resolve (GW_0158)
+     *     topology that needs loopback must not unlock it as a side effect (GW_INGEST_0025)
+     * @param budgets what one manifest may cost to resolve (GW_INGEST_0026)
      */
     public record ExternalSources(
             Boolean enabled,
@@ -252,7 +252,7 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * What resolving one manifest's external plugin sources may cost (GW_0158).
+     * What resolving one manifest's external plugin sources may cost (GW_INGEST_0026).
      *
      * <p>A git fetch is decompression of a stream the gateway did not create, so an unbounded
      * resolver turns any manifest the gateway will look at into a denial-of-service primitive
@@ -260,24 +260,24 @@ public record SkillsGatewayProperties(
      * stream that never ends, and the inflated bound and the ratio stop a stream that ends quickly
      * and expands enormously. Neither catches the other's case.
      *
-     * <p>One setting per sub-requirement of GW_0158, so a verdict on this budget says which bound
+     * <p>One setting per sub-requirement of GW_INGEST_0026, so a verdict on this budget says which bound
      * moved rather than only that some bound did.
      *
      * @param maxReceivedBytes bytes one source may send on the wire before the transfer is aborted
-     *     (GW_0158.1)
+     *     (GW_INGEST_0026.1)
      * @param maxInflatedBytes total size of one source's content once it is objects on disk
-     *     (GW_0158.2)
+     *     (GW_INGEST_0026.2)
      * @param maxClosureBytes the same, accumulated over every source one manifest declares
-     *     (GW_0158.3)
+     *     (GW_INGEST_0026.3)
      * @param maxInflationRatio inflated bytes per received byte, which is what a pack bomb maximises
-     *     (GW_0158.4)
-     * @param maxObjects blobs and trees one source may contribute (GW_0158.5)
-     * @param maxBlobBytes the largest single file one source may contribute (GW_0158.6)
+     *     (GW_INGEST_0026.4)
+     * @param maxObjects blobs and trees one source may contribute (GW_INGEST_0026.5)
+     * @param maxBlobBytes the largest single file one source may contribute (GW_INGEST_0026.6)
      * @param maxTreeDepth how deep a directory tree the gateway will accept, bounding every later
-     *     walk of the content as well as the fetch (GW_0158.7)
-     * @param maxRedirects redirect hops one request may take (GW_0157)
+     *     walk of the content as well as the fetch (GW_INGEST_0026.7)
+     * @param maxRedirects redirect hops one request may take (GW_INGEST_0025)
      * @param deadline wall-clock budget for resolving a whole manifest, so a resolution that is
-     *     slow rather than large still terminates (GW_0158.8)
+     *     slow rather than large still terminates (GW_INGEST_0026.8)
      */
     public record ResolutionBudgets(
             DataSize maxReceivedBytes,
@@ -322,7 +322,7 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * Which git storage backend holds the repositories, and how to reach it (GW_0111).
+     * Which git storage backend holds the repositories, and how to reach it (GW_FACADE_0010).
      *
      * <p>The backend is <em>named</em>, never inferred. An absent block is {@code filesystem},
      * which is what every existing deployment already has, so an upgrade changes nothing; an
@@ -334,7 +334,7 @@ public record SkillsGatewayProperties(
      * @param backend the named backend; null is {@link Backend#FILESYSTEM}
      * @param objectStore how to reach the bucket; required, and validated, only when the backend
      *     is {@link Backend#OBJECT_STORE}
-     * @param migration the one-shot offline copy between backends (GW_0114); off unless asked for
+     * @param migration the one-shot offline copy between backends (GW_FACADE_0013); off unless asked for
      */
     public record Storage(Backend backend, ObjectStore objectStore, Migration migration) {
 
@@ -351,7 +351,7 @@ public record SkillsGatewayProperties(
         }
 
         /**
-         * The one-shot offline copy from the configured backend into another one (GW_0114).
+         * The one-shot offline copy from the configured backend into another one (GW_FACADE_0013).
          *
          * <p>Both ends come from this same configuration: the source is whatever
          * {@code storage.backend} names, and {@code to} names the destination, so a migration and
@@ -512,7 +512,7 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * The declarative estate (GW_0083–GW_0087): marketplaces, role grants, webhook subscribers and
+     * The declarative estate (GW_ESTATE_0001–GW_ESTATE_0005): marketplaces, role grants, webhook subscribers and
      * audit export sinks defined as configuration and reconciled — additively, idempotently — at
      * startup and on demand. Everything here defaults to empty, and an empty declaration reconciles
      * nothing, so the block's absence is exactly today's behavior.
@@ -546,8 +546,8 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * A declared marketplace (GW_0084). There is deliberately no ref field: the ingested ref is the
-     * gateway's decision (GW_0017), so the declaration cannot express one.
+     * A declared marketplace (GW_ESTATE_0002). There is deliberately no ref field: the ingested ref is the
+     * gateway's decision (GW_INGEST_0006), so the declaration cannot express one.
      *
      * @param name gateway-local marketplace name, same rules as the API
      * @param url upstream clone URL; its scheme must be on the allowlist, and once registered it is
@@ -556,7 +556,7 @@ public record SkillsGatewayProperties(
      *     HMAC secret is gateway-generated show-once, which has no declarative form). Null means the
      *     stored mode is not managed and never touched. A hosted marketplace accepts only
      *     {@code on-demand}: its ingestion trigger is the push.
-     * @param origin {@code upstream} (the default) or {@code hosted} (GW_0101); a hosted marketplace
+     * @param origin {@code upstream} (the default) or {@code hosted} (GW_FACADE_0006); a hosted marketplace
      *     declares no url, and like a url the origin is immutable after registration
      * @param pushPolicy for a hosted marketplace, {@code append-only} (the default) or
      *     {@code allow-rewrite}
@@ -564,14 +564,14 @@ public record SkillsGatewayProperties(
     public record DeclaredMarketplace(String name, String url, String syncMode, String origin, String pushPolicy) {}
 
     /**
-     * A declared role grant (GW_0085), the exact shape of the grants API: approver grants name one
+     * A declared role grant (GW_ESTATE_0003), the exact shape of the grants API: approver grants name one
      * marketplace that must exist at reconcile time (declared here or API-registered); admin and
      * auditor grants must not name one.
      */
     public record DeclaredGrant(String principal, String role, String marketplace) {}
 
     /**
-     * A declared webhook subscriber (GW_0086). The signing secret is operator-supplied — reference
+     * A declared webhook subscriber (GW_ESTATE_0004). The signing secret is operator-supplied — reference
      * an environment variable ({@code ${...}}) rather than inlining a literal — and write-only:
      * never logged, never audited, never answered by any API. Changing the referenced value rotates
      * the stored secret idempotently.
@@ -581,7 +581,7 @@ public record SkillsGatewayProperties(
     public record DeclaredWebhook(String name, String url, String events, String secret) {}
 
     /**
-     * A declared audit export sink (GW_0086); the secret contract is {@link DeclaredWebhook}'s.
+     * A declared audit export sink (GW_ESTATE_0004); the secret contract is {@link DeclaredWebhook}'s.
      *
      * @param after ledger sequence the sink starts after — applied at creation only; the cursor is
      *     runtime progress and is never touched by a later reconciliation
@@ -590,7 +590,7 @@ public record SkillsGatewayProperties(
     public record DeclaredAuditSink(String name, String url, String secret, Long after, Integer batchSize) {}
 
     /**
-     * A declared CEL policy deny rule (GW_0089), reconciled through the same compiled, audited
+     * A declared CEL policy deny rule (GW_APPROVAL_0006), reconciled through the same compiled, audited
      * path as the policy API: an expression that does not compile to a boolean is an isolated
      * entry failure, never a stored rule.
      *
@@ -600,7 +600,7 @@ public record SkillsGatewayProperties(
     public record DeclaredPolicyRule(String name, String description, String expression, Boolean enabled) {}
 
     /**
-     * Delegated administration (GW_0068, GW_0071). {@code enabled=false} — the default — makes
+     * Delegated administration (GW_AUTH_0010, GW_AUTH_0013). {@code enabled=false} — the default — makes
      * every authorization check pass, so an upgrade never locks anyone out; a deployment stages
      * its grants and then opts in. {@code admins} are admins by configuration and cannot be
      * revoked through the API — the escape hatch that survives a bad grant edit.
@@ -620,7 +620,7 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * One identity-provider claim value granting one role (GW_0098). The value is the provider's
+     * One identity-provider claim value granting one role (GW_AUTH_0015). The value is the provider's
      * own — a group object id, an app-role value — so it is matched exactly and never by
      * convention; an {@code approver} mapping names the marketplace it is scoped to and the global
      * roles name none, which {@code ClaimRoleMapper} refuses to start without.
@@ -631,7 +631,7 @@ public record SkillsGatewayProperties(
     public record ClaimMapping(String claimValue, String role, String marketplace) {}
 
     /**
-     * Browser-login integrity beyond what the client registration expresses (GW_0100).
+     * Browser-login integrity beyond what the client registration expresses (GW_AUTH_0017).
      *
      * @param issuer the ID-token issuer to require. Null — the default, for compatibility — runs
      *     Spring Security's own checks only, which compare no issuer at all when the registration
@@ -641,11 +641,11 @@ public record SkillsGatewayProperties(
     public record Oidc(String issuer) {}
 
     /**
-     * Access-token policy (GW_0065).
+     * Access-token policy (GW_AUTH_0007).
      *
      * @param maxTtl the longest lifetime creation accepts; a request beyond it is refused, never
      *     silently clamped. Null — the default, for compatibility — accepts tokens with no expiry.
-     * @param sessionTtl what a session-derived credential is *granted* (GW_0104), as opposed to
+     * @param sessionTtl what a session-derived credential is *granted* (GW_AUTH_0018), as opposed to
      *     what a holder may ask for. Deliberately not derived from {@code maxTtl}: a deployment
      *     may allow year-long CI tokens and still want session credentials to die at lunchtime.
      */
@@ -655,7 +655,7 @@ public record SkillsGatewayProperties(
         public static final Duration DEFAULT_SESSION_TTL = Duration.ofHours(8);
 
         /**
-         * The cap a machine API credential is held to when {@code max-ttl} is unset (GW_0131).
+         * The cap a machine API credential is held to when {@code max-ttl} is unset (GW_AUTH_0024).
          *
          * <p>Ninety days: a quarter, which is short enough that a forgotten credential in a
          * pipeline variable expires within one planning cycle rather than outliving the service
@@ -682,7 +682,7 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * The global virtual catalog (GW_0061–GW_0063). {@code name} is reserved: registration
+     * The global virtual catalog (GW_FACADE_0003–GW_FACADE_0005). {@code name} is reserved: registration
      * refuses it, because the catalog occupies that facade path.
      *
      * @param enabled whether publications and revocations rebuild the catalog and the endpoints
@@ -702,7 +702,7 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * Upstream sync (GW_0056–GW_0059). {@code enabled=true} is safe on upgrade: the sweep only
+     * Upstream sync (GW_INGEST_0010–GW_INGEST_0013). {@code enabled=true} is safe on upgrade: the sweep only
      * touches marketplaces an operator has explicitly moved to {@code scheduled}, so a default
      * estate (all {@code on-demand}) sees no behavior change.
      *
@@ -733,7 +733,7 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * The vetting chain (GW_0037-GW_0043). There is deliberately no enable/disable switch: the
+     * The vetting chain (GW_VETTING_0001-GW_VETTING_0006). There is deliberately no enable/disable switch: the
      * chain is the approval gate's evidence, and an operator who could switch it off would be
      * switching off the record rather than the gate — a snapshot with no chain run is blocked
      * either way, so the only thing a kill switch would buy is a blocked estate with no findings.
@@ -743,23 +743,23 @@ public record SkillsGatewayProperties(
      * @param maxFileBytes files larger than this are handed to connectors as unread, and reported
      *     as an informational finding rather than skipped in silence
      * @param contentCacheBytes how much of a snapshot's content one chain run may hold so that the
-     *     connectors after the first read it instead of inflating it again (GW_0162). Past it
+     *     connectors after the first read it instead of inflating it again (GW_VETTING_0030). Past it
      *     content is re-read rather than kept, so this is a speed setting and never a coverage
      *     one. It is bounded rather than unlimited because the content is an upstream repository
      *     the gateway does not control.
-     * @param waiverSweepInterval how often lapsed waivers are noted in the ledger (GW_0048). This
+     * @param waiverSweepInterval how often lapsed waivers are noted in the ledger (GW_VETTING_0011). This
      *     knob cannot open a hole: a waiver stops suppressing its finding the moment the effective
      *     outcome is next computed, whether or not the sweep has run, so the interval only decides
      *     how promptly the lapse is announced.
      * @param waiverSweepBatchSize how many lapsed waivers one sweep pass records
      * @param minimumReleaseAge the cooling-off window a snapshot must clear before it can be
-     *     approved (GW_0073), measured from the instant the gateway first ingested its commit.
+     *     approved (GW_APPROVAL_0004), measured from the instant the gateway first ingested its commit.
      *     Zero — the default — disables the gate entirely, so an upgrade changes nothing. Like
      *     waiver expiry this is a comparison made per approval request, not a scheduled state, so
      *     the wait clears itself and no sweep can be late.
-     * @param revet continuous re-vetting of approved content (GW_0049-GW_0054)
-     * @param license the org-level license policy (GW_0094)
-     * @param conformance the posture of the built-in SKILL.md conformance connector (GW_0167)
+     * @param revet continuous re-vetting of approved content (GW_VETTING_0012-GW_VETTING_0017)
+     * @param license the org-level license policy (GW_VETTING_0020)
+     * @param conformance the posture of the built-in SKILL.md conformance connector (GW_INGEST_0028)
      */
     public record Vetting(
             Duration timeout,
@@ -804,7 +804,7 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * The posture of the built-in {@code skill-conformance} connector (GW_0167).
+     * The posture of the built-in {@code skill-conformance} connector (GW_INGEST_0028).
      *
      * <p>Defaults to advisory, and the default is the load-bearing part. A verdict covers a whole
      * snapshot, so a blocking default would let one malformed skill hold up every other skill in
@@ -815,7 +815,7 @@ public record SkillsGatewayProperties(
      *
      * <p>Like the license lists this is configuration rather than API-managed runtime state: it is
      * stamped into the connector's recorded version, so every run names the posture it ran under
-     * and a changed answer about unchanged content stays attributable (GW_0049).
+     * and a changed answer about unchanged content stays attributable (GW_VETTING_0012).
      *
      * @param enforce whether conformance defects block approval instead of warning
      */
@@ -829,11 +829,11 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * The organisation-level license policy (GW_0094), evaluated by the built-in license-scan
-     * vetting connector and reported by the per-snapshot license endpoint (GW_0095).
+     * The organisation-level license policy (GW_VETTING_0020), evaluated by the built-in license-scan
+     * vetting connector and reported by the per-snapshot license endpoint (GW_VETTING_0021).
      *
      * <p>Deliberately configuration rather than API-managed runtime state: vetting policy must be
-     * attributable per chain run (GW_0049), and a policy that changes only by deploy — its digest
+     * attributable per chain run (GW_VETTING_0012), and a policy that changes only by deploy — its digest
      * stamped into the connector's recorded version — keeps every run's chain identity naming the
      * policy it ran under. Both lists default to empty, under which identified licenses are
      * informational and unknown or missing licenses only warn, so an upgrade blocks nothing.
@@ -855,7 +855,7 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * Continuous re-vetting of already-approved content (GW_0049-GW_0051).
+     * Continuous re-vetting of already-approved content (GW_VETTING_0012-GW_VETTING_0014).
      *
      * <p>The two switches answer different questions and default differently on purpose.
      * {@code enabled} controls whether fresh <em>evidence</em> is produced, and defaults to true:
@@ -901,7 +901,7 @@ public record SkillsGatewayProperties(
         }
     }
 
-    /** What a re-vetting violation does to the snapshot it was found on (GW_0050, GW_0051). */
+    /** What a re-vetting violation does to the snapshot it was found on (GW_VETTING_0013, GW_VETTING_0014). */
     public enum RevetMode {
 
         /**
@@ -911,12 +911,12 @@ public record SkillsGatewayProperties(
          */
         WARN,
 
-        /** Revoke the snapshot and stop serving it (GW_0050). */
+        /** Revoke the snapshot and stop serving it (GW_VETTING_0013). */
         ENFORCE
     }
 
     /**
-     * The approval gate's own settings (GW_0097). Only the separation-of-duties rule lives here so
+     * The approval gate's own settings (GW_APPROVAL_0011). Only the separation-of-duties rule lives here so
      * far; the vetting, policy and cooling-off preconditions predate it and stay where they are.
      */
     public record Approval(FourEyes fourEyes) {
@@ -929,7 +929,7 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * Separation of duties on approval (GW_0096, GW_0097): whether a reviewer who is also the
+     * Separation of duties on approval (GW_APPROVAL_0010, GW_APPROVAL_0011): whether a reviewer who is also the
      * snapshot's ingestion actor, the marketplace's registrant, or the author of a waiver the
      * approval relies on may publish it.
      *
@@ -963,7 +963,7 @@ public record SkillsGatewayProperties(
         }
     }
 
-    /** What a detected four-eyes conflict does to the approval that raised it (GW_0097). */
+    /** What a detected four-eyes conflict does to the approval that raised it (GW_APPROVAL_0011). */
     public enum FourEyesMode {
 
         /**
@@ -979,12 +979,12 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * Snapshot retention (GW_0031–GW_0034). {@code enabled=false} — the default — stops both
+     * Snapshot retention (GW_RETENTION_0001–GW_RETENTION_0004). {@code enabled=false} — the default — stops both
      * scheduled passes: an upgrade never deletes anything until an operator opts in, while the
      * on-demand endpoints stay available for a dry run.
      *
      * <p>{@code stagingRefMaxAge} belongs to the compaction pass's sweep of publication staging
-     * references (GW_0168) rather than to any per-marketplace policy: it describes how long a
+     * references (GW_FACADE_0019) rather than to any per-marketplace policy: it describes how long a
      * publication may take, which is a property of the storage and the estate's snapshot sizes,
      * not of what any one marketplace is allowed to keep.
      */
@@ -1014,7 +1014,7 @@ public record SkillsGatewayProperties(
                 batchSize = 200;
             }
             // A day, because the only cost of being wrong upwards is disk and the cost of being
-            // wrong downwards is a publication losing its objects mid-flight (GW_0168). Nothing
+            // wrong downwards is a publication losing its objects mid-flight (GW_FACADE_0019). Nothing
             // needs it to be small: the reference reclaims nothing while it waits either way.
             if (stagingRefMaxAge == null) {
                 stagingRefMaxAge = Duration.ofHours(24);
@@ -1080,7 +1080,7 @@ public record SkillsGatewayProperties(
         }
     }
 
-    /** Audit ledger export (GW_0027–GW_0029); {@code enabled=false} stops the exporter poller only. */
+    /** Audit ledger export (GW_AUDIT_0003–GW_AUDIT_0005); {@code enabled=false} stops the exporter poller only. */
     public record AuditExport(
             Boolean enabled,
             Duration pollInterval,
@@ -1114,7 +1114,7 @@ public record SkillsGatewayProperties(
         }
     }
 
-    /** Outbound lifecycle webhook dispatch (GW_0025); {@code enabled=false} stops the poller only. */
+    /** Outbound lifecycle webhook dispatch (GW_WEBHOOK_0003); {@code enabled=false} stops the poller only. */
     public record Webhooks(
             Boolean enabled,
             Duration pollInterval,

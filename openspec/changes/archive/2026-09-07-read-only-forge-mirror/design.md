@@ -4,7 +4,7 @@
 
 - `ApprovalService.doApprove` is the only publication path: it decides the row,
   calls `GitStorage.publish`, rebuilds the catalog and returns. A publication
-  that fails puts the row back (GW_0133), so the method already has a
+  that fails puts the row back (GW_APPROVAL_0012), so the method already has a
   well-defined "the content is now served" point.
 - `RevetService.quarantine` is the only revocation path. It revokes the row
   first, conditionally on the snapshot still being approved, then calls
@@ -44,7 +44,7 @@
 ### 1. Asynchronous, and the reason is the requirement rather than latency
 
 A synchronous push would make an approval's success depend on a forge being up.
-That is not a performance objection, it is GW_0170 — *The mirror is never an
+That is not a performance objection, it is GW_FACADE_0021 — *The mirror is never an
 enforcement path* — and the failure mode it prevents is specific: an
 organisation that cannot approve content because a forge is down will turn the
 approval gate off long before it turns the mirror off.
@@ -76,7 +76,7 @@ reference in those namespaces that the served set no longer has.
 
 This is the load-bearing decision of the change, and it buys four things at once:
 
-- **Revocation propagates with no second code path** (GW_0171). A revoked
+- **Revocation propagates with no second code path** (GW_FACADE_0022). A revoked
   snapshot is a reference the served set no longer has, so the next
   reconciliation deletes it. There is no "unmirror" operation to get wrong.
 - **It is idempotent and self-healing.** A dropped, duplicated or reordered task

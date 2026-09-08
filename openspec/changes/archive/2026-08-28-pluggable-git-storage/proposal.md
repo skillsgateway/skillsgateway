@@ -70,7 +70,7 @@ first trial.
   object storage it becomes one atomic manifest transition rather than two
   independent ref deletions.
 - **A `none` persistence mode.** ~~The chart stops defaulting to ephemeral
-  storage~~ — **done by #134 (GW_0120)** while this was in review: the chart
+  storage~~ — **done by #134 (GW_FACADE_0008)** while this was in review: the chart
   already refuses to render without an explicit `persistence.mode`. What is left
   here is the third mode, `none`, valid only on `object-store`, for a deployment
   that keeps no durable volume because the bucket is the repository.
@@ -83,9 +83,9 @@ first trial.
   re-approving anything: an offline one-shot copy of quarantine, hosted and
   published repositories, verified by comparing the resolved ref sets before
   the old volume is discarded.
-- Requirements **GW_0111, GW_0112, GW_0114, GW_0115** with the matching SVCs.
+- Requirements **GW_FACADE_0010, GW_FACADE_0011, GW_FACADE_0013, GW_FACADE_0014** with the matching SVCs.
   GW_0113 was reserved for "deployment never defaults to storage that loses
-  served content" and is **dropped**: #134 landed exactly that as GW_0120 while
+  served content" and is **dropped**: #134 landed exactly that as GW_FACADE_0008 while
   this change was in review. The remaining ids are reserved here; their text
   lands in `docs/reqstool/requirements.yml` (the SSOT) with the implementation,
   as task 1 says.
@@ -104,7 +104,7 @@ first trial.
 
 - `release-packaging`: the chart must refuse a replica count the configured
   backend cannot support. (The "must not default to storage that loses served
-  content" half of this is already shipped as GW_0120.)
+  content" half of this is already shipped as GW_FACADE_0008.)
 
 ## Impact
 

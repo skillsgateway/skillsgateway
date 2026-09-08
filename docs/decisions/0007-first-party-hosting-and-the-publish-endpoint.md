@@ -48,7 +48,7 @@ Concretely:
 
 3. **Push authority is a separate token scope with no wildcard.** Where a fetch
    scope may be absent to mean *every marketplace* — the compatibility rule
-   GW_0064 kept for tokens that predate scoping — an absent push scope means
+   GW_AUTH_0006 kept for tokens that predate scoping — an absent push scope means
    *none*. Every token that exists today can publish nothing, and no token can
    ever be granted publication to everything by omission.
 

@@ -104,7 +104,7 @@
    say the source *was* admitted and cannot yet be resolved. Two distinct
    messages because two distinct operator actions: "enable the type" versus
    "this gateway cannot do that yet". When the resolver lands, that branch is the
-   single place it plugs into, and GW_0152 becomes structurally satisfied instead
+   single place it plugs into, and GW_INGEST_0021 becomes structurally satisfied instead
    of satisfied by refusal.
    *Alternative rejected:* letting an admitted source produce a `held` snapshot
    with the external URL still in the served manifest. That is a published
@@ -129,7 +129,7 @@
 skills-gateway:
   ingestion:
     external-sources:
-      enabled: false                     # default: GW_0003's local-only behaviour
+      enabled: false                     # default: GW_INGEST_0003's local-only behaviour
       allowed-types: [github]            # this increment implements github only
       allowed-hosts: []                  # empty = any host; non-empty = exact-host allowlist
       max-sources: 20                    # external sources per manifest
@@ -198,7 +198,7 @@ no SSRF surface yet to address.
 ## Migration Plan
 
 None. No schema change, no data migration, no API change. The default
-configuration reproduces current behaviour exactly, which is what SVC_GW_0003 —
+configuration reproduces current behaviour exactly, which is what SVC_GW_INGEST_0003 —
 unchanged — now also pins.
 
 ## Open Questions (Decisions to confirm)
@@ -210,9 +210,9 @@ unchanged — now also pins.
    already being walked. Confirm that rather than tightening the string form now.
 2. **`allowed-types` in this increment.** Defaulted to `[github]` since that is
    the only type the next increment will resolve. Should `git` and `git-subdir`
-   be listed as admissible now (and rejected by GW_0152 as unresolvable), or
+   be listed as admissible now (and rejected by GW_INGEST_0021 as unresolvable), or
    stay out of the allowlist until they can be resolved? Proposed: out, so the
    allowlist never advertises a type nothing implements.
-3. **Requirement id block.** GW_0150–GW_0152 claimed; GW_0149 is the highest in
+3. **Requirement id block.** GW_INGEST_0019–GW_INGEST_0021 claimed; GW_VETTING_0029 is the highest in
    `requirements.yml` and no open PR claims further ids. The issue's provisional
-   GW_0105+ block is superseded — those ids are taken.
+   GW_API_0002+ block is superseded — those ids are taken.

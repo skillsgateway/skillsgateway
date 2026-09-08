@@ -2,7 +2,7 @@ package dev.skillsgateway.server.webhook;
 
 import java.util.List;
 
-/** The snapshot lifecycle events a subscriber can filter on (GW_0023, GW_0053). */
+/** The snapshot lifecycle events a subscriber can filter on (GW_WEBHOOK_0001, GW_VETTING_0016). */
 public final class WebhookEvent {
 
     public static final String SNAPSHOT_INGESTED = "snapshot.ingested";
@@ -10,7 +10,7 @@ public final class WebhookEvent {
     public static final String SNAPSHOT_REJECTED = "snapshot.rejected";
 
     /**
-     * Retention deletions (GW_0032). They are lifecycle events like any other — the snapshot's
+     * Retention deletions (GW_RETENTION_0002). They are lifecycle events like any other — the snapshot's
      * vetting state is unchanged by them, so the payload keeps reporting held or rejected, and the
      * actor distinguishes an operator from the scheduled policy pass.
      */
@@ -19,14 +19,14 @@ public final class WebhookEvent {
     public static final String SNAPSHOT_RESTORED = "snapshot.restored";
 
     /**
-     * A vetting chain run finished (GW_0037). The payload reports the snapshot's own state, which
+     * A vetting chain run finished (GW_VETTING_0001). The payload reports the snapshot's own state, which
      * the chain never changes: what a receiver acts on is that fresh verdicts are now readable at
      * {@code /api/snapshots/{id}/vetting}.
      */
     public static final String SNAPSHOT_VETTED = "snapshot.vetted";
 
     /**
-     * A re-vetting run found a violation in a snapshot that is already approved (GW_0053) — the
+     * A re-vetting run found a violation in a snapshot that is already approved (GW_VETTING_0016) — the
      * retroactive one, the event that says content a team is already using has stopped being
      * acceptable.
      *
@@ -38,7 +38,7 @@ public final class WebhookEvent {
     public static final String SNAPSHOT_REVET_VIOLATION = "snapshot.revet_violation";
 
     /**
-     * A snapshot was retroactively quarantined and is no longer served (GW_0050, GW_0053). The
+     * A snapshot was retroactively quarantined and is no longer served (GW_VETTING_0013, GW_VETTING_0016). The
      * counterpart of {@link #SNAPSHOT_APPROVED}: the ref that was advertised is gone, so a
      * consumer's next fetch of that marketplace will fail rather than quietly serve old content.
      */
@@ -46,7 +46,7 @@ public final class WebhookEvent {
 
     /**
      * A chain run finished against a snapshot that is still held: it is waiting for a person
-     * (GW_0159). The event an external review pipeline subscribes to, and the reason it is not
+     * (GW_WEBHOOK_0006). The event an external review pipeline subscribes to, and the reason it is not
      * {@link #SNAPSHOT_VETTED} — that one fires for every run in every state, including runs
      * against content that is already approved, and says nothing about a pending decision.
      *
@@ -68,7 +68,7 @@ public final class WebhookEvent {
             SNAPSHOT_APPROVAL_PENDING);
 
     /**
-     * Event name carried by audit ledger export batches (GW_0028). Deliberately outside
+     * Event name carried by audit ledger export batches (GW_AUDIT_0004). Deliberately outside
      * {@link #ALL}: it is provisioned by creating an audit export sink, never by subscribing a
      * lifecycle receiver, and {@code WebhookService.emit} is never called with it — so not even a
      * {@code *} subscriber receives ledger content it did not ask for.

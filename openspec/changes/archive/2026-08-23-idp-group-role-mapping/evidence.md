@@ -72,7 +72,7 @@ Attempted against the finished implementation, all covered by tests:
   letter case, or an internal space — none grant anything.
 - A claim-derived approver reaching another marketplace by name, through a bare
   snapshot id, and through a bare waiver id — refused on all three, by the same
-  gateway-side resolution that carries SVC_GW_0069.
+  gateway-side resolution that carries SVC_GW_AUTH_0011.
 - A non-OIDC `Authentication` carrying `gw-admins` as a *granted authority*
   rather than a claim — derives nothing.
 - An OIDC session carrying the mapped values under a different claim name than
@@ -135,7 +135,7 @@ All twelve run against a gateway with `skills-gateway.roles.enabled=true` whose
 the suite passes only if claim-to-role mapping works end to end through a real
 login redirect. Test 12
 (`the_session_holds_an_admin_role_derived_from_the_identity_providers_group_claim`,
-`SVC_GW_0098`) names it explicitly by asserting `source: "claim"` on `/api/me`.
+`SVC_GW_AUTH_0015`) names it explicitly by asserting `source: "claim"` on `/api/me`.
 This is the stronger of the two arrangements `design.md` Decision 8 allowed;
 the fallback was not needed.
 

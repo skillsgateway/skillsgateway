@@ -2,11 +2,11 @@
 
 ## 1. Requirements (SSOT first)
 
-- [x] 1.1 Add GW_0072 (container image publication) to
+- [x] 1.1 Add GW_RELEASE_0002 (container image publication) to
       `docs/reqstool/requirements.yml` — GHCR publication by immutable digest,
       main + release tags, digest surfaced, SBOM attestation, publish only from
       push events after the smoke test.
-- [x] 1.2 Add SVC_GW_0072 to `docs/reqstool/software_verification_cases.yml`
+- [x] 1.2 Add SVC_GW_RELEASE_0002 to `docs/reqstool/software_verification_cases.yml`
       (verification: automated-test) — the workflow file carries the publish
       contract (image name, both tag channels, push-event gate, permissions,
       attestation step ordered after push).
@@ -27,10 +27,10 @@
 
 ## 3. Verification
 
-- [x] 3.1 Extend `PackagingTests` with SVC_GW_0072 assertions on native.yml:
+- [x] 3.1 Extend `PackagingTests` with SVC_GW_RELEASE_0002 assertions on native.yml:
       image name, `sha-`/`latest`/`v*` tag channels, publish steps gated on
       push events (never schedule/dispatch), required permissions present,
-      attestation step after push. Add `@SVCs("SVC_GW_0072")` /
+      attestation step after push. Add `@SVCs("SVC_GW_RELEASE_0002")` /
       `@Requirements` annotations. Prove the test fails against the
       pre-change workflow, then passes.
 

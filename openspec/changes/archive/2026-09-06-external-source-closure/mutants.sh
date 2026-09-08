@@ -76,7 +76,7 @@ PY
 
 echo "=== manual mutation: external-source-closure ==="
 
-# --- the closure value (GW_0164)
+# --- the closure value (GW_INGEST_0030)
 
 mutate "${MAIN}/ingestion/SnapshotClosure.java" \
     'List<String> lines = members.stream().map(Member::canonical).sorted().toList();' \
@@ -96,7 +96,7 @@ mutate "${MAIN}/ingestion/SnapshotClosure.java" \
     'SnapshotClosureDigestTests' \
     'null and the empty string frame identically'
 
-# --- recording (GW_0164)
+# --- recording (GW_INGEST_0030)
 
 mutate "${MAIN}/persistence/SnapshotRepository.java" \
     'if (closure != null && !closure.isEmpty()) {' \
@@ -122,7 +122,7 @@ mutate "${MAIN}/persistence/SnapshotClosureRepository.java" \
     'SnapshotClosureTests' \
     'the blast-radius query ignores the resolved commit'
 
-# --- the completeness gate (GW_0165)
+# --- the completeness gate (GW_APPROVAL_0013)
 
 mutate "${MAIN}/approval/ApprovalService.java" \
     'requireCompleteClosure(current, marketplace, reviewer);' \

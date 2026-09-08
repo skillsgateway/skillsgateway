@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * The publication endpoint (GW_0102): the one place the gateway accepts a git push.
+ * The publication endpoint (GW_FACADE_0007): the one place the gateway accepts a git push.
  *
  * <p>It is deliberately a second servlet rather than a mode on {@link GitFacadeConfiguration},
  * which keeps its {@code setReceivePackFactory(null)} untouched. Nothing here can reach a
@@ -32,7 +32,7 @@ import org.springframework.context.annotation.Configuration;
  *
  * <p>Authorization is the token's push scope, checked before the repository is opened, and every
  * failure — bad name, unscoped token, upstream marketplace, unknown marketplace — answers
- * not-found alike, so a credential cannot map what else the gateway governs (the rule GW_0064 set
+ * not-found alike, so a credential cannot map what else the gateway governs (the rule GW_AUTH_0006 set
  * for fetch scopes).
  */
 @Configuration
@@ -57,7 +57,7 @@ public class GitPublishConfiguration {
     }
 
     @Bean
-    @Requirements({"GW_0102"})
+    @Requirements({"GW_FACADE_0007"})
     public ServletRegistrationBean<GitServlet> publishServlet() {
         GitServlet servlet = new GitServlet();
         servlet.setRepositoryResolver(this::resolveOrigin);
@@ -70,7 +70,7 @@ public class GitPublishConfiguration {
     }
 
     /** Push scope, then hosted-ness, then existence — every failure answers alike. */
-    @Requirements({"GW_0102"})
+    @Requirements({"GW_FACADE_0007"})
     Repository resolveOrigin(HttpServletRequest request, String name)
             throws RepositoryNotFoundException, ServiceMayNotContinueException {
         String marketplace = name.endsWith(".git") ? name.substring(0, name.length() - 4) : name;
@@ -99,7 +99,7 @@ public class GitPublishConfiguration {
         return origin.orElseThrow(() -> new RepositoryNotFoundException(name));
     }
 
-    @Requirements({"GW_0102"})
+    @Requirements({"GW_FACADE_0007"})
     ReceivePack createReceivePack(HttpServletRequest request, Repository repository) {
         ReceivePack receivePack = new ReceivePack(repository);
         receivePack.setRefLogIdent(pushHook.identityOf(auditHook.currentPrincipal()));
@@ -113,7 +113,7 @@ public class GitPublishConfiguration {
         return receivePack;
     }
 
-    @Requirements({"GW_0102"})
+    @Requirements({"GW_FACADE_0007"})
     UploadPack createUploadPack(HttpServletRequest request, Repository repository) {
         return new UploadPack(repository);
     }

@@ -149,7 +149,7 @@ export function useWaivers(marketplace: string | null) {
  * default — a violation is recorded and nothing is unpublished, and in enforce mode the snapshot
  * is revoked. The button never chooses, which is why there is no mode in the request.
  *
- * @Requirements GW_0055
+ * @Requirements GW_VETTING_0018
  */
 export function useRevetSnapshot() {
   const queryClient = useQueryClient();
@@ -191,7 +191,7 @@ export function useSnapshotVetting(snapshotId: number | null) {
  * has not. The server computes it per request from its own first sighting of the commit, so the
  * portal never has to reason about upstream timestamps — or about its own clock.
  *
- * @Requirements GW_0073
+ * @Requirements GW_APPROVAL_0004
  */
 export function useSnapshotReleaseAge(snapshotId: number | null) {
   return useQuery({
@@ -210,7 +210,7 @@ export function useSnapshotReleaseAge(snapshotId: number | null) {
  * would be a rule that can disagree with the one that decides. The approval endpoint enforces it
  * independently in any case — this only lets the dialog say so before the button is pressed.
  *
- * @Requirements GW_0096, GW_0097
+ * @Requirements GW_APPROVAL_0010, GW_APPROVAL_0011
  */
 export function useSnapshotFourEyes(snapshotId: number | null) {
   return useQuery({
@@ -223,7 +223,7 @@ export function useSnapshotFourEyes(snapshotId: number | null) {
 /**
  * The conflicting acts as a reviewer reads them, in the order they happened to the snapshot.
  *
- * @Requirements GW_0096
+ * @Requirements GW_APPROVAL_0010
  */
 export function describeFourEyesConflicts(check: FourEyesCheck | undefined): string {
   const roles = (check?.conflicts ?? []).map((conflict) =>

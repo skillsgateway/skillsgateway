@@ -19,18 +19,18 @@ decisions, so it ships with an ADR
 
 ## What Changes
 
-- **Connector enable/disable (GW_0149).** An administrator can disable or
+- **Connector enable/disable (GW_VETTING_0029).** An administrator can disable or
   re-enable a built-in connector (secret-scan, prompt-injection, license-scan),
   globally or per marketplace, via `PUT /api/vetting/connectors/{name}/toggle`
   (admin-only), with the settings readable at `GET
   /api/vetting/connector-toggles` (admin-only). A disabled connector is not run
   at ingestion or re-vetting; the chain records a distinct `disabled` verdict in
-  its place. The fail-closed aggregation (GW_0038) is extended so a `disabled`
+  its place. The fail-closed aggregation (GW_VETTING_0002) is extended so a `disabled`
   verdict neither clears nor blocks — but a run still needs at least one clearing
   verdict to clear, so disabling every connector leaves a run **blocked**. Every
   toggle is an audited, admin-only action (`connector-disabled` /
   `connector-enabled`).
-- **Override of a blocked outcome (GW_0148).** An administrator — and only an
+- **Override of a blocked outcome (GW_VETTING_0028).** An administrator — and only an
   administrator — can approve a held or revoked snapshot whose effective outcome
   is blocked by setting `overrideVetting` with a reason on the approve endpoint.
   The override lifts only the vetting gate; the policy, release-age and
@@ -39,8 +39,8 @@ decisions, so it ships with an ADR
   naming the administrator, the reason and the blocking verdicts, and records a
   standing marker (`snapshot_vetting_overrides`) surfaced on the vetting read
   surface so it is never indistinguishable from a clean approval.
-- Requirements GW_0148 (override) and GW_0149 (connector toggle), with
-  SVC_GW_0148 / SVC_GW_0149.
+- Requirements GW_VETTING_0028 (override) and GW_VETTING_0029 (connector toggle), with
+  SVC_GW_VETTING_0028 / SVC_GW_VETTING_0029.
 
 ## Capabilities
 

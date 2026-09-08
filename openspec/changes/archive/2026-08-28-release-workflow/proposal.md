@@ -54,29 +54,29 @@ publishes would fragment it.
 - `release-packaging`: gains the gated release flow and the version-tag format, and
   revises the existing publication requirement whose trigger contract this change
   changes.
-  - **GW_0108** (new) — gated release automation: dry-run preview, version resolution
+  - **GW_RELEASE_0003** (new) — gated release automation: dry-run preview, version resolution
     from Conventional Commits, the release-candidate path, the approval gate, and the
     prerelease → verify → promote ordering.
-  - **GW_0109** (new) — release version tag format: unprefixed three-part semver, the
+  - **GW_RELEASE_0004** (new) — release version tag format: unprefixed three-part semver, the
     tag as the single source of the released version, and releases cut only from a ref
     reachable from `main`.
-  - **GW_0072** (revised) — its description currently binds every publish step to
+  - **GW_RELEASE_0002** (revised) — its description currently binds every publish step to
     `push` events, which is precisely what this change replaces. Revised to bind
     publication to a `main` push or the gated release workflow, and to forbid it from a
-    schedule or a bare dispatch. `SVC_GW_0072`'s assertions get *stricter*, not looser:
+    schedule or a bare dispatch. `SVC_GW_RELEASE_0002`'s assertions get *stricter*, not looser:
     every assertion dropped is replaced by a stronger one proving the release path is
     gated and the tag unprefixed. No existing SVC coverage is weakened.
 
 ## Impact
 
-**Requirements** — `docs/reqstool/requirements.yml` (GW_0108, GW_0109 added; GW_0072
+**Requirements** — `docs/reqstool/requirements.yml` (GW_RELEASE_0003, GW_RELEASE_0004 added; GW_RELEASE_0002
 revised with a revision bump) and `docs/reqstool/software_verification_cases.yml`
-(SVC_GW_0108, SVC_GW_0109 added; SVC_GW_0072 strengthened).
+(SVC_GW_RELEASE_0003, SVC_GW_RELEASE_0004 added; SVC_GW_RELEASE_0002 strengthened).
 
 **Tests** — `src/test/java/dev/skillsgateway/server/PackagingTests.java` currently
 asserts `tags: ['v*']` and `github.event_name == 'push'` against `native.yml`. Both
 become false, so `releaseWorkflowCarriesThePublishByDigestContract` is rewritten against
-the revised GW_0072, and new cases cover GW_0108 and GW_0109.
+the revised GW_RELEASE_0002, and new cases cover GW_RELEASE_0003 and GW_RELEASE_0004.
 
 **Workflows** — `release.yml` (new); `docs.yml` and `native.yml` (triggers,
 `workflow_call`, Pages deployment); `check-semantic-pr.yml` → `pr-title.yml`,
@@ -100,5 +100,5 @@ runtime); `helm/skills-gateway/Chart.yaml`; `docs/manual/reference/container-ima
 entry.
 
 **Not affected** — the REST API, the git facade, and every trust boundary. This change
-touches delivery only. Requirement IDs start at GW_0108 because GW_0096–GW_0107 are
+touches delivery only. Requirement IDs start at GW_RELEASE_0003 because GW_APPROVAL_0010–GW_API_0004 are
 already claimed by in-flight work.

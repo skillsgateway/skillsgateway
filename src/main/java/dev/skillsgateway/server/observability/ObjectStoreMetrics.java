@@ -8,7 +8,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.MeterBinder;
 
 /**
- * The object-storage backend's own counters, published as meters (GW_0116).
+ * The object-storage backend's own counters, published as meters (GW_FACADE_0012).
  *
  * <p>The backend keeps plain counters so that it needs no registry to work. This is where they
  * become telemetry, and it is deliberately the only place: the meter names live beside
@@ -62,7 +62,7 @@ public class ObjectStoreMetrics implements MeterBinder {
     }
 
     @Override
-    @Requirements({"GW_0116"})
+    @Requirements({"GW_FACADE_0012"})
     public void bindTo(MeterRegistry registry) {
         counter(registry, CONFLICTS, "conditional writes the store refused", ObjectStoreStatistics::conflicts);
         counter(registry, RETRIES, "transition attempts made after a refusal", ObjectStoreStatistics::retries);

@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * A registered webhook receiver. The {@code secret} is the HMAC signing key and is never
- * exposed by any read endpoint after creation (GW_0024).
+ * exposed by any read endpoint after creation (GW_WEBHOOK_0002).
  */
 public record WebhookSubscriber(
         long id, String name, String url, String secret, String events, boolean enabled, Instant createdAt) {
@@ -24,7 +24,7 @@ public record WebhookSubscriber(
                 .toList();
     }
 
-    /** True when this subscriber asked for {@code event} (GW_0023). */
+    /** True when this subscriber asked for {@code event} (GW_WEBHOOK_0001). */
     public boolean subscribesTo(String event) {
         List<String> filter = eventFilter();
         return filter.contains(ALL_EVENTS) || filter.contains(event);

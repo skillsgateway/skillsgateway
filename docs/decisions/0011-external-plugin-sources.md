@@ -11,7 +11,7 @@ resolves inside the gateway**. That is what kills threats T3 (rug pulls) and T4
 (transitive sources) for plugin content, not only for the marketplace repository.
 
 It has never been implemented. Phase 1 chose the other fail-closed answer —
-**rejection** — and GW_0003 states it: a snapshot whose manifest declares any
+**rejection** — and GW_INGEST_0003 states it: a snapshot whose manifest declares any
 source other than a repository-relative path is rejected. `ManifestPolicy`
 implements it with a string-shape check, which refuses an object-form source
 before its type discriminator is ever read.
@@ -50,7 +50,7 @@ state that makes a snapshot approvable and therefore publishable, so:
 > A snapshot is placed in the held state only when every plugin source its
 > manifest declares resolves inside the snapshot the gateway itself serves.
 
-That is GW_0152, and it is stated as a standing invariant over the held state
+That is GW_INGEST_0021, and it is stated as a standing invariant over the held state
 rather than as a property of one release. An admitted-but-unresolved source is
 recorded `rejected`, exactly as an inadmissible one is, with a violation that
 distinguishes the two — the operator actions differ. The invariant is what makes
@@ -139,8 +139,8 @@ for.
 
 ## Consequences
 
-- GW_0003 evolves rather than being contradicted: local-only rejection becomes
-  the **default-configuration** behaviour (revision 0.2.0), and SVC_GW_0003 is
+- GW_INGEST_0003 evolves rather than being contradicted: local-only rejection becomes
+  the **default-configuration** behaviour (revision 0.2.0), and SVC_GW_INGEST_0003 is
   unchanged — it is now also the regression test pinning that default. A gateway
   that is never configured for external sources behaves exactly as it does today.
 - The compatibility reference's "rejected fail-closed" row gains the
@@ -162,10 +162,10 @@ for.
 
 | Increment | Requirements | State |
 | --- | --- | --- |
-| Admission: typed source model, configuration gate, held-only-if-local invariant | GW_0003 (rev. 0.2.0), GW_0150, GW_0151, GW_0152 | Shipped |
-| Resolution of the `github` type: closure fetch into quarantine, deterministic composite rewrite parented on the upstream commit, closure-wide vetting by construction | GW_0155, GW_0156, GW_0161 | Shipped |
-| Hardening the resolution path: post-DNS and per-request address validation, redirect policy, inflation and size budgets, global deadline | GW_0157, GW_0158 | Shipped |
-| The closure as a queryable domain object: `snapshots.upstream_sha`, closure and member rows written with the snapshot, the closure in provenance and in the policy facts, and a closure-completeness gate ahead of every other approval gate | GW_0164, GW_0165 | Shipped |
+| Admission: typed source model, configuration gate, held-only-if-local invariant | GW_INGEST_0003 (rev. 0.2.0), GW_INGEST_0019, GW_INGEST_0020, GW_INGEST_0021 | Shipped |
+| Resolution of the `github` type: closure fetch into quarantine, deterministic composite rewrite parented on the upstream commit, closure-wide vetting by construction | GW_INGEST_0023, GW_INGEST_0024, GW_INGEST_0027 | Shipped |
+| Hardening the resolution path: post-DNS and per-request address validation, redirect policy, inflation and size budgets, global deadline | GW_INGEST_0025, GW_INGEST_0026 | Shipped |
+| The closure as a queryable domain object: `snapshots.upstream_sha`, closure and member rows written with the snapshot, the closure in provenance and in the policy facts, and a closure-completeness gate ahead of every other approval gate | GW_INGEST_0030, GW_APPROVAL_0013 | Shipped |
 | The blast-radius re-vetting the closure query enables (wiring `snapshotsContaining` into `RevetService`) | to be assigned | #17, next |
 | `git` and `git-subdir`, declared `ref`/`sha` pinning, the egress proxy, connect-time address pinning, the negative cache, the origin badge on the marketplace detail page | to be assigned | #17, after |
 

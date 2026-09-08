@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * Verification of vetting waivers (GW_0044–GW_0048).
+ * Verification of vetting waivers (GW_VETTING_0007–GW_VETTING_0011).
  *
  * <p>A waiver is the one sanctioned way past a trust boundary, so these tests attack it rather
  * than demonstrate it: a waiver with no expiry, a waiver whose expiry has already passed, a waiver
@@ -71,7 +71,7 @@ class WaiverTests extends AbstractGatewayTest {
      * "the waiver was rejected but half-recorded" would be the worst of both worlds.
      */
     @Test
-    @SVCs({"SVC_GW_0044"})
+    @SVCs({"SVC_GW_VETTING_0007"})
     void aWaiverWithoutJustificationApproverOrAFutureExpiryIsRefused() throws Exception {
         Registered blocked = blockedSnapshot("waivfields");
         long id = blocked.snapshot().id();
@@ -130,7 +130,7 @@ class WaiverTests extends AbstractGatewayTest {
 
     /** Every near-miss scope: right rule wrong commit, right rule wrong path, wrong rule entirely. */
     @Test
-    @SVCs({"SVC_GW_0045"})
+    @SVCs({"SVC_GW_VETTING_0008"})
     void aWaiverSuppressesOnlyTheFindingItsScopeNames() throws Exception {
         Registered blocked = blockedSnapshot("waivscope");
         long id = blocked.snapshot().id();
@@ -176,7 +176,7 @@ class WaiverTests extends AbstractGatewayTest {
      * only has to move the waiver, never the clock of some background job.
      */
     @Test
-    @SVCs({"SVC_GW_0046"})
+    @SVCs({"SVC_GW_VETTING_0009"})
     void anExpiredOrRevokedWaiverStopsSuppressingItsFinding() throws Exception {
         Registered blocked = blockedSnapshot("waivexpiry");
         long id = blocked.snapshot().id();
@@ -229,7 +229,7 @@ class WaiverTests extends AbstractGatewayTest {
 
     /** Creation, use at approval, revocation, and the sweep's expiry note — all in the ledger. */
     @Test
-    @SVCs({"SVC_GW_0048"})
+    @SVCs({"SVC_GW_VETTING_0011"})
     void theLedgerRecordsWaiverCreationUseAndRevocation() throws Exception {
         Registered blocked = blockedSnapshot("waivledger");
         long id = blocked.snapshot().id();
@@ -305,7 +305,7 @@ class WaiverTests extends AbstractGatewayTest {
      * must never clear a verdict that has no findings to name.
      */
     @Test
-    @SVCs({"SVC_GW_0045"})
+    @SVCs({"SVC_GW_VETTING_0008"})
     void evaluationNeverClearsAVerdictThatHasNothingToWaive() {
         String sha = "abc123";
         Finding critical = new Finding(RULE, Severity.CRITICAL, "plugins/hello/DEPLOY.md:3", "planted key");

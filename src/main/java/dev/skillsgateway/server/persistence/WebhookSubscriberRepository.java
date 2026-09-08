@@ -54,7 +54,7 @@ public class WebhookSubscriberRepository {
     }
 
     /**
-     * Converges a subscriber's target, secret and filter to a declared state (GW_0086). The caller
+     * Converges a subscriber's target, secret and filter to a declared state (GW_ESTATE_0004). The caller
      * — the estate reconciler — has already diffed, so a call here is always a real change; the
      * secret value never appears anywhere but this parameter and the stored row.
      */

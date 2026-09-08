@@ -43,4 +43,4 @@ construction rather than by comment.
 
 - Additive endpoint; no change to the subscriber wire format, the dispatcher, or
   any stored data.
-- `lifecycle-webhooks` spec gains GW_0088.
+- `lifecycle-webhooks` spec gains GW_WEBHOOK_0005.

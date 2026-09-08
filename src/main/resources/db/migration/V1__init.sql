@@ -17,7 +17,7 @@ CREATE TYPE webhook_delivery_state AS ENUM ('pending', 'delivered', 'failed');
 CREATE TYPE audit_sink_kind AS ENUM ('webhook');
 CREATE TYPE vetting_run_outcome AS ENUM ('clear', 'blocked');
 -- 'disabled' records that an administrator switched this connector off for the snapshot's
--- marketplace (GW_0143): the chain skipped it rather than running it. It is neither clearing
+-- marketplace (GW_VETTING_0023): the chain skipped it rather than running it. It is neither clearing
 -- nor blocking — the disablement is fail-loud evidence on the run, not a silent shorter chain.
 CREATE TYPE vetting_verdict_state AS ENUM ('pass', 'warn', 'fail', 'error', 'pending', 'disabled');
 CREATE TYPE vetting_finding_severity AS ENUM ('info', 'low', 'medium', 'high', 'critical');
@@ -27,41 +27,41 @@ CREATE TYPE role_grant_role AS ENUM ('admin', 'approver', 'auditor');
 CREATE TABLE marketplaces (
     id BIGSERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
-    -- The identity that registered the marketplace (GW_0096): the supply-side decision the
+    -- The identity that registered the marketplace (GW_APPROVAL_0010): the supply-side decision the
     -- four-eyes rule compares an approving reviewer against. Nullable for the same reason as
     -- snapshots.ingested_by — an unrecorded registrant never conflicts.
     registered_by TEXT,
-    -- Null only for a gateway-hosted marketplace (GW_0101), which has no upstream to clone from;
+    -- Null only for a gateway-hosted marketplace (GW_FACADE_0006), which has no upstream to clone from;
     -- the CHECK below is what keeps every other marketplace's URL mandatory.
     url TEXT,
     created_at TIMESTAMPTZ NOT NULL,
-    -- Where the content comes from (GW_0101): fetched from an upstream clone URL, or pushed by
+    -- Where the content comes from (GW_FACADE_0006): fetched from an upstream clone URL, or pushed by
     -- the organisation into a gateway-owned origin repository. Immutable after registration --
     -- changing it would swap the supply chain under snapshots that were already approved.
     origin marketplace_origin NOT NULL DEFAULT 'upstream',
-    -- Whether a hosted marketplace's publisher may rewrite its lineage (GW_0102). append-only
+    -- Whether a hosted marketplace's publisher may rewrite its lineage (GW_FACADE_0007). append-only
     -- refuses a non-fast-forward push; allow-rewrite permits it and puts both tips on the ledger.
     push_policy marketplace_push_policy NOT NULL DEFAULT 'append-only',
-    -- Best-effort forge metadata captured at registration (GW_0021).
+    -- Best-effort forge metadata captured at registration (GW_INGEST_0009).
     forge TEXT,
     forge_project TEXT,
     description TEXT,
     upstream_updated_at TIMESTAMPTZ,
-    -- How new upstream content reaches quarantine (GW_0056): an operator's click (on-demand),
+    -- How new upstream content reaches quarantine (GW_INGEST_0010): an operator's click (on-demand),
     -- the polling sweep (scheduled), or a signed forge push webhook (webhook). Only the trigger
     -- varies — every mode lands snapshots held behind the same approval gate.
     sync_mode marketplace_sync_mode NOT NULL DEFAULT 'on-demand',
-    -- HMAC key for the inbound webhook (GW_0058). Like webhook_subscribers.secret this must stay
+    -- HMAC key for the inbound webhook (GW_INGEST_0012). Like webhook_subscribers.secret this must stay
     -- recoverable (HMAC verification needs the key itself, so a PAT-style hash is impossible);
     -- it is returned exactly once by the mode change that generated it and by no read endpoint.
     webhook_secret TEXT,
-    -- Last sync attempt, success or failure (GW_0057): stamping failures too is what keeps one
+    -- Last sync attempt, success or failure (GW_INGEST_0011): stamping failures too is what keeps one
     -- dead upstream from monopolizing the sweep's oldest-first order.
     last_sync_at TIMESTAMPTZ,
-    -- An upstream marketplace is defined by its clone URL; a hosted one has none (GW_0101).
+    -- An upstream marketplace is defined by its clone URL; a hosted one has none (GW_FACADE_0006).
     CONSTRAINT marketplaces_upstream_has_url CHECK (origin = 'hosted' OR url IS NOT NULL),
     -- A hosted marketplace has no upstream to poll or be notified about: its ingestion trigger is
-    -- the push itself, so the sweep must never see it (GW_0101).
+    -- the push itself, so the sweep must never see it (GW_FACADE_0006).
     CONSTRAINT marketplaces_hosted_is_on_demand CHECK (origin <> 'hosted' OR sync_mode = 'on-demand')
 );
 
@@ -72,21 +72,21 @@ CREATE TABLE snapshots (
     id BIGSERIAL PRIMARY KEY,
     marketplace_id BIGINT NOT NULL REFERENCES marketplaces (id),
     -- The commit the gateway serves: the upstream commit for a local-only manifest, the
-    -- synthesised composite for one with resolved external sources (GW_0156).
+    -- synthesised composite for one with resolved external sources (GW_INGEST_0024).
     sha TEXT NOT NULL,
-    -- The commit ingested from upstream (GW_0164). Equal to `sha` unless a composite was
+    -- The commit ingested from upstream (GW_INGEST_0030). Equal to `sha` unless a composite was
     -- synthesised, in which case it is also the composite's parent; the column exists so the
     -- question can be asked across snapshots without opening repository storage.
     upstream_sha TEXT NOT NULL,
     -- held -> approved | rejected, approved -> revoked, revoked -> approved | rejected.
-    -- 'revoked' is retroactive quarantine (GW_0050): a snapshot that was approved and published,
+    -- 'revoked' is retroactive quarantine (GW_VETTING_0013): a snapshot that was approved and published,
     -- and whose later re-vetting run found a violation the active waivers do not cover. It is a
     -- state of its own rather than a return to 'held' because the difference matters to everyone
     -- reading it — the content was served, and to whom is answerable from the fetch ledger.
     state snapshot_state NOT NULL,
     violation TEXT,
     created_at TIMESTAMPTZ NOT NULL,
-    -- The identity that triggered this snapshot's ingestion (GW_0096): a person's principal for an
+    -- The identity that triggered this snapshot's ingestion (GW_APPROVAL_0010): a person's principal for an
     -- on-demand ingest or a push, and the constant sync actors 'scheduler'/'webhook' for the
     -- automated triggers. First-class rather than derived from the ledger because the four-eyes
     -- rule is an authorization decision, and the ledger is append-only evidence, not an
@@ -97,10 +97,10 @@ CREATE TABLE snapshots (
     decided_at TIMESTAMPTZ,
     -- Revocation stamps are their own columns rather than an overwrite of decided_by/decided_at:
     -- who approved the snapshot, and when, must survive the revocation that retracted it. Cleared
-    -- when a fresh approve decision re-publishes the snapshot (GW_0050).
+    -- when a fresh approve decision re-publishes the snapshot (GW_VETTING_0013).
     revoked_at TIMESTAMPTZ,
     revoked_by TEXT,
-    -- Retention (GW_0031..GW_0034). Deletion is orthogonal to the vetting state: a deleted
+    -- Retention (GW_RETENTION_0001..GW_RETENTION_0004). Deletion is orthogonal to the vetting state: a deleted
     -- snapshot keeps the state it was decided into, so the record of what was held, approved,
     -- or rejected survives, and a restore cannot invent a transition.
     deleted_at TIMESTAMPTZ,
@@ -110,7 +110,7 @@ CREATE TABLE snapshots (
     UNIQUE (marketplace_id, sha)
 );
 
--- The resolved closure of a composite snapshot (GW_0164): what each external plugin source was
+-- The resolved closure of a composite snapshot (GW_INGEST_0030): what each external plugin source was
 -- declared as, what it resolved to, and where it was grafted, copied as values at ingestion.
 -- Never a foreign key into the marketplace or the manifest -- those are the mutable source; this
 -- is the immutable artifact that was vetted and approved, and it must keep meaning the same thing
@@ -142,14 +142,14 @@ CREATE TABLE snapshot_closure_members (
     plugin_name TEXT NOT NULL,
     source_type TEXT NOT NULL,
     -- The source as the manifest declared it (an owner/repo shorthand, a URL), and any ref or
-    -- commit it pinned. A declared pin is refused today (GW_0155), so both are NULL until the
+    -- commit it pinned. A declared pin is refused today (GW_INGEST_0023), so both are NULL until the
     -- increment that honours one lands.
     declared_source TEXT NOT NULL,
     declared_ref TEXT,
     declared_sha TEXT,
     clone_url TEXT NOT NULL,
     resolved_sha TEXT NOT NULL,
-    -- The tree grafted into the composite, and where. The approval gate (GW_0165) compares this
+    -- The tree grafted into the composite, and where. The approval gate (GW_APPROVAL_0013) compares this
     -- against the pinned commit rather than resolving `resolved_sha`: the external commit object
     -- is reachable from nothing once scaffolding is pruned and may legitimately be collected.
     tree_sha TEXT NOT NULL,
@@ -170,7 +170,7 @@ CREATE INDEX idx_snapshots_purge_queue ON snapshots (purge_after) WHERE deleted_
 CREATE INDEX idx_snapshots_revet_queue ON snapshots (id) WHERE state = 'approved' AND deleted_at IS NULL;
 
 -- Append-only fetch ledger: no UPDATE/DELETE is ever issued against this table.
--- What kind of actor produced a ledger entry (GW_0128). A native type rather than three
+-- What kind of actor produced a ledger entry (GW_AUDIT_0007). A native type rather than three
 -- magic strings in `principal`: the ledger already had this vocabulary --
 -- 'config-reconciler', 'scheduler', 'system' -- distinguishable only by string comparison
 -- against values that also look like ordinary identities.
@@ -181,7 +181,7 @@ CREATE TABLE fetch_log (
     ts TIMESTAMPTZ NOT NULL,
     source TEXT NOT NULL,
     principal TEXT,
-    -- Denormalised on purpose (GW_0128), for the same reason `token_id` below is not a foreign
+    -- Denormalised on purpose (GW_AUDIT_0007), for the same reason `token_id` below is not a foreign
     -- key: the ledger is append-only history and must still say what it meant after the
     -- credential it names has been revoked and its row deleted. A join to `access_tokens`
     -- would make the ledger's meaning depend on mutable state, which is what an append-only
@@ -193,23 +193,23 @@ CREATE TABLE fetch_log (
     ref TEXT,
     sha TEXT,
     -- Free-text qualifier for an entry that needs one: today the vetting chain outcome and
-    -- the reason a reviewer gave when overriding it (GW_0043). Its own column rather than an
+    -- the reason a reviewer gave when overriding it (GW_VETTING_0006). Its own column rather than an
     -- overloaded `ref`, so the exported ledger schema stays honest for SIEM consumers.
     detail TEXT,
-    -- Which token authenticated a facade entry (GW_0067); NULL on admin entries and on facade
+    -- Which token authenticated a facade entry (GW_AUTH_0009); NULL on admin entries and on facade
     -- entries older than per-token attribution. Deliberately not a foreign key: the ledger is
     -- append-only history and must outlive any token row.
     token_id BIGINT
 );
 
--- The staleness read's query (GW_0076): the latest content-transferring fetch per
+-- The staleness read's query (GW_OBSERVABILITY_0002): the latest content-transferring fetch per
 -- (principal, marketplace). Partial on upload-pack because only a pack send means the identity
 -- received the content — info-refs fires on every `git fetch` whether or not anything transfers.
 CREATE INDEX idx_fetch_log_adoption ON fetch_log (principal, marketplace, id DESC)
     WHERE event = 'upload-pack';
 
 -- Separating human, machine and system actors at query time is the whole point of the column
--- (GW_0128); `WHERE actor_type = 'machine'` is an indexable predicate, unlike the string
+-- (GW_AUDIT_0007); `WHERE actor_type = 'machine'` is an indexable predicate, unlike the string
 -- comparison it replaces.
 CREATE INDEX idx_fetch_log_actor_type ON fetch_log (actor_type, id DESC);
 
@@ -220,42 +220,42 @@ CREATE TABLE access_tokens (
     token_hash TEXT NOT NULL UNIQUE,
     created_at TIMESTAMPTZ NOT NULL,
     revoked_at TIMESTAMPTZ,
-    -- Comma-delimited marketplace names the token may fetch (GW_0064); NULL grants every
+    -- Comma-delimited marketplace names the token may fetch (GW_AUTH_0006); NULL grants every
     -- marketplace, which is what every pre-scoping token meant. Names cannot contain the
     -- delimiter (^[a-z0-9][a-z0-9_-]*$).
     scopes TEXT,
-    -- Expiry is decided by comparing this to now at authentication time (GW_0065): no sweep can
+    -- Expiry is decided by comparing this to now at authentication time (GW_AUTH_0007): no sweep can
     -- be late and no scheduler outage can keep a dead token alive. NULL never expires.
     expires_at TIMESTAMPTZ,
-    -- The token this one replaced via rotation (GW_0066): the lineage an auditor follows.
+    -- The token this one replaced via rotation (GW_AUTH_0008): the lineage an auditor follows.
     rotated_from BIGINT REFERENCES access_tokens (id),
-    -- Derived from a browser session rather than deliberately provisioned (GW_0104). Recorded
+    -- Derived from a browser session rather than deliberately provisioned (GW_AUTH_0018). Recorded
     -- rather than inferred from a short expiry: a short-lived PAT is an ordinary thing to want,
     -- and what the ledger needs to distinguish is how the credential was obtained.
     session_derived BOOLEAN NOT NULL DEFAULT FALSE,
-    -- Comma-delimited hosted marketplace names this token may PUSH to (GW_0102). Deliberately
+    -- Comma-delimited hosted marketplace names this token may PUSH to (GW_FACADE_0007). Deliberately
     -- unlike `scopes`: NULL here means none, not all, so no token that predates publication --
     -- and no token whose fetch scope is the every-marketplace form -- can write anything.
     push_scopes TEXT,
-    -- Comma-delimited administrative scope values this token may exercise on /api/** (GW_0126).
+    -- Comma-delimited administrative scope values this token may exercise on /api/** (GW_AUTH_0020).
     -- NULL means none -- the push default, not the fetch one, because reaching the control
     -- plane is a grant and never a baseline: every token that predates this column is exactly
     -- what it was, a fetch credential that cannot reach the API. A token is a machine API
     -- credential precisely when this is non-NULL, which is also what makes `scopes` mean
     -- nothing rather than everything for it.
     api_scopes TEXT,
-    -- The identity that provisioned a machine credential (GW_0131). `principal` is the
+    -- The identity that provisioned a machine credential (GW_AUTH_0024). `principal` is the
     -- credential's own name, which is what the ledger attributes its actions to; this is the
     -- responsible person, named once at provisioning rather than impersonated on every use,
     -- and what the administrative listing reports. NULL for every non-machine credential.
     machine_owner TEXT,
-    -- A session-derived credential can never hold administrative scope (GW_0127). Enforced by
+    -- A session-derived credential can never hold administrative scope (GW_AUTH_0021). Enforced by
     -- the database rather than by the one service method that mints them, so no future call
     -- site can launder a browser session -- whose lifetime the holder did not choose and whose
     -- purpose is fetching -- into a standing control-plane credential.
     CONSTRAINT session_derived_credentials_hold_no_api_scope
         CHECK (NOT (session_derived AND api_scopes IS NOT NULL)),
-    -- A machine credential must expire (GW_0131). The never-expiring credential in a
+    -- A machine credential must expire (GW_AUTH_0024). The never-expiring credential in a
     -- continuous-integration variable is the failure mode this capability would otherwise
     -- introduce; the service refuses it at issue time and the schema makes the refusal
     -- unbypassable.
@@ -263,7 +263,7 @@ CREATE TABLE access_tokens (
         CHECK (api_scopes IS NULL OR expires_at IS NOT NULL)
 );
 
--- Lifecycle event webhooks (GW_0023..GW_0025).
+-- Lifecycle event webhooks (GW_WEBHOOK_0001..GW_WEBHOOK_0003).
 
 CREATE TABLE webhook_subscribers (
     id BIGSERIAL PRIMARY KEY,
@@ -297,7 +297,7 @@ CREATE TABLE webhook_deliveries (
 -- The dispatcher's only query.
 CREATE INDEX idx_webhook_deliveries_due ON webhook_deliveries (state, next_attempt_at);
 
--- Audit ledger export sinks (GW_0028..GW_0029).
+-- Audit ledger export sinks (GW_AUDIT_0004..GW_AUDIT_0005).
 
 CREATE TABLE audit_sinks (
     id BIGSERIAL PRIMARY KEY,
@@ -309,7 +309,7 @@ CREATE TABLE audit_sinks (
     -- retried, and recorded by exactly the machinery lifecycle events already use.
     subscriber_id BIGINT NOT NULL REFERENCES webhook_subscribers (id) ON DELETE CASCADE,
     -- Id of the last fetch_log entry handed to this sink; the only per-consumer state.
-    -- Resetting it is what "replay" means (GW_0029).
+    -- Resetting it is what "replay" means (GW_AUDIT_0005).
     cursor_position BIGINT NOT NULL DEFAULT 0,
     batch_size INTEGER NOT NULL DEFAULT 500,
     enabled BOOLEAN NOT NULL DEFAULT TRUE,
@@ -317,7 +317,7 @@ CREATE TABLE audit_sinks (
     updated_at TIMESTAMPTZ NOT NULL
 );
 
--- Snapshot vetting (GW_0037..GW_0048).
+-- Snapshot vetting (GW_VETTING_0001..GW_VETTING_0011).
 --
 -- Deliberately separate from `snapshots.state`: vetting is evidence about a commit, not a
 -- vetting state of its own. A snapshot stays `held` whatever the chain says — the chain
@@ -328,19 +328,19 @@ CREATE TABLE vetting_runs (
     id BIGSERIAL PRIMARY KEY,
     snapshot_id BIGINT NOT NULL REFERENCES snapshots (id) ON DELETE CASCADE,
     -- What caused the run: 'ingestion', 'revet-scheduled' (the continuous re-vetting sweep,
-    -- GW_0049) or 'revet-manual' (an operator asking for one now, which is also how a scanner
+    -- GW_VETTING_0012) or 'revet-manual' (an operator asking for one now, which is also how a scanner
     -- feed update is turned into fresh evidence).
     trigger TEXT NOT NULL,
     started_at TIMESTAMPTZ NOT NULL,
     finished_at TIMESTAMPTZ,
     -- Identity of the chain that produced the run: 'connector@version' for every connector, in
     -- chain order. Recorded so "the same content was vetted again and the answer changed" can be
-    -- told apart from "a different chain looked at it" without re-deriving anything (GW_0049).
+    -- told apart from "a different chain looked at it" without re-deriving anything (GW_VETTING_0012).
     chain TEXT,
     -- Fail-closed aggregate over the run's verdicts; see VettingChain. Deliberately raw: this
     -- is what the connectors said, and waivers never rewrite it. The outcome that gates the
     -- approval is the *effective* one, derived on read from this run plus the waivers active
-    -- at that instant (GW_0045), which is what makes expiry (GW_0046) need no scheduler.
+    -- at that instant (GW_VETTING_0008), which is what makes expiry (GW_VETTING_0009) need no scheduler.
     outcome vetting_run_outcome NOT NULL
 );
 
@@ -376,7 +376,7 @@ CREATE TABLE vetting_findings (
 CREATE INDEX idx_vetting_verdicts_run ON vetting_verdicts (run_id);
 CREATE INDEX idx_vetting_findings_verdict ON vetting_findings (verdict_id);
 
--- Vetting waivers (GW_0044..GW_0048): scoped, expiring accepted-risk exceptions.
+-- Vetting waivers (GW_VETTING_0007..GW_VETTING_0011): scoped, expiring accepted-risk exceptions.
 --
 -- A waiver names one rule on one marketplace and one scope. It never rewrites a run; it is an
 -- input to the effective-outcome computation, which is why expiry is a comparison against
@@ -413,7 +413,7 @@ CREATE INDEX idx_vetting_waivers_marketplace ON vetting_waivers (marketplace_id,
 CREATE INDEX idx_vetting_waivers_expiry_sweep ON vetting_waivers (expires_at)
     WHERE expired_recorded_at IS NULL AND revoked_at IS NULL;
 
--- Delegated administration (GW_0068..GW_0071).
+-- Delegated administration (GW_AUTH_0010..GW_AUTH_0013).
 --
 -- Current state only, mirroring webhook_subscribers rather than the soft-delete pattern: a
 -- revoked grant has no future behavior to explain, and the audit ledger carries the history.
@@ -436,7 +436,7 @@ CREATE TABLE role_grants (
 -- The authorization check's only query.
 CREATE INDEX idx_role_grants_principal ON role_grants (principal);
 
--- CEL policy deny rules (GW_0089..GW_0091).
+-- CEL policy deny rules (GW_APPROVAL_0006..GW_APPROVAL_0008).
 --
 -- A rule is an organizational prohibition as data: a CEL expression over a snapshot's facts,
 -- evaluated fail-closed at the moment of approval. The expression is compiled (parsed and
@@ -458,7 +458,7 @@ CREATE TABLE policy_rules (
     updated_at TIMESTAMPTZ
 );
 
--- Administrative override of a blocked vetting outcome (GW_0142): the cockpit model's
+-- Administrative override of a blocked vetting outcome (GW_VETTING_0022): the cockpit model's
 -- "captain disconnects the autopilot" recorded as its own evidence, deliberately separate from
 -- `snapshots.state` for the same reason vetting runs are — the override is a fact about one
 -- approval of a commit, not a vetting state of its own. One row per snapshot, replaced if the
@@ -481,7 +481,7 @@ CREATE TABLE snapshot_vetting_overrides (
     overridden_at TIMESTAMPTZ NOT NULL
 );
 
--- Administrative connector enable/disable (GW_0143): the standing decision to switch a built-in
+-- Administrative connector enable/disable (GW_VETTING_0023): the standing decision to switch a built-in
 -- connector off, globally or for one marketplace. NULL marketplace_id is the global setting; a
 -- per-marketplace row overrides it. Absence of a row is "enabled", so the table's emptiness is
 -- exactly today's behaviour — every connector runs. NULLS NOT DISTINCT so a duplicate global
@@ -507,7 +507,7 @@ CREATE TABLE connector_toggles (
 CREATE INDEX idx_connector_toggles_lookup ON connector_toggles (connector, marketplace_id);
 
 -- Publication stages a snapshot's objects in the published repository under an unadvertised
--- refs/staging/<sha> and only then moves the served references (GW_0168). A process killed
+-- refs/staging/<sha> and only then moves the served references (GW_FACADE_0019). A process killed
 -- between the two leaves that reference behind, pinning objects nothing will ever serve. The
 -- retention sweep removes it, and this table is the clock the sweep needs: a git reference carries
 -- no portable creation time, and neither storage backend can be asked for one.

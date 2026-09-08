@@ -63,7 +63,7 @@ gate that notices the next time the count grows.
 
 ### Modified Capabilities
 
-_None._ No requirement changes. `GW_0163 — Proxy-reported scheme and host are
+_None._ No requirement changes. `GW_AUTH_0029 — Proxy-reported scheme and host are
 honoured only when configured, identically on every packaging` is verified by the
 same six postures against the same real server; only the HTTP client that drives
 them changes.

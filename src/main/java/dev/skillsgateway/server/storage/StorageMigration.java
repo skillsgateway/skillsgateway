@@ -107,7 +107,7 @@ public final class StorageMigration {
      * the same branch. A repository that does not match is named, and the run reports failure —
      * success is never the default outcome of having finished.
      */
-    @Requirements({"GW_0114"})
+    @Requirements({"GW_FACADE_0013"})
     public Report migrate(GitStorage source, GitStorage target) throws IOException {
         Files.createDirectories(scratch);
         List<RepositoryResult> results = new ArrayList<>();

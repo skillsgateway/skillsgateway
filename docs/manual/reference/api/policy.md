@@ -1,6 +1,6 @@
 # Policy
 
-CEL deny rules and their playground (GW_0089–GW_0092). What the rules mean,
+CEL deny rules and their playground (GW_APPROVAL_0006–GW_APPROVAL_0009). What the rules mean,
 the evaluation variables, and the fail-closed semantics are in
 [Policy deny rules](../../guides/policy-rules.md); the declarative form is in
 [Configuration](../configuration.md#declarative-estate).

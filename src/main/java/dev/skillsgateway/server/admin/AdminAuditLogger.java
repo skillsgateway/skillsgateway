@@ -17,10 +17,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 /**
- * Appends administrative actions (GW_0022) to the same append-only ledger as facade fetches:
+ * Appends administrative actions (GW_AUDIT_0002) to the same append-only ledger as facade fetches:
  * registration, ingestion, approval decisions, and token lifecycle, each with the acting identity.
  *
- * <p>It is also the <b>one place</b> an entry's actor kind is decided (GW_0128). Deriving it here,
+ * <p>It is also the <b>one place</b> an entry's actor kind is decided (GW_AUDIT_0007). Deriving it here,
  * from the authentication that is actually on the request, rather than passing it from each of the
  * two dozen call sites, is what keeps a denormalised column from drifting: there is exactly one
  * line that can be wrong. The gateway's own actors — reconciliation, the schedulers, the waiver
@@ -34,7 +34,7 @@ public class AdminAuditLogger {
     private static final String SOURCE = "admin";
 
     /**
-     * The gateway's own actor names, declared (GW_0128). These already existed — {@code
+     * The gateway's own actor names, declared (GW_AUDIT_0007). These already existed — {@code
      * config-reconciler}, {@code scheduler}, {@code webhook}, the re-vetting sweep and the waiver
      * expiry — as magic strings threaded through service calls into the {@code principal} column,
      * distinguishable only by string comparison and enforced by nothing.
@@ -55,9 +55,9 @@ public class AdminAuditLogger {
             WaiverService.SYSTEM_ACTOR,
             // The vetting chain is the gateway's own automated subsystem, not a person; without
             // this its verdict and run-completed entries fell through to HUMAN and the portal
-            // showed an automated verdict as a human actor (GW_0128).
+            // showed an automated verdict as a human actor (GW_AUDIT_0007).
             VettingService.VETTING_ACTOR,
-            // The forge mirror (GW_0169) runs on its own thread with no authentication to derive
+            // The forge mirror (GW_FACADE_0020) runs on its own thread with no authentication to derive
             // from, so its entries declare themselves system here rather than defaulting to human.
             ForgeMirrorService.MIRROR_ACTOR);
 
@@ -67,13 +67,13 @@ public class AdminAuditLogger {
         this.fetchLogRepository = fetchLogRepository;
     }
 
-    @Requirements({"GW_0022"})
+    @Requirements({"GW_AUDIT_0002"})
     public void record(String principal, String marketplace, String event, String sha) {
         record(principal, marketplace, event, sha, null);
     }
 
     /** As {@link #record}, carrying the entry's free-text qualifier (a vetting outcome or reason). */
-    @Requirements({"GW_0022", "GW_0043", "GW_0128", "GW_0142"})
+    @Requirements({"GW_AUDIT_0002", "GW_VETTING_0006", "GW_AUDIT_0007", "GW_VETTING_0022"})
     public void record(String principal, String marketplace, String event, String sha, String detail) {
         Authentication authentication = current();
         MachineApiAuthentication machine = machineActor(authentication, principal);
@@ -95,11 +95,11 @@ public class AdminAuditLogger {
     }
 
     /**
-     * As {@link #record}, for an actor the gateway is rather than one it authenticated (GW_0128) —
+     * As {@link #record}, for an actor the gateway is rather than one it authenticated (GW_AUDIT_0007) —
      * {@code config-reconciler}, {@code scheduler}, {@code webhook}, the re-vetting sweep and the
      * waiver expiry. These have no authentication to derive a kind from, so they state it.
      */
-    @Requirements({"GW_0022", "GW_0128"})
+    @Requirements({"GW_AUDIT_0002", "GW_AUDIT_0007"})
     public void recordAs(ActorType actorType, String principal, String marketplace, String event, String detail) {
         fetchLogRepository.append(SOURCE, principal, marketplace, event, null, null, detail, null, actorType);
     }

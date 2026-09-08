@@ -20,7 +20,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriUtils;
 
 /**
- * Best-effort forge metadata at registration (GW_0021): project name, description, and last
+ * Best-effort forge metadata at registration (GW_INGEST_0009): project name, description, and last
  * upstream update from the forge's REST API. Supported forges: GitHub, GitLab, Bitbucket Cloud,
  * Bitbucket Server/Data Center, Azure DevOps, and the Gitea/Forgejo API shape as the fallback
  * (covers Codeberg and self-hosted instances). Any failure (unknown forge, private repo, network,
@@ -46,7 +46,7 @@ public class ForgeMetadataService {
     record ForgeTarget(
             String forge, String apiUrl, String namePointer, String descriptionPointer, String updatedPointer) {}
 
-    @Requirements({"GW_0021"})
+    @Requirements({"GW_INGEST_0009"})
     public Optional<ForgeMetadata> resolve(String cloneUrl) {
         try {
             Optional<ForgeTarget> target = target(cloneUrl);

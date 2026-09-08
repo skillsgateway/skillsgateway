@@ -4,9 +4,9 @@
 
 A reviewer approving a held snapshot today sees two things that do not answer
 the question they are actually asking. `GET /api/snapshots/{id}/content`
-(GW_0020) enumerates *everything* the snapshot ships, so on the tenth ingestion
+(GW_INGEST_0008) enumerates *everything* the snapshot ships, so on the tenth ingestion
 of a large marketplace the one new skill is a needle in the same list as the
-forty that were approved months ago. `GET /api/snapshots/{id}/diff` (GW_0081)
+forty that were approved months ago. `GET /api/snapshots/{id}/diff` (GW_INGEST_0016)
 is a *file* diff against the marketplace's currently served commit — precise,
 but it speaks in paths and hunks, so "a skill moved from one plugin to another"
 arrives as a delete and an add of two unrelated-looking `SKILL.md` files.
@@ -17,14 +17,14 @@ with what changed since the marketplace's **last approved** snapshot. That
 turns "approve SHA `a1b2c3`" into "approve two new skills and one changed one".
 
 The baseline is deliberately the last approved snapshot rather than the served
-tip GW_0081 uses: the question a reviewer is answering is "what am I adding to
+tip GW_INGEST_0016 uses: the question a reviewer is answering is "what am I adding to
 what my organisation already accepted", and an approval that has not published
 yet, or a marketplace whose serving was interrupted, must not silently change
 the answer.
 
 ## What Changes
 
-- **Plugin/skill-level content diff (GW_0153).** New
+- **Plugin/skill-level content diff (GW_INGEST_0022).** New
   `SnapshotContentService.diff(snapshotId)` compares a snapshot's inventory
   against the inventory of the newest approved, live snapshot of the same
   marketplace, and classifies every plugin and every skill as `added`,
@@ -35,13 +35,13 @@ the answer.
   as `moved`, naming the plugin it came from, instead of as an unrelated
   removal and addition.
 - **New endpoint** `GET /api/snapshots/{id}/content-diff`. The obvious path,
-  `/diff`, is already the file-level preview diff (GW_0081) and is not
+  `/diff`, is already the file-level preview diff (GW_INGEST_0016) and is not
   redefined: the API contract is additive within a major.
 - **Portal** (`marketplace-detail.tsx`): the existing **Show contents** panel
   gains a "Changes since the last approved snapshot" section listing only what
   changed, with its own states for a first snapshot (no baseline) and for a
   snapshot that changed nothing.
-- Requirement GW_0153 with SVC_GW_0153.
+- Requirement GW_INGEST_0022 with SVC_GW_INGEST_0022.
 
 ## Capabilities
 
@@ -51,7 +51,7 @@ _None._
 
 ### Modified Capabilities
 
-- `marketplace-ingestion`: the snapshot content inventory (GW_0020) gains a
+- `marketplace-ingestion`: the snapshot content inventory (GW_INGEST_0008) gains a
   companion diff of that inventory against the marketplace's newest approved
   snapshot, at plugin and skill granularity, including relocation of a skill
   between plugins and the no-baseline case.

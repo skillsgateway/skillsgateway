@@ -33,7 +33,7 @@ not in the served OpenAPI document, so the new component is not an API change;
 
 ### The `connector=state` lead is preserved
 
-The existing `SVC_GW_0043` ledger test asserts the verdict detail *contains*
+The existing `SVC_GW_VETTING_0006` ledger test asserts the verdict detail *contains*
 `secret-scan=fail` and `prompt-injection=pass`. The enriched detail keeps that
 exact lead and appends `; findings=…; worst=…; run=…`, so the substring
 assertions stay valid and the SVC is not weakened — the new facts are additive.
@@ -53,7 +53,7 @@ carries.
   `/api/audit` (`SELECT *`, carries `actor_type`), so the actor fix surfaces
   there. A SIEM consuming `/api/audit/export` still will not see the actor kind.
   Adding it to `FetchLogRepository.AuditEntry` is a small, arguably in-spirit
-  extension of `GW_0128` but changes the export contract; left out of this change
+  extension of `GW_AUDIT_0007` but changes the export contract; left out of this change
   deliberately. Confirm whether it should ride along.
 - **`run` id vs. a stable public reference.** If a per-run endpoint is planned,
   the ledger reference could later be a URL; the id is forward-compatible with

@@ -2,20 +2,20 @@
 
 ## ADDED Requirements
 
-### Requirement: GW_0126
-The system SHALL implement GW_0126.
+### Requirement: GW_AUTH_0020
+The system SHALL implement GW_AUTH_0020.
 
-#### Scenario: SVC_GW_0126
-The system SHALL pass SVC_GW_0126.
+#### Scenario: SVC_GW_AUTH_0020
+The system SHALL pass SVC_GW_AUTH_0020.
 
-### Requirement: GW_0127
-The system SHALL implement GW_0127.
+### Requirement: GW_AUTH_0021
+The system SHALL implement GW_AUTH_0021.
 
-#### Scenario: SVC_GW_0127
-The system SHALL pass SVC_GW_0127.
+#### Scenario: SVC_GW_AUTH_0021
+The system SHALL pass SVC_GW_AUTH_0021.
 
-### Requirement: GW_0128
-The system SHALL implement GW_0128.
+### Requirement: GW_AUDIT_0007
+The system SHALL implement GW_AUDIT_0007.
 
-#### Scenario: SVC_GW_0128
-The system SHALL pass SVC_GW_0128.
+#### Scenario: SVC_GW_AUDIT_0007
+The system SHALL pass SVC_GW_AUDIT_0007.

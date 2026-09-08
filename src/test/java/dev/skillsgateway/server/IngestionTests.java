@@ -18,7 +18,7 @@ import org.springframework.http.MediaType;
 class IngestionTests extends AbstractGatewayTest {
 
     @Test
-    @SVCs({"SVC_GW_0001"})
+    @SVCs({"SVC_GW_INGEST_0001"})
     void registeredMarketplaceIsListedWithItsUrl() throws Exception {
         String name = uniqueName("corp");
         Path upstream = createUpstream(DEFAULT_MANIFEST);
@@ -40,7 +40,7 @@ class IngestionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0002"})
+    @SVCs({"SVC_GW_INGEST_0002"})
     void ingestingValidUpstreamCreatesHeldSnapshotPinnedToUpstreamHead() throws Exception {
         Path upstream = createUpstream(DEFAULT_MANIFEST);
 
@@ -52,7 +52,7 @@ class IngestionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0003"})
+    @SVCs({"SVC_GW_INGEST_0003"})
     void externalPluginSourceIsRejectedAndCannotBeApproved() throws Exception {
         String manifest = """
                 {
@@ -73,7 +73,7 @@ class IngestionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0016"})
+    @SVCs({"SVC_GW_INGEST_0005"})
     void nonAllowlistedUrlSchemesAreRejectedAtRegistration() throws Exception {
         for (String url : List.of("ssh://git@evil.example/repo.git", "ext::sh -c whoami", "/var/tmp/local-repo")) {
             String name = uniqueName("corp");
@@ -87,7 +87,7 @@ class IngestionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0017"})
+    @SVCs({"SVC_GW_INGEST_0006"})
     void consumerSuppliedRefOtherThanDefaultBranchIsRejected() throws Exception {
         Path upstream = createUpstream(DEFAULT_MANIFEST);
         String url = upstream.toUri().toString();

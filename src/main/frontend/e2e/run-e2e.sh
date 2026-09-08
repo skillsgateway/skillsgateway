@@ -101,14 +101,14 @@ GATEWAY_PORT="${E2E_GATEWAY_PORT:-8081}"
 mkdir -p "$UI_DIR/test-results"
 DATA_DIR="$(mktemp -d "${TMPDIR:-/tmp}/e2e-data.XXXXXX")"
 # Role enforcement is ON and the only admin is the group the mock IdP puts in every token, so the
-# whole suite passes only if claim-to-role mapping works end to end through a real login (GW_0098).
+# whole suite passes only if claim-to-role mapping works end to end through a real login (GW_AUTH_0015).
 #
 # Re-vetting: the scheduled sweep is off, so no background pass can revoke a fixture out from
 # under a running test — but the mode is ENFORCE, because the acceptance suite has to see the
 # retraction a deployment that opts in would see, not the warn-mode default that changes nothing.
 #
 # Authorization is always enforced and a gateway that grants the admin role to nobody refuses to
-# start (GW_0139), so the claim mapping below is what satisfies the bootstrap check as well as what
+# start (GW_AUTH_0026), so the claim mapping below is what satisfies the bootstrap check as well as what
 # the role assertions exercise: remove it and the gateway will not boot at all.
 SERVER_PORT="$GATEWAY_PORT" \
 SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5433/skillsgateway" \

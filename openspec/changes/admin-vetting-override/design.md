@@ -6,7 +6,7 @@ Two deliberate stances are reversed narrowly (see ADR 0009). The relevant code:
 
 - `VettingService.run` iterates the connectors (Spring beans) in order, runs each
   guarded, records a verdict, and aggregates fail-closed via
-  `VettingChain.aggregate` (GW_0038: empty-is-blocked, any non-clearing blocks).
+  `VettingChain.aggregate` (GW_VETTING_0002: empty-is-blocked, any non-clearing blocks).
 - `ApprovalService.doApprove` gates approval: `waiverService.evaluate` →
   `VettingBlockedException` if the effective outcome is blocked, then the policy
   gate, the release-age gate, and the four-eyes gate, all before the state
@@ -45,7 +45,7 @@ Two deliberate stances are reversed narrowly (see ADR 0009). The relevant code:
    is discounted from the block decision but does not count as clearing. So a run
    of nothing but `DISABLED` verdicts blocks — disabling every connector can
    never be a blanket approval by omission. This is the one change that could
-   have loosened GW_0038, so it is covered exhaustively by a pure-function test.
+   have loosened GW_VETTING_0002, so it is covered exhaustively by a pure-function test.
 
 3. **Toggle resolution is per-marketplace-then-global-then-enabled.**
    `ConnectorToggleService.enabled(connector, marketplaceId)` reads the

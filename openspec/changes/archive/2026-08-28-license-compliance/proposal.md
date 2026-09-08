@@ -41,7 +41,7 @@ approved unnoticed.
   append-only ledger like every other verdict. The connector's recorded
   version reflects the policy in force, so a changed allow/ban list is
   attributable in the chain identity exactly as a changed scanner rule set
-  is (GW_0049).
+  is (GW_VETTING_0012).
 - **License data surfaced over the API**: a new
   `GET /api/snapshots/{id}/licenses` endpoint reports, for any snapshot, each
   detected license with its SPDX id (or unknown), where it was found (file
@@ -58,19 +58,19 @@ approved unnoticed.
 - `license-compliance`: deterministic license detection at ingestion, the
   configured allow/ban policy evaluated through the standard vetting chain,
   unknown/missing license as detectable states, and the per-snapshot license
-  report endpoint (GW_0093–GW_0095).
+  report endpoint (GW_VETTING_0019–GW_VETTING_0021).
 
 ### Modified Capabilities
 
 None — the vetting chain, waivers, approval gate, and re-vetting requirements
-(GW_0037–GW_0055) already quantify over "every connector"; adding a connector
+(GW_VETTING_0001–GW_VETTING_0018) already quantify over "every connector"; adding a connector
 changes no existing requirement.
 
 ## Impact
 
 - New: `LicenseScanConnector`, `LicenseDetector`, license policy properties
   under `skills-gateway.vetting.license.*`, license report service and
-  endpoint, reqstool requirements GW_0093–GW_0095 with SVC_GW_0093–0091.
+  endpoint, reqstool requirements GW_VETTING_0019–GW_VETTING_0021 with SVC_GW_VETTING_0019–0091.
 - Touched: `SkillsGatewayProperties.Vetting` (new nested `License` record),
   `AdminController` (new read endpoint), `VettingTests` (a chain-position
   assertion that hard-codes two connectors becomes derived — no assertion is

@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * The point of the whole change (GW_0103): first-party content removes a redundant system, not the
+ * The point of the whole change (GW_INGEST_0017): first-party content removes a redundant system, not the
  * review. A push is quarantined, vetted and held like anything fetched, and the facade serves it
  * only after somebody approved it.
  */
@@ -77,7 +77,7 @@ class HostedLifecycleTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0103"})
+    @SVCs({"SVC_GW_INGEST_0017"})
     void a_push_is_held_until_approved_then_served_until_revoked() throws Exception {
         Publisher publisher = hostedPublisher("lifecycle");
         commitAndPush(publisher, DEFAULT_MANIFEST, "# Hello skill\n\nFirst-party content.\n");
@@ -110,7 +110,7 @@ class HostedLifecycleTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0103"})
+    @SVCs({"SVC_GW_INGEST_0017"})
     void pushed_content_faces_the_same_vetting_chain() throws Exception {
         Publisher publisher = hostedPublisher("vetted");
         // A planted credential in first-party content is still a planted credential.
@@ -125,7 +125,7 @@ class HostedLifecycleTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0103"})
+    @SVCs({"SVC_GW_INGEST_0017"})
     void a_pushed_manifest_declaring_a_non_local_source_is_rejected() throws Exception {
         Publisher publisher = hostedPublisher("nonlocal");
         commitAndPush(publisher, """

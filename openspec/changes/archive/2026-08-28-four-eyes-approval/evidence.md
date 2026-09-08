@@ -52,7 +52,7 @@ them. The UI gate (typecheck, oxlint, vitest, reqstool tags) runs inside it.
     112/112 complete · 0 incomplete · PASS
 ```
 
-GW_0096 and GW_0097 are the two this change adds. The total is 112 rather than
+GW_APPROVAL_0010 and GW_APPROVAL_0011 are the two this change adds. The total is 112 rather than
 108 because main gained four requirements while this branch was open.
 
 ## `openspec validate --all --strict`

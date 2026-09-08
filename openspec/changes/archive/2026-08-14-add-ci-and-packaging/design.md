@@ -51,11 +51,11 @@ image, and no deployment artifact.
   image, external PostgreSQL coordinates (host/db/user + existing-secret reference), and
   OIDC settings. PostgreSQL itself is not templated (enterprise deployments bring their
   own); `helm lint` runs in the native workflow.
-- **GW_0015 modeled as `implementation: configuration` with a build-phase SVC.**
+- **GW_RELEASE_0001 modeled as `implementation: configuration` with a build-phase SVC.**
   A post-build-only SVC was tried first, but reqstool's status verdict requires at
   least one build-phase SVC per requirement, so it can never complete without
   `--with-post-tests`. Instead: the requirement is non-code (`configuration` — the
-  Dockerfile and chart), and SVC_GW_0015 is an automated packaging-consistency test
+  Dockerfile and chart), and SVC_GW_RELEASE_0001 is an automated packaging-consistency test
   (`PackagingTests`) asserting the Dockerfile runs the native binary and the chart
   wires image, probes, and PostgreSQL/OIDC configuration. The real container build +
   smoke test still runs in the native workflow as defense in depth.
@@ -63,7 +63,7 @@ image, and no deployment artifact.
   PostgreSQL; README documents build → image → compose.
 - **springdoc 3.1.0** (Boot 4 line) with `api/OpenAPI.java` (`@OpenAPIDefinition`)
   per user instruction; docs sit behind the OIDC session like the rest of the web
-  surface (GW_0011 untouched).
+  surface (GW_AUTH_0002 untouched).
 - **Renovate over Dependabot**: issue #4 names Renovate; `renovate.json` groups
   `org.springframework.boot*` + `io.arconia*` (Boot-aligned BOM) into one PR stream and
   enables the Maven wrapper manager.

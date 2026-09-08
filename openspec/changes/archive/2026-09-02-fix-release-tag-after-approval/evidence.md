@@ -23,7 +23,7 @@ rewritten per job rather than cumulatively, and one sentence about re-dispatch �
 landed after it started. No Java source or test reads that file, and
 `mkdocs build --strict` below ran after them.
 
-## `SVC_GW_0108` was proved capable of failing
+## `SVC_GW_RELEASE_0003` was proved capable of failing
 
 The reordering is the change, so the test that asserts the order had to be shown
 to discriminate. With `tag`'s `needs` reverted to `[prepare, checks]`:
@@ -59,11 +59,11 @@ INFO    -  Documentation built in 4.36 seconds
 ```
 
 **This does not pass locally, and would not for any change in this repository
-that skips the browser suites.** All 14 incomplete requirements — `GW_0018`,
-`GW_0019`, `GW_0026`, `GW_0030`, `GW_0036`, `GW_0042`, `GW_0047`, `GW_0055`,
-`GW_0078`, `GW_0079`, `GW_0082`, `GW_0097`, `GW_0098`, `GW_0138` — carry their
+that skips the browser suites.** All 14 incomplete requirements — `GW_INGEST_0007`,
+`GW_AUTH_0005`, `GW_WEBHOOK_0004`, `GW_AUDIT_0006`, `GW_RETENTION_0006`, `GW_VETTING_0005`, `GW_VETTING_0010`, `GW_VETTING_0018`,
+`GW_OBSERVABILITY_0004`, `GW_AUTH_0014`, `GW_APPROVAL_0005`, `GW_APPROVAL_0011`, `GW_AUTH_0015`, `GW_AUTH_0025` — carry their
 `@SVCs` in `src/main/frontend/e2e/portal.spec.ts`, so their annotations only
-exist once the Playwright suite has run. `GW_0108`, the requirement this change
+exist once the Playwright suite has run. `GW_RELEASE_0003`, the requirement this change
 revises, is in the complete set. CI runs the suite and the gate together.
 
 ## Gates not run, and why

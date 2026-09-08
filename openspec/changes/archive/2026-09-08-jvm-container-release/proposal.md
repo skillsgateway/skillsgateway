@@ -48,11 +48,11 @@ in, and what that artifact can and cannot fail at.
   #272. An audit of the whole main source tree found this to be the only
   `@ConditionalOnProperty` or `@Profile` on an application bean, so the class is
   closed rather than sampled.
-- **`GW_0015 — Container distribution` is amended** to state the properties the
+- **`GW_RELEASE_0001 — Container distribution` is amended** to state the properties the
   base image is chosen for rather than the binary it used to carry, and
-  **`GW_0072 — Container image publication by digest`** to describe one build
+  **`GW_RELEASE_0002 — Container image publication by digest`** to describe one build
   producing both platforms and one tagged index per release.
-- **`GW_0114 — Verified migration between storage backends` is amended** to
+- **`GW_FACADE_0013 — Verified migration between storage backends` is amended** to
   require that whether a start is a migration is decided from the configuration
   the running process is given.
 - **The `native` Maven profile stays.** It costs nothing and leaves the way back

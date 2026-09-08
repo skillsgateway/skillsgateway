@@ -6,7 +6,7 @@ import java.net.UnknownHostException;
 import java.util.List;
 
 /**
- * Which addresses the gateway will contact while resolving an external plugin source (GW_0157).
+ * Which addresses the gateway will contact while resolving an external plugin source (GW_INGEST_0025).
  *
  * <p>Manifest content decides where resolution sends requests, and an internal address answering a
  * request that appears to originate inside the perimeter is the whole of server-side request
@@ -34,7 +34,7 @@ import java.util.List;
 public record SourceAddressPolicy(boolean allowPrivateNetworks) {
 
     /** Returns why the address is forbidden, or {@code null} when it may be contacted. */
-    @Requirements({"GW_0157"})
+    @Requirements({"GW_INGEST_0025"})
     public String refuse(InetAddress address) {
         if (address == null) {
             return "an address that could not be determined";
@@ -72,7 +72,7 @@ public record SourceAddressPolicy(boolean allowPrivateNetworks) {
      * is permitted. A host that resolved to nothing is refused: there is no address to validate, so
      * there is nothing to be confident about.
      */
-    @Requirements({"GW_0157"})
+    @Requirements({"GW_INGEST_0025"})
     public String refuseAny(String host, List<InetAddress> addresses) {
         if (addresses == null || addresses.isEmpty()) {
             return "host '%s' resolved to no address".formatted(host);
@@ -87,7 +87,7 @@ public record SourceAddressPolicy(boolean allowPrivateNetworks) {
     }
 
     /** Resolves the host and refuses it in one step; a resolution failure is a refusal. */
-    @Requirements({"GW_0157"})
+    @Requirements({"GW_INGEST_0025"})
     public Resolution resolve(String host) {
         try {
             List<InetAddress> addresses = List.of(InetAddress.getAllByName(host));

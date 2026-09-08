@@ -40,7 +40,7 @@ External connectors are declared under `skills-gateway.vetting.external[*]`
 (name, URL, order, version, description, credential, timeouts, size caps) and
 bound into one `ExternalVettingConnector` bean each. This mirrors the
 `skills-gateway.vetting.license` decision: **vetting policy must be attributable
-per chain run** (GW_0049), so the identity and version of every connector that
+per chain run** (GW_VETTING_0012), so the identity and version of every connector that
 ran is stamped into the run. A connector whose endpoint, position or version
 could change through the API between two runs would make "cleared last month,
 blocks today — content or chain?" unanswerable. Configuration binds the chain to

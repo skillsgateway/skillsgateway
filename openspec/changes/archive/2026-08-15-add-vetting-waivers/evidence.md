@@ -26,7 +26,7 @@ The five new Java verification tests are in `WaiverTests`:
 [INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 -- in io.github.jimisola.skillsgateway.WaiverTests
 ```
 
-`VettingTests` still runs its full seven, with SVC_GW_0041 and SVC_GW_0043
+`VettingTests` still runs its full seven, with SVC_GW_APPROVAL_0003 and SVC_GW_VETTING_0006
 adapted to the waiver mechanism rather than weakened:
 
 ```
@@ -63,8 +63,8 @@ Running 7 tests using 1 worker
   7 passed (13.4s)
 ```
 
-Test 6 (SVC_GW_0042, adapted) confirms the reason field is gone and the confirm
-control cannot be enabled while the outcome is blocked. Test 7 (SVC_GW_0047, new)
+Test 6 (SVC_GW_VETTING_0005, adapted) confirms the reason field is gone and the confirm
+control cannot be enabled while the outcome is blocked. Test 7 (SVC_GW_VETTING_0010, new)
 waives every blocking finding from the review surface with a justification and an
 expiry, watches each become *waived by alice until …*, confirms the outcome badge
 reads **vetting clear with waivers** rather than **vetting clear**, and only then
@@ -77,8 +77,8 @@ INCOMPLETE (0)
 48/48 complete · 0 incomplete · PASS
 ```
 
-GW_0044–GW_0048 are covered by SVC_GW_0044–SVC_GW_0048 (four Java tests plus one
-Playwright test for the portal surface). GW_0041, GW_0042 and GW_0043 were
+GW_VETTING_0007–GW_VETTING_0011 are covered by SVC_GW_VETTING_0007–SVC_GW_VETTING_0011 (four Java tests plus one
+Playwright test for the portal surface). GW_APPROVAL_0003, GW_VETTING_0005 and GW_VETTING_0006 were
 revised in place to revision 0.2.0 and remain covered.
 
 ## 4. `openspec validate --all --strict`

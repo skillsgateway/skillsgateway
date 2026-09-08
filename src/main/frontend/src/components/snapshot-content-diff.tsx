@@ -66,7 +66,7 @@ function summaryChips(summary: ContentDiff["summary"]) {
  * Distinct from the preview pane's file diff, which is against what the facade currently serves
  * and answers in paths and hunks.
  *
- * @Requirements GW_0153
+ * @Requirements GW_INGEST_0022
  */
 export function SnapshotContentDiff({ snapshotId }: { snapshotId: number }) {
   const diff = useSnapshotContentDiff(snapshotId);

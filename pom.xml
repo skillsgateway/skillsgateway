@@ -278,7 +278,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <executions>
                     <!-- BuildProperties carries the Nisse-derived version into the
-                         served OpenAPI document (GW_0105). -->
+                         served OpenAPI document (GW_API_0002). -->
                     <execution>
                         <goals>
                             <goal>build-info</goal>

@@ -49,7 +49,7 @@ class ObjectStoreObservabilityTests {
 
     // the backend's contention, levels and cache counters are all published as meters
     @Test
-    @SVCs({"SVC_GW_0116"})
+    @SVCs({"SVC_GW_FACADE_0012"})
     void theBackendsCountersArePublishedAsMeters() throws Exception {
         String marketplace = marketplace();
         String prefix = ObjectStoreTestSupport.isolatedPrefix("metrics");
@@ -104,7 +104,7 @@ class ObjectStoreObservabilityTests {
 
     // every object-store request is timed, by operation and outcome and by nothing else
     @Test
-    @SVCs({"SVC_GW_0116"})
+    @SVCs({"SVC_GW_FACADE_0012"})
     void everyObjectStoreRequestIsTimed() throws Exception {
         String marketplace = marketplace();
         String prefix = ObjectStoreTestSupport.isolatedPrefix("latency");
@@ -144,7 +144,7 @@ class ObjectStoreObservabilityTests {
 
     // no meter this backend publishes is tagged by a marketplace, a repository or a key
     @Test
-    @SVCs({"SVC_GW_0116"})
+    @SVCs({"SVC_GW_FACADE_0012"})
     void noMeterCarriesAnUnboundedTag() throws Exception {
         String marketplace = marketplace();
         String prefix = ObjectStoreTestSupport.isolatedPrefix("cardinality");
@@ -171,7 +171,7 @@ class ObjectStoreObservabilityTests {
 
     // the health indicator names the object-store backend, its reachability and the startup probe
     @Test
-    @SVCs({"SVC_GW_0116"})
+    @SVCs({"SVC_GW_FACADE_0012"})
     void theHealthIndicatorReportsTheObjectStoreBackend() throws Exception {
         String prefix = ObjectStoreTestSupport.isolatedPrefix("health");
         SkillsGatewayProperties properties =
@@ -196,7 +196,7 @@ class ObjectStoreObservabilityTests {
      */
     // a store that cannot be reached is reported down, not up
     @Test
-    @SVCs({"SVC_GW_0116"})
+    @SVCs({"SVC_GW_FACADE_0012"})
     void anUnreachableStoreIsReportedDown() throws Exception {
         String prefix = ObjectStoreTestSupport.isolatedPrefix("unreachable");
         SkillsGatewayProperties properties =
@@ -212,7 +212,7 @@ class ObjectStoreObservabilityTests {
 
     // on the filesystem backend the indicator says so, and reports the directory it depends on
     @Test
-    @SVCs({"SVC_GW_0116"})
+    @SVCs({"SVC_GW_FACADE_0012"})
     void theHealthIndicatorReportsTheFilesystemBackend() throws Exception {
         Path data = Files.createTempDirectory("git-storage-health-");
         SkillsGatewayProperties properties = new SkillsGatewayProperties(

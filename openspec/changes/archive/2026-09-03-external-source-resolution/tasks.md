@@ -2,9 +2,9 @@
 
 <!-- Deviations from the plan as written, so a reader is not left to diff it:
 
-     * The requirement ids moved twice while this change was in flight. GW_0154
-       was claimed by #249 and GW_0159/GW_0160 by #251, so the block ended up as
-       GW_0155 - GW_0158 plus GW_0161 rather than a contiguous run. The ids in
+     * The requirement ids moved twice while this change was in flight. GW_FACADE_0018
+       was claimed by #249 and GW_WEBHOOK_0006/GW_WEBHOOK_0007 by #251, so the block ended up as
+       GW_INGEST_0023 - GW_INGEST_0026 plus GW_INGEST_0027 rather than a contiguous run. The ids in
        this file are the final ones.
      * 2.1 - 2.5 ran red first against throwing stubs. 2.6 and section 4/6 did
        not: the resolver, the guarded transport and the ingestion wiring were
@@ -24,41 +24,41 @@
 
 ## 1. Requirements (SSOT first)
 
-- [x] 1.1 Add GW_0155 (resolution into quarantine, pinned), GW_0156
-      (deterministic composite snapshot with a gateway-local manifest), GW_0157
-      (address, redirect and transport policy), GW_0158 (resource bounds) and
-      GW_0161 (failed resolution rejects, nothing half-resolved) to
+- [x] 1.1 Add GW_INGEST_0023 (resolution into quarantine, pinned), GW_INGEST_0024
+      (deterministic composite snapshot with a gateway-local manifest), GW_INGEST_0025
+      (address, redirect and transport policy), GW_INGEST_0026 (resource bounds) and
+      GW_INGEST_0027 (failed resolution rejects, nothing half-resolved) to
       `docs/reqstool/requirements.yml`
-- [x] 1.2 Add SVC_GW_0155 – SVC_GW_0161 (GIVEN/WHEN/THEN) to
+- [x] 1.2 Add SVC_GW_INGEST_0023 – SVC_GW_INGEST_0027 (GIVEN/WHEN/THEN) to
       `docs/reqstool/software_verification_cases.yml`
-- [x] 1.3 GW_0003, GW_0150, GW_0151 and GW_0152 are left untouched: the default
-      configuration is unchanged and GW_0152 keeps its wording, which still
+- [x] 1.3 GW_INGEST_0003, GW_INGEST_0019, GW_INGEST_0020 and GW_INGEST_0021 are left untouched: the default
+      configuration is unchanged and GW_INGEST_0021 keeps its wording, which still
       describes the failure paths this change adds
 
 ## 2. Tests (red before green)
 
-- [x] 2.1 `SourceAddressPolicyTests` (`@SVCs({"SVC_GW_0157"})`): the two tiers —
+- [x] 2.1 `SourceAddressPolicyTests` (`@SVCs({"SVC_GW_INGEST_0025"})`): the two tiers —
       link-local including `169.254.169.254`, `fe80::1`, multicast, unspecified,
       `0.0.0.0/8` and IPv4-mapped forms of them refused under every
       configuration; loopback, RFC1918, CGNAT and unique-local refused unless
       private networks are permitted; a host resolving to a mixture of permitted
       and forbidden addresses refused as a whole
-- [x] 2.2 `SourceUrlPolicyTests` (`@SVCs({"SVC_GW_0157"})`): decimal, octal and
+- [x] 2.2 `SourceUrlPolicyTests` (`@SVCs({"SVC_GW_INGEST_0025"})`): decimal, octal and
       hexadecimal IPv4 literals; embedded credentials; a port outside the policy;
       a redirect that changes host, downgrades the scheme, names a
       non-allowlisted scheme, or exceeds the hop bound
-- [x] 2.3 `PluginSourceTests` additions (`@SVCs({"SVC_GW_0150"})`): `..` and `.`
+- [x] 2.3 `PluginSourceTests` additions (`@SVCs({"SVC_GW_INGEST_0019"})`): `..` and `.`
       segments in `owner/repo` yield no clone URL; a `github` source declaring
       `ref` or `sha` parses to the refusing form
-- [x] 2.4 `ManifestRewriterTests` (`@SVCs({"SVC_GW_0156"})`): the rewritten
+- [x] 2.4 `ManifestRewriterTests` (`@SVCs({"SVC_GW_INGEST_0024"})`): the rewritten
       manifest, the upstream parent and its byte-exact original manifest,
       determinism and the three inputs that change the SHA, the reserved-directory
       collision, the four bad plugin names, the duplicate name, and the
       post-condition that the composite manifest passes `ManifestPolicy.validate`
-- [x] 2.5 `ResolutionBudgetTests` (`@SVCs({"SVC_GW_0158"})`): every bound refuses
+- [x] 2.5 `ResolutionBudgetTests` (`@SVCs({"SVC_GW_INGEST_0026"})`): every bound refuses
       at the boundary and passes just under it; an expired deadline refuses
-- [x] 2.6 `ExternalSourceResolutionTests` (`@SVCs({"SVC_GW_0155", "SVC_GW_0156",
-      "SVC_GW_0161"})`), its own Spring context with `enabled: true` and
+- [x] 2.6 `ExternalSourceResolutionTests` (`@SVCs({"SVC_GW_INGEST_0023", "SVC_GW_INGEST_0024",
+      "SVC_GW_INGEST_0027"})`), its own Spring context with `enabled: true` and
       `github-base-url` pointed at the in-process fixture: held composite
       snapshot, content inventory, facade clone with no external URL, planted
       secret in the external repository blocking vetting, idempotent
@@ -72,7 +72,7 @@
       record of every path requested so a test can assert a target was never
       contacted. No container, no new dependency
 - [x] 2.8 Confirm `IngestionTests.externalPluginSourceIsRejectedAndCannotBeApproved`
-      (SVC_GW_0003), the `HostedLifecycleTests` key-per-type case,
+      (SVC_GW_INGEST_0003), the `HostedLifecycleTests` key-per-type case,
       `ManifestPolicyTests`, `ExternalSourceAdmissionTests` and
       `PluginSourceTests` still pass **unmodified** under the default
       configuration
@@ -80,14 +80,14 @@
 ## 3. Transport and policy
 
 - [x] 3.1 `SourceAddressPolicy`: the two-tier `InetAddress` classification;
-      `@Requirements({"GW_0157"})`
+      `@Requirements({"GW_INGEST_0025"})`
 - [x] 3.2 `SourceUrlPolicy`: scheme, port, userinfo and redirect-transition rules
-      over a URL, independent of any connection; `@Requirements({"GW_0157"})`
+      over a URL, independent of any connection; `@Requirements({"GW_INGEST_0025"})`
 - [x] 3.3 `GuardedHttpConnectionFactory`: resolve once, validate every address,
       connect to the validated address with the hostname preserved for TLS, no
       JDK redirect following, per-hop re-validation, timeouts, and the counting
       response stream that enforces `max-received-bytes`;
-      `@Requirements({"GW_0157", "GW_0158"})`
+      `@Requirements({"GW_INGEST_0025", "GW_INGEST_0026"})`
 - [x] 3.4 Install it per fetch via `FetchCommand.setTransportConfigCallback` and
       `TransportHttp.setHttpConnectionFactory` — never
       `HttpTransport.setConnectionFactory`, which is a JVM-wide static
@@ -99,19 +99,19 @@
       an absent block is the shipped default
 - [x] 4.2 `PluginSource.GitHub`: `ref`/`sha` fields parsed and refused by name;
       `cloneUrl()` derives from the configured base and refuses `.`/`..`
-      segments; `@Requirements({"GW_0150", "GW_0155"})`
+      segments; `@Requirements({"GW_INGEST_0019", "GW_INGEST_0023"})`
 - [x] 4.3 `ManifestPolicy.evaluate(byte[]) -> Evaluation` returning the
       violation, the parsed manifest and the admitted sources; `validate` keeps
-      its signature and delegates; `@Requirements({"GW_0152"})`
+      its signature and delegates; `@Requirements({"GW_INGEST_0021"})`
 - [x] 4.4 `ExternalSourceResolver`: fetch each admitted source into the
       marketplace quarantine under a scaffolding ref, deduplicate identical
       sources, apply the per-source and per-closure budgets and the deadline,
       prune the scaffolding refs in a `finally`, and return either the resolved
-      set or a violation; `@Requirements({"GW_0155", "GW_0158"})`
+      set or a violation; `@Requirements({"GW_INGEST_0023", "GW_INGEST_0026"})`
 - [x] 4.5 `ResolutionBudget`: the mutable accumulator for bytes, objects and time
       across one resolution, plus the post-fetch tree walk that enforces inflated
       bytes, ratio, object count, blob size and tree depth;
-      `@Requirements({"GW_0158"})`
+      `@Requirements({"GW_INGEST_0026"})`
 
 ## 5. Rewrite
 
@@ -119,17 +119,17 @@
       plus each graft under `_plugins/<name>`, the rewritten manifest blob, the
       commit parented on the upstream commit with a fixed identity and the
       provenance message, and the graft-hazard refusals;
-      `@Requirements({"GW_0156"})`
-- [x] 5.2 The GW_0152 post-condition: the rewritten manifest is run back through
+      `@Requirements({"GW_INGEST_0024"})`
+- [x] 5.2 The GW_INGEST_0021 post-condition: the rewritten manifest is run back through
       `ManifestPolicy.validate` and a non-null result refuses the composite;
-      `@Requirements({"GW_0152", "GW_0156"})`
+      `@Requirements({"GW_INGEST_0021", "GW_INGEST_0024"})`
 
 ## 6. Ingestion wiring
 
 - [x] 6.1 `IngestionService.ingestLocked`: evaluate the manifest before pinning,
       resolve and rewrite when there are admitted sources, pin the served commit,
       and keep the existing dedupe, insert and vet steps unchanged;
-      `@Requirements({"GW_0155", "GW_0156", "GW_0161"})`
+      `@Requirements({"GW_INGEST_0023", "GW_INGEST_0024", "GW_INGEST_0027"})`
 - [x] 6.2 The failure path: a resolver or rewriter violation records the snapshot
       at the upstream SHA in `rejected`, with no composite ref written
 

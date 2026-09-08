@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Locale;
 
 /**
- * What a waiver's scope value means, and how it is matched against a finding (GW_0044).
+ * What a waiver's scope value means, and how it is matched against a finding (GW_VETTING_0007).
  *
  * <p>The finding model offers exactly two stable handles: the rule id, and the path part of
  * {@link Finding#location()}. The line number is not one of them — inserting a line above a

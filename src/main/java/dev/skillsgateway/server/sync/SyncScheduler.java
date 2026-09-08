@@ -8,7 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * The scheduled polling sweep (GW_0057). Enabled by default and still safe on upgrade: it only
+ * The scheduled polling sweep (GW_INGEST_0011). Enabled by default and still safe on upgrade: it only
  * ever touches marketplaces an operator has explicitly moved to the {@code scheduled} sync mode,
  * so an estate of defaults sees no behavior change.
  */
@@ -25,7 +25,7 @@ public class SyncScheduler {
         this.properties = properties.sync();
     }
 
-    @Requirements({"GW_0057"})
+    @Requirements({"GW_INGEST_0011"})
     @Scheduled(
             fixedDelayString = "${skills-gateway.sync.poll-interval:10m}",
             initialDelayString = "${skills-gateway.sync.poll-interval:10m}")

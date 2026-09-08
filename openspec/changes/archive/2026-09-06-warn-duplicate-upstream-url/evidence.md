@@ -10,10 +10,10 @@ Implementation commit: `6ed4f2edf1501ba4d53adc8907384b0df73a6b2a`.
 
 | Requirement | Verifies | Test |
 | --- | --- | --- |
-| GW_0166 — Warning on a duplicate upstream URL at registration | normalization rule (host case, trailing slash, `.git` suffix, both orders; path case preserved; scheme/port distinguish; null/blank/unparseable → null) | `CloneUrlNormalizerTests`, 4 tests |
-| GW_0166 | a normalized-duplicate URL warns and the registration still succeeds; a non-colliding URL carries no warning; multiple prior matches are all named | `DuplicateUrlWarningTests` (`SVC_GW_0166`), 3 tests |
-| GW_0166 (frontend mirror) | the TypeScript `normalizeCloneUrl` produces the identical table | `form-rules.test.ts`, 4 tests |
-| GW_0166 (frontend surfacing) | a `warnings` entry in the registration response is shown as a toast even when the pre-submission dialog did not already catch it | `marketplaces.test.tsx::a_warning_in_the_registration_response_is_shown_even_when_the_client_missed_it` |
+| GW_INGEST_0029 — Warning on a duplicate upstream URL at registration | normalization rule (host case, trailing slash, `.git` suffix, both orders; path case preserved; scheme/port distinguish; null/blank/unparseable → null) | `CloneUrlNormalizerTests`, 4 tests |
+| GW_INGEST_0029 | a normalized-duplicate URL warns and the registration still succeeds; a non-colliding URL carries no warning; multiple prior matches are all named | `DuplicateUrlWarningTests` (`SVC_GW_INGEST_0029`), 3 tests |
+| GW_INGEST_0029 (frontend mirror) | the TypeScript `normalizeCloneUrl` produces the identical table | `form-rules.test.ts`, 4 tests |
+| GW_INGEST_0029 (frontend surfacing) | a `warnings` entry in the registration response is shown as a toast even when the pre-submission dialog did not already catch it | `marketplaces.test.tsx::a_warning_in_the_registration_response_is_shown_even_when_the_client_missed_it` |
 
 ## A latent normalization bug, caught before it shipped
 
@@ -61,7 +61,7 @@ $ (cd src/main/frontend && pnpm e2e)
 
 ```
 $ reqstool status local -p docs/reqstool
-  GW_0166             skills-gateway
+  GW_INGEST_0029             skills-gateway
 156/156 complete · 0 incomplete · PASS
 ```
 

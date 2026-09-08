@@ -26,7 +26,7 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * Roles derived from the identity provider's own claims (GW_0098, GW_0099), in a context whose
+ * Roles derived from the identity provider's own claims (GW_AUTH_0015, GW_AUTH_0016), in a context whose
  * only privilege sources are one bootstrap admin and the claim mappings — so any privilege a
  * session here holds without a grant row came through the mapper.
  *
@@ -66,7 +66,7 @@ class ClaimRoleMappingTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0098"})
+    @SVCs({"SVC_GW_AUTH_0015"})
     void a_mapped_admin_claim_grants_the_admin_surface_with_no_grant_row() throws Exception {
         var alice = session("claim-alice", List.of("gw-admins"));
 
@@ -88,7 +88,7 @@ class ClaimRoleMappingTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0098"})
+    @SVCs({"SVC_GW_AUTH_0015"})
     void a_mapped_approver_claim_acts_only_on_its_own_marketplace_including_through_bare_ids() throws Exception {
         var root = oidcLogin().idToken(token -> token.subject("root"));
         var bob = session("claim-bob", List.of("gw-approvers-a"));
@@ -103,7 +103,7 @@ class ClaimRoleMappingTests extends AbstractGatewayTest {
                         .with(bob))
                 .andExpect(status().isCreated());
 
-        // Another marketplace is refused by name and through a bare snapshot id (GW_0069).
+        // Another marketplace is refused by name and through a bare snapshot id (GW_AUTH_0011).
         mockMvc.perform(post(
                                 "/api/marketplaces/{name}/ingest",
                                 other.marketplace().name())
@@ -131,7 +131,7 @@ class ClaimRoleMappingTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0098"})
+    @SVCs({"SVC_GW_AUTH_0015"})
     void a_mapped_auditor_claim_reads_the_ledger_and_is_refused_every_mutation() throws Exception {
         var carol = session("claim-carol", List.of("gw-auditors"));
 
@@ -147,7 +147,7 @@ class ClaimRoleMappingTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0098"})
+    @SVCs({"SVC_GW_AUTH_0015"})
     void claim_values_that_only_resemble_a_mapping_grant_nothing() throws Exception {
         List<String> nearMisses =
                 List.of("gw-admin", "gw-admins-extra", "xgw-admins", "GW-ADMINS", "Gw-Admins", "gw admins", "");
@@ -165,7 +165,7 @@ class ClaimRoleMappingTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0098"})
+    @SVCs({"SVC_GW_AUTH_0015"})
     void a_credential_without_identity_provider_claims_derives_nothing() throws Exception {
         // The dev-insecure principal shape: a bare-string principal with forged authorities, so
         // there is no claim map to read and nothing to match against.
@@ -179,7 +179,7 @@ class ClaimRoleMappingTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0098"})
+    @SVCs({"SVC_GW_AUTH_0015"})
     void claim_roles_union_with_configured_admins_and_stored_grants() throws Exception {
         var root = oidcLogin().idToken(token -> token.subject("root"));
 
@@ -215,7 +215,7 @@ class ClaimRoleMappingTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0098"})
+    @SVCs({"SVC_GW_AUTH_0015"})
     void a_mapping_naming_an_unregistered_marketplace_starts_and_matches_nothing() throws Exception {
         // The context booted with a mapping for claim-unregistered-mkt; reaching this line is
         // half the claim, and conferring nothing anywhere is the other half.
@@ -232,7 +232,7 @@ class ClaimRoleMappingTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0085"})
+    @SVCs({"SVC_GW_ESTATE_0003"})
     void a_declared_grant_is_still_created_for_a_principal_who_holds_the_role_by_claim() {
         // The reconciler's "already converged" check reads stored grants only. If a claim-derived
         // role counted as convergence, the declared row would never be written — and losing the
@@ -254,7 +254,7 @@ class ClaimRoleMappingTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0099"})
+    @SVCs({"SVC_GW_AUTH_0016"})
     void a_truncated_claim_is_reported_and_an_absent_one_is_not() throws Exception {
         // The overage shape: no groups claim, but the provider says there would have been one.
         var overflowing =

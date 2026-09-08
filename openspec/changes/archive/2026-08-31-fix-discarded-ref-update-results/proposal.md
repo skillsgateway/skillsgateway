@@ -65,7 +65,7 @@ transaction inside `unpublish`. This change closes that asymmetry.
   neither does. Partial serving stops being a state the system can reach, rather
   than one it detects afterwards. On the object-store backend this gives
   publication the compare-and-swap retry and atomicity that revocation already
-  has; `GW_0112`'s existing clause — a transition that did not take effect is
+  has; `GW_FACADE_0011`'s existing clause — a transition that did not take effect is
   raised rather than reported as done — then covers publication too, and the
   storage contract suite gains it as a tested transition on both backends.
 - **The facade advertises an explicit allowlist.** `UploadPack` currently gets no
@@ -87,12 +87,12 @@ transaction inside `unpublish`. This change closes that asymmetry.
   in-tree copies in `StorageMigration` and `FilesystemGitStorage.deleteRef` — so a
   fifth call site cannot reintroduce the bug quietly.
 - **New requirements** in `docs/reqstool/`, one per affected capability, with
-  adversarial verification cases: `GW_0132` (publication is one atomic, verified
-  transition on every backend), `GW_0133` (an approval reports success only when
+  adversarial verification cases: `GW_FACADE_0015` (publication is one atomic, verified
+  transition on every backend), `GW_APPROVAL_0012` (an approval reports success only when
   publication took effect, and a refusal leaves nothing published and the row as
-  it was), `GW_0134` (the facade advertises only the refs it serves), `GW_0135`
-  (the served catalog repository retains no internal scaffolding refs), `GW_0136`
-  (a purge reports deletion only when the pin is gone) and `GW_0137` (ingestion
+  it was), `GW_FACADE_0016` (the facade advertises only the refs it serves), `GW_FACADE_0017`
+  (the served catalog repository retains no internal scaffolding refs), `GW_RETENTION_0007`
+  (a purge reports deletion only when the pin is gone) and `GW_INGEST_0018` (ingestion
   reports a pinned snapshot only when it is pinned).
 
 Not breaking: every change is a refusal where the system previously reported a
@@ -108,19 +108,19 @@ introducing a new one.
 
 ### Modified Capabilities
 
-- `git-storage`: `GW_0132` — publication joins the seam as the inverse of
+- `git-storage`: `GW_FACADE_0015` — publication joins the seam as the inverse of
   revocation, one atomic verified transition with the same guarantee on both
   backends.
-- `snapshot-approval`: `GW_0133` — an approval reports success only when
+- `snapshot-approval`: `GW_APPROVAL_0012` — an approval reports success only when
   publication took effect; a refusal leaves nothing published and no row claiming
   otherwise.
-- `git-facade`: `GW_0134` — advertisement is an explicit allowlist rather than
+- `git-facade`: `GW_FACADE_0016` — advertisement is an explicit allowlist rather than
   whatever the repository happens to hold.
-- `virtual-catalog`: `GW_0135` — the served catalog repository retains no internal
+- `virtual-catalog`: `GW_FACADE_0017` — the served catalog repository retains no internal
   scaffolding refs.
-- `snapshot-retention`: `GW_0136` — a purge reports deletion only when the pin is
+- `snapshot-retention`: `GW_RETENTION_0007` — a purge reports deletion only when the pin is
   gone.
-- `marketplace-ingestion`: `GW_0137` — ingestion reports a pinned snapshot only
+- `marketplace-ingestion`: `GW_INGEST_0018` — ingestion reports a pinned snapshot only
   when it is pinned.
 
 ## Impact

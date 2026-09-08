@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 class SbomTests extends AbstractGatewayTest {
 
     @Test
-    @SVCs({"SVC_GW_0014"})
+    @SVCs({"SVC_GW_API_0001"})
     void sbomEndpointServesCycloneDxBom() throws Exception {
         String listing = mockMvc.perform(get("/actuator/sbom").with(oidcLogin()))
                 .andExpect(status().isOk())

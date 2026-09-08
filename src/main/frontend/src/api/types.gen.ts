@@ -595,7 +595,7 @@ export interface paths {
         put?: never;
         /**
          * Approve a held or revoked snapshot
-         * @description Publishes the snapshot to the git facade and records the reviewer identity and timestamp. The request body is optional. Held snapshots and snapshots that re-vetting revoked can be approved; a revoked one is re-published only by this fresh decision, behind the same gate, which means the violation that revoked it must have been waived or fixed first. A snapshot whose effective vetting outcome is blocked — its chain run objects and at least one blocking finding is not covered by an active waiver, including a snapshot with no chain run at all — is refused, and the problem document names both the blocking connectors and the uncovered findings. Record a scoped, expiring waiver for each of those findings and approve again; every waiver that let the approval through is written to the ledger. Alternatively an administrator — and only an administrator — may set overrideVetting with a reason to approve over the block (GW_0148): the override lifts only the vetting gate, is written to the ledger as a distinct event with the failing verdicts, and marks the snapshot approved over a vetting failure.
+         * @description Publishes the snapshot to the git facade and records the reviewer identity and timestamp. The request body is optional. Held snapshots and snapshots that re-vetting revoked can be approved; a revoked one is re-published only by this fresh decision, behind the same gate, which means the violation that revoked it must have been waived or fixed first. A snapshot whose effective vetting outcome is blocked — its chain run objects and at least one blocking finding is not covered by an active waiver, including a snapshot with no chain run at all — is refused, and the problem document names both the blocking connectors and the uncovered findings. Record a scoped, expiring waiver for each of those findings and approve again; every waiver that let the approval through is written to the ledger. Alternatively an administrator — and only an administrator — may set overrideVetting with a reason to approve over the block (GW_VETTING_0028): the override lifts only the vetting gate, is written to the ledger as a distinct event with the failing verdicts, and marks the snapshot approved over a vetting failure.
          */
         post: operations["approve"];
         delete?: never;
@@ -1457,7 +1457,7 @@ export interface components {
         };
         /** @description Optional approval body carrying an administrative override of a blocked vetting outcome */
         ApproveRequest: {
-            /** @description Set true, as an administrator, to approve despite a blocked vetting outcome (GW_0148); a reason is then required and the override is recorded distinctly */
+            /** @description Set true, as an administrator, to approve despite a blocked vetting outcome (GW_VETTING_0028); a reason is then required and the override is recorded distinctly */
             overrideVetting?: boolean;
             /** @description The administrator's reason for overriding the block; required when overrideVetting */
             reason?: string;
@@ -2076,7 +2076,7 @@ export interface components {
             rotatedFrom?: number;
             /** @description Marketplace scopes; empty grants every marketplace */
             scopes?: string[];
-            /** @description Whether this credential was derived from a browser session (GW_0104) */
+            /** @description Whether this credential was derived from a browser session (GW_AUTH_0018) */
             sessionDerived?: boolean;
             /** @description Cleartext token value - shown exactly once, only a hash is stored */
             token?: string;
@@ -2259,7 +2259,7 @@ export interface components {
             /** @description All snapshots of this marketplace, any state */
             snapshots?: components["schemas"]["Snapshot"][];
             /**
-             * @description How upstream content reaches quarantine (GW_0056)
+             * @description How upstream content reaches quarantine (GW_INGEST_0010)
              * @enum {string}
              */
             syncMode?: "on-demand" | "scheduled" | "webhook";
@@ -2485,7 +2485,7 @@ export interface components {
              */
             pushPolicy?: "append-only" | "allow-rewrite";
             /**
-             * @description Must be omitted or equal the upstream default branch; the ingested ref is the gateway's decision, never the consumer's (GW_0017)
+             * @description Must be omitted or equal the upstream default branch; the ingested ref is the gateway's decision, never the consumer's (GW_INGEST_0006)
              * @example main
              */
             ref?: string;
@@ -2526,7 +2526,7 @@ export interface components {
             /** @description Identity that registered the marketplace, or null when it was not recorded */
             registeredBy?: string;
             /**
-             * @description How upstream content reaches quarantine (GW_0056)
+             * @description How upstream content reaches quarantine (GW_INGEST_0010)
              * @enum {string}
              */
             syncMode?: "on-demand" | "scheduled" | "webhook";
@@ -2537,7 +2537,7 @@ export interface components {
             upstreamUpdatedAt?: string;
             /** @description Upstream clone URL; null for a gateway-hosted marketplace */
             url?: string;
-            /** @description Non-blocking warnings about this registration, e.g. the upstream url already being registered under another marketplace name (GW_0166) */
+            /** @description Non-blocking warnings about this registration, e.g. the upstream url already being registered under another marketplace name (GW_INGEST_0029) */
             warnings?: string[];
         };
         /** @description What one re-vetting run concluded about one approved snapshot */
@@ -3061,7 +3061,7 @@ export interface components {
              * @enum {string}
              */
             outcome?: "CLEAR" | "CLEAR_WITH_WAIVERS" | "BLOCKED";
-            /** @description Present when an administrator approved this snapshot over a blocked vetting outcome (GW_0148); its presence is what surfaces the override so it is never indistinguishable from a clean approval. Null otherwise. */
+            /** @description Present when an administrator approved this snapshot over a blocked vetting outcome (GW_VETTING_0028); its presence is what surfaces the override so it is never indistinguishable from a clean approval. Null otherwise. */
             override?: components["schemas"]["VettingOverrideRecord"];
             /**
              * @description What the connectors themselves concluded, before any waiver was applied

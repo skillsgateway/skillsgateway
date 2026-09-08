@@ -31,7 +31,7 @@ public class GitFacadeConfiguration {
     private static final String SERVED_REF = GitStorage.SERVED_REF;
 
     /**
-     * What the facade puts on the wire, stated rather than inherited (GW_0134).
+     * What the facade puts on the wire, stated rather than inherited (GW_FACADE_0016).
      *
      * <p>{@code UploadPack} advertises every reference the repository holds unless told otherwise,
      * and under the default {@code RequestPolicy.ADVERTISED} every advertised tip is a legal
@@ -68,7 +68,7 @@ public class GitFacadeConfiguration {
 
     /** Read-only by construction: receive-pack is disabled, so pushes are impossible. */
     @Bean
-    @Requirements({"GW_0006"})
+    @Requirements({"GW_FACADE_0001"})
     public ServletRegistrationBean<GitServlet> gitServlet() {
         GitServlet servlet = new GitServlet();
         servlet.setRepositoryResolver(this::resolvePublished);
@@ -78,14 +78,14 @@ public class GitFacadeConfiguration {
     }
 
     /** The facade only ever opens published repositories; quarantine is unreachable from here. */
-    @Requirements({"GW_0007", "GW_0064"})
+    @Requirements({"GW_FACADE_0002", "GW_AUTH_0006"})
     Repository resolvePublished(HttpServletRequest request, String name)
             throws RepositoryNotFoundException, ServiceMayNotContinueException {
         String marketplace = name.endsWith(".git") ? name.substring(0, name.length() - 4) : name;
         if (!MARKETPLACE_NAME.matcher(marketplace).matches()) {
             throw new RepositoryNotFoundException(name);
         }
-        // Scope enforcement (GW_0064), before the storage lookup: an out-of-scope request gets
+        // Scope enforcement (GW_AUTH_0006), before the storage lookup: an out-of-scope request gets
         // the same not-found a nonexistent marketplace gets, so a scoped token cannot probe what
         // else the gateway governs. An unscoped token permits everything.
         var token = auditHook.currentToken();
@@ -113,7 +113,7 @@ public class GitFacadeConfiguration {
         return repository;
     }
 
-    @Requirements({"GW_0134"})
+    @Requirements({"GW_FACADE_0016"})
     UploadPack createUploadPack(HttpServletRequest request, Repository repository) {
         UploadPack uploadPack = new UploadPack(repository);
         uploadPack.setRefFilter(SERVED_REFS);
@@ -128,7 +128,7 @@ public class GitFacadeConfiguration {
     }
 
     /**
-     * Which advertised ref a transferred {@code want} resolves to (GW_0154), or {@code null} when
+     * Which advertised ref a transferred {@code want} resolves to (GW_FACADE_0018), or {@code null} when
      * none does.
      *
      * <p>{@code PreUploadHook} is handed object ids, not ref names, and JGit exposes no
@@ -149,7 +149,7 @@ public class GitFacadeConfiguration {
      * constant is the defect this replaces. A column whose purpose is to say what was asked for has
      * to be able to say it does not know; {@code sha} still pins the delivered content exactly.
      */
-    @Requirements({"GW_0154"})
+    @Requirements({"GW_FACADE_0018"})
     static String wantedRef(Map<String, Ref> advertised, ObjectId want) {
         Ref tip = advertised.get(SERVED_REF);
         if (tip != null && want.equals(tip.getObjectId())) {
@@ -189,7 +189,7 @@ public class GitFacadeConfiguration {
         }
 
         @Override
-        @Requirements({"GW_0008", "GW_0154"})
+        @Requirements({"GW_AUDIT_0001", "GW_FACADE_0018"})
         public void onSendPack(
                 UploadPack up, Collection<? extends ObjectId> wants, Collection<? extends ObjectId> haves) {
             Map<String, Ref> advertised = up.getAdvertisedRefs();

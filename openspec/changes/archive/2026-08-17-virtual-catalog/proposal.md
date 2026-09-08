@@ -40,13 +40,13 @@ win available, and it can be built without touching the approval gate.
 ### New Capabilities
 
 - `virtual-catalog`: the synthesized catalog, its freshness on publication
-  changes, and its provenance/audit story (GW_0061–GW_0063).
+  changes, and its provenance/audit story (GW_FACADE_0003–GW_FACADE_0005).
 
 ### Modified Capabilities
 
-<!-- none: registration gains a reserved-name refusal, but GW_0001's
+<!-- none: registration gains a reserved-name refusal, but GW_INGEST_0001's
      requirement text is unchanged — the refusal is part of the new
-     GW_0063 requirement -->
+     GW_FACADE_0005 requirement -->
 
 ## Impact
 
@@ -61,7 +61,7 @@ win available, and it can be built without touching the approval gate.
   and generated TS types regenerate.
 - **Docs**: new guide, config reference, API reference, consuming-skills and
   concepts touches, ARCHITECTURE note.
-- **Traceability**: GW_0061–GW_0063 + SVC_GW_0061–SVC_GW_0063.
+- **Traceability**: GW_FACADE_0003–GW_FACADE_0005 + SVC_GW_FACADE_0003–SVC_GW_FACADE_0005.
 - **Known limit (documented)**: plugin-name prefixing uses
   `<marketplace>-<plugin>`; a contrived pair of names can still collide, in
   which case the rebuild keeps the first (deterministic marketplace-name order)

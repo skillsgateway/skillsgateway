@@ -9,32 +9,32 @@ audit trail of every mode change and sync-triggered ingestion.
 
 ## ADDED Requirements
 
-### Requirement: GW_0056
-The system SHALL implement GW_0056.
+### Requirement: GW_INGEST_0010
+The system SHALL implement GW_INGEST_0010.
 
-#### Scenario: SVC_GW_0056
-The system SHALL pass SVC_GW_0056.
+#### Scenario: SVC_GW_INGEST_0010
+The system SHALL pass SVC_GW_INGEST_0010.
 
-### Requirement: GW_0057
-The system SHALL implement GW_0057.
+### Requirement: GW_INGEST_0011
+The system SHALL implement GW_INGEST_0011.
 
-#### Scenario: SVC_GW_0057
-The system SHALL pass SVC_GW_0057.
+#### Scenario: SVC_GW_INGEST_0011
+The system SHALL pass SVC_GW_INGEST_0011.
 
-### Requirement: GW_0058
-The system SHALL implement GW_0058.
+### Requirement: GW_INGEST_0012
+The system SHALL implement GW_INGEST_0012.
 
-#### Scenario: SVC_GW_0058
-The system SHALL pass SVC_GW_0058.
+#### Scenario: SVC_GW_INGEST_0012
+The system SHALL pass SVC_GW_INGEST_0012.
 
-### Requirement: GW_0059
-The system SHALL implement GW_0059.
+### Requirement: GW_INGEST_0013
+The system SHALL implement GW_INGEST_0013.
 
-#### Scenario: SVC_GW_0059
-The system SHALL pass SVC_GW_0059.
+#### Scenario: SVC_GW_INGEST_0013
+The system SHALL pass SVC_GW_INGEST_0013.
 
-### Requirement: GW_0060
-The system SHALL implement GW_0060.
+### Requirement: GW_INGEST_0014
+The system SHALL implement GW_INGEST_0014.
 
-#### Scenario: SVC_GW_0060
-The system SHALL pass SVC_GW_0060.
+#### Scenario: SVC_GW_INGEST_0014
+The system SHALL pass SVC_GW_INGEST_0014.

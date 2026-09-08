@@ -27,11 +27,11 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.springframework.stereotype.Service;
 
 /**
- * Read-only inventory of what a snapshot contains (GW_0020): the plugins its manifest declares and
+ * Read-only inventory of what a snapshot contains (GW_INGEST_0008): the plugins its manifest declares and
  * the skills found under each plugin's source tree. The future policy surface for limiting
  * individual plugins or skills hangs off this inventory.
  *
- * <p>The same inventory diffed against the marketplace's last approved snapshot (GW_0153) is what
+ * <p>The same inventory diffed against the marketplace's last approved snapshot (GW_INGEST_0022) is what
  * a reviewer actually decides on — the inventory says what a snapshot ships, the diff says what
  * approving it would add to what the organisation already accepted.
  */
@@ -162,7 +162,7 @@ public class SnapshotContentService {
 
             @Schema(description = "Skill counts per status") DiffSummary summary) {}
 
-    @Requirements({"GW_0020"})
+    @Requirements({"GW_INGEST_0008"})
     public SnapshotContent content(long snapshotId) {
         Snapshot snapshot =
                 snapshotRepository.findById(snapshotId).orElseThrow(() -> new SnapshotNotFoundException(snapshotId));
@@ -197,7 +197,7 @@ public class SnapshotContentService {
     }
 
     /**
-     * The snapshot's inventory against the marketplace's last approved snapshot (GW_0153).
+     * The snapshot's inventory against the marketplace's last approved snapshot (GW_INGEST_0022).
      *
      * <p>Both commits live in the same quarantine repository, so the whole comparison is one
      * repository handle and no fetch. A skill counts as changed when the git tree object of its
@@ -208,7 +208,7 @@ public class SnapshotContentService {
      * <p>With nothing approved yet the answer says so: a null baseline and everything added,
      * rather than a diff that quietly looks like a review of nothing.
      */
-    @Requirements({"GW_0153"})
+    @Requirements({"GW_INGEST_0022"})
     public ContentDiff diff(long snapshotId) {
         Snapshot snapshot =
                 snapshotRepository.findById(snapshotId).orElseThrow(() -> new SnapshotNotFoundException(snapshotId));

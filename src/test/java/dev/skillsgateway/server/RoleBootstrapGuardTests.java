@@ -16,7 +16,7 @@ import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.env.SystemEnvironmentPropertySource;
 
 /**
- * The two startup refusals that replace the switch (GW_0139, GW_0140), each as a real Spring context
+ * The two startup refusals that replace the switch (GW_AUTH_0026, GW_AUTH_0027), each as a real Spring context
  * that either starts or does not.
  *
  * <p>Removing the enforcement switch trades one failure for another: instead of a gateway anyone can
@@ -30,7 +30,7 @@ class RoleBootstrapGuardTests {
             new ApplicationContextRunner().withUserConfiguration(GuardUnderTest.class);
 
     @Test
-    @SVCs({"SVC_GW_0139"})
+    @SVCs({"SVC_GW_AUTH_0026"})
     void a_gateway_with_no_configured_administrator_refuses_to_start() {
         contexts.run(context -> {
             assertThat(context).hasFailed();
@@ -48,7 +48,7 @@ class RoleBootstrapGuardTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0139"})
+    @SVCs({"SVC_GW_AUTH_0026"})
     void each_configuration_path_that_names_an_administrator_starts_cleanly() {
         contexts.withPropertyValues("skills-gateway.roles.admins=ops")
                 .run(context -> assertThat(context).hasNotFailed());
@@ -73,7 +73,7 @@ class RoleBootstrapGuardTests {
      * assert almost nothing.
      */
     @Test
-    @SVCs({"SVC_GW_0139"})
+    @SVCs({"SVC_GW_AUTH_0026"})
     void a_configuration_naming_only_a_lesser_role_is_still_no_administrator() {
         contexts.withPropertyValues(
                         "skills-gateway.roles.mappings[0].claim-value=gw-auditors",
@@ -88,7 +88,7 @@ class RoleBootstrapGuardTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0140"})
+    @SVCs({"SVC_GW_AUTH_0027"})
     void the_removed_property_is_refused_in_every_spelling() {
         // false is the dangerous one: ignoring it would reverse an operator's explicit intention
         // that the gateway have no authorization.
@@ -111,7 +111,7 @@ class RoleBootstrapGuardTests {
      * list of spellings that has to be kept in step with the first.
      */
     @Test
-    @SVCs({"SVC_GW_0140"})
+    @SVCs({"SVC_GW_AUTH_0027"})
     void the_removed_property_is_refused_as_an_environment_variable() {
         contexts.withPropertyValues("skills-gateway.roles.admins=ops")
                 .withInitializer(context -> context.getEnvironment()
@@ -124,7 +124,7 @@ class RoleBootstrapGuardTests {
 
     /** The removed property is refused before the bootstrap check, so its message is the one seen. */
     @Test
-    @SVCs({"SVC_GW_0140"})
+    @SVCs({"SVC_GW_AUTH_0027"})
     void the_removed_property_is_refused_even_when_there_is_also_no_administrator() {
         contexts.withPropertyValues("skills-gateway.roles.enabled=false")
                 .run(context -> assertRefused(context, "was removed"));

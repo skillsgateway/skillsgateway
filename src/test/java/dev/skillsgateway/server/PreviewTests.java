@@ -22,8 +22,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.OidcLoginRequestPostProcessor;
 
 /**
- * Snapshot preview: tree-addressed file inspection with its caps and denials (GW_0080) and the
- * diff against the served baseline (GW_0081). The reads must show exactly the pinned commit —
+ * Snapshot preview: tree-addressed file inspection with its caps and denials (GW_INGEST_0015) and the
+ * diff against the served baseline (GW_INGEST_0016). The reads must show exactly the pinned commit —
  * these tests plant hostile-shaped content (oversized, binary, traversal paths) and assert the
  * service answers with metadata and refusals, never with the wrong bytes.
  */
@@ -35,7 +35,7 @@ class PreviewTests extends AbstractGatewayTest {
     private final OidcLoginRequestPostProcessor alice = oidcLogin().idToken(token -> token.subject("alice"));
 
     @Test
-    @SVCs({"SVC_GW_0080"})
+    @SVCs({"SVC_GW_INGEST_0015"})
     void file_inspection_is_tree_addressed_capped_and_binary_aware() throws Exception {
         // A text file over the 128 KiB cap and a NUL-carrying binary blob, planted upstream.
         String oversized = "oversized line of fixture text\n".repeat(8000); // ~248 KiB
@@ -104,7 +104,7 @@ class PreviewTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0081"})
+    @SVCs({"SVC_GW_INGEST_0016"})
     void the_diff_names_the_served_baseline_and_the_exact_delta_or_its_absence() throws Exception {
         Path upstream = createUpstream(DEFAULT_MANIFEST, Map.of("docs/REMOVE.md", "# Goes away\n"));
         Registered fixture = registerAndIngest(uniqueName("diffbase"), upstream);

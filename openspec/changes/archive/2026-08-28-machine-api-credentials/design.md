@@ -134,7 +134,7 @@ call.
   facade token authenticates on the facade chain and fails on this one. The
   check is a precondition of authentication, not a later `authorizeHttpRequests`
   rule, so no controller can be the single point of failure.
-- **Session-derived credentials (`GW_0104`) can never hold API scope.** They are
+- **Session-derived credentials (`GW_AUTH_0018`) can never hold API scope.** They are
   minted from a browser session with a gateway-set lifetime for fetching; the
   `session_derived` flag is refused API scope at issue time, not merely absent
   from it.
@@ -520,7 +520,7 @@ Reuse the existing token lineage; it already has the properties this needs.
 - **Expiry is mandatory**, unlike a human token where it is optional. A
   never-expiring credential sitting in a CI variable is the failure mode this
   feature would otherwise introduce. A request without an expiry is refused,
-  never defaulted — the same "refuse, never clamp" posture GW_0065 already
+  never defaulted — the same "refuse, never clamp" posture GW_AUTH_0007 already
   takes.
 
   **But "mandatory" is not enough on its own,** because the configured cap it
@@ -575,7 +575,7 @@ that does not exist yet.
 ### 6b. The development escape hatch does not open the bearer path
 
 `skills-gateway.dev-insecure-auth=true` makes the web chain `permitAll` while
-the facade chain stays strict (`GW_0110`, `DevInsecureAuthGuard`). The machine
+the facade chain stays strict (`GW_AUTH_0019`, `DevInsecureAuthGuard`). The machine
 chain follows the facade, not the web chain: a request carrying an
 `Authorization: Bearer` header is authenticated strictly even in development
 mode, and a garbage bearer token gets 401 rather than a synthetic principal.

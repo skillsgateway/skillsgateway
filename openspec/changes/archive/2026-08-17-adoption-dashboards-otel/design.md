@@ -4,7 +4,7 @@
 
 Every facade fetch already lands on the append-only `fetch_log`
 (`FetchAuditHook.record`), attributed to the authenticated principal and the
-token that authenticated it. `FetchLogRepository.fetchersOf(sha)` (GW_0053)
+token that authenticated it. `FetchLogRepository.fetchersOf(sha)` (GW_VETTING_0016)
 established the pattern this change generalizes: `upload-pack` entries are the
 ones that mean "content was received" — `info-refs` fires on every `git fetch`
 whether or not anything transfers. The served tip of a marketplace is
@@ -44,7 +44,7 @@ exports.
 1. **Two endpoints, both auditor-gated reads.** `GET /api/adoption?days=N`
    (default 30, clamped 1..365) and `GET /api/adoption/staleness`. They
    enumerate identities off the ledger, which is exactly the class of read
-   GW_0068/GW_0070 call "the ledger and the operational listings", so both
+   GW_AUTH_0010/GW_AUTH_0012 call "the ledger and the operational listings", so both
    start with `roleService.requireAuditor(...)` and are added to the
    `PRIVILEGED_READS` classification in RoleEnforcementTests. No new
    requirement text for authorization — the existing enforcement covers it.

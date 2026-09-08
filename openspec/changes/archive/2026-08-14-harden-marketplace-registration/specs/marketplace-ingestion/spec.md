@@ -5,14 +5,14 @@ ingestion ref.
 
 ## ADDED Requirements
 
-### Requirement: GW_0016
-The system SHALL implement GW_0016.
+### Requirement: GW_INGEST_0005
+The system SHALL implement GW_INGEST_0005.
 
-#### Scenario: SVC_GW_0016
-The system SHALL pass SVC_GW_0016.
+#### Scenario: SVC_GW_INGEST_0005
+The system SHALL pass SVC_GW_INGEST_0005.
 
-### Requirement: GW_0017
-The system SHALL implement GW_0017.
+### Requirement: GW_INGEST_0006
+The system SHALL implement GW_INGEST_0006.
 
-#### Scenario: SVC_GW_0017
-The system SHALL pass SVC_GW_0017.
+#### Scenario: SVC_GW_INGEST_0006
+The system SHALL pass SVC_GW_INGEST_0006.

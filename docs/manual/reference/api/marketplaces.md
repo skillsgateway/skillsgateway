@@ -137,7 +137,7 @@ Ingesting a commit already captured does not create a second snapshot.
 
 ## Upstream sync
 
-Automated ingestion triggers (GW_0056–GW_0060). Modes and the secret lifecycle
+Automated ingestion triggers (GW_INGEST_0010–GW_INGEST_0014). Modes and the secret lifecycle
 are described in [Syncing from upstream automatically](../../guides/upstream-sync.md).
 
 ### `PUT /marketplaces/{name}/sync`
@@ -189,7 +189,7 @@ and lands `held` like any other.
 
 ## Virtual catalog
 
-The synthesized one-URL catalog (GW_0061–GW_0063); see
+The synthesized one-URL catalog (GW_FACADE_0003–GW_FACADE_0005); see
 [The virtual catalog](../../guides/virtual-catalog.md).
 
 ### `GET /catalog`

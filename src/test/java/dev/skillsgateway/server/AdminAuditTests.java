@@ -17,7 +17,7 @@ import org.springframework.http.MediaType;
 class AdminAuditTests extends AbstractGatewayTest {
 
     @Test
-    @SVCs({"SVC_GW_0022"})
+    @SVCs({"SVC_GW_AUDIT_0002"})
     void adminActionsAreRecordedInTheLedgerWithTheActingIdentity() throws Exception {
         String me = JsonPath.read(
                 mockMvc.perform(get("/api/me").with(oidcLogin()))
