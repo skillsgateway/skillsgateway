@@ -17,7 +17,6 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
@@ -30,11 +29,10 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
  * list, so a scope added without a test is impossible: the parameterised walk covers whatever the
  * registry holds.
  */
-@TestPropertySource(
-        // The scope walk holds the administrative role, so every refusal it observes is the scope
-        // allowlist's and never a missing role (GW_0138, SVC_GW_0129).
-        properties = {"skills-gateway.roles.admins=scope-walk-machine"})
-class MachineApiScopeTests extends AbstractGatewayTest {
+// The scope walk holds the administrative role, so every refusal it observes is the scope
+// allowlist's and never a missing role (GW_0138, SVC_GW_0129). "scope-walk-machine" is named for
+// the whole family in AbstractNamedAdminsTest.
+class MachineApiScopeTests extends AbstractNamedAdminsTest {
 
     /** 403, not 401: the credential authenticated and the allowlist refused it. */
     private static final int FORBIDDEN = 403;

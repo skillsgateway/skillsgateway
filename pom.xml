@@ -293,10 +293,12 @@
                 <configuration>
                     <systemPropertyVariables>
                         <!--
-                          Every distinct @TestPropertySource/@SpringBootTest property set caches a
-                          whole live ApplicationContext - datasource pool, JGit storage, embedded
-                          Tomcat. This suite has 33 such property sets against Spring's default
-                          cache size of 32, so effectively nothing is ever evicted and every
+                          Every distinct context cache key caches a whole live ApplicationContext -
+                          datasource pool, JGit storage, embedded Tomcat, and its own PostgreSQL
+                          container, because the Arconia dev service registers one per context.
+                          ContextBudgetTests counts the distinct keys and holds the total to a
+                          budget; at the time of writing it is 31, against Spring's default cache
+                          size of 32. At the default, effectively nothing is ever evicted and every
                           context built stays resident for the rest of the run.
 
                           On a developer machine that is merely wasteful. On the 2-core CI runner,
@@ -308,6 +310,11 @@
                           Bounding the cache trades a few extra context startups for a working set
                           that fits. Contexts evicted here are closed, so their pools and file
                           handles are released rather than held to the end of the run.
+
+                          8 was chosen to make the suite fit rather than from measurement. It is
+                          worth revisiting once the budget above is materially lower - with fewer
+                          contexts a larger cache is probably faster - but only against a measured
+                          before and after, which is what #305 is for.
                         -->
                         <spring.test.context.cache.maxSize>8</spring.test.context.cache.maxSize>
                     </systemPropertyVariables>

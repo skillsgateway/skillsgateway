@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.OidcLoginRequestPostProcessor;
-import org.springframework.test.context.TestPropertySource;
 
 /**
  * Provisioning is admin-only (GW_0130).
@@ -35,8 +34,9 @@ import org.springframework.test.context.TestPropertySource;
  * identity-provider account is deprovisioned. That is a persistence of privilege the session
  * itself does not have.
  */
-@TestPropertySource(properties = {"skills-gateway.roles.admins=owner", "skills-gateway.roles.admins=owner"})
-class MachineCredentialAdminTests extends AbstractGatewayTest {
+// "owner" is named for the whole family in AbstractNamedAdminsTest. The principal this suite proves
+// gets nothing, "just-logged-in", must stay out of that list -- see the note there.
+class MachineCredentialAdminTests extends AbstractNamedAdminsTest {
 
     @Autowired
     private ClaimRoleMapper claimRoleMapper;

@@ -254,6 +254,40 @@ $ pip install -r docs/requirements.txt
 $ mkdocs build --strict
 ```
 
+### The application-context budget
+
+`./mvnw verify` also enforces a budget on how many *distinct* Spring
+application contexts the test suite starts. `ContextBudgetTests` resolves every
+Spring test class's merged context configuration — the framework's own context
+cache key — without loading a single context, counts the distinct ones, and
+fails when the total crosses the budget in that class. The breakdown, and which
+classes share which property set, is written to `target/context-budget.txt` on
+every run.
+
+The budget exists because context growth is invisible until it is fatal. Each
+distinct property set is a whole live context — connection pool, JGit storage,
+embedded Tomcat, and its own PostgreSQL container, since the Arconia dev
+service registers one per context. Enough of them and the fork runs out of
+heap, which is what happened in
+[#302](https://github.com/skillsgateway/skillsgateway/issues/302): a partial
+test count, no error, and nothing in the build that noticed the cause.
+
+If a change makes the budget fail, the question to ask first is not "what
+number do I put here". It is:
+
+- **Could this test reuse an existing property set?** Two sets that differ only
+  by a value nothing asserts on are two contexts for one posture. Suites that
+  need only their own administrator's *name* share one declaration in
+  `AbstractNamedAdminsTest`.
+- **Does this test need a full context at all?** A slice — `@WebMvcTest`,
+  `@JdbcTest`, `@RestClientTest`, `@JsonTest` — loads a fraction of one.
+- **Is the property genuinely load-bearing?** A property set equal to a
+  default configures nothing and costs a context.
+
+Raising the number is a legitimate answer when a posture genuinely needs its
+own context; it is a deliberate edit with the reason in the commit message, not
+a formality.
+
 ### Running the gates on Podman
 
 Podman is a supported way to run the container-backed gates, but not an

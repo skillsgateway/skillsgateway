@@ -21,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.OidcLoginRequestPostProcessor;
-import org.springframework.test.context.TestPropertySource;
 
 /**
  * Issuance and lifecycle (GW_0126, GW_0131). Every rule here is a refusal rather than a default,
@@ -33,8 +32,7 @@ import org.springframework.test.context.TestPropertySource;
  * exactly the configuration in which "mandatory expiry" would otherwise admit a hundred-year
  * credential.
  */
-@TestPropertySource(properties = {"skills-gateway.roles.admins=root"})
-class MachineCredentialLifecycleTests extends AbstractGatewayTest {
+class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
 
     /**
      * Provisioning requires the admin role whether or not role enforcement is enabled (GW_0130),

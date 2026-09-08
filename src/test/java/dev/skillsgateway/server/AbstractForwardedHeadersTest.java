@@ -8,9 +8,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
-import org.springframework.web.client.RestClient;
+import org.springframework.test.web.servlet.client.RestTestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
@@ -54,17 +53,23 @@ abstract class AbstractForwardedHeadersTest {
 
     /** The identity provider's view: the {@code redirect_uri} the authorization request names. */
     String redirectUriSeenByTheIdp(Map<String, String> headers) {
-        // The JDK client never follows a redirect, which is the response under test.
-        ResponseEntity<Void> response = RestClient.builder()
-                .requestFactory(new JdkClientHttpRequestFactory())
+        // Bound to the running server rather than to MockMvc: the whole point of this suite is that
+        // the request reaches Tomcat's valves and the servlet filter chain. The request factory is
+        // named rather than left to detection because the JDK client never follows a redirect, and
+        // the redirect is the response under test -- a factory that followed it would turn every
+        // assertion here into an assertion about the identity provider's 404 page.
+        URI location = RestTestClient.bindToServer(new JdkClientHttpRequestFactory())
+                .baseUrl("http://localhost:" + port)
                 .build()
                 .get()
-                .uri("http://localhost:" + port + "/oauth2/authorization/idp")
+                .uri("/oauth2/authorization/idp")
                 .headers(h -> headers.forEach(h::add))
-                .retrieve()
-                .toBodilessEntity();
-        assertThat(response.getStatusCode().is3xxRedirection()).isTrue();
-        URI location = response.getHeaders().getLocation();
+                .exchange()
+                .expectStatus()
+                .is3xxRedirection()
+                .returnResult()
+                .getResponseHeaders()
+                .getLocation();
         assertThat(location).isNotNull();
         String encoded =
                 UriComponentsBuilder.fromUri(location).build().getQueryParams().getFirst("redirect_uri");
