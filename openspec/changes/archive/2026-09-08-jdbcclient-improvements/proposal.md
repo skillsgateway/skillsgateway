@@ -50,7 +50,8 @@ turn out to be "no, and here is why" — which is the point of asking.
   decided it recorded in `design.md`.
 
 Observable behaviour is unchanged. What the change buys is one fewer growth
-curve in the vetting read path, ~110 fewer lines of mapper boilerplate, and two
+curve in the vetting read path, 130 net fewer lines of production code
+(`src/main/java`: 141 added, 271 removed, the N+1 fix included), and two
 questions closed with evidence instead of left open as folklore.
 
 ## Impact
