@@ -189,7 +189,7 @@ public record SkillsGatewayProperties(
      * default here is the behaviour that shipped before this block existed, so an absent block —
      * which is every existing deployment — rejects external sources exactly as GW_INGEST_0003 always did.
      *
-     * <p>An enabled gateway resolves what it admits (GW_INGEST_0023, GW_INGEST_0024): the source is fetched into
+     * <p>An enabled gateway resolves what it admits (GW_INGEST_0023, GW_INGEST_0024.1): the source is fetched into
      * quarantine and grafted into a composite snapshot whose manifest is entirely gateway-local.
      * Enabling this therefore opens the gateway's only manifest-driven outbound network path, which
      * is what {@link #allowPrivateNetworks} and {@link #budgets} bound — and why the primary control

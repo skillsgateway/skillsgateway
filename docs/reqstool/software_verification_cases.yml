@@ -1739,21 +1739,108 @@ cases:
 
   - id: SVC_GW_INGEST_0024
     requirement_ids: ["GW_INGEST_0024"]
-    title: Composite snapshot whose manifest is gateway-local and whose identity is deterministic
+    title: One composite commit is what is pinned at ingestion and what a client receives at the end
     verification: automated-test
     description: |
-      GIVEN an ingestion whose manifest declares one resolved external plugin source
+      GIVEN a marketplace manifest declaring one resolved external plugin source
+      WHEN the snapshot is recorded and, once approved, cloned by a client
+      THEN the commit pinned as the snapshot at ingestion and the commit the client
+      receives from the facade are the same synthesised composite, with its manifest
+      gateway-local and its grafted content present at both points, and nothing about the
+      snapshot's identity is a side record kept beside a different commit
+    revision: "0.1.0"
+
+  - id: SVC_GW_INGEST_0024.1
+    requirement_ids: ["GW_INGEST_0024.1"]
+    title: The composite tree holds the upstream content, the grafted sources, and a manifest pointing only inside it
+    verification: automated-test
+    description: |
+      GIVEN a manifest declaring a local plugin and a resolved external plugin, and
+      separately a graft offered for a plugin the manifest does not declare as resolved
+      WHEN the composite commit is built, served through the content inventory, and
+      cloned by a client
+      THEN the rewritten manifest names only a path inside the commit for the resolved
+      source and leaves every local source and every other field unchanged, the resolved
+      content is present under the reserved directory alongside the untouched upstream
+      content, the content inventory and a real clone both see that same shape, vetting
+      finds content grafted there exactly as it would anywhere else in the tree, and a
+      graft with no matching declared source is refused with no commit produced
+    revision: "0.1.0"
+
+  - id: SVC_GW_INGEST_0024.2
+    requirement_ids: ["GW_INGEST_0024.2"]
+    title: The snapshot's recorded commit and pinned reference are the synthesised composite
+    verification: automated-test
+    description: |
+      GIVEN a manifest declaring a resolved external plugin source
       WHEN the snapshot is recorded
-      THEN the snapshot is identified by a synthesised commit whose parent is the ingested
-      upstream commit, whose manifest declares only paths inside that commit while every
-      other manifest field and every local source is unchanged, whose reserved directory
-      holds the resolved external content, and whose message records the upstream commit,
-      each source with its resolved commit and the rewrite implementation's identity; the
-      same inputs produce the same commit and a changed resolved commit or rewrite
-      identity produces a different one; and a manifest whose upstream content already
-      occupies the reserved directory, an external plugin name that is not a single
-      lowercase path segment, and two external plugins sharing a name are each refused
-      with no commit synthesised
+      THEN the snapshot's commit is the synthesised composite rather than the ingested
+      upstream commit, and quarantine pins exactly that composite under
+      refs/snapshots/<sha>
+    revision: "0.1.0"
+
+  - id: SVC_GW_INGEST_0024.3
+    requirement_ids: ["GW_INGEST_0024.3"]
+    title: The upstream commit is the composite's parent, and its manifest is unchanged
+    verification: automated-test
+    description: |
+      GIVEN a manifest declaring a resolved external plugin source, in an in-memory
+      repository and against a real fetch
+      WHEN the composite commit is built
+      THEN it has exactly one parent, the ingested upstream commit, and that parent's
+      manifest is byte-exact to what upstream declared
+    revision: "0.1.0"
+
+  - id: SVC_GW_INGEST_0024.4
+    requirement_ids: ["GW_INGEST_0024.4"]
+    title: The same inputs give the same composite, and a changed input gives a different one
+    verification: automated-test
+    description: |
+      GIVEN the same upstream commit, the same resolved external commit and the same
+      rewrite implementation, and separately a change to only the resolved commit, only
+      the upstream content, or only the rewrite implementation's version
+      WHEN the composite is built again
+      THEN the unchanged inputs produce the identical commit, re-ingesting unchanged
+      content resolves to the same snapshot, and each of the three changes on its own
+      produces a different commit
+    revision: "0.1.0"
+
+  - id: SVC_GW_INGEST_0024.5
+    requirement_ids: ["GW_INGEST_0024.5"]
+    title: The commit message records the upstream commit, each source, and the rewrite implementation
+    verification: automated-test
+    description: |
+      GIVEN a manifest declaring one resolved external plugin source
+      WHEN the composite commit is built
+      THEN its message names the ingested upstream commit, the source's plugin name,
+      clone URL and resolved commit, and the rewrite implementation's version
+    revision: "0.1.0"
+
+  - id: SVC_GW_INGEST_0024.6
+    requirement_ids: ["GW_INGEST_0024.6"]
+    title: A reserved-directory collision, a malformed name, or a duplicate name refuses with no commit
+    verification: automated-test
+    description: |
+      GIVEN a manifest whose upstream content already occupies the reserved directory, a
+      resolved plugin whose name is not a single lowercase path segment, or two resolved
+      plugins sharing a name
+      WHEN the composite is built, in an in-memory repository and against a real
+      ingestion
+      THEN each case is refused as a manifest policy violation naming the offending
+      condition and no commit is produced
+    revision: "0.1.0"
+
+  - id: SVC_GW_INGEST_0024.7
+    requirement_ids: ["GW_INGEST_0024.7"]
+    title: The rewritten manifest is checked against the local-only policy before its commit is used
+    verification: automated-test
+    description: |
+      GIVEN a manifest declaring two external sources with a graft resolved for only one
+      of them
+      WHEN the composite is built
+      THEN the rewritten manifest is evaluated against the local-only manifest policy
+      before any commit from it is returned, and because it still declares a source
+      outside the gateway the rewrite is refused with no commit produced
     revision: "0.1.0"
 
   - id: SVC_GW_INGEST_0025

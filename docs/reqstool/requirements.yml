@@ -1223,10 +1223,80 @@ requirements:
     revision: 0.1.0
 
   - id: GW_INGEST_0024
-    title: Deterministic composite snapshot with a gateway-local manifest
+    title: The synthesised composite commit is the snapshot, not metadata beside it
     significance: shall
-    description: "The system shall record a snapshot of a manifest declaring resolved external plugin sources as a synthesised commit that contains the ingested upstream content, each resolved external source's content under a reserved directory of that commit, and a rewritten marketplace manifest in which every plugin source is a path inside that commit; shall identify the snapshot by that synthesised commit; and shall make the ingested upstream commit the synthesised commit's parent so that the manifest as upstream declared it stays byte-exact and reachable from the identified commit. The system shall produce the same synthesised commit for the same upstream commit, the same resolved external commits and the same rewrite implementation, and shall record in that commit the upstream commit, each plugin's source and resolved commit, and the identity of the rewrite implementation. The system shall refuse, as a manifest policy violation and without synthesising a commit, a manifest whose upstream content already occupies the reserved directory, an external plugin whose name is not a single lowercase path segment, and two external plugins sharing a name. The system shall verify that the rewritten manifest satisfies the local-only manifest policy before the synthesised commit is used."
-    rationale: "Rewriting at ingestion rather than at publication is what makes the commit a reviewer approves the commit clients receive, and what makes the vetting chain see external content with no connector change: the resolved closure is not metadata beside the snapshot, it is the snapshot. Making the synthesised commit the snapshot's identity means every component at or behind a trust boundary — vetting, approval, the facade, retention, the ledger — keeps reading one commit and never learns that external content exists, where a second column beside the old identity would force each of them to choose. Keeping the upstream commit as the parent turns the whole transformation into a diff an auditor can run, so the gateway cannot be the only witness to what it changed. Determinism keeps re-ingestion of unchanged content idempotent, and recording the rewrite implementation's identity is what makes determinism a durable claim rather than an accident of one version. Refusing a reserved-directory collision, a name that is not a plain path segment, or a duplicate name fails closed at the one point where manifest-supplied names decide where content is written."
+    description: "The system shall treat the commit it synthesises for a manifest with resolved external plugin sources as the snapshot itself rather than as metadata kept beside a separate snapshot identity: the commit that is pinned in quarantine, vetted, approved and served is that one synthesised commit, and every component at or behind a trust boundary reads the snapshot through it and through nothing else. The system shall synthesise such a commit for every snapshot whose manifest declares external plugin sources it resolves, and shall serve the ingested upstream commit unchanged, with no synthesised commit, for a manifest that declares none."
+    rationale: "Rewriting at ingestion rather than at publication is what makes the commit a reviewer approves the commit clients receive, and what makes the vetting chain see external content with no connector change: the synthesised commit is not metadata beside the snapshot, it is the snapshot. Making it the snapshot's identity means every component at or behind a trust boundary — vetting, approval, the facade, retention, the ledger — keeps reading one commit and never learns that external content exists, where a second column beside the old identity would force each of them to choose between two commits and a reason to trust one over the other. Each of the seven guarantees below states one part of that identity claim that can be verified, and can regress, on its own."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0024.1
+    title: The composite's tree holds the upstream content, the grafted sources, and a manifest that points only inside it
+    significance: shall
+    description: "The system shall build, for a manifest declaring resolved external plugin sources, a commit whose tree contains the ingested upstream content unchanged, each resolved external source's content grafted under a reserved directory of that commit, and a rewritten marketplace manifest in which every resolved plugin source is replaced by a path inside that same commit while every other manifest field, and every source the manifest declared as local, is left exactly as declared."
+    rationale: "A composite that changed anything beyond what it was built to change would be a rewrite the gateway cannot account for: the local sources, the plugin descriptions and the marketplace's own metadata all have to survive untouched for the same manifest to still be the manifest a client reads. Grafting every source under one reserved directory, rather than in some arrangement chosen per plugin, is what keeps the graft mechanical and identical for every plugin, and it is what lets the reserved-directory refusal state a precise condition rather than a heuristic over an unbounded set of places content might land. Rewriting the manifest to point inside the commit, rather than leaving the original external reference beside the graft, is the entire reason the composite gives a client nothing to dereference outside the gateway: a manifest that still named the upstream location would defeat the composite the moment it was read literally."
+    references:
+      requirement_ids: ["GW_INGEST_0024"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0024.2
+    title: The snapshot is identified by the synthesised composite commit
+    significance: shall
+    description: "The system shall identify the snapshot of a manifest with resolved external plugin sources by the synthesised composite commit: that commit, and no other, is what is pinned as the snapshot's reference and recorded as the snapshot's own commit."
+    rationale: "A snapshot's identity is the one thing every later reader relies on without re-deriving it: vetting opens it, approval copies it, the facade advertises it, retention anchors on it. If the identity stayed the upstream commit with the composite recorded somewhere beside it, each of those readers would face two commits and a decision about which one is real; making the synthesised commit the identity removes the decision, because there is exactly one commit to read and it already contains everything those readers need."
+    references:
+      requirement_ids: ["GW_INGEST_0024"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0024.3
+    title: The upstream commit is the synthesised commit's parent, byte-exact and reachable
+    significance: shall
+    description: "The system shall make the ingested upstream commit the synthesised commit's parent, so that the manifest exactly as upstream declared it stays byte-exact and reachable from the identified commit."
+    rationale: "Keeping the upstream commit as the parent turns the whole transformation into a diff anyone can run against the commit the gateway serves, rather than the gateway's own unverifiable account of what it changed. An auditor, or a reviewer who does not take the gateway's word for the rewrite, can read exactly what was ingested and exactly what the rewrite did to it for as long as the composite commit itself survives, with no separate export or explanation required."
+    references:
+      requirement_ids: ["GW_INGEST_0024"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0024.4
+    title: The same upstream commit, resolved commits and rewrite implementation produce the same composite
+    significance: shall
+    description: "The system shall produce the same synthesised commit for the same upstream commit, the same resolved external commits and the same rewrite implementation, and shall produce a different synthesised commit when any one of those three differs."
+    rationale: "Re-ingesting content nobody changed has to be a no-op, or every scheduled sync would mint a new snapshot to re-vet and re-approve for content already served; determinism is what makes that no-op an equality check on a commit hash rather than a comparison the gateway has to compute some other way. Determinism is only a durable claim if the transformation is itself an input to it: a rewriter that changed its output without changing the hash would go on serving new content under a commit that vetting and approval had already signed off on under different content, so the rewrite implementation's own identity has to decide the hash exactly as the upstream and resolved commits do."
+    references:
+      requirement_ids: ["GW_INGEST_0024"]
+    categories: ["reliability", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0024.5
+    title: The commit records the upstream commit, each source, and the rewrite implementation's identity
+    significance: shall
+    description: "The system shall record, in the synthesised commit itself, the ingested upstream commit, each resolved external plugin's source and resolved commit, and the identity of the rewrite implementation that produced it."
+    rationale: "The commit already contains the tree the composite serves, so recording provenance inside it, rather than only in a database row, means any consumer that can read git — not only the gateway's own database — can answer who published what: cloning the composite directly shows the upstream commit it was built from, each source's origin and resolved commit, and which version of the rewrite produced it, with no cooperation from the gateway required. It is also what keeps the commit's own identity honest under determinism: the upstream commit and the rewrite implementation's identity are exactly two of the three inputs the composite's hash already depends on, so recording them in the message states, in the one place every reader already looks, facts the hash is already built from rather than a separate claim about them."
+    references:
+      requirement_ids: ["GW_INGEST_0024"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0024.6
+    title: A reserved-directory collision, a malformed plugin name, or a duplicate plugin name is refused with no commit synthesised
+    significance: shall
+    description: "The system shall refuse, as a manifest policy violation and without synthesising a commit, a manifest whose upstream content already occupies the reserved directory, an external plugin whose name is not a single lowercase path segment, and two external plugins sharing a name."
+    rationale: "Each of these three is a case where a manifest-supplied name would otherwise decide where content is written into the composite: an upstream repository that already has a top-level directory with the reserved name would have its own content overwritten by or mixed with grafted content; a name that is not a single lowercase path segment could climb out of the graft directory or collide with a reserved path element; two plugins sharing a name would leave the graft ambiguous about whose content belongs where. All three fail closed at the point where the name is read rather than after the tree is built, so no composite exists for the gateway to have gotten wrong in one of these ways — refusing before synthesis, not after, is what keeps a plausible-looking but structurally broken commit from ever reaching vetting or approval."
+    references:
+      requirement_ids: ["GW_INGEST_0024"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0024.7
+    title: The rewritten manifest is verified against the local-only manifest policy before the synthesised commit is used
+    significance: shall
+    description: "The system shall verify that the rewritten manifest satisfies the local-only manifest policy before the synthesised commit is used."
+    rationale: "The rewrite exists to make every source in the manifest resolve inside the gateway, and the only way to know it actually did that, rather than trust that it did, is to put its own output back through the same gate that rejected the original: a manifest that still declares a source outside the gateway after rewriting — for instance because a resolved graft went missing — must not become a commit anything downstream can serve. Checking the rewrite's own work before the commit is used is what makes the local-only invariant GW_INGEST_0021 hold because the commit could not otherwise be used, rather than because the rewriter is believed to be correct."
+    references:
+      requirement_ids: ["GW_INGEST_0024"]
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 

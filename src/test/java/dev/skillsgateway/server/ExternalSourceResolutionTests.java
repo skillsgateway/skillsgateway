@@ -119,7 +119,11 @@ class ExternalSourceResolutionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_INGEST_0023", "SVC_GW_INGEST_0024"})
+    // The parent SVC brackets the whole "composite is the snapshot" claim end to end: this test
+    // is the ingestion-time half (the composite, not the upstream commit, is what quarantine
+    // pins), and a_client_cloning_the_approved_snapshot_receives_a_manifest_with_no_external_url
+    // below is the serve-time half.
+    @SVCs({"SVC_GW_INGEST_0023", "SVC_GW_INGEST_0024", "SVC_GW_INGEST_0024.1", "SVC_GW_INGEST_0024.2"})
     void an_admitted_source_becomes_a_held_composite_whose_manifest_is_gateway_local() throws Exception {
         FORGE.publish("acme/tools", Map.of("skills/tool/SKILL.md", "# Tool\n\nA tool.\n"));
         Path upstream = createUpstream(manifestWithExternal("acme/tools"));
@@ -154,7 +158,7 @@ class ExternalSourceResolutionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_INGEST_0024"})
+    @SVCs({"SVC_GW_INGEST_0024.3", "SVC_GW_INGEST_0024.5"})
     void the_composite_is_parented_on_the_upstream_commit_whose_manifest_stays_byte_exact() throws Exception {
         FORGE.publish("acme/tools", Map.of("skills/tool/SKILL.md", "# Tool\n"));
         String declared = manifestWithExternal("acme/tools");
@@ -191,7 +195,7 @@ class ExternalSourceResolutionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_INGEST_0024"})
+    @SVCs({"SVC_GW_INGEST_0024.1"})
     void the_content_inventory_lists_the_external_plugins_skills_with_no_api_change() throws Exception {
         FORGE.publish("acme/tools", Map.of("skills/tool/SKILL.md", "# Tool\n"));
         Registered registered =
@@ -211,7 +215,7 @@ class ExternalSourceResolutionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_INGEST_0024"})
+    @SVCs({"SVC_GW_INGEST_0024", "SVC_GW_INGEST_0024.1"})
     void a_client_cloning_the_approved_snapshot_receives_a_manifest_with_no_external_url() throws Exception {
         FORGE.publish("acme/tools", Map.of("skills/tool/SKILL.md", "# Tool\n"));
         Registered registered =
@@ -228,7 +232,7 @@ class ExternalSourceResolutionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_INGEST_0024"})
+    @SVCs({"SVC_GW_INGEST_0024.1"})
     void a_secret_planted_in_the_external_repository_is_found_by_vetting() throws Exception {
         // The payoff of rewriting before vetting rather than at publish time: the closure *is* the
         // commit, so the chain sees external content with no connector change and no bypass.
@@ -248,7 +252,7 @@ class ExternalSourceResolutionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_INGEST_0023", "SVC_GW_INGEST_0024"})
+    @SVCs({"SVC_GW_INGEST_0023", "SVC_GW_INGEST_0024.4"})
     void re_ingesting_unchanged_content_produces_the_same_snapshot() throws Exception {
         FORGE.publish("acme/tools", Map.of("skills/tool/SKILL.md", "# Tool\n"));
         Path upstream = createUpstream(manifestWithExternal("acme/tools"));
@@ -261,7 +265,7 @@ class ExternalSourceResolutionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_INGEST_0023", "SVC_GW_INGEST_0024"})
+    @SVCs({"SVC_GW_INGEST_0023", "SVC_GW_INGEST_0024.4"})
     void an_external_repository_that_moves_on_produces_a_new_composite_and_a_new_snapshot() throws Exception {
         FORGE.publish("acme/tools", Map.of("skills/tool/SKILL.md", "# Tool\n"));
         Path upstream = createUpstream(manifestWithExternal("acme/tools"));
@@ -405,7 +409,7 @@ class ExternalSourceResolutionTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_INGEST_0024"})
+    @SVCs({"SVC_GW_INGEST_0024.6"})
     void a_marketplace_that_already_uses_the_reserved_directory_is_refused() throws Exception {
         FORGE.publish("acme/tools", Map.of("skills/tool/SKILL.md", "# Tool\n"));
         Path upstream =
