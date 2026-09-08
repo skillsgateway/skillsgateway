@@ -77,7 +77,7 @@ public class ApprovalService {
         this.events = events;
     }
 
-    /** Ledger event for an approval the cooling-off window refused (GW_APPROVAL_0004). */
+    /** Ledger event for an approval the cooling-off window refused (GW_APPROVAL_0004.5). */
     static final String EVENT_REFUSED = "snapshot-approval-refused";
 
     /**
@@ -113,7 +113,7 @@ public class ApprovalService {
     /**
      * An approved snapshot, the waivers that were in force when the gate let it through — empty for
      * a snapshot the chain cleared on its own merits (GW_VETTING_0011) — and how long ago the gateway first
-     * ingested its commit, which the ledger records against the decision (GW_APPROVAL_0004).
+     * ingested its commit, which the ledger records against the decision (GW_APPROVAL_0004.5).
      */
     public record Approved(
             Snapshot snapshot,
@@ -325,13 +325,14 @@ public class ApprovalService {
     }
 
     /**
-     * The cooling-off window (GW_APPROVAL_0004), with the refusal appended to the ledger before it is
-     * raised. A blocked approval that left no trace would make the control unauditable: from the
-     * ledger alone one could not tell a window that was never tested from one that turned an
-     * attempt away, which is precisely the event worth seeing twice in a row.
+     * The cooling-off window (GW_APPROVAL_0004.3), with the refusal appended to the ledger before it
+     * is raised (GW_APPROVAL_0004.5). A blocked approval that left no trace would make the control
+     * unauditable: from the ledger alone one could not tell a window that was never tested from one
+     * that turned an attempt away, which is precisely the event worth seeing twice in a row.
      *
      * @return how long ago the commit was first ingested, for the ledger entry of the decision
      */
+    @Requirements({"GW_APPROVAL_0004.3", "GW_APPROVAL_0004.5"})
     private Duration requireReleaseAge(Snapshot snapshot, Marketplace marketplace, String reviewer) {
         try {
             return releaseAgeGate.require(snapshot);
@@ -413,7 +414,7 @@ public class ApprovalService {
     }
 
     /** Whether the snapshot has cleared the cooling-off window, and when it will if it has not. */
-    @Requirements({"GW_APPROVAL_0004"})
+    @Requirements({"GW_APPROVAL_0004.4"})
     public Optional<ReleaseAgeGate.Eligibility> releaseAge(long snapshotId) {
         return snapshotRepository.findById(snapshotId).map(releaseAgeGate::evaluate);
     }

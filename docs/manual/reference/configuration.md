@@ -1097,7 +1097,7 @@ skills-gateway:
     # through the API — the escape hatch that survives a bad grant edit.
     admins:
       - admin@example.com
-    # Roles from the identity provider's own claims (GW_AUTH_0015). The claim name
+    # Roles from the identity provider's own claims (GW_AUTH_0015.1). The claim name
     # and every value are yours: on a shared app registration the values are
     # the organisation's group ids or app-role values, not gateway role names.
     claim: groups

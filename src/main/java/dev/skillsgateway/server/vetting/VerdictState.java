@@ -37,7 +37,7 @@ public enum VerdictState {
     PENDING,
 
     /**
-     * An administrator disabled this connector for the snapshot's marketplace (GW_VETTING_0029), so the
+     * An administrator disabled this connector for the snapshot's marketplace (GW_VETTING_0029.2), so the
      * chain recorded this in its place instead of running it. Neither clears nor blocks.
      */
     DISABLED;
@@ -60,7 +60,7 @@ public enum VerdictState {
      * Whether this state blocks the chain. Everything that is not clearing blocks, with the one
      * exception of {@link #DISABLED}: an administrator switching a connector off is a deliberate,
      * audited act, not an unanswered or broken verdict, so it must not fail the chain closed the
-     * way a timeout or a crash does (GW_VETTING_0029). Positive clearing evidence is still required
+     * way a timeout or a crash does (GW_VETTING_0029.3). Positive clearing evidence is still required
      * elsewhere in the run — see {@link VettingChain#aggregate}.
      */
     public boolean blocking() {

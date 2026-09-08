@@ -231,11 +231,11 @@ public class RoleService {
 
     /**
      * Everything a session may do: configuration admin, stored grants, and the roles its
-     * identity-provider claims confer (GW_AUTH_0013, GW_AUTH_0015). The same (role, marketplace) pair is
-     * reported once, attributed to the most durable source that produced it — a grant outranks a
-     * claim, because a grant survives the user leaving the group.
+     * identity-provider claims confer (GW_AUTH_0013, GW_AUTH_0015.1). The same (role, marketplace) pair
+     * is reported once, attributed to the most durable source that produced it (GW_AUTH_0015.3) — a
+     * grant outranks a claim, because a grant survives the user leaving the group.
      */
-    @Requirements({"GW_AUTH_0013", "GW_AUTH_0015", "GW_AUTH_0028"})
+    @Requirements({"GW_AUTH_0013", "GW_AUTH_0015.1", "GW_AUTH_0015.3", "GW_AUTH_0028"})
     public List<EffectiveRole> effectiveRoles(Authentication authentication) {
         Map<String, EffectiveRole> roles = new LinkedHashMap<>();
         if (escapeHatchPrincipal(authentication)) {

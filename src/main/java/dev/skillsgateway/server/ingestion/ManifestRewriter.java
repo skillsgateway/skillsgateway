@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Synthesises the commit the gateway serves for a manifest with resolved external sources
- * (GW_INGEST_0024): the upstream tree, each resolved source grafted under {@code _plugins/<name>}, and a
+ * (GW_INGEST_0024.1): the upstream tree, each resolved source grafted under {@code _plugins/<name>}, and a
  * manifest in which every plugin source is a path inside that same commit.
  *
  * <p>Three properties are what the rest of the system rests on.
@@ -117,7 +117,15 @@ public class ManifestRewriter {
         }
     }
 
-    @Requirements({"GW_INGEST_0021", "GW_INGEST_0024"})
+    @Requirements({
+        "GW_INGEST_0021",
+        "GW_INGEST_0024.1",
+        "GW_INGEST_0024.3",
+        "GW_INGEST_0024.4",
+        "GW_INGEST_0024.5",
+        "GW_INGEST_0024.6",
+        "GW_INGEST_0024.7"
+    })
     public Rewrite rewrite(Repository repository, RevCommit upstream, List<Graft> grafts) throws IOException {
         String hazard = graftHazard(repository, upstream, grafts);
         if (hazard != null) {
