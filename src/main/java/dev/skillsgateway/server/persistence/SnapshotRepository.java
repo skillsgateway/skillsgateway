@@ -51,14 +51,15 @@ public class SnapshotRepository {
 
     /**
      * As above, for a snapshot whose served commit is not the ingested one: the upstream commit is
-     * recorded beside it, and the closure it resolved — when there is one — is written in the
-     * same transaction (GW_INGEST_0030), so a snapshot with external content and no record of what that
-     * content is cannot come out of this method half-made. The duplicate-key race the caller
-     * already handles rolls the closure back with the row.
+     * recorded beside it on every snapshot this method creates (GW_INGEST_0030.2), and the closure it
+     * resolved — when there is one — is written in the same transaction (GW_INGEST_0030.3), so a
+     * snapshot with external content and no record of what that content is cannot come out of this
+     * method half-made. The duplicate-key race the caller already handles rolls the closure back
+     * with the row.
      *
      * @param closure the resolved closure, or null for a snapshot that resolved nothing
      */
-    @Requirements({"GW_APPROVAL_0010", "GW_FACADE_0009", "GW_INGEST_0030"})
+    @Requirements({"GW_APPROVAL_0010", "GW_FACADE_0009", "GW_INGEST_0030.2", "GW_INGEST_0030.3"})
     @Transactional
     public Snapshot create(
             long marketplaceId,

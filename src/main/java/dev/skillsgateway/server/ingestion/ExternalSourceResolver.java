@@ -70,7 +70,7 @@ public class ExternalSourceResolver {
 
     /**
      * One source, fetched and pinned — with what the manifest declared and what the fetch
-     * measured, because the closure (GW_INGEST_0030) records both and nothing downstream could
+     * measured, because the closure (GW_INGEST_0030.1) records both and nothing downstream could
      * reconstruct them.
      */
     public record Resolved(

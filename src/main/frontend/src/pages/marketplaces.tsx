@@ -238,7 +238,7 @@ function RegisterMarketplaceDialog({ existing }: { existing: MarketplaceView[] }
  * plugin sources, the closure: each external plugin with the URL it was fetched through and the
  * commit it resolved to, as recorded with the snapshot at ingestion.
  *
- * @Requirements GW_INGEST_0030
+ * @Requirements GW_INGEST_0030.5
  */
 function ProvenanceDialog({ snapshotId, onClose }: { snapshotId: number; onClose: () => void }) {
   const provenance = useProvenance(snapshotId);

@@ -95,7 +95,14 @@ public class IngestionService {
         }
     }
 
-    @Requirements({"GW_INGEST_0018", "GW_INGEST_0023", "GW_INGEST_0024", "GW_INGEST_0027", "GW_INGEST_0030"})
+    @Requirements({
+        "GW_INGEST_0018",
+        "GW_INGEST_0023",
+        "GW_INGEST_0024",
+        "GW_INGEST_0027",
+        "GW_INGEST_0030",
+        "GW_INGEST_0030.3"
+    })
     private Snapshot ingestLocked(Marketplace marketplace, String actor) {
         try (Repository repo = storage.quarantine(marketplace.name())) {
             ObjectId upstream = fetchIncoming(repo, marketplace);
@@ -118,7 +125,7 @@ public class IngestionService {
             String state = violation == null ? Snapshot.HELD : Snapshot.REJECTED;
             Snapshot snapshot;
             try {
-                // The closure goes in with the row (GW_INGEST_0030): a composite and the record of what it
+                // The closure goes in with the row (GW_INGEST_0030.3): a composite and the record of what it
                 // resolved are one fact, and the completeness gate at approval is what refuses the
                 // state in which they are not.
                 snapshot = snapshotRepository.create(
@@ -246,7 +253,7 @@ public class IngestionService {
      * otherwise byte-for-byte the path that shipped before: a local-only manifest is served as the
      * upstream commit, with no composite, no fetch and no new reference.
      */
-    @Requirements({"GW_INGEST_0021", "GW_INGEST_0023", "GW_INGEST_0024", "GW_INGEST_0027", "GW_INGEST_0030"})
+    @Requirements({"GW_INGEST_0021", "GW_INGEST_0023", "GW_INGEST_0024", "GW_INGEST_0027", "GW_INGEST_0030.1"})
     private Served serve(Repository repo, ObjectId upstreamSha) throws IOException {
         byte[] manifestBytes = manifestBytes(repo, upstreamSha);
         if (manifestBytes == null) {
@@ -278,7 +285,7 @@ public class IngestionService {
         }
     }
 
-    /** The closure as a value (GW_INGEST_0030): what each source was declared as, and what it became. */
+    /** The closure as a value (GW_INGEST_0030.1): what each source was declared as, and what it became. */
     private SnapshotClosure closure(ObjectId upstreamSha, List<ExternalSourceResolver.Resolved> resolved) {
         List<SnapshotClosure.Member> members = new java.util.ArrayList<>();
         for (ExternalSourceResolver.Resolved source : resolved) {
