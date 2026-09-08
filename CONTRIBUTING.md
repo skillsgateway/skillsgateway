@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- JDK 25 (Temurin; GraalVM CE 25 only for native builds)
+- JDK 25 (Temurin)
 - A container runtime (Testcontainers/Arconia dev services, e2e infrastructure).
   Docker works out of the box; Podman needs setup — Ryuk cannot start rootless
   and the Floci dev service needs the in-VM socket path. Both present as a wall
@@ -87,8 +87,9 @@ openspec validate --all --strict
 mkdocs build --strict                   # docs site (pip install -r docs/requirements.txt)
 ```
 
-CI enforces the same gates per PR (`.github/workflows/ci.yml`) plus a native
-image build on main (`native.yml`). For speed, CI splits them across parallel
+CI enforces the same gates per PR (`.github/workflows/ci.yml`) plus a container
+image build and smoke test on main (`native.yml`, named for the artifact it used
+to produce). For speed, CI splits them across parallel
 jobs: build + unit gates, the Storybook story tests, and the portal e2e run
 concurrently (the e2e job packages its own jar with `-DskipTests
 -Dskip.ui.verify=true`; the story tests get their own runner because a real
@@ -106,10 +107,15 @@ code.
 ## Building and running the packaged artifacts
 
 ```bash
-./mvnw -Pnative -DskipTests native:compile   # GraalVM native binary (needs GraalVM CE 25)
-docker build -t skills-gateway:local .       # OCI image from the native binary
-docker compose up                            # gateway + PostgreSQL on :8080 (compose.yaml)
+./mvnw -DskipTests -Dskip.ui.verify=true package   # the application jar
+docker build -t skills-gateway:local .             # distroless image: the jar on a jlink runtime
+docker compose up                                  # gateway + PostgreSQL on :8080 (compose.yaml)
 ```
+
+The `native` Maven profile is still there (`./mvnw -Pnative -DskipTests
+native:compile`, needs GraalVM CE 25) and still builds a binary, but nothing
+ships it: ADR 0012 made the release artifact the jar in a container. It is kept
+so the way back stays open, not because it is on any path.
 
 The admin portal (React/Vite, `src/main/frontend/`) is **built by the Maven
 build** — the frontend-maven-plugin provisions node/pnpm, runs the UI gates,
@@ -141,8 +147,8 @@ opt-in because it is heavy and unnecessary for ordinary work:
 
 `useTestClasspath` is required, not optional: the dev-service dependencies are
 test-scoped, so the profile finds nothing without it — deliberately, so nothing
-observability-related is reachable from the packaged jar, the container image or
-the native binary. The Grafana URL is logged at startup. Configuration lives in
+observability-related is reachable from the packaged jar or the container image
+built from it. The Grafana URL is logged at startup. Configuration lives in
 `src/main/resources/application-observability.yaml`, including a 5-minute startup
 timeout because the image boots six processes and the default is tight on a small
 container VM.

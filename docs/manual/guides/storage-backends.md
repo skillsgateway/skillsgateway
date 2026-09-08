@@ -216,8 +216,17 @@ service. The source is whatever `storage.backend` names; `storage.migration.to`
 names the destination, so the migration and its rollback are the same
 configuration with two values swapped.
 
+Run the published container image, with the same volume and the same identity
+the gateway itself runs with, and append the arguments to the entrypoint:
+
 ```bash
-skills-gateway-server \
+kubectl run skills-gateway-migration \
+  --image=ghcr.io/skillsgateway/skillsgateway@sha256:… \
+  --restart=Never --attach --rm \
+  --overrides='{"spec":{"serviceAccountName":"skills-gateway",
+    "volumes":[{"name":"data","persistentVolumeClaim":{"claimName":"skills-gateway"}}],
+    "containers":[{"name":"skills-gateway-migration","volumeMounts":[{"name":"data","mountPath":"/data"}]}]}}' \
+  -- \
   --spring.main.web-application-type=none \
   --skills-gateway.data-dir=/data \
   --skills-gateway.storage.backend=filesystem \
@@ -227,6 +236,27 @@ skills-gateway-server \
   --skills-gateway.storage.migration.enabled=true \
   --skills-gateway.storage.migration.to=object-store
 ```
+
+The same arguments work against the jar the release attaches, for a migration
+run outside the cluster:
+
+```bash
+java -jar skills-gateway-server-<version>.jar \
+  --spring.main.web-application-type=none \
+  --skills-gateway.data-dir=/data \
+  … the same arguments …
+```
+
+!!! note "This used to be documented against the native binary"
+
+    Earlier releases published a GraalVM native image, and this guide told you to
+    run it. Both `--spring.main.web-application-type=none` and the migration
+    runner's own switch were fixed when that image was built, so the flags were
+    accepted and the process started an ordinary server instead — a migration
+    that could report having finished without having copied anything. The release
+    artifact is now a JVM container ([ADR 0012](../reference/decisions.md)) and
+    the migration runner reads its switch at runtime on every packaging, so the
+    procedure above does what it says.
 
 It builds the destination through the same validation and the same startup probe
 a serving start would use, so a bucket the gateway would refuse to serve from is

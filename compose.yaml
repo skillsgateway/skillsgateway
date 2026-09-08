@@ -1,6 +1,6 @@
 # Local run of the packaged gateway image against PostgreSQL.
 #
-#   ./mvnw -Pnative -DskipTests native:compile
+#   ./mvnw -DskipTests -Dskip.ui.verify=true package
 #   docker build -t skills-gateway:local .
 #   docker compose up
 #

@@ -243,10 +243,10 @@ is the part nobody has yet done.
 !!! note "Hand-pushing a tag publishes nothing"
 
     This is a change from earlier behaviour, and it is deliberate. `docs.yml`
-    and `native.yml` used to watch for tags, so pushing one published the
-    documentation and the container image immediately — unordered, and with no
-    approval between the tag and the world. Both are now invoked *by* the
-    release workflow instead. A tag pushed by hand is inert.
+    and the container-image workflow used to watch for tags, so pushing one
+    published the documentation and the container image immediately — unordered,
+    and with no approval between the tag and the world. Both are now invoked *by*
+    the release workflow instead. A tag pushed by hand is inert.
 
 ## What a release produces
 

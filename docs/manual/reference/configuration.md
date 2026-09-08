@@ -1276,9 +1276,9 @@ with a `password` key).
 
 ## OIDC login
 
-The registration id is `idp` and must exist at AOT build time, because
-native-image evaluates auto-configuration conditions then. That is why the
-defaults are the placeholders below rather than being absent.
+The registration id is `idp`. The defaults below are placeholders rather than
+absent values, so the registration always exists and a gateway with none of these
+set still starts — it simply cannot complete a login.
 
 | Property | Environment variable | Placeholder default |
 | --- | --- | --- |
@@ -1394,11 +1394,14 @@ the variable — see
 The gateway registers the `framework` filter itself and reads the setting at
 runtime (GW_0163 — Proxy-reported scheme and host are honoured only when
 configured, identically on every packaging). Spring Boot's own registration is
-behind a `@ConditionalOnProperty` that a GraalVM native image evaluates at
-build time, when the property is unset, so on the released image it was never
-compiled in and no runtime value could switch it on. `native` never had that
-problem: Tomcat's valve is installed by a customizer that reads the property at
-runtime.
+behind a `@ConditionalOnProperty`, which an ahead-of-time image evaluates when it
+is built, with the property unset — so on the GraalVM native image the release
+used to publish it was never compiled in and no runtime value could switch it on.
+`native` never had that problem: Tomcat's valve is installed by a customizer that
+reads the property at runtime. The released image is a JVM container today
+([ADR 0012](decisions.md)), where neither shape can occur; the explicit
+registration stays because it is what makes the setting mean one thing on every
+packaging rather than on the one that happens to ship.
 
 ---
 

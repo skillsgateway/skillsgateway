@@ -3,8 +3,9 @@
 ## Purpose
 
 Distribution of the gateway itself: the service is deliverable as an OCI
-container image running the GraalVM native binary, deployable via a provided
-Helm chart, with packaging verified by an automated consistency test.
+container image that carries its own Java runtime over a base with no shell,
+runs non-root on a root filesystem it never writes to, and is deployable via a
+provided Helm chart, with packaging verified by an automated consistency test.
 ## Requirements
 ### Requirement: GW_0015
 The system SHALL implement GW_0015.

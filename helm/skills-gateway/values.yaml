@@ -183,11 +183,15 @@ ingress:
   #    hosts:
   #      - skills-gateway.example.com
 
-# A starting point, not a measurement. The service is a GraalVM native binary,
-# so the runtime footprint is small and startup is immediate; the memory a real
-# deployment needs is driven by JGit packing large upstream repositories, not by
-# a JVM heap. Raise the limits if ingestion of a big marketplace is OOM-killed,
-# and profile before trusting these in production.
+# Measured idle, not measured under load. The image runs a JVM, whose resident
+# footprint sat at roughly 255 MB idle under this 1 GiB limit — about half the
+# request below, and a quarter of the limit. What a real deployment needs beyond
+# that is driven by JGit packing large upstream repositories, which is the term
+# these numbers do not contain. Raise the limits if ingestion of a big
+# marketplace is OOM-killed, and profile before trusting these in production.
+#
+# The image's entrypoint caps the heap at 75% of the container limit, so raising
+# `limits.memory` raises the heap with it and lowering it lowers the heap.
 resources:
   requests:
     cpu: 250m

@@ -21,6 +21,7 @@ instead — the chart already does everything below.
 | A PostgreSQL database | Snapshots, the audit ledger, tokens and grants live there. Nothing here creates one. |
 | An OIDC client | The whole web surface authenticates with OIDC. Client id, client secret and the three endpoint URIs — see [Identity providers](identity-providers.md). |
 | Persistent storage | On the default `filesystem` backend, the repositories live on disk under the data directory and must outlive the container. See [Storage](#storage). |
+| A container memory limit | The image runs a JVM, and its heap ceiling is a percentage of the limit. With no limit set that percentage is taken from the *host's* memory. See [Memory](#memory). |
 | Writable scratch at `/tmp` | Only if you run with a read-only root filesystem — Tomcat's work directory lives there and the process will not start without it. See [A writable `/tmp`](#a-writable-tmp-if-you-seal-the-root-filesystem). |
 | A TLS-terminating proxy | The application speaks plain HTTP on 8080. See [Running behind a proxy](#running-behind-a-proxy) — this needs one setting, and logins fail without it. |
 
@@ -112,13 +113,15 @@ deployment that works because of a deduction is one nobody can read.
 
 !!! note "`framework` was inert on the released image until it was registered explicitly"
 
-    Spring Boot registers its forwarded-header filter behind a condition that a
-    GraalVM native image evaluates once, when the image is built, and the
-    property is not set then — so `SERVER_FORWARDHEADERSSTRATEGY=framework` did
-    nothing on the released image, however correctly it was deployed. The
-    gateway now registers the filter itself and reads the setting at runtime,
-    so every value means the same on the JVM jar and on the native image. Do
-    not go back to relying on Spring Boot's own registration.
+    Spring Boot registers its forwarded-header filter behind a condition that an
+    ahead-of-time image evaluates once, when the image is built, and the property
+    is not set then — so `SERVER_FORWARDHEADERSSTRATEGY=framework` did nothing on
+    the GraalVM native image the release used to publish, however correctly it
+    was deployed. The gateway now registers the filter itself and reads the
+    setting at runtime, so every value means the same on every packaging. Do not
+    go back to relying on Spring Boot's own registration: the released image is a
+    JVM container today, but the explicit registration is what makes the setting
+    mean one thing regardless.
 
 The redirect URI can also be stated outright, with no header trusted at all:
 
@@ -274,6 +277,19 @@ local pack cache defaults to `{data-dir}/object-store-cache`. Where you run
 with no durable volume at all, point `skills-gateway.storage.object-store.cache.dir`
 at a path under your ephemeral mount — nothing in that cache is authoritative,
 and deleting it at any moment is safe.
+
+## Memory
+
+The image runs the application jar on a JVM, and its entrypoint sets
+`-XX:MaxRAMPercentage=75.0`: the heap may grow to three quarters of the
+container's memory limit. Under a 1 GiB limit the process sat at roughly 255 MB
+resident while idle; the term that is not in that number is JGit packing a large
+upstream repository, which is what the remaining headroom is for.
+
+**Set a limit.** The percentage is taken from whatever the JVM believes the
+container has, so an unlimited container gives the heap three quarters of the
+host — which is only a problem the first time something else on that host needs
+the memory.
 
 ## Health checks
 

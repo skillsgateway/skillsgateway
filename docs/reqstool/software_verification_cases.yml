@@ -148,8 +148,11 @@ cases:
     description: |
       GIVEN the repository's packaging artifacts (Dockerfile and Helm chart)
       WHEN the packaging test validates them
-      THEN the Dockerfile runs the native binary, and the chart's Deployment wires the image, the actuator health probes, and the PostgreSQL and OIDC configuration
-    revision: "0.1.0"
+      THEN the Dockerfile stages the application jar and runs it on a runtime the image
+      builds for itself, derives the published image from a base carrying no shell, runs it
+      as the non-root user, needs no shell of its own to start, and the chart's Deployment
+      wires the image, the actuator health probes, and the PostgreSQL and OIDC configuration
+    revision: "0.2.0"
 
   - id: SVC_GW_0016
     requirement_ids: ["GW_0016"]
@@ -713,13 +716,13 @@ cases:
 
   - id: SVC_GW_0072
     requirement_ids: ["GW_0072"]
-    title: The release workflow carries the multi-arch publish-by-digest contract
+    title: The release workflow carries the multi-arch publication contract
     verification: automated-test
     description: |
       GIVEN the repository's release workflow definition
       WHEN the packaging test validates it
-      THEN the native build job is a matrix over a linux/amd64 and a linux/arm64 runner, declares no tag trigger of its own so a hand-pushed tag cannot publish, gates every publish step to the release workflow alone so that neither a main-branch push, a schedule nor a bare manually dispatched run ever reaches one, holds the permissions publishing and attestation require, each leg pushes its own platform manifest to the project's registry namespace addressed only by digest rather than under an arch-suffixed tag and attests the CycloneDX SBOM against that digest, and a downstream job gated the same way downloads both legs' digests and combines them into a multi-arch manifest published under the released version's tag alone, surfacing the combined digest in the job summary
-    revision: "0.4.0"
+      THEN the image job builds linux/amd64 and linux/arm64 from one build rather than a matrix over runners, declares no tag trigger of its own so a hand-pushed tag cannot publish, gates every publish step to the release workflow alone so that neither a main-branch push, a schedule nor a bare manually dispatched run ever reaches one, holds the permissions publishing and attestation require, smoke-tests the image before anything is pushed, publishes to the project's registry namespace under the released version and under no other tag, surfaces the published index digest in the job summary, and attests the CycloneDX SBOM against that digest
+    revision: "0.5.0"
 
   - id: SVC_GW_0073
     requirement_ids: ["GW_0073"]
@@ -1317,9 +1320,11 @@ cases:
       tip and the pinned snapshot reference both survive, a marketplace the source did
       not hold in a role is not created there, a destination that has lost a reference
       is reported as not verified with the repository named and the source stated to be
-      intact, the source is byte-identical afterwards, and the reverse direction
-      restores the previous state
-    revision: "0.1.0"
+      intact, the source is byte-identical afterwards, the reverse direction
+      restores the previous state, and the runner that performs the migration is present
+      in a context that asked for no migration — doing nothing there, and acting only on
+      the flag as the running process reads it — so that no packaging can compile it out
+    revision: "0.2.0"
 
   - id: SVC_GW_0115
     requirement_ids: ["GW_0115"]

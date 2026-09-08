@@ -13,7 +13,7 @@ and serves only approved, SHA-pinned content to unmodified git clients —
 with every fetch in an append-only audit ledger.
 
 **Status: pre-1.0.** The core loop is implemented on Java 25 / Spring Boot 4 /
-JGit (GraalVM native-image at release): ingestion into quarantine, hold until
+JGit: ingestion into quarantine, hold until
 approved, and serving approved SHA-pinned content through the PAT-authenticated
 git smart-HTTP facade, with an admin portal and an append-only audit ledger.
 Lifecycle webhooks, ledger export, and snapshot retention build on that. There
@@ -47,9 +47,9 @@ runs 18) and an **OIDC identity provider** for the web surface. `compose.yaml`
 brings its own PostgreSQL; the Helm chart expects you to bring both.
 
 ```bash
-./mvnw -Pnative -DskipTests native:compile   # GraalVM native binary (needs GraalVM CE 25)
-docker build -t skills-gateway:local .       # OCI image from the native binary
-docker compose up                            # gateway + PostgreSQL on :8080 (compose.yaml)
+./mvnw -DskipTests -Dskip.ui.verify=true package   # the application jar
+docker build -t skills-gateway:local .             # distroless image: the jar on a jlink runtime
+docker compose up                                  # gateway + PostgreSQL on :8080 (compose.yaml)
 ```
 
 The API is documented with springdoc: `/v3/api-docs` (OpenAPI 3), rendered by

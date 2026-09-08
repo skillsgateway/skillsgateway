@@ -186,8 +186,8 @@ would make it differ from the build on every commit.
 
 | Component | Requirement |
 | --- | --- |
-| Runtime | Java 25 (Temurin); GraalVM CE 25 for native builds |
+| Runtime | Java 25 (Temurin) |
 | Database | PostgreSQL |
 | Identity | An OIDC provider supporting authorization-code flow |
-| Container | Distroless image built from the native binary |
+| Container | Distroless image: the application jar on a `jlink` Java 25 runtime |
 | Kubernetes | `helm/skills-gateway`; bring your own PostgreSQL and OIDC provider |

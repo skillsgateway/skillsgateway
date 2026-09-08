@@ -1,4 +1,11 @@
-name: Native image
+# The container image: built, smoke-tested, and -- only from a release --
+# published.
+#
+# The file is still called native.yml because release.yml calls it by path and
+# renaming it would move a reference nothing else gains from moving. What it
+# builds is no longer a native image: ADR 0012 made the release artifact the
+# Spring Boot jar on a jlink runtime.
+name: Container image
 
 on:
   push:
@@ -23,30 +30,19 @@ permissions:
   contents: read
 
 jobs:
-  native:
-    name: Native build, container & smoke test
-    # native-image compiles for the host it runs on -- there is no
-    # cross-compilation and no --platform flag that would make one runner
-    # produce both architectures, so each platform is a real leg on its own
-    # runner rather than a buildx target. GitHub's ubuntu-24.04-arm hosted
-    # runner gives the arm64 leg real hardware, which is also strictly better
-    # smoke-test coverage than emulation would be.
+  image:
+    name: Container build & smoke test
+    # One job, one buildx invocation, both platforms. The two-runner matrix this
+    # replaces existed because native-image compiles for the host it runs on and
+    # cannot cross-compile. The jar does not care: it is the same bytes on both
+    # architectures, and only the jlink runtime under it is platform-specific,
+    # which buildx builds for each target platform in the same build.
     #
-    # A main push and a schedule/dispatch build and smoke-test both platforms
-    # exactly like a release does -- proving the image works -- but publish
-    # nothing. Only release.yml (`inputs.version` set) ever reaches GHCR: the
-    # published tag namespace holds released versions only, never a moving
-    # per-commit tag.
-    strategy:
-      matrix:
-        include:
-          - runner: ubuntu-latest
-            platform: linux/amd64
-            suffix: amd64
-          - runner: ubuntu-24.04-arm
-            platform: linux/arm64
-            suffix: arm64
-    runs-on: ${{ matrix.runner }}
+    # A main push and a schedule/dispatch build and smoke-test exactly what a
+    # release does -- proving the image works -- but publish nothing. Only
+    # release.yml (`inputs.version` set) ever reaches GHCR: the published tag
+    # namespace holds released versions only, never a moving per-commit tag.
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       # Publishing runs only from release.yml (never from a push, a schedule or
@@ -73,21 +69,28 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: graalvm/setup-graalvm@0426e2e191540e8514dff98dc52a5f5146a2a276 # v1.6.6
+      - uses: actions/setup-java@v6.0.0
         with:
+          distribution: temurin
           java-version: '25'
-          distribution: graalvm-community
           cache: maven
 
-      - name: Build native image
-        # native:compile forks the package lifecycle; the UI gate execution is
-        # skipped (no browsers here) while the UI bundle itself is still built.
-        run: ./mvnw --batch-mode -Pnative -DskipTests -Dskip.ui.verify=true native:compile
+      - name: Build the jar
+        # The Dockerfile packages what this produces; it does not build it. The
+        # UI gate execution is skipped (no browsers here) while the UI bundle
+        # itself is still built into the jar.
+        run: ./mvnw --batch-mode -DskipTests -Dskip.ui.verify=true package
 
+      # QEMU is what lets the arm64 leg of the multi-arch build run its jlink
+      # stage on an amd64 runner. Only the runtime build is emulated; the jar is
+      # copied in unchanged, and nothing emulated is ever measured or timed.
+      - uses: docker/setup-qemu-action@1f40c72289eff860ee54a304f1438e3cff362e0a # v4.3.0
       - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
 
       - name: Build container image
-        run: docker buildx build --platform ${{ matrix.platform }} --load -t skills-gateway:ci .
+        # The runner's own platform, loaded into the daemon so the smoke test can
+        # run it natively. The multi-arch publish below rebuilds from cache.
+        run: docker buildx build --platform linux/amd64 --load -t skills-gateway:ci .
 
       - name: Smoke test container
         run: |
@@ -96,11 +99,19 @@ jobs:
           # as it: the assertion here is that the image boots and reports healthy, and the
           # startup guard is part of booting.
           #
-          # The forwarded-header strategy is set to the one value only an explicit bean can
-          # honour on a native image (GW_0163): Spring Boot's own registration is behind a
-          # build-time condition, so this is the packaging on which the JVM test suite cannot
-          # see the defect, and the one place it is asserted against the real binary.
+          # Booting is a stronger assertion than it looks on this image: the runtime under
+          # the jar is a jlink module set chosen by hand, so a missing module surfaces here
+          # rather than in a deployment.
+          #
+          # The forwarded-header strategy is set because it is the setting GW_0163 is about,
+          # and this is the one place it is asserted against the real image rather than
+          # against a test context.
+          #
+          # The root filesystem is read-only and the data directory a tmpfs, which is the
+          # shape the Helm chart deploys: a runtime that needed to write anywhere else fails
+          # here rather than in a cluster.
           docker run -d --name gateway --network host \
+            --read-only --tmpfs /tmp:rw,mode=1777 --tmpfs /data:rw,mode=1777 \
             -e SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/skillsgateway \
             -e SPRING_DATASOURCE_USERNAME=skillsgateway \
             -e SPRING_DATASOURCE_PASSWORD=skillsgateway \
@@ -127,9 +138,9 @@ jobs:
           case "$location" in
             *redirect_uri=https://gateway.example.com/login/oauth2/code/idp* | \
             *redirect_uri=https%3A%2F%2Fgateway.example.com%2Flogin%2Foauth2%2Fcode%2Fidp*)
-              echo "forwarded headers honoured on the native image" ;;
+              echo "forwarded headers honoured on the published image" ;;
             *)
-              echo "forwarded headers ignored on the native image: $location"; docker logs gateway; exit 1 ;;
+              echo "forwarded headers ignored on the published image: $location"; docker logs gateway; exit 1 ;;
           esac
 
       - name: Helm lint
@@ -137,15 +148,12 @@ jobs:
 
       # --- Publication: only the smoke-tested image, and only from release.yml.
       #
-      # Each leg pushes its own platform manifest addressed by digest, never by a
-      # tag -- `push-by-digest` is buildx's documented mechanism for exactly
-      # this cross-job matrix shape, and it is what keeps GHCR from ever
-      # recording an `-amd64`/`-arm64` tag: the `publish` job below references
-      # these digests directly to build the one tagged multi-arch index a
-      # consumer sees. A hand-pushed tag then deleted after the fact was
-      # considered and rejected in design.md -- it risks detaching the very
-      # blob the index needs, where digest-only push never creates that tag to
-      # begin with.
+      # One build produces both platforms and pushes them as a single tagged
+      # multi-arch index. The platform manifests exist in the registry only as
+      # the untagged children of that index, so GHCR's tagged-versions listing
+      # holds one entry per release rather than three -- the same property the
+      # push-by-digest matrix this replaces was built to preserve, reached
+      # without a cross-job digest handoff because there is only one job now.
       - name: Log in to GHCR
         if: inputs.version != ''
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -154,34 +162,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push image by digest
+      - name: Push the multi-arch image
         if: inputs.version != ''
         id: push
+        env:
+          VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
           IMAGE=ghcr.io/skillsgateway/skillsgateway
-          docker buildx build --platform ${{ matrix.platform }} \
+          docker buildx build --platform linux/amd64,linux/arm64 \
             --metadata-file metadata.json \
-            --output type=image,name="$IMAGE",push=true,push-by-digest=true,name-canonical=true \
-            .
+            --tag "$IMAGE:$VERSION" --push .
           DIGEST=$(python3 -c 'import json,sys; print(json.load(open("metadata.json"))["containerimage.digest"])')
           echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
-          mkdir -p /tmp/digests
-          echo -n "$DIGEST" > "/tmp/digests/${{ matrix.suffix }}.txt"
           {
-            echo "## Pushed platform manifest (${{ matrix.platform }})"
+            echo "## Published multi-arch image"
             echo '```'
             echo "$IMAGE@$DIGEST"
             echo '```'
+            echo "Tag: $VERSION"
+            echo "Platforms: linux/amd64, linux/arm64"
           } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload digest
-        if: inputs.version != ''
-        uses: actions/upload-artifact@v7.0.1
-        with:
-          name: digest-${{ matrix.suffix }}
-          path: /tmp/digests/*
-          retention-days: 1
 
       - name: Attest SBOM
         if: inputs.version != ''
@@ -203,64 +204,14 @@ jobs:
       - name: Upload image artifact
         uses: actions/upload-artifact@v7.0.1
         with:
-          # Suffixed: one upload per matrix leg would otherwise collide on the
-          # same artifact name within a run.
-          name: skills-gateway-native-image-${{ matrix.suffix }}
+          name: skills-gateway-container-image
           path: skills-gateway-image.tar.gz
           retention-days: 7
 
-      - name: Upload native-build SBOM
+      - name: Upload SBOM
         uses: actions/upload-artifact@v7.0.1
         with:
-          name: sbom-cyclonedx-native-${{ matrix.suffix }}
+          name: sbom-cyclonedx-container
           path: target/classes/META-INF/sbom/application.cdx.json
           if-no-files-found: error
           retention-days: 30
-
-  publish:
-    name: Publish multi-arch manifest
-    needs: native
-    # Restated: this is a separate job, so `native`'s per-step publish gate does
-    # not protect it. Every matrix leg "succeeds" on a push, a schedule or a
-    # bare dispatch too -- it just skips its own push and attest steps -- so
-    # `needs.native.result == 'success'` alone is not enough to keep this
-    # confined to release.yml.
-    if: ${{ !cancelled() && needs.native.result == 'success' && inputs.version != '' }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Download digests
-        uses: actions/download-artifact@v8.0.1
-        with:
-          pattern: digest-*
-          path: /tmp/digests
-          merge-multiple: true
-
-      - name: Create and push the multi-arch manifest
-        env:
-          # `inputs.*` is workflow-scoped, so it is readable here even though
-          # only `native` declared a dependency on it.
-          VERSION: ${{ inputs.version }}
-        run: |
-          set -euo pipefail
-          IMAGE=ghcr.io/skillsgateway/skillsgateway
-          docker buildx imagetools create -t "$IMAGE:$VERSION" \
-            "$IMAGE@$(cat /tmp/digests/amd64.txt)" \
-            "$IMAGE@$(cat /tmp/digests/arm64.txt)"
-          DIGEST=$(docker buildx imagetools inspect "$IMAGE:$VERSION" | awk '/^Digest:/{print $2}')
-          {
-            echo "## Published multi-arch image"
-            echo '```'
-            echo "$IMAGE@$DIGEST"
-            echo '```'
-            echo "Tag: $VERSION"
-            echo "Platforms: linux/amd64, linux/arm64"
-          } >> "$GITHUB_STEP_SUMMARY"
