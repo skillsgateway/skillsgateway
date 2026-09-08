@@ -1063,13 +1063,83 @@ cases:
 
   - id: SVC_GW_RELEASE_0003
     requirement_ids: ["GW_RELEASE_0003"]
-    title: The release workflow is dispatch-only, previews by default and gates before publishing
+    title: The release workflow definition ties the tag, every publisher, verification and promotion into one chain
     verification: automated-test
     description: |
       GIVEN the repository's release workflow definition
       WHEN the packaging test validates it
-      THEN the workflow is reachable only by manual dispatch, its preview input defaults to on, it offers the release-candidate modes alongside a plain release, it requires the override flag before a hand-entered version can disagree with the derived one, it runs the main-branch gates before the approval gate, it binds the approval to a protected environment so a required reviewer holds it, it orders the tag and every publishing step after that approval so the reviewer can prevent the version from existing, it creates the release as a prerelease, it orders promotion to latest after the published-artifact verification, and it reports the surviving state of any run that tagged without promoting, including a run that was cancelled
+      THEN the tag job waits on the approval job, every publishing job waits on the tag job, the promotion job waits on the verification job, and a run that reaches the tag without reaching promotion — including one ended by cancellation — is exactly the case the partial-release report job's own condition is keyed on, so the chain of gates the requirement states is one continuous dependency graph in the workflow rather than independent steps that happen to run in the right order
     revision: "0.2.0"
+
+  - id: SVC_GW_RELEASE_0003.1
+    requirement_ids: ["GW_RELEASE_0003.1"]
+    title: The release workflow is reachable only by manual dispatch, and previews by default
+    verification: automated-test
+    description: |
+      GIVEN the repository's release workflow definition
+      WHEN the packaging test validates it
+      THEN its only trigger is workflow_dispatch and its dry-run input defaults to true
+    revision: "0.1.0"
+
+  - id: SVC_GW_RELEASE_0003.2
+    requirement_ids: ["GW_RELEASE_0003.2"]
+    title: An explicit override input exists alongside the hand-entered version
+    verification: automated-test
+    description: |
+      GIVEN the repository's release workflow definition
+      WHEN the packaging test validates it
+      THEN its dispatch inputs declare an explicit force flag, which the version derivation requires before accepting a hand-entered version that disagrees with the derived one
+    revision: "0.1.0"
+
+  - id: SVC_GW_RELEASE_0003.3
+    requirement_ids: ["GW_RELEASE_0003.3"]
+    title: A release-candidate mode is offered from the same dispatch input as a plain release
+    verification: automated-test
+    description: |
+      GIVEN the repository's release workflow definition
+      WHEN the packaging test validates it
+      THEN its prerelease dispatch input offers a release-candidate mode alongside a plain release, with no separate workflow or input for one versus the other
+    revision: "0.1.0"
+
+  - id: SVC_GW_RELEASE_0003.4
+    requirement_ids: ["GW_RELEASE_0003.4"]
+    title: The tag and every publisher wait on gates and a required reviewer, verifying the commit that gets tagged
+    verification: automated-test
+    description: |
+      GIVEN the repository's release workflow definition
+      WHEN the packaging test validates it
+      THEN the approval job waits on the main-branch gates, is bound to a protected environment so a required reviewer holds it, the tag job waits on that approval and carries no environment of its own, every publishing job waits on the tag job, and the dispatch inputs declare no ref so the commit the gates verify cannot differ from the commit that gets tagged
+    revision: "0.1.0"
+
+  - id: SVC_GW_RELEASE_0003.5
+    requirement_ids: ["GW_RELEASE_0003.5"]
+    title: The tag job creates the release as a prerelease
+    verification: automated-test
+    description: |
+      GIVEN the repository's release workflow definition
+      WHEN the packaging test validates it
+      THEN the tag job delegates to the shared tag-and-prerelease workflow rather than to a job that publishes a release directly
+    revision: "0.1.0"
+
+  - id: SVC_GW_RELEASE_0003.6
+    requirement_ids: ["GW_RELEASE_0003.6"]
+    title: Promotion waits on published-artifact verification and tolerates an expected skip
+    verification: automated-test
+    description: |
+      GIVEN the repository's release workflow definition
+      WHEN the packaging test validates it
+      THEN the promotion job waits on the verification job and its guard condition is that no job failed rather than that every job succeeded
+    revision: "0.1.0"
+
+  - id: SVC_GW_RELEASE_0003.7
+    requirement_ids: ["GW_RELEASE_0003.7"]
+    title: A run that tags without promoting reports its surviving state, even when cancelled
+    verification: automated-test
+    description: |
+      GIVEN the repository's release workflow definition
+      WHEN the packaging test validates it
+      THEN the partial-release report job waits on the tag and the promotion job, runs unconditionally including on a cancelled run, and its own condition keys on the tag having succeeded while promotion did not
+    revision: "0.1.0"
 
   - id: SVC_GW_RELEASE_0004
     requirement_ids: ["GW_RELEASE_0004"]

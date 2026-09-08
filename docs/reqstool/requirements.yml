@@ -865,13 +865,89 @@ requirements:
     revision: 0.1.0
 
   - id: GW_RELEASE_0003
-    title: Gated release automation
+    title: Every publicly-visible or irreversible release step answers to the same chain of evidence
     significance: shall
-    description: The system's release automation shall cut a release only from a manual dispatch, shall default to a preview that resolves and reports the release without creating a tag or publishing anything, shall derive the version to release from the Conventional Commits since the previous tag and require an explicit override flag before accepting a hand-entered version that disagrees with the derived one, shall offer a release-candidate mode that is verified like any release but never promoted, shall run the same gates that guard the main branch and then hold for approval by a required reviewer before the version's tag is created and before every other publicly visible or irreversible step, shall create the release as a prerelease that is excluded from the latest-release resolution until its published artifacts have been downloaded and verified over the same unauthenticated path a consumer uses, shall promote a release to latest only after that verification passes, and shall report at the end of any run that created the tag without reaching promotion which parts of the release exist and which do not.
-    rationale: A release is the one irreversible thing this project does to the outside world, so every step that a consumer can observe belongs behind evidence and a human decision; a dry run by default makes previewing free, deriving the version from the commit history keeps it honest to what actually changed, and creating the release invisible until its artifacts are verified means a failed publish never leaves a release that advertises bytes nobody can fetch. The tag is named among the steps the approval precedes because it is the only version the project has and nothing deletes it safely once anyone has fetched it, so a gate that cannot prevent it is not deciding whether the release happens; and because a run can still stop between the tag and promotion, the half-published state it leaves has to be stated by the run that caused it rather than reconstructed afterwards from a red job list.
+    description: "The system's release automation shall run no publicly-visible or irreversible step of a release — creating the tag, publishing from it, or promoting a release to latest — outside one continuous chain: the gates that guard the main branch, then a required reviewer's approval, then publication as an unpromoted prerelease, then verification of the published artifacts over the same unauthenticated path a consumer uses, and only then promotion. A run that leaves the chain incomplete after tagging shall state exactly which later links it reached."
+    rationale: "A release is the one irreversible thing this project does to the outside world, so every step that a consumer can observe belongs behind evidence and a human decision. Stating that as one chain, rather than as a list of unrelated steps, is what makes it a single property to defend: an approval that a later job could route around, or a promotion that did not actually wait on verification, would leave the chain's other links standing while the property they exist to enforce had already failed. Each of the seven guarantees below states one link that can be verified, and can regress, on its own."
     categories: ["security", "reliability"]
     implementation: configuration
     revision: 0.2.0
+
+  - id: GW_RELEASE_0003.1
+    title: A release is never a side effect, and previewing costs nothing
+    significance: shall
+    description: "The release workflow shall be reachable only by a manual dispatch, with no push, schedule or other trigger able to start it, and its preview (dry-run) input shall default to on, so that resolving and reporting what a release would be is free and creating a tag or publishing anything is always a deliberate opt-out."
+    rationale: "A release that could start from a push or a schedule would make the one irreversible thing this project does to the outside world an accident waiting on the wrong commit landing at the wrong time; requiring a human to dispatch it removes that path entirely. Defaulting the preview on means the safe action is also the path of least resistance — an operator who forgets the flag gets a report, not a tag."
+    references:
+      requirement_ids: ["GW_RELEASE_0003"]
+    categories: ["security", "reliability"]
+    implementation: configuration
+    revision: 0.1.0
+
+  - id: GW_RELEASE_0003.2
+    title: A hand-entered version needs an explicit override to disagree with the derived one
+    significance: shall
+    description: "The release automation shall accept a hand-entered version that disagrees with the version it derives from the Conventional Commits since the previous tag only when an explicit override flag is also given."
+    rationale: "A hand-entered version is the one input to a release that is not derived from evidence already in the repository, so it is also the one place a typo or a stale assumption can release the wrong thing under the right process; requiring a second, explicit flag before it is allowed to disagree with what the commit history itself implies keeps a mistake from being one field away from shipping."
+    references:
+      requirement_ids: ["GW_RELEASE_0003"]
+    categories: ["security", "reliability"]
+    implementation: configuration
+    revision: 0.1.0
+
+  - id: GW_RELEASE_0003.3
+    title: A release-candidate mode is offered alongside a plain release
+    significance: shall
+    description: "The release workflow shall offer a release-candidate mode, chosen from the same dispatch input as a plain release, so that a candidate is verified by exactly the automation a release is."
+    rationale: "A release candidate exists to be exercised by the same gates a release is, on the theory that a build path exercised only for real releases is a build path nobody has run when a real release needs it; offering it from the same input as a plain release is what keeps the two from drifting into two different pipelines that happen to share a name."
+    references:
+      requirement_ids: ["GW_RELEASE_0003"]
+    categories: ["reliability"]
+    implementation: configuration
+    revision: 0.1.0
+
+  - id: GW_RELEASE_0003.4
+    title: The tag and everything that follows it wait on the same gates and a required reviewer
+    significance: shall
+    description: "The release automation shall run the same gates that guard the main branch before offering the release for approval, shall bind that approval to a protected environment so a required reviewer holds it, and shall make the tag and every step that publishes from it wait on that approval, so that the reviewer can prevent the version from ever existing."
+    rationale: "The tag is the only version the project has and nothing deletes it safely once anyone has fetched it, so a gate that cannot prevent the tag is not deciding whether the release happens — it is deciding how the release happens after it already has. Running the main-branch gates first means the reviewer approves something already green with the resolved version and rendered notes in front of them, rather than a version string standing in for work not yet checked."
+    references:
+      requirement_ids: ["GW_RELEASE_0003"]
+    categories: ["security", "reliability"]
+    implementation: configuration
+    revision: 0.1.0
+
+  - id: GW_RELEASE_0003.5
+    title: The release is created as a prerelease
+    significance: shall
+    description: "The release automation shall create the release as a prerelease, so that its tag and its published assets exist without the release being resolvable as the project's latest."
+    rationale: "Publication and promotion are two different acts with two different blast radii: publishing makes the release downloadable by exact version, which a consumer who already knows what they want can do safely against an unfinished release, while promotion changes what everyone else who asks for 'the latest' receives. Keeping the release a prerelease until promotion is what stops the first act from silently performing the second."
+    references:
+      requirement_ids: ["GW_RELEASE_0003"]
+    categories: ["security", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_RELEASE_0003.6
+    title: Promotion to latest waits on verification of the published artifacts, tolerating an expected skip
+    significance: shall
+    description: "The release automation shall promote a release to latest only after its published artifacts have been verified over the same unauthenticated path a consumer uses, and that verification-and-promotion ordering shall not be defeated by a job that was expected to be skipped for the release in hand."
+    rationale: "A failed publish must never leave a release that advertises bytes nobody can fetch, which is what verifying the actual downloaded artifact — not merely the build that produced it — before promoting is for. Guarding promotion on nothing having failed, rather than on everything having succeeded, is what keeps a release candidate's deliberately skipped step from also blocking every real release the moment it ships beside one."
+    references:
+      requirement_ids: ["GW_RELEASE_0003"]
+    categories: ["security", "reliability"]
+    implementation: configuration
+    revision: 0.1.0
+
+  - id: GW_RELEASE_0003.7
+    title: A run that tags without promoting reports which parts of the release exist
+    significance: shall
+    description: "A run of the release automation that created the tag without reaching promotion, including one abandoned by cancellation, shall report at its end which parts of the release exist and which do not."
+    rationale: "A run that stops between the tag and promotion leaves a half-published release, and the tag itself is not undone by the run failing — so the state that run left behind has to be stated by the run that caused it, or the only way to learn what exists is to reconstruct it afterwards from a red job list, which is exactly the gap a prior incident (#205) left open."
+    references:
+      requirement_ids: ["GW_RELEASE_0003"]
+    categories: ["reliability"]
+    implementation: configuration
+    revision: 0.1.0
 
   - id: GW_RELEASE_0004
     title: Release version tag format

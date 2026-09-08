@@ -447,7 +447,16 @@ class PackagingTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_RELEASE_0003"})
+    @SVCs({
+        "SVC_GW_RELEASE_0003",
+        "SVC_GW_RELEASE_0003.1",
+        "SVC_GW_RELEASE_0003.2",
+        "SVC_GW_RELEASE_0003.3",
+        "SVC_GW_RELEASE_0003.4",
+        "SVC_GW_RELEASE_0003.5",
+        "SVC_GW_RELEASE_0003.6",
+        "SVC_GW_RELEASE_0003.7"
+    })
     void releaseWorkflowIsDispatchOnlyPreviewsByDefaultAndGatesBeforePublishing() throws IOException {
         Map<String, Object> wf = parse(REPO_ROOT.resolve(".github/workflows/release.yml"));
 
