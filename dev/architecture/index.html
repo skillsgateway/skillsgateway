@@ -2559,6 +2559,13 @@ artifacts actually work:</p>
 </table>
 <p>T1–T4 are the ones no current product addresses; T3+T4 together are the reason
 naive mirroring is insufficient.</p>
+<p>T5 is the one row the gateway has no mitigation for at all. Covering it needs a
+rule that can ask a question of the <em>approved estate</em> rather than of the snapshot
+in front of it, which is a different shape from every control the gateway has —
+<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md">ADR 0015</a>
+proposes where such a question may be asked without costing the vetting chain the
+reproducibility that continuous re-vetting depends on. It is a proposed decision;
+nothing is implemented, and T5 remains uncovered until it is.</p>
 <h2 id="3-design-principles">3. Design principles<a class="headerlink" href="#3-design-principles" title="Permanent link">&para;</a></h2>
 <ol>
 <li><strong>Be the only door.</strong> Governance that depends on developers voluntarily
