@@ -2095,7 +2095,7 @@ export interface components {
              * @description Outcome of the last update attempt
              * @enum {string}
              */
-            lastAttemptOutcome?: "ok" | "failed" | "refused" | "none";
+            lastAttemptOutcome?: "ok" | "failed" | "none";
             /** @description The mirrored marketplace */
             marketplace?: string;
             /** @description Commit refs/heads/main resolves to on the mirror */

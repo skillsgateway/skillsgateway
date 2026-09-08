@@ -197,7 +197,13 @@ class ForgeMirrorSweepTests extends AbstractGatewayTest {
                 .as("a short read of published storage must never empty the mirror")
                 .containsOnlyKeys(GitStorage.SERVED_REF, snapshotRef);
         assertThat(mirrorEvents()).contains(ForgeMirrorService.EVENT_REFUSED);
-        assertThat(mirror.report().lastAttemptOutcome()).isEqualTo(MirrorReport.REFUSED);
+        // A refusal reports as a failed attempt, not as a fourth outcome value: a client that
+        // falls through to "fine" on a value it does not recognise would swallow exactly this
+        // signal. The distinction lives in the error, in the log and on the ledger instead.
+        MirrorReport refused = mirror.report();
+        assertThat(refused.lastAttemptOutcome()).isEqualTo(MirrorReport.FAILED);
+        assertThat(refused.error()).startsWith(ForgeMirrorService.REFUSAL);
+        assertThat(refused.inSync()).isFalse();
         // A refusal is never agreement: the outcome must not read as a successful repair.
         assertThat(mirrorEvents().subList(ledgerRowsBefore, mirrorEvents().size()))
                 .doesNotContain(ForgeMirrorService.EVENT_REPAIRED, ForgeMirrorService.EVENT_UPDATED);

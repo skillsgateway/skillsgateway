@@ -1334,7 +1334,6 @@
             "enum": [
               "ok",
               "failed",
-              "refused",
               "none"
             ],
             "type": "string"

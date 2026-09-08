@@ -141,7 +141,7 @@ Read it as three questions:
 | --- | --- |
 | Could the gateway see the mirror at all? | `reachable` — false means the comparison failed, and `inSync` is then false too, never true by default |
 | Does the mirror show what the facade serves? | `inSync`, with `missingOnMirror` and `staleOnMirror` naming the difference |
-| Did the last push work? | `lastAttemptOutcome` (`ok`, `failed`, `refused`, `none`) and `error` |
+| Did the last push work? | `lastAttemptOutcome` (`ok`, `failed`, `none`) and `error` |
 
 `staleOnMirror` is the field to watch after a revocation: a reference listed
 there is content the gateway has stopped serving that the mirror still carries.
@@ -201,8 +201,15 @@ is a silent total wipe filed as a repair.
 So before contacting the host, the gateway checks the served references it read
 against its own record of what that marketplace has approved. When the two
 contradict, it pushes nothing, deletes nothing, records
-`mirror-reconciliation-refused`, and reports `refused` as `lastAttemptOutcome`
-with the reason in `error`. **The mirror is left exactly as it was.**
+`mirror-reconciliation-refused`, and reports `failed` as `lastAttemptOutcome`
+with an `error` beginning `refused:`. **The mirror is left exactly as it was.**
+
+A refusal is a `failed` attempt rather than an outcome of its own on purpose. A
+client reading `lastAttemptOutcome` and falling through to "fine" on a value it
+does not recognise would swallow exactly this signal, so the value stays one
+every existing reader already treats as not-ok; the distinction lives in `error`,
+in the log, and in the ledger event, none of which anybody has to match
+exhaustively on.
 
 Treat it as an alert on storage: check the marketplace's published repository and
 the storage backend's configuration. A single refusal immediately after an

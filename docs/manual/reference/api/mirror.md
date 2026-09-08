@@ -51,8 +51,8 @@ $ curl localhost:8080/api/mirror/drift
 | `staleOnMirror` | References the mirror still holds that are no longer served — what a revocation that has not reached the mirror leaves behind. |
 | `pendingUpdates` | Mirror updates queued or in flight right now. A non-zero value means the picture is mid-change. |
 | `lastAttemptAt` | When the mirror was last updated, or attempted. |
-| `lastAttemptOutcome` | `ok`, `failed`, `refused`, or `none` if nothing has been attempted since this gateway started. `refused` means the gateway read its own published storage and would not act on what it read — the mirror was left untouched and the problem is upstream of the code host. |
-| `error` | Why the comparison or the last attempt failed, or null. |
+| `lastAttemptOutcome` | `ok`, `failed`, or `none` if nothing has been attempted since this gateway started. |
+| `error` | Why the comparison or the last attempt failed, or null. An error beginning `refused:` means the gateway read its own published storage and would not act on what it read — the mirror was left untouched and the problem is upstream of the code host. |
 
 The comparison is made against published storage, not against what the gateway
 last tried to push, so a mirror somebody changed by hand shows up here as drift
@@ -105,7 +105,8 @@ otherwise.
 
     If published storage answers successfully but incompletely, the gateway
     declines to push or delete anything rather than acting on a reference set it
-    cannot believe: the response carries `lastAttemptOutcome` `refused` with the
-    reason in `error`, and the ledger records `mirror-reconciliation-refused`.
+    cannot believe: the response carries `lastAttemptOutcome` `failed` with an
+    `error` beginning `refused:`, and the ledger records
+    `mirror-reconciliation-refused`.
     That points at the gateway's own storage, not at the code host — see
     [The read-only forge mirror](../../guides/read-only-forge-mirror.md#mirror-reconciliation-refused).

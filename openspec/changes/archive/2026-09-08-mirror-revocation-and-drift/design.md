@@ -144,6 +144,43 @@ what it read has nothing to be authoritative *with*. Note also that the guard si
 and so protects the event-triggered path too — a degraded read during an approval could have wiped
 the mirror before this change, and now cannot.
 
+### 3a. A refusal reports as `failed`, not as a fourth outcome value
+
+Adding `refused` to `lastAttemptOutcome` was the first shape, and the API
+compatibility gate rejected it — correctly. Adding a value to a **response** enum
+breaks every client already reading the field, and it breaks it in the worst
+direction for this particular field: a client whose `switch` falls through to a
+default of "fine" on a value it does not recognise would silently swallow a
+refusal, which is the one signal here that most needs to be seen.
+
+So a refusal is a `failed` attempt whose `error` begins `refused: `. Three things
+make that lossless rather than a compromise:
+
+- **The metric already agreed with it.** A refusal increments
+  `reconciliations.failed`, because the reconciliation did not happen. The API
+  and the telemetry now say the same thing instead of disagreeing.
+- **A refusal *is* a failure to reconcile.** What differs is the operator
+  response — a `failed` push points at the forge, a refusal points at the
+  gateway's own storage — and that difference lives where nothing has to match an
+  enum exhaustively to get it: the error prefix, the log line at ERROR, and
+  `mirror-reconciliation-refused` on the ledger, which is a distinct event.
+- **Every existing client already fails closed on it.** A reader written before
+  this guard existed treats `failed` as not-ok, which is exactly right. This is
+  the same reasoning that makes `inSync` false on an unreachable mirror: silence
+  must never read as agreement.
+
+Reclassifying `response-property-enum-value-added` in `.oasdiff.yaml` would also
+have removed the gate failure, and was deliberately **not** done: that is a
+project-wide decision about what the compatibility promise means, and it belongs
+to the owner rather than to a mirror change.
+
+While there: `docs/manual/reference/compatibility.md` says a breaking change
+"moves the path prefix **and** ships as a major", and that clause is
+unsatisfiable today because `/api/**` carries no version segment — so no breaking
+change in this repo can literally comply, and the label-plus-`!` escape in the
+workflow is what is actually used. Worth the owner fixing in the policy rather
+than each change rediscovering it.
+
 ### 4. What happens when the mirror cannot be made consistent
 
 Unchanged in posture, changed in visibility. The revocation still completes, the

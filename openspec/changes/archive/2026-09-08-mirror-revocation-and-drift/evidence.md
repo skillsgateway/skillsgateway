@@ -28,7 +28,7 @@ All six gates below were run **fresh, in order, after the last code edit**.
 | Published storage answers successfully but short, and the reconciliation deletes everything | `requireCredible`; `ForgeMirrorSweepTests` phase B, and mutant 1 |
 | A repair erases the fact that the mirror had diverged | `mirror-drift-repaired` as its own ledger event; phase C assertion, and mutant 3 |
 | A reconciliation on a timer buries the audit ledger | the no-change reconciliation records nothing; phase B assertion, and mutant 4 |
-| A refusal is filed as success, so silence reads as agreement | `MirrorReport.REFUSED`; phase B assertion, and mutant 5 |
+| A refusal is filed as success, so silence reads as agreement | it reports as `failed` with an `error` beginning `refused: `, so every existing client already fails closed on it (design decision 3a); phase B assertion, and mutant 5 |
 | The sweep is wired but never actually scheduled | `the_reconciliation_is_registered_on_the_applications_schedule`, asserted against the container's `ScheduledTaskHolder` rather than the annotation source |
 | The sweep throws and takes the schedule with it | caught inside the scheduled method; the `@Scheduled` contract is a framework convention we do not own |
 | The sweep contacts a forge on a gateway that has no mirror | `ForgeMirrorDisabledTests` |
@@ -65,8 +65,8 @@ between this suite and a happy path:
   cannot tell from a marketplace that legitimately stopped serving, and its
   honest conclusion would be to empty the mirror. The assertion is that the
   mirror comes through with **every reference it had**, that the ledger carries
-  `mirror-reconciliation-refused`, and that the report says `refused` rather than
-  `ok`. The tip is then restored and the next reconciliation shown to succeed, so
+  `mirror-reconciliation-refused`, and that the report says `failed` with an
+  `error` beginning `refused: ` rather than `ok`. The tip is then restored and the next reconciliation shown to succeed, so
   the guard is proved to be a refusal and not a permanent jam.
 
 The credential is configured in the passing suite (`sweep-bot` / `sweep-secret`)

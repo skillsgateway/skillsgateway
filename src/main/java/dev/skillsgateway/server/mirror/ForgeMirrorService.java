@@ -100,6 +100,14 @@ public class ForgeMirrorService {
     public static final String EVENT_FAILED = "mirror-push-failed";
 
     /**
+     * How the drift report's {@code error} opens when the last attempt was a refusal rather than a
+     * push that failed: the operator response is different — one points at the forge, the other at
+     * the gateway's own storage — and this is where that difference lives, since the outcome value
+     * deliberately does not carry it.
+     */
+    public static final String REFUSAL = "refused: ";
+
+    /**
      * Ledger event for a reconciliation that would not act on what it read (GW_0190).
      *
      * <p>The one place this component declines to be authoritative, and it is the price of deleting
@@ -464,9 +472,17 @@ public class ForgeMirrorService {
      * closed on an unreachable mirror — the gateway did not confirm the mirror is right, so nothing
      * here may read as agreement — and {@code seconds_since_success} therefore keeps climbing,
      * which is the signal an operator alerts on.
+     *
+     * <p>It reports as {@link MirrorReport#FAILED} rather than as an outcome of its own, with
+     * {@link #REFUSAL} opening the error. A fourth outcome value would break every client already
+     * reading that field, and would break it in the worst direction: a client that falls through to
+     * "fine" on a value it does not recognise would swallow exactly this signal. Under
+     * {@code failed}, a client written before this guard existed already treats a refusal as
+     * not-ok. The distinction survives where nothing has to parse an enum for it — this error
+     * prefix, the log line, and {@link #EVENT_REFUSED} on the ledger.
      */
     private void refuse(String reason, RuntimeException cause) {
-        lastAttempt.set(new Attempt(Instant.now(), MirrorReport.REFUSED, cause.getMessage()));
+        lastAttempt.set(new Attempt(Instant.now(), MirrorReport.FAILED, REFUSAL + cause.getMessage()));
         statistics.failed();
         log.error(
                 "forge mirror reconciliation for '{}' refused to act (trigger {}): {}."
