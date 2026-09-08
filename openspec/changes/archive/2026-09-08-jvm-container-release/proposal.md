@@ -2,7 +2,7 @@
 
 ## Why
 
-[ADR 0012](../../../docs/decisions/0012-native-image-as-the-release-artifact.md)
+[ADR 0012](../../../../docs/decisions/0012-native-image-as-the-release-artifact.md)
 — accepted 2026-09-07 — decided that the release artifact becomes a JVM
 container and the GraalVM native image is dropped. This change implements that
 decision.
