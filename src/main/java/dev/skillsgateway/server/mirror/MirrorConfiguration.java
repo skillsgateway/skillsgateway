@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.mirror;
 
+import dev.skillsgateway.server.observability.MirrorMetrics;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.springframework.context.annotation.Bean;
@@ -7,6 +8,16 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class MirrorConfiguration {
+
+    /**
+     * The mirror's counters as meters (GW_0191). Registered here rather than in the service so that
+     * the service keeps working with no registry at all — the same split {@code ObjectStoreMetrics}
+     * uses — and so the meter names stay in the observability package with every other one.
+     */
+    @Bean
+    public MirrorMetrics mirrorMetrics(ForgeMirrorService mirror) {
+        return new MirrorMetrics(mirror.statistics());
+    }
 
     /**
      * The thread the mirror runs on, and the reason approval never waits for a forge (GW_0170).

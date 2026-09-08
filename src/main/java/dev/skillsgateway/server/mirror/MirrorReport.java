@@ -27,7 +27,8 @@ import java.util.List;
  *     revocation that did not reach the mirror leaves behind
  * @param pendingUpdates mirror updates queued or in flight right now
  * @param lastAttemptAt when the mirror was last updated, or attempted
- * @param lastAttemptOutcome {@code ok}, {@code failed}, or {@code none} if it has never been tried
+ * @param lastAttemptOutcome {@code ok}, {@code failed}, {@code refused} when the reconciliation
+ *     would not act on the served references it read, or {@code none} if it has never been tried
  * @param error why the comparison or the last attempt failed, or null
  */
 @Schema(description = "How the read-only forge mirror compares to what the facade serves")
@@ -68,7 +69,7 @@ public record MirrorReport(
 
         @Schema(
                 description = "Outcome of the last update attempt",
-                allowableValues = {"ok", "failed", "none"})
+                allowableValues = {"ok", "failed", "refused", "none"})
         String lastAttemptOutcome,
 
         @Schema(description = "Why the comparison or the last attempt failed")
@@ -82,6 +83,14 @@ public record MirrorReport(
 
     /** No attempt has been made since this gateway started. */
     public static final String NONE = "none";
+
+    /**
+     * The reconciliation read published storage successfully and would not act on what it read, so
+     * the mirror was left exactly as it was (GW_0190). Distinct from {@link #FAILED} because the
+     * operator response is different: a failure points at the forge, a refusal points at the
+     * gateway's own storage of the marketplace named in the report.
+     */
+    public static final String REFUSED = "refused";
 
     public MirrorReport {
         missingOnMirror = missingOnMirror == null ? List.of() : List.copyOf(missingOnMirror);

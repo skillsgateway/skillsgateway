@@ -77,7 +77,7 @@ public record SkillsGatewayProperties(
             ingestion = new Ingestion(null);
         }
         if (mirror == null) {
-            mirror = new Mirror(null, null, null, null, null, null, null, null);
+            mirror = new Mirror(null, null, null, null, null, null, null, null, null, null, null);
         }
     }
 
@@ -103,6 +103,16 @@ public record SkillsGatewayProperties(
      * @param timeout how long one mirror operation may take before it is abandoned as failed
      * @param maxAttempts how many times one mirror update is attempted before it is left as drift
      * @param retryDelay how long to wait between those attempts
+     * @param sweepEnabled whether the recurring reconciliation runs (GW_0190). True by default, and
+     *     irrelevant while {@link #enabled} is false. It is on with the mirror because a mirror that
+     *     tracks what is served only when an approval happens to occur — unless you also find and
+     *     set a second flag — is a trap; the flag exists so that a suite seeding its own drift can
+     *     keep a background actor from repairing it mid-assertion
+     * @param sweepInterval how often that reconciliation runs, and therefore the bound on how long a
+     *     reference the facade no longer serves can remain on the mirror
+     * @param sweepInitialDelay how long after startup the first one runs. Short on purpose: a
+     *     restart is exactly when the in-memory queue was lost, so the first sweep is what closes
+     *     that hole
      */
     public record Mirror(
             Boolean enabled,
@@ -112,7 +122,10 @@ public record SkillsGatewayProperties(
             String token,
             Duration timeout,
             Integer maxAttempts,
-            Duration retryDelay) {
+            Duration retryDelay,
+            Boolean sweepEnabled,
+            Duration sweepInterval,
+            Duration sweepInitialDelay) {
 
         public Mirror {
             if (enabled == null) {
@@ -127,14 +140,33 @@ public record SkillsGatewayProperties(
             if (retryDelay == null) {
                 retryDelay = Duration.ofSeconds(5);
             }
+            if (sweepEnabled == null) {
+                sweepEnabled = true;
+            }
+            if (sweepInterval == null) {
+                sweepInterval = Duration.ofMinutes(15);
+            }
+            if (sweepInitialDelay == null) {
+                sweepInitialDelay = Duration.ofMinutes(1);
+            }
         }
 
         /** The credential is deliberately absent: a record's generated toString would print it. */
         @Override
         public String toString() {
             return "Mirror[enabled=%s, marketplace=%s, url=%s, username=%s, timeout=%s, maxAttempts=%d,"
-                    + " retryDelay=%s]"
-                            .formatted(enabled, marketplace, url, username, timeout, maxAttempts, retryDelay);
+                    + " retryDelay=%s, sweepEnabled=%s, sweepInterval=%s, sweepInitialDelay=%s]"
+                            .formatted(
+                                    enabled,
+                                    marketplace,
+                                    url,
+                                    username,
+                                    timeout,
+                                    maxAttempts,
+                                    retryDelay,
+                                    sweepEnabled,
+                                    sweepInterval,
+                                    sweepInitialDelay);
         }
     }
 
