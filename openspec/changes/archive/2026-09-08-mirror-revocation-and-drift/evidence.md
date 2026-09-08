@@ -5,8 +5,7 @@ integration, and it adds an **automatic, unattended deletion** on the far side o
 it — so the old-coder discipline applies at Tier 3. This report records what was
 executed, on what, and what was deliberately not.
 
-**Commit under test:** `d8bfdc8b37f33a372e81ef869b1e212bb35f9c7c` (`docs(mirror): the recurring
-reconciliation, its metrics, and what a refusal means`), branched from
+**Commit under test:** `8f21434df5dcfeca903e3a894507df541009b804` (`fix(mirror): report a refusal as a failed attempt rather than a new outcome value`), branched from
 `331cf68` — the tip of `main` at the time of the run.
 
 **Spec approval: not obtained (autonomous run).** `proposal.md` and `design.md`
@@ -97,10 +96,18 @@ cp $SRC/MirrorReconciliationSweep.java /tmp/MRS.orig.java
 | 2 | `MirrorReconciliationSweep.sweep()` returns before queueing | **killed** — `ForgeMirrorSweepTests:199` (the withdrawn reference survives) |
 | 3 | the repair recorded under `EVENT_UPDATED` instead of `trigger.event()` | **killed** — `ForgeMirrorSweepTests:247` |
 | 4 | the `if (!done.changed()) return;` early return removed | **killed** — `ForgeMirrorSweepTests:215 [a reconciliation that changed nothing must not write a ledger row]` |
-| 5 | a refusal recorded as `MirrorReport.OK` with no error | **killed** — `ForgeMirrorSweepTests:200` |
+| 5 | a refusal recorded as `MirrorReport.OK` with no error | **killed** — `ForgeMirrorSweepTests:204` |
+| 6 | the refusal's `refused: ` error prefix dropped, leaving it indistinguishable from a failed push | **killed** — `ForgeMirrorSweepTests:205` |
 
-5/5 killed. Both source files were verified byte-identical to their originals
+6/6 killed. Both source files were verified byte-identical to their originals
 (`diff`) after the last restore, before the gate run below.
+
+Mutants 5 and 6 were run **after** the refusal was folded into the `failed`
+outcome (design decision 3a), so they cover the shape that actually ships:
+mutant 5 that a refusal cannot be filed as a success, and mutant 6 that the
+`refused: ` prefix is what carries the distinction from a push failure. Mutants
+1–4 were run against the same logic they still guard, which the fold did not
+touch.
 
 Mutant 1 is the one that matters: it is the direct proof that the guard is
 load-bearing rather than decorative, and that without it the suite would have
@@ -132,7 +139,7 @@ observed the mirror being emptied by a bad read.
 
 ## Gate results
 
-All commands run from the worktree root at `d8bfdc8b37f33a372e81ef869b1e212bb35f9c7c`.
+All commands run from the worktree root at `8f21434df5dcfeca903e3a894507df541009b804`.
 
 ### 1. `./mvnw clean verify`
 
@@ -141,8 +148,8 @@ All commands run from the worktree root at `d8bfdc8b37f33a372e81ef869b1e212bb35f
 [INFO] Spotless.Java is keeping 316 files clean - 0 needs changes to be clean, 316 were already clean, 0 were skipped because caching determined they were already clean
 [INFO] You have 0 Checkstyle violations.
 [INFO] BUILD SUCCESS
-[INFO] Total time:  02:30 min
-[INFO] Finished at: 2026-09-08T02:19:14+02:00
+[INFO] Total time:  02:27 min
+[INFO] Finished at: 2026-09-08T02:48:15+02:00
 ```
 
 ### 2. `(cd src/main/frontend && pnpm test:stories)`
@@ -150,15 +157,15 @@ All commands run from the worktree root at `d8bfdc8b37f33a372e81ef869b1e212bb35f
 ```
  Test Files  3 passed (3)
       Tests  6 passed (6)
-   Duration  2.58s (transform 0ms, setup 1.56s, import 636ms, tests 689ms, environment 0ms)
+   Duration  2.17s (transform 0ms, setup 1.51s, import 616ms, tests 710ms, environment 0ms)
 ```
 
 ### 3. `(cd src/main/frontend && pnpm e2e)`
 
 ```
   ✓  12 [chromium] › e2e/portal.spec.ts:581:1 › preview_pane_shows_tree_inert_skill_md_and_diff_vs_served (5.9s)
-  ✓  13 [chromium] › e2e/portal.spec.ts:665:1 › the_session_holds_an_admin_role_derived_from_the_identity_providers_group_claim (332ms)
-  13 passed (46.0s)
+  ✓  13 [chromium] › e2e/portal.spec.ts:665:1 › the_session_holds_an_admin_role_derived_from_the_identity_providers_group_claim (330ms)
+  13 passed (45.6s)
 ```
 
 ### 4. `reqstool status local -p docs/reqstool`
@@ -180,7 +187,7 @@ INCOMPLETE (0)
 ```
 ✓ spec/vetting-waivers
 ✓ spec/virtual-catalog
-Totals: 32 passed, 0 failed (32 items)
+Totals: 31 passed, 0 failed (31 items)
 ```
 
 ### 6. `mkdocs build --strict`
