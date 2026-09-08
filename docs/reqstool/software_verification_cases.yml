@@ -1981,24 +1981,106 @@ cases:
 
   - id: SVC_GW_INGEST_0030
     requirement_ids: ["GW_INGEST_0030"]
-    title: The resolved closure is recorded with the snapshot and queryable
+    title: The resolved closure exists exactly when the snapshot it belongs to does
     verification: automated-test
     description: |
       GIVEN a gateway configured to admit github plugin sources and a marketplace whose
       manifest declares one, backed by a reachable upstream plugin repository
-      WHEN ingestion records the composite snapshot
-      THEN a closure is recorded for it naming the upstream commit, the rewrite
-      implementation's identity and a digest, with one member carrying the plugin name,
-      source type, declared source, clone URL, resolved commit, grafted tree, graft path,
-      object count and decompressed size; the snapshot records the upstream commit as its
-      parent; a local-only snapshot and a rejected resolution record no closure and an
-      upstream commit equal to their own; the digest is the same for the same closure
-      regardless of member order and differs when any member field, the upstream commit
-      or the rewrite identity differs; the provenance response carries the served commit,
-      the upstream commit and the closure; the policy facts carry the external source
-      count and each plugin's origin, clone URL and resolved commit; the snapshots whose
-      closure contains the clone URL are returned by one query and a different URL returns
-      none; and purging the snapshot removes the closure with it
+      WHEN ingestion records the composite snapshot, and the snapshot is later purged
+      THEN a closure is recorded together with the snapshot at ingestion, naming the
+      upstream commit, the rewrite implementation's identity, a digest and one member
+      per resolved external plugin; and purging the snapshot removes the closure with
+      it, leaving neither behind without the other
+    revision: "0.1.0"
+
+  - id: SVC_GW_INGEST_0030.1
+    requirement_ids: ["GW_INGEST_0030.1"]
+    title: The closure and its members record the value copies the requirement describes
+    verification: automated-test
+    description: |
+      GIVEN a gateway configured to admit github plugin sources and a marketplace whose
+      manifest declares one, backed by a reachable upstream plugin repository, and a
+      closure value built directly from resolved member fields
+      WHEN ingestion records the composite snapshot's closure, or the closure's digest is
+      computed directly
+      THEN the recorded closure names the upstream commit, the rewrite implementation's
+      identity and a digest, with one member carrying the plugin name, source type,
+      declared source, clone URL, resolved commit, grafted tree, graft path, object count
+      and decompressed size; two closures with the same content have the same digest
+      regardless of member order; and the digest changes whenever the upstream commit,
+      the rewrite identity, or any single member field differs
+    revision: "0.1.0"
+
+  - id: SVC_GW_INGEST_0030.2
+    requirement_ids: ["GW_INGEST_0030.2"]
+    title: The upstream commit is recorded on every snapshot, equal to its own when nothing was resolved
+    verification: automated-test
+    description: |
+      GIVEN a marketplace ingested with no external plugin source declared, and one
+      ingested with a source whose resolution is rejected
+      WHEN ingestion records either snapshot
+      THEN the snapshot's upstream commit equals its own served commit, and no closure is
+      recorded for it
+    revision: "0.1.0"
+
+  - id: SVC_GW_INGEST_0030.3
+    requirement_ids: ["GW_INGEST_0030.3"]
+    title: The closure is recorded together with the snapshot it belongs to
+    verification: automated-test
+    description: |
+      GIVEN a marketplace whose manifest declares an external plugin source that resolves
+      WHEN ingestion records the resulting composite snapshot
+      THEN the closure is present, recorded against that snapshot, as soon as ingestion
+      returns
+    revision: "0.1.0"
+
+  - id: SVC_GW_INGEST_0030.4
+    requirement_ids: ["GW_INGEST_0030.4"]
+    title: A closure is removed only when its snapshot is purged
+    verification: automated-test
+    description: |
+      GIVEN a held composite snapshot with a recorded closure, soft-deleted and past its
+      restore window
+      WHEN the snapshot is purged
+      THEN the closure and its members are removed with it, and neither survives the
+      purge
+    revision: "0.1.0"
+
+  - id: SVC_GW_INGEST_0030.5
+    requirement_ids: ["GW_INGEST_0030.5"]
+    title: Provenance carries the served commit, the upstream commit and the closure
+    verification: automated-test
+    description: |
+      GIVEN a composite snapshot with a resolved closure, and a local-only snapshot with
+      none
+      WHEN a reviewer reads either snapshot's provenance
+      THEN the composite's provenance carries its served commit, its upstream commit and
+      its closure with the resolved plugin's name, clone URL and resolved commit; and the
+      local-only snapshot's provenance carries no closure
+    revision: "0.1.0"
+
+  - id: SVC_GW_INGEST_0030.6
+    requirement_ids: ["GW_INGEST_0030.6"]
+    title: The policy gate receives the resolved source count and each plugin's origin as facts
+    verification: automated-test
+    description: |
+      GIVEN a composite snapshot with one external and one local plugin
+      WHEN the policy facts for that snapshot are built
+      THEN the snapshot's facts carry the resolved external source count and its upstream
+      commit, and each plugin's facts carry its origin, with the external plugin's clone
+      URL and resolved commit present and the local plugin's origin distinct from it
+    revision: "0.1.0"
+
+  - id: SVC_GW_INGEST_0030.7
+    requirement_ids: ["GW_INGEST_0030.7"]
+    title: Snapshots whose closure contains a clone URL are found by one query
+    verification: automated-test
+    description: |
+      GIVEN a composite snapshot resolved from a known clone URL and commit
+      WHEN the snapshots containing that clone URL are queried, at that commit, at a
+      different commit, and with no commit given
+      THEN the snapshot is returned for the matching commit and for no commit given, and
+      is absent for a different commit or a different clone URL
     revision: "0.1.0"
 
   - id: SVC_GW_APPROVAL_0013

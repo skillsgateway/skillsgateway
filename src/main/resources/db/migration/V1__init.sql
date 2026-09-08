@@ -74,7 +74,7 @@ CREATE TABLE snapshots (
     -- The commit the gateway serves: the upstream commit for a local-only manifest, the
     -- synthesised composite for one with resolved external sources (GW_INGEST_0024).
     sha TEXT NOT NULL,
-    -- The commit ingested from upstream (GW_INGEST_0030). Equal to `sha` unless a composite was
+    -- The commit ingested from upstream (GW_INGEST_0030.2). Equal to `sha` unless a composite was
     -- synthesised, in which case it is also the composite's parent; the column exists so the
     -- question can be asked across snapshots without opening repository storage.
     upstream_sha TEXT NOT NULL,
@@ -110,13 +110,13 @@ CREATE TABLE snapshots (
     UNIQUE (marketplace_id, sha)
 );
 
--- The resolved closure of a composite snapshot (GW_INGEST_0030): what each external plugin source was
--- declared as, what it resolved to, and where it was grafted, copied as values at ingestion.
+-- The resolved closure of a composite snapshot: what each external plugin source was declared as,
+-- what it resolved to, and where it was grafted, copied as values at ingestion (GW_INGEST_0030.1).
 -- Never a foreign key into the marketplace or the manifest -- those are the mutable source; this
 -- is the immutable artifact that was vetted and approved, and it must keep meaning the same thing
 -- after either of them changes. One row per composite snapshot, owned by it: a local-only
 -- snapshot has no row, and no row is the empty closure. Written in the snapshot's transaction
--- and removed only by the snapshot's purge, through the cascade.
+-- (GW_INGEST_0030.3) and removed only by the snapshot's purge, through the cascade (GW_INGEST_0030.4).
 
 CREATE TABLE snapshot_closures (
     id BIGSERIAL PRIMARY KEY,

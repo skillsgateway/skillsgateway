@@ -423,7 +423,7 @@ public class ApprovalService {
                 "reject", () -> snapshotRepository.decide(snapshotId, Snapshot.REJECTED, reviewer));
     }
 
-    @Requirements({"GW_INGEST_0004", "GW_INGEST_0030"})
+    @Requirements({"GW_INGEST_0004", "GW_INGEST_0030.5"})
     public Optional<Provenance> provenance(long snapshotId) {
         return snapshotRepository.findById(snapshotId).map(snapshot -> {
             Marketplace marketplace =

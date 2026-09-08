@@ -1377,8 +1377,78 @@ requirements:
   - id: GW_INGEST_0030
     title: The resolved closure is recorded as an immutable domain object of the snapshot
     significance: shall
-    description: "The system shall record, with every snapshot whose manifest declared external plugin sources it resolved, the closure those sources form: the ingested upstream commit, the identity of the rewrite implementation, a digest over the sorted set of resolved members together with those two values, and one member per resolved external plugin carrying the plugin name, the source type, the source exactly as the manifest declared it, any ref or commit the manifest pinned, the clone URL the source was resolved through, the commit it resolved to, the tree grafted into the snapshot, the path it was grafted at, and the object count and decompressed size measured at resolution — every value a copy taken at ingestion and none of them a reference into mutable configuration. The system shall record the upstream commit on every snapshot, equal to the snapshot's own commit when no composite was synthesised; shall record the closure in the same transaction as the snapshot so that neither can exist without the other; shall never modify a recorded closure and shall remove one only when its snapshot is purged; shall include the closure, the served commit and the upstream commit in the snapshot's provenance; shall present the number of resolved external sources and each plugin's origin, clone URL and resolved commit as facts to the policy gate; and shall make the snapshots whose closure contains a given clone URL, at any or at a given resolved commit, answerable by one query."
-    rationale: "The composite commit already carries its provenance in its message, but a commit message is text inside git storage: it can be read for one snapshot at a time and cannot be queried across an estate, and the question a security team asks when an external repository is found compromised is which approved snapshots include that repository at any commit. Recording the closure as rows makes that question one indexed query, which is the shape continuous re-vetting's blast-radius reporting needs, and gives future signed provenance a stable digest to sign. Value copies rather than foreign keys are what separate the mutable source — the marketplace row and whatever a manifest declares this week — from the immutable artifact that was actually vetted and approved; a closure that pointed into configuration would change meaning when the configuration did. Recording the grafted tree rather than relying on the resolved commit is deliberate: the external commit object becomes unreachable once the scaffolding references are pruned and garbage collection may reclaim it, while the tree is what the composite holds and serves. Writing the closure in the snapshot's transaction is what makes a snapshot with external content and no closure impossible to create, which is the state the approval gate exists to refuse. Exposing the closure as facts is new signal for an existing gate rather than a new gate: an organisation that wants a rule over external content — none at all, or none from outside an allowlisted host — writes it as a policy rule."
+    description: "The system shall treat the closure a snapshot's resolved external plugin sources form as a first-class domain object of that snapshot rather than metadata kept beside it: existing only together with the snapshot it belongs to, carrying the snapshot's own immutability, and read by every later consumer — the snapshot's own provenance, the policy gate, and a query across the whole estate — as the record of what that snapshot actually serves. The system shall record such a closure with every snapshot whose manifest declared external plugin sources it resolved, and shall record no closure for a snapshot that resolved none."
+    rationale: "A composite commit's message already names the sources it was built from, but a commit message is text inside git storage: it exists for one snapshot at a time, answers to nothing but a human reader, and cannot be joined against anything else the gateway knows. Making the closure a queryable object rather than leaving that text as the only record is what turns 'which approved snapshots include this repository' from a manual audit of every marketplace into one fact the gateway can answer about itself. Binding the object to its snapshot — sharing its identity, existing only while the snapshot does, and never independently editable — is what keeps that fact honest: an approval decision is a decision about the snapshot and the closure together, and nothing may make either one true of the other after the fact. Each of the seven guarantees below states one part of that binding that can be verified, and can regress, on its own."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0030.1
+    title: Every closure and member field is recorded as a value copy taken at ingestion
+    significance: shall
+    description: "The system shall record, for every snapshot whose manifest declared external plugin sources it resolved, the closure those sources form: the ingested upstream commit, the identity of the rewrite implementation, a digest over the sorted set of resolved members together with those two values, and one member per resolved external plugin carrying the plugin name, the source type, the source exactly as the manifest declared it, any ref or commit the manifest pinned, the clone URL the source was resolved through, the commit it resolved to, the tree grafted into the snapshot, the path it was grafted at, and the object count and decompressed size measured at resolution. The system shall record every one of those values as a copy taken at the moment of ingestion, and none of them as a reference into mutable configuration."
+    rationale: "Value copies rather than foreign keys are what separate the mutable source — the marketplace row and whatever a manifest declares this week — from the immutable artifact that was actually vetted and approved; a closure that pointed into configuration instead of copying it would change meaning when the configuration did, silently invalidating an approval nobody revisited. Recording the grafted tree rather than relying on the resolved commit alone is deliberate within that same copy: the external commit object becomes unreachable once the scaffolding references are pruned and garbage collection may reclaim it, while the tree is what the composite actually holds and serves, so it is the tree that has to survive as a value even after the commit that produced it is gone."
+    references:
+      requirement_ids: ["GW_INGEST_0030"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0030.2
+    title: The upstream commit is recorded on every snapshot, resolved or not
+    significance: shall
+    description: "The system shall record the upstream commit on every snapshot, whether or not its manifest declared any external plugin source, and shall record it equal to the snapshot's own commit when no composite was synthesised."
+    rationale: "A column that existed only on composite snapshots would make 'what did the gateway ingest' a different query depending on whether a manifest happened to have external sources, and every later reader — provenance, the estate-wide closure query, a future audit — would need to know which shape it was looking at before it could ask the question. Recording the same column on every snapshot, equal to its own commit when nothing was resolved, is what makes the upstream commit a property of ingestion itself rather than a detail that only composites carry."
+    references:
+      requirement_ids: ["GW_INGEST_0030"]
+    categories: ["functional-suitability", "security"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0030.3
+    title: The closure is recorded in the same transaction as its snapshot
+    significance: shall
+    description: "The system shall record a resolved closure in the same transaction as the snapshot it belongs to, so that neither the snapshot nor its closure can come to exist without the other."
+    rationale: "Writing the closure in the snapshot's own transaction is what makes a snapshot with resolved external content and no record of what that content was impossible to create in the first place, rather than a state a later gate has to detect and refuse. The approval gate's closure-completeness check exists precisely because this guarantee, and only this guarantee, keeps that state from arising; a closure written after the snapshot, in a step that could fail independently, would turn a database hiccup into an unreviewable snapshot."
+    references:
+      requirement_ids: ["GW_INGEST_0030"]
+    categories: ["reliability", "security"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0030.4
+    title: A recorded closure is never modified, and is removed only when its snapshot is purged
+    significance: shall
+    description: "The system shall never modify a recorded closure, and shall remove one only when the snapshot it belongs to is purged."
+    rationale: "A closure that could be edited after the snapshot it describes was approved would no longer be a record of what was vetted; it would be current opinion about the snapshot's content, indistinguishable from a fact except that it changes. Tying removal to the snapshot's own purge rather than to any independent trigger is what keeps the closure's lifecycle identical to the lifecycle of the artifact it belongs to: a closure can no more outlive its snapshot than it can predate it, and it can no more be deleted alone than the snapshot can be half-purged."
+    references:
+      requirement_ids: ["GW_INGEST_0030"]
+    categories: ["reliability", "security"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0030.5
+    title: The closure, the served commit and the upstream commit are included in the snapshot's provenance
+    significance: shall
+    description: "The system shall include the resolved closure, the served commit and the upstream commit in the provenance the system reports for a snapshot."
+    rationale: "Provenance is where a reviewer or an auditor already looks to answer 'what does this snapshot serve and where did it come from'; a closure recorded in the database but absent from that answer would still require the same person to know a second surface exists and to query it directly. Presenting the closure beside the served and upstream commits already in provenance is what makes the closure discoverable through the interface built for exactly that question, rather than a fact that only exists for whoever already knows the schema."
+    references:
+      requirement_ids: ["GW_INGEST_0030"]
+    categories: ["functional-suitability", "security"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0030.6
+    title: The resolved source count and each plugin's origin are presented as facts to the policy gate
+    significance: shall
+    description: "The system shall present the number of resolved external sources and, for each plugin, its origin, the clone URL it was resolved through and the commit it resolved to, as facts available to the policy gate."
+    rationale: "The approval policy gate already evaluates facts about a snapshot's content; exposing the closure through that same channel is new signal for an existing gate rather than a new gate of its own — an organisation that wants a rule over external content at all, none permitted or none from outside an allowlisted host, can write it as an ordinary policy rule instead of the gateway needing to invent a second enforcement point for exactly this kind of fact."
+    references:
+      requirement_ids: ["GW_INGEST_0030"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0030.7
+    title: Snapshots whose closure contains a given clone URL are answerable by one query
+    significance: shall
+    description: "The system shall make the snapshots whose recorded closure contains a given clone URL — at any resolved commit, or at a specific one — answerable by one query."
+    rationale: "The question a security team asks when an external repository is found compromised is which approved snapshots include that repository, at any commit or at the one now known to be bad; a commit message inside git storage can be read for one snapshot at a time and cannot be joined across an estate, so that question would otherwise mean opening every snapshot in turn. Recording the closure as rows makes it one indexed query instead, which is the shape continuous re-vetting's blast-radius reporting needs, and the same rows give a future signed provenance a stable digest to sign over."
+    references:
+      requirement_ids: ["GW_INGEST_0030"]
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 

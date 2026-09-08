@@ -59,12 +59,12 @@ public class SnapshotFactsService {
     /**
      * The variables of one evaluation: {@code snapshot}, {@code files}, {@code plugins}, {@code skills}.
      *
-     * <p>The closure (GW_INGEST_0030) is folded into the same variables rather than added as a fifth: a
+     * <p>The closure (GW_INGEST_0030.6) is folded into the same variables rather than added as a fifth: a
      * rule about external content is a rule about plugins, so each plugin carries its
      * {@code origin}, {@code upstreamUrl} and {@code resolvedSha}, and the snapshot carries the
      * count. New signal for the existing gate, not a new gate.
      */
-    @Requirements({"GW_APPROVAL_0007", "GW_INGEST_0030"})
+    @Requirements({"GW_APPROVAL_0007", "GW_INGEST_0030.6"})
     public Map<String, Object> build(Snapshot snapshot, Marketplace marketplace) {
         Map<String, SnapshotClosure.Member> closure = new HashMap<>();
         closures.findBySnapshot(snapshot.id()).ifPresent(recorded -> {

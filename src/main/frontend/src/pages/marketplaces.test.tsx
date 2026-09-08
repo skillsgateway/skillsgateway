@@ -38,9 +38,9 @@ test("lists_registered_marketplaces_and_reveals_snapshots_on_expand", async () =
 });
 
 /**
- * The provenance dialog carries the closure (GW_INGEST_0030): a reviewer sees the served commit beside
+ * The provenance dialog carries the closure (GW_INGEST_0030.5): a reviewer sees the served commit beside
  * the upstream one, and each external plugin with the URL it was fetched through and the commit it
- * resolved to. Untagged for the reason given below: SVC_GW_INGEST_0030 is verified by the Java suite.
+ * resolved to. Untagged for the reason given below: SVC_GW_INGEST_0030.5 is verified by the Java suite.
  */
 test("provenance_dialog_lists_the_served_commit_and_the_resolved_closure", async () => {
   const user = userEvent.setup();
