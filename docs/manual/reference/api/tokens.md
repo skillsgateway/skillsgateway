@@ -283,8 +283,9 @@ entry that is itself new content to export.
 
 Effective authority is the **intersection** of the allowlist, the credential's
 scopes, and its principal's roles. A credential scoped `audit:read` still gets
-**403** unless its principal holds
-`auditor` or `admin`.
+**403** unless its principal holds `auditor` or `admin`, and one scoped
+`snapshots:read` reaches a snapshot's preview reads and its `/fetchers` report
+only where its principal approves that marketplace, or is an admin.
 
 Scope and allowlist enforcement, unlike role enforcement, does **not** consult
 that flag and is always on. The flag exists so an upgrade does not lock out

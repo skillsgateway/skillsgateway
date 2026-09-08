@@ -84,6 +84,8 @@ public final class MachineApiRegistry {
                         get("/api/snapshots/{id}/file"),
                         get("/api/snapshots/{id}/files"),
                         get("/api/snapshots/{id}/vetting"),
+                        // The only route in this scope that also needs a role: the blast-radius
+                        // report is approver-scoped (GW_AUTH_0011), and reach is the intersection.
                         get("/api/snapshots/{id}/fetchers"),
                         // Four-eyes eligibility is a read of the same evidence surface: it reports
                         // whether a second reviewer is required and who the first was. Approval

@@ -555,10 +555,10 @@ requirements:
   - id: GW_AUTH_0011
     title: Per-marketplace approver scoping
     significance: shall
-    description: The system shall scope an approver grant to exactly one marketplace and accept from its holder ingestion, approval, rejection, re-vetting and waiver operations only for content of that marketplace, resolving the owning marketplace on the gateway's side from the addressed snapshot or waiver where the route carries an id rather than a marketplace name, and shall refuse the holder the same operations for any other marketplace.
-    rationale: Delegation is only containment if the boundary holds on every route; resolving the marketplace from the addressed resource rather than trusting the route shape closes the confused-deputy path where an approver of one marketplace reaches another's content through a bare snapshot or waiver id.
+    description: The system shall scope an approver grant to exactly one marketplace and accept from its holder ingestion, approval, rejection, re-vetting and waiver operations, and the report of which identities fetched a snapshot's content, only for content of that marketplace, resolving the owning marketplace on the gateway's side from the addressed snapshot or waiver where the route carries an id rather than a marketplace name, and shall refuse the holder the same operations for any other marketplace.
+    rationale: Delegation is only containment if the boundary holds on every route; resolving the marketplace from the addressed resource rather than trusting the route shape closes the confused-deputy path where an approver of one marketplace reaches another's content through a bare snapshot or waiver id. The blast-radius report is scoped with the actions rather than with the browsing surface because it names identities, which is the same judgement as the revocation it informs.
     categories: ["security"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_AUTH_0012
     title: Auditor read-only guarantee

@@ -9,7 +9,7 @@ turns that into delegated administration: named **admins**, per-marketplace
 | Role | Scope | May |
 | --- | --- | --- |
 | `admin` | global | Everything, including managing grants. |
-| `approver` | one marketplace | Ingest, approve, reject, re-vet, and waive findings for that marketplace only. |
+| `approver` | one marketplace | Ingest, approve, reject, re-vet, waive findings, and read a snapshot's blast-radius report, for that marketplace only. |
 | `auditor` | global | Read the ledger, its export, the webhook subscriber/delivery/sink listings, and retention candidates. Nothing else. |
 
 Roles compose upward — an admin can do everything an approver or auditor can.
