@@ -1,8 +1,6 @@
 package dev.skillsgateway.server.persistence;
 
 import io.github.reqstool.annotations.Requirements;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -59,7 +57,7 @@ public class MarketplaceRepository {
                         metadata == null || metadata.updatedAt() == null
                                 ? null
                                 : metadata.updatedAt().atOffset(java.time.ZoneOffset.UTC))
-                .query(MarketplaceRepository::map)
+                .query(Marketplace.class)
                 .single();
     }
 
@@ -69,20 +67,20 @@ public class MarketplaceRepository {
     public Optional<Marketplace> findByName(String name) {
         return jdbc.sql("SELECT * FROM marketplaces WHERE name = :name")
                 .param("name", name)
-                .query(MarketplaceRepository::map)
+                .query(Marketplace.class)
                 .optional();
     }
 
     public Optional<Marketplace> findById(long id) {
         return jdbc.sql("SELECT * FROM marketplaces WHERE id = :id")
                 .param("id", id)
-                .query(MarketplaceRepository::map)
+                .query(Marketplace.class)
                 .optional();
     }
 
     public List<Marketplace> list() {
         return jdbc.sql("SELECT * FROM marketplaces ORDER BY name")
-                .query(MarketplaceRepository::map)
+                .query(Marketplace.class)
                 .list();
     }
 
@@ -98,7 +96,7 @@ public class MarketplaceRepository {
                 .param("mode", mode)
                 .param("secret", webhookSecret)
                 .param("name", name)
-                .query(MarketplaceRepository::map)
+                .query(Marketplace.class)
                 .optional();
     }
 
@@ -116,7 +114,7 @@ public class MarketplaceRepository {
         return jdbc.sql("SELECT * FROM marketplaces WHERE sync_mode = 'scheduled'"
                         + " ORDER BY last_sync_at ASC NULLS FIRST, id ASC LIMIT :limit")
                 .param("limit", limit)
-                .query(MarketplaceRepository::map)
+                .query(Marketplace.class)
                 .list();
     }
 
@@ -126,27 +124,5 @@ public class MarketplaceRepository {
                 .param("now", OffsetDateTime.now())
                 .param("id", id)
                 .update();
-    }
-
-    static Marketplace map(ResultSet rs, int rowNum) throws SQLException {
-        return new Marketplace(
-                rs.getLong("id"),
-                rs.getString("name"),
-                rs.getString("url"),
-                instant(rs, "created_at"),
-                rs.getString("registered_by"),
-                rs.getString("origin"),
-                rs.getString("push_policy"),
-                rs.getString("forge"),
-                rs.getString("forge_project"),
-                rs.getString("description"),
-                instant(rs, "upstream_updated_at"),
-                rs.getString("sync_mode"),
-                instant(rs, "last_sync_at"));
-    }
-
-    static Instant instant(ResultSet rs, String column) throws SQLException {
-        OffsetDateTime value = rs.getObject(column, OffsetDateTime.class);
-        return value == null ? null : value.toInstant();
     }
 }

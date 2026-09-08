@@ -1,9 +1,5 @@
 package dev.skillsgateway.server.policy;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -30,7 +26,7 @@ public class PolicyRuleRepository {
                 .param("enabled", enabled)
                 .param("actor", actor)
                 .param("now", OffsetDateTime.now(ZoneOffset.UTC))
-                .query(PolicyRuleRepository::map)
+                .query(PolicyRule.class)
                 .single();
     }
 
@@ -43,7 +39,7 @@ public class PolicyRuleRepository {
                 .param("enabled", enabled)
                 .param("actor", actor)
                 .param("now", OffsetDateTime.now(ZoneOffset.UTC))
-                .query(PolicyRuleRepository::map)
+                .query(PolicyRule.class)
                 .single();
     }
 
@@ -54,38 +50,20 @@ public class PolicyRuleRepository {
     public Optional<PolicyRule> findByName(String name) {
         return jdbc.sql("SELECT * FROM policy_rules WHERE name = :name")
                 .param("name", name)
-                .query(PolicyRuleRepository::map)
+                .query(PolicyRule.class)
                 .optional();
     }
 
     public List<PolicyRule> list() {
         return jdbc.sql("SELECT * FROM policy_rules ORDER BY name")
-                .query(PolicyRuleRepository::map)
+                .query(PolicyRule.class)
                 .list();
     }
 
     /** The gate's only query: every rule that may decide an approval right now (GW_0090). */
     public List<PolicyRule> listEnabled() {
         return jdbc.sql("SELECT * FROM policy_rules WHERE enabled ORDER BY name")
-                .query(PolicyRuleRepository::map)
+                .query(PolicyRule.class)
                 .list();
-    }
-
-    static PolicyRule map(ResultSet rs, int rowNum) throws SQLException {
-        return new PolicyRule(
-                rs.getLong("id"),
-                rs.getString("name"),
-                rs.getString("description"),
-                rs.getString("expression"),
-                rs.getBoolean("enabled"),
-                rs.getString("created_by"),
-                instant(rs, "created_at"),
-                rs.getString("updated_by"),
-                instant(rs, "updated_at"));
-    }
-
-    private static Instant instant(ResultSet rs, String column) throws SQLException {
-        Timestamp timestamp = rs.getTimestamp(column);
-        return timestamp == null ? null : timestamp.toInstant();
     }
 }

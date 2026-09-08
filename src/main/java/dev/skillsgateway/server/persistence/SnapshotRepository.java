@@ -2,13 +2,13 @@ package dev.skillsgateway.server.persistence;
 
 import dev.skillsgateway.server.ingestion.SnapshotClosure;
 import io.github.reqstool.annotations.Requirements;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.jdbc.core.DataClassRowMapper;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +22,13 @@ public class SnapshotRepository {
      * a negation would have let {@code revoked} in without anyone deciding that it should be.
      */
     private static final String DELETABLE_STATES = "('held', 'rejected', 'revoked')";
+
+    /**
+     * The snapshot half of the composite read below. {@code candidates} selects a computed
+     * {@code reason} alongside {@code snapshots.*}; a surplus column is ignored by the mapper
+     * (pinned in {@code DataClassRowMapperTests}), so only the composition is hand-written.
+     */
+    private static final RowMapper<Snapshot> SNAPSHOT = DataClassRowMapper.newInstance(Snapshot.class);
 
     private final JdbcClient jdbc;
     private final SnapshotClosureRepository closures;
@@ -80,14 +87,14 @@ public class SnapshotRepository {
                 .param("state", state)
                 .param("violation", violation)
                 .param("now", OffsetDateTime.now())
-                .query(SnapshotRepository::map)
+                .query(Snapshot.class)
                 .single();
     }
 
     public Optional<Snapshot> findById(long id) {
         return jdbc.sql("SELECT * FROM snapshots WHERE id = :id")
                 .param("id", id)
-                .query(SnapshotRepository::map)
+                .query(Snapshot.class)
                 .optional();
     }
 
@@ -95,14 +102,14 @@ public class SnapshotRepository {
         return jdbc.sql("SELECT * FROM snapshots WHERE marketplace_id = :marketplaceId AND sha = :sha")
                 .param("marketplaceId", marketplaceId)
                 .param("sha", sha)
-                .query(SnapshotRepository::map)
+                .query(Snapshot.class)
                 .optional();
     }
 
     public List<Snapshot> listByMarketplace(long marketplaceId) {
         return jdbc.sql("SELECT * FROM snapshots WHERE marketplace_id = :marketplaceId ORDER BY id")
                 .param("marketplaceId", marketplaceId)
-                .query(SnapshotRepository::map)
+                .query(Snapshot.class)
                 .list();
     }
 
@@ -136,7 +143,7 @@ public class SnapshotRepository {
                 .param("reviewer", reviewer)
                 .param("now", OffsetDateTime.now())
                 .param("id", id)
-                .query(SnapshotRepository::map)
+                .query(Snapshot.class)
                 .single();
     }
 
@@ -177,7 +184,7 @@ public class SnapshotRepository {
                 .param("decidedAt", at(before.decidedAt()))
                 .param("id", before.id())
                 .param("approved", Snapshot.APPROVED)
-                .query(SnapshotRepository::map)
+                .query(Snapshot.class)
                 .optional();
     }
 
@@ -204,7 +211,7 @@ public class SnapshotRepository {
                 .param("violation", violation)
                 .param("id", id)
                 .param("approved", Snapshot.APPROVED)
-                .query(SnapshotRepository::map)
+                .query(Snapshot.class)
                 .optional();
     }
 
@@ -229,7 +236,7 @@ public class SnapshotRepository {
                 .param("approved", Snapshot.APPROVED)
                 .param("cutoff", cutoff.atOffset(ZoneOffset.UTC))
                 .param("limit", limit)
-                .query(SnapshotRepository::map)
+                .query(Snapshot.class)
                 .list();
     }
 
@@ -239,7 +246,7 @@ public class SnapshotRepository {
                         + " AND state = :approved::snapshot_state AND deleted_at IS NULL ORDER BY id")
                 .param("marketplaceId", marketplaceId)
                 .param("approved", Snapshot.APPROVED)
-                .query(SnapshotRepository::map)
+                .query(Snapshot.class)
                 .list();
     }
 
@@ -260,7 +267,7 @@ public class SnapshotRepository {
                 .param("marketplaceId", marketplaceId)
                 .param("approved", Snapshot.APPROVED)
                 .param("excludingId", excludingId)
-                .query(SnapshotRepository::map)
+                .query(Snapshot.class)
                 .optional();
     }
 
@@ -319,7 +326,7 @@ public class SnapshotRepository {
                 .param("supersededCutoff", supersededCutoff.atOffset(ZoneOffset.UTC))
                 .param("idleCutoff", idleCutoff.atOffset(ZoneOffset.UTC))
                 .param("limit", limit)
-                .query((rs, rowNum) -> new Candidate(map(rs, rowNum), rs.getString("reason")))
+                .query((rs, rowNum) -> new Candidate(SNAPSHOT.mapRow(rs, rowNum), rs.getString("reason")))
                 .list();
     }
 
@@ -337,7 +344,7 @@ public class SnapshotRepository {
                 .param("reason", reason)
                 .param("purgeAfter", purgeAfter.atOffset(ZoneOffset.UTC))
                 .param("id", id)
-                .query(SnapshotRepository::map)
+                .query(Snapshot.class)
                 .optional();
     }
 
@@ -346,7 +353,7 @@ public class SnapshotRepository {
         return jdbc.sql("UPDATE snapshots SET deleted_at = NULL, deleted_reason = NULL, purge_after = NULL"
                         + " WHERE id = :id AND deleted_at IS NOT NULL RETURNING *")
                 .param("id", id)
-                .query(SnapshotRepository::map)
+                .query(Snapshot.class)
                 .optional();
     }
 
@@ -356,7 +363,7 @@ public class SnapshotRepository {
                         + " AND state IN " + DELETABLE_STATES + " ORDER BY id LIMIT :limit")
                 .param("now", now.atOffset(ZoneOffset.UTC))
                 .param("limit", limit)
-                .query(SnapshotRepository::map)
+                .query(Snapshot.class)
                 .list();
     }
 
@@ -374,24 +381,5 @@ public class SnapshotRepository {
 
         public static final String HELD_TOO_LONG = "held-too-long";
         public static final String SUPERSEDED = "superseded";
-    }
-
-    static Snapshot map(ResultSet rs, int rowNum) throws SQLException {
-        return new Snapshot(
-                rs.getLong("id"),
-                rs.getLong("marketplace_id"),
-                rs.getString("sha"),
-                rs.getString("upstream_sha"),
-                rs.getString("state"),
-                rs.getString("violation"),
-                MarketplaceRepository.instant(rs, "created_at"),
-                rs.getString("ingested_by"),
-                rs.getString("decided_by"),
-                MarketplaceRepository.instant(rs, "decided_at"),
-                MarketplaceRepository.instant(rs, "revoked_at"),
-                rs.getString("revoked_by"),
-                MarketplaceRepository.instant(rs, "deleted_at"),
-                rs.getString("deleted_reason"),
-                MarketplaceRepository.instant(rs, "purge_after"));
     }
 }

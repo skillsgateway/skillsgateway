@@ -1,8 +1,6 @@
 package dev.skillsgateway.server.persistence;
 
 import io.github.reqstool.annotations.Requirements;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -31,33 +29,33 @@ public class AuditSinkRepository {
                 .param("cursor", cursorPosition)
                 .param("batchSize", batchSize)
                 .param("now", now)
-                .query(AuditSinkRepository::map)
+                .query(AuditSink.class)
                 .single();
     }
 
     public List<AuditSink> list() {
         return jdbc.sql("SELECT * FROM audit_sinks ORDER BY id")
-                .query(AuditSinkRepository::map)
+                .query(AuditSink.class)
                 .list();
     }
 
     public List<AuditSink> listEnabled() {
         return jdbc.sql("SELECT * FROM audit_sinks WHERE enabled ORDER BY id")
-                .query(AuditSinkRepository::map)
+                .query(AuditSink.class)
                 .list();
     }
 
     public Optional<AuditSink> findById(long id) {
         return jdbc.sql("SELECT * FROM audit_sinks WHERE id = :id")
                 .param("id", id)
-                .query(AuditSinkRepository::map)
+                .query(AuditSink.class)
                 .optional();
     }
 
     public Optional<AuditSink> findByName(String name) {
         return jdbc.sql("SELECT * FROM audit_sinks WHERE name = :name")
                 .param("name", name)
-                .query(AuditSinkRepository::map)
+                .query(AuditSink.class)
                 .optional();
     }
 
@@ -71,7 +69,7 @@ public class AuditSinkRepository {
                 .param("cursor", cursorPosition)
                 .param("now", OffsetDateTime.now())
                 .param("id", id)
-                .query(AuditSinkRepository::map)
+                .query(AuditSink.class)
                 .optional();
     }
 
@@ -82,7 +80,7 @@ public class AuditSinkRepository {
                 .param("batchSize", batchSize)
                 .param("now", OffsetDateTime.now())
                 .param("id", id)
-                .query(AuditSinkRepository::map)
+                .query(AuditSink.class)
                 .optional();
     }
 
@@ -91,18 +89,5 @@ public class AuditSinkRepository {
                         .param("id", id)
                         .update()
                 > 0;
-    }
-
-    static AuditSink map(ResultSet rs, int rowNum) throws SQLException {
-        return new AuditSink(
-                rs.getLong("id"),
-                rs.getString("name"),
-                rs.getString("kind"),
-                rs.getLong("subscriber_id"),
-                rs.getLong("cursor_position"),
-                rs.getInt("batch_size"),
-                rs.getBoolean("enabled"),
-                MarketplaceRepository.instant(rs, "created_at"),
-                MarketplaceRepository.instant(rs, "updated_at"));
     }
 }

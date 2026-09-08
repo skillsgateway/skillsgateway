@@ -1,9 +1,6 @@
 package dev.skillsgateway.server.vetting;
 
 import io.github.reqstool.annotations.Requirements;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -42,7 +39,7 @@ public class ConnectorToggleRepository {
                 .param("reason", reason)
                 .param("updatedBy", updatedBy)
                 .param("now", OffsetDateTime.now())
-                .query(ConnectorToggleRepository::map)
+                .query(ConnectorToggle.class)
                 .single();
     }
 
@@ -52,7 +49,7 @@ public class ConnectorToggleRepository {
                         + " AND marketplace_id = :marketplaceId")
                 .param("connector", connector)
                 .param("marketplaceId", marketplaceId)
-                .query(ConnectorToggleRepository::map)
+                .query(ConnectorToggle.class)
                 .optional();
     }
 
@@ -60,31 +57,14 @@ public class ConnectorToggleRepository {
     public Optional<ConnectorToggle> findGlobal(String connector) {
         return jdbc.sql("SELECT * FROM connector_toggles WHERE connector = :connector AND marketplace_id IS NULL")
                 .param("connector", connector)
-                .query(ConnectorToggleRepository::map)
+                .query(ConnectorToggle.class)
                 .optional();
     }
 
     /** Every setting, globals and per-marketplace, in a stable order. */
     public List<ConnectorToggle> list() {
         return jdbc.sql("SELECT * FROM connector_toggles ORDER BY connector, marketplace_id NULLS FIRST")
-                .query(ConnectorToggleRepository::map)
+                .query(ConnectorToggle.class)
                 .list();
-    }
-
-    private static ConnectorToggle map(ResultSet rs, int rowNum) throws SQLException {
-        long marketplaceId = rs.getLong("marketplace_id");
-        return new ConnectorToggle(
-                rs.getLong("id"),
-                rs.getString("connector"),
-                rs.wasNull() ? null : marketplaceId,
-                rs.getBoolean("enabled"),
-                rs.getString("reason"),
-                rs.getString("updated_by"),
-                at(rs, "updated_at"));
-    }
-
-    private static Instant at(ResultSet rs, String column) throws SQLException {
-        OffsetDateTime value = rs.getObject(column, OffsetDateTime.class);
-        return value == null ? null : value.toInstant();
     }
 }
