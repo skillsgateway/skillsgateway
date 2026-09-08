@@ -4941,6 +4941,13 @@ packaging rather than on the one that happens to ship.</p>
 <code>server.port</code> means editing the chart, not just values.</p>
 <p><strong>Container storage.</strong> The image sets <code>SKILLSGATEWAY_DATADIR=/data</code> — the
 relaxed-binding environment form of <code>skills-gateway.data-dir</code>.</p>
+<p><strong>JGit's own scratch.</strong> The image sets <code>XDG_CONFIG_HOME=/tmp/xdg-config</code>, and
+the chart restates it in the Deployment (GW_0179 — The embedded git library's
+own scratch stays inside the writable temporary directory). JGit resolves a
+filesystem-timestamp-resolution cache file there the first time it touches a
+repository; left unset, it falls back to a home directory this user does not
+have under a read-only root filesystem, and fails — caught, not fatal, but
+logged — on every fetch.</p>
 <p><strong>Volume durability is a decision the chart makes you state.</strong> There is no
 default: <code>persistence.mode</code> must be <code>existingClaim</code> (a PersistentVolumeClaim
 that already exists), <code>ephemeral</code> (an <code>emptyDir</code>, and everything on it is lost

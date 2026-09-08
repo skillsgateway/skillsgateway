@@ -2611,6 +2611,13 @@ capabilities dropped, privilege escalation disabled and a read-only root
 filesystem; the chart mounts an <code>emptyDir</code> at <code>/tmp</code> so the runtime keeps
 somewhere to write. <code>podSecurityContext.fsGroup</code> is what makes the mounted data
 volume writable by that user.</p>
+<p>The embedded git library (JGit) needs to know about that scratch space too:
+it caches a filesystem-timestamp attribute in a user-level configuration file
+under <code>$XDG_CONFIG_HOME</code>, and with neither that variable nor <code>HOME</code> otherwise
+set, it would resolve to a home directory this user does not have on a sealed
+root filesystem — failing on every fetch with a caught (non-fatal) error that
+still drowns out real ones. The chart sets <code>XDG_CONFIG_HOME=/tmp/xdg-config</code>
+in the Deployment for exactly this reason.</p>
 <h2 id="storage-options-on-serverless-kubernetes">Storage options on serverless Kubernetes<a class="headerlink" href="#storage-options-on-serverless-kubernetes" title="Permanent link">&para;</a></h2>
 <p>Serverless node pools — AWS Fargate and its equivalents — constrain storage
 sharply, and the constraints interact. This is the short version of the choice,
