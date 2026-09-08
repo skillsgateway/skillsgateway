@@ -64,7 +64,7 @@ public final class VettingChain {
         }
     }
 
-    @Requirements({"GW_VETTING_0002", "GW_VETTING_0029.3"})
+    @Requirements({"GW_VETTING_0002", "GW_VETTING_0029", "GW_VETTING_0029.3"})
     public static Outcome aggregate(Collection<VerdictState> states) {
         if (states == null || states.isEmpty()) {
             return Outcome.BLOCKED;
