@@ -2208,6 +2208,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#adr-0018-requirement-ids-carry-a-domain-gw_domain_nnnn-minted-manually" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0018 — Requirement ids carry a domain: GW_&lt;DOMAIN&gt;_NNNN, minted manually
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2482,6 +2493,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#adr-0018-requirement-ids-carry-a-domain-gw_domain_nnnn-minted-manually" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0018 — Requirement ids carry a domain: GW_&lt;DOMAIN&gt;_NNNN, minted manually
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2669,7 +2691,7 @@ price of outsourcing <strong>enforcement and audit</strong>, which are the produ
 forge-served repository makes the approval gate bypassable by anyone with
 repository write, and forge logs do not record per-user fetches. The two things
 a forge was wanted for are addressed at the gateway instead: <strong>SSO-derived
-short-lived git credentials</strong> (GW_0104, implemented) close the
+short-lived git credentials</strong> (GW_AUTH_0018, implemented) close the
 second-credential-system gap without moving a fetch off the ledger, and a
 read-only <strong>forge mirror for browsing</strong> is sequenced after, never as a serving
 surface. Availability of the facade is now explicitly a security property, with
@@ -2679,14 +2701,14 @@ serving independent of ingestion.</p>
 <p>An operator can add their own vetting connector — an LLM reviewer, a sandbox, a
 corporate scanner — as <strong>configuration</strong> (<code>skills-gateway.vetting.external[*]</code>),
 not API-managed state, so every chain run stays attributable to the exact
-connector and version that produced it (GW_0049). It is a <strong>synchronous</strong> HTTP
+connector and version that produced it (GW_VETTING_0012). It is a <strong>synchronous</strong> HTTP
 participant in the existing chain: the gateway POSTs the snapshot bundle and reads
 back the normalized <code>{state, report-url, findings[]}</code>. The load-bearing half is
 <strong>fail-closed</strong> — an unreachable, slow, oversized, unparseable, unrecognised or
-partial answer is an <code>error</code> verdict that blocks, never a pass (GW_0145) — plus
+partial answer is an <code>error</code> verdict that blocks, never a pass (GW_VETTING_0025) — plus
 <strong>worst-of</strong> aggregation so an endpoint cannot pass content its own findings
-condemn (GW_0146). A <code>pending</code> answer is the <strong>asynchronous seam</strong> and blocks
-until resolved (GW_0147); the inbound resolution callback is deliberately a
+condemn (GW_VETTING_0026). A <code>pending</code> answer is the <strong>asynchronous seam</strong> and blocks
+until resolved (GW_VETTING_0027); the inbound resolution callback is deliberately a
 separate, sequenced piece of work.</p>
 <h3 id="adr-0010-admin-override-of-vetting-automation-the-cockpit-model"><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0010-admin-override-of-vetting-automation.md">ADR 0010 — Admin override of vetting automation (the cockpit model)</a><a class="headerlink" href="#adr-0010-admin-override-of-vetting-automation-the-cockpit-model" title="Permanent link">&para;</a></h3>
 <p><em>Accepted, 2026-09-01.</em></p>
@@ -2694,10 +2716,10 @@ separate, sequenced piece of work.</p>
 <strong>disconnected by the captain</strong>, deliberately and audibly. Two stances taken on
 purpose are narrowly reversed for <strong>admin-only, audited</strong> acts. An administrator
 may <strong>enable or disable a built-in connector</strong>, globally or per marketplace
-(GW_0149) — a disabled connector is recorded as a distinct <code>disabled</code> verdict
+(GW_VETTING_0029) — a disabled connector is recorded as a distinct <code>disabled</code> verdict
 (fail-loud) and disabling every connector still leaves a run <strong>blocked</strong>, never
 cleared. An administrator may also <strong>approve a snapshot over a blocked outcome</strong>
-(GW_0148) with a required reason — the override lifts only the vetting gate (the
+(GW_VETTING_0028) with a required reason — the override lifts only the vetting gate (the
 policy, release-age and four-eyes gates still run), writes a distinct
 <code>snapshot-approved-over-vetting-failure</code> ledger event, and marks the snapshot so
 it is never indistinguishable from a clean approval. The override does not
@@ -2710,7 +2732,7 @@ sources lands in increments — <strong>admission</strong> (a typed source model
 configuration gate, disabled by default) before <strong>resolution</strong> (fetching and
 rewriting into a gateway-local composite snapshot) — separated by a standing
 invariant: a snapshot is <strong>held only when every plugin source it declares
-resolves inside the snapshot the gateway serves</strong> (GW_0152), so T4 stays closed
+resolves inside the snapshot the gateway serves</strong> (GW_INGEST_0021), so T4 stays closed
 for the whole reversal rather than reopening between increments. When the
 rewriter lands, snapshot identity becomes the <strong>served composite SHA</strong>, which is
 what leaves vetting, approval, the facade and retention unchanged by
@@ -2770,10 +2792,10 @@ plainly that an export is not a backup.</p>
 <p><em>Proposed.</em> The first mitigation for T5 (typosquatting) needs a rule that can ask a
 question of the approved estate, which a vetting connector structurally cannot be
 allowed to ask. A chain run is a pure function of (pinned content, chain identity),
-and that is the entire answer to <code>GW_0049 — Continuous re-vetting of approved
+and that is the entire answer to <code>GW_VETTING_0012 — Continuous re-vetting of approved
 snapshots</code>. Recording a corpus watermark as a third input was weighed and rejected:
 the estate is not a temporal table, so the watermark would name a state the system
-cannot reconstruct — and reconstructing it from the ledger is the move <code>GW_0096 —
+cannot reconstruct — and reconstructing it from the ledger is the move <code>GW_APPROVAL_0010 —
 Four-eyes separation of duties on approval</code> already refused. A corpus rule inside
 the chain is also symmetric where the threat is not, so the first enforcing sweep
 over an estate that already contains collisions would revoke both sides of each.
@@ -2810,8 +2832,22 @@ record keyed by commit SHA. Exclusion is settled as <strong>curation, not contai
 — revocation stays the security control — and entitlement is identified as the
 gateway's <strong>first per-identity deny on the facade</strong> (token scopes are
 self-chosen, so they are not one), deferred until a deployment has two audiences.
-Multi-ref publication is ruled out of this issue: it re-decides <code>GW_0017 —
+Multi-ref publication is ruled out of this issue: it re-decides <code>GW_INGEST_0006 —
 Gateway-pinned ingestion ref</code> and needs its own ADR.</p>
+<h3 id="adr-0018-requirement-ids-carry-a-domain-gw_domain_nnnn-minted-manually"><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0018-domain-prefixed-requirement-ids.md">ADR 0018 — Requirement ids carry a domain: <code>GW_&lt;DOMAIN&gt;_NNNN</code>, minted manually</a><a class="headerlink" href="#adr-0018-requirement-ids-carry-a-domain-gw_domain_nnnn-minted-manually" title="Permanent link">&para;</a></h3>
+<p><em>Accepted, 2026-09-08.</em> Extends <a href="https://github.com/skillsgateway/skillsgateway/issues/299">issue #299</a>.
+Every requirement and SVC id gains a domain segment — <code>GW_INGEST_</code>, <code>GW_VETTING_</code>,
+<code>GW_AUTH_</code>, <code>GW_FACADE_</code>, <code>GW_APPROVAL_</code>, <code>GW_AUDIT_</code>, <code>GW_WEBHOOK_</code>,
+<code>GW_RETENTION_</code>, <code>GW_API_</code>, <code>GW_RELEASE_</code>, <code>GW_ESTATE_</code>, <code>GW_OBSERVABILITY_</code> —
+each keeping its own sequence, per the reqstool-conventions skill's
+domain-specific-prefix guidance. Renumbered wholesale rather than grown
+incrementally: the project is pre-<code>1.0.0</code>, no other branch had an open PR
+against <code>docs/reqstool/</code>, and every mention of an old id moved in the same
+change — the SSOT, every annotation, every doc, every ADR, and every archived
+and active OpenSpec change. Ids reserved and then abandoned, and provisional
+ids in still-unimplemented change proposals, were never real and stay as
+historical bare numbers. <code>.reqstool-ai.yaml</code> sets <code>req_prefix</code>/<code>svc_prefix</code>
+blank — ids are minted manually now, one domain sequence at a time.</p>
 
 
 

@@ -2295,7 +2295,7 @@ polling, batch payload, signature, replay — is in
 </tr>
 <tr>
 <td><code>actorType</code> / <code>actor_type</code></td>
-<td>What kind of actor acted: <code>human</code>, <code>machine</code> or <code>system</code> (GW_0128). See below.</td>
+<td>What kind of actor acted: <code>human</code>, <code>machine</code> or <code>system</code> (GW_AUDIT_0007). See below.</td>
 </tr>
 <tr>
 <td><code>marketplace</code></td>
@@ -2319,7 +2319,7 @@ polling, batch payload, signature, replay — is in
 </tr>
 <tr>
 <td><code>tokenId</code> / <code>token_id</code></td>
-<td>Id of the credential that authenticated a facade entry (GW_0067) or a machine API entry (GW_0128); null on interactive admin entries and on entries older than per-credential attribution. <code>GET /api/tokens</code> gives the owner the id→name mapping.</td>
+<td>Id of the credential that authenticated a facade entry (GW_AUTH_0009) or a machine API entry (GW_AUDIT_0007); null on interactive admin entries and on entries older than per-credential attribution. <code>GET /api/tokens</code> gives the owner the id→name mapping.</td>
 </tr>
 </tbody>
 </table>
@@ -2417,7 +2417,7 @@ the acting OIDC principal.</p>
 <tbody>
 <tr>
 <td><code>roles-read</code></td>
-<td>Every <strong>authorized</strong> read of <code>GET /api/roles</code>, by a person or a machine alike (GW_0128). A refused read records nothing.</td>
+<td>Every <strong>authorized</strong> read of <code>GET /api/roles</code>, by a person or a machine alike (GW_AUDIT_0007). A refused read records nothing.</td>
 <td><code>grants={n}</code>.</td>
 </tr>
 <tr>

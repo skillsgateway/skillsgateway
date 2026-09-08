@@ -2464,14 +2464,14 @@ be recovered afterwards.</p>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:[</span><span class="s2">"acme"</span><span class="p">,</span><span class="s2">"catalog"</span><span class="p">],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-12-31T00:00:00Z"</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w"> </span><span class="nt">"pushScopes"</span><span class="p">:[]}</span>
 </code></pre></div>
-<p><code>scopes</code> (GW_0064) lists marketplace names the token may fetch — the
+<p><code>scopes</code> (GW_AUTH_0006) lists marketplace names the token may fetch — the
 <a href="../../../guides/virtual-catalog/">virtual catalog</a>'s name is a valid entry —
 and every entry is validated against the registered marketplaces at creation.
 Empty or omitted grants every marketplace, which is what every pre-scoping
 token meant. An out-of-scope fetch answers exactly like a marketplace that
 does not exist, so a scoped token is not a directory of what else the gateway
 governs.</p>
-<p><code>pushScopes</code> (GW_0102) lists <strong>hosted</strong> marketplaces the token may publish to
+<p><code>pushScopes</code> (GW_FACADE_0007) lists <strong>hosted</strong> marketplaces the token may publish to
 through <a href="../../../guides/publishing-first-party-skills/"><code>/publish/{name}</code></a>, and
 is a different grant from <code>scopes</code> in the one way that matters: omitting it
 grants <strong>none</strong>, not all. There is no every-marketplace push scope, so no token
@@ -2482,7 +2482,7 @@ exactly like a marketplace that does not exist, as an out-of-scope fetch does.</
 <p><code>sessionDerived</code> on a returned token says the credential came from
 <a href="#post-apitokenssession"><code>POST /api/tokens/session</code></a> rather than from a
 deliberate provisioning.</p>
-<p><code>expiresAt</code> (GW_0065): an expired token fails authentication exactly like a
+<p><code>expiresAt</code> (GW_AUTH_0007): an expired token fails authentication exactly like a
 revoked one, decided by comparing the stamp at authentication time — no
 background process is involved. When
 <a href="../../configuration/#access-tokens"><code>skills-gateway.tokens.max-ttl</code></a> is set,
@@ -2540,7 +2540,7 @@ rows.</p>
 </table>
 <hr />
 <h2 id="post-tokensidrotate"><code>POST /tokens/{id}/rotate</code><a class="headerlink" href="#post-tokensidrotate" title="Permanent link">&para;</a></h2>
-<p>Retire a possibly-exposed secret without renegotiating the grant (GW_0066).
+<p>Retire a possibly-exposed secret without renegotiating the grant (GW_AUTH_0008).
 Issues a fresh secret with the <strong>identical</strong> grant — name, scopes (fetch and
 push alike), and the same
 expiry deadline — records which token it replaced (<code>rotatedFrom</code>), and revokes
@@ -2586,7 +2586,7 @@ surgical, and ledger entries attribute fetches to something meaningful.</p>
 <hr />
 <h2 id="post-apitokenssession"><code>POST /api/tokens/session</code><a class="headerlink" href="#post-apitokenssession" title="Permanent link">&para;</a></h2>
 <p>Mint a short-lived git credential from the calling principal's browser session
-(GW_0104). The identity half of
+(GW_AUTH_0018). The identity half of
 <a href="../../decisions/">ADR 0008</a>: a human who has just proved who they are should
 not have to create a second, standing credential in order to fetch.</p>
 <p><strong>Body</strong> — <code>{name, scopes?}</code></p>

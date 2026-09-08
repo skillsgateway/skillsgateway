@@ -3475,13 +3475,13 @@ compliance feed with a hole in it is worse than one that is seconds behind.</p>
 <h2 id="ingestion-external-plugin-sources">Ingestion — external plugin sources<a class="headerlink" href="#ingestion-external-plugin-sources" title="Permanent link">&para;</a></h2>
 <p>Whether a marketplace manifest may declare plugins that live outside the
 marketplace repository, and — when it may — what resolving them is allowed to
-reach and to cost (GW_0151, GW_0155 – GW_0158, GW_0161). Java-side defaults; nothing
+reach and to cost (GW_INGEST_0020, GW_INGEST_0023 – GW_INGEST_0026, GW_INGEST_0027). Java-side defaults; nothing
 appears in <code>application.yaml</code>, and an absent block is the behaviour every
 existing deployment already has.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">ingestion</span><span class="p">:</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="nt">external-sources</span><span class="p">:</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">      </span><span class="c1"># false is GW_0003's local-only rejection: a manifest declaring a github,</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">      </span><span class="c1"># false is GW_INGEST_0003's local-only rejection: a manifest declaring a github,</span>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">      </span><span class="c1"># git, git-subdir, npm or archive source is refused, snapshot rejected.</span>
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">      </span><span class="c1"># It is also the only setting under which the gateway makes no outbound</span>
 <a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">      </span><span class="c1"># request driven by manifest content.</span>
@@ -3531,7 +3531,7 @@ existing deployment already has.</p>
 <td><code>skills-gateway.ingestion.external-sources.enabled</code></td>
 <td>boolean</td>
 <td><code>false</code></td>
-<td><code>false</code> is unchanged GW_0003 behaviour, and no manifest-driven outbound request is made.</td>
+<td><code>false</code> is unchanged GW_INGEST_0003 behaviour, and no manifest-driven outbound request is made.</td>
 </tr>
 <tr>
 <td><code>skills-gateway.ingestion.external-sources.allowed-types</code></td>
@@ -3620,10 +3620,10 @@ existing deployment already has.</p>
 </tbody>
 </table>
 <p>Every <code>budgets.*</code> key except <code>max-redirects</code> is its own sub-requirement of
-GW_0158 — <em>Resource-bounded source resolution</em>, in the order the table lists
-them: <code>GW_0158.1</code> through <code>GW_0158.8</code>. Raising one of them is therefore a
+GW_INGEST_0026 — <em>Resource-bounded source resolution</em>, in the order the table lists
+them: <code>GW_INGEST_0026.1</code> through <code>GW_INGEST_0026.8</code>. Raising one of them is therefore a
 decision about one stated bound, and a traceability report names the bound that
-regressed rather than the whole budget. <code>max-redirects</code> belongs to GW_0157 —
+regressed rather than the whole budget. <code>max-redirects</code> belongs to GW_INGEST_0025 —
 <em>Address, redirect and transport policy for source resolution</em>, which is where
 redirect policy lives.</p>
 <p>A source's derived clone URL must also satisfy <code>skills-gateway.allowed-url-schemes</code>
@@ -3909,7 +3909,7 @@ back a normalized <code>{state, reportUrl, findings[]}</code> where <code>state<
 <td><code>…external[n].version</code></td>
 <td>string</td>
 <td><code>1</code></td>
-<td>Stamped into the chain identity (GW_0049). Bump when the external rules change.</td>
+<td>Stamped into the chain identity (GW_VETTING_0012). Bump when the external rules change.</td>
 </tr>
 <tr>
 <td><code>…external[n].description</code></td>
@@ -3981,7 +3981,7 @@ finding and have it pass.</p>
 <div class="admonition note">
 <p class="admonition-title">External connectors are configuration for the same reason the license policy is</p>
 <p>Their identity and <code>version</code> are stamped into every run's chain identity
-(GW_0049), so a changed answer about unchanged content is attributable. That
+(GW_VETTING_0012), so a changed answer about unchanged content is attributable. That
 is why they are declared by deploy, not managed through the API. A <code>pending</code>
 answer is the asynchronous seam: it is recorded as <code>PENDING</code> and <strong>blocks</strong>
 until resolved — the inbound resolution callback is a separate, later
@@ -4411,7 +4411,7 @@ nothing appears in <code>application.yaml</code>.</p>
 <a href="../../guides/virtual-catalog/">The virtual catalog</a>.</p>
 <hr />
 <h2 id="access-tokens">Access tokens<a class="headerlink" href="#access-tokens" title="Permanent link">&para;</a></h2>
-<p>Token policy (GW_0065). Java-side default; nothing appears in
+<p>Token policy (GW_AUTH_0007). Java-side default; nothing appears in
 <code>application.yaml</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">tokens</span><span class="p">:</span>
@@ -4420,7 +4420,7 @@ nothing appears in <code>application.yaml</code>.</p>
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span><span class="c1"># silently shortened. Unset (the default) accepts tokens that never</span>
 <a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span><span class="c1"># expire, which is what every pre-cap deployment had.</span>
 <a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">    </span><span class="nt">max-ttl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90d</span>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">    </span><span class="c1"># What a session-derived credential is GRANTED (GW_0104), as opposed to</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">    </span><span class="c1"># What a session-derived credential is GRANTED (GW_AUTH_0018), as opposed to</span>
 <a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="w">    </span><span class="c1"># what a holder may ask for. Not derived from max-ttl on purpose: a</span>
 <a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">    </span><span class="c1"># deployment may allow year-long CI tokens and still want a credential</span>
 <a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">    </span><span class="c1"># minted from a browser session to die at the end of the working day.</span>
@@ -4471,9 +4471,9 @@ unset <code>max-ttl</code> is exactly what it was.</p>
 <a href="../../guides/consuming-skills/">Consuming skills</a>.</p>
 <hr />
 <h2 id="delegated-administration">Delegated administration<a class="headerlink" href="#delegated-administration" title="Permanent link">&para;</a></h2>
-<p>Role enforcement for the web surface (GW_0068, GW_0071). Java-side defaults;
+<p>Role enforcement for the web surface (GW_AUTH_0010, GW_AUTH_0013). Java-side defaults;
 nothing appears in <code>application.yaml</code>.</p>
-<p>Enforcement is <strong>unconditional</strong> (GW_0138): every mutation and the ledger
+<p>Enforcement is <strong>unconditional</strong> (GW_AUTH_0025): every mutation and the ledger
 surface need a role, in every deployment. There is nothing to switch on.</p>
 <div class="admonition warning">
 <p class="admonition-title"><code>skills-gateway.roles.enabled</code> was removed, and setting it refuses startup</p>
@@ -4495,7 +4495,7 @@ removal at the next major version — see
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span><span class="c1"># through the API — the escape hatch that survives a bad grant edit.</span>
 <a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span><span class="nt">admins</span><span class="p">:</span>
 <a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin@example.com</span>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">    </span><span class="c1"># Roles from the identity provider's own claims (GW_0098). The claim name</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">    </span><span class="c1"># Roles from the identity provider's own claims (GW_AUTH_0015). The claim name</span>
 <a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="w">    </span><span class="c1"># and every value are yours: on a shared app registration the values are</span>
 <a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="w">    </span><span class="c1"># the organisation's group ids or app-role values, not gateway role names.</span>
 <a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="w">    </span><span class="nt">claim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">groups</span>
@@ -4612,7 +4612,7 @@ walkthrough in <a href="../../guides/identity-providers/">Identity providers</a>
 grants API in <a href="../api/roles/">Roles</a>.</p>
 <hr />
 <h2 id="declarative-estate">Declarative estate<a class="headerlink" href="#declarative-estate" title="Permanent link">&para;</a></h2>
-<p>The estate defined as configuration (GW_0083–GW_0087, GW_0089): marketplaces,
+<p>The estate defined as configuration (GW_ESTATE_0001–GW_ESTATE_0005, GW_APPROVAL_0006): marketplaces,
 role grants, webhook subscribers, audit export sinks and policy deny rules,
 reconciled at startup —
 after schema migration, before the web surface serves — and on demand via
@@ -4643,7 +4643,7 @@ other entries.</p>
 <a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="w">        </span><span class="c1"># generated and shown once, which has no declarative form.</span>
 <a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="w">        </span><span class="nt">sync-mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">scheduled</span>
 <a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="w">      </span><span class="c1"># A gateway-hosted marketplace declares no url and is published to by</span>
-<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="w">      </span><span class="c1"># pushing (GW_0101). Its sync mode is fixed at on-demand: the push is</span>
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="w">      </span><span class="c1"># pushing (GW_FACADE_0006). Its sync mode is fixed at on-demand: the push is</span>
 <a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a><span class="w">      </span><span class="c1"># its ingestion trigger. push-policy defaults to append-only.</span>
 <a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">platform-skills</span>
 <a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a><span class="w">        </span><span class="nt">origin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hosted</span>
@@ -4997,7 +4997,7 @@ sets <code>native</code> through its <code>forwardHeadersStrategy</code> value; 
 the variable — see
 <a href="../../guides/deploying-without-kubernetes/#running-behind-a-proxy">Running behind a proxy</a>.</p>
 <p>The gateway registers the <code>framework</code> filter itself and reads the setting at
-runtime (GW_0163 — Proxy-reported scheme and host are honoured only when
+runtime (GW_AUTH_0029 — Proxy-reported scheme and host are honoured only when
 configured, identically on every packaging). Spring Boot's own registration is
 behind a <code>@ConditionalOnProperty</code>, which an ahead-of-time image evaluates when it
 is built, with the property unset — so on the GraalVM native image the release
@@ -5015,7 +5015,7 @@ packaging rather than on the one that happens to ship.</p>
 <p><strong>Container storage.</strong> The image sets <code>SKILLSGATEWAY_DATADIR=/data</code> — the
 relaxed-binding environment form of <code>skills-gateway.data-dir</code>.</p>
 <p><strong>JGit's own scratch.</strong> The image sets <code>XDG_CONFIG_HOME=/tmp/xdg-config</code>, and
-the chart restates it in the Deployment (GW_0179 — The embedded git library's
+the chart restates it in the Deployment (GW_FACADE_0024 — The embedded git library's
 own scratch stays inside the writable temporary directory). JGit resolves a
 filesystem-timestamp-resolution cache file there the first time it touches a
 repository; left unset, it falls back to a home directory this user does not
