@@ -43,7 +43,7 @@
     "zod": "4.5.4"
   },
   "devDependencies": {
-    "@playwright/test": "1.62.1",
+    "@playwright/test": "1.63.0",
     "@reqstool/reqstool-typescript-tags": "0.3.0",
     "@storybook/addon-a11y": "10.6.0",
     "@storybook/addon-vitest": "10.6.0",
@@ -61,7 +61,7 @@
     "msw": "2.15.0",
     "openapi-typescript": "7.13.0",
     "oxlint": "1.81.0",
-    "playwright": "1.62.1",
+    "playwright": "1.63.0",
     "storybook": "10.6.0",
     "typescript": "7.0.2",
     "vite": "8.2.2",
