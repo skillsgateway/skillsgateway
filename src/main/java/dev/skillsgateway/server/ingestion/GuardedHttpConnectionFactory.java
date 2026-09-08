@@ -110,7 +110,7 @@ final class GuardedHttpConnectionFactory implements HttpConnectionFactory {
     }
 
     @Override
-    @Requirements({"GW_0157", "GW_0158"})
+    @Requirements({"GW_0157", "GW_0158.1"})
     public HttpConnection create(URL url, Proxy proxy) throws IOException {
         String refusal = refuse(url);
         if (refusal != null) {
@@ -349,6 +349,7 @@ final class GuardedHttpConnectionFactory implements HttpConnectionFactory {
             return read;
         }
 
+        @Requirements({"GW_0158.1"})
         private void count(int bytes) throws IOException {
             receivedBytes += bytes;
             if (receivedBytes > maxReceivedBytes) {

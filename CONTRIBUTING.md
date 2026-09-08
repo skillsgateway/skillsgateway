@@ -28,6 +28,11 @@
    specs, design, tasks.
 2. New behavior gets a requirement + verification case in `docs/reqstool/`
    (`GW_*` / `SVC_GW_*`) and traceability annotations in the code and tests.
+   A requirement covering several independently verifiable behaviors is written
+   as a parent with dot-notation children (`GW_0158.1`, `SVC_GW_0158.1`) linked
+   by `references.requirement_ids`, so one verdict per behavior is possible. A
+   requirement describing a single atomic behavior stays whole — length is not
+   the test. `GW_0158` is the worked example; issue #299 carries the rationale.
 3. Implement on a branch named `<type>/<kebab-description>`.
    Any change to behavior, the REST API, configuration, or the portal updates
    the affected pages under `docs/manual/` **in the same PR** — see

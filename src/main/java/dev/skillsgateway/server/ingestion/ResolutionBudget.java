@@ -40,6 +40,7 @@ public final class ResolutionBudget {
      * fact would mean the bytes the bound exists to refuse have already been received, which for an
      * endless stream is the whole failure.
      */
+    @Requirements({"GW_0158.1"})
     public long maxReceivedBytes() {
         return limits.maxReceivedBytes().toBytes();
     }
@@ -50,7 +51,7 @@ public final class ResolutionBudget {
     }
 
     /** Returns why the resolution may not continue, or {@code null} while there is time left. */
-    @Requirements({"GW_0158"})
+    @Requirements({"GW_0158.8"})
     public String expired() {
         return clock.instant().isAfter(deadline)
                 ? "resolving the external plugin sources exceeded the %s deadline".formatted(limits.deadline())
@@ -62,7 +63,7 @@ public final class ResolutionBudget {
      * total advances only when the source is accepted, so a refusal leaves the accumulator exactly
      * where the last accepted source left it.
      */
-    @Requirements({"GW_0158"})
+    @Requirements({"GW_0158", "GW_0158.3"})
     public String accept(String pluginName, Measurement measurement) {
         String reason = reason(measurement);
         if (reason != null) {
@@ -79,6 +80,7 @@ public final class ResolutionBudget {
         return null;
     }
 
+    @Requirements({"GW_0158.1", "GW_0158.2", "GW_0158.4", "GW_0158.5", "GW_0158.6", "GW_0158.7"})
     private String reason(Measurement measurement) {
         if (measurement.receivedBytes() > limits.maxReceivedBytes().toBytes()) {
             return "it received %d bytes, over the %d permitted for one source"

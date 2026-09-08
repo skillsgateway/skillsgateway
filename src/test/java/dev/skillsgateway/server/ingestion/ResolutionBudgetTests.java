@@ -15,6 +15,10 @@ import org.springframework.util.unit.DataSize;
  * GW_0158 as a pure accumulator: every bound is checked at the boundary and one past it, because a
  * budget that is off by one either refuses legitimate content or admits the content it exists to
  * refuse, and only testing both sides tells them apart.
+ *
+ * <p>One bound per sub-requirement, so a verdict says which bound moved: GW_0158.1 – GW_0158.8 each
+ * cover one configurable bound, and GW_0158 itself covers what holds across all of them — content
+ * inside every bound is accepted, and a refusal names the plugin and the number.
  */
 class ResolutionBudgetTests {
 
@@ -71,7 +75,7 @@ class ResolutionBudgetTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0158"})
+    @SVCs({"SVC_GW_0158.1"})
     void a_source_over_the_received_byte_bound_is_refused() {
         assertThat(budget().accept("tools", measurement(1001, 10, 1, 10, 1)))
                 .isNotNull()
@@ -79,7 +83,7 @@ class ResolutionBudgetTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0158"})
+    @SVCs({"SVC_GW_0158.2"})
     void a_source_over_the_inflated_byte_bound_is_refused() {
         assertThat(budget().accept("tools", measurement(1000, 4001, 1, 10, 1)))
                 .isNotNull()
@@ -87,7 +91,7 @@ class ResolutionBudgetTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0158"})
+    @SVCs({"SVC_GW_0158.4"})
     void a_source_over_the_inflation_ratio_is_refused_even_when_both_byte_bounds_hold() {
         // 30 received bytes expanding to 3000 is a hundredfold, well inside both byte bounds and
         // exactly the shape of a pack bomb. This is why the ratio is a bound of its own.
@@ -98,7 +102,7 @@ class ResolutionBudgetTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0158"})
+    @SVCs({"SVC_GW_0158.4"})
     void the_ratio_is_not_judged_below_the_floor_where_the_absolute_bound_already_caps_the_damage() {
         // A 900-byte file arriving in 9 bytes is a hundredfold expansion and a threat to nothing:
         // the per-source inflated bound caps it. Refusing it would refuse ordinary repositories,
@@ -111,7 +115,7 @@ class ResolutionBudgetTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0158"})
+    @SVCs({"SVC_GW_0158.5"})
     void a_source_over_the_object_count_is_refused() {
         assertThat(budget().accept("tools", measurement(100, 100, 51, 10, 1)))
                 .isNotNull()
@@ -119,7 +123,7 @@ class ResolutionBudgetTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0158"})
+    @SVCs({"SVC_GW_0158.6"})
     void a_source_with_a_file_over_the_blob_bound_is_refused() {
         assertThat(budget().accept("tools", measurement(100, 600, 2, 501, 1)))
                 .isNotNull()
@@ -127,7 +131,7 @@ class ResolutionBudgetTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0158"})
+    @SVCs({"SVC_GW_0158.7"})
     void a_source_with_a_tree_deeper_than_the_bound_is_refused() {
         assertThat(budget().accept("tools", measurement(100, 100, 2, 10, 5)))
                 .isNotNull()
@@ -135,7 +139,7 @@ class ResolutionBudgetTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0158"})
+    @SVCs({"SVC_GW_0158.3"})
     void the_closure_bound_accumulates_across_sources() {
         ResolutionBudget budget = budget();
 
@@ -155,7 +159,7 @@ class ResolutionBudgetTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0158"})
+    @SVCs({"SVC_GW_0158.8"})
     void the_deadline_is_not_expired_before_it_passes_and_is_after() {
         MovableClock clock = new MovableClock();
         ResolutionBudget budget = new ResolutionBudget(limits(), clock);
@@ -168,7 +172,7 @@ class ResolutionBudgetTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0158"})
+    @SVCs({"SVC_GW_0158.1"})
     void the_received_byte_bound_is_published_so_a_transfer_can_be_stopped_rather_than_measured() {
         // The stream has to refuse mid-transfer; measuring after the fact would mean the content
         // the bound exists to refuse has already been received.

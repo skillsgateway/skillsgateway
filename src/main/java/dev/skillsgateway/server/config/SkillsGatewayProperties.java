@@ -260,17 +260,24 @@ public record SkillsGatewayProperties(
      * stream that never ends, and the inflated bound and the ratio stop a stream that ends quickly
      * and expands enormously. Neither catches the other's case.
      *
+     * <p>One setting per sub-requirement of GW_0158, so a verdict on this budget says which bound
+     * moved rather than only that some bound did.
+     *
      * @param maxReceivedBytes bytes one source may send on the wire before the transfer is aborted
+     *     (GW_0158.1)
      * @param maxInflatedBytes total size of one source's content once it is objects on disk
+     *     (GW_0158.2)
      * @param maxClosureBytes the same, accumulated over every source one manifest declares
+     *     (GW_0158.3)
      * @param maxInflationRatio inflated bytes per received byte, which is what a pack bomb maximises
-     * @param maxObjects blobs and trees one source may contribute
-     * @param maxBlobBytes the largest single file one source may contribute
+     *     (GW_0158.4)
+     * @param maxObjects blobs and trees one source may contribute (GW_0158.5)
+     * @param maxBlobBytes the largest single file one source may contribute (GW_0158.6)
      * @param maxTreeDepth how deep a directory tree the gateway will accept, bounding every later
-     *     walk of the content as well as the fetch
-     * @param maxRedirects redirect hops one request may take
+     *     walk of the content as well as the fetch (GW_0158.7)
+     * @param maxRedirects redirect hops one request may take (GW_0157)
      * @param deadline wall-clock budget for resolving a whole manifest, so a resolution that is
-     *     slow rather than large still terminates
+     *     slow rather than large still terminates (GW_0158.8)
      */
     public record ResolutionBudgets(
             DataSize maxReceivedBytes,
