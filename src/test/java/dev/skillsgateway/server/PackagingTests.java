@@ -239,8 +239,7 @@ class PackagingTests {
         String dockerfile = Files.readString(REPO_ROOT.resolve("Dockerfile"));
         assertThat(dockerfile).contains("ENV XDG_CONFIG_HOME=/tmp/xdg-config");
 
-        String deployment = Files.readString(
-                REPO_ROOT.resolve("helm/skills-gateway/templates/deployment.yaml"));
+        String deployment = Files.readString(REPO_ROOT.resolve("helm/skills-gateway/templates/deployment.yaml"));
         assertThat(deployment).contains("- name: XDG_CONFIG_HOME").contains("value: /tmp/xdg-config");
     }
 
