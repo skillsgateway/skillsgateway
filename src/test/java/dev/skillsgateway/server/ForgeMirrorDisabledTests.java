@@ -3,13 +3,16 @@ package dev.skillsgateway.server;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import dev.skillsgateway.server.mirror.ForgeMirrorService;
+import dev.skillsgateway.server.mirror.MirrorReconciliationSweep;
 import dev.skillsgateway.server.mirror.MirrorReport;
 import dev.skillsgateway.server.persistence.FetchLogRepository;
 import io.github.reqstool.annotations.SVCs;
+import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +28,9 @@ class ForgeMirrorDisabledTests extends AbstractGatewayTest {
 
     @Autowired
     private ForgeMirrorService mirror;
+
+    @Autowired
+    private MirrorReconciliationSweep sweep;
 
     @Autowired
     private FetchLogRepository ledger;
@@ -53,6 +59,35 @@ class ForgeMirrorDisabledTests extends AbstractGatewayTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.enabled").value(false))
                 .andExpect(jsonPath("$.marketplace").doesNotExist());
+    }
+
+    /**
+     * The recurring reconciliation and the on-demand one, on a gateway with no mirror (GW_0190,
+     * GW_0192).
+     *
+     * <p>The sweep is on by default — it is on with the mirror — so "off by default" now has a
+     * second thing to mean: a timer that exists in every deployment and must contact nothing in
+     * almost all of them. Since there is no forge here, "nothing was contacted" is exactly what
+     * "nothing was recorded and nothing was reported" amounts to.
+     */
+    @Test
+    @SVCs({"SVC_GW_0190", "SVC_GW_0192"})
+    void a_gateway_with_no_mirror_configured_sweeps_nothing_and_reconciles_nothing() throws Exception {
+        assertThat(mirror.enabled()).isFalse();
+
+        sweep.sweep();
+        assertThat(mirror.awaitQuiescence(Duration.ofSeconds(10))).isTrue();
+        assertThat(mirror.report()).isEqualTo(MirrorReport.disabled());
+        assertThat(mirrorLedgerEvents()).isEmpty();
+
+        // The endpoint answers rather than 404s, for the same reason the drift report does — and is
+        // administrator-only even when there is nothing for it to reconcile.
+        mockMvc.perform(post("/api/mirror/reconcile").with(oidcLogin().idToken(token -> token.subject("mallory"))))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/mirror/reconcile").with(oidcLogin().idToken(token -> token.subject("alice"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.enabled").value(false));
+        assertThat(mirrorLedgerEvents()).isEmpty();
     }
 
     private List<String> mirrorLedgerEvents() {

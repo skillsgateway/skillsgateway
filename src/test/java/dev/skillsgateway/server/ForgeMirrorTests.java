@@ -52,6 +52,10 @@ import org.springframework.test.context.TestPropertySource;
             // Configured so that "the report and the ledger do not contain it" means something.
             "skills-gateway.mirror.username=mirror-bot",
             "skills-gateway.mirror.token=mirror-secret",
+            // This walk seeds drift behind the gateway's back and then asserts on it. The recurring
+            // reconciliation (GW_0190) exists precisely to repair that, so leaving it on would put a
+            // second actor inside the assertions. It has its own suite; no expectation here changes.
+            "skills-gateway.mirror.sweep-enabled=false",
             // Revocation is what GW_0171 is about, and only enforce mode performs one.
             "skills-gateway.vetting.revet.mode=enforce",
             "skills-gateway.roles.admins=alice"

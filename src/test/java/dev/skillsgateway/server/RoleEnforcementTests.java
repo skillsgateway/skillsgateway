@@ -81,6 +81,10 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             // The administrative connector on/off switch (GW_0149): admin-only, so it walks with
             // the role-gated mutations and is denied to every non-admin.
             "PUT /api/vetting/connectors/{name}/toggle",
+            // Reconciling the read-only forge mirror (GW_0192): admin-only for the same reason its
+            // drift report is, and the route that actually exercises the push credential — if the
+            // report is reserved, the button that acts on it cannot be less so.
+            "POST /api/mirror/reconcile",
             // Read-only by contract, but a POST and approver-gated: it walks as a mutation.
             "POST /api/policy/playground");
 
