@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 class FacadeTests extends AbstractGatewayTest {
 
     @Test
-    @SVCs({"SVC_GW_0006"})
+    @SVCs({"SVC_GW_FACADE_0001"})
     void standardGitClientClonesApprovedSnapshot() throws Exception {
         String name = uniqueName("corp");
         Path upstream = createUpstream(DEFAULT_MANIFEST);
@@ -31,7 +31,7 @@ class FacadeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0004"})
+    @SVCs({"SVC_GW_APPROVAL_0001"})
     void upstreamChangesNeverAlterServedContent() throws Exception {
         String name = uniqueName("corp");
         Path upstream = createUpstream(DEFAULT_MANIFEST);
@@ -51,7 +51,7 @@ class FacadeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0007"})
+    @SVCs({"SVC_GW_FACADE_0002"})
     void heldContentIsNotAdvertisedAndCannotBeFetched() throws Exception {
         String name = uniqueName("corp");
         Path upstream = createUpstream(DEFAULT_MANIFEST);
@@ -73,7 +73,7 @@ class FacadeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0008"})
+    @SVCs({"SVC_GW_AUDIT_0001"})
     void facadeFetchesAreAuditLogged() throws Exception {
         String name = uniqueName("corp");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));

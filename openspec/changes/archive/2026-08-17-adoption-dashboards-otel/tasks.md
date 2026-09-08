@@ -2,11 +2,11 @@
 
 ## 1. Traceability (SSOT first)
 
-- [x] 1.1 Add GW_0075–GW_0078 to `docs/reqstool/requirements.yml`
+- [x] 1.1 Add GW_OBSERVABILITY_0001–GW_OBSERVABILITY_0004 to `docs/reqstool/requirements.yml`
       (adoption reporting; staleness reporting; always-recorded
-      observability; the adoption portal page). GW_0073/GW_0074 are
+      observability; the adoption portal page). GW_APPROVAL_0004/GW_0074 are
       reserved by another in-flight change.
-- [x] 1.2 Add SVC_GW_0075–SVC_GW_0078 to
+- [x] 1.2 Add SVC_GW_OBSERVABILITY_0001–SVC_GW_OBSERVABILITY_0004 to
       `docs/reqstool/software_verification_cases.yml`.
 
 ## 2. Backend
@@ -17,15 +17,15 @@
 - [x] 2.2 `adoption/AdoptionService`: fold aggregation rows into
       per-marketplace summaries with served-tip resolution via
       `GitStorage.publishedIfServing`; compute staleness (latest fetch ≠ tip,
-      including no-longer-serving marketplaces). `@Requirements` GW_0075,
-      GW_0076.
+      including no-longer-serving marketplaces). `@Requirements` GW_OBSERVABILITY_0001,
+      GW_OBSERVABILITY_0002.
 - [x] 2.3 `adoption/AdoptionController`: `GET /api/adoption?days=`,
       `GET /api/adoption/staleness`, both `requireAuditor` first line,
       OpenAPI annotations, `@Schema` on DTOs.
 - [x] 2.4 `observability/GatewayMetrics`: `skills_gateway.ingestion` and
       `skills_gateway.approval` observations, `skills_gateway.facade.fetches`
       counter; wire into `IngestionService`, `ApprovalService`,
-      `FetchAuditHook` (additive wrapping only). `@Requirements` GW_0077.
+      `FetchAuditHook` (additive wrapping only). `@Requirements` GW_OBSERVABILITY_0003.
 
 ## 3. API artifacts
 
@@ -33,15 +33,15 @@
 
 ## 4. Tests
 
-- [x] 4.1 Adoption (SVC_GW_0075): two identities fetch two marketplaces
+- [x] 4.1 Adoption (SVC_GW_OBSERVABILITY_0001): two identities fetch two marketplaces
       through the facade with real git; the summary carries fetch counts,
       distinct identities and the per-SHA breakdown; an entry older than the
       window is excluded; the read is auditor-gated (classified in the
       RoleEnforcementTests walk).
-- [x] 4.2 Staleness (SVC_GW_0076): an identity that fetched a superseded SHA
+- [x] 4.2 Staleness (SVC_GW_OBSERVABILITY_0002): an identity that fetched a superseded SHA
       is reported with the served tip; an identity on the tip is not; after
       unpublish, every holder is reported with a null served tip.
-- [x] 4.3 Observability (SVC_GW_0077): with the default (no export) config,
+- [x] 4.3 Observability (SVC_GW_OBSERVABILITY_0003): with the default (no export) config,
       the meter registry carries `skills_gateway.ingestion`,
       `skills_gateway.approval` (per decision) and
       `skills_gateway.facade.fetches` (per event) after the flows run, and a
@@ -54,9 +54,9 @@
       from the regenerated types.
 - [x] 5.2 `pages/adoption.tsx`: stat chips, per-marketplace row cards with
       per-SHA tables, staleness table, window selector, loading/empty/error
-      states; JSDoc `@Requirements` GW_0075, GW_0076, GW_0078; route +
+      states; JSDoc `@Requirements` GW_OBSERVABILITY_0001, GW_OBSERVABILITY_0002, GW_OBSERVABILITY_0004; route +
       Governance nav + breadcrumb; component tests.
-- [x] 5.3 Playwright e2e (SVC_GW_0078, snake_case title): mint a PAT in the
+- [x] 5.3 Playwright e2e (SVC_GW_OBSERVABILITY_0004, snake_case title): mint a PAT in the
       portal, clone through the facade, see the fetch and identity on the
       Adoption page.
 - [x] 5.4 `/impeccable audit` + `harden` + `critique` on the new page;

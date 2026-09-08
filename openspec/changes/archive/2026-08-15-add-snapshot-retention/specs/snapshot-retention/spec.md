@@ -7,38 +7,38 @@ the audit record of every retention action, and the portal delete/restore surfac
 
 ## ADDED Requirements
 
-### Requirement: GW_0031
-The system SHALL implement GW_0031.
+### Requirement: GW_RETENTION_0001
+The system SHALL implement GW_RETENTION_0001.
 
-#### Scenario: SVC_GW_0031
-The system SHALL pass SVC_GW_0031.
+#### Scenario: SVC_GW_RETENTION_0001
+The system SHALL pass SVC_GW_RETENTION_0001.
 
-### Requirement: GW_0032
-The system SHALL implement GW_0032.
+### Requirement: GW_RETENTION_0002
+The system SHALL implement GW_RETENTION_0002.
 
-#### Scenario: SVC_GW_0032
-The system SHALL pass SVC_GW_0032.
+#### Scenario: SVC_GW_RETENTION_0002
+The system SHALL pass SVC_GW_RETENTION_0002.
 
-### Requirement: GW_0033
-The system SHALL implement GW_0033.
+### Requirement: GW_RETENTION_0003
+The system SHALL implement GW_RETENTION_0003.
 
-#### Scenario: SVC_GW_0033
-The system SHALL pass SVC_GW_0033.
+#### Scenario: SVC_GW_RETENTION_0003
+The system SHALL pass SVC_GW_RETENTION_0003.
 
-### Requirement: GW_0034
-The system SHALL implement GW_0034.
+### Requirement: GW_RETENTION_0004
+The system SHALL implement GW_RETENTION_0004.
 
-#### Scenario: SVC_GW_0034
-The system SHALL pass SVC_GW_0034.
+#### Scenario: SVC_GW_RETENTION_0004
+The system SHALL pass SVC_GW_RETENTION_0004.
 
-### Requirement: GW_0035
-The system SHALL implement GW_0035.
+### Requirement: GW_RETENTION_0005
+The system SHALL implement GW_RETENTION_0005.
 
-#### Scenario: SVC_GW_0035
-The system SHALL pass SVC_GW_0035.
+#### Scenario: SVC_GW_RETENTION_0005
+The system SHALL pass SVC_GW_RETENTION_0005.
 
-### Requirement: GW_0036
-The system SHALL implement GW_0036.
+### Requirement: GW_RETENTION_0006
+The system SHALL implement GW_RETENTION_0006.
 
-#### Scenario: SVC_GW_0036
-The system SHALL pass SVC_GW_0036.
+#### Scenario: SVC_GW_RETENTION_0006
+The system SHALL pass SVC_GW_RETENTION_0006.

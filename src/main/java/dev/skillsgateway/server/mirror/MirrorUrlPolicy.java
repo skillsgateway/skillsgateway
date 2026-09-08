@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * What the gateway will accept as a mirror URL (GW_0169).
+ * What the gateway will accept as a mirror URL (GW_FACADE_0020).
  *
  * <p>The scheme allowlist is the one {@code MarketplaceRegistrationService} applies to a
  * registration, read from the same {@code skills-gateway.allowed-url-schemes} property, for the
@@ -25,7 +25,7 @@ public final class MirrorUrlPolicy {
     private MirrorUrlPolicy() {}
 
     /** Refusal reason, or null when the URL is acceptable. Pure: nothing here contacts anything. */
-    @Requirements({"GW_0169"})
+    @Requirements({"GW_FACADE_0020"})
     public static String refuse(String url, List<String> allowedSchemes) {
         if (url == null || url.isBlank()) {
             return "skills-gateway.mirror.url is required when the mirror is enabled";

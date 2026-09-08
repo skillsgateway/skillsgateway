@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
  * the portal's type generation (ADR 0003: MSW/types are contract-derived, never hand-authored).
  *
  * <p>The snapshot is written in {@link OpenApiSnapshot#publishedForm published form}, which is what
- * {@code src/main/frontend/openapi.json} must equal (GW_0106).
+ * {@code src/main/frontend/openapi.json} must equal (GW_API_0003).
  */
 class OpenApiDocsTests extends AbstractGatewayTest {
 

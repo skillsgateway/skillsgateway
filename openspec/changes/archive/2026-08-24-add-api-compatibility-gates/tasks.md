@@ -1,11 +1,11 @@
 ## 1. Requirements (SSOT first)
 
-- [x] 1.1 Add GW_0105 (served document declares the release version), GW_0106
-      (committed contract identical to the generated one), GW_0107 (breaking
+- [x] 1.1 Add GW_API_0002 (served document declares the release version), GW_API_0003
+      (committed contract identical to the generated one), GW_API_0004 (breaking
       contract changes detected and declared) to `docs/reqstool/requirements.yml`
       with title, significance, description, rationale, categories, revision —
       matching the style of the surrounding entries.
-- [x] 1.2 Add SVC_GW_0105–SVC_GW_0107 to the reqstool SVC file alongside the
+- [x] 1.2 Add SVC_GW_API_0002–SVC_GW_API_0004 to the reqstool SVC file alongside the
       existing SVCs.
 
 ## 2. The contract document: canonical form and version
@@ -25,17 +25,17 @@
 ## 3. Tests
 
 - [x] 3.1 `OpenApiContractTests`: the served document's `info.version` equals the
-      build's version and is not the literal `v1` (`@SVCs SVC_GW_0105`).
+      build's version and is not the literal `v1` (`@SVCs SVC_GW_API_0002`).
 - [x] 3.2 `OpenApiContractTests`: `src/main/frontend/openapi.json` equals the
       canonical form of the served document, failing with the regenerate command
-      in the message (`@SVCs SVC_GW_0106`).
+      in the message (`@SVCs SVC_GW_API_0003`).
 - [x] 3.3 Negative test for 3.2: a mutated committed document fails the check —
       prove the test can fail before trusting it.
 - [x] 3.4 `OpenApiContractTests`: `.github/workflows/api-contract.yml` carries the
       gate's contract — merge-base baseline, `fetch-depth: 0`, the label escape,
       the title-agreement rule, and `types: [... edited ...]` — in the style of
       `PackagingTests.releaseWorkflowCarriesThePublishByDigestContract`
-      (`@SVCs SVC_GW_0107`).
+      (`@SVCs SVC_GW_API_0004`).
 
 ## 4. The CI gate
 

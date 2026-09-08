@@ -26,7 +26,7 @@ revocation propagation, drift and failure modes.
 
 ## What Changes
 
-- **An optional mirror, off by default (GW_0169).** A new
+- **An optional mirror, off by default (GW_FACADE_0020).** A new
   `skills-gateway.mirror` block names one marketplace, a clone URL and a
   credential. Nothing happens until an operator sets `enabled: true`, so an
   upgrade changes nothing. Only published content is ever pushed: the
@@ -35,19 +35,19 @@ revocation propagation, drift and failure modes.
   the same `skills-gateway.allowed-url-schemes` allowlist that governs
   registration — one policy for every address the gateway dereferences — and a
   URL that embeds a credential is refused so the URL stays safe to print.
-- **Wired as an event, not a call (GW_0170).** `ApprovalService` and
+- **Wired as an event, not a call (GW_FACADE_0021).** `ApprovalService` and
   `RevetService` raise a `ServedContentChangedEvent` after the transition they
   just made; a listener queues a reconciliation on the mirror's own single
   thread. The approving thread neither waits for the forge nor can be failed by
   it, and nothing in serving or authorization reads anything the mirror writes.
-- **Reconciliation, not deltas (GW_0171).** Each task pushes published storage's
+- **Reconciliation, not deltas (GW_FACADE_0022).** Each task pushes published storage's
   current served reference set and deletes whatever the mirror still holds inside
   those namespaces. Revocation therefore propagates without a second code path —
   a snapshot that is no longer served is a reference the next reconciliation
   deletes — and a lost or reordered task cannot corrupt the mirror, only delay
   it. A push that exhausts its retries is recorded on the ledger and left as
   drift; it never blocks or reverses the revocation that triggered it.
-- **A drift report (GW_0172).** `GET /api/mirror/drift`, administrator-only,
+- **A drift report (GW_FACADE_0023).** `GET /api/mirror/drift`, administrator-only,
   compares the mirror's references against published storage now and names the
   ones missing, held at another commit, or left behind. A mirror the gateway
   cannot read is reported unreachable, never as agreeing.

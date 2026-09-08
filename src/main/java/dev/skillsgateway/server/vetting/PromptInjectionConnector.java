@@ -7,7 +7,7 @@ import java.util.Locale;
 import org.springframework.stereotype.Component;
 
 /**
- * Built-in connector: prompt-injection markers in a snapshot's instruction content (GW_0040).
+ * Built-in connector: prompt-injection markers in a snapshot's instruction content (GW_VETTING_0004).
  *
  * <p>Threat T1 is that {@code SKILL.md}, slash commands and agent definitions are <em>prose that
  * executes</em> with the agent's privileges. This connector reads that prose and looks for the
@@ -107,7 +107,7 @@ public class PromptInjectionConnector implements VettingConnector {
     }
 
     @Override
-    @Requirements({"GW_0040", "GW_0143"})
+    @Requirements({"GW_VETTING_0004", "GW_VETTING_0023"})
     public Verdict vet(SnapshotUnderVetting snapshot) {
         List<Finding> findings = new ArrayList<>();
         int[] counts = new int[2]; // {scanned, skipped}
@@ -142,7 +142,7 @@ public class PromptInjectionConnector implements VettingConnector {
         return Verdict.of(findings, summary(counts[0], counts[1]));
     }
 
-    /** What the scan examined (GW_0143): a clean pass records this so it is not read as "did not run". */
+    /** What the scan examined (GW_VETTING_0023): a clean pass records this so it is not read as "did not run". */
     private static String summary(int scanned, int skipped) {
         return "scanned %d instruction file(s) (%s)%s; applied %d injection-marker rules plus"
                         .formatted(

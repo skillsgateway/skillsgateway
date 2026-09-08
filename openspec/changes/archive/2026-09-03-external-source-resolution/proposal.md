@@ -7,7 +7,7 @@ Increment 1 of issue [#17](https://github.com/skillsgateway/skillsgateway/issues
 the typed source model and configuration-gated *admission*, and stopped
 deliberately before any outbound fetch: "no new outbound network surface exists
 after this change". It left exactly one named branch point — the `Admitted` arm
-of `ManifestPolicy.validate` — and one standing invariant, **GW_0152**: a
+of `ManifestPolicy.validate` — and one standing invariant, **GW_INGEST_0021**: a
 snapshot is held only when every source it declares resolves inside the snapshot
 the gateway serves. Until something can resolve, that arm returns a violation and
 an admitted source is a *rejected* snapshot.
@@ -15,7 +15,7 @@ an admitted source is a *rejected* snapshot.
 This change fills that arm. It is the second increment of ADR 0011's staged
 reversal: fetch each admitted source into quarantine, graft it into one
 deterministic composite commit whose manifest declares only gateway-local
-sources, and make that composite the snapshot. GW_0152 then becomes
+sources, and make that composite the snapshot. GW_INGEST_0021 then becomes
 *structurally* satisfied rather than satisfied by refusal — and it is enforced as
 a post-condition, not as a comment: the composite is served only if its own
 rewritten manifest passes the same local-only gate that rejected the original.
@@ -28,12 +28,12 @@ manifest content — the exposure class ADR 0011 §3 exists to bound.
 
 ## What Changes
 
-- **Resolution (GW_0155).** `ExternalSourceResolver` fetches each admitted
+- **Resolution (GW_INGEST_0023).** `ExternalSourceResolver` fetches each admitted
   source into the marketplace's own quarantine repository under a scaffolding
   ref, pinned at the resolved commit, using JGit. Scaffolding refs are pruned
   once the composite exists; the content stays reachable from the composite's
   tree. Only the `github` type resolves (see "Scope cut").
-- **Deterministic composite snapshot (GW_0156).** `ManifestRewriter` synthesises
+- **Deterministic composite snapshot (GW_INGEST_0024).** `ManifestRewriter` synthesises
   one commit: the upstream tree, each external plugin's tree grafted under
   `_plugins/<name>/`, and `.claude-plugin/marketplace.json` rewritten so every
   external `source` becomes `./_plugins/<name>`. The composite's **parent is the
@@ -41,7 +41,7 @@ manifest content — the exposure class ADR 0011 §3 exists to bound.
   from the served SHA as evidence (ADR 0011 §6 of the issue's review). Snapshot
   identity becomes the served composite SHA (ADR 0011 §2). Same upstream commit
   + same resolved plugin SHAs + same transformer version ⇒ same composite SHA.
-- **SSRF-hardened transport (GW_0157).** A gateway-owned JGit
+- **SSRF-hardened transport (GW_INGEST_0025).** A gateway-owned JGit
   `HttpConnectionFactory`, installed per fetch (never as JGit's global static),
   validates **after** DNS against every resolved address, connects to the
   validated address so a second resolution cannot substitute a private target,
@@ -51,16 +51,16 @@ manifest content — the exposure class ADR 0011 §3 exists to bound.
   (including `169.254.169.254`), multicast, unspecified and reserved addresses
   are refused under **every** configuration; loopback and RFC1918 only under an
   explicit `allow-private-networks`.
-- **Resource budgets (GW_0158).** Received bytes per source and per closure,
+- **Resource budgets (GW_INGEST_0026).** Received bytes per source and per closure,
   inflated bytes, inflation ratio, object count, largest blob, tree depth, and a
   wall-clock deadline for the whole resolution. Every breach refuses; none
   exhausts the process.
-- **Atomic failure (GW_0161).** Any refusal, timeout, budget breach or mid-fetch
+- **Atomic failure (GW_INGEST_0027).** Any refusal, timeout, budget breach or mid-fetch
   failure records the snapshot at the **upstream** SHA in `rejected`, with no
   composite commit, no graft, no scaffolding ref left behind, and nothing
-  published. GW_0152 therefore holds through every failure path: there is no
+  published. GW_INGEST_0021 therefore holds through every failure path: there is no
   held-with-unresolved-sources state to reach.
-- **GW_0152 is now enforced twice.** The manifest gate still refuses an admitted
+- **GW_INGEST_0021 is now enforced twice.** The manifest gate still refuses an admitted
   source it cannot resolve, and the rewriter re-runs that same gate over the
   composite manifest before the commit is used. A composite that still declared
   a non-local source could not be served.

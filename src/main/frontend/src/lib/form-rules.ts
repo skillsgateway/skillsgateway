@@ -58,7 +58,7 @@ export function isAbsoluteUrl(value: string): boolean {
  * not a block. Registering the same upstream under two names is legitimate (it is how one tests
  * a marketplace), so the server does not reject it; the portal only surfaces it so the collision
  * is a deliberate choice rather than a silent one. Mirrors the server's own normalization
- * (`CloneUrlNormalizer`, GW_0166), which is what makes the two agree on what counts as a
+ * (`CloneUrlNormalizer`, GW_INGEST_0029), which is what makes the two agree on what counts as a
  * duplicate.
  */
 export function normalizeCloneUrl(value: string): string | null {

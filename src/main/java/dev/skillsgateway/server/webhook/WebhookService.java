@@ -81,7 +81,7 @@ public class WebhookService {
      * diff something to fail on when a field is removed or renamed (#121).
      */
     @Schema(description = "Webhook event payload")
-    @Requirements({"GW_0181"})
+    @Requirements({"GW_API_0005"})
     public record EventPayload(
             @Schema(description = "Lifecycle event name", requiredMode = Schema.RequiredMode.REQUIRED)
             String event,
@@ -107,7 +107,7 @@ public class WebhookService {
             String actor) {}
 
     /**
-     * What the vetting chain concluded about a snapshot awaiting approval (GW_0160): counts,
+     * What the vetting chain concluded about a snapshot awaiting approval (GW_WEBHOOK_0007): counts,
      * connector names and identifiers, and deliberately nothing else.
      *
      * <p>No finding message, rule id or location appears here. A webhook target is authorised by a
@@ -162,7 +162,7 @@ public class WebhookService {
     }
 
     /**
-     * The {@code snapshot.approval_pending} body (GW_0159, GW_0160): the seven fields every
+     * The {@code snapshot.approval_pending} body (GW_WEBHOOK_0006, GW_WEBHOOK_0007): the seven fields every
      * lifecycle event carries, in the same names and order as {@link EventPayload}, plus the
      * vetting summary. Keeping the shared half identical is what makes the event free to adopt for
      * a receiver already parsing another one — one unknown key, nothing else to change.
@@ -200,16 +200,16 @@ public class WebhookService {
             VettingSummary vetting) {}
 
     /** The secret is stored recoverably because signing needs it, and is never read back over the API. */
-    @Requirements({"GW_0024"})
+    @Requirements({"GW_WEBHOOK_0002"})
     public CreatedSubscriber createSubscriber(String name, String url, String events) {
         return createSubscriber(name, url, events, null);
     }
 
     /**
      * As {@link #createSubscriber(String, String, String)}, with an operator-supplied secret when
-     * the caller is the estate reconciler (GW_0086); null generates one, as the API always does.
+     * the caller is the estate reconciler (GW_ESTATE_0004); null generates one, as the API always does.
      */
-    @Requirements({"GW_0024"})
+    @Requirements({"GW_WEBHOOK_0002"})
     public CreatedSubscriber createSubscriber(String name, String url, String events, String suppliedSecret) {
         String secret = suppliedSecret == null ? generateSecret() : suppliedSecret;
         WebhookSubscriber stored = subscriberRepository.create(name, url, secret, events);
@@ -224,13 +224,13 @@ public class WebhookService {
     }
 
     /**
-     * The one subscriber registration path (GW_0024, GW_0086): validates the name, the target URL
+     * The one subscriber registration path (GW_WEBHOOK_0002, GW_ESTATE_0004): validates the name, the target URL
      * scheme against the allowlist and the event filter, refuses a duplicate name, creates the
      * subscriber, and appends the ledger entry with the acting identity — whether the caller is the
      * webhooks API (null secret, generated show-once) or the estate reconciler (operator-supplied
      * secret). Statuses match the API contract; a non-HTTP caller reports the reason instead.
      */
-    @Requirements({"GW_0024"})
+    @Requirements({"GW_WEBHOOK_0002"})
     public CreatedSubscriber register(String name, String url, String events, String suppliedSecret, String actor) {
         if (name == null || !SUBSCRIBER_NAME.matcher(name).matches()) {
             throw new ResponseStatusException(
@@ -248,13 +248,13 @@ public class WebhookService {
 
     /**
      * The target-URL gate for callers that converge an existing subscriber in place (the estate
-     * reconciler): an updated target faces the same allowlist as a created one (GW_0086).
+     * reconciler): an updated target faces the same allowlist as a created one (GW_ESTATE_0004).
      */
     public void validateTarget(String url) {
         requireAllowlistedScheme(url);
     }
 
-    /** Fails closed, exactly like marketplace registration (GW_0016). */
+    /** Fails closed, exactly like marketplace registration (GW_INGEST_0005). */
     private void requireAllowlistedScheme(String url) {
         String scheme = null;
         if (url != null) {
@@ -312,7 +312,7 @@ public class WebhookService {
      * Queues one delivery per enabled subscriber whose filter includes the event, and none for any
      * other subscriber. The payload is serialized once here so every retry sends identical bytes.
      */
-    @Requirements({"GW_0023"})
+    @Requirements({"GW_WEBHOOK_0001"})
     public List<WebhookDelivery> emit(
             String event, String marketplace, long snapshotId, String sha, String state, String actor) {
         return fanOut(
@@ -321,7 +321,7 @@ public class WebhookService {
     }
 
     /**
-     * The payload-rich emit (GW_0159, GW_0160): {@code snapshot.approval_pending} with the vetting
+     * The payload-rich emit (GW_WEBHOOK_0006, GW_WEBHOOK_0007): {@code snapshot.approval_pending} with the vetting
      * summary a receiver triages on.
      *
      * <p>Typed to its payload rather than offered as a general {@code emit(String, Object)}. That is
@@ -329,7 +329,7 @@ public class WebhookService {
      * caller to hand the dispatcher something content-bearing, and keeping quarantined content off
      * this wire is the one rule the event must never break.
      */
-    @Requirements({"GW_0159", "GW_0160"})
+    @Requirements({"GW_WEBHOOK_0006", "GW_WEBHOOK_0007"})
     public List<WebhookDelivery> emitApprovalPending(
             String marketplace, long snapshotId, String sha, String state, String actor, VettingSummary vetting) {
         return fanOut(

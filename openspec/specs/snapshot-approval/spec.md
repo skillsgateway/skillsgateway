@@ -5,51 +5,51 @@
 The held-until-approved gate between quarantine and served content: manual
 approval decisions by reviewers and the provenance record of every approval.
 ## Requirements
-### Requirement: GW_0004
-The system SHALL implement GW_0004.
+### Requirement: GW_APPROVAL_0001
+The system SHALL implement GW_APPROVAL_0001.
 
-#### Scenario: SVC_GW_0004
-The system SHALL pass SVC_GW_0004.
+#### Scenario: SVC_GW_APPROVAL_0001
+The system SHALL pass SVC_GW_APPROVAL_0001.
 
-### Requirement: GW_0005
-The system SHALL implement GW_0005.
+### Requirement: GW_APPROVAL_0002
+The system SHALL implement GW_APPROVAL_0002.
 
-#### Scenario: SVC_GW_0005
-The system SHALL pass SVC_GW_0005.
+#### Scenario: SVC_GW_APPROVAL_0002
+The system SHALL pass SVC_GW_APPROVAL_0002.
 
-### Requirement: GW_0009
-The system SHALL implement GW_0009.
+### Requirement: GW_INGEST_0004
+The system SHALL implement GW_INGEST_0004.
 
-#### Scenario: SVC_GW_0009
-The system SHALL pass SVC_GW_0009.
+#### Scenario: SVC_GW_INGEST_0004
+The system SHALL pass SVC_GW_INGEST_0004.
 
-### Requirement: GW_0073
-The system SHALL implement GW_0073.
+### Requirement: GW_APPROVAL_0004
+The system SHALL implement GW_APPROVAL_0004.
 
-#### Scenario: SVC_GW_0073
-The system SHALL pass SVC_GW_0073.
+#### Scenario: SVC_GW_APPROVAL_0004
+The system SHALL pass SVC_GW_APPROVAL_0004.
 
-### Requirement: GW_0096
-The system SHALL implement GW_0096.
+### Requirement: GW_APPROVAL_0010
+The system SHALL implement GW_APPROVAL_0010.
 
-#### Scenario: SVC_GW_0096
-The system SHALL pass SVC_GW_0096.
+#### Scenario: SVC_GW_APPROVAL_0010
+The system SHALL pass SVC_GW_APPROVAL_0010.
 
-### Requirement: GW_0097
-The system SHALL implement GW_0097.
+### Requirement: GW_APPROVAL_0011
+The system SHALL implement GW_APPROVAL_0011.
 
-#### Scenario: SVC_GW_0097
-The system SHALL pass SVC_GW_0097.
+#### Scenario: SVC_GW_APPROVAL_0011
+The system SHALL pass SVC_GW_APPROVAL_0011.
 
-### Requirement: GW_0133
-The system SHALL implement GW_0133.
+### Requirement: GW_APPROVAL_0012
+The system SHALL implement GW_APPROVAL_0012.
 
-#### Scenario: SVC_GW_0133
-The system SHALL pass SVC_GW_0133.
+#### Scenario: SVC_GW_APPROVAL_0012
+The system SHALL pass SVC_GW_APPROVAL_0012.
 
-### Requirement: GW_0165
-The system SHALL implement GW_0165.
+### Requirement: GW_APPROVAL_0013
+The system SHALL implement GW_APPROVAL_0013.
 
-#### Scenario: SVC_GW_0165
-The system SHALL pass SVC_GW_0165.
+#### Scenario: SVC_GW_APPROVAL_0013
+The system SHALL pass SVC_GW_APPROVAL_0013.
 

@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 import org.springframework.stereotype.Component;
 
 /**
- * The one place gateway telemetry names live (GW_0077). Everything here is <em>recorded</em>
+ * The one place gateway telemetry names live (GW_OBSERVABILITY_0003). Everything here is <em>recorded</em>
  * unconditionally — through the auto-configured registries, which exist whether or not anything
  * exports — so enabling OpenTelemetry export in a deployment ({@code arconia.otel.enabled=true},
  * or the local {@code observability} profile) publishes these without any gateway change. Export
@@ -39,19 +39,19 @@ public class GatewayMetrics {
     }
 
     /** Times one ingestion as an observation (a timer always; a span when tracing is on). */
-    @Requirements({"GW_0077"})
+    @Requirements({"GW_OBSERVABILITY_0003"})
     public <T> T observeIngestion(Supplier<T> work) {
         return observe(INGESTION, null, null, work);
     }
 
     /** Times one approval decision; a refusal (e.g. vetting-blocked) is the observation's error. */
-    @Requirements({"GW_0077"})
+    @Requirements({"GW_OBSERVABILITY_0003"})
     public <T> T observeApproval(String decision, Supplier<T> work) {
         return observe(APPROVAL, "decision", decision, work);
     }
 
     /** Counts one facade fetch entry by its event kind; the HTTP span already exists server-side. */
-    @Requirements({"GW_0077"})
+    @Requirements({"GW_OBSERVABILITY_0003"})
     public void facadeFetch(String event) {
         meters.counter(FACADE_FETCHES, "event", event).increment();
     }

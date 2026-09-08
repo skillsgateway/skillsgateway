@@ -12,12 +12,12 @@ Issue #11 is three lines long and each bullet is a feature:
 - federate multiple upstream marketplaces into namespaced catalogs;
 - let team/client entitlements decide which approved plugins are visible;
 - approve a snapshot but serve a **filtered** manifest, on the content
-  inventory `GW_0020 — Snapshot content inventory` already exposes;
+  inventory `GW_INGEST_0008 — Snapshot content inventory` already exposes;
 - publish approved snapshots on more than one ref.
 
-The first of those shipped: `GW_0061 — Global virtual catalog`,
-`GW_0062 — Catalog freshness on publication changes` and
-`GW_0063 — Catalog provenance, audit, and the reserved name` synthesize one
+The first of those shipped: `GW_FACADE_0003 — Global virtual catalog`,
+`GW_FACADE_0004 — Catalog freshness on publication changes` and
+`GW_FACADE_0005 — Catalog provenance, audit, and the reserved name` synthesize one
 repository at `/git/catalog` that vendors every marketplace's currently served
 snapshot under a subdirectory and merges their manifests into one. The rest is
 open, and the standing assessment on the issue (2026-08-18) ordered it
@@ -27,7 +27,7 @@ entitlements blocked on `#66`.
 Two things have changed since that assessment, and both bear on the order.
 
 **`#66` closed.** Roles now derive from an identity provider's own group or
-application-role claims by configured mapping (`GW_0098 — Identity-provider
+application-role claims by configured mapping (`GW_AUTH_0015 — Identity-provider
 claim to role mapping`). The stated blocker is gone — but it
 was the wrong blocker. Group-to-**role** mapping gives the gateway a way to read
 a group claim; it does not give it a team, and, more importantly, it does not
@@ -117,7 +117,7 @@ This is the fact that reorders the issue's last bullet.
 A personal access token may carry `scopes`, a list of marketplace names, and
 `GitFacadeConfiguration` enforces them at repository resolution — an
 out-of-scope fetch answers 404, indistinguishably from a marketplace that does
-not exist (`GW_0064 — Marketplace-scoped access tokens`). That looks like
+not exist (`GW_AUTH_0006 — Marketplace-scoped access tokens`). That looks like
 per-identity authorization. It is not:
 
 - a token **without** scopes reaches every marketplace, which is what every
@@ -251,8 +251,8 @@ credential can still fetch at `/git/{marketplace}`. Therefore:
 
 **A per-plugin exclusion is not a containment control and must never be
 documented, named or surfaced as one.** Where content must stop being reachable,
-the existing control is revocation — `GW_0050 — Auto-quarantine of a violating
-approved snapshot` and `GW_0053 — Re-vetting violations are announced with their
+the existing control is revocation — `GW_VETTING_0013 — Auto-quarantine of a violating
+approved snapshot` and `GW_VETTING_0016 — Re-vetting violations are announced with their
 affected consumers` — which removes both published references and produces the
 blast-radius report.
 
@@ -385,7 +385,7 @@ does not touch catalogs, entitlements or filtering, and nothing in it is blocked
 by or blocks them.
 
 It is also not the small feature the issue's placement implies. The gateway
-today refuses to be told which ref to ingest — `GW_0017 — Gateway-pinned
+today refuses to be told which ref to ingest — `GW_INGEST_0006 — Gateway-pinned
 ingestion ref` rejects a registration that supplies one, `DEFAULT_BRANCH` is a
 constant, and `DeclaredMarketplace` deliberately has no `ref` field so the
 declaration cannot express one. `CLAUDE.md` names the gateway-pinned ref as part

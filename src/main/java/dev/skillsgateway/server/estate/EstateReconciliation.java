@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * The outcome of one reconciliation run (GW_0083, GW_0087): per declared entry, what happened and
+ * The outcome of one reconciliation run (GW_ESTATE_0001, GW_ESTATE_0005): per declared entry, what happened and
  * why. Secret values never appear here — a failed receiver entry names the entry and the rule it
  * broke, never the material it carried.
  */

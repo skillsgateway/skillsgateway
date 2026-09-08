@@ -30,7 +30,7 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.springframework.stereotype.Service;
 
 /**
- * Read-only inspection of a snapshot's pinned content (GW_0080, GW_0081): the file tree and
+ * Read-only inspection of a snapshot's pinned content (GW_INGEST_0015, GW_INGEST_0016): the file tree and
  * individual blobs of exactly the commit the snapshot pins, and the diff against the
  * marketplace's currently served commit. Everything resolves through the quarantine
  * repository's object store — paths are addressed only within the pinned commit's tree via
@@ -134,7 +134,7 @@ public class SnapshotPreviewService {
             boolean truncated) {}
 
     /** The file tree of the pinned commit, bounded and marked when cut. */
-    @Requirements({"GW_0080"})
+    @Requirements({"GW_INGEST_0015"})
     public FileTree files(long snapshotId) {
         Resolved resolved = resolve(snapshotId);
         try (Repository repo = storage.quarantine(resolved.marketplace().name());
@@ -167,7 +167,7 @@ public class SnapshotPreviewService {
      * — a path the tree does not contain, which includes every traversal shape, is absent, and
      * absent answers not-found.
      */
-    @Requirements({"GW_0080"})
+    @Requirements({"GW_INGEST_0015"})
     public Optional<FileContent> file(long snapshotId, String path) {
         Resolved resolved = resolve(snapshotId);
         try (Repository repo = storage.quarantine(resolved.marketplace().name());
@@ -192,7 +192,7 @@ public class SnapshotPreviewService {
      * both commits' objects live. When nothing is served the answer is the honest one: no
      * baseline, every path added.
      */
-    @Requirements({"GW_0081"})
+    @Requirements({"GW_INGEST_0016"})
     public SnapshotDiff diff(long snapshotId) {
         Resolved resolved = resolve(snapshotId);
         String baselineSha = servedTip(resolved.marketplace().name());

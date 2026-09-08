@@ -65,7 +65,7 @@ class ObjectStoreConcurrencyTests {
      */
     // a revocation and the approval that supersedes it: exactly one of them decides the outcome
     @Test
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void aRevocationAndTheApprovalThatSupersedesItAreDecidedByExactlyOneOfThem() throws Exception {
         for (int attempt = 0; attempt < 8; attempt++) {
             int round = attempt;
@@ -155,7 +155,7 @@ class ObjectStoreConcurrencyTests {
      */
     // concurrent revocations of a superseded snapshot all report they stopped nothing
     @Test
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void concurrentRevocationsOfASupersededSnapshotStopNothing() throws Exception {
         String marketplace = marketplace();
         String prefix = ObjectStoreTestSupport.isolatedPrefix("superseded");
@@ -197,7 +197,7 @@ class ObjectStoreConcurrencyTests {
      */
     // publications and revocations of distinct snapshots interleave without losing any of them
     @Test
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void interleavedPublicationsAndRevocationsLoseNothing() throws Exception {
         String marketplace = marketplace();
         String prefix = ObjectStoreTestSupport.isolatedPrefix("interleaved");
@@ -248,7 +248,7 @@ class ObjectStoreConcurrencyTests {
      */
     // a writer killed between uploading its objects and naming them leaves nothing half-published
     @Test
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void aWriterKilledBeforeTheManifestWriteNamesNothing() throws Exception {
         String marketplace = marketplace();
         String prefix = ObjectStoreTestSupport.isolatedPrefix("killed");

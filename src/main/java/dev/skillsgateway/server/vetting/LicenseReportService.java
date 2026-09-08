@@ -15,7 +15,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 /**
- * The per-snapshot license report (GW_0095): a fresh deterministic detection over the content
+ * The per-snapshot license report (GW_VETTING_0021): a fresh deterministic detection over the content
  * pinned to the snapshot's commit SHA, evaluated under the license policy currently configured.
  *
  * <p>Deliberately recomputed rather than read back from a recorded chain run: detection is cheap,
@@ -76,7 +76,7 @@ public class LicenseReportService {
             @Schema(description = "The configured ban list (SPDX ids)")
             List<String> banned) {}
 
-    @Requirements({"GW_0095"})
+    @Requirements({"GW_VETTING_0021"})
     public LicenseReport report(long snapshotId) {
         Snapshot snapshot =
                 snapshotRepository.findById(snapshotId).orElseThrow(() -> new SnapshotNotFoundException(snapshotId));

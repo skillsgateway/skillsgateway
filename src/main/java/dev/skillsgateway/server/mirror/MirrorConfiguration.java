@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 public class MirrorConfiguration {
 
     /**
-     * The mirror's counters as meters (GW_0191). Registered here rather than in the service so that
+     * The mirror's counters as meters (GW_FACADE_0026). Registered here rather than in the service so that
      * the service keeps working with no registry at all — the same split {@code ObjectStoreMetrics}
      * uses — and so the meter names stay in the observability package with every other one.
      */
@@ -20,7 +20,7 @@ public class MirrorConfiguration {
     }
 
     /**
-     * The thread the mirror runs on, and the reason approval never waits for a forge (GW_0170).
+     * The thread the mirror runs on, and the reason approval never waits for a forge (GW_FACADE_0021).
      *
      * <p>Single, like the webhook ingest thread and for the same reason: reconciliations of one
      * marketplace serialize instead of racing, so two of them cannot push conflicting reference

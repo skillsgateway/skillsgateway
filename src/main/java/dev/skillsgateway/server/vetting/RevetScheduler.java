@@ -7,7 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * The continuous re-vetting sweep on its schedule (GW_0049).
+ * The continuous re-vetting sweep on its schedule (GW_VETTING_0012).
  *
  * <p>The pass is a no-op while {@code skills-gateway.vetting.revet.enabled} is false, and — much
  * more importantly — it retracts nothing at all while

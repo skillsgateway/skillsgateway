@@ -23,7 +23,7 @@ import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 /**
  * The mapper itself, away from HTTP: claim shapes, nested claim paths, the startup validation that
  * refuses a malformed mapping, and a randomized sweep asserting the matcher never throws and never
- * widens (GW_0098, GW_0099).
+ * widens (GW_AUTH_0015, GW_AUTH_0016).
  */
 class ClaimRoleMapperTests {
 
@@ -46,7 +46,7 @@ class ClaimRoleMapperTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0098"})
+    @SVCs({"SVC_GW_AUTH_0015"})
     void a_claim_list_a_lone_string_and_a_nested_path_all_resolve() {
         assertThat(mapper("groups").rolesFrom(oidc(Map.of("groups", List.of("gw-admins", "gw-auditors")))))
                 .containsExactlyInAnyOrder(
@@ -62,7 +62,7 @@ class ClaimRoleMapperTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0098"})
+    @SVCs({"SVC_GW_AUTH_0015"})
     void a_delimited_string_is_one_value_and_is_never_split() {
         // Splitting would mean inventing a delimiter the provider never promised.
         assertThat(mapper("groups").rolesFrom(oidc(Map.of("groups", "gw-admins gw-auditors"))))
@@ -72,14 +72,14 @@ class ClaimRoleMapperTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0098"})
+    @SVCs({"SVC_GW_AUTH_0015"})
     void duplicate_and_repeated_claim_values_yield_one_role_each() {
         assertThat(mapper("groups").rolesFrom(oidc(Map.of("groups", List.of("gw-admins", "gw-admins", " gw-admins ")))))
                 .containsExactly(new EffectiveRole("admin", null, EffectiveRole.CLAIM));
     }
 
     @Test
-    @SVCs({"SVC_GW_0099"})
+    @SVCs({"SVC_GW_AUTH_0016"})
     void truncation_is_detected_only_when_the_provider_says_the_claim_was_dropped() {
         ClaimRoleMapper mapper = mapper("groups");
         assertThat(mapper.truncated(oidc(Map.of("hasgroups", true)))).isTrue();
@@ -98,7 +98,7 @@ class ClaimRoleMapperTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0098"})
+    @SVCs({"SVC_GW_AUTH_0015"})
     void a_credential_that_is_not_an_identity_provider_session_yields_nothing() {
         Authentication bare = UsernamePasswordAuthenticationToken.authenticated("pat-user", null, List.of());
         assertThat(mapper("groups").rolesFrom(bare)).isEmpty();
@@ -106,7 +106,7 @@ class ClaimRoleMapperTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0098"})
+    @SVCs({"SVC_GW_AUTH_0015"})
     void a_malformed_mapping_refuses_construction() {
         assertThatThrownBy(() -> new ClaimRoleMapper(
                         new Roles(List.of(), "groups", List.of(new ClaimMapping("x", "superuser", null)))))
@@ -140,7 +140,7 @@ class ClaimRoleMapperTests {
      * testing by hand, not a property-based framework — no such dependency is in the build.
      */
     @Test
-    @SVCs({"SVC_GW_0098"})
+    @SVCs({"SVC_GW_AUTH_0015"})
     void arbitrary_claim_payloads_never_throw_and_never_grant_without_an_exact_match() {
         Random random = new Random(0x5AFE_C1A1L);
         ClaimRoleMapper mapper = mapper("groups");

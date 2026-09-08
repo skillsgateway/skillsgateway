@@ -123,7 +123,7 @@ mutate "${MAIN}/ManifestRewriter.java" \
     'String stillExternal = policy.validate(rewritten);' \
     'String stillExternal = null;' \
     'ManifestRewriterTests' \
-    'the GW_0152 post-condition over the rewritten manifest is dropped'
+    'the GW_INGEST_0021 post-condition over the rewritten manifest is dropped'
 
 mutate "${MAIN}/ManifestRewriter.java" \
     'commit.setParentId(upstream);' \

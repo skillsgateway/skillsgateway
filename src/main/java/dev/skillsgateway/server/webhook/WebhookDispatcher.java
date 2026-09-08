@@ -22,7 +22,7 @@ import org.springframework.web.client.RestClient;
 /**
  * Delivers queued webhooks out of band: claims due deliveries, POSTs the stored payload with its
  * HMAC signature, and reschedules failures with exponential backoff until the attempt budget is
- * spent (GW_0025). Claiming is an atomic conditional UPDATE, so a second instance of the poller
+ * spent (GW_WEBHOOK_0003). Claiming is an atomic conditional UPDATE, so a second instance of the poller
  * (or a future second replica) cannot take the same delivery.
  */
 @Component
@@ -67,7 +67,7 @@ public class WebhookDispatcher {
     }
 
     /** One dispatch pass over everything that is due; returns the number of attempts made. */
-    @Requirements({"GW_0025"})
+    @Requirements({"GW_WEBHOOK_0003"})
     public int dispatchDue() {
         List<Long> due = deliveryRepository.dueIds(properties.batchSize());
         int attempted = 0;

@@ -9,7 +9,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtIssuerValidator;
 
 /**
- * ID-token validation for the browser login (GW_0100).
+ * ID-token validation for the browser login (GW_AUTH_0017).
  *
  * <p>Spring Security compares a token's {@code iss} only when the client registration carries an
  * issuer, and ours cannot: {@code application.yaml} gives the provider explicit endpoints so the
@@ -32,7 +32,7 @@ public final class OidcIdTokenValidation {
      * @param expectedIssuer the issuer to require, or null to keep only the standard checks —
      *     which compare no issuer at all, which is why the gateway warns when nothing is pinned
      */
-    @Requirements({"GW_0100"})
+    @Requirements({"GW_AUTH_0017"})
     public static OAuth2TokenValidator<Jwt> validator(ClientRegistration registration, String expectedIssuer) {
         OAuth2TokenValidator<Jwt> standard = new OidcIdTokenValidator(registration);
         if (expectedIssuer == null || expectedIssuer.isBlank()) {

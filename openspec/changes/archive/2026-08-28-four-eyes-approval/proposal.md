@@ -29,8 +29,8 @@ reviewer as a Phase-1 governance prerequisite) and tracked as issue
   (enforce mode); the API returns a structured 409 problem naming the
   conflicting role(s).
 - Non-human sync actors (`scheduler`, `webhook`) never conflict.
-- Requirements GW_0096 (conflict detection and enforcement) and GW_0097
-  (mode configuration and ledger visibility) with SVC_GW_0096 / SVC_GW_0097.
+- Requirements GW_APPROVAL_0010 (conflict detection and enforcement) and GW_APPROVAL_0011
+  (mode configuration and ledger visibility) with SVC_GW_APPROVAL_0010 / SVC_GW_APPROVAL_0011.
 
 ## Capabilities
 

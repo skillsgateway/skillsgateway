@@ -8,8 +8,8 @@ What exists, read rather than remembered:
   lists marketplaces sorted ascending by name, and for each one calls
   `storage.publishedIfServing(name)`, skipping anything not serving. For each
   serving constituent it fetches the published tip into `refs/catalog/<name>`
-  (internal scaffolding, never advertised — `GW_0134 — The facade advertises only
-  the references it serves` and `GW_0135 — The served catalog repository keeps no
+  (internal scaffolding, never advertised — `GW_FACADE_0016 — The facade advertises only
+  the references it serves` and `GW_FACADE_0017 — The served catalog repository keeps no
   scaffolding references`), records the tip's tree id, parses the constituent's
   `.claude-plugin/marketplace.json`, and merges each plugin.
 - **`CatalogService.mergePlugin`** is where the defect lives:

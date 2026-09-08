@@ -47,8 +47,8 @@ EXIT=0
 
 ```
 $ reqstool status local -p docs/reqstool
-  GW_0181             skills-gateway
-  GW_0182             skills-gateway
+  GW_API_0005             skills-gateway
+  GW_API_0006             skills-gateway
 
 INCOMPLETE (0)
 167/167 complete · 0 incomplete · PASS
@@ -167,6 +167,6 @@ reported **Build & gates**, **Portal e2e**, **Storybook tests** and
 **Documentation (strict)** green on the first attempt.
 
 One further failure was **real** and is fixed rather than retried: the first CI
-run reported `166/167 complete · 1 incomplete · FAIL` because GW_0182 carried no
+run reported `166/167 complete · 1 incomplete · FAIL` because GW_API_0006 carried no
 `@Requirements` annotation. See the PR body — "A note on the traceability gate".
 The reqstool run above is after that fix.

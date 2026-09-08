@@ -5,10 +5,10 @@
 The product language is decided (ADR 0001: Java + GraalVM; ADR 0002:
 toolchain) and the scaffold builds green, but the gateway's behavior exists
 only in the archived Python prototype. This change implements the product:
-the validated behavior (GW_0001–GW_0010) re-established on the product stack
+the validated behavior (GW_INGEST_0001–GW_AUTH_0001) re-established on the product stack
 with JGit embedded from day 1, plus the pieces deliberately excluded from the
-prototype — authentication (GW_0011–GW_0013) and the service's own SBOM
-endpoint (GW_0014).
+prototype — authentication (GW_AUTH_0002–GW_AUTH_0004) and the service's own SBOM
+endpoint (GW_API_0001).
 
 ## What Changes
 
@@ -16,17 +16,17 @@ endpoint (GW_0014).
   into quarantine (default branch, SHA-keyed snapshots, local-only plugin
   sources fail closed) → held until reviewer approval → publish exactly the
   approved commit closure → serve read-only git smart-HTTP → append-only
-  fetch audit log (GW_0001–GW_0010).
+  fetch audit log (GW_INGEST_0001–GW_AUTH_0001).
 - **JGit embedded, no subprocess git** (ADR 0002): ingestion and publication
   via the JGit API, serving via `GitServlet` (upload-pack only).
 - Persistence on PostgreSQL: Flyway schema + `JdbcClient` repositories
   (marketplaces, snapshots, fetch ledger, tokens).
 - **Auth from the beginning** (ADR 0002): OIDC login for the web/admin
-  surface (GW_0011), personal-access-token auth on the git façade with
-  identity-level audit (GW_0012), token create/revoke with hash-at-rest and
-  show-once (GW_0013).
+  surface (GW_AUTH_0002), personal-access-token auth on the git façade with
+  identity-level audit (GW_AUTH_0003), token create/revoke with hash-at-rest and
+  show-once (GW_AUTH_0004).
 - **SBOM endpoint**: CycloneDX generated at build, served via the Spring Boot
-  actuator SBOM endpoint (GW_0014).
+  actuator SBOM endpoint (GW_API_0001).
 - Storage behind a seam a JGit-DFS implementation can satisfy later
   (object-storage-as-truth roadmap); filesystem implementation in this change.
 - Early de-risk task: JGit upload-pack inside a GraalVM native image
@@ -45,15 +45,15 @@ here as ADDED deltas. This change spans the whole service rather than a
 single capability by design — it is the port that seeds the spec base.
 
 - `marketplace-ingestion`: registration and quarantine ingestion with
-  local-only source enforcement (GW_0001, GW_0002, GW_0003)
+  local-only source enforcement (GW_INGEST_0001, GW_INGEST_0002, GW_INGEST_0003)
 - `snapshot-approval`: held-until-approved gate, manual decisions, provenance
-  (GW_0004, GW_0005, GW_0009)
+  (GW_APPROVAL_0001, GW_APPROVAL_0002, GW_INGEST_0004)
 - `git-facade`: read-only smart-HTTP serving of approved content with fetch
-  auditing (GW_0006, GW_0007, GW_0008)
-- `admin-api`: administrative HTTP interface (GW_0010)
+  auditing (GW_FACADE_0001, GW_FACADE_0002, GW_AUDIT_0001)
+- `admin-api`: administrative HTTP interface (GW_AUTH_0001)
 - `auth`: OIDC web sessions, PAT-authenticated git access, token lifecycle
-  (GW_0011, GW_0012, GW_0013)
-- `sbom`: the service's own CycloneDX SBOM endpoint (GW_0014)
+  (GW_AUTH_0002, GW_AUTH_0003, GW_AUTH_0004)
+- `sbom`: the service's own CycloneDX SBOM endpoint (GW_API_0001)
 
 ### Modified Capabilities
 
@@ -69,5 +69,5 @@ single capability by design — it is the port that seeds the spec base.
 - New Flyway migrations under `src/main/resources/db/migration/`.
 - Tests run against Arconia-provisioned PostgreSQL; e2e tests drive the
   façade with the real `git` client.
-- reqstool: GW_0001–GW_0014 all move to implemented+verified; traceability
+- reqstool: GW_INGEST_0001–GW_API_0001 all move to implemented+verified; traceability
   target is 14/14 PASS.

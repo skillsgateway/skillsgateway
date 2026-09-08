@@ -26,15 +26,15 @@ harness is built with the first component, not retrofitted.
   the system SSOT with two implementations — `docs/reqstool-gateway` (backend
   annotations + surefire results) and `ui/reqstool` (TS annotations via
   @reqstool/reqstool-typescript-tags + vitest/Playwright JUnit results).
-- New requirements GW_0018 (portal marketplace/snapshot administration) and GW_0019
-  (portal PAT self-service) with SVC_GW_0018/0019.
+- New requirements GW_INGEST_0007 (portal marketplace/snapshot administration) and GW_AUTH_0005
+  (portal PAT self-service) with SVC_GW_INGEST_0007/0019.
 
 ## Capabilities
 
 ### New Capabilities
 
 - `admin-portal`: browser portal for marketplace/snapshot administration and PAT
-  self-service (GW_0018, GW_0019).
+  self-service (GW_INGEST_0007, GW_AUTH_0005).
 
 ### Modified Capabilities
 

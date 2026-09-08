@@ -8,11 +8,11 @@ import org.springframework.stereotype.Component;
 
 /**
  * Writes a {@code waiver-expired} ledger entry the first time a waiver is seen past its expiry
- * (GW_0048).
+ * (GW_VETTING_0011).
  *
  * <p>This pass has no authority over the gate. A lapsed waiver stops suppressing its finding the
  * moment {@link WaiverService#evaluate(long)} next runs, because expiry is a comparison against
- * {@code now} and not a state anything transitions through (GW_0046). So the sweep can be delayed,
+ * {@code now} and not a state anything transitions through (GW_VETTING_0009). So the sweep can be delayed,
  * disabled, or never run at all without opening a hole — the only thing that changes is whether
  * the lapse is <em>announced</em> in the ledger rather than merely observable in it.
  *

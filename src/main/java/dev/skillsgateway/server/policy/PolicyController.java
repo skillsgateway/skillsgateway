@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Policy rules and their playground (GW_0089, GW_0092). */
+/** Policy rules and their playground (GW_APPROVAL_0006, GW_APPROVAL_0009). */
 @RestController
 @RequestMapping("/api/policy")
 public class PolicyController {
@@ -110,7 +110,7 @@ public class PolicyController {
     @ApiResponse(responseCode = "200", description = "Rule created and, if enabled, in force immediately")
     @ApiResponse(responseCode = "409", description = "A rule of that name exists")
     @ApiResponse(responseCode = "422", description = "Malformed name, or an expression that does not compile")
-    @Requirements({"GW_0089"})
+    @Requirements({"GW_APPROVAL_0006"})
     public PolicyRule create(@RequestBody CreateRuleRequest request, Authentication authentication) {
         roleService.requireAdmin(authentication);
         boolean enabled = request.enabled() == null || request.enabled();
@@ -124,7 +124,7 @@ public class PolicyController {
             summary = "List policy rules",
             description = "Every stored rule, enabled or not, with its expression and attribution.")
     @ApiResponse(responseCode = "200", description = "All policy rules")
-    @Requirements({"GW_0089"})
+    @Requirements({"GW_APPROVAL_0006"})
     public List<PolicyRule> list(Authentication authentication) {
         roleService.requireAuditor(authentication);
         return ruleService.list();
@@ -141,7 +141,7 @@ public class PolicyController {
     @ApiResponse(responseCode = "200", description = "Rule updated")
     @ApiResponse(responseCode = "404", description = "No rule of that name")
     @ApiResponse(responseCode = "422", description = "An expression that does not compile")
-    @Requirements({"GW_0089"})
+    @Requirements({"GW_APPROVAL_0006"})
     public PolicyRule update(
             @PathVariable String name, @RequestBody UpdateRuleRequest request, Authentication authentication) {
         roleService.requireAdmin(authentication);
@@ -157,7 +157,7 @@ public class PolicyController {
                     + " on the append-only ledger.")
     @ApiResponse(responseCode = "200", description = "Rule deleted")
     @ApiResponse(responseCode = "404", description = "No rule of that name")
-    @Requirements({"GW_0089"})
+    @Requirements({"GW_APPROVAL_0006"})
     public Map<String, String> delete(@PathVariable String name, Authentication authentication) {
         roleService.requireAdmin(authentication);
         ruleService.delete(name, authentication.getName());
@@ -175,7 +175,7 @@ public class PolicyController {
                     + " named snapshot.")
     @ApiResponse(responseCode = "200", description = "The expression's answer, or its error")
     @ApiResponse(responseCode = "404", description = "No such snapshot")
-    @Requirements({"GW_0092"})
+    @Requirements({"GW_APPROVAL_0009"})
     public PlaygroundResult playground(@RequestBody PlaygroundRequest request, Authentication authentication) {
         long snapshotId = request.snapshotId() == null ? -1L : request.snapshotId();
         roleService.requireApproverOfSnapshot(authentication, snapshotId);

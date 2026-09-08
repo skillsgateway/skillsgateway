@@ -64,7 +64,7 @@ export const deletedSnapshot: Schemas["Snapshot"] = {
 
 /**
  * Retroactively quarantined by a re-vetting violation: approved once, then revoked, so it carries
- * both an approval record and a revocation record at the same time (GW_0050).
+ * both an approval record and a revocation record at the same time (GW_VETTING_0013).
  */
 export const revokedSnapshot: Schemas["Snapshot"] = {
   id: 3,
@@ -81,7 +81,7 @@ export const revokedSnapshot: Schemas["Snapshot"] = {
 
 /**
  * The default answer of the cooling-off gate: eligible, which is what every deployment sees until
- * an operator configures a minimum release age (GW_0073). Tests that need the window shut override
+ * an operator configures a minimum release age (GW_APPROVAL_0004). Tests that need the window shut override
  * this handler with {@link tooYoung}.
  */
 export const eligible: Schemas["Eligibility"] = {

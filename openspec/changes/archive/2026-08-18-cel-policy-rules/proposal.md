@@ -70,14 +70,14 @@ unchanged if auto-approval is ever decided.
 ### New Capabilities
 
 - `policy-rules`: CEL deny rules — managed lifecycle and declarative estate
-  (GW_0089), the fail-closed approval gate (GW_0090), ledger provenance of
-  decisions (GW_0091), and the read-only playground (GW_0092).
+  (GW_APPROVAL_0006), the fail-closed approval gate (GW_APPROVAL_0007), ledger provenance of
+  decisions (GW_APPROVAL_0008), and the read-only playground (GW_APPROVAL_0009).
 
 ### Modified Capabilities
 
-<!-- none: snapshot-approval (GW_0005/GW_0041) is unchanged — the policy
+<!-- none: snapshot-approval (GW_APPROVAL_0002/GW_APPROVAL_0003) is unchanged — the policy
      gate is additive and runs after the vetting gate; declarative-estate
-     (GW_0083–GW_0087) is unchanged — policy rules are a new declared kind
+     (GW_ESTATE_0001–GW_ESTATE_0005) is unchanged — policy rules are a new declared kind
      going through the same reconciliation contract -->
 
 ## Impact
@@ -104,4 +104,4 @@ unchanged if auto-approval is ever decided.
 - **Docs**: new `guides/policy-rules.md` and `reference/api/policy.md`;
   `reference/configuration.md` estate block; ADR 0006 + architecture.md
   policy-engine note; glossary.
-- **Traceability**: GW_0089–GW_0092 + SVC_GW_0089–SVC_GW_0092.
+- **Traceability**: GW_APPROVAL_0006–GW_APPROVAL_0009 + SVC_GW_APPROVAL_0006–SVC_GW_APPROVAL_0009.

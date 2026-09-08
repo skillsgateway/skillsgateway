@@ -2,8 +2,8 @@
 
 ## ADDED Requirements
 
-### Requirement: GW_0102
-The system SHALL implement GW_0102.
+### Requirement: GW_FACADE_0007
+The system SHALL implement GW_FACADE_0007.
 
-#### Scenario: SVC_GW_0102
-The system SHALL pass SVC_GW_0102.
+#### Scenario: SVC_GW_FACADE_0007
+The system SHALL pass SVC_GW_FACADE_0007.

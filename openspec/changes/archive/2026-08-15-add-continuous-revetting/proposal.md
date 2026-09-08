@@ -1,6 +1,6 @@
 ## Why
 
-The vetting chain (GW_0037–GW_0043) and waivers (GW_0044–GW_0048) gate the moment of
+The vetting chain (GW_VETTING_0001–GW_VETTING_0006) and waivers (GW_VETTING_0007–GW_VETTING_0011) gate the moment of
 **approval**, and nothing after it. Once a snapshot is published it is never looked at again:
 a connector can gain a rule, an advisory can land, and — the sharpest case — an accepted risk
 can expire, and the content keeps being served regardless.
@@ -38,7 +38,7 @@ blast-radius report from the ledger — and seven manual pages currently assert 
 - `continuous-revetting`: re-vetting of approved content and the retroactive quarantine it can
   trigger — the sweep and its scheduling, the revoked state and its unpublication, warn versus
   enforce, the inconclusive rule, notification and blast radius, the ledger record, and the
-  portal surface (GW_0049–GW_0055).
+  portal surface (GW_VETTING_0012–GW_VETTING_0018).
 
 ## Impact
 
@@ -53,4 +53,4 @@ blast-radius report from the ledger — and seven manual pages currently assert 
   and the already-fetched-by list, and **Re-approve** on a revoked snapshot.
 - **Docs**: a new guide, a new configuration block, the state-machine diagram and every page that
   asserted there is no revocation state.
-- **Traceability**: GW_0049–GW_0055 and SVC_GW_0049–SVC_GW_0055.
+- **Traceability**: GW_VETTING_0012–GW_VETTING_0018 and SVC_GW_VETTING_0012–SVC_GW_VETTING_0018.

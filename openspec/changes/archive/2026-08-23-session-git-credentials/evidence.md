@@ -72,7 +72,7 @@ reformatted the lines, which is the behaviour wanted.
   be laundered or extended.
 - A credential from a gateway configured with a 1ms session TTL — fails
   authentication with no scheduler having run, and its facade clone fails,
-  confirming expiry is a comparison at use (GW_0065) and not a sweep.
+  confirming expiry is a comparison at use (GW_AUTH_0007) and not a sweep.
 
 ## Known limits (declared, not covered)
 

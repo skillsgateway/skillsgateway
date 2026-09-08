@@ -141,7 +141,7 @@ public final class ObjectStoreGitStorage implements GitStorage, AutoCloseable {
     }
 
     @Override
-    @Requirements({"GW_0112"})
+    @Requirements({"GW_FACADE_0011"})
     public boolean unpublish(String marketplace, String sha) throws IOException {
         ManifestStore manifests = manifests(Role.PUBLISHED, marketplace);
         if (!manifests.exists()) {
@@ -169,7 +169,7 @@ public final class ObjectStoreGitStorage implements GitStorage, AutoCloseable {
     }
 
     @Override
-    @Requirements({"GW_0132", "GW_0112"})
+    @Requirements({"GW_FACADE_0015", "GW_FACADE_0011"})
     public boolean commitPublication(String marketplace, String sha) throws IOException {
         ManifestStore manifests = manifests(Role.PUBLISHED, marketplace);
         String pinned = SNAPSHOT_REF_PREFIX + sha;
@@ -206,7 +206,7 @@ public final class ObjectStoreGitStorage implements GitStorage, AutoCloseable {
         }
     }
 
-    @Requirements({"GW_0112"})
+    @Requirements({"GW_FACADE_0011"})
     private Repository openOrCreate(Role role, String marketplace) throws IOException {
         ManifestStore manifests = manifests(role, marketplace);
         // HEAD is part of the manifest rather than an object of its own, so creating a repository

@@ -410,7 +410,7 @@ Sinks, cursors and replay are described in
 
 Whether a marketplace manifest may declare plugins that live outside the
 marketplace repository, and — when it may — what resolving them is allowed to
-reach and to cost (GW_0151, GW_0155 – GW_0158, GW_0161). Java-side defaults; nothing
+reach and to cost (GW_INGEST_0020, GW_INGEST_0023 – GW_INGEST_0026, GW_INGEST_0027). Java-side defaults; nothing
 appears in `application.yaml`, and an absent block is the behaviour every
 existing deployment already has.
 
@@ -418,7 +418,7 @@ existing deployment already has.
 skills-gateway:
   ingestion:
     external-sources:
-      # false is GW_0003's local-only rejection: a manifest declaring a github,
+      # false is GW_INGEST_0003's local-only rejection: a manifest declaring a github,
       # git, git-subdir, npm or archive source is refused, snapshot rejected.
       # It is also the only setting under which the gateway makes no outbound
       # request driven by manifest content.
@@ -457,7 +457,7 @@ skills-gateway:
 
 | Key | Type | Default | Notes |
 | --- | --- | --- | --- |
-| `skills-gateway.ingestion.external-sources.enabled` | boolean | `false` | `false` is unchanged GW_0003 behaviour, and no manifest-driven outbound request is made. |
+| `skills-gateway.ingestion.external-sources.enabled` | boolean | `false` | `false` is unchanged GW_INGEST_0003 behaviour, and no manifest-driven outbound request is made. |
 | `skills-gateway.ingestion.external-sources.allowed-types` | list | `[github]` | `npm` and `archive` are refused whatever this says; `git` and `git-subdir` are not resolved yet. |
 | `skills-gateway.ingestion.external-sources.allowed-hosts` | list | `[]` (any) | Exact-host matching on the derived clone URL. |
 | `skills-gateway.ingestion.external-sources.max-sources` | integer | `20` | Counts external sources, not plugins. |
@@ -474,10 +474,10 @@ skills-gateway:
 | `…external-sources.budgets.deadline` | duration | `5m` | Wall clock for resolving a whole manifest. |
 
 Every `budgets.*` key except `max-redirects` is its own sub-requirement of
-GW_0158 — *Resource-bounded source resolution*, in the order the table lists
-them: `GW_0158.1` through `GW_0158.8`. Raising one of them is therefore a
+GW_INGEST_0026 — *Resource-bounded source resolution*, in the order the table lists
+them: `GW_INGEST_0026.1` through `GW_INGEST_0026.8`. Raising one of them is therefore a
 decision about one stated bound, and a traceability report names the bound that
-regressed rather than the whole budget. `max-redirects` belongs to GW_0157 —
+regressed rather than the whole budget. `max-redirects` belongs to GW_INGEST_0025 —
 *Address, redirect and transport policy for source resolution*, which is where
 redirect policy lives.
 
@@ -705,7 +705,7 @@ back a normalized `{state, reportUrl, findings[]}` where `state` is one of
 | `…external[n].name` | string | — | Required, unique; must not be a built-in (`secret-scan`, `prompt-injection`, `license-scan`, `skill-conformance`). |
 | `…external[n].url` | url | — | Required; `http` or `https` only. |
 | `…external[n].order` | integer | `1000` | Chain position; ties broken by name. Built-ins start at `100`. |
-| `…external[n].version` | string | `1` | Stamped into the chain identity (GW_0049). Bump when the external rules change. |
+| `…external[n].version` | string | `1` | Stamped into the chain identity (GW_VETTING_0012). Bump when the external rules change. |
 | `…external[n].description` | string | derived | Reviewer-facing one-liner. |
 | `…external[n].token` | string | none | Credential; use `${ENV}`. Write-only. Null sends no credential. |
 | `…external[n].token-header` | string | `Authorization` | Header the credential is sent in. |
@@ -730,7 +730,7 @@ back a normalized `{state, reportUrl, findings[]}` where `state` is one of
 !!! note "External connectors are configuration for the same reason the license policy is"
 
     Their identity and `version` are stamped into every run's chain identity
-    (GW_0049), so a changed answer about unchanged content is attributable. That
+    (GW_VETTING_0012), so a changed answer about unchanged content is attributable. That
     is why they are declared by deploy, not managed through the API. A `pending`
     answer is the asynchronous seam: it is recorded as `PENDING` and **blocks**
     until resolved — the inbound resolution callback is a separate, later
@@ -1020,7 +1020,7 @@ Composition, freshness, and provenance are described in
 
 ## Access tokens
 
-Token policy (GW_0065). Java-side default; nothing appears in
+Token policy (GW_AUTH_0007). Java-side default; nothing appears in
 `application.yaml`.
 
 ```yaml
@@ -1031,7 +1031,7 @@ skills-gateway:
     # silently shortened. Unset (the default) accepts tokens that never
     # expire, which is what every pre-cap deployment had.
     max-ttl: 90d
-    # What a session-derived credential is GRANTED (GW_0104), as opposed to
+    # What a session-derived credential is GRANTED (GW_AUTH_0018), as opposed to
     # what a holder may ask for. Not derived from max-ttl on purpose: a
     # deployment may allow year-long CI tokens and still want a credential
     # minted from a browser session to die at the end of the working day.
@@ -1069,10 +1069,10 @@ Scopes, expiry, and rotation are described in
 
 ## Delegated administration
 
-Role enforcement for the web surface (GW_0068, GW_0071). Java-side defaults;
+Role enforcement for the web surface (GW_AUTH_0010, GW_AUTH_0013). Java-side defaults;
 nothing appears in `application.yaml`.
 
-Enforcement is **unconditional** (GW_0138): every mutation and the ledger
+Enforcement is **unconditional** (GW_AUTH_0025): every mutation and the ledger
 surface need a role, in every deployment. There is nothing to switch on.
 
 !!! warning "`skills-gateway.roles.enabled` was removed, and setting it refuses startup"
@@ -1097,7 +1097,7 @@ skills-gateway:
     # through the API — the escape hatch that survives a bad grant edit.
     admins:
       - admin@example.com
-    # Roles from the identity provider's own claims (GW_0098). The claim name
+    # Roles from the identity provider's own claims (GW_AUTH_0015). The claim name
     # and every value are yours: on a shared app registration the values are
     # the organisation's group ids or app-role values, not gateway role names.
     claim: groups
@@ -1169,7 +1169,7 @@ grants API in [Roles](api/roles.md).
 
 ## Declarative estate
 
-The estate defined as configuration (GW_0083–GW_0087, GW_0089): marketplaces,
+The estate defined as configuration (GW_ESTATE_0001–GW_ESTATE_0005, GW_APPROVAL_0006): marketplaces,
 role grants, webhook subscribers, audit export sinks and policy deny rules,
 reconciled at startup —
 after schema migration, before the web surface serves — and on demand via
@@ -1203,7 +1203,7 @@ skills-gateway:
         # generated and shown once, which has no declarative form.
         sync-mode: scheduled
       # A gateway-hosted marketplace declares no url and is published to by
-      # pushing (GW_0101). Its sync mode is fixed at on-demand: the push is
+      # pushing (GW_FACADE_0006). Its sync mode is fixed at on-demand: the push is
       # its ingestion trigger. push-policy defaults to append-only.
       - name: platform-skills
         origin: hosted
@@ -1421,7 +1421,7 @@ the variable — see
 [Running behind a proxy](../guides/deploying-without-kubernetes.md#running-behind-a-proxy).
 
 The gateway registers the `framework` filter itself and reads the setting at
-runtime (GW_0163 — Proxy-reported scheme and host are honoured only when
+runtime (GW_AUTH_0029 — Proxy-reported scheme and host are honoured only when
 configured, identically on every packaging). Spring Boot's own registration is
 behind a `@ConditionalOnProperty`, which an ahead-of-time image evaluates when it
 is built, with the property unset — so on the GraalVM native image the release
@@ -1444,7 +1444,7 @@ packaging rather than on the one that happens to ship.
 relaxed-binding environment form of `skills-gateway.data-dir`.
 
 **JGit's own scratch.** The image sets `XDG_CONFIG_HOME=/tmp/xdg-config`, and
-the chart restates it in the Deployment (GW_0179 — The embedded git library's
+the chart restates it in the Deployment (GW_FACADE_0024 — The embedded git library's
 own scratch stays inside the writable temporary directory). JGit resolves a
 filesystem-timestamp-resolution cache file there the first time it touches a
 repository; left unset, it falls back to a home directory this user does not

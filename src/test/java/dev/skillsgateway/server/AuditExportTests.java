@@ -25,8 +25,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 /**
- * Audit ledger export: the NDJSON pull stream (GW_0027), cursor-tracking push sinks with
- * at-least-once delivery (GW_0028), and cursor replay (GW_0029).
+ * Audit ledger export: the NDJSON pull stream (GW_AUDIT_0003), cursor-tracking push sinks with
+ * at-least-once delivery (GW_AUDIT_0004), and cursor replay (GW_AUDIT_0005).
  */
 class AuditExportTests extends AbstractGatewayTest {
 
@@ -85,7 +85,7 @@ class AuditExportTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0027"})
+    @SVCs({"SVC_GW_AUDIT_0003"})
     void ledgerStreamsAsNewlineDelimitedJsonFromACursor() throws Exception {
         long start = fetchLogRepository.maxId();
         String marketplace = uniqueName("ndjson");
@@ -117,7 +117,7 @@ class AuditExportTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0028"})
+    @SVCs({"SVC_GW_AUDIT_0004"})
     void sinkReceivesTheEntriesAfterItsPositionAndAdvancesPastThem() throws Exception {
         long sinkId = createSink(uniqueName("siem"));
         AuditSink sink = exportService.findSink(sinkId).orElseThrow();
@@ -149,7 +149,7 @@ class AuditExportTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0029"})
+    @SVCs({"SVC_GW_AUDIT_0005"})
     void resettingTheCursorRedeliversTheEntriesAfterIt() throws Exception {
         long sinkId = createSink(uniqueName("replay"));
         AuditSink sink = exportService.findSink(sinkId).orElseThrow();

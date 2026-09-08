@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-/** The catalog's admin surface (GW_0063), behind the OIDC session like every /api endpoint. */
+/** The catalog's admin surface (GW_FACADE_0005), behind the OIDC session like every /api endpoint. */
 @RestController
 @RequestMapping("/api")
 public class CatalogController {
@@ -32,7 +32,7 @@ public class CatalogController {
     }
 
     @GetMapping("/catalog")
-    @Requirements({"GW_0063"})
+    @Requirements({"GW_FACADE_0005"})
     @Tag(name = "Catalog")
     @Operation(
             summary = "The served catalog revision",
@@ -55,7 +55,7 @@ public class CatalogController {
     }
 
     @PostMapping("/catalog/rebuild")
-    @Requirements({"GW_0062", "GW_0063"})
+    @Requirements({"GW_FACADE_0004", "GW_FACADE_0005"})
     @Tag(name = "Catalog")
     @Operation(
             summary = "Rebuild the catalog now",

@@ -19,7 +19,7 @@ public record AccessToken(
         String apiScopes,
         String machineOwner) {
 
-    /** The scope list, empty meaning every marketplace (GW_0064). */
+    /** The scope list, empty meaning every marketplace (GW_AUTH_0006). */
     public List<String> scopeList() {
         if (scopes == null || scopes.isBlank()) {
             return List.of();
@@ -28,7 +28,7 @@ public record AccessToken(
     }
 
     /**
-     * Whether this token may fetch the named repository through the facade (GW_0064, GW_0127).
+     * Whether this token may fetch the named repository through the facade (GW_AUTH_0006, GW_AUTH_0021).
      *
      * <p>An empty fetch list means <em>every marketplace</em> — what every pre-scoping token
      * meant — but only for a credential that holds no administrative scope. A machine API
@@ -49,7 +49,7 @@ public record AccessToken(
         return scopeList.contains(marketplace);
     }
 
-    /** The push scope list; empty means this token may push nowhere (GW_0102). */
+    /** The push scope list; empty means this token may push nowhere (GW_FACADE_0007). */
     public List<String> pushScopeList() {
         if (pushScopes == null || pushScopes.isBlank()) {
             return List.of();
@@ -58,7 +58,7 @@ public record AccessToken(
     }
 
     /**
-     * Whether this token may push to the named hosted marketplace (GW_0102). Deliberately the
+     * Whether this token may push to the named hosted marketplace (GW_FACADE_0007). Deliberately the
      * opposite default from {@link #permitsMarketplace}: no push scopes means none, so every
      * token that predates publication — and every token whose fetch scope is the
      * every-marketplace form — can write nothing.
@@ -69,7 +69,7 @@ public record AccessToken(
 
     /**
      * The administrative scope list; empty means this token reaches no {@code /api/**} endpoint
-     * at all (GW_0126).
+     * at all (GW_AUTH_0020).
      *
      * <p>All three of this record's scope dimensions have an empty value, and all three mean
      * something different. Stated together, because reading any one of them as "unrestricted" is
@@ -94,7 +94,7 @@ public record AccessToken(
     }
 
     /**
-     * Whether this is a machine API credential (GW_0126) — exactly when it holds at least one
+     * Whether this is a machine API credential (GW_AUTH_0020) — exactly when it holds at least one
      * administrative scope. There is no separate credential type and no flag: one record carries
      * all three dimensions, and each chain asks only the dimension it owns.
      */
@@ -103,7 +103,7 @@ public record AccessToken(
     }
 
     /**
-     * Whether this token holds the named administrative scope (GW_0126). Exact membership: there
+     * Whether this token holds the named administrative scope (GW_AUTH_0020). Exact membership: there
      * is no wildcard value and no scope implies another, so {@code policy:write} does not confer
      * {@code policy:read}. Implication chains are how coarse scopes grow back.
      */

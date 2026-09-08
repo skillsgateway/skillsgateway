@@ -6,13 +6,13 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * One operator-configured external vetting connector (GW_0144), bound from
+ * One operator-configured external vetting connector (GW_VETTING_0024), bound from
  * {@code skills-gateway.vetting.external[*]}.
  *
  * <p>External connectors are deliberately <b>configuration</b>, not API-managed runtime state, for
  * the same reason the license policy is (see {@code SkillsGatewayProperties.License}): a chain run
  * must be attributable, so the identity of every connector that took part is stamped into the run
- * (GW_0049). A connector whose endpoint, position or rule-set version could be changed through the
+ * (GW_VETTING_0012). A connector whose endpoint, position or rule-set version could be changed through the
  * API between two runs would make "the content cleared last month and blocks today" unanswerable.
  * Binding the chain from configuration keeps its identity a property of the deployment. This is why
  * the estate obligation (declarative estate, #65) does not apply: nothing here is API-mutable.
@@ -26,7 +26,7 @@ import java.util.Set;
  *     {@code prompt-injection}, {@code license-scan}, {@code skill-conformance})
  * @param url endpoint the gateway POSTs the snapshot bundle to; required
  * @param order ascending chain position, in the same space as the built-ins; ties broken by name
- * @param version rule-set identity stamped into the chain identity (GW_0049); bump it when the
+ * @param version rule-set identity stamped into the chain identity (GW_VETTING_0012); bump it when the
  *     external rules change so a changed answer about unchanged content is attributable
  * @param description reviewer-facing one-liner: what it looks for and what it cannot see
  * @param token credential sent to the external service; null sends no credential

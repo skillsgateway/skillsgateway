@@ -2,8 +2,8 @@
 
 ## ADDED Requirements
 
-### Requirement: GW_0153
-The system SHALL implement GW_0153.
+### Requirement: GW_INGEST_0022
+The system SHALL implement GW_INGEST_0022.
 
-#### Scenario: SVC_GW_0153
-The system SHALL pass SVC_GW_0153.
+#### Scenario: SVC_GW_INGEST_0022
+The system SHALL pass SVC_GW_INGEST_0022.

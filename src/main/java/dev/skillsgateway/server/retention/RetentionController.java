@@ -38,7 +38,7 @@ public class RetentionController {
     }
 
     @DeleteMapping("/snapshots/{id}")
-    @Requirements({"GW_0032", "GW_0033"})
+    @Requirements({"GW_RETENTION_0002", "GW_RETENTION_0003"})
     @Tag(name = "Retention")
     @Operation(
             summary = "Soft-delete a snapshot",
@@ -54,7 +54,7 @@ public class RetentionController {
     }
 
     @PostMapping("/snapshots/{id}/restore")
-    @Requirements({"GW_0032"})
+    @Requirements({"GW_RETENTION_0002"})
     @Tag(name = "Retention")
     @Operation(
             summary = "Restore a soft-deleted snapshot",
@@ -68,7 +68,7 @@ public class RetentionController {
     }
 
     @GetMapping("/retention/candidates")
-    @Requirements({"GW_0031"})
+    @Requirements({"GW_RETENTION_0001"})
     @Tag(name = "Retention")
     @Operation(
             summary = "Preview the retention candidates",
@@ -83,7 +83,7 @@ public class RetentionController {
     }
 
     @PostMapping("/retention/evaluate")
-    @Requirements({"GW_0031"})
+    @Requirements({"GW_RETENTION_0001"})
     @Tag(name = "Retention")
     @Operation(
             summary = "Run a retention evaluation pass",
@@ -98,7 +98,7 @@ public class RetentionController {
     }
 
     @PostMapping("/retention/compact")
-    @Requirements({"GW_0034"})
+    @Requirements({"GW_RETENTION_0004"})
     @Tag(name = "Retention")
     @Operation(
             summary = "Run a compaction pass",

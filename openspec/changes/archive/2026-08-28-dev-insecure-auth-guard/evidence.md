@@ -96,9 +96,9 @@ not, so the suite is unaffected, which is the compatibility claim being tested.
 ### `reqstool status local -p docs/reqstool`
 
 ```console
-  GW_0108             skills-gateway
-  GW_0109             skills-gateway
-  GW_0110             skills-gateway
+  GW_RELEASE_0003             skills-gateway
+  GW_RELEASE_0004             skills-gateway
+  GW_AUTH_0019             skills-gateway
 
 INCOMPLETE (0)
 107/107 complete · 0 incomplete · PASS

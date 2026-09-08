@@ -2,30 +2,30 @@
 
 ## 1. Requirements (SSOT first)
 
-- [x] 1.1 Add GW_0101 (a marketplace may be gateway-hosted: registered with no
+- [x] 1.1 Add GW_FACADE_0006 (a marketplace may be gateway-hosted: registered with no
       clone URL, given a gateway-owned origin repository, never fetched from
-      anywhere, and pinned to on-demand refresh), GW_0102 (authenticated git
+      anywhere, and pinned to on-demand refresh), GW_FACADE_0007 (authenticated git
       push into that origin over a separate endpoint: push-scoped tokens with
       no wildcard, out-of-scope indistinguishable from not-found, only the
       single lineage ref accepted, deletes always refused, history rewrites
       refused unless the marketplace's policy allows them and ledger-recorded
       when it does, and the consumer facade still accepting no push at all) and
-      GW_0103 (a pushed commit traverses quarantine, manifest validation,
+      GW_INGEST_0017 (a pushed commit traverses quarantine, manifest validation,
       vetting and approval exactly as fetched content, and is served only after
       approval) to `docs/reqstool/requirements.yml`
-- [x] 1.2 Add SVC_GW_0101, SVC_GW_0102 and SVC_GW_0103 (GIVEN/WHEN/THEN) to
+- [x] 1.2 Add SVC_GW_FACADE_0006, SVC_GW_FACADE_0007 and SVC_GW_INGEST_0017 (GIVEN/WHEN/THEN) to
       `docs/reqstool/software_verification_cases.yml`
 
 ## 2. Tests first — each observed failing before its implementation exists
 
 - [x] 2.1 `HostedMarketplaceTests` (extends `AbstractGatewayTest`),
-      `@SVCs({"SVC_GW_0101"})`: registration with `origin=hosted` and no url
+      `@SVCs({"SVC_GW_FACADE_0006"})`: registration with `origin=hosted` and no url
       succeeds and creates the origin repository; with `origin=hosted` *and* a
       url is refused; with `origin=upstream` and no url is refused as today;
       `PUT /marketplaces/{name}/sync` refuses a hosted marketplace; the
       marketplace view reports the origin, the push policy and the publish
       clone URL
-- [x] 2.2 `HostedPushTests`, `@SVCs({"SVC_GW_0102"})`, driving the real git
+- [x] 2.2 `HostedPushTests`, `@SVCs({"SVC_GW_FACADE_0007"})`, driving the real git
       binary through `AbstractGatewayTest.git(...)`: a push-scoped token pushes
       `main` and the objects land in the origin repository; a fetch-scoped
       token, a wildcard-fetch token (`scopes IS NULL`) and a legacy token with
@@ -38,13 +38,13 @@
       policies (F6); a force-push is refused under `append-only` and the origin
       tip is unchanged (F4); under `allow-rewrite` it succeeds and writes a
       ledger entry naming the old and new tip
-- [x] 2.4 `HostedLifecycleTests`, `@SVCs({"SVC_GW_0103"})`: push → the snapshot
+- [x] 2.4 `HostedLifecycleTests`, `@SVCs({"SVC_GW_INGEST_0017"})`: push → the snapshot
       is `held` with the pushed SHA → the facade 404s the marketplace (F8) →
       approve → a real `git clone` of `/git/{name}` returns the pushed content →
       revoke → the clone fails again. A push of the tainted fixture lands
       `held` with findings; a push whose manifest declares a non-local source
       lands `rejected` (F7)
-- [x] 2.5 Null-URL regression sweep, `@SVCs({"SVC_GW_0101"})`: provenance,
+- [x] 2.5 Null-URL regression sweep, `@SVCs({"SVC_GW_FACADE_0006"})`: provenance,
       the marketplace listing, the estate reconciler's URL comparison and forge
       metadata resolution all survive a hosted marketplace (F9)
 - [~] 2.6 RED observed for `HostedMarketplaceTests` only — all four failed on a
@@ -63,17 +63,17 @@
 - [x] 3.3 `AccessToken` gains `pushScopes` with `permitsPushTo(marketplace)` —
       null means none, deliberately unlike `permitsMarketplace`;
       `TokenService.create` accepts and validates them against registered
-      marketplaces; `@Requirements({"GW_0102"})`
+      marketplaces; `@Requirements({"GW_FACADE_0007"})`
 
 ## 4. Storage and registration
 
 - [x] 4.1 `GitStorage.hosted(String)` / `hostedIfPresent(String)` and the
       `FilesystemGitStorage` implementation over `{data-dir}/hosted`;
-      `@Requirements({"GW_0101"})`
+      `@Requirements({"GW_FACADE_0006"})`
 - [x] 4.2 `MarketplaceRegistrationService`: a `hosted` registration skips the
       scheme allowlist, refuses a supplied url, and creates the origin
       repository; an `upstream` registration is unchanged;
-      `@Requirements({"GW_0101"})`
+      `@Requirements({"GW_FACADE_0006"})`
 - [x] 4.3 `SyncService.changeMode` refuses a hosted marketplace
 
 ## 5. The publish endpoint
@@ -82,11 +82,11 @@
       `/publish/*`, resolver enforcing the name pattern then the push scope
       then `origin=hosted` (not-found for every failure), receive-pack and
       upload-pack factories; `GitFacadeConfiguration` is not edited;
-      `@Requirements({"GW_0102"})`
+      `@Requirements({"GW_FACADE_0007"})`
 - [x] 5.2 `HostedPushHook` implementing `PreReceiveHook` (single lineage ref,
       no deletes, fast-forward unless `allow-rewrite`) and `PostReceiveHook`
       (ledger entry `marketplace-pushed` with the acting token, the old and new
-      tip, then hand off to ingestion); `@Requirements({"GW_0102", "GW_0103"})`
+      tip, then hand off to ingestion); `@Requirements({"GW_FACADE_0007", "GW_INGEST_0017"})`
 - [x] 5.3 `SecurityConfig`: a `publishChain` at `/publish/**` beside `gitChain`
       — PAT only, stateless, CSRF off; `PatAuthenticationProvider` unchanged
       (the push scope lives on the `AccessToken` already set as details)
@@ -97,7 +97,7 @@
       resolution — `upstream` fetches `marketplace.url()` as today, `hosted`
       fetches the origin repository's `refs/heads/main` by path — leaving
       everything from the snapshot pin down untouched;
-      `@Requirements({"GW_0103"})`
+      `@Requirements({"GW_INGEST_0017"})`
 - [x] 6.2 `ApprovalService.provenance` and the marketplace/provenance views
       report the origin and tolerate a null upstream url
 - [x] 6.3 `EstateReconciler.reconcileMarketplace`: null-safe URL comparison,

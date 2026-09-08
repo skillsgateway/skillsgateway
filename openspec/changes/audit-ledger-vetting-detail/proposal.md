@@ -10,7 +10,7 @@ most of it away, in three distinct ways.
   `secret-scan=pass`. There is no finding count, no worst severity, and no
   reference back to the chain run the verdict belongs to, so the ledger is a
   pointer you have to re-derive from the vetting tables rather than an auditable
-  record on its own. `GW_0043` already requires the run and every verdict to be
+  record on its own. `GW_VETTING_0006` already requires the run and every verdict to be
   logged; it does not require them to be legible.
 - **A clean pass says nothing.** `secret-scan` and `prompt-injection` return
   `detail: null, findings: []`, so their `detail` column is `NULL`. On a
@@ -20,7 +20,7 @@ most of it away, in three distinct ways.
   entries under the principal `vetting`, which is not in `AdminAuditLogger`'s
   system-actor set, so every vetting entry falls through to `ActorType.HUMAN`.
   The portal audit table then renders the automated subsystem as a **human**
-  actor — a transparency defect on the transparency surface. `GW_0128` already
+  actor — a transparency defect on the transparency surface. `GW_AUDIT_0007` already
   requires the ledger to distinguish a person, a machine credential and the
   gateway acting on its own; the vetting principal simply was not classified.
 
@@ -29,19 +29,19 @@ most of it away, in three distinct ways.
 Backend only. The frontend half of #221 (sortable/filterable audit table on
 `@tanstack/react-table`) is a separate change owned by another branch.
 
-- **Verdict entries become self-describing (`GW_0142`).** The `vetting-verdict`
+- **Verdict entries become self-describing (`GW_VETTING_0022`).** The `vetting-verdict`
   ledger detail keeps its scannable `connector=state` lead and gains the finding
   count, the worst severity present (`none` when there are none), and the id of
   the chain run. The `vetting-completed` entry gains the same run id, so the
   scattered per-connector rows can be reassembled into the one run they came
   from.
-- **A clean pass records its coverage (`GW_0143`).** Every built-in connector
+- **A clean pass records its coverage (`GW_VETTING_0023`).** Every built-in connector
   now returns a non-empty `summary` on its `Verdict` — what it examined, the
   files it scanned and the rules it applied — even for a pass with no findings.
   `VettingRepository` records that summary as the verdict `detail` when there are
   no findings, so a passing verdict carries positive evidence of what was checked
   in both the vetting report and the ledger.
-- **The vetting chain is typed as the gateway (`GW_0142` / `GW_0128`).** The
+- **The vetting chain is typed as the gateway (`GW_VETTING_0022` / `GW_AUDIT_0007`).** The
   `vetting` principal is declared as a constant on `VettingService` and added to
   `AdminAuditLogger`'s system-actor set, so its entries are typed
   `ActorType.SYSTEM`. This reuses the existing actor vocabulary — the chain is
@@ -63,9 +63,9 @@ None. This change adds requirements to an existing capability.
 
 ### Modified Capabilities
 
-- `snapshot-vetting`: `GW_0142` — a vetting ledger entry carries the finding
+- `snapshot-vetting`: `GW_VETTING_0022` — a vetting ledger entry carries the finding
   count, worst severity and run reference and is attributed to the gateway rather
-  than a person; `GW_0143` — a clean connector pass records what it examined.
+  than a person; `GW_VETTING_0023` — a clean connector pass records what it examined.
 
 ## Impact
 
@@ -81,7 +81,7 @@ None. This change adds requirements to an existing capability.
 - `admin/AdminAuditLogger.java` — the vetting principal joins the system-actor
   set
 - `docs/reqstool/requirements.yml`, `software_verification_cases.yml` —
-  `GW_0142`, `GW_0143` and their SVCs
+  `GW_VETTING_0022`, `GW_VETTING_0023` and their SVCs
 
 **Behavior**
 

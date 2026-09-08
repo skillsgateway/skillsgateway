@@ -33,15 +33,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
- * Snapshot retention: policy evaluation (GW_0031), soft deletion with a restore window (GW_0032),
- * the guard that keeps approved — that is, served — snapshots out of reach (GW_0033), and the
+ * Snapshot retention: policy evaluation (GW_RETENTION_0001), soft deletion with a restore window (GW_RETENTION_0002),
+ * the guard that keeps approved — that is, served — snapshots out of reach (GW_RETENTION_0003), and the
  * compaction that permanently removes an expired soft deletion together with its git storage
- * (GW_0034). Every action is written to the append-only ledger (GW_0035).
+ * (GW_RETENTION_0004). Every action is written to the append-only ledger (GW_RETENTION_0005).
  *
  * <p>Evaluation and compaction are deliberately separate passes: the restore window only means
  * something if a wrong criterion costs a reversible mark rather than content.
  *
- * <p>Compaction also sweeps the publication staging references a crash left behind (GW_0168) —
+ * <p>Compaction also sweeps the publication staging references a crash left behind (GW_FACADE_0019) —
  * the one thing retention does on the published side of the estate. It is here rather than in the
  * storage seam because deciding whether a staged commit is still anybody's snapshot takes the
  * database, and the seam is deliberately ignorant of it.
@@ -124,7 +124,7 @@ public class RetentionService {
     }
 
     /** As {@link #candidates()}, restricted to one marketplace when {@code only} is non-null. */
-    @Requirements({"GW_0031", "GW_0033"})
+    @Requirements({"GW_RETENTION_0001", "GW_RETENTION_0003"})
     public List<Candidate> candidates(String only) {
         Instant now = Instant.now();
         List<Candidate> candidates = new ArrayList<>();
@@ -164,7 +164,7 @@ public class RetentionService {
     }
 
     /** As {@link #evaluate(String)}, restricted to one marketplace when {@code only} is non-null. */
-    @Requirements({"GW_0031", "GW_0032", "GW_0035"})
+    @Requirements({"GW_RETENTION_0001", "GW_RETENTION_0002", "GW_RETENTION_0005"})
     public PassResult evaluate(String actor, String only) {
         List<Candidate> selected = candidates(only);
         int acted = 0;
@@ -191,7 +191,7 @@ public class RetentionService {
      * the {@code UPDATE} itself excludes approved snapshots, so served content stays served
      * whatever a caller asks for.
      */
-    @Requirements({"GW_0032", "GW_0033", "GW_0035"})
+    @Requirements({"GW_RETENTION_0002", "GW_RETENTION_0003", "GW_RETENTION_0005"})
     public Snapshot softDelete(long snapshotId, String reason, String actor) {
         Snapshot snapshot =
                 snapshotRepository.findById(snapshotId).orElseThrow(() -> new SnapshotNotFoundException(snapshotId));
@@ -211,7 +211,7 @@ public class RetentionService {
     }
 
     /** Restores a soft-deleted snapshot; only possible while compaction has not reached it. */
-    @Requirements({"GW_0032", "GW_0035"})
+    @Requirements({"GW_RETENTION_0002", "GW_RETENTION_0005"})
     public Snapshot restore(long snapshotId, String actor) {
         snapshotRepository.findById(snapshotId).orElseThrow(() -> new SnapshotNotFoundException(snapshotId));
         Snapshot restored = snapshotRepository
@@ -230,7 +230,7 @@ public class RetentionService {
      * marketplace so the objects the deleted tip made unreachable are reclaimed, and the record is
      * deleted. What the snapshot was, and that it was removed, stays in the append-only ledger.
      */
-    @Requirements({"GW_0034", "GW_0035"})
+    @Requirements({"GW_RETENTION_0004", "GW_RETENTION_0005"})
     public PassResult compact(String actor) {
         List<Snapshot> due = snapshotRepository.duePurge(Instant.now(), properties.batchSize());
         Set<String> touched = new LinkedHashSet<>();
@@ -254,7 +254,7 @@ public class RetentionService {
             auditLogger.record(actor, marketplace, "snapshot-purged", snapshot.sha());
         }
         touched.forEach(marketplace -> collectGarbage(GitStorage.Role.QUARANTINE, marketplace));
-        // The other thing this pass reclaims, on the other side of the estate (GW_0168). Its own
+        // The other thing this pass reclaims, on the other side of the estate (GW_FACADE_0019). Its own
         // failures are its own: a sweep that cannot read the published side must not turn a
         // completed purge into a failed compaction pass.
         try {
@@ -267,7 +267,7 @@ public class RetentionService {
 
     /**
      * Removes publication staging references that no publication is going to finish, and reclaims
-     * what they were holding (GW_0168).
+     * what they were holding (GW_FACADE_0019).
      *
      * <p>Publication stages a snapshot's objects in the published repository under
      * {@code refs/staging/<sha>} and only then moves the served references, so that a transfer
@@ -297,7 +297,7 @@ public class RetentionService {
      * query. That ordering closes today's window on its own; the age bound is what keeps it closed
      * when the publication path changes.
      */
-    @Requirements({"GW_0168"})
+    @Requirements({"GW_FACADE_0019"})
     public PassResult sweepStagingRefs(String actor) {
         if (!properties.stagingSweepEnabled()) {
             return new PassResult(0, 0);
@@ -421,13 +421,13 @@ public class RetentionService {
     }
 
     /**
-     * Checked (GW_0136). The purge order is remove-the-pin, delete the row, then write the
+     * Checked (GW_RETENTION_0007). The purge order is remove-the-pin, delete the row, then write the
      * {@code snapshot-purged} ledger entry — so a deletion that was refused and returned quietly
      * left the pin in place while the row went away. Nothing would ever revisit it: the content
      * would be retained forever, garbage collection would reclaim nothing, and the ledger would
      * assert a deletion that did not happen. Raising here stops the purge before the row is gone.
      */
-    @Requirements({"GW_0136"})
+    @Requirements({"GW_RETENTION_0007"})
     private static void delete(Repository repository, String ref) throws IOException {
         RefTransitions.delete(repository, ref);
     }

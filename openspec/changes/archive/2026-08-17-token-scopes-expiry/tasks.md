@@ -2,9 +2,9 @@
 
 ## 1. Traceability (SSOT first)
 
-- [x] 1.1 GW_0064–GW_0067 in `docs/reqstool/requirements.yml` (scopes;
+- [x] 1.1 GW_AUTH_0006–GW_AUTH_0009 in `docs/reqstool/requirements.yml` (scopes;
       expiry; rotation; attribution).
-- [x] 1.2 SVC_GW_0064–SVC_GW_0067 in
+- [x] 1.2 SVC_GW_AUTH_0006–SVC_GW_AUTH_0009 in
       `docs/reqstool/software_verification_cases.yml`.
 
 ## 2. Schema

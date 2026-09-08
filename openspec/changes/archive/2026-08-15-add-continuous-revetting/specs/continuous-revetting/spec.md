@@ -10,44 +10,44 @@ run and transition, and the portal surface a reviewer answers a revocation from.
 
 ## ADDED Requirements
 
-### Requirement: GW_0049
-The system SHALL implement GW_0049.
+### Requirement: GW_VETTING_0012
+The system SHALL implement GW_VETTING_0012.
 
-#### Scenario: SVC_GW_0049
-The system SHALL pass SVC_GW_0049.
+#### Scenario: SVC_GW_VETTING_0012
+The system SHALL pass SVC_GW_VETTING_0012.
 
-### Requirement: GW_0050
-The system SHALL implement GW_0050.
+### Requirement: GW_VETTING_0013
+The system SHALL implement GW_VETTING_0013.
 
-#### Scenario: SVC_GW_0050
-The system SHALL pass SVC_GW_0050.
+#### Scenario: SVC_GW_VETTING_0013
+The system SHALL pass SVC_GW_VETTING_0013.
 
-### Requirement: GW_0051
-The system SHALL implement GW_0051.
+### Requirement: GW_VETTING_0014
+The system SHALL implement GW_VETTING_0014.
 
-#### Scenario: SVC_GW_0051
-The system SHALL pass SVC_GW_0051.
+#### Scenario: SVC_GW_VETTING_0014
+The system SHALL pass SVC_GW_VETTING_0014.
 
-### Requirement: GW_0052
-The system SHALL implement GW_0052.
+### Requirement: GW_VETTING_0015
+The system SHALL implement GW_VETTING_0015.
 
-#### Scenario: SVC_GW_0052
-The system SHALL pass SVC_GW_0052.
+#### Scenario: SVC_GW_VETTING_0015
+The system SHALL pass SVC_GW_VETTING_0015.
 
-### Requirement: GW_0053
-The system SHALL implement GW_0053.
+### Requirement: GW_VETTING_0016
+The system SHALL implement GW_VETTING_0016.
 
-#### Scenario: SVC_GW_0053
-The system SHALL pass SVC_GW_0053.
+#### Scenario: SVC_GW_VETTING_0016
+The system SHALL pass SVC_GW_VETTING_0016.
 
-### Requirement: GW_0054
-The system SHALL implement GW_0054.
+### Requirement: GW_VETTING_0017
+The system SHALL implement GW_VETTING_0017.
 
-#### Scenario: SVC_GW_0054
-The system SHALL pass SVC_GW_0054.
+#### Scenario: SVC_GW_VETTING_0017
+The system SHALL pass SVC_GW_VETTING_0017.
 
-### Requirement: GW_0055
-The system SHALL implement GW_0055.
+### Requirement: GW_VETTING_0018
+The system SHALL implement GW_VETTING_0018.
 
-#### Scenario: SVC_GW_0055
-The system SHALL pass SVC_GW_0055.
+#### Scenario: SVC_GW_VETTING_0018
+The system SHALL pass SVC_GW_VETTING_0018.

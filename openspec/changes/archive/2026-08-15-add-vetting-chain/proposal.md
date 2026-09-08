@@ -56,7 +56,7 @@ decision. It is the foundation for waivers (#28) and continuous re-vetting (#24)
   verdicts and findings; the marketplaces page requires a reason before approving a blocked
   snapshot.
 - **Configuration**: `skills-gateway.vetting.timeout` and `skills-gateway.vetting.max-file-bytes`.
-- New requirements GW_0037–GW_0043 with SVC_GW_0037–SVC_GW_0043.
+- New requirements GW_VETTING_0001–GW_VETTING_0006 with SVC_GW_VETTING_0001–SVC_GW_VETTING_0006.
 
 Out of v1, recorded as follow-ons in `design.md`: malware scanning, the LLM semantic-review
 connector (promptfoo, ARCHITECTURE.md §14.2), the external webhook/async connector, waivers
@@ -66,17 +66,17 @@ connector (promptfoo, ARCHITECTURE.md §14.2), the external webhook/async connec
 
 ### New Capabilities
 
-- `snapshot-vetting`: the ordered connector chain at ingestion (GW_0037), fail-closed
-  aggregation including connector crashes (GW_0038), the secret-scanning connector (GW_0039),
-  the prompt-injection heuristic connector (GW_0040), the approval gate with a recorded
-  reviewer override (GW_0041), the portal verdict surface (GW_0042), and the ledger record of
-  runs, verdicts and overrides (GW_0043).
+- `snapshot-vetting`: the ordered connector chain at ingestion (GW_VETTING_0001), fail-closed
+  aggregation including connector crashes (GW_VETTING_0002), the secret-scanning connector (GW_VETTING_0003),
+  the prompt-injection heuristic connector (GW_VETTING_0004), the approval gate with a recorded
+  reviewer override (GW_APPROVAL_0003), the portal verdict surface (GW_VETTING_0005), and the ledger record of
+  runs, verdicts and overrides (GW_VETTING_0006).
 
 ### Modified Capabilities
 
-(none — no existing requirement text changes. `GW_0005` (approval) keeps its meaning: the
+(none — no existing requirement text changes. `GW_APPROVAL_0002` (approval) keeps its meaning: the
 gate is an additional precondition on approving, not a change to what approval does, and
-`GW_0004` (held until approved) is strengthened rather than altered.)
+`GW_APPROVAL_0001` (held until approved) is strengthened rather than altered.)
 
 ## Impact
 

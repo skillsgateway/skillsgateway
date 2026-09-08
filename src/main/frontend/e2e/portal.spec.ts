@@ -12,7 +12,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 
 async function login(page: Page, username: string) {
   await page.goto("/");
-  // The gateway redirects unauthenticated browsers to the IdP (GW_0011).
+  // The gateway redirects unauthenticated browsers to the IdP (GW_AUTH_0002).
   await page.waitForURL(/9090/);
   await page.getByPlaceholder(/enter any user/i).fill(username);
   await page.getByRole("button", { name: /sign.?in/i }).click();
@@ -62,7 +62,7 @@ function marketplaceRegion(page: Page, name: string): Locator {
 }
 
 /**
- * @SVCs SVC_GW_0018
+ * @SVCs SVC_GW_INGEST_0007
  */
 test("admin_registers_ingests_and_approves_a_marketplace_in_the_portal", async ({ page }) => {
   await login(page, "alice");
@@ -86,7 +86,7 @@ test("admin_registers_ingests_and_approves_a_marketplace_in_the_portal", async (
   await region.getByRole("button", { name: `Ingest ${name}` }).click();
   await expect(region.getByText("held", { exact: true })).toBeVisible();
 
-  // Approval goes through the review dialog: the reviewer sees the verdicts first (GW_0042).
+  // Approval goes through the review dialog: the reviewer sees the verdicts first (GW_VETTING_0005).
   await region.getByRole("button", { name: /Approve snapshot \d+/ }).click();
   await page.getByRole("button", { name: /Confirm approval of snapshot \d+/ }).click();
   await expect(region.getByText("approved", { exact: true })).toBeVisible();
@@ -97,12 +97,12 @@ test("admin_registers_ingests_and_approves_a_marketplace_in_the_portal", async (
   await expect(dialog.getByText("alice")).toBeVisible();
   await page.keyboard.press("Escape");
 
-  // Detail view: the snapshot's plugin/skill inventory (GW_0020).
+  // Detail view: the snapshot's plugin/skill inventory (GW_INGEST_0008).
   await page.getByRole("link", { name, exact: true }).click();
   await page.getByRole("button", { name: /Show contents of snapshot \d+/ }).click();
   await expect(page.getByText("hello", { exact: true }).first()).toBeVisible();
 
-  // Beside it, what approving it would change (GW_0153). This marketplace has exactly one
+  // Beside it, what approving it would change (GW_INGEST_0022). This marketplace has exactly one
   // snapshot — the one on screen — so there is no approved baseline, and the panel says so
   // rather than rendering an empty diff.
   await expect(
@@ -111,7 +111,7 @@ test("admin_registers_ingests_and_approves_a_marketplace_in_the_portal", async (
 });
 
 /**
- * Separation of duties as a lone administrator meets it, in a real browser (GW_0097).
+ * Separation of duties as a lone administrator meets it, in a real browser (GW_APPROVAL_0011).
  *
  * One identity registers the marketplace, pulls the content and then opens the review dialog —
  * which is the whole point of this test running against the acceptance deployment's default
@@ -120,7 +120,7 @@ test("admin_registers_ingests_and_approves_a_marketplace_in_the_portal", async (
  * unapprovable the moment a single-person deployment upgrades. The refusal half of the rule is
  * a deployment mode this suite's one mock-IdP identity cannot exercise; it is verified over HTTP.
  *
- * @SVCs SVC_GW_0097
+ * @SVCs SVC_GW_APPROVAL_0011
  */
 test("the_approve_dialog_warns_that_the_reviewer_supplied_the_content_and_still_allows_it", async ({
   page,
@@ -154,7 +154,7 @@ test("the_approve_dialog_warns_that_the_reviewer_supplied_the_content_and_still_
 });
 
 /**
- * @SVCs SVC_GW_0019
+ * @SVCs SVC_GW_AUTH_0005
  */
 test("token_cleartext_is_shown_once_and_revocation_marks_it_revoked", async ({ page }) => {
   await login(page, "alice");
@@ -183,7 +183,7 @@ test("token_cleartext_is_shown_once_and_revocation_marks_it_revoked", async ({ p
 });
 
 /**
- * @SVCs SVC_GW_0026
+ * @SVCs SVC_GW_WEBHOOK_0004
  */
 test("webhooks_page_lists_subscribers_and_delivery_attempts", async ({ page }) => {
   await login(page, "alice");
@@ -223,7 +223,7 @@ test("webhooks_page_lists_subscribers_and_delivery_attempts", async ({ page }) =
 });
 
 /**
- * @SVCs SVC_GW_0036
+ * @SVCs SVC_GW_RETENTION_0006
  */
 test("snapshot_soft_delete_and_restore_in_the_portal", async ({ page }) => {
   await login(page, "alice");
@@ -254,7 +254,7 @@ test("snapshot_soft_delete_and_restore_in_the_portal", async ({ page }) => {
 });
 
 /**
- * @SVCs SVC_GW_0030
+ * @SVCs SVC_GW_AUDIT_0006
  */
 test("audit_page_exports_the_ledger_and_lists_sinks", async ({ page }) => {
   await login(page, "alice");
@@ -364,7 +364,7 @@ async function waiveAllFindings(dialog: Locator) {
 }
 
 /**
- * @SVCs SVC_GW_0042
+ * @SVCs SVC_GW_VETTING_0005
  */
 test("vetting_verdicts_are_shown_and_a_blocked_snapshot_cannot_be_approved", async ({ page }) => {
   await login(page, "alice");
@@ -386,7 +386,7 @@ test("vetting_verdicts_are_shown_and_a_blocked_snapshot_cannot_be_approved", asy
 });
 
 /**
- * @SVCs SVC_GW_0047
+ * @SVCs SVC_GW_VETTING_0010
  */
 test("a_finding_is_waived_from_the_review_surface_and_the_waiver_is_listed", async ({ page }) => {
   await login(page, "alice");
@@ -420,7 +420,7 @@ test("a_finding_is_waived_from_the_review_surface_and_the_waiver_is_listed", asy
  * its own — so the acceptance test drives it the way an operator would, and checks the two things
  * an operator needs afterwards: why it went, and who already had it.
  *
- * @SVCs SVC_GW_0055
+ * @SVCs SVC_GW_VETTING_0018
  */
 test("a_revoked_snapshot_shows_its_violation_and_who_had_already_fetched_it", async ({ page }) => {
   await login(page, "alice");
@@ -475,7 +475,7 @@ test("a_revoked_snapshot_shows_its_violation_and_who_had_already_fetched_it", as
 });
 
 /**
- * @SVCs SVC_GW_0078
+ * @SVCs SVC_GW_OBSERVABILITY_0004
  */
 test("adoption_page_shows_a_real_facade_fetch_and_its_identity", async ({ page }) => {
   await login(page, "alice");
@@ -530,7 +530,7 @@ test("adoption_page_shows_a_real_facade_fetch_and_its_identity", async ({ page }
  * The setup wizard composes everything a client needs from the page's own origin, and holds the
  * show-once line: a token minted inside it fills the snippets only while the wizard is open.
  *
- * @SVCs SVC_GW_0079
+ * @SVCs SVC_GW_AUTH_0014
  */
 test("setup_wizard_composes_origin_derived_commands_and_holds_show_once", async ({ page }) => {
   await login(page, "alice");
@@ -576,7 +576,7 @@ test("setup_wizard_composes_origin_derived_commands_and_holds_show_once", async 
  * upstream fixture (modify the skill, add a file), re-ingest, and inspect the held snapshot —
  * tree, inertly rendered SKILL.md, and the diff naming the served baseline's changes.
  *
- * @SVCs SVC_GW_0082
+ * @SVCs SVC_GW_APPROVAL_0005
  */
 test("preview_pane_shows_tree_inert_skill_md_and_diff_vs_served", async ({ page }) => {
   const upstream = process.env.E2E_PREVIEW_UPSTREAM_DIR;
@@ -660,7 +660,7 @@ test("preview_pane_shows_tree_inert_skill_md_and_diff_vs_served", async ({ page 
  * every test above already depends on this path. Here it is named: the session
  * holds admin, and its source is the claim rather than a grant row.
  *
- * @SVCs SVC_GW_0098, SVC_GW_0138
+ * @SVCs SVC_GW_AUTH_0015, SVC_GW_AUTH_0025
  */
 test("the_session_holds_an_admin_role_derived_from_the_identity_providers_group_claim", async ({
   page,
@@ -672,7 +672,7 @@ test("the_session_holds_an_admin_role_derived_from_the_identity_providers_group_
   const body = await me.json();
 
   // Authorization is always enforced, so there is no flag to report and its absence is the
-  // assertion (GW_0138). The role below is what proves enforcement reached a real login.
+  // assertion (GW_AUTH_0025). The role below is what proves enforcement reached a real login.
   expect(body.rolesEnabled).toBeUndefined();
   expect(body.claimsTruncated).toBe(false);
   expect(body.roles).toContainEqual({ role: "admin", marketplace: null, source: "claim" });

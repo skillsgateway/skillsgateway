@@ -12,7 +12,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
 /**
- * Persistence of waivers (GW_0044). Rows are only ever inserted, revoked, or stamped by the expiry
+ * Persistence of waivers (GW_VETTING_0007). Rows are only ever inserted, revoked, or stamped by the expiry
  * sweep — a waiver's rule, scope, justification, approver and expiry are immutable once written, so
  * that "what was accepted" cannot be edited after the fact into something the approver never
  * agreed to. Changing an acceptance means revoking it and writing a new one, which leaves both in
@@ -32,7 +32,7 @@ public class WaiverRepository {
         this.jdbc = jdbc;
     }
 
-    @Requirements({"GW_0125"})
+    @Requirements({"GW_FACADE_0009"})
     public Waiver create(
             long marketplaceId,
             String ruleId,

@@ -16,7 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * The machine API chain's authentication filter (GW_0127): reads {@code Authorization: Bearer},
+ * The machine API chain's authentication filter (GW_AUTH_0021): reads {@code Authorization: Bearer},
  * authenticates it, and holds the result for this request only.
  *
  * <p>Three properties this filter exists to guarantee, none of which is a configuration option:
@@ -49,7 +49,7 @@ public class MachineApiAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    @Requirements({"GW_0127"})
+    @Requirements({"GW_AUTH_0021"})
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
         if (request.getHeader(HttpHeaders.COOKIE) != null) {

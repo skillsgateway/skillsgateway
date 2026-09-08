@@ -32,7 +32,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * The composite snapshot (GW_0156) built against an in-memory repository, so the whole
+ * The composite snapshot (GW_INGEST_0024) built against an in-memory repository, so the whole
  * transformation is exercised without a database, a Spring context or a network.
  *
  * <p>The claims worth proving here are all structural. The rewritten manifest must point only
@@ -41,7 +41,7 @@ import org.junit.jupiter.api.Test;
  * run; the same inputs must give the same SHA, because the ingestion dedupe is built on it; and
  * every way manifest-supplied names could decide where content is written must fail closed.
  *
- * <p>The last test is the GW_0152 post-condition: the composite is put through the same local-only
+ * <p>The last test is the GW_INGEST_0021 post-condition: the composite is put through the same local-only
  * gate that rejected the original, so a rewrite that missed a source cannot be served.
  */
 class ManifestRewriterTests {
@@ -76,7 +76,7 @@ class ManifestRewriterTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0156"})
+    @SVCs({"SVC_GW_INGEST_0024"})
     void the_rewritten_manifest_points_only_inside_the_commit() throws Exception {
         RevCommit upstream = upstream(UPSTREAM_MANIFEST, Map.of("plugins/hello/skills/hi/SKILL.md", "# hi\n"));
         ObjectId pluginTree = tree(Map.of("skills/tool/SKILL.md", "# tool\n"));
@@ -94,7 +94,7 @@ class ManifestRewriterTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0156"})
+    @SVCs({"SVC_GW_INGEST_0024"})
     void the_grafted_content_is_present_under_the_reserved_directory() throws Exception {
         RevCommit upstream = upstream(UPSTREAM_MANIFEST, Map.of("plugins/hello/skills/hi/SKILL.md", "# hi\n"));
         ObjectId pluginTree = tree(Map.of("skills/tool/SKILL.md", "# tool\n", "README.md", "tools\n"));
@@ -109,7 +109,7 @@ class ManifestRewriterTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0156"})
+    @SVCs({"SVC_GW_INGEST_0024"})
     void the_upstream_commit_is_the_parent_and_its_manifest_stays_byte_exact() throws Exception {
         RevCommit upstream = upstream(UPSTREAM_MANIFEST, Map.of());
         Rewrite rewrite = rewriter.rewrite(repository, upstream, List.of(graft("tools", tree(Map.of("a", "b")))));
@@ -125,7 +125,7 @@ class ManifestRewriterTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0156"})
+    @SVCs({"SVC_GW_INGEST_0024"})
     void the_commit_records_the_upstream_commit_each_source_and_the_transformer() throws Exception {
         RevCommit upstream = upstream(UPSTREAM_MANIFEST, Map.of());
         ObjectId resolved = ObjectId.fromString("1234567890123456789012345678901234567890");
@@ -147,7 +147,7 @@ class ManifestRewriterTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0156"})
+    @SVCs({"SVC_GW_INGEST_0024"})
     void the_same_inputs_produce_the_same_commit() throws Exception {
         RevCommit upstream = upstream(UPSTREAM_MANIFEST, Map.of());
         ObjectId pluginTree = tree(Map.of("skills/tool/SKILL.md", "# tool\n"));
@@ -161,7 +161,7 @@ class ManifestRewriterTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0156"})
+    @SVCs({"SVC_GW_INGEST_0024"})
     void a_different_resolved_commit_produces_a_different_composite() throws Exception {
         RevCommit upstream = upstream(UPSTREAM_MANIFEST, Map.of());
         ObjectId pluginTree = tree(Map.of("skills/tool/SKILL.md", "# tool\n"));
@@ -176,7 +176,7 @@ class ManifestRewriterTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0156"})
+    @SVCs({"SVC_GW_INGEST_0024"})
     void the_transformer_version_is_an_input_to_the_composite_identity() throws Exception {
         // Determinism is only a durable claim if the transformation is itself an input: a rewriter
         // that changed its output without changing the SHA would serve new content under a commit
@@ -194,7 +194,7 @@ class ManifestRewriterTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0156"})
+    @SVCs({"SVC_GW_INGEST_0024"})
     void a_reserved_directory_already_present_upstream_is_refused_with_no_commit() throws Exception {
         RevCommit upstream = upstream(UPSTREAM_MANIFEST, Map.of("_plugins/tools/SKILL.md", "# planted\n"));
 
@@ -205,7 +205,7 @@ class ManifestRewriterTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0156"})
+    @SVCs({"SVC_GW_INGEST_0024"})
     void a_plugin_name_that_is_not_a_single_lowercase_path_segment_is_refused_with_no_commit() throws Exception {
         ObjectId pluginTree = tree(Map.of("a", "b"));
 
@@ -227,7 +227,7 @@ class ManifestRewriterTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0156"})
+    @SVCs({"SVC_GW_INGEST_0024"})
     void two_external_plugins_sharing_a_name_are_refused_with_no_commit() throws Exception {
         RevCommit upstream = upstream(UPSTREAM_MANIFEST, Map.of());
         ObjectId pluginTree = tree(Map.of("a", "b"));
@@ -240,7 +240,7 @@ class ManifestRewriterTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0156"})
+    @SVCs({"SVC_GW_INGEST_0024"})
     void a_graft_for_a_plugin_the_manifest_does_not_declare_is_refused_with_no_commit() throws Exception {
         RevCommit upstream = upstream(UPSTREAM_MANIFEST, Map.of());
 
@@ -251,7 +251,7 @@ class ManifestRewriterTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0152", "SVC_GW_0156"})
+    @SVCs({"SVC_GW_INGEST_0021", "SVC_GW_INGEST_0024"})
     void the_composite_manifest_is_put_back_through_the_local_only_gate() throws Exception {
         // The post-condition, and the reason it is not merely a comment: a manifest declaring two
         // external sources with a graft for only one of them must not produce a servable commit.

@@ -29,7 +29,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 /**
  * The compliance export surface over the append-only ledger: a newline-delimited stream for pull
- * consumers (GW_0027) and cursor-tracking sinks for push consumers (GW_0028, GW_0029).
+ * consumers (GW_AUDIT_0003) and cursor-tracking sinks for push consumers (GW_AUDIT_0004, GW_AUDIT_0005).
  */
 @RestController
 @RequestMapping("/api/audit")
@@ -107,7 +107,7 @@ public class AuditController {
             long after) {}
 
     @GetMapping(value = "/export", produces = NDJSON)
-    @Requirements({"GW_0027"})
+    @Requirements({"GW_AUDIT_0003"})
     @Tag(name = "Audit")
     @Operation(
             summary = "Stream the audit ledger as NDJSON",
@@ -134,7 +134,7 @@ public class AuditController {
     }
 
     @PostMapping("/sinks")
-    @Requirements({"GW_0028"})
+    @Requirements({"GW_AUDIT_0004"})
     @Tag(name = "Audit")
     @Operation(
             summary = "Register an audit export sink",
@@ -182,7 +182,7 @@ public class AuditController {
     }
 
     @PutMapping("/sinks/{id}/cursor")
-    @Requirements({"GW_0029"})
+    @Requirements({"GW_AUDIT_0005"})
     @Tag(name = "Audit")
     @Operation(
             summary = "Set an audit export sink's ledger position",

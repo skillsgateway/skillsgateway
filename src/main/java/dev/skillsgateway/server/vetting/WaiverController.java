@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Waiver management (GW_0044, GW_0046, GW_0047): record an accepted risk against a finding, list
+ * Waiver management (GW_VETTING_0007, GW_VETTING_0009, GW_VETTING_0010): record an accepted risk against a finding, list
  * what a marketplace has accepted, and withdraw one.
  */
 @RestController
@@ -130,7 +130,7 @@ public class WaiverController {
             Instant expiresAt) {}
 
     @PostMapping("/snapshots/{id}/waivers")
-    @Requirements({"GW_0044"})
+    @Requirements({"GW_VETTING_0007"})
     @Tag(name = "Vetting")
     @Operation(
             summary = "Accept a vetting finding on this snapshot's marketplace",
@@ -163,7 +163,7 @@ public class WaiverController {
     }
 
     @GetMapping("/marketplaces/{name}/waivers")
-    @Requirements({"GW_0047"})
+    @Requirements({"GW_VETTING_0010"})
     @Tag(name = "Vetting")
     @Operation(
             summary = "A marketplace's vetting waivers",
@@ -183,7 +183,7 @@ public class WaiverController {
     }
 
     @DeleteMapping("/waivers/{id}")
-    @Requirements({"GW_0046"})
+    @Requirements({"GW_VETTING_0009"})
     @Tag(name = "Vetting")
     @Operation(
             summary = "Withdraw a waiver",

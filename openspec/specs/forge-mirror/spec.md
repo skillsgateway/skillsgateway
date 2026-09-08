@@ -11,50 +11,50 @@ divergence from the served content is reportable and bounded rather than
 open-ended, and a reconciliation refuses to act at all on a served reference set
 the system's own records contradict.
 ## Requirements
-### Requirement: GW_0169
-The system SHALL implement GW_0169.
+### Requirement: GW_FACADE_0020
+The system SHALL implement GW_FACADE_0020.
 
-#### Scenario: SVC_GW_0169
-The system SHALL pass SVC_GW_0169.
+#### Scenario: SVC_GW_FACADE_0020
+The system SHALL pass SVC_GW_FACADE_0020.
 
-### Requirement: GW_0170
-The system SHALL implement GW_0170.
+### Requirement: GW_FACADE_0021
+The system SHALL implement GW_FACADE_0021.
 
-#### Scenario: SVC_GW_0170
-The system SHALL pass SVC_GW_0170.
+#### Scenario: SVC_GW_FACADE_0021
+The system SHALL pass SVC_GW_FACADE_0021.
 
-### Requirement: GW_0171
-The system SHALL implement GW_0171.
+### Requirement: GW_FACADE_0022
+The system SHALL implement GW_FACADE_0022.
 
-#### Scenario: SVC_GW_0171
-The system SHALL pass SVC_GW_0171.
+#### Scenario: SVC_GW_FACADE_0022
+The system SHALL pass SVC_GW_FACADE_0022.
 
-### Requirement: GW_0172
-The system SHALL implement GW_0172.
+### Requirement: GW_FACADE_0023
+The system SHALL implement GW_FACADE_0023.
 
-#### Scenario: SVC_GW_0172
-The system SHALL pass SVC_GW_0172.
+#### Scenario: SVC_GW_FACADE_0023
+The system SHALL pass SVC_GW_FACADE_0023.
 
-### Requirement: GW_0190
-The system SHALL implement GW_0190.
+### Requirement: GW_FACADE_0025
+The system SHALL implement GW_FACADE_0025.
 
-#### Scenario: SVC_GW_0190
-The system SHALL pass SVC_GW_0190.
+#### Scenario: SVC_GW_FACADE_0025
+The system SHALL pass SVC_GW_FACADE_0025.
 
-### Requirement: GW_0191
-The system SHALL implement GW_0191.
+### Requirement: GW_FACADE_0026
+The system SHALL implement GW_FACADE_0026.
 
-#### Scenario: SVC_GW_0191
-The system SHALL pass SVC_GW_0191.
+#### Scenario: SVC_GW_FACADE_0026
+The system SHALL pass SVC_GW_FACADE_0026.
 
-### Requirement: GW_0192
-The system SHALL implement GW_0192.
+### Requirement: GW_FACADE_0027
+The system SHALL implement GW_FACADE_0027.
 
-#### Scenario: SVC_GW_0192
-The system SHALL pass SVC_GW_0192.
+#### Scenario: SVC_GW_FACADE_0027
+The system SHALL pass SVC_GW_FACADE_0027.
 
-### Requirement: GW_0193
-The system SHALL implement GW_0193.
+### Requirement: GW_FACADE_0028
+The system SHALL implement GW_FACADE_0028.
 
-#### Scenario: SVC_GW_0193
-The system SHALL pass SVC_GW_0193.
+#### Scenario: SVC_GW_FACADE_0028
+The system SHALL pass SVC_GW_FACADE_0028.

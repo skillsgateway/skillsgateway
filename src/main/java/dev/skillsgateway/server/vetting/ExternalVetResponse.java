@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
 /**
- * The normalized answer an external vetting connector returns (GW_0144, GW_0146): the
+ * The normalized answer an external vetting connector returns (GW_VETTING_0024, GW_VETTING_0026): the
  * {@code {verdict, report-url, findings[]}} of ARCHITECTURE.md §4, over the wire.
  *
  * <p>Unknown JSON properties are ignored so the contract can grow additively, but the fields it

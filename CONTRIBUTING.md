@@ -27,12 +27,19 @@
    Claude Code, or follow `openspec/` conventions manually): proposal, delta
    specs, design, tasks.
 2. New behavior gets a requirement + verification case in `docs/reqstool/`
-   (`GW_*` / `SVC_GW_*`) and traceability annotations in the code and tests.
-   A requirement covering several independently verifiable behaviors is written
-   as a parent with dot-notation children (`GW_0158.1`, `SVC_GW_0158.1`) linked
-   by `references.requirement_ids`, so one verdict per behavior is possible. A
+   (`GW_<DOMAIN>_NNNN` / `SVC_GW_<DOMAIN>_NNNN`) and traceability annotations in
+   the code and tests. The domain segment is one of the functional domains in
+   `.reqstool-ai.yaml`'s comment block (`INGEST`, `VETTING`, `AUTH`, `FACADE`,
+   `APPROVAL`, `AUDIT`, `WEBHOOK`, `RETENTION`, `RELEASE`, `ESTATE`,
+   `OBSERVABILITY`, `API`); pick the domain the behavior belongs to and continue
+   that domain's own sequence — ids are minted manually
+   (`req_prefix`/`svc_prefix` are blank in `.reqstool-ai.yaml`), there is no
+   single global counter to append to. A requirement covering several
+   independently verifiable behaviors is written as a parent with dot-notation
+   children (`GW_INGEST_0026.1`, `SVC_GW_INGEST_0026.1`) linked by
+   `references.requirement_ids`, so one verdict per behavior is possible. A
    requirement describing a single atomic behavior stays whole — length is not
-   the test. `GW_0158` is the worked example; issue #299 carries the rationale.
+   the test. `GW_INGEST_0026` is the worked example; issue #299 carries the rationale.
 3. Implement on a branch named `<type>/<kebab-description>`.
    Any change to behavior, the REST API, configuration, or the portal updates
    the affected pages under `docs/manual/` **in the same PR** — see

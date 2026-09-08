@@ -36,7 +36,7 @@ import org.springframework.web.server.ResponseStatusException;
  * <p>A sink owns nothing but its position in the ledger. A pass reads the entries after that
  * position, hands them to the lifecycle webhook delivery machinery as one signed delivery, and only
  * then advances the position — a crash in between re-sends the batch instead of skipping it, which
- * is exactly the at-least-once guarantee of GW_0028. Replay (GW_0029) is the same column written
+ * is exactly the at-least-once guarantee of GW_AUDIT_0004. Replay (GW_AUDIT_0005) is the same column written
  * backwards.
  */
 @Service
@@ -131,17 +131,17 @@ public class AuditExportService {
      * the cursor row that points at it. Nothing about signing, retry, or delivery recording is
      * re-implemented here.
      */
-    @Requirements({"GW_0028"})
+    @Requirements({"GW_AUDIT_0004"})
     public CreatedSink createWebhookSink(String name, String url, long cursorPosition, int batchSize) {
         return createWebhookSink(name, url, cursorPosition, batchSize, null);
     }
 
     /**
      * As {@link #createWebhookSink(String, String, long, int)}, with an operator-supplied signing
-     * secret when the caller is the estate reconciler (GW_0086); null generates one, as the API
+     * secret when the caller is the estate reconciler (GW_ESTATE_0004); null generates one, as the API
      * always does.
      */
-    @Requirements({"GW_0028"})
+    @Requirements({"GW_AUDIT_0004"})
     public CreatedSink createWebhookSink(String name, String url, long cursorPosition, int batchSize, String secret) {
         WebhookService.CreatedSubscriber subscriber =
                 webhookService.createSubscriber(name, url, WebhookEvent.AUDIT_EXPORT, secret);
@@ -159,14 +159,14 @@ public class AuditExportService {
     }
 
     /**
-     * The one sink registration path (GW_0028, GW_0086): validates the name, the target URL scheme
+     * The one sink registration path (GW_AUDIT_0004, GW_ESTATE_0004): validates the name, the target URL scheme
      * against the allowlist and the cross-namespace duplicate (a sink's delivery channel is a
      * webhook subscriber, so the two name spaces are one), clamps the batch size, registers, and
      * appends the ledger entry with the acting identity — whether the caller is the audit API
      * (null secret, generated show-once) or the estate reconciler (operator-supplied secret).
      * Statuses match the API contract; a non-HTTP caller reports the reason instead.
      */
-    @Requirements({"GW_0028"})
+    @Requirements({"GW_AUDIT_0004"})
     public CreatedSink registerSink(
             String name, String url, Long after, Integer batchSize, String secret, String actor) {
         if (name == null || !SINK_NAME.matcher(name).matches()) {
@@ -184,7 +184,7 @@ public class AuditExportService {
         return created;
     }
 
-    /** Converges a sink's batch size to a declared value (GW_0086); the clamp matches creation. */
+    /** Converges a sink's batch size to a declared value (GW_ESTATE_0004); the clamp matches creation. */
     public Optional<AuditSink> updateSinkBatchSize(long id, int batchSize) {
         return sinkRepository.updateBatchSize(id, Math.clamp(batchSize, 1, properties.maxPageSize()));
     }
@@ -243,9 +243,9 @@ public class AuditExportService {
 
     /**
      * Sets a sink's position; setting it back re-delivers everything after it on the next pass.
-     * Replay is deliberately a cursor write rather than a separate delivery mode (GW_0029).
+     * Replay is deliberately a cursor write rather than a separate delivery mode (GW_AUDIT_0005).
      */
-    @Requirements({"GW_0029"})
+    @Requirements({"GW_AUDIT_0005"})
     public Optional<AuditSink> resetCursor(long id, long cursorPosition) {
         return sinkRepository.updateCursor(id, Math.max(cursorPosition, 0));
     }
@@ -270,10 +270,10 @@ public class AuditExportService {
 
     /**
      * Streams the ledger entries in {@code (after, endCursor]} as newline-delimited JSON, one
-     * compact object per line in ledger order (GW_0027). The ledger is read in fixed chunks, so
+     * compact object per line in ledger order (GW_AUDIT_0003). The ledger is read in fixed chunks, so
      * memory is bounded by the chunk rather than by the requested page size.
      */
-    @Requirements({"GW_0027"})
+    @Requirements({"GW_AUDIT_0003"})
     public void streamNdjson(long after, long endCursor, OutputStream out) throws IOException {
         Instant cutoff = cutoff();
         long position = after;
@@ -311,9 +311,9 @@ public class AuditExportService {
 
     /**
      * Hands one sink the next batch after its cursor. The delivery row is durable before the cursor
-     * moves: a crash in between costs a duplicate, never a gap (GW_0028).
+     * moves: a crash in between costs a duplicate, never a gap (GW_AUDIT_0004).
      */
-    @Requirements({"GW_0028"})
+    @Requirements({"GW_AUDIT_0004"})
     public Optional<WebhookDelivery> exportBatch(AuditSink sink) {
         List<FetchLogRepository.AuditEntry> entries =
                 fetchLogRepository.entriesAfter(sink.cursorPosition(), cutoff(), sink.batchSize());
@@ -335,7 +335,7 @@ public class AuditExportService {
         return Optional.of(delivery);
     }
 
-    /** Entries younger than the settling lag are not exported yet; see GW_0028's rationale. */
+    /** Entries younger than the settling lag are not exported yet; see GW_AUDIT_0004's rationale. */
     private Instant cutoff() {
         return Instant.now().minus(properties.lag());
     }

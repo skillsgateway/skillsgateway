@@ -73,7 +73,7 @@ gate red, so the entries land with the code that satisfies them.
 
 ## 6. Portal
 
-- [ ] 6.1 A presence section on the existing adoption page (GW_0078 — *Adoption
+- [ ] 6.1 A presence section on the existing adoption page (GW_OBSERVABILITY_0004 — *Adoption
       page in the admin portal* keeps its scope; no new page), with loading, empty
       and error states, and the uniformity line above the table
 - [ ] 6.2 Storybook stories covering those states; JSDoc requirement tags

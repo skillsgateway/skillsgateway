@@ -24,7 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 /**
- * The identity half of ADR 0008 (GW_0104): a git credential a human gets from the session they
+ * The identity half of ADR 0008 (GW_AUTH_0018): a git credential a human gets from the session they
  * already have, whose life is the gateway's to set. What makes it not a personal access token
  * reached through a different URL is precisely that the caller cannot influence its lifetime — so
  * that is what most of this asserts.
@@ -52,7 +52,7 @@ class SessionCredentialTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0104"})
+    @SVCs({"SVC_GW_AUTH_0018"})
     void the_gateway_sets_the_lifetime_and_the_caller_cannot_move_it() throws Exception {
         Duration configured = properties.tokens().sessionTtl();
         Instant before = Instant.now();
@@ -70,7 +70,7 @@ class SessionCredentialTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0104"})
+    @SVCs({"SVC_GW_AUTH_0018"})
     void a_session_credential_is_marked_and_an_ordinary_token_is_not() throws Exception {
         String session = mint("{\"name\":\"laptop\"}");
         assertThat(JsonPath.<Boolean>read(session, "$.sessionDerived")).isTrue();
@@ -96,7 +96,7 @@ class SessionCredentialTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0104"})
+    @SVCs({"SVC_GW_AUTH_0018"})
     void it_fetches_like_any_credential_and_narrows_like_any_scope() throws Exception {
         Registered served = registerAndIngest(uniqueName("sessionfetch"), createUpstream(DEFAULT_MANIFEST));
         approve(served.snapshot().id());
@@ -118,7 +118,7 @@ class SessionCredentialTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0104"})
+    @SVCs({"SVC_GW_AUTH_0018"})
     void it_cannot_publish_to_a_hosted_marketplace() throws Exception {
         String hosted = uniqueName("sessionpush");
         marketplaceRepository.register(
@@ -147,7 +147,7 @@ class SessionCredentialTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0104"})
+    @SVCs({"SVC_GW_AUTH_0018"})
     void rotation_keeps_the_deadline_and_the_mark() throws Exception {
         String minted = mint("{\"name\":\"laptop\"}");
         long id = ((Number) JsonPath.read(minted, "$.id")).longValue();

@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
- * The vetting orchestrator (GW_0037, GW_0038, GW_0043). The gateway does not vet content itself —
+ * The vetting orchestrator (GW_VETTING_0001, GW_VETTING_0002, GW_VETTING_0006). The gateway does not vet content itself —
  * it runs the configured connectors in order against the quarantined, SHA-pinned snapshot,
  * normalizes their answers, records them against the snapshot, and aggregates them fail-closed.
  *
@@ -45,7 +45,7 @@ public class VettingService {
     private static final Logger log = LoggerFactory.getLogger(VettingService.class);
 
     /**
-     * The ledger principal of the automated vetting chain (GW_0128). The chain is the gateway's own
+     * The ledger principal of the automated vetting chain (GW_AUDIT_0007). The chain is the gateway's own
      * subsystem acting on its own, not a person, so its entries are typed {@link
      * dev.skillsgateway.server.persistence.ActorType#SYSTEM} — declared here and recognised by
      * {@code AdminAuditLogger}'s system-actor set, the one place a ledger entry's actor kind is
@@ -100,7 +100,7 @@ public class VettingService {
 
     /**
      * Identity of the chain as configured right now: {@code connector@version} for each connector,
-     * in chain order (GW_0049). Stamped on every run so that a changed answer about unchanged
+     * in chain order (GW_VETTING_0012). Stamped on every run so that a changed answer about unchanged
      * content can be attributed to the chain rather than guessed at.
      */
     public String chainIdentity() {
@@ -113,20 +113,20 @@ public class VettingService {
      * Runs the chain against a snapshot and records the run. Returns the aggregated outcome; the
      * snapshot's own state is untouched.
      */
-    @Requirements({"GW_0037", "GW_0038", "GW_0043"})
+    @Requirements({"GW_VETTING_0001", "GW_VETTING_0002", "GW_VETTING_0006"})
     public VettingChain.Outcome vet(Snapshot snapshot, String marketplace) {
         return run(snapshot, marketplace, VettingRepository.TRIGGER_INGESTION).outcome();
     }
 
     /**
-     * The ledger detail of one connector verdict (GW_0043). It leads with {@code connector=state}
+     * The ledger detail of one connector verdict (GW_VETTING_0006). It leads with {@code connector=state}
      * so the row is scannable, then carries the finding count and the worst severity present and a
      * reference to the chain run the verdict belongs to — so the ledger is auditable on its own
      * rather than as a pointer back into the vetting tables. For a clean pass with no findings it
-     * appends the connector's coverage statement (GW_0143), so a passing row still says what was
+     * appends the connector's coverage statement (GW_VETTING_0023), so a passing row still says what was
      * examined instead of only that nothing was found.
      */
-    @Requirements({"GW_0043", "GW_0142"})
+    @Requirements({"GW_VETTING_0006", "GW_VETTING_0022"})
     static String verdictDetail(VettingConnector connector, Verdict verdict, long runId) {
         String worst = verdict.findings().stream()
                 .map(Finding::severity)
@@ -159,7 +159,7 @@ public class VettingService {
      * verdict <em>means</em> is decided by {@code RevetService}, not here, so this method stays the
      * one place the chain executes.
      */
-    @Requirements({"GW_0037", "GW_0038", "GW_0043", "GW_0049"})
+    @Requirements({"GW_VETTING_0001", "GW_VETTING_0002", "GW_VETTING_0006", "GW_VETTING_0012"})
     public Run run(Snapshot snapshot, String marketplace, String trigger) {
         long runId = vettingRepository.startRun(snapshot.id(), trigger, chainIdentity());
         List<VerdictState> states = new ArrayList<>(connectors.size());
@@ -168,7 +168,7 @@ public class VettingService {
             for (VettingConnector connector : connectors) {
                 // A connector an administrator switched off for this marketplace is skipped, not
                 // run, and recorded as a distinct disabled verdict so the disablement is part of
-                // the run's evidence rather than a silently shorter chain (GW_0149). The
+                // the run's evidence rather than a silently shorter chain (GW_VETTING_0029). The
                 // aggregation counts it as neither clearing nor blocking.
                 Verdict verdict = toggleService.enabled(connector.name(), snapshot.marketplaceId())
                         ? runGuarded(connector, content)
@@ -206,7 +206,7 @@ public class VettingService {
     }
 
     /**
-     * The approval-pending announcement (GW_0159): a finished chain run over a snapshot that is
+     * The approval-pending announcement (GW_WEBHOOK_0006): a finished chain run over a snapshot that is
      * still held is what "waiting for a person" means concretely, so it is said as its own event
      * rather than left for a receiver to infer from {@code snapshot.vetted} — which also fires for
      * runs against approved content.
@@ -216,9 +216,9 @@ public class VettingService {
      *
      * <p>What travels is the <em>effective</em> outcome, the one that gates approval, so a receiver
      * can tell "approve will succeed" from "waive or fix first" without a follow-up call — and
-     * nothing beyond counts, connector names and identifiers (GW_0160).
+     * nothing beyond counts, connector names and identifiers (GW_WEBHOOK_0007).
      */
-    @Requirements({"GW_0159"})
+    @Requirements({"GW_WEBHOOK_0006"})
     private void announceIfAwaitingApproval(Snapshot snapshot, String marketplace, long runId) {
         if (!Snapshot.HELD.equals(snapshot.state())) {
             return;
@@ -253,7 +253,7 @@ public class VettingService {
      * One connector, with both failure modes closed: anything it throws becomes an error verdict,
      * and so does outrunning the configured timeout.
      */
-    @Requirements({"GW_0038"})
+    @Requirements({"GW_VETTING_0002"})
     private Verdict runGuarded(VettingConnector connector, SnapshotUnderVetting content) {
         Future<Verdict> future = executor.submit(() -> connector.vet(content));
         try {
@@ -292,14 +292,14 @@ public class VettingService {
 
     /**
      * Whether the chain itself objects to this snapshot, before any waiver is considered
-     * (GW_0038). A snapshot with no run at all is blocked: absence of evidence is not evidence of
+     * (GW_VETTING_0002). A snapshot with no run at all is blocked: absence of evidence is not evidence of
      * safety.
      *
      * <p>This is the <em>recorded</em> answer, not the one that gates an approval. The gate reads
      * the effective outcome from {@code WaiverService.evaluate}, which layers the waivers active
-     * at that instant over this run (GW_0045).
+     * at that instant over this run (GW_VETTING_0008).
      */
-    @Requirements({"GW_0038"})
+    @Requirements({"GW_VETTING_0002"})
     public boolean blocked(long snapshotId) {
         return vettingRepository
                 .latestRun(snapshotId)

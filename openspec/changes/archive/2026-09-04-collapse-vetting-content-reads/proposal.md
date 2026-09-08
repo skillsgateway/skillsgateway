@@ -14,10 +14,10 @@ chain walks and inflates the same tree three times:
 - `license-scan` reads a handful of `LICENSE`-shaped files and one manifest, and
   inflates the entire tree to find them.
 
-Adding an external connector — `GW_0144 — Operator-configured external vetting
+Adding an external connector — `GW_VETTING_0024 — Operator-configured external vetting
 connectors join the ordered chain` — adds a fourth full walk.
 
-This is not a one-off ingestion cost. `GW_0049 — Continuous re-vetting of
+This is not a one-off ingestion cost. `GW_VETTING_0012 — Continuous re-vetting of
 approved snapshots` re-runs the chain over already-approved content on a
 schedule, so the multiplier applies to the whole approved estate on every sweep.
 
@@ -25,7 +25,7 @@ Issue [#252](https://github.com/skillsgateway/skillsgateway/issues/252).
 
 ## What Changes
 
-- **A connector declares which paths it reads** — `GW_0162 — Bounded
+- **A connector declares which paths it reads** — `GW_VETTING_0030 — Bounded
   single-pass snapshot content access for a vetting chain run`.
   `SnapshotUnderVetting.walk(Predicate<String>, FileVisitor)` becomes the
   primitive; the existing single-argument `walk` is a default that selects
@@ -41,12 +41,12 @@ Issue [#252](https://github.com/skillsgateway/skillsgateway/issues/252).
   never in coverage. The bound is not a nicety — quarantined content is
   attacker-supplied, and an unbounded per-run cache would turn any large
   upstream repository into a memory-exhaustion primitive against the gateway.
-- Requirement GW_0162 with SVC_GW_0162.
+- Requirement GW_VETTING_0030 with SVC_GW_VETTING_0030.
 
 **No connector's verdict changes.** Every connector already filtered by path
 inside its visitor; the predicate moves that same test one step earlier. A file
 over `max-file-bytes` is still visited with `null` content, so the
-`file-not-scanned` findings that make a coverage gap visible — `GW_0143 — A
+`file-not-scanned` findings that make a coverage gap visible — `GW_VETTING_0023 — A
 clean vetting pass records what it examined` — are unaffected, and `license-scan` still records an oversized `LICENSE` as an
 explicit unknown.
 
@@ -59,7 +59,7 @@ _None._
 ### Modified Capabilities
 
 - `snapshot-vetting`: the snapshot view handed to connectors under
-  `GW_0037 — Ordered vetting connector chain at ingestion` gains a
+  `GW_VETTING_0001 — Ordered vetting connector chain at ingestion` gains a
   path selection applied before content is read, a single tree walk per chain
   run, and a bounded per-run reuse of content across the connectors of that run.
 

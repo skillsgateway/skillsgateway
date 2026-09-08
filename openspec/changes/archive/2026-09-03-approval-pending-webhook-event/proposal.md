@@ -23,13 +23,13 @@ be something #222 can later drive, without building any of #222 here.
 ## What Changes
 
 - **A new subscribable lifecycle event, `snapshot.approval_pending`
-  (GW_0159).** Emitted when a vetting chain run finishes against a snapshot that
+  (GW_WEBHOOK_0006).** Emitted when a vetting chain run finishes against a snapshot that
   is `held` — "vetting is complete and it is still waiting for a human" — beside
   the existing `snapshot.vetted` emit, and never for a snapshot in any other
   state. It joins `WebhookEvent.ALL`, so it is filterable, offered by
   `GET /api/webhooks/events`, and declarable in `skills-gateway.estate.webhooks`
   through the existing event-filter validation.
-- **A payload-rich emit path (GW_0160).** The event carries the seven fields
+- **A payload-rich emit path (GW_WEBHOOK_0007).** The event carries the seven fields
   every lifecycle event already carries plus a `vetting` object: the run id, the
   effective and recorded outcomes, the names of the blocking connectors, and how
   many findings are uncovered and how many are waived. Counts and connector
@@ -40,7 +40,7 @@ be something #222 can later drive, without building any of #222 here.
   meaning changes; a subscriber whose filter does not name the new event receives
   nothing new. Delivery keeps the dispatcher's existing contract (enqueue-only,
   at-least-once, no ordering guarantee).
-- Requirements GW_0159 and GW_0160, with SVC_GW_0159 and SVC_GW_0160.
+- Requirements GW_WEBHOOK_0006 and GW_WEBHOOK_0007, with SVC_GW_WEBHOOK_0006 and SVC_GW_WEBHOOK_0007.
 
 ## Capabilities
 
@@ -68,7 +68,7 @@ _None._
   `string[]` response. No new endpoint, no changed endpoint.
 - **Estate**: no new API-managed runtime state. The subscriber rows that
   reference the event are already reconciled by `skills-gateway.estate.webhooks`
-  (GW_0086), and their `events` filter is validated against the same registry,
+  (GW_ESTATE_0004), and their `events` filter is validated against the same registry,
   so the new event is declarable the day it exists — see design.md, "Estate
   configuration".
 - **Trust boundary**: the event announces that unapproved content exists; it must

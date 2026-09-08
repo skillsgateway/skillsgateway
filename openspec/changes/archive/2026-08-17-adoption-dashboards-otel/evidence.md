@@ -8,7 +8,7 @@ bottom.
 - Non-vacuity mutant (killed, then restored — verified by re-running the
   suite): the staleness comparison inverted to skip marketplaces that stopped
   serving (`tip.isEmpty() || …` instead of `tip.isPresent() && …`) →
-  `SVC_GW_0076` failed exactly on the after-retraction assertion
+  `SVC_GW_OBSERVABILITY_0002` failed exactly on the after-retraction assertion
   (`containsExactlyInAnyOrder(alice, bob)` found nothing). All three backend
   tests passed on their first full run otherwise; the mutant is the proof the
   load-bearing retraction assertion can fail.
@@ -25,7 +25,7 @@ bottom.
   fixed in its own commit (timestamps rendered localized where the portal
   convention is raw ISO-8601). No findings dismissed.
 - `arconia.otel.enabled=false` and the opt-in `observability` profile are
-  untouched; `SVC_GW_0077` asserts the meters exist under exactly that default.
+  untouched; `SVC_GW_OBSERVABILITY_0003` asserts the meters exist under exactly that default.
 
 ## Gates
 

@@ -22,8 +22,8 @@ import org.springframework.http.MediaType;
 
 /**
  * Effective authority is the <b>intersection</b> — the allowlist ∧ the credential's named scopes ∧
- * the principal's roles — never any two of them (GW_0130). The one-sided cases below are observable
- * because authorization is always enforced (GW_0138): each of them names a principal of its own
+ * the principal's roles — never any two of them (GW_AUTH_0023). The one-sided cases below are observable
+ * because authorization is always enforced (GW_AUTH_0025): each of them names a principal of its own
  * that holds exactly one half of the intersection, so the half it lacks is what refuses it.
  *
  * <p>The grantor it acts as, {@code owner}, is named for the whole family in {@link
@@ -49,7 +49,7 @@ class MachineRoleIntersectionTests extends AbstractNamedAdminsTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0130"})
+    @SVCs({"SVC_GW_AUTH_0023"})
     void a_scope_without_the_role_is_refused_and_so_is_the_role_without_the_scope() throws Exception {
         // Scope but no role: the allowlist admits it, RoleService does not.
         String unroled = uniqueName("scoped-only");
@@ -70,7 +70,7 @@ class MachineRoleIntersectionTests extends AbstractNamedAdminsTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0130"})
+    @SVCs({"SVC_GW_AUTH_0023"})
     void an_admin_granted_machine_credential_still_cannot_grant_a_role_or_approve() throws Exception {
         String principal = uniqueName("privileged");
         roleService.grant(principal, RoleGrant.ADMIN, null, "owner");
@@ -100,7 +100,7 @@ class MachineRoleIntersectionTests extends AbstractNamedAdminsTest {
      * today. Reconciliation attributes it to the gateway itself.
      */
     @Test
-    @SVCs({"SVC_GW_0130"})
+    @SVCs({"SVC_GW_AUTH_0023"})
     void the_declared_estate_can_grant_a_role_to_a_machine_principal() {
         String principal = uniqueName("declared");
         credential(principal, List.of("audit:read"));

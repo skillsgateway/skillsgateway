@@ -18,14 +18,14 @@ bottom.
   routes introspected from the running application's
   `RequestMappingHandlerMapping` — 24 mutation routes (21 role-gated, 3
   owner-scoped token routes). A mutation endpoint added later without a
-  deliberate classification fails `SVC_GW_0068` rather than shipping open.
+  deliberate classification fails `SVC_GW_AUTH_0010` rather than shipping open.
 - **Trust-boundary mutants** (both killed, then restored — restore verified
   via `git diff` showing zero `MUTANT` markers):
   1. `RoleService.requireAdmin` short-circuited (`if (true) return;`) →
      3 tests failed (deny walk: 403→404 leak-through; auditor mutation walk:
      403→200; grants admin-only: 403→201).
   2. Approver marketplace comparison removed from `approves(...)` →
-     `SVC_GW_0069` failed (cross-marketplace ingest 403→201).
+     `SVC_GW_AUTH_0011` failed (cross-marketplace ingest 403→201).
 - **No-existence-oracle property**: an unauthorized `require*` denies with the
   same 403 whether the addressed snapshot/waiver exists or not; only an admin
   falls through to the controller's 404.

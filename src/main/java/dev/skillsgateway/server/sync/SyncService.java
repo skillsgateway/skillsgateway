@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * The shared trigger path for sync-driven ingestion (GW_0056–GW_0060). Both automated triggers —
+ * The shared trigger path for sync-driven ingestion (GW_INGEST_0010–GW_INGEST_0014). Both automated triggers —
  * the polling sweep and the inbound webhook — land here, so every automated ingestion stamps the
  * attempt, writes the same ledger entry shape, and emits the same lifecycle event. Nothing in this
  * class touches approval or publication: a sync-triggered snapshot is held (or rejected by the
@@ -63,10 +63,10 @@ public class SyncService {
      * (re-)generates the secret — which is also the rotation mechanism — and leaving it discards
      * the key. The secret is returned exactly once, here; no read path ever exposes it.
      */
-    @Requirements({"GW_0056", "GW_0060", "GW_0101"})
+    @Requirements({"GW_INGEST_0010", "GW_INGEST_0014", "GW_FACADE_0006"})
     public Optional<ModeChange> changeMode(String name, String mode, String actor) {
         // A hosted marketplace has no upstream to poll or be notified about: its ingestion trigger
-        // is the push itself (GW_0101). The table's CHECK is the backstop; this is the answer.
+        // is the push itself (GW_FACADE_0006). The table's CHECK is the backstop; this is the answer.
         marketplaceRepository.findByName(name).filter(Marketplace::hosted).ifPresent(marketplace -> {
             throw new ResponseStatusException(
                     HttpStatus.UNPROCESSABLE_CONTENT,
@@ -84,11 +84,11 @@ public class SyncService {
     public record ModeChange(Marketplace marketplace, String webhookSecret) {}
 
     /**
-     * One polling sweep pass (GW_0057): the least recently attempted scheduled marketplaces, up to
+     * One polling sweep pass (GW_INGEST_0011): the least recently attempted scheduled marketplaces, up to
      * the batch bound. Every attempt is stamped, success or failure, so a dead upstream rotates to
      * the back of the queue instead of monopolizing it; one failure never stops the batch.
      */
-    @Requirements({"GW_0057"})
+    @Requirements({"GW_INGEST_0011"})
     public int sweep(int batchSize) {
         List<Marketplace> due = marketplaceRepository.dueScheduledSync(batchSize);
         int ingested = 0;
@@ -101,22 +101,22 @@ public class SyncService {
     }
 
     /**
-     * Queues the ingestion a validly signed webhook request asked for (GW_0058). Asynchronous so
+     * Queues the ingestion a validly signed webhook request asked for (GW_INGEST_0012). Asynchronous so
      * the forge gets its 202 before the upstream fetch runs, single-threaded so queued triggers
      * are serialized; the returned future exists for tests and is ignored by the controller.
      */
-    @Requirements({"GW_0058"})
+    @Requirements({"GW_INGEST_0012"})
     public CompletableFuture<Snapshot> queueWebhookIngest(Marketplace marketplace) {
         return CompletableFuture.supplyAsync(() -> ingest(marketplace, WEBHOOK_ACTOR), webhookExecutor);
     }
 
     /**
      * The one automated trigger path: ingest, stamp the attempt, audit with the trigger identity,
-     * emit the ordinary lifecycle event (GW_0059, GW_0060). A failure — typically an unreachable
+     * emit the ordinary lifecycle event (GW_INGEST_0013, GW_INGEST_0014). A failure — typically an unreachable
      * upstream — is logged and swallowed: it changes no snapshot state and no published ref, and
      * the facade keeps serving the last approved snapshot untouched.
      */
-    @Requirements({"GW_0059", "GW_0060"})
+    @Requirements({"GW_INGEST_0013", "GW_INGEST_0014"})
     private Snapshot ingest(Marketplace marketplace, String actor) {
         try {
             Snapshot snapshot = ingestionService.ingest(marketplace, actor);

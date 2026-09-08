@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Container-free verification of {@link SkillConformanceConnector} against the pinned Agent Skills
- * specification (GW_0167). No Spring context and no database: the connector is a pure function from
+ * specification (GW_INGEST_0028). No Spring context and no database: the connector is a pure function from
  * a snapshot's SKILL.md files to findings, so this is where every branch of it is pinned.
  *
  * <p>The adversarial half matters as much as the conformance half. Frontmatter comes from a
@@ -46,18 +46,18 @@ class SkillConformanceConnectorTests {
     // --- The conformant case ---------------------------------------------------------------------
 
     @Test
-    @SVCs({"SVC_GW_0167"})
+    @SVCs({"SVC_GW_INGEST_0028"})
     void aConformantSkillPassesWithNoFindings() {
         Verdict verdict = advisory().vet(snapshotOf(Map.of(PATH, CONFORMANT)));
 
         assertThat(verdict.state()).isEqualTo(VerdictState.PASS);
         assertThat(verdict.findings()).isEmpty();
-        // A clean pass still states what it examined (GW_0143), naming the pin it examined against.
+        // A clean pass still states what it examined (GW_VETTING_0023), naming the pin it examined against.
         assertThat(verdict.summary()).contains("scanned 1 SKILL.md file(s)").contains("agentskills-2026-08-04");
     }
 
     @Test
-    @SVCs({"SVC_GW_0167"})
+    @SVCs({"SVC_GW_INGEST_0028"})
     void aSnapshotWithNoSkillsPassesAndSaysSo() {
         Verdict verdict =
                 advisory().vet(snapshotOf(Map.of("README.md", "# nothing here", "docs/SKILL.md", "# not a skill")));
@@ -69,7 +69,7 @@ class SkillConformanceConnectorTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0167"})
+    @SVCs({"SVC_GW_INGEST_0028"})
     void onlyFilesInASkillDirectoryAreSelected() {
         assertThat(SkillConformanceConnector.skillDefinition("plugins/hello/skills/hello/SKILL.md"))
                 .isTrue();
@@ -87,7 +87,7 @@ class SkillConformanceConnectorTests {
     // --- Every required field, missing and malformed ---------------------------------------------
 
     @Test
-    @SVCs({"SVC_GW_0167"})
+    @SVCs({"SVC_GW_INGEST_0028"})
     void aSkillWithNoFrontmatterIsReportedAsSuch() {
         Verdict verdict = advisory().vet(snapshotOf(Map.of(PATH, "# Hello\n\nJust prose.\n")));
 
@@ -101,7 +101,7 @@ class SkillConformanceConnectorTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0167"})
+    @SVCs({"SVC_GW_INGEST_0028"})
     void eachRequiredFieldMissingIsItsOwnFinding() {
         assertThat(rules("---\ndescription: Says hello. Use when greeting.\nname: hello\n---\n"))
                 .isEmpty();
@@ -127,7 +127,7 @@ class SkillConformanceConnectorTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0167"})
+    @SVCs({"SVC_GW_INGEST_0028"})
     void eachConstraintOnNameIsCheckedSeparately() {
         assertThat(messages("---\nname: Hello\ndescription: d\n---\n"))
                 .anySatisfy(message -> assertThat(message).contains("must be lowercase"));
@@ -149,7 +149,7 @@ class SkillConformanceConnectorTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0167"})
+    @SVCs({"SVC_GW_INGEST_0028"})
     void eachConstraintOnTheOtherFieldsIsCheckedSeparately() {
         String base = "---\nname: hello\ndescription: %s\n---\n";
         assertThat(messages(base.formatted("d".repeat(1025))))
@@ -173,7 +173,7 @@ class SkillConformanceConnectorTests {
     // --- Unknown fields, by design, do not block --------------------------------------------------
 
     @Test
-    @SVCs({"SVC_GW_0167"})
+    @SVCs({"SVC_GW_INGEST_0028"})
     void anUnknownFieldIsInformationalUnderBothPostures() {
         String md = "---\nname: hello\ndescription: Says hello. Use when greeting.\nauthor: someone\n---\n";
 
@@ -196,7 +196,7 @@ class SkillConformanceConnectorTests {
     // --- Posture ----------------------------------------------------------------------------------
 
     @Test
-    @SVCs({"SVC_GW_0167"})
+    @SVCs({"SVC_GW_INGEST_0028"})
     void thePostureDecidesWhetherADefectBlocks() {
         Map<String, String> files = Map.of(PATH, "---\nname: hello\n---\n");
 
@@ -216,7 +216,7 @@ class SkillConformanceConnectorTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0167"})
+    @SVCs({"SVC_GW_INGEST_0028"})
     void aSkillTheConnectorCouldNotReadIsInformationalAdvisoryAndBlockingUnderEnforcement() {
         SnapshotUnderVetting oversize = snapshotOfBytes(PATH, null);
         assertThat(advisory().vet(oversize).findings()).singleElement().satisfies(finding -> {
@@ -240,7 +240,7 @@ class SkillConformanceConnectorTests {
     // --- Adversarial frontmatter ------------------------------------------------------------------
 
     @Test
-    @SVCs({"SVC_GW_0167"})
+    @SVCs({"SVC_GW_INGEST_0028"})
     void anAliasBombIsRefusedByTheLoaderRatherThanExpanded() {
         StringBuilder bomb = new StringBuilder("---\nl0: &l0 [x, x, x, x, x, x, x, x, x, x]\n");
         for (int level = 1; level <= 8; level++) {
@@ -261,7 +261,7 @@ class SkillConformanceConnectorTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0167"})
+    @SVCs({"SVC_GW_INGEST_0028"})
     void deeplyNestedFrontmatterIsRefusedByTheLoader() {
         String nested = "---\ndeep: %s%s\n---\n".formatted("[".repeat(200), "]".repeat(200));
 
@@ -273,7 +273,7 @@ class SkillConformanceConnectorTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0167"})
+    @SVCs({"SVC_GW_INGEST_0028"})
     void anOversizeFrontmatterBlockIsRefusedBeforeItIsParsed() {
         String huge = "---\ndescription: %s\n---\n".formatted("a".repeat(2 * 1024 * 1024));
 
@@ -285,7 +285,7 @@ class SkillConformanceConnectorTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0167"})
+    @SVCs({"SVC_GW_INGEST_0028"})
     void malformedYamlIsAFindingAndNeverAnExceptionOutOfTheConnector() {
         assertThat(onlyFinding(advisory().vet(snapshotOf(Map.of(PATH, "---\nname: [unclosed\n---\n")))))
                 .satisfies(finding -> {
@@ -299,7 +299,7 @@ class SkillConformanceConnectorTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0167"})
+    @SVCs({"SVC_GW_INGEST_0028"})
     void oneDefectiveSkillDoesNotStopTheOthersBeingExamined() {
         Map<String, String> files = new LinkedHashMap<>();
         files.put(PATH, CONFORMANT);

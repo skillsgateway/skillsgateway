@@ -13,7 +13,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 /**
- * The closure digest (GW_0164): the one value that has to be a function of exactly the closure's
+ * The closure digest (GW_INGEST_0030): the one value that has to be a function of exactly the closure's
  * content — no more, so that member order changes nothing, and no less, so that two closures
  * differing in any field never share one.
  */
@@ -43,20 +43,20 @@ class SnapshotClosureDigestTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_INGEST_0030"})
     void the_digest_is_a_sha256_hex_string() {
         assertThat(closure(member("tools")).digest()).matches("^[0-9a-f]{64}$");
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_INGEST_0030"})
     void the_same_closure_has_the_same_digest_whatever_the_member_order() {
         assertThat(closure(member("tools"), member("extra")).digest())
                 .isEqualTo(closure(member("extra"), member("tools")).digest());
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_INGEST_0030"})
     void the_empty_closure_has_a_digest_of_its_own() {
         String empty = closure().digest();
         assertThat(empty)
@@ -65,7 +65,7 @@ class SnapshotClosureDigestTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_INGEST_0030"})
     void the_upstream_commit_and_the_transformer_version_are_inputs() {
         String base = closure(member("tools")).digest();
         assertThat(new SnapshotClosure("d".repeat(40), "1", List.of(member("tools"))).digest())
@@ -75,7 +75,7 @@ class SnapshotClosureDigestTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_INGEST_0030"})
     void a_null_and_an_empty_declared_pin_are_different_closures() {
         Member unpinned = member("tools");
         Member emptyPin = new Member(
@@ -94,7 +94,7 @@ class SnapshotClosureDigestTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_INGEST_0030"})
     void two_members_cannot_be_confused_with_one_by_field_boundaries() {
         // A digest built by concatenation without framing would let "ab" + "c" collide with
         // "a" + "bc"; the plugin name and the source type are adjacent fields, so this is the
@@ -264,7 +264,7 @@ class SnapshotClosureDigestTests {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("fields")
-    @SVCs({"SVC_GW_0164"})
+    @SVCs({"SVC_GW_INGEST_0030"})
     void every_member_field_is_an_input(String field, UnaryOperator<Member> change) {
         Member original = member("tools");
         assertThat(closure(change.apply(original)).digest())

@@ -8,7 +8,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableConfigurationProperties(SkillsGatewayProperties.class)
-// Drives the webhook dispatcher's fixed-delay poll (GW_0025).
+// Drives the webhook dispatcher's fixed-delay poll (GW_WEBHOOK_0003).
 @EnableScheduling
 public class SkillsGatewayApplication {
 

@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Role grant management (GW_0071). Admin-only while enforcement is enabled; while disabled the
+ * Role grant management (GW_AUTH_0013). Admin-only while enforcement is enabled; while disabled the
  * grants are inert data any session may stage before flipping the switch — the flip itself is a
  * configuration decision, strictly more privileged than any API caller.
  */
@@ -67,11 +67,11 @@ public class RoleController {
                     + " enforcement is enabled.")
     @ApiResponse(responseCode = "200", description = "Current grants")
     @ApiResponse(responseCode = "403", description = "Enforcement is enabled and the caller is not an admin")
-    @Requirements({"GW_0071", "GW_0128", "GW_0129"})
+    @Requirements({"GW_AUTH_0013", "GW_AUDIT_0007", "GW_AUTH_0022"})
     public List<RoleGrant> list(Authentication authentication) {
         roleService.requireAdmin(authentication);
         List<RoleGrant> grants = roleGrantRepository.list();
-        // Every authorized read lands on the ledger (GW_0128) -- one rule, with no condition on
+        // Every authorized read lands on the ledger (GW_AUDIT_0007) -- one rule, with no condition on
         // what kind of principal read it. Reading who holds what authority has reconnaissance
         // value to a stolen credential, and denying the read would not prevent configuration
         // drift, only make it undetectable: the declared estate never prunes, so it cannot
@@ -83,7 +83,7 @@ public class RoleController {
     }
 
     @PostMapping("/roles")
-    @Requirements({"GW_0071"})
+    @Requirements({"GW_AUTH_0013"})
     @Tag(name = "Roles")
     @Operation(
             summary = "Grant a role",
@@ -107,7 +107,7 @@ public class RoleController {
     }
 
     @DeleteMapping("/roles/{id}")
-    @Requirements({"GW_0071"})
+    @Requirements({"GW_AUTH_0013"})
     @Tag(name = "Roles")
     @Operation(
             summary = "Revoke a role grant",

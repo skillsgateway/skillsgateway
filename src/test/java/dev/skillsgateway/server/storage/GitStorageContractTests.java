@@ -107,7 +107,7 @@ class GitStorageContractTests {
 
     @ParameterizedTest
     @MethodSource("backends")
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void theThreeRolesAreSeparateRepositories(Backend backend) throws IOException {
         String marketplace = marketplace();
         GitStorage storage = backend.storage();
@@ -130,7 +130,7 @@ class GitStorageContractTests {
 
     @ParameterizedTest
     @MethodSource("backends")
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void hostedIfPresentIsEmptyUntilTheOriginExists(Backend backend) throws IOException {
         String marketplace = marketplace();
         GitStorage storage = backend.storage();
@@ -148,7 +148,7 @@ class GitStorageContractTests {
 
     @ParameterizedTest
     @MethodSource("backends")
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void publishedIfServingIsEmptyUntilThereIsAServedTip(Backend backend) throws IOException {
         String marketplace = marketplace();
         GitStorage storage = backend.storage();
@@ -179,7 +179,7 @@ class GitStorageContractTests {
 
     @ParameterizedTest
     @MethodSource("backends")
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void everyCreatedRepositoryLinksHeadToMain(Backend backend) throws IOException {
         String marketplace = marketplace();
         GitStorage storage = backend.storage();
@@ -204,7 +204,7 @@ class GitStorageContractTests {
 
     @ParameterizedTest
     @MethodSource("backends")
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void publicationMakesExactlyTheTwoRefsAppear(Backend backend) throws IOException {
         String marketplace = marketplace();
         GitStorage storage = backend.storage();
@@ -235,7 +235,7 @@ class GitStorageContractTests {
      */
     @ParameterizedTest
     @MethodSource("backends")
-    @SVCs({"SVC_GW_0132"})
+    @SVCs({"SVC_GW_FACADE_0015"})
     void publicationTransfersObjectsAndLandsBothRefs(Backend backend) throws IOException {
         String marketplace = marketplace();
         GitStorage storage = backend.storage();
@@ -271,7 +271,7 @@ class GitStorageContractTests {
      */
     @ParameterizedTest
     @MethodSource("backends")
-    @SVCs({"SVC_GW_0132"})
+    @SVCs({"SVC_GW_FACADE_0015"})
     void aRefusedPublicationLeavesNothingOnTheWire(Backend backend) throws IOException {
         String marketplace = marketplace();
         GitStorage storage = backend.storage();
@@ -312,7 +312,7 @@ class GitStorageContractTests {
      */
     @ParameterizedTest
     @MethodSource("backends")
-    @SVCs({"SVC_GW_0132"})
+    @SVCs({"SVC_GW_FACADE_0015"})
     void aStaleStagingReferenceDoesNotBlockALaterPublication(Backend backend) throws IOException {
         String marketplace = marketplace();
         GitStorage storage = backend.storage();
@@ -342,7 +342,7 @@ class GitStorageContractTests {
 
     @ParameterizedTest
     @MethodSource("backends")
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void unpublishRemovesBothRefsAndReportsThatItStoppedTheServing(Backend backend) throws IOException {
         String marketplace = marketplace();
         GitStorage storage = backend.storage();
@@ -368,7 +368,7 @@ class GitStorageContractTests {
 
     @ParameterizedTest
     @MethodSource("backends")
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void unpublishOfASupersededSnapshotLeavesTheMarketplaceServing(Backend backend) throws IOException {
         String marketplace = marketplace();
         GitStorage storage = backend.storage();
@@ -402,7 +402,7 @@ class GitStorageContractTests {
 
     @ParameterizedTest
     @MethodSource("backends")
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void unpublishOfAMarketplaceThatNeverServedReportsThatItStoppedNothing(Backend backend) throws IOException {
         String marketplace = marketplace();
         GitStorage storage = backend.storage();
@@ -431,7 +431,7 @@ class GitStorageContractTests {
      */
     @ParameterizedTest
     @MethodSource("backends")
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void aRefusedRefTransitionIsRaisedNotSwallowed(Backend backend) throws IOException {
         String marketplace = marketplace();
         GitStorage storage = backend.storage();
@@ -460,7 +460,7 @@ class GitStorageContractTests {
 
     @ParameterizedTest
     @MethodSource("backends")
-    @SVCs({"SVC_GW_0112"})
+    @SVCs({"SVC_GW_FACADE_0011"})
     void theAtomicPushCapabilityIsAdvertised(Backend backend) throws IOException {
         String marketplace = marketplace();
         GitStorage storage = backend.storage();

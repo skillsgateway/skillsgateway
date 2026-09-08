@@ -8,20 +8,20 @@ freshness on every publication change, and its provenance and audit story.
 
 ## ADDED Requirements
 
-### Requirement: GW_0061
-The system SHALL implement GW_0061.
+### Requirement: GW_FACADE_0003
+The system SHALL implement GW_FACADE_0003.
 
-#### Scenario: SVC_GW_0061
-The system SHALL pass SVC_GW_0061.
+#### Scenario: SVC_GW_FACADE_0003
+The system SHALL pass SVC_GW_FACADE_0003.
 
-### Requirement: GW_0062
-The system SHALL implement GW_0062.
+### Requirement: GW_FACADE_0004
+The system SHALL implement GW_FACADE_0004.
 
-#### Scenario: SVC_GW_0062
-The system SHALL pass SVC_GW_0062.
+#### Scenario: SVC_GW_FACADE_0004
+The system SHALL pass SVC_GW_FACADE_0004.
 
-### Requirement: GW_0063
-The system SHALL implement GW_0063.
+### Requirement: GW_FACADE_0005
+The system SHALL implement GW_FACADE_0005.
 
-#### Scenario: SVC_GW_0063
-The system SHALL pass SVC_GW_0063.
+#### Scenario: SVC_GW_FACADE_0005
+The system SHALL pass SVC_GW_FACADE_0005.

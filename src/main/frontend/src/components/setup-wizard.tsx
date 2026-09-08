@@ -70,7 +70,7 @@ function Snippet({
  * the wizard stays open, and is gone when it closes — no previously issued secret is ever
  * displayed (the server never returns one, and this component never stores one).
  *
- * @Requirements GW_0079
+ * @Requirements GW_AUTH_0014
  */
 export function SetupWizard({ marketplace, onClose }: { marketplace: string; onClose: () => void }) {
   const create = useCreateToken();

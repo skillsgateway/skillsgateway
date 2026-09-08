@@ -2,14 +2,14 @@
 
 ## ADDED Requirements
 
-### Requirement: GW_0096
-The system SHALL implement GW_0096.
+### Requirement: GW_APPROVAL_0010
+The system SHALL implement GW_APPROVAL_0010.
 
-#### Scenario: SVC_GW_0096
-The system SHALL pass SVC_GW_0096.
+#### Scenario: SVC_GW_APPROVAL_0010
+The system SHALL pass SVC_GW_APPROVAL_0010.
 
-### Requirement: GW_0097
-The system SHALL implement GW_0097.
+### Requirement: GW_APPROVAL_0011
+The system SHALL implement GW_APPROVAL_0011.
 
-#### Scenario: SVC_GW_0097
-The system SHALL pass SVC_GW_0097.
+#### Scenario: SVC_GW_APPROVAL_0011
+The system SHALL pass SVC_GW_APPROVAL_0011.

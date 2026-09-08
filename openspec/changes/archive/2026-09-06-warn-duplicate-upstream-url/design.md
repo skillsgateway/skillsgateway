@@ -2,8 +2,8 @@
 
 ## Context
 
-`MarketplaceRegistrationService.register` is the one registration gate (GW_0001,
-GW_0063, GW_0084): the API and the estate reconciler both go through it, and its
+`MarketplaceRegistrationService.register` is the one registration gate (GW_INGEST_0001,
+GW_FACADE_0005, GW_ESTATE_0002): the API and the estate reconciler both go through it, and its
 existing checks — name pattern, reserved name, URL scheme allowlist, name
 conflict — all either pass or throw. Adding a check that must never throw is a
 new shape for this method.

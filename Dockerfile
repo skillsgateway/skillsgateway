@@ -50,7 +50,7 @@ ENV SKILLSGATEWAY_DATADIR=/data
 # Neither HOME nor XDG_CONFIG_HOME is otherwise set for this user, so on a
 # read-only root filesystem JGit resolves a path it cannot create and logs a
 # caught (non-fatal) error on every fetch. Point it at the one writable mount
-# every deployment already provides (GW_0179).
+# every deployment already provides (GW_FACADE_0024).
 ENV XDG_CONFIG_HOME=/tmp/xdg-config
 
 WORKDIR /app

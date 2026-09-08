@@ -27,16 +27,16 @@ public class WebhookSigner {
     /** Header carrying the attempt timestamp. */
     public static final String TIMESTAMP_HEADER = "X-Skills-Gateway-Timestamp";
 
-    @Requirements({"GW_0024"})
+    @Requirements({"GW_WEBHOOK_0002"})
     public String sign(String secret, String body) {
         return sign(secret, body.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
-     * Byte-exact form for inbound verification (GW_0058): the signature must be computed over the
+     * Byte-exact form for inbound verification (GW_INGEST_0012): the signature must be computed over the
      * bytes that arrived, not over a decode-re-encode of them.
      */
-    @Requirements({"GW_0058"})
+    @Requirements({"GW_INGEST_0012"})
     public String sign(String secret, byte[] body) {
         try {
             Mac mac = Mac.getInstance(ALGORITHM);

@@ -14,11 +14,11 @@
       the `upload-pack` row for A names `refs/snapshots/A`. **Prove it red**
       before any production edit, and paste the failure into `evidence.md`.
 
-## 2. The requirement (GW_0154 / SVC_GW_0154)
+## 2. The requirement (GW_FACADE_0018 / SVC_GW_FACADE_0018)
 
-- [x] 2.1 Add `GW_0154` to `docs/reqstool/requirements.yml` — the fetch ledger
+- [x] 2.1 Add `GW_FACADE_0018` to `docs/reqstool/requirements.yml` — the fetch ledger
       records the advertised ref a transferred want resolves to.
-- [x] 2.2 Add `SVC_GW_0154` to `docs/reqstool/software_verification_cases.yml`
+- [x] 2.2 Add `SVC_GW_FACADE_0018` to `docs/reqstool/software_verification_cases.yml`
       covering the superseded snapshot, the current tip, and the ambiguity rule.
 
 ## 3. Resolve the want against the advertised set
@@ -28,7 +28,7 @@
       Order: main's tip, then a `refs/snapshots/*` tip, then `null`.
 - [x] 3.2 Call it from `onSendPack` in place of the `SERVED_REF` constant.
       Leave the `info-refs` entry and the `SERVED_REFS` filter alone.
-- [x] 3.3 Annotate the hook with `@Requirements({"GW_0008", "GW_0154"})`.
+- [x] 3.3 Annotate the hook with `@Requirements({"GW_AUDIT_0001", "GW_FACADE_0018"})`.
 - [x] 3.4 Turn 1.3 green.
 
 ## 4. Prove the tests discriminate
@@ -38,7 +38,7 @@
       `refs/heads/main`; a want matching no advertised ref resolves to `null`;
       `HEAD` is never the recorded name.
 - [x] 4.2 Real-client test that an ordinary clone still records
-      `refs/heads/main` — the existing `SVC_GW_0008` assertion must keep
+      `refs/heads/main` — the existing `SVC_GW_AUDIT_0001` assertion must keep
       passing, unweakened.
 - [x] 4.3 Mutate the resolution to always return `SERVED_REF` and confirm the new
       tests fail; restore. Record the mutation result in `evidence.md`.

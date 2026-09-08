@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * Verification of continuous re-vetting in its default, warn-only mode (GW_0049, GW_0051).
+ * Verification of continuous re-vetting in its default, warn-only mode (GW_VETTING_0012, GW_VETTING_0014).
  *
  * <p>The property under attack here is that warn mode is genuinely inert. It is easy to write a
  * "grace mode" that still quietly changes something; these tests check the snapshot row, the
@@ -82,7 +82,7 @@ class RevetTests extends AbstractGatewayTest {
      * spike; one that took an arbitrary subset would starve whichever snapshots it never reached.
      */
     @Test
-    @SVCs({"SVC_GW_0049"})
+    @SVCs({"SVC_GW_VETTING_0012"})
     void theSweepRevetsTheLeastRecentlyVettedApprovedSnapshotsInBatches() throws Exception {
         Path upstream = createUpstream(DEFAULT_MANIFEST);
         Registered first = registerAndIngest(uniqueName("revetsweep1"), upstream);
@@ -154,7 +154,7 @@ class RevetTests extends AbstractGatewayTest {
      * mode that removed a ref and left the state behind.
      */
     @Test
-    @SVCs({"SVC_GW_0051"})
+    @SVCs({"SVC_GW_VETTING_0014"})
     void warnModeRecordsTheViolationAndNeverUnpublishes() throws Exception {
         assertThat(revetService.mode()).isEqualTo(SkillsGatewayProperties.RevetMode.WARN);
         Registered registered = approvedWithLapsedWaiver("revetwarn");

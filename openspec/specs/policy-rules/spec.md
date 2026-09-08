@@ -10,26 +10,26 @@ enforced.
 
 ## Requirements
 
-### Requirement: GW_0089
-The system SHALL implement GW_0089.
+### Requirement: GW_APPROVAL_0006
+The system SHALL implement GW_APPROVAL_0006.
 
-#### Scenario: SVC_GW_0089
-The system SHALL pass SVC_GW_0089.
+#### Scenario: SVC_GW_APPROVAL_0006
+The system SHALL pass SVC_GW_APPROVAL_0006.
 
-### Requirement: GW_0090
-The system SHALL implement GW_0090.
+### Requirement: GW_APPROVAL_0007
+The system SHALL implement GW_APPROVAL_0007.
 
-#### Scenario: SVC_GW_0090
-The system SHALL pass SVC_GW_0090.
+#### Scenario: SVC_GW_APPROVAL_0007
+The system SHALL pass SVC_GW_APPROVAL_0007.
 
-### Requirement: GW_0091
-The system SHALL implement GW_0091.
+### Requirement: GW_APPROVAL_0008
+The system SHALL implement GW_APPROVAL_0008.
 
-#### Scenario: SVC_GW_0091
-The system SHALL pass SVC_GW_0091.
+#### Scenario: SVC_GW_APPROVAL_0008
+The system SHALL pass SVC_GW_APPROVAL_0008.
 
-### Requirement: GW_0092
-The system SHALL implement GW_0092.
+### Requirement: GW_APPROVAL_0009
+The system SHALL implement GW_APPROVAL_0009.
 
-#### Scenario: SVC_GW_0092
-The system SHALL pass SVC_GW_0092.
+#### Scenario: SVC_GW_APPROVAL_0009
+The system SHALL pass SVC_GW_APPROVAL_0009.

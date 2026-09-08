@@ -1,9 +1,9 @@
 > **Re-validated against `main` at implementation time (2026-09-08).** Five facts
 > moved since this was written; each is corrected in place below and in design.md,
-> and the route is unchanged. In summary: the requirement ids GW_0145/GW_0146 were
-> taken by another change and became **GW_0181/GW_0182**; `WebhookEvent.ALL` now
+> and the route is unchanged. In summary: the requirement ids GW_VETTING_0025/GW_VETTING_0026 were
+> taken by another change and became **GW_API_0005/GW_API_0006**; `WebhookEvent.ALL` now
 > holds **nine** events, not eight; a **second** payload shape
-> (`ApprovalPendingPayload`, GW_0159/GW_0160) exists and already carries
+> (`ApprovalPendingPayload`, GW_WEBHOOK_0006/GW_WEBHOOK_0007) exists and already carries
 > `requiredMode = REQUIRED`; `.oasdiff.yaml` with a `severity-levels` file now
 > exists on `main` (#216), which retires one of design.md's rejected alternatives
 > as written; and **two pre-release tags now exist** (`0.2.0-b1`, `0.2.0-b2`), so
@@ -83,7 +83,7 @@ Not in this change, deliberately:
   with no human-readable published contract — the weaker of #121's two routes.
 - **`skills-gateway.estate.*` as a contract.** #121 asks in passing. Out of scope
   with a reason (design — Decisions).
-- **Inbound webhook verification** (GW_0058) and the signature *algorithm*. The
+- **Inbound webhook verification** (GW_INGEST_0012) and the signature *algorithm*. The
   headers are described; the HMAC construction stays prose in the guide, because a
   contract document can say a header exists but not how to compute it.
 
@@ -95,18 +95,18 @@ None.
 
 ### Modified Capabilities
 
-- `lifecycle-webhooks`: two new requirements — GW_0181 — The lifecycle event
-  deliveries are part of the published contract document; and GW_0182 — Breaking
+- `lifecycle-webhooks`: two new requirements — GW_API_0005 — The lifecycle event
+  deliveries are part of the published contract document; and GW_API_0006 — Breaking
   changes to the lifecycle event payload surface are detected and declared.
 
 ## Impact
 
 - **Requirements**: `docs/reqstool/requirements.yml` and
-  `software_verification_cases.yml` gain GW_0181/GW_0182 and
-  SVC_GW_0181/SVC_GW_0182. GW_0145/GW_0146 as originally proposed were taken while
+  `software_verification_cases.yml` gain GW_API_0005/GW_API_0006 and
+  SVC_GW_API_0005/SVC_GW_API_0006. GW_VETTING_0025/GW_VETTING_0026 as originally proposed were taken while
   this sat unmerged — they are now external-vetting-connector requirements on
   `main`, which is exactly the silent SSOT collision the original id gap was meant
-  to avoid. GW_0172 is the highest committed; GW_0173–GW_0180 are left to changes
+  to avoid. GW_FACADE_0023 is the highest committed; GW_0173–GW_0180 are left to changes
   in flight.
 - **Java**: `WebhookService.EventPayload` gains `requiredMode = REQUIRED` on its
   seven components; a new `OpenApiCustomizer` (alongside the existing

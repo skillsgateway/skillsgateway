@@ -20,9 +20,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * Verification of deterministic license detection (GW_0093) and the default — warn-only — policy
- * behavior (GW_0094), plus the license report endpoint under the default policy (GW_0095). The
- * configured-policy half of GW_0094/GW_0095 lives in {@link LicensePolicyTests}, which runs its own
+ * Verification of deterministic license detection (GW_VETTING_0019) and the default — warn-only — policy
+ * behavior (GW_VETTING_0020), plus the license report endpoint under the default policy (GW_VETTING_0021). The
+ * configured-policy half of GW_VETTING_0020/GW_VETTING_0021 lives in {@link LicensePolicyTests}, which runs its own
  * Spring context: the policy is a deployment decision, not settable per call.
  */
 class LicenseTests extends AbstractGatewayTest {
@@ -36,7 +36,7 @@ class LicenseTests extends AbstractGatewayTest {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Test
-    @SVCs({"SVC_GW_0093"})
+    @SVCs({"SVC_GW_VETTING_0019"})
     void licensesAreDetectedDeterministicallyFromFilesTagsAndManifest() throws Exception {
         String name = uniqueName("licdetect");
         Registered registered = registerAndIngest(
@@ -81,7 +81,7 @@ class LicenseTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0093", "SVC_GW_0094"})
+    @SVCs({"SVC_GW_VETTING_0019", "SVC_GW_VETTING_0020"})
     void anUnrecognizableLicenseIsUnknownAndWarnsWithoutBlockingUnderDefaults() throws Exception {
         Registered registered = registerAndIngest(
                 uniqueName("licunknown"),
@@ -100,7 +100,7 @@ class LicenseTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0093", "SVC_GW_0094"})
+    @SVCs({"SVC_GW_VETTING_0019", "SVC_GW_VETTING_0020"})
     void aSnapshotWithoutAnyLicenseInformationIsMissingAndWarnsUnderDefaults() throws Exception {
         Registered registered = registerAndIngest(uniqueName("licmissing"), createUpstream(DEFAULT_MANIFEST));
 
@@ -113,7 +113,7 @@ class LicenseTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0095"})
+    @SVCs({"SVC_GW_VETTING_0021"})
     void theLicenseEndpointReportsEveryDetectionAndAnswersNotFoundForAMissingSnapshot() throws Exception {
         Registered registered = registerAndIngest(
                 uniqueName("licapi"),

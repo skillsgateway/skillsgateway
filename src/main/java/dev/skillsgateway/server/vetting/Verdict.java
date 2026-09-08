@@ -12,7 +12,7 @@ import java.util.List;
  * @param reportUrl where a fuller report lives, for a connector that produces one
  * @param summary a non-empty, reviewer-facing statement of what this connector examined — the
  *     files it scanned and the rules it applied — recorded even for a clean pass so a pass is
- *     distinguishable in the ledger from a connector that never ran (GW_0143); may be {@code null}
+ *     distinguishable in the ledger from a connector that never ran (GW_VETTING_0023); may be {@code null}
  *     for an internally-derived verdict that examined nothing (an error, or a residual re-derivation
  *     over already-recorded findings)
  */
@@ -50,7 +50,7 @@ public record Verdict(
 
     /**
      * {@link #of(List)} carrying the connector's coverage {@code summary} — what it examined
-     * (GW_0143). A connector states this on every verdict it produces, including a clean pass, so
+     * (GW_VETTING_0023). A connector states this on every verdict it produces, including a clean pass, so
      * that "pass" is not indistinguishable from "did not run".
      */
     public static Verdict of(List<Finding> findings, String summary) {
@@ -67,7 +67,7 @@ public record Verdict(
 
     /**
      * The verdict recorded in place of a connector an administrator switched off for this
-     * marketplace (GW_0149). Carries an informational finding so the disablement is visible on the
+     * marketplace (GW_VETTING_0029). Carries an informational finding so the disablement is visible on the
      * run rather than being a silently shorter chain; INFO severity keeps it out of the block
      * decision, and {@link VerdictState#DISABLED} is neither clearing nor blocking regardless.
      */

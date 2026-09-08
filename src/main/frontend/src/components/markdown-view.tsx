@@ -51,7 +51,7 @@ const HEADING_SIZES = [
  * as visible text rather than as markup, and links render as non-navigating text: this surface
  * inspects content, it never executes or follows it.
  *
- * @Requirements GW_0082
+ * @Requirements GW_APPROVAL_0005
  */
 export function MarkdownView({ text }: { text: string }) {
   const lines = text.split("\n");

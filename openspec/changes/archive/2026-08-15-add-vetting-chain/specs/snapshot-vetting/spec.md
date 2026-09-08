@@ -7,44 +7,44 @@ the evidence in front of the reviewer, and the ledger record of every run, verdi
 
 ## ADDED Requirements
 
-### Requirement: GW_0037
-The system SHALL implement GW_0037.
+### Requirement: GW_VETTING_0001
+The system SHALL implement GW_VETTING_0001.
 
-#### Scenario: SVC_GW_0037
-The system SHALL pass SVC_GW_0037.
+#### Scenario: SVC_GW_VETTING_0001
+The system SHALL pass SVC_GW_VETTING_0001.
 
-### Requirement: GW_0038
-The system SHALL implement GW_0038.
+### Requirement: GW_VETTING_0002
+The system SHALL implement GW_VETTING_0002.
 
-#### Scenario: SVC_GW_0038
-The system SHALL pass SVC_GW_0038.
+#### Scenario: SVC_GW_VETTING_0002
+The system SHALL pass SVC_GW_VETTING_0002.
 
-### Requirement: GW_0039
-The system SHALL implement GW_0039.
+### Requirement: GW_VETTING_0003
+The system SHALL implement GW_VETTING_0003.
 
-#### Scenario: SVC_GW_0039
-The system SHALL pass SVC_GW_0039.
+#### Scenario: SVC_GW_VETTING_0003
+The system SHALL pass SVC_GW_VETTING_0003.
 
-### Requirement: GW_0040
-The system SHALL implement GW_0040.
+### Requirement: GW_VETTING_0004
+The system SHALL implement GW_VETTING_0004.
 
-#### Scenario: SVC_GW_0040
-The system SHALL pass SVC_GW_0040.
+#### Scenario: SVC_GW_VETTING_0004
+The system SHALL pass SVC_GW_VETTING_0004.
 
-### Requirement: GW_0041
-The system SHALL implement GW_0041.
+### Requirement: GW_APPROVAL_0003
+The system SHALL implement GW_APPROVAL_0003.
 
-#### Scenario: SVC_GW_0041
-The system SHALL pass SVC_GW_0041.
+#### Scenario: SVC_GW_APPROVAL_0003
+The system SHALL pass SVC_GW_APPROVAL_0003.
 
-### Requirement: GW_0042
-The system SHALL implement GW_0042.
+### Requirement: GW_VETTING_0005
+The system SHALL implement GW_VETTING_0005.
 
-#### Scenario: SVC_GW_0042
-The system SHALL pass SVC_GW_0042.
+#### Scenario: SVC_GW_VETTING_0005
+The system SHALL pass SVC_GW_VETTING_0005.
 
-### Requirement: GW_0043
-The system SHALL implement GW_0043.
+### Requirement: GW_VETTING_0006
+The system SHALL implement GW_VETTING_0006.
 
-#### Scenario: SVC_GW_0043
-The system SHALL pass SVC_GW_0043.
+#### Scenario: SVC_GW_VETTING_0006
+The system SHALL pass SVC_GW_VETTING_0006.

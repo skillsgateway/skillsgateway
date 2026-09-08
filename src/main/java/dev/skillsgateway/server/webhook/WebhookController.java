@@ -113,12 +113,12 @@ public class WebhookController {
      * <p>The two example bodies are what put {@code EventPayload} and {@code ApprovalPendingPayload}
      * inside the {@code paths} surface the contract gate diffs, where a removed field is an error
      * rather than the warning it is on the request side of a {@code webhooks} entry. That placement
-     * is the code half of GW_0182 — the other half is the workflow and its severity file, which no
+     * is the code half of GW_API_0006 — the other half is the workflow and its severity file, which no
      * annotation can carry. They are illustrative constants, never a real delivery: a delivery
      * arrives at the subscriber's own URL, signed, and nothing about it is readable here.
      */
     @Schema(description = "The subscribable lifecycle events and the shape of the deliveries that carry them")
-    @Requirements({"GW_0182"})
+    @Requirements({"GW_API_0006"})
     public record EventRegistry(
             @Schema(
                     description = "Every snapshot lifecycle event a subscriber may filter on",
@@ -163,7 +163,7 @@ public class WebhookController {
      * {@code ALL}, and subscribing to it is not how an export sink is provisioned.
      */
     @GetMapping("/events")
-    @Requirements({"GW_0088", "GW_0181"})
+    @Requirements({"GW_WEBHOOK_0005", "GW_API_0005"})
     @Tag(name = "Webhooks")
     @Operation(
             summary = "List the subscribable lifecycle events and the shape they deliver",
@@ -195,7 +195,7 @@ public class WebhookController {
     }
 
     @GetMapping("/deliveries")
-    @Requirements({"GW_0026"})
+    @Requirements({"GW_WEBHOOK_0004"})
     @Tag(name = "Webhooks")
     @Operation(
             summary = "List recent delivery attempts",

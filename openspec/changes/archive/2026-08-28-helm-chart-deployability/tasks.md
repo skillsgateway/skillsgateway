@@ -1,11 +1,11 @@
 ## 1. Requirements (reqstool SSOT first)
 
-- [x] 1.1 Add `GW_0120` (explicit storage durability choice, chart fails closed) to `docs/reqstool/requirements.yml` with `implementation: configuration`
-- [x] 1.2 Add `GW_0121` (deployable chart surface: registry credentials, optional ingress, default reservations, own service account, non-root least-privilege defaults)
-- [x] 1.3 Add `GW_0122` (configuration passthrough; role enforcement off by default must be documented)
-- [x] 1.4 Add `SVC_GW_0120`–`SVC_GW_0122` to `docs/reqstool/software_verification_cases.yml` as `verification: automated-test`
+- [x] 1.1 Add `GW_FACADE_0008` (explicit storage durability choice, chart fails closed) to `docs/reqstool/requirements.yml` with `implementation: configuration`
+- [x] 1.2 Add `GW_RELEASE_0005` (deployable chart surface: registry credentials, optional ingress, default reservations, own service account, non-root least-privilege defaults)
+- [x] 1.3 Add `GW_RELEASE_0006` (configuration passthrough; role enforcement off by default must be documented)
+- [x] 1.4 Add `SVC_GW_FACADE_0008`–`SVC_GW_RELEASE_0006` to `docs/reqstool/software_verification_cases.yml` as `verification: automated-test`
 
-## 2. Configuration passthrough (GW_0122, the headline — #132)
+## 2. Configuration passthrough (GW_RELEASE_0006, the headline — #132)
 
 - [x] 2.1 Verify how the application actually resolves configuration before choosing a mechanism: no `spring.config.import`/`location` in the app, no config build arg in the native profile, locations resolved at runtime
 - [x] 2.2 Verify `EstateBootstrap` ordering (`SmartInitializingSingleton`, before the web server starts) so a mounted file is present in time
@@ -14,13 +14,13 @@
 - [x] 2.5 Add `extraEnv` (supporting `valueFrom`) and `extraEnvFrom` (`secretRef`/`configMapRef`)
 - [x] 2.6 Hash `config` into a `checksum/config` pod annotation so a configuration edit rolls the pods
 
-## 3. Fail-closed storage (GW_0120)
+## 3. Fail-closed storage (GW_FACADE_0008)
 
 - [x] 3.1 Replace `persistence.existingClaim`-or-`emptyDir` with `persistence.mode` (`existingClaim` | `ephemeral`), no default
 - [x] 3.2 Move the volume source into `skills-gateway.storageVolume`, failing the render on an absent or unrecognised mode and on `existingClaim` with no claim
 - [x] 3.3 Make the failure message state the data-loss consequence, not just the rule
 
-## 4. Deployable surface (GW_0121)
+## 4. Deployable surface (GW_RELEASE_0005)
 
 - [x] 4.1 `imagePullSecrets` on the pod spec
 - [x] 4.2 `templates/ingress.yaml` behind `ingress.enabled` (default false) with class, annotations, hosts, paths, TLS
@@ -30,11 +30,11 @@
 
 ## 5. Tests
 
-- [x] 5.1 `chartRefusesToRenderWithoutAnExplicitStorageDurabilityChoice` (`SVC_GW_0120`)
-- [x] 5.2 `chartCarriesRegistryCredentialsAnOptionalIngressAndDefaultReservations` (`SVC_GW_0121`)
-- [x] 5.3 `chartPassesArbitraryApplicationConfigurationThrough` (`SVC_GW_0122`)
+- [x] 5.1 `chartRefusesToRenderWithoutAnExplicitStorageDurabilityChoice` (`SVC_GW_FACADE_0008`)
+- [x] 5.2 `chartCarriesRegistryCredentialsAnOptionalIngressAndDefaultReservations` (`SVC_GW_RELEASE_0005`)
+- [x] 5.3 `chartPassesArbitraryApplicationConfigurationThrough` (`SVC_GW_RELEASE_0006`)
 - [x] 5.4 Prove each new assertion fails before it passes: nine deliberate chart breaks, each failing the intended test and no other; recorded in `evidence.md`
-- [x] 5.5 No existing assertion weakened — the pre-existing `SVC_GW_0015`, `SVC_GW_0072`, `SVC_GW_0108`, `SVC_GW_0109` tests are untouched
+- [x] 5.5 No existing assertion weakened — the pre-existing `SVC_GW_RELEASE_0001`, `SVC_GW_RELEASE_0002`, `SVC_GW_RELEASE_0003`, `SVC_GW_RELEASE_0004` tests are untouched
 
 ## 6. Documentation
 

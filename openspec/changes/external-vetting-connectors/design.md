@@ -14,7 +14,7 @@ decision; this document is the feature-level detail.
 External connectors bind from `skills-gateway.vetting.external[*]`, not an API.
 The reason is the same as the license policy's (`SkillsGatewayProperties.License`):
 a chain run must be **attributable**, and the identity and `version` of every
-connector are stamped into the run's chain identity (GW_0049). An API-mutable
+connector are stamped into the run's chain identity (GW_VETTING_0012). An API-mutable
 endpoint or position would make "content or chain?" unanswerable across runs.
 Consequence: the declarative-estate obligation (#65) does not apply, because
 nothing here is API-managed runtime state — recorded per the process rule.
@@ -77,7 +77,7 @@ bundle; both fail closed when exceeded. The endpoint URL is operator-configured
 The specific ways this change can hurt, each with a covering test layer:
 
 - **Silent pass on a broken dependency** → the adversarial matrix
-  (`ExternalVettingConnectorUnitTests`, GW_0145): unreachable, refused, timeout,
+  (`ExternalVettingConnectorUnitTests`, GW_VETTING_0025): unreachable, refused, timeout,
   non-2xx, empty, oversized, unparseable, unknown state, malformed finding, over-cap
   bundle — each asserted `ERROR`/blocked.
 - **Memory exhaustion from a hostile response** → oversized-response and

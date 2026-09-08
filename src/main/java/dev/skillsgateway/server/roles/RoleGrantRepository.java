@@ -24,9 +24,9 @@ public class RoleGrantRepository {
 
     /**
      * Inserts a grant, or returns empty when the identical grant already exists — the caller
-     * turns that into a conflict answer (GW_0071).
+     * turns that into a conflict answer (GW_AUTH_0013).
      */
-    @Requirements({"GW_0071", "GW_0125"})
+    @Requirements({"GW_AUTH_0013", "GW_FACADE_0009"})
     public Optional<RoleGrant> insert(String principal, String role, Long marketplaceId, String grantedBy) {
         try {
             long id = jdbc.sql(

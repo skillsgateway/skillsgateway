@@ -3,7 +3,7 @@ package dev.skillsgateway.server.policy;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 
-/** A stored policy deny rule (GW_0089); its expression compiled when the row was written. */
+/** A stored policy deny rule (GW_APPROVAL_0006); its expression compiled when the row was written. */
 @Schema(description = "A CEL policy deny rule, evaluated fail-closed at approval time")
 public record PolicyRule(
         @Schema(description = "Rule id") long id,

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.github.reqstool.annotations.Requirements;
 
 /**
- * A marketplace manifest's plugin {@code source}, parsed into the form it declares (GW_0150).
+ * A marketplace manifest's plugin {@code source}, parsed into the form it declares (GW_INGEST_0019).
  *
  * <p>The manifest's source field is polymorphic — a string for a repository-relative path, an
  * object carrying a type discriminator for everything else — so a check that only asks whether the
@@ -160,7 +160,7 @@ public sealed interface PluginSource {
      * Places a manifest's {@code source} value into one of the forms above. Never throws and never
      * returns {@code null}.
      */
-    @Requirements({"GW_0150"})
+    @Requirements({"GW_INGEST_0019"})
     static PluginSource parse(JsonNode source) {
         if (source == null || source.isNull()) {
             return new Unrecognised("no source");

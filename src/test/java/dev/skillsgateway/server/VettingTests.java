@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * Verification of the vetting chain (GW_0037-GW_0043). The chain is a trust-boundary control, so
+ * Verification of the vetting chain (GW_VETTING_0001-GW_VETTING_0006). The chain is a trust-boundary control, so
  * these tests are adversarial where it counts: a connector that crashes, planted credentials and
  * planted injection markers, and an approval that tries to walk past a blocked outcome.
  */
@@ -82,7 +82,7 @@ class VettingTests extends AbstractGatewayTest {
     private dev.skillsgateway.server.vetting.ConnectorToggleService connectorToggleService;
 
     @Test
-    @SVCs({"SVC_GW_0037"})
+    @SVCs({"SVC_GW_VETTING_0001"})
     void ingestionRecordsAChainRunWithAVerdictPerConnector() throws Exception {
         Registered registered = registerAndIngest(uniqueName("vetclean"), createUpstream(DEFAULT_MANIFEST));
 
@@ -114,7 +114,7 @@ class VettingTests extends AbstractGatewayTest {
      * checked against the rule "clear iff non-empty and all clearing". No database, no context.
      */
     @Test
-    @SVCs({"SVC_GW_0038"})
+    @SVCs({"SVC_GW_VETTING_0002"})
     void aggregationClearsOnlyWhenEveryConnectorAnsweredWithoutObjecting() {
         assertThat(VettingChain.aggregate(List.of())).isEqualTo(VettingChain.Outcome.BLOCKED);
         assertThat(VettingChain.aggregate(null)).isEqualTo(VettingChain.Outcome.BLOCKED);
@@ -123,7 +123,7 @@ class VettingTests extends AbstractGatewayTest {
                     .as("single verdict %s", first)
                     .isEqualTo(first.clearing() ? VettingChain.Outcome.CLEAR : VettingChain.Outcome.BLOCKED);
             for (VerdictState second : VerdictState.values()) {
-                // A verdict blocks unless it clears or is DISABLED (GW_0149): an administrator
+                // A verdict blocks unless it clears or is DISABLED (GW_VETTING_0029): an administrator
                 // switching a connector off is discounted from the block decision, but positive
                 // clearing evidence is still required from somewhere in the run.
                 boolean anyBlocking = first.blocking() || second.blocking();
@@ -142,7 +142,7 @@ class VettingTests extends AbstractGatewayTest {
 
     /** A connector that throws is recorded as an error and blocks; it is never skipped. */
     @Test
-    @SVCs({"SVC_GW_0038"})
+    @SVCs({"SVC_GW_VETTING_0002"})
     void aConnectorThatThrowsBlocksTheSnapshotAndLeavesItUnserved() throws Exception {
         String name = uniqueName("vetcrash");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
@@ -172,7 +172,7 @@ class VettingTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0039"})
+    @SVCs({"SVC_GW_VETTING_0003"})
     void theSecretScannerFindsPlantedCredentialsAndClearsCleanContent() throws Exception {
         Registered dirty = registerAndIngest(
                 uniqueName("vetsecret"),
@@ -197,7 +197,7 @@ class VettingTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0040"})
+    @SVCs({"SVC_GW_VETTING_0004"})
     void thePromptInjectionScannerFindsPlantedMarkersInSkillInstructions() throws Exception {
         Registered dirty = registerAndIngest(
                 uniqueName("vetinject"),
@@ -221,7 +221,7 @@ class VettingTests extends AbstractGatewayTest {
      * refusal, which is exactly what the old single-reason mechanism could not express.
      */
     @Test
-    @SVCs({"SVC_GW_0041"})
+    @SVCs({"SVC_GW_APPROVAL_0003"})
     void aBlockedSnapshotIsApprovedOnlyOnceWaiversCoverEveryBlockingFinding() throws Exception {
         String name = uniqueName("vetgate");
         Registered blocked = registerAndIngest(
@@ -297,11 +297,11 @@ class VettingTests extends AbstractGatewayTest {
 
     /**
      * The run and every verdict land in the ledger. The acceptance half of the trail moved to the
-     * waiver lifecycle (SVC_GW_0048), which records strictly more than the single override entry
+     * waiver lifecycle (SVC_GW_VETTING_0011), which records strictly more than the single override entry
      * this test used to assert: what was accepted, on what scope, by whom, and until when.
      */
     @Test
-    @SVCs({"SVC_GW_0043"})
+    @SVCs({"SVC_GW_VETTING_0006"})
     void theLedgerRecordsTheChainRunAndTheVerdicts() throws Exception {
         String name = uniqueName("vetledger");
         Registered blocked = registerAndIngest(
@@ -320,7 +320,7 @@ class VettingTests extends AbstractGatewayTest {
                     assertThat(String.valueOf(entry.get("detail"))).contains("outcome=blocked");
                 });
         // The verdict rows still lead with connector=state, and now carry the finding count, the
-        // worst severity and the run they belong to (GW_0142) — additive over the old assertion.
+        // worst severity and the run they belong to (GW_VETTING_0022) — additive over the old assertion.
         assertThat(entries)
                 .filteredOn(entry -> "vetting-verdict".equals(entry.get("event")))
                 .extracting(entry -> String.valueOf(entry.get("detail")))
@@ -332,13 +332,13 @@ class VettingTests extends AbstractGatewayTest {
     }
 
     /**
-     * A vetting-verdict ledger entry is self-sufficient (GW_0142): it names the finding count and
+     * A vetting-verdict ledger entry is self-sufficient (GW_VETTING_0022): it names the finding count and
      * the worst severity present and references the chain run it belongs to; the run-completed
      * entry references the same run; and every vetting entry is typed as the gateway's own
      * automated subsystem, never as a human actor.
      */
     @Test
-    @SVCs({"SVC_GW_0142"})
+    @SVCs({"SVC_GW_VETTING_0022"})
     void vettingLedgerEntriesAreSelfDescribingAndTypedAsSystem() throws Exception {
         String name = uniqueName("vetledgerrich");
         Registered blocked = registerAndIngest(
@@ -387,12 +387,12 @@ class VettingTests extends AbstractGatewayTest {
     }
 
     /**
-     * A clean connector pass records what it examined (GW_0143): its verdict detail is non-empty
+     * A clean connector pass records what it examined (GW_VETTING_0023): its verdict detail is non-empty
      * and states the coverage, so "pass" is distinguishable from "did not run" — in the recorded
      * verdict and in the ledger alike.
      */
     @Test
-    @SVCs({"SVC_GW_0143"})
+    @SVCs({"SVC_GW_VETTING_0023"})
     void aCleanPassRecordsTheCoverageItExamined() throws Exception {
         String name = uniqueName("vetcoverage");
         Registered clean = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));

@@ -6,29 +6,29 @@ applies: failing tests first, proved failing, before any implementation.
 
 ## 1. Requirements (SSOT first)
 
-- [x] 1.1 Add GW_0111 (backend named not inferred, fail-closed startup,
-      credentials without IMDS), GW_0112 (atomic uncoordinated reference
-      transitions), GW_0114 (verified migration) and GW_0115 (replication
+- [x] 1.1 Add GW_FACADE_0010 (backend named not inferred, fail-closed startup,
+      credentials without IMDS), GW_FACADE_0011 (atomic uncoordinated reference
+      transitions), GW_FACADE_0013 (verified migration) and GW_FACADE_0014 (replication
       refused where unsafe) to `docs/reqstool/requirements.yml`. GW_0113 is
-      dropped — #134 shipped it as GW_0120.
-      **GW_0112 landed with the contract suite (section 3).** The other three
-      ids are verified free against `main` (which now carries GW_0120–GW_0122
-      and GW_0125–GW_0131, so 0111–0119 and 0123–0124 are unclaimed) and stay
+      dropped — #134 shipped it as GW_FACADE_0008.
+      **GW_FACADE_0011 landed with the contract suite (section 3).** The other three
+      ids are verified free against `main` (which now carries GW_FACADE_0008–GW_RELEASE_0006
+      and GW_FACADE_0009–GW_AUTH_0024, so 0111–0119 and 0123–0124 are unclaimed) and stay
       reserved: `reqstool status` counts a requirement with no `@Requirements`
       annotation and no passing SVC test as incomplete and fails the gate, so
-      each of GW_0111, GW_0114 and GW_0115 lands in the section that
+      each of GW_FACADE_0010, GW_FACADE_0013 and GW_FACADE_0014 lands in the section that
       implements it — 5.3, 7.2 and 8.3 respectively.
-      **GW_0111 landed with the configuration surface (section 5).** Its id was
-      re-verified free against `main` before it was written. **GW_0114 landed
-      with the migration (section 7) and GW_0115 with the packaging (section
+      **GW_FACADE_0010 landed with the configuration surface (section 5).** Its id was
+      re-verified free against `main` before it was written. **GW_FACADE_0013 landed
+      with the migration (section 7) and GW_FACADE_0014 with the packaging (section
       8).** Both ids were re-verified free immediately before being written —
-      against `origin/main` (which carries GW_0093–GW_0110, GW_0120–GW_0122 and
-      GW_0125–GW_0131) and against this change's own reservations. No collision;
+      against `origin/main` (which carries GW_VETTING_0019–GW_AUTH_0019, GW_FACADE_0008–GW_RELEASE_0006 and
+      GW_FACADE_0009–GW_AUTH_0024) and against this change's own reservations. No collision;
       0113 stays dropped, 0117–0119 and 0123–0124 stay unclaimed
 - [x] 1.2 Add the matching SVCs (GIVEN/WHEN/THEN) to
       `docs/reqstool/software_verification_cases.yml`.
-      **SVC_GW_0112 landed with section 3, SVC_GW_0111 with section 5,
-      SVC_GW_0116 with section 9, and SVC_GW_0114 and SVC_GW_0115 here with
+      **SVC_GW_FACADE_0011 landed with section 3, SVC_GW_FACADE_0010 with section 5,
+      SVC_GW_FACADE_0012 with section 9, and SVC_GW_FACADE_0013 and SVC_GW_FACADE_0014 here with
       sections 7 and 8.** Every one is matched by reqstool against a real
       surefire case — checked by reading the matched-annotation output, not by
       trusting a PASS, because a `@DisplayName` on a class or method carrying
@@ -127,7 +127,7 @@ applies: failing tests first, proved failing, before any implementation.
       a `receive-pack` advertisement, since `ReceivePack.service()` overwrites
       the server-side flag from what the client enabled
 - [x] 3.2 `unpublish` cases in the same suite, annotated
-      `@SVCs({"SVC_GW_0112"})`: `refs/snapshots/{sha}` always removed;
+      `@SVCs({"SVC_GW_FACADE_0011"})`: `refs/snapshots/{sha}` always removed;
       `refs/heads/main` removed only when it still resolves to that SHA;
       the returned boolean true exactly when the tip was removed; revoking a
       superseded snapshot leaves the marketplace serving
@@ -142,7 +142,7 @@ applies: failing tests first, proved failing, before any implementation.
 
 ## 4. Failing tests for the new behavior (prove they fail)
 
-- [x] 4.1 Backend selection tests annotated `@SVCs({"SVC_GW_0111"})`: absent
+- [x] 4.1 Backend selection tests annotated `@SVCs({"SVC_GW_FACADE_0010"})`: absent
       value yields `FilesystemGitStorage`; unrecognised value fails context
       startup naming the accepted values; `object-store` with no bucket,
       endpoint or credential mode fails startup; no case resolves a backend
@@ -154,7 +154,7 @@ applies: failing tests first, proved failing, before any implementation.
       that would have worked. Proved RED, then fixed with a
       `@ConfigurationPropertiesBinding` converter whose refusal lists the
       accepted set
-- [x] 4.2 Concurrency tests annotated `@SVCs({"SVC_GW_0112"})` against Floci
+- [x] 4.2 Concurrency tests annotated `@SVCs({"SVC_GW_FACADE_0011"})` against Floci
       (only once task 2.1 has proved it honours `If-Match`):
       N concurrent publications and revocations of the same and of superseding
       snapshots; assert no lost update, that exactly one caller is told its
@@ -171,15 +171,15 @@ applies: failing tests first, proved failing, before any implementation.
       of an already-superseded snapshot, publications and revocations of
       distinct snapshots interleaved, and a writer killed in the window between
       its objects becoming durable and the manifest naming them
-- [x] 4.3 **Landed with section 7.** Migration tests annotated `@SVCs({"SVC_GW_0114"})`: full copy across
+- [x] 4.3 **Landed with section 7.** Migration tests annotated `@SVCs({"SVC_GW_FACADE_0013"})`: full copy across
       all three roles, ref-set comparison, refusal on a deliberately damaged
       copy, source left byte-identical, and a round trip back.
       `StorageMigrationTests`, eight cases against a real object store
-- [x] 4.4 **Landed with section 8, proved RED first.** Packaging tests annotated `@SVCs({"SVC_GW_0115"})`: `replicaCount > 1`
+- [x] 4.4 **Landed with section 8, proved RED first.** Packaging tests annotated `@SVCs({"SVC_GW_FACADE_0014"})`: `replicaCount > 1`
       fails on `filesystem`; fails on `object-store` with the uncoordinated
       pollers enabled; renders with them disabled. (#134's `PackagingTests`
       already cover the fail-closed `persistence.mode`; extend, never weaken).
-      4.3 and 4.4 verify GW_0114 and GW_0115, whose text task 1.1 reserves for
+      4.3 and 4.4 verify GW_FACADE_0013 and GW_FACADE_0014, whose text task 1.1 reserves for
       sections 7 and 8 for a stated reason: `reqstool status` fails a
       requirement that has no annotation and no passing SVC, so writing either
       SVC before its implementation would break the traceability gate. They land
@@ -203,8 +203,8 @@ applies: failing tests first, proved failing, before any implementation.
       `connection-time-to-live`, because "below the store's idle timeout" is a
       fact about the store and cannot be a constant of ours
 - [x] 5.3 `GitStorageConfiguration` selecting the single `GitStorage` bean;
-      annotate the selection path `@Requirements({"GW_0111"})`. GW_0111 and
-      SVC_GW_0111 are written here, with the selection behaviour they describe:
+      annotate the selection path `@Requirements({"GW_FACADE_0010"})`. GW_FACADE_0010 and
+      SVC_GW_FACADE_0010 are written here, with the selection behaviour they describe:
       `StorageBackendSelectionTests` covers the four refusals and the four
       resolutions, and `FilesystemGitStorage` stops being a `@Component` so that
       exactly one backend can ever be in the context
@@ -230,7 +230,7 @@ applies: failing tests first, proved failing, before any implementation.
       chosen in task 2.4; `DfsRepository` subclass wiring the two
 - [x] 6.4 `ObjectStoreGitStorage implements GitStorage` — the three roles and
       `unpublish` evaluated and committed as one transition; annotate
-      `@Requirements({"GW_0112"})`
+      `@Requirements({"GW_FACADE_0011"})`
 - [x] 6.5 Bounded on-disk pack cache under `data-dir` plus `DfsBlockCache`
       sizing; deleting the cache must be safe at any time
 - [x] 6.6 Compaction: WAL entries folded into the manifest, small packs via
@@ -270,7 +270,7 @@ applies: failing tests first, proved failing, before any implementation.
       about a subcommand versus a separate entrypoint in favour of one artifact
 - [x] 7.2 Verification pass comparing resolved ref sets per repository,
       refusing success on any mismatch and naming the repository; annotate
-      `@Requirements({"GW_0114"})`. It is a second, independent read of both
+      `@Requirements({"GW_FACADE_0013"})`. It is a second, independent read of both
       sides rather than a claim the copy makes about itself, and it compares the
       symbolic references separately from the concrete ones — which is what
       caught a real defect: `getRefs()` reports a symbolic reference with the id
@@ -311,13 +311,13 @@ applies: failing tests first, proved failing, before any implementation.
 - [x] 8.4 Extend the existing packaging consistency test to cover 8.1–8.3;
       chart version bump and a release note naming the deliberate break.
       `PackagingTests.chartRefusesAStorageShapeTheGatewayCannotHonour`
-      (`SVC_GW_0115`), written and proved RED before any chart edit, and
-      #134's `SVC_GW_0120` case is extended nowhere and weakened nowhere — it
+      (`SVC_GW_FACADE_0014`), written and proved RED before any chart edit, and
+      #134's `SVC_GW_FACADE_0008` case is extended nowhere and weakened nowhere — it
       still passes unchanged. All eight refusals were also exercised through a
       real `helm template`, recorded in `evidence.md`.
       **No chart version bump, and that is deliberate:** `Chart.yaml` carries
       `0.0.0-SNAPSHOT` as a placeholder and the release workflow stamps the real
-      version from the tag — `SVC_GW_0109` asserts exactly that, so hand-editing
+      version from the tag — `SVC_GW_RELEASE_0004` asserts exactly that, so hand-editing
       it would break the release contract. **And there is no deliberate break to
       note:** every default is unchanged (`storage.backend: filesystem`,
       `replicaCount: 1`), so an existing install upgrades to identical
@@ -345,13 +345,13 @@ applies: failing tests first, proved failing, before any implementation.
 - [x] 9.2 A health indicator reporting backend reachability and the
       conditional-write probe result. `GitStorageHealthIndicator`, present on
       *both* backends — an indicator that names the backend actually in use is
-      the outside-visible half of GW_0111's guarantee. It reads and never
+      the outside-visible half of GW_FACADE_0010's guarantee. It reads and never
       writes: a health endpoint is polled, and the conditional-write probe is a
       startup gate whose result is reported rather than repeated.
-      **Requirement GW_0116 and SVC_GW_0116** carry section 9. The id was
-      re-verified free against `main` (which carries GW_0120–GW_0122 and
-      GW_0125–GW_0131) and against this change's reservations (GW_0114 for
-      section 7, GW_0115 for section 8, GW_0113 dropped); no collision
+      **Requirement GW_FACADE_0012 and SVC_GW_FACADE_0012** carry section 9. The id was
+      re-verified free against `main` (which carries GW_FACADE_0008–GW_RELEASE_0006 and
+      GW_FACADE_0009–GW_AUTH_0024) and against this change's reservations (GW_FACADE_0013 for
+      section 7, GW_FACADE_0014 for section 8, GW_0113 dropped); no collision
 
 ## 10. Documentation (same PR as the implementation)
 

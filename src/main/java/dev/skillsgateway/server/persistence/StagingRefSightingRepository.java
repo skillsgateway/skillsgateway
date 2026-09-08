@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * How long the gateway has been looking at a publication staging reference (GW_0168).
+ * How long the gateway has been looking at a publication staging reference (GW_FACADE_0019).
  *
  * <p>The retention sweep may only remove a staging reference that has outlived a bound on how long
  * a publication can take, and a git reference carries no creation time either backend can be asked
@@ -45,7 +45,7 @@ public class StagingRefSightingRepository {
      *
      * @param at the observation instant, which becomes the stamp of anything new
      */
-    @Requirements({"GW_0168"})
+    @Requirements({"GW_FACADE_0019"})
     @Transactional
     public Map<String, Instant> observe(String marketplace, Collection<String> refs, Instant at) {
         if (refs.isEmpty()) {
@@ -81,7 +81,7 @@ public class StagingRefSightingRepository {
     }
 
     /** Forgets the references a sweep has just removed, so nothing outlives what it describes. */
-    @Requirements({"GW_0168"})
+    @Requirements({"GW_FACADE_0019"})
     public void forget(String marketplace, Collection<String> refs) {
         if (refs.isEmpty()) {
             return;

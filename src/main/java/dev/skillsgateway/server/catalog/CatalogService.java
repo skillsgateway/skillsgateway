@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
- * The global virtual catalog (GW_0061–GW_0063): one synthesized repository, served by the ordinary
+ * The global virtual catalog (GW_FACADE_0003–GW_FACADE_0005): one synthesized repository, served by the ordinary
  * facade under the reserved name, whose tree vendors the currently served snapshot of every
  * marketplace under a subdirectory and merges their manifests into one.
  *
@@ -100,10 +100,10 @@ public class CatalogService {
     }
 
     /**
-     * Rebuild for the two publication-changing paths (GW_0062): never lets a catalog problem fail
+     * Rebuild for the two publication-changing paths (GW_FACADE_0004): never lets a catalog problem fail
      * the approval or revocation that triggered it.
      */
-    @Requirements({"GW_0062"})
+    @Requirements({"GW_FACADE_0004"})
     public void rebuildQuietly() {
         if (!properties.enabled()) {
             return;
@@ -117,11 +117,11 @@ public class CatalogService {
 
     /**
      * Synthesizes one parentless catalog commit from what every marketplace is serving right now
-     * and force-updates the catalog's {@code main} to it (GW_0061). Serialized: concurrent
+     * and force-updates the catalog's {@code main} to it (GW_FACADE_0003). Serialized: concurrent
      * approvals rebuild one after the other, and last-writer-wins is correct because every rebuild
      * reads the current served state in full.
      */
-    @Requirements({"GW_0061", "GW_0062"})
+    @Requirements({"GW_FACADE_0003", "GW_FACADE_0004"})
     public CatalogInfo rebuild() throws IOException, GitAPIException {
         synchronized (rebuildLock) {
             try (Repository catalog = storage.published(properties.name())) {
@@ -158,8 +158,8 @@ public class CatalogService {
         }
     }
 
-    /** The revision the facade is serving, parsed back out of the catalog commit (GW_0063). */
-    @Requirements({"GW_0063"})
+    /** The revision the facade is serving, parsed back out of the catalog commit (GW_FACADE_0005). */
+    @Requirements({"GW_FACADE_0005"})
     public Optional<CatalogInfo> served() throws IOException {
         Optional<Repository> serving = storage.publishedIfServing(properties.name());
         if (serving.isEmpty()) {
@@ -222,7 +222,7 @@ public class CatalogService {
     }
 
     /**
-     * Namespaced merge (GW_0061): names prefixed with the marketplace, sources rewritten under its
+     * Namespaced merge (GW_FACADE_0003): names prefixed with the marketplace, sources rewritten under its
      * subdirectory. A prefix collision keeps the first in marketplace-name order and logs the rest
      * — a documented limit of the naming scheme, not a silent drop.
      */
@@ -246,7 +246,7 @@ public class CatalogService {
         plugins.add(merged);
     }
 
-    /** One parentless commit (GW_0062): history depth 1, so old compositions are unreachable. */
+    /** One parentless commit (GW_FACADE_0004): history depth 1, so old compositions are unreachable. */
     private ObjectId commitCatalog(
             Repository catalog, Map<String, ObjectId> subtrees, ObjectNode manifest, List<Constituent> constituents)
             throws IOException {
@@ -286,7 +286,7 @@ public class CatalogService {
             ObjectId commitId = inserter.insert(commit);
             inserter.flush();
 
-            // Checked (GW_0135): a refused move would have this method return a commit the facade
+            // Checked (GW_FACADE_0017): a refused move would have this method return a commit the facade
             // does not serve, and the rebuild endpoint report a sha nobody can fetch.
             RefTransitions.write(catalog, MAIN, commitId);
             return commitId;
@@ -296,12 +296,12 @@ public class CatalogService {
     /**
      * The fetch refs are scaffolding; only main (and nothing else) stays in the catalog repository.
      *
-     * <p>Checked (GW_0135). The facade now advertises an allowlist, so a reference left here is no
+     * <p>Checked (GW_FACADE_0017). The facade now advertises an allowlist, so a reference left here is no
      * longer served — but it still holds objects a later revocation should have made unreachable,
      * and a prune that reported success while leaving them is the same class of untruth as a
      * publication that did not happen.
      */
-    @Requirements({"GW_0135"})
+    @Requirements({"GW_FACADE_0017"})
     private static void pruneInternalRefs(Repository catalog) throws IOException {
         for (Ref ref : catalog.getRefDatabase().getRefsByPrefix(INTERNAL_REF_PREFIX)) {
             RefTransitions.delete(catalog, ref.getName());

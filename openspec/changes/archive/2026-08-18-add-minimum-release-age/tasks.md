@@ -2,8 +2,8 @@
 
 ## 1. Traceability (SSOT first)
 
-- [x] 1.1 Add GW_0073 to `docs/reqstool/requirements.yml`.
-- [x] 1.2 Add SVC_GW_0073 to `docs/reqstool/software_verification_cases.yml`.
+- [x] 1.1 Add GW_APPROVAL_0004 to `docs/reqstool/requirements.yml`.
+- [x] 1.2 Add SVC_GW_APPROVAL_0004 to `docs/reqstool/software_verification_cases.yml`.
 
 ## 2. Backend
 
@@ -11,7 +11,7 @@
       default `0` = off).
 - [x] 2.2 `approval/ReleaseAgeGate`: the pure `(firstSeen, now, minimum)`
       eligibility rule, the `Eligibility` view, and `require(snapshot)`;
-      `@Requirements({"GW_0073"})`.
+      `@Requirements({"GW_APPROVAL_0004"})`.
 - [x] 2.3 `approval/SnapshotTooYoungException` naming the setting, the age and
       the time remaining.
 - [x] 2.4 `ApprovalService.approve`: the age precondition after the vetting
@@ -25,7 +25,7 @@
 
 - [x] 3.1 Regenerate `src/main/frontend/openapi.json` and `types.gen.ts`.
 
-## 4. Tests (SVC_GW_0073)
+## 4. Tests (SVC_GW_APPROVAL_0004)
 
 - [x] 4.1 Boundary: the rule evaluated at `firstSeen + minimum` is eligible,
       and one nanosecond earlier is not.

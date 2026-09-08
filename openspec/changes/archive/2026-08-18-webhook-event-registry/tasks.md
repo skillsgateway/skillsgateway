@@ -2,9 +2,9 @@
 
 ## 1. Traceability (SSOT first)
 
-- [x] 1.1 Add GW_0088 to `docs/reqstool/requirements.yml` (the served event
+- [x] 1.1 Add GW_WEBHOOK_0005 to `docs/reqstool/requirements.yml` (the served event
       registry and the portal filter composed from it).
-- [x] 1.2 Add SVC_GW_0088 to `docs/reqstool/software_verification_cases.yml`.
+- [x] 1.2 Add SVC_GW_WEBHOOK_0005 to `docs/reqstool/software_verification_cases.yml`.
 
 ## 2. Backend
 

@@ -26,7 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * Separation of duties under enforcement (GW_0096).
+ * Separation of duties under enforcement (GW_APPROVAL_0010).
  *
  * <p>Every test here attacks the rule from the side that matters: not "does it let the right
  * person through" but "can the wrong person get content published anyway". A refusal is therefore
@@ -40,7 +40,7 @@ import org.springframework.test.context.TestPropertySource;
  */
 @TestPropertySource(properties = "skills-gateway.approval.four-eyes.mode=enforce")
 @TestPropertySource(
-        // Authorization is always enforced (GW_0138), so this suite names the principal it acts as.
+        // Authorization is always enforced (GW_AUTH_0025), so this suite names the principal it acts as.
         properties = {"skills-gateway.roles.admins=dana,rachel"})
 class FourEyesEnforceTests extends AbstractGatewayTest {
 
@@ -82,7 +82,7 @@ class FourEyesEnforceTests extends AbstractGatewayTest {
 
     /** The reviewer who fetched the content cannot be the one who decides it is safe. */
     @Test
-    @SVCs({"SVC_GW_0096"})
+    @SVCs({"SVC_GW_APPROVAL_0010"})
     void theIngestionActorCannotApproveTheSnapshotTheyIngested() throws Exception {
         assertThat(fourEyesGate.mode()).isEqualTo(SkillsGatewayProperties.FourEyesMode.ENFORCE);
         Registered registered =
@@ -113,7 +113,7 @@ class FourEyesEnforceTests extends AbstractGatewayTest {
 
     /** Choosing the upstream is a supply-side decision too, however long ago it was made. */
     @Test
-    @SVCs({"SVC_GW_0096"})
+    @SVCs({"SVC_GW_APPROVAL_0010"})
     void theMarketplaceRegistrantCannotApproveItsSnapshots() throws Exception {
         Registered registered =
                 registerAndIngest(uniqueName("fe4reg"), createUpstream(DEFAULT_MANIFEST), "reggie", null);
@@ -138,7 +138,7 @@ class FourEyesEnforceTests extends AbstractGatewayTest {
      * otherwise take: waive the objection on a fresh copy and approve that instead.
      */
     @Test
-    @SVCs({"SVC_GW_0096"})
+    @SVCs({"SVC_GW_APPROVAL_0010"})
     void theAuthorOfAWaiverTheApprovalReliesOnCannotApprove() throws Exception {
         Registered registered = registerAndIngest(
                 uniqueName("fe4waiver"),
@@ -169,7 +169,7 @@ class FourEyesEnforceTests extends AbstractGatewayTest {
      * comparing against the whole waiver set would do.
      */
     @Test
-    @SVCs({"SVC_GW_0096"})
+    @SVCs({"SVC_GW_APPROVAL_0010"})
     void aWaiverTheApprovalDoesNotRelyOnIsNotAConflict() throws Exception {
         Registered registered = registerAndIngest(uniqueName("fe4stale"), createUpstream(DEFAULT_MANIFEST), null, null);
         long id = registered.snapshot().id();
@@ -186,7 +186,7 @@ class FourEyesEnforceTests extends AbstractGatewayTest {
      * feature it guards unusable.
      */
     @Test
-    @SVCs({"SVC_GW_0096"})
+    @SVCs({"SVC_GW_APPROVAL_0010"})
     void automatedTriggersAndUnrecordedActorsNeverConflict() throws Exception {
         for (String actor : new String[] {SyncService.SCHEDULER_ACTOR, SyncService.WEBHOOK_ACTOR, null}) {
             Registered registered =
@@ -208,7 +208,7 @@ class FourEyesEnforceTests extends AbstractGatewayTest {
      * pre-check endpoint that says the same thing before the button is pressed.
      */
     @Test
-    @SVCs({"SVC_GW_0096"})
+    @SVCs({"SVC_GW_APPROVAL_0010"})
     void theApprovalEndpointRefusesWithAConflictProblemNamingTheRoles() throws Exception {
         Registered registered =
                 registerAndIngest(uniqueName("fe4http"), createUpstream(DEFAULT_MANIFEST), "dana", "dana");
@@ -263,7 +263,7 @@ class FourEyesEnforceTests extends AbstractGatewayTest {
 
     /** Rejecting is never gated: refusing content quickly must not need a second pair of eyes. */
     @Test
-    @SVCs({"SVC_GW_0096"})
+    @SVCs({"SVC_GW_APPROVAL_0010"})
     void rejectionIsNotGatedByTheRule() throws Exception {
         Registered registered =
                 registerAndIngest(uniqueName("fe4reject"), createUpstream(DEFAULT_MANIFEST), "dana", "dana");

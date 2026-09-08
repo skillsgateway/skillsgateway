@@ -5,9 +5,9 @@
 Issue [#11](https://github.com/skillsgateway/skillsgateway/issues/11) asks for
 four things in three lines: federated namespaced catalogs, per-team
 entitlements, per-plugin/skill limiting, and multi-ref publication. The
-federation half shipped — `GW_0061 — Global virtual catalog`,
-`GW_0062 — Catalog freshness on publication changes` and
-`GW_0063 — Catalog provenance, audit, and the reserved name`. The rest has been
+federation half shipped — `GW_FACADE_0003 — Global virtual catalog`,
+`GW_FACADE_0004 — Catalog freshness on publication changes` and
+`GW_FACADE_0005 — Catalog provenance, audit, and the reserved name`. The rest has been
 assessed twice on the issue and never opened, because "what to build" was not
 decided.
 
@@ -135,7 +135,7 @@ Deferred to later slices per ADR 0017, and to be opened as their own changes:
 - **Entitlement as a facade deny** (slice 5) — the only genuinely new trust
   boundary in #11, gated on a deployment with two real audiences.
 - **Multi-ref publication** — ruled out of #11 by ADR 0017. It re-decides
-  `GW_0017 — Gateway-pinned ingestion ref`, which `CLAUDE.md` names as part of
+  `GW_INGEST_0006 — Gateway-pinned ingestion ref`, which `CLAUDE.md` names as part of
   the registration trust boundary, and needs its own ADR and its own issue.
 - **Portal surfaces** for collisions and revisions. The API and the ledger carry
   them first.

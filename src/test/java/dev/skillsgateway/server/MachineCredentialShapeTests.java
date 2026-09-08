@@ -8,7 +8,7 @@ import java.time.Instant;
 import org.junit.jupiter.api.Test;
 
 /**
- * The three scope dimensions and their three different empty meanings (GW_0126). One record now
+ * The three scope dimensions and their three different empty meanings (GW_AUTH_0020). One record now
  * serves two audiences, and the next bug lives in whichever empty list somebody reads as
  * "unrestricted", so all three defaults are asserted together rather than one at a time.
  */
@@ -32,7 +32,7 @@ class MachineCredentialShapeTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0126"})
+    @SVCs({"SVC_GW_AUTH_0020"})
     void a_credential_with_no_api_scopes_grants_no_api_reach() {
         AccessToken existing = token(null, null, null);
 
@@ -46,7 +46,7 @@ class MachineCredentialShapeTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0126"})
+    @SVCs({"SVC_GW_AUTH_0020"})
     void the_three_empty_list_defaults_mean_three_different_things() {
         AccessToken empty = token(null, null, null);
 
@@ -68,7 +68,7 @@ class MachineCredentialShapeTests {
      * entire estate. That is the exact opposite of the guarantee this change exists to make.
      */
     @Test
-    @SVCs({"SVC_GW_0127"})
+    @SVCs({"SVC_GW_AUTH_0021"})
     void an_api_only_credential_with_an_empty_fetch_list_reaches_no_marketplace() {
         AccessToken machine = token(null, null, "marketplaces:read");
 
@@ -85,7 +85,7 @@ class MachineCredentialShapeTests {
      * exists today.
      */
     @Test
-    @SVCs({"SVC_GW_0064"})
+    @SVCs({"SVC_GW_AUTH_0006"})
     void an_ordinary_fetch_token_with_an_empty_fetch_list_still_reaches_every_marketplace() {
         AccessToken fetchOnly = token(null, null, null);
 
@@ -97,7 +97,7 @@ class MachineCredentialShapeTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0126"})
+    @SVCs({"SVC_GW_AUTH_0020"})
     void an_api_scope_list_is_read_as_the_named_values_and_nothing_else() {
         AccessToken machine = token(null, null, "marketplaces:read,estate:read");
 

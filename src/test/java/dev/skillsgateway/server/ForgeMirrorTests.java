@@ -34,7 +34,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * The read-only forge mirror against a real push target (GW_0169, GW_0171, GW_0172).
+ * The read-only forge mirror against a real push target (GW_FACADE_0020, GW_FACADE_0022, GW_FACADE_0023).
  *
  * <p>The target is a bare repository on disk reached over {@code file://}, so the push, the
  * deletion and the ls-remote are the real JGit transport operations a forge would see — and no test
@@ -53,10 +53,10 @@ import org.springframework.test.context.TestPropertySource;
             "skills-gateway.mirror.username=mirror-bot",
             "skills-gateway.mirror.token=mirror-secret",
             // This walk seeds drift behind the gateway's back and then asserts on it. The recurring
-            // reconciliation (GW_0190) exists precisely to repair that, so leaving it on would put a
+            // reconciliation (GW_FACADE_0025) exists precisely to repair that, so leaving it on would put a
             // second actor inside the assertions. It has its own suite; no expectation here changes.
             "skills-gateway.mirror.sweep-enabled=false",
-            // Revocation is what GW_0171 is about, and only enforce mode performs one.
+            // Revocation is what GW_FACADE_0022 is about, and only enforce mode performs one.
             "skills-gateway.vetting.revet.mode=enforce",
             "skills-gateway.roles.admins=alice"
         })
@@ -134,7 +134,7 @@ class ForgeMirrorTests extends AbstractGatewayTest {
      * reconciliation that read the wrong repository would push it anyway.
      */
     @Test
-    @SVCs({"SVC_GW_0169", "SVC_GW_0171", "SVC_GW_0172"})
+    @SVCs({"SVC_GW_FACADE_0020", "SVC_GW_FACADE_0022", "SVC_GW_FACADE_0023"})
     void the_mirror_holds_exactly_what_is_served_through_approval_drift_and_revocation() throws Exception {
         assertThat(mirror.enabled()).isTrue();
         Path upstream = createUpstream(DEFAULT_MANIFEST, Map.of("plugins/hello/DEPLOY.md", PLANTED_SECRET));
@@ -219,7 +219,7 @@ class ForgeMirrorTests extends AbstractGatewayTest {
      * something.
      */
     @Test
-    @SVCs({"SVC_GW_0172"})
+    @SVCs({"SVC_GW_FACADE_0023"})
     void the_drift_report_is_admin_only_and_never_carries_the_push_credential() throws Exception {
         mockMvc.perform(get("/api/mirror/drift").with(oidcLogin().idToken(token -> token.subject("mallory"))))
                 .andExpect(status().isForbidden());

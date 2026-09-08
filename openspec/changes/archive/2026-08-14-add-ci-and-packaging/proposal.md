@@ -18,8 +18,8 @@ next step after the Java port merged (issue #4, step 2).
 - Dockerfile packaging the native binary as an OCI container image.
 - Helm chart for deploying the container image (gateway + PostgreSQL dependency wiring).
 - Renovate configuration with Spring Boot-related dependencies grouped.
-- New requirement GW_0015 (container distribution, `implementation: configuration`)
-  with SVC_GW_0015 verified by an automated packaging-consistency test; the real
+- New requirement GW_RELEASE_0001 (container distribution, `implementation: configuration`)
+  with SVC_GW_RELEASE_0001 verified by an automated packaging-consistency test; the real
   container build + smoke test runs in the native CI workflow.
 - Local runnability of the packaged image: `compose.yaml` (gateway + PostgreSQL)
   and README instructions (user request).
@@ -32,7 +32,7 @@ next step after the Java port merged (issue #4, step 2).
 ### New Capabilities
 
 - `release-packaging`: the gateway is distributable as an OCI container image running
-  the native binary, deployable via a provided Helm chart (GW_0015).
+  the native binary, deployable via a provided Helm chart (GW_RELEASE_0001).
 
 ### Modified Capabilities
 
@@ -41,5 +41,5 @@ next step after the Java port merged (issue #4, step 2).
 ## Impact
 
 - New files: `.github/workflows/`, `Dockerfile`, `helm/skills-gateway/`, `renovate.json`.
-- `docs/reqstool/requirements.yml` and `software_verification_cases.yml`: GW_0015 / SVC_GW_0015.
+- `docs/reqstool/requirements.yml` and `software_verification_cases.yml`: GW_RELEASE_0001 / SVC_GW_RELEASE_0001.
 - No application code changes; the per-PR gates codify the existing local gates.

@@ -28,7 +28,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * The global virtual catalog (GW_0061–GW_0063): composition from the served estate, freshness on
+ * The global virtual catalog (GW_FACADE_0003–GW_FACADE_0005): composition from the served estate, freshness on
  * publications and revocations, provenance, audit, and the reserved name.
  *
  * <p>Its own Spring context (and so its own database): the empty-estate case needs a gateway where
@@ -61,7 +61,7 @@ class CatalogTests extends AbstractGatewayTest {
 
     @Test
     @Order(1)
-    @SVCs({"SVC_GW_0062"})
+    @SVCs({"SVC_GW_FACADE_0004"})
     void an_empty_estate_serves_an_empty_catalog_not_nothing() throws Exception {
         catalogService.rebuild();
         Path clone = newWorkDir("catempty");
@@ -73,7 +73,7 @@ class CatalogTests extends AbstractGatewayTest {
 
     @Test
     @Order(2)
-    @SVCs({"SVC_GW_0061"})
+    @SVCs({"SVC_GW_FACADE_0003"})
     void the_catalog_aggregates_exactly_the_served_estate_under_namespaced_paths() throws Exception {
         Registered served1 = registerAndIngest(uniqueName("cata"), createUpstream(DEFAULT_MANIFEST));
         Registered served2 = registerAndIngest(uniqueName("catb"), createUpstream(DEFAULT_MANIFEST));
@@ -106,7 +106,7 @@ class CatalogTests extends AbstractGatewayTest {
 
     @Test
     @Order(3)
-    @SVCs({"SVC_GW_0062"})
+    @SVCs({"SVC_GW_FACADE_0004"})
     void publications_and_revocations_reshape_the_catalog_on_their_own() throws Exception {
         // Approved and published the only sanctioned way, then the acceptance is withdrawn.
         Registered doomed = registerAndIngest(
@@ -154,7 +154,7 @@ class CatalogTests extends AbstractGatewayTest {
 
     @Test
     @Order(4)
-    @SVCs({"SVC_GW_0063"})
+    @SVCs({"SVC_GW_FACADE_0005"})
     void constituents_audit_manual_rebuild_and_the_reserved_name() throws Exception {
         Registered served = registerAndIngest(uniqueName("catprov"), createUpstream(DEFAULT_MANIFEST));
         approve(served.snapshot().id());

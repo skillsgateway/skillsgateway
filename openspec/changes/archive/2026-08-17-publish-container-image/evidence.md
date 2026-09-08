@@ -4,7 +4,7 @@ Final fresh run of all gates after the last code edit, on commit `ee90814`
 (`feat(ci): publish the container image to GHCR by digest (#67)`), branch
 `feat/publish-container-image` (stacked on `refactor/rename-maven-gav`).
 
-## Fail-first proof (SVC_GW_0072)
+## Fail-first proof (SVC_GW_RELEASE_0002)
 
 `PackagingTests.releaseWorkflowCarriesThePublishByDigestContract` was written
 and run against the pre-change workflow first:

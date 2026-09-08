@@ -156,15 +156,15 @@ public final class MachineApiRegistry {
             delete("/api/tokens/machine/{id}"),
             // A session identity page; a machine has no session.
             get("/api/me"),
-            // The forge mirror's drift report (GW_0172): it names an outbound integration target
+            // The forge mirror's drift report (GW_FACADE_0023): it names an outbound integration target
             // and the state of its credential's last use, which is deployment infrastructure
             // rather than anything the gateway serves. Administrator-only, and no scope reaches it.
             get("/api/mirror/drift"),
-            // Reconciling that mirror on demand (GW_0192): the same outbound integration, and the
+            // Reconciling that mirror on demand (GW_FACADE_0027): the same outbound integration, and the
             // route that actually exercises its credential against the forge. If the report is
             // reserved to administrators, the button that acts on it cannot be less so.
             post("/api/mirror/reconcile"),
-            // The connector on/off switch (GW_0149): administrator judgement over the vetting
+            // The connector on/off switch (GW_VETTING_0029): administrator judgement over the vetting
             // chain itself, and even seeing the current settings is reserved to administrators —
             // no scope may let a machine credential turn off the control that governs it.
             get("/api/vetting/connector-toggles"),
@@ -173,19 +173,19 @@ public final class MachineApiRegistry {
     private MachineApiRegistry() {}
 
     /** Every named scope value, in declaration order. There is no wildcard and no implicit all. */
-    @Requirements({"GW_0129"})
+    @Requirements({"GW_AUTH_0022"})
     public static Set<String> scopes() {
         return REACHABLE.keySet();
     }
 
     /** The routes a single scope reaches. Empty for a value that is not a known scope. */
-    @Requirements({"GW_0129"})
+    @Requirements({"GW_AUTH_0022"})
     public static Set<Route> routesOf(String scope) {
         return REACHABLE.getOrDefault(scope, Set.of());
     }
 
     /** Whether the value names a scope this gateway knows; a misspelling must fail loudly. */
-    @Requirements({"GW_0126"})
+    @Requirements({"GW_AUTH_0020"})
     public static boolean isKnownScope(String scope) {
         return REACHABLE.containsKey(scope);
     }

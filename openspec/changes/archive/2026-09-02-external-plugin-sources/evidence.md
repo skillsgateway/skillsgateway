@@ -8,15 +8,15 @@ not, including where the loop was not followed.
 
 | Requirement | What is proved | Test(s) |
 | --- | --- | --- |
-| GW_0150 — typed source model | every form classifies to its own variant; nothing falls through | `PluginSourceTests` (5 cases, SVC_GW_0150) |
-| GW_0151 — config-gated admission | the shipped default admits nothing; each configured bound refuses; `npm`/`archive` unreachable by configuration | `ExternalSourceAdmissionTests` (10 cases, SVC_GW_0151); `ManifestPolicyTests.the_max_sources_bound_is_reached_through_a_whole_manifest` |
-| GW_0152 — held only if gateway-local | the gate returns `null` — what `IngestionService` maps to held — only when every source resolves inside the served snapshot | `ManifestPolicyTests` (4 cases, SVC_GW_0152) |
-| GW_0003 (rev. 0.2.0) — local-only by default | unchanged behaviour for an unconfigured gateway | `IngestionTests.externalPluginSourceIsRejectedAndCannotBeApproved`, `HostedLifecycleTests.a_pushed_manifest_declaring_a_non_local_source_is_rejected` — **both unmodified** |
+| GW_INGEST_0019 — typed source model | every form classifies to its own variant; nothing falls through | `PluginSourceTests` (5 cases, SVC_GW_INGEST_0019) |
+| GW_INGEST_0020 — config-gated admission | the shipped default admits nothing; each configured bound refuses; `npm`/`archive` unreachable by configuration | `ExternalSourceAdmissionTests` (10 cases, SVC_GW_INGEST_0020); `ManifestPolicyTests.the_max_sources_bound_is_reached_through_a_whole_manifest` |
+| GW_INGEST_0021 — held only if gateway-local | the gate returns `null` — what `IngestionService` maps to held — only when every source resolves inside the served snapshot | `ManifestPolicyTests` (4 cases, SVC_GW_INGEST_0021) |
+| GW_INGEST_0003 (rev. 0.2.0) — local-only by default | unchanged behaviour for an unconfigured gateway | `IngestionTests.externalPluginSourceIsRejectedAndCannotBeApproved`, `HostedLifecycleTests.a_pushed_manifest_declaring_a_non_local_source_is_rejected` — **both unmodified** |
 
 ## The adversarial cases (the guardrails, not the happy path)
 
 - **The default admits nothing.** `the_shipped_default_admits_nothing` asserts
-  the refusal still carries GW_0003's "non-local" phrase, which is also what the
+  the refusal still carries GW_INGEST_0003's "non-local" phrase, which is also what the
   untouched `IngestionTests` assertion depends on.
 - **A near-miss host never satisfies the allowlist.** `evil-github.com` and
   `github.com.evil.example` are both refused against an allowlist of
@@ -34,7 +34,7 @@ not, including where the loop was not followed.
   refusal wins over the softer admitted-but-unresolvable violation recorded on
   the first source.
 - **The gate never returns `null` for an unresolved external source.** That is
-  GW_0152, and it is the case that keeps T4 closed while the reversal is staged.
+  GW_INGEST_0021, and it is the case that keeps T4 closed while the reversal is staged.
 - **Nothing in any of it touches a network.** Admission is a function of the
   manifest bytes and the configuration; there is no transport, client or URL
   connection anywhere in the added code.
@@ -64,7 +64,7 @@ Run against the tree at the implementation commit.
 | Formatting | `./mvnw spotless:check` | BUILD SUCCESS |
 | Style | `./mvnw checkstyle:check` | BUILD SUCCESS |
 | New unit tests | `./mvnw -Dtest=PluginSourceTests,ExternalSourceAdmissionTests,ManifestPolicyTests test` | Tests run: 19, Failures: 0, Errors: 0 |
-| SVC_GW_0003 regression | `./mvnw -Dtest=IngestionTests,HostedLifecycleTests test` | Tests run: 8, Failures: 0, Errors: 0 — **both suites unmodified** |
+| SVC_GW_INGEST_0003 regression | `./mvnw -Dtest=IngestionTests,HostedLifecycleTests test` | Tests run: 8, Failures: 0, Errors: 0 — **both suites unmodified** |
 | Full build | `./mvnw -o clean verify` | **Stopped at 77/85 classes before completing — see below** |
 | Requirements | `reqstool status local -p docs/reqstool` | **Not run — see below** |
 
@@ -111,7 +111,7 @@ requirement "not implemented" too.
 
 1. `./mvnw clean verify` **online**, to completion — confirming in particular
    that `SbomTests` passes once the aggregate BOM is generated.
-2. `reqstool status local -p docs/reqstool` ending `PASS`, with GW_0150–GW_0152
+2. `reqstool status local -p docs/reqstool` ending `PASS`, with GW_INGEST_0019–GW_INGEST_0021
    showing implemented and verified from the annotations added here.
 3. `/opsx:archive` of this change as the final commit.
 

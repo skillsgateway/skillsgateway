@@ -66,7 +66,7 @@ public final class ManifestPolicy {
      * Returns a violation message, or {@code null} when the manifest is acceptable <em>as it
      * stands</em> — which for an external source means resolved, not merely admitted.
      *
-     * <p>This is the GW_0152 gate and it has exactly one meaning: {@code null} is what
+     * <p>This is the GW_INGEST_0021 gate and it has exactly one meaning: {@code null} is what
      * {@code IngestionService} maps to the held state, and held is what a reviewer may approve and
      * therefore publish. A manifest still pointing a client at a URL outside the gateway must never
      * reach it — that is threat T4 — so an admitted-but-unresolved source is still a violation,
@@ -77,7 +77,7 @@ public final class ManifestPolicy {
      * A composite whose manifest does not pass this gate is not served, which makes the invariant
      * structural rather than a property of the rewriter being correct.
      */
-    @Requirements({"GW_0003", "GW_0150", "GW_0151", "GW_0152"})
+    @Requirements({"GW_INGEST_0003", "GW_INGEST_0019", "GW_INGEST_0020", "GW_INGEST_0021"})
     public String validate(byte[] manifestBytes) {
         Evaluation evaluation = evaluate(manifestBytes);
         if (evaluation.rejected()) {
@@ -95,7 +95,7 @@ public final class ManifestPolicy {
      * than refusing them. Refusals still short-circuit: the first refused plugin ends the walk, so
      * the default configuration produces the same violation string it always did.
      */
-    @Requirements({"GW_0150", "GW_0151"})
+    @Requirements({"GW_INGEST_0019", "GW_INGEST_0020"})
     public Evaluation evaluate(byte[] manifestBytes) {
         JsonNode root;
         try {

@@ -35,7 +35,7 @@ import org.springframework.http.MediaType;
 import org.springframework.util.FileSystemUtils;
 
 /**
- * Upstream sync modes (GW_0056–GW_0060): the mode policy and its show-once secret, the bounded
+ * Upstream sync modes (GW_INGEST_0010–GW_INGEST_0014): the mode policy and its show-once secret, the bounded
  * oldest-first polling sweep, the HMAC-gated inbound webhook including its adversarial cases, the
  * upstream-outage resilience guarantee, and the ledger trail. The scheduled sweep is disabled in
  * the shared fixture and driven explicitly here.
@@ -55,7 +55,7 @@ class SyncTests extends AbstractGatewayTest {
     private WebhookDeliveryRepository deliveryRepository;
 
     @Test
-    @SVCs({"SVC_GW_0056"})
+    @SVCs({"SVC_GW_INGEST_0010"})
     void sync_mode_defaults_changes_and_never_bypasses_approval() throws Exception {
         String name = uniqueName("mode");
         Path upstream = createUpstream(DEFAULT_MANIFEST);
@@ -93,7 +93,7 @@ class SyncTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0057"})
+    @SVCs({"SVC_GW_INGEST_0011"})
     void scheduled_sweep_is_scoped_bounded_oldest_first_and_survives_a_failure() throws Exception {
         // The sweep is estate-wide, so this ordering-sensitive test first removes any scheduled
         // marketplaces earlier tests left behind.
@@ -127,7 +127,7 @@ class SyncTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0058"})
+    @SVCs({"SVC_GW_INGEST_0012"})
     void webhook_endpoint_accepts_only_a_validly_signed_request_and_ignores_the_payload() throws Exception {
         String name = uniqueName("hook");
         Path upstream = createUpstream(DEFAULT_MANIFEST);
@@ -169,7 +169,7 @@ class SyncTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0059"})
+    @SVCs({"SVC_GW_INGEST_0013"})
     void a_failing_upstream_never_affects_what_the_facade_serves() throws Exception {
         String name = uniqueName("outage");
         Path upstream = createUpstream(DEFAULT_MANIFEST);
@@ -199,7 +199,7 @@ class SyncTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0060"})
+    @SVCs({"SVC_GW_INGEST_0014"})
     void mode_changes_and_sync_ingestions_are_on_the_ledger_with_their_trigger() throws Exception {
         String name = uniqueName("ledger");
         Path upstream = createUpstream(DEFAULT_MANIFEST);
@@ -261,7 +261,7 @@ class SyncTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0056"})
+    @SVCs({"SVC_GW_INGEST_0010"})
     void concurrent_ingests_of_one_marketplace_yield_one_snapshot() throws Exception {
         String name = uniqueName("race");
         Path upstream = createUpstream(DEFAULT_MANIFEST);

@@ -17,12 +17,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * The reviewer's own eyes on a snapshot (GW_0080, GW_0081): the pinned commit's file tree, its
+ * The reviewer's own eyes on a snapshot (GW_INGEST_0015, GW_INGEST_0016): the pinned commit's file tree, its
  * blobs as inert text, and the delta against what the marketplace currently serves.
  *
  * <p>These reads expose held quarantine content — the very material vetting flags — so, unlike
  * the open snapshot-metadata reads, they are privileged: admin or an approver of the snapshot's
- * marketplace, resolved on the gateway's side from the addressed snapshot (GW_0069's
+ * marketplace, resolved on the gateway's side from the addressed snapshot (GW_AUTH_0011's
  * confused-deputy-safe resolver). They live on the OIDC web surface only; nothing here touches
  * {@code /git/**} or changes what the facade serves.
  */

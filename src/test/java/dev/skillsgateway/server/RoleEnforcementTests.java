@@ -33,7 +33,7 @@ import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 /**
- * Role enforcement (GW_0068–GW_0071, GW_0138): its own context — and therefore its own database —
+ * Role enforcement (GW_AUTH_0010–GW_AUTH_0013, GW_AUTH_0025): its own context — and therefore its own database —
  * with one configuration-bootstrapped admin, so no grant here can leak into another suite and vice
  * versa. It names its own admin rather than inheriting the base class's, which is also what keeps
  * the deny-by-default walk below honest: the principal it drives is not an admin here.
@@ -78,10 +78,10 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             "POST /api/policy/rules",
             "PUT /api/policy/rules/{name}",
             "DELETE /api/policy/rules/{name}",
-            // The administrative connector on/off switch (GW_0149): admin-only, so it walks with
+            // The administrative connector on/off switch (GW_VETTING_0029): admin-only, so it walks with
             // the role-gated mutations and is denied to every non-admin.
             "PUT /api/vetting/connectors/{name}/toggle",
-            // Reconciling the read-only forge mirror (GW_0192): admin-only for the same reason its
+            // Reconciling the read-only forge mirror (GW_FACADE_0027): admin-only for the same reason its
             // drift report is, and the route that actually exercises the push credential — if the
             // report is reserved, the button that acts on it cannot be less so.
             "POST /api/mirror/reconcile",
@@ -89,8 +89,8 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             "POST /api/policy/playground");
 
     /**
-     * Owner-scoped by design (GW_0068): a session's own tokens need no role. A session-derived
-     * credential (GW_0104) is the same thing — it grants the session's own principal exactly what
+     * Owner-scoped by design (GW_AUTH_0010): a session's own tokens need no role. A session-derived
+     * credential (GW_AUTH_0018) is the same thing — it grants the session's own principal exactly what
      * that principal could already ask for, with a shorter life and no publication authority — so
      * it belongs here rather than behind a role.
      */
@@ -98,7 +98,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             "POST /api/tokens", "POST /api/tokens/session", "POST /api/tokens/{id}/rotate", "DELETE /api/tokens/{id}");
 
     /**
-     * Machine credential provisioning (GW_0130): admin-only whether or not enforcement is enabled,
+     * Machine credential provisioning (GW_AUTH_0023): admin-only whether or not enforcement is enabled,
      * so it walks with the role-gated mutations here and is asserted separately, in
      * {@code MachineCredentialAdminTests}, with the flag off — which is the state the check
      * actually exists for.
@@ -106,10 +106,10 @@ class RoleEnforcementTests extends AbstractGatewayTest {
     private static final Set<String> ALWAYS_ADMIN_MUTATIONS = Set.of(
             "POST /api/tokens/machine", "POST /api/tokens/machine/{id}/rotate", "DELETE /api/tokens/machine/{id}");
 
-    /** The ledger and the operational listings: auditor-or-admin reads (GW_0070). */
+    /** The ledger and the operational listings: auditor-or-admin reads (GW_AUTH_0012). */
     private static final Set<String> PRIVILEGED_READS = Set.of(
             // Admin-only rather than an auditor read: it lists control-plane credentials, and it
-            // is admin-only whether or not enforcement is enabled (GW_0130). The auditor walk
+            // is admin-only whether or not enforcement is enabled (GW_AUTH_0023). The auditor walk
             // below skips it for the same reason it skips grant administration.
             "GET /api/tokens/machine",
             "GET /api/audit",
@@ -124,16 +124,16 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             "GET /api/roles",
             "GET /api/estate",
             "GET /api/policy/rules",
-            // The connector settings are admin-only, not an auditor read (GW_0149): the switch that
+            // The connector settings are admin-only, not an auditor read (GW_VETTING_0029): the switch that
             // governs the vetting chain is not shown to marketplace-scoped approvers or auditors.
             "GET /api/vetting/connector-toggles",
-            // The forge mirror's drift report (GW_0172) is admin-only too: it names an outbound
+            // The forge mirror's drift report (GW_FACADE_0023) is admin-only too: it names an outbound
             // integration target and the state of its credential's last use, which is deployment
             // infrastructure rather than a record of what the gateway served to whom.
             "GET /api/mirror/drift");
 
     @Test
-    @SVCs({"SVC_GW_0068"})
+    @SVCs({"SVC_GW_AUTH_0010"})
     void a_no_role_session_is_refused_every_mutation_and_privileged_read_but_keeps_browsing_and_tokens()
             throws Exception {
         // The walk's list is asserted complete against the application's own route table first:
@@ -203,7 +203,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0069"})
+    @SVCs({"SVC_GW_AUTH_0011"})
     void an_approver_acts_on_its_marketplace_and_is_refused_every_other_including_by_id() throws Exception {
         var root = oidcLogin().idToken(token -> token.subject("root"));
         String bobName = "bob-" + uniqueName("p");
@@ -252,7 +252,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                 .andExpect(status().isOk());
 
         // ...and none of it works on B — not by name, and not through a bare id (no confused
-        // deputy: the owning marketplace is resolved from the addressed resource, GW_0069).
+        // deputy: the owning marketplace is resolved from the addressed resource, GW_AUTH_0011).
         long bSnapshot = b.snapshot().id();
         Waiver waiverOnB = waiverService.create(
                 bSnapshot,
@@ -278,7 +278,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0070"})
+    @SVCs({"SVC_GW_AUTH_0012"})
     void an_auditor_reads_the_ledger_and_listings_and_is_refused_every_mutation() throws Exception {
         var root = oidcLogin().idToken(token -> token.subject("root"));
         String carolName = "carol-" + uniqueName("p");
@@ -290,8 +290,8 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                     || route.equals("GET /api/tokens/machine")
                     || route.equals("GET /api/vetting/connector-toggles")
                     || route.equals("GET /api/mirror/drift")) {
-                // Grant administration (GW_0071), the machine-credential listing (GW_0130), the
-                // connector settings (GW_0149) and the mirror's drift report (GW_0172) are
+                // Grant administration (GW_AUTH_0013), the machine-credential listing (GW_AUTH_0023), the
+                // connector settings (GW_VETTING_0029) and the mirror's drift report (GW_FACADE_0023) are
                 // admin-only, not auditor reads.
                 continue;
             }
@@ -306,12 +306,12 @@ class RoleEnforcementTests extends AbstractGatewayTest {
 
     /**
      * The snapshot preview reads return raw held quarantine content — a step beyond the open
-     * metadata reads — so they are approver-scoped (GW_0080): denied to a no-role session and to
+     * metadata reads — so they are approver-scoped (GW_INGEST_0015): denied to a no-role session and to
      * an auditor, allowed to the owning approver and to an admin, and denied cross-marketplace
-     * through a bare snapshot id exactly like the approver mutations (GW_0069's resolver).
+     * through a bare snapshot id exactly like the approver mutations (GW_AUTH_0011's resolver).
      */
     @Test
-    @SVCs({"SVC_GW_0080"})
+    @SVCs({"SVC_GW_INGEST_0015"})
     void preview_reads_are_denied_without_an_approver_grant_for_the_owning_marketplace() throws Exception {
         var root = oidcLogin().idToken(token -> token.subject("root"));
         var mallory = oidcLogin().idToken(token -> token.subject("mallory"));
@@ -329,7 +329,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         long onA = a.snapshot().id();
         long onB = b.snapshot().id();
         // No role, and read-only auditor: refused — the auditor's charter is the ledger and the
-        // listings (GW_0070), not held content.
+        // listings (GW_AUTH_0012), not held content.
         for (var session : List.of(mallory, grace)) {
             mockMvc.perform(get("/api/snapshots/{id}/files", onA).with(session)).andExpect(status().isForbidden());
             mockMvc.perform(get("/api/snapshots/{id}/file", onA)
@@ -358,12 +358,12 @@ class RoleEnforcementTests extends AbstractGatewayTest {
 
     /**
      * The playground evaluates real quarantine-backed facts, so it is scoped exactly like the
-     * approval it rehearses (GW_0092): the owning approver and the admin may test expressions,
+     * approval it rehearses (GW_APPROVAL_0009): the owning approver and the admin may test expressions,
      * a foreign approver reached through the bare snapshot id is refused, and rule management
-     * stays admin-only while the listing answers auditors (GW_0089).
+     * stays admin-only while the listing answers auditors (GW_APPROVAL_0006).
      */
     @Test
-    @SVCs({"SVC_GW_0089", "SVC_GW_0092"})
+    @SVCs({"SVC_GW_APPROVAL_0006", "SVC_GW_APPROVAL_0009"})
     void the_playground_is_approver_scoped_and_rule_management_admin_only() throws Exception {
         var root = oidcLogin().idToken(token -> token.subject("root"));
         String henryName = "henry-" + uniqueName("p");
@@ -414,7 +414,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0071"})
+    @SVCs({"SVC_GW_AUTH_0013"})
     void grants_are_admin_only_validated_audited_and_cannot_revoke_a_config_admin() throws Exception {
         var root = oidcLogin().idToken(token -> token.subject("root"));
         var dave = oidcLogin().idToken(token -> token.subject("dave-" + uniqueName("p")));
@@ -461,7 +461,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         assertThat(ledgerEntries("role-revoked", erin)).isNotEmpty();
 
         // The config-bootstrapped admin is effective but is not a grant row: there is nothing an
-        // API call could revoke (GW_0071) — its admin role comes from configuration alone.
+        // API call could revoke (GW_AUTH_0013) — its admin role comes from configuration alone.
         String meAsRoot = mockMvc.perform(get("/api/me").with(root))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.roles[0].role").value("admin"))

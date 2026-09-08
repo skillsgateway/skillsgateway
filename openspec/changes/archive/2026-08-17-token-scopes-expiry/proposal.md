@@ -38,11 +38,11 @@ attribution.
 ### New Capabilities
 
 - `token-lifecycle`: scopes and their facade enforcement, expiry, rotation,
-  and per-token attribution (GW_0064–GW_0067).
+  and per-token attribution (GW_AUTH_0006–GW_AUTH_0009).
 
 ### Modified Capabilities
 
-<!-- none: GW_0012/GW_0013 (PAT auth, hashed storage, show-once) are unchanged;
+<!-- none: GW_AUTH_0003/GW_AUTH_0004 (PAT auth, hashed storage, show-once) are unchanged;
      the new requirements layer on top without altering their text -->
 
 ## Impact
@@ -59,4 +59,4 @@ attribution.
 - **Config**: `skills-gateway.tokens.max-ttl` (unset = unlimited).
 - **Docs**: consuming-skills, new tokens reference sections, configuration,
   trust-boundaries concept, glossary.
-- **Traceability**: GW_0064–GW_0067 + SVC_GW_0064–SVC_GW_0067.
+- **Traceability**: GW_AUTH_0006–GW_AUTH_0009 + SVC_GW_AUTH_0006–SVC_GW_AUTH_0009.

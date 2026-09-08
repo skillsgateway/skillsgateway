@@ -2,21 +2,21 @@
 
 ## Context
 
-- `AdoptionService` — GW_0075 — *Adoption reporting from the fetch ledger* and
-  GW_0076 — *Staleness reporting against the served tip* — is two ledger
+- `AdoptionService` — GW_OBSERVABILITY_0001 — *Adoption reporting from the fetch ledger* and
+  GW_OBSERVABILITY_0002 — *Staleness reporting against the served tip* — is two ledger
   aggregations plus a read of the served tip. It writes nothing, and its Javadoc says so as a property rather
   than an observation. `FetchLogRepository.adoptionSince` already returns
   `(marketplace, sha, fetches, identities, lastFetch)` per SHA — the report's
   granularity floor today is the snapshot.
-- `SnapshotContentService.content(snapshotId)` — GW_0020 — *Snapshot content
+- `SnapshotContentService.content(snapshotId)` — GW_INGEST_0008 — *Snapshot content
   inventory* — already walks a
   snapshot's pinned commit tree and returns the manifest's plugins with the skills
   found under each plugin's `skills/` directory. It is exactly the inventory this
   change needs, and it exists.
-- `SnapshotPreviewService` / GW_0080 — *Snapshot file inspection* reads file
+- `SnapshotPreviewService` / GW_INGEST_0015 — *Snapshot file inspection* reads file
   **bytes** out of the pinned commit and is gated to admin or the snapshot's
   approver, because those bytes are held quarantine content.
-- GW_0031 — *Snapshot retention policy evaluation* can reclaim a snapshot's
+- GW_RETENTION_0001 — *Snapshot retention policy evaluation* can reclaim a snapshot's
   objects. The ledger entry for a fetch of that SHA survives; the tree behind it
   may not.
 - ADR 0016 is the decision this change implements. Where the two disagree, the
@@ -35,7 +35,7 @@
 
 - Any invocation figure, from any source. ADR 0016.
 - A new store of snapshot content. See decision 3.
-- Per-team anything. The gateway has no team concept (GW_0075's rationale).
+- Per-team anything. The gateway has no team concept (GW_OBSERVABILITY_0001's rationale).
 
 ## Decisions
 
@@ -46,7 +46,7 @@ window, resolve the snapshot's plugins and skills through
 `SnapshotContentService`, then re-key the existing per-SHA measures onto
 `(marketplace, plugin, skill)`.
 
-Nothing is recorded. That is not thrift — it is the property GW_0075 was written
+Nothing is recorded. That is not thrift — it is the property GW_OBSERVABILITY_0001 was written
 to have, and a report that starts writing rows is a report that can disagree with
 the ledger it claims to summarise.
 
@@ -60,7 +60,7 @@ affordable.
 
 This is the adversarial point of the change and it is easy to miss, because the
 new report is auditor-gated (like the ledger) while the tree it reads is
-approver-gated (GW_0080, because it is quarantine content).
+approver-gated (GW_INGEST_0015, because it is quarantine content).
 
 Two constraints keep those from colliding:
 
@@ -71,10 +71,10 @@ Two constraints keep those from colliding:
   hand to an authenticated reader.
 - **Names and paths only; never bytes.** The report carries plugin name, skill
   name and the `SKILL.md` path. A caller who wants the content still goes through
-  GW_0080 and is still gated as an approver.
+  GW_INGEST_0015 and is still gated as an approver.
 
 An auditor who could name the skills inside a *held* snapshot would have crossed
-GW_0080's boundary through a report that never mentions it. The negative test for
+GW_INGEST_0015's boundary through a report that never mentions it. The negative test for
 that belongs in the definition of done, not in a review comment.
 
 ### 3. Per-SHA content resolution is cached, and the cache never invalidates
@@ -179,7 +179,7 @@ unaffected.
   report — argues for its own scope; but a second scope for one path argues for
   reuse. Decide in the implementing PR, and whichever way it goes, the estate
   declaration obligation in `CLAUDE.md` applies to a new grantable scope.
-- **Window semantics**: GW_0075 windows and GW_0076 deliberately does not, because
+- **Window semantics**: GW_OBSERVABILITY_0001 windows and GW_OBSERVABILITY_0002 deliberately does not, because
   staleness is a property of an identity's latest state. Presence is arguably the
   same — *holds*, not *held during a window* — which would make the window
   optional rather than defaulted. Leaning window-free with an optional bound, but

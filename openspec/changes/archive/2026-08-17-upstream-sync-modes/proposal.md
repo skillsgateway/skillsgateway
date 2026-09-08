@@ -41,7 +41,7 @@ what triggered it.
 
 - `upstream-sync`: per-marketplace sync mode, the scheduled sweep, the inbound
   webhook trigger with HMAC verification, outage resilience, and the audit trail
-  (GW_0056–GW_0060).
+  (GW_INGEST_0010–GW_INGEST_0014).
 
 ### Modified Capabilities
 
@@ -62,5 +62,5 @@ what triggered it.
   surface — old-coder discipline, adversarial/negative tests required (bad signature,
   missing signature, wrong marketplace, replayed/oversized body, mode not webhook).
 - **Docs**: MkDocs manual pages for configuration and REST API, new sync page.
-- **Traceability**: new GW_0056–GW_0060 + SVC_GW_0056–SVC_GW_0060 in
+- **Traceability**: new GW_INGEST_0010–GW_INGEST_0014 + SVC_GW_INGEST_0010–SVC_GW_INGEST_0014 in
   `docs/reqstool/`.

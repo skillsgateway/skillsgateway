@@ -3,8 +3,8 @@
 ## Context
 
 The audit ledger is one table, `fetch_log`, written by exactly two collaborators —
-`FetchAuditHook` for facade fetches (GW_0008) and `AdminAuditLogger` for administrative
-actions (GW_0022) — through `FetchLogRepository.append(...)`, which issues a single
+`FetchAuditHook` for facade fetches (GW_AUDIT_0001) and `AdminAuditLogger` for administrative
+actions (GW_AUDIT_0002) — through `FetchLogRepository.append(...)`, which issues a single
 `INSERT` and nothing else. Its shape is `(id BIGSERIAL, ts, source, principal,
 marketplace, event, ref, sha)`; `source` is a client address for fetches and the literal
 `admin` for administrative actions. The only reader today is `GET /api/audit`, which does
@@ -27,7 +27,7 @@ operational signal that may be sampled and dropped. Compliance evidence may not 
 an authenticated NDJSON endpoint with a cursor or by receiving signed batches pushed to it;
 a consumer that falls behind, is rebuilt, or misses a delivery can replay from any position;
 delivery is at-least-once and each entry carries the sequence a receiver de-duplicates on
-(GW_0027–GW_0030).
+(GW_AUDIT_0003–GW_AUDIT_0006).
 
 **Non-Goals:** Kafka and syslog sinks (see follow-ons); exactly-once delivery; filtering or
 redaction of ledger fields per sink; signing or hash-chaining the ledger itself (tamper

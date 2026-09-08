@@ -24,7 +24,7 @@ Issue [#207](https://github.com/skillsgateway/skillsgateway/issues/207).
 ## What Changes
 
 - **Retention's compaction pass gains a sweep of the published side** —
-  `GW_0168 — Abandoned publication staging references are swept from published
+  `GW_FACADE_0019 — Abandoned publication staging references are swept from published
   repositories`. For every published repository it lists `refs/staging/*`,
   removes each reference that no live snapshot record names *and* that has been
   under observation for longer than a bound, garbage-collects, and records what

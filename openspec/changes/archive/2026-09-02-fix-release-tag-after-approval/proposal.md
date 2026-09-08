@@ -6,11 +6,11 @@ release cannot decide whether the version comes into existence. The first
 `0.1.0` and a GitHub prerelease behind with no image, no chart, no SBOM and no
 documentation version ([#205](https://github.com/skillsgateway/skillsgateway/issues/205)).
 
-`GW_0108` already requires the approval to be held "before any publicly visible
-or irreversible step". A pushed tag is both — `GW_0109` makes the tag the single
+`GW_RELEASE_0003` already requires the approval to be held "before any publicly visible
+or irreversible step". A pushed tag is both — `GW_RELEASE_0004` makes the tag the single
 source of the released version, and `releasing.md` calls it the only version
 there is. So this is the implementation disagreeing with the requirement it was
-written for, not a requirement that needs rethinking. What `GW_0108` did not
+written for, not a requirement that needs rethinking. What `GW_RELEASE_0003` did not
 anticipate is the state a run can still leave between the tag and promotion, and
 that nothing reports it.
 
@@ -63,10 +63,10 @@ None.
 
 ### Modified Capabilities
 
-- `release-packaging`: `GW_0108` — the approval is named as preceding the tag
+- `release-packaging`: `GW_RELEASE_0003` — the approval is named as preceding the tag
   specifically, rather than "any publicly visible or irreversible step" in the
   abstract, and gains the obligation to report the surviving state of a run that
-  tagged without promoting. `SVC_GW_0108` gains both assertions.
+  tagged without promoting. `SVC_GW_RELEASE_0003` gains both assertions.
 
 ## Impact
 
@@ -77,7 +77,7 @@ None.
 
 **Code**
 
-- `src/test/java/dev/skillsgateway/server/PackagingTests.java` — `SVC_GW_0108`
+- `src/test/java/dev/skillsgateway/server/PackagingTests.java` — `SVC_GW_RELEASE_0003`
   asserts the new order and the partial report.
 - `docs/reqstool/requirements.yml`, `docs/reqstool/software_verification_cases.yml`.
 

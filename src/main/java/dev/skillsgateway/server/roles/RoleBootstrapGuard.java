@@ -10,13 +10,13 @@ import org.springframework.stereotype.Component;
  *
  * <p>Authorization used to be switchable, and it defaulted to off, so a gateway installed and left
  * alone granted full administrative access to anyone who could complete a login. Enforcement is now
- * unconditional (GW_0138), which trades that failure for a different one: an estate nobody can
+ * unconditional (GW_AUTH_0025), which trades that failure for a different one: an estate nobody can
  * administer. This guard makes both failures loud at startup instead of quiet at runtime, in the
  * shape {@code DevInsecureAuthGuard} already established for the sibling escape hatch — say what was
  * detected, why it matters, and every way out, quoting property names in full.
  */
 @Component
-@Requirements({"GW_0139", "GW_0140"})
+@Requirements({"GW_AUTH_0026", "GW_AUTH_0027"})
 public class RoleBootstrapGuard {
 
     /** The property that used to switch enforcement off. Refused rather than ignored. */
@@ -29,7 +29,7 @@ public class RoleBootstrapGuard {
             throw new IllegalStateException(removedProperty());
         }
         if (properties.devInsecureAuth()) {
-            // The escape hatch confers the administrative role on its own principal (GW_0141), so
+            // The escape hatch confers the administrative role on its own principal (GW_AUTH_0028), so
             // the estate is administerable and there is nothing to check. DevInsecureAuthGuard
             // independently refuses that flag on anything resembling a real deployment, so this
             // skip cannot become a way around the check in production.

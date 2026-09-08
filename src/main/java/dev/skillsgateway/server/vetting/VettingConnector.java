@@ -1,7 +1,7 @@
 package dev.skillsgateway.server.vetting;
 
 /**
- * The vetting SPI (GW_0037). A connector takes a quarantined, SHA-pinned snapshot and answers with
+ * The vetting SPI (GW_VETTING_0001). A connector takes a quarantined, SHA-pinned snapshot and answers with
  * a {@link Verdict}; the gateway orchestrates, normalizes and records — it never vets itself
  * (ARCHITECTURE.md §4).
  *
@@ -25,7 +25,7 @@ public interface VettingConnector {
 
     /**
      * Identity of the rule set this connector currently carries, recorded on every run it takes
-     * part in (GW_0049). It answers the question continuous re-vetting exists to raise: when a
+     * part in (GW_VETTING_0012). It answers the question continuous re-vetting exists to raise: when a
      * snapshot that cleared last month is blocked today, was it the content that changed, or the
      * connector? Bump it whenever the rules change.
      *

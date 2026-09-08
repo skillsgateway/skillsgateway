@@ -123,7 +123,7 @@ public class AdminController {
 
             @Schema(
                     description = "Must be omitted or equal the upstream default branch; the ingested ref"
-                            + " is the gateway's decision, never the consumer's (GW_0017)",
+                            + " is the gateway's decision, never the consumer's (GW_INGEST_0006)",
                     example = "main")
             String ref) {}
 
@@ -168,7 +168,7 @@ public class AdminController {
             Instant upstreamUpdatedAt,
 
             @Schema(
-                    description = "How upstream content reaches quarantine (GW_0056)",
+                    description = "How upstream content reaches quarantine (GW_INGEST_0010)",
                     allowableValues = {"on-demand", "scheduled", "webhook"})
             String syncMode,
 
@@ -233,7 +233,7 @@ public class AdminController {
             Instant upstreamUpdatedAt,
 
             @Schema(
-                    description = "How upstream content reaches quarantine (GW_0056)",
+                    description = "How upstream content reaches quarantine (GW_INGEST_0010)",
                     allowableValues = {"on-demand", "scheduled", "webhook"})
             String syncMode,
 
@@ -242,7 +242,7 @@ public class AdminController {
 
             @Schema(
                     description = "Non-blocking warnings about this registration, e.g. the upstream url"
-                            + " already being registered under another marketplace name (GW_0166)")
+                            + " already being registered under another marketplace name (GW_INGEST_0029)")
             List<String> warnings) {
 
         static RegisteredMarketplace of(Marketplace marketplace, List<String> warnings) {
@@ -295,7 +295,7 @@ public class AdminController {
     }
 
     @GetMapping("/snapshots/{id}/licenses")
-    @Requirements({"GW_0095"})
+    @Requirements({"GW_VETTING_0021"})
     @Tag(name = "Snapshots")
     @Operation(
             summary = "Snapshot license report",
@@ -313,7 +313,7 @@ public class AdminController {
     }
 
     /** The ingested ref is the gateway's decision (upstream default branch), never the consumer's. */
-    @Requirements({"GW_0017"})
+    @Requirements({"GW_INGEST_0006"})
     private void requireDefaultBranchRef(String ref) {
         if (ref != null && !DEFAULT_BRANCH.equals(ref)) {
             throw new ResponseStatusException(
@@ -324,7 +324,7 @@ public class AdminController {
     }
 
     @GetMapping("/marketplaces")
-    @Requirements({"GW_0010"})
+    @Requirements({"GW_AUTH_0001"})
     @Tag(name = "Marketplaces")
     @Operation(
             summary = "List marketplaces and their snapshots",
@@ -376,14 +376,14 @@ public class AdminController {
     public record ApproveRequest(
             @Schema(
                     description = "Set true, as an administrator, to approve despite a blocked vetting outcome"
-                            + " (GW_0148); a reason is then required and the override is recorded distinctly")
+                            + " (GW_VETTING_0028); a reason is then required and the override is recorded distinctly")
             Boolean overrideVetting,
 
             @Schema(description = "The administrator's reason for overriding the block; required when overrideVetting")
             String reason) {}
 
     @PostMapping("/snapshots/{id}/approve")
-    @Requirements({"GW_0041", "GW_0050", "GW_0096", "GW_0097", "GW_0148"})
+    @Requirements({"GW_APPROVAL_0003", "GW_VETTING_0013", "GW_APPROVAL_0010", "GW_APPROVAL_0011", "GW_VETTING_0028"})
     @Tag(name = "Snapshots")
     @Operation(
             summary = "Approve a held or revoked snapshot",
@@ -398,7 +398,7 @@ public class AdminController {
                     + " uncovered findings. Record a scoped, expiring waiver for each of those findings and"
                     + " approve again; every waiver that let the approval through is written to the ledger."
                     + " Alternatively an administrator — and only an administrator — may set overrideVetting with"
-                    + " a reason to approve over the block (GW_0148): the override lifts only the vetting gate,"
+                    + " a reason to approve over the block (GW_VETTING_0028): the override lifts only the vetting gate,"
                     + " is written to the ledger as a distinct event with the failing verdicts, and marks the"
                     + " snapshot approved over a vetting failure.")
     @ApiResponse(responseCode = "200", description = "Snapshot approved and now served")
@@ -417,7 +417,7 @@ public class AdminController {
         if (request != null && Boolean.TRUE.equals(request.overrideVetting())) {
             // The override is the captain disconnecting the autopilot: admin-only, deliberately
             // stricter than the marketplace-scoped approver gate an ordinary approval passes
-            // (GW_0148). An approver may not override the control that governs their own content.
+            // (GW_VETTING_0028). An approver may not override the control that governs their own content.
             roleService.requireAdmin(authentication);
             override = ApprovalService.ApprovalOverride.ofVettingFailure(request.reason());
         } else {
@@ -427,7 +427,7 @@ public class AdminController {
         Snapshot snapshot = approved.snapshot();
         String marketplace = marketplaceName(snapshot.marketplaceId());
         waiverService.recordUse(marketplace, snapshot.sha(), authentication.getName(), approved.waiversApplied());
-        // The override lands on the ledger as its own event beside snapshot-approved (GW_0148), so
+        // The override lands on the ledger as its own event beside snapshot-approved (GW_VETTING_0028), so
         // the decision entry says who approved and this one says what they overrode and why — both
         // facts kept, never one instead of the other.
         if (approved.vettingOverride() != null) {
@@ -440,7 +440,7 @@ public class AdminController {
                     "reason=%s; blockingConnectors=%s; uncovered=%s"
                             .formatted(over.reason(), over.blockingConnectors(), over.uncoveredFindings()));
         }
-        // The age at approval is on the decision's own ledger entry (GW_0073): what the cooling-off
+        // The age at approval is on the decision's own ledger entry (GW_APPROVAL_0004): what the cooling-off
         // window was worth for this snapshot is only reconstructible if the entry says how long the
         // commit had been sitting in quarantine when someone adopted it.
         auditLogger.record(
@@ -449,7 +449,7 @@ public class AdminController {
                 "snapshot-approved",
                 snapshot.sha(),
                 "ingestion-age=" + ReleaseAgeGate.format(approved.ingestionAge()));
-        // Warn mode published a self-approval (GW_0097). The decision entry above says who approved;
+        // Warn mode published a self-approval (GW_APPROVAL_0011). The decision entry above says who approved;
         // this one says why that was not an independent review, and it is written beside the
         // approval rather than instead of it so the ledger carries both facts.
         if (!approved.fourEyesConflicts().isEmpty()) {
@@ -522,7 +522,7 @@ public class AdminController {
     }
 
     @GetMapping("/snapshots/{id}/release-age")
-    @Requirements({"GW_0073"})
+    @Requirements({"GW_APPROVAL_0004"})
     @Tag(name = "Snapshots")
     @Operation(
             summary = "Minimum release age eligibility",
@@ -542,7 +542,7 @@ public class AdminController {
     }
 
     @GetMapping("/snapshots/{id}/four-eyes")
-    @Requirements({"GW_0096", "GW_0097"})
+    @Requirements({"GW_APPROVAL_0010", "GW_APPROVAL_0011"})
     @Tag(name = "Snapshots")
     @Operation(
             summary = "Four-eyes standing of the calling reviewer",
@@ -591,7 +591,7 @@ public class AdminController {
     }
 
     /**
-     * Fail-closed approval gate (GW_0041). The response names the connectors that blocked and,
+     * Fail-closed approval gate (GW_APPROVAL_0003). The response names the connectors that blocked and,
      * beside them, every blocking finding no active waiver covers — which is exactly the set of
      * waivers the reviewer must record for this approval to succeed.
      */
@@ -605,7 +605,7 @@ public class AdminController {
     }
 
     /**
-     * The closure-completeness gate (GW_0165). Every discrepancy is named, because a refusal here
+     * The closure-completeness gate (GW_APPROVAL_0013). Every discrepancy is named, because a refusal here
      * means the snapshot's recorded closure and its pinned commit disagree — which nothing in the
      * gateway produces — and the shape of the disagreement is what an operator needs to see.
      */
@@ -618,7 +618,7 @@ public class AdminController {
     }
 
     /**
-     * An administrator asked to override a blocked vetting outcome without a reason (GW_0148). 422
+     * An administrator asked to override a blocked vetting outcome without a reason (GW_VETTING_0028). 422
      * rather than 409: the request is well-formed as far as the snapshot's state goes, but the one
      * field that makes an override an act of taking responsibility — the reason — is missing.
      */
@@ -630,7 +630,7 @@ public class AdminController {
     }
 
     /**
-     * Fail-closed policy gate (GW_0090). The response names every deciding rule with its outcome
+     * Fail-closed policy gate (GW_APPROVAL_0007). The response names every deciding rule with its outcome
      * — {@code matched}, or {@code error: ...} for a rule that could not evaluate — because the
      * remedy differs: a matched rule means the content is prohibited; an erroring rule means an
      * admin fixes or disables the rule.
@@ -644,7 +644,7 @@ public class AdminController {
     }
 
     /**
-     * Separation of duties (GW_0096). 409 rather than 403 on purpose: the principal <em>is</em>
+     * Separation of duties (GW_APPROVAL_0010). 409 rather than 403 on purpose: the principal <em>is</em>
      * authorized to approve in this marketplace — the role model already said so — and what refuses
      * them is this snapshot's provenance, which a different reviewer resolves and a different
      * permission would not. The response names each conflicting role so the answer is actionable:
@@ -660,7 +660,7 @@ public class AdminController {
     }
 
     /**
-     * The cooling-off window (GW_0073). The response says which setting imposed the wait and how
+     * The cooling-off window (GW_APPROVAL_0004). The response says which setting imposed the wait and how
      * much of it is left, so the reader can tell the two possible answers apart: wait, or change
      * the configuration — there is deliberately no per-approval override to reach for.
      */

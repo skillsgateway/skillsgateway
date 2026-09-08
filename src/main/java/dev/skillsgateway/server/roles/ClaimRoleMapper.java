@@ -20,7 +20,7 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Component;
 
 /**
- * Roles the identity provider already knows about (GW_0098): a configured claim's values matched
+ * Roles the identity provider already knows about (GW_AUTH_0015): a configured claim's values matched
  * against a configured table of claim value to role. Nothing here is provider-specific — the claim
  * name, its path and every value come from configuration, because on an app registration shared
  * with other services the values are the organisation's, not the gateway's.
@@ -67,7 +67,7 @@ public class ClaimRoleMapper {
      * Every mapping the deployment declared, or no application at all. A typo that quietly grants
      * nothing is the failure this refuses: an operator who misspells a role learns at startup.
      */
-    @Requirements({"GW_0098"})
+    @Requirements({"GW_AUTH_0015"})
     private List<ClaimMapping> validated(List<ClaimMapping> declared) {
         List<ClaimMapping> checked = new ArrayList<>();
         for (int i = 0; i < declared.size(); i++) {
@@ -100,7 +100,7 @@ public class ClaimRoleMapper {
     }
 
     /** The roles this session's claims confer, in mapping order, without duplicates. */
-    @Requirements({"GW_0098"})
+    @Requirements({"GW_AUTH_0015"})
     public List<EffectiveRole> rolesFrom(Authentication authentication) {
         if (mappings.isEmpty()) {
             return List.of();
@@ -120,11 +120,11 @@ public class ClaimRoleMapper {
 
     /**
      * Whether the provider dropped the claim rather than the session having no membership
-     * (GW_0099). Two shapes say so without naming any product: OpenID Connect's {@code
+     * (GW_AUTH_0016). Two shapes say so without naming any product: OpenID Connect's {@code
      * _claim_names}, and a sibling boolean named after the claim — the {@code hasgroups} convention
      * a directory uses when a user belongs to more groups than a token may carry.
      */
-    @Requirements({"GW_0099"})
+    @Requirements({"GW_AUTH_0016"})
     public boolean truncated(Authentication authentication) {
         Optional<Map<String, Object>> claims = claimsOf(authentication);
         if (claims.isEmpty() || resolve(claims.get()) != null) {

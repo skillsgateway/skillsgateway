@@ -7,8 +7,8 @@ CycloneDX software bill of materials over HTTP.
 
 ## Requirements
 
-### Requirement: GW_0014
-The system SHALL implement GW_0014.
+### Requirement: GW_API_0001
+The system SHALL implement GW_API_0001.
 
-#### Scenario: SVC_GW_0014
-The system SHALL pass SVC_GW_0014.
+#### Scenario: SVC_GW_API_0001
+The system SHALL pass SVC_GW_API_0001.

@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * Verification of the enforcing posture of the {@code skill-conformance} connector (GW_0167). Its
+ * Verification of the enforcing posture of the {@code skill-conformance} connector (GW_INGEST_0028). Its
  * own Spring context via {@link TestPropertySource}: the posture is a deployment decision, not
  * settable per call, which is exactly what makes it attributable per chain run.
  *
@@ -39,7 +39,7 @@ class SkillConformanceEnforceTests extends AbstractGatewayTest {
     private WaiverService waiverService;
 
     @Test
-    @SVCs({"SVC_GW_0167"})
+    @SVCs({"SVC_GW_INGEST_0028"})
     void underEnforcementAConformanceDefectBlocksApprovalUntilItIsWaived() throws Exception {
         Registered registered = registerAndIngest(
                 uniqueName("confenf"),
@@ -88,7 +88,7 @@ class SkillConformanceEnforceTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0167"})
+    @SVCs({"SVC_GW_INGEST_0028"})
     void underEnforcementAConformantMarketplaceIsStillApprovedWithoutCeremony() throws Exception {
         Registered registered = registerAndIngest(uniqueName("confenfok"), createUpstream(DEFAULT_MANIFEST));
 

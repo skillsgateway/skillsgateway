@@ -2,16 +2,16 @@
 
 ## 1. Requirements (SSOT first)
 
-- [x] 1.1 Add GW_0110 (the development-only unauthenticated mode refuses to
+- [x] 1.1 Add GW_AUTH_0019 (the development-only unauthenticated mode refuses to
       start on a deployment that has an identity provider configured, and the
       refusal states what decided it and how to resolve it) to
       `docs/reqstool/requirements.yml`
-- [x] 1.2 Add SVC_GW_0110 (GIVEN/WHEN/THEN) to
+- [x] 1.2 Add SVC_GW_AUTH_0019 (GIVEN/WHEN/THEN) to
       `docs/reqstool/software_verification_cases.yml`
 
 ## 2. Failing test first (old-coder: prove it fails)
 
-- [x] 2.1 `DevInsecureAuthGuardTests`, `@SVCs({"SVC_GW_0110"})`: real Spring
+- [x] 2.1 `DevInsecureAuthGuardTests`, `@SVCs({"SVC_GW_AUTH_0019"})`: real Spring
       contexts that start or refuse — the local loop (flag on, placeholders)
       starts; a real client id, a real provider endpoint, and a pinned issuer
       each refuse; a fully configured identity provider with the flag off starts
@@ -22,7 +22,7 @@
 ## 3. Implementation
 
 - [x] 3.1 `DevInsecureAuthGuard` in `dev.skillsgateway.server.auth`,
-      `@Requirements({"GW_0110"})`: no-op when the flag is off; otherwise
+      `@Requirements({"GW_AUTH_0019"})`: no-op when the flag is off; otherwise
       collects identity-provider signals from the `ClientRegistrationRepository`
       and `skills-gateway.oidc.issuer` and throws with an actionable message
 - [x] 3.2 `DevAuthTests` autowires the guard, so the local loop the guard must

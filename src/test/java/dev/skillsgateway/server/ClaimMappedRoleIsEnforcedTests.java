@@ -12,7 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * A claim-derived role both reports and binds (GW_0098, GW_0138).
+ * A claim-derived role both reports and binds (GW_AUTH_0015, GW_AUTH_0025).
  *
  * <p>This suite used to assert the opposite half: that a configured mapping was reported but inert,
  * so an operator could dry-run it before turning enforcement on. There is no off state to dry-run
@@ -28,7 +28,7 @@ import org.springframework.test.context.TestPropertySource;
 class ClaimMappedRoleIsEnforcedTests extends AbstractGatewayTest {
 
     @Test
-    @SVCs({"SVC_GW_0098"})
+    @SVCs({"SVC_GW_AUTH_0015"})
     void a_mapped_auditor_reads_the_ledger_and_is_refused_an_admin_mutation() throws Exception {
         var carol = oidcLogin()
                 .idToken(token -> token.subject("dryrun-carol").claim("groups", java.util.List.of("gw-auditors")));

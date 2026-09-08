@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * The inbound forge webhook (GW_0058) — the only surface reachable without an OIDC session or a
+ * The inbound forge webhook (GW_INGEST_0012) — the only surface reachable without an OIDC session or a
  * PAT, so its rules are strict: authentication is solely the HMAC-SHA256 signature of the exact
  * raw body against the marketplace's gateway-generated secret, and authority is nil — the payload
  * is never read, a valid signature only triggers ingestion of the registered upstream URL's
@@ -52,7 +52,7 @@ public class InboundWebhookController {
     }
 
     @PostMapping("/hooks/{marketplace}")
-    @Requirements({"GW_0058"})
+    @Requirements({"GW_INGEST_0012"})
     @Tag(name = "Sync")
     @Operation(
             summary = "Forge push webhook",

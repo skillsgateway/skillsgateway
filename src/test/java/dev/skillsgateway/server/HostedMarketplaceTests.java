@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 /**
- * Registering a marketplace the gateway itself hosts (GW_0101): no upstream, an origin repository
+ * Registering a marketplace the gateway itself hosts (GW_FACADE_0006): no upstream, an origin repository
  * of its own, and a refresh strategy that cannot be changed because there is nothing to refresh
  * from.
  */
@@ -34,7 +34,7 @@ class HostedMarketplaceTests extends AbstractGatewayTest {
     private EstateReconciler reconciler;
 
     @Test
-    @SVCs({"SVC_GW_0101"})
+    @SVCs({"SVC_GW_FACADE_0006"})
     void a_hosted_marketplace_registers_without_a_url_and_gets_an_origin_repository() throws Exception {
         String name = uniqueName("hosted");
 
@@ -62,7 +62,7 @@ class HostedMarketplaceTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0101"})
+    @SVCs({"SVC_GW_FACADE_0006"})
     void the_two_origins_are_mutually_exclusive_about_the_url() throws Exception {
         // A hosted marketplace with a URL is a contradiction, not an unused field.
         mockMvc.perform(post("/api/marketplaces")
@@ -88,7 +88,7 @@ class HostedMarketplaceTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0101"})
+    @SVCs({"SVC_GW_FACADE_0006"})
     void a_hosted_marketplace_reports_its_publish_path_and_refuses_a_sync_mode_change() throws Exception {
         String name = uniqueName("hostedsync");
         mockMvc.perform(post("/api/marketplaces")
@@ -118,7 +118,7 @@ class HostedMarketplaceTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0101"})
+    @SVCs({"SVC_GW_FACADE_0006"})
     void every_surface_that_would_report_an_upstream_survives_not_having_one() throws Exception {
         // A marketplace with no url is the shape most likely to NPE somewhere that assumed one.
         String name = uniqueName("nullurl");
@@ -165,7 +165,7 @@ class HostedMarketplaceTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0101"})
+    @SVCs({"SVC_GW_FACADE_0006"})
     void an_upstream_marketplace_is_unaffected() throws Exception {
         String name = uniqueName("stillupstream");
         String created = mockMvc.perform(post("/api/marketplaces")

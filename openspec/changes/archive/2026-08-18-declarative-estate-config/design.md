@@ -4,12 +4,12 @@
 
 The estate objects the issue names already have exactly one audited creation
 path each: `AdminController.registerMarketplace` (name pattern, reserved
-catalog name, URL scheme allowlist — GW_0016/GW_0063), `RoleController.grant`
-(role vocabulary, approver scoping to an existing marketplace — GW_0071),
+catalog name, URL scheme allowlist — GW_INGEST_0005/GW_FACADE_0005), `RoleController.grant`
+(role vocabulary, approver scoping to an existing marketplace — GW_AUTH_0013),
 `WebhookController.create` (name pattern, scheme allowlist, event-filter
-validation, gateway-generated show-once secret — GW_0024), and
+validation, gateway-generated show-once secret — GW_WEBHOOK_0002), and
 `AuditController.createSink` (sink = webhook subscriber filtered to
-`audit.export` plus a cursor row — GW_0028). All of them audit through
+`audit.export` plus a cursor row — GW_AUDIT_0004). All of them audit through
 `AdminAuditLogger` onto the append-only ledger. The reconciler must be a new
 *caller* of these paths, never a second implementation of them.
 
@@ -89,7 +89,7 @@ codebase; the losing branch is recorded where it was a near call.
    two copies of a boundary drift into a hole.
 
 5. **The estate block has no ref field, and declared sync modes exclude
-   `webhook`.** Registration never accepts a ref (GW_0017: the gateway pins
+   `webhook`.** Registration never accepts a ref (GW_INGEST_0006: the gateway pins
    the upstream default branch), so the declaration cannot express one —
    the invariant holds structurally, not by validation. A declared
    `sync-mode` may be `on-demand` or `scheduled` and is applied through
@@ -115,7 +115,7 @@ codebase; the losing branch is recorded where it was a near call.
    the API at any point before. Requiring same-file declaration was
    rejected: it would force a deployment migrating to GitOps to declare its
    whole marketplace estate before it may declare a single grant, and the
-   API applies exactly the exists-now rule (GW_0071), which the reconciler
+   API applies exactly the exists-now rule (GW_AUTH_0013), which the reconciler
    reuses. A grant whose marketplace does not exist is an entry failure
    (reported, retried next reconcile), never a startup failure.
 
@@ -153,7 +153,7 @@ codebase; the losing branch is recorded where it was a near call.
     consumers distinguish declarative from interactive changes by actor, not
     by guessing. The on-demand endpoint additionally audits
     `estate-reconcile-triggered` with the *calling admin* as actor — the
-    trigger is an admin action (GW_0022) even when the run converges nothing.
+    trigger is an admin action (GW_AUDIT_0002) even when the run converges nothing.
 
 11. **Two endpoints, classified in the deny-by-default walk.**
     `POST /api/estate/reconcile` is a mutation → admin-only.
@@ -161,7 +161,7 @@ codebase; the losing branch is recorded where it was a near call.
     startup run repopulates it after a restart) → auditor-or-admin, because
     like the subscriber/sink listings it exposes operator infrastructure
     (declared names, target URLs in failure reasons), classified with the
-    operational listings per GW_0070. Both are added to
+    operational listings per GW_AUTH_0012. Both are added to
     `RoleEnforcementTests`' route classification, which the walk asserts
     against the live route table. *Rejected branch:* a health-indicator
     surface for failures — a config typo flipping readiness would let

@@ -2,8 +2,8 @@
 
 ## ADDED Requirements
 
-### Requirement: GW_0141
-The system SHALL implement GW_0141.
+### Requirement: GW_AUTH_0028
+The system SHALL implement GW_AUTH_0028.
 
-#### Scenario: SVC_GW_0141
-The system SHALL pass SVC_GW_0141.
+#### Scenario: SVC_GW_AUTH_0028
+The system SHALL pass SVC_GW_AUTH_0028.

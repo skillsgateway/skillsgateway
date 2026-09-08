@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * The configured license allow/ban lists and their one evaluation rule (GW_0094). Shared by the
+ * The configured license allow/ban lists and their one evaluation rule (GW_VETTING_0020). Shared by the
  * connector (which turns evaluations into findings that gate approval) and the report endpoint
  * (which states them per detection), so the two can never disagree.
  *
@@ -38,7 +38,7 @@ final class LicensePolicy {
         return ids.stream().map(id -> id.toLowerCase(Locale.ROOT)).collect(Collectors.toSet());
     }
 
-    @Requirements({"GW_0094"})
+    @Requirements({"GW_VETTING_0020"})
     LicenseEvaluation evaluate(LicenseDetector.Detection detection) {
         if (detection.unknown()) {
             return LicenseEvaluation.UNKNOWN;
@@ -56,9 +56,9 @@ final class LicensePolicy {
     /**
      * The connector's findings for a snapshot's detections: every identified license recorded
      * informationally, every policy objection as a blocking finding on its own rule id, unknown and
-     * missing license as their own first-class states (GW_0093, GW_0094).
+     * missing license as their own first-class states (GW_VETTING_0019, GW_VETTING_0020).
      */
-    @Requirements({"GW_0093", "GW_0094"})
+    @Requirements({"GW_VETTING_0019", "GW_VETTING_0020"})
     List<Finding> findings(List<LicenseDetector.Detection> detections) {
         List<Finding> findings = new ArrayList<>();
         Severity failClosed = config.allowListConfigured() ? Severity.HIGH : Severity.LOW;
@@ -111,7 +111,7 @@ final class LicensePolicy {
 
     /**
      * Stable identity of the policy in force, stamped into the connector version so every recorded
-     * chain run names the policy it ran under (GW_0049). {@code default} when nothing is
+     * chain run names the policy it ran under (GW_VETTING_0012). {@code default} when nothing is
      * configured; otherwise a digest over the normalised, sorted lists.
      */
     String digest() {

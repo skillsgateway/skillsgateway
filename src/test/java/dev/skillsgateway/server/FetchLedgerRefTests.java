@@ -11,7 +11,7 @@ import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.Test;
 
 /**
- * What the fetch ledger says a client asked for (GW_0154), driven through the real git binary
+ * What the fetch ledger says a client asked for (GW_FACADE_0018), driven through the real git binary
  * against the real facade.
  *
  * <p>The facade advertises two namespaces, and both are legal wants: the served tip, and every
@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 class FetchLedgerRefTests extends AbstractGatewayTest {
 
     @Test
-    @SVCs({"SVC_GW_0154"})
+    @SVCs({"SVC_GW_FACADE_0018"})
     void a_fetch_of_a_superseded_snapshot_records_that_snapshots_ref() throws Exception {
         String name = uniqueName("corp");
         Path upstream = createUpstream(DEFAULT_MANIFEST);
@@ -50,7 +50,7 @@ class FetchLedgerRefTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0154"})
+    @SVCs({"SVC_GW_FACADE_0018"})
     void a_clone_of_the_served_tip_records_the_tip() throws Exception {
         String name = uniqueName("corp");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));

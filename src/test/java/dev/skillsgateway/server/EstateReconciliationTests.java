@@ -36,7 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * The declarative estate (GW_0083–GW_0087) in its own context — and therefore its own database —
+ * The declarative estate (GW_ESTATE_0001–GW_ESTATE_0005) in its own context — and therefore its own database —
  * with role enforcement enabled and an estate declared in configuration, so the startup
  * reconciliation itself is under test. The declared objects (estate-alpha, estate-hook,
  * estate-siem, the two grants) are never mutated by any test here: the converged-no-op test
@@ -100,7 +100,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
     private PolicyRuleService policyRuleService;
 
     @Test
-    @SVCs({"SVC_GW_0083"})
+    @SVCs({"SVC_GW_ESTATE_0001"})
     void startup_reconciliation_applies_the_declared_estate_through_the_audited_paths() {
         Marketplace alpha = marketplaceRepository.findByName("estate-alpha").orElseThrow();
         assertThat(alpha.url()).isEqualTo("file:///tmp/estate-alpha-upstream");
@@ -150,7 +150,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0083"})
+    @SVCs({"SVC_GW_ESTATE_0001"})
     void a_converged_estate_reconciles_with_zero_writes_and_zero_ledger_entries() throws Exception {
         WebhookSubscriber hookBefore =
                 subscriberRepository.findByName("estate-hook").orElseThrow();
@@ -180,7 +180,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0083"})
+    @SVCs({"SVC_GW_ESTATE_0001"})
     void objects_absent_from_the_declaration_are_never_touched() {
         String survivor = uniqueName("estate-survivor");
         registrationService.register(survivor, "https://example.invalid/" + survivor + ".git", "alice");
@@ -194,7 +194,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0084"})
+    @SVCs({"SVC_GW_ESTATE_0002"})
     void declared_marketplaces_face_the_same_registration_gate_as_the_api() {
         String drift = uniqueName("estate-drift");
         registrationService.register(drift, "https://example.invalid/original.git", "alice");
@@ -244,7 +244,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0085"})
+    @SVCs({"SVC_GW_ESTATE_0003"})
     void declared_grants_reconcile_through_the_audited_grant_path() throws Exception {
         // The startup grant took effect under enforcement: the approver reaches its marketplace's
         // ingest (which then fails upstream, 502 — authorization passed), a stranger gets 403.
@@ -281,7 +281,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0086"})
+    @SVCs({"SVC_GW_ESTATE_0004"})
     void declared_secrets_are_write_only_rotated_idempotently_and_floored() throws Exception {
         String first = "estate-rotate-secret-one-0123456789";
         String second = "estate-rotate-secret-two-0123456789";
@@ -361,11 +361,11 @@ class EstateReconciliationTests extends AbstractGatewayTest {
     /**
      * A new subscribable event is not a new estate object type: what an operator declares is a
      * subscriber, and its filter is validated against the same event registry the API uses
-     * (GW_0086, GW_0159). So the day the event exists it is declarable — and a typo in it is still
+     * (GW_ESTATE_0004, GW_WEBHOOK_0006). So the day the event exists it is declarable — and a typo in it is still
      * a reconciliation failure rather than a filter that silently receives nothing.
      */
     @Test
-    @SVCs({"SVC_GW_0159"})
+    @SVCs({"SVC_GW_WEBHOOK_0006"})
     void a_declared_subscriber_may_filter_on_the_approval_pending_event() {
         String declared = uniqueName("estate-pending");
         String typo = uniqueName("estate-pending-typo");
@@ -397,7 +397,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0087"})
+    @SVCs({"SVC_GW_ESTATE_0005"})
     void a_failing_entry_is_isolated_and_the_report_is_answerable_by_role() throws Exception {
         String good = uniqueName("estate-isolated");
         Estate estate = new Estate(
@@ -427,7 +427,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0089"})
+    @SVCs({"SVC_GW_APPROVAL_0006"})
     void declared_policy_rules_reconcile_through_the_compiled_audited_path() {
         String fresh = uniqueName("estate-rule");
         String broken = uniqueName("estate-rule-broken");

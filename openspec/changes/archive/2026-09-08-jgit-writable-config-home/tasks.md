@@ -19,12 +19,12 @@
 
 ## 2. Requirements (SSOT first)
 
-- [x] 2.1 Add GW_0179 (the image and the chart point JGit's own cache at the
+- [x] 2.1 Add GW_FACADE_0024 (the image and the chart point JGit's own cache at the
       writable temporary directory) to `docs/reqstool/requirements.yml`
-- [x] 2.2 Add SVC_GW_0179 (GIVEN/WHEN/THEN) to
+- [x] 2.2 Add SVC_GW_FACADE_0024 (GIVEN/WHEN/THEN) to
       `docs/reqstool/software_verification_cases.yml`
 
-## 3. Packaging (SVC_GW_0179)
+## 3. Packaging (SVC_GW_FACADE_0024)
 
 - [x] 3.1 `Dockerfile`: `ENV XDG_CONFIG_HOME=/tmp/xdg-config`, with a comment
       explaining why
@@ -36,7 +36,7 @@
 
 ## 4. Tests (never weakening an existing SVC test)
 
-- [x] 4.1 `PackagingTests`: new test method, `@SVCs({"SVC_GW_0179"})`,
+- [x] 4.1 `PackagingTests`: new test method, `@SVCs({"SVC_GW_FACADE_0024"})`,
       asserting the `Dockerfile` and the rendered `Deployment` both carry
       `XDG_CONFIG_HOME` under `/tmp`
 

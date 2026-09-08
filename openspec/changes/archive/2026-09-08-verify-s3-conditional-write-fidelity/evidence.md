@@ -213,7 +213,7 @@ GW_0227 were reserved for this change and are deliberately **not** consumed —
 they remain free for another change to claim.
 
 This change adds no required behaviour. It extends how the foundation of
-GW_0112 — Reference transitions are the same on every storage backend is
+GW_FACADE_0011 — Reference transitions are the same on every storage backend is
 verified. Both fidelity suites carry no `@SVCs`, as the original did not: they
 verify the store, not the gateway. A suite that skips unless a bucket is
 configured could not satisfy an SVC in any case, since reqstool counts a passing

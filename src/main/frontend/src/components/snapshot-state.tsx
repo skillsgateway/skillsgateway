@@ -11,7 +11,7 @@ import type { Snapshot } from "@/api/queries";
  * is destructive like `rejected` because the consequence is the same — nothing is being served —
  * and the word is what distinguishes "never published" from "published and taken back".
  *
- * @Requirements GW_0055
+ * @Requirements GW_VETTING_0018
  */
 export function SnapshotStateBadge({ state }: { state?: string }) {
   switch (state) {
@@ -34,7 +34,7 @@ export function SnapshotStateBadge({ state }: { state?: string }) {
  * the card itself; repeating it here would make the same sentence appear twice on one page.
  * Renders nothing for a snapshot that was not revoked.
  *
- * @Requirements GW_0055
+ * @Requirements GW_VETTING_0018
  */
 export function RevocationNote({ snapshot }: { snapshot: Snapshot }) {
   if (snapshot.state !== "revoked") {

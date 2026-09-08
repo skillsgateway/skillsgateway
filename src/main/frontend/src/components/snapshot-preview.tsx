@@ -136,7 +136,7 @@ function DiffView({ snapshotId }: { snapshotId: number }) {
  * rendered without any HTML pipeline, binary blobs are described rather than shown, and
  * truncation is stated rather than silent.
  *
- * @Requirements GW_0080, GW_0081, GW_0082
+ * @Requirements GW_INGEST_0015, GW_INGEST_0016, GW_APPROVAL_0005
  */
 export function SnapshotPreview({ snapshotId }: { snapshotId: number }) {
   const files = useSnapshotFiles(snapshotId);

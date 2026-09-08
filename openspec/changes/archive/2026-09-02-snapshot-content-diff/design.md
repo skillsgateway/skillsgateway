@@ -4,11 +4,11 @@
 
 Three things already exist and constrain the shape of this change:
 
-- `SnapshotContentService.content(id)` (GW_0020) reads
+- `SnapshotContentService.content(id)` (GW_INGEST_0008) reads
   `.claude-plugin/marketplace.json` at the snapshot's pinned commit inside the
   marketplace's **quarantine** repository and lists, per declared plugin, the
   skill directories under `<source>/skills/` that contain a `SKILL.md`.
-- `SnapshotPreviewService.diff(id)` (GW_0081) already owns
+- `SnapshotPreviewService.diff(id)` (GW_INGEST_0016) already owns
   `GET /api/snapshots/{id}/diff`: a JGit `DiffFormatter` file diff against the
   *served tip* of the published repository, privileged to admin/approver.
 - Every snapshot of a marketplace — held, approved or revoked — is a commit in
@@ -27,7 +27,7 @@ Three things already exist and constrain the shape of this change:
 
 **Non-Goals**
 
-- Not a replacement for GW_0081's file diff; that stays the way to read the
+- Not a replacement for GW_INGEST_0016's file diff; that stays the way to read the
   actual hunks, and this endpoint returns no file text at all.
 - No change to what the approval gate reads. The diff is evidence for a person,
   never an input to a decision the gateway makes.
@@ -39,7 +39,7 @@ Three things already exist and constrain the shape of this change:
 ## Decisions
 
 1. **A new path, `/content-diff`, not a redefinition of `/diff`.** `/diff` is
-   GW_0081's file diff. The contract is additive within a major, and two
+   GW_INGEST_0016's file diff. The contract is additive within a major, and two
    different answers behind one path would break every existing client at once.
    The name says what it diffs: the content *inventory*.
 
@@ -49,7 +49,7 @@ Three things already exist and constrain the shape of this change:
    deleted_at IS NULL ORDER BY id DESC LIMIT 1`, the same predicate
    `approvedByMarketplace` already uses, so "approved" means one thing in the
    repository.
-   *Alternative rejected:* the served tip (what GW_0081 uses). It answers a
+   *Alternative rejected:* the served tip (what GW_INGEST_0016 uses). It answers a
    different question — "what will the facade start serving" — and it goes
    blank whenever publication is interrupted, which would turn a two-skill
    review into a forty-skill one at exactly the wrong moment. Excluding the
@@ -85,7 +85,7 @@ Three things already exist and constrain the shape of this change:
 
 6. **No baseline is stated, not simulated.** With no approved snapshot,
    `baselineSnapshotId` and `baselineSha` are `null` and every plugin and skill
-   is `added`. That is the same honesty GW_0081 already applies to an unserved
+   is `added`. That is the same honesty GW_INGEST_0016 already applies to an unserved
    marketplace, and it keeps a first approval from looking like a no-op review.
 
 7. **Access parity with `/content`, not with the preview pane.** The endpoint
@@ -114,7 +114,7 @@ Three things already exist and constrain the shape of this change:
   the content comparison bounds the damage — an identical tree means the two
   really are the same skill.
 - **A purged baseline commit.** Approved snapshots are excluded from retention
-  deletion (GW_0033), so the baseline's objects cannot be compacted away while
+  deletion (GW_RETENTION_0003), so the baseline's objects cannot be compacted away while
   it is the baseline. If a read still fails, it surfaces as the existing
   `IngestionException` → 502 rather than as a silently empty diff.
 

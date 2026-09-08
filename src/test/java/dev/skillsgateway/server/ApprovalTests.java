@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 class ApprovalTests extends AbstractGatewayTest {
 
     @Test
-    @SVCs({"SVC_GW_0005"})
+    @SVCs({"SVC_GW_APPROVAL_0002"})
     void approvingHeldSnapshotRecordsReviewerAndTimestamp() throws Exception {
         Registered registered = registerAndIngest(uniqueName("corp"), createUpstream(DEFAULT_MANIFEST));
 
@@ -24,7 +24,7 @@ class ApprovalTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0009"})
+    @SVCs({"SVC_GW_INGEST_0004"})
     void provenanceOfApprovedSnapshotIsRetrievable() throws Exception {
         Path upstream = createUpstream(DEFAULT_MANIFEST);
         Registered registered = registerAndIngest(uniqueName("corp"), upstream);

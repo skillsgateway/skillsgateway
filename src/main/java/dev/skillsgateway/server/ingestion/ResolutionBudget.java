@@ -6,7 +6,7 @@ import java.time.Clock;
 import java.time.Instant;
 
 /**
- * What resolving one manifest's external plugin sources is allowed to cost (GW_0158).
+ * What resolving one manifest's external plugin sources is allowed to cost (GW_INGEST_0026).
  *
  * <p>One instance per ingestion: the per-source bounds are checked against each source and the
  * closure bound accumulates, so a manifest cannot get past a per-source limit by declaring twenty
@@ -40,7 +40,7 @@ public final class ResolutionBudget {
      * fact would mean the bytes the bound exists to refuse have already been received, which for an
      * endless stream is the whole failure.
      */
-    @Requirements({"GW_0158.1"})
+    @Requirements({"GW_INGEST_0026.1"})
     public long maxReceivedBytes() {
         return limits.maxReceivedBytes().toBytes();
     }
@@ -51,7 +51,7 @@ public final class ResolutionBudget {
     }
 
     /** Returns why the resolution may not continue, or {@code null} while there is time left. */
-    @Requirements({"GW_0158.8"})
+    @Requirements({"GW_INGEST_0026.8"})
     public String expired() {
         return clock.instant().isAfter(deadline)
                 ? "resolving the external plugin sources exceeded the %s deadline".formatted(limits.deadline())
@@ -63,7 +63,7 @@ public final class ResolutionBudget {
      * total advances only when the source is accepted, so a refusal leaves the accumulator exactly
      * where the last accepted source left it.
      */
-    @Requirements({"GW_0158", "GW_0158.3"})
+    @Requirements({"GW_INGEST_0026", "GW_INGEST_0026.3"})
     public String accept(String pluginName, Measurement measurement) {
         String reason = reason(measurement);
         if (reason != null) {
@@ -80,7 +80,14 @@ public final class ResolutionBudget {
         return null;
     }
 
-    @Requirements({"GW_0158.1", "GW_0158.2", "GW_0158.4", "GW_0158.5", "GW_0158.6", "GW_0158.7"})
+    @Requirements({
+        "GW_INGEST_0026.1",
+        "GW_INGEST_0026.2",
+        "GW_INGEST_0026.4",
+        "GW_INGEST_0026.5",
+        "GW_INGEST_0026.6",
+        "GW_INGEST_0026.7"
+    })
     private String reason(Measurement measurement) {
         if (measurement.receivedBytes() > limits.maxReceivedBytes().toBytes()) {
             return "it received %d bytes, over the %d permitted for one source"

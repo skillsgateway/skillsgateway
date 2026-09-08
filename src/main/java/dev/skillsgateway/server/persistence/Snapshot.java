@@ -58,7 +58,7 @@ public record Snapshot(
     public static final String REJECTED = "rejected";
 
     /**
-     * Retroactively quarantined (GW_0050): the snapshot was approved and published, and a later
+     * Retroactively quarantined (GW_VETTING_0013): the snapshot was approved and published, and a later
      * re-vetting run found a violation its active waivers do not cover. Its content is no longer
      * served, and it cannot be served again without a fresh approve decision.
      */

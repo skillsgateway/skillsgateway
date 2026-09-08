@@ -38,7 +38,7 @@ function StatChip({ label, value }: { label: string; value: ReactNode }) {
  * One marketplace's adoption over the window: header with serving state, stat chips, and the
  * per-snapshot-SHA breakdown with the served tip marked current.
  *
- * @Requirements GW_0075
+ * @Requirements GW_OBSERVABILITY_0001
  */
 export function AdoptionMarketplaceCard({ entry }: { entry: MarketplaceAdoption }) {
   return (
@@ -98,7 +98,7 @@ export function AdoptionMarketplaceCard({ entry }: { entry: MarketplaceAdoption 
  * dash in the served-tip column means the marketplace stopped serving entirely — the identity
  * holds retracted content.
  *
- * @Requirements GW_0076
+ * @Requirements GW_OBSERVABILITY_0002
  */
 export function StalenessTable({ entries }: { entries: StaleIdentity[] }) {
   return (
@@ -140,7 +140,7 @@ export function StalenessTable({ entries }: { entries: StaleIdentity[] }) {
  * selectable window, and who is not on the served tip anymore. Read-only — the reports state
  * facts, and attribution is by identity as the ledger records it (there is no team concept).
  *
- * @Requirements GW_0075, GW_0076, GW_0078
+ * @Requirements GW_OBSERVABILITY_0001, GW_OBSERVABILITY_0002, GW_OBSERVABILITY_0004
  */
 export function AdoptionPage() {
   const [days, setDays] = useState<number>(30);

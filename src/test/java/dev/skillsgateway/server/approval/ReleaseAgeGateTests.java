@@ -8,7 +8,7 @@ import java.time.Instant;
 import org.junit.jupiter.api.Test;
 
 /**
- * The cooling-off rule itself (GW_0073), evaluated as the pure function of
+ * The cooling-off rule itself (GW_APPROVAL_0004), evaluated as the pure function of
  * {@code (firstIngestedAt, now, minimum)} that it is.
  *
  * <p>The boundary is the whole point of testing it this way. "Eligible once the age has been
@@ -21,7 +21,7 @@ class ReleaseAgeGateTests {
     private static final Duration MINIMUM = Duration.ofHours(24);
 
     @Test
-    @SVCs({"SVC_GW_0073"})
+    @SVCs({"SVC_GW_APPROVAL_0004"})
     void eligibility_turns_over_exactly_at_the_boundary_instant() {
         Instant boundary = FIRST_SEEN.plus(MINIMUM);
 
@@ -47,7 +47,7 @@ class ReleaseAgeGateTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0073"})
+    @SVCs({"SVC_GW_APPROVAL_0004"})
     void a_zero_minimum_is_no_gate_at_all() {
         ReleaseAgeGate.Eligibility fresh = ReleaseAgeGate.evaluate(1L, FIRST_SEEN, FIRST_SEEN, Duration.ZERO);
 
@@ -58,7 +58,7 @@ class ReleaseAgeGateTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0073"})
+    @SVCs({"SVC_GW_APPROVAL_0004"})
     void the_remaining_time_is_rendered_as_a_reviewer_reads_it() {
         assertThat(ReleaseAgeGate.format(Duration.ofHours(52))).isEqualTo("2d 4h");
         assertThat(ReleaseAgeGate.format(Duration.ofDays(3))).isEqualTo("3d");

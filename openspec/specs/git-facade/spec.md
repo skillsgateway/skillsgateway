@@ -6,39 +6,39 @@ Serving approved snapshots as read-only git repositories over smart-HTTP for
 unmodified git clients, exposing only approved content and audit-logging
 every fetch.
 ## Requirements
-### Requirement: GW_0006
-The system SHALL implement GW_0006.
+### Requirement: GW_FACADE_0001
+The system SHALL implement GW_FACADE_0001.
 
-#### Scenario: SVC_GW_0006
-The system SHALL pass SVC_GW_0006.
+#### Scenario: SVC_GW_FACADE_0001
+The system SHALL pass SVC_GW_FACADE_0001.
 
-### Requirement: GW_0007
-The system SHALL implement GW_0007.
+### Requirement: GW_FACADE_0002
+The system SHALL implement GW_FACADE_0002.
 
-#### Scenario: SVC_GW_0007
-The system SHALL pass SVC_GW_0007.
+#### Scenario: SVC_GW_FACADE_0002
+The system SHALL pass SVC_GW_FACADE_0002.
 
-### Requirement: GW_0008
-The system SHALL implement GW_0008.
+### Requirement: GW_AUDIT_0001
+The system SHALL implement GW_AUDIT_0001.
 
-#### Scenario: SVC_GW_0008
-The system SHALL pass SVC_GW_0008.
+#### Scenario: SVC_GW_AUDIT_0001
+The system SHALL pass SVC_GW_AUDIT_0001.
 
-### Requirement: GW_0102
-The system SHALL implement GW_0102.
+### Requirement: GW_FACADE_0007
+The system SHALL implement GW_FACADE_0007.
 
-#### Scenario: SVC_GW_0102
-The system SHALL pass SVC_GW_0102.
+#### Scenario: SVC_GW_FACADE_0007
+The system SHALL pass SVC_GW_FACADE_0007.
 
-### Requirement: GW_0134
-The system SHALL implement GW_0134.
+### Requirement: GW_FACADE_0016
+The system SHALL implement GW_FACADE_0016.
 
-#### Scenario: SVC_GW_0134
-The system SHALL pass SVC_GW_0134.
+#### Scenario: SVC_GW_FACADE_0016
+The system SHALL pass SVC_GW_FACADE_0016.
 
-### Requirement: GW_0154
-The system SHALL implement GW_0154.
+### Requirement: GW_FACADE_0018
+The system SHALL implement GW_FACADE_0018.
 
-#### Scenario: SVC_GW_0154
-The system SHALL pass SVC_GW_0154.
+#### Scenario: SVC_GW_FACADE_0018
+The system SHALL pass SVC_GW_FACADE_0018.
 

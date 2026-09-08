@@ -50,7 +50,7 @@ spec/proposal wording fixes, and the archive move — no source changes).
   tools rule (an attacker malforming frontmatter cannot switch a rule off);
   every refusal leaving the snapshot `held` with `publishedIfServing`
   empty and no `snapshot-approved` ledger entry.
-- Boundary and role coverage: the deny-by-default walk (`SVC_GW_0068`)
+- Boundary and role coverage: the deny-by-default walk (`SVC_GW_AUTH_0010`)
   now classifies `POST/PUT/DELETE /api/policy/rules*` and
   `POST /api/policy/playground` as role-gated mutations and
   `GET /api/policy/rules` as a privileged read — the walk's route-table
@@ -102,7 +102,7 @@ INCOMPLETE (0)
 90/90 complete · 0 incomplete · PASS
 ```
 
-(GW_0089–GW_0092 all COMPLETE.)
+(GW_APPROVAL_0006–GW_APPROVAL_0009 all COMPLETE.)
 
 ### `openspec validate --all --strict`
 

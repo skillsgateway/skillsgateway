@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 public class SyncConfig {
 
     /**
-     * Single thread on purpose (GW_0058): a forge expects its delivery answered in seconds, while
+     * Single thread on purpose (GW_INGEST_0012): a forge expects its delivery answered in seconds, while
      * an upstream fetch can take longer, so triggers are queued rather than run in the request —
      * and one thread means queued triggers for the same marketplace serialize instead of racing.
      */

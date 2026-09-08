@@ -77,18 +77,18 @@ public class ApprovalService {
         this.events = events;
     }
 
-    /** Ledger event for an approval the cooling-off window refused (GW_0073). */
+    /** Ledger event for an approval the cooling-off window refused (GW_APPROVAL_0004). */
     static final String EVENT_REFUSED = "snapshot-approval-refused";
 
     /**
      * Ledger event for an administrator approving a snapshot over a blocked vetting outcome
-     * (GW_0148) — deliberately its own event so an override is never indistinguishable from a clean
+     * (GW_VETTING_0028) — deliberately its own event so an override is never indistinguishable from a clean
      * approval on the ledger.
      */
     public static final String EVENT_OVERRIDE = "snapshot-approved-over-vetting-failure";
 
     /**
-     * An administrator's request to approve past a blocked vetting outcome (GW_0148). The captain
+     * An administrator's request to approve past a blocked vetting outcome (GW_VETTING_0028). The captain
      * disconnecting the autopilot: it lifts only the vetting gate, requires a reason, and is
      * admin-only (enforced at the controller). {@link #none()} is the ordinary approval, which
      * overrides nothing.
@@ -112,8 +112,8 @@ public class ApprovalService {
 
     /**
      * An approved snapshot, the waivers that were in force when the gate let it through — empty for
-     * a snapshot the chain cleared on its own merits (GW_0048) — and how long ago the gateway first
-     * ingested its commit, which the ledger records against the decision (GW_0073).
+     * a snapshot the chain cleared on its own merits (GW_VETTING_0011) — and how long ago the gateway first
+     * ingested its commit, which the ledger records against the decision (GW_APPROVAL_0004).
      */
     public record Approved(
             Snapshot snapshot,
@@ -121,7 +121,7 @@ public class ApprovalService {
             Duration ingestionAge,
             List<FourEyesConflictException.Conflict> fourEyesConflicts,
 
-            /** The administrator's override of a blocked vetting outcome, or null (GW_0148). */
+            /** The administrator's override of a blocked vetting outcome, or null (GW_VETTING_0028). */
             VettingOverrideRecord vettingOverride) {
 
         public Approved {
@@ -132,7 +132,7 @@ public class ApprovalService {
     /**
      * Records the decision, then copies the pinned commit to published and advances main.
      *
-     * <p>The vetting gate comes first and fails closed (GW_0041): a snapshot whose <em>effective</em>
+     * <p>The vetting gate comes first and fails closed (GW_APPROVAL_0003): a snapshot whose <em>effective</em>
      * outcome is blocked — its latest chain run objects and at least one blocking finding is not
      * covered by an active waiver, including the case of a snapshot with no chain run at all — is
      * refused. The check precedes the state transition, so a refused approval leaves the snapshot
@@ -143,14 +143,14 @@ public class ApprovalService {
      * found and nothing else. The waivers that were in force are returned to the caller, which
      * appends them to the ledger as the acting identity.
      *
-     * <p>A snapshot that re-vetting revoked (GW_0050) comes back through this exact method and no
+     * <p>A snapshot that re-vetting revoked (GW_VETTING_0013) comes back through this exact method and no
      * other. That is what "not re-publishable without a fresh approve decision" means concretely:
      * the same gate, evaluated against the same effective outcome — so the violation that caused
      * the revocation must have been waived, or fixed by re-ingestion, before this can succeed — and
      * a new reviewer identity and timestamp recorded by the transition. There is no un-revoke.
      *
      * <p>Last of the preconditions — after the vetting gate and the policy gate — is the cooling-off
-     * window (GW_0073): a snapshot whose commit the gateway first ingested less than the configured
+     * window (GW_APPROVAL_0004): a snapshot whose commit the gateway first ingested less than the configured
      * minimum release age ago is refused, however clear its verdicts and rules are. It goes last
      * deliberately. All three refusals are disqualifying, but the other two tell a reviewer about
      * something to do — waive these findings, or take that rule up with whoever owns it — while
@@ -161,22 +161,22 @@ public class ApprovalService {
      *
      * @return the decided snapshot together with the waivers that let it through
      */
-    @Requirements({"GW_0005", "GW_0041", "GW_0050", "GW_0073"})
+    @Requirements({"GW_APPROVAL_0002", "GW_APPROVAL_0003", "GW_VETTING_0013", "GW_APPROVAL_0004"})
     public Approved approve(long snapshotId, String reviewer) {
         return approve(snapshotId, reviewer, ApprovalOverride.none());
     }
 
     /**
      * As {@link #approve(long, String)}, but with an administrator's override of a blocked vetting
-     * outcome (GW_0148). When {@code override.vettingFailure()} is set and the effective outcome is
+     * outcome (GW_VETTING_0028). When {@code override.vettingFailure()} is set and the effective outcome is
      * blocked, the vetting gate is lifted instead of refusing — the reason is required, the block
      * is recorded as a distinct ledger event and a standing marker on the snapshot, and every other
      * gate (policy, cooling-off, four-eyes) still runs. The admin-only nature of the override is
      * enforced by the caller; this method assumes an override request has already been authorized.
      */
-    @Requirements({"GW_0005", "GW_0041", "GW_0050", "GW_0073", "GW_0148"})
+    @Requirements({"GW_APPROVAL_0002", "GW_APPROVAL_0003", "GW_VETTING_0013", "GW_APPROVAL_0004", "GW_VETTING_0028"})
     public Approved approve(long snapshotId, String reviewer, ApprovalOverride override) {
-        // Observation only (GW_0077): timing and outcome around the unchanged decision — a
+        // Observation only (GW_OBSERVABILITY_0003): timing and outcome around the unchanged decision — a
         // vetting-blocked refusal is the observation's error and still propagates untouched.
         return metrics.observeApproval("approve", () -> doApprove(snapshotId, reviewer, override));
     }
@@ -196,14 +196,14 @@ public class ApprovalService {
         Duration ingestionAge = Duration.ZERO;
         OverrideCapture override = null;
         if (current.decidable()) {
-            // Before every other gate (GW_0165), and before the override below can lift anything:
+            // Before every other gate (GW_APPROVAL_0013), and before the override below can lift anything:
             // a snapshot whose recorded closure does not describe the commit it pins is refused
             // whatever vetting, policy or a reviewer say about it. The override lifts the vetting
             // gate; it is not a decision to publish content whose provenance is unknown.
             requireCompleteClosure(current, marketplace, reviewer);
             WaiverEvaluation.Effect effect = waiverService.evaluate(current);
             if (effect.blocked()) {
-                // No blanket override existed here by design; GW_0148 adds one, and only for an
+                // No blanket override existed here by design; GW_VETTING_0028 adds one, and only for an
                 // administrator who states a reason. When one is requested the vetting gate is
                 // lifted — the block is recorded rather than refused — and every other gate below
                 // still runs. Without a request the refusal is exactly as before.
@@ -216,13 +216,13 @@ public class ApprovalService {
                 override = OverrideCapture.of(overrideRequest.reason(), effect);
             }
             applied = effect.suppressions();
-            // The policy gate (GW_0090) comes after vetting and before the state transition: every
+            // The policy gate (GW_APPROVAL_0007) comes after vetting and before the state transition: every
             // enabled deny rule is evaluated over facts built at this instant, fail-closed — a rule
             // that matches, errors, or cannot see the facts refuses the approval, records the
-            // decision on the ledger (GW_0091), and leaves the snapshot held with nothing published.
+            // decision on the ledger (GW_APPROVAL_0008), and leaves the snapshot held with nothing published.
             policyGate.enforce(current, marketplace, reviewer);
             ingestionAge = requireReleaseAge(current, marketplace, reviewer);
-            // Separation of duties last, and after waiver evaluation (GW_0096): the set of waivers
+            // Separation of duties last, and after waiver evaluation (GW_APPROVAL_0010): the set of waivers
             // this approval leans on is only known once the effective outcome has been computed,
             // and one of them being the reviewer's own is a conflict. In enforce mode this throws
             // before the state transition below, so a refused approval leaves the snapshot held
@@ -232,7 +232,7 @@ public class ApprovalService {
         Snapshot decided = snapshotRepository.decide(snapshotId, Snapshot.APPROVED, reviewer);
         String sha = decided.sha();
         try {
-            // Publication is one seam operation (GW_0132): both served references land or neither
+            // Publication is one seam operation (GW_FACADE_0015): both served references land or neither
             // does, and a transition that did not take effect is raised rather than returned. What
             // used to be here -- a fetch built from the quarantine's filesystem path, then a
             // RefUpdate whose Result was discarded -- could not work on a backend whose
@@ -243,7 +243,7 @@ public class ApprovalService {
             repair(current, publishFailed);
             throw new ApprovalException("publish failed for snapshot %d".formatted(snapshotId), publishFailed);
         }
-        // The override marker is written only once the publication has actually landed (GW_0148):
+        // The override marker is written only once the publication has actually landed (GW_VETTING_0028):
         // the snapshot is now served over a vetting failure, so the standing marker that says so
         // must not exist for a snapshot that was never published. The ledger event is written by
         // the caller once approve returns, beside snapshot-approved, exactly as the four-eyes
@@ -256,19 +256,19 @@ public class ApprovalService {
                         override.blockingConnectors(),
                         override.uncoveredFindings(),
                         reviewer);
-        // The published set just grew; the catalog re-derives from it (GW_0062). Never fails the
+        // The published set just grew; the catalog re-derives from it (GW_FACADE_0004). Never fails the
         // approval that triggered it.
         catalogService.rebuildQuietly();
         // And it is announced, for whatever keeps a copy of what is served — today the read-only
-        // forge mirror (GW_0169). An event rather than a call because none of those consumers may
-        // affect this decision (GW_0170): the publication has already landed, and a listener that
+        // forge mirror (GW_FACADE_0020). An event rather than a call because none of those consumers may
+        // affect this decision (GW_FACADE_0021): the publication has already landed, and a listener that
         // fails leaves it landed.
         events.publishEvent(new ServedContentChangedEvent(marketplace.name(), "snapshot-approved"));
         return new Approved(decided, applied, ingestionAge, conflicts, overrideRecord);
     }
 
     /**
-     * What was blocking at the moment an administrator overrode the vetting gate (GW_0148),
+     * What was blocking at the moment an administrator overrode the vetting gate (GW_VETTING_0028),
      * rendered for the ledger, the standing marker, and the refusal-that-was-not. Captured from the
      * effective outcome before the state transition, so it names exactly what the administrator
      * took responsibility for.
@@ -287,13 +287,13 @@ public class ApprovalService {
     }
 
     /** The administrator's override of a blocked vetting outcome for this snapshot, or empty. */
-    @Requirements({"GW_0148"})
+    @Requirements({"GW_VETTING_0028"})
     public Optional<VettingOverrideRecord> vettingOverride(long snapshotId) {
         return vettingOverrideRepository.findBySnapshot(snapshotId);
     }
 
     /**
-     * Puts the row back after a publication that did not happen (GW_0133).
+     * Puts the row back after a publication that did not happen (GW_APPROVAL_0012).
      *
      * <p>{@code decide} has already committed by this point, so the row says {@code approved} while
      * nothing is served. The caller writes the ledger entry and emits the event only once
@@ -325,7 +325,7 @@ public class ApprovalService {
     }
 
     /**
-     * The cooling-off window (GW_0073), with the refusal appended to the ledger before it is
+     * The cooling-off window (GW_APPROVAL_0004), with the refusal appended to the ledger before it is
      * raised. A blocked approval that left no trace would make the control unauditable: from the
      * ledger alone one could not tell a window that was never tested from one that turned an
      * attempt away, which is precisely the event worth seeing twice in a row.
@@ -352,12 +352,12 @@ public class ApprovalService {
     }
 
     /**
-     * The closure-completeness gate (GW_0165), with its refusal on the ledger before it is raised —
+     * The closure-completeness gate (GW_APPROVAL_0013), with its refusal on the ledger before it is raised —
      * for the reason every refusing gate here records itself: a control that turns approvals away
      * silently cannot be audited, and this one firing at all means something other than the
      * gateway has been at the snapshot.
      */
-    @Requirements({"GW_0165"})
+    @Requirements({"GW_APPROVAL_0013"})
     private void requireCompleteClosure(Snapshot snapshot, Marketplace marketplace, String reviewer) {
         try {
             closureGate.require(snapshot, marketplace);
@@ -377,7 +377,7 @@ public class ApprovalService {
      * reason the cooling-off refusal is: a control that turns approvals away invisibly cannot be
      * audited, and a refused self-approval is the one event an operator most needs to see.
      */
-    @Requirements({"GW_0096", "GW_0097"})
+    @Requirements({"GW_APPROVAL_0010", "GW_APPROVAL_0011"})
     private List<FourEyesConflictException.Conflict> requireFourEyes(
             Snapshot snapshot, Marketplace marketplace, List<WaiverEvaluation.Suppression> applied, String reviewer) {
         try {
@@ -395,10 +395,10 @@ public class ApprovalService {
 
     /**
      * What the four-eyes rule would say about this reviewer and this snapshot, without deciding
-     * anything (GW_0096). Evaluates the waivers exactly as an approval would, so the answer names
+     * anything (GW_APPROVAL_0010). Evaluates the waivers exactly as an approval would, so the answer names
      * the waiver conflicts a real approval would raise rather than an approximation of them.
      */
-    @Requirements({"GW_0096"})
+    @Requirements({"GW_APPROVAL_0010"})
     public Optional<FourEyesGate.FourEyesCheck> fourEyes(long snapshotId, String reviewer) {
         return snapshotRepository.findById(snapshotId).map(snapshot -> {
             Marketplace marketplace =
@@ -413,7 +413,7 @@ public class ApprovalService {
     }
 
     /** Whether the snapshot has cleared the cooling-off window, and when it will if it has not. */
-    @Requirements({"GW_0073"})
+    @Requirements({"GW_APPROVAL_0004"})
     public Optional<ReleaseAgeGate.Eligibility> releaseAge(long snapshotId) {
         return snapshotRepository.findById(snapshotId).map(releaseAgeGate::evaluate);
     }
@@ -423,7 +423,7 @@ public class ApprovalService {
                 "reject", () -> snapshotRepository.decide(snapshotId, Snapshot.REJECTED, reviewer));
     }
 
-    @Requirements({"GW_0009", "GW_0164"})
+    @Requirements({"GW_INGEST_0004", "GW_INGEST_0030"})
     public Optional<Provenance> provenance(long snapshotId) {
         return snapshotRepository.findById(snapshotId).map(snapshot -> {
             Marketplace marketplace =
@@ -451,7 +451,7 @@ public class ApprovalService {
             long snapshotId,
             String marketplace,
 
-            /** Null for a gateway-hosted marketplace, which has no upstream at all (GW_0101). */
+            /** Null for a gateway-hosted marketplace, which has no upstream at all (GW_FACADE_0006). */
             String upstreamUrl,
 
             /** {@code upstream} or {@code hosted}: tells "no upstream" from "not recorded". */

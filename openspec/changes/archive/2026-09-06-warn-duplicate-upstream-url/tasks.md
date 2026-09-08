@@ -2,13 +2,13 @@
 
 ## 1. Requirements (SSOT first)
 
-- [x] 1.1 Add GW_0166 (normalized-URL comparison at registration; a match is a
+- [x] 1.1 Add GW_INGEST_0029 (normalized-URL comparison at registration; a match is a
       non-blocking warning naming the existing marketplace, never a refusal)
       to `docs/reqstool/requirements.yml`
-- [x] 1.2 Add SVC_GW_0166 (GIVEN/WHEN/THEN) to
+- [x] 1.2 Add SVC_GW_INGEST_0029 (GIVEN/WHEN/THEN) to
       `docs/reqstool/software_verification_cases.yml`
 
-## 2. Backend (SVC_GW_0166)
+## 2. Backend (SVC_GW_INGEST_0029)
 
 - [x] 2.1 `CloneUrlNormalizer` (new, `dev.skillsgateway.server.admin`):
       lowercase scheme and host, strip a trailing slash, strip a `.git`
@@ -17,7 +17,7 @@
       List<String> warnings)` replaces `Marketplace` as both `register(...)`
       overloads' return type; `duplicateUrlWarnings` runs next to
       `requireAllowlistedScheme`, comparing against `marketplaceRepository.list()`.
-      Annotated `@Requirements({"GW_0166"})`
+      Annotated `@Requirements({"GW_INGEST_0029"})`
 - [x] 2.3 `AdminController`: `RegisteredMarketplace` record (every
       `Marketplace` field, flat, plus `warnings`) replaces `Marketplace` as
       `registerMarketplace`'s response type
@@ -37,10 +37,10 @@
 
 ## 4. Tests (never weakening an existing SVC test)
 
-- [x] 4.1 `CloneUrlNormalizerTests` (plain JUnit, `SVC_GW_0166`): host case, a
+- [x] 4.1 `CloneUrlNormalizerTests` (plain JUnit, `SVC_GW_INGEST_0029`): host case, a
       trailing slash, a `.git` suffix and combinations of the two orders; path
       case preserved; scheme/port distinguish; null/blank/unparseable → null
-- [x] 4.2 `DuplicateUrlWarningTests` (`AbstractGatewayTest`, `SVC_GW_0166`):
+- [x] 4.2 `DuplicateUrlWarningTests` (`AbstractGatewayTest`, `SVC_GW_INGEST_0029`):
       registering a normalized-duplicate URL returns 201, still creates the
       marketplace, and names the earlier one in `warnings`; a non-colliding
       URL carries no warning; two existing marketplaces sharing a URL are both

@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * The default mode (GW_0097): a conflict is recorded and the approval proceeds.
+ * The default mode (GW_APPROVAL_0011): a conflict is recorded and the approval proceeds.
  *
  * <p>These tests exist because the default is a decision, not an absence of one. A deployment with
  * a single administrator — a first evaluation, a small team — has nobody to be the second pair of
@@ -30,7 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * <p>Nothing about four-eyes is configured here, and that is the point of the class: this is what
  * an operator gets without configuring anything. The four principals it acts as are named for the
  * whole family in {@link AbstractNamedAdminsTest}, because authorization is always enforced
- * (GW_0138) and somebody has to hold the role — not because the mode is set.
+ * (GW_AUTH_0025) and somebody has to hold the role — not because the mode is set.
  */
 class FourEyesTests extends AbstractNamedAdminsTest {
 
@@ -46,7 +46,7 @@ class FourEyesTests extends AbstractNamedAdminsTest {
 
     /** The floor of the control: recording, never off. */
     @Test
-    @SVCs({"SVC_GW_0097"})
+    @SVCs({"SVC_GW_APPROVAL_0011"})
     void theDefaultModeIsWarnAndThereIsNoWayToTurnDetectionOff() {
         assertThat(fourEyesGate.mode()).isEqualTo(SkillsGatewayProperties.FourEyesMode.WARN);
         assertThat(fourEyesGate.enforcing()).isFalse();
@@ -62,7 +62,7 @@ class FourEyesTests extends AbstractNamedAdminsTest {
      * served, and the ledger says plainly that nobody independent looked at it.
      */
     @Test
-    @SVCs({"SVC_GW_0097"})
+    @SVCs({"SVC_GW_APPROVAL_0011"})
     void aConflictedApprovalProceedsAndTheConflictIsRecordedBesideIt() throws Exception {
         Registered registered =
                 registerAndIngest(uniqueName("fe4warn"), createUpstream(DEFAULT_MANIFEST), "solo", "solo");
@@ -112,7 +112,7 @@ class FourEyesTests extends AbstractNamedAdminsTest {
      * self-approval rather than noise every approval produces.
      */
     @Test
-    @SVCs({"SVC_GW_0097"})
+    @SVCs({"SVC_GW_APPROVAL_0011"})
     void anIndependentApprovalRecordsNoConflictAtAll() throws Exception {
         Registered registered =
                 registerAndIngest(uniqueName("fe4indep"), createUpstream(DEFAULT_MANIFEST), "solo", "solo");
@@ -138,7 +138,7 @@ class FourEyesTests extends AbstractNamedAdminsTest {
      * marketplace and on the snapshot.
      */
     @Test
-    @SVCs({"SVC_GW_0097"})
+    @SVCs({"SVC_GW_APPROVAL_0011"})
     void registrationAndIngestionOverHttpRecordTheActingIdentity() throws Exception {
         String name = uniqueName("fe4actor");
         String url = "file://" + createUpstream(DEFAULT_MANIFEST).toAbsolutePath();

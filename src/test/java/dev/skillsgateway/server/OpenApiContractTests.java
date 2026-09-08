@@ -62,7 +62,7 @@ class OpenApiContractTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0105"})
+    @SVCs({"SVC_GW_API_0002"})
     void servedDocumentDeclaresTheBuildsVersion() throws Exception {
         String served = JsonPath.read(servedDocument(), "$.info.version");
 
@@ -91,7 +91,7 @@ class OpenApiContractTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0106"})
+    @SVCs({"SVC_GW_API_0003"})
     void publishedDocumentMatchesTheServedOne() throws Exception {
         assertPublishedIsCurrent(Files.readString(PUBLISHED), servedDocument());
     }
@@ -110,7 +110,7 @@ class OpenApiContractTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0107"})
+    @SVCs({"SVC_GW_API_0004"})
     void contractWorkflowCarriesTheBreakingChangeContract() throws IOException {
         String workflow = Files.readString(REPO_ROOT.resolve(".github/workflows/api-contract.yml"));
 
@@ -132,7 +132,7 @@ class OpenApiContractTests extends AbstractGatewayTest {
     }
 
     // ---------------------------------------------------------------------------------------
-    // The lifecycle event deliveries (GW_0181, GW_0182). Each assertion below is a private
+    // The lifecycle event deliveries (GW_API_0005, GW_API_0006). Each assertion below is a private
     // method so the negative tests can drive the real check from a mutated document rather
     // than an imitation of it.
     // ---------------------------------------------------------------------------------------
@@ -210,7 +210,7 @@ class OpenApiContractTests extends AbstractGatewayTest {
         Map<String, Object> properties = document.read("$.components.schemas.EventRegistry.properties");
         assertThat(properties.toString())
                 .as("both payload shapes hang off a response, where the diff rates a removed field an error"
-                        + " — on the request side of a webhooks entry it is only a warning (GW_0182)")
+                        + " — on the request side of a webhooks entry it is only a warning (GW_API_0006)")
                 .contains("#/components/schemas/" + EVENT_PAYLOAD)
                 .contains("#/components/schemas/" + APPROVAL_PENDING_PAYLOAD);
     }
@@ -231,7 +231,7 @@ class OpenApiContractTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0181"})
+    @SVCs({"SVC_GW_API_0005"})
     void theDocumentDescribesEveryLifecycleDelivery() throws Exception {
         DocumentContext document = parse(servedDocument());
 
@@ -243,7 +243,7 @@ class OpenApiContractTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0181"})
+    @SVCs({"SVC_GW_API_0005"})
     void aDeliveryCarriesEveryFieldTheDocumentPromises() throws Exception {
         // The contract is worthless if the document promises a field the wire omits, so the check
         // runs against a real queued delivery rather than against the record's declaration.
@@ -265,7 +265,7 @@ class OpenApiContractTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0181"})
+    @SVCs({"SVC_GW_API_0005"})
     void theDeliveryChecksCanActuallyFail() throws Exception {
         // A check nobody has seen fail is a check nobody should trust. Each mutation below is the
         // exact regression its check exists to catch.
@@ -314,7 +314,7 @@ class OpenApiContractTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0182"})
+    @SVCs({"SVC_GW_API_0006"})
     void theContractGateCoversTheDeliveriesOnTheSameTerms() throws IOException {
         String workflow = Files.readString(REPO_ROOT.resolve(".github/workflows/api-contract.yml"));
 
@@ -331,7 +331,7 @@ class OpenApiContractTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0107"})
+    @SVCs({"SVC_GW_API_0004"})
     void removingAResponseFieldIsAnErrorNotAWarning() throws IOException {
         // oasdiff rates removing a response field a warning unless the schema marks the field
         // required, and no response schema here does — so fail-on: ERR let it through (#216).

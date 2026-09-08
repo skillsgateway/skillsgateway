@@ -14,7 +14,7 @@ import java.util.Set;
 import org.springframework.stereotype.Component;
 
 /**
- * Separation of duties on approval (GW_0096, GW_0097), and the only place the rule lives.
+ * Separation of duties on approval (GW_APPROVAL_0010, GW_APPROVAL_0011), and the only place the rule lives.
  *
  * <p>The question it answers is narrow and worth stating precisely: not <em>may this principal
  * approve here</em> — that is the role model's decision, made before this gate ever runs — but
@@ -43,11 +43,11 @@ public class FourEyesGate {
     /** The reviewer wrote a waiver this approval relies on. */
     public static final String ROLE_WAIVER_AUTHOR = "waiver-author";
 
-    /** Ledger event for a detected conflict, written in both modes (GW_0097). */
+    /** Ledger event for a detected conflict, written in both modes (GW_APPROVAL_0011). */
     public static final String EVENT_CONFLICT = "four-eyes-conflict";
 
     /**
-     * Identities that are triggers rather than people (GW_0096). They are written to
+     * Identities that are triggers rather than people (GW_APPROVAL_0010). They are written to
      * {@code snapshots.ingested_by} so attribution stays honest — the ledger and the snapshot agree
      * on what caused the ingestion — but they are excluded from comparison, because a scheduled
      * poll or a forge webhook is nobody's judgement about the content. A snapshot the sweep brought
@@ -78,7 +78,7 @@ public class FourEyesGate {
      *     actually suppressed findings with, never the marketplace's whole waiver set: a waiver
      *     that is suppressing nothing is not something this approval relies on
      */
-    @Requirements({"GW_0096"})
+    @Requirements({"GW_APPROVAL_0010"})
     public List<FourEyesConflictException.Conflict> conflicts(
             Snapshot snapshot, Marketplace marketplace, List<WaiverEvaluation.Suppression> applied, String reviewer) {
         if (reviewer == null || reviewer.isBlank()) {
@@ -123,7 +123,7 @@ public class FourEyesGate {
      * so the caller can record them. Both modes detect identically — the mode decides only what
      * happens next, which is what keeps warn mode an honest rehearsal for enforcement.
      */
-    @Requirements({"GW_0096", "GW_0097"})
+    @Requirements({"GW_APPROVAL_0010", "GW_APPROVAL_0011"})
     public List<FourEyesConflictException.Conflict> require(
             Snapshot snapshot, Marketplace marketplace, List<WaiverEvaluation.Suppression> applied, String reviewer) {
         List<FourEyesConflictException.Conflict> conflicts = conflicts(snapshot, marketplace, applied, reviewer);

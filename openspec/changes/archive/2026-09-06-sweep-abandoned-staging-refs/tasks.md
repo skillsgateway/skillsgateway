@@ -2,15 +2,15 @@
 
 ## 1. Requirements (SSOT first)
 
-- [x] 1.1 Add GW_0168 (an abandoned publication staging reference is removed and
+- [x] 1.1 Add GW_FACADE_0019 (an abandoned publication staging reference is removed and
       its objects reclaimed, only when no live snapshot record names its commit
       and it has been observed for longer than a configured bound; served
       references and approved content untouched; the removal recorded on the
       ledger) to `docs/reqstool/requirements.yml`
-- [x] 1.2 Add SVC_GW_0168 (GIVEN/WHEN/THEN, both backends) to
+- [x] 1.2 Add SVC_GW_FACADE_0019 (GIVEN/WHEN/THEN, both backends) to
       `docs/reqstool/software_verification_cases.yml`
 
-## 2. Backend (SVC_GW_0168)
+## 2. Backend (SVC_GW_FACADE_0019)
 
 - [x] 2.1 `V1__init.sql`: `staging_ref_sightings (marketplace, ref,
       first_seen_at)`, unique on `(marketplace, ref)`
@@ -21,13 +21,13 @@
 - [x] 2.4 `RetentionService.sweepStagingRefs`: list `refs/staging/*` per
       published repository, stamp, select the ones past the bound that no live
       snapshot row names, delete them, garbage-collect, record on the ledger.
-      Annotated `@Requirements({"GW_0168"})`
+      Annotated `@Requirements({"GW_FACADE_0019"})`
 - [x] 2.5 `RetentionService.compact` calls it, with its failures caught
       separately; `collectGarbage` becomes role-aware
 
 ## 3. Tests (never weakening an existing SVC test)
 
-- [x] 3.1 `StagingRefSweepTests`, `@SVCs({"SVC_GW_0168"})`, parameterized over
+- [x] 3.1 `StagingRefSweepTests`, `@SVCs({"SVC_GW_FACADE_0019"})`, parameterized over
       the filesystem and object-store backends: an abandoned reference past the
       bound is swept and its commit becomes reachable from nothing; a reference
       inside the bound survives *and its publication still completes and

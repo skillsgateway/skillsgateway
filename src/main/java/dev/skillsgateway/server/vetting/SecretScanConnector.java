@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 
 /**
- * Built-in connector: credential material committed into a snapshot (GW_0039).
+ * Built-in connector: credential material committed into a snapshot (GW_VETTING_0003).
  *
  * <p>Credentials in a skill repository are exfiltrated to every developer who installs it, and they
  * are the most mechanically detectable class of harmful content — shaped tokens (AWS, GitHub,
@@ -87,7 +87,7 @@ public class SecretScanConnector implements VettingConnector {
     }
 
     @Override
-    @Requirements({"GW_0039", "GW_0143"})
+    @Requirements({"GW_VETTING_0003", "GW_VETTING_0023"})
     public Verdict vet(SnapshotUnderVetting snapshot) {
         List<Finding> findings = new ArrayList<>();
         int[] counts = new int[2]; // {scanned, skipped}
@@ -123,7 +123,7 @@ public class SecretScanConnector implements VettingConnector {
         return Verdict.of(findings, summary(counts[0], counts[1]));
     }
 
-    /** What the scan examined (GW_0143): a clean pass records this so it is not read as "did not run". */
+    /** What the scan examined (GW_VETTING_0023): a clean pass records this so it is not read as "did not run". */
     private static String summary(int scanned, int skipped) {
         return "scanned %d text file(s)%s; applied %d secret-shape rules plus high-entropy assignment analysis"
                 .formatted(

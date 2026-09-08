@@ -61,13 +61,13 @@ and say so.
   declares the break and the `⚠️ BREAKING CONTRACT` label applies. See
   `design.md` → "Decision 6" for the alternative (keep it deprecated and
   always true) and why it is not preferred.
-- New requirements **GW_0138** (authorization always enforced), **GW_0139**
-  (refuse to start with no administrator), **GW_0140** (refuse to start when
-  the removed property is set) and **GW_0141** (the escape hatch's principal
+- New requirements **GW_AUTH_0025** (authorization always enforced), **GW_AUTH_0026**
+  (refuse to start with no administrator), **GW_AUTH_0027** (refuse to start when
+  the removed property is set) and **GW_AUTH_0028** (the escape hatch's principal
   administers, and only while the escape hatch is on), each with its SVC.
-  Requirement ids start at GW_0138 rather than GW_0132 because the in-flight
+  Requirement ids start at GW_AUTH_0025 rather than GW_FACADE_0015 because the in-flight
   change `fix-discarded-ref-update-results`, on another branch, is claiming
-  GW_0132–GW_0137; starting after it avoids a collision that neither branch
+  GW_FACADE_0015–GW_INGEST_0018; starting after it avoids a collision that neither branch
   would see until both merged.
 
 ## Capabilities
@@ -78,16 +78,16 @@ _None._ The behaviour belongs to capabilities that already exist.
 
 ### Modified Capabilities
 
-- `admin-roles`: enforcement stops being conditional. GW_0068 and GW_0071 lose
+- `admin-roles`: enforcement stops being conditional. GW_AUTH_0010 and GW_AUTH_0013 lose
   the configuration switch and its default-off semantics from their text;
-  GW_0069, GW_0070 and GW_0098 lose the "role enforcement enabled" precondition
-  from their verification cases (it is now the only state); GW_0130 loses the
+  GW_AUTH_0011, GW_AUTH_0012 and GW_AUTH_0015 lose the "role enforcement enabled" precondition
+  from their verification cases (it is now the only state); GW_AUTH_0023 loses the
   "whether or not role enforcement is enabled" qualifier that distinguished
-  credential minting from everything else. Gains GW_0138, GW_0139 and GW_0140.
-- `admin-api`: GW_0129 loses its closing sentence that the scope classification
+  credential minting from everything else. Gains GW_AUTH_0025, GW_AUTH_0026 and GW_AUTH_0027.
+- `admin-api`: GW_AUTH_0022 loses its closing sentence that the scope classification
   does not depend on whether role enforcement is enabled, and its verification
   case stops being conducted "with role enforcement disabled".
-- `auth`: gains GW_0141 — the development escape hatch confers the
+- `auth`: gains GW_AUTH_0028 — the development escape hatch confers the
   administrative role on its synthetic principal, and confers nothing when the
   escape hatch is off.
 
@@ -106,8 +106,8 @@ _None._ The behaviour belongs to capabilities that already exist.
   reads it today.
 - **Tests**: `RolesDisabledTests` and `ClaimRolesDisabledTests` verify a state
   that will no longer exist and are replaced, not weakened —
-  `RolesDisabledTests` currently carries SVC_GW_0068 and
-  `ClaimRolesDisabledTests` SVC_GW_0098, so both SVCs' verification text is
+  `RolesDisabledTests` currently carries SVC_GW_AUTH_0010 and
+  `ClaimRolesDisabledTests` SVC_GW_AUTH_0015, so both SVCs' verification text is
   revised and re-covered rather than dropped. `AbstractGatewayTest` must
   bootstrap an admin for every context that mutates; `MachineApiScopeTests`,
   `MachineRoleIntersectionTests`, `RoleEnforcementTests`,

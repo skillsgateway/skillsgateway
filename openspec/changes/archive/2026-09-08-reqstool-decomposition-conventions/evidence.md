@@ -1,7 +1,7 @@
 # Evidence: reqstool-decomposition-conventions
 
 Commit under test: **`1a9ba67a0e1c4161a503c195b4fd9ed2dd7fa030`** —
-`docs(reqstool): decompose GW_0158 into dot-notation child requirements`.
+`docs(reqstool): decompose GW_INGEST_0026 into dot-notation child requirements`.
 
 All gates below were run from the worktree after the last code edit. No source,
 test or requirement file changed between the run and this report.
@@ -107,20 +107,20 @@ Last line is `PASS`. 173, up from 165 before this change — the eight children 
 the difference, and all eight are listed complete:
 
 ```
-  GW_0158             skills-gateway
-  GW_0158.1           skills-gateway
-  GW_0158.2           skills-gateway
-  GW_0158.3           skills-gateway
-  GW_0158.4           skills-gateway
-  GW_0158.5           skills-gateway
-  GW_0158.6           skills-gateway
-  GW_0158.7           skills-gateway
-  GW_0158.8           skills-gateway
+  GW_INGEST_0026             skills-gateway
+  GW_INGEST_0026.1           skills-gateway
+  GW_INGEST_0026.2           skills-gateway
+  GW_INGEST_0026.3           skills-gateway
+  GW_INGEST_0026.4           skills-gateway
+  GW_INGEST_0026.5           skills-gateway
+  GW_INGEST_0026.6           skills-gateway
+  GW_INGEST_0026.7           skills-gateway
+  GW_INGEST_0026.8           skills-gateway
 ```
 
 This is the load-bearing result of the change: reqstool 0.12.1 accepts a dot in a
 requirement id and in an SVC id, resolves `references.requirement_ids`, and maps
-`@SVCs({"SVC_GW_0158.4"})` to its JUnit test case with no tooling or schema
+`@SVCs({"SVC_GW_INGEST_0026.4"})` to its JUnit test case with no tooling or schema
 change.
 
 ## 5. `openspec validate --all --strict`

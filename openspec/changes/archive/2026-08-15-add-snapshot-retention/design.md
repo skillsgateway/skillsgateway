@@ -11,7 +11,7 @@ one marketplace has exactly two bare repositories, shared by all its snapshots �
 no per-snapshot directory to delete, and reclaiming space means deleting a ref and letting
 git garbage collection drop the objects that become unreachable.
 
-The ingested ref is always the upstream default branch (GW_0017), so "the same
+The ingested ref is always the upstream default branch (GW_INGEST_0006), so "the same
 marketplace/ref" from issue #25 is simply "the same marketplace". The ledger (`fetch_log`)
 records facade fetches with `marketplace`, `ref` and `sha`, and administrative actions with
 `source = 'admin'`; it is append-only and is not touched by this change.
@@ -26,7 +26,7 @@ property naming teams, and the only consumer-visible selection of content is the
 operator-stated criteria; a restore window that makes a wrong deletion recoverable; a hard
 delete that actually reclaims git storage; an absolute guarantee that served content is
 never deleted; a complete audit trail of every retention decision and action
-(GW_0031–GW_0036).
+(GW_RETENTION_0001–GW_RETENTION_0006).
 
 **Non-Goals:** deleting or compacting the audit ledger itself (it is append-only, and its
 retention is a separate compliance question); archiving snapshot content to cold storage

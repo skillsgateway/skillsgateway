@@ -12,7 +12,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.stereotype.Component;
 
 /**
- * Startup guard for the development escape hatch (GW_0110).
+ * Startup guard for the development escape hatch (GW_AUTH_0019).
  *
  * <p>{@code skills-gateway.dev-insecure-auth=true} opens the whole web surface — every {@code
  * /api/**}, {@code /actuator/**} and {@code /docs} request — and attributes it to a synthetic
@@ -39,7 +39,7 @@ import org.springframework.stereotype.Component;
  * dev-insecure-auth} — is always available.
  */
 @Component
-@Requirements({"GW_0110"})
+@Requirements({"GW_AUTH_0019"})
 public class DevInsecureAuthGuard {
 
     /** The client id {@code application.yaml} ships when no {@code SGW_OIDC_CLIENT_ID} is set. */

@@ -21,7 +21,7 @@ what this design has to fit inside rather than re-decide:
   run and aggregates it fail-closed; the snapshot stays `held`. What gates an
   approval is not the recorded outcome but the *effective* one —
   `WaiverService.evaluate`, which layers the waivers active at that instant over
-  the run (GW_0045).
+  the run (GW_VETTING_0008).
 - **Held is exactly the state that awaits a person.** `IngestionService` runs the
   chain for every snapshot it records as `held`, and only for those (a manifest
   violation is recorded `rejected` and never vetted). So "a chain run finished
@@ -157,7 +157,7 @@ the runtime state that *references* the event is already estate-managed.
 
 A subscribable event name is a compile-time constant in `WebhookEvent.ALL`, not
 a row. The thing an operator creates is a subscriber, which
-`skills-gateway.estate.webhooks` already reconciles (GW_0086) through
+`skills-gateway.estate.webhooks` already reconciles (GW_ESTATE_0004) through
 `WebhookService.register` → `normalizeEvents` — the same validation the API
 uses, against the same registry. So
 `events: snapshot.approval_pending,snapshot.approved` in a declared estate works

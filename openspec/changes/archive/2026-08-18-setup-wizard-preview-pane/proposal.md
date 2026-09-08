@@ -53,12 +53,12 @@ which the model forbids, or approving on a summary.
 
 - `snapshot-preview`: the inspection reads over a snapshot's pinned commit and
   the diff against the served baseline, with their caps and denial rules
-  (GW_0080, GW_0081), and the portal preview pane presenting them (GW_0082).
+  (GW_INGEST_0015, GW_INGEST_0016), and the portal preview pane presenting them (GW_APPROVAL_0005).
 
 ### Modified Capabilities
 
 - `admin-portal`: the client setup wizard on the marketplace detail page
-  (GW_0079). Existing portal requirements are untouched.
+  (GW_AUTH_0014). Existing portal requirements are untouched.
 
 ## Impact
 
@@ -75,11 +75,11 @@ which the model forbids, or approving on a summary.
 - **Portal**: `components/setup-wizard.tsx`, `components/snapshot-preview.tsx`
   (+ a small inert Markdown renderer), wired into `pages/marketplace-detail.tsx`;
   new queries and typed MSW handlers; component tests; two Playwright e2e
-  specs (`SVC_GW_0079`, `SVC_GW_0082`) driving a real held snapshot's preview
+  specs (`SVC_GW_AUTH_0014`, `SVC_GW_APPROVAL_0005`) driving a real held snapshot's preview
   and diff and the wizard's show-once behavior.
 - **Docs**: `reference/api/marketplaces.md` (new endpoints),
   `reference/portal.md` (wizard + preview pane), `guides/consuming-skills.md`
   (the wizard as the paved path), `guides/approving-snapshots.md` (preview
   before deciding). No new pages, no nav change.
-- **Traceability**: GW_0079–GW_0082 + SVC_GW_0079–SVC_GW_0082 (GW_0073/0074
-  are reserved by one in-flight change; GW_0075–0078 are taken by another).
+- **Traceability**: GW_AUTH_0014–GW_APPROVAL_0005 + SVC_GW_AUTH_0014–SVC_GW_APPROVAL_0005 (GW_APPROVAL_0004/0074
+  are reserved by one in-flight change; GW_OBSERVABILITY_0001–0078 are taken by another).

@@ -2,10 +2,10 @@
 
 ## 1. Traceability (SSOT first)
 
-- [x] 1.1 Revise GW_0041, GW_0042, GW_0043 in `docs/reqstool/requirements.yml` to the
-      waiver-based gate (revision 0.2.0); add GW_0044–GW_0048.
-- [x] 1.2 Revise SVC_GW_0041–SVC_GW_0043 to the new mechanism, keeping their verification
-      intent; add SVC_GW_0044–SVC_GW_0048.
+- [x] 1.1 Revise GW_APPROVAL_0003, GW_VETTING_0005, GW_VETTING_0006 in `docs/reqstool/requirements.yml` to the
+      waiver-based gate (revision 0.2.0); add GW_VETTING_0007–GW_VETTING_0011.
+- [x] 1.2 Revise SVC_GW_APPROVAL_0003–SVC_GW_VETTING_0006 to the new mechanism, keeping their verification
+      intent; add SVC_GW_VETTING_0007–SVC_GW_VETTING_0011.
 
 ## 2. Schema
 
@@ -50,11 +50,11 @@
 
 ## 6. Tests
 
-- [x] 6.1 Adapt `VettingTests` SVC_GW_0041/0043 to the waiver mechanism without weakening them.
-- [x] 6.2 `WaiverTests`: SVC_GW_0044 (mandatory fields), SVC_GW_0045 (scope mismatch, all four
-      cases), SVC_GW_0046 (expired and revoked), SVC_GW_0048 (ledger lifecycle).
+- [x] 6.1 Adapt `VettingTests` SVC_GW_APPROVAL_0003/0043 to the waiver mechanism without weakening them.
+- [x] 6.2 `WaiverTests`: SVC_GW_VETTING_0007 (mandatory fields), SVC_GW_VETTING_0008 (scope mismatch, all four
+      cases), SVC_GW_VETTING_0009 (expired and revoked), SVC_GW_VETTING_0011 (ledger lifecycle).
 - [x] 6.3 Pure exhaustive test of `WaiverEvaluation` over verdict states × waiver presence.
-- [x] 6.4 Portal unit tests and Playwright `SVC_GW_0042` (adapted) and `SVC_GW_0047` (new).
+- [x] 6.4 Portal unit tests and Playwright `SVC_GW_VETTING_0005` (adapted) and `SVC_GW_VETTING_0010` (new).
 
 ## 7. Documentation
 

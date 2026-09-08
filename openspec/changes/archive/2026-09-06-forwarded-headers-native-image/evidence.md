@@ -13,8 +13,8 @@ edits after it are this report and the archive move.
 
 | Requirement | Verifies | Test |
 | --- | --- | --- |
-| GW_0163 — Proxy-reported scheme and host are honoured only when configured, identically on every packaging | headers ignored when unset; honoured under `framework` and `native`; exactly one filter registered under `framework`; the absolute redirect URI immune to headers | `ForwardedHeadersUnsetTests`, `ForwardedHeadersFrameworkTests`, `ForwardedHeadersNativeTests`, `ForwardedHeadersRedirectUriTests` on `AbstractForwardedHeadersTest` (SVC_GW_0163), 5 tests across 4 real-server contexts |
-| GW_0015 — Container distribution | the chart names the strategy, gates it, passes the redirect URI through; `application.yaml` reads the variable | `PackagingTests.chartNamesTheForwardedHeaderStrategyAndPassesTheRedirectUriThrough` (SVC_GW_0015) |
+| GW_AUTH_0029 — Proxy-reported scheme and host are honoured only when configured, identically on every packaging | headers ignored when unset; honoured under `framework` and `native`; exactly one filter registered under `framework`; the absolute redirect URI immune to headers | `ForwardedHeadersUnsetTests`, `ForwardedHeadersFrameworkTests`, `ForwardedHeadersNativeTests`, `ForwardedHeadersRedirectUriTests` on `AbstractForwardedHeadersTest` (SVC_GW_AUTH_0029), 5 tests across 4 real-server contexts |
+| GW_RELEASE_0001 — Container distribution | the chart names the strategy, gates it, passes the redirect URI through; `application.yaml` reads the variable | `PackagingTests.chartNamesTheForwardedHeaderStrategyAndPassesTheRedirectUriThrough` (SVC_GW_RELEASE_0001) |
 
 "Identically on every packaging" cannot be asserted by a JVM test — on the
 JVM, Boot's own registration works — so it is asserted two other ways: the
@@ -174,9 +174,9 @@ $ (cd src/main/frontend && pnpm e2e)
 
 ```console
 $ reqstool status local -p docs/reqstool
-  GW_0161             skills-gateway
-  GW_0162             skills-gateway
-  GW_0163             skills-gateway
+  GW_INGEST_0027             skills-gateway
+  GW_VETTING_0030             skills-gateway
+  GW_AUTH_0029             skills-gateway
 
 INCOMPLETE (0)
 156/156 complete · 0 incomplete · PASS

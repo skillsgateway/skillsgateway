@@ -9,9 +9,9 @@ bottom.
   standing "continue, stack PRs" authorization, and their direct confirmation
   that scoped tokens are the next roadmap item).
 - Trust-boundary mutants (both killed, then restored — verified via git diff):
-  1. Facade scope check disabled (`if (false && ...)`) → `SVC_GW_0064` failed
+  1. Facade scope check disabled (`if (false && ...)`) → `SVC_GW_AUTH_0006` failed
      (out-of-scope clone succeeded).
-  2. Expiry filter removed from `findActiveByHash` → `SVC_GW_0065` failed
+  2. Expiry filter removed from `findActiveByHash` → `SVC_GW_AUTH_0007` failed
      (expired token authenticated).
 - One pre-existing SVC test updated, not weakened: `AuthTests`' closed
   enumeration of the token view's fields (intent: no hash/secret leak) gained

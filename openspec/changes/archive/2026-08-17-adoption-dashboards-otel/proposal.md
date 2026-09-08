@@ -44,13 +44,13 @@ facade traffic) should already be flowing without a code change.
 ### New Capabilities
 
 - `adoption-reporting`: the adoption and staleness reads over the fetch ledger
-  and the portal page presenting them (GW_0075, GW_0076, GW_0078).
+  and the portal page presenting them (GW_OBSERVABILITY_0001, GW_OBSERVABILITY_0002, GW_OBSERVABILITY_0004).
 - `observability`: the always-recorded `skills_gateway.*` metrics and
-  observations for ingestion, approvals and facade traffic (GW_0077).
+  observations for ingestion, approvals and facade traffic (GW_OBSERVABILITY_0003).
 
 ### Modified Capabilities
 
-<!-- none: the reads are auditor-gated by the existing GW_0068/GW_0070
+<!-- none: the reads are auditor-gated by the existing GW_AUTH_0010/GW_AUTH_0012
      enforcement, whose requirement text already covers "operational-listing
      reads"; the instrumentation changes no behavior of the flows it times -->
 
@@ -71,7 +71,7 @@ facade traffic) should already be flowing without a code change.
   through the facade, read it on the page).
 - **Docs**: new `reference/api/adoption.md`, new `reference/observability.md`,
   portal reference section, nav entries.
-- **Traceability**: GW_0075–GW_0078 + SVC_GW_0075–SVC_GW_0078 (GW_0073/0074
+- **Traceability**: GW_OBSERVABILITY_0001–GW_OBSERVABILITY_0004 + SVC_GW_OBSERVABILITY_0001–SVC_GW_OBSERVABILITY_0004 (GW_APPROVAL_0004/0074
   are reserved by another in-flight change).
 - **Known limit (documented)**: metric tags are low-cardinality only (outcome,
   decision, event) — per-marketplace and per-identity numbers stay in the

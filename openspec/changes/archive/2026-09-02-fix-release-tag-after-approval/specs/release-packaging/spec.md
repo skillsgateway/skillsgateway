@@ -2,8 +2,8 @@
 
 ## MODIFIED Requirements
 
-### Requirement: GW_0108
-The system SHALL implement GW_0108.
+### Requirement: GW_RELEASE_0003
+The system SHALL implement GW_RELEASE_0003.
 
-#### Scenario: SVC_GW_0108
-The system SHALL pass SVC_GW_0108.
+#### Scenario: SVC_GW_RELEASE_0003
+The system SHALL pass SVC_GW_RELEASE_0003.

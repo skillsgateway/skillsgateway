@@ -72,7 +72,7 @@ started. They enter in the implementing PR, which is task 1.1 of `tasks.md`.
 
 The ids were checked as free against this branch and against `origin/main`
 (`grep -rn 'GW_020[6-9]\|GW_021[0-2]' docs/ src/` matches nothing outside this
-change's own spec delta); the highest allocated id on `main` is GW_0172.
+change's own spec delta); the highest allocated id on `main` is GW_FACADE_0023.
 
 ## What this change does not claim
 

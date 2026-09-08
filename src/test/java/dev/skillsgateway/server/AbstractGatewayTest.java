@@ -54,7 +54,7 @@ import org.springframework.web.context.WebApplicationContext;
             "spring.security.oauth2.client.provider.idp.jwk-set-uri=https://idp.invalid/jwks",
             "skills-gateway.data-dir=target/test-git-data",
             // Authorization is always enforced and a gateway with no configured administrator
-            // refuses to start (GW_0138, GW_0139), so the shared context names the principals its
+            // refuses to start (GW_AUTH_0025, GW_AUTH_0026), so the shared context names the principals its
             // suites act as: "user" is what Spring Security's oidcLogin() invents by default, and
             // "root" and "alice" are the named subjects the non-authorization suites use.
             //
@@ -111,7 +111,7 @@ abstract class AbstractGatewayTest {
 
     /**
      * The default fixture's skill, conformant with the Agent Skills specification the
-     * skill-conformance connector pins (GW_0167): a clean fixture has to mean a clean chain, or
+     * skill-conformance connector pins (GW_INGEST_0028): a clean fixture has to mean a clean chain, or
      * every test that asserts one would be asserting around a standing finding instead.
      */
     protected static final String CONFORMANT_SKILL = """
@@ -258,7 +258,7 @@ abstract class AbstractGatewayTest {
         return registerAndIngest(name, upstreamDir, null, null);
     }
 
-    /** As above, with the supply-side identities the four-eyes rule reads (GW_0096). */
+    /** As above, with the supply-side identities the four-eyes rule reads (GW_APPROVAL_0010). */
     protected Registered registerAndIngest(String name, Path upstreamDir, String registrant, String ingestActor) {
         Marketplace marketplace = marketplaceRepository.register(
                 name,
@@ -285,7 +285,7 @@ abstract class AbstractGatewayTest {
         return "http://" + credentials + "127.0.0.1:" + port + "/git/" + marketplace;
     }
 
-    /** Publish endpoint URL for a hosted marketplace (GW_0102); a null PAT gives no credentials. */
+    /** Publish endpoint URL for a hosted marketplace (GW_FACADE_0007); a null PAT gives no credentials. */
     protected String publishUrl(String marketplace, String pat) {
         String credentials = pat == null ? "" : "token:" + pat + "@";
         return "http://" + credentials + "127.0.0.1:" + port + "/publish/" + marketplace;

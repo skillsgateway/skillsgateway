@@ -9,7 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 /**
- * An authenticated machine API credential (GW_0127). Its own type rather than a
+ * An authenticated machine API credential (GW_AUTH_0021). Its own type rather than a
  * {@code UsernamePasswordAuthenticationToken} so that the ledger, the audit logger and any future
  * caller can tell a machine actor from a person by asking the authentication rather than by
  * comparing strings — which is the same mistake this change removes from the ledger.
@@ -39,7 +39,7 @@ public final class MachineApiAuthentication extends AbstractAuthenticationToken 
     }
 
     /** The credential this request authenticated with; the ledger attributes the entry to it. */
-    @Requirements({"GW_0127"})
+    @Requirements({"GW_AUTH_0021"})
     public AccessToken token() {
         return token;
     }

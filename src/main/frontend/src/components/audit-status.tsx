@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
  * refusal or violation — the same red the marketplace card paints, which is the point of #221.
  * The theme carries no green token, so "clear" is the accent, not a new colour.
  *
- * @Requirements GW_0030
+ * @Requirements GW_AUDIT_0006
  */
 const LABEL: Record<AuditStatus, string> = {
   clear: "clear",

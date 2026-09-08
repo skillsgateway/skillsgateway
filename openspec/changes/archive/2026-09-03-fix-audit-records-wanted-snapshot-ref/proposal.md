@@ -12,7 +12,7 @@ for (ObjectId want : wants) {
 }
 ```
 
-The facade advertises two namespaces (`GW_0134`), and both are legal wants. An
+The facade advertises two namespaces (`GW_FACADE_0016`), and both are legal wants. An
 approved snapshot stays fetchable by name after a later approval has superseded
 it — that is deliberate, documented behaviour, and `RefAdvertisementTests`
 guards it. So a client that fetches `refs/snapshots/<sha>` of a *superseded*
@@ -21,7 +21,7 @@ The row is not merely imprecise: the ref it names is a reference the client did
 not ask for and, in this case, one whose content the client did not receive
 ([#206](https://github.com/skillsgateway/skillsgateway/issues/206)).
 
-That matters because the fetch ledger is an evidentiary surface. `GW_0008`
+That matters because the fetch ledger is an evidentiary surface. `GW_AUDIT_0001`
 requires it to record the ref of every facade fetch, and a constant is not a
 record. Two materially different requests — "give me whatever you serve now" and
 "give me this specific snapshot, by name" — are today indistinguishable in it,
@@ -66,8 +66,8 @@ states them rather than quietly fixing something that is not broken.**
   is an advertised tip — but the fallback is the point of the change: the column
   says "unknown" instead of asserting the tip. `sha` still pins the content
   exactly.
-- **`GW_0154`** in `docs/reqstool/` — the fetch ledger records the advertised ref
-  a want resolves to — with `SVC_GW_0154` covering the superseded-snapshot case
+- **`GW_FACADE_0018`** in `docs/reqstool/` — the fetch ledger records the advertised ref
+  a want resolves to — with `SVC_GW_FACADE_0018` covering the superseded-snapshot case
   that is wrong today, the current-tip case that must not regress, and the
   deterministic resolution of the ambiguity.
 
@@ -89,7 +89,7 @@ None. This adds a requirement to an existing capability.
 
 ### Modified Capabilities
 
-- `git-facade`: `GW_0154` — the fetch ledger's `ref` for a pack transfer is the
+- `git-facade`: `GW_FACADE_0018` — the fetch ledger's `ref` for a pack transfer is the
   advertised ref the want resolves to, not a constant.
 
 ## Impact

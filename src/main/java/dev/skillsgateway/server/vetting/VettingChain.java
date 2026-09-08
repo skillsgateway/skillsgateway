@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * The fail-closed aggregation rule (GW_0038), and the only place it lives.
+ * The fail-closed aggregation rule (GW_VETTING_0002), and the only place it lives.
  *
  * <p>A chain run is {@link Outcome#CLEAR} <em>if and only if</em> it produced at least one verdict
  * and every verdict is {@link VerdictState#PASS} or {@link VerdictState#WARN}. Everything else is
@@ -19,7 +19,7 @@ import java.util.Locale;
  * misconfigured to nothing — fail closed rather than sail through the approval gate. There is no
  * input to this function that yields {@code CLEAR} without positive evidence.
  *
- * <p>A {@link VerdictState#DISABLED} verdict (GW_0149) is the one state that is neither clearing
+ * <p>A {@link VerdictState#DISABLED} verdict (GW_VETTING_0029) is the one state that is neither clearing
  * nor blocking: an administrator switched that connector off, which is a deliberate audited act
  * rather than a crash. It is discounted from the block decision — but not from the requirement for
  * positive evidence. A run whose only verdicts are {@code DISABLED} still {@code BLOCKED}s, so
@@ -41,7 +41,7 @@ public final class VettingChain {
 
         /**
          * Nothing objects any more, but only because an active waiver is suppressing a finding
-         * (GW_0045). Deliberately a different word from {@link #CLEAR}: a reviewer or an auditor
+         * (GW_VETTING_0008). Deliberately a different word from {@link #CLEAR}: a reviewer or an auditor
          * looking at a badge must never read an accepted risk as a clean chain. It is never
          * produced by {@link #aggregate(Collection)} — only by evaluating waivers over a run —
          * and it is never stored on the run, whose recorded outcome stays raw.
@@ -64,7 +64,7 @@ public final class VettingChain {
         }
     }
 
-    @Requirements({"GW_0038", "GW_0149"})
+    @Requirements({"GW_VETTING_0002", "GW_VETTING_0029"})
     public static Outcome aggregate(Collection<VerdictState> states) {
         if (states == null || states.isEmpty()) {
             return Outcome.BLOCKED;
@@ -80,7 +80,7 @@ public final class VettingChain {
         }
         // Every verdict is clearing or DISABLED; only a run that actually cleared something clears.
         // A chain of nothing but DISABLED verdicts has switched every control off and proven
-        // nothing, so it blocks (GW_0149).
+        // nothing, so it blocks (GW_VETTING_0029).
         return anyClearing ? Outcome.CLEAR : Outcome.BLOCKED;
     }
 

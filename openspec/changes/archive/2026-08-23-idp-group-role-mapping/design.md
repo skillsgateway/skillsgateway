@@ -70,7 +70,7 @@ dependency set rather than assumed:
 
 - **No new role and no schema change.** Claim-derived roles are never rows.
 - **No claim-based authorization on the git facade.** `/git/**` authorizes by
-  token scopes (GW_0064); a PAT carries no claims and derives no role.
+  token scopes (GW_AUTH_0006); a PAT carries no claims and derives no role.
 - **No group-membership lookup against a provider's directory API.** Resolving
   a truncated claim by calling out to the IdP would add an outbound dependency
   to the authorization path and a vendor-specific client. The gateway reports
@@ -88,10 +88,10 @@ dependency set rather than assumed:
 | F1 | A claim value matches by prefix, substring or case, granting the wrong people | Exact `equals` after trim; property test asserting no non-equal string ever matches |
 | F2 | Claims are honoured on a credential that is not an OIDC session (PAT, dev principal, anonymous webhook) | `instanceof OidcUser` gate; negative tests on the facade chain, `dev-insecure-auth`, and a `UsernamePasswordAuthenticationToken` carrying a forged `groups` "claim" |
 | F3 | A token from an unrelated tenant/issuer is accepted because `iss` is unchecked | `skills-gateway.oidc.issuer` + `JwtIssuerValidator`; test that a differing issuer fails the login |
-| F4 | The group claim is truncated (overage) or absent and the session is silently under-privileged | GW_0099 detection, `/api/me` flag, WARN log; test asserts all three |
+| F4 | The group claim is truncated (overage) or absent and the session is silently under-privileged | GW_AUTH_0016 detection, `/api/me` flag, WARN log; test asserts all three |
 | F5 | A mapping typo silently grants nothing | Startup refuses a malformed mapping; a well-formed mapping that matches nothing is legitimate and stays quiet (documented) |
 | F6 | The estate reconciler treats a claim-derived role as an existing grant and skips the declared one | `rolesOf(String)` stays stored-only; regression test that a declared grant is still created for a principal who holds the same role via claim |
-| F7 | A claim-derived approver reaches another marketplace through a bare snapshot or waiver id | Reuses the existing gateway-side resolution; adversarial tests mirroring SVC_GW_0069 with claim-derived identities |
+| F7 | A claim-derived approver reaches another marketplace through a bare snapshot or waiver id | Reuses the existing gateway-side resolution; adversarial tests mirroring SVC_GW_AUTH_0011 with claim-derived identities |
 | F8 | A route ships ungated | Existing `RoleEnforcementTests.ROLE_GATED_MUTATIONS` route-table equality assertion (this change adds no route) |
 | F9 | A hostile or malformed claim payload throws inside the authorization path — a 500 where a 403 belongs, or worse | Property-based test over arbitrary claim payloads (nested maps, nulls, numbers, huge lists, wrong types): never throws, never grants without an exact match |
 | F10 | The principal attribute is mutable, so a rename orphans stored grants | Not fixable in code — documented in the guide, and precisely the argument for mapping groups instead of granting principals |

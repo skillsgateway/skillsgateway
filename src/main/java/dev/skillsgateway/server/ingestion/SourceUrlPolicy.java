@@ -8,7 +8,7 @@ import java.util.Set;
 
 /**
  * What the gateway will ask for while resolving an external plugin source, and what a redirect may
- * change (GW_0157). Decided from the URL alone — no resolution, no connection — so a refusal costs
+ * change (GW_INGEST_0025). Decided from the URL alone — no resolution, no connection — so a refusal costs
  * nothing and cannot itself cause traffic.
  *
  * <p>Host text is never treated as an address here. An address literal spelled in decimal, octal or
@@ -33,7 +33,7 @@ public record SourceUrlPolicy(Set<String> allowedSchemes, int maxRedirects) {
     }
 
     /** Returns why this URL may not be requested, or {@code null} when it may. */
-    @Requirements({"GW_0157"})
+    @Requirements({"GW_INGEST_0025"})
     public String refuseTarget(String url) {
         Parsed parsed = Parsed.of(url);
         // The scheme is decided before anything else, even when the rest of the URL did not parse:
@@ -61,7 +61,7 @@ public record SourceUrlPolicy(Set<String> allowedSchemes, int maxRedirects) {
      *
      * @param hop which hop this is, counting from one
      */
-    @Requirements({"GW_0157"})
+    @Requirements({"GW_INGEST_0025"})
     public String refuseRedirect(String from, String to, int hop) {
         if (hop > maxRedirects) {
             return "more than the permitted %d redirect hops".formatted(maxRedirects);

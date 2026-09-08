@@ -13,9 +13,9 @@ at the bottom.
   surface.
 - Trust-boundary mutants (both killed, then restored — verified via git diff):
   1. HMAC comparison disabled (`if (false && !MessageDigest.isEqual(...))`) →
-     `SVC_GW_0058` test failed (wrong/missing-signature cases accepted).
+     `SVC_GW_INGEST_0012` test failed (wrong/missing-signature cases accepted).
   2. Webhook-mode gate removed (`.filter(... SYNC_WEBHOOK ...)`) →
-     `SVC_GW_0058` test failed (non-webhook marketplace no longer 404).
+     `SVC_GW_INGEST_0012` test failed (non-webhook marketplace no longer 404).
 - One real defect found by the suite before it ever ran green: the concurrency
   test deadlocked itself (`invokeAll` + latch); fixed to `submit` + bounded
   `get`. The subscriber-fixture NOT NULL violation was the only other red.

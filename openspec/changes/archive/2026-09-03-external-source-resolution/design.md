@@ -11,16 +11,16 @@ lives only in `docs/reqstool/requirements.yml`.
 
 | Id | Title | Role here |
 | --- | --- | --- |
-| GW_0155 | Resolution of admitted external plugin sources into quarantine | added |
-| GW_0156 | Deterministic composite snapshot with a gateway-local manifest | added |
-| GW_0157 | Address, redirect and transport policy for source resolution | added |
-| GW_0158 | Resource-bounded source resolution | added |
-| GW_0161 | A failed resolution leaves the snapshot rejected and nothing half-resolved | added |
-| GW_0152 | No snapshot is held while a plugin source is not gateway-local | unchanged; now satisfied by construction rather than by refusal |
-| GW_0151 | Configuration-gated admission of external plugin sources | unchanged; still decides admission with no network call |
-| GW_0150 | Typed plugin source model | unchanged, extended with a refusing variant for a declared pin |
-| GW_0003 | Local-only plugin sources unless external sources are enabled | unchanged; still the shipped default |
-| GW_0137 | An ingestion reports a pinned snapshot only when it is pinned | unchanged; the pin now names the served commit |
+| GW_INGEST_0023 | Resolution of admitted external plugin sources into quarantine | added |
+| GW_INGEST_0024 | Deterministic composite snapshot with a gateway-local manifest | added |
+| GW_INGEST_0025 | Address, redirect and transport policy for source resolution | added |
+| GW_INGEST_0026 | Resource-bounded source resolution | added |
+| GW_INGEST_0027 | A failed resolution leaves the snapshot rejected and nothing half-resolved | added |
+| GW_INGEST_0021 | No snapshot is held while a plugin source is not gateway-local | unchanged; now satisfied by construction rather than by refusal |
+| GW_INGEST_0020 | Configuration-gated admission of external plugin sources | unchanged; still decides admission with no network call |
+| GW_INGEST_0019 | Typed plugin source model | unchanged, extended with a refusing variant for a declared pin |
+| GW_INGEST_0003 | Local-only plugin sources unless external sources are enabled | unchanged; still the shipped default |
+| GW_INGEST_0018 | An ingestion reports a pinned snapshot only when it is pinned | unchanged; the pin now names the served commit |
 
 ## Context
 
@@ -49,7 +49,7 @@ lives only in `docs/reqstool/requirements.yml`.
 
 - An admitted `github` source becomes content the gateway serves, with every URL
   a client dereferences resolving inside the gateway (architecture principle 4).
-- GW_0152 survives every path: no failure mode reaches `held` with an unresolved
+- GW_INGEST_0021 survives every path: no failure mode reaches `held` with an unresolved
   source. It is enforced structurally, by re-running the same gate over the
   rewritten manifest, not by a comment.
 - The outbound path is bounded in address space, redirects, bytes, objects and
@@ -262,7 +262,7 @@ style, so an absent block is the shipped default and an upgrade changes nothing.
 | Path traversal in `owner/repo` | escaping a GHES base path prefix | `.`/`..` segment refusal in `cloneUrl()` |
 | Silent pin loss (declared `sha` ignored) | serving a commit the manifest did not name | declared `ref`/`sha` refused, naming the field |
 | Concurrency: two ingests of one marketplace | duplicate rows, ref lock races | existing per-marketplace lock, existing `DuplicateKeyException` fallback |
-| Regression of the default | an unconfigured gateway starts fetching | `enabled: false` default; SVC_GW_0003 untouched and still green |
+| Regression of the default | an unconfigured gateway starts fetching | `enabled: false` default; SVC_GW_INGEST_0003 untouched and still green |
 | Vetting bypass | external content served unvetted | the closure *is* the commit, so `VettingService` sees it; asserted with a planted secret |
 
 Deliberately **not** covered, and stated as known limits in `evidence.md`: a
@@ -275,7 +275,7 @@ to.
 
 Pure-function suites (no Spring context, no database):
 
-- `SourceAddressPolicyTests` (SVC_GW_0157)
+- `SourceAddressPolicyTests` (SVC_GW_INGEST_0025)
   1. `169.254.169.254` refused with `allow-private-networks: true`
   2. `fe80::1` refused with `allow-private-networks: true`
   3. loopback `127.0.0.1` and `::1` refused by default, allowed when private
@@ -287,7 +287,7 @@ Pure-function suites (no Spring context, no database):
      allowed — the v4 rules are applied to the mapped address
   8. a hostname resolving to *both* a public and a private address is refused as
      a whole (every address is checked, not the first)
-- `SourceUrlPolicyTests` (SVC_GW_0157)
+- `SourceUrlPolicyTests` (SVC_GW_INGEST_0025)
   1. decimal (`http://2852039166/`), octal (`http://0300.0250.0.1/`) and hex
      (`http://0xA9FEA9FE/`) IPv4 encodings refused
   2. embedded credentials (`https://user:pw@host/x`) refused
@@ -296,11 +296,11 @@ Pure-function suites (no Spring context, no database):
   4. `https` → `http` redirect refused; redirect to another host refused;
      `max-redirects + 1` hops refused
   5. a redirect target whose scheme is not allowlisted refused
-- `PluginSourceTests` additions (SVC_GW_0150 — existing suite)
+- `PluginSourceTests` additions (SVC_GW_INGEST_0019 — existing suite)
   1. `{"repo": "../.."}` yields no clone URL
   2. `{"repo": "owner/./repo"}`-shaped inputs (a `.` segment) yield no clone URL
   3. a `github` source declaring `ref` or `sha` parses to the refusing variant
-- `ManifestRewriterTests` (SVC_GW_0156)
+- `ManifestRewriterTests` (SVC_GW_INGEST_0024)
   1. the rewritten manifest declares `./_plugins/<name>` for the external plugin
      and leaves every other field and every local source byte-identical
   2. the composite's parent is the upstream commit, and the upstream manifest
@@ -311,10 +311,10 @@ Pure-function suites (no Spring context, no database):
   4. `_plugins` already present upstream ⇒ refused, no commit
   5. plugin name `../evil`, `_plugins`, `Upper` or empty ⇒ refused, no commit
   6. two external plugins with the same name ⇒ refused, no commit
-  7. the composite manifest passes `ManifestPolicy.validate` (the GW_0152
+  7. the composite manifest passes `ManifestPolicy.validate` (the GW_INGEST_0021
      post-condition), and a rewriter that failed to rewrite one source is caught
      by it
-- `ResolutionBudgetTests` (SVC_GW_0158)
+- `ResolutionBudgetTests` (SVC_GW_INGEST_0026)
   1. each of `max-received-bytes`, `max-inflated-bytes`, `max-closure-bytes`,
      `max-inflation-ratio`, `max-objects`, `max-blob-bytes`, `max-tree-depth`
      refuses at the boundary and passes just under it
@@ -324,7 +324,7 @@ Container-backed suite, its own Spring context with `enabled: true`,
 `allowed-types: [github]`, `github-base-url` pointed at an in-process JGit-backed
 smart-HTTP fixture on loopback, `allow-private-networks: true`:
 
-- `ExternalSourceResolutionTests` (SVC_GW_0155, SVC_GW_0156, SVC_GW_0161)
+- `ExternalSourceResolutionTests` (SVC_GW_INGEST_0023, SVC_GW_INGEST_0024, SVC_GW_INGEST_0027)
   1. a manifest with one `github` source ⇒ snapshot **held**, its SHA is the
      composite, its manifest declares only local sources, and
      `_plugins/<name>/skills/…` is present in the served tree
@@ -353,7 +353,7 @@ smart-HTTP fixture on loopback, `allow-private-networks: true`:
 Regression, unmodified:
 
 - `IngestionTests.externalPluginSourceIsRejectedAndCannotBeApproved`
-  (SVC_GW_0003) and the `HostedLifecycleTests` key-per-type case still pass under
+  (SVC_GW_INGEST_0003) and the `HostedLifecycleTests` key-per-type case still pass under
   the default configuration, untouched.
 - `ManifestPolicyTests`, `ExternalSourceAdmissionTests`, `PluginSourceTests`
   keep every existing assertion.
@@ -400,7 +400,7 @@ Regression, unmodified:
 
 None. No schema change, no data migration, no API change. `enabled: false`
 remains the default, so an existing deployment behaves exactly as it does today,
-which SVC_GW_0003 — unchanged — pins.
+which SVC_GW_INGEST_0003 — unchanged — pins.
 
 ## Open Questions (for the owner)
 
@@ -409,13 +409,13 @@ which SVC_GW_0003 — unchanged — pins.
    `Transformer-Version`, because a policy digest would change the served SHA —
    and so force re-vetting and re-approval — when an operator allowlists an
    unrelated host. Confirm the deviation, or say the ADR's stricter reading wins.
-2. **Requirement id block.** GW_0155 – GW_0158 and GW_0161, which is not a
-   contiguous block and deliberately so: GW_0159 and GW_0160 were claimed by
+2. **Requirement id block.** GW_INGEST_0023 – GW_INGEST_0026 and GW_INGEST_0027, which is not a
+   contiguous block and deliberately so: GW_WEBHOOK_0006 and GW_WEBHOOK_0007 were claimed by
    [#251](https://github.com/skillsgateway/skillsgateway/pull/251) while this
-   change was in flight, and GW_0155 – GW_0158 were still free on `main`. Filling
-   the gap beats leaving four ids permanently unused. GW_0160 is the highest in
+   change was in flight, and GW_INGEST_0023 – GW_INGEST_0026 were still free on `main`. Filling
+   the gap beats leaving four ids permanently unused. GW_WEBHOOK_0007 is the highest in
    `requirements.yml`; no in-flight change under `openspec/changes/` claims
-   anything above GW_0149.
+   anything above GW_VETTING_0029.
 3. **Deferring the closure tables.** Provenance is in the composite commit
    (parent + message trailers) rather than in `closures`/`closure_nodes`. That is
    enough for a reviewer and an auditor, and not enough for the blast-radius

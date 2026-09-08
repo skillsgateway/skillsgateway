@@ -9,7 +9,7 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import java.util.function.ToDoubleFunction;
 
 /**
- * The read-only forge mirror's divergence, published as meters (GW_0191).
+ * The read-only forge mirror's divergence, published as meters (GW_FACADE_0026).
  *
  * <p>The mirror already knew all of this; what it did not have was a way to <em>tell</em> anyone
  * without being asked. As first shipped the only signals were a log line, a ledger row and an
@@ -61,7 +61,7 @@ public class MirrorMetrics implements MeterBinder {
     }
 
     @Override
-    @Requirements({"GW_0191"})
+    @Requirements({"GW_FACADE_0026"})
     public void bindTo(MeterRegistry registry) {
         level(
                 registry,

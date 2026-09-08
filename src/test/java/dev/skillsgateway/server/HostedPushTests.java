@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * The write path (GW_0102), driven by the real git binary against the running server — the only
+ * The write path (GW_FACADE_0007), driven by the real git binary against the running server — the only
  * place the claim "a publisher can push, and only a publisher, and only forward" can be made
  * honestly.
  */
@@ -64,7 +64,7 @@ class HostedPushTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0102"})
+    @SVCs({"SVC_GW_FACADE_0007"})
     void a_push_scoped_token_publishes_and_nothing_else_does() throws Exception {
         String name = registerHosted(uniqueName("pushok"), Marketplace.PUSH_APPEND_ONLY);
         Path working = publisherWorkingCopy();
@@ -94,7 +94,7 @@ class HostedPushTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0102"})
+    @SVCs({"SVC_GW_FACADE_0007"})
     void the_consumer_facade_still_accepts_no_push_at_all() throws Exception {
         String name = registerHosted(uniqueName("facadepush"), Marketplace.PUSH_APPEND_ONLY);
         Path working = publisherWorkingCopy();
@@ -106,7 +106,7 @@ class HostedPushTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0102"})
+    @SVCs({"SVC_GW_FACADE_0007"})
     void an_unknown_marketplace_and_a_traversing_name_answer_alike() throws Exception {
         String name = registerHosted(uniqueName("probe"), Marketplace.PUSH_APPEND_ONLY);
         Path working = publisherWorkingCopy();
@@ -132,7 +132,7 @@ class HostedPushTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0102"})
+    @SVCs({"SVC_GW_FACADE_0007"})
     void a_push_scope_can_only_ever_name_a_hosted_marketplace() {
         // This is the guard that makes "an upstream marketplace is not a publish target" true:
         // a token cannot be issued with a push scope naming one, so the resolver's own origin
@@ -151,7 +151,7 @@ class HostedPushTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0102"})
+    @SVCs({"SVC_GW_FACADE_0007"})
     void the_receive_pack_itself_refuses_deletions_and_the_hook_refuses_them_again() throws Exception {
         // Deletion is guarded twice on purpose: the ReceivePack is configured to disallow it, and
         // the hook refuses it independently. This asserts the hook alone holds, so neither guard
@@ -168,7 +168,7 @@ class HostedPushTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0102"})
+    @SVCs({"SVC_GW_FACADE_0007"})
     void only_the_single_lineage_may_be_published() throws Exception {
         String name = registerHosted(uniqueName("lineage"), Marketplace.PUSH_APPEND_ONLY);
         Path working = publisherWorkingCopy();
@@ -199,7 +199,7 @@ class HostedPushTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0102"})
+    @SVCs({"SVC_GW_FACADE_0007"})
     void an_append_only_marketplace_refuses_a_rewrite_and_keeps_its_tip() throws Exception {
         String name = registerHosted(uniqueName("appendonly"), Marketplace.PUSH_APPEND_ONLY);
         Path working = publisherWorkingCopy();
@@ -226,7 +226,7 @@ class HostedPushTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0102"})
+    @SVCs({"SVC_GW_FACADE_0007"})
     void a_rewritable_marketplace_allows_the_rewrite_and_says_so_on_the_ledger() throws Exception {
         String name = registerHosted(uniqueName("rewritable"), Marketplace.PUSH_ALLOW_REWRITE);
         Path working = publisherWorkingCopy();

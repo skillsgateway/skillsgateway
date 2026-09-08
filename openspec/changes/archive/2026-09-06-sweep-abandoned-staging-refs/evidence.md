@@ -14,7 +14,7 @@ Implementation commit: `97e87c3707e248028d6c9ef33aeb875a349debf1`.
 
 | Requirement | Verifies | Test |
 | --- | --- | --- |
-| GW_0168 — Abandoned publication staging references are swept from published repositories | abandoned reference past the bound swept and its commit left unreachable; in-flight publication inside the bound survives *and completes*; a reference a live snapshot row names survives however old; a repository with nothing abandoned comes out byte-identical | `StagingRefSweepTests` (SVC_GW_0168), 11 tests |
+| GW_FACADE_0019 — Abandoned publication staging references are swept from published repositories | abandoned reference past the bound swept and its commit left unreachable; in-flight publication inside the bound survives *and completes*; a reference a live snapshot row names survives however old; a repository with nothing abandoned comes out byte-identical | `StagingRefSweepTests` (SVC_GW_FACADE_0019), 11 tests |
 
 Eight of the eleven are the four properties above, each run against **both**
 storage backends. The parameter carries the backend's `GitStorage` and a
@@ -127,7 +127,7 @@ $ reqstool status local -p docs/reqstool
 ```
 
 ```
-  GW_0168             skills-gateway
+  GW_FACADE_0019             skills-gateway
 
 INCOMPLETE (0)
 156/156 complete · 0 incomplete · PASS

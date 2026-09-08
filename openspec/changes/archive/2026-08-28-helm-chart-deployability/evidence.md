@@ -7,10 +7,10 @@ of every gate after the rebase.
 ## Rebase onto `8e83dac`
 
 Two commits landed on main after this branch was cut — #129 (archiving
-`license-compliance`) and #133 (`GW_0110`, the dev escape hatch) — and both
+`license-compliance`) and #133 (`GW_AUTH_0019`, the dev escape hatch) — and both
 reqstool files conflicted. The clash is positional, not semantic: #133 appended
-`GW_0110`/`SVC_GW_0110` at the end of each file, this change appended
-`GW_0120`–`GW_0122`/`SVC_GW_0120`–`SVC_GW_0122` at the same place. No id
+`GW_AUTH_0019`/`SVC_GW_AUTH_0019` at the end of each file, this change appended
+`GW_FACADE_0008`–`GW_RELEASE_0006`/`SVC_GW_FACADE_0008`–`SVC_GW_RELEASE_0006` at the same place. No id
 overlaps, so nothing was renumbered.
 
 **Neither file was resolved by editing conflict markers.** Each was rebuilt
@@ -25,10 +25,10 @@ SVCs: 110 ids, 0 duplicates
 dangling requirement_ids: none
 requirements missing 'revision': none
 SVCs missing 'revision': none
-ids from main lost: none; GW_0110 present: True
+ids from main lost: none; GW_AUTH_0019 present: True
 main requirement blocks altered: none
 removed lines in diff: 0
-ids added by diff: ['GW_0120', 'GW_0121', 'GW_0122', 'SVC_GW_0120', 'SVC_GW_0121', 'SVC_GW_0122']
+ids added by diff: ['GW_FACADE_0008', 'GW_RELEASE_0005', 'GW_RELEASE_0006', 'SVC_GW_FACADE_0008', 'SVC_GW_RELEASE_0005', 'SVC_GW_RELEASE_0006']
 
 ALL CHECKS PASS
 ```
@@ -241,13 +241,13 @@ whose requirement the break violates.
 
 | Break | Test that failed | Line |
 | --- | --- | --- |
-| A — the data volume falls back to `emptyDir` again | `chartRefusesToRenderWithoutAnExplicitStorageDurabilityChoice` (`SVC_GW_0120`) | 69 |
+| A — the data volume falls back to `emptyDir` again | `chartRefusesToRenderWithoutAnExplicitStorageDurabilityChoice` (`SVC_GW_FACADE_0008`) | 69 |
 | B — an unrecognised mode silently yields `emptyDir` instead of failing | same | 92 |
-| C — the ingress is enabled by default | `chartCarriesRegistryCredentialsAnOptionalIngressAndDefaultReservations` (`SVC_GW_0121`) | 122 |
+| C — the ingress is enabled by default | `chartCarriesRegistryCredentialsAnOptionalIngressAndDefaultReservations` (`SVC_GW_RELEASE_0005`) | 122 |
 | D — the pod spec drops `imagePullSecrets` | same | 111 |
 | E — the pod runs as the namespace `default` service account | same | 151 |
 | F — the root filesystem is writable | same | 160 |
-| G — `extraEnv` never reaches the container | `chartPassesArbitraryApplicationConfigurationThrough` (`SVC_GW_0122`) | 187 |
+| G — `extraEnv` never reaches the container | `chartPassesArbitraryApplicationConfigurationThrough` (`SVC_GW_RELEASE_0006`) | 187 |
 | G2 — `envFrom` sources never reach the container | same | 188 |
 | H — the layered configuration location points nowhere | same | 192 |
 | I — a configuration change does not roll the pods | same | 201 |
@@ -282,6 +282,6 @@ reason for running the breaks rather than asserting that they would fail.
 
 ## Not weakened
 
-The four pre-existing tests (`SVC_GW_0015`, `SVC_GW_0072`, `SVC_GW_0108`,
-`SVC_GW_0109`) are untouched; the suite went from 4 to 7 tests, and the count in
+The four pre-existing tests (`SVC_GW_RELEASE_0001`, `SVC_GW_RELEASE_0002`, `SVC_GW_RELEASE_0003`,
+`SVC_GW_RELEASE_0004`) are untouched; the suite went from 4 to 7 tests, and the count in
 every run above is `Tests run: 7`.

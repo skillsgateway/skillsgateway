@@ -3,8 +3,8 @@
 ## Why
 
 Every marketplace the gateway governs today must already exist somewhere else.
-Registration takes a clone URL (GW_0001), ingestion fetches an upstream default
-branch (GW_0002), and `MarketplaceRegistrationService.requireAllowlistedScheme`
+Registration takes a clone URL (GW_INGEST_0001), ingestion fetches an upstream default
+branch (GW_INGEST_0002), and `MarketplaceRegistrationService.requireAllowlistedScheme`
 refuses a registration without one. An organisation that writes its *own*
 skills therefore has to stand up a forge repository first, purely so the
 gateway has something to pull from — and then govern the same content in two
@@ -33,7 +33,7 @@ documentation pages state that pushes are impossible.
   its existing property that only `IngestionService` ever writes it.
 - **A separate publish endpoint, `/publish/**`.** Its own servlet, its own
   `ReceivePackFactory`, its own filter chain. The consumer facade at `/git/**`
-  keeps `setReceivePackFactory(null)` verbatim — GW_0006 and GW_0007 are
+  keeps `setReceivePackFactory(null)` verbatim — GW_FACADE_0001 and GW_FACADE_0002 are
   untouched, and no push can reach a published repository.
 - **Push-scoped tokens.** `access_tokens.push_scopes` names the marketplaces a
   token may push to; unset — which every existing token is — may push nothing.
@@ -45,10 +45,10 @@ documentation pages state that pushes are impossible.
 - **A push ingests through the unchanged pipeline.** It lands `held`, is vetted
   by the same connectors, and is served only after somebody approves it.
   Nothing about the approval gate moves.
-- Requirements GW_0101 (hosted origin and its registration), GW_0102 (the
+- Requirements GW_FACADE_0006 (hosted origin and its registration), GW_FACADE_0007 (the
   authenticated push path, its scoping, and the lineage and immutability rules)
-  and GW_0103 (a pushed snapshot traverses quarantine, vetting and approval
-  like any other) with SVC_GW_0101 / SVC_GW_0102 / SVC_GW_0103.
+  and GW_INGEST_0017 (a pushed snapshot traverses quarantine, vetting and approval
+  like any other) with SVC_GW_FACADE_0006 / SVC_GW_FACADE_0007 / SVC_GW_INGEST_0017.
 - **ADR 0007** records the write path as an architecture decision, because
   "receive-pack is disabled by construction" is stated in the trust-boundary
   model, the facade reference, the compatibility matrix and the glossary.

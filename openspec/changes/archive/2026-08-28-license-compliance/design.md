@@ -2,7 +2,7 @@
 
 ## Context
 
-The vetting chain (GW_0037–GW_0043) is the standard policy/violation path:
+The vetting chain (GW_VETTING_0001–GW_VETTING_0006) is the standard policy/violation path:
 connectors run at ingestion against the quarantined SHA-pinned snapshot,
 their findings are recorded per run, aggregation is fail-closed, the approval
 gate refuses uncovered blocking findings, scoped/expiring waivers are the only
@@ -10,9 +10,9 @@ acceptance mechanism, continuous re-vetting re-runs the chain over approved
 content, and everything lands on the append-only ledger. License compliance
 must ride this path, not a parallel one.
 
-The gateway's SBOM story today is its own CycloneDX SBOM (GW_0014,
+The gateway's SBOM story today is its own CycloneDX SBOM (GW_API_0001,
 `/actuator/sbom`) plus the per-snapshot content inventory
-(`GET /api/snapshots/{id}/content`, GW_0020). License data belongs alongside
+(`GET /api/snapshots/{id}/content`, GW_INGEST_0008). License data belongs alongside
 these as the per-snapshot supply-chain answer.
 
 ## Goals / Non-Goals
@@ -39,7 +39,7 @@ these as the per-snapshot supply-chain answer.
   retention-style per-marketplace override map is an obvious later extension
   and nothing in this design precludes it.
 - Portal UI beyond what exists. License findings appear on the snapshot
-  review surface through the existing vetting findings UI (GW_0042) —
+  review surface through the existing vetting findings UI (GW_VETTING_0005) —
   rule id, severity, location, message — which is exactly the evidence a
   reviewer needs. The proposal declares REST-only v1 for the report endpoint.
 - Dependency-level license scanning inside skills (package manifests of
@@ -60,7 +60,7 @@ configuration.
 
 Rationale over an API + estate reconciliation design:
 
-- Vetting policy must be attributable per chain run (GW_0049). Configuration
+- Vetting policy must be attributable per chain run (GW_VETTING_0012). Configuration
   changes arrive by deploy, and the connector stamps a digest of the policy
   into its recorded `version`, so every run names the policy it ran under.
   Mutable-at-runtime lists would change the meaning of "the chain as
@@ -71,7 +71,7 @@ Rationale over an API + estate reconciliation design:
   an off switch). An API-managed license policy would be the first, and would
   need its own roles, audit events, estate block and portal surface for no
   additional capability — a config change plus an on-demand re-vet
-  (GW_0049) already turns a new policy into fresh evidence now.
+  (GW_VETTING_0012) already turns a new policy into fresh evidence now.
 
 ### D2 — Detection is a deterministic three-source SPDX-id match
 
@@ -137,7 +137,7 @@ session.
 - Connector: `LicenseScanConnector implements VettingConnector`, order 300
   (after secret-scan 100 and prompt-injection), `version()` =
   `<table-version>+policy:<digest>` so policy changes are chain-identity
-  visible (GW_0049).
+  visible (GW_VETTING_0012).
 - The approval gate, waivers, re-vetting (warn/enforce), webhooks, ledger:
   untouched — license findings are findings.
 - Estate reconciler, roles, portal: untouched (D1, Non-Goals).

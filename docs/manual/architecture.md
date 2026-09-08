@@ -205,7 +205,7 @@ flowchart LR
   admitting nothing) before **resolution** (fetching and rewriting external
   content into a gateway-local composite snapshot), the two separated by a
   standing invariant — a snapshot is held only when every source it declares
-  resolves inside the snapshot the gateway serves (GW_0152). Local-only remains
+  resolves inside the snapshot the gateway serves (GW_INGEST_0021). Local-only remains
   the behaviour of an unconfigured gateway throughout, and resolution's outbound
   path is bounded in address space, redirects, bytes and time behind that gate
   (see [Trust boundaries](concepts/trust-boundaries.md)) — with network egress
@@ -297,7 +297,7 @@ old one did. Tier-0 diffs that stay tier-0 and scan clean can auto-promote on
 a configurable delay (a cooling-off window also defeats
 push-then-quickly-revert attacks).
 
-Implemented today (GW_0073): a global
+Implemented today (GW_APPROVAL_0004): a global
 `skills-gateway.vetting.minimum-release-age` (default `0`, off) that the manual
 approval gate enforces — a snapshot whose commit this gateway first ingested
 less than that long ago is refused, whatever its verdicts say. The age is taken
@@ -306,7 +306,7 @@ is compared at each approval request rather than tracked, so the wait clears
 itself. This is the window any future auto-promotion is conditioned on;
 per-marketplace and per-tier ages ride on the policy rules.
 
-Implemented today (GW_0096, GW_0097): **separation of duties** on that same
+Implemented today (GW_APPROVAL_0010, GW_APPROVAL_0011): **separation of duties** on that same
 gate. The marketplace's registrant and each snapshot's ingestion actor are
 recorded as attributes of the objects themselves, and an approval by the
 registrant, by the ingestion actor, or by the author of a waiver the approval
@@ -325,7 +325,7 @@ virtual marketplace, (b) makes the façade refuse its mirror refs, (c) produces
 the blast-radius report from the ledger (every identity that ever fetched it),
 and (d) optionally pushes a fleet-managed settings change to force uninstall.
 
-Implemented today (GW_0049–GW_0055): a `revoked` snapshot state, removal of both
+Implemented today (GW_VETTING_0012–GW_VETTING_0018): a `revoked` snapshot state, removal of both
 published refs (`refs/heads/main` when it is still the tip, and the advertised
 `refs/snapshots/<sha>`), and the blast-radius report from the fetch ledger at
 `GET /api/snapshots/{id}/fetchers`. What triggers the recall is **continuous
@@ -521,34 +521,34 @@ that would duplicate a sweep, and leader election is separate later work.
   virtual marketplaces, multi-ref publication. *Implemented:* per-marketplace
   upstream sync modes — on-demand, scheduled polling, and HMAC-authenticated
   forge webhooks, all landing snapshots held behind the unchanged approval
-  gate (GW_0056–GW_0060); webhook payload parsing and a portal surface for
+  gate (GW_INGEST_0010–GW_INGEST_0014); webhook payload parsing and a portal surface for
   sync modes are deferred. *Implemented:* the global virtual catalog — one
   synthesized facade repo aggregating the served estate, strictly derived
-  from published content (GW_0061–GW_0063); per-team catalogs, entitlements,
+  from published content (GW_FACADE_0003–GW_FACADE_0005); per-team catalogs, entitlements,
   and per-plugin/skill filtering remain the rest of the virtual-marketplaces
   item. *Implemented:* token lifecycle — marketplace-scoped PATs enforced at
   the facade, expiry decided at authentication time, rotation that cannot
-  widen a grant, per-token fetch attribution on the ledger (GW_0064–GW_0067);
+  widen a grant, per-token fetch attribution on the ledger (GW_AUTH_0006–GW_AUTH_0009);
   team entitlements are deferred. SSO-derived short-lived credentials are
-  *implemented* (GW_0104): a git credential minted from a browser session with
+  *implemented* (GW_AUTH_0018): a git credential minted from a browser session with
   a gateway-set lifetime the holder cannot extend, no publication authority,
   and a session-derived mark on the ledger — the identity half of ADR 0008,
   which declined serving from an external forge and keeps the audited facade
   canonical. The visibility half — an optional
   [read-only mirror](guides/read-only-forge-mirror.md) of approved content on an
-  external code host — is *implemented* in its first increment (GW_0169–GW_0172):
+  external code host — is *implemented* in its first increment (GW_FACADE_0020–GW_FACADE_0023):
   one marketplace behind a flag defaulting off, updated by reconciling against
   what the façade serves, with a drift report. It is a browsing convenience and
   never an enforcement path; auto-provisioning of the repository, more than one
   marketplace and automatic drift repair are deferred. *Implemented:* scoped admin roles on the web surface — global
   admin, per-marketplace approver, read-only auditor; DB-managed audited
   grants with configuration-bootstrapped admins, deny-by-default once
-  always enforced (GW_0068–GW_0071, GW_0138), and roles derived from the
+  always enforced (GW_AUTH_0010–GW_AUTH_0013, GW_AUTH_0025), and roles derived from the
   identity provider's own group or application-role claims by configured
   mapping, with truncated claims made visible and an enforceable expected
-  ID-token issuer (GW_0098–GW_0100); per-team catalog scoping and a
+  ID-token issuer (GW_AUTH_0015–GW_AUTH_0017); per-team catalog scoping and a
   portal grants UI are deferred. *Implemented:* non-interactive machine
-  credentials for the REST API (GW_0126–GW_0131) — a third scope dimension on
+  credentials for the REST API (GW_AUTH_0020–GW_AUTH_0024) — a third scope dimension on
   the existing token rather than a second credential type, reached by a
   stateless bearer chain, scoped per concern over an allowlist that no
   combination of scopes and no role can widen, with mandatory expiry under a
@@ -559,7 +559,7 @@ that would duplicate a sweep, and leader election is separate later work.
   published to by authenticated git push on a separate endpoint into a separate
   origin repository under a push scope no existing token holds, with one
   lineage, forward-only by default, and the same quarantine, vetting and
-  approval gate as fetched content (GW_0101–GW_0103, ADR 0007); auto-approval
+  approval gate as fetched content (GW_FACADE_0006–GW_INGEST_0017, ADR 0007); auto-approval
   for trusted internal publishers stays parked per ADR 0006.
 - *Implemented:* a pluggable git storage backend — the `GitStorage` seam with a
   JGit DFS implementation over an S3-compatible bucket beside the filesystem
@@ -567,7 +567,7 @@ that would duplicate a sweep, and leader election is separate later work.
   per-repository manifest, a named and fail-closed backend selection, an
   offline verified migration between the two, and a chart that refuses a replica
   count or a storage shape the selected backend cannot honour
-  (GW_0111, GW_0112, GW_0114, GW_0115, GW_0116). Real AWS S3 has not yet been
+  (GW_FACADE_0010, GW_FACADE_0011, GW_FACADE_0013, GW_FACADE_0014, GW_FACADE_0012). Real AWS S3 has not yet been
   exercised against the conditional-write assertions; leader election for the
   background sweeps remains separate work.
 - **Phase 3 — assurance & scale.** Client telemetry inventory, kill switch

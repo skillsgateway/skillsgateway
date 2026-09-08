@@ -59,11 +59,11 @@ None.
 
 ### Modified Capabilities
 
-- `release-packaging`: `GW_0072` — publication no longer happens from a
+- `release-packaging`: `GW_RELEASE_0002` — publication no longer happens from a
   main-branch push; only `release.yml` publishes, as a multi-arch image index
   (`linux/amd64` + `linux/arm64`) with each platform pushed by digest and
   attested individually, combined into the index under the released version's
-  tag. `SVC_GW_0072` gains the matching assertions.
+  tag. `SVC_GW_RELEASE_0002` gains the matching assertions.
 
 ## Impact
 
@@ -76,7 +76,7 @@ None.
 **Code**
 
 - `src/test/java/dev/skillsgateway/server/PackagingTests.java` —
-  `SVC_GW_0072`'s test asserts the matrix, the digest-only per-leg push, and
+  `SVC_GW_RELEASE_0002`'s test asserts the matrix, the digest-only per-leg push, and
   the combine job.
 - `docs/reqstool/requirements.yml`, `docs/reqstool/software_verification_cases.yml`.
 

@@ -2,8 +2,8 @@
 
 ## ADDED Requirements
 
-### Requirement: GW_0133
-The system SHALL implement GW_0133.
+### Requirement: GW_APPROVAL_0012
+The system SHALL implement GW_APPROVAL_0012.
 
-#### Scenario: SVC_GW_0133
-The system SHALL pass SVC_GW_0133.
+#### Scenario: SVC_GW_APPROVAL_0012
+The system SHALL pass SVC_GW_APPROVAL_0012.

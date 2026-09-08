@@ -235,6 +235,6 @@ these numbers multiply.
 ## What this change does not do
 
 - No new requirement ids. The change introduces no new required behaviour; the
-  new tests attach to SVC_GW_0037 and are otherwise framework regressions.
+  new tests attach to SVC_GW_VETTING_0001 and are otherwise framework regressions.
 - No schema migration, no API change, no configuration change, no portal change.
 - No batching (part 3) and no implicit casts (part 1), for the reasons above.

@@ -7,7 +7,7 @@ import java.util.Optional;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
-/** Persistence of policy deny rules (GW_0089). */
+/** Persistence of policy deny rules (GW_APPROVAL_0006). */
 @Repository
 public class PolicyRuleRepository {
 
@@ -60,7 +60,7 @@ public class PolicyRuleRepository {
                 .list();
     }
 
-    /** The gate's only query: every rule that may decide an approval right now (GW_0090). */
+    /** The gate's only query: every rule that may decide an approval right now (GW_APPROVAL_0007). */
     public List<PolicyRule> listEnabled() {
         return jdbc.sql("SELECT * FROM policy_rules WHERE enabled ORDER BY name")
                 .query(PolicyRule.class)

@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { normalizeCloneUrl } from "./form-rules";
 
 /**
- * Mirrors the server's `CloneUrlNormalizerTests` (GW_0166): the same input variants must
+ * Mirrors the server's `CloneUrlNormalizerTests` (GW_INGEST_0029): the same input variants must
  * normalize to the same value on both sides, or the client's pre-submission warning and the
  * server's authoritative one could disagree.
  */

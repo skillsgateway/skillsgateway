@@ -39,21 +39,21 @@ public class MirrorController {
                     + " the gateway cannot read is reported as unreachable and never as in sync.")
     @ApiResponse(responseCode = "200", description = "The comparison, or a disabled report when no mirror is set up")
     @ApiResponse(responseCode = "403", description = "Not an administrator")
-    @Requirements({"GW_0172"})
+    @Requirements({"GW_FACADE_0023"})
     public MirrorReport drift(Authentication authentication) {
         roleService.requireAdmin(authentication);
         return mirror.report();
     }
 
     /**
-     * Reconcile the mirror now and answer with the result (GW_0192).
+     * Reconcile the mirror now and answer with the result (GW_FACADE_0027).
      *
      * <p>The concrete answer to "what does an operator do about drift", which before this was
      * "approve or revoke something, or restart the gateway" — both worse than the problem. It is
      * the one mirror path that waits for the forge, because waiting is the request: an operator who
      * has just fixed an outage or rotated a rejected credential is asking whether the mirror is
      * right <em>now</em>. Nothing about approval, revocation or what the facade serves is on this
-     * path, so GW_0170 is untouched, and the wait is bounded by the mirror's own timeout and
+     * path, so GW_FACADE_0021 is untouched, and the wait is bounded by the mirror's own timeout and
      * attempt count.
      *
      * <p>{@code POST} because it changes a remote system; administrator-only and unreachable by any
@@ -71,7 +71,7 @@ public class MirrorController {
                     + " unreachable rather than failing the request.")
     @ApiResponse(responseCode = "200", description = "The comparison after reconciling, or a disabled report")
     @ApiResponse(responseCode = "403", description = "Not an administrator")
-    @Requirements({"GW_0192"})
+    @Requirements({"GW_FACADE_0027"})
     public MirrorReport reconcile(Authentication authentication) {
         roleService.requireAdmin(authentication);
         return mirror.reconcileNow(REASON);

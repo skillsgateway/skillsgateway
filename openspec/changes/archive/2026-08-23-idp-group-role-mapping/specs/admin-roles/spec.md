@@ -2,14 +2,14 @@
 
 ## ADDED Requirements
 
-### Requirement: GW_0098
-The system SHALL implement GW_0098.
+### Requirement: GW_AUTH_0015
+The system SHALL implement GW_AUTH_0015.
 
-#### Scenario: SVC_GW_0098
-The system SHALL pass SVC_GW_0098.
+#### Scenario: SVC_GW_AUTH_0015
+The system SHALL pass SVC_GW_AUTH_0015.
 
-### Requirement: GW_0099
-The system SHALL implement GW_0099.
+### Requirement: GW_AUTH_0016
+The system SHALL implement GW_AUTH_0016.
 
-#### Scenario: SVC_GW_0099
-The system SHALL pass SVC_GW_0099.
+#### Scenario: SVC_GW_AUTH_0016
+The system SHALL pass SVC_GW_AUTH_0016.

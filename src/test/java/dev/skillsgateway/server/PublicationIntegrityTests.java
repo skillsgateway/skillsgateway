@@ -41,7 +41,7 @@ class PublicationIntegrityTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0133"})
+    @SVCs({"SVC_GW_APPROVAL_0012"})
     void a_refused_publication_does_not_report_an_approval() throws Exception {
         String name = uniqueName("corp");
         Path upstream = createUpstream(DEFAULT_MANIFEST);
@@ -100,7 +100,7 @@ class PublicationIntegrityTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0133"})
+    @SVCs({"SVC_GW_APPROVAL_0012"})
     void a_refused_first_publication_leaves_the_marketplace_unserved() throws Exception {
         String name = uniqueName("corp");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
@@ -130,7 +130,7 @@ class PublicationIntegrityTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0133"})
+    @SVCs({"SVC_GW_APPROVAL_0012"})
     void a_refused_republication_of_a_revoked_snapshot_keeps_its_revocation() throws Exception {
         String name = uniqueName("corp");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));

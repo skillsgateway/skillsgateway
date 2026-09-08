@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 class AdminTests extends AbstractGatewayTest {
 
     @Test
-    @SVCs({"SVC_GW_0010"})
+    @SVCs({"SVC_GW_AUTH_0001"})
     void listReturnsAllMarketplacesWithSnapshotStates() throws Exception {
         String heldName = uniqueName("corp");
         String rejectedName = uniqueName("corp");

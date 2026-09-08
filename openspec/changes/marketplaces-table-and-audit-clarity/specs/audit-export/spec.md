@@ -2,8 +2,8 @@
 
 ## MODIFIED Requirements
 
-### Requirement: GW_0030
-The system SHALL implement GW_0030.
+### Requirement: GW_AUDIT_0006
+The system SHALL implement GW_AUDIT_0006.
 
 The portal audit surface presents the ledger as a table whose rows carry a status
 derived from the entry's event and, for a completed-vetting entry, the outcome in
@@ -15,5 +15,5 @@ and its resumable cursor are unchanged. This is a presentation and navigation
 change over the same ledger; the requirement's ID-level statement and its
 verification are unchanged.
 
-#### Scenario: SVC_GW_0030
-The system SHALL pass SVC_GW_0030.
+#### Scenario: SVC_GW_AUDIT_0006
+The system SHALL pass SVC_GW_AUDIT_0006.

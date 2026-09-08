@@ -18,7 +18,7 @@ import java.util.List;
  *
  * <p>The version is normalised away because it is derived from git state and changes on every
  * commit — a snapshot carrying it would differ from the build's document on every commit, and the
- * check that they match (GW_0106) would never be green. The served document keeps the real one.
+ * check that they match (GW_API_0003) would never be green. The served document keeps the real one.
  *
  * <p>Keys are sorted because springdoc assembles the document by reflecting over the application
  * context; sorting removes the question of whether that order is stable rather than betting on it.

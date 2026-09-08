@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-/** The sync-mode admin surface (GW_0056), behind the OIDC session like every /api endpoint. */
+/** The sync-mode admin surface (GW_INGEST_0010), behind the OIDC session like every /api endpoint. */
 @RestController
 @RequestMapping("/api")
 public class SyncController {
@@ -50,7 +50,7 @@ public class SyncController {
             String webhookSecret) {}
 
     @PutMapping("/marketplaces/{name}/sync")
-    @Requirements({"GW_0056"})
+    @Requirements({"GW_INGEST_0010"})
     @Tag(name = "Sync")
     @Operation(
             summary = "Change a marketplace's sync mode",

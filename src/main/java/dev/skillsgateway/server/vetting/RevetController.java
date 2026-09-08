@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Re-vetting on demand, and the blast radius of a violation (GW_0049, GW_0053).
+ * Re-vetting on demand, and the blast radius of a violation (GW_VETTING_0012, GW_VETTING_0016).
  *
  * <p>The manual endpoints exist for the case the scheduled sweep cannot serve: a scanner or
  * advisory feed has moved and the answer is wanted now, not at the next tick. The built-in
@@ -39,7 +39,7 @@ public class RevetController {
     }
 
     @PostMapping("/snapshots/{id}/revet")
-    @Requirements({"GW_0049"})
+    @Requirements({"GW_VETTING_0012"})
     @Tag(name = "Vetting")
     @Operation(
             summary = "Re-vet an approved snapshot now",
@@ -59,7 +59,7 @@ public class RevetController {
     }
 
     @PostMapping("/marketplaces/{name}/revet")
-    @Requirements({"GW_0049"})
+    @Requirements({"GW_VETTING_0012"})
     @Tag(name = "Vetting")
     @Operation(
             summary = "Re-vet every approved snapshot of a marketplace now",
@@ -74,7 +74,7 @@ public class RevetController {
     }
 
     @GetMapping("/snapshots/{id}/fetchers")
-    @Requirements({"GW_0053"})
+    @Requirements({"GW_VETTING_0016"})
     @Tag(name = "Vetting")
     @Operation(
             summary = "Who fetched this snapshot",

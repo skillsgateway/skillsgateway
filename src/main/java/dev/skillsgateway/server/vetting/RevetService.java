@@ -27,7 +27,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * Continuous re-vetting of approved content, and the retroactive quarantine it can trigger
- * (GW_0049-GW_0054).
+ * (GW_VETTING_0012-GW_VETTING_0017).
  *
  * <p>Approval is a decision made against the evidence available on one day. This service exists
  * because that evidence goes stale: a connector gains a rule, a waiver lapses, an advisory lands.
@@ -162,13 +162,13 @@ public class RevetService {
     }
 
     /**
-     * The scheduled sweep (GW_0049): one bounded batch of the approved snapshots whose evidence is
+     * The scheduled sweep (GW_VETTING_0012): one bounded batch of the approved snapshots whose evidence is
      * oldest. Deliberately not "every approved snapshot every tick" — an estate of thousands would
      * make the sweep a periodic self-inflicted load spike, and re-vetting the same recently-vetted
      * snapshot again buys nothing. Oldest-first over a batch covers the estate in rotation, and
      * guarantees the interval any one snapshot waits is bounded by its size.
      */
-    @Requirements({"GW_0049"})
+    @Requirements({"GW_VETTING_0012"})
     public PassResult sweep(String actor) {
         Instant cutoff = Instant.now().minus(properties.cadence());
         List<Snapshot> due = snapshotRepository.dueRevet(cutoff, properties.batchSize());
@@ -185,8 +185,8 @@ public class RevetService {
         return summarize(results);
     }
 
-    /** Every live approved snapshot of one marketplace, re-vetted now (GW_0049). */
-    @Requirements({"GW_0049"})
+    /** Every live approved snapshot of one marketplace, re-vetted now (GW_VETTING_0012). */
+    @Requirements({"GW_VETTING_0012"})
     public PassResult revetMarketplace(String name, String actor) {
         Marketplace marketplace = marketplaceRepository
                 .findByName(name)
@@ -198,8 +198,8 @@ public class RevetService {
         return summarize(results);
     }
 
-    /** One snapshot, re-vetted now (GW_0049). */
-    @Requirements({"GW_0049"})
+    /** One snapshot, re-vetted now (GW_VETTING_0012). */
+    @Requirements({"GW_VETTING_0012"})
     public RevetResult revetSnapshot(long snapshotId, String actor) {
         Snapshot snapshot =
                 snapshotRepository.findById(snapshotId).orElseThrow(() -> new SnapshotNotFoundException(snapshotId));
@@ -213,14 +213,14 @@ public class RevetService {
     }
 
     /**
-     * Re-vets one approved snapshot and acts on the answer (GW_0050, GW_0051, GW_0052, GW_0054).
+     * Re-vets one approved snapshot and acts on the answer (GW_VETTING_0013, GW_VETTING_0014, GW_VETTING_0015, GW_VETTING_0017).
      *
      * <p>The order is the safety property: the run is recorded first, the violation is written to
      * the ledger and announced second, and only then — and only in enforce mode — is anything
      * unpublished. A crash at any point leaves recorded evidence and served content, never
      * retracted content nobody can explain.
      */
-    @Requirements({"GW_0050", "GW_0051", "GW_0052", "GW_0054"})
+    @Requirements({"GW_VETTING_0013", "GW_VETTING_0014", "GW_VETTING_0015", "GW_VETTING_0017"})
     private RevetResult revet(Snapshot snapshot, String trigger, String actor) {
         String marketplace = marketplaceName(snapshot);
         VettingService.Run run = vettingService.run(snapshot, marketplace, trigger);
@@ -268,11 +268,11 @@ public class RevetService {
     }
 
     /**
-     * The retroactive violation, in the ledger and on the wire (GW_0053, GW_0054) — and the whole
+     * The retroactive violation, in the ledger and on the wire (GW_VETTING_0016, GW_VETTING_0017) — and the whole
      * of what warn mode does. Every affected identity is named individually, so the blast radius is
      * answerable from the ledger alone rather than from a query someone has to think to run.
      */
-    @Requirements({"GW_0053", "GW_0054"})
+    @Requirements({"GW_VETTING_0016", "GW_VETTING_0017"})
     private void recordViolation(
             Snapshot snapshot,
             String marketplace,
@@ -318,7 +318,7 @@ public class RevetService {
     }
 
     /**
-     * Retroactive quarantine (GW_0050): move the snapshot to {@code revoked} and take its content
+     * Retroactive quarantine (GW_VETTING_0013): move the snapshot to {@code revoked} and take its content
      * off the wire.
      *
      * <p>The database transition comes first and is conditional on the snapshot still being
@@ -329,7 +329,7 @@ public class RevetService {
      * {@code refs/snapshots/<sha>} in the quarantine repository, which is exactly what makes the
      * decision reviewable and reversible by a person.
      */
-    @Requirements({"GW_0050", "GW_0054"})
+    @Requirements({"GW_VETTING_0013", "GW_VETTING_0017"})
     private boolean quarantine(Snapshot snapshot, String marketplace, WaiverEvaluation.Effect effect, String actor) {
         String violation = "re-vetting violation: %s".formatted(effect.blockingConnectors());
         Optional<Snapshot> revoked = snapshotRepository.revoke(snapshot.id(), actor, violation);
@@ -367,9 +367,9 @@ public class RevetService {
                     "revoked but still published: " + e.getMessage());
         }
         // The published set just shrank; the catalog re-derives so the retracted content leaves it
-        // too (GW_0062). Never fails the revocation that triggered it.
+        // too (GW_FACADE_0004). Never fails the revocation that triggered it.
         catalogService.rebuildQuietly();
-        // Announced unconditionally, including on the unpublish failure above (GW_0171): the
+        // Announced unconditionally, including on the unpublish failure above (GW_FACADE_0022): the
         // reconciliation the mirror runs is over what is served now, so it repairs a mirror the
         // failure would otherwise have left holding the revoked snapshot. Nothing here waits for
         // it, and a mirror that stays behind is drift, never a revocation that did not happen.
@@ -379,8 +379,8 @@ public class RevetService {
         return true;
     }
 
-    /** The identities that fetched a snapshot's content: the blast radius of a violation (GW_0053). */
-    @Requirements({"GW_0053"})
+    /** The identities that fetched a snapshot's content: the blast radius of a violation (GW_VETTING_0016). */
+    @Requirements({"GW_VETTING_0016"})
     public List<FetchLogRepository.Fetcher> affected(long snapshotId) {
         Snapshot snapshot =
                 snapshotRepository.findById(snapshotId).orElseThrow(() -> new SnapshotNotFoundException(snapshotId));

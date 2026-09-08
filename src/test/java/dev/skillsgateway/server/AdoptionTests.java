@@ -26,13 +26,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
- * Adoption and staleness reporting off the fetch ledger (GW_0075, GW_0076) and the always-recorded
- * gateway metrics (GW_0077). All fetches here are real git clones through the facade, so the
+ * Adoption and staleness reporting off the fetch ledger (GW_OBSERVABILITY_0001, GW_OBSERVABILITY_0002) and the always-recorded
+ * gateway metrics (GW_OBSERVABILITY_0003). All fetches here are real git clones through the facade, so the
  * ledger rows under aggregation are exactly the rows production writes; the authorization walk of
  * the two reads lives in RoleEnforcementTests, whose enforcing context classifies them as
  * privileged reads.
  */
-// Authorization is always enforced (GW_0138), so this suite names the principal it acts as --
+// Authorization is always enforced (GW_AUTH_0025), so this suite names the principal it acts as --
 // "auditor", declared once for the whole family in AbstractNamedAdminsTest.
 class AdoptionTests extends AbstractNamedAdminsTest {
 
@@ -57,7 +57,7 @@ class AdoptionTests extends AbstractNamedAdminsTest {
     private MeterRegistry meterRegistry;
 
     @Test
-    @SVCs({"SVC_GW_0075"})
+    @SVCs({"SVC_GW_OBSERVABILITY_0001"})
     void the_adoption_report_aggregates_the_windowed_ledger_per_marketplace_sha_and_identity() throws Exception {
         String name = uniqueName("adopt");
         Registered fixture = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
@@ -98,7 +98,7 @@ class AdoptionTests extends AbstractNamedAdminsTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0076"})
+    @SVCs({"SVC_GW_OBSERVABILITY_0002"})
     void staleness_names_exactly_the_identities_not_on_the_served_tip_retracted_content_included() throws Exception {
         String name = uniqueName("stale");
         Path upstream = createUpstream(DEFAULT_MANIFEST);
@@ -136,7 +136,7 @@ class AdoptionTests extends AbstractNamedAdminsTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0077"})
+    @SVCs({"SVC_GW_OBSERVABILITY_0003"})
     void the_skills_gateway_metrics_are_recorded_with_export_left_at_its_disabled_default() throws Exception {
         // The context runs with the repository's default telemetry posture: no export enabled.
         String name = uniqueName("metrics");

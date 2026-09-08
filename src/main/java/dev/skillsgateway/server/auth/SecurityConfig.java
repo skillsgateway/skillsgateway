@@ -35,7 +35,7 @@ public class SecurityConfig {
 
     /**
      * The principal the development escape hatch invents. Named here because {@code RoleService}
-     * confers the administrative role on exactly this name while the hatch is open (GW_0141), and
+     * confers the administrative role on exactly this name while the hatch is open (GW_AUTH_0028), and
      * two copies of the string would let the two halves drift apart.
      */
     public static final String DEV_PRINCIPAL = "dev";
@@ -59,14 +59,14 @@ public class SecurityConfig {
     }
 
     /**
-     * The publication chain (GW_0102): the only write path the gateway has, and a sibling of the
+     * The publication chain (GW_FACADE_0007): the only write path the gateway has, and a sibling of the
      * read-only facade chain rather than a mode on it. Same credential kind — PATs, stateless, no
      * session — but authorization is the token's push scope, which no token holds by default and
      * none can hold for every marketplace.
      */
     @Bean
     @Order(2)
-    @Requirements({"GW_0102"})
+    @Requirements({"GW_FACADE_0007"})
     public SecurityFilterChain publishChain(HttpSecurity http, PatAuthenticationProvider patAuthenticationProvider)
             throws Exception {
         http.securityMatcher("/publish/**")
@@ -83,7 +83,7 @@ public class SecurityConfig {
     }
 
     /**
-     * Stateless anonymous chain for the inbound forge webhook (GW_0058). Authentication is not
+     * Stateless anonymous chain for the inbound forge webhook (GW_INGEST_0012). Authentication is not
      * absent, it lives one layer down: the controller verifies an HMAC-SHA256 signature of the raw
      * body against the marketplace's gateway-generated secret and rejects everything else. Keeping
      * the check out of the filter chain also keeps it in force under dev-insecure-auth, and the
@@ -107,13 +107,13 @@ public class SecurityConfig {
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     /**
-     * Adds the issuer comparison Spring Security cannot make on its own here (GW_0100). Unset is
+     * Adds the issuer comparison Spring Security cannot make on its own here (GW_AUTH_0017). Unset is
      * today's behaviour and stays the default, so an upgrade changes nothing — but a deployment
      * that is not the local development escape hatch is told, once, that its login accepts an
      * identity token from any issuer whose keys are in the configured key set.
      */
     @Bean
-    @Requirements({"GW_0100"})
+    @Requirements({"GW_AUTH_0017"})
     public JwtDecoderFactory<ClientRegistration> idTokenDecoderFactory(SkillsGatewayProperties properties) {
         String issuer = properties.oidc().issuer();
         if ((issuer == null || issuer.isBlank()) && !properties.devInsecureAuth()) {
@@ -126,7 +126,7 @@ public class SecurityConfig {
     }
 
     /**
-     * The machine API chain (GW_0127): a sibling of the facade and publication chains rather than
+     * The machine API chain (GW_AUTH_0021): a sibling of the facade and publication chains rather than
      * a mode on the session chain. It matches {@code /api/**} <em>and</em> the presence of an
      * {@code Authorization: Bearer} header, so a browser request without one still falls through
      * to the session chain exactly as before and that chain is unchanged apart from its order.
@@ -146,7 +146,7 @@ public class SecurityConfig {
      */
     @Bean
     @Order(4)
-    @Requirements({"GW_0127", "GW_0129"})
+    @Requirements({"GW_AUTH_0021", "GW_AUTH_0022"})
     public SecurityFilterChain machineApiChain(
             HttpSecurity http, MachineApiAuthenticationProvider machineApiAuthenticationProvider) throws Exception {
         AuthenticationManager authenticationManager = new ProviderManager(machineApiAuthenticationProvider);
@@ -169,11 +169,11 @@ public class SecurityConfig {
     }
 
     /**
-     * One rule per reachable route, then {@code denyAll} (GW_0129). Deny-by-default is the shape:
+     * One rule per reachable route, then {@code denyAll} (GW_AUTH_0022). Deny-by-default is the shape:
      * an endpoint the registry does not classify as reachable is refused here, so a new endpoint
      * is unreachable until somebody names it rather than being admitted by silence.
      */
-    @Requirements({"GW_0129"})
+    @Requirements({"GW_AUTH_0022"})
     private static void machineApiRules(
             org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer<HttpSecurity>
                             .AuthorizationManagerRequestMatcherRegistry
@@ -192,11 +192,11 @@ public class SecurityConfig {
      *
      * <p>With {@code skills-gateway.dev-insecure-auth=true} (development only, default off) the
      * web surface is open and requests act as the anonymous user "dev"; the git facade keeps
-     * requiring PATs. GW_0011 holds for every default-configured deployment.
+     * requiring PATs. GW_AUTH_0002 holds for every default-configured deployment.
      */
     @Bean
     @Order(5)
-    @Requirements({"GW_0011"})
+    @Requirements({"GW_AUTH_0002"})
     public SecurityFilterChain webChain(HttpSecurity http, SkillsGatewayProperties properties) throws Exception {
         if (properties.devInsecureAuth()) {
             log.warn("skills-gateway.dev-insecure-auth is ON — the web surface is UNAUTHENTICATED. "

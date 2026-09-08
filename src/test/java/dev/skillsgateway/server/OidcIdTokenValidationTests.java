@@ -14,7 +14,7 @@ import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 /**
- * Issuer pinning for the browser login (GW_0100). Spring Security compares an ID token's {@code
+ * Issuer pinning for the browser login (GW_AUTH_0017). Spring Security compares an ID token's {@code
  * iss} only when the client registration carries an issuer, and ours cannot carry one without
  * losing its explicitly configured endpoints — so the comparison is added here, and this is where
  * it is proved to actually refuse.
@@ -48,7 +48,7 @@ class OidcIdTokenValidationTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0100"})
+    @SVCs({"SVC_GW_AUTH_0017"})
     void a_token_from_another_issuer_is_refused_and_the_expected_one_is_accepted() {
         OAuth2TokenValidator<Jwt> validator = OidcIdTokenValidation.validator(registration(), EXPECTED);
 
@@ -68,7 +68,7 @@ class OidcIdTokenValidationTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0100"})
+    @SVCs({"SVC_GW_AUTH_0017"})
     void pinning_the_issuer_does_not_replace_the_standard_identity_token_checks() {
         OAuth2TokenValidator<Jwt> validator = OidcIdTokenValidation.validator(registration(), EXPECTED);
 
@@ -85,7 +85,7 @@ class OidcIdTokenValidationTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_0100"})
+    @SVCs({"SVC_GW_AUTH_0017"})
     void with_no_issuer_configured_the_standard_checks_are_all_that_run() {
         OAuth2TokenValidator<Jwt> validator = OidcIdTokenValidation.validator(registration(), null);
 

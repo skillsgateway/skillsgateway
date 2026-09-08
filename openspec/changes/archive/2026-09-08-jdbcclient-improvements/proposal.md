@@ -19,7 +19,7 @@ turn out to be "no, and here is why" — which is the point of asking.
 
 ## What Changes
 
-- **The N+1 in `VettingRepository.verdicts()` is closed (GW_0037 — Ordered
+- **The N+1 in `VettingRepository.verdicts()` is closed (GW_VETTING_0001 — Ordered
   vetting connector chain at ingestion).** Reading a run now costs two statements
   whatever the chain length: one for the verdicts, one join query for every
   finding of the run, grouped by verdict in memory. Ordering and grouping are
@@ -28,7 +28,7 @@ turn out to be "no, and here is why" — which is the point of asking.
   an empty list rather than borrowing another verdict's.
 
 - **Row mapping moves to `DataClassRowMapper` where the record maps 1:1
-  (GW_0125 — Enumerated persisted values are database types).** A spike
+  (GW_FACADE_0009 — Enumerated persisted values are database types).** A spike
   (see `design.md`) established that `timestamptz` reaches an `Instant` record
   component with no converter, that a nullable boxed component reads back null,
   that a SQL NULL into a primitive component fails loudly rather than silently
@@ -56,7 +56,7 @@ questions closed with evidence instead of left open as folklore.
 
 ## Impact
 
-- Affected specs: `snapshot-vetting` (GW_0037), `persistence-schema` (GW_0125).
+- Affected specs: `snapshot-vetting` (GW_VETTING_0001), `persistence-schema` (GW_FACADE_0009).
 - Affected code: `VettingRepository`, and the row mappers of
   `MarketplaceRepository`, `SnapshotRepository`, `TokenRepository`,
   `RoleGrantRepository`, `AuditSinkRepository`, `WebhookSubscriberRepository`,

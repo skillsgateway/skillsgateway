@@ -26,7 +26,7 @@ class ObjectStoreClientFactoryTests {
 
     // the connection pool is given an explicit, ordered lifetime by default
     @Test
-    @SVCs({"SVC_GW_0111"})
+    @SVCs({"SVC_GW_FACADE_0010"})
     void theConnectionPoolHasAnExplicitLifetime() {
         SkillsGatewayProperties.ObjectStore settings =
                 new SkillsGatewayProperties.ObjectStore(null, "eu-north-1", "skills", null, null, null, null, null);
@@ -43,7 +43,7 @@ class ObjectStoreClientFactoryTests {
 
     // a client built from configuration alone can round-trip an object
     @Test
-    @SVCs({"SVC_GW_0111"})
+    @SVCs({"SVC_GW_FACADE_0010"})
     void aClientBuiltFromConfigurationWorks() throws IOException {
         AwsConnectionDetails connection = ObjectStoreTestSupport.connection();
         String bucket = ObjectStoreTestSupport.bucket(ObjectStoreTestSupport.BUCKET);

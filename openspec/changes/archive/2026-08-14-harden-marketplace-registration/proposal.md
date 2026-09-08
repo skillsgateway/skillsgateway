@@ -12,10 +12,10 @@ gateway's decision rather than the consumer's.
 
 - Marketplace clone URLs are validated against a configurable scheme allowlist
   (default: `http`, `https`); any other scheme — or a scheme-less path — is rejected
-  with HTTP 400 and nothing is persisted (GW_0016).
+  with HTTP 400 and nothing is persisted (GW_INGEST_0005).
 - The gateway pins ingestion to the upstream default branch. A registration request
   that supplies a `ref` other than the default branch (`main`) is rejected with
-  HTTP 400; the consumer cannot override the ref (GW_0017, owner directive).
+  HTTP 400; the consumer cannot override the ref (GW_INGEST_0006, owner directive).
 - Existing tests that register scheme-less filesystem paths over HTTP switch to
   `file://` URIs, with `file` added to the allowlist only in the test configuration.
 
@@ -27,13 +27,13 @@ gateway's decision rather than the consumer's.
 
 ### Modified Capabilities
 
-- `marketplace-ingestion`: two ADDED requirements — GW_0016 (URL scheme allowlist)
-  and GW_0017 (gateway-pinned ingestion ref).
+- `marketplace-ingestion`: two ADDED requirements — GW_INGEST_0005 (URL scheme allowlist)
+  and GW_INGEST_0006 (gateway-pinned ingestion ref).
 
 ## Impact
 
-- `docs/reqstool/requirements.yml`, `software_verification_cases.yml`: GW_0016/0017,
-  SVC_GW_0016/0017.
+- `docs/reqstool/requirements.yml`, `software_verification_cases.yml`: GW_INGEST_0005/0017,
+  SVC_GW_INGEST_0005/0017.
 - `AdminController` (registration validation), `SkillsGatewayProperties`
   (`allowed-url-schemes`), `AbstractGatewayTest` / `IngestionTests`.
 - No schema or facade changes.

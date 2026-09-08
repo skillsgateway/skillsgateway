@@ -8,13 +8,13 @@ place of the implementation (`.claude/skills/old-coder`, Tier 3: it changes what
 
 | Id | Title | Role here |
 | --- | --- | --- |
-| GW_0164 | The resolved closure is recorded as an immutable domain object of the snapshot | added |
-| GW_0165 | Approval requires a complete closure | added |
-| GW_0009 | Snapshot provenance | unchanged; its response grows additively |
-| GW_0090 | Policy facts | unchanged; the fact set grows |
-| GW_0156 | Deterministic composite snapshot with a gateway-local manifest | unchanged; the closure is a second, queryable record of what its commit message already says |
-| GW_0161 | A failed resolution leaves the snapshot rejected and nothing half-resolved | unchanged; a rejected resolution records no closure |
-| GW_0034 | Compaction | unchanged; the closure goes with the purge by cascade |
+| GW_INGEST_0030 | The resolved closure is recorded as an immutable domain object of the snapshot | added |
+| GW_APPROVAL_0013 | Approval requires a complete closure | added |
+| GW_INGEST_0004 | Snapshot provenance | unchanged; its response grows additively |
+| GW_APPROVAL_0007 | Policy facts | unchanged; the fact set grows |
+| GW_INGEST_0024 | Deterministic composite snapshot with a gateway-local manifest | unchanged; the closure is a second, queryable record of what its commit message already says |
+| GW_INGEST_0027 | A failed resolution leaves the snapshot rejected and nothing half-resolved | unchanged; a rejected resolution records no closure |
+| GW_RETENTION_0004 | Compaction | unchanged; the closure goes with the purge by cascade |
 
 ## Context
 
@@ -31,7 +31,7 @@ place of the implementation (`.claude/skills/old-coder`, Tier 3: it changes what
   held. Nothing records the upstream SHA; ADR 0011 lists that as a deviation to
   be closed "when the closure tables arrive".
 - `ApprovalService.doApprove`: state machine → (if decidable) waiver evaluation
-  and the vetting gate, with the GW_0148 override, → policy gate → release age →
+  and the vetting gate, with the GW_VETTING_0028 override, → policy gate → release age →
   four-eyes → `decide` → `publish`. Refusals from the release-age and four-eyes
   gates are written to the ledger as `snapshot-approval-refused` before they are
   raised.
@@ -109,7 +109,7 @@ place of the implementation (`.claude/skills/old-coder`, Tier 3: it changes what
    Against the review's field list: `closures.closure_digest` → `digest`;
    `closure_nodes` → `snapshot_closure_members` with every named field (plugin
    name, source type, declared url/ref/sha, resolved sha, size/object counts) plus
-   `tree_sha` and `graft_path`, which the assertion in GW_0165 needs;
+   `tree_sha` and `graft_path`, which the assertion in GW_APPROVAL_0013 needs;
    `closure_edges` → `parent_member_id`, the adjacency form of the same
    relation: the closure is a tree by construction (each member is grafted at
    exactly one path), so adjacency is exact, it is `NULL` for every member at
@@ -150,7 +150,7 @@ place of the implementation (`.claude/skills/old-coder`, Tier 3: it changes what
    inserts the row, the closure and its members under one `@Transactional`. A
    `DuplicateKeyException` from the race the existing code already handles rolls
    the whole thing back. A composite snapshot without its closure is therefore
-   not a state the gateway can produce — which is exactly the state GW_0165
+   not a state the gateway can produce — which is exactly the state GW_APPROVAL_0013
    exists to refuse if anything else ever produces it.
 
 6. **Members record the grafted tree, and the gate compares trees.** A member's
@@ -174,7 +174,7 @@ place of the implementation (`.claude/skills/old-coder`, Tier 3: it changes what
    checks the stronger thing, that it parses as an object id.
 
 8. **The gate runs first inside the decidable branch, on every path.** Before
-   waiver evaluation, so before the GW_0148 override can lift anything; the
+   waiver evaluation, so before the GW_VETTING_0028 override can lift anything; the
    override lifts the *vetting* gate and nothing else. A revoked snapshot being
    re-approved passes through the same branch. The state-machine check stays
    ahead of it, for the reason the existing comment gives: a snapshot that is not
@@ -242,10 +242,10 @@ place of the implementation (`.claude/skills/old-coder`, Tier 3: it changes what
 
 | Requirement | Test(s) |
 | --- | --- |
-| GW_0164 — closure recorded, immutable, queryable, surfaced | `SnapshotClosureDigestTests` (unit), `SnapshotClosureTests` (integration) |
-| GW_0165 — approval requires a complete closure | `ClosureCompletenessTests` (integration, tamper-based) |
-| GW_0009 — provenance (unchanged for local-only) | `ApprovalTests.provenanceOfApprovedSnapshotIsRetrievable`, unmodified |
-| GW_0156, GW_0161 — unchanged | `ExternalSourceResolutionTests`, unmodified |
+| GW_INGEST_0030 — closure recorded, immutable, queryable, surfaced | `SnapshotClosureDigestTests` (unit), `SnapshotClosureTests` (integration) |
+| GW_APPROVAL_0013 — approval requires a complete closure | `ClosureCompletenessTests` (integration, tamper-based) |
+| GW_INGEST_0004 — provenance (unchanged for local-only) | `ApprovalTests.provenanceOfApprovedSnapshotIsRetrievable`, unmodified |
+| GW_INGEST_0024, GW_INGEST_0027 — unchanged | `ExternalSourceResolutionTests`, unmodified |
 
 ## Setup plan
 

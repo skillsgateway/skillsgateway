@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Provisioning and administration of machine API credentials (GW_0126, GW_0131).
+ * Provisioning and administration of machine API credentials (GW_AUTH_0020, GW_AUTH_0024).
  *
  * <p><b>Deliberately under {@code /api/tokens/**}</b>, which the machine-reachability registry
  * classifies wholly unreachable. That placement is a security constraint rather than a routing
@@ -110,7 +110,7 @@ public class MachineTokenController {
             String machineOwner) {}
 
     @PostMapping
-    @Requirements({"GW_0126", "GW_0130", "GW_0131"})
+    @Requirements({"GW_AUTH_0020", "GW_AUTH_0023", "GW_AUTH_0024"})
     @Tag(name = "Tokens")
     @Operation(
             summary = "Provision a machine API credential",
@@ -142,7 +142,7 @@ public class MachineTokenController {
     }
 
     @GetMapping
-    @Requirements({"GW_0131"})
+    @Requirements({"GW_AUTH_0024"})
     @Tag(name = "Tokens")
     @Operation(
             summary = "List machine API credentials",
@@ -161,7 +161,7 @@ public class MachineTokenController {
     }
 
     @PostMapping("/{id}/rotate")
-    @Requirements({"GW_0066", "GW_0131"})
+    @Requirements({"GW_AUTH_0008", "GW_AUTH_0024"})
     @Tag(name = "Tokens")
     @Operation(
             summary = "Rotate a machine API credential",
@@ -184,7 +184,7 @@ public class MachineTokenController {
     }
 
     @DeleteMapping("/{id}")
-    @Requirements({"GW_0131"})
+    @Requirements({"GW_AUTH_0024"})
     @Tag(name = "Tokens")
     @Operation(
             summary = "Revoke a machine API credential",

@@ -20,7 +20,7 @@ collision post-approval is too late to gate on.
 
 The hard part is not the matching. It is that a vetting chain run is today a pure
 function of **(pinned content, chain identity)** — the two things `vetting_runs`
-records — and that purity is the entire answer to `GW_0049 — Continuous
+records — and that purity is the entire answer to `GW_VETTING_0012 — Continuous
 re-vetting of approved snapshots`. Adding corpus state as a third input to a run
 would make a changed verdict over unchanged content mean nothing in particular.
 
@@ -56,7 +56,7 @@ out of [#153](https://github.com/skillsgateway/skillsgateway/issues/153).
   acceptable only by a scoped, expiring waiver`. `vetting_waivers.rule_id` is an
   opaque string and `WaiverService.create` already takes an arbitrary rule id, so
   no waiver machinery changes; the precondition gains a waiver consultation. The
-  `GW_0148 — Administrative override of a blocked vetting outcome` override does
+  `GW_VETTING_0028 — Administrative override of a blocked vetting outcome` override does
   **not** lift it, exactly as it does not lift the policy, release-age or
   four-eyes gates.
 - **The decision is on the ledger and in the portal** — `GW_0197 — Collision
@@ -65,7 +65,7 @@ out of [#153](https://github.com/skillsgateway/skillsgateway/issues/153).
   never an input to a vetting chain run`. Stated as a requirement rather than
   left to the shape of the code, so a later change that hands a connector an
   estate query is caught rather than reviewed as a reasonable-looking
-  improvement — the same reason `GW_0170 — The mirror is never an enforcement
+  improvement — the same reason `GW_FACADE_0021 — The mirror is never an enforcement
   path` is written down.
 
 **No connector's verdict changes, and `SnapshotUnderVetting` is untouched.**
@@ -143,7 +143,7 @@ measurement: the pairs they match are the same name in any practical namespace.
   existing is not by itself a reason to reopen it.
 - **Edit distance**, for the reason above.
 - **The marketplace-name half of T5** — a registration-time near-miss warning
-  extending `GW_0166 — Duplicate upstream URL is reported as a registration
+  extending `GW_INGEST_0029 — Duplicate upstream URL is reported as a registration
   warning`. Endorsed by ADR 0015, cheaper, and independent of this change.
 - **The `mergePlugin` shadowing primitive** — that a marketplace name sorting
   earlier can silently displace an incumbent plugin from the virtual catalog is a

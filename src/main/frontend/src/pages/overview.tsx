@@ -44,7 +44,7 @@ function SectionCard({
 /**
  * Gateway overview: what is registered, what awaits review, and what has been fetched.
  *
- * @Requirements GW_0018
+ * @Requirements GW_INGEST_0007
  */
 export function OverviewPage() {
   const marketplaces = useMarketplaces();

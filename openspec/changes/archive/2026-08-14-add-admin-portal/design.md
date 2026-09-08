@@ -5,7 +5,7 @@
 ADR 0003 fixes the stack and the harness philosophy (closed SDLC loop, harness with the
 first component). ADR 0002 fixes the serving model: SPA served by the app as its own
 BFF from the boot jar, same-origin `/api`, session cookie, tokens never in the browser.
-The backend admin API is complete (GW_0001–GW_0017) and documented via springdoc.
+The backend admin API is complete (GW_INGEST_0001–GW_INGEST_0006) and documented via springdoc.
 
 ## Goals / Non-Goals
 

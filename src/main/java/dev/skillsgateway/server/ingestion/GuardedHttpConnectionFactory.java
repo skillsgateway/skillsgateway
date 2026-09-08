@@ -21,7 +21,7 @@ import org.eclipse.jgit.transport.http.HttpConnectionFactory;
 import org.eclipse.jgit.transport.http.JDKHttpConnectionFactory;
 
 /**
- * The one place an external plugin source's fetch reaches the network (GW_0157, GW_0158).
+ * The one place an external plugin source's fetch reaches the network (GW_INGEST_0025, GW_INGEST_0026).
  *
  * <p>Installed per fetch through {@code FetchCommand.setTransportConfigCallback} and
  * {@code TransportHttp.setHttpConnectionFactory} — deliberately <em>not</em> through
@@ -110,7 +110,7 @@ final class GuardedHttpConnectionFactory implements HttpConnectionFactory {
     }
 
     @Override
-    @Requirements({"GW_0157", "GW_0158.1"})
+    @Requirements({"GW_INGEST_0025", "GW_INGEST_0026.1"})
     public HttpConnection create(URL url, Proxy proxy) throws IOException {
         String refusal = refuse(url);
         if (refusal != null) {
@@ -349,7 +349,7 @@ final class GuardedHttpConnectionFactory implements HttpConnectionFactory {
             return read;
         }
 
-        @Requirements({"GW_0158.1"})
+        @Requirements({"GW_INGEST_0026.1"})
         private void count(int bytes) throws IOException {
             receivedBytes += bytes;
             if (receivedBytes > maxReceivedBytes) {

@@ -54,21 +54,21 @@ legible and navigable.
 
 _None._ The behaviour belongs to capabilities that already exist. This is a
 presentation and navigation change over the portal's existing marketplace
-administration (GW_0018), administrative audit logging (GW_0022) and portal audit
-surface (GW_0030); it introduces no new requirement semantics, so no new GW
+administration (GW_INGEST_0007), administrative audit logging (GW_AUDIT_0002) and portal audit
+surface (GW_AUDIT_0006); it introduces no new requirement semantics, so no new GW
 requirement or SVC is created. The new UI code carries `@Requirements`
 annotations against those existing requirements, whose SVCs already pass.
 
 ### Modified Capabilities
 
-- `admin-portal`: GW_0018's portal marketplace administration is re-presented as
+- `admin-portal`: GW_INGEST_0007's portal marketplace administration is re-presented as
   a sortable, expandable table with a per-row link to the marketplace detail page,
   and the register form gains a client-side duplicate-URL warning. No change to
-  what the portal is allowed to do or to GW_0018's verification.
-- `audit-export`: GW_0030's portal audit surface gains per-row verdict colouring,
+  what the portal is allowed to do or to GW_INGEST_0007's verification.
+- `audit-export`: GW_AUDIT_0006's portal audit surface gains per-row verdict colouring,
   marketplace links, and per-column sort/filter/pagination over the same ledger
   the NDJSON export already serves. No change to the export contract or to
-  GW_0030's verification.
+  GW_AUDIT_0006's verification.
 
 ## Impact
 
@@ -87,8 +87,8 @@ annotations against those existing requirements, whose SVCs already pass.
   `openapi.json` / `types.gen.ts` regeneration; the API-contract gate is not
   engaged.
 - **Requirements**: none added or revised. `docs/reqstool/` is untouched; the new
-  TypeScript carries `@Requirements` JSDoc tags against existing GW_0018 /
-  GW_0022 / GW_0030.
+  TypeScript carries `@Requirements` JSDoc tags against existing GW_INGEST_0007 /
+  GW_AUDIT_0002 / GW_AUDIT_0006.
 - **Docs** (same PR): `docs/manual/reference/portal.md` — the marketplaces table
   and the audit-log colouring/links.
 - **Trust boundary**: none crossed. This is UI craft over read surfaces; the

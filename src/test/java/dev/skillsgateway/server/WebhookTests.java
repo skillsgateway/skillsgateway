@@ -35,8 +35,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 /**
- * Lifecycle event webhooks: filtering (GW_0023), signing (GW_0024), retry with backoff (GW_0025),
- * and the approval-pending announcement (GW_0159, GW_0160).
+ * Lifecycle event webhooks: filtering (GW_WEBHOOK_0001), signing (GW_WEBHOOK_0002), retry with backoff (GW_WEBHOOK_0003),
+ * and the approval-pending announcement (GW_WEBHOOK_0006, GW_WEBHOOK_0007).
  */
 class WebhookTests extends AbstractGatewayTest {
 
@@ -150,7 +150,7 @@ class WebhookTests extends AbstractGatewayTest {
      * lifecycle subscriber must never be able to pick it out of a list and receive ledger content.
      */
     @Test
-    @SVCs({"SVC_GW_0088"})
+    @SVCs({"SVC_GW_WEBHOOK_0005"})
     void the_event_registry_lists_every_dispatchable_event_and_never_the_export_event() throws Exception {
         String body = mockMvc.perform(get("/api/webhooks/events").with(oidcLogin()))
                 .andExpect(status().isOk())
@@ -159,7 +159,7 @@ class WebhookTests extends AbstractGatewayTest {
                 .getContentAsString();
 
         // The registry answers with an object, not a bare array: it carries the vocabulary and an
-        // example of each delivery body, so a receiver author reads both from one place (GW_0181).
+        // example of each delivery body, so a receiver author reads both from one place (GW_API_0005).
         List<String> served = JsonPath.read(body, "$.events");
 
         assertThat(served).containsExactlyElementsOf(WebhookEvent.ALL);
@@ -170,14 +170,14 @@ class WebhookTests extends AbstractGatewayTest {
     }
 
     /**
-     * The announcement an external review pipeline subscribes to (GW_0159). Three facts in one
+     * The announcement an external review pipeline subscribes to (GW_WEBHOOK_0006). Three facts in one
      * arrangement, because they are the same fact from three sides: the subscriber that asked for
      * it gets exactly one delivery for a held snapshot, a subscriber that asked for something else
      * gets none, and the same snapshot approved and then re-vetted produces no second announcement
      * — "awaiting a human" is about the held state, not about a chain run having happened.
      */
     @Test
-    @SVCs({"SVC_GW_0159"})
+    @SVCs({"SVC_GW_WEBHOOK_0006"})
     void a_held_snapshot_announces_itself_only_to_the_subscribers_that_asked() throws Exception {
         long pendingSubscriber = createSubscriber(
                 uniqueName("pending"), "https://receiver.invalid/hook", WebhookEvent.SNAPSHOT_APPROVAL_PENDING, null);
@@ -216,13 +216,13 @@ class WebhookTests extends AbstractGatewayTest {
     }
 
     /**
-     * The trust-boundary half (GW_0160): the event says a blocked snapshot is waiting, in enough
+     * The trust-boundary half (GW_WEBHOOK_0007): the event says a blocked snapshot is waiting, in enough
      * detail to triage it, and says nothing about what the connectors actually found. A webhook
      * target is authorised by a URL scheme allowlist, not by an identity, so the finding messages
      * and the paths they name stay behind the authenticated vetting endpoint.
      */
     @Test
-    @SVCs({"SVC_GW_0160"})
+    @SVCs({"SVC_GW_WEBHOOK_0007"})
     void the_approval_pending_payload_summarises_the_run_and_discloses_no_content() throws Exception {
         long subscriber = createSubscriber(
                 uniqueName("summary"), "https://receiver.invalid/hook", WebhookEvent.SNAPSHOT_APPROVAL_PENDING, null);
@@ -260,7 +260,7 @@ class WebhookTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0023"})
+    @SVCs({"SVC_GW_WEBHOOK_0001"})
     void lifecycleEventsReachOnlySubscribersFilteringForThem() throws Exception {
         String marketplace = uniqueName("corp");
         Path upstream = createUpstream(DEFAULT_MANIFEST);
@@ -300,7 +300,7 @@ class WebhookTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0024"})
+    @SVCs({"SVC_GW_WEBHOOK_0002"})
     void deliveriesAreSignedWithTheShowOnceSecret() throws Exception {
         try (Receiver receiver = new Receiver(200)) {
             StringBuilder secret = new StringBuilder();
@@ -335,7 +335,7 @@ class WebhookTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0025"})
+    @SVCs({"SVC_GW_WEBHOOK_0003"})
     void failingDeliveryIsRetriedWithBackoffAndFinallyFails() throws Exception {
         try (Receiver receiver = new Receiver(500)) {
             long subscriberId = createSubscriber(uniqueName("failing"), receiver.url(), "*", null);

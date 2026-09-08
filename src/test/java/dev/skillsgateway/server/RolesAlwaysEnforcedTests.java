@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
 /**
- * Authorization with nothing switching it on (GW_0138).
+ * Authorization with nothing switching it on (GW_AUTH_0025).
  *
  * <p>This suite runs in the shared default context, which is the point: it sets no enforcement
  * property, because there is none to set. It replaces the compatibility suite that asserted the
@@ -24,7 +24,7 @@ import org.springframework.http.MediaType;
 class RolesAlwaysEnforcedTests extends AbstractGatewayTest {
 
     @Test
-    @SVCs({"SVC_GW_0138"})
+    @SVCs({"SVC_GW_AUTH_0025"})
     void a_session_holding_no_role_is_refused_with_no_enforcement_property_anywhere() throws Exception {
         var nobody = oidcLogin().idToken(token -> token.subject("nobody-" + uniqueName("p")));
         String name = uniqueName("enforced");
@@ -60,7 +60,7 @@ class RolesAlwaysEnforcedTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0138"})
+    @SVCs({"SVC_GW_AUTH_0025"})
     void the_session_endpoint_no_longer_reports_an_enforcement_flag() throws Exception {
         mockMvc.perform(get("/api/me").with(oidcLogin()))
                 .andExpect(status().isOk())

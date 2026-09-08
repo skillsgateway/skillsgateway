@@ -30,8 +30,8 @@ Issue [#294](https://github.com/skillsgateway/skillsgateway/issues/294).
 
 ## What Changes
 
-- **`GW_0179 — The embedded git library's own scratch stays inside the
-  writable temporary directory`**, with SVC_GW_0179. The `Dockerfile` sets
+- **`GW_FACADE_0024 — The embedded git library's own scratch stays inside the
+  writable temporary directory`**, with SVC_GW_FACADE_0024. The `Dockerfile` sets
   `XDG_CONFIG_HOME=/tmp/xdg-config` as an image default; the chart's
   `templates/deployment.yaml` states the same variable explicitly in the pod
   spec, so it stays correct even against an image that does not set it.
@@ -63,7 +63,7 @@ _None._
 
 ### Modified Capabilities
 
-_None functionally._ `release-packaging` gains GW_0179 — a packaging
+_None functionally._ `release-packaging` gains GW_FACADE_0024 — a packaging
 correctness requirement, verified by a static consistency check
 (`PackagingTests`) rather than a change to any served capability's behaviour.
 

@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
 /**
- * A separation-of-duties refusal (GW_0096): the reviewer is on the supply side of the very
+ * A separation-of-duties refusal (GW_APPROVAL_0010): the reviewer is on the supply side of the very
  * snapshot they are approving.
  *
  * <p>Raised only in {@code enforce} mode. In {@code warn} mode the same conflicts are computed and

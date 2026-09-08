@@ -61,7 +61,7 @@ public class TokenService {
             @Schema(description = "Hosted marketplaces this token may publish to; empty grants none")
             List<String> pushScopes,
 
-            @Schema(description = "Whether this credential was derived from a browser session (GW_0104)")
+            @Schema(description = "Whether this credential was derived from a browser session (GW_AUTH_0018)")
             boolean sessionDerived,
 
             @Schema(
@@ -95,22 +95,22 @@ public class TokenService {
      * unstretched SHA-256 is the documented design for these high-entropy random tokens — they are
      * not passwords.
      *
-     * <p>Scopes are validated against the registered marketplaces and the catalog name (GW_0064):
+     * <p>Scopes are validated against the registered marketplaces and the catalog name (GW_AUTH_0006):
      * a typo'd scope must fail loudly at issue time, not silently never match. A lifetime beyond
-     * the configured cap is refused, never clamped (GW_0065).
+     * the configured cap is refused, never clamped (GW_AUTH_0007).
      */
-    @Requirements({"GW_0013", "GW_0064", "GW_0065"})
+    @Requirements({"GW_AUTH_0004", "GW_AUTH_0006", "GW_AUTH_0007"})
     public IssuedToken create(String principal, String name, List<String> scopes, Instant expiresAt) {
         return create(principal, name, scopes, expiresAt, List.of());
     }
 
     /**
-     * As above, plus push scopes (GW_0102). A push scope must name a registered <em>hosted</em>
+     * As above, plus push scopes (GW_FACADE_0007). A push scope must name a registered <em>hosted</em>
      * marketplace: the catalog is generated, an upstream marketplace's content comes from its
      * upstream, and neither can be published to — so naming one is a mistake worth failing at
      * issue time rather than a grant that could never match.
      */
-    @Requirements({"GW_0013", "GW_0064", "GW_0065", "GW_0102"})
+    @Requirements({"GW_AUTH_0004", "GW_AUTH_0006", "GW_AUTH_0007", "GW_FACADE_0007"})
     public IssuedToken create(
             String principal, String name, List<String> scopes, Instant expiresAt, List<String> pushScopes) {
         String storedScopes = validateScopes(scopes);
@@ -123,12 +123,12 @@ public class TokenService {
     }
 
     /**
-     * A git credential derived from the caller's browser session (GW_0104). The lifetime is the
+     * A git credential derived from the caller's browser session (GW_AUTH_0018). The lifetime is the
      * gateway's, taken from configuration: there is no parameter for it, because a credential
      * whose life the holder can choose is a personal access token reached through another URL.
      * No push scopes, ever — publishing is done with something somebody provisioned on purpose.
      */
-    @Requirements({"GW_0104"})
+    @Requirements({"GW_AUTH_0018"})
     public IssuedToken createSessionCredential(String principal, String name, List<String> scopes) {
         String storedScopes = validateScopes(scopes);
         Instant expiresAt = Instant.now().plus(properties.tokens().sessionTtl());
@@ -139,7 +139,7 @@ public class TokenService {
     }
 
     /**
-     * Issues a machine API credential (GW_0126, GW_0131). Everything here is a refusal rather
+     * Issues a machine API credential (GW_AUTH_0020, GW_AUTH_0024). Everything here is a refusal rather
      * than a default, because every default this method could offer is a weaker credential than
      * the caller asked for:
      *
@@ -151,14 +151,14 @@ public class TokenService {
      *       not a credential, it is a fetch token, and issuing one here would quietly produce
      *       something that cannot do what the caller asked for.
      *   <li>An expiry is required and is never defaulted, and a lifetime beyond the cap is
-     *       refused rather than clamped — the posture GW_0065 already takes. The cap applies even
+     *       refused rather than clamped — the posture GW_AUTH_0007 already takes. The cap applies even
      *       when the deployment configures none; see {@code Tokens.DEFAULT_MACHINE_MAX_TTL}.
      *   <li>A session-derived credential can never hold administrative scope. It is minted from a
      *       browser session with a lifetime the holder did not choose, for fetching; letting one
      *       carry control-plane authority would launder a session into a standing credential.
      * </ul>
      */
-    @Requirements({"GW_0126", "GW_0127", "GW_0131"})
+    @Requirements({"GW_AUTH_0020", "GW_AUTH_0021", "GW_AUTH_0024"})
     public IssuedToken createMachineCredential(
             String principal, String name, List<String> apiScopes, Instant expiresAt, String owner) {
         String storedApiScopes = validateApiScopes(apiScopes);
@@ -170,7 +170,7 @@ public class TokenService {
     }
 
     /**
-     * Rotation for a machine credential (GW_0131): the same grant with a new secret. The identity,
+     * Rotation for a machine credential (GW_AUTH_0024): the same grant with a new secret. The identity,
      * the expiry <em>deadline</em> and all three scope dimensions carry over, and the old
      * credential is revoked before the new one is issued, so no moment has two live secrets. A
      * rotation that silently widened or dropped an administrative scope would be the worst defect
@@ -180,7 +180,7 @@ public class TokenService {
      * principal is not an identity anybody logs in as, so owner-scoping would leave it
      * unrotatable by everyone.
      */
-    @Requirements({"GW_0066", "GW_0131"})
+    @Requirements({"GW_AUTH_0008", "GW_AUTH_0024"})
     public Optional<IssuedToken> rotateMachineCredential(long id) {
         Optional<AccessToken> found = tokenRepository.findById(id).filter(AccessToken::machineCredential);
         if (found.isEmpty()) {
@@ -210,17 +210,17 @@ public class TokenService {
     }
 
     /**
-     * Every machine credential, whoever provisioned it (GW_0131). The caller's own-token listing
+     * Every machine credential, whoever provisioned it (GW_AUTH_0024). The caller's own-token listing
      * keeps its strict own-principal scoping; this is the separate administrative view, because a
      * credential nobody can see is a credential nobody can revoke during an incident.
      */
-    @Requirements({"GW_0131"})
+    @Requirements({"GW_AUTH_0024"})
     public List<AccessToken> listMachineCredentials() {
         return tokenRepository.listMachineCredentials();
     }
 
     /** Administrative revocation of a machine credential; takes effect at the next lookup. */
-    @Requirements({"GW_0131"})
+    @Requirements({"GW_AUTH_0024"})
     public boolean revokeMachineCredential(long id) {
         return tokenRepository
                 .findById(id)
@@ -234,7 +234,7 @@ public class TokenService {
         return tokenRepository.findById(id).filter(AccessToken::machineCredential);
     }
 
-    @Requirements({"GW_0126"})
+    @Requirements({"GW_AUTH_0020"})
     private String validateApiScopes(List<String> apiScopes) {
         if (apiScopes == null || apiScopes.isEmpty()) {
             throw new InvalidTokenRequestException("a machine credential must name at least one API scope;"
@@ -250,7 +250,7 @@ public class TokenService {
         return String.join(",", new LinkedHashSet<>(apiScopes));
     }
 
-    @Requirements({"GW_0131"})
+    @Requirements({"GW_AUTH_0024"})
     private void validateMachineTtl(Instant expiresAt) {
         if (expiresAt == null) {
             throw new InvalidTokenRequestException("a machine credential must state an expiry; it is never defaulted");
@@ -274,12 +274,12 @@ public class TokenService {
     }
 
     /**
-     * Same grant, new secret (GW_0066): name, scopes and the same expiry deadline are copied;
+     * Same grant, new secret (GW_AUTH_0008): name, scopes and the same expiry deadline are copied;
      * the old token is revoked before the new one is issued, so a crash between the steps leaves
      * no live secret rather than two. Only the owner rotates, and only a live token: a revoked or
      * expired grant is not a template for a new one.
      */
-    @Requirements({"GW_0066"})
+    @Requirements({"GW_AUTH_0008"})
     public Optional<IssuedToken> rotate(long id, String principal) {
         Optional<AccessToken> found = tokenRepository.findByIdAndPrincipal(id, principal);
         if (found.isEmpty()) {
@@ -301,7 +301,7 @@ public class TokenService {
                 old.scopes(),
                 old.expiresAt(),
                 id,
-                // Rotation changes the secret and nothing else (GW_0066): push scopes, the expiry
+                // Rotation changes the secret and nothing else (GW_AUTH_0008): push scopes, the expiry
                 // deadline, and the session-derived mark all carry over — so a rotation can
                 // neither widen a grant nor launder a session credential into a standing one.
                 old.pushScopes(),
@@ -313,7 +313,7 @@ public class TokenService {
         return tokenRepository.listByPrincipal(principal);
     }
 
-    @Requirements({"GW_0065"})
+    @Requirements({"GW_AUTH_0007"})
     public Optional<AccessToken> authenticate(String presentedToken) {
         return tokenRepository.findActiveByHash(sha256Hex(presentedToken));
     }
@@ -334,7 +334,7 @@ public class TokenService {
         return String.join(",", new LinkedHashSet<>(scopes));
     }
 
-    @Requirements({"GW_0102"})
+    @Requirements({"GW_FACADE_0007"})
     private String validatePushScopes(List<String> pushScopes) {
         if (pushScopes == null || pushScopes.isEmpty()) {
             return null;

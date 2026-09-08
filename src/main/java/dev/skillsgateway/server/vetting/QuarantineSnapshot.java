@@ -24,7 +24,7 @@ import org.eclipse.jgit.treewalk.TreeWalk;
  * can reach a ref, another commit, or another marketplace.
  *
  * <p>The tree itself is walked once, in the constructor, into an index of paths and blob ids
- * (GW_0162). Every connector's walk then iterates that index, opens only the blobs its selection
+ * (GW_VETTING_0030). Every connector's walk then iterates that index, opens only the blobs its selection
  * asks for, and reuses what an earlier connector already read — so a chain of three connectors
  * costs one tree walk and one inflation of each blob any of them wanted, rather than three of each.
  *
@@ -83,7 +83,7 @@ final class QuarantineSnapshot implements SnapshotUnderVetting, AutoCloseable {
     }
 
     @Override
-    @Requirements({"GW_0162"})
+    @Requirements({"GW_VETTING_0030"})
     public void walk(Predicate<String> wanted, FileVisitor visitor) throws IOException {
         for (Entry entry : entries) {
             if (wanted.test(entry.path())) {

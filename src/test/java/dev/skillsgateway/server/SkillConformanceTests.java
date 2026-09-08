@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * Verification of the {@code skill-conformance} connector inside the real chain (GW_0167), under
+ * Verification of the {@code skill-conformance} connector inside the real chain (GW_INGEST_0028), under
  * the default — advisory — posture. The blocking half lives in {@link SkillConformanceEnforceTests},
  * which runs its own Spring context: the posture is a deployment decision, deliberately not
  * settable per call, which is what makes it attributable per chain run.
@@ -33,7 +33,7 @@ class SkillConformanceTests extends AbstractGatewayTest {
     private VettingService vettingService;
 
     @Test
-    @SVCs({"SVC_GW_0167"})
+    @SVCs({"SVC_GW_INGEST_0028"})
     void aConformantMarketplacePassesAndTheRunNamesThePinnedSpecification() throws Exception {
         Registered registered = registerAndIngest(uniqueName("confok"), createUpstream(DEFAULT_MANIFEST));
 
@@ -43,7 +43,7 @@ class SkillConformanceTests extends AbstractGatewayTest {
 
         assertThat(verdict.state()).isEqualTo(VerdictState.PASS);
         assertThat(verdict.findings()).isEmpty();
-        // A clean pass states what it examined (GW_0143), including the pin it examined against.
+        // A clean pass states what it examined (GW_VETTING_0023), including the pin it examined against.
         assertThat(verdict.detail()).contains("scanned 1 SKILL.md file(s)").contains("agentskills-2026-08-04");
 
         // The pinned specification is part of the recorded chain identity, so a bump is attributable.
@@ -58,7 +58,7 @@ class SkillConformanceTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0167"})
+    @SVCs({"SVC_GW_INGEST_0028"})
     void aNonConformantSkillWarnsWithAnActionableFindingAndDoesNotBlockApproval() throws Exception {
         Registered registered = registerAndIngest(
                 uniqueName("confbad"),
@@ -94,7 +94,7 @@ class SkillConformanceTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0167"})
+    @SVCs({"SVC_GW_INGEST_0028"})
     void hostileFrontmatterIsAFindingAndNeverAnErroredConnector() throws Exception {
         Registered registered = registerAndIngest(
                 uniqueName("confbomb"),

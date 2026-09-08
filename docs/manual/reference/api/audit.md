@@ -72,13 +72,13 @@ polling, batch payload, signature, replay — is in
 | `ts` | When the entry was appended. |
 | `source` | Client address for a facade fetch; the literal `admin` for an administrative action. |
 | `principal` | The PAT principal for a fetch, the OIDC principal for an admin action, the credential's own principal for a machine API action. |
-| `actorType` / `actor_type` | What kind of actor acted: `human`, `machine` or `system` (GW_0128). See below. |
+| `actorType` / `actor_type` | What kind of actor acted: `human`, `machine` or `system` (GW_AUDIT_0007). See below. |
 | `marketplace` | The marketplace name, or `-` when not marketplace-scoped. |
 | `event` | What happened — see below. |
 | `ref` | The ref involved, when there is one. For a facade fetch this is a ref the facade [advertised](../git-facade.md#what-is-served) for that request — see [Events](#events). |
 | `sha` | The commit involved, when there is one. |
 | `detail` | Free-text qualifier, when the entry needs one: the vetting chain outcome, a connector's verdict, or the reason a reviewer gave when overriding a blocked outcome. |
-| `tokenId` / `token_id` | Id of the credential that authenticated a facade entry (GW_0067) or a machine API entry (GW_0128); null on interactive admin entries and on entries older than per-credential attribution. `GET /api/tokens` gives the owner the id→name mapping. |
+| `tokenId` / `token_id` | Id of the credential that authenticated a facade entry (GW_AUTH_0009) or a machine API entry (GW_AUDIT_0007); null on interactive admin entries and on entries older than per-credential attribution. `GET /api/tokens` gives the owner the id→name mapping. |
 
 ### The actor type
 
@@ -141,7 +141,7 @@ the acting OIDC principal.
 
 | Event | When | `detail` |
 | --- | --- | --- |
-| `roles-read` | Every **authorized** read of `GET /api/roles`, by a person or a machine alike (GW_0128). A refused read records nothing. | `grants={n}`. |
+| `roles-read` | Every **authorized** read of `GET /api/roles`, by a person or a machine alike (GW_AUDIT_0007). A refused read records nothing. | `grants={n}`. |
 | `machine-credential-created` | A machine API credential was provisioned. The actor is the administrator who provisioned it; the credential's own actions are recorded under its own principal. | `credential {id} '{name}' scopes=…; expires=…`. |
 | `machine-credential-rotated` | A machine API credential got a new secret with an identical grant. | As above. |
 | `machine-credential-revoked` | A machine API credential was revoked. | `credential {id} '{name}' principal=…`. |

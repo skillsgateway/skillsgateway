@@ -5,7 +5,7 @@
 `ApprovalService.approve` is the only path from quarantine to served content.
 It already runs two preconditions before the state transition: the state
 machine (`Snapshot.decidable()`), and the fail-closed effective vetting outcome
-(`WaiverService.evaluate`, GW_0041). Both refuse before anything is decided or
+(`WaiverService.evaluate`, GW_APPROVAL_0003). Both refuse before anything is decided or
 published, and the vetting refusal travels as `VettingBlockedException` →
 409 problem document carrying the reviewer's worklist.
 

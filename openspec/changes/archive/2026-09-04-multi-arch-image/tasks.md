@@ -1,6 +1,6 @@
 # Tasks — multi-arch-image
 
-## 1. Matrix the native build (GW_0072 / SVC_GW_0072)
+## 1. Matrix the native build (GW_RELEASE_0002 / SVC_GW_RELEASE_0002)
 
 - [x] 1.1 `native.yml`'s `native` job gains
       `strategy.matrix.include: [{runner: ubuntu-latest, platform: linux/amd64,
@@ -19,7 +19,7 @@
       `subject-digest: ${{ steps.push.outputs.digest }}` — now sourced from the
       digest-only push rather than a tagged one.
 
-## 2. Combine into a multi-arch index (GW_0072 / SVC_GW_0072)
+## 2. Combine into a multi-arch index (GW_RELEASE_0002 / SVC_GW_RELEASE_0002)
 
 - [x] 2.1 Add a `publish` job, `needs: native`, gated on
       `!cancelled() && needs.native.result == 'success' && inputs.version != ''`.
@@ -30,10 +30,10 @@
 
 ## 3. Requirements and the packaging test
 
-- [x] 3.1 `GW_0072` in `requirements.yml`: describe release-only publication of
+- [x] 3.1 `GW_RELEASE_0002` in `requirements.yml`: describe release-only publication of
       a multi-arch index (`linux/amd64` + `linux/arm64`) with each platform
       pushed by digest and attested individually; revision `0.4.0`.
-- [x] 3.2 `SVC_GW_0072` in `software_verification_cases.yml`: matching
+- [x] 3.2 `SVC_GW_RELEASE_0002` in `software_verification_cases.yml`: matching
       description; revision `0.4.0`.
 - [x] 3.3 `PackagingTests.releaseWorkflowCarriesThePublishByDigestContract`:
       asserts the matrix, the release-only gate (`inputs.version != ''` alone,

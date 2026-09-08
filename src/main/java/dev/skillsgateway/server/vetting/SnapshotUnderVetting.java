@@ -30,7 +30,7 @@ public interface SnapshotUnderVetting {
      *
      * <p>A connector that reads only some file kinds says so here rather than filtering inside its
      * visitor: the selection is applied before content is read, so a blob no connector asked for is
-     * never inflated (GW_0162).
+     * never inflated (GW_VETTING_0030).
      */
     void walk(Predicate<String> wanted, FileVisitor visitor) throws IOException;
 

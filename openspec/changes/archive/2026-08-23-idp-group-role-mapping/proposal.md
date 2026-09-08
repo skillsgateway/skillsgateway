@@ -2,14 +2,14 @@
 
 ## Why
 
-The role model (GW_0068–GW_0071) grants per principal: every approver, every
+The role model (GW_AUTH_0010–GW_AUTH_0013) grants per principal: every approver, every
 auditor, every admin beyond the configuration escape hatch is a row somebody
 had to POST. In an enterprise identity provider the unit that already exists,
 already has an owner, and is already governed by a joiner/mover/leaver process
 is the **group**. Reproducing that membership as gateway grant rows means a
 second source of truth that drifts the moment somebody changes teams — and it
 means the gateway cannot be stood up by configuration alone, which is what
-GW_0083–GW_0087 (declarative estate) otherwise achieves.
+GW_ESTATE_0001–GW_ESTATE_0005 (declarative estate) otherwise achieves.
 
 Tracked as issue
 [#66](https://github.com/skillsgateway/skillsgateway/issues/66).
@@ -70,9 +70,9 @@ close them would be a guide that does not work:
   claim configuration, the overage caveat, and why `preferred_username` is the
   principal attribute — including that it is a mutable attribute and what that
   means for grants keyed on it.
-- Requirements GW_0098 (claim-to-role mapping), GW_0099 (truncated-claim
-  detection), GW_0100 (principal attribute and issuer pinning), with
-  SVC_GW_0098 / SVC_GW_0099 / SVC_GW_0100.
+- Requirements GW_AUTH_0015 (claim-to-role mapping), GW_AUTH_0016 (truncated-claim
+  detection), GW_AUTH_0017 (principal attribute and issuer pinning), with
+  SVC_GW_AUTH_0015 / SVC_GW_AUTH_0016 / SVC_GW_AUTH_0017.
 
 ## Capabilities
 

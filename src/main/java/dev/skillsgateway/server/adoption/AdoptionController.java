@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * The adoption reporting surface (GW_0075, GW_0076): read-only, derived entirely from the fetch
+ * The adoption reporting surface (GW_OBSERVABILITY_0001, GW_OBSERVABILITY_0002): read-only, derived entirely from the fetch
  * ledger and the served tips. Both reads enumerate identities off the ledger, so they are gated
  * exactly like the ledger itself (auditor or admin once role enforcement is on).
  */
@@ -34,7 +34,7 @@ public class AdoptionController {
     }
 
     @GetMapping
-    @Requirements({"GW_0075"})
+    @Requirements({"GW_OBSERVABILITY_0001"})
     @Tag(name = "Adoption")
     @Operation(
             summary = "Adoption report over the fetch ledger",
@@ -54,7 +54,7 @@ public class AdoptionController {
     }
 
     @GetMapping("/staleness")
-    @Requirements({"GW_0076"})
+    @Requirements({"GW_OBSERVABILITY_0002"})
     @Tag(name = "Adoption")
     @Operation(
             summary = "Identities not on the served tip",

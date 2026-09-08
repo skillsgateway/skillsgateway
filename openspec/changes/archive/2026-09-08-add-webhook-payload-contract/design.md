@@ -20,7 +20,7 @@ recalled:
   `WebhookEvent.ALL` ship this identical shape; only `event` varies. It already
   carries springdoc `@Schema` annotations.
   **[MOVED]** `WebhookEvent.ALL` now holds **nine** names — `snapshot.approval_pending`
-  (GW_0159) was added — and that ninth one ships a *second* record,
+  (GW_WEBHOOK_0006) was added — and that ninth one ships a *second* record,
   `WebhookService.ApprovalPendingPayload`: `EventPayload`'s seven fields in the same
   names and order, plus a `vetting` summary. It and `VettingSummary` already carry
   `requiredMode = REQUIRED` on every component, added with a comment naming #121.
@@ -58,7 +58,7 @@ recalled:
 - `OpenApiContractTests` asserts the committed document equals the served one and
   carries `theStalenessCheckCanActuallyFail`, a negative test proving the real
   assertion can go red. That is the pattern any new contract assertion here copies.
-- `GET /api/webhooks/events` (`WebhookController`, GW_0088) returns a bare
+- `GET /api/webhooks/events` (`WebhookController`, GW_WEBHOOK_0005) returns a bare
   `List<String>`.
 - **[MOVED]** Two pre-release tags now exist: `0.2.0-b1` and `0.2.0-b2`
   (2026-09-03), both GitHub *pre-releases*, both excluded from `/releases/latest`
@@ -85,7 +85,7 @@ recalled:
 - Versioning the payload independently of the API. The payload ships with the
   gateway; there is one version.
 - Guarding `skills-gateway.estate.*`. See Decisions.
-- Inbound webhook verification (GW_0058). Different direction, different surface.
+- Inbound webhook verification (GW_INGEST_0012). Different direction, different surface.
 
 ## Decisions
 

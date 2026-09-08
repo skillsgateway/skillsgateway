@@ -15,13 +15,13 @@ import dev.cel.runtime.CelRuntimeFactory;
 import java.util.Map;
 
 /**
- * The pure CEL core of policy rules (GW_0089, GW_0090): compile — parse and type-check to boolean
+ * The pure CEL core of policy rules (GW_APPROVAL_0006, GW_APPROVAL_0007): compile — parse and type-check to boolean
  * against the documented variables — at write time, evaluate bounded at decision time. CEL is
  * non-Turing-complete and terminating by design; the explicit comprehension-iteration bound closes
  * what nesting can still multiply, so a hostile expression errors out instead of hanging the gate.
  *
  * <p>No custom functions are registered: an expression can read the facts it is handed and nothing
- * else — no I/O, no state, no side effects. That property is what makes the playground (GW_0092)
+ * else — no I/O, no state, no side effects. That property is what makes the playground (GW_APPROVAL_0009)
  * safe to point at real snapshots.
  */
 public final class CelPolicy {
@@ -58,7 +58,7 @@ public final class CelPolicy {
 
     /**
      * Parses and type-checks an expression to a boolean over the declared variables — the
-     * write-time gate that keeps a non-compiling rule from ever being stored (GW_0089).
+     * write-time gate that keeps a non-compiling rule from ever being stored (GW_APPROVAL_0006).
      */
     public static Compiled compile(String expression) {
         try {
@@ -71,7 +71,7 @@ public final class CelPolicy {
 
     /**
      * Evaluates a compiled expression over the facts. Anything but a clean boolean — a runtime
-     * error, an exceeded bound, a non-boolean value — raises, and the gate denies (GW_0090).
+     * error, an exceeded bound, a non-boolean value — raises, and the gate denies (GW_APPROVAL_0007).
      */
     public static boolean matches(Compiled compiled, Map<String, Object> facts) {
         Object result;

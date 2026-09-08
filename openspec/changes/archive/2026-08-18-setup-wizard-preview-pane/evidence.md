@@ -7,7 +7,7 @@ bottom.
 
 - Non-vacuity mutant (killed, then restored — verified by re-running the
   test): the `requireApproverOfSnapshot` line removed from the files read →
-  `SVC_GW_0080`'s enforcement method failed exactly on the no-role denial
+  `SVC_GW_INGEST_0015`'s enforcement method failed exactly on the no-role denial
   (`Status expected:<403> but was:<200>`); with the line restored the method
   passes. The authorization gate is proven load-bearing, not decorative.
 - Negative cases are first-class: traversal-shaped paths (`../../../etc/passwd`,
@@ -40,7 +40,7 @@ bottom.
   landmark, relabeled `File tree of snapshot {id}`). No findings dismissed.
 - One traceability correction landed as its own commit: the TS tag scanner
   splits `@Requirements` on commas and binds to the documented declaration —
-  the ids are now comma-separated on the exported components, and GW_0079's
+  the ids are now comma-separated on the exported components, and GW_AUTH_0014's
   category uses the schema's `interaction-capability`.
 
 ## Gates

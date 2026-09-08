@@ -70,7 +70,7 @@ INCOMPLETE (0)
 43/43 complete · 0 incomplete · PASS
 ```
 
-GW_0037–GW_0043 are covered by SVC_GW_0037–SVC_GW_0043 (six Java tests plus one
+GW_VETTING_0001–GW_VETTING_0006 are covered by SVC_GW_VETTING_0001–SVC_GW_VETTING_0006 (six Java tests plus one
 Playwright test for the portal surface).
 
 ## 4. `openspec validate --all --strict`

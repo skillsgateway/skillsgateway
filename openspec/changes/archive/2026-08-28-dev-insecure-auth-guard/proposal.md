@@ -35,7 +35,7 @@ serves a CycloneDX SBOM).
   identity-provider configuration unset if this really is a laptop.
 - **No new configuration.** No opt-out property: an override would be a flag
   whose only purpose is to switch off the check on a flag.
-- Requirement GW_0110 with SVC_GW_0110.
+- Requirement GW_AUTH_0019 with SVC_GW_AUTH_0019.
 - **A `NOTICE` file** at the repository root: project, copyright, the Apache-2.0
   statement, and a pointer to the CycloneDX SBOM as the authoritative
   third-party inventory rather than a hand-maintained list.

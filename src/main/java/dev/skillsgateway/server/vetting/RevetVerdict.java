@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * What a re-vetting run means for content that is already approved and served (GW_0050, GW_0052),
+ * What a re-vetting run means for content that is already approved and served (GW_VETTING_0013, GW_VETTING_0015),
  * and the only place that judgement lives.
  *
  * <p>Approval and re-vetting ask different questions of the same evidence, and the difference is
@@ -85,7 +85,7 @@ public final class RevetVerdict {
      * @param run the run that was just recorded, or null when there is none
      * @param effect the effective outcome of that run with the active waivers layered over it
      */
-    @Requirements({"GW_0050", "GW_0052"})
+    @Requirements({"GW_VETTING_0013", "GW_VETTING_0015"})
     public static Classification classify(VettingRepository.Run run, WaiverEvaluation.Effect effect) {
         if (effect == null || !effect.blocked()) {
             return Classification.CLEAR;
@@ -103,7 +103,7 @@ public final class RevetVerdict {
         }
         for (String connector : blocking) {
             VerdictState recorded = run.stateOf(connector).orElse(VerdictState.ERROR);
-            // ERROR and PENDING name no fault in the content; neither does DISABLED (GW_0149) — an
+            // ERROR and PENDING name no fault in the content; neither does DISABLED (GW_VETTING_0029) — an
             // administrator switching a connector off says nothing about what it would have found,
             // so it must not be read as the chain objecting to the content.
             if (recorded != VerdictState.ERROR

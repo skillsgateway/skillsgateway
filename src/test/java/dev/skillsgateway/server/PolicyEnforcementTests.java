@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 /**
- * The fail-closed policy gate at approval (GW_0090) and its ledger provenance (GW_0091). Every
+ * The fail-closed policy gate at approval (GW_APPROVAL_0007) and its ledger provenance (GW_APPROVAL_0008). Every
  * rule here scopes itself to its own fixture marketplace and is deleted afterwards, so a deny
  * rule can never leak into another test's approval.
  */
@@ -60,7 +60,7 @@ class PolicyEnforcementTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0090"})
+    @SVCs({"SVC_GW_APPROVAL_0007"})
     void matching_rule_denies_and_publishes_nothing() throws Exception {
         String name = uniqueName("policym");
         String rule = uniqueName("no-shell");
@@ -90,7 +90,7 @@ class PolicyEnforcementTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0090"})
+    @SVCs({"SVC_GW_APPROVAL_0007"})
     void disabled_and_non_matching_rules_do_not_deny() throws Exception {
         String name = uniqueName("policyn");
         String disabled = uniqueName("disabled-match");
@@ -113,7 +113,7 @@ class PolicyEnforcementTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0090"})
+    @SVCs({"SVC_GW_APPROVAL_0007"})
     void a_rule_that_errors_at_evaluation_denies() throws Exception {
         String name = uniqueName("policye");
         String rule = uniqueName("erroring");
@@ -134,7 +134,7 @@ class PolicyEnforcementTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0090"})
+    @SVCs({"SVC_GW_APPROVAL_0007"})
     void a_comprehension_bomb_denies_within_the_bound_instead_of_hanging() throws Exception {
         String name = uniqueName("policyb");
         Map<String, String> many = new HashMap<>();
@@ -163,7 +163,7 @@ class PolicyEnforcementTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0090"})
+    @SVCs({"SVC_GW_APPROVAL_0007"})
     void malformed_skill_frontmatter_denies_under_a_tools_rule() throws Exception {
         String name = uniqueName("policyf");
         String rule = uniqueName("no-shell-fm");
@@ -185,7 +185,7 @@ class PolicyEnforcementTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_0091"})
+    @SVCs({"SVC_GW_APPROVAL_0008"})
     void every_deciding_rule_lands_on_the_ledger_with_its_outcome() throws Exception {
         String name = uniqueName("policyl");
         String matching = uniqueName("aa-matching");

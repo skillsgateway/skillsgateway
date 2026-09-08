@@ -5,11 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.github.reqstool.annotations.SVCs;
 import org.junit.jupiter.api.Test;
 
-/** Pure URL → forge API mapping across the supported providers (GW_0021). */
+/** Pure URL → forge API mapping across the supported providers (GW_INGEST_0009). */
 class ForgeTargetTests {
 
     @Test
-    @SVCs({"SVC_GW_0021"})
+    @SVCs({"SVC_GW_INGEST_0009"})
     void cloneUrlsOfLargeProvidersMapToTheirMetadataApis() throws Exception {
         assertThat(ForgeMetadataService.target("https://github.com/acme/skills.git"))
                 .hasValueSatisfying(t -> {

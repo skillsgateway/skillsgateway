@@ -43,7 +43,7 @@ public interface GitStorage {
      * Whether a reference is one the facade puts on the wire.
      *
      * <p>Here rather than in the facade because a second reader has appeared: the forge mirror
-     * (GW_0169) copies exactly what is served and nothing else, and two independent spellings of
+     * (GW_FACADE_0020) copies exactly what is served and nothing else, and two independent spellings of
      * "what is served" would be a mirror that drifts by construction. {@code HEAD} is deliberately
      * not included — the facade keeps it so a clone knows which branch to check out, which is a
      * property of an advertisement rather than of the served set.
@@ -92,7 +92,7 @@ public interface GitStorage {
     Repository quarantine(String marketplace) throws IOException;
 
     /**
-     * Open (creating if absent) the origin repository of a gateway-hosted marketplace (GW_0101):
+     * Open (creating if absent) the origin repository of a gateway-hosted marketplace (GW_FACADE_0006):
      * the publisher's source of record, which is neither quarantine nor published. Ingestion
      * fetches out of it exactly as it fetches from an upstream URL, so quarantine keeps its
      * property of having exactly one writer.
@@ -109,7 +109,7 @@ public interface GitStorage {
     Optional<Repository> publishedIfServing(String marketplace) throws IOException;
 
     /**
-     * The exact inverse of publication (GW_0050): removes every published ref through which one
+     * The exact inverse of publication (GW_VETTING_0013): removes every published ref through which one
      * snapshot's content is reachable, and nothing else.
      *
      * <p>Two refs put a snapshot on the wire, and both must go. {@code refs/heads/main} is the
@@ -128,7 +128,7 @@ public interface GitStorage {
     boolean unpublish(String marketplace, String sha) throws IOException;
 
     /**
-     * Puts one snapshot's content on the wire (GW_0132) — the exact inverse of
+     * Puts one snapshot's content on the wire (GW_FACADE_0015) — the exact inverse of
      * {@link #unpublish(String, String)}, and the only way content becomes served.
      *
      * <p>Publication was for a long time the one reference transition performed <em>outside</em>
