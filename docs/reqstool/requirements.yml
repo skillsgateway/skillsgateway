@@ -925,6 +925,7 @@ requirements:
     references:
       requirement_ids: ["GW_RELEASE_0003"]
     categories: ["security", "reliability"]
+    implementation: configuration
     revision: 0.1.0
 
   - id: GW_RELEASE_0003.6
