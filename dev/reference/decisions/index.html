@@ -2134,6 +2134,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#adr-0014-estate-export-content-and-its-attestations-leave-together-an-import-can-only-fill-quarantine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0014 — Estate export: content and its attestations leave together; an import can only fill quarantine
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2358,6 +2369,17 @@
     <span class="md-ellipsis">
       
         ADR 0013 — Data access stays on JdbcClient; JPA is not adopted
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-0014-estate-export-content-and-its-attestations-leave-together-an-import-can-only-fill-quarantine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0014 — Estate export: content and its attestations leave together; an import can only fill quarantine
       
     </span>
   </a>
@@ -2625,6 +2647,27 @@ lives in twenty guarded <code>UPDATE … RETURNING *</code> statements rather th
 transactions or locking, and those stay native SQL under any ORM — so JPA would
 take over only the part that was never the problem, at the cost of entities that
 cannot be records and a re-verification campaign at a trust boundary.</p>
+<h3 id="adr-0014-estate-export-content-and-its-attestations-leave-together-an-import-can-only-fill-quarantine"><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0014-estate-import-export.md">ADR 0014 — Estate export: content and its attestations leave together; an import can only fill quarantine</a><a class="headerlink" href="#adr-0014-estate-export-content-and-its-attestations-leave-together-an-import-can-only-fill-quarantine" title="Permanent link">&para;</a></h3>
+<p><em>Proposed, 2026-09-08.</em> Answers how an estate leaves a gateway, and on what
+terms one may enter. An export is <strong>git bundles plus JSON and NDJSON in a
+directory</strong>, readable by a plain git client and a text editor without a running
+gateway, in the same vocabulary the object-store backend already uses; content
+and attestation are one artefact by construction, because either half alone is
+worthless. One format, two selections — a marketplace to hand over, or the
+estate to archive. Secrets never leave: not tokens, and not the two HMAC keys
+that hide in <code>marketplaces.webhook_secret</code> and <code>webhook_subscribers.secret</code>.
+Revocations may never be omitted, because an omitted revocation reads as content
+that was never withdrawn. Verification inherits <code>StorageMigration</code>'s discipline —
+re-read both sides and compare, refuse rather than default to success — plus an
+offline mode that opens no database.</p>
+<p>The constraint that shapes the rest: <strong>allow-shaped state never imports,
+deny-shaped state may.</strong> An imported approval would be a way around the approval
+gate, so an approved snapshot imports as <code>held</code>, waivers and overrides and grants
+do not import at all, foreign verdicts are evidence rather than verdicts, and
+another instance's ledger is never grafted onto this one's. The consequence is
+that a round trip is lossy by design, which is why this ADR recommends building
+<strong>export only</strong> for now and leaving import to its own change — and why it says
+plainly that an export is not a backup.</p>
 
 
 
