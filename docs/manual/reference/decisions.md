@@ -243,3 +243,20 @@ another instance's ledger is never grafted onto this one's. The consequence is
 that a round trip is lossy by design, which is why this ADR recommends building
 **export only** for now and leaving import to its own change — and why it says
 plainly that an export is not a backup.
+
+### [ADR 0015 — Corpus questions are approval-gate preconditions, not vetting connectors](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md)
+
+*Proposed.* The first mitigation for T5 (typosquatting) needs a rule that can ask a
+question of the approved estate, which a vetting connector structurally cannot be
+allowed to ask. A chain run is a pure function of (pinned content, chain identity),
+and that is the entire answer to `GW_0049 — Continuous re-vetting of approved
+snapshots`. Recording a corpus watermark as a third input was weighed and rejected:
+the estate is not a temporal table, so the watermark would name a state the system
+cannot reconstruct — and reconstructing it from the ledger is the move `GW_0096 —
+Four-eyes separation of duties on approval` already refused. A corpus rule inside
+the chain is also symmetric where the threat is not, so the first enforcing sweep
+over an estate that already contains collisions would revoke both sides of each.
+So `SnapshotFactsService`'s output is **persisted** as a queryable corpus, and the
+corpus question is asked at the **approval request** beside the minimum release
+age — first-come-wins, never able to withdraw served content, accepted through the
+existing scoped, expiring waiver and not lifted by the ADR 0010 override.
