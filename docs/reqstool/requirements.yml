@@ -833,11 +833,41 @@ requirements:
     revision: 0.1.0
 
   - id: GW_AUTH_0015
-    title: Identity-provider claim to role mapping
+    title: A claim mapping is validated before it can grant anything, and never grants more than it says
     significance: shall
-    description: The system shall derive a browser session's delegated-administration roles from a configured claim of its identity-provider token in addition to the roles it holds by configuration and by stored grant, matching each claim value exactly against a configured list of mappings from claim value to role — an approver mapping naming the marketplace it is scoped to and the global roles naming none — shall union the derived roles with the configured and granted ones without changing deny-by-default enforcement, approver scoping or the auditor's read-only guarantee, shall refuse to start when a mapping names an unknown role, carries no claim value, scopes a global role or leaves an approver unscoped, shall derive no role at all for a credential that carries no identity-provider claims, and shall report on the session identity endpoint which of the three sources each effective role came from.
-    rationale: In an enterprise the group is the unit that already has an owner and a joiner-mover-leaver process, so reproducing its membership as grant rows creates a second source of truth that drifts; mapping by claim value rather than by convention is what lets an app registration shared with other services be used at all, matching exactly keeps a mapping from ever widening who is privileged, refusing a malformed mapping at startup keeps a typo from silently granting nothing, and reporting the source is how an auditor answers why a session holds a role without reading the deployment's configuration.
+    description: "The system shall treat an identity-provider claim mapping as a third source of a browser session's delegated-administration roles, alongside configuration and stored grants, that is validated once at startup and, once valid, is exact and reportable at every point it is consulted: a session never receives a role the mapping table does not name for a value its own token actually carries, and nothing derived from it is invisible to an auditor reading the session's own identity."
+    rationale: "In an enterprise the group is the unit that already has an owner and a joiner-mover-leaver process, so reproducing its membership as grant rows creates a second source of truth that drifts; letting the identity provider's own claims confer a role directly removes that duplication, but only if the three guarantees below all hold — a malformed mapping is caught before it can run, a valid one never grants past what it exactly says, and what it granted is never hidden from the session's own identity endpoint. Each can regress on its own: a validation that stops catching a bad mapping, a matcher that starts resembling values instead of matching them, or an identity endpoint that stops naming the source are three different failures with three different blast radii."
     categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_AUTH_0015.1
+    title: Claim-derived roles are matched exactly and compose without ever widening privilege
+    significance: shall
+    description: "The system shall derive a browser session's delegated-administration roles from a configured claim of its identity-provider token, matching each claim value exactly against a configured list of mappings from claim value to role — an approver mapping naming the marketplace it is scoped to and the global roles naming none — shall union the derived roles with the roles the session holds by configuration and by stored grant without changing deny-by-default enforcement, approver scoping or the auditor's read-only guarantee, and shall derive no role at all for a credential that carries no identity-provider claims."
+    rationale: "Mapping by claim value rather than by convention is what lets an app registration shared with other services be used at all — the value is the provider's own, not a name the gateway invented. Matching it exactly, rather than by resemblance, keeps a mapping from ever widening who is privileged past what an administrator actually wrote down, and reading claims only from an identity-provider session keeps a personal access token or the development escape hatch from being able to forge its way into a mapped role."
+    references:
+      requirement_ids: ["GW_AUTH_0015"]
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_AUTH_0015.2
+    title: A malformed claim mapping refuses gateway startup
+    significance: shall
+    description: "The system shall refuse to start when a configured claim mapping names an unknown role, carries no claim value, scopes a global role, or leaves an approver mapping unscoped."
+    rationale: "Refusing a malformed mapping at startup keeps a typo from silently granting nothing — a deployment that believed a mapping was in force would otherwise discover the gap only when an incident needed the access it thought existed. A mapping that names a marketplace not yet registered is deliberately not one of these failures: registration may come later, and until then the mapping simply matches nothing."
+    references:
+      requirement_ids: ["GW_AUTH_0015"]
+    categories: ["security", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_AUTH_0015.3
+    title: The session identity endpoint reports which source granted each effective role
+    significance: shall
+    description: "The system shall report on the session identity endpoint which of the three sources — configuration, a stored grant, or a claim mapping — each of the session's effective roles came from."
+    rationale: "Reporting the source is how an auditor answers why a session holds a role without reading the deployment's configuration or its grant table by hand; the same (role, marketplace) pair held by more than one source is reported once, attributed to the most durable source that produced it, because a grant survives the user leaving the group in a way a claim does not."
+    references:
+      requirement_ids: ["GW_AUTH_0015"]
+    categories: ["security", "interaction-capability"]
     revision: 0.1.0
 
   - id: GW_AUTH_0016

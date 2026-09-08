@@ -1012,12 +1012,42 @@ cases:
 
   - id: SVC_GW_AUTH_0015
     requirement_ids: ["GW_AUTH_0015"]
-    title: Claim-mapped roles grant, compose and never widen, and a malformed mapping refuses startup
+    title: A malformed mapping never runs, and a valid one grants exactly and visibly what it says
     verification: automated-test
     description: |
-      GIVEN role enforcement enabled with claim mappings to admin, to approver of one marketplace and to auditor, and no stored grant for the acting principals
-      WHEN sessions carrying the mapped claim values exercise the operations of their role, a session carrying a value that only resembles a mapped one by prefix, substring or letter case attempts the same, a claim-derived approver attempts another marketplace by name and through bare snapshot and waiver ids, a personal access token on the git facade, the insecure development principal and a non-identity-provider credential carrying a forged claim attempt privileged operations, the session identity endpoint is read, and gateways configured with an unknown role, a blank claim value, an unscoped approver mapping and a scoped global mapping are started
-      THEN each mapped session may do exactly what its role allows and no more, the near-miss values and the claimless credentials hold nothing, the derived roles union with configured admins and stored grants without altering deny-by-default or approver scoping, the identity endpoint names the source of every effective role, and each malformed mapping refuses startup while a mapping naming an unregistered marketplace starts and matches nothing
+      GIVEN gateways configured with an unknown role, a blank claim value, an unscoped approver mapping and a scoped global mapping, and a separate gateway configured with a valid admin claim mapping and no stored grant for the acting principal
+      WHEN each malformed gateway is started, and a session carrying the mapped claim value exercises an admin-only operation and reads the session identity endpoint on the valid gateway
+      THEN each malformed mapping refuses startup, while the valid gateway lets the mapped session perform the admin-only operation with no grant row behind it and reports the role on the identity endpoint with its source named as the claim mapping
+    revision: "0.1.0"
+
+  - id: SVC_GW_AUTH_0015.1
+    requirement_ids: ["GW_AUTH_0015.1"]
+    title: Claim-derived roles compose, scope correctly, and never widen past an exact match
+    verification: automated-test
+    description: |
+      GIVEN role enforcement with claim mappings to admin, to an approver scoped to one marketplace and to auditor, no stored grant for the acting principals, and a randomized sweep of claim payloads including near-misses of every mapped value by prefix, substring, case or whitespace
+      WHEN sessions carrying the mapped claim values exercise the operations their role allows, a claim-derived approver attempts another marketplace by name and through bare snapshot and waiver ids, a claim-derived auditor attempts a mutation, a personal access token, the development escape hatch and a credential carrying a forged claim under an unmapped name attempt privileged operations, a credential with no identity-provider claims is evaluated, and the randomized payloads are evaluated against the mapping table
+      THEN each mapped session may do exactly what its role allows and nothing past its scope, the near-miss values and the claimless or non-identity-provider credentials confer nothing, the derived roles union with configured and granted roles without altering deny-by-default, approver scoping or the auditor's read-only guarantee, and every random payload's granted roles agree exactly with an independent exact-match computation over the same mapping table
+    revision: "0.1.0"
+
+  - id: SVC_GW_AUTH_0015.2
+    requirement_ids: ["GW_AUTH_0015.2"]
+    title: A malformed mapping refuses startup; a mapping naming an unregistered marketplace does not
+    verification: automated-test
+    description: |
+      GIVEN mapping tables naming an unknown role, a blank claim value, an unscoped approver mapping and a scoped global mapping, and a separate mapping naming a marketplace that is not registered
+      WHEN a mapper is constructed from each table
+      THEN the four malformed tables each refuse construction naming the offending mapping, while the mapping naming an unregistered marketplace is accepted and, until that marketplace exists, matches nothing
+    revision: "0.1.0"
+
+  - id: SVC_GW_AUTH_0015.3
+    requirement_ids: ["GW_AUTH_0015.3"]
+    title: The identity endpoint names the source of every effective role, including through a real login
+    verification: automated-test
+    description: |
+      GIVEN a session holding a role by configuration, one by stored grant, one by claim mapping alone, and one holding the same role by both a stored grant and a claim, established through the mocked identity provider in the same way a real browser session is
+      WHEN the session identity endpoint is read in each case
+      THEN it names the role's source as configuration, grant or claim respectively, and a role held by both a grant and a claim is reported once, attributed to the grant
     revision: "0.1.0"
 
   - id: SVC_GW_AUTH_0016

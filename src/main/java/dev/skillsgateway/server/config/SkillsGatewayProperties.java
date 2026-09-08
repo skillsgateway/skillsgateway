@@ -620,10 +620,10 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * One identity-provider claim value granting one role (GW_AUTH_0015). The value is the provider's
+     * One identity-provider claim value granting one role (GW_AUTH_0015.1). The value is the provider's
      * own — a group object id, an app-role value — so it is matched exactly and never by
      * convention; an {@code approver} mapping names the marketplace it is scoped to and the global
-     * roles name none, which {@code ClaimRoleMapper} refuses to start without.
+     * roles name none, which {@code ClaimRoleMapper} refuses to start without (GW_AUTH_0015.2).
      *
      * <p>The named marketplace need not exist yet: registration may come later, including from
      * {@link Estate}, and until then the mapping simply matches nothing.

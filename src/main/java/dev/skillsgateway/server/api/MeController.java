@@ -33,7 +33,7 @@ public class MeController {
             boolean claimsTruncated) {}
 
     @GetMapping("/api/me")
-    @Requirements({"GW_AUTH_0013", "GW_AUTH_0015", "GW_AUTH_0016"})
+    @Requirements({"GW_AUTH_0013", "GW_AUTH_0015.3", "GW_AUTH_0016"})
     @Tag(name = "Session")
     @Operation(
             summary = "Current user",
