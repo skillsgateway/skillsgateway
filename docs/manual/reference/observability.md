@@ -52,6 +52,29 @@ reference transition and belongs on an alert. `wal.depth` and `packs.live`
 climbing without falling back is compaction falling behind, which shows up as a
 slow restore long before it shows up as anything else.
 
+### The read-only forge mirror
+
+Recorded on every gateway. A deployment with no mirror configured publishes them
+as zeros, which is what "nothing has diverged" looks like and is true. Turning
+the mirror on is in
+[The read-only forge mirror](../guides/read-only-forge-mirror.md).
+
+| Metric | Type | Tags | Recorded around |
+| --- | --- | --- | --- |
+| `skills_gateway.mirror.stale_refs` | gauge | — | References the mirror still holds that the facade no longer serves. **Alert on this**: in the ordinary case they are a snapshot the gateway revoked, so a value above zero outstaying one `sweep-interval` means the mirror is showing content the gateway has withdrawn. |
+| `skills_gateway.mirror.missing_refs` | gauge | — | Served references the mirror lacks or holds at another commit. A visibility gap rather than a security one. |
+| `skills_gateway.mirror.reachable` | gauge | — | `1` when the last look at the mirror reached it, `0` when it did not. |
+| `skills_gateway.mirror.seconds_since_success` | gauge | — | Seconds since a reconciliation last succeeded; `-1` when none has since startup. Climbing without bound is a code host the gateway cannot write to. |
+| `skills_gateway.mirror.reconciliations.ok` | counter | — | Reconciliations that brought the mirror into line, or found it already there. |
+| `skills_gateway.mirror.reconciliations.failed` | counter | — | Reconciliations that exhausted their retries, or that refused to act on a served reference set the gateway's own records contradicted. |
+
+Read `stale_refs` and `seconds_since_success` together, always. The counts are
+written by reconciliations and by the drift report, never computed when a
+monitoring system scrapes — a gauge that contacted a code host on read would put
+a third party on the scrape path. So a gateway that cannot reach the mirror does
+not know what it holds, and `reachable` at `0` with `seconds_since_success`
+climbing is what says the count beside them is old rather than low.
+
 ## Health
 
 `/actuator/health` carries a `gitStorage` indicator on both backends. It names

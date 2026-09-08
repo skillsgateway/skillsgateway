@@ -1,17 +1,18 @@
 # Mirror
 
-The read-only forge mirror's one endpoint: a comparison between the references
-the mirror holds and the references the facade serves. Turning the mirror on is
+The read-only forge mirror's two endpoints: a comparison between the references
+the mirror holds and the references the facade serves, and a request to reconcile
+the two now. Turning the mirror on is
 in [Configuration](../configuration.md#read-only-forge-mirror); what it is for
 and what it is not is in
 [The read-only forge mirror](../../guides/read-only-forge-mirror.md).
 
-Under role enforcement the report is **admin-only** — not an auditor read. It
-names an outbound integration target and the state of a push credential's last
-use, which is deployment infrastructure rather than a record of what the gateway
-served to whom.
+Under role enforcement both are **admin-only** — not auditor reads. They name an
+outbound integration target and the state of a push credential's last use, which
+is deployment infrastructure rather than a record of what the gateway served to
+whom; the reconcile route is the one that actually exercises that credential.
 
-**Machine reach.** None. No API scope reaches this endpoint, for the same
+**Machine reach.** None. No API scope reaches either endpoint, for the same
 reason. See [Machine API credentials](tokens.md#machine-api-credentials).
 
 ---
@@ -50,7 +51,7 @@ $ curl localhost:8080/api/mirror/drift
 | `staleOnMirror` | References the mirror still holds that are no longer served — what a revocation that has not reached the mirror leaves behind. |
 | `pendingUpdates` | Mirror updates queued or in flight right now. A non-zero value means the picture is mid-change. |
 | `lastAttemptAt` | When the mirror was last updated, or attempted. |
-| `lastAttemptOutcome` | `ok`, `failed`, or `none` if nothing has been attempted since this gateway started. |
+| `lastAttemptOutcome` | `ok`, `failed`, `refused`, or `none` if nothing has been attempted since this gateway started. `refused` means the gateway read its own published storage and would not act on what it read — the mirror was left untouched and the problem is upstream of the code host. |
 | `error` | Why the comparison or the last attempt failed, or null. |
 
 The comparison is made against published storage, not against what the gateway
@@ -69,3 +70,42 @@ otherwise.
     Drift is a statement about the mirror, never about the facade. A mirror that
     is stale, unreachable or wrong does not change which snapshot the facade
     serves, and a revoked snapshot is off the facade whatever this report says.
+
+---
+
+## `POST /api/mirror/reconcile`
+
+Reconciles the mirror with what the facade serves now, and answers with the
+resulting comparison — the same body as `GET /api/mirror/drift`.
+
+```console
+$ curl -X POST localhost:8080/api/mirror/reconcile
+```
+
+Use it after fixing a code-host outage, rotating a rejected credential, or
+enabling the mirror on a marketplace whose last approval is in the past, rather
+than waiting for the recurring reconciliation.
+
+`POST` rather than `GET` because it changes a remote system. It waits for the
+reconciliation rather than acknowledging it, so the body describes the mirror
+after the attempt; a request whose wait runs out answers with `pendingUpdates`
+above zero rather than failing.
+
+`200` for an administrator, whether or not a mirror is configured — a gateway
+with none answers `{"enabled": false, ...}` and contacts nothing. `403`
+otherwise.
+
+!!! note "It cannot affect what the facade serves"
+
+    Like every other mirror path, this one reads published storage and writes to
+    the code host. Nothing about approval, revocation or the facade is on it, and
+    a code host that never answers costs the request its wait and nothing else.
+
+!!! warning "A reconciliation may refuse"
+
+    If published storage answers successfully but incompletely, the gateway
+    declines to push or delete anything rather than acting on a reference set it
+    cannot believe: the response carries `lastAttemptOutcome` `refused` with the
+    reason in `error`, and the ledger records `mirror-reconciliation-refused`.
+    That points at the gateway's own storage, not at the code host — see
+    [The read-only forge mirror](../../guides/read-only-forge-mirror.md#mirror-reconciliation-refused).
