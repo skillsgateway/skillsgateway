@@ -873,6 +873,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#the-application-context-budget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The application-context budget
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#running-the-gates-on-podman" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2373,6 +2384,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#the-application-context-budget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The application-context budget
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#running-the-gates-on-podman" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2679,6 +2701,36 @@ failing run green.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="gp">$ </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>docs/requirements.txt
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="gp">$ </span>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict
 </code></pre></div>
+<h3 id="the-application-context-budget">The application-context budget<a class="headerlink" href="#the-application-context-budget" title="Permanent link">&para;</a></h3>
+<p><code>./mvnw verify</code> also enforces a budget on how many <em>distinct</em> Spring
+application contexts the test suite starts. <code>ContextBudgetTests</code> resolves every
+Spring test class's merged context configuration — the framework's own context
+cache key — without loading a single context, counts the distinct ones, and
+fails when the total crosses the budget in that class. The breakdown, and which
+classes share which property set, is written to <code>target/context-budget.txt</code> on
+every run.</p>
+<p>The budget exists because context growth is invisible until it is fatal. Each
+distinct property set is a whole live context — connection pool, JGit storage,
+embedded Tomcat, and its own PostgreSQL container, since the Arconia dev
+service registers one per context. Enough of them and the fork runs out of
+heap, which is what happened in
+<a href="https://github.com/skillsgateway/skillsgateway/issues/302">#302</a>: a partial
+test count, no error, and nothing in the build that noticed the cause.</p>
+<p>If a change makes the budget fail, the question to ask first is not "what
+number do I put here". It is:</p>
+<ul>
+<li><strong>Could this test reuse an existing property set?</strong> Two sets that differ only
+  by a value nothing asserts on are two contexts for one posture. Suites that
+  need only their own administrator's <em>name</em> share one declaration in
+  <code>AbstractNamedAdminsTest</code>.</li>
+<li><strong>Does this test need a full context at all?</strong> A slice — <code>@WebMvcTest</code>,
+  <code>@JdbcTest</code>, <code>@RestClientTest</code>, <code>@JsonTest</code> — loads a fraction of one.</li>
+<li><strong>Is the property genuinely load-bearing?</strong> A property set equal to a
+  default configures nothing and costs a context.</li>
+</ul>
+<p>Raising the number is a legitimate answer when a posture genuinely needs its
+own context; it is a deliberate edit with the reason in the commit message, not
+a formality.</p>
 <h3 id="running-the-gates-on-podman">Running the gates on Podman<a class="headerlink" href="#running-the-gates-on-podman" title="Permanent link">&para;</a></h3>
 <p>Podman is a supported way to run the container-backed gates, but not an
 unconfigured one. Both of the problems below present as a broken change rather
