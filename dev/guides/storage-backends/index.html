@@ -16,7 +16,7 @@
         <link rel="prev" href="../policy-rules/">
       
       
-        <link rel="next" href="../deploying-on-kubernetes/">
+        <link rel="next" href="../verifying-an-object-store/">
       
       
         
@@ -564,6 +564,8 @@
   
     
     
+      
+        
       
         
       
@@ -1396,6 +1398,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../verifying-an-object-store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verifying conditional writes against a real bucket
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2395,7 +2425,7 @@ discovered during an approval.</p>
 </tr>
 <tr>
 <td>AWS S3</td>
-<td><strong>Documented, not exercised by this project.</strong> AWS documents <code>If-Match</code> and <code>If-None-Match</code> on <code>PutObject</code>, and it is the primary target — but nobody here has run the assertions against a real account, so it is believed rather than verified</td>
+<td><strong>Verified against a real bucket.</strong> All the conditional-write assertions pass, and both negative controls discriminate. Verified on a plain bucket — see the note below for what that leaves open. Not part of the build, because it needs an account no contributor should have to have</td>
 </tr>
 <tr>
 <td>Google Cloud Storage</td>
@@ -2407,14 +2437,19 @@ discovered during an approval.</p>
 </tr>
 </tbody>
 </table>
-<div class="admonition warning">
-<p class="admonition-title">The AWS S3 row is not a verified row</p>
-<p>It is the production target and it is the row that has never been run. If
-you are the first to run the gateway against a real S3 bucket, the startup
-probe is doing real work for you rather than confirming something already
-known.</p>
-<p>Closing that row is tracked as
-<a href="https://github.com/skillsgateway/skillsgateway/issues/151">issue #151</a>.</p>
+<div class="admonition note">
+<p class="admonition-title">What the AWS S3 row covers, and what it does not</p>
+<p>The assertions were run against a scratch bucket created with defaults: <strong>no
+versioning and no SSE-KMS.</strong> On a bucket with either of those an ETag is not
+a content hash, and while the gateway never <em>computes</em> an expected ETag — it
+only chains the one the store returned — that case has not been run. If your
+bucket uses either, <a href="../verifying-an-object-store/">run the suite against it</a>
+rather than reading this row as covering it. Doing so needs no code change
+and takes a few minutes.</p>
+<p>The row also says nothing about your account: a bucket policy, an object
+lock or a service control policy can refuse writes the store itself would
+have accepted. That is what the startup probe is for, and what the guide's
+two negative controls will tell you apart.</p>
 </div>
 <h2 id="credentials">Credentials<a class="headerlink" href="#credentials" title="Permanent link">&para;</a></h2>
 <p><code>skills-gateway.storage.object-store.credentials.mode</code> names how credentials are
@@ -2605,6 +2640,7 @@ exactly. If the volume is already gone, the same command with <code>backend</cod
 <code>migration.to</code> swapped copies the estate back onto a fresh one.</p>
 <h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
+<li><a href="../verifying-an-object-store/">Verifying conditional writes against a real bucket</a></li>
 <li><a href="../../reference/configuration/#git-storage">Configuration reference — Git storage</a></li>
 <li><a href="../deploying-on-kubernetes/">Deploying on Kubernetes</a></li>
 <li><a href="../../concepts/trust-boundaries/">Trust boundaries</a></li>
