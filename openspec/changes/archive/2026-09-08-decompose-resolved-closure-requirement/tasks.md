@@ -67,5 +67,5 @@
       GW_INGEST_0030.1 – GW_INGEST_0030.7 with their SVCs as scenarios
 - [x] 4.2 Delta spec under `specs/marketplace-ingestion/` in this change:
       GW_INGEST_0030 modified, GW_INGEST_0030.1 – GW_INGEST_0030.7 added
-- [ ] 4.3 Run every gate one final time and record `evidence.md`
-- [ ] 4.4 Archive the change as the final commit of the PR
+- [x] 4.3 Run every gate one final time and record `evidence.md`
+- [x] 4.4 Archive the change as the final commit of the PR
