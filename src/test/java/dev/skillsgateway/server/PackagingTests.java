@@ -225,6 +225,24 @@ class PackagingTests {
         assertThat(deployment).contains("mountPath: /tmp").contains("- name: tmp\n          emptyDir: {}");
     }
 
+    /**
+     * JGit caches a filesystem timestamp-resolution attribute the first time it touches a
+     * repository, in a user-level configuration file it locates via {@code XDG_CONFIG_HOME},
+     * falling back to {@code $HOME/.config} when that variable is unset. Neither is otherwise set
+     * for this image's user, so under the read-only root filesystem above JGit resolved a path it
+     * could not create and logged a caught error on every fetch (GW_0179). Both the image and the
+     * chart point it at the writable temporary directory instead.
+     */
+    @Test
+    @SVCs({"SVC_GW_0179"})
+    void imageAndChartPointJGitsOwnConfigCacheAtTheWritableTemporaryDirectory() throws IOException {
+        String dockerfile = Files.readString(REPO_ROOT.resolve("Dockerfile"));
+        assertThat(dockerfile).contains("ENV XDG_CONFIG_HOME=/tmp/xdg-config");
+
+        String deployment = Files.readString(REPO_ROOT.resolve("helm/skills-gateway/templates/deployment.yaml"));
+        assertThat(deployment).contains("- name: XDG_CONFIG_HOME").contains("value: /tmp/xdg-config");
+    }
+
     @Test
     @SVCs({"SVC_GW_0122"})
     void chartPassesArbitraryApplicationConfigurationThrough() throws IOException {

@@ -278,6 +278,15 @@ with no durable volume at all, point `skills-gateway.storage.object-store.cache.
 at a path under your ephemeral mount — nothing in that cache is authoritative,
 and deleting it at any moment is safe.
 
+The embedded git library (JGit) also keeps a small cache of its own under
+`$XDG_CONFIG_HOME` — a measured filesystem-timestamp attribute, written the
+first time it touches a repository. Left unset, alongside a `HOME` this user
+does not have, JGit falls back to a home directory that does not exist here
+either, and fails to create it on every fetch: caught and logged, not fatal,
+but the log line drowns out anything that is. The image already sets
+`XDG_CONFIG_HOME=/tmp/xdg-config`, so nothing further is needed once `/tmp`
+itself is writable — the same mount this section is about.
+
 ## Memory
 
 The image runs the application jar on a JVM, and its entrypoint sets

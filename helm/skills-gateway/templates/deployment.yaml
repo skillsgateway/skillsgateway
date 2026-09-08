@@ -81,6 +81,15 @@ spec:
             {{- end }}
             - name: SERVER_FORWARDHEADERSSTRATEGY
               value: {{ include "skills-gateway.forwardHeadersStrategy" . | quote }}
+            # JGit's own filesystem-timestamp-resolution cache falls back to
+            # $HOME/.config/jgit when XDG_CONFIG_HOME is unset, and neither is
+            # otherwise set for this pod -- so under the read-only root
+            # filesystem below it resolved a path it could not create and
+            # logged a caught error on every fetch (GW_0179). Stated here
+            # too, not only baked into the image, so it stays correct even
+            # against an image that does not set it.
+            - name: XDG_CONFIG_HOME
+              value: /tmp/xdg-config
             # The storage backend is named, never inferred -- here as in the
             # gateway, so what the values file says and what the pod does are
             # the same statement.
