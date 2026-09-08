@@ -1411,6 +1411,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#health-checks" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2229,6 +2240,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#health-checks" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2318,6 +2340,10 @@ instead — the chart already does everything below.</p>
 <tr>
 <td>Persistent storage</td>
 <td>On the default <code>filesystem</code> backend, the repositories live on disk under the data directory and must outlive the container. See <a href="#storage">Storage</a>.</td>
+</tr>
+<tr>
+<td>A container memory limit</td>
+<td>The image runs a JVM, and its heap ceiling is a percentage of the limit. With no limit set that percentage is taken from the <em>host's</em> memory. See <a href="#memory">Memory</a>.</td>
 </tr>
 <tr>
 <td>Writable scratch at <code>/tmp</code></td>
@@ -2425,13 +2451,15 @@ Kubernetes and ECS among them — and <code>none</code> anywhere else. Name the 
 deployment that works because of a deduction is one nobody can read.</p>
 <div class="admonition note">
 <p class="admonition-title"><code>framework</code> was inert on the released image until it was registered explicitly</p>
-<p>Spring Boot registers its forwarded-header filter behind a condition that a
-GraalVM native image evaluates once, when the image is built, and the
-property is not set then — so <code>SERVER_FORWARDHEADERSSTRATEGY=framework</code> did
-nothing on the released image, however correctly it was deployed. The
-gateway now registers the filter itself and reads the setting at runtime,
-so every value means the same on the JVM jar and on the native image. Do
-not go back to relying on Spring Boot's own registration.</p>
+<p>Spring Boot registers its forwarded-header filter behind a condition that an
+ahead-of-time image evaluates once, when the image is built, and the property
+is not set then — so <code>SERVER_FORWARDHEADERSSTRATEGY=framework</code> did nothing on
+the GraalVM native image the release used to publish, however correctly it
+was deployed. The gateway now registers the filter itself and reads the
+setting at runtime, so every value means the same on every packaging. Do not
+go back to relying on Spring Boot's own registration: the released image is a
+JVM container today, but the explicit registration is what makes the setting
+mean one thing regardless.</p>
 </div>
 <p>The redirect URI can also be stated outright, with no header trusted at all:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">SGW_OIDC_REDIRECT_URI</span><span class="o">=</span>https://&lt;your-host&gt;/login/oauth2/code/idp
@@ -2575,6 +2603,16 @@ local pack cache defaults to <code>{data-dir}/object-store-cache</code>. Where y
 with no durable volume at all, point <code>skills-gateway.storage.object-store.cache.dir</code>
 at a path under your ephemeral mount — nothing in that cache is authoritative,
 and deleting it at any moment is safe.</p>
+<h2 id="memory">Memory<a class="headerlink" href="#memory" title="Permanent link">&para;</a></h2>
+<p>The image runs the application jar on a JVM, and its entrypoint sets
+<code>-XX:MaxRAMPercentage=75.0</code>: the heap may grow to three quarters of the
+container's memory limit. Under a 1 GiB limit the process sat at roughly 255 MB
+resident while idle; the term that is not in that number is JGit packing a large
+upstream repository, which is what the remaining headroom is for.</p>
+<p><strong>Set a limit.</strong> The percentage is taken from whatever the JVM believes the
+container has, so an unlimited container gives the heap three quarters of the
+host — which is only a problem the first time something else on that host needs
+the memory.</p>
 <h2 id="health-checks">Health checks<a class="headerlink" href="#health-checks" title="Permanent link">&para;</a></h2>
 <p><code>/actuator/health</code> on port 8080 is the readiness and liveness signal, and it is
 the only unauthenticated path. Probe the bare path, not the <code>/readiness</code> and

@@ -2310,8 +2310,8 @@ along.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>spring-boot:run<span class="w"> </span>-Dspring-boot.run.profiles<span class="o">=</span>observability
 </code></pre></div>
 <p>The Grafana URL is logged at startup. The supporting dependencies are optional,
-and test scope again under the <code>native</code> profile: nothing of the dev stack is
-reachable from the packaged jar, the container image or the native binary.</p>
+so nothing of the dev stack is reachable from the packaged jar or the container
+image built from it.</p>
 
 
 

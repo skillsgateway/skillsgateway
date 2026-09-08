@@ -2478,7 +2478,7 @@
 <p>Get a gateway running on your machine, with or without an identity provider.</p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
 <ul>
-<li>JDK 25 (Temurin; GraalVM CE 25 only for native builds)</li>
+<li>JDK 25 (Temurin)</li>
 <li>A container runtime — Testcontainers and the Arconia dev services for the
   build, Compose for running. Docker works out of the box; Podman works
   too, with the setup in <a href="#running-the-gates-on-podman">Running the gates on Podman</a></li>
@@ -2507,9 +2507,8 @@ serves the portal at <code>/</code>.</p>
 <p class="admonition-title">Why the dev services are not in the jar</p>
 <p>The Arconia dev services and the OpenTelemetry starter are declared
 <code>&lt;optional&gt;true&lt;/optional&gt;</code>. Spring Boot's <code>repackage</code> leaves optional
-dependencies out of the jar, and the <code>native</code> profile pins them to test
-scope, so they reach neither the jar, the container image nor the native
-binary — while <code>spring-boot:run</code> still sees them. Maven has no
+dependencies out of the jar, so they reach neither the jar nor the container
+image built from it — while <code>spring-boot:run</code> still sees them. Maven has no
 environment-oriented scope, so this is the closest equivalent to Gradle's
 <code>testAndDevelopmentOnly</code>.</p>
 </div>
@@ -2531,9 +2530,9 @@ is nothing to configure and nothing to run by hand.</p>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_OIDC_TOKEN_URI</span><span class="o">=</span>https://idp.example.com/token
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_OIDC_JWK_SET_URI</span><span class="o">=</span>https://idp.example.com/jwks
 </code></pre></div>
-<p>The client registration id is <code>idp</code> and must exist at build time for
-native-image, which is why the defaults are the placeholders <code>change-me</code> and
-<code>idp.invalid</code>. A gateway started without these will not complete a login.</p>
+<p>The client registration id is <code>idp</code>, and the defaults are the placeholders
+<code>change-me</code> and <code>idp.invalid</code> so that the registration always exists. A gateway
+started without real values will not complete a login.</p>
 <h3 id="without-one-the-escape-hatch">Without one — the escape hatch<a class="headerlink" href="#without-one-the-escape-hatch" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>spring-boot:run<span class="w"> </span>-Dspring-boot.run.arguments<span class="o">=</span>--skills-gateway.dev-insecure-auth<span class="o">=</span><span class="nb">true</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="gp">$ </span>java<span class="w"> </span>-jar<span class="w"> </span>target/skills-gateway-server-*.jar<span class="w"> </span>--skills-gateway.dev-insecure-auth<span class="o">=</span><span class="nb">true</span>
@@ -2737,9 +2736,8 @@ diagnose: the Arconia dev services resolve the runtime differently and can keep
 working while tests that use Testcontainers directly fail in the same build.</p>
 <h4 id="give-the-machine-enough-memory">Give the machine enough memory<a class="headerlink" href="#give-the-machine-enough-memory" title="Permanent link">&para;</a></h4>
 <p>The default machine is small. Under a parallel build the PostgreSQL, Floci and
-LGTM containers plus the native-image and CycloneDX steps hit container-startup
-timeouts and OOM kills. Raise it in place — stop, set, start; storage is
-preserved:</p>
+LGTM containers plus the CycloneDX step hit container-startup timeouts and OOM
+kills. Raise it in place — stop, set, start; storage is preserved:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="gp">$ </span>podman<span class="w"> </span>machine<span class="w"> </span>stop
 <a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="gp">$ </span>podman<span class="w"> </span>machine<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--memory<span class="w"> </span><span class="m">8192</span>
 <a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="gp">$ </span>podman<span class="w"> </span>machine<span class="w"> </span>start

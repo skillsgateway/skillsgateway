@@ -1814,6 +1814,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#size-startup-and-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Size, startup and memory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#tags" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2040,6 +2051,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#size-startup-and-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Size, startup and memory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#tags" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2109,29 +2131,79 @@
 
 
 <h1 id="container-image">Container image<a class="headerlink" href="#container-image" title="Permanent link">&para;</a></h1>
-<p>The gateway is published as a container image running the GraalVM native
-binary:</p>
+<p>The gateway is published as a container image running the application jar on a
+<code>jlink</code>-produced Java 25 runtime:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ghcr.io/skillsgateway/skillsgateway
 </code></pre></div>
+<p>The base is <code>gcr.io/distroless/java-base-debian12:nonroot</code>: the OS libraries a
+JVM needs and nothing else — no shell, no package manager — with the runtime
+itself supplied by <code>jlink</code> rather than by a JDK in the base. The container runs
+as uid 65532 and needs nothing on its root filesystem writable, which is why the
+Helm chart mounts it read-only. <a href="../decisions/">ADR 0012</a> records why this
+replaced the GraalVM native binary the image previously carried.</p>
 <p>It is published as a <strong>multi-arch image index</strong> covering <code>linux/amd64</code> and
 <code>linux/arm64</code> — a plain <code>docker pull</code>/<code>docker run</code> resolves the manifest for
 the caller's platform automatically, with no <code>--platform</code> flag needed on
-either architecture. Each platform's build is smoke-tested on its own native
-runner before either is published, since GraalVM native-image cannot
-cross-compile.</p>
+either architecture. Both platforms come from one build: the jar is the same
+bytes on either, and only the runtime beneath it is platform-specific.</p>
+<p>The image is smoke-tested — booted against a real PostgreSQL, on a read-only
+root filesystem, and checked for health and for the proxy-header behaviour —
+before anything is published. That test runs on the runner's own architecture,
+<code>linux/amd64</code>; the <code>linux/arm64</code> manifest is built from the same Dockerfile and
+the same jar in the same build but is not booted in CI.</p>
 <p><strong>Only a release publishes.</strong> A push to <code>main</code>, the weekly scheduled rebuild
-and a manually dispatched run all build and smoke-test both architectures —
-proving the image works — but publish nothing: only the
+and a manually dispatched run all build the image and smoke-test it — proving it
+works — but publish nothing: only the
 <a href="../../guides/releasing/">release workflow</a> ever reaches GHCR. The published
 tag namespace therefore holds released versions only; there is no per-commit
 or moving tag to track <code>main</code>.</p>
-<p>Each platform's manifest is pushed to the registry addressed only by its own
-digest, never under a separate <code>-amd64</code>/<code>-arm64</code> tag — the two are combined
-into the index that is tagged with the released version. This is why the
-package's tagged-versions listing shows one entry per release rather than
-three: the platform manifests exist in the registry, but as the untagged
-children of that one tagged index, exactly as GitHub renders any properly
-multi-arch image.</p>
+<p>The released version is the only tag the publish creates. The platform manifests
+exist in the registry as the untagged children of that one tagged index, never
+under a separate <code>-amd64</code>/<code>-arm64</code> tag. This is why the package's tagged-versions
+listing shows one entry per release rather than three, exactly as GitHub renders
+any properly multi-arch image.</p>
+<h2 id="size-startup-and-memory">Size, startup and memory<a class="headerlink" href="#size-startup-and-memory" title="Permanent link">&para;</a></h2>
+<p>Measured on the image this repository builds, so that a deployment can be sized
+from numbers rather than from expectations:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align: right;"><code>linux/amd64</code></th>
+<th style="text-align: right;"><code>linux/arm64</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Image, uncompressed</td>
+<td style="text-align: right;">185 MB</td>
+<td style="text-align: right;">195 MB</td>
+</tr>
+<tr>
+<td>Image, compressed (what a pull transfers)</td>
+<td style="text-align: right;">~131 MB</td>
+<td style="text-align: right;">~130 MB</td>
+</tr>
+<tr>
+<td>Application startup</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">3.6 s</td>
+</tr>
+<tr>
+<td>Resident memory, idle, under a 1 GiB limit</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">255 MB</td>
+</tr>
+</tbody>
+</table>
+<p>The image is roughly the distroless base (46 MB), the <code>jlink</code> runtime (79 MB)
+and the application jar (69 MB). The jar carries the built portal, so it does not
+shrink much. Startup and memory were measured on <code>linux/arm64</code>, on real
+hardware; a figure taken under emulation would measure the emulator.</p>
+<p>The entrypoint sets <code>-XX:MaxRAMPercentage=75.0</code> on purpose. The JVM's default
+ceiling is a quarter of the container's limit; the heap that matters here is the
+one JGit packs a large upstream repository in, and a quarter of the limit is less
+than the previous artifact had.</p>
 <h2 id="tags">Tags<a class="headerlink" href="#tags" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2163,11 +2235,10 @@ need a token with the <code>read:packages</code> scope:</p>
 <p>Package visibility can later be made public in the GHCR package settings,
 independently of the repository's visibility.</p>
 <h2 id="sbom-attestation">SBOM attestation<a class="headerlink" href="#sbom-attestation" title="Permanent link">&para;</a></h2>
-<p>Each published <strong>platform manifest</strong> — not just the index — carries the
-build's CycloneDX SBOM as a registry attestation (the same SBOM the running
-gateway serves at <code>/actuator/sbom</code>), so verification succeeds against the
-digest a puller's platform actually resolves to. Verify what a pinned digest
-contains with:</p>
+<p>The published image index carries the build's CycloneDX SBOM as a registry
+attestation (the same SBOM the running gateway serves at <code>/actuator/sbom</code>),
+against the digest the publish prints and that a deployment pins. Verify what a
+pinned digest contains with:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>gh<span class="w"> </span>attestation<span class="w"> </span>verify<span class="w"> </span>oci://ghcr.io/skillsgateway/skillsgateway@sha256:…<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span>--owner<span class="w"> </span>skillsgateway
 </code></pre></div>

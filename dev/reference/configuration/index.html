@@ -4741,9 +4741,9 @@ Testcontainers and the e2e compose stack — builds it from scratch.</p>
 </div>
 <hr />
 <h2 id="oidc-login">OIDC login<a class="headerlink" href="#oidc-login" title="Permanent link">&para;</a></h2>
-<p>The registration id is <code>idp</code> and must exist at AOT build time, because
-native-image evaluates auto-configuration conditions then. That is why the
-defaults are the placeholders below rather than being absent.</p>
+<p>The registration id is <code>idp</code>. The defaults below are placeholders rather than
+absent values, so the registration always exists and a gateway with none of these
+set still starts — it simply cannot complete a login.</p>
 <table>
 <thead>
 <tr>
@@ -4926,11 +4926,14 @@ the variable — see
 <p>The gateway registers the <code>framework</code> filter itself and reads the setting at
 runtime (GW_0163 — Proxy-reported scheme and host are honoured only when
 configured, identically on every packaging). Spring Boot's own registration is
-behind a <code>@ConditionalOnProperty</code> that a GraalVM native image evaluates at
-build time, when the property is unset, so on the released image it was never
-compiled in and no runtime value could switch it on. <code>native</code> never had that
-problem: Tomcat's valve is installed by a customizer that reads the property at
-runtime.</p>
+behind a <code>@ConditionalOnProperty</code>, which an ahead-of-time image evaluates when it
+is built, with the property unset — so on the GraalVM native image the release
+used to publish it was never compiled in and no runtime value could switch it on.
+<code>native</code> never had that problem: Tomcat's valve is installed by a customizer that
+reads the property at runtime. The released image is a JVM container today
+(<a href="../decisions/">ADR 0012</a>), where neither shape can occur; the explicit
+registration stays because it is what makes the setting mean one thing on every
+packaging rather than on the one that happens to ship.</p>
 <hr />
 <h2 id="server-and-storage-notes">Server and storage notes<a class="headerlink" href="#server-and-storage-notes" title="Permanent link">&para;</a></h2>
 <p><strong>Port.</strong> Never set; the Spring default <code>8080</code> applies. Compose publishes

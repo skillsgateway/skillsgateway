@@ -2499,6 +2499,8 @@ and Gerrit. Choosing Rust would have bet the roadmap on gitoxide's server side
 maturing on schedule.</p>
 <p>Native-image also shrinks Java's classic dynamic attack surface through
 closed-world compilation, and gives single-artifact installs.</p>
+<p><em>The packaging half of this was later reversed: see ADR 0012 below. The choice of
+Java, and the JGit reasoning it rests on, stands.</em></p>
 <h3 id="adr-0002-toolchain-and-product-decisions"><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0002-toolchain-and-product-decisions.md">ADR 0002 — Toolchain and product decisions</a><a class="headerlink" href="#adr-0002-toolchain-and-product-decisions" title="Permanent link">&para;</a></h3>
 <p><em>Accepted, 2026-08-13.</em></p>
 <p>The concrete stack that follows from 0001:</p>
@@ -2536,7 +2538,7 @@ closed-world compilation, and gives single-artifact installs.</p>
 </tr>
 <tr>
 <td>Release</td>
-<td>GraalVM native-image as the release profile</td>
+<td>GraalVM native-image as the release profile — <em>superseded by ADR 0012</em></td>
 </tr>
 <tr>
 <td>Auth</td>

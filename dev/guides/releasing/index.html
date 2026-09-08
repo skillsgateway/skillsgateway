@@ -2593,10 +2593,10 @@ is the part nobody has yet done.</p>
 <div class="admonition note">
 <p class="admonition-title">Hand-pushing a tag publishes nothing</p>
 <p>This is a change from earlier behaviour, and it is deliberate. <code>docs.yml</code>
-and <code>native.yml</code> used to watch for tags, so pushing one published the
-documentation and the container image immediately — unordered, and with no
-approval between the tag and the world. Both are now invoked <em>by</em> the
-release workflow instead. A tag pushed by hand is inert.</p>
+and the container-image workflow used to watch for tags, so pushing one
+published the documentation and the container image immediately — unordered,
+and with no approval between the tag and the world. Both are now invoked <em>by</em>
+the release workflow instead. A tag pushed by hand is inert.</p>
 </div>
 <h2 id="what-a-release-produces">What a release produces<a class="headerlink" href="#what-a-release-produces" title="Permanent link">&para;</a></h2>
 <table>

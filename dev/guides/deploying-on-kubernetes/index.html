@@ -2520,13 +2520,15 @@ registered with the provider, and every login fails on a redirect-URI mismatch.
 should you ever need to bypass the derivation.</p>
 <div class="admonition warning">
 <p class="admonition-title">Remove <code>SERVER_FORWARDHEADERSSTRATEGY: framework</code> from <code>extraEnv</code></p>
-<p>Earlier versions of this guide set it there. On the native image that value
-was inert — Spring Boot registers the filter behind a condition the image
-evaluates at build time — and setting it also switched off the <code>native</code>
-strategy Spring Boot would otherwise have deduced on Kubernetes, so
-following the advice made logins fail rather than fixing them. The chart
-value replaces it; an <code>extraEnv</code> entry of the same name would override the
-chart's.</p>
+<p>Earlier versions of this guide set it there. On the GraalVM native image the
+release used to publish, that value was inert — Spring Boot registers the
+filter behind a condition the image evaluates at build time — and setting it
+also switched off the <code>native</code> strategy Spring Boot would otherwise have
+deduced on Kubernetes, so following the advice made logins fail rather than
+fixing them. The gateway registers the filter itself now, and the release
+artifact is a JVM container, so both halves of that are gone. The chart value
+replaces the <code>extraEnv</code> entry either way; an <code>extraEnv</code> entry of the same
+name would override the chart's.</p>
 </div>
 <h2 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">&para;</a></h2>
 <p>The gateway keeps three sets of repositories on disk under <code>/data</code>: the
