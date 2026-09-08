@@ -1228,10 +1228,50 @@ requirements:
     revision: 0.1.0
 
   - id: GW_VETTING_0029
-    title: Administrative enable and disable of a built-in vetting connector
+    title: The connector on/off switch never becomes a blanket approval
     significance: shall
-    description: The system shall allow an administrator, and only an administrator, to disable or re-enable a specific built-in vetting connector either globally or for one named marketplace, resolving the effective state of a connector for a marketplace as its per-marketplace setting when one exists and otherwise its global setting and otherwise enabled, shall skip a connector that is disabled for a snapshot's marketplace when the chain runs at ingestion or re-vetting rather than running it, recording a distinct disabled verdict against that chain run in the connector's place so the disablement is part of the run's evidence, shall count a disabled verdict as neither clearing nor blocking while still requiring at least one clearing verdict for a run to clear so that disabling every connector leaves the run blocked rather than cleared, shall record every toggle as an administrator-only, audited action naming the acting administrator, the connector, the scope and the new state, and shall neither show connector settings to nor accept a toggle from a principal that is not an administrator.
-    rationale: "A connector that is too noisy or wrong for one marketplace should be answerable to an administrator without redeploying the gateway, which reverses the previous stance that the chain had no enable or disable switch at all. Recording a skipped connector as a distinct disabled verdict rather than simply omitting it is what keeps the disablement fail-loud: a reviewer and an auditor both see that the connector did not run and why, instead of a silently shorter chain. Requiring positive clearing evidence for a run to clear is what stops disabling the whole chain from becoming a blanket approval — an estate that has switched everything off is blocked, not cleared — and reserving the switch to administrators keeps a marketplace-scoped approver from quietly turning off the control that governs their own content."
+    description: "The system shall let an administrator's use of the connector on/off switch change only which connectors run and how their absence is scored — never make the chain more permissive about what a connector's own verdicts already say. A disabled connector's absence shall never be indistinguishable from a clearing verdict, and disabling every connector shall leave a run blocked rather than clear."
+    rationale: "Reversing the previous stance that the chain had no enable/disable switch at all is a trust-boundary change (ADR 0009): the moment an administrator can silence a connector, silencing every connector must not silently become the easiest way to approve anything. The four guarantees below are how that is kept true — who may switch it, what runs because of it, how a disabled connector is scored, and that it is scored at all rather than omitted — and each can regress on its own without the others noticing."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0029.1
+    title: A connector's effective state resolves per-marketplace, then global, then enabled
+    significance: shall
+    description: "The system shall let an administrator disable or re-enable a specific built-in vetting connector either globally or for one named marketplace, and shall resolve a connector's effective state for a marketplace as its per-marketplace setting when one exists, otherwise its global setting, and otherwise enabled."
+    rationale: "A connector that is too noisy or wrong for one marketplace should be answerable without redeploying the gateway or turning it off for every other marketplace at the same time; the three-tier resolution is what lets a global default and a narrow exception coexist without an administrator having to restate the default everywhere it still applies."
+    references:
+      requirement_ids: ["GW_VETTING_0029"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0029.2
+    title: A disabled connector is skipped and recorded as a distinct disabled verdict
+    significance: shall
+    description: "The system shall skip a connector that is disabled for a snapshot's marketplace when the vetting chain runs at ingestion or re-vetting, rather than running it, and shall record a distinct disabled verdict against that chain run in the connector's place, so the disablement is part of the run's own evidence."
+    rationale: "Recording a skipped connector as its own verdict rather than simply omitting it is what keeps the disablement fail-loud: a reviewer or an auditor reading the run sees that the connector did not run and why, instead of a chain that is silently shorter than the estate's other marketplaces."
+    references:
+      requirement_ids: ["GW_VETTING_0029"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0029.3
+    title: A disabled verdict counts as neither clearing nor blocking
+    significance: shall
+    description: "The system shall count a disabled verdict as neither clearing nor blocking a chain run, while still requiring at least one clearing verdict for the run to clear, so that disabling every connector leaves the run blocked rather than clear."
+    rationale: "Requiring positive clearing evidence, rather than merely the absence of a blocking one, is what stops disabling the whole chain from becoming a blanket approval: an estate that has switched everything off has proven nothing about the content it serves, and a disabled verdict must not be able to rescue one that has failed elsewhere either."
+    references:
+      requirement_ids: ["GW_VETTING_0029"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0029.4
+    title: Every toggle is an audited, administrator-only action
+    significance: shall
+    description: "The system shall record every toggle of a connector's enablement as an administrator-only, audited action naming the acting administrator, the connector, the scope and the new state, and shall neither show connector settings to nor accept a toggle from a principal that is not an administrator."
+    rationale: "The switch governs the vetting chain, so its own visibility and use have to sit above the content it governs: a marketplace-scoped approver who could see or flip it could quietly turn off the control that governs their own content, and an unaudited toggle would leave no way to answer why a connector was silent on a given run."
+    references:
+      requirement_ids: ["GW_VETTING_0029"]
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 

@@ -1657,21 +1657,52 @@ cases:
 
   - id: SVC_GW_VETTING_0029
     requirement_ids: ["GW_VETTING_0029"]
-    title: An administrator disables a connector globally and per marketplace, audibly and alone
+    title: A disabled verdict never rescues a blocking one, and pre-existing aggregation is unchanged
     verification: automated-test
     description: |
-      GIVEN a marketplace whose snapshot a built-in connector would block, and the same
-      connector left enabled for a second marketplace
-      WHEN an administrator disables that connector for the first marketplace, a
-      non-administrator attempts to disable it and to read the connector settings, the
-      first marketplace is re-ingested, an administrator disables every connector
-      globally, and a marketplace is ingested under that global disablement
-      THEN the non-administrator is refused both the toggle and the read, the first
-      marketplace's re-ingested snapshot records the connector as a disabled verdict and
-      no longer blocks on it while the second marketplace still runs and blocks on it,
-      every toggle is on the ledger naming the administrator, the connector, the scope
-      and the new state, and the snapshot ingested with every connector disabled is
-      blocked rather than clear
+      GIVEN the fail-closed aggregation rule extended with the DISABLED verdict state
+      WHEN a disabled verdict is aggregated alongside a verdict that still fails, errors or has not answered, and every verdict combination that predates the DISABLED state is aggregated again
+      THEN a disabled verdict never turns a blocked outcome into a clear one, and every pre-existing aggregation case — an empty run, an all-passing run, a warned run, a failing run — aggregates exactly as it did before DISABLED existed
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0029.1
+    requirement_ids: ["GW_VETTING_0029.1"]
+    title: A connector disabled for one marketplace is skipped there while an unrelated marketplace still runs it
+    verification: automated-test
+    description: |
+      GIVEN a built-in connector enabled by default for two marketplaces
+      WHEN an administrator disables it for one of them by name and both marketplaces are then ingested
+      THEN the disabled marketplace's chain run treats the connector as not run while the other marketplace's run still executes it and still blocks on the same content
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0029.2
+    requirement_ids: ["GW_VETTING_0029.2"]
+    title: A disabled connector is recorded as a distinct disabled verdict rather than omitted
+    verification: automated-test
+    description: |
+      GIVEN a marketplace whose connector an administrator has disabled
+      WHEN that marketplace's snapshot is ingested
+      THEN the chain run's verdict for that connector is the distinct DISABLED state rather than an absent entry, and the run's overall outcome still clears on the other connectors' evidence
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0029.3
+    requirement_ids: ["GW_VETTING_0029.3"]
+    title: Disabling every connector blocks the run rather than clearing it
+    verification: automated-test
+    description: |
+      GIVEN the DISABLED verdict state, both as the pure aggregation function's input and as a real chain run's outcome
+      WHEN a run's verdicts are all DISABLED, and, through the real API, every built-in connector is disabled for one marketplace before it is ingested
+      THEN the pure function classifies DISABLED as neither clearing nor blocking on its own, a run made only of DISABLED verdicts aggregates to BLOCKED, and the marketplace ingested with every connector disabled is blocked rather than clear
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0029.4
+    requirement_ids: ["GW_VETTING_0029.4"]
+    title: Only an administrator may see or change connector settings, and every change is on the ledger
+    verification: automated-test
+    description: |
+      GIVEN a marketplace and a non-administrator principal
+      WHEN the non-administrator attempts to toggle a connector and to read the connector settings, and an administrator then disables the connector for that marketplace with a reason
+      THEN the non-administrator is refused both the toggle and the read, and the ledger carries exactly one entry for the administrator's toggle naming the administrator, the connector, the scope and the new state
     revision: "0.1.0"
 
   - id: SVC_GW_INGEST_0019
