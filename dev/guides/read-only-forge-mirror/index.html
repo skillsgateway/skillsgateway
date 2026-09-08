@@ -1111,6 +1111,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="4. Check for drift">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#without-asking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Without asking
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1121,6 +1138,34 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Fixing drift">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-the-gateway-repairs-it-says-so" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When the gateway repairs, it says so
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mirror-reconciliation-refused" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mirror-reconciliation-refused
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2114,6 +2159,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="4. Check for drift">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#without-asking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Without asking
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2124,6 +2186,34 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Fixing drift">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-the-gateway-repairs-it-says-so" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When the gateway repairs, it says so
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mirror-reconciliation-refused" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mirror-reconciliation-refused
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2168,12 +2258,13 @@ cannot be enforced on a repository other people can write to — see
 <a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0008-serving-surface-stays-the-embedded-facade.md">ADR 0008</a>.</p>
 </div>
 <h2 id="what-it-does">What it does<a class="headerlink" href="#what-it-does" title="Permanent link">&para;</a></h2>
-<p>Whenever a snapshot is approved or revoked, the gateway makes the mirror hold
-exactly the references the facade serves for that marketplace — <code>refs/heads/main</code>
-and <code>refs/snapshots/*</code> — and removes anything it still holds in those namespaces
-that is no longer served. Nothing else on the mirror is touched: a branch, a tag
-or a README the repository already has is left alone.</p>
-<p>Two consequences fall out of that shape and are worth stating plainly:</p>
+<p>Whenever a snapshot is approved or revoked — <strong>and on a recurring schedule
+regardless</strong> — the gateway makes the mirror hold exactly the references the
+facade serves for that marketplace (<code>refs/heads/main</code> and <code>refs/snapshots/*</code>) and
+removes anything it still holds in those namespaces that is no longer served.
+Nothing else on the mirror is touched: a branch, a tag or a README the repository
+already has is left alone.</p>
+<p>Three consequences fall out of that shape and are worth stating plainly:</p>
 <ul>
 <li><strong>Revocation reaches the mirror.</strong> A revoked snapshot's references are gone
   from the mirror as well as from the facade, so nobody can pull the withdrawn
@@ -2182,7 +2273,20 @@ or a README the repository already has is left alone.</p>
   be reached, the approval or revocation still happens in full, the facade
   behaves exactly as it would with the mirror off, and the divergence shows up
   in the drift report.</li>
+<li><strong>That drift does not last indefinitely.</strong> The recurring reconciliation runs
+  whether or not anything was approved, so a push that gave up, an update lost to
+  a restart and a change somebody made on the host by hand are all corrected
+  within <code>sweep-interval</code> — 15 minutes by default. This is why a failed push is
+  allowed to simply stop rather than retry forever.</li>
 </ul>
+<div class="admonition warning">
+<p class="admonition-title">A stale mirror is a security problem, not a cosmetic one</p>
+<p>A mirror that still holds a revoked snapshot is a way to read content the
+gateway has withdrawn. That is why the reconciliation is on a timer rather
+than only on approvals, and why
+<a href="../../reference/observability/#the-read-only-forge-mirror"><code>skills_gateway.mirror.stale_refs</code></a>
+is the meter to alert on.</p>
+</div>
 <h2 id="1-create-the-repository-on-the-host">1. Create the repository on the host<a class="headerlink" href="#1-create-the-repository-on-the-host" title="Permanent link">&para;</a></h2>
 <p>The gateway does not create it, and never calls a code host's API. Make an empty
 repository by hand, and give the account the gateway will push as write access to
@@ -2194,8 +2298,10 @@ either:</p>
   the gateway does not touch, saying that it is a read-only mirror and where the
   real clone URL is.</li>
 <li>Make it read-only for everybody else. Content that appears there did pass the
-  approval gate; content somebody pushes there directly did not, and the gateway
-  will remove it at the next reconciliation without announcing that it did.</li>
+  approval gate; content somebody pushes there directly did not. The gateway
+  removes it at the next reconciliation — within <code>sweep-interval</code> even if nothing
+  is approved — and records <code>mirror-drift-repaired</code> naming the references it took
+  off, so the fact that somebody wrote there is not erased by the repair.</li>
 </ul>
 <h2 id="2-configure-the-gateway">2. Configure the gateway<a class="headerlink" href="#2-configure-the-gateway" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
@@ -2224,24 +2330,28 @@ non-allowlisted scheme or a credential in the URL <strong>fails startup</strong>
 contacted to decide that; only the configuration is read. A mirror that is merely
 unreachable never affects startup.</p>
 <h2 id="3-fill-it">3. Fill it<a class="headerlink" href="#3-fill-it" title="Permanent link">&para;</a></h2>
-<p>The mirror is brought up to date by the next approval or revocation of that
-marketplace. There is no "sync now" in this increment, so a marketplace whose
-last approval predates the configuration stays unmirrored — and visibly so —
-until its next one. The drift report is what makes that wait observable rather
-than a mystery.</p>
+<p>The first recurring reconciliation runs a minute after startup and fills the
+mirror from what the marketplace already serves, so a marketplace whose last
+approval predates the configuration does not have to wait for another one.</p>
+<p>To fill it immediately, ask:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/mirror/reconcile
+</code></pre></div>
+<p>Administrator-only. It reconciles and answers with the resulting comparison, in
+the same shape as the drift report below — so the response tells you whether it
+worked rather than only that it was attempted.</p>
 <h2 id="4-check-for-drift">4. Check for drift<a class="headerlink" href="#4-check-for-drift" title="Permanent link">&para;</a></h2>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">API</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/mirror/drift
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/mirror/drift
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span><span class="nt">"enabled"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"corp-marketplace"</span><span class="p">,</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w"> </span><span class="nt">"url"</span><span class="p">:</span><span class="s2">"https://forge.example.com/mirrors/corp-marketplace.git"</span><span class="p">,</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w"> </span><span class="nt">"reachable"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"inSync"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w"> </span><span class="nt">"servedTip"</span><span class="p">:</span><span class="s2">"9f2c1d4e6a7b8c9d0e1f2a3b4c5d6e7f80912345"</span><span class="p">,</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w"> </span><span class="nt">"mirrorTip"</span><span class="p">:</span><span class="s2">"9f2c1d4e6a7b8c9d0e1f2a3b4c5d6e7f80912345"</span><span class="p">,</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w"> </span><span class="nt">"missingOnMirror"</span><span class="p">:[],</span><span class="nt">"staleOnMirror"</span><span class="p">:[],</span><span class="nt">"pendingUpdates"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w"> </span><span class="nt">"lastAttemptAt"</span><span class="p">:</span><span class="s2">"2026-09-06T21:14:03Z"</span><span class="p">,</span><span class="nt">"lastAttemptOutcome"</span><span class="p">:</span><span class="s2">"ok"</span><span class="p">,</span><span class="nt">"error"</span><span class="p">:</span><span class="kc">null</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span><span class="nt">"enabled"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"corp-marketplace"</span><span class="p">,</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w"> </span><span class="nt">"url"</span><span class="p">:</span><span class="s2">"https://forge.example.com/mirrors/corp-marketplace.git"</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w"> </span><span class="nt">"reachable"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"inSync"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w"> </span><span class="nt">"servedTip"</span><span class="p">:</span><span class="s2">"9f2c1d4e6a7b8c9d0e1f2a3b4c5d6e7f80912345"</span><span class="p">,</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w"> </span><span class="nt">"mirrorTip"</span><span class="p">:</span><span class="s2">"9f2c1d4e6a7b8c9d0e1f2a3b4c5d6e7f80912345"</span><span class="p">,</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w"> </span><span class="nt">"missingOnMirror"</span><span class="p">:[],</span><span class="nt">"staleOnMirror"</span><span class="p">:[],</span><span class="nt">"pendingUpdates"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w"> </span><span class="nt">"lastAttemptAt"</span><span class="p">:</span><span class="s2">"2026-09-06T21:14:03Z"</span><span class="p">,</span><span class="nt">"lastAttemptOutcome"</span><span class="p">:</span><span class="s2">"ok"</span><span class="p">,</span><span class="nt">"error"</span><span class="p">:</span><span class="kc">null</span><span class="p">}</span>
 </code></pre></div>
 </div>
 </div>
@@ -2267,20 +2377,85 @@ than a mystery.</p>
 </tr>
 <tr>
 <td>Did the last push work?</td>
-<td><code>lastAttemptOutcome</code> and <code>error</code></td>
+<td><code>lastAttemptOutcome</code> (<code>ok</code>, <code>failed</code>, <code>none</code>) and <code>error</code></td>
 </tr>
 </tbody>
 </table>
 <p><code>staleOnMirror</code> is the field to watch after a revocation: a reference listed
 there is content the gateway has stopped serving that the mirror still carries.</p>
+<h3 id="without-asking">Without asking<a class="headerlink" href="#without-asking" title="Permanent link">&para;</a></h3>
+<p>The same numbers are published as meters, so a mirror that diverges can raise an
+alert instead of waiting to be noticed — see
+<a href="../../reference/observability/#the-read-only-forge-mirror">Observability</a>.
+<code>skills_gateway.mirror.stale_refs</code> above zero for longer than one
+<code>sweep-interval</code> is the condition worth paging on, and
+<code>skills_gateway.mirror.seconds_since_success</code> is what tells you whether the count
+beside it is current or merely old.</p>
 <h2 id="fixing-drift">Fixing drift<a class="headerlink" href="#fixing-drift" title="Permanent link">&para;</a></h2>
-<p>There is no repair endpoint in this increment. A reconciliation runs on the next
-approval or revocation of the marketplace, and it pushes the whole served
-reference set rather than a delta — so whatever the drift was, including a mirror
-somebody edited by hand, the next one corrects it.</p>
-<p>If the drift is because the mirror has been unreachable, fix the cause and the
-same applies. Nothing accumulates that a later reconciliation cannot fix, which
-is why a failed push is allowed to simply stop rather than retry forever.</p>
+<p>Usually: nothing. A reconciliation pushes the whole served reference set rather
+than a delta, so whatever the drift was — a push that gave up, an update lost to
+a restart, a mirror somebody edited by hand — the next one corrects it, and the
+next one is at most <code>sweep-interval</code> away.</p>
+<p>Do something when the cause is outside the gateway. Fix the code host, the
+network or the credential, then either wait for the schedule or reconcile now:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/mirror/reconcile
+</code></pre></div>
+<h3 id="when-the-gateway-repairs-it-says-so">When the gateway repairs, it says so<a class="headerlink" href="#when-the-gateway-repairs-it-says-so" title="Permanent link">&para;</a></h3>
+<p>A reconciliation that changes the mirror writes one audit-ledger entry naming
+the references it pushed and the references it deleted. Which event it writes is
+the useful part:</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mirror-updated</code></td>
+<td>An approval or a revocation reached the mirror. The mirror doing its job.</td>
+</tr>
+<tr>
+<td><code>mirror-drift-repaired</code></td>
+<td>A reconciliation nothing asked for had to change the mirror. Nothing was approved or revoked, so the mirror had diverged — an earlier push that gave up, or somebody writing to the host directly.</td>
+</tr>
+<tr>
+<td><code>mirror-push-failed</code></td>
+<td>The push exhausted its retries. The mirror is drifted until the next reconciliation succeeds.</td>
+</tr>
+<tr>
+<td><code>mirror-reconciliation-refused</code></td>
+<td>The gateway read its own published storage and would not act on what it read. See below.</td>
+</tr>
+</tbody>
+</table>
+<p>A reconciliation that found the mirror already correct writes nothing at all, so
+a gateway whose mirror is healthy adds no ledger rows on its timer.</p>
+<h3 id="mirror-reconciliation-refused"><code>mirror-reconciliation-refused</code><a class="headerlink" href="#mirror-reconciliation-refused" title="Permanent link">&para;</a></h3>
+<p>This one is about the gateway, not the code host, and it is the only outcome that
+asks you to look somewhere other than the mirror.</p>
+<p>Reconciliation deletes whatever the mirror holds that the served set does not.
+That is correct exactly as long as the served set is <em>true</em>. If published storage
+answers <strong>successfully but incompletely</strong> — a transient backend read failure, a
+half-applied migration, a backend pointed at the wrong bucket or prefix — then the
+honest conclusion would be "delete everything on the mirror", and on a timer that
+is a silent total wipe filed as a repair.</p>
+<p>So before contacting the host, the gateway checks the served references it read
+against its own record of what that marketplace has approved. When the two
+contradict, it pushes nothing, deletes nothing, records
+<code>mirror-reconciliation-refused</code>, and reports <code>failed</code> as <code>lastAttemptOutcome</code>
+with an <code>error</code> beginning <code>refused:</code>. <strong>The mirror is left exactly as it was.</strong></p>
+<p>A refusal is a <code>failed</code> attempt rather than an outcome of its own on purpose. A
+client reading <code>lastAttemptOutcome</code> and falling through to "fine" on a value it
+does not recognise would swallow exactly this signal, so the value stays one
+every existing reader already treats as not-ok; the distinction lives in <code>error</code>,
+in the log, and in the ledger event, none of which anybody has to match
+exhaustively on.</p>
+<p>Treat it as an alert on storage: check the marketplace's published repository and
+the storage backend's configuration. A single refusal immediately after an
+approval can be the narrow race between the approval record and its publication,
+and clears itself on the next pass; a repeated one does not.</p>
 <div class="admonition note">
 <p class="admonition-title">Drift never means the facade is wrong</p>
 <p>Everything on this page is about a copy. What the facade serves is decided by

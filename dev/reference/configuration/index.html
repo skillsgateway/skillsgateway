@@ -3241,10 +3241,19 @@ serves depends on it. See
 <a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30s</span>
 <a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>
 <a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="w">    </span><span class="c1"># Attempts per mirror update, first one included. Exhausting them leaves the</span>
-<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="w">    </span><span class="c1"># mirror drifted until the next approval or revocation; it never affects the</span>
-<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="w">    </span><span class="c1"># decision that triggered the update.</span>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="w">    </span><span class="c1"># mirror drifted until the next reconciliation; it never affects the decision</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="w">    </span><span class="c1"># that triggered the update.</span>
 <a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="w">    </span><span class="nt">max-attempts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
 <a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="w">    </span><span class="nt">retry-delay</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5s</span>
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="w">    </span><span class="c1"># The recurring reconciliation: on with the mirror, and the bound on how long</span>
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a><span class="w">    </span><span class="c1"># a reference the facade no longer serves can stay on the mirror.</span>
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a><span class="w">    </span><span class="nt">sweep-enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a><span class="w">    </span><span class="nt">sweep-interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15m</span>
+<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a>
+<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a><span class="w">    </span><span class="c1"># Short on purpose. A restart is when a queued update is lost, so the first</span>
+<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a><span class="w">    </span><span class="c1"># reconciliation after startup is the one that closes that gap.</span>
+<a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a><span class="w">    </span><span class="nt">sweep-initial-delay</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1m</span>
 </code></pre></div>
 <table>
 <thead>
@@ -3304,6 +3313,24 @@ serves depends on it. See
 <td><code>5s</code></td>
 <td>Delay between those attempts.</td>
 </tr>
+<tr>
+<td><code>skills-gateway.mirror.sweep-enabled</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>The recurring reconciliation. Irrelevant while the mirror is disabled; turning it off with the mirror on means drift is corrected only by the next approval or revocation.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.mirror.sweep-interval</code></td>
+<td>duration</td>
+<td><code>15m</code></td>
+<td>How often it runs, and therefore the bound on how long the mirror may hold a reference the facade no longer serves.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.mirror.sweep-initial-delay</code></td>
+<td>duration</td>
+<td><code>1m</code></td>
+<td>How long after startup the first one runs.</td>
+</tr>
 </tbody>
 </table>
 <div class="admonition warning">
@@ -3319,6 +3346,15 @@ affects startup or anything else.</p>
 mirror is not on the audit ledger, is not covered by the gateway's access
 tokens, and a revoked snapshot stops being served by the facade whether or
 not the mirror has caught up.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title"><code>sweep-interval</code> is a security setting</p>
+<p>It is how long a mirror may keep showing a snapshot the gateway has revoked
+when the revocation's own push failed. Lengthening it lengthens that window;
+turning the sweep off removes the bound entirely and leaves the mirror
+correct only as often as something is approved or revoked. Watch
+<code>skills_gateway.mirror.stale_refs</code> either way — see
+<a href="../observability/#the-read-only-forge-mirror">Observability</a>.</p>
 </div>
 <hr />
 <h2 id="audit-export">Audit export<a class="headerlink" href="#audit-export" title="Permanent link">&para;</a></h2>

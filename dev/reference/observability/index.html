@@ -1948,6 +1948,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#the-read-only-forge-mirror" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The read-only forge mirror
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2073,6 +2084,17 @@
     <span class="md-ellipsis">
       
         Storage backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-read-only-forge-mirror" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The read-only forge mirror
       
     </span>
   </a>
@@ -2265,6 +2287,65 @@ design is checked against its own assumptions rather than trusted.</p>
 reference transition and belongs on an alert. <code>wal.depth</code> and <code>packs.live</code>
 climbing without falling back is compaction falling behind, which shows up as a
 slow restore long before it shows up as anything else.</p>
+<h3 id="the-read-only-forge-mirror">The read-only forge mirror<a class="headerlink" href="#the-read-only-forge-mirror" title="Permanent link">&para;</a></h3>
+<p>Recorded on every gateway. A deployment with no mirror configured publishes them
+as zeros, which is what "nothing has diverged" looks like and is true. Turning
+the mirror on is in
+<a href="../../guides/read-only-forge-mirror/">The read-only forge mirror</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Type</th>
+<th>Tags</th>
+<th>Recorded around</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>skills_gateway.mirror.stale_refs</code></td>
+<td>gauge</td>
+<td>—</td>
+<td>References the mirror still holds that the facade no longer serves. <strong>Alert on this</strong>: in the ordinary case they are a snapshot the gateway revoked, so a value above zero outstaying one <code>sweep-interval</code> means the mirror is showing content the gateway has withdrawn.</td>
+</tr>
+<tr>
+<td><code>skills_gateway.mirror.missing_refs</code></td>
+<td>gauge</td>
+<td>—</td>
+<td>Served references the mirror lacks or holds at another commit. A visibility gap rather than a security one.</td>
+</tr>
+<tr>
+<td><code>skills_gateway.mirror.reachable</code></td>
+<td>gauge</td>
+<td>—</td>
+<td><code>1</code> when the last look at the mirror reached it, <code>0</code> when it did not.</td>
+</tr>
+<tr>
+<td><code>skills_gateway.mirror.seconds_since_success</code></td>
+<td>gauge</td>
+<td>—</td>
+<td>Seconds since a reconciliation last succeeded; <code>-1</code> when none has since startup. Climbing without bound is a code host the gateway cannot write to.</td>
+</tr>
+<tr>
+<td><code>skills_gateway.mirror.reconciliations.ok</code></td>
+<td>counter</td>
+<td>—</td>
+<td>Reconciliations that brought the mirror into line, or found it already there.</td>
+</tr>
+<tr>
+<td><code>skills_gateway.mirror.reconciliations.failed</code></td>
+<td>counter</td>
+<td>—</td>
+<td>Reconciliations that exhausted their retries, or that refused to act on a served reference set the gateway's own records contradicted.</td>
+</tr>
+</tbody>
+</table>
+<p>Read <code>stale_refs</code> and <code>seconds_since_success</code> together, always. The counts are
+written by reconciliations and by the drift report, never computed when a
+monitoring system scrapes — a gauge that contacted a code host on read would put
+a third party on the scrape path. So a gateway that cannot reach the mirror does
+not know what it holds, and <code>reachable</code> at <code>0</code> with <code>seconds_since_success</code>
+climbing is what says the count beside them is old rather than low.</p>
 <h2 id="health">Health<a class="headerlink" href="#health" title="Permanent link">&para;</a></h2>
 <p><code>/actuator/health</code> carries a <code>gitStorage</code> indicator on both backends. It names
 the backend actually in use — which is the point, since a gateway serving from
