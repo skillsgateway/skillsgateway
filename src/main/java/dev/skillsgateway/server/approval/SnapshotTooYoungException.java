@@ -4,7 +4,7 @@ import java.time.Duration;
 
 /**
  * Approval refused because the snapshot has not yet cleared the configured cooling-off window
- * (GW_APPROVAL_0004). Thrown before the state transition, so nothing was decided and nothing was published.
+ * (GW_APPROVAL_0004.3). Thrown before the state transition, so nothing was decided and nothing was published.
  *
  * <p>The eligibility travels with the exception because "wait" is only actionable if it says how
  * long: the refusal names the setting that imposed the wait, the age the snapshot has reached, and

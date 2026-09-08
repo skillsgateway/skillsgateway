@@ -52,7 +52,7 @@ class MinimumReleaseAgeTests extends AbstractGatewayTest {
     private ReleaseAgeGate releaseAgeGate;
 
     @Test
-    @SVCs({"SVC_GW_APPROVAL_0004"})
+    @SVCs({"SVC_GW_APPROVAL_0004.3", "SVC_GW_APPROVAL_0004.5"})
     void a_snapshot_the_gateway_saw_moments_ago_cannot_be_approved_and_nothing_is_published() throws Exception {
         String name = uniqueName("cooloff");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
@@ -78,7 +78,7 @@ class MinimumReleaseAgeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_APPROVAL_0004"})
+    @SVCs({"SVC_GW_APPROVAL_0004.5"})
     void a_snapshot_that_has_cleared_the_window_is_approved_and_its_age_is_on_the_ledger() throws Exception {
         String name = uniqueName("cooloff");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
@@ -93,7 +93,7 @@ class MinimumReleaseAgeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_APPROVAL_0004"})
+    @SVCs({"SVC_GW_APPROVAL_0004.1"})
     void a_backdated_commit_does_not_buy_its_way_past_the_window() throws Exception {
         // The adversarial case the clock choice exists for: a committer date is written by whoever
         // made the commit, so an attacker defeating a cooling-off window would only have to claim
@@ -112,7 +112,7 @@ class MinimumReleaseAgeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_APPROVAL_0004"})
+    @SVCs({"SVC_GW_APPROVAL_0004.1"})
     void re_ingesting_the_same_commit_does_not_restart_the_clock() throws Exception {
         String name = uniqueName("reingest");
         Path upstream = createUpstream(DEFAULT_MANIFEST);
@@ -133,7 +133,7 @@ class MinimumReleaseAgeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_APPROVAL_0004"})
+    @SVCs({"SVC_GW_APPROVAL_0004.2"})
     void rejection_is_never_gated_by_age() throws Exception {
         Registered registered = registerAndIngest(uniqueName("cooloff"), createUpstream(DEFAULT_MANIFEST));
 
@@ -143,7 +143,7 @@ class MinimumReleaseAgeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_APPROVAL_0004"})
+    @SVCs({"SVC_GW_APPROVAL_0004", "SVC_GW_APPROVAL_0004.4"})
     void the_eligibility_endpoint_answers_what_the_gate_will_do() throws Exception {
         Registered registered = registerAndIngest(uniqueName("cooloff"), createUpstream(DEFAULT_MANIFEST));
         long id = registered.snapshot().id();

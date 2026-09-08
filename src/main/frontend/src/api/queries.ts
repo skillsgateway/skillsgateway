@@ -191,7 +191,7 @@ export function useSnapshotVetting(snapshotId: number | null) {
  * has not. The server computes it per request from its own first sighting of the commit, so the
  * portal never has to reason about upstream timestamps — or about its own clock.
  *
- * @Requirements GW_APPROVAL_0004
+ * @Requirements GW_APPROVAL_0004.4
  */
 export function useSnapshotReleaseAge(snapshotId: number | null) {
   return useQuery({

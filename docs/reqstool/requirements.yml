@@ -586,10 +586,60 @@ requirements:
     revision: 0.5.0
 
   - id: GW_APPROVAL_0004
-    title: Minimum release age before approval
+    title: The minimum release age is a self-clearing control anchored to the gateway's own clock
     significance: shall
-    description: The system shall let an operator configure a global minimum age a snapshot must reach before it can be approved, shall measure that age from the instant the gateway itself first ingested the snapshot's commit and never from any timestamp the upstream commit carries, shall keep that instant unchanged when the same commit is ingested again, shall evaluate the age at the instant of each approval request with no scheduled process involved, shall refuse an approval of a snapshot that has not reached the configured age with a conflict naming the configured setting, the snapshot's current age and the time remaining, shall report the same eligibility and remaining time for a snapshot on request so a reviewer sees it before deciding, shall record the snapshot's age on every approval it allows and the refusal on every one it blocks in the append-only ledger, and shall apply no age gate at all when the setting is zero, which is the default.
-    rationale: A compromised release is usually noticed by the wider world within hours of being published, so adopting a commit the moment it lands forfeits the cheapest detection window there is and leaves the push-then-quickly-revert attack unanswered; taking the age from the gateway's own first sighting puts the control out of reach of an attacker who can backdate a commit, and evaluating it per request means the wait clears itself with no scheduler that can be late and no state that can be left behind.
+    description: "The system shall let an operator configure a global minimum age a snapshot must reach before it can be approved, as a control anchored to a clock the gateway alone controls and that needs no scheduled process to enforce or to lift: the answer changes correctly over time from data already recorded, and agrees for every path that consults it — the approval attempt itself, the eligibility report a reviewer reads first, and the ledger entry the decision leaves behind."
+    rationale: "A compromised release is usually noticed by the wider world within hours of being published, so adopting a commit the moment it lands forfeits the cheapest detection window there is. Stating the control as self-clearing and self-consistent, rather than as a list of unrelated behaviours, is what makes it trustworthy: a gate that a report could disagree with, or that needed a scheduler to open, would be a control whose state nobody could be sure of at the moment a reviewer relies on it. Each of the five guarantees below states one part of that trustworthiness that can be verified, and can regress, on its own."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0004.1
+    title: The age is measured from the gateway's own first sighting, immune to backdating and re-ingestion
+    significance: shall
+    description: "The system shall measure a snapshot's age from the instant the gateway itself first ingested the snapshot's commit, never from any timestamp the upstream commit carries, and shall keep that instant unchanged when the same commit is ingested again."
+    rationale: "A committer date is written by whoever made the commit, so an attacker who wants to defeat a cooling-off window would only have to backdate one; taking the age from the gateway's own first sighting puts the control out of that reach. Leaving the instant untouched by re-ingestion is what keeps a re-push from resetting a window that has already nearly cleared."
+    references:
+      requirement_ids: ["GW_APPROVAL_0004"]
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0004.2
+    title: The age is evaluated fresh at each approval request, gates only approval, and a zero setting disables it
+    significance: shall
+    description: "The system shall evaluate a snapshot's age at the instant of each approval request, with no scheduled process involved, shall gate no other decision — rejection in particular is never gated by age — and shall apply no age gate at all when the configured minimum is left at its zero default."
+    rationale: "Evaluating per request rather than on a schedule means the wait clears itself with no scheduler that can be late and no state that can be left behind, the same reasoning waiver expiry follows. Leaving rejection ungated is what keeps the window from ever standing between a reviewer and turning suspicious content away quickly, and the zero default is what makes adopting the setting change nothing for a deployment that never configures it."
+    references:
+      requirement_ids: ["GW_APPROVAL_0004"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0004.3
+    title: An approval below the configured age is refused, naming the setting, the age and the wait remaining
+    significance: shall
+    description: "The system shall refuse an approval of a snapshot that has not reached the configured age, with a conflict naming the configured setting, the snapshot's current age and the time remaining, and the refusal shall precede any state transition so nothing is published."
+    rationale: "A refusal that does not name the setting or the remaining wait teaches a reviewer nothing they can act on; and refusing before any state transition is what keeps a blocked approval from leaving a snapshot half-decided or content half-published behind it."
+    references:
+      requirement_ids: ["GW_APPROVAL_0004"]
+    categories: ["security", "interaction-capability"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0004.4
+    title: The same eligibility and remaining time are reported on request, agreeing with the gate
+    significance: shall
+    description: "The system shall report a snapshot's eligibility and remaining time on request, agreeing exactly with what the approval gate itself would do, so that a reviewer sees the answer before deciding rather than only in a refusal."
+    rationale: "A report that could disagree with the gate would be worse than no report: a reviewer who trusted it would either wait needlessly or attempt an approval doomed to be refused. Deriving both from the same computation is what keeps them unable to drift apart."
+    references:
+      requirement_ids: ["GW_APPROVAL_0004"]
+    categories: ["interaction-capability", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0004.5
+    title: Every approval and every age-refused approval is recorded on the ledger with the snapshot's age
+    significance: shall
+    description: "The system shall record the snapshot's age on every approval the gate allows, and the refusal on every approval it blocks, in the append-only ledger."
+    rationale: "What the cooling-off window was worth for a given snapshot is only reconstructible afterwards if the ledger says how long the commit had been sitting in quarantine when someone adopted it; and a window that turned an approval away silently would make the control itself unauditable — a blocked attempt has to be exactly as visible on the ledger as one that was let through."
+    references:
+      requirement_ids: ["GW_APPROVAL_0004"]
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 

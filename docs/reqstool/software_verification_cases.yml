@@ -726,12 +726,62 @@ cases:
 
   - id: SVC_GW_APPROVAL_0004
     requirement_ids: ["GW_APPROVAL_0004"]
-    title: A snapshot younger than the configured age is unapprovable, on the gateway's own clock
+    title: The eligibility report and the approval gate agree, computed from the same rule
     verification: automated-test
     description: |
-      GIVEN a gateway configured with a non-zero minimum release age, a second gateway left at the zero default, and the eligibility rule evaluated directly at the boundary instant
-      WHEN a snapshot ingested moments ago is approved, one whose first ingestion is older than the configured age is approved, a snapshot pinned to a commit whose committer date is far older than the configured age but ingested moments ago is approved, the same commit is ingested a second time after its first sighting has aged, a rejection and a revoked snapshot's paths are exercised, and the same operations are performed on the gateway left at the default
-      THEN the young snapshot is refused with a conflict naming the setting, its age and the time remaining while nothing is published and the refusal is on the append-only ledger, the aged snapshot is approved with its age on the ledger, the backdated commit is refused exactly as the young one, re-ingestion leaves the first-sighting instant and therefore the eligibility untouched, rejection is never gated by age, the eligibility report agrees with the gate and is eligible exactly at the boundary instant and not one moment before, and on the default gateway every approval succeeds as it did before the setting existed
+      GIVEN a snapshot ingested moments ago under a configured minimum release age
+      WHEN its eligibility is read from the report endpoint, an approval is then attempted, and the snapshot is aged past the window and read again
+      THEN the report and the refusal the approval attempt provokes carry the same eligibility, age and remaining time, and once the window has cleared the report and a real approval agree that it has
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0004.1
+    requirement_ids: ["GW_APPROVAL_0004.1"]
+    title: A backdated commit gains nothing, and re-ingestion does not restart the clock
+    verification: automated-test
+    description: |
+      GIVEN a commit whose own committer date claims to be far older than the configured minimum age, and a snapshot already aged past the window by moving its first-ingested instant back
+      WHEN the backdated commit is ingested and approval is attempted, and the already-aged snapshot's commit is ingested a second time
+      THEN the backdated commit is refused exactly as a genuinely young one, and re-ingestion leaves the first-ingested instant, and therefore the eligibility, untouched
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0004.2
+    requirement_ids: ["GW_APPROVAL_0004.2"]
+    title: Eligibility turns over at the exact boundary instant, rejection is never gated, and zero disables the gate
+    verification: automated-test
+    description: |
+      GIVEN the eligibility rule evaluated directly as a function of the first-ingested instant, the current instant and the configured minimum, a snapshot under a non-zero configured minimum, and a second gateway left at the zero default
+      WHEN the rule is evaluated at exactly the boundary instant and one nanosecond before it, a snapshot is rejected before its window has cleared, and approvals are attempted on the gateway left at the default
+      THEN the snapshot is eligible at exactly first-ingested-plus-minimum and not one moment before, rejection succeeds with no age check at all, and every approval on the default gateway succeeds exactly as it did before the setting existed
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0004.3
+    requirement_ids: ["GW_APPROVAL_0004.3"]
+    title: A young snapshot is refused with a conflict naming the setting, the age and the remaining wait, and nothing is published
+    verification: automated-test
+    description: |
+      GIVEN a snapshot the gateway ingested moments ago under a configured minimum release age
+      WHEN its approval is attempted
+      THEN the attempt is refused with a conflict naming the configured setting, the snapshot's age and the time remaining, the snapshot stays in the held state, and a client cloning the marketplace receives nothing published for it
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0004.4
+    requirement_ids: ["GW_APPROVAL_0004.4"]
+    title: The eligibility report agrees with the gate, and remaining time is rendered as a reviewer reads it
+    verification: automated-test
+    description: |
+      GIVEN a snapshot below the configured minimum age
+      WHEN its eligibility is read from the report endpoint before and after the window clears, and the remaining duration is formatted for display
+      THEN the report shows ineligible with the same remaining seconds an approval attempt's refusal would carry, shows eligible with zero remaining once the window clears, and coarse durations render the way a reviewer reads them (`2d 4h`, `45m`, `30s`)
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0004.5
+    requirement_ids: ["GW_APPROVAL_0004.5"]
+    title: Every approval and every age-refused approval leaves its age or the refusal on the ledger
+    verification: automated-test
+    description: |
+      GIVEN a snapshot that is refused for being too young, and a second snapshot aged past the window
+      WHEN the refusal is provoked and the second snapshot is approved
+      THEN the refusal is on the append-only ledger naming the minimum-release-age control and the time remaining, and the approval's ledger entry carries the snapshot's ingestion age
     revision: "0.1.0"
 
   # SVC_GW_0074 is deliberately unused — see the matching note on GW_0074 in

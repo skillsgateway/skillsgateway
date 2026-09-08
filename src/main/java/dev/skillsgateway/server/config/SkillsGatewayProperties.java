@@ -753,10 +753,11 @@ public record SkillsGatewayProperties(
      *     how promptly the lapse is announced.
      * @param waiverSweepBatchSize how many lapsed waivers one sweep pass records
      * @param minimumReleaseAge the cooling-off window a snapshot must clear before it can be
-     *     approved (GW_APPROVAL_0004), measured from the instant the gateway first ingested its commit.
-     *     Zero — the default — disables the gate entirely, so an upgrade changes nothing. Like
-     *     waiver expiry this is a comparison made per approval request, not a scheduled state, so
-     *     the wait clears itself and no sweep can be late.
+     *     approved (GW_APPROVAL_0004.1), measured from the instant the gateway first ingested its
+     *     commit. Zero — the default — disables the gate entirely, so an upgrade changes nothing
+     *     (GW_APPROVAL_0004.2). Like waiver expiry this is a comparison made per approval request,
+     *     not a scheduled state, so the wait clears itself and no sweep can be late
+     *     (GW_APPROVAL_0004.2).
      * @param revet continuous re-vetting of approved content (GW_VETTING_0012-GW_VETTING_0017)
      * @param license the org-level license policy (GW_VETTING_0020)
      * @param conformance the posture of the built-in SKILL.md conformance connector (GW_INGEST_0028)

@@ -9,7 +9,7 @@ import java.time.Instant;
 import org.springframework.stereotype.Component;
 
 /**
- * The cooling-off window before a snapshot can be approved (GW_APPROVAL_0004): an operator-configured
+ * The cooling-off window before a snapshot can be approved (GW_APPROVAL_0004.1): an operator-configured
  * minimum age, measured from the instant the gateway <em>itself</em> first ingested the snapshot's
  * commit.
  *
@@ -47,7 +47,7 @@ public class ReleaseAgeGate {
      * current instant on every call: nothing is cached, so the answer changes on its own the moment
      * the window elapses.
      */
-    @Requirements({"GW_APPROVAL_0004"})
+    @Requirements({"GW_APPROVAL_0004.1"})
     public Eligibility evaluate(Snapshot snapshot) {
         return evaluate(snapshot.id(), snapshot.createdAt(), Instant.now(), minimum);
     }
@@ -56,8 +56,10 @@ public class ReleaseAgeGate {
      * The rule itself, as a function of its three inputs so the boundary can be verified exactly
      * rather than raced against a real clock. A snapshot is eligible when its age has
      * <em>reached</em> the minimum: at {@code firstIngestedAt + minimum} it may be approved, one
-     * nanosecond earlier it may not.
+     * nanosecond earlier it may not (GW_APPROVAL_0004.2). A zero minimum turns the gate off entirely
+     * (GW_APPROVAL_0004.2).
      */
+    @Requirements({"GW_APPROVAL_0004.2"})
     static Eligibility evaluate(long snapshotId, Instant firstIngestedAt, Instant now, Duration minimum) {
         boolean off = minimum.isZero() || minimum.isNegative();
         Duration age = Duration.between(firstIngestedAt, now);
@@ -80,7 +82,7 @@ public class ReleaseAgeGate {
      *
      * @return the age the snapshot had when the gate let it through, for the ledger
      */
-    @Requirements({"GW_APPROVAL_0004"})
+    @Requirements({"GW_APPROVAL_0004.3"})
     public Duration require(Snapshot snapshot) {
         Eligibility eligibility = evaluate(snapshot);
         if (!eligibility.eligible()) {
