@@ -2089,6 +2089,12 @@ carries, not by what it asks for.</p>
 <p><code>/docs</code> renders the OpenAPI document at <code>/v3/api-docs</code>. Both are behind the
 OIDC login. These pages describe the same surface with the surrounding
 reasoning.</p>
+<p>The document describes more than the paths the gateway answers on. Its
+top-level <code>webhooks</code> object describes the deliveries the gateway <em>sends</em> —
+one entry per <a href="../../guides/lifecycle-webhooks/">lifecycle event</a>, with its
+transport headers and body schema — so a receiver is written against the same
+contract, and against the same
+<a href="../compatibility/#the-api-contract">additive promise</a>, as a client.</p>
 </div>
 <h2 id="conventions">Conventions<a class="headerlink" href="#conventions" title="Permanent link">&para;</a></h2>
 <p><strong>Authentication.</strong> Every <code>/api/**</code> endpoint is reached by exactly one of two

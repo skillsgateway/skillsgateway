@@ -1063,6 +1063,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="2. Handle the delivery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-shape-is-published-and-it-only-grows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The shape is published, and it only grows
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2144,6 +2161,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="2. Handle the delivery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-shape-is-published-and-it-only-grows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The shape is published, and it only grows
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2389,6 +2423,30 @@ deleting the subscriber and registering it again.</p>
 </code></pre></div>
 <p><code>state</code> is the snapshot state <em>after</em> the event, and <code>actor</code> is the principal
 that performed the admin action.</p>
+<h3 id="the-shape-is-published-and-it-only-grows">The shape is published, and it only grows<a class="headerlink" href="#the-shape-is-published-and-it-only-grows" title="Permanent link">&para;</a></h3>
+<p>Every delivery above is described in the gateway's own OpenAPI document, under
+its top-level <code>webhooks</code> object — one entry per event, carrying the four headers
+and the body schema, rendered alongside the REST surface in the
+<a href="../../reference/api/">API reference</a>. <code>GET /api/webhooks/events</code> serves the
+same vocabulary with a worked example of each body, so a receiver can be
+generated or hand-written against the contract rather than against a sample
+somebody pasted into a ticket.</p>
+<p>Those descriptions are generated from the registry and the types the dispatcher
+actually sends, so they cannot drift from what arrives.</p>
+<p>What you may rely on, and what you must not:</p>
+<ul>
+<li><strong>Every field shown above is always present.</strong> The schema marks them required.</li>
+<li><strong>Fields are only ever added</strong>, and an added field is added <em>optional</em> — a
+  receiver written today keeps working, and a receiver cannot assume a field that
+  only exists from some release onward. Parse permissively: ignore keys you do
+  not recognise.</li>
+<li><strong>Removing or renaming an event, a field or a header is a breaking change</strong>,
+  refused by the same gate that guards <code>/api/**</code> unless it is declared. See
+  <a href="../../reference/compatibility/#the-api-contract">Compatibility</a>.</li>
+<li><strong>The signature scheme is not in the document.</strong> A schema can say the header
+  exists and constrain its shape; how the HMAC is computed and compared is
+  written out below, and that is where it stays.</li>
+</ul>
 <h2 id="3-verify-the-signature">3. Verify the signature<a class="headerlink" href="#3-verify-the-signature" title="Permanent link">&para;</a></h2>
 <p>Compute the HMAC over the raw request body — the bytes as received, before any
 JSON parsing or re-serialization. The payload is serialized once when the event
