@@ -2,8 +2,8 @@
 
 One fresh run of every gate after the last code edit.
 
-Commit under test: `f1d1ddef4e61f28dbc685b24441c3cfe0167f41c`
-Branch: `test/scheduled-interval-agreement` (on top of `feat/sweep-lease-coordination`)
+Commit under test: `f7f81db` (rebased onto main after GW_FACADE_0030 merged as #341; tree unchanged, gates re-run)
+Branch: `test/scheduled-interval-agreement`
 
 ## Gates
 
