@@ -14,8 +14,11 @@ turns that into delegated administration: named **admins**, per-marketplace
 
 Roles compose upward — an admin can do everything an approver or auditor can.
 Every session, role or not, keeps the browsing surface (marketplaces, the
-catalog, snapshot contents, provenance, vetting results, waiver lists) and its
-own [access tokens](../reference/api/tokens.md).
+catalog, a snapshot's content inventory, provenance, licenses, vetting results,
+four-eyes eligibility, waiver lists) and its own
+[access tokens](../reference/api/tokens.md). Reading the pinned files
+themselves — the preview panes — and the blast-radius report is not browsing:
+those take the approver's standing, listed above.
 
 Enforcement lives at the REST API, which is what the portal speaks. The
 [git facade](../reference/git-facade.md) is untouched: its authorization is
