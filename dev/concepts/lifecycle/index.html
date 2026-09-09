@@ -2625,6 +2625,13 @@ let an approval through is written to the ledger.</p>
 fetches the pinned <code>refs/snapshots/{sha}</code> from quarantine into the published
 repository and force-updates <code>refs/heads/main</code> to that exact SHA. Rejection
 marks the snapshot <code>rejected</code> and touches no repository at all.</p>
+<p>The decision is recorded first and published second, so a failure between the
+two is possible: a publication that cannot be made fails the approval and puts
+the decision back, and if <em>that</em> also fails the row says <code>approved</code> while
+nothing is served. The next start compares what the database records as approved
+against what storage is serving and republishes the difference, before the
+facade accepts a request — see
+<a href="../../guides/approving-snapshots/#when-the-repair-fails-too">When the repair fails too</a>.</p>
 <pre class="mermaid"><code>sequenceDiagram
     actor Rev as Reviewer (OIDC session)
     participant API as AdminController

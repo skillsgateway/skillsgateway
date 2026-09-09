@@ -2631,8 +2631,12 @@ again, not to reconcile a half-migrated estate.</p>
 <a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="nt">persistence</span><span class="p">:</span>
 <a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">  </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ephemeral</span><span class="w">   </span><span class="c1"># the local pack cache; or `none` to keep no volume at all</span>
 </code></pre></div>
-<p>Then scale back up and check the served estate against what the database records
-as approved.</p>
+<p>Then scale back up. The gateway itself compares the served estate against what
+the database records as approved before it serves its first request, so a
+migration that lost a reference shows up as <code>publication-repaired</code> on the ledger
+and one serving something no approval covers as
+<code>publication-served-not-approved</code> — on a clean copy, neither appears. See
+<a href="../approving-snapshots/#when-the-repair-fails-too">When the repair fails too</a>.</p>
 <h3 id="rolling-back">Rolling back<a class="headerlink" href="#rolling-back" title="Permanent link">&para;</a></h3>
 <p>Switch <code>storage.backend</code> back to <code>filesystem</code> and scale up. Nothing wrote to the
 volume while the gateway was on the bucket, so the previous state returns

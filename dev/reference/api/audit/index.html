@@ -2345,7 +2345,7 @@ polling, batch payload, signature, replay — is in
 </tr>
 <tr>
 <td><code>system</code></td>
-<td><code>config-reconciler</code>, <code>scheduler</code>, <code>webhook</code>, <code>revet-policy</code>, <code>catalog-builder</code> or <code>system</code></td>
+<td><code>config-reconciler</code>, <code>scheduler</code>, <code>webhook</code>, <code>revet-policy</code>, <code>catalog-builder</code>, <code>publication-reconciler</code> or <code>system</code></td>
 <td>the gateway acting on its own</td>
 </tr>
 </tbody>
@@ -2530,6 +2530,31 @@ records <code>revet-policy</code> as the principal; an on-demand run records the
 <td><code>snapshot-unpublish-failed</code></td>
 <td>A revoked snapshot's refs could not be removed.</td>
 <td>The failure. <strong>Needs a person</strong>: the record and the wire disagree.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>From publication reconciliation</strong> — at startup, before the web surface serves
+its first request, recorded with <code>publication-reconciler</code> as the principal and
+the affected marketplace as the marketplace. See
+<a href="../../../guides/approving-snapshots/#when-the-repair-fails-too">When the repair fails too</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>When</th>
+<th><code>detail</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>publication-repaired</code></td>
+<td>A snapshot the database records as approved was not being served, and was republished.</td>
+<td>The snapshot's SHA.</td>
+</tr>
+<tr>
+<td><code>publication-served-not-approved</code></td>
+<td>A ref is served for a snapshot the database does not record as approved. Nothing is retracted. <strong>Needs a person</strong>: the record and the wire disagree.</td>
+<td>The SHA being served.</td>
 </tr>
 </tbody>
 </table>
