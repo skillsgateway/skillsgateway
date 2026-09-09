@@ -2132,18 +2132,40 @@ mode.</p>
 <p><strong>Unauthenticated requests</strong> to <code>/api/**</code> receive a clean <strong>401</strong>, not a 302 to
 the identity provider, so an expired session surfaces as an error rather than an
 HTML login page rendered into a <code>fetch()</code>.</p>
-<p><strong>CSRF</strong> is enabled for the web surface but disabled for <code>/api/**</code>, which is
-consumed by the portal with a session cookie. The machine path earns its own
-exemption the way the git facade does and does not borrow the session path's: it
-is stateless, creates no session, honours no cookie and refuses a request that
-carries one, so every request there authenticates itself.</p>
+<p><strong>CSRF.</strong> The session path carries a token. Every response sets an <code>XSRF-TOKEN</code>
+cookie readable by script, and a state-changing request must echo it in an
+<code>X-XSRF-TOKEN</code> header or receive <strong>403</strong>: a session cookie on its own does not
+authorise a mutation. The portal's fetch wrapper sends it on every call, so a
+portal user does nothing differently. One consequence worth knowing before you
+meet it: the Scalar reference at <code>/docs</code> sends its requests from the browser
+without that header, so a mutation tried from there is refused even though a
+read from there works. Why the session path needs a token at all is in
+<a href="../../concepts/trust-boundaries/#the-web-surface">Trust boundaries</a>.</p>
+<p>The machine path carries no token and needs none. It earns that the way the git
+facade does rather than borrowing the session path's: it is stateless, creates
+no session, honours no cookie and refuses a request that carries one, so every
+request there authenticates itself.</p>
+<div class="admonition note">
+<p class="admonition-title">Driving the session path from a script</p>
+<p>The <code>curl</code> examples in these pages show the path and the body, not the
+credential. Reads are unaffected; a mutation needs the cookie jar and the
+header, and that holds under <code>skills-gateway.dev-insecure-auth=true</code> too —
+the hatch opens authentication, not this.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-sS<span class="w"> </span>-c<span class="w"> </span>jar<span class="w"> </span>-b<span class="w"> </span>jar<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>localhost:8080/api/marketplaces
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">$ </span>curl<span class="w"> </span>-sS<span class="w"> </span>-c<span class="w"> </span>jar<span class="w"> </span>-b<span class="w"> </span>jar<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/1/approve<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-H<span class="w"> </span><span class="s2">"X-XSRF-TOKEN: </span><span class="k">$(</span>grep<span class="w"> </span>XSRF-TOKEN<span class="w"> </span>jar<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-f7<span class="k">)</span><span class="s2">"</span>
+</code></pre></div>
+<p>A pipeline should use a
+<a href="tokens/#machine-api-credentials">machine API credential</a> instead, which
+needs neither the jar nor the header.</p>
+</div>
 <p><strong>Compatibility.</strong> Within a major, this surface only grows; a breaking change
 moves the path prefix and ships as a major. See
 <a href="../compatibility/#the-api-contract">The API contract</a> for what counts as
 breaking and how it is enforced.</p>
 <p><strong>Errors</strong> are RFC 7807 <code>ProblemDetail</code> documents:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="s2">"about:blank"</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Bad Request"</span><span class="p">,</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">400</span><span class="p">,</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"url scheme must be one of [http, https]"</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="s2">"about:blank"</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Bad Request"</span><span class="p">,</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">400</span><span class="p">,</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"url scheme must be one of [http, https]"</span><span class="p">}</span>
 </code></pre></div>
 <p><strong>Status codes</strong> used across the API:</p>
 <table>
@@ -2232,10 +2254,10 @@ breaking and how it is enforced.</p>
 enabled, the session's effective roles with the <strong>source</strong> of each, and whether
 the identity provider truncated the membership claim. The portal uses it for
 the sidebar footer and, with roles, to adapt its controls.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"username"</span><span class="p">:</span><span class="w"> </span><span class="s2">"alice@example.com"</span><span class="p">,</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"roles"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"approver"</span><span class="p">,</span><span class="w"> </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="w"> </span><span class="s2">"acme"</span><span class="p">,</span><span class="w"> </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"grant"</span><span class="p">},</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">           </span><span class="p">{</span><span class="nt">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"auditor"</span><span class="p">,</span><span class="w"> </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"claim"</span><span class="p">}],</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w"> </span><span class="nt">"claimsTruncated"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span><span class="nt">"username"</span><span class="p">:</span><span class="w"> </span><span class="s2">"alice@example.com"</span><span class="p">,</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w"> </span><span class="nt">"roles"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"approver"</span><span class="p">,</span><span class="w"> </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="w"> </span><span class="s2">"acme"</span><span class="p">,</span><span class="w"> </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"grant"</span><span class="p">},</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">           </span><span class="p">{</span><span class="nt">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"auditor"</span><span class="p">,</span><span class="w"> </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"claim"</span><span class="p">}],</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w"> </span><span class="nt">"claimsTruncated"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">}</span>
 </code></pre></div>
 <table>
 <thead>

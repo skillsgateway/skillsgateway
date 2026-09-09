@@ -2246,7 +2246,8 @@ waiver and in the audit ledger.</p>
 <ul>
 <li>A snapshot whose vetting outcome is blocked. <code>GET /api/snapshots/{id}/vetting</code>
   shows the verdicts, or open the approve dialog in the portal.</li>
-<li>A portal session, or a session cookie for the API.</li>
+<li>A portal session, or — for the API — a session cookie and the CSRF token that
+  goes with it (<a href="../../reference/api/#conventions">REST API</a>).</li>
 </ul>
 <h2 id="1-find-out-exactly-what-is-blocking">1. Find out exactly what is blocking<a class="headerlink" href="#1-find-out-exactly-what-is-blocking" title="Permanent link">&para;</a></h2>
 <p>Ask for the approval and read the refusal — it lists the work:</p>

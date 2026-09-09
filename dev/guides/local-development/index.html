@@ -2597,6 +2597,10 @@ is then what appears in every audit entry. The application logs a loud
 warning at startup.</p>
 <p>It does <strong>not</strong> affect the git facade: <code>/git/**</code> still requires a valid
 personal access token.</p>
+<p>It does not affect the CSRF token either — it opens authentication, not
+forgery protection — so a mutation driven by <code>curl</code> still needs the
+<code>X-XSRF-TOKEN</code> header. See
+<a href="../../reference/api/#conventions">REST API</a>.</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">It refuses to start once an identity provider is configured</p>
