@@ -58,7 +58,7 @@ class ObjectStoreObservabilityTests {
         String competing = SNAPSHOT_PREFIX + "c".repeat(40);
         ObjectStoreGitStorage storage = new ObjectStoreGitStorage(
                 new RacingObjectStoreClient(store, competing, 1),
-                ObjectStoreTestSupport.properties(prefix, Duration.ZERO, Duration.ofHours(1)),
+                ObjectStoreTestSupport.properties(prefix, Duration.ofHours(1)),
                 statistics);
 
         // One conflict, deliberately provoked by a disjoint writer slipping in ahead of the
@@ -70,7 +70,7 @@ class ObjectStoreObservabilityTests {
         // Then compaction and a second transition through an unobstructed store, on the same
         // counters: the levels are what a maintenance pass leaves behind, not what a double does.
         ObjectStoreGitStorage plain = new ObjectStoreGitStorage(
-                store, ObjectStoreTestSupport.properties(prefix, Duration.ZERO, Duration.ofHours(1)), statistics);
+                store, ObjectStoreTestSupport.properties(prefix, Duration.ofHours(1)), statistics);
         String compacted = marketplace();
         long walBeforeCompaction;
         try (Repository published = plain.published(compacted)) {
@@ -152,7 +152,7 @@ class ObjectStoreObservabilityTests {
         ObjectStoreStatistics statistics = new ObjectStoreStatistics();
         ObjectStoreClient store = new MeteredObjectStoreClient(ObjectStoreTestSupport.client(), meters);
         ObjectStoreGitStorage storage = new ObjectStoreGitStorage(
-                store, ObjectStoreTestSupport.properties(prefix, Duration.ZERO, Duration.ofHours(1)), statistics);
+                store, ObjectStoreTestSupport.properties(prefix, Duration.ofHours(1)), statistics);
         try (Repository published = storage.published(marketplace)) {
             setRef(published, MAIN, commit(published, "approved"));
         }
@@ -174,8 +174,7 @@ class ObjectStoreObservabilityTests {
     @SVCs({"SVC_GW_FACADE_0012"})
     void theHealthIndicatorReportsTheObjectStoreBackend() throws Exception {
         String prefix = ObjectStoreTestSupport.isolatedPrefix("health");
-        SkillsGatewayProperties properties =
-                ObjectStoreTestSupport.properties(prefix, Duration.ZERO, Duration.ofHours(1));
+        SkillsGatewayProperties properties = ObjectStoreTestSupport.properties(prefix, Duration.ofHours(1));
         ObjectStoreGitStorage storage =
                 new ObjectStoreGitStorage(ObjectStoreTestSupport.client(), properties, new ObjectStoreStatistics());
         storage.probe();
@@ -199,8 +198,7 @@ class ObjectStoreObservabilityTests {
     @SVCs({"SVC_GW_FACADE_0012"})
     void anUnreachableStoreIsReportedDown() throws Exception {
         String prefix = ObjectStoreTestSupport.isolatedPrefix("unreachable");
-        SkillsGatewayProperties properties =
-                ObjectStoreTestSupport.properties(prefix, Duration.ZERO, Duration.ofHours(1));
+        SkillsGatewayProperties properties = ObjectStoreTestSupport.properties(prefix, Duration.ofHours(1));
         ObjectStoreGitStorage storage =
                 new ObjectStoreGitStorage(new UnreachableObjectStoreClient(), properties, new ObjectStoreStatistics());
 

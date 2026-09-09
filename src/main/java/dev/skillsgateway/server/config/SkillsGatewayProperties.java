@@ -419,7 +419,7 @@ public record SkillsGatewayProperties(
                 credentials = new Credentials(null, null, null, null, null);
             }
             if (cache == null) {
-                cache = new Cache(null, null, null, null, null, null);
+                cache = new Cache(null, null, null, null, null);
             }
             if (connectionMaxIdleTime == null || connectionMaxIdleTime.isNegative()) {
                 connectionMaxIdleTime = Duration.ofSeconds(20);
@@ -471,26 +471,19 @@ public record SkillsGatewayProperties(
      *
      * <p>Nothing in either cache is authoritative: packs are immutable and content-named, so a
      * cached pack is never stale and deleting the whole cache at any moment is always safe. Only
-     * the manifest is re-read — and {@code refFreshness} is how long a replica may keep serving a
-     * ref map it has already read, which on the revocation path is a trust-boundary property and
-     * not a tuning knob. Zero, the default, means every reference advertisement is preceded by a
-     * conditional {@code GET} of the manifest, so the bound is "the next advertisement".
+     * the manifest is re-read, and how long a replica may keep serving a ref map it has already
+     * read <b>is not settable</b>: it is a trust-boundary property on the revocation path, not a
+     * tuning knob, and every reference advertisement is preceded by a conditional {@code GET} of
+     * the manifest. The bound is "the next advertisement" and nothing can lengthen it.
      *
      * @param dir where cached packs live; null puts them under {@code data-dir/object-store-cache}
      * @param maxBytes cache budget; the least recently used cached packs are evicted past it
      * @param blockCacheBytes size of JGit's in-process DFS block cache
      * @param blockSizeBytes DFS block size
-     * @param refFreshness how long a read ref map may be reused before the manifest is re-checked
      * @param packGrace how long a pack no manifest references any more is kept before deletion,
      *     so a replica part-way through streaming it does not get a 404 mid-fetch
      */
-    public record Cache(
-            Path dir,
-            Long maxBytes,
-            Long blockCacheBytes,
-            Integer blockSizeBytes,
-            Duration refFreshness,
-            Duration packGrace) {
+    public record Cache(Path dir, Long maxBytes, Long blockCacheBytes, Integer blockSizeBytes, Duration packGrace) {
 
         public Cache {
             if (maxBytes == null || maxBytes <= 0) {
@@ -501,9 +494,6 @@ public record SkillsGatewayProperties(
             }
             if (blockSizeBytes == null || blockSizeBytes <= 0) {
                 blockSizeBytes = 64 * 1024;
-            }
-            if (refFreshness == null || refFreshness.isNegative()) {
-                refFreshness = Duration.ZERO;
             }
             if (packGrace == null || packGrace.isNegative()) {
                 packGrace = Duration.ofHours(1);

@@ -32,15 +32,16 @@ class ConfigSurfaceBudgetTests {
     /**
      * The number of settable leaves the gateway is allowed to offer.
      *
-     * <p><b>105, measured.</b> The assessment that asked for this test counted 127 by hand; that
+     * <p><b>104, measured.</b> The assessment that asked for this test counted 127 by hand; that
      * figure does not reproduce, and the discrepancy is the argument for the test rather than a
      * detail to reconcile — a surface nobody can count twice the same way is a surface nobody is
      * deciding the size of. All 105 are documented in the configuration reference, checked leaf by
-     * leaf against its tables when this was written.
+     * leaf against its tables when this was written; it was 105 then, and removing
+     * {@code storage.object-store.cache.ref-freshness} is what took it to 104.
      *
      * <p>The cuts the assessment proposed are separate changes, and each one lowers this number.
      */
-    private static final int BUDGET = 105;
+    private static final int BUDGET = 104;
 
     /** Where the measured breakdown is written, so a run's numbers survive for a PR body. */
     private static final Path REPORT = Path.of("target", "config-surface.txt");

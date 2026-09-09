@@ -141,10 +141,6 @@ skills-gateway:
         max-bytes: 2147483648
         block-size-bytes: 65536
         block-cache-bytes: 268435456
-        # How long a replica may keep serving a reference map it has not
-        # re-read. This is the upper bound on how long a revoked snapshot can
-        # still be advertised by a replica that did not do the revoking.
-        ref-freshness: 10s
         # How long a pack nothing references is kept before its objects are
         # deleted, so a fetch already streaming from it is not cut off.
         pack-grace: 1h
@@ -178,12 +174,31 @@ skills-gateway:
 | `skills-gateway.storage.object-store.cache.max-bytes` | bytes | `2 GiB` | Bound on the on-disk pack cache. |
 | `skills-gateway.storage.object-store.cache.block-size-bytes` | bytes | `64 KiB` | JGit `DfsBlockCache` block size. |
 | `skills-gateway.storage.object-store.cache.block-cache-bytes` | bytes | `256 MiB` | JGit `DfsBlockCache` size. |
-| `skills-gateway.storage.object-store.cache.ref-freshness` | duration | `10s` | Upper bound on cross-replica revocation latency. |
 | `skills-gateway.storage.object-store.cache.pack-grace` | duration | `1h` | Grace before an unreferenced pack's objects are deleted. |
 | `skills-gateway.storage.object-store.connection-max-idle-time` | duration | `20s` | Keep below the store's idle timeout. |
 | `skills-gateway.storage.object-store.connection-time-to-live` | duration | `1m` | Upper bound on a pooled connection's life. |
 | `skills-gateway.storage.migration.enabled` | boolean | `false` | Makes this start a migration instead of a service. |
 | `skills-gateway.storage.migration.to` | `filesystem` \| `object-store` | — | Required when enabled; must differ from `backend`. |
+
+!!! warning "`…cache.ref-freshness` was removed, and setting it refuses startup"
+
+    It set how long a replica could keep serving a reference map it had already
+    read — in effect, how long a revoked snapshot could still be advertised by
+    a replica that did not perform the revocation. That is a property of the
+    revocation path rather than a tuning dial, so it is no longer settable:
+    every reference advertisement is preceded by a conditional `GET` of the
+    repository manifest, and the bound is the next advertisement.
+
+    It is **refused rather than ignored** for the same reason
+    `skills-gateway.roles.enabled` is. A deployment that set it was asking for
+    a longer bound; ignoring it would shorten the bound silently, which is the
+    right behaviour arrived at by the wrong route — the operator would still
+    believe the value they wrote was in force.
+
+    Remove the property. What you get without it is what the default already
+    gave you: it defaulted to zero, and the documented `10s` default recorded
+    here until this change never existed in the code. The refusal is a
+    migration aid and is scheduled for removal at the next major version.
 
 ### Credential modes
 

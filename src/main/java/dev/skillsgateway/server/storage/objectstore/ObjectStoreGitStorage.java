@@ -238,12 +238,7 @@ public final class ObjectStoreGitStorage implements GitStorage, AutoCloseable {
 
     private ManifestStore manifests(Role role, String marketplace) {
         String repositoryPrefix = repositoryPrefix(role, marketplace);
-        return new ManifestStore(
-                store,
-                repositoryPrefix + "manifest",
-                repositoryPrefix + "wal/",
-                cacheSettings.refFreshness(),
-                statistics);
+        return new ManifestStore(store, repositoryPrefix + "manifest", repositoryPrefix + "wal/", statistics);
     }
 
     String repositoryPrefix(Role role, String marketplace) {

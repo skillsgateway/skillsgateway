@@ -80,11 +80,10 @@ public final class ObjectStoreTestSupport {
      * Properties selecting the object-store backend on the shared bucket under {@code prefix},
      * with a local cache of its own so one suite's cache cannot answer another's read.
      */
-    public static SkillsGatewayProperties properties(String prefix, Duration refFreshness, Duration packGrace)
-            throws IOException {
+    public static SkillsGatewayProperties properties(String prefix, Duration packGrace) throws IOException {
         Path data = Files.createTempDirectory(Files.createDirectories(Path.of("target", "object-store")), "backend-");
         SkillsGatewayProperties.Cache cache =
-                new SkillsGatewayProperties.Cache(data.resolve("cache"), null, null, null, refFreshness, packGrace);
+                new SkillsGatewayProperties.Cache(data.resolve("cache"), null, null, null, packGrace);
         SkillsGatewayProperties.ObjectStore objectStore =
                 new SkillsGatewayProperties.ObjectStore(null, "eu-north-1", BUCKET, prefix, null, cache, null, null);
         SkillsGatewayProperties.Storage storage = new SkillsGatewayProperties.Storage(
@@ -96,14 +95,13 @@ public final class ObjectStoreTestSupport {
 
     /** A backend on the shared bucket, under its own prefix, reading through {@code client}. */
     public static ObjectStoreGitStorage storage(ObjectStoreClient client, String prefix) throws IOException {
-        return storage(client, prefix, Duration.ZERO, Duration.ofHours(1));
+        return storage(client, prefix, Duration.ofHours(1));
     }
 
-    /** As {@link #storage(ObjectStoreClient, String)}, with the two bounds stated explicitly. */
-    public static ObjectStoreGitStorage storage(
-            ObjectStoreClient client, String prefix, Duration refFreshness, Duration packGrace) throws IOException {
-        return new ObjectStoreGitStorage(
-                client, properties(prefix, refFreshness, packGrace), new ObjectStoreStatistics());
+    /** As {@link #storage(ObjectStoreClient, String)}, with the pack grace stated explicitly. */
+    public static ObjectStoreGitStorage storage(ObjectStoreClient client, String prefix, Duration packGrace)
+            throws IOException {
+        return new ObjectStoreGitStorage(client, properties(prefix, packGrace), new ObjectStoreStatistics());
     }
 
     /** A bucket that exists, created once and shared; the store is handed over running, not set up. */

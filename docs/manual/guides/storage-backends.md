@@ -222,12 +222,18 @@ about it. Scaling out means moving to `object-store` first.
     be approved again. See
     [Approving snapshots](approving-snapshots.md#when-an-approval-fails).
 
-!!! note "Revocation is not instantaneous across replicas"
+!!! note "Revocation takes effect on the next advertisement, on every replica"
 
-    A replica serves the reference map it last read. `ref-freshness` (10 s by
-    default) is the upper bound on how long a replica that did not perform a
-    revocation may still advertise the revoked snapshot. Lower it if that
-    matters more than the extra conditional `GET` per advertisement.
+    A replica caches the reference map it last read, so a revocation performed
+    elsewhere would otherwise stay invisible to it. Every reference
+    advertisement is therefore preceded by a conditional `GET` of the
+    repository manifest — `O(1)`, and no body when nothing has changed — which
+    makes the bound on how long a revoked snapshot stays advertised "the next
+    advertisement".
+
+    There is no setting for this. `ref-freshness` used to let an operator
+    lengthen that bound; it was removed, and setting it now refuses startup —
+    see [Configuration](../reference/configuration.md).
 
 ## Migrating an existing deployment
 
