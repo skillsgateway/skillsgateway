@@ -2342,7 +2342,7 @@ the mirror on is in
 <td><code>skills_gateway.mirror.stale_refs</code></td>
 <td>gauge</td>
 <td>—</td>
-<td>References the mirror still holds that the facade no longer serves. <strong>Alert on this</strong>: in the ordinary case they are a snapshot the gateway revoked, so a value above zero outstaying one <code>sweep-interval</code> means the mirror is showing content the gateway has withdrawn.</td>
+<td>References the mirror still holds that the facade no longer serves. <strong>Alert on this</strong>: in the ordinary case they are a snapshot the gateway revoked, so a value above zero outstaying one <code>sweep-interval</code> means the mirror is showing content the gateway has withdrawn. The bound is the same on a scaled-out deployment — the reconciliation pass takes a lease and so runs once per interval across the estate, not once per replica — but the replica that ran it varies from tick to tick.</td>
 </tr>
 <tr>
 <td><code>skills_gateway.mirror.missing_refs</code></td>
@@ -2376,6 +2376,12 @@ the mirror on is in
 </tr>
 </tbody>
 </table>
+<p>On a scaled-out deployment these gauges are written by whichever replica took
+the reconciliation lease for that tick, and each replica reports what it last
+wrote itself — so scrape every replica and read the freshest, rather than
+picking one and trusting it. Which replica ran a given pass is answerable from
+the <code>holder</code> column on its lease row in the database; no metric reports it. See
+<a href="../../guides/storage-backends/#running-more-than-one-replica">Running more than one replica</a>.</p>
 <p>Read <code>stale_refs</code> and <code>seconds_since_success</code> together, always. The counts are
 written by reconciliations and by the drift report, never computed when a
 monitoring system scrapes — a gauge that contacted a code host on read would put

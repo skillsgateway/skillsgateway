@@ -2600,13 +2600,15 @@ approved, so the volume and the database are one estate: a gateway that restarts
 onto an empty <code>/data</code> still reports its snapshots as published and can serve
 none of them. Give it storage that outlives the container.</p>
 <p>It also means <strong>exactly one instance</strong>. The filesystem backend has no
-cross-process locking, and the background schedulers are not cluster-aware. Two
-processes on one volume is not a supported configuration, and a rolling deploy
-that overlaps old and new is two processes. Configure your platform for
-stop-then-start rather than an overlapping replacement.</p>
+cross-process locking, so two processes on one volume can interleave a fetch and
+a publish into a corrupt repository. That is not a supported configuration, and
+a rolling deploy that overlaps old and new is two processes. Configure your
+platform for stop-then-start rather than an overlapping replacement.</p>
 <p>Running more than one instance means the <code>object-store</code> backend — see
-<a href="../storage-backends/">Choosing and migrating the storage backend</a>, which also
-covers the background singletons that must be switched off first.</p>
+<a href="../storage-backends/">Choosing and migrating the storage backend</a>. Nothing else
+has to be turned off to do it: the scheduled background passes coordinate
+themselves, each taking a lease so that it runs once per interval across the
+whole estate rather than once per instance.</p>
 <h3 id="a-writable-tmp-if-you-seal-the-root-filesystem">A writable <code>/tmp</code>, if you seal the root filesystem<a class="headerlink" href="#a-writable-tmp-if-you-seal-the-root-filesystem" title="Permanent link">&para;</a></h3>
 <p>Sealing the container's root filesystem is worth doing, and this image is built
 for it — but the application still needs <strong>one writable scratch directory</strong>.

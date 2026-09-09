@@ -2595,10 +2595,10 @@ render <code>replicaCount &gt; 1</code> there rather than trusting you to know t
 <p>Keep <code>replicaCount: 1</code>. A rolling update briefly runs two pods, so prefer the
 <code>Recreate</code> strategy — or accept a moment's overlap — on volumes that allow only
 one writer anyway.</p>
-<p>On the <code>object-store</code> backend concurrent writers are safe by construction, and
-more than one replica becomes possible — but only with the gateway's
-uncoordinated background sweeps and pollers switched off on the scaled-out
-deployment, which the chart also checks. See
+<p>On the <code>object-store</code> backend concurrent writers are safe by construction and
+more than one replica is supported as it renders: the scheduled background
+passes take a lease apiece, so each one still runs once per interval however
+many replicas there are. See
 <a href="../storage-backends/#running-more-than-one-replica">Running more than one replica</a>.</p>
 <h2 id="ingress-and-tls">Ingress and TLS<a class="headerlink" href="#ingress-and-tls" title="Permanent link">&para;</a></h2>
 <p>The Ingress is off by default:</p>
@@ -2709,9 +2709,10 @@ the pod does, which is what the worked example below creates by hand.</p>
   Expect clone and repack times in multiples, not percentages.</li>
 <li><strong>RWX does not enforce the single-writer assumption.</strong> A network filesystem
   is ReadWriteMany by nature, so nothing stops a second pod from mounting the
-  same volume and writing to it. Today's storage has no cross-pod locking, so
-  <code>replicaCount: 1</code> holds by convention here rather than by construction — an
-  RWO block volume would have refused the second writer for you.</li>
+  same volume and writing to it. The <code>filesystem</code> backend has no cross-pod
+  locking, so <code>replicaCount: 1</code> holds by convention here rather than by
+  construction — an RWO block volume would have refused the second writer for
+  you.</li>
 </ul>
 <p><strong>A parallel filesystem is not an option either</strong>: FSx for Lustre is listed as
 unavailable to Fargate pods.</p>

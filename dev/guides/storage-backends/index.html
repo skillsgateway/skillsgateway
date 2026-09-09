@@ -1309,6 +1309,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Running more than one replica">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-each-pass-leases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What each pass leases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-is-still-single-replica" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is still single-replica
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2216,6 +2244,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Running more than one replica">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-each-pass-leases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What each pass leases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-is-still-single-replica" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is still single-replica
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2352,7 +2408,7 @@ and in the application.</p>
 <tr>
 <td><code>replicaCount</code></td>
 <td>Must be 1</td>
-<td>May exceed 1, under <a href="#running-more-than-one-replica">the gate below</a></td>
+<td>May exceed 1 — see <a href="#running-more-than-one-replica">Running more than one replica</a></td>
 </tr>
 <tr>
 <td>Durability</td>
@@ -2400,10 +2456,14 @@ It is not the production answer.</p>
 <h2 id="which-object-stores-work">Which object stores work<a class="headerlink" href="#which-object-stores-work" title="Permanent link">&para;</a></h2>
 <p>The backend needs exactly one primitive that not every store implements: a
 <strong>conditional write</strong> (<code>If-Match</code>, and <code>If-None-Match: *</code> for creation) on a
-small object. That single compare-and-swap is what makes a reference transition
-atomic without a lock service, a coordination database or leader election —
-and there is no degraded mode without it, because last-writer-wins on the
-reference manifest is precisely the lost update the design exists to prevent.</p>
+small object. That single compare-and-swap is the whole serialization of a
+reference transition: the transition needs no lock service and no leader to
+perform it, and the store itself is the only party that arbitrates. There is no
+degraded mode without it, because last-writer-wins on the reference manifest is
+precisely the lost update the design exists to prevent. (The gateway does keep a
+coordination table in its own database, but for
+<a href="#running-more-than-one-replica">the scheduled passes</a> — never for a reference
+transition.)</p>
 <p>The gateway probes the configured bucket at startup and refuses to run where the
 probe fails, so an unsupported store is a startup error rather than a corruption
 discovered during an approval.</p>
@@ -2503,38 +2563,110 @@ and the number of live packs. Both are published as metrics, along with
 conditional-write conflicts and retries and per-request latency — see
 <a href="../../reference/observability/">Observability</a>.</p>
 <h2 id="running-more-than-one-replica">Running more than one replica<a class="headerlink" href="#running-more-than-one-replica" title="Permanent link">&para;</a></h2>
-<p>Removing the storage obstacle is not the same as making the gateway
-cluster-safe. Reads and facade fetches spread across replicas safely on the
-object-store backend, and concurrent writers are serialized by the conditional
-write. What is <em>not</em> safe is everything in the gateway that is a scheduled
-singleton with no coordination: the upstream sync sweep, the re-vetting sweep,
-retention, the webhook dispatch poller and the audit-export poller. N replicas
-would mean N sweeps, N webhook deliveries and N exporters advancing the same
-cursor.</p>
-<p>The chart gates both together. <code>replicaCount &gt; 1</code> is refused outright on
-<code>filesystem</code>, and on <code>object-store</code> it is refused while any of those switches is
-still on — the refusal names each one. The honest shape is two deployments
-sharing one bucket:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># The worker: one replica, the sweeps on.</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nt">replicaCount</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nt">storage</span><span class="p">:</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object-store</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="nt">objectStore</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> bucket</span><span class="p">:</span><span class="w"> </span><span class="nv">skills-gateway</span><span class="p p-Indicator">,</span><span class="nt"> region</span><span class="p">:</span><span class="w"> </span><span class="nv">eu-north-1</span><span class="w"> </span><span class="p p-Indicator">}</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># The serving deployment: scaled out, the sweeps off.</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nt">replicaCount</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nt">storage</span><span class="p">:</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object-store</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="nt">objectStore</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> bucket</span><span class="p">:</span><span class="w"> </span><span class="nv">skills-gateway</span><span class="p p-Indicator">,</span><span class="nt"> region</span><span class="p">:</span><span class="w"> </span><span class="nv">eu-north-1</span><span class="w"> </span><span class="p p-Indicator">}</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="nt">config</span><span class="p">:</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span><span class="nt">skills-gateway</span><span class="p">:</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">    </span><span class="nt">sync</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="nt">vetting</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> revet</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span><span class="w"> </span><span class="p p-Indicator">}</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="nt">retention</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="nt">webhooks</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">    </span><span class="nt">audit-export</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
-</code></pre></div>
-<p>Leader election that removes the split is separate, later work.</p>
+<p>Reads and facade fetches spread across replicas safely on the object-store
+backend, and concurrent writers are serialized by the conditional write. What
+was left was everything the gateway runs on a schedule: each of those passes
+enumerates rows the whole estate shares, so N replicas meant N sync passes, N
+webhook deliveries and N exporters advancing the same cursor.</p>
+<p>Each pass now takes a <strong>lease</strong> before it runs
+(GW_FACADE_0030 — A scheduled background pass runs on one replica at a time).
+The lease is one conditional upsert on a row in the gateway's own database,
+keyed by the pass's name: the replica that takes it runs the pass, and a replica
+that does not <strong>skips that tick and returns</strong>. Nothing blocks and nothing
+queues. That is deliberate — all the passes share one scheduler thread, so a
+replica waiting its turn on the six-hourly re-vetting lease would stall the
+five-second webhook poll behind it.</p>
+<p>The lease is also <strong>never released early</strong>. It lapses on its own after the
+pass's own interval, which is what turns "one pass per replica per interval"
+into "one pass per interval, estate-wide", and it means a replica that dies
+mid-pass costs exactly what one that finished costs: the next tick. There is no
+unlock to leak and no stale lock to clear by hand.</p>
+<p><strong>No configuration was added, and none is needed.</strong> A lease lasts its pass's own
+interval, so the interval you already set is the lease. The row also records a
+<code>holder</code> — the pod hostname, which under Kubernetes is the pod name — so <em>which</em>
+replica ran a pass stays answerable afterwards.</p>
+<h3 id="what-each-pass-leases">What each pass leases<a class="headerlink" href="#what-each-pass-leases" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Pass</th>
+<th>Lease key</th>
+<th>Lease lasts</th>
+<th>Runs when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Upstream sync</td>
+<td><code>sync</code></td>
+<td><code>skills-gateway.sync.poll-interval</code> (10m)</td>
+<td><code>skills-gateway.sync.enabled</code>, on by default</td>
+</tr>
+<tr>
+<td>Continuous re-vetting</td>
+<td><code>revet</code></td>
+<td><code>skills-gateway.vetting.revet.interval</code> (6h)</td>
+<td><code>skills-gateway.vetting.revet.enabled</code>, on by default</td>
+</tr>
+<tr>
+<td>Retention evaluation</td>
+<td><code>retention-evaluate</code></td>
+<td><code>skills-gateway.retention.poll-interval</code> (1h)</td>
+<td><code>skills-gateway.retention.enabled</code>, off by default</td>
+</tr>
+<tr>
+<td>Retention compaction</td>
+<td><code>retention-compact</code></td>
+<td>twice <code>skills-gateway.retention.compaction-interval</code> (6h)</td>
+<td><code>skills-gateway.retention.enabled</code>, off by default</td>
+</tr>
+<tr>
+<td>Waiver expiry</td>
+<td><code>waiver-expiry</code></td>
+<td><code>skills-gateway.vetting.waiver-sweep-interval</code> (1h)</td>
+<td>always; there is no switch</td>
+</tr>
+<tr>
+<td>Webhook dispatch</td>
+<td><code>webhook-dispatch</code></td>
+<td><code>skills-gateway.webhooks.poll-interval</code> (5s)</td>
+<td><code>skills-gateway.webhooks.enabled</code>, on by default</td>
+</tr>
+<tr>
+<td>Mirror reconciliation</td>
+<td><code>mirror-drift</code></td>
+<td><code>skills-gateway.mirror.sweep-interval</code> (15m)</td>
+<td><code>skills-gateway.mirror.sweep-enabled</code>, with a mirror configured</td>
+</tr>
+<tr>
+<td>Audit export</td>
+<td><code>audit-export</code></td>
+<td><code>skills-gateway.audit-export.poll-interval</code> (30s)</td>
+<td><code>skills-gateway.audit-export.enabled</code>, on by default</td>
+</tr>
+</tbody>
+</table>
+<p>Compaction is the one exception to "the lease is the interval": it takes twice
+its interval, because it runs <code>git gc</code> and a pass that legitimately outlasts one
+period must not have a second replica start behind it.</p>
+<p>Two passes carry a second line of defence of their own, because a lease bounds
+how many replicas run a pass and not what a single pass does with a row it read.
+Waiver expiry stamps the waiver as expired before it writes the
+<code>waiver-expired</code> entry and writes the entry only if it won that stamp, so one
+lapse is one ledger entry (GW_VETTING_0011 — Waiver lifecycle is audit-logged).
+Audit export advances its cursor with a compare-and-set against the value it
+read. That does not deduplicate a delivery — the lease is what stops there being
+two exporters — but it stops the cursor being clobbered, and in particular stops
+an export pass silently undoing an operator's replay rewind
+(GW_AUDIT_0004 — Audit export sinks with at-least-once delivery,
+GW_AUDIT_0005 — Audit export cursor replay).</p>
+<h3 id="what-is-still-single-replica">What is still single-replica<a class="headerlink" href="#what-is-still-single-replica" title="Permanent link">&para;</a></h3>
+<p>The <code>filesystem</code> backend, and the chart still refuses <code>replicaCount &gt; 1</code> there
+(GW_FACADE_0014 — Deployment refuses a storage and replication shape the gateway
+cannot honour). That refusal is about reference transitions on the serving path,
+not about the scheduled passes: two pods on one volume can interleave a fetch
+and a publish into a corrupt repository, and a lease on a sweep does nothing
+about it. Scaling out means moving to <code>object-store</code> first.</p>
 <div class="admonition note">
 <p class="admonition-title">Publication is one transition, and a lost race is ordinary</p>
 <p>Putting a snapshot on the wire moves two references — the served tip and the
@@ -2558,11 +2690,12 @@ matters more than the extra conditional <code>GET</code> per advertisement.</p>
 </div>
 <h2 id="migrating-an-existing-deployment">Migrating an existing deployment<a class="headerlink" href="#migrating-an-existing-deployment" title="Permanent link">&para;</a></h2>
 <p>The migration is <strong>offline, verified and reversible</strong>. There is no dual write
-and no live cutover: the gateway runs one replica on one volume today, so a
+and no live cutover: the deployment you are migrating away from is by definition
+the single replica on a single volume the <code>filesystem</code> backend requires, so a
 short maintenance window is affordable and far cheaper to make correct.</p>
 <p>The old volume is the rollback. Keep it until you are satisfied.</p>
 <h3 id="1-stop-the-gateway">1. Stop the gateway<a class="headerlink" href="#1-stop-the-gateway" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kubectl<span class="w"> </span>scale<span class="w"> </span>deployment/skills-gateway<span class="w"> </span>--replicas<span class="o">=</span><span class="m">0</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kubectl<span class="w"> </span>scale<span class="w"> </span>deployment/skills-gateway<span class="w"> </span>--replicas<span class="o">=</span><span class="m">0</span>
 </code></pre></div>
 <h3 id="2-run-the-migration">2. Run the migration<a class="headerlink" href="#2-run-the-migration" title="Permanent link">&para;</a></h3>
 <p>The migration is the same artifact, started as a migration instead of as a
@@ -2571,28 +2704,28 @@ names the destination, so the migration and its rollback are the same
 configuration with two values swapped.</p>
 <p>Run the published container image, with the same volume and the same identity
 the gateway itself runs with, and append the arguments to the entrypoint:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kubectl<span class="w"> </span>run<span class="w"> </span>skills-gateway-migration<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--image<span class="o">=</span>ghcr.io/skillsgateway/skillsgateway@sha256:…<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--restart<span class="o">=</span>Never<span class="w"> </span>--attach<span class="w"> </span>--rm<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--overrides<span class="o">=</span><span class="s1">'{"spec":{"serviceAccountName":"skills-gateway",</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="s1">    "volumes":[{"name":"data","persistentVolumeClaim":{"claimName":"skills-gateway"}}],</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="s1">    "containers":[{"name":"skills-gateway-migration","volumeMounts":[{"name":"data","mountPath":"/data"}]}]}}'</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">  </span>--<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span>--spring.main.web-application-type<span class="o">=</span>none<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span>--skills-gateway.data-dir<span class="o">=</span>/data<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">  </span>--skills-gateway.storage.backend<span class="o">=</span>filesystem<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">  </span>--skills-gateway.storage.object-store.bucket<span class="o">=</span>skills-gateway<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">  </span>--skills-gateway.storage.object-store.region<span class="o">=</span>eu-north-1<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">  </span>--skills-gateway.storage.object-store.credentials.mode<span class="o">=</span>web-identity<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">  </span>--skills-gateway.storage.migration.enabled<span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">  </span>--skills-gateway.storage.migration.to<span class="o">=</span>object-store
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kubectl<span class="w"> </span>run<span class="w"> </span>skills-gateway-migration<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--image<span class="o">=</span>ghcr.io/skillsgateway/skillsgateway@sha256:…<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--restart<span class="o">=</span>Never<span class="w"> </span>--attach<span class="w"> </span>--rm<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>--overrides<span class="o">=</span><span class="s1">'{"spec":{"serviceAccountName":"skills-gateway",</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s1">    "volumes":[{"name":"data","persistentVolumeClaim":{"claimName":"skills-gateway"}}],</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="s1">    "containers":[{"name":"skills-gateway-migration","volumeMounts":[{"name":"data","mountPath":"/data"}]}]}}'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span>--<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span>--spring.main.web-application-type<span class="o">=</span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">  </span>--skills-gateway.data-dir<span class="o">=</span>/data<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span>--skills-gateway.storage.backend<span class="o">=</span>filesystem<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">  </span>--skills-gateway.storage.object-store.bucket<span class="o">=</span>skills-gateway<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">  </span>--skills-gateway.storage.object-store.region<span class="o">=</span>eu-north-1<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">  </span>--skills-gateway.storage.object-store.credentials.mode<span class="o">=</span>web-identity<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">  </span>--skills-gateway.storage.migration.enabled<span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">  </span>--skills-gateway.storage.migration.to<span class="o">=</span>object-store
 </code></pre></div>
 <p>The same arguments work against the jar the release attaches, for a migration
 run outside the cluster:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>java<span class="w"> </span>-jar<span class="w"> </span>skills-gateway-server-&lt;version&gt;.jar<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--spring.main.web-application-type<span class="o">=</span>none<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>--skills-gateway.data-dir<span class="o">=</span>/data<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>…<span class="w"> </span>the<span class="w"> </span>same<span class="w"> </span>arguments<span class="w"> </span>…
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>java<span class="w"> </span>-jar<span class="w"> </span>skills-gateway-server-&lt;version&gt;.jar<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--spring.main.web-application-type<span class="o">=</span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--skills-gateway.data-dir<span class="o">=</span>/data<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>…<span class="w"> </span>the<span class="w"> </span>same<span class="w"> </span>arguments<span class="w"> </span>…
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">This used to be documented against the native binary</p>
@@ -2623,13 +2756,13 @@ is untouched either way, so the recovery is to fix the cause and run it
 again, not to reconcile a half-migrated estate.</p>
 </div>
 <h3 id="4-switch-the-backend-and-start">4. Switch the backend and start<a class="headerlink" href="#4-switch-the-backend-and-start" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">storage</span><span class="p">:</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object-store</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nt">objectStore</span><span class="p">:</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="nt">bucket</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">skills-gateway</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="nt">region</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">eu-north-1</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="nt">persistence</span><span class="p">:</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">  </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ephemeral</span><span class="w">   </span><span class="c1"># the local pack cache; or `none` to keep no volume at all</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">storage</span><span class="p">:</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object-store</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="nt">objectStore</span><span class="p">:</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="nt">bucket</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">skills-gateway</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="nt">region</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">eu-north-1</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="nt">persistence</span><span class="p">:</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">  </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ephemeral</span><span class="w">   </span><span class="c1"># the local pack cache; or `none` to keep no volume at all</span>
 </code></pre></div>
 <p>Then scale back up. The gateway itself compares the served estate against what
 the database records as approved before it serves its first request, so a

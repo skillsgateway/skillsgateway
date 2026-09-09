@@ -2880,10 +2880,11 @@ decision as it goes; stripping references by hand records nothing.</p>
 <div class="admonition note">
 <p class="admonition-title">The remedy is a restart</p>
 <p>Reconciliation runs at startup and nowhere else — there is no sweep and no
-endpoint. A recurring sweep would add to the
-<a href="../storage-backends/#running-more-than-one-replica">uncoordinated background singletons</a>
-a multi-replica deployment already has to split out, for a failure rare
-enough that a restart is a proportionate remedy.</p>
+endpoint. A recurring pass would be
+<a href="../storage-backends/#running-more-than-one-replica">one more scheduled pass</a>
+on the estate's shared budget, for a divergence rare enough that it does not
+earn one: a restart is already the proportionate remedy, and it is one an
+operator can order the moment they see the report.</p>
 </div>
 <h2 id="rejection-is-not-deletion">Rejection is not deletion<a class="headerlink" href="#rejection-is-not-deletion" title="Permanent link">&para;</a></h2>
 <p>The rejected snapshot stays as evidence — it is the record that someone looked

@@ -2985,7 +2985,7 @@ implementation is in the context:</p>
 <tr>
 <td><code>object-store</code></td>
 <td>JGit DFS over an S3-compatible bucket: immutable content-named packs, a write-ahead log, and one reference manifest per repository</td>
-<td>Any number. Every transition is one conditional write on the manifest, and that compare-and-swap is the only serialization point — no lock service, no coordination database, no leader election</td>
+<td>Any number. Every transition is one conditional write on the manifest, and that compare-and-swap is the only serialization point a transition needs — no lock service and no leader</td>
 </tr>
 </tbody>
 </table>
@@ -2996,10 +2996,18 @@ filesystem nobody chose. Local disk on the object-store backend is a bounded
 cache and nothing in it is authoritative. Moving between the two is an offline,
 verified, reversible copy — see
 <a href="../guides/storage-backends/">Choosing and migrating the storage backend</a>.</p>
-<p>What object storage does <strong>not</strong> make safe is the gateway's uncoordinated
-background singletons (sync, re-vetting, retention, webhook dispatch, audit
-export). It unblocks multi-replica serving; the chart refuses a replica count
-that would duplicate a sweep, and leader election is separate later work.</p>
+<p>What object storage makes safe is serving and writing. The gateway's scheduled
+background passes are singletons for a different reason — each enumerates rows
+the whole estate shares — so each takes a lease in the gateway's own database
+before it runs, keyed by the pass's name and lasting that pass's own interval
+(GW_FACADE_0030 — A scheduled background pass runs on one replica at a time).
+The acquire never blocks and the lease is never released early: a replica that
+does not take it skips the tick, and a replica that dies mid-pass costs the next
+tick and nothing more. So the estate gets one pass per interval whatever the
+replica count, with no configuration and no lock to leak. The chart's remaining
+replica refusal is the <code>filesystem</code> backend, which has no cross-pod locking of
+reference transitions at all — see
+<a href="../guides/storage-backends/#running-more-than-one-replica">Running more than one replica</a>.</p>
 <h2 id="13-roadmap">13. Roadmap<a class="headerlink" href="#13-roadmap" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Phase 1 — visibility &amp; choke point (MVP).</strong> Git façade + ingestion of
@@ -3073,8 +3081,12 @@ that would duplicate a sweep, and leader election is separate later work.</p>
   offline verified migration between the two, and a chart that refuses a replica
   count or a storage shape the selected backend cannot honour
   (GW_FACADE_0010, GW_FACADE_0011, GW_FACADE_0013, GW_FACADE_0014, GW_FACADE_0012). Real AWS S3 has not yet been
-  exercised against the conditional-write assertions; leader election for the
-  background sweeps remains separate work.</li>
+  exercised against the conditional-write assertions.</li>
+<li><em>Implemented:</em> the scheduled background passes are cluster-safe — each takes a
+  non-blocking, self-expiring lease in the gateway's database, so the estate
+  gets one pass per interval however many replicas run, without leader election,
+  without an advisory lock a pooled connection could leak, and without a
+  property to set (GW_FACADE_0030).</li>
 <li><strong>Phase 3 — assurance &amp; scale.</strong> Client telemetry inventory, kill switch
   with fleet force-uninstall, signed attestations, additional tool adapters,
   repository-manager catalog federation, OCI re-publication.</li>
