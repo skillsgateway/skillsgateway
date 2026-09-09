@@ -3244,7 +3244,9 @@ it is still published</em> (warn mode), or <em>revoked by a re-vetting violation
 <p><strong>Already fetched by</strong> lists every identity that received the snapshot's content
 through the facade, each with a fetch count and a last-fetch time, from
 <code>GET /api/snapshots/{id}/fetchers</code>. It is only requested for a revoked snapshot.
-When nobody fetched it, the panel says so rather than showing an empty list.</p>
+When nobody fetched it, the panel says so rather than showing an empty list.
+While role enforcement is enabled this read is privileged — admin or an approver
+of this marketplace — so the panel shows an error to a session holding neither.</p>
 <p>The way back is on the <a href="#marketplaces">marketplaces</a> page: a revoked snapshot's
 approve control reads <strong>Re-approve</strong> and goes through the ordinary gate. See
 <a href="../../guides/re-vetting/">Re-vetting approved content</a>.</p>

@@ -2530,8 +2530,24 @@ grow too.</p>
 <td>Removing or renaming an event, a delivery body field, or a transport header</td>
 <td><strong>No.</strong></td>
 </tr>
+<tr>
+<td>Gating a route that was reachable without the role it should always have required</td>
+<td><strong>Additive to the document, narrowing in fact.</strong> See below.</td>
+</tr>
 </tbody>
 </table>
+<div class="admonition note">
+<p class="admonition-title">Closing a security gap narrows a route without moving the prefix</p>
+<p>A route that was readable by callers who should never have reached it is
+corrected in place: the guard is added, a <code>403</code> joins its documented
+responses, and the prefix does not move. The remedy the table prescribes for
+a narrowing — a new prefix and a major — cannot apply, because it would leave
+the old prefix serving the gap it exists to close.</p>
+<p>The gate does not object: adding a response is additive, and oasdiff cannot
+see that a caller who used to get <code>200</code> now gets <code>403</code>. That makes this a
+case review has to catch, like the prefix rule above it. It has happened once
+so far, to <code>GET /api/snapshots/{id}/fetchers</code>.</p>
+</div>
 <div class="admonition note">
 <p class="admonition-title">A payload field added later is added optional</p>
 <p>Not a concession to the diff tool — an honest statement. A receiver cannot

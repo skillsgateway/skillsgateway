@@ -2914,9 +2914,12 @@ registration and sync-mode changes require <strong>admin</strong>; ingest, appro
 re-vet, and waiver create/delete require <strong>approver of the marketplace</strong> (or
 admin) — resolved server-side from the addressed snapshot or waiver where the
 route carries an id; every <code>GET</code> on this page stays open to any session, except
-the connector settings, which are <strong>admin</strong>. Two administrative escape hatches
-require <strong>admin</strong> specifically: overriding a blocked vetting outcome on approve,
-and enabling or disabling a connector.</p>
+the <a href="#snapshot-preview">snapshot preview</a> reads and the
+<a href="#get-snapshotsidfetchers">blast-radius report</a>, which take the same
+approver-or-admin standing as a decision on that snapshot, and the connector
+settings, which are <strong>admin</strong>. Two administrative escape hatches require
+<strong>admin</strong> specifically: overriding a blocked vetting outcome on approve, and
+enabling or disabling a connector.</p>
 <p><strong>Machine reach.</strong> <code>marketplaces:read</code> covers <code>GET /marketplaces</code>, <code>GET
 /catalog</code> and a snapshot's <code>/content</code>, <code>/content-diff</code>, <code>/licenses</code>,
 <code>/provenance</code> and <code>/release-age</code>; <code>snapshots:read</code> covers <code>/diff</code>, <code>/file</code>,
@@ -2924,7 +2927,9 @@ and enabling or disabling a connector.</p>
 <code>marketplaces:ingest</code>, <code>vetting:run</code>, <code>sync:write</code> and <code>waivers:read</code> cover
 the corresponding mutations and the waiver listing. <strong>Approve, reject, waiver
 create, waiver delete, snapshot delete and snapshot restore are reachable by no
-scope at all</strong> — they publish, refuse or retract content. See
+scope at all</strong> — they publish, refuse or retract content. A scope grants reach,
+not standing: a credential reaching one of the privileged reads above still needs
+its principal's approver or admin role. See
 <a href="../tokens/#machine-api-credentials">Machine API credentials</a>.</p>
 <h2 id="representations">Representations<a class="headerlink" href="#representations" title="Permanent link">&para;</a></h2>
 <p><strong>Marketplace</strong></p>
@@ -3690,6 +3695,9 @@ retroactive violation, read from the append-only fetch ledger.</p>
 </code></pre></div>
 <p>Only pack transfers count. A ref advertisement means a client asked, not that it
 received anything, so counting it would name teams that never got the content.</p>
+<p>This read is <strong>privileged</strong>: an admin, or an approver of the snapshot's
+marketplace. It names identities, so seeing it is the same judgement as acting on
+the revocation it informs.</p>
 <table>
 <thead>
 <tr>
@@ -3701,6 +3709,10 @@ received anything, so counting it would name teams that never got the content.</
 <tr>
 <td>200</td>
 <td>The identities that fetched the snapshot's content.</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Enforcement is enabled and the caller may not approve that snapshot.</td>
 </tr>
 <tr>
 <td>404</td>
