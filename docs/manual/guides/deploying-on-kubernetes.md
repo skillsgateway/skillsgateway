@@ -217,10 +217,10 @@ Keep `replicaCount: 1`. A rolling update briefly runs two pods, so prefer the
 `Recreate` strategy — or accept a moment's overlap — on volumes that allow only
 one writer anyway.
 
-On the `object-store` backend concurrent writers are safe by construction, and
-more than one replica becomes possible — but only with the gateway's
-uncoordinated background sweeps and pollers switched off on the scaled-out
-deployment, which the chart also checks. See
+On the `object-store` backend concurrent writers are safe by construction and
+more than one replica is supported as it renders: the scheduled background
+passes take a lease apiece, so each one still runs once per interval however
+many replicas there are. See
 [Running more than one replica](storage-backends.md#running-more-than-one-replica).
 
 ## Ingress and TLS
@@ -320,9 +320,10 @@ Two caveats worth understanding before choosing it:
   Expect clone and repack times in multiples, not percentages.
 - **RWX does not enforce the single-writer assumption.** A network filesystem
   is ReadWriteMany by nature, so nothing stops a second pod from mounting the
-  same volume and writing to it. Today's storage has no cross-pod locking, so
-  `replicaCount: 1` holds by convention here rather than by construction — an
-  RWO block volume would have refused the second writer for you.
+  same volume and writing to it. The `filesystem` backend has no cross-pod
+  locking, so `replicaCount: 1` holds by convention here rather than by
+  construction — an RWO block volume would have refused the second writer for
+  you.
 
 **A parallel filesystem is not an option either**: FSx for Lustre is listed as
 unavailable to Fargate pods.

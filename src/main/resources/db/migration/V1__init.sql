@@ -525,3 +525,23 @@ CREATE TABLE staging_ref_sightings (
     first_seen_at TIMESTAMPTZ NOT NULL,
     UNIQUE (marketplace, ref)
 );
+
+-- Cross-replica coordination for the scheduled background sweeps (GW_FACADE_0030).
+--
+-- A row per sweep, not a pg_advisory_lock. Advisory locks are session-scoped, and under a
+-- connection pool a lock outlives the code that took it: the connection goes back to the pool
+-- still holding it, and a finally-unlock cannot guarantee it runs on the same physical
+-- connection. The failure that produces is a sweep that stops running and says nothing, for as
+-- long as the pool keeps that connection — which for a re-vetting sweep is a security control
+-- silently switched off. A row with an expiry cannot fail that way: a replica that dies holding
+-- one loses it when the lease lapses, and there is no cleanup path to get wrong.
+CREATE TABLE sweep_leases (
+    -- The sweep's own constant, declared on the class that runs it. Never derived from a class
+    -- name: renaming a class would silently mint a new key and let two replicas run at once.
+    name TEXT PRIMARY KEY CHECK (name <> ''),
+    leased_until TIMESTAMPTZ NOT NULL,
+    -- The pod that holds it. The lease works without this; "which replica ran the 03:00 sweep"
+    -- is only answerable with it.
+    holder TEXT NOT NULL CHECK (holder <> ''),
+    updated_at TIMESTAMPTZ NOT NULL
+);

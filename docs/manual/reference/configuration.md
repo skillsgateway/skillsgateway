@@ -1489,6 +1489,16 @@ message that spells out the consequence. See
 an `object-store` selection with no bucket or no region, a static credential
 mode with no secret to take the keys from, a `web-identity` mode with no
 annotation on the service account, `persistence.mode: none` on the filesystem
-backend, more than one replica on the filesystem backend, or more than one
-replica while any of the background pollers is still enabled. Each refusal
-names the value it was decided by.
+backend, or more than one replica on the filesystem backend. Each refusal names
+the value it was decided by.
+
+**Background passes coordinate themselves across replicas.** Every scheduled
+pass — sync, re-vetting, retention evaluation and compaction, waiver expiry,
+webhook dispatch, mirror reconciliation and audit export — takes a lease in the
+gateway's own database before it runs, so the estate gets one pass per interval
+whatever the replica count
+(GW_FACADE_0030 — A scheduled background pass runs on one replica at a time).
+**There is no property for it.** A lease lasts its pass's own interval, which is
+the property already listed for that pass above, so there is nothing extra to
+set and nothing to keep consistent between replicas. See
+[Running more than one replica](../guides/storage-backends.md#running-more-than-one-replica).

@@ -8,7 +8,7 @@ and in the application.
 | --- | --- | --- |
 | Where repositories live | Bare repositories under `skills-gateway.data-dir` | Immutable packs plus one reference manifest per repository, in an S3-compatible bucket |
 | Writers | Exactly one. There is no cross-pod locking of any kind | Any number. Every reference transition is one conditional write |
-| `replicaCount` | Must be 1 | May exceed 1, under [the gate below](#running-more-than-one-replica) |
+| `replicaCount` | Must be 1 | May exceed 1 — see [Running more than one replica](#running-more-than-one-replica) |
 | Durability | The volume's problem | The bucket's problem |
 | Local disk | The source of truth | A cache, safe to delete at any moment |
 | Read latency | Page cache | First fetch of a pack pays object-store latency; later reads are local |
@@ -42,10 +42,14 @@ It is not the production answer.
 
 The backend needs exactly one primitive that not every store implements: a
 **conditional write** (`If-Match`, and `If-None-Match: *` for creation) on a
-small object. That single compare-and-swap is what makes a reference transition
-atomic without a lock service, a coordination database or leader election —
-and there is no degraded mode without it, because last-writer-wins on the
-reference manifest is precisely the lost update the design exists to prevent.
+small object. That single compare-and-swap is the whole serialization of a
+reference transition: the transition needs no lock service and no leader to
+perform it, and the store itself is the only party that arbitrates. There is no
+degraded mode without it, because last-writer-wins on the reference manifest is
+precisely the lost update the design exists to prevent. (The gateway does keep a
+coordination table in its own database, but for
+[the scheduled passes](#running-more-than-one-replica) — never for a reference
+transition.)
 
 The gateway probes the configured bucket at startup and refuses to run where the
 probe fails, so an unsupported store is a startup error rather than a corruption
@@ -139,44 +143,69 @@ conditional-write conflicts and retries and per-request latency — see
 
 ## Running more than one replica
 
-Removing the storage obstacle is not the same as making the gateway
-cluster-safe. Reads and facade fetches spread across replicas safely on the
-object-store backend, and concurrent writers are serialized by the conditional
-write. What is *not* safe is everything in the gateway that is a scheduled
-singleton with no coordination: the upstream sync sweep, the re-vetting sweep,
-retention, the webhook dispatch poller and the audit-export poller. N replicas
-would mean N sweeps, N webhook deliveries and N exporters advancing the same
-cursor.
+Reads and facade fetches spread across replicas safely on the object-store
+backend, and concurrent writers are serialized by the conditional write. What
+was left was everything the gateway runs on a schedule: each of those passes
+enumerates rows the whole estate shares, so N replicas meant N sync passes, N
+webhook deliveries and N exporters advancing the same cursor.
 
-The chart gates both together. `replicaCount > 1` is refused outright on
-`filesystem`, and on `object-store` it is refused while any of those switches is
-still on — the refusal names each one. The honest shape is two deployments
-sharing one bucket:
+Each pass now takes a **lease** before it runs
+(GW_FACADE_0030 — A scheduled background pass runs on one replica at a time).
+The lease is one conditional upsert on a row in the gateway's own database,
+keyed by the pass's name: the replica that takes it runs the pass, and a replica
+that does not **skips that tick and returns**. Nothing blocks and nothing
+queues. That is deliberate — all the passes share one scheduler thread, so a
+replica waiting its turn on the six-hourly re-vetting lease would stall the
+five-second webhook poll behind it.
 
-```yaml
-# The worker: one replica, the sweeps on.
-replicaCount: 1
-storage:
-  backend: object-store
-  objectStore: { bucket: skills-gateway, region: eu-north-1 }
-```
+The lease is also **never released early**. It lapses on its own after the
+pass's own interval, which is what turns "one pass per replica per interval"
+into "one pass per interval, estate-wide", and it means a replica that dies
+mid-pass costs exactly what one that finished costs: the next tick. There is no
+unlock to leak and no stale lock to clear by hand.
 
-```yaml
-# The serving deployment: scaled out, the sweeps off.
-replicaCount: 3
-storage:
-  backend: object-store
-  objectStore: { bucket: skills-gateway, region: eu-north-1 }
-config:
-  skills-gateway:
-    sync: { enabled: false }
-    vetting: { revet: { enabled: false } }
-    retention: { enabled: false }
-    webhooks: { enabled: false }
-    audit-export: { enabled: false }
-```
+**No configuration was added, and none is needed.** A lease lasts its pass's own
+interval, so the interval you already set is the lease. The row also records a
+`holder` — the pod hostname, which under Kubernetes is the pod name — so *which*
+replica ran a pass stays answerable afterwards.
 
-Leader election that removes the split is separate, later work.
+### What each pass leases
+
+| Pass | Lease key | Lease lasts | Runs when |
+| --- | --- | --- | --- |
+| Upstream sync | `sync` | `skills-gateway.sync.poll-interval` (10m) | `skills-gateway.sync.enabled`, on by default |
+| Continuous re-vetting | `revet` | `skills-gateway.vetting.revet.interval` (6h) | `skills-gateway.vetting.revet.enabled`, on by default |
+| Retention evaluation | `retention-evaluate` | `skills-gateway.retention.poll-interval` (1h) | `skills-gateway.retention.enabled`, off by default |
+| Retention compaction | `retention-compact` | twice `skills-gateway.retention.compaction-interval` (6h) | `skills-gateway.retention.enabled`, off by default |
+| Waiver expiry | `waiver-expiry` | `skills-gateway.vetting.waiver-sweep-interval` (1h) | always; there is no switch |
+| Webhook dispatch | `webhook-dispatch` | `skills-gateway.webhooks.poll-interval` (5s) | `skills-gateway.webhooks.enabled`, on by default |
+| Mirror reconciliation | `mirror-drift` | `skills-gateway.mirror.sweep-interval` (15m) | `skills-gateway.mirror.sweep-enabled`, with a mirror configured |
+| Audit export | `audit-export` | `skills-gateway.audit-export.poll-interval` (30s) | `skills-gateway.audit-export.enabled`, on by default |
+
+Compaction is the one exception to "the lease is the interval": it takes twice
+its interval, because it runs `git gc` and a pass that legitimately outlasts one
+period must not have a second replica start behind it.
+
+Two passes carry a second line of defence of their own, because a lease bounds
+how many replicas run a pass and not what a single pass does with a row it read.
+Waiver expiry stamps the waiver as expired before it writes the
+`waiver-expired` entry and writes the entry only if it won that stamp, so one
+lapse is one ledger entry (GW_VETTING_0011 — Waiver lifecycle is audit-logged).
+Audit export advances its cursor with a compare-and-set against the value it
+read. That does not deduplicate a delivery — the lease is what stops there being
+two exporters — but it stops the cursor being clobbered, and in particular stops
+an export pass silently undoing an operator's replay rewind
+(GW_AUDIT_0004 — Audit export sinks with at-least-once delivery,
+GW_AUDIT_0005 — Audit export cursor replay).
+
+### What is still single-replica
+
+The `filesystem` backend, and the chart still refuses `replicaCount > 1` there
+(GW_FACADE_0014 — Deployment refuses a storage and replication shape the gateway
+cannot honour). That refusal is about reference transitions on the serving path,
+not about the scheduled passes: two pods on one volume can interleave a fetch
+and a publish into a corrupt repository, and a lease on a sweep does nothing
+about it. Scaling out means moving to `object-store` first.
 
 !!! note "Publication is one transition, and a lost race is ordinary"
 
@@ -203,7 +232,8 @@ Leader election that removes the split is separate, later work.
 ## Migrating an existing deployment
 
 The migration is **offline, verified and reversible**. There is no dual write
-and no live cutover: the gateway runs one replica on one volume today, so a
+and no live cutover: the deployment you are migrating away from is by definition
+the single replica on a single volume the `filesystem` backend requires, so a
 short maintenance window is affordable and far cheaper to make correct.
 
 The old volume is the rollback. Keep it until you are satisfied.

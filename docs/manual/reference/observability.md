@@ -62,12 +62,19 @@ the mirror on is in
 
 | Metric | Type | Tags | Recorded around |
 | --- | --- | --- | --- |
-| `skills_gateway.mirror.stale_refs` | gauge | — | References the mirror still holds that the facade no longer serves. **Alert on this**: in the ordinary case they are a snapshot the gateway revoked, so a value above zero outstaying one `sweep-interval` means the mirror is showing content the gateway has withdrawn. |
+| `skills_gateway.mirror.stale_refs` | gauge | — | References the mirror still holds that the facade no longer serves. **Alert on this**: in the ordinary case they are a snapshot the gateway revoked, so a value above zero outstaying one `sweep-interval` means the mirror is showing content the gateway has withdrawn. The bound is the same on a scaled-out deployment — the reconciliation pass takes a lease and so runs once per interval across the estate, not once per replica — but the replica that ran it varies from tick to tick. |
 | `skills_gateway.mirror.missing_refs` | gauge | — | Served references the mirror lacks or holds at another commit. A visibility gap rather than a security one. |
 | `skills_gateway.mirror.reachable` | gauge | — | `1` when the last look at the mirror reached it, `0` when it did not. |
 | `skills_gateway.mirror.seconds_since_success` | gauge | — | Seconds since a reconciliation last succeeded; `-1` when none has since startup. Climbing without bound is a code host the gateway cannot write to. |
 | `skills_gateway.mirror.reconciliations.ok` | counter | — | Reconciliations that brought the mirror into line, or found it already there. |
 | `skills_gateway.mirror.reconciliations.failed` | counter | — | Reconciliations that exhausted their retries, or that refused to act on a served reference set the gateway's own records contradicted. |
+
+On a scaled-out deployment these gauges are written by whichever replica took
+the reconciliation lease for that tick, and each replica reports what it last
+wrote itself — so scrape every replica and read the freshest, rather than
+picking one and trusting it. Which replica ran a given pass is answerable from
+the `holder` column on its lease row in the database; no metric reports it. See
+[Running more than one replica](../guides/storage-backends.md#running-more-than-one-replica).
 
 Read `stale_refs` and `seconds_since_success` together, always. The counts are
 written by reconciliations and by the drift report, never computed when a

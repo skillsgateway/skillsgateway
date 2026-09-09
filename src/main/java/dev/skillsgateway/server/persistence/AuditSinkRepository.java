@@ -60,8 +60,32 @@ public class AuditSinkRepository {
     }
 
     /**
-     * Moves the sink's cursor. Used both to advance after a durable delivery and to rewind for a
-     * replay (GW_AUDIT_0005) — the same single-column write in both directions.
+     * Advances the cursor only if it is still where the caller read it. The export path uses this
+     * one, because its write is a <em>consequence</em> of a value it read: an unconditional write
+     * there overwrites whatever happened in between, and what happens in between is an operator's
+     * replay rewind (GW_AUDIT_0005), silently undone by the next export pass while the replay
+     * reports success and delivers nothing.
+     *
+     * <p>It does not deduplicate a delivery. Two exporters that both read {@code expected} have
+     * both enqueued the same batch before either writes; the sweep lease is what stops there being
+     * two exporters. This stops the cursor being <em>clobbered</em>, which is a different and
+     * smaller claim.
+     */
+    public Optional<AuditSink> advanceCursor(long id, long cursorPosition, long expected) {
+        return jdbc.sql("UPDATE audit_sinks SET cursor_position = :cursor, updated_at = :now"
+                        + " WHERE id = :id AND cursor_position = :expected RETURNING *")
+                .param("cursor", cursorPosition)
+                .param("now", OffsetDateTime.now())
+                .param("id", id)
+                .param("expected", expected)
+                .query(AuditSink.class)
+                .optional();
+    }
+
+    /**
+     * Moves the sink's cursor unconditionally. This is the replay rewind (GW_AUDIT_0005), where
+     * overriding the current value <em>is</em> the operation, so there is nothing to compare
+     * against. Advancing after an export goes through {@link #advanceCursor(long, long, long)}.
      */
     public Optional<AuditSink> updateCursor(long id, long cursorPosition) {
         return jdbc.sql("UPDATE audit_sinks SET cursor_position = :cursor, updated_at = :now"

@@ -115,30 +115,24 @@ region should find that out before a pod exists, not from a CrashLoopBackOff.
 {{/*
 Replica gating.
 
-Two separate obstacles, and both have to be gone. Storage: the filesystem
-backend has no cross-pod locking of any kind, and on an RWX volume nothing but
-the replica count stands between the estate and a lost reference update, so more
-than one replica is refused outright there. Coordination: the gateway's
-background sweeps and pollers are uncoordinated singletons, so N replicas means
-N sweeps, N webhook deliveries and N exporters advancing the same cursor. The
-object-store backend removes the first obstacle and not the second, which is why
-scaling out also requires those switches to be off in this deployment.
+One obstacle now, and it is storage. The filesystem backend has no cross-pod
+locking of any kind, and on an RWX volume nothing but the replica count stands
+between the estate and a lost reference update, so more than one replica is
+refused outright there.
+
+Coordination used to be the second obstacle, and this template used to name five
+switches an operator had to turn off before scaling out. The gateway coordinates
+its own sweeps now (GW_FACADE_0030): each takes a lease row for its interval, so
+N replicas run one pass, not N. That block is gone rather than relaxed — it also
+listed five switches for eight passes, so an operator who set all five still got
+N waiver-expiry sweeps and N mirror sweeps, and a gate that promises a safety it
+does not deliver is worse than no gate.
 */}}
 {{- define "skills-gateway.replicaGate" -}}
 {{- $replicas := int (.Values.replicaCount | default 1) -}}
 {{- if gt $replicas 1 -}}
 {{- if ne .Values.storage.backend "object-store" -}}
 {{- fail (printf "replicaCount is %d, but storage.backend is %q. The filesystem backend assumes a single writer and has no cross-pod locking, so a second pod force-updates the served reference with nothing to stop it. Only \"object-store\", whose reference transitions are serialized by a conditional write, supports more than one replica." $replicas .Values.storage.backend) -}}
-{{- end -}}
-{{- $config := .Values.config | default dict -}}
-{{- $on := list -}}
-{{- if not (eq (dig "skills-gateway" "sync" "enabled" true $config) false) -}}{{- $on = append $on "skills-gateway.sync.enabled" -}}{{- end -}}
-{{- if not (eq (dig "skills-gateway" "vetting" "revet" "enabled" true $config) false) -}}{{- $on = append $on "skills-gateway.vetting.revet.enabled" -}}{{- end -}}
-{{- if not (eq (dig "skills-gateway" "retention" "enabled" false $config) false) -}}{{- $on = append $on "skills-gateway.retention.enabled" -}}{{- end -}}
-{{- if not (eq (dig "skills-gateway" "webhooks" "enabled" true $config) false) -}}{{- $on = append $on "skills-gateway.webhooks.enabled" -}}{{- end -}}
-{{- if not (eq (dig "skills-gateway" "audit-export" "enabled" true $config) false) -}}{{- $on = append $on "skills-gateway.audit-export.enabled" -}}{{- end -}}
-{{- if $on -}}
-{{- fail (printf "replicaCount is %d, but these background singletons are still enabled and would run on every replica: %s. They are not cluster-safe: N replicas means N sync sweeps, N re-vetting sweeps, N retention passes, N webhook deliveries and N exporters advancing the same cursor. Set each of them to false under `config` on the scaled-out deployment (the honest shape is one worker deployment with them on and one serving deployment scaled out with them off, sharing the bucket), or keep replicaCount at 1." $replicas (join ", " $on)) -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}

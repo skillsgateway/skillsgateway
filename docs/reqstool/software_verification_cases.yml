@@ -1490,9 +1490,8 @@ cases:
       volume renders only on the object-store backend and points the local pack cache
       somewhere writable, the selection reaches the container as configuration rather
       than staying in the values file, and more than one replica is refused on the
-      filesystem backend and refused on the object-store backend while any background
-      singleton is still enabled
-    revision: "0.1.0"
+      filesystem backend and accepted on the object-store backend
+    revision: "0.2.0"
 
   - id: SVC_GW_FACADE_0015
     requirement_ids: ["GW_FACADE_0015"]
@@ -2562,6 +2561,19 @@ cases:
       GIVEN two served marketplaces whose names and plugin names join to the same catalog name, and a third marketplace whose name nothing contests
       WHEN the catalog is rebuilt and then read back from what the facade serves
       THEN the contested name appears in the catalog manifest for neither claimant, the uncontested marketplace's plugins are published unchanged, and the withheld name is on the audit ledger and reported by the catalog read together with both claimants
+    revision: "0.1.0"
+
+  - id: SVC_GW_FACADE_0030
+    requirement_ids: ["GW_FACADE_0030"]
+    title: A scheduled pass whose turn is held elsewhere is skipped, not duplicated and not delayed
+    verification: automated-test
+    description: |
+      GIVEN a turn already taken for a scheduled pass by another holder
+      WHEN that pass is triggered on this instance
+      THEN its body does not run and the trigger returns rather than waiting, a second
+      pass under a different key is unaffected, the turn becomes available again once it
+      has lapsed without anybody releasing it, the holder that took it is recorded, and
+      every scheduled pass the application declares takes a turn under its own key
     revision: "0.1.0"
 
   - id: SVC_GW_APPROVAL_0014

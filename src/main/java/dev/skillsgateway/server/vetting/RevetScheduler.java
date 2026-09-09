@@ -1,6 +1,7 @@
 package dev.skillsgateway.server.vetting;
 
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
+import dev.skillsgateway.server.scheduling.SweepLeases;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,12 +21,17 @@ public class RevetScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(RevetScheduler.class);
 
+    /** This sweep's cross-replica lease key (GW_FACADE_0030). */
+    public static final String LEASE = "revet";
+
     private final RevetService revetService;
     private final SkillsGatewayProperties.Revet properties;
+    private final SweepLeases leases;
 
-    public RevetScheduler(RevetService revetService, SkillsGatewayProperties properties) {
+    public RevetScheduler(RevetService revetService, SkillsGatewayProperties properties, SweepLeases leases) {
         this.revetService = revetService;
         this.properties = properties.vetting().revet();
+        this.leases = leases;
     }
 
     @Scheduled(
@@ -35,6 +41,11 @@ public class RevetScheduler {
         if (!properties.enabled()) {
             return;
         }
+        leases.runIfLeader(LEASE, properties.interval(), this::sweepNow);
+    }
+
+    /** One pass. The enabled flag and the lease are the scheduled wrapper's business, not this one's. */
+    void sweepNow() {
         try {
             RevetService.PassResult result = revetService.sweep(RevetService.SWEEP_ACTOR);
             if (result.violations() > 0 || result.inconclusive() > 0) {

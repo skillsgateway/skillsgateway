@@ -104,13 +104,19 @@ public class WaiverRepository {
                 .list();
     }
 
-    /** Stamps a waiver as having had its expiry noted, so the ledger entry is written once. */
-    public void markExpiryRecorded(long id) {
-        jdbc.sql("UPDATE vetting_waivers SET expired_recorded_at = :now"
-                        + " WHERE id = :id AND expired_recorded_at IS NULL")
-                .param("now", OffsetDateTime.now())
-                .param("id", id)
-                .update();
+    /**
+     * Stamps a waiver as having had its expiry noted and reports whether this caller is the one
+     * that stamped it. The condition was always here; the answer was thrown away, which is what
+     * let two passes over the same waiver each write a {@code waiver-expired} entry while only one
+     * of them stamped. The ledger's whole value is that a single lapse appears once.
+     */
+    public boolean markExpiryRecorded(long id) {
+        return jdbc.sql("UPDATE vetting_waivers SET expired_recorded_at = :now"
+                                + " WHERE id = :id AND expired_recorded_at IS NULL")
+                        .param("now", OffsetDateTime.now())
+                        .param("id", id)
+                        .update()
+                > 0;
     }
 
     private static Waiver map(ResultSet rs, int rowNum) throws SQLException {

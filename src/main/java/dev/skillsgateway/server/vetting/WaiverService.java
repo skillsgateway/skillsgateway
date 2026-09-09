@@ -194,8 +194,24 @@ public class WaiverService {
      */
     @Requirements({"GW_VETTING_0011"})
     public int sweepExpired(int batchSize) {
-        List<Waiver> expired = waiverRepository.newlyExpired(Instant.now(), batchSize);
+        return recordExpiries(waiverRepository.newlyExpired(Instant.now(), batchSize));
+    }
+
+    /**
+     * Announces the lapses in a batch that has already been read, and reports how many it
+     * announced. Separate from the read because the read is where two passes converge: replicas
+     * that poll a second apart hold the same batch, and what has to be true is that the batch
+     * being held twice produces one ledger entry, not two.
+     */
+    public int recordExpiries(List<Waiver> expired) {
+        int recorded = 0;
         for (Waiver waiver : expired) {
+            // The stamp first, and the entry only if this pass won it. The other order writes one
+            // ledger entry per pass and stamps once, so a concurrent pass announces the same lapse
+            // twice; the count returned has to follow the stamp for the same reason.
+            if (!waiverRepository.markExpiryRecorded(waiver.id())) {
+                continue;
+            }
             auditLogger.record(
                     SYSTEM_ACTOR,
                     waiver.marketplace(),
@@ -208,9 +224,9 @@ public class WaiverService {
                                     waiver.scopeValue(),
                                     waiver.approvedBy(),
                                     waiver.expiresAt()));
-            waiverRepository.markExpiryRecorded(waiver.id());
+            recorded++;
         }
-        return expired.size();
+        return recorded;
     }
 
     /**

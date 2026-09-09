@@ -5,6 +5,7 @@ import dev.skillsgateway.server.persistence.WebhookDelivery;
 import dev.skillsgateway.server.persistence.WebhookDeliveryRepository;
 import dev.skillsgateway.server.persistence.WebhookSubscriber;
 import dev.skillsgateway.server.persistence.WebhookSubscriberRepository;
+import dev.skillsgateway.server.scheduling.SweepLeases;
 import io.github.reqstool.annotations.Requirements;
 import java.net.http.HttpClient;
 import java.time.Duration;
@@ -30,21 +31,27 @@ public class WebhookDispatcher {
 
     private static final Logger log = LoggerFactory.getLogger(WebhookDispatcher.class);
 
+    /** This poller's cross-replica lease key (GW_FACADE_0030). */
+    public static final String LEASE = "webhook-dispatch";
+
     private final WebhookDeliveryRepository deliveryRepository;
     private final WebhookSubscriberRepository subscriberRepository;
     private final WebhookSigner signer;
     private final SkillsGatewayProperties.Webhooks properties;
+    private final SweepLeases leases;
     private final RestClient restClient;
 
     public WebhookDispatcher(
             WebhookDeliveryRepository deliveryRepository,
             WebhookSubscriberRepository subscriberRepository,
             WebhookSigner signer,
-            SkillsGatewayProperties properties) {
+            SkillsGatewayProperties properties,
+            SweepLeases leases) {
         this.deliveryRepository = deliveryRepository;
         this.subscriberRepository = subscriberRepository;
         this.signer = signer;
         this.properties = properties.webhooks();
+        this.leases = leases;
         JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(HttpClient.newBuilder()
                 .connectTimeout(this.properties.timeout())
                 .build());
@@ -59,6 +66,15 @@ public class WebhookDispatcher {
         if (!properties.enabled()) {
             return;
         }
+        leases.runIfLeader(LEASE, properties.pollInterval(), this::pollNow);
+    }
+
+    /**
+     * One dispatch pass, guarded. The lease is belt to {@link #dispatchDue()}'s existing braces —
+     * per-delivery claiming already stops two dispatchers sending the same payload; what the lease
+     * adds is that they stop competing for the queue at all.
+     */
+    void pollNow() {
         try {
             dispatchDue();
         } catch (RuntimeException e) {

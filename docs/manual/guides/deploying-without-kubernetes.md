@@ -236,14 +236,16 @@ onto an empty `/data` still reports its snapshots as published and can serve
 none of them. Give it storage that outlives the container.
 
 It also means **exactly one instance**. The filesystem backend has no
-cross-process locking, and the background schedulers are not cluster-aware. Two
-processes on one volume is not a supported configuration, and a rolling deploy
-that overlaps old and new is two processes. Configure your platform for
-stop-then-start rather than an overlapping replacement.
+cross-process locking, so two processes on one volume can interleave a fetch and
+a publish into a corrupt repository. That is not a supported configuration, and
+a rolling deploy that overlaps old and new is two processes. Configure your
+platform for stop-then-start rather than an overlapping replacement.
 
 Running more than one instance means the `object-store` backend — see
-[Choosing and migrating the storage backend](storage-backends.md), which also
-covers the background singletons that must be switched off first.
+[Choosing and migrating the storage backend](storage-backends.md). Nothing else
+has to be turned off to do it: the scheduled background passes coordinate
+themselves, each taking a lease so that it runs once per interval across the
+whole estate rather than once per instance.
 
 ### A writable `/tmp`, if you seal the root filesystem
 
