@@ -1049,10 +1049,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#known-limit" class="md-nav__link">
+  <a href="#contested-names" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Known limit
+        Contested names
       
     </span>
   </a>
@@ -2125,10 +2125,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#known-limit" class="md-nav__link">
+  <a href="#contested-names" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Known limit
+        Contested names
       
     </span>
   </a>
@@ -2212,11 +2212,28 @@ the catalog read stays open to any session.</p>
 is refused, because the catalog occupies that facade path. See
 <a href="../../reference/configuration/#virtual-catalog">Configuration</a> for the
 <code>skills-gateway.catalog</code> block.</p>
-<h2 id="known-limit">Known limit<a class="headerlink" href="#known-limit" title="Permanent link">&para;</a></h2>
-<p>Prefixing plugin names with the marketplace makes collisions between
-marketplaces impossible in practice but not in theory (<code>a</code> + <code>b-c</code> collides
-with <code>a-b</code> + <code>c</code>). A collision keeps the first plugin in marketplace-name order
-and logs the other; if it ever bites, rename one of the plugins upstream.</p>
+<h2 id="contested-names">Contested names<a class="headerlink" href="#contested-names" title="Permanent link">&para;</a></h2>
+<p>The <code>&lt;marketplace&gt;-&lt;plugin&gt;</code> join is not injective: marketplace <code>a</code> with plugin
+<code>b-c</code> and marketplace <code>a-b</code> with plugin <code>c</code> both claim <code>a-b-c</code>. A name is
+published only when <strong>exactly one</strong> served marketplace claims it. A contested
+name is withheld from <em>every</em> claimant, and the same rule withholds a plugin
+name one marketplace declares twice. Uncontested names are unaffected, and
+their order in the manifest is unchanged.</p>
+<p>Withholding it from both is the point. Awarding a contested name to one
+claimant serves that marketplace's content under the name the other's consumers
+install — content substitution across a publisher boundary — and the award was
+re-decided on every rebuild, so a newly registered marketplace whose name sorted
+earlier could silently change what an existing install name means. Omitting a
+name is legitimate; substituting content is not.</p>
+<p>Every withheld name is announced: a WARN log line, a ledger entry
+<code>catalog-name-collision</code> from the <code>catalog-builder</code> actor naming the claimants,
+an increment of the <code>skills_gateway.catalog.collisions</code> counter, and an entry in
+the <code>collisions</code> field of <code>GET /api/catalog</code>. The counter is untagged — a
+contested name is unbounded cardinality, so the ledger and the catalog read are
+where you look for <em>which</em>. That field is persisted in the catalog commit beside
+the constituents, so the served revision reports its own collisions.</p>
+<p>Resolve it upstream — rename one of the two plugins, or one of the two
+marketplaces — and the next rebuild publishes both names.</p>
 
 
 

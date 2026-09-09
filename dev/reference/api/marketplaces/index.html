@@ -3144,8 +3144,16 @@ and lands <code>held</code> like any other.</p>
 <h3 id="get-catalog"><code>GET /catalog</code><a class="headerlink" href="#get-catalog" title="Permanent link">&para;</a></h3>
 <p>The catalog revision the facade is serving at <code>/git/{catalog-name}</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"a91b..."</span><span class="p">,</span><span class="nt">"generatedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"constituents"</span><span class="p">:[</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="p">{</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c..."</span><span class="p">}]}</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="p">{</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c..."</span><span class="p">}],</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w"> </span><span class="nt">"collisions"</span><span class="p">:[{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"acme-tools-deploy"</span><span class="p">,</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">                </span><span class="nt">"marketplaces"</span><span class="p">:[</span><span class="s2">"acme"</span><span class="p">,</span><span class="s2">"acme-tools"</span><span class="p">]}]}</span>
 </code></pre></div>
+<p><code>collisions</code> are the plugin names claimed more than once across the served
+estate — by two marketplaces, or twice within one — and therefore published for
+no claimant; <code>marketplaces</code> lists the claimants in name order. See
+<a href="../../../guides/virtual-catalog/#contested-names">Contested names</a>. Empty in the
+ordinary case. Like <code>constituents</code> it is recorded in the catalog commit itself,
+so the served revision reports its own.</p>
 <p><strong>200</strong> · <strong>404</strong> catalog disabled or not generated yet.</p>
 <h3 id="post-catalogrebuild"><code>POST /catalog/rebuild</code><a class="headerlink" href="#post-catalogrebuild" title="Permanent link">&para;</a></h3>
 <p>Regenerate now from what every marketplace is serving. Approvals and

@@ -2235,6 +2235,12 @@ a time series.</p>
 <td><code>event=info-refs\|upload-pack</code></td>
 <td>Every facade fetch entry as it is appended to the ledger.</td>
 </tr>
+<tr>
+<td><code>skills_gateway.catalog.collisions</code></td>
+<td>counter</td>
+<td>—</td>
+<td>Each catalog name a rebuild withheld because more than one plugin claimed it. Untagged for the reason above: <em>which</em> name is a <a href="../api/audit/">ledger</a> question.</td>
+</tr>
 </tbody>
 </table>
 <p>The ingestion and approval instruments are Micrometer <em>observations</em>, so when
