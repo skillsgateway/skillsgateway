@@ -1,5 +1,27 @@
 # Proposal: estate-import-export
 
+!!! warning "Parked — blocked on a decision, not on effort"
+
+    **Status: parked, 2026-09-09.** Nothing is implemented. It cannot start
+    until the owner accepts **ADR 0014**, which is still *Proposed*. The
+    decision is whether to take its recommended shape — export plus offline
+    verification first, **import not at all** — and with it decision 4's binding
+    rule that allow-shaped state never imports while deny-shaped state may.
+
+    **Before the format can be fixed** its own section 2 lists three unanswered
+    empirical questions, one of which is a hazard rather than a detail: if a
+    secret-scanning connector quotes what it matched, exporting findings exports
+    secrets.
+
+    **The export is also a new place where quarantined — unreviewed, possibly
+    hostile — content leaves the gateway as a file.** ADR 0014 says so itself.
+
+    **Every `GW_NNNN` id below is a drafting artifact, not a reservation.** ADR
+    0018 retired the flat sequence and names this change: whoever implements it
+    mints a domain-prefixed id then. Nothing here is in `docs/reqstool/`, so
+    there is no traceability to clean up — and section 1 of its task list, which
+    tells an implementer to add ids in the old format, is stale on its face.
+
 > **Status: not implemented.** This change is the design artefact for
 > [#152](https://github.com/skillsgateway/skillsgateway/issues/152) and ships
 > alongside a **proposed** ADR. Nothing in `tasks.md` has been done, and the

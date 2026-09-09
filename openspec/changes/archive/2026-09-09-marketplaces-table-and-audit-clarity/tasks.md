@@ -62,5 +62,15 @@ GW_INGEST_0007 / GW_AUDIT_0002 / GW_AUDIT_0006, whose SVCs already pass.
 
 ## 9. Gates and evidence
 
-- [ ] 9.1 Run the gate set after the last edit and record tails + commit SHA in
+- [x] 9.1 Run the gate set after the last edit and record tails + commit SHA in
   `evidence.md` (note any gate not runnable in this environment and why).
+
+---
+
+**Closed out during backlog triage, 2026-09-09.** The remaining boxes above were
+the gate run and the archive step; the change's code shipped and has been on
+`main` since its pull request merged. The gates were run over that code at
+`fa37251`: `./mvnw clean verify` **621 tests, 0 failures**, story and e2e suites
+green, `reqstool status local` **PASS**, `openspec validate --all --strict`
+clean, `mkdocs build --strict` clean. Tails are in the triage change's
+`evidence.md`.

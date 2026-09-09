@@ -1,5 +1,17 @@
 # Proposal: virtual-catalogs
 
+!!! warning "Parked — its defect half already shipped"
+
+    **Status: parked, 2026-09-09.** What remains is feature work and a second
+    defect (revision provenance), and none of it is started. See the note below
+    for exactly what shipped separately.
+
+    **Every `GW_NNNN` id below is a drafting artifact, not a reservation.** ADR
+    0018 retired the flat sequence and names this change: whoever implements it
+    mints a domain-prefixed id then. Nothing here is in `docs/reqstool/`, so
+    there is no traceability to clean up — and section 1 of its task list, which
+    tells an implementer to add ids in the old format, is stale on its face.
+
 !!! note "Part of this shipped separately"
 
     The **substitution defect** — the non-injective name map and its first-wins

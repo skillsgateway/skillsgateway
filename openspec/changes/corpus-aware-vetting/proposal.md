@@ -1,5 +1,29 @@
 # Proposal: corpus-aware-vetting
 
+!!! warning "Parked — blocked on a decision, not on effort"
+
+    **Status: parked, 2026-09-09.** Nothing is implemented. This is not idle
+    work: it cannot start until the owner accepts **ADR 0015**, which is still
+    *Proposed*, and answers its four open questions — whether a corpus-aware
+    connector is wanted after all, whether a corpus refusal is waivable at all,
+    how aggressive the confusable fold should be, and whether `revoked →
+    approved` re-runs the precondition. Its own task list says a different answer
+    to any of them means regenerating sections 3–6 rather than patching them.
+
+    **Why it still matters:** T5 — typosquatting and lookalikes — is the only
+    row of the threat model with no mitigation at all, and stays that way while
+    this is parked. `docs/manual/architecture.md` already says so plainly.
+
+    **The design's own sharpest risk**, in ADR 0015's words: two approvals racing
+    could each see an estate without the other. Its `CollisionRaceTests` is
+    described as the test that decides whether the design survives.
+
+    **Every `GW_NNNN` id below is a drafting artifact, not a reservation.** ADR
+    0018 retired the flat sequence and names this change: whoever implements it
+    mints a domain-prefixed id then. Nothing here is in `docs/reqstool/`, so
+    there is no traceability to clean up — and section 1 of its task list, which
+    tells an implementer to add ids in the old format, is stale on its face.
+
 ## Why
 
 T5 — typosquatting and lookalikes — is the only row of the threat model in

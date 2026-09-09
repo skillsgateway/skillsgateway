@@ -81,3 +81,45 @@ The system SHALL implement GW_VETTING_0029.4.
 #### Scenario: SVC_GW_VETTING_0029.4
 The system SHALL pass SVC_GW_VETTING_0029.4.
 
+### Requirement: GW_VETTING_0029
+The system SHALL implement GW_VETTING_0029.
+
+#### Scenario: SVC_GW_VETTING_0029
+The system SHALL pass SVC_GW_VETTING_0029.
+
+### Requirement: GW_VETTING_0022
+The system SHALL implement GW_VETTING_0022.
+
+#### Scenario: SVC_GW_VETTING_0022
+The system SHALL pass SVC_GW_VETTING_0022.
+
+### Requirement: GW_VETTING_0023
+The system SHALL implement GW_VETTING_0023.
+
+#### Scenario: SVC_GW_VETTING_0023
+The system SHALL pass SVC_GW_VETTING_0023.
+
+### Requirement: GW_VETTING_0024
+The system SHALL implement GW_VETTING_0024.
+
+#### Scenario: SVC_GW_VETTING_0024
+The system SHALL pass SVC_GW_VETTING_0024.
+
+### Requirement: GW_VETTING_0025
+The system SHALL implement GW_VETTING_0025.
+
+#### Scenario: SVC_GW_VETTING_0025
+The system SHALL pass SVC_GW_VETTING_0025.
+
+### Requirement: GW_VETTING_0026
+The system SHALL implement GW_VETTING_0026.
+
+#### Scenario: SVC_GW_VETTING_0026
+The system SHALL pass SVC_GW_VETTING_0026.
+
+### Requirement: GW_VETTING_0027
+The system SHALL implement GW_VETTING_0027.
+
+#### Scenario: SVC_GW_VETTING_0027
+The system SHALL pass SVC_GW_VETTING_0027.
+

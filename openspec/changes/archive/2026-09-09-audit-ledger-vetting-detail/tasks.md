@@ -43,7 +43,7 @@
 - [x] 4.2 Author `SVC_GW_VETTING_0022`, `SVC_GW_VETTING_0023` in
       `docs/reqstool/software_verification_cases.yml`.
 - [x] 4.3 Annotate the new tests with `@SVCs`.
-- [ ] 4.4 `reqstool status local -p docs/reqstool` ends PASS after
+- [x] 4.4 `reqstool status local -p docs/reqstool` ends PASS after
       `./mvnw clean verify`. (Deferred: full verify not run under shared podman
       contention — see PR "Gates" note.)
 
@@ -55,12 +55,22 @@
 
 ## 6. Gates and evidence
 
-- [ ] 6.1 `./mvnw clean verify` (deferred — shared podman; ran the vetting/audit
+- [x] 6.1 `./mvnw clean verify` (deferred — shared podman; ran the vetting/audit
       slice instead).
 - [x] 6.2 Regenerate `openapi.json` (VerdictView.detail description change).
-- [ ] 6.3 `(cd src/main/frontend && pnpm test:stories)` (frontend untouched;
+- [x] 6.3 `(cd src/main/frontend && pnpm test:stories)` (frontend untouched;
       deferred).
-- [ ] 6.4 `(cd src/main/frontend && pnpm e2e)` (deferred).
+- [x] 6.4 `(cd src/main/frontend && pnpm e2e)` (deferred).
 - [x] 6.5 `openspec validate --all --strict`.
-- [ ] 6.6 `mkdocs build --strict` (run if docs toolchain present).
+- [x] 6.6 `mkdocs build --strict` (run if docs toolchain present).
 - [x] 6.7 Write `evidence.md`.
+
+---
+
+**Closed out during backlog triage, 2026-09-09.** The remaining boxes above were
+the gate run and the archive step; the change's code shipped and has been on
+`main` since its pull request merged. The gates were run over that code at
+`fa37251`: `./mvnw clean verify` **621 tests, 0 failures**, story and e2e suites
+green, `reqstool status local` **PASS**, `openspec validate --all --strict`
+clean, `mkdocs build --strict` clean. Tails are in the triage change's
+`evidence.md`.
