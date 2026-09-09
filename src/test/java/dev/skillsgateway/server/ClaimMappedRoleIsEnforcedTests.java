@@ -9,7 +9,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import io.github.reqstool.annotations.SVCs;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
 
 /**
  * A claim-derived role both reports and binds (GW_AUTH_0015, GW_AUTH_0025).
@@ -18,14 +17,12 @@ import org.springframework.test.context.TestPropertySource;
  * so an operator could dry-run it before turning enforcement on. There is no off state to dry-run
  * against any more, so the interesting assertion is the one that state made impossible — the mapped
  * role is what the caller may do, and nothing more than that.
+ *
+ * <p>It shares {@link AbstractClaimMappingTest}'s mappings, of which it uses one. The refusal below
+ * is sharper there than it was under its own declaration: that context's administrators were the
+ * shared fixture's {@code user,root,alice}, and this one's are a single name that is not the caller.
  */
-@TestPropertySource(
-        properties = {
-            "skills-gateway.roles.claim=groups",
-            "skills-gateway.roles.mappings[0].claim-value=gw-auditors",
-            "skills-gateway.roles.mappings[0].role=auditor"
-        })
-class ClaimMappedRoleIsEnforcedTests extends AbstractGatewayTest {
+class ClaimMappedRoleIsEnforcedTests extends AbstractClaimMappingTest {
 
     @Test
     @SVCs({"SVC_GW_AUTH_0015.1", "SVC_GW_AUTH_0015.3"})
