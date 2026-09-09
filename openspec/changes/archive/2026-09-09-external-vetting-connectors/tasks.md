@@ -57,11 +57,21 @@ has an adversarial test; the run is closed by a gauntlet and `evidence.md`.
 
 - [x] 7.1 Java compile (main + test) clean.
 - [x] 7.2 Unit suite green (20/20); 3/3 mutants killed.
-- [ ] 7.3 Container-backed integration tests, `./mvnw clean verify`, reqstool,
+- [x] 7.3 Container-backed integration tests, `./mvnw clean verify`, reqstool,
   openspec validate, mkdocs — run serially pre-merge (the shared podman VM's
   Floci dev-service container will not start in this worktree; see `evidence.md`).
 - [x] 7.4 `evidence.md` written with pasted result tails and the mutation log.
 
 ## 8. Archive
 
-- [ ] 8.1 `/opsx:archive` as the final commit, after gates pass pre-merge.
+- [x] 8.1 `/opsx:archive` as the final commit, after gates pass pre-merge.
+
+---
+
+**Closed out during backlog triage, 2026-09-09.** The remaining boxes above were
+the gate run and the archive step; the change's code shipped and has been on
+`main` since its pull request merged. The gates were run over that code at
+`fa37251`: `./mvnw clean verify` **621 tests, 0 failures**, story and e2e suites
+green, `reqstool status local` **PASS**, `openspec validate --all --strict`
+clean, `mkdocs build --strict` clean. Tails are in the triage change's
+`evidence.md`.

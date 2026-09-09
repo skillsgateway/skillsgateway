@@ -1,5 +1,37 @@
 # Proposal: invocation-adoption-metrics
 
+!!! warning "Parked — and it is *not* a decision not to build"
+
+    **Status: parked, 2026-09-09.** It cannot start until the owner accepts
+    **ADR 0016**, which is still *Proposed*; its own task list says not to begin
+    section 2 before that, because implementing first would make the ADR a
+    description of something already built.
+
+    **Read this before triaging it again.** The 2026-09-08 architecture
+    assessment recommended archiving this as "a decision not to build". That
+    reading does not survive the documents. ADR 0016 refuses *client-reported
+    telemetry* — the metric is forgeable by the population being measured, and
+    the join key arrives as a constant — but it explicitly **rejected** doing
+    nothing, and chose to build the half the gateway can produce unforgeably:
+    **presence**, which skills a served snapshot contains and therefore which
+    identities hold them. Only two of the twenty-seven tasks encode the refusal;
+    the rest are constructive work on that report.
+
+    **The finished "no" is ADR 0016 itself**, which already stands alone in
+    `docs/decisions/` and needs nothing from this change to survive.
+
+    **One orphaned obligation lives only here:** `docs/manual/architecture.md`
+    §9 still offers install-inventory enrichment "optionally … with client OTel
+    telemetry", and §13 still lists client telemetry inventory. ADR 0016 says
+    both become wrong **on its acceptance**, so they are correct today and must
+    be rewritten the moment it is accepted. Nothing else tracks that.
+
+    **Every `GW_NNNN` id below is a drafting artifact, not a reservation.** ADR
+    0018 retired the flat sequence and names this change: whoever implements it
+    mints a domain-prefixed id then. Nothing here is in `docs/reqstool/`, so
+    there is no traceability to clean up — and section 1 of its task list, which
+    tells an implementer to add ids in the old format, is stale on its face.
+
 ## Why
 
 Issue [#85](https://github.com/skillsgateway/skillsgateway/issues/85) is Phase 3
