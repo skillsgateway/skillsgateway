@@ -1,9 +1,12 @@
 package dev.skillsgateway.server.config;
 
+import io.github.reqstool.annotations.Requirements;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.unit.DataSize;
 
@@ -290,34 +293,113 @@ public record SkillsGatewayProperties(
             Integer maxRedirects,
             Duration deadline) {
 
+        private static final Logger log = LoggerFactory.getLogger(ResolutionBudgets.class);
+
+        /**
+         * The ceilings, roughly an order of magnitude above each default except where the bound's
+         * own meaning caps it lower. They are not a second set of defaults and no deployment meets
+         * them by accident: a value this far above the default is one somebody typed.
+         *
+         * <p>Lowering any bound is always allowed and never clamped — an operator who wants a
+         * tighter gateway gets one. What is refused is raising a bound past the point where it
+         * stops defending anything, because these bounds exist so that no manifest the gateway will
+         * look at can exhaust the gateway (GW_INGEST_0026), and a bound an operator can set to
+         * anything is a control an operator can switch off by typing a large number.
+         */
+        private static final DataSize MAX_RECEIVED_CEILING = DataSize.ofMegabytes(500);
+
+        private static final DataSize MAX_INFLATED_CEILING = DataSize.ofGigabytes(2);
+
+        private static final DataSize MAX_CLOSURE_CEILING = DataSize.ofGigabytes(5);
+
+        private static final int MAX_INFLATION_RATIO_CEILING = 1000;
+
+        private static final int MAX_OBJECTS_CEILING = 200_000;
+
+        private static final DataSize MAX_BLOB_CEILING = DataSize.ofMegabytes(100);
+
+        /** Deeper than this and the path-length assumptions every later walk makes stop holding. */
+        private static final int MAX_TREE_DEPTH_CEILING = 256;
+
+        /** A chain longer than this is a redirect loop, not a redirect. */
+        private static final int MAX_REDIRECTS_CEILING = 10;
+
+        /** Past this a resolution has outlived any request that could still be waiting for it. */
+        private static final Duration DEADLINE_CEILING = Duration.ofMinutes(30);
+
         public ResolutionBudgets {
             if (maxReceivedBytes == null || maxReceivedBytes.toBytes() <= 0) {
                 maxReceivedBytes = DataSize.ofMegabytes(50);
             }
+            maxReceivedBytes = clamp("max-received-bytes", maxReceivedBytes, MAX_RECEIVED_CEILING);
             if (maxInflatedBytes == null || maxInflatedBytes.toBytes() <= 0) {
                 maxInflatedBytes = DataSize.ofMegabytes(200);
             }
+            maxInflatedBytes = clamp("max-inflated-bytes", maxInflatedBytes, MAX_INFLATED_CEILING);
             if (maxClosureBytes == null || maxClosureBytes.toBytes() <= 0) {
                 maxClosureBytes = DataSize.ofMegabytes(500);
             }
+            maxClosureBytes = clamp("max-closure-bytes", maxClosureBytes, MAX_CLOSURE_CEILING);
             if (maxInflationRatio == null || maxInflationRatio <= 0) {
                 maxInflationRatio = 100;
             }
+            maxInflationRatio = clamp("max-inflation-ratio", maxInflationRatio, MAX_INFLATION_RATIO_CEILING);
             if (maxObjects == null || maxObjects <= 0) {
                 maxObjects = 20000;
             }
+            maxObjects = clamp("max-objects", maxObjects, MAX_OBJECTS_CEILING);
             if (maxBlobBytes == null || maxBlobBytes.toBytes() <= 0) {
                 maxBlobBytes = DataSize.ofMegabytes(10);
             }
+            maxBlobBytes = clamp("max-blob-bytes", maxBlobBytes, MAX_BLOB_CEILING);
             if (maxTreeDepth == null || maxTreeDepth <= 0) {
                 maxTreeDepth = 32;
             }
+            maxTreeDepth = clamp("max-tree-depth", maxTreeDepth, MAX_TREE_DEPTH_CEILING);
             if (maxRedirects == null || maxRedirects < 0) {
                 maxRedirects = 3;
             }
+            maxRedirects = clamp("max-redirects", maxRedirects, MAX_REDIRECTS_CEILING);
             if (deadline == null || deadline.isNegative() || deadline.isZero()) {
                 deadline = Duration.ofMinutes(5);
             }
+            if (deadline.compareTo(DEADLINE_CEILING) > 0) {
+                warn("deadline", deadline, DEADLINE_CEILING);
+                deadline = DEADLINE_CEILING;
+            }
+        }
+
+        @Requirements({"GW_INGEST_0031"})
+        private static DataSize clamp(String name, DataSize requested, DataSize ceiling) {
+            if (requested.toBytes() <= ceiling.toBytes()) {
+                return requested;
+            }
+            warn(name, requested, ceiling);
+            return ceiling;
+        }
+
+        @Requirements({"GW_INGEST_0031"})
+        private static int clamp(String name, int requested, int ceiling) {
+            if (requested <= ceiling) {
+                return requested;
+            }
+            warn(name, requested, ceiling);
+            return ceiling;
+        }
+
+        /**
+         * Loud, and at WARN rather than INFO: the gateway is not doing what the manifest says, and
+         * an operator who set a number and got a different one has to be able to find out why from
+         * the log rather than from a resolution that refuses content they expected to fit.
+         */
+        private static void warn(String name, Object requested, Object ceiling) {
+            log.warn(
+                    "skills-gateway.ingestion.external-sources.budgets.{} was set to {}, above the {} this"
+                            + " gateway will defend; using {}. Lower it freely; it cannot be raised past that.",
+                    name,
+                    requested,
+                    ceiling,
+                    ceiling);
         }
     }
 

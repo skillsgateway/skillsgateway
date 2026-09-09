@@ -1649,6 +1649,14 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
+  - id: GW_INGEST_0031
+    title: A configured resolution bound is honoured only as far as the gateway can defend it
+    significance: shall
+    description: "The system shall honour without limit any configured resolution bound that is at or below the value it ships with; shall honour a configured bound above that value only up to a limit it defines for each bound, using its own limit in place of the configured value beyond that point; shall record every such substitution, naming the bound, the value that was configured and the value in force; and shall start normally in either case."
+    rationale: "The bounds exist so that no manifest the gateway will look at can exhaust the gateway, and a bound an operator can set to any value is not that — it is a control that can be switched off by typing a large number, after which the gateway behaves exactly as an unbounded resolver while its own configuration still claims a limit. Lowering is never restricted because an operator asking for a tighter gateway is asking for more of what these bounds are for, and raising is not refused outright because a legitimate marketplace has to be able to outgrow a default. Substitution rather than a refused start is the proportionate answer for a resource budget: a stale number in a manifest should not be an outage, and the substitution is only defensible if it is recorded, since an operator who set a number and got a different one has no other way to find out."
+    categories: ["security", "reliability"]
+    revision: 0.1.0
+
   - id: GW_INGEST_0030.1
     title: Every closure and member field is recorded as a value copy taken at ingestion
     significance: shall
