@@ -3598,62 +3598,101 @@ existing deployment already has.</p>
 <td><code>false</code></td>
 <td>Loopback, RFC1918, <code>100.64.0.0/10</code>, <code>fc00::/7</code>. Never link-local.</td>
 </tr>
+</tbody>
+</table>
+<p>The nine resolution budgets carry a second number: the furthest this gateway
+will honour a raise.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Ceiling</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
 <tr>
 <td><code>…external-sources.budgets.max-received-bytes</code></td>
 <td>size</td>
 <td><code>50MB</code></td>
+<td><code>500MB</code></td>
 <td>Enforced on the response stream, so an endless transfer is cut off rather than measured.</td>
 </tr>
 <tr>
 <td><code>…external-sources.budgets.max-inflated-bytes</code></td>
 <td>size</td>
 <td><code>200MB</code></td>
+<td><code>2GB</code></td>
 <td>One source's content as objects.</td>
 </tr>
 <tr>
 <td><code>…external-sources.budgets.max-closure-bytes</code></td>
 <td>size</td>
 <td><code>500MB</code></td>
+<td><code>5GB</code></td>
 <td>Accumulated across every source one manifest declares.</td>
 </tr>
 <tr>
 <td><code>…external-sources.budgets.max-inflation-ratio</code></td>
 <td>integer</td>
 <td><code>100</code></td>
+<td><code>1000</code></td>
 <td>Judged only once a source's content passes a quarter of <code>max-inflated-bytes</code>; below that the absolute bound already caps it.</td>
 </tr>
 <tr>
 <td><code>…external-sources.budgets.max-objects</code></td>
 <td>integer</td>
 <td><code>20000</code></td>
+<td><code>200000</code></td>
 <td>Blobs and directories one source may contribute.</td>
 </tr>
 <tr>
 <td><code>…external-sources.budgets.max-blob-bytes</code></td>
 <td>size</td>
 <td><code>10MB</code></td>
+<td><code>100MB</code></td>
 <td>Largest single file.</td>
 </tr>
 <tr>
 <td><code>…external-sources.budgets.max-tree-depth</code></td>
 <td>integer</td>
 <td><code>32</code></td>
+<td><code>256</code></td>
 <td>Bounds every later walk of the content, not only the fetch.</td>
 </tr>
 <tr>
 <td><code>…external-sources.budgets.max-redirects</code></td>
 <td>integer</td>
 <td><code>3</code></td>
+<td><code>10</code></td>
 <td>Hops one request may take.</td>
 </tr>
 <tr>
 <td><code>…external-sources.budgets.deadline</code></td>
 <td>duration</td>
 <td><code>5m</code></td>
+<td><code>30m</code></td>
 <td>Wall clock for resolving a whole manifest.</td>
 </tr>
 </tbody>
 </table>
+<div class="admonition warning">
+<p class="admonition-title">A budget can be lowered without limit and raised only so far</p>
+<p>The <strong>Ceiling</strong> column is the furthest this gateway will honour. Set a
+budget above it and the gateway uses the ceiling instead, logs a warning
+naming the key, the value you configured and the value in force, and starts
+normally (GW_INGEST_0031 — <em>A configured resolution bound is honoured only as
+far as the gateway can defend it</em>).</p>
+<p>Lowering is never clamped. These bounds exist so that no manifest the
+gateway will look at can exhaust the gateway, and a bound settable to any
+value is not that — it is a control an operator can switch off by typing a
+large number, after which the gateway behaves as an unbounded resolver while
+its configuration still claims a limit. Every ceiling is far above its
+default, so a marketplace that legitimately outgrows one still has somewhere
+to go.</p>
+</div>
 <p>Every <code>budgets.*</code> key except <code>max-redirects</code> is its own sub-requirement of
 GW_INGEST_0026 — <em>Resource-bounded source resolution</em>, in the order the table lists
 them: <code>GW_INGEST_0026.1</code> through <code>GW_INGEST_0026.8</code>. Raising one of them is therefore a
