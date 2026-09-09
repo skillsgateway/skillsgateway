@@ -67,9 +67,29 @@ is refused, because the catalog occupies that facade path. See
 [Configuration](../reference/configuration.md#virtual-catalog) for the
 `skills-gateway.catalog` block.
 
-## Known limit
+## Contested names
 
-Prefixing plugin names with the marketplace makes collisions between
-marketplaces impossible in practice but not in theory (`a` + `b-c` collides
-with `a-b` + `c`). A collision keeps the first plugin in marketplace-name order
-and logs the other; if it ever bites, rename one of the plugins upstream.
+The `<marketplace>-<plugin>` join is not injective: marketplace `a` with plugin
+`b-c` and marketplace `a-b` with plugin `c` both claim `a-b-c`. A name is
+published only when **exactly one** served marketplace claims it. A contested
+name is withheld from *every* claimant, and the same rule withholds a plugin
+name one marketplace declares twice. Uncontested names are unaffected, and
+their order in the manifest is unchanged.
+
+Withholding it from both is the point. Awarding a contested name to one
+claimant serves that marketplace's content under the name the other's consumers
+install — content substitution across a publisher boundary — and the award was
+re-decided on every rebuild, so a newly registered marketplace whose name sorted
+earlier could silently change what an existing install name means. Omitting a
+name is legitimate; substituting content is not.
+
+Every withheld name is announced: a WARN log line, a ledger entry
+`catalog-name-collision` from the `catalog-builder` actor naming the claimants,
+an increment of the `skills_gateway.catalog.collisions` counter, and an entry in
+the `collisions` field of `GET /api/catalog`. The counter is untagged — a
+contested name is unbounded cardinality, so the ledger and the catalog read are
+where you look for *which*. That field is persisted in the catalog commit beside
+the constituents, so the served revision reports its own collisions.
+
+Resolve it upstream — rename one of the two plugins, or one of the two
+marketplaces — and the next rebuild publishes both names.

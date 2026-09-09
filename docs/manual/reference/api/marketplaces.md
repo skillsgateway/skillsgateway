@@ -203,8 +203,17 @@ The catalog revision the facade is serving at `/git/{catalog-name}`.
 
 ```json
 {"sha":"a91b...","generatedAt":"...","constituents":[
-  {"marketplace":"acme","sha":"3f9c..."}]}
+  {"marketplace":"acme","sha":"3f9c..."}],
+ "collisions":[{"name":"acme-tools-deploy",
+                "marketplaces":["acme","acme-tools"]}]}
 ```
+
+`collisions` are the plugin names claimed more than once across the served
+estate — by two marketplaces, or twice within one — and therefore published for
+no claimant; `marketplaces` lists the claimants in name order. See
+[Contested names](../../guides/virtual-catalog.md#contested-names). Empty in the
+ordinary case. Like `constituents` it is recorded in the catalog commit itself,
+so the served revision reports its own.
 
 **200** · **404** catalog disabled or not generated yet.
 

@@ -198,6 +198,66 @@ class CatalogTests extends AbstractGatewayTest {
                 .andExpect(status().isUnprocessableContent());
     }
 
+    /**
+     * The prefix map is not injective, and until GW_FACADE_0029 the first claimant in
+     * marketplace-name order won — serving its tree under the name the loser's consumers install.
+     * Fixed names rather than {@code uniqueName}, because the collision is the point: the pair has
+     * to join to one string, which a random suffix cannot arrange.
+     */
+    @Test
+    @Order(5)
+    @SVCs({"SVC_GW_FACADE_0029"})
+    void a_name_two_marketplaces_claim_is_published_for_neither_and_is_reported() throws Exception {
+        String plain = "colx";
+        String prefixed = "colx-tools";
+        String contested = "colx-tools-hello";
+
+        // colx publishes "tools-hello"; colx-tools publishes "hello". Both ask for colx-tools-hello.
+        Registered first = registerAndIngest(plain, createUpstream(manifestNaming("tools-hello")));
+        Registered second = registerAndIngest(prefixed, createUpstream(manifestNaming("hello")));
+        Registered uncontested = registerAndIngest("colsafe", createUpstream(DEFAULT_MANIFEST));
+        approve(first.snapshot().id());
+        approve(second.snapshot().id());
+        approve(uncontested.snapshot().id());
+
+        Path clone = newWorkDir("catcollision");
+        assertThat(gitClone(facadeUrl("catalog", newPat()), clone).exitCode()).isZero();
+        List<String> published = manifestOf(clone).path("plugins").findValuesAsText("name");
+
+        assertThat(published)
+                .as("neither claimant gets it: omitting a name is legitimate, substituting content is not")
+                .doesNotContain(contested);
+        assertThat(published).as("a marketplace nobody contests is untouched").contains("colsafe-hello");
+        // Both trees are still vendored — the withheld entry is an advertisement, not a deletion.
+        assertThat(clone.resolve(plain)).exists();
+        assertThat(clone.resolve(prefixed)).exists();
+
+        // The served revision reports its own collisions, so an operator who looks afterwards finds it.
+        JsonNode info = MAPPER.readTree(mockMvc.perform(get("/api/catalog").with(oidcLogin()))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString());
+        assertThat(info.path("collisions")).anySatisfy(collision -> {
+            assertThat(collision.path("name").asText()).isEqualTo(contested);
+            assertThat(collision.path("marketplaces"))
+                    .extracting(JsonNode::asText)
+                    .containsExactly(plain, prefixed);
+        });
+
+        // And it is on the ledger, attributed to the gateway rather than to whoever approved.
+        assertThat(fetchLogRepository.list()).anySatisfy(entry -> {
+            assertThat(entry.get("event")).isEqualTo("catalog-name-collision");
+            assertThat(entry.get("principal")).isEqualTo("catalog-builder");
+            assertThat(String.valueOf(entry.get("detail"))).contains(contested);
+        });
+    }
+
+    /** The default fixture with one plugin renamed, so a pair can be made to join to one name. */
+    private static String manifestNaming(String plugin) {
+        return DEFAULT_MANIFEST.replace("\"name\": \"hello\"", "\"name\": \"" + plugin + "\"");
+    }
+
     private static JsonNode manifestOf(Path clone) throws Exception {
         return MAPPER.readTree(Files.readString(clone.resolve(".claude-plugin/marketplace.json")));
     }

@@ -1488,6 +1488,8 @@ export interface components {
         };
         /** @description The catalog revision the facade is serving */
         CatalogInfo: {
+            /** @description Names claimed by more than one marketplace; none of them is published */
+            collisions?: components["schemas"]["Collision"][];
             /** @description Served marketplaces vendored into this revision */
             constituents?: components["schemas"]["Constituent"][];
             /**
@@ -1531,6 +1533,13 @@ export interface components {
             transformerVersion?: string;
             /** @description The commit ingested from upstream */
             upstreamSha?: string;
+        };
+        /** @description A catalog plugin name more than one marketplace claims */
+        Collision: {
+            /** @description Every marketplace that claimed it, in name order */
+            marketplaces?: string[];
+            /** @description The contested name, which this revision does not publish */
+            name?: string;
         };
         /** @description A supply-side act by the reviewer that makes this approval a self-approval */
         Conflict: {
