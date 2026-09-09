@@ -177,7 +177,9 @@ reviewable and reversible by a person.
 `GET /api/snapshots/{id}/fetchers` — and the portal panel on a revoked snapshot —
 lists every authenticated identity that received the content through the facade,
 with a fetch count and a last-fetch time, read from the append-only ledger the
-gateway has been keeping since the first clone.
+gateway has been keeping since the first clone. Reading it takes the same
+standing as deciding on the snapshot: an admin, or an approver of its
+marketplace.
 
 It names principals, not teams: the gateway knows who authenticated, and mapping
 a principal to a team is the identity provider's knowledge. Direct per-team

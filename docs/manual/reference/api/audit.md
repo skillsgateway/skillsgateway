@@ -184,7 +184,9 @@ WHERE sha = '3f9c2ab...' AND ts > now() - interval '90 days';
 ```
 
 `GET /api/snapshots/{id}/fetchers` answers exactly this from the API, and it is
-what the portal shows beneath a revoked snapshot.
+what the portal shows beneath a revoked snapshot. That endpoint is the approver's
+view of one snapshot — an admin, or an approver of its marketplace; an auditor
+asks the same question of the whole ledger through the reads on this page.
 
 That is the "which of our developers received this exact content" question that
 git distribution otherwise cannot answer.

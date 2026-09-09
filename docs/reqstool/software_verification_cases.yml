@@ -690,9 +690,9 @@ cases:
     verification: automated-test
     description: |
       GIVEN role enforcement enabled and a principal granted approver of marketplace A, with content in marketplaces A and B
-      WHEN the approver ingests, approves, rejects, re-vets and waives content of A, and then attempts the same operations against B by marketplace name and through bare snapshot and waiver ids belonging to B
+      WHEN the approver ingests, approves, rejects, re-vets, waives and reads the fetcher report of content of A, and then attempts the same operations against B by marketplace name and through bare snapshot and waiver ids belonging to B
       THEN every operation on A succeeds, and every operation on B is refused with an authorization error regardless of whether the route named the marketplace or only carried an id
-    revision: "0.1.0"
+    revision: "0.2.0"
 
   - id: SVC_GW_AUTH_0012
     requirement_ids: ["GW_AUTH_0012"]

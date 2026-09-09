@@ -8,9 +8,12 @@ registration and sync-mode changes require **admin**; ingest, approve, reject,
 re-vet, and waiver create/delete require **approver of the marketplace** (or
 admin) — resolved server-side from the addressed snapshot or waiver where the
 route carries an id; every `GET` on this page stays open to any session, except
-the connector settings, which are **admin**. Two administrative escape hatches
-require **admin** specifically: overriding a blocked vetting outcome on approve,
-and enabling or disabling a connector.
+the [snapshot preview](#snapshot-preview) reads and the
+[blast-radius report](#get-snapshotsidfetchers), which take the same
+approver-or-admin standing as a decision on that snapshot, and the connector
+settings, which are **admin**. Two administrative escape hatches require
+**admin** specifically: overriding a blocked vetting outcome on approve, and
+enabling or disabling a connector.
 
 **Machine reach.** `marketplaces:read` covers `GET /marketplaces`, `GET
 /catalog` and a snapshot's `/content`, `/content-diff`, `/licenses`,
@@ -19,7 +22,9 @@ and enabling or disabling a connector.
 `marketplaces:ingest`, `vetting:run`, `sync:write` and `waivers:read` cover
 the corresponding mutations and the waiver listing. **Approve, reject, waiver
 create, waiver delete, snapshot delete and snapshot restore are reachable by no
-scope at all** — they publish, refuse or retract content. See
+scope at all** — they publish, refuse or retract content. A scope grants reach,
+not standing: a credential reaching one of the privileged reads above still needs
+its principal's approver or admin role. See
 [Machine API credentials](tokens.md#machine-api-credentials).
 
 ## Representations
@@ -599,9 +604,14 @@ retroactive violation, read from the append-only fetch ledger.
 Only pack transfers count. A ref advertisement means a client asked, not that it
 received anything, so counting it would name teams that never got the content.
 
+This read is **privileged**: an admin, or an approver of the snapshot's
+marketplace. It names identities, so seeing it is the same judgement as acting on
+the revocation it informs.
+
 | Status | Cause |
 | --- | --- |
 | 200 | The identities that fetched the snapshot's content. |
+| 403 | Enforcement is enabled and the caller may not approve that snapshot. |
 | 404 | Unknown snapshot. |
 
 ---
