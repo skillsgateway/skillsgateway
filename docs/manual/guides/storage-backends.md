@@ -295,8 +295,12 @@ persistence:
   mode: ephemeral   # the local pack cache; or `none` to keep no volume at all
 ```
 
-Then scale back up and check the served estate against what the database records
-as approved.
+Then scale back up. The gateway itself compares the served estate against what
+the database records as approved before it serves its first request, so a
+migration that lost a reference shows up as `publication-repaired` on the ledger
+and one serving something no approval covers as
+`publication-served-not-approved` — on a clean copy, neither appears. See
+[When the repair fails too](approving-snapshots.md#when-the-repair-fails-too).
 
 ### Rolling back
 

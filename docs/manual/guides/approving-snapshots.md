@@ -353,7 +353,63 @@ approval; there is nothing to clean up first.
     recorded as approved, the ledger said so, and subscribers were notified, while
     the facade went on serving the previous tip. If you are looking at an estate
     where the database and the facade disagree about what is served, that is the
-    cause, and re-approving the affected snapshot is the fix.
+    cause. An `approved` snapshot cannot be decided again, so the repair is the
+    startup reconciliation described below, not a second approval.
+
+### When the repair fails too
+
+Failing the approval means putting the recorded decision back, and that write
+can fail in its turn. The double failure is reported — at `ERROR`, and on the
+exception the approval raises — but what it leaves behind is a row saying
+`approved` while nothing is served.
+
+The next start reconciles that. After the schema is migrated and before the web
+surface serves its first request, the gateway compares, per marketplace, what
+the database records as approved against what storage is actually serving, and
+republishes what is missing; each repair lands on the ledger as
+`publication-repaired`. Publication is idempotent by SHA, so the repair only
+ever adds. A marketplace serving nothing is repaired like any other — that is
+exactly what a double failure on a first publication leaves — while one whose
+storage could not be *read* is skipped, because "I could not look" must never be
+taken for "there is nothing there". Doing this before the facade accepts a
+request means no client observes the served references moving.
+
+The mismatch in the other direction — a ref served for a snapshot the database
+does not call approved — is **reported and never retracted**. It lands on the
+ledger as `publication-served-not-approved` and the references are left exactly
+as they are. The asymmetry is deliberate: deleting served references on the
+strength of a database comparison is the direction that fails catastrophically
+and silently when the *database* is the thing that is wrong — a migration
+mid-flight, a restore from a stale dump. Serving unapproved content is the
+graver condition, and precisely because it is, retracting it is a judgement for
+a person holding the report.
+
+!!! warning "`publication-served-not-approved` needs a person"
+
+    Content is on the wire that the gateway does not consider approved. Take the
+    SHA from the ledger entry and establish which case it is:
+
+    - **A decision whose unpublish never completed** — the snapshot is `revoked`
+      or `rejected` and its references are still there. The record is right and
+      the wire is wrong; this is the same condition `snapshot-unpublish-failed`
+      reports, and removing the references is the fix.
+    - **A snapshot the database no longer has** — a restore from an older dump,
+      a migration that did not finish. Here the *database* is what is wrong.
+      Repair it first: nothing should come off storage while the comparison is
+      being made against state that is itself untrustworthy.
+
+    The gateway does not choose between those two on your behalf, which is why
+    it only reports. Where content genuinely has to come off the wire,
+    [re-vetting](re-vetting.md) is the path that retracts it and records the
+    decision as it goes; stripping references by hand records nothing.
+
+!!! note "The remedy is a restart"
+
+    Reconciliation runs at startup and nowhere else — there is no sweep and no
+    endpoint. A recurring sweep would add to the
+    [uncoordinated background singletons](storage-backends.md#running-more-than-one-replica)
+    a multi-replica deployment already has to split out, for a failure rare
+    enough that a restart is a proportionate remedy.
 
 ## Rejection is not deletion
 

@@ -86,7 +86,7 @@ polling, batch payload, signature, replay — is in
 | --- | --- | --- |
 | `human` | the identity-provider subject, or the PAT principal | an interactive session, and every facade fetch by a credential holding no API scope |
 | `machine` | the credential's own principal | a [machine API credential](tokens.md#machine-api-credentials), and a facade fetch by one |
-| `system` | `config-reconciler`, `scheduler`, `webhook`, `revet-policy`, `catalog-builder` or `system` | the gateway acting on its own |
+| `system` | `config-reconciler`, `scheduler`, `webhook`, `revet-policy`, `catalog-builder`, `publication-reconciler` or `system` | the gateway acting on its own |
 
 It is **denormalised on purpose**, and never a join: an entry written years ago
 must still say what it meant after the credential it names has been revoked and
@@ -181,6 +181,16 @@ records `revet-policy` as the principal; an on-demand run records the operator.
 | `snapshot-revoked` | The state transition out of `approved`. | The violation that caused it. |
 | `snapshot-unpublished` | The published refs were removed. | Whether the marketplace still serves anything. |
 | `snapshot-unpublish-failed` | A revoked snapshot's refs could not be removed. | The failure. **Needs a person**: the record and the wire disagree. |
+
+**From publication reconciliation** — at startup, before the web surface serves
+its first request, recorded with `publication-reconciler` as the principal and
+the affected marketplace as the marketplace. See
+[When the repair fails too](../../guides/approving-snapshots.md#when-the-repair-fails-too).
+
+| Event | When | `detail` |
+| --- | --- | --- |
+| `publication-repaired` | A snapshot the database records as approved was not being served, and was republished. | The snapshot's SHA. |
+| `publication-served-not-approved` | A ref is served for a snapshot the database does not record as approved. Nothing is retracted. **Needs a person**: the record and the wire disagree. | The SHA being served. |
 
 ## What this answers
 

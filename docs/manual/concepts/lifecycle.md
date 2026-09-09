@@ -115,6 +115,14 @@ fetches the pinned `refs/snapshots/{sha}` from quarantine into the published
 repository and force-updates `refs/heads/main` to that exact SHA. Rejection
 marks the snapshot `rejected` and touches no repository at all.
 
+The decision is recorded first and published second, so a failure between the
+two is possible: a publication that cannot be made fails the approval and puts
+the decision back, and if *that* also fails the row says `approved` while
+nothing is served. The next start compares what the database records as approved
+against what storage is serving and republishes the difference, before the
+facade accepts a request — see
+[When the repair fails too](../guides/approving-snapshots.md#when-the-repair-fails-too).
+
 ```mermaid
 sequenceDiagram
     actor Rev as Reviewer (OIDC session)
