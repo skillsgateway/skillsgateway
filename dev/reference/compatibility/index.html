@@ -2480,12 +2480,15 @@ the same additive obligation — and what would gate it — is open in
 radius is at least different in kind: a renamed configuration key fails at
 startup, loudly, for the one operator who owns the file, rather than silently
 in somebody's receiver.</p>
-<p>One consequence is live today: <code>skills-gateway.roles.enabled</code> was removed,
+<p>Two consequences are live today. <code>skills-gateway.roles.enabled</code> was removed,
 and a deployment that still sets it is <strong>refused at startup</strong> rather than
 having the setting ignored. Ignoring it would reverse an operator who set it
 to <code>false</code>, and a property that is read and a property that is ignored look
-identical from inside a deployment. That refusal is a migration aid and is
-scheduled for removal at the next major.</p>
+identical from inside a deployment. <code>…object-store.cache.ref-freshness</code> was
+removed on the same reasoning: it lengthened the window in which a revoked
+snapshot could still be advertised, so ignoring it would silently shorten a
+bound the operator believed they had set. Both refusals are migration aids
+and are scheduled for removal at the next major.</p>
 </div>
 <p><strong>Within a major, <code>/api/**</code> only grows.</strong> Endpoints, fields and enum values may
 be added; nothing a deployed client could depend on is removed, narrowed or

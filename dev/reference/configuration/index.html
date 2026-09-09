@@ -2977,25 +2977,21 @@ see <a href="../../guides/storage-backends/">Choosing and migrating the storage 
 <a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="w">        </span><span class="nt">max-bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2147483648</span>
 <a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="w">        </span><span class="nt">block-size-bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">65536</span>
 <a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a><span class="w">        </span><span class="nt">block-cache-bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">268435456</span>
-<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="w">        </span><span class="c1"># How long a replica may keep serving a reference map it has not</span>
-<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span class="w">        </span><span class="c1"># re-read. This is the upper bound on how long a revoked snapshot can</span>
-<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a><span class="w">        </span><span class="c1"># still be advertised by a replica that did not do the revoking.</span>
-<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a><span class="w">        </span><span class="nt">ref-freshness</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10s</span>
-<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a><span class="w">        </span><span class="c1"># How long a pack nothing references is kept before its objects are</span>
-<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a><span class="w">        </span><span class="c1"># deleted, so a fetch already streaming from it is not cut off.</span>
-<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a><span class="w">        </span><span class="nt">pack-grace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1h</span>
-<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a>
-<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a><span class="w">      </span><span class="c1"># Below the store's own idle timeout: a connection the store has already</span>
-<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a><span class="w">      </span><span class="c1"># closed reads, on the first request after a quiet period, as a storage</span>
-<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a><span class="w">      </span><span class="c1"># fault rather than as the pooling artefact it is.</span>
-<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a><span class="w">      </span><span class="nt">connection-max-idle-time</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20s</span>
-<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a><span class="w">      </span><span class="nt">connection-time-to-live</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1m</span>
-<a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a>
-<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a><span class="w">    </span><span class="c1"># The offline one-shot copy between backends. Off unless asked for.</span>
-<a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a><span class="w">    </span><span class="nt">migration</span><span class="p">:</span>
-<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a><span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-<a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a><span class="w">      </span><span class="c1"># The destination; the source is whatever `backend` above names.</span>
-<a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a><span class="w">      </span><span class="nt">to</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object-store</span>
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="w">        </span><span class="c1"># How long a pack nothing references is kept before its objects are</span>
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span class="w">        </span><span class="c1"># deleted, so a fetch already streaming from it is not cut off.</span>
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a><span class="w">        </span><span class="nt">pack-grace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1h</span>
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a><span class="w">      </span><span class="c1"># Below the store's own idle timeout: a connection the store has already</span>
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a><span class="w">      </span><span class="c1"># closed reads, on the first request after a quiet period, as a storage</span>
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a><span class="w">      </span><span class="c1"># fault rather than as the pooling artefact it is.</span>
+<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a><span class="w">      </span><span class="nt">connection-max-idle-time</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20s</span>
+<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a><span class="w">      </span><span class="nt">connection-time-to-live</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1m</span>
+<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a>
+<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a><span class="w">    </span><span class="c1"># The offline one-shot copy between backends. Off unless asked for.</span>
+<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a><span class="w">    </span><span class="nt">migration</span><span class="p">:</span>
+<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a><span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a><span class="w">      </span><span class="c1"># The destination; the source is whatever `backend` above names.</span>
+<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a><span class="w">      </span><span class="nt">to</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object-store</span>
 </code></pre></div>
 <table>
 <thead>
@@ -3092,12 +3088,6 @@ see <a href="../../guides/storage-backends/">Choosing and migrating the storage 
 <td>JGit <code>DfsBlockCache</code> size.</td>
 </tr>
 <tr>
-<td><code>skills-gateway.storage.object-store.cache.ref-freshness</code></td>
-<td>duration</td>
-<td><code>10s</code></td>
-<td>Upper bound on cross-replica revocation latency.</td>
-</tr>
-<tr>
 <td><code>skills-gateway.storage.object-store.cache.pack-grace</code></td>
 <td>duration</td>
 <td><code>1h</code></td>
@@ -3129,6 +3119,24 @@ see <a href="../../guides/storage-backends/">Choosing and migrating the storage 
 </tr>
 </tbody>
 </table>
+<div class="admonition warning">
+<p class="admonition-title"><code>…cache.ref-freshness</code> was removed, and setting it refuses startup</p>
+<p>It set how long a replica could keep serving a reference map it had already
+read — in effect, how long a revoked snapshot could still be advertised by
+a replica that did not perform the revocation. That is a property of the
+revocation path rather than a tuning dial, so it is no longer settable:
+every reference advertisement is preceded by a conditional <code>GET</code> of the
+repository manifest, and the bound is the next advertisement.</p>
+<p>It is <strong>refused rather than ignored</strong> for the same reason
+<code>skills-gateway.roles.enabled</code> is. A deployment that set it was asking for
+a longer bound; ignoring it would shorten the bound silently, which is the
+right behaviour arrived at by the wrong route — the operator would still
+believe the value they wrote was in force.</p>
+<p>Remove the property. What you get without it is what the default already
+gave you: it defaulted to zero, and the documented <code>10s</code> default recorded
+here until this change never existed in the code. The refusal is a
+migration aid and is scheduled for removal at the next major version.</p>
+</div>
 <h3 id="credential-modes">Credential modes<a class="headerlink" href="#credential-modes" title="Permanent link">&para;</a></h3>
 <table>
 <thead>

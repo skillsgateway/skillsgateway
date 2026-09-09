@@ -2682,11 +2682,16 @@ be approved again. See
 <a href="../approving-snapshots/#when-an-approval-fails">Approving snapshots</a>.</p>
 </div>
 <div class="admonition note">
-<p class="admonition-title">Revocation is not instantaneous across replicas</p>
-<p>A replica serves the reference map it last read. <code>ref-freshness</code> (10 s by
-default) is the upper bound on how long a replica that did not perform a
-revocation may still advertise the revoked snapshot. Lower it if that
-matters more than the extra conditional <code>GET</code> per advertisement.</p>
+<p class="admonition-title">Revocation takes effect on the next advertisement, on every replica</p>
+<p>A replica caches the reference map it last read, so a revocation performed
+elsewhere would otherwise stay invisible to it. Every reference
+advertisement is therefore preceded by a conditional <code>GET</code> of the
+repository manifest — <code>O(1)</code>, and no body when nothing has changed — which
+makes the bound on how long a revoked snapshot stays advertised "the next
+advertisement".</p>
+<p>There is no setting for this. <code>ref-freshness</code> used to let an operator
+lengthen that bound; it was removed, and setting it now refuses startup —
+see <a href="../../reference/configuration/">Configuration</a>.</p>
 </div>
 <h2 id="migrating-an-existing-deployment">Migrating an existing deployment<a class="headerlink" href="#migrating-an-existing-deployment" title="Permanent link">&para;</a></h2>
 <p>The migration is <strong>offline, verified and reversible</strong>. There is no dual write
