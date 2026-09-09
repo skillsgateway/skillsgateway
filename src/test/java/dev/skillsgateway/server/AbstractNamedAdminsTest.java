@@ -28,5 +28,9 @@ import org.springframework.test.context.TestPropertySource;
  * administrator list it controls entirely — so it keeps its own, and pays for its own context.
  */
 @TestPropertySource(
-        properties = {"skills-gateway.roles.admins=auditor,dana,ingrid,owner,rachel,root,scope-walk-machine,solo"})
+        properties = {
+            "skills-gateway.roles.admins=a-person,auditor,dana,ingrid,ledger-ephemeral,ledger-exporter,"
+                    + "ledger-machine,ledger-machine-kinds,ledger-owned,ledger-person,ledger-reader,owner,rachel,"
+                    + "root,scope-walk-machine,solo"
+        })
 abstract class AbstractNamedAdminsTest extends AbstractGatewayTest {}
