@@ -131,12 +131,15 @@ HTTP surface *promises*.
     startup, loudly, for the one operator who owns the file, rather than silently
     in somebody's receiver.
 
-    One consequence is live today: `skills-gateway.roles.enabled` was removed,
+    Two consequences are live today. `skills-gateway.roles.enabled` was removed,
     and a deployment that still sets it is **refused at startup** rather than
     having the setting ignored. Ignoring it would reverse an operator who set it
     to `false`, and a property that is read and a property that is ignored look
-    identical from inside a deployment. That refusal is a migration aid and is
-    scheduled for removal at the next major.
+    identical from inside a deployment. `…object-store.cache.ref-freshness` was
+    removed on the same reasoning: it lengthened the window in which a revoked
+    snapshot could still be advertised, so ignoring it would silently shorten a
+    bound the operator believed they had set. Both refusals are migration aids
+    and are scheduled for removal at the next major.
 
 **Within a major, `/api/**` only grows.** Endpoints, fields and enum values may
 be added; nothing a deployed client could depend on is removed, narrowed or

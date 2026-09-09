@@ -94,6 +94,23 @@ class RemovedPropertyGuardTests {
                         assertThat(constructor.getParameterTypes()).contains(RemovedPropertyGuard.class));
     }
 
+    /**
+     * The revocation-freshness knob, refused for the same reason as the enforcement switch.
+     *
+     * <p>It set how long a replica could keep serving a reference map it had already read, so a
+     * deployment that set it was asking for a longer window in which a revoked snapshot stays
+     * advertised. Ignoring it would shorten that window silently — the right behaviour reached by
+     * the wrong route, with the operator still believing the value they wrote was in force.
+     */
+    @Test
+    @SVCs({"SVC_GW_AUTH_0027"})
+    void the_removed_revocation_freshness_knob_is_refused() {
+        contexts.withPropertyValues(
+                        "skills-gateway.roles.admins=ops",
+                        "skills-gateway.storage.object-store.cache.ref-freshness=10s")
+                .run(context -> assertRefused(context, "ref-freshness"));
+    }
+
     /** A clean manifest starts, which is the case that proves the guard is looking at all. */
     @Test
     @SVCs({"SVC_GW_AUTH_0027"})

@@ -68,7 +68,7 @@ class ObjectStoreBackendTests {
         ObjectStoreStatistics statistics = new ObjectStoreStatistics();
         ObjectStoreGitStorage storage = new ObjectStoreGitStorage(
                 new RacingObjectStoreClient(client, competing, 1),
-                ObjectStoreTestSupport.properties(prefix, Duration.ZERO, Duration.ofHours(1)),
+                ObjectStoreTestSupport.properties(prefix, Duration.ofHours(1)),
                 statistics);
 
         try (Repository published = storage.published(marketplace)) {
@@ -204,7 +204,7 @@ class ObjectStoreBackendTests {
     // a snapshot revoked on one replica stops being served by another within the bound
     @Test
     @SVCs({"SVC_GW_FACADE_0011"})
-    void aRevokedSnapshotStopsBeingServedByAnotherReplicaWithinTheBound() throws Exception {
+    void aRevokedSnapshotStopsBeingServedByAnotherReplicaOnTheNextAdvertisement() throws Exception {
         String marketplace = marketplace();
         String prefix = ObjectStoreTestSupport.isolatedPrefix("replicas");
         ObjectStoreGitStorage one = ObjectStoreTestSupport.storage(ObjectStoreTestSupport.client(), prefix);
@@ -246,8 +246,7 @@ class ObjectStoreBackendTests {
         String marketplace = marketplace();
         String prefix = ObjectStoreTestSupport.isolatedPrefix("grace");
         ObjectStoreClient client = ObjectStoreTestSupport.client();
-        ObjectStoreGitStorage storage =
-                ObjectStoreTestSupport.storage(client, prefix, Duration.ZERO, Duration.ofHours(1));
+        ObjectStoreGitStorage storage = ObjectStoreTestSupport.storage(client, prefix, Duration.ofHours(1));
 
         try (Repository published = storage.published(marketplace)) {
             ObjectId first = commit(published, "first");

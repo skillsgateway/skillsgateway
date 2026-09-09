@@ -2,12 +2,10 @@ package dev.skillsgateway.server.storage.objectstore;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * One repository's manifest, read, cached, and swapped by compare-and-swap.
@@ -27,12 +25,13 @@ import java.util.concurrent.atomic.AtomicLong;
  * path a silent failure would have the ledger say a marketplace stopped serving while the revoked
  * commit is still on the wire.
  *
- * <p><b>Freshness is bounded too, and that bound is a trust-boundary property.</b> JGit's DFS
- * reference database caches its reference map until something clears it. With one process that was
+ * <p><b>Freshness is not bounded by a duration; it is not bounded at all.</b> JGit's DFS reference
+ * database caches its reference map until something clears it. With one process that was
  * invisible; with several replicas over one bucket it means an unpublished snapshot stays
  * advertised by every replica whose cache is still warm. {@link #freshen()} is a conditional
- * {@code GET} — {@code O(1)}, no body when nothing changed — and the default freshness of zero
- * makes the bound "the next reference advertisement".
+ * {@code GET} — {@code O(1)}, no body when nothing changed — and it runs before every reference
+ * advertisement, so the revocation bound is "the next advertisement" and there is no configuration
+ * that can make it longer (GW_FACADE_0011).
  */
 public final class ManifestStore {
 
@@ -65,22 +64,14 @@ public final class ManifestStore {
     private final ObjectStoreClient store;
     private final String manifestKey;
     private final String walPrefix;
-    private final Duration freshness;
     private final ObjectStoreStatistics statistics;
 
-    private final AtomicLong lastCheckedNanos = new AtomicLong(Long.MIN_VALUE);
     private volatile Snapshot cached;
 
-    ManifestStore(
-            ObjectStoreClient store,
-            String manifestKey,
-            String walPrefix,
-            Duration freshness,
-            ObjectStoreStatistics statistics) {
+    ManifestStore(ObjectStoreClient store, String manifestKey, String walPrefix, ObjectStoreStatistics statistics) {
         this.store = store;
         this.manifestKey = manifestKey;
         this.walPrefix = walPrefix;
-        this.freshness = freshness;
         this.statistics = statistics;
     }
 
@@ -123,19 +114,16 @@ public final class ManifestStore {
     }
 
     /**
-     * Re-check the manifest if the cached copy is older than the freshness bound, and say whether
-     * it moved. A conditional {@code GET}, so the common answer costs a round trip and no body.
+     * Re-check the manifest and say whether it moved. A conditional {@code GET}, so the common
+     * answer costs a round trip and no body — which is what makes doing it every time affordable,
+     * and doing it every time is what makes a revocation take effect on the next advertisement
+     * rather than whenever some replica's timer happened to lapse.
      */
     public boolean freshen() throws IOException {
         Snapshot snapshot = cached;
         if (snapshot == null) {
             return false;
         }
-        long now = System.nanoTime();
-        if (!freshness.isZero() && now - lastCheckedNanos.get() < freshness.toNanos()) {
-            return false;
-        }
-        lastCheckedNanos.set(now);
         Optional<ObjectStoreClient.StoredObject> changed = store.getIfChanged(manifestKey, snapshot.etag());
         if (changed.isEmpty()) {
             return false;
@@ -274,6 +262,5 @@ public final class ManifestStore {
     private void remember(Snapshot snapshot) {
         statistics.livePacksObserved(manifestKey, snapshot.manifest().packs().size());
         cached = snapshot;
-        lastCheckedNanos.set(System.nanoTime());
     }
 }

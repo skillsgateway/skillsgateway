@@ -39,18 +39,26 @@ final class RemovedProperties {
      */
     record Removal(Disposition disposition, String advice) {}
 
-    static final Map<String, Removal> ALL =
-            Map.of("skills-gateway.roles.enabled", new Removal(Disposition.REFUSE, """
+    static final Map<String, Removal> ALL = Map.of(
+            "skills-gateway.roles.enabled",
+            new Removal(Disposition.REFUSE, """
                     Authorization is now always enforced, so there is nothing for this property to \
                     turn on or off. Ignoring it silently would be worse than refusing: a deployment \
                     that set it to false was asking for a gateway with no authorization, and quietly \
                     doing the opposite of what a manifest says is not something an operator can see \
-                    from inside the deployment.
+                    from inside the deployment."""),
+            "skills-gateway.storage.object-store.cache.ref-freshness",
+            new Removal(Disposition.REFUSE, """
+                    How long a replica may keep serving a reference map it has already read is a \
+                    trust-boundary property on the revocation path, not a tuning knob, so it is no \
+                    longer settable. Every reference advertisement is now preceded by a conditional \
+                    GET of the manifest — the bound on how long a revoked snapshot stays advertised \
+                    is the next advertisement, and nothing can lengthen it.
 
-                    If the intention was to keep a gateway that anyone who logs in can administer, \
-                    that is no longer available; grant the admin role to the principals who should \
-                    have it instead, with skills-gateway.roles.admins or a \
-                    skills-gateway.roles.mappings entry."""));
+                    A deployment that set this was raising that bound, so ignoring it would leave \
+                    revoked content advertised for exactly as long as the operator asked and report \
+                    nothing. Remove the property: the behaviour you get without it is the behaviour \
+                    the default already gave you."""));
 
     private RemovedProperties() {}
 }
