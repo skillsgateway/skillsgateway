@@ -47,12 +47,14 @@ class ContextBudgetTests {
      * <b>31</b> after. (The figures quoted in #302 and #305 — 33 and "approximately 30" — were
      * counted from annotations rather than from cache keys, which is the reason this test exists
      * and not a discrepancy to reconcile.) Raised to <b>32</b> for {@code ForgeMirrorSweepTests}
-     * (#325, merged concurrently with this consolidation): it needs the mirror sweep actually
-     * enabled and running on a short interval to assert against the scheduled task, which
-     * {@code ForgeMirrorTests}'s disabled-sweep context cannot express. Lower it whenever the
-     * count drops; raise it only with a reason worth reading.
+     * (#325): it needs the mirror sweep actually enabled and running on a short interval to assert
+     * against the scheduled task, which {@code ForgeMirrorTests}'s disabled-sweep context cannot
+     * express. Lowered to <b>29</b> by the second increment of #305, which retired the contexts of
+     * {@code MachineLedgerTests}, {@code ClaimMappedRoleIsEnforcedTests} and {@code
+     * ExternalConnectorRegistrationTests}. Lower it whenever the count drops; raise it only with a
+     * reason worth reading.
      */
-    private static final int BUDGET = 32;
+    private static final int BUDGET = 29;
 
     /** Where the measured breakdown is written, so a run's numbers survive for a PR body. */
     private static final Path REPORT = Path.of("target", "context-budget.txt");
