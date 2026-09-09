@@ -1,6 +1,6 @@
 # Evidence: retire-three-application-contexts
 
-Commit under test: `a3710f2a76dc3242ac3f0aa56f05ba958e11318c`, branched from
+Commit under test: `8c1a1f3` (the code commit of this branch), branched from
 `92e1fde` (`main`). All gates below were run after the last code edit, on the
 same machine, with nothing else building.
 
