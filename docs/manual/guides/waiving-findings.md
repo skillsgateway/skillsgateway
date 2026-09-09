@@ -21,7 +21,8 @@ waiver and in the audit ledger.
 
 - A snapshot whose vetting outcome is blocked. `GET /api/snapshots/{id}/vetting`
   shows the verdicts, or open the approve dialog in the portal.
-- A portal session, or a session cookie for the API.
+- A portal session, or — for the API — a session cookie and the CSRF token that
+  goes with it ([REST API](../reference/api/index.md#conventions)).
 
 ## 1. Find out exactly what is blocking
 

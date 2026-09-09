@@ -1,6 +1,7 @@
 package dev.skillsgateway.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -98,7 +99,10 @@ class DevAuthTests {
                 .build();
 
         // An administrative mutation, not merely a read: this is the loop a developer actually runs.
+        // It carries a CSRF token because the hatch opens authentication and not forgery protection
+        // (GW_AUTH_0030) — the portal sends one here exactly as it does against a configured gateway.
         mockMvc.perform(post("/api/marketplaces")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\": \"dev-local\", \"url\": \"https://example.com/x.git\"}"))
                 .andExpect(status().isCreated());

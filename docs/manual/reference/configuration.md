@@ -19,6 +19,7 @@ Every setting the gateway reads, with its default and what consumes it.
 | [`skills-gateway.estate.*`](#declarative-estate) | The declared estate: marketplaces, role grants, webhook subscribers, audit sinks — reconciled at startup and on demand. **Empty by default.** | No — empty by default. |
 | [`spring.datasource.*`](#datasource) | PostgreSQL connection. Supplied entirely by environment. | **Yes** |
 | [`spring.security.oauth2.client.*`](#oidc-login) | OIDC login for the web surface. | **Yes** |
+| [`server.servlet.session.cookie.same-site`](#session-cookie) | Whether the browser sends the session cookie on a cross-site request. | No — set to `lax` in `application.yaml`. |
 | [`server.forward-headers-strategy`](#forwarded-headers) | Whether the scheme and host a TLS-terminating proxy reports are believed. **Off by default.** | **Yes**, behind a proxy — which is every real deployment. |
 | [`management.endpoints.*`](#actuator) | Which actuator endpoints are exposed. | No |
 | [`scalar.*`](#api-documentation) | The bundled API reference UI. | No |
@@ -1353,6 +1354,31 @@ matters most where one authorization endpoint serves many tenants: every
 tenant's tokens verify against the same signing keys, so the issuer is the only
 thing that says which organisation the person logging in belongs to. The
 gateway logs a warning at startup while it is unset.
+
+---
+
+## Session cookie
+
+```yaml
+server:
+  servlet:
+    session:
+      cookie:
+        same-site: lax
+```
+
+Named rather than left to the browser, because Firefox and Safari apply no
+default at all: unset, the session cookie rides a cross-site request in those
+browsers.
+
+`Strict` is deliberately not used. It withholds the cookie on the identity
+provider's redirect back to `/login/oauth2/code/idp` — a cross-site top-level
+navigation that has to carry the session holding the saved authorization request
+— so login fails outright. `Lax` still withholds it on every cross-site POST,
+which is the vector. Naming the attribute is one half of GW_AUTH_0030 — A
+cross-site request cannot act on an ambient session; the control itself is the
+CSRF token on the web chain, described under
+[The web surface](../concepts/trust-boundaries.md#the-web-surface).
 
 ---
 

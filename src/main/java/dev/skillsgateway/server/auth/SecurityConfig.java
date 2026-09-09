@@ -16,6 +16,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
@@ -193,10 +194,17 @@ public class SecurityConfig {
      * <p>With {@code skills-gateway.dev-insecure-auth=true} (development only, default off) the
      * web surface is open and requests act as the anonymous user "dev"; the git facade keeps
      * requiring PATs. GW_AUTH_0002 holds for every default-configured deployment.
+     *
+     * <p>This is the only chain carrying an <em>ambient</em> credential, so it is the only one that
+     * needs a CSRF token (GW_AUTH_0030). {@code spa()} is Spring Security 7's built-in form of the
+     * cookie-and-header exchange: an {@code XSRF-TOKEN} cookie the portal's own script reads, echoed
+     * in {@code X-XSRF-TOKEN}, XOR-masked per response. The four chains above stay exempt because
+     * each authenticates every request on its own and honours no cookie — their comments say so
+     * individually.
      */
     @Bean
     @Order(5)
-    @Requirements({"GW_AUTH_0002"})
+    @Requirements({"GW_AUTH_0002", "GW_AUTH_0030"})
     public SecurityFilterChain webChain(HttpSecurity http, SkillsGatewayProperties properties) throws Exception {
         if (properties.devInsecureAuth()) {
             log.warn("skills-gateway.dev-insecure-auth is ON — the web surface is UNAUTHENTICATED. "
@@ -213,7 +221,10 @@ public class SecurityConfig {
                                 chain.doFilter(request, response);
                             },
                             AnonymousAuthenticationFilter.class)
-                    .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"));
+                    // Same CSRF posture as the configured chain below, deliberately: the hatch
+                    // opens authentication, not this. Exempting /api/** here instead would let the
+                    // portal's own token handling break only in production.
+                    .csrf(CsrfConfigurer::spa);
             return http.build();
         }
         http.authorizeHttpRequests(authorize -> authorize
@@ -222,8 +233,7 @@ public class SecurityConfig {
                         .anyRequest()
                         .authenticated())
                 .oauth2Login(Customizer.withDefaults())
-                // Session-cookie API for the SPA; revisit CSRF with the portal.
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
+                .csrf(CsrfConfigurer::spa)
                 .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
                         new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
                         PathPatternRequestMatcher.withDefaults().matcher("/api/**")));

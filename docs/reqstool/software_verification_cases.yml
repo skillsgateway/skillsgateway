@@ -2540,3 +2540,17 @@ cases:
       declared as breaking by the commit that ships it, on the same terms and through the
       same configuration as the rest of the contract
     revision: "0.1.0"
+
+  - id: SVC_GW_AUTH_0030
+    requirement_ids: ["GW_AUTH_0030"]
+    title: A body-less mutation needs the token, and the cookies say what they must
+    verification: automated-test
+    description: |
+      GIVEN a running gateway and an administrator's cookie-authenticated session
+      WHEN a body-less state-changing POST is made without the anti-forgery token, and then with it,
+      and separately the login redirect is requested over real HTTP
+      THEN the request without the token is refused and the one with it is accepted, the response
+      carries an anti-forgery cookie the surface's own script can read, and the session cookie
+      declares the same-site attribute that still permits the identity provider's redirect back
+    revision: "0.1.0"
+
