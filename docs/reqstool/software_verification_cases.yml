@@ -2554,3 +2554,13 @@ cases:
       declares the same-site attribute that still permits the identity provider's redirect back
     revision: "0.1.0"
 
+  - id: SVC_GW_FACADE_0029
+    requirement_ids: ["GW_FACADE_0029"]
+    title: Two marketplaces claiming one catalog name lose it, audibly
+    verification: automated-test
+    description: |
+      GIVEN two served marketplaces whose names and plugin names join to the same catalog name, and a third marketplace whose name nothing contests
+      WHEN the catalog is rebuilt and then read back from what the facade serves
+      THEN the contested name appears in the catalog manifest for neither claimant, the uncontested marketplace's plugins are published unchanged, and the withheld name is on the audit ledger and reported by the catalog read together with both claimants
+    revision: "0.1.0"
+

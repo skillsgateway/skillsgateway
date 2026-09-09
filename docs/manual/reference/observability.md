@@ -20,6 +20,7 @@ a time series.
 | `skills_gateway.ingestion` | timer (observation) | `outcome=success\|error` | Each ingestion — upstream fetch, pin, snapshot record, vetting trigger. |
 | `skills_gateway.approval` | timer (observation) | `decision=approve\|reject`, `outcome=success\|error` | Each approval decision. A vetting-blocked approval lands on `outcome=error` and still surfaces its refusal unchanged. |
 | `skills_gateway.facade.fetches` | counter | `event=info-refs\|upload-pack` | Every facade fetch entry as it is appended to the ledger. |
+| `skills_gateway.catalog.collisions` | counter | — | Each catalog name a rebuild withheld because more than one plugin claimed it. Untagged for the reason above: *which* name is a [ledger](api/audit.md) question. |
 
 The ingestion and approval instruments are Micrometer *observations*, so when
 tracing is enabled they also produce spans with the same names and tags.

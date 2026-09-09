@@ -30,6 +30,9 @@ public class GatewayMetrics {
     /** Counter of facade fetch events, tagged {@code event=info-refs|upload-pack}. */
     public static final String FACADE_FETCHES = "skills_gateway.facade.fetches";
 
+    /** Counter of catalog names withheld because more than one marketplace claimed them. */
+    public static final String CATALOG_COLLISIONS = "skills_gateway.catalog.collisions";
+
     private final ObservationRegistry observations;
     private final MeterRegistry meters;
 
@@ -48,6 +51,15 @@ public class GatewayMetrics {
     @Requirements({"GW_OBSERVABILITY_0003"})
     public <T> T observeApproval(String decision, Supplier<T> work) {
         return observe(APPROVAL, "decision", decision, work);
+    }
+
+    /**
+     * Counts one catalog name withheld for a collision. Untagged: the contested name is
+     * unbounded-cardinality, and it is on the ledger, which is where an operator looks for which.
+     */
+    @Requirements({"GW_FACADE_0029"})
+    public void catalogCollision() {
+        meters.counter(CATALOG_COLLISIONS).increment();
     }
 
     /** Counts one facade fetch entry by its event kind; the HTTP span already exists server-side. */

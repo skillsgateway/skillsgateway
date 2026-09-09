@@ -103,6 +103,13 @@
       "CatalogInfo": {
         "description": "The catalog revision the facade is serving",
         "properties": {
+          "collisions": {
+            "description": "Names claimed by more than one marketplace; none of them is published",
+            "items": {
+              "$ref": "#/components/schemas/Collision"
+            },
+            "type": "array"
+          },
           "constituents": {
             "description": "Served marketplaces vendored into this revision",
             "items": {
@@ -172,6 +179,23 @@
           },
           "upstreamSha": {
             "description": "The commit ingested from upstream",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Collision": {
+        "description": "A catalog plugin name more than one marketplace claims",
+        "properties": {
+          "marketplaces": {
+            "description": "Every marketplace that claimed it, in name order",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "name": {
+            "description": "The contested name, which this revision does not publish",
             "type": "string"
           }
         },

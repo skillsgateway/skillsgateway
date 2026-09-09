@@ -86,7 +86,7 @@ polling, batch payload, signature, replay — is in
 | --- | --- | --- |
 | `human` | the identity-provider subject, or the PAT principal | an interactive session, and every facade fetch by a credential holding no API scope |
 | `machine` | the credential's own principal | a [machine API credential](tokens.md#machine-api-credentials), and a facade fetch by one |
-| `system` | `config-reconciler`, `scheduler`, `webhook`, `revet-policy` or `system` | the gateway acting on its own |
+| `system` | `config-reconciler`, `scheduler`, `webhook`, `revet-policy`, `catalog-builder` or `system` | the gateway acting on its own |
 
 It is **denormalised on purpose**, and never a join: an entry written years ago
 must still say what it meant after the credential it names has been revoked and
@@ -149,6 +149,16 @@ the acting OIDC principal.
 Reads of the ledger itself record **nothing**, deliberately: an exporter polling
 on a cursor loop would otherwise append one entry per poll, and that entry is
 itself new content to export.
+
+**From the catalog builder** — recorded with `catalog-builder` as the principal
+and the catalog's own name as the marketplace, because a contested name is the
+gateway's finding rather than an act of whoever approved the snapshot that
+triggered the rebuild. See
+[Contested names](../../guides/virtual-catalog.md#contested-names).
+
+| Event | When | `detail` |
+| --- | --- | --- |
+| `catalog-name-collision` | One per name a rebuild withheld because more than one plugin in the served estate claimed it. The name is published for no claimant. | `{name} claimed by {marketplace}, {marketplace}`. |
 
 **From the vetting chain** — every run, recorded under the `admin` source with
 `vetting` as the principal:

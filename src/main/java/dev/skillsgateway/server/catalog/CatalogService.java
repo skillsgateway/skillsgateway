@@ -4,7 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
+import dev.skillsgateway.server.observability.GatewayMetrics;
+import dev.skillsgateway.server.persistence.ActorType;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.storage.GitStorage;
@@ -59,19 +62,34 @@ public class CatalogService {
     private static final String MANIFEST_PATH = MANIFEST_DIR + "/" + MANIFEST_FILE;
     private static final String MAIN = Constants.R_HEADS + "main";
     private static final String INTERNAL_REF_PREFIX = "refs/catalog/";
+    private static final String COLLISION_LINE = "collision ";
     private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    /** The gateway's own name on a ledger entry it writes about its own derived catalog. */
+    public static final String ACTOR = "catalog-builder";
 
     private final GitStorage storage;
     private final MarketplaceRepository marketplaceRepository;
     private final SkillsGatewayProperties.Catalog properties;
+    private final AdminAuditLogger auditLogger;
+    private final GatewayMetrics metrics;
     private final Object rebuildLock = new Object();
 
     public CatalogService(
-            GitStorage storage, MarketplaceRepository marketplaceRepository, SkillsGatewayProperties properties) {
+            GitStorage storage,
+            MarketplaceRepository marketplaceRepository,
+            SkillsGatewayProperties properties,
+            AdminAuditLogger auditLogger,
+            GatewayMetrics metrics) {
         this.storage = storage;
         this.marketplaceRepository = marketplaceRepository;
         this.properties = properties.catalog();
+        this.auditLogger = auditLogger;
+        this.metrics = metrics;
     }
+
+    /** One name claimed by one marketplace, already rewritten, held until every claim is in. */
+    private record Claim(String marketplace, ObjectNode entry) {}
 
     @Schema(description = "One marketplace inside the served catalog revision")
     public record Constituent(
@@ -89,7 +107,18 @@ public class CatalogService {
             Instant generatedAt,
 
             @Schema(description = "Served marketplaces vendored into this revision")
-            List<Constituent> constituents) {}
+            List<Constituent> constituents,
+
+            @Schema(description = "Names claimed by more than one marketplace; none of them is published")
+            List<Collision> collisions) {}
+
+    @Schema(description = "A catalog plugin name more than one marketplace claims")
+    public record Collision(
+            @Schema(description = "The contested name, which this revision does not publish")
+            String name,
+
+            @Schema(description = "Every marketplace that claimed it, in name order")
+            List<String> marketplaces) {}
 
     public boolean enabled() {
         return properties.enabled();
@@ -131,7 +160,10 @@ public class CatalogService {
                 manifest.put("name", properties.name());
                 manifest.set("owner", MAPPER.createObjectNode().put("name", "skills-gateway"));
                 ArrayNode plugins = manifest.putArray("plugins");
-                Map<String, String> pluginOwners = new LinkedHashMap<>();
+                // Every claim on every name, gathered before any of them is published: a first-wins
+                // rule cannot retract the winner when the second claimant arrives, and retracting is
+                // the whole of the fix (GW_FACADE_0029).
+                Map<String, List<Claim>> claims = new LinkedHashMap<>();
 
                 List<Marketplace> marketplaces = marketplaceRepository.list().stream()
                         .sorted(Comparator.comparing(Marketplace::name))
@@ -146,14 +178,16 @@ public class CatalogService {
                         if (tip == null) {
                             continue;
                         }
-                        vendor(catalog, published, marketplace.name(), tip, subtrees, plugins, pluginOwners);
+                        vendor(catalog, published, marketplace.name(), tip, subtrees, claims);
                         constituents.add(new Constituent(marketplace.name(), tip.name()));
                     }
                 }
 
-                ObjectId commit = commitCatalog(catalog, subtrees, manifest, constituents);
+                List<Collision> collisions = publishUncontested(claims, plugins);
+                ObjectId commit = commitCatalog(catalog, subtrees, manifest, constituents, collisions);
                 pruneInternalRefs(catalog);
-                return new CatalogInfo(commit.name(), Instant.now(), constituents);
+                announce(collisions);
+                return new CatalogInfo(commit.name(), Instant.now(), constituents, collisions);
             }
         }
     }
@@ -181,8 +215,16 @@ public class CatalogService {
                         return new Constituent(parts[0], parts[1]);
                     })
                     .toList();
-            return Optional.of(
-                    new CatalogInfo(tip.name(), Instant.ofEpochSecond(commit.getCommitTime()), constituents));
+            List<Collision> collisions = commit.getFullMessage()
+                    .lines()
+                    .map(String::strip)
+                    .filter(line -> line.startsWith(COLLISION_LINE))
+                    .map(line -> line.substring(COLLISION_LINE.length()).split(" ", 2))
+                    .filter(parts -> parts.length == 2)
+                    .map(parts -> new Collision(parts[0], List.of(parts[1].split(","))))
+                    .toList();
+            return Optional.of(new CatalogInfo(
+                    tip.name(), Instant.ofEpochSecond(commit.getCommitTime()), constituents, collisions));
         }
     }
 
@@ -196,8 +238,7 @@ public class CatalogService {
             String name,
             ObjectId tip,
             Map<String, ObjectId> subtrees,
-            ArrayNode plugins,
-            Map<String, String> pluginOwners)
+            Map<String, List<Claim>> claims)
             throws IOException, GitAPIException {
         try (Git git = new Git(catalog)) {
             git.fetch()
@@ -215,40 +256,92 @@ public class CatalogService {
                 JsonNode parsed =
                         MAPPER.readTree(catalog.open(tree.getObjectId(0)).getBytes());
                 for (JsonNode plugin : parsed.path("plugins")) {
-                    mergePlugin(name, plugin, plugins, pluginOwners);
+                    mergePlugin(name, plugin, claims);
                 }
             }
         }
     }
 
     /**
-     * Namespaced merge (GW_FACADE_0003): names prefixed with the marketplace, sources rewritten under its
-     * subdirectory. A prefix collision keeps the first in marketplace-name order and logs the rest
-     * — a documented limit of the naming scheme, not a silent drop.
+     * Namespaced merge (GW_FACADE_0003): names prefixed with the marketplace, sources rewritten under
+     * its subdirectory. Records the claim rather than publishing it — {@link #publishUncontested}
+     * decides, once every marketplace has been read.
      */
-    private static void mergePlugin(
-            String marketplace, JsonNode plugin, ArrayNode plugins, Map<String, String> pluginOwners) {
+    private static void mergePlugin(String marketplace, JsonNode plugin, Map<String, List<Claim>> claims) {
         String prefixed = marketplace + "-" + plugin.path("name").asText("unnamed");
-        String owner = pluginOwners.putIfAbsent(prefixed, marketplace);
-        if (owner != null) {
-            log.warn(
-                    "catalog plugin name collision: '{}' from marketplace '{}' already taken by '{}'; keeping the first",
-                    prefixed,
-                    marketplace,
-                    owner);
-            return;
-        }
         ObjectNode merged = plugin.deepCopy();
         merged.put("name", prefixed);
         String source = plugin.path("source").asText("");
         String relative = source.startsWith("./") ? source.substring(2) : source;
         merged.put("source", "./" + marketplace + "/" + relative);
-        plugins.add(merged);
+        claims.computeIfAbsent(prefixed, name -> new ArrayList<>()).add(new Claim(marketplace, merged));
+    }
+
+    /**
+     * Publishes exactly the names one marketplace claims, and withholds every contested one from
+     * both claimants (GW_FACADE_0029).
+     *
+     * <p>The prefix map is not injective — marketplace {@code a} with plugin {@code b-c} and
+     * marketplace {@code a-b} with plugin {@code c} both produce {@code a-b-c} — and the rule that
+     * stood here published the first in marketplace-name order. That did not merely drop the loser:
+     * it served the winner's tree <em>under the name the loser's consumers install</em>, and it was
+     * re-decided on every rebuild, so registering a marketplace whose name sorts earlier could
+     * change what an existing install name means. Substituting one publisher's content for another's
+     * is the one thing a catalog may never do. Omitting a name is legitimate; that is why both go.
+     *
+     * <p>Insertion order is preserved for the names that survive, so an estate with no collision
+     * produces exactly the manifest it did before.
+     */
+    @Requirements({"GW_FACADE_0029"})
+    private static List<Collision> publishUncontested(Map<String, List<Claim>> claims, ArrayNode plugins) {
+        List<Collision> collisions = new ArrayList<>();
+        for (Map.Entry<String, List<Claim>> claimed : claims.entrySet()) {
+            List<Claim> claimants = claimed.getValue();
+            if (claimants.size() == 1) {
+                plugins.add(claimants.getFirst().entry());
+                continue;
+            }
+            collisions.add(new Collision(
+                    claimed.getKey(),
+                    claimants.stream()
+                            .map(Claim::marketplace)
+                            .distinct()
+                            .sorted()
+                            .toList()));
+        }
+        return collisions.stream().sorted(Comparator.comparing(Collision::name)).toList();
+    }
+
+    /**
+     * A withheld name is a plugin its publisher believes is being served, so it is reported rather
+     * than only logged: one ledger entry per contested name per rebuild, and a counter. The entry
+     * names the gateway itself — the collision is the gateway's finding, not the act of whoever
+     * approved the snapshot that triggered the rebuild.
+     */
+    @Requirements({"GW_FACADE_0029"})
+    private void announce(List<Collision> collisions) {
+        for (Collision collision : collisions) {
+            log.warn(
+                    "catalog name collision: '{}' is claimed by {} and is published by none of them",
+                    collision.name(),
+                    collision.marketplaces());
+            metrics.catalogCollision();
+            auditLogger.recordAs(
+                    ActorType.SYSTEM,
+                    ACTOR,
+                    properties.name(),
+                    "catalog-name-collision",
+                    collision.name() + " claimed by " + String.join(", ", collision.marketplaces()));
+        }
     }
 
     /** One parentless commit (GW_FACADE_0004): history depth 1, so old compositions are unreachable. */
     private ObjectId commitCatalog(
-            Repository catalog, Map<String, ObjectId> subtrees, ObjectNode manifest, List<Constituent> constituents)
+            Repository catalog,
+            Map<String, ObjectId> subtrees,
+            ObjectNode manifest,
+            List<Constituent> constituents,
+            List<Collision> collisions)
             throws IOException {
         try (ObjectInserter inserter = catalog.newObjectInserter()) {
             byte[] manifestBytes = MAPPER.writerWithDefaultPrettyPrinter()
@@ -275,6 +368,18 @@ public class CatalogService {
                 message.append(constituent.marketplace())
                         .append(' ')
                         .append(constituent.sha())
+                        .append('\n');
+            }
+            // Collisions ride in the message beside the constituents because the read endpoint
+            // reconstructs from the served commit and nothing else: a withheld name that only
+            // existed in the rebuild's return value would be invisible to the operator who goes
+            // looking for it afterwards (GW_FACADE_0029). The keyword prefix keeps these lines out
+            // of the constituent pattern, whose second field is a 40-character SHA.
+            for (Collision collision : collisions) {
+                message.append(COLLISION_LINE)
+                        .append(collision.name())
+                        .append(' ')
+                        .append(String.join(",", collision.marketplaces()))
                         .append('\n');
             }
             CommitBuilder commit = new CommitBuilder();

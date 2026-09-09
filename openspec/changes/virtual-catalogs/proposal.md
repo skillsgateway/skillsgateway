@@ -1,5 +1,21 @@
 # Proposal: virtual-catalogs
 
+!!! note "Part of this shipped separately"
+
+    The **substitution defect** — the non-injective name map and its first-wins
+    collision rule — shipped as its own change, `catalog-name-collisions`
+    (GW_FACADE_0029 — A contested catalog name is published for nobody). It was a
+    defect in released code sitting in a queue of unstarted feature work, and it
+    was separated so it could be fixed without waiting for the rest.
+
+    **What remains here:** revision provenance (a catalog revision named on the
+    fetch ledger may no longer be describable — the second defect, which needs a
+    migration, a repository and two endpoints), the registration prefix warning,
+    and everything from slice 2 onward.
+
+    Do not re-implement the collision rule from this proposal; read
+    `openspec/changes/archive/*-catalog-name-collisions/` for what was done.
+
 ## Why
 
 Issue [#11](https://github.com/skillsgateway/skillsgateway/issues/11) asks for

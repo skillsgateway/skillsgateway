@@ -30,3 +30,9 @@ The system SHALL implement GW_FACADE_0017.
 #### Scenario: SVC_GW_FACADE_0017
 The system SHALL pass SVC_GW_FACADE_0017.
 
+### Requirement: GW_FACADE_0029
+The system SHALL implement GW_FACADE_0029.
+
+#### Scenario: SVC_GW_FACADE_0029
+The system SHALL pass SVC_GW_FACADE_0029.
+
