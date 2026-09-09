@@ -2260,6 +2260,21 @@ cases:
       it, leaving neither behind without the other
     revision: "0.1.0"
 
+  - id: SVC_GW_INGEST_0031
+    requirement_ids: ["GW_INGEST_0031"]
+    title: A resolution bound may be lowered without limit and raised only so far
+    verification: automated-test
+    description: |
+      GIVEN the resolution budgets bound to configured values
+      WHEN every bound is left unset, then set below what the gateway ships with, then
+      set above it but within reach, and then set to a value that would disable it
+      THEN the unset case is the shipped value, a lowered bound is honoured exactly, a
+      raised bound is honoured exactly while it is one the gateway can defend, a bound
+      beyond that is replaced by the furthest the gateway will go rather than failing the
+      start, each bound is replaced independently of the others, and no such limit is
+      itself below the value the gateway ships with
+    revision: "0.1.0"
+
   - id: SVC_GW_INGEST_0030.1
     requirement_ids: ["GW_INGEST_0030.1"]
     title: The closure and its members record the value copies the requirement describes

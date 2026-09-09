@@ -479,15 +479,37 @@ skills-gateway:
 | `skills-gateway.ingestion.external-sources.max-sources` | integer | `20` | Counts external sources, not plugins. |
 | `skills-gateway.ingestion.external-sources.github-base-url` | string | `https://github.com` | Trailing slashes are trimmed. The derived URL still faces the scheme and host allowlists. |
 | `skills-gateway.ingestion.external-sources.allow-private-networks` | boolean | `false` | Loopback, RFC1918, `100.64.0.0/10`, `fc00::/7`. Never link-local. |
-| `…external-sources.budgets.max-received-bytes` | size | `50MB` | Enforced on the response stream, so an endless transfer is cut off rather than measured. |
-| `…external-sources.budgets.max-inflated-bytes` | size | `200MB` | One source's content as objects. |
-| `…external-sources.budgets.max-closure-bytes` | size | `500MB` | Accumulated across every source one manifest declares. |
-| `…external-sources.budgets.max-inflation-ratio` | integer | `100` | Judged only once a source's content passes a quarter of `max-inflated-bytes`; below that the absolute bound already caps it. |
-| `…external-sources.budgets.max-objects` | integer | `20000` | Blobs and directories one source may contribute. |
-| `…external-sources.budgets.max-blob-bytes` | size | `10MB` | Largest single file. |
-| `…external-sources.budgets.max-tree-depth` | integer | `32` | Bounds every later walk of the content, not only the fetch. |
-| `…external-sources.budgets.max-redirects` | integer | `3` | Hops one request may take. |
-| `…external-sources.budgets.deadline` | duration | `5m` | Wall clock for resolving a whole manifest. |
+
+The nine resolution budgets carry a second number: the furthest this gateway
+will honour a raise.
+
+| Key | Type | Default | Ceiling | Notes |
+| --- | --- | --- | --- | --- |
+| `…external-sources.budgets.max-received-bytes` | size | `50MB` | `500MB` | Enforced on the response stream, so an endless transfer is cut off rather than measured. |
+| `…external-sources.budgets.max-inflated-bytes` | size | `200MB` | `2GB` | One source's content as objects. |
+| `…external-sources.budgets.max-closure-bytes` | size | `500MB` | `5GB` | Accumulated across every source one manifest declares. |
+| `…external-sources.budgets.max-inflation-ratio` | integer | `100` | `1000` | Judged only once a source's content passes a quarter of `max-inflated-bytes`; below that the absolute bound already caps it. |
+| `…external-sources.budgets.max-objects` | integer | `20000` | `200000` | Blobs and directories one source may contribute. |
+| `…external-sources.budgets.max-blob-bytes` | size | `10MB` | `100MB` | Largest single file. |
+| `…external-sources.budgets.max-tree-depth` | integer | `32` | `256` | Bounds every later walk of the content, not only the fetch. |
+| `…external-sources.budgets.max-redirects` | integer | `3` | `10` | Hops one request may take. |
+| `…external-sources.budgets.deadline` | duration | `5m` | `30m` | Wall clock for resolving a whole manifest. |
+
+!!! warning "A budget can be lowered without limit and raised only so far"
+
+    The **Ceiling** column is the furthest this gateway will honour. Set a
+    budget above it and the gateway uses the ceiling instead, logs a warning
+    naming the key, the value you configured and the value in force, and starts
+    normally (GW_INGEST_0031 — *A configured resolution bound is honoured only as
+    far as the gateway can defend it*).
+
+    Lowering is never clamped. These bounds exist so that no manifest the
+    gateway will look at can exhaust the gateway, and a bound settable to any
+    value is not that — it is a control an operator can switch off by typing a
+    large number, after which the gateway behaves as an unbounded resolver while
+    its configuration still claims a limit. Every ceiling is far above its
+    default, so a marketplace that legitimately outgrows one still has somewhere
+    to go.
 
 Every `budgets.*` key except `max-redirects` is its own sub-requirement of
 GW_INGEST_0026 — *Resource-bounded source resolution*, in the order the table lists
