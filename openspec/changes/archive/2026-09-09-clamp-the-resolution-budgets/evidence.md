@@ -2,19 +2,23 @@
 
 One fresh run of every gate after the last code edit.
 
-Commit under test: `846131fbee040072a74bc15182190b1f9ab13444`
+Commit under test: `6024beb` (rebased after #342 and #343 merged and #344 was replayed onto main; gates re-run)
 Branch: `feat/clamp-the-resolution-budgets` (on top of `feat/revocation-freshness-is-not-a-knob`)
 
 ## Gates
 
 ```
-./mvnw clean verify                          → BUILD SUCCESS, 646 tests, 0 Checkstyle violations
+./mvnw clean verify                          → BUILD SUCCESS, 647 tests, 0 Checkstyle violations
 (cd src/main/frontend && pnpm test:stories)  → 6 tests passed
-(cd src/main/frontend && pnpm e2e)           → 13 passed (45.1s)
+(cd src/main/frontend && pnpm e2e)           → 13 passed (44.6s)
 reqstool status local -p docs/reqstool       → 218/218 complete · 0 incomplete · PASS
-openspec validate --all --strict             → 32 passed, 0 failed
-mkdocs build --strict                        → built in 1.15s
+openspec validate --all --strict             → 31 passed, 0 failed
+mkdocs build --strict                        → built in 1.17s
 ```
+
+The e2e run used `E2E_GATEWAY_PORT=18081`; 8081 was held by an unrelated process
+on this machine. `run-e2e.sh` takes the port from that variable, so nothing about
+the suite changed.
 
 ## The analysis that replaced the original plan
 
