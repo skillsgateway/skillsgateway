@@ -72,11 +72,37 @@ mode.
 the identity provider, so an expired session surfaces as an error rather than an
 HTML login page rendered into a `fetch()`.
 
-**CSRF** is enabled for the web surface but disabled for `/api/**`, which is
-consumed by the portal with a session cookie. The machine path earns its own
-exemption the way the git facade does and does not borrow the session path's: it
-is stateless, creates no session, honours no cookie and refuses a request that
-carries one, so every request there authenticates itself.
+**CSRF.** The session path carries a token. Every response sets an `XSRF-TOKEN`
+cookie readable by script, and a state-changing request must echo it in an
+`X-XSRF-TOKEN` header or receive **403**: a session cookie on its own does not
+authorise a mutation. The portal's fetch wrapper sends it on every call, so a
+portal user does nothing differently. One consequence worth knowing before you
+meet it: the Scalar reference at `/docs` sends its requests from the browser
+without that header, so a mutation tried from there is refused even though a
+read from there works. Why the session path needs a token at all is in
+[Trust boundaries](../../concepts/trust-boundaries.md#the-web-surface).
+
+The machine path carries no token and needs none. It earns that the way the git
+facade does rather than borrowing the session path's: it is stateless, creates
+no session, honours no cookie and refuses a request that carries one, so every
+request there authenticates itself.
+
+!!! note "Driving the session path from a script"
+
+    The `curl` examples in these pages show the path and the body, not the
+    credential. Reads are unaffected; a mutation needs the cookie jar and the
+    header, and that holds under `skills-gateway.dev-insecure-auth=true` too —
+    the hatch opens authentication, not this.
+
+    ```console
+    $ curl -sS -c jar -b jar -o /dev/null localhost:8080/api/marketplaces
+    $ curl -sS -c jar -b jar -X POST localhost:8080/api/snapshots/1/approve \
+        -H "X-XSRF-TOKEN: $(grep XSRF-TOKEN jar | cut -f7)"
+    ```
+
+    A pipeline should use a
+    [machine API credential](tokens.md#machine-api-credentials) instead, which
+    needs neither the jar nor the header.
 
 **Compatibility.** Within a major, this surface only grows; a breaking change
 moves the path prefix and ships as a major. See

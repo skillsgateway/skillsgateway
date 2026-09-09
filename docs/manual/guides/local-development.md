@@ -101,6 +101,11 @@ $ java -jar target/skills-gateway-server-*.jar --skills-gateway.dev-insecure-aut
     It does **not** affect the git facade: `/git/**` still requires a valid
     personal access token.
 
+    It does not affect the CSRF token either — it opens authentication, not
+    forgery protection — so a mutation driven by `curl` still needs the
+    `X-XSRF-TOKEN` header. See
+    [REST API](../reference/api/index.md#conventions).
+
 !!! note "It refuses to start once an identity provider is configured"
 
     The escape hatch is for a loop that has no identity provider. Set it

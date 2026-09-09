@@ -1,3 +1,15 @@
+server:
+  servlet:
+    session:
+      cookie:
+        # Named rather than left to the browser: Firefox and Safari apply no default at all, so an
+        # unset attribute means the session cookie rides a cross-site request in those browsers.
+        # Lax, not Strict — Strict withholds the cookie on the identity provider's redirect back to
+        # /login/oauth2/code/*, which is a cross-site top-level navigation, and login fails with the
+        # authorization request unfound. Lax still withholds it on every cross-site POST, which is
+        # the vector (GW_AUTH_0030).
+        same-site: lax
+
 spring:
   application:
     name: skills-gateway

@@ -283,6 +283,24 @@ Requests to `/api/**` that lack a session get a clean **401** rather than a 302
 to the identity provider, so an expired session surfaces in the SPA as an error
 instead of an HTML login page rendered into a `fetch()`.
 
+The session cookie is the only **ambient** credential the gateway has, so this
+is the only chain that needs a CSRF token; the other four authenticate every
+request on their own and honour no cookie, so a forged cross-site request
+arrives at them unauthenticated. Every response here sets an `XSRF-TOKEN` cookie
+readable by script, and a state-changing request must echo it in an
+`X-XSRF-TOKEN` header. What that stops is the shape the JSON content-type
+requirement does not: `approve`, `reject`, `revet`, `restore` and the rebuild,
+reconcile, retention and rotation triggers are body-less `POST`s, which a plain
+cross-site HTML form can produce — and Firefox and Safari apply no default
+`SameSite`, so in those browsers such a request carried the session cookie. A
+logged-in reviewer visiting a hostile page could be made to approve a snapshot.
+
+The session cookie is named `SameSite=Lax` rather than left to the browser,
+which withholds it from every cross-site POST. That is a second layer and not
+the control, because honouring it is the browser's choice; `Strict` is
+deliberately not used, and
+[Configuration](../reference/configuration.md#session-cookie) says why.
+
 !!! warning "dev-insecure-auth"
 
     `skills-gateway.dev-insecure-auth=true` makes the **entire web surface**
@@ -300,6 +318,11 @@ instead of an HTML login page rendered into a `fetch()`.
     the way the git facade is: a mode in which every bearer value authenticated
     would be a very quiet way to lose the control plane in a copied
     configuration.
+
+    It opens **authentication**, not forgery protection: the CSRF token is
+    required here exactly as it is with a configured identity provider, so the
+    portal's token handling is exercised in the local loop instead of breaking
+    only in production.
 
 ## The machine API — a credential in a pipeline becomes a control-plane caller
 

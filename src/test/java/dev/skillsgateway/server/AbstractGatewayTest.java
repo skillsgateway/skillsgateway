@@ -28,8 +28,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -152,9 +154,20 @@ abstract class AbstractGatewayTest {
 
     protected MockMvc mockMvc;
 
+    /**
+     * Every request carries a CSRF token by default (GW_AUTH_0030). The alternative was
+     * {@code .with(csrf())} on some 143 mutating call sites, which would have made the token part
+     * of what each suite appears to be about. {@code defaultRequest}'s post-processors are merged
+     * ahead of the per-request ones rather than replacing them, so {@code .with(oidcLogin())} still
+     * applies.
+     *
+     * <p>The cost is that no suite reached through this base can fail for a missing token, so none
+     * of them proves the token is required. {@code CsrfEnforcementTests} does that on its own.
+     */
     @BeforeEach
     void setUpMockMvc() {
         this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+                .defaultRequest(MockMvcRequestBuilders.get("/").with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .apply(SecurityMockMvcConfigurers.springSecurity())
                 .build();
     }
