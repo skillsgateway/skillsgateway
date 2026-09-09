@@ -89,3 +89,9 @@ The system SHALL implement GW_VETTING_0028.
 #### Scenario: SVC_GW_VETTING_0028
 The system SHALL pass SVC_GW_VETTING_0028.
 
+### Requirement: GW_APPROVAL_0014
+The system SHALL implement GW_APPROVAL_0014.
+
+#### Scenario: SVC_GW_APPROVAL_0014
+The system SHALL pass SVC_GW_APPROVAL_0014.
+
