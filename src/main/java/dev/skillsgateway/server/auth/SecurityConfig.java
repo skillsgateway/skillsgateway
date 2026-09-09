@@ -137,9 +137,9 @@ public class SecurityConfig {
      * {@link MachineApiRegistry}, expanded here into one rule per reachable route with
      * {@code denyAll} underneath: every route the registry does not name — every act of human
      * judgement, every retraction of content, every credential-minting path — is refused whatever
-     * combination of scopes the credential holds. Because both live in the filter chain, neither
-     * consults {@code skills-gateway.roles.enabled}: that flag exists so an upgrade does not lock
-     * out existing sessions, and nothing predates a credential kind that did not exist.
+     * combination of scopes the credential holds. Neither consults any enforcement switch, because
+     * there is none: {@code skills-gateway.roles.enabled} was removed and setting it now refuses
+     * startup (GW_AUTH_0027).
      *
      * <p>Ordered ahead of the web chain, so this holds under
      * {@code skills-gateway.dev-insecure-auth=true} as well — the escape hatch opens the browser
