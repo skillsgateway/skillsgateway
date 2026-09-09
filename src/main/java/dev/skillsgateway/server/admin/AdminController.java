@@ -383,7 +383,14 @@ public class AdminController {
             String reason) {}
 
     @PostMapping("/snapshots/{id}/approve")
-    @Requirements({"GW_APPROVAL_0003", "GW_VETTING_0013", "GW_APPROVAL_0010", "GW_APPROVAL_0011", "GW_VETTING_0028"})
+    @Requirements({
+        "GW_APPROVAL_0003",
+        "GW_VETTING_0013",
+        "GW_APPROVAL_0010",
+        "GW_APPROVAL_0011",
+        "GW_VETTING_0028",
+        "GW_APPROVAL_0004.5"
+    })
     @Tag(name = "Snapshots")
     @Operation(
             summary = "Approve a held or revoked snapshot",
@@ -440,7 +447,7 @@ public class AdminController {
                     "reason=%s; blockingConnectors=%s; uncovered=%s"
                             .formatted(over.reason(), over.blockingConnectors(), over.uncoveredFindings()));
         }
-        // The age at approval is on the decision's own ledger entry (GW_APPROVAL_0004): what the cooling-off
+        // The age at approval is on the decision's own ledger entry (GW_APPROVAL_0004.5): what the cooling-off
         // window was worth for this snapshot is only reconstructible if the entry says how long the
         // commit had been sitting in quarantine when someone adopted it.
         auditLogger.record(
@@ -522,7 +529,7 @@ public class AdminController {
     }
 
     @GetMapping("/snapshots/{id}/release-age")
-    @Requirements({"GW_APPROVAL_0004"})
+    @Requirements({"GW_APPROVAL_0004.4"})
     @Tag(name = "Snapshots")
     @Operation(
             summary = "Minimum release age eligibility",
@@ -660,10 +667,11 @@ public class AdminController {
     }
 
     /**
-     * The cooling-off window (GW_APPROVAL_0004). The response says which setting imposed the wait and how
-     * much of it is left, so the reader can tell the two possible answers apart: wait, or change
-     * the configuration — there is deliberately no per-approval override to reach for.
+     * The cooling-off window (GW_APPROVAL_0004.3). The response says which setting imposed the wait
+     * and how much of it is left, so the reader can tell the two possible answers apart: wait, or
+     * change the configuration — there is deliberately no per-approval override to reach for.
      */
+    @Requirements({"GW_APPROVAL_0004.3"})
     @ExceptionHandler(SnapshotTooYoungException.class)
     public ProblemDetail snapshotTooYoung(SnapshotTooYoungException e) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());

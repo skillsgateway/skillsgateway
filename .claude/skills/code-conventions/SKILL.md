@@ -62,7 +62,8 @@ openspec validate --all --strict
   suites run outside `mvnw verify` — as their own commands locally and their
   own CI jobs (#103).
 - API types are GENERATED: `src/main/frontend/openapi.json` → `src/api/types.gen.ts`
-  (`pnpm exec openapi-typescript openapi.json -o src/api/types.gen.ts`).
+  (`pnpm gen:api-types` — it pins TypeScript 5.9.3 via `dlx`, because
+  `openapi-typescript` cannot run against the workspace's TypeScript 7).
   Regenerate after backend API changes (snapshot comes from
   `OpenApiDocsTests` → `target/openapi.json`). Never hand-edit.
   `OpenApiContractTests` fails the build when the committed `openapi.json` is not

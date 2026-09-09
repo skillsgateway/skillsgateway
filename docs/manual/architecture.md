@@ -328,10 +328,11 @@ and (d) optionally pushes a fleet-managed settings change to force uninstall.
 Implemented today (GW_VETTING_0012–GW_VETTING_0018): a `revoked` snapshot state, removal of both
 published refs (`refs/heads/main` when it is still the tip, and the advertised
 `refs/snapshots/<sha>`), and the blast-radius report from the fetch ledger at
-`GET /api/snapshots/{id}/fetchers`. What triggers the recall is **continuous
-re-vetting** — the chain re-run over approved content on a schedule — rather
-than only a human pressing a button, so an acceptance that expired or a
-connector rule that landed retracts content without waiting to be noticed.
+`GET /api/snapshots/{id}/fetchers`, readable by an approver of the marketplace or
+an administrator. What triggers the recall is **continuous re-vetting** — the
+chain re-run over approved content on a schedule — rather than only a human
+pressing a button, so an acceptance that expired or a connector rule that landed
+retracts content without waiting to be noticed.
 Two limits are deliberate:
 
 - Enforcement is **opt-in** (`skills-gateway.vetting.revet.mode`, default

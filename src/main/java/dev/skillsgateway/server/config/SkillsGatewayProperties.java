@@ -189,7 +189,7 @@ public record SkillsGatewayProperties(
      * default here is the behaviour that shipped before this block existed, so an absent block —
      * which is every existing deployment — rejects external sources exactly as GW_INGEST_0003 always did.
      *
-     * <p>An enabled gateway resolves what it admits (GW_INGEST_0023, GW_INGEST_0024): the source is fetched into
+     * <p>An enabled gateway resolves what it admits (GW_INGEST_0023, GW_INGEST_0024.1): the source is fetched into
      * quarantine and grafted into a composite snapshot whose manifest is entirely gateway-local.
      * Enabling this therefore opens the gateway's only manifest-driven outbound network path, which
      * is what {@link #allowPrivateNetworks} and {@link #budgets} bound — and why the primary control
@@ -620,10 +620,10 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * One identity-provider claim value granting one role (GW_AUTH_0015). The value is the provider's
+     * One identity-provider claim value granting one role (GW_AUTH_0015.1). The value is the provider's
      * own — a group object id, an app-role value — so it is matched exactly and never by
      * convention; an {@code approver} mapping names the marketplace it is scoped to and the global
-     * roles name none, which {@code ClaimRoleMapper} refuses to start without.
+     * roles name none, which {@code ClaimRoleMapper} refuses to start without (GW_AUTH_0015.2).
      *
      * <p>The named marketplace need not exist yet: registration may come later, including from
      * {@link Estate}, and until then the mapping simply matches nothing.
@@ -753,10 +753,11 @@ public record SkillsGatewayProperties(
      *     how promptly the lapse is announced.
      * @param waiverSweepBatchSize how many lapsed waivers one sweep pass records
      * @param minimumReleaseAge the cooling-off window a snapshot must clear before it can be
-     *     approved (GW_APPROVAL_0004), measured from the instant the gateway first ingested its commit.
-     *     Zero — the default — disables the gate entirely, so an upgrade changes nothing. Like
-     *     waiver expiry this is a comparison made per approval request, not a scheduled state, so
-     *     the wait clears itself and no sweep can be late.
+     *     approved (GW_APPROVAL_0004.1), measured from the instant the gateway first ingested its
+     *     commit. Zero — the default — disables the gate entirely, so an upgrade changes nothing
+     *     (GW_APPROVAL_0004.2). Like waiver expiry this is a comparison made per approval request,
+     *     not a scheduled state, so the wait clears itself and no sweep can be late
+     *     (GW_APPROVAL_0004.2).
      * @param revet continuous re-vetting of approved content (GW_VETTING_0012-GW_VETTING_0017)
      * @param license the org-level license policy (GW_VETTING_0020)
      * @param conformance the posture of the built-in SKILL.md conformance connector (GW_INGEST_0028)

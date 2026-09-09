@@ -84,6 +84,8 @@ public final class MachineApiRegistry {
                         get("/api/snapshots/{id}/file"),
                         get("/api/snapshots/{id}/files"),
                         get("/api/snapshots/{id}/vetting"),
+                        // The only route in this scope that also needs a role: the blast-radius
+                        // report is approver-scoped (GW_AUTH_0011), and reach is the intersection.
                         get("/api/snapshots/{id}/fetchers"),
                         // Four-eyes eligibility is a read of the same evidence surface: it reports
                         // whether a second reviewer is required and who the first was. Approval
@@ -164,7 +166,7 @@ public final class MachineApiRegistry {
             // route that actually exercises its credential against the forge. If the report is
             // reserved to administrators, the button that acts on it cannot be less so.
             post("/api/mirror/reconcile"),
-            // The connector on/off switch (GW_VETTING_0029): administrator judgement over the vetting
+            // The connector on/off switch (GW_VETTING_0029.4): administrator judgement over the vetting
             // chain itself, and even seeing the current settings is reserved to administrators —
             // no scope may let a machine credential turn off the control that governs it.
             get("/api/vetting/connector-toggles"),

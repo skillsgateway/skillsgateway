@@ -159,6 +159,20 @@ grow too.
 | A new lifecycle event | **Yes.** A subscriber's filter is exact-match, so nothing starts receiving it uninvited. |
 | A new field in a delivery body — added **optional** | **Yes.** Receivers must ignore keys they do not recognise. |
 | Removing or renaming an event, a delivery body field, or a transport header | **No.** |
+| Gating a route that was reachable without the role it should always have required | **Additive to the document, narrowing in fact.** See below. |
+
+!!! note "Closing a security gap narrows a route without moving the prefix"
+
+    A route that was readable by callers who should never have reached it is
+    corrected in place: the guard is added, a `403` joins its documented
+    responses, and the prefix does not move. The remedy the table prescribes for
+    a narrowing — a new prefix and a major — cannot apply, because it would leave
+    the old prefix serving the gap it exists to close.
+
+    The gate does not object: adding a response is additive, and oasdiff cannot
+    see that a caller who used to get `200` now gets `403`. That makes this a
+    case review has to catch, like the prefix rule above it. It has happened once
+    so far, to `GET /api/snapshots/{id}/fetchers`.
 
 !!! note "A payload field added later is added optional"
 

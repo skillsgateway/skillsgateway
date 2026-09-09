@@ -99,6 +99,7 @@ public class IngestionService {
         "GW_INGEST_0018",
         "GW_INGEST_0023",
         "GW_INGEST_0024",
+        "GW_INGEST_0024.2",
         "GW_INGEST_0027",
         "GW_INGEST_0030",
         "GW_INGEST_0030.3"
@@ -253,7 +254,7 @@ public class IngestionService {
      * otherwise byte-for-byte the path that shipped before: a local-only manifest is served as the
      * upstream commit, with no composite, no fetch and no new reference.
      */
-    @Requirements({"GW_INGEST_0021", "GW_INGEST_0023", "GW_INGEST_0024", "GW_INGEST_0027", "GW_INGEST_0030.1"})
+    @Requirements({"GW_INGEST_0021", "GW_INGEST_0023", "GW_INGEST_0024.1", "GW_INGEST_0027", "GW_INGEST_0030.1"})
     private Served serve(Repository repo, ObjectId upstreamSha) throws IOException {
         byte[] manifestBytes = manifestBytes(repo, upstreamSha);
         if (manifestBytes == null) {

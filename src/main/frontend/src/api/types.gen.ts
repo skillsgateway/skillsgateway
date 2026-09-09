@@ -673,7 +673,7 @@ export interface paths {
         };
         /**
          * Who fetched this snapshot
-         * @description Every authenticated identity that received this snapshot's content through the git facade, with how many times and when it last did — the blast radius of a retroactive violation, answered from the append-only fetch ledger. Only pack transfers count: a ref advertisement means the client asked, not that it received anything.
+         * @description Every authenticated identity that received this snapshot's content through the git facade, with how many times and when it last did — the blast radius of a retroactive violation, answered from the append-only fetch ledger. Only pack transfers count: a ref advertisement means the client asked, not that it received anything. Approver of the snapshot's marketplace, or administrator: it names identities, so it is the same judgement as acting on the revocation it informs.
          */
         get: operations["fetchers"];
         put?: never;
@@ -4414,6 +4414,15 @@ export interface operations {
         responses: {
             /** @description The identities that fetched the snapshot's content */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Fetcher"][];
+                };
+            };
+            /** @description The caller is neither an administrator nor an approver of the snapshot's marketplace */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -150,9 +150,15 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             mockMvc.perform(request(route).with(mallory)).andExpect(status().isForbidden());
         }
 
-        // The browsing surface stays open: it is what the portal is for.
         Registered fixture = registerAndIngest(uniqueName("rolewalk"), createUpstream(DEFAULT_MANIFEST));
         long snapshotId = fixture.snapshot().id();
+        // The blast-radius report names identities, so it is not browsing (GW_VETTING_0016). It is
+        // scoped to the snapshot's approver rather than listed above, because the walk addresses
+        // routes by a synthetic id and this guard resolves the owning marketplace from a real one.
+        mockMvc.perform(get("/api/snapshots/{id}/fetchers", snapshotId).with(mallory))
+                .andExpect(status().isForbidden());
+
+        // The browsing surface stays open: it is what the portal is for.
         mockMvc.perform(get("/api/marketplaces").with(mallory)).andExpect(status().isOk());
         mockMvc.perform(get("/api/snapshots/{id}/content", snapshotId).with(mallory))
                 .andExpect(status().isOk());
@@ -161,8 +167,6 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         mockMvc.perform(get("/api/snapshots/{id}/provenance", snapshotId).with(mallory))
                 .andExpect(status().isOk());
         mockMvc.perform(get("/api/snapshots/{id}/vetting", snapshotId).with(mallory))
-                .andExpect(status().isOk());
-        mockMvc.perform(get("/api/snapshots/{id}/fetchers", snapshotId).with(mallory))
                 .andExpect(status().isOk());
         // Eligibility is a read of the same browsing surface, not a step toward approving: it
         // reports whether the cooling-off window has passed, and approve itself stays role-gated
@@ -238,6 +242,8 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         mockMvc.perform(post("/api/snapshots/{id}/revet", a.snapshot().id()).with(bob))
                 .andExpect(status().isOk());
         mockMvc.perform(post("/api/marketplaces/{name}/revet", nameA).with(bob)).andExpect(status().isOk());
+        mockMvc.perform(get("/api/snapshots/{id}/fetchers", a.snapshot().id()).with(bob))
+                .andExpect(status().isOk());
         addUpstreamCommit(upstreamA, "reject-me");
         String heldOnA = mockMvc.perform(
                         post("/api/marketplaces/{name}/ingest", nameA).with(bob))
@@ -268,6 +274,8 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                 .andExpect(status().isForbidden());
         mockMvc.perform(post("/api/snapshots/{id}/reject", bSnapshot).with(bob)).andExpect(status().isForbidden());
         mockMvc.perform(post("/api/snapshots/{id}/revet", bSnapshot).with(bob)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/snapshots/{id}/fetchers", bSnapshot).with(bob))
+                .andExpect(status().isForbidden());
         mockMvc.perform(post("/api/marketplaces/{name}/revet", nameB).with(bob)).andExpect(status().isForbidden());
         mockMvc.perform(post("/api/snapshots/{id}/waivers", bSnapshot)
                         .with(bob)

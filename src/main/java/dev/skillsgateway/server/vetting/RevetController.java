@@ -81,10 +81,16 @@ public class RevetController {
             description = "Every authenticated identity that received this snapshot's content through the git"
                     + " facade, with how many times and when it last did — the blast radius of a retroactive"
                     + " violation, answered from the append-only fetch ledger. Only pack transfers count: a ref"
-                    + " advertisement means the client asked, not that it received anything.")
+                    + " advertisement means the client asked, not that it received anything. Approver of the"
+                    + " snapshot's marketplace, or administrator: it names identities, so it is the same"
+                    + " judgement as acting on the revocation it informs.")
     @ApiResponse(responseCode = "200", description = "The identities that fetched the snapshot's content")
+    @ApiResponse(
+            responseCode = "403",
+            description = "The caller is neither an administrator nor an approver of the snapshot's marketplace")
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
-    public List<FetchLogRepository.Fetcher> fetchers(@PathVariable long id) {
+    public List<FetchLogRepository.Fetcher> fetchers(@PathVariable long id, Authentication authentication) {
+        roleService.requireApproverOfSnapshot(authentication, id);
         return revetService.affected(id);
     }
 

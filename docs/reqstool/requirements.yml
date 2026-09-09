@@ -555,10 +555,10 @@ requirements:
   - id: GW_AUTH_0011
     title: Per-marketplace approver scoping
     significance: shall
-    description: The system shall scope an approver grant to exactly one marketplace and accept from its holder ingestion, approval, rejection, re-vetting and waiver operations only for content of that marketplace, resolving the owning marketplace on the gateway's side from the addressed snapshot or waiver where the route carries an id rather than a marketplace name, and shall refuse the holder the same operations for any other marketplace.
-    rationale: Delegation is only containment if the boundary holds on every route; resolving the marketplace from the addressed resource rather than trusting the route shape closes the confused-deputy path where an approver of one marketplace reaches another's content through a bare snapshot or waiver id.
+    description: The system shall scope an approver grant to exactly one marketplace and accept from its holder ingestion, approval, rejection, re-vetting and waiver operations, and the report of which identities fetched a snapshot's content, only for content of that marketplace, resolving the owning marketplace on the gateway's side from the addressed snapshot or waiver where the route carries an id rather than a marketplace name, and shall refuse the holder the same operations for any other marketplace.
+    rationale: Delegation is only containment if the boundary holds on every route; resolving the marketplace from the addressed resource rather than trusting the route shape closes the confused-deputy path where an approver of one marketplace reaches another's content through a bare snapshot or waiver id. The blast-radius report is scoped with the actions rather than with the browsing surface because it names identities, which is the same judgement as the revocation it informs.
     categories: ["security"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_AUTH_0012
     title: Auditor read-only guarantee
@@ -586,10 +586,60 @@ requirements:
     revision: 0.5.0
 
   - id: GW_APPROVAL_0004
-    title: Minimum release age before approval
+    title: The minimum release age is a self-clearing control anchored to the gateway's own clock
     significance: shall
-    description: The system shall let an operator configure a global minimum age a snapshot must reach before it can be approved, shall measure that age from the instant the gateway itself first ingested the snapshot's commit and never from any timestamp the upstream commit carries, shall keep that instant unchanged when the same commit is ingested again, shall evaluate the age at the instant of each approval request with no scheduled process involved, shall refuse an approval of a snapshot that has not reached the configured age with a conflict naming the configured setting, the snapshot's current age and the time remaining, shall report the same eligibility and remaining time for a snapshot on request so a reviewer sees it before deciding, shall record the snapshot's age on every approval it allows and the refusal on every one it blocks in the append-only ledger, and shall apply no age gate at all when the setting is zero, which is the default.
-    rationale: A compromised release is usually noticed by the wider world within hours of being published, so adopting a commit the moment it lands forfeits the cheapest detection window there is and leaves the push-then-quickly-revert attack unanswered; taking the age from the gateway's own first sighting puts the control out of reach of an attacker who can backdate a commit, and evaluating it per request means the wait clears itself with no scheduler that can be late and no state that can be left behind.
+    description: "The system shall let an operator configure a global minimum age a snapshot must reach before it can be approved, as a control anchored to a clock the gateway alone controls and that needs no scheduled process to enforce or to lift: the answer changes correctly over time from data already recorded, and agrees for every path that consults it — the approval attempt itself, the eligibility report a reviewer reads first, and the ledger entry the decision leaves behind."
+    rationale: "A compromised release is usually noticed by the wider world within hours of being published, so adopting a commit the moment it lands forfeits the cheapest detection window there is. Stating the control as self-clearing and self-consistent, rather than as a list of unrelated behaviours, is what makes it trustworthy: a gate that a report could disagree with, or that needed a scheduler to open, would be a control whose state nobody could be sure of at the moment a reviewer relies on it. Each of the five guarantees below states one part of that trustworthiness that can be verified, and can regress, on its own."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0004.1
+    title: The age is measured from the gateway's own first sighting, immune to backdating and re-ingestion
+    significance: shall
+    description: "The system shall measure a snapshot's age from the instant the gateway itself first ingested the snapshot's commit, never from any timestamp the upstream commit carries, and shall keep that instant unchanged when the same commit is ingested again."
+    rationale: "A committer date is written by whoever made the commit, so an attacker who wants to defeat a cooling-off window would only have to backdate one; taking the age from the gateway's own first sighting puts the control out of that reach. Leaving the instant untouched by re-ingestion is what keeps a re-push from resetting a window that has already nearly cleared."
+    references:
+      requirement_ids: ["GW_APPROVAL_0004"]
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0004.2
+    title: The age is evaluated fresh at each approval request, gates only approval, and a zero setting disables it
+    significance: shall
+    description: "The system shall evaluate a snapshot's age at the instant of each approval request, with no scheduled process involved, shall gate no other decision — rejection in particular is never gated by age — and shall apply no age gate at all when the configured minimum is left at its zero default."
+    rationale: "Evaluating per request rather than on a schedule means the wait clears itself with no scheduler that can be late and no state that can be left behind, the same reasoning waiver expiry follows. Leaving rejection ungated is what keeps the window from ever standing between a reviewer and turning suspicious content away quickly, and the zero default is what makes adopting the setting change nothing for a deployment that never configures it."
+    references:
+      requirement_ids: ["GW_APPROVAL_0004"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0004.3
+    title: An approval below the configured age is refused, naming the setting, the age and the wait remaining
+    significance: shall
+    description: "The system shall refuse an approval of a snapshot that has not reached the configured age, with a conflict naming the configured setting, the snapshot's current age and the time remaining, and the refusal shall precede any state transition so nothing is published."
+    rationale: "A refusal that does not name the setting or the remaining wait teaches a reviewer nothing they can act on; and refusing before any state transition is what keeps a blocked approval from leaving a snapshot half-decided or content half-published behind it."
+    references:
+      requirement_ids: ["GW_APPROVAL_0004"]
+    categories: ["security", "interaction-capability"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0004.4
+    title: The same eligibility and remaining time are reported on request, agreeing with the gate
+    significance: shall
+    description: "The system shall report a snapshot's eligibility and remaining time on request, agreeing exactly with what the approval gate itself would do, so that a reviewer sees the answer before deciding rather than only in a refusal."
+    rationale: "A report that could disagree with the gate would be worse than no report: a reviewer who trusted it would either wait needlessly or attempt an approval doomed to be refused. Deriving both from the same computation is what keeps them unable to drift apart."
+    references:
+      requirement_ids: ["GW_APPROVAL_0004"]
+    categories: ["interaction-capability", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0004.5
+    title: Every approval and every age-refused approval is recorded on the ledger with the snapshot's age
+    significance: shall
+    description: "The system shall record the snapshot's age on every approval the gate allows, and the refusal on every approval it blocks, in the append-only ledger."
+    rationale: "What the cooling-off window was worth for a given snapshot is only reconstructible afterwards if the ledger says how long the commit had been sitting in quarantine when someone adopted it; and a window that turned an approval away silently would make the control itself unauditable — a blocked attempt has to be exactly as visible on the ledger as one that was let through."
+    references:
+      requirement_ids: ["GW_APPROVAL_0004"]
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
@@ -783,11 +833,41 @@ requirements:
     revision: 0.1.0
 
   - id: GW_AUTH_0015
-    title: Identity-provider claim to role mapping
+    title: A claim mapping is validated before it can grant anything, and never grants more than it says
     significance: shall
-    description: The system shall derive a browser session's delegated-administration roles from a configured claim of its identity-provider token in addition to the roles it holds by configuration and by stored grant, matching each claim value exactly against a configured list of mappings from claim value to role — an approver mapping naming the marketplace it is scoped to and the global roles naming none — shall union the derived roles with the configured and granted ones without changing deny-by-default enforcement, approver scoping or the auditor's read-only guarantee, shall refuse to start when a mapping names an unknown role, carries no claim value, scopes a global role or leaves an approver unscoped, shall derive no role at all for a credential that carries no identity-provider claims, and shall report on the session identity endpoint which of the three sources each effective role came from.
-    rationale: In an enterprise the group is the unit that already has an owner and a joiner-mover-leaver process, so reproducing its membership as grant rows creates a second source of truth that drifts; mapping by claim value rather than by convention is what lets an app registration shared with other services be used at all, matching exactly keeps a mapping from ever widening who is privileged, refusing a malformed mapping at startup keeps a typo from silently granting nothing, and reporting the source is how an auditor answers why a session holds a role without reading the deployment's configuration.
+    description: "The system shall treat an identity-provider claim mapping as a third source of a browser session's delegated-administration roles, alongside configuration and stored grants, that is validated once at startup and, once valid, is exact and reportable at every point it is consulted: a session never receives a role the mapping table does not name for a value its own token actually carries, and nothing derived from it is invisible to an auditor reading the session's own identity."
+    rationale: "In an enterprise the group is the unit that already has an owner and a joiner-mover-leaver process, so reproducing its membership as grant rows creates a second source of truth that drifts; letting the identity provider's own claims confer a role directly removes that duplication, but only if the three guarantees below all hold — a malformed mapping is caught before it can run, a valid one never grants past what it exactly says, and what it granted is never hidden from the session's own identity endpoint. Each can regress on its own: a validation that stops catching a bad mapping, a matcher that starts resembling values instead of matching them, or an identity endpoint that stops naming the source are three different failures with three different blast radii."
     categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_AUTH_0015.1
+    title: Claim-derived roles are matched exactly and compose without ever widening privilege
+    significance: shall
+    description: "The system shall derive a browser session's delegated-administration roles from a configured claim of its identity-provider token, matching each claim value exactly against a configured list of mappings from claim value to role — an approver mapping naming the marketplace it is scoped to and the global roles naming none — shall union the derived roles with the roles the session holds by configuration and by stored grant without changing deny-by-default enforcement, approver scoping or the auditor's read-only guarantee, and shall derive no role at all for a credential that carries no identity-provider claims."
+    rationale: "Mapping by claim value rather than by convention is what lets an app registration shared with other services be used at all — the value is the provider's own, not a name the gateway invented. Matching it exactly, rather than by resemblance, keeps a mapping from ever widening who is privileged past what an administrator actually wrote down, and reading claims only from an identity-provider session keeps a personal access token or the development escape hatch from being able to forge its way into a mapped role."
+    references:
+      requirement_ids: ["GW_AUTH_0015"]
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_AUTH_0015.2
+    title: A malformed claim mapping refuses gateway startup
+    significance: shall
+    description: "The system shall refuse to start when a configured claim mapping names an unknown role, carries no claim value, scopes a global role, or leaves an approver mapping unscoped."
+    rationale: "Refusing a malformed mapping at startup keeps a typo from silently granting nothing — a deployment that believed a mapping was in force would otherwise discover the gap only when an incident needed the access it thought existed. A mapping that names a marketplace not yet registered is deliberately not one of these failures: registration may come later, and until then the mapping simply matches nothing."
+    references:
+      requirement_ids: ["GW_AUTH_0015"]
+    categories: ["security", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_AUTH_0015.3
+    title: The session identity endpoint reports which source granted each effective role
+    significance: shall
+    description: "The system shall report on the session identity endpoint which of the three sources — configuration, a stored grant, or a claim mapping — each of the session's effective roles came from."
+    rationale: "Reporting the source is how an auditor answers why a session holds a role without reading the deployment's configuration or its grant table by hand; the same (role, marketplace) pair held by more than one source is reported once, attributed to the most durable source that produced it, because a grant survives the user leaving the group in a way a claim does not."
+    references:
+      requirement_ids: ["GW_AUTH_0015"]
+    categories: ["security", "interaction-capability"]
     revision: 0.1.0
 
   - id: GW_AUTH_0016
@@ -865,13 +945,90 @@ requirements:
     revision: 0.1.0
 
   - id: GW_RELEASE_0003
-    title: Gated release automation
+    title: Every publicly-visible or irreversible release step answers to the same chain of evidence
     significance: shall
-    description: The system's release automation shall cut a release only from a manual dispatch, shall default to a preview that resolves and reports the release without creating a tag or publishing anything, shall derive the version to release from the Conventional Commits since the previous tag and require an explicit override flag before accepting a hand-entered version that disagrees with the derived one, shall offer a release-candidate mode that is verified like any release but never promoted, shall run the same gates that guard the main branch and then hold for approval by a required reviewer before the version's tag is created and before every other publicly visible or irreversible step, shall create the release as a prerelease that is excluded from the latest-release resolution until its published artifacts have been downloaded and verified over the same unauthenticated path a consumer uses, shall promote a release to latest only after that verification passes, and shall report at the end of any run that created the tag without reaching promotion which parts of the release exist and which do not.
-    rationale: A release is the one irreversible thing this project does to the outside world, so every step that a consumer can observe belongs behind evidence and a human decision; a dry run by default makes previewing free, deriving the version from the commit history keeps it honest to what actually changed, and creating the release invisible until its artifacts are verified means a failed publish never leaves a release that advertises bytes nobody can fetch. The tag is named among the steps the approval precedes because it is the only version the project has and nothing deletes it safely once anyone has fetched it, so a gate that cannot prevent it is not deciding whether the release happens; and because a run can still stop between the tag and promotion, the half-published state it leaves has to be stated by the run that caused it rather than reconstructed afterwards from a red job list.
+    description: "The system's release automation shall run no publicly-visible or irreversible step of a release — creating the tag, publishing from it, or promoting a release to latest — outside one continuous chain: the gates that guard the main branch, then a required reviewer's approval, then publication as an unpromoted prerelease, then verification of the published artifacts over the same unauthenticated path a consumer uses, and only then promotion. A run that leaves the chain incomplete after tagging shall state exactly which later links it reached."
+    rationale: "A release is the one irreversible thing this project does to the outside world, so every step that a consumer can observe belongs behind evidence and a human decision. Stating that as one chain, rather than as a list of unrelated steps, is what makes it a single property to defend: an approval that a later job could route around, or a promotion that did not actually wait on verification, would leave the chain's other links standing while the property they exist to enforce had already failed. Each of the seven guarantees below states one link that can be verified, and can regress, on its own."
     categories: ["security", "reliability"]
     implementation: configuration
     revision: 0.2.0
+
+  - id: GW_RELEASE_0003.1
+    title: A release is never a side effect, and previewing costs nothing
+    significance: shall
+    description: "The release workflow shall be reachable only by a manual dispatch, with no push, schedule or other trigger able to start it, and its preview (dry-run) input shall default to on, so that resolving and reporting what a release would be is free and creating a tag or publishing anything is always a deliberate opt-out."
+    rationale: "A release that could start from a push or a schedule would make the one irreversible thing this project does to the outside world an accident waiting on the wrong commit landing at the wrong time; requiring a human to dispatch it removes that path entirely. Defaulting the preview on means the safe action is also the path of least resistance — an operator who forgets the flag gets a report, not a tag."
+    references:
+      requirement_ids: ["GW_RELEASE_0003"]
+    categories: ["security", "reliability"]
+    implementation: configuration
+    revision: 0.1.0
+
+  - id: GW_RELEASE_0003.2
+    title: A hand-entered version needs an explicit override to disagree with the derived one
+    significance: shall
+    description: "The release automation shall accept a hand-entered version that disagrees with the version it derives from the Conventional Commits since the previous tag only when an explicit override flag is also given."
+    rationale: "A hand-entered version is the one input to a release that is not derived from evidence already in the repository, so it is also the one place a typo or a stale assumption can release the wrong thing under the right process; requiring a second, explicit flag before it is allowed to disagree with what the commit history itself implies keeps a mistake from being one field away from shipping."
+    references:
+      requirement_ids: ["GW_RELEASE_0003"]
+    categories: ["security", "reliability"]
+    implementation: configuration
+    revision: 0.1.0
+
+  - id: GW_RELEASE_0003.3
+    title: A release-candidate mode is offered alongside a plain release
+    significance: shall
+    description: "The release workflow shall offer a release-candidate mode, chosen from the same dispatch input as a plain release, so that a candidate is verified by exactly the automation a release is."
+    rationale: "A release candidate exists to be exercised by the same gates a release is, on the theory that a build path exercised only for real releases is a build path nobody has run when a real release needs it; offering it from the same input as a plain release is what keeps the two from drifting into two different pipelines that happen to share a name."
+    references:
+      requirement_ids: ["GW_RELEASE_0003"]
+    categories: ["reliability"]
+    implementation: configuration
+    revision: 0.1.0
+
+  - id: GW_RELEASE_0003.4
+    title: The tag and everything that follows it wait on the same gates and a required reviewer
+    significance: shall
+    description: "The release automation shall run the same gates that guard the main branch before offering the release for approval, shall bind that approval to a protected environment so a required reviewer holds it, and shall make the tag and every step that publishes from it wait on that approval, so that the reviewer can prevent the version from ever existing."
+    rationale: "The tag is the only version the project has and nothing deletes it safely once anyone has fetched it, so a gate that cannot prevent the tag is not deciding whether the release happens — it is deciding how the release happens after it already has. Running the main-branch gates first means the reviewer approves something already green with the resolved version and rendered notes in front of them, rather than a version string standing in for work not yet checked."
+    references:
+      requirement_ids: ["GW_RELEASE_0003"]
+    categories: ["security", "reliability"]
+    implementation: configuration
+    revision: 0.1.0
+
+  - id: GW_RELEASE_0003.5
+    title: The release is created as a prerelease
+    significance: shall
+    description: "The release automation shall create the release as a prerelease, so that its tag and its published assets exist without the release being resolvable as the project's latest."
+    rationale: "Publication and promotion are two different acts with two different blast radii: publishing makes the release downloadable by exact version, which a consumer who already knows what they want can do safely against an unfinished release, while promotion changes what everyone else who asks for 'the latest' receives. Keeping the release a prerelease until promotion is what stops the first act from silently performing the second."
+    references:
+      requirement_ids: ["GW_RELEASE_0003"]
+    categories: ["security", "reliability"]
+    implementation: configuration
+    revision: 0.1.0
+
+  - id: GW_RELEASE_0003.6
+    title: Promotion to latest waits on verification of the published artifacts, tolerating an expected skip
+    significance: shall
+    description: "The release automation shall promote a release to latest only after its published artifacts have been verified over the same unauthenticated path a consumer uses, and that verification-and-promotion ordering shall not be defeated by a job that was expected to be skipped for the release in hand."
+    rationale: "A failed publish must never leave a release that advertises bytes nobody can fetch, which is what verifying the actual downloaded artifact — not merely the build that produced it — before promoting is for. Guarding promotion on nothing having failed, rather than on everything having succeeded, is what keeps a release candidate's deliberately skipped step from also blocking every real release the moment it ships beside one."
+    references:
+      requirement_ids: ["GW_RELEASE_0003"]
+    categories: ["security", "reliability"]
+    implementation: configuration
+    revision: 0.1.0
+
+  - id: GW_RELEASE_0003.7
+    title: A run that tags without promoting reports which parts of the release exist
+    significance: shall
+    description: "A run of the release automation that created the tag without reaching promotion, including one abandoned by cancellation, shall report at its end which parts of the release exist and which do not."
+    rationale: "A run that stops between the tag and promotion leaves a half-published release, and the tag itself is not undone by the run failing — so the state that run left behind has to be stated by the run that caused it, or the only way to learn what exists is to reconstruct it afterwards from a red job list, which is exactly the gap a prior incident (#205) left open."
+    references:
+      requirement_ids: ["GW_RELEASE_0003"]
+    categories: ["reliability"]
+    implementation: configuration
+    revision: 0.1.0
 
   - id: GW_RELEASE_0004
     title: Release version tag format
@@ -1151,10 +1308,50 @@ requirements:
     revision: 0.1.0
 
   - id: GW_VETTING_0029
-    title: Administrative enable and disable of a built-in vetting connector
+    title: The connector on/off switch never becomes a blanket approval
     significance: shall
-    description: The system shall allow an administrator, and only an administrator, to disable or re-enable a specific built-in vetting connector either globally or for one named marketplace, resolving the effective state of a connector for a marketplace as its per-marketplace setting when one exists and otherwise its global setting and otherwise enabled, shall skip a connector that is disabled for a snapshot's marketplace when the chain runs at ingestion or re-vetting rather than running it, recording a distinct disabled verdict against that chain run in the connector's place so the disablement is part of the run's evidence, shall count a disabled verdict as neither clearing nor blocking while still requiring at least one clearing verdict for a run to clear so that disabling every connector leaves the run blocked rather than cleared, shall record every toggle as an administrator-only, audited action naming the acting administrator, the connector, the scope and the new state, and shall neither show connector settings to nor accept a toggle from a principal that is not an administrator.
-    rationale: "A connector that is too noisy or wrong for one marketplace should be answerable to an administrator without redeploying the gateway, which reverses the previous stance that the chain had no enable or disable switch at all. Recording a skipped connector as a distinct disabled verdict rather than simply omitting it is what keeps the disablement fail-loud: a reviewer and an auditor both see that the connector did not run and why, instead of a silently shorter chain. Requiring positive clearing evidence for a run to clear is what stops disabling the whole chain from becoming a blanket approval — an estate that has switched everything off is blocked, not cleared — and reserving the switch to administrators keeps a marketplace-scoped approver from quietly turning off the control that governs their own content."
+    description: "The system shall let an administrator's use of the connector on/off switch change only which connectors run and how their absence is scored — never make the chain more permissive about what a connector's own verdicts already say. A disabled connector's absence shall never be indistinguishable from a clearing verdict, and disabling every connector shall leave a run blocked rather than clear."
+    rationale: "Reversing the previous stance that the chain had no enable/disable switch at all is a trust-boundary change (ADR 0009): the moment an administrator can silence a connector, silencing every connector must not silently become the easiest way to approve anything. The four guarantees below are how that is kept true — who may switch it, what runs because of it, how a disabled connector is scored, and that it is scored at all rather than omitted — and each can regress on its own without the others noticing."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0029.1
+    title: A connector's effective state resolves per-marketplace, then global, then enabled
+    significance: shall
+    description: "The system shall let an administrator disable or re-enable a specific built-in vetting connector either globally or for one named marketplace, and shall resolve a connector's effective state for a marketplace as its per-marketplace setting when one exists, otherwise its global setting, and otherwise enabled."
+    rationale: "A connector that is too noisy or wrong for one marketplace should be answerable without redeploying the gateway or turning it off for every other marketplace at the same time; the three-tier resolution is what lets a global default and a narrow exception coexist without an administrator having to restate the default everywhere it still applies."
+    references:
+      requirement_ids: ["GW_VETTING_0029"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0029.2
+    title: A disabled connector is skipped and recorded as a distinct disabled verdict
+    significance: shall
+    description: "The system shall skip a connector that is disabled for a snapshot's marketplace when the vetting chain runs at ingestion or re-vetting, rather than running it, and shall record a distinct disabled verdict against that chain run in the connector's place, so the disablement is part of the run's own evidence."
+    rationale: "Recording a skipped connector as its own verdict rather than simply omitting it is what keeps the disablement fail-loud: a reviewer or an auditor reading the run sees that the connector did not run and why, instead of a chain that is silently shorter than the estate's other marketplaces."
+    references:
+      requirement_ids: ["GW_VETTING_0029"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0029.3
+    title: A disabled verdict counts as neither clearing nor blocking
+    significance: shall
+    description: "The system shall count a disabled verdict as neither clearing nor blocking a chain run, while still requiring at least one clearing verdict for the run to clear, so that disabling every connector leaves the run blocked rather than clear."
+    rationale: "Requiring positive clearing evidence, rather than merely the absence of a blocking one, is what stops disabling the whole chain from becoming a blanket approval: an estate that has switched everything off has proven nothing about the content it serves, and a disabled verdict must not be able to rescue one that has failed elsewhere either."
+    references:
+      requirement_ids: ["GW_VETTING_0029"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0029.4
+    title: Every toggle is an audited, administrator-only action
+    significance: shall
+    description: "The system shall record every toggle of a connector's enablement as an administrator-only, audited action naming the acting administrator, the connector, the scope and the new state, and shall neither show connector settings to nor accept a toggle from a principal that is not an administrator."
+    rationale: "The switch governs the vetting chain, so its own visibility and use have to sit above the content it governs: a marketplace-scoped approver who could see or flip it could quietly turn off the control that governs their own content, and an unaudited toggle would leave no way to answer why a connector was silent on a given run."
+    references:
+      requirement_ids: ["GW_VETTING_0029"]
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
@@ -1223,10 +1420,80 @@ requirements:
     revision: 0.1.0
 
   - id: GW_INGEST_0024
-    title: Deterministic composite snapshot with a gateway-local manifest
+    title: The synthesised composite commit is the snapshot, not metadata beside it
     significance: shall
-    description: "The system shall record a snapshot of a manifest declaring resolved external plugin sources as a synthesised commit that contains the ingested upstream content, each resolved external source's content under a reserved directory of that commit, and a rewritten marketplace manifest in which every plugin source is a path inside that commit; shall identify the snapshot by that synthesised commit; and shall make the ingested upstream commit the synthesised commit's parent so that the manifest as upstream declared it stays byte-exact and reachable from the identified commit. The system shall produce the same synthesised commit for the same upstream commit, the same resolved external commits and the same rewrite implementation, and shall record in that commit the upstream commit, each plugin's source and resolved commit, and the identity of the rewrite implementation. The system shall refuse, as a manifest policy violation and without synthesising a commit, a manifest whose upstream content already occupies the reserved directory, an external plugin whose name is not a single lowercase path segment, and two external plugins sharing a name. The system shall verify that the rewritten manifest satisfies the local-only manifest policy before the synthesised commit is used."
-    rationale: "Rewriting at ingestion rather than at publication is what makes the commit a reviewer approves the commit clients receive, and what makes the vetting chain see external content with no connector change: the resolved closure is not metadata beside the snapshot, it is the snapshot. Making the synthesised commit the snapshot's identity means every component at or behind a trust boundary — vetting, approval, the facade, retention, the ledger — keeps reading one commit and never learns that external content exists, where a second column beside the old identity would force each of them to choose. Keeping the upstream commit as the parent turns the whole transformation into a diff an auditor can run, so the gateway cannot be the only witness to what it changed. Determinism keeps re-ingestion of unchanged content idempotent, and recording the rewrite implementation's identity is what makes determinism a durable claim rather than an accident of one version. Refusing a reserved-directory collision, a name that is not a plain path segment, or a duplicate name fails closed at the one point where manifest-supplied names decide where content is written."
+    description: "The system shall treat the commit it synthesises for a manifest with resolved external plugin sources as the snapshot itself rather than as metadata kept beside a separate snapshot identity: the commit that is pinned in quarantine, vetted, approved and served is that one synthesised commit, and every component at or behind a trust boundary reads the snapshot through it and through nothing else. The system shall synthesise such a commit for every snapshot whose manifest declares external plugin sources it resolves, and shall serve the ingested upstream commit unchanged, with no synthesised commit, for a manifest that declares none."
+    rationale: "Rewriting at ingestion rather than at publication is what makes the commit a reviewer approves the commit clients receive, and what makes the vetting chain see external content with no connector change: the synthesised commit is not metadata beside the snapshot, it is the snapshot. Making it the snapshot's identity means every component at or behind a trust boundary — vetting, approval, the facade, retention, the ledger — keeps reading one commit and never learns that external content exists, where a second column beside the old identity would force each of them to choose between two commits and a reason to trust one over the other. Each of the seven guarantees below states one part of that identity claim that can be verified, and can regress, on its own."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0024.1
+    title: The composite's tree holds the upstream content, the grafted sources, and a manifest that points only inside it
+    significance: shall
+    description: "The system shall build, for a manifest declaring resolved external plugin sources, a commit whose tree contains the ingested upstream content unchanged, each resolved external source's content grafted under a reserved directory of that commit, and a rewritten marketplace manifest in which every resolved plugin source is replaced by a path inside that same commit while every other manifest field, and every source the manifest declared as local, is left exactly as declared."
+    rationale: "A composite that changed anything beyond what it was built to change would be a rewrite the gateway cannot account for: the local sources, the plugin descriptions and the marketplace's own metadata all have to survive untouched for the same manifest to still be the manifest a client reads. Grafting every source under one reserved directory, rather than in some arrangement chosen per plugin, is what keeps the graft mechanical and identical for every plugin, and it is what lets the reserved-directory refusal state a precise condition rather than a heuristic over an unbounded set of places content might land. Rewriting the manifest to point inside the commit, rather than leaving the original external reference beside the graft, is the entire reason the composite gives a client nothing to dereference outside the gateway: a manifest that still named the upstream location would defeat the composite the moment it was read literally."
+    references:
+      requirement_ids: ["GW_INGEST_0024"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0024.2
+    title: The snapshot is identified by the synthesised composite commit
+    significance: shall
+    description: "The system shall identify the snapshot of a manifest with resolved external plugin sources by the synthesised composite commit: that commit, and no other, is what is pinned as the snapshot's reference and recorded as the snapshot's own commit."
+    rationale: "A snapshot's identity is the one thing every later reader relies on without re-deriving it: vetting opens it, approval copies it, the facade advertises it, retention anchors on it. If the identity stayed the upstream commit with the composite recorded somewhere beside it, each of those readers would face two commits and a decision about which one is real; making the synthesised commit the identity removes the decision, because there is exactly one commit to read and it already contains everything those readers need."
+    references:
+      requirement_ids: ["GW_INGEST_0024"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0024.3
+    title: The upstream commit is the synthesised commit's parent, byte-exact and reachable
+    significance: shall
+    description: "The system shall make the ingested upstream commit the synthesised commit's parent, so that the manifest exactly as upstream declared it stays byte-exact and reachable from the identified commit."
+    rationale: "Keeping the upstream commit as the parent turns the whole transformation into a diff anyone can run against the commit the gateway serves, rather than the gateway's own unverifiable account of what it changed. An auditor, or a reviewer who does not take the gateway's word for the rewrite, can read exactly what was ingested and exactly what the rewrite did to it for as long as the composite commit itself survives, with no separate export or explanation required."
+    references:
+      requirement_ids: ["GW_INGEST_0024"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0024.4
+    title: The same upstream commit, resolved commits and rewrite implementation produce the same composite
+    significance: shall
+    description: "The system shall produce the same synthesised commit for the same upstream commit, the same resolved external commits and the same rewrite implementation, and shall produce a different synthesised commit when any one of those three differs."
+    rationale: "Re-ingesting content nobody changed has to be a no-op, or every scheduled sync would mint a new snapshot to re-vet and re-approve for content already served; determinism is what makes that no-op an equality check on a commit hash rather than a comparison the gateway has to compute some other way. Determinism is only a durable claim if the transformation is itself an input to it: a rewriter that changed its output without changing the hash would go on serving new content under a commit that vetting and approval had already signed off on under different content, so the rewrite implementation's own identity has to decide the hash exactly as the upstream and resolved commits do."
+    references:
+      requirement_ids: ["GW_INGEST_0024"]
+    categories: ["reliability", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0024.5
+    title: The commit records the upstream commit, each source, and the rewrite implementation's identity
+    significance: shall
+    description: "The system shall record, in the synthesised commit itself, the ingested upstream commit, each resolved external plugin's source and resolved commit, and the identity of the rewrite implementation that produced it."
+    rationale: "The commit already contains the tree the composite serves, so recording provenance inside it, rather than only in a database row, means any consumer that can read git — not only the gateway's own database — can answer who published what: cloning the composite directly shows the upstream commit it was built from, each source's origin and resolved commit, and which version of the rewrite produced it, with no cooperation from the gateway required. It is also what keeps the commit's own identity honest under determinism: the upstream commit and the rewrite implementation's identity are exactly two of the three inputs the composite's hash already depends on, so recording them in the message states, in the one place every reader already looks, facts the hash is already built from rather than a separate claim about them."
+    references:
+      requirement_ids: ["GW_INGEST_0024"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0024.6
+    title: A reserved-directory collision, a malformed plugin name, or a duplicate plugin name is refused with no commit synthesised
+    significance: shall
+    description: "The system shall refuse, as a manifest policy violation and without synthesising a commit, a manifest whose upstream content already occupies the reserved directory, an external plugin whose name is not a single lowercase path segment, and two external plugins sharing a name."
+    rationale: "Each of these three is a case where a manifest-supplied name would otherwise decide where content is written into the composite: an upstream repository that already has a top-level directory with the reserved name would have its own content overwritten by or mixed with grafted content; a name that is not a single lowercase path segment could climb out of the graft directory or collide with a reserved path element; two plugins sharing a name would leave the graft ambiguous about whose content belongs where. All three fail closed at the point where the name is read rather than after the tree is built, so no composite exists for the gateway to have gotten wrong in one of these ways — refusing before synthesis, not after, is what keeps a plausible-looking but structurally broken commit from ever reaching vetting or approval."
+    references:
+      requirement_ids: ["GW_INGEST_0024"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0024.7
+    title: The rewritten manifest is verified against the local-only manifest policy before the synthesised commit is used
+    significance: shall
+    description: "The system shall verify that the rewritten manifest satisfies the local-only manifest policy before the synthesised commit is used."
+    rationale: "The rewrite exists to make every source in the manifest resolve inside the gateway, and the only way to know it actually did that, rather than trust that it did, is to put its own output back through the same gate that rejected the original: a manifest that still declares a source outside the gateway after rewriting — for instance because a resolved graft went missing — must not become a commit anything downstream can serve. Checking the rewrite's own work before the commit is used is what makes the local-only invariant GW_INGEST_0021 hold because the commit could not otherwise be used, rather than because the rewriter is believed to be correct."
+    references:
+      requirement_ids: ["GW_INGEST_0024"]
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 

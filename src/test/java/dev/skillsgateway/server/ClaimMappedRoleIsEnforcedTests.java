@@ -28,7 +28,7 @@ import org.springframework.test.context.TestPropertySource;
 class ClaimMappedRoleIsEnforcedTests extends AbstractGatewayTest {
 
     @Test
-    @SVCs({"SVC_GW_AUTH_0015"})
+    @SVCs({"SVC_GW_AUTH_0015.1", "SVC_GW_AUTH_0015.3"})
     void a_mapped_auditor_reads_the_ledger_and_is_refused_an_admin_mutation() throws Exception {
         var carol = oidcLogin()
                 .idToken(token -> token.subject("dryrun-carol").claim("groups", java.util.List.of("gw-auditors")));

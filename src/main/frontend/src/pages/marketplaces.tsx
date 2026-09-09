@@ -320,7 +320,7 @@ function ProvenanceDialog({ snapshotId, onClose }: { snapshotId: number; onClose
  * nobody else to ask; under enforce it shuts the button and names the person who has to press it
  * instead. The server enforces all three independently.
  *
- * @Requirements GW_VETTING_0005, GW_VETTING_0010, GW_APPROVAL_0004, GW_APPROVAL_0010, GW_APPROVAL_0011
+ * @Requirements GW_VETTING_0005, GW_VETTING_0010, GW_APPROVAL_0004.4, GW_APPROVAL_0010, GW_APPROVAL_0011
  */
 function ApproveDialog({ snapshotId, onClose }: { snapshotId: number; onClose: () => void }) {
   const vetting = useSnapshotVetting(snapshotId);

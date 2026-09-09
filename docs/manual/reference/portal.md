@@ -355,6 +355,8 @@ it is still published* (warn mode), or *revoked by a re-vetting violation*
 through the facade, each with a fetch count and a last-fetch time, from
 `GET /api/snapshots/{id}/fetchers`. It is only requested for a revoked snapshot.
 When nobody fetched it, the panel says so rather than showing an empty list.
+While role enforcement is enabled this read is privileged — admin or an approver
+of this marketplace — so the panel shows an error to a session holding neither.
 
 The way back is on the [marketplaces](#marketplaces) page: a revoked snapshot's
 approve control reads **Re-approve** and goes through the ordinary gate. See
