@@ -1,4 +1,4 @@
-# vetting — delta for retire-three-application-contexts
+# snapshot-vetting — delta for retire-three-application-contexts
 
 ## MODIFIED Requirements
 
