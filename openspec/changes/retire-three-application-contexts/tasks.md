@@ -45,8 +45,8 @@
 ## 6. Measure after, and the gates
 
 - [x] 6.1 Re-run the budget test and set `BUDGET` to the measured figure
-- [ ] 6.2 `./mvnw clean verify`
-- [ ] 6.3 `pnpm test:stories`, `pnpm e2e`
-- [ ] 6.4 `reqstool status local -p docs/reqstool` — must end `PASS`
-- [ ] 6.5 `openspec validate --all --strict`, `mkdocs build --strict`
-- [ ] 6.6 `evidence.md` with the before/after numbers and the gate tails
+- [x] 6.2 `./mvnw clean verify`
+- [x] 6.3 `pnpm test:stories`, `pnpm e2e`
+- [x] 6.4 `reqstool status local -p docs/reqstool` — must end `PASS`
+- [x] 6.5 `openspec validate --all --strict`, `mkdocs build --strict`
+- [x] 6.6 `evidence.md` with the before/after numbers and the gate tails
