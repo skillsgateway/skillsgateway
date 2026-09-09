@@ -676,13 +676,13 @@ cases:
 
   - id: SVC_GW_AUTH_0010
     requirement_ids: ["GW_AUTH_0010"]
-    title: Deny-by-default walk of every mutation and privileged read, and the disabled default
+    title: Deny-by-default walk of every mutation and every read, both derived from the route table
     verification: automated-test
     description: |
       GIVEN a gateway with role enforcement enabled and a session holding no role, and a second gateway left at the disabled default
-      WHEN the no-role session calls every REST API mutation route — the set asserted complete against the running application's own route table — and the ledger, export and operational listings, and then exercises the browsing surface and its own tokens, while on the disabled gateway a no-role session performs privileged operations
-      THEN on the enforcing gateway every mutation and privileged read is refused with an authorization error while the browsing surface and the session's own tokens still work, and on the disabled gateway everything works exactly as before enforcement existed
-    revision: "0.1.0"
+      WHEN the no-role session calls every REST API mutation route and every REST API read route — both sets asserted complete against the running application's own route table, and every read classified as privileged, scoped to a marketplace, scoped to the session, or open — while on the disabled gateway a no-role session performs privileged operations
+      THEN on the enforcing gateway every mutation, every privileged read and every marketplace-scoped read is refused with an authorization error while the browsing surface and the session's own tokens still work, and on the disabled gateway everything works exactly as before enforcement existed
+    revision: "0.2.0"
 
   - id: SVC_GW_AUTH_0011
     requirement_ids: ["GW_AUTH_0011"]

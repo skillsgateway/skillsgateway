@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -132,15 +133,51 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             // infrastructure rather than a record of what the gateway served to whom.
             "GET /api/mirror/drift");
 
+    /**
+     * Reads scoped to the snapshot's own marketplace (GW_AUTH_0011): an approver of it, or an
+     * admin. Not auditor reads — an auditor is refused these, which the auditor walk asserts.
+     * These name identities or expose the pinned content itself, so they are the same judgement as
+     * deciding on the snapshot rather than part of browsing it.
+     */
+    private static final Set<String> APPROVER_SCOPED_READS = Set.of(
+            "GET /api/snapshots/{id}/diff",
+            "GET /api/snapshots/{id}/file",
+            "GET /api/snapshots/{id}/files",
+            "GET /api/snapshots/{id}/fetchers");
+
+    /** A session's own things: open to any authenticated session, scoped to that session. */
+    private static final Set<String> OWNER_SCOPED_READS = Set.of("GET /api/me", "GET /api/tokens");
+
+    /** The browsing surface: what the portal is for, open to any authenticated session. */
+    private static final Set<String> OPEN_READS = Set.of(
+            "GET /api/catalog",
+            "GET /api/marketplaces",
+            "GET /api/marketplaces/{name}/waivers",
+            "GET /api/snapshots/{id}/content",
+            "GET /api/snapshots/{id}/content-diff",
+            "GET /api/snapshots/{id}/licenses",
+            "GET /api/snapshots/{id}/provenance",
+            "GET /api/snapshots/{id}/vetting",
+            // Eligibility is a read of the same browsing surface, not a step toward approving: it
+            // reports whether the cooling-off window has passed, and approve itself stays
+            // role-gated. Classified here so that stays a decision rather than an omission.
+            "GET /api/snapshots/{id}/release-age",
+            "GET /api/snapshots/{id}/four-eyes");
+
     @Test
     @SVCs({"SVC_GW_AUTH_0010"})
     void a_no_role_session_is_refused_every_mutation_and_privileged_read_but_keeps_browsing_and_tokens()
             throws Exception {
-        // The walk's list is asserted complete against the application's own route table first:
-        // a mutation endpoint this test does not know about is a failure, not a blind spot.
+        // Both walks are asserted complete against the application's own route table first: an
+        // endpoint this test does not know about is a failure, not a blind spot. Reads are derived
+        // as well as mutations (GW_AUTH_0010), so a new read cannot ship classified by silence —
+        // which is how the blast-radius report came to be readable by anyone at all.
         assertThat(mutationRoutesFromTheRouteTable())
                 .containsExactlyInAnyOrderElementsOf(
                         union(union(ROLE_GATED_MUTATIONS, OWNER_SCOPED_MUTATIONS), ALWAYS_ADMIN_MUTATIONS));
+        assertThat(readRoutesFromTheRouteTable())
+                .containsExactlyInAnyOrderElementsOf(
+                        union(union(PRIVILEGED_READS, APPROVER_SCOPED_READS), union(OWNER_SCOPED_READS, OPEN_READS)));
 
         var mallory = oidcLogin().idToken(token -> token.subject("mallory"));
         for (String route : union(ROLE_GATED_MUTATIONS, ALWAYS_ADMIN_MUTATIONS)) {
@@ -151,33 +188,21 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         }
 
         Registered fixture = registerAndIngest(uniqueName("rolewalk"), createUpstream(DEFAULT_MANIFEST));
-        long snapshotId = fixture.snapshot().id();
-        // The blast-radius report names identities, so it is not browsing (GW_VETTING_0016). It is
-        // scoped to the snapshot's approver rather than listed above, because the walk addresses
-        // routes by a synthetic id and this guard resolves the owning marketplace from a real one.
-        mockMvc.perform(get("/api/snapshots/{id}/fetchers", snapshotId).with(mallory))
-                .andExpect(status().isForbidden());
+        String snapshotId = Long.toString(fixture.snapshot().id());
+        String marketplace = fixture.marketplace().name();
+
+        // Against a real snapshot, so the refusal is the guard and not a 404 wearing its clothes.
+        for (String route : APPROVER_SCOPED_READS) {
+            mockMvc.perform(request(route, snapshotId, marketplace).with(mallory))
+                    .andExpect(status().isForbidden());
+        }
 
         // The browsing surface stays open: it is what the portal is for.
-        mockMvc.perform(get("/api/marketplaces").with(mallory)).andExpect(status().isOk());
-        mockMvc.perform(get("/api/snapshots/{id}/content", snapshotId).with(mallory))
-                .andExpect(status().isOk());
-        mockMvc.perform(get("/api/snapshots/{id}/content-diff", snapshotId).with(mallory))
-                .andExpect(status().isOk());
-        mockMvc.perform(get("/api/snapshots/{id}/provenance", snapshotId).with(mallory))
-                .andExpect(status().isOk());
-        mockMvc.perform(get("/api/snapshots/{id}/vetting", snapshotId).with(mallory))
-                .andExpect(status().isOk());
-        // Eligibility is a read of the same browsing surface, not a step toward approving: it
-        // reports whether the cooling-off window has passed, and approve itself stays role-gated
-        // above. Asserted here so that stays a decision rather than an omission.
-        mockMvc.perform(get("/api/snapshots/{id}/release-age", snapshotId).with(mallory))
-                .andExpect(status().isOk());
-        mockMvc.perform(get(
-                                "/api/marketplaces/{name}/waivers",
-                                fixture.marketplace().name())
-                        .with(mallory))
-                .andExpect(status().isOk());
+        for (String route : union(OPEN_READS, OWNER_SCOPED_READS)) {
+            mockMvc.perform(request(route, snapshotId, marketplace).with(mallory))
+                    .andExpect(status().isOk());
+        }
+
         mockMvc.perform(get("/api/me").with(mallory))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.roles").isEmpty());
@@ -306,6 +331,13 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             mockMvc.perform(request(route).with(carol)).andExpect(status().isOk());
         }
         mockMvc.perform(get("/api/roles").with(carol)).andExpect(status().isForbidden());
+
+        // An auditor is not an approver, and the reads scoped to a marketplace stay shut to one
+        // (GW_AUTH_0011). The blast-radius report is the case that matters: the same facts reach an
+        // auditor through the ledger on /api/audit, which is the read this role exists for.
+        for (String route : APPROVER_SCOPED_READS) {
+            mockMvc.perform(request(route).with(carol)).andExpect(status().isForbidden());
+        }
         mockMvc.perform(get("/api/tokens/machine").with(carol)).andExpect(status().isForbidden());
         for (String route : union(ROLE_GATED_MUTATIONS, ALWAYS_ADMIN_MUTATIONS)) {
             mockMvc.perform(request(route).with(carol)).andExpect(status().isForbidden());
@@ -496,13 +528,26 @@ class RoleEnforcementTests extends AbstractGatewayTest {
 
     /** All non-GET routes under /api, read from the running application's own route table. */
     private Set<String> mutationRoutesFromTheRouteTable() {
+        return routesFromTheRouteTable(method -> method != RequestMethod.GET);
+    }
+
+    /**
+     * Every GET under /api, from the same table. Derived rather than hand-listed for the reason
+     * mutations are: a privileged read that nobody classified is one that ships open, and the
+     * blast-radius report did exactly that until it was caught by reading the code.
+     */
+    private Set<String> readRoutesFromTheRouteTable() {
+        return routesFromTheRouteTable(method -> method == RequestMethod.GET);
+    }
+
+    private Set<String> routesFromTheRouteTable(Predicate<RequestMethod> wanted) {
         Set<String> routes = new TreeSet<>();
         for (RequestMappingHandlerMapping mapping : webApplicationContext
                 .getBeansOfType(RequestMappingHandlerMapping.class)
                 .values()) {
             for (RequestMappingInfo info : mapping.getHandlerMethods().keySet()) {
                 for (RequestMethod method : info.getMethodsCondition().getMethods()) {
-                    if (method == RequestMethod.GET) {
+                    if (!wanted.test(method)) {
                         continue;
                     }
                     for (String pattern : info.getPathPatternsCondition().getPatternValues()) {
@@ -518,8 +563,17 @@ class RoleEnforcementTests extends AbstractGatewayTest {
 
     /** Builds the request for a "METHOD /path" walk entry, with placeholder ids and a JSON body. */
     private static MockHttpServletRequestBuilder request(String route) {
+        return request(route, "999999", "no-such-marketplace");
+    }
+
+    /**
+     * The same, addressing a snapshot and marketplace that exist. The read walks need it: a 404 and
+     * a 403 are both refusals, and only a real resource tells them apart — while an open read
+     * cannot answer 200 about a snapshot that is not there.
+     */
+    private static MockHttpServletRequestBuilder request(String route, String snapshotId, String marketplace) {
         String[] parts = route.split(" ", 2);
-        String path = parts[1].replace("{id}", "999999").replace("{name}", "no-such-marketplace");
+        String path = parts[1].replace("{id}", snapshotId).replace("{name}", marketplace);
         MockHttpServletRequestBuilder builder =
                 switch (parts[0]) {
                     case "POST" -> post(path);
@@ -528,6 +582,11 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                     case "GET" -> get(path);
                     default -> throw new IllegalArgumentException(route);
                 };
+        if (path.endsWith("/file")) {
+            // Its blob path is a required parameter, and argument binding runs before the handler:
+            // without one the walk would meet a 400 raised before any authorization check.
+            builder.param("path", "plugins/hello/SKILL.md");
+        }
         if (parts[0].equals("POST") || parts[0].equals("PUT")) {
             // A deserializable JSON body so @RequestBody binding succeeds and the request reaches
             // the authorization call — the walk must observe the require* denial, not a 400. The
