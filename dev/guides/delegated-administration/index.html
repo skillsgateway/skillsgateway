@@ -2237,8 +2237,11 @@ turns that into delegated administration: named <strong>admins</strong>, per-mar
 </table>
 <p>Roles compose upward — an admin can do everything an approver or auditor can.
 Every session, role or not, keeps the browsing surface (marketplaces, the
-catalog, snapshot contents, provenance, vetting results, waiver lists) and its
-own <a href="../../reference/api/tokens/">access tokens</a>.</p>
+catalog, a snapshot's content inventory, provenance, licenses, vetting results,
+four-eyes eligibility, waiver lists) and its own
+<a href="../../reference/api/tokens/">access tokens</a>. Reading the pinned files
+themselves — the preview panes — and the blast-radius report is not browsing:
+those take the approver's standing, listed above.</p>
 <p>Enforcement lives at the REST API, which is what the portal speaks. The
 <a href="../../reference/git-facade/">git facade</a> is untouched: its authorization is
 token scopes, a different credential for a different surface.</p>
