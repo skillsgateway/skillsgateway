@@ -2,19 +2,23 @@
 
 One fresh run of every gate after the last code edit.
 
-Commit under test: `66e3d158769ad0fc65e0817e3a59cb919ea3d379`
-Branch: `feat/revocation-freshness-is-not-a-knob` (on top of `chore/config-surface-guardrail`)
+Commit under test: `1aec59a` (rebased onto main after #342 and #343 merged; gates re-run)
+Branch: `feat/revocation-freshness-is-not-a-knob`
 
 ## Gates
 
 ```
-./mvnw clean verify                          → BUILD SUCCESS, 0 Checkstyle violations
+./mvnw clean verify                          → BUILD SUCCESS, 642 tests, 0 Checkstyle violations
 (cd src/main/frontend && pnpm test:stories)  → 6 tests passed
-(cd src/main/frontend && pnpm e2e)           → 13 passed (46.0s)
-reqstool status local -p docs/reqstool       → 216/216 complete · 0 incomplete · PASS
-openspec validate --all --strict             → 32 passed, 0 failed
-mkdocs build --strict                        → built in 1.21s
+(cd src/main/frontend && pnpm e2e)           → 13 passed (45.4s)
+reqstool status local -p docs/reqstool       → 217/217 complete · 0 incomplete · PASS
+openspec validate --all --strict             → 31 passed, 0 failed
+mkdocs build --strict                        → built in 1.23s
 ```
+
+The e2e run used `E2E_GATEWAY_PORT=18081`; 8081 was held by an unrelated process
+on this machine. `run-e2e.sh` takes the port from that variable, so nothing about
+the suite changed.
 
 ## What was found before the change
 
