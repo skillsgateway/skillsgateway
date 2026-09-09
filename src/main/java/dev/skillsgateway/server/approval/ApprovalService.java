@@ -302,8 +302,10 @@ public class ApprovalService {
      *
      * <p>A repair that itself fails is not swallowed. It is attached to the failure that caused it,
      * because at that point the estate is genuinely inconsistent — a row claiming a publication that
-     * did not happen — and that is the case the startup check comparing the served estate against
-     * the database exists to catch. Logged at error, since nothing downstream will see it again.
+     * did not happen. {@link PublicationReconciler} is what catches that case afterwards: until it
+     * existed this sentence named a startup check that had never been built, which is worse than no
+     * sentence, because it retires the concern in the reader's mind. Still logged at error: the
+     * repair runs on the next start, not on this request.
      */
     private void repair(Snapshot before, Throwable publishFailed) {
         try {

@@ -2564,3 +2564,13 @@ cases:
       THEN the contested name appears in the catalog manifest for neither claimant, the uncontested marketplace's plugins are published unchanged, and the withheld name is on the audit ledger and reported by the catalog read together with both claimants
     revision: "0.1.0"
 
+  - id: SVC_GW_APPROVAL_0014
+    requirement_ids: ["GW_APPROVAL_0014"]
+    title: An approved snapshot that is not served is republished, and an unapproved served one is only reported
+    verification: automated-test
+    description: |
+      GIVEN a marketplace serving an approved snapshot, whose served reference for that snapshot is then removed behind the gateway's back, and a second marketplace serving content for a snapshot no longer recorded as approved
+      WHEN the publication reconciliation runs
+      THEN the first marketplace serves the approved snapshot again and the repair is on the audit ledger as the gateway's own act, while the second marketplace still serves what it served and the discrepancy is reported rather than retracted
+    revision: "0.1.0"
+
