@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.vetting;
 
+import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
@@ -67,10 +68,12 @@ public record Verdict(
 
     /**
      * The verdict recorded in place of a connector an administrator switched off for this
-     * marketplace (GW_VETTING_0029). Carries an informational finding so the disablement is visible on the
+     * marketplace (GW_VETTING_0029.2). Carries an informational finding so the disablement is visible on the
      * run rather than being a silently shorter chain; INFO severity keeps it out of the block
-     * decision, and {@link VerdictState#DISABLED} is neither clearing nor blocking regardless.
+     * decision, and {@link VerdictState#DISABLED} is neither clearing nor blocking regardless
+     * (GW_VETTING_0029.3).
      */
+    @Requirements({"GW_VETTING_0029.2"})
     public static Verdict disabled(String connector, String scope) {
         return new Verdict(
                 VerdictState.DISABLED,

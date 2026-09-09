@@ -66,7 +66,7 @@ class ClaimRoleMappingTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_AUTH_0015"})
+    @SVCs({"SVC_GW_AUTH_0015", "SVC_GW_AUTH_0015.1", "SVC_GW_AUTH_0015.3"})
     void a_mapped_admin_claim_grants_the_admin_surface_with_no_grant_row() throws Exception {
         var alice = session("claim-alice", List.of("gw-admins"));
 
@@ -88,7 +88,7 @@ class ClaimRoleMappingTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_AUTH_0015"})
+    @SVCs({"SVC_GW_AUTH_0015.1"})
     void a_mapped_approver_claim_acts_only_on_its_own_marketplace_including_through_bare_ids() throws Exception {
         var root = oidcLogin().idToken(token -> token.subject("root"));
         var bob = session("claim-bob", List.of("gw-approvers-a"));
@@ -131,7 +131,7 @@ class ClaimRoleMappingTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_AUTH_0015"})
+    @SVCs({"SVC_GW_AUTH_0015.1"})
     void a_mapped_auditor_claim_reads_the_ledger_and_is_refused_every_mutation() throws Exception {
         var carol = session("claim-carol", List.of("gw-auditors"));
 
@@ -147,7 +147,7 @@ class ClaimRoleMappingTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_AUTH_0015"})
+    @SVCs({"SVC_GW_AUTH_0015.1"})
     void claim_values_that_only_resemble_a_mapping_grant_nothing() throws Exception {
         List<String> nearMisses =
                 List.of("gw-admin", "gw-admins-extra", "xgw-admins", "GW-ADMINS", "Gw-Admins", "gw admins", "");
@@ -165,7 +165,7 @@ class ClaimRoleMappingTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_AUTH_0015"})
+    @SVCs({"SVC_GW_AUTH_0015.1"})
     void a_credential_without_identity_provider_claims_derives_nothing() throws Exception {
         // The dev-insecure principal shape: a bare-string principal with forged authorities, so
         // there is no claim map to read and nothing to match against.
@@ -179,7 +179,7 @@ class ClaimRoleMappingTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_AUTH_0015"})
+    @SVCs({"SVC_GW_AUTH_0015.1", "SVC_GW_AUTH_0015.3"})
     void claim_roles_union_with_configured_admins_and_stored_grants() throws Exception {
         var root = oidcLogin().idToken(token -> token.subject("root"));
 
@@ -215,7 +215,7 @@ class ClaimRoleMappingTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_AUTH_0015"})
+    @SVCs({"SVC_GW_AUTH_0015.1", "SVC_GW_AUTH_0015.2", "SVC_GW_AUTH_0015.3"})
     void a_mapping_naming_an_unregistered_marketplace_starts_and_matches_nothing() throws Exception {
         // The context booted with a mapping for claim-unregistered-mkt; reaching this line is
         // half the claim, and conferring nothing anywhere is the other half.

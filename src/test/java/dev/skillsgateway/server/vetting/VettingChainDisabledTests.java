@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 class VettingChainDisabledTests {
 
     @Test
-    @SVCs({"SVC_GW_VETTING_0029"})
+    @SVCs({"SVC_GW_VETTING_0029.3"})
     void a_disabled_verdict_does_not_block_when_something_else_clears() {
         assertThat(VettingChain.aggregate(List.of(VerdictState.PASS, VerdictState.DISABLED)))
                 .isEqualTo(VettingChain.Outcome.CLEAR);
@@ -24,7 +24,7 @@ class VettingChainDisabledTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_VETTING_0029"})
+    @SVCs({"SVC_GW_VETTING_0029.3"})
     void disabling_every_connector_blocks_rather_than_clears() {
         // The load-bearing case: no positive clearing evidence, so no clear — an estate that has
         // switched everything off is blocked, not cleared.
@@ -58,7 +58,7 @@ class VettingChainDisabledTests {
     }
 
     @Test
-    @SVCs({"SVC_GW_VETTING_0029"})
+    @SVCs({"SVC_GW_VETTING_0029.3"})
     void disabled_is_neither_clearing_nor_blocking() {
         assertThat(VerdictState.DISABLED.clearing()).isFalse();
         assertThat(VerdictState.DISABLED.blocking()).isFalse();

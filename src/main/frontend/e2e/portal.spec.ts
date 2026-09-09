@@ -660,7 +660,7 @@ test("preview_pane_shows_tree_inert_skill_md_and_diff_vs_served", async ({ page 
  * every test above already depends on this path. Here it is named: the session
  * holds admin, and its source is the claim rather than a grant row.
  *
- * @SVCs SVC_GW_AUTH_0015, SVC_GW_AUTH_0025
+ * @SVCs SVC_GW_AUTH_0015.3, SVC_GW_AUTH_0025
  */
 test("the_session_holds_an_admin_role_derived_from_the_identity_providers_group_claim", async ({
   page,

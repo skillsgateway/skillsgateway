@@ -40,7 +40,7 @@ class ConnectorToggleTests extends AbstractGatewayTest {
     private VettingService vettingService;
 
     @Test
-    @SVCs({"SVC_GW_VETTING_0029"})
+    @SVCs({"SVC_GW_VETTING_0029.1", "SVC_GW_VETTING_0029.2", "SVC_GW_VETTING_0029.4"})
     void an_admin_disables_a_connector_per_marketplace_and_no_one_else_can() throws Exception {
         String nameA = uniqueName("toggle-a");
         String nameB = uniqueName("toggle-b");
@@ -96,7 +96,7 @@ class ConnectorToggleTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_VETTING_0029"})
+    @SVCs({"SVC_GW_VETTING_0029.3"})
     void disabling_every_connector_leaves_a_run_blocked_not_clear() throws Exception {
         // Scoped to one marketplace so the shared context is untouched: switching every connector
         // off for it is the integration-level counterpart of the pure-function "disable-all blocks"

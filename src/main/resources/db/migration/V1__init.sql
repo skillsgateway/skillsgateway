@@ -72,7 +72,7 @@ CREATE TABLE snapshots (
     id BIGSERIAL PRIMARY KEY,
     marketplace_id BIGINT NOT NULL REFERENCES marketplaces (id),
     -- The commit the gateway serves: the upstream commit for a local-only manifest, the
-    -- synthesised composite for one with resolved external sources (GW_INGEST_0024).
+    -- synthesised composite for one with resolved external sources (GW_INGEST_0024.2).
     sha TEXT NOT NULL,
     -- The commit ingested from upstream (GW_INGEST_0030.2). Equal to `sha` unless a composite was
     -- synthesised, in which case it is also the composite's parent; the column exists so the

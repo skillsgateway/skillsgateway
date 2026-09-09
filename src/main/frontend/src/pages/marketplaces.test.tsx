@@ -57,14 +57,14 @@ test("provenance_dialog_lists_the_served_commit_and_the_resolved_closure", async
 });
 
 /**
- * The cooling-off window (GW_APPROVAL_0004) as a reviewer meets it: the control is shut and says when it
- * opens, rather than opening a dialog that would only refuse. Nothing in the portal can shorten
- * the wait — that is the point of the control — so the copy says what happens instead of offering
- * a way past it.
+ * The cooling-off window (GW_APPROVAL_0004.4) as a reviewer meets it: the control is shut and says
+ * when it opens, rather than opening a dialog that would only refuse. Nothing in the portal can
+ * shorten the wait — that is the point of the control — so the copy says what happens instead of
+ * offering a way past it.
  *
- * Untagged on purpose: SVC_GW_APPROVAL_0004 is verified by the Java suite, and only Playwright results are
- * matched back to SVC ids (vitest classnames are not normalised to the tag FQN style). Tagging it
- * here would register a verification the traceability gate could never see pass.
+ * Untagged on purpose: SVC_GW_APPROVAL_0004.4 is verified by the Java suite, and only Playwright
+ * results are matched back to SVC ids (vitest classnames are not normalised to the tag FQN style).
+ * Tagging it here would register a verification the traceability gate could never see pass.
  */
 test("approve_is_disabled_with_the_remaining_time_inside_the_cooling_off_window", async () => {
   const user = userEvent.setup();

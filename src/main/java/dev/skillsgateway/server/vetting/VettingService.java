@@ -159,7 +159,7 @@ public class VettingService {
      * verdict <em>means</em> is decided by {@code RevetService}, not here, so this method stays the
      * one place the chain executes.
      */
-    @Requirements({"GW_VETTING_0001", "GW_VETTING_0002", "GW_VETTING_0006", "GW_VETTING_0012"})
+    @Requirements({"GW_VETTING_0001", "GW_VETTING_0002", "GW_VETTING_0006", "GW_VETTING_0012", "GW_VETTING_0029.2"})
     public Run run(Snapshot snapshot, String marketplace, String trigger) {
         long runId = vettingRepository.startRun(snapshot.id(), trigger, chainIdentity());
         List<VerdictState> states = new ArrayList<>(connectors.size());
@@ -168,8 +168,8 @@ public class VettingService {
             for (VettingConnector connector : connectors) {
                 // A connector an administrator switched off for this marketplace is skipped, not
                 // run, and recorded as a distinct disabled verdict so the disablement is part of
-                // the run's evidence rather than a silently shorter chain (GW_VETTING_0029). The
-                // aggregation counts it as neither clearing nor blocking.
+                // the run's evidence rather than a silently shorter chain (GW_VETTING_0029.2). The
+                // aggregation counts it as neither clearing nor blocking (GW_VETTING_0029.3).
                 Verdict verdict = toggleService.enabled(connector.name(), snapshot.marketplaceId())
                         ? runGuarded(connector, content)
                         : Verdict.disabled(connector.name(), "for marketplace '" + marketplace + "'");
