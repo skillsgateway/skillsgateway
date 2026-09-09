@@ -45,11 +45,11 @@ securityContext:
       - ALL
 
 # More than one replica is accepted only where concurrent writers are safe by
-# construction: `storage.backend: object-store`, AND with the gateway's
-# uncoordinated background singletons switched off in `config` (see the failure
-# message the chart produces). On `filesystem` there is no cross-pod locking at
-# all, so the chart refuses outright rather than trusting the operator to know
-# that. See guides/deploying-on-kubernetes.md.
+# construction: `storage.backend: object-store`. On `filesystem` there is no
+# cross-pod locking at all, so the chart refuses outright rather than trusting
+# the operator to know that. The background sweeps take a lease each and run on
+# one replica per interval, so they need no switching off.
+# See guides/deploying-on-kubernetes.md.
 replicaCount: 1
 
 # Which storage holds the git repositories. The gateway takes this from a name

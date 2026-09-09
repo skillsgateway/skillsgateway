@@ -1,5 +1,7 @@
 package dev.skillsgateway.server.mirror;
 
+import dev.skillsgateway.server.config.SkillsGatewayProperties;
+import dev.skillsgateway.server.scheduling.SweepLeases;
 import io.github.reqstool.annotations.Requirements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,10 +39,18 @@ public class MirrorReconciliationSweep {
     /** The reason recorded on the ledger and in the logs for a reconciliation nothing asked for. */
     public static final String REASON = "drift-sweep";
 
-    private final ForgeMirrorService mirror;
+    /** This sweep's cross-replica lease key (GW_FACADE_0030). */
+    public static final String LEASE = "mirror-drift";
 
-    public MirrorReconciliationSweep(ForgeMirrorService mirror) {
+    private final ForgeMirrorService mirror;
+    private final SkillsGatewayProperties.Mirror properties;
+    private final SweepLeases leases;
+
+    public MirrorReconciliationSweep(
+            ForgeMirrorService mirror, SkillsGatewayProperties properties, SweepLeases leases) {
         this.mirror = mirror;
+        this.properties = properties.mirror();
+        this.leases = leases;
     }
 
     @Scheduled(
@@ -51,6 +61,14 @@ public class MirrorReconciliationSweep {
         if (!mirror.sweepEnabled()) {
             return;
         }
+        leases.runIfLeader(LEASE, properties.sweepInterval(), this::sweepNow);
+    }
+
+    /**
+     * Queues one reconciliation. The scheduled method above keeps the name {@code sweep} on
+     * purpose: it is the name the task registry reports, and that string is asserted on.
+     */
+    public void sweepNow() {
         try {
             mirror.checkForDriftLater(REASON);
         } catch (RuntimeException e) {

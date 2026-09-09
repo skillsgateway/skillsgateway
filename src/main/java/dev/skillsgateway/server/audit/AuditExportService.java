@@ -331,7 +331,19 @@ public class AuditExportService {
                 entries);
         WebhookDelivery delivery =
                 deliveryRepository.enqueue(sink.subscriberId(), WebhookEvent.AUDIT_EXPORT, serialize(batch));
-        sinkRepository.updateCursor(sink.id(), to);
+        // Enqueue first, advance second: a crash in between costs a duplicate, never a gap. The
+        // advance is conditional so it cannot overwrite a cursor this pass did not read — an
+        // operator's replay rewind is the case that matters, and a lost advance there means the
+        // replay stands and this batch is re-sent, which is the direction GW_AUDIT_0004 chooses.
+        if (sinkRepository.advanceCursor(sink.id(), to, sink.cursorPosition()).isEmpty()) {
+            log.warn(
+                    "audit sink {} cursor moved under an export pass (expected {}); leaving it where it is,"
+                            + " batch {}-{} is enqueued and will be re-sent",
+                    sink.name(),
+                    sink.cursorPosition(),
+                    sink.cursorPosition(),
+                    to);
+        }
         return Optional.of(delivery);
     }
 

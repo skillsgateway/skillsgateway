@@ -190,7 +190,7 @@ class ForgeMirrorSweepTests extends AbstractGatewayTest {
         ObjectId tip = removeServedTipFromPublishedStorage();
         int ledgerRowsBefore = mirrorEvents().size();
 
-        sweep.sweep();
+        sweep.sweepNow();
         assertThat(mirror.awaitQuiescence(Duration.ofSeconds(30))).isTrue();
 
         assertThat(mirrorRefs())
@@ -212,7 +212,7 @@ class ForgeMirrorSweepTests extends AbstractGatewayTest {
         // reconciliation succeeds, finds nothing to do, and therefore writes nothing (GW_FACADE_0028).
         restoreServedTipInPublishedStorage(tip);
         int quietRowsBefore = mirrorEvents().size();
-        sweep.sweep();
+        sweep.sweepNow();
         assertThat(mirror.awaitQuiescence(Duration.ofSeconds(30))).isTrue();
         assertThat(mirror.report().lastAttemptOutcome()).isEqualTo(MirrorReport.OK);
         assertThat(mirror.report().inSync()).isTrue();
@@ -242,7 +242,7 @@ class ForgeMirrorSweepTests extends AbstractGatewayTest {
         assertThat(gauge(MirrorMetrics.STALE_REFS)).isGreaterThan(0);
 
         // Only the sweep runs. No approval, no revocation, no restart.
-        sweep.sweep();
+        sweep.sweepNow();
         assertThat(mirror.awaitQuiescence(Duration.ofSeconds(30))).isTrue();
 
         assertThat(mirrorRefs())

@@ -299,6 +299,52 @@ class WaiverTests extends AbstractGatewayTest {
     }
 
     /**
+     * Two passes holding the same batch announce the lapse once (GW_FACADE_0030).
+     *
+     * <p>The sweep used to write the ledger entry and <em>then</em> stamp the waiver, so two
+     * replicas whose polls overlapped each announced the lapse and only one stamped it. Nothing
+     * sequential can see that — the second pass's read never returns the row — which is why it
+     * survived to be found by reading rather than by failing. The batch is read once here and
+     * handed to the pass twice, which is precisely the state two overlapping replicas are in, and
+     * makes the reproduction deterministic rather than a race the test hopes to win.
+     */
+    @Test
+    @SVCs({"SVC_GW_FACADE_0030"})
+    void twoPassesOverOneBatchAnnounceTheLapseOnce() throws Exception {
+        Registered subject = blockedSnapshot("waivrace");
+        waiverRepository.create(
+                subject.snapshot().marketplaceId(),
+                RULE,
+                WaiverScope.SNAPSHOT,
+                subject.snapshot().sha(),
+                "already lapsed",
+                "alice",
+                Instant.now().minus(Duration.ofDays(1)));
+
+        List<Waiver> batch = waiverRepository.newlyExpired(Instant.now(), 50).stream()
+                .filter(waiver ->
+                        waiver.marketplace().equals(subject.marketplace().name()))
+                .toList();
+        assertThat(batch)
+                .as("the lapsed waiver is in the batch both passes hold")
+                .hasSize(1);
+
+        assertThat(waiverService.recordExpiries(batch))
+                .as("the pass that wins the stamp")
+                .isEqualTo(1);
+        assertThat(waiverService.recordExpiries(batch))
+                .as("and the one that does not announces nothing")
+                .isZero();
+
+        assertThat(fetchLogRepository.list().stream()
+                        .filter(entry -> subject.marketplace().name().equals(entry.get("marketplace")))
+                        .filter(entry -> WaiverService.EVENT_EXPIRED.equals(entry.get("event")))
+                        .count())
+                .as("one lapse, one announcement")
+                .isEqualTo(1);
+    }
+
+    /**
      * The evaluation rule, exhaustively and without a database: every verdict state crossed with
      * "the finding is waived" and "it is not". The property under attack is that waiving can only
      * ever remove an objection — it must never turn a clearing verdict into a blocking one, and it

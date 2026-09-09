@@ -349,17 +349,24 @@ class PackagingTests {
                 .as("with no volume the local pack cache still needs somewhere writable")
                 .contains("SKILLSGATEWAY_STORAGE_OBJECTSTORE_CACHE_DIR");
 
-        // Replica gating: the storage obstacle and the uncoordinated singletons, together.
+        // Replica gating: the storage obstacle, and only that. Coordination was the other half
+        // until the sweeps took leases (GW_FACADE_0030); the switch list that stood here is gone,
+        // and this asserts it stays gone rather than merely that it is absent today.
         String replicas = define(helpers, "skills-gateway.replicaGate");
         assertThat(replicas).as("the replica gate exists").isNotEmpty();
         assertThat(replicas).contains("gt $replicas 1").contains("fail");
         assertThat(replicas)
                 .as("more than one writer is refused outright on the filesystem backend")
                 .contains("object-store");
-        for (String poller : List.of("sync", "revet", "retention", "webhooks", "audit-export")) {
+        for (String flag : List.of(
+                "sync.enabled",
+                "vetting.revet.enabled",
+                "retention.enabled",
+                "webhooks.enabled",
+                "audit-export.enabled")) {
             assertThat(replicas)
-                    .as("scaling out must refuse to duplicate the %s singleton", poller)
-                    .contains(poller);
+                    .as("scaling out must not ask an operator to switch %s off; the lease handles it", flag)
+                    .doesNotContain(flag);
         }
         assertThat(deployment).contains("skills-gateway.replicaGate");
     }

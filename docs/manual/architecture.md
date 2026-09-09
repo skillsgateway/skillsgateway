@@ -481,7 +481,7 @@ implementation is in the context:
 | Backend | Substrate | Writers |
 | --- | --- | --- |
 | `filesystem` (default) | Bare repositories on the mounted volume | One. No cross-pod locking exists |
-| `object-store` | JGit DFS over an S3-compatible bucket: immutable content-named packs, a write-ahead log, and one reference manifest per repository | Any number. Every transition is one conditional write on the manifest, and that compare-and-swap is the only serialization point — no lock service, no coordination database, no leader election |
+| `object-store` | JGit DFS over an S3-compatible bucket: immutable content-named packs, a write-ahead log, and one reference manifest per repository | Any number. Every transition is one conditional write on the manifest, and that compare-and-swap is the only serialization point a transition needs — no lock service and no leader |
 
 The backend is named and never inferred; an unrecognised name, or an
 `object-store` selection whose settings are incomplete or whose bucket fails the
@@ -491,10 +491,18 @@ cache and nothing in it is authoritative. Moving between the two is an offline,
 verified, reversible copy — see
 [Choosing and migrating the storage backend](guides/storage-backends.md).
 
-What object storage does **not** make safe is the gateway's uncoordinated
-background singletons (sync, re-vetting, retention, webhook dispatch, audit
-export). It unblocks multi-replica serving; the chart refuses a replica count
-that would duplicate a sweep, and leader election is separate later work.
+What object storage makes safe is serving and writing. The gateway's scheduled
+background passes are singletons for a different reason — each enumerates rows
+the whole estate shares — so each takes a lease in the gateway's own database
+before it runs, keyed by the pass's name and lasting that pass's own interval
+(GW_FACADE_0030 — A scheduled background pass runs on one replica at a time).
+The acquire never blocks and the lease is never released early: a replica that
+does not take it skips the tick, and a replica that dies mid-pass costs the next
+tick and nothing more. So the estate gets one pass per interval whatever the
+replica count, with no configuration and no lock to leak. The chart's remaining
+replica refusal is the `filesystem` backend, which has no cross-pod locking of
+reference transitions at all — see
+[Running more than one replica](guides/storage-backends.md#running-more-than-one-replica).
 
 ## 13. Roadmap
 
@@ -569,8 +577,12 @@ that would duplicate a sweep, and leader election is separate later work.
   offline verified migration between the two, and a chart that refuses a replica
   count or a storage shape the selected backend cannot honour
   (GW_FACADE_0010, GW_FACADE_0011, GW_FACADE_0013, GW_FACADE_0014, GW_FACADE_0012). Real AWS S3 has not yet been
-  exercised against the conditional-write assertions; leader election for the
-  background sweeps remains separate work.
+  exercised against the conditional-write assertions.
+- *Implemented:* the scheduled background passes are cluster-safe — each takes a
+  non-blocking, self-expiring lease in the gateway's database, so the estate
+  gets one pass per interval however many replicas run, without leader election,
+  without an advisory lock a pooled connection could leak, and without a
+  property to set (GW_FACADE_0030).
 - **Phase 3 — assurance & scale.** Client telemetry inventory, kill switch
   with fleet force-uninstall, signed attestations, additional tool adapters,
   repository-manager catalog federation, OCI re-publication.

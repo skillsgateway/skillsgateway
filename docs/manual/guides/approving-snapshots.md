@@ -406,10 +406,11 @@ a person holding the report.
 !!! note "The remedy is a restart"
 
     Reconciliation runs at startup and nowhere else — there is no sweep and no
-    endpoint. A recurring sweep would add to the
-    [uncoordinated background singletons](storage-backends.md#running-more-than-one-replica)
-    a multi-replica deployment already has to split out, for a failure rare
-    enough that a restart is a proportionate remedy.
+    endpoint. A recurring pass would be
+    [one more scheduled pass](storage-backends.md#running-more-than-one-replica)
+    on the estate's shared budget, for a divergence rare enough that it does not
+    earn one: a restart is already the proportionate remedy, and it is one an
+    operator can order the moment they see the report.
 
 ## Rejection is not deletion
 

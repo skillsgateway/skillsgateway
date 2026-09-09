@@ -1,6 +1,7 @@
 package dev.skillsgateway.server.sync;
 
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
+import dev.skillsgateway.server.scheduling.SweepLeases;
 import io.github.reqstool.annotations.Requirements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,12 +18,17 @@ public class SyncScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(SyncScheduler.class);
 
+    /** This sweep's cross-replica lease key (GW_FACADE_0030). */
+    public static final String LEASE = "sync";
+
     private final SyncService syncService;
     private final SkillsGatewayProperties.Sync properties;
+    private final SweepLeases leases;
 
-    public SyncScheduler(SyncService syncService, SkillsGatewayProperties properties) {
+    public SyncScheduler(SyncService syncService, SkillsGatewayProperties properties, SweepLeases leases) {
         this.syncService = syncService;
         this.properties = properties.sync();
+        this.leases = leases;
     }
 
     @Requirements({"GW_INGEST_0011"})
@@ -33,6 +39,11 @@ public class SyncScheduler {
         if (!properties.enabled()) {
             return;
         }
+        leases.runIfLeader(LEASE, properties.pollInterval(), this::sweepNow);
+    }
+
+    /** One pass. The enabled flag and the lease are the scheduled wrapper's business, not this one's. */
+    void sweepNow() {
         try {
             int ingested = syncService.sweep(properties.batchSize());
             if (ingested > 0) {

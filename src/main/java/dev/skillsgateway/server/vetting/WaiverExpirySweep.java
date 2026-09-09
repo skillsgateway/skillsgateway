@@ -1,6 +1,7 @@
 package dev.skillsgateway.server.vetting;
 
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
+import dev.skillsgateway.server.scheduling.SweepLeases;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,18 +26,28 @@ public class WaiverExpirySweep {
 
     private static final Logger log = LoggerFactory.getLogger(WaiverExpirySweep.class);
 
+    /** This sweep's cross-replica lease key (GW_FACADE_0030). */
+    public static final String LEASE = "waiver-expiry";
+
     private final WaiverService waiverService;
     private final SkillsGatewayProperties.Vetting properties;
+    private final SweepLeases leases;
 
-    public WaiverExpirySweep(WaiverService waiverService, SkillsGatewayProperties properties) {
+    public WaiverExpirySweep(WaiverService waiverService, SkillsGatewayProperties properties, SweepLeases leases) {
         this.waiverService = waiverService;
         this.properties = properties.vetting();
+        this.leases = leases;
     }
 
     @Scheduled(
             fixedDelayString = "${skills-gateway.vetting.waiver-sweep-interval:1h}",
             initialDelayString = "${skills-gateway.vetting.waiver-sweep-interval:1h}")
     public void sweep() {
+        leases.runIfLeader(LEASE, properties.waiverSweepInterval(), this::sweepNow);
+    }
+
+    /** One pass. The lease is the scheduled wrapper's business, not this one's. */
+    void sweepNow() {
         try {
             int recorded = waiverService.sweepExpired(properties.waiverSweepBatchSize());
             if (recorded > 0) {
