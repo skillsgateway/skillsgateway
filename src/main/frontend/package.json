@@ -60,7 +60,7 @@
     "jsdom": "30.0.1",
     "msw": "2.15.0",
     "openapi-typescript": "7.13.0",
-    "oxlint": "1.81.0",
+    "oxlint": "1.82.0",
     "playwright": "1.63.0",
     "storybook": "10.6.0",
     "typescript": "7.0.2",
