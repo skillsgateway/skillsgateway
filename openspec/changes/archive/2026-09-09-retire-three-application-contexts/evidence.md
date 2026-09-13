@@ -1,8 +1,15 @@
 # Evidence: retire-three-application-contexts
 
-Commit under test: `8c1a1f3` (the code commit of this branch), branched from
-`92e1fde` (`main`). All gates below were run after the last code edit, on the
+Commit under test: `3da0fed` (the code commit of this branch), branched from
+`c9b5469` (`main`). All gates below were run after the last code edit, on the
 same machine, with nothing else building.
+
+Re-recorded after rebasing onto `main`, which had moved 21 commits ahead. Every
+one of those is a dependency bump — `main` touched no Java source and no test
+between `92e1fde` and `c9b5469` — so the rebase was clean and the numbers below
+are a fresh run on the new base rather than the pre-rebase figures carried over.
+The distinct-context count is unchanged at 29, which is the load-bearing check:
+a test class arriving on `main` would have moved it.
 
 ## The measurement
 
@@ -36,8 +43,8 @@ The three contexts retired, from `target/context-budget.txt`:
 
 ```
 [INFO] BUILD SUCCESS
-[INFO] Total time:  07:28 min
-[INFO] Finished at: 2026-09-09T21:35:13+02:00
+[INFO] Total time:  08:34 min
+[INFO] Finished at: 2026-09-14T07:58:19+02:00
 ```
 
 Aggregated across the 127 surefire reports: **647 tests run, 0 failures, 0
@@ -59,13 +66,13 @@ may be that flake and not this change.
 ```
  Test Files  3 passed (3)
       Tests  6 passed (6)
-   Duration  3.58s
+   Duration  3.95s
 ```
 
 ### `pnpm e2e`
 
 ```
-  13 passed (48.7s)
+  13 passed (46.3s)
 ```
 
 ### `reqstool status local -p docs/reqstool`
