@@ -64,6 +64,28 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 20
+      # The smoke test drives the API as a real administrator, and the web
+      # surface accepts nothing but OIDC. interactiveLogin is false, unlike the
+      # portal e2e suite's mock: there is no browser here, so the provider has to
+      # answer the authorization request with a code rather than a login form.
+      # The subject is set explicitly because a non-interactive token would
+      # otherwise carry none, and an id_token with no `sub` is rejected.
+      oidc:
+        image: ghcr.io/navikt/mock-oauth2-server:2.3.0
+        env:
+          JSON_CONFIG: >-
+            {"interactiveLogin": false,
+             "tokenCallbacks": [
+               {"issuerId": "default",
+                "tokenExpiry": 3600,
+                "requestMappings": [
+                  {"requestParam": "grant_type",
+                   "match": "*",
+                   "claims": {"sub": "smoke-admin", "groups": ["sg-gateway-admins"]}}
+                ]}
+             ]}
+        ports:
+          - 9090:8080
     steps:
       - uses: actions/checkout@v7.0.1
         with:
@@ -86,6 +108,40 @@ jobs:
       # copied in unchanged, and nothing emulated is ever measured or timed.
       - uses: docker/setup-qemu-action@1f40c72289eff860ee54a304f1438e3cff362e0a # v4.3.0
       - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Build the marketplace fixture
+        # Plain git, built here rather than fetched: no network dependency and
+        # nothing external that can drift. It is bind-mounted into the image
+        # below, because the container's root filesystem is read-only and its
+        # /data is a tmpfs -- a path on the runner is not otherwise reachable
+        # from inside.
+        run: |
+          export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
+          FIXTURE="$RUNNER_TEMP/smoke-fixture"
+          mkdir -p "$FIXTURE/.claude-plugin" "$FIXTURE/plugins/hello/skills/hello"
+          git init -q -b main "$FIXTURE"
+          cat > "$FIXTURE/.claude-plugin/marketplace.json" <<'JSON'
+          {
+            "name": "smoke-marketplace",
+            "owner": {"name": "Smoke"},
+            "plugins": [{"name": "hello", "source": "./plugins/hello", "description": "smoke"}]
+          }
+          JSON
+          # Conformant with the Agent Skills specification the skill-conformance
+          # connector pins: a fixture that tripped the vetting chain would be
+          # held rather than approved, and the clone below would have nothing to
+          # find.
+          cat > "$FIXTURE/plugins/hello/skills/hello/SKILL.md" <<'MD'
+          ---
+          name: hello
+          description: Says hello. Use when the container smoke test needs a well-formed skill.
+          ---
+          # Hello
+          MD
+          git -C "$FIXTURE" add -A
+          git -C "$FIXTURE" -c user.name=smoke -c user.email=smoke@example.invalid \
+            -c commit.gpgsign=false commit -q -m "container smoke test fixture"
+          echo "SMOKE_FIXTURE=$FIXTURE" >> "$GITHUB_ENV"
 
       - name: Build container image
         # The runner's own platform, loaded into the daemon so the smoke test can
@@ -112,11 +168,21 @@ jobs:
           # here rather than in a cluster.
           docker run -d --name gateway --network host \
             --read-only --tmpfs /tmp:rw,mode=1777 --tmpfs /data:rw,mode=1777 \
+            -v "$SMOKE_FIXTURE:/fixture:ro" \
             -e SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/skillsgateway \
             -e SPRING_DATASOURCE_USERNAME=skillsgateway \
             -e SPRING_DATASOURCE_PASSWORD=skillsgateway \
             -e SKILLSGATEWAY_ROLES_ADMINS_0=smoke-test \
             -e SERVER_FORWARDHEADERSSTRATEGY=framework \
+            -e SGW_OIDC_CLIENT_ID=smoke-client \
+            -e SGW_OIDC_CLIENT_SECRET=smoke-secret \
+            -e SGW_OIDC_AUTHORIZATION_URI=http://localhost:9090/default/authorize \
+            -e SGW_OIDC_TOKEN_URI=http://localhost:9090/default/token \
+            -e SGW_OIDC_JWK_SET_URI=http://localhost:9090/default/jwks \
+            -e SKILLSGATEWAY_ROLES_CLAIM=groups \
+            -e SKILLSGATEWAY_ROLES_MAPPINGS_0_CLAIMVALUE=sg-gateway-admins \
+            -e SKILLSGATEWAY_ROLES_MAPPINGS_0_ROLE=admin \
+            -e SKILLSGATEWAY_ALLOWEDURLSCHEMES=http,https,file \
             skills-gateway:ci
           healthy=false
           for _ in $(seq 1 30); do
@@ -142,6 +208,78 @@ jobs:
             *)
               echo "forwarded headers ignored on the published image: $location"; docker logs gateway; exit 1 ;;
           esac
+
+      - name: Smoke test the product on the published image
+        # The step above proves the image boots. This one proves it works: #293
+        # shipped a release where every ingest returned 500 and a health-only
+        # smoke test passed anyway. Ingestion, approval, publication and the
+        # facade are the four things the product is, so the assertion is one
+        # happy path through all four -- against the artifact, not the code.
+        #
+        # Depth belongs in the portal e2e suite. Nothing here is a second test
+        # suite; it is the shipped image doing its job once.
+        run: |
+          set -euo pipefail
+          BASE=http://localhost:8080
+          JAR="$RUNNER_TEMP/cookies.txt"
+          export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
+
+          fail() { echo "smoke: $1"; docker logs gateway; exit 1; }
+          # Spring Security's SPA CSRF posture: the token arrives as a cookie and
+          # has to come back as a header on every mutating call.
+          csrf() { awk '$6 == "XSRF-TOKEN" {print $7}' "$JAR" | tail -1; }
+
+          # A real login through the real chain: the gateway redirects to the
+          # provider, the provider answers with a code, and the gateway exchanges
+          # it and opens a session. Nothing here uses the dev escape hatch, so a
+          # break in the OIDC chain fails this step rather than hiding behind a
+          # posture no deployment runs.
+          curl -sS -c "$JAR" -b "$JAR" -L -o /dev/null "$BASE/oauth2/authorization/idp"
+          me=$(curl -sS -b "$JAR" -c "$JAR" "$BASE/api/me")
+          echo "$me" | grep -q '"role":"admin"' || fail "login did not yield an administrator: $me"
+
+          # 1. Register, from the bind-mounted fixture. The file scheme is off the
+          # default allowlist and is enabled above purely to deliver the fixture;
+          # what is asserted is the registration, not the scheme.
+          code=$(curl -sS -b "$JAR" -c "$JAR" -o "$RUNNER_TEMP/register.json" -w '%{http_code}' \
+            -X POST "$BASE/api/marketplaces" \
+            -H 'Content-Type: application/json' -H "X-XSRF-TOKEN: $(csrf)" \
+            -d '{"name":"smoke","url":"file:///fixture"}')
+          [ "$code" = "201" ] || fail "register returned $code: $(cat "$RUNNER_TEMP/register.json")"
+
+          # 2. Ingest, and insist the snapshot is held -- not approved, and not
+          # rejected on a policy violation.
+          curl -sS -b "$JAR" -c "$JAR" -o "$RUNNER_TEMP/snapshot.json" \
+            -X POST "$BASE/api/marketplaces/smoke/ingest" -H "X-XSRF-TOKEN: $(csrf)"
+          id=$(jq -r '.id' "$RUNNER_TEMP/snapshot.json")
+          state=$(jq -r '.state' "$RUNNER_TEMP/snapshot.json")
+          [ "$state" = "held" ] || fail "ingest produced state '$state', expected held: $(cat "$RUNNER_TEMP/snapshot.json")"
+
+          # 3. Approve. Only this publishes; the clone below is what proves it did.
+          code=$(curl -sS -b "$JAR" -c "$JAR" -o "$RUNNER_TEMP/approve.json" -w '%{http_code}' \
+            -X POST "$BASE/api/snapshots/$id/approve" \
+            -H 'Content-Type: application/json' -H "X-XSRF-TOKEN: $(csrf)" -d '{}')
+          [ "$code" = "200" ] || fail "approve returned $code: $(cat "$RUNNER_TEMP/approve.json")"
+          [ "$(jq -r '.state' "$RUNNER_TEMP/approve.json")" = "approved" ] || fail "snapshot not approved"
+
+          # 4. Clone it back through the facade with a PAT, and read the file.
+          # The facade is a different chain from the API -- PAT over Basic, no
+          # session, no cookie -- so this is the one assertion that covers it.
+          curl -sS -b "$JAR" -c "$JAR" -o "$RUNNER_TEMP/token.json" \
+            -X POST "$BASE/api/tokens" \
+            -H 'Content-Type: application/json' -H "X-XSRF-TOKEN: $(csrf)" \
+            -d '{"name":"container-smoke-test"}'
+          pat=$(jq -r '.token' "$RUNNER_TEMP/token.json")
+          [ -n "$pat" ] && [ "$pat" != "null" ] || fail "no cleartext token issued"
+
+          clone="$RUNNER_TEMP/smoke-clone"
+          git clone -q "http://x:$pat@localhost:8080/git/smoke" "$clone" \
+            || fail "facade clone failed"
+          skill="$clone/plugins/hello/skills/hello/SKILL.md"
+          [ -f "$skill" ] || fail "clone is missing the skill: $(find "$clone" -type f -not -path '*/.git/*')"
+          grep -q '^name: hello$' "$skill" || fail "cloned skill has unexpected content: $(cat "$skill")"
+
+          echo "the published image ingested, approved, published and served a marketplace"
 
       - name: Helm lint
         run: helm lint helm/skills-gateway
