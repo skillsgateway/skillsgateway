@@ -283,11 +283,34 @@ number do I put here". It is:
 - **Could this test reuse an existing property set?** Two sets that differ only
   by a value nothing asserts on are two contexts for one posture. Suites that
   need only their own administrator's *name* share one declaration in
-  `AbstractNamedAdminsTest`.
-- **Does this test need a full context at all?** A slice — `@WebMvcTest`,
-  `@JdbcTest`, `@RestClientTest`, `@JsonTest` — loads a fraction of one.
+  `AbstractNamedAdminsTest`, and the claim-mapping suites share
+  `AbstractClaimMappingTest`.
+- **Does this test need the *gateway* at all?** Configuration that is consumed
+  while the context is built — a binding, a registrar, a startup refusal — is
+  provable with an `ApplicationContextRunner` holding just the beans under test.
+  That is the only conversion that removes a context outright rather than
+  trading it for a cheaper one: the runner's context is created and closed per
+  test and never enters the cache. `StorageBackendSelectionTests`,
+  `RoleBootstrapGuardTests` and `ExternalConnectorRegistrationTests` are the
+  worked examples.
 - **Is the property genuinely load-bearing?** A property set equal to a
   default configures nothing and costs a context.
+
+Two things about slices are worth knowing before reaching for one, because both
+are easy to discover the expensive way:
+
+- **A slice for a test that currently shares the base context makes the count
+  worse.** The base context is built whichever way that test goes, so the slice
+  is an additional context, not a replacement. Slices pay off on the classes
+  that own a context today — the ones carrying their own `@TestPropertySource`.
+- **The slice annotations are not on the classpath.** Spring Boot 4 ships only
+  `@JsonTest` in `spring-boot-test-autoconfigure`; `@WebMvcTest`, `@JdbcTest`
+  and `@RestClientTest` live in `spring-boot-webmvc-test`,
+  `spring-boot-jdbc-test` and `spring-boot-restclient-test`, none of which this
+  project depends on. And `@JdbcTest` replaces the datasource with an embedded
+  one by default, which for a schema built by Flyway on PostgreSQL-specific SQL
+  would mean no longer testing the database the gateway runs on — any adoption
+  needs `@AutoConfigureTestDatabase(replace = NONE)`.
 
 Raising the number is a legitimate answer when a posture genuinely needs its
 own context; it is a deliberate edit with the reason in the commit message, not

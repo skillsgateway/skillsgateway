@@ -23,32 +23,14 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.OidcLoginRequestPostProcessor;
-import org.springframework.test.context.TestPropertySource;
 
 /**
  * Roles derived from the identity provider's own claims (GW_AUTH_0015, GW_AUTH_0016), in a context whose
  * only privilege sources are one bootstrap admin and the claim mappings — so any privilege a
- * session here holds without a grant row came through the mapper.
- *
- * <p>{@code gw-approvers-ghost} maps to a marketplace that is never registered: a mapping is
- * allowed to run ahead of the estate, and must confer nothing while it does.
+ * session here holds without a grant row came through the mapper. Both are declared in {@link
+ * AbstractClaimMappingTest}.
  */
-@TestPropertySource(
-        properties = {
-            "skills-gateway.roles.admins=root",
-            "skills-gateway.roles.claim=groups",
-            "skills-gateway.roles.mappings[0].claim-value=gw-admins",
-            "skills-gateway.roles.mappings[0].role=admin",
-            "skills-gateway.roles.mappings[1].claim-value=gw-approvers-a",
-            "skills-gateway.roles.mappings[1].role=approver",
-            "skills-gateway.roles.mappings[1].marketplace=claim-approver-mkt",
-            "skills-gateway.roles.mappings[2].claim-value=gw-auditors",
-            "skills-gateway.roles.mappings[2].role=auditor",
-            "skills-gateway.roles.mappings[3].claim-value=gw-approvers-ghost",
-            "skills-gateway.roles.mappings[3].role=approver",
-            "skills-gateway.roles.mappings[3].marketplace=claim-unregistered-mkt"
-        })
-class ClaimRoleMappingTests extends AbstractGatewayTest {
+class ClaimRoleMappingTests extends AbstractClaimMappingTest {
 
     @Autowired
     private RoleService roleService;
