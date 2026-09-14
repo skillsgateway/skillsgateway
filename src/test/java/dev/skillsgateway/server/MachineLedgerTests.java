@@ -16,22 +16,18 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.test.context.TestPropertySource;
 
 /**
  * The ledger's explicit actor kind (GW_AUDIT_0007). The vocabulary existed before this column did — as
  * three magic strings in the identity column, distinguishable only by string comparison against
  * values that also look like ordinary principals. What changes here is that no consumer compares
  * strings at all.
+ *
+ * <p>The {@code ledger-*} principals stay fixed rather than unique even though the database is now
+ * shared: they are named nowhere else in the suite, so a row carrying one of them was written here,
+ * which is what the per-principal filters rely on.
  */
-@TestPropertySource(
-        // Authorization is always enforced (GW_AUTH_0025), so this suite names every principal it acts
-        // as -- the human and each machine credential. The machine principals are fixed rather than
-        // unique because this suite has its own context, and therefore its own database.
-        properties = {
-            "skills-gateway.roles.admins=a-person,ledger-machine,ledger-ephemeral,ledger-owned,ledger-reader,ledger-exporter,ledger-machine-kinds,ledger-person"
-        })
-class MachineLedgerTests extends AbstractGatewayTest {
+class MachineLedgerTests extends AbstractNamedAdminsTest {
 
     @Autowired
     private JdbcClient jdbc;
