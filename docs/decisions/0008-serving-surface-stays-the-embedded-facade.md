@@ -53,10 +53,14 @@ as separate pieces of work:
 2. **Visibility — a read-only forge mirror.** `ApprovalService` additionally
    pushing approved content to a forge repository, labelled a mirror, for
    humans to browse; agent installs keep pointing at the facade so fetches stay
-   attributable. **Not implemented**, and deliberately sequenced after this: it
-   is an outbound integration with its own failure modes (partial pushes, a
-   mirror that drifts from what is served, revocation that must reach it), and
-   it must never become a serving surface people install from.
+   attributable. **Implemented** (GW_FACADE_0020), off by default, after this
+   and deliberately sequenced so. Each failure mode this ADR named is answered
+   rather than avoided: reconciliation compares the mirror against the currently
+   served refs, so a partial push and a revocation are the same repair; the
+   drift it cannot prevent is reportable (GW_FACADE_0023) and swept on a timer
+   (GW_FACADE_0025); and that it must never become a serving surface people
+   install from is the standing constraint (GW_FACADE_0021), not a solved
+   problem.
 
 ## Consequences
 
