@@ -1,6 +1,6 @@
 # Evidence: container-smoke-test-ingests-and-clones
 
-Commit under test: `f4b30fb`, branched from `082e7ea` (`main`).
+Commit under test: `0187238`, branched from `1ed8125` (`main`).
 
 The change touches one file, `.github/workflows/native.yml`, and that file is not
 exercised by any local gate — so the evidence that matters here is a real run of
@@ -9,8 +9,11 @@ the workflow, in both directions.
 ## The workflow, run on the branch
 
 `gh workflow run native.yml --ref test/container-smoke-test-ingests-and-clones`
-→ [run 34815036574](https://github.com/skillsgateway/skillsgateway/actions/runs/34815036574),
-**success**.
+→ [run 34886657185](https://github.com/skillsgateway/skillsgateway/actions/runs/34886657185),
+**success**. (Re-dispatched after rebasing onto `1ed8125`; the first run,
+[34815036574](https://github.com/skillsgateway/skillsgateway/actions/runs/34815036574),
+was the same result on the pre-rebase base. `native.yml` is byte-identical in
+both — the only later commit on this branch edits this file.)
 
 ```
 Container build & smoke test: success
