@@ -30,5 +30,5 @@
 - [x] 4.2 **Prove it fails when the product is broken** — with the fixture
       unreachable, health still reports `UP` (the old smoke test passes) while
       the new step exits non-zero naming the ingest failure
-- [ ] 4.3 Run the workflow on the branch via `workflow_dispatch` and confirm green
-- [ ] 4.4 `evidence.md` with both runs and the gate tails
+- [x] 4.3 Run the workflow on the branch via `workflow_dispatch` and confirm green
+- [x] 4.4 `evidence.md` with both runs and the gate tails
