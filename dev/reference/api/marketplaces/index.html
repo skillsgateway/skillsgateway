@@ -3396,10 +3396,14 @@ is described in <a href="../../../concepts/vetting/">Vetting — the connector c
 </table>
 <hr />
 <h2 id="connector-enabledisable">Connector enable/disable<a class="headerlink" href="#connector-enabledisable" title="Permanent link">&para;</a></h2>
-<p>An administrator can switch a built-in connector (secret-scan, prompt-injection,
-license-scan, skill-conformance) off or on, globally or for one marketplace. Both endpoints are
-<strong>admin-only</strong> — the switch that governs the vetting chain, and even the
-visibility of its settings, are not shown to marketplace-scoped approvers.</p>
+<p>An administrator can switch any connector in the chain off or on, globally or for
+one marketplace — a built-in (secret-scan, prompt-injection, license-scan,
+skill-conformance) or one of the operator's own
+<a href="../../configuration/#external-connectors">external connectors</a>. A name no
+connector in the chain carries is refused with a 422 naming the ones it does.
+Both endpoints are <strong>admin-only</strong> — the switch that governs the vetting chain,
+and even the visibility of its settings, are not shown to marketplace-scoped
+approvers.</p>
 <p>A disabled connector is <strong>not run</strong> at ingestion or re-vetting; the chain records
 a <code>DISABLED</code> verdict in its place, so the disablement is part of the run's
 evidence rather than a silently shorter chain. Disabling every connector leaves a

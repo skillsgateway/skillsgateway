@@ -2994,7 +2994,11 @@ Each is an HTTP endpoint the gateway POSTs the snapshot's scannable content to
 and reads a normalized <code>{state, reportUrl, findings[]}</code> back from. A configured
 external connector runs in the chain at its position and is recorded, aggregated
 and waivable exactly like a built-in one — its findings and its external report
-link surface wherever a built-in's do.</p>
+link surface wherever a built-in's do. The administrative
+<a href="../../reference/api/marketplaces/#connector-enabledisable">on/off switch</a> reaches
+it on the same terms too: an administrator can disable an external connector
+globally or for one marketplace, and the run then records a <code>DISABLED</code> verdict in
+its place rather than a silently shorter chain.</p>
 <p>Because the endpoint is a dependency the gateway does not control, an external
 connector is <strong>fail-closed</strong> in the strong sense: an unreachable, slow, oversized,
 unparseable, unrecognised or partial answer is an <code>ERROR</code> verdict, which blocks —
