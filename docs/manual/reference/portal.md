@@ -259,9 +259,8 @@ the global one. Every change is written to the audit ledger with the acting
 administrator, the connector, the scope, the new state and the reason.
 
 Switching connectors off narrows the evidence behind an approval; it never makes
-one automatic. A disabled connector is recorded on each run as a `DISABLED`
-verdict that neither clears nor blocks, and a run with nothing left to clear it is
-blocked rather than clear.
+one automatic. What that means for a run is described in
+[Switching a connector off](../concepts/vetting.md#switching-a-connector-off).
 
 ### Snapshots
 
