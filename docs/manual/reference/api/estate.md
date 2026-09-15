@@ -51,7 +51,7 @@ the history.
 | Status | Meaning |
 | --- | --- |
 | 200 | The last run's report. |
-| 403 | Enforcement is enabled and the caller holds neither auditor nor admin. |
+| 403 | The caller holds neither auditor nor admin. |
 | 404 | No reconciliation has run (not reachable in practice: startup always runs one). |
 
 ---
@@ -76,7 +76,7 @@ the actor `config-reconciler`.
 | Status | Meaning |
 | --- | --- |
 | 200 | The run's report, converged or not — a failed entry is a report line, not an error status. |
-| 403 | Enforcement is enabled and the caller is not an admin. |
+| 403 | The caller is not an admin. |
 
 !!! note "Reconciliation never deletes"
 

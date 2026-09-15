@@ -44,7 +44,7 @@ at the very next approval — there is no propagation delay to wait out.
 | Status | Meaning |
 | --- | --- |
 | 200 | Rule created; the ledger records `policy-rule-created`. |
-| 403 | Enforcement is enabled and the caller is not an admin. |
+| 403 | The caller is not an admin. |
 | 409 | A rule of that name exists. |
 | 422 | Malformed name, or an expression that does not compile to a boolean. |
 
@@ -55,7 +55,7 @@ Every stored rule, enabled or not.
 | Status | Meaning |
 | --- | --- |
 | 200 | All rules. |
-| 403 | Enforcement is enabled and the caller holds neither auditor nor admin. |
+| 403 | The caller holds neither auditor nor admin. |
 
 ## `PUT /api/policy/rules/{name}`
 
@@ -66,7 +66,7 @@ the audited off-switch — there is no per-snapshot waiver of a policy denial.
 | Status | Meaning |
 | --- | --- |
 | 200 | Rule updated; the ledger records `policy-rule-updated`. |
-| 403 | Enforcement is enabled and the caller is not an admin. |
+| 403 | The caller is not an admin. |
 | 404 | No rule of that name. |
 | 422 | An expression that does not compile. |
 
@@ -77,7 +77,7 @@ Remove the rule. Past denials it decided stay on the append-only ledger.
 | Status | Meaning |
 | --- | --- |
 | 200 | Rule deleted; the ledger records `policy-rule-deleted`. |
-| 403 | Enforcement is enabled and the caller is not an admin. |
+| 403 | The caller is not an admin. |
 | 404 | No rule of that name. |
 
 ---
@@ -103,7 +103,7 @@ $ curl -X POST localhost:8080/api/policy/playground \
 | Status | Meaning |
 | --- | --- |
 | 200 | The expression's answer or its error. Nothing was persisted or recorded. |
-| 403 | Enforcement is enabled and the caller may not approve that snapshot. |
+| 403 | The caller may not approve that snapshot. |
 | 404 | No such snapshot. |
 
 ---

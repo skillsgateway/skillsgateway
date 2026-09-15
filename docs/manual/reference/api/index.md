@@ -121,7 +121,7 @@ breaking and how it is enforced.
 | Status | Meaning |
 | --- | --- |
 | 400 | The request violated a trust-boundary rule — a disallowed URL scheme, or a non-default ref. |
-| 403 | Role enforcement is enabled and the session lacks the role the endpoint requires; or a machine credential reached an endpoint its scopes do not cover, or one no scope covers. |
+| 403 | The session lacks the role the endpoint requires; or a machine credential reached an endpoint its scopes do not cover, or one no scope covers. |
 | 404 | No such marketplace, snapshot or token. |
 | 409 | A state conflict — a duplicate name, a decision on a snapshot that is already `approved` or `rejected`, or a re-vet of one that is not `approved`. |
 | 422 | A name failed `^[a-z0-9][a-z0-9_-]*$`. |

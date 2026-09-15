@@ -47,7 +47,7 @@ source `config` and `claim` on [`/api/me`](index.md#session).
 | Status | Meaning |
 | --- | --- |
 | 200 | The current grants. |
-| 403 | Enforcement is enabled and the caller is not an admin. |
+| 403 | The caller is not an admin. |
 
 ---
 
@@ -70,7 +70,7 @@ $ curl -X POST localhost:8080/api/roles \
 | Status | Meaning |
 | --- | --- |
 | 201 | Granted; the grant is on the ledger as `role-granted`. |
-| 403 | Enforcement is enabled and the caller is not an admin. |
+| 403 | The caller is not an admin. |
 | 404 | An approver grant named a marketplace that does not exist. |
 | 409 | The identical grant already exists. |
 | 422 | Missing principal, unknown role, approver without a marketplace, or a global role with one. |
@@ -85,7 +85,7 @@ Revoke a grant. The row is deleted; the ledger keeps the history as
 | Status | Meaning |
 | --- | --- |
 | 204 | Revoked. |
-| 403 | Enforcement is enabled and the caller is not an admin. |
+| 403 | The caller is not an admin. |
 | 404 | No such grant. |
 
 !!! warning "Configuration admins cannot be revoked here"

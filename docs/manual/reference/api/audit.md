@@ -22,8 +22,7 @@ that is itself new content to export. See
 
 ## `GET /api/audit`
 
-Return the ledger. Requires an authenticated session — and, with role
-enforcement enabled, the auditor role.
+Return the ledger. Requires an authenticated session with the auditor role.
 
 ```console
 $ curl localhost:8080/api/audit
