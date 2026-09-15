@@ -1749,20 +1749,20 @@ cases:
     title: A connector disabled for one marketplace is skipped there while an unrelated marketplace still runs it
     verification: automated-test
     description: |
-      GIVEN a built-in connector enabled by default for two marketplaces
-      WHEN an administrator disables it for one of them by name and both marketplaces are then ingested
-      THEN the disabled marketplace's chain run treats the connector as not run while the other marketplace's run still executes it and still blocks on the same content
-    revision: "0.1.0"
+      GIVEN a built-in connector enabled by default for two marketplaces, and a chain that also carries an operator-configured external connector
+      WHEN an administrator disables the built-in for one of the two marketplaces by name and both marketplaces are then ingested, and the external connector is disabled by name for a marketplace of its own
+      THEN the disabled marketplace's chain run treats the built-in as not run while the other marketplace's run still executes it and still blocks on the same content, the external connector's name is accepted by the switch on the same terms, and a name no connector in the chain carries is refused with a message naming the connectors it does carry
+    revision: "0.2.0"
 
   - id: SVC_GW_VETTING_0029.2
     requirement_ids: ["GW_VETTING_0029.2"]
     title: A disabled connector is recorded as a distinct disabled verdict rather than omitted
     verification: automated-test
     description: |
-      GIVEN a marketplace whose connector an administrator has disabled
-      WHEN that marketplace's snapshot is ingested
-      THEN the chain run's verdict for that connector is the distinct DISABLED state rather than an absent entry, and the run's overall outcome still clears on the other connectors' evidence
-    revision: "0.1.0"
+      GIVEN a marketplace whose built-in connector an administrator has disabled, and a second marketplace whose operator-configured external connector an administrator has disabled
+      WHEN each marketplace's snapshot is put through the chain
+      THEN each run's verdict for the disabled connector is the distinct DISABLED state rather than an absent entry, whether the connector is built-in or external, and the first run's overall outcome still clears on the other connectors' evidence
+    revision: "0.2.0"
 
   - id: SVC_GW_VETTING_0029.3
     requirement_ids: ["GW_VETTING_0029.3"]

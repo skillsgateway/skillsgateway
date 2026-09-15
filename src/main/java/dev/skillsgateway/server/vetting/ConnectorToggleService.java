@@ -20,8 +20,13 @@ import org.springframework.web.server.ResponseStatusException;
  * change (ADR 0009), so the switch is reserved to administrators at the controller, and every
  * change is audited here — the one path both the API and any future declarative reconciliation go
  * through — with the connector, the scope and the new state named. A toggle for a connector name no
- * built-in currently carries is refused rather than stored silently: a typo that matched nothing
+ * connector currently carries is refused rather than stored silently: a typo that matched nothing
  * would be a control an administrator believes is off while it is on.
+ *
+ * <p>The known set is the injected chain, so an operator's external connector is switchable on the
+ * same terms as a built-in. The guarantees that keep the switch from becoming a blanket approval
+ * (GW_VETTING_0029.2 - GW_VETTING_0029.4) are properties of the run, not of which connector was
+ * switched, so they hold for either kind.
  */
 @Service
 public class ConnectorToggleService {
@@ -72,7 +77,7 @@ public class ConnectorToggleService {
         if (connector == null || !knownConnectors.contains(connector)) {
             throw new ResponseStatusException(
                     HttpStatus.UNPROCESSABLE_ENTITY,
-                    "unknown connector '%s'; the built-in connectors are %s".formatted(connector, knownConnectors));
+                    "unknown connector '%s'; the configured connectors are %s".formatted(connector, knownConnectors));
         }
         Long marketplaceId = null;
         String scope = "global";

@@ -1318,12 +1318,12 @@ requirements:
   - id: GW_VETTING_0029.1
     title: A connector's effective state resolves per-marketplace, then global, then enabled
     significance: shall
-    description: "The system shall let an administrator disable or re-enable a specific built-in vetting connector either globally or for one named marketplace, and shall resolve a connector's effective state for a marketplace as its per-marketplace setting when one exists, otherwise its global setting, and otherwise enabled."
-    rationale: "A connector that is too noisy or wrong for one marketplace should be answerable without redeploying the gateway or turning it off for every other marketplace at the same time; the three-tier resolution is what lets a global default and a narrow exception coexist without an administrator having to restate the default everywhere it still applies."
+    description: "The system shall let an administrator disable or re-enable a specific vetting connector in the chain — built-in or operator-configured — either globally or for one named marketplace, and shall resolve a connector's effective state for a marketplace as its per-marketplace setting when one exists, otherwise its global setting, and otherwise enabled. The system shall refuse, naming the connectors the chain does carry, a toggle for a name no connector in the chain carries."
+    rationale: "A connector that is too noisy or wrong for one marketplace should be answerable without redeploying the gateway or turning it off for every other marketplace at the same time; the three-tier resolution is what lets a global default and a narrow exception coexist without an administrator having to restate the default everywhere it still applies. An operator's own connector is the likeliest candidate for that treatment and the costliest to silence any other way — changing the configured external chain changes it for every marketplace at once — so the switch covers the chain as configured rather than a fixed set of names, and the guarantees that keep it from becoming a blanket approval are properties of the run rather than of which connector was switched. Refusing an unrecognised name is what keeps a typo from leaving an administrator believing a control is off while it is on."
     references:
       requirement_ids: ["GW_VETTING_0029"]
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_VETTING_0029.2
     title: A disabled connector is skipped and recorded as a distinct disabled verdict
