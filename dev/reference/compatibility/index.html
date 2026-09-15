@@ -2469,17 +2469,26 @@ has a top-level <code>_plugins</code>; an external plugin whose name is not
 <p>Everything above is about what the gateway <em>accepts</em>. This is about what its own
 HTTP surface <em>promises</em>.</p>
 <div class="admonition note">
-<p class="admonition-title">What this promise does not cover</p>
-<p>It covers <code>/api/**</code> <strong>and the lifecycle webhook deliveries</strong>. It does <strong>not</strong>
-currently extend to the <code>skills-gateway.*</code> configuration surface, the Helm
-chart's values, or the declarative estate schema — those appear nowhere in
-the OpenAPI document, so the diff below cannot see them, however hard a
-renamed key there breaks a checked-in estate file. Whether those should carry
-the same additive obligation — and what would gate it — is open in
-<a href="https://github.com/skillsgateway/skillsgateway/issues/121">#121</a>. Their blast
-radius is at least different in kind: a renamed configuration key fails at
-startup, loudly, for the one operator who owns the file, rather than silently
-in somebody's receiver.</p>
+<p class="admonition-title">What this promise covers, and how each surface is checked</p>
+<p>It covers <code>/api/**</code>, the lifecycle webhook deliveries, and the
+<code>skills-gateway.estate.*</code> declarative estate schema
+(<a href="../../guides/declarative-estate/#1-declare-the-estate">guide</a>,
+<a href="../configuration/#declarative-estate">reference</a>). A renamed or removed
+estate key breaks a checked-in estate file exactly as a removed API field
+breaks a client, so the same additive-within-major rule applies: a key may
+be added, but not renamed, removed, or narrowed, without a major release.</p>
+<p>It does not extend to the rest of <code>skills-gateway.*</code>, or to the Helm
+chart's values — those are operator-facing too, but nothing here declares
+them a contract yet.</p>
+<p>Enforcement differs by surface, not the obligation. <code>/api/**</code> and the
+webhook deliveries are diffed by oasdiff because both are described in the
+OpenAPI document. The estate schema is Spring <code>@ConfigurationProperties</code>,
+not OpenAPI, so no diffable document exists for it today — enforcement is
+by review, against this page and the configuration reference, of what the
+PR title declares. A future gate could diff the
+<code>spring-configuration-metadata.json</code> the build already generates, if a
+reviewed miss shows the need; none exists yet, and this change does not add
+one.</p>
 <p>Two consequences are live today. <code>skills-gateway.roles.enabled</code> was removed,
 and a deployment that still sets it is <strong>refused at startup</strong> rather than
 having the setting ignored. Ignoring it would reverse an operator who set it
@@ -2566,7 +2575,7 @@ introduces API versioning; until then the promise binds, and the check below
 enforces it, against the unversioned paths.</p>
 </div>
 <h3 id="how-it-is-enforced">How it is enforced<a class="headerlink" href="#how-it-is-enforced" title="Permanent link">&para;</a></h3>
-<p>Three mechanisms, and it is worth being clear about which is which.</p>
+<p>Several mechanisms, and it is worth being clear about which is which.</p>
 <table>
 <thead>
 <tr>
@@ -2590,6 +2599,10 @@ enforces it, against the unversioned paths.</p>
 <tr>
 <td>The prefix <em>was</em> moved</td>
 <td><strong>Nobody.</strong> No check can tell that a break should have been versioned instead; that is review's job.</td>
+</tr>
+<tr>
+<td>The estate schema is additive</td>
+<td><strong>Nobody, mechanically.</strong> <code>skills-gateway.estate.*</code> is not OpenAPI, so oasdiff never sees it. Review checks the PR title against this page and <a href="../configuration/#declarative-estate">Configuration</a>.</td>
 </tr>
 </tbody>
 </table>

@@ -2364,6 +2364,9 @@ A working deployment declaration:</p>
 <p>Grants may reference marketplaces declared in the same file (marketplaces
 reconcile first) <strong>or</strong> marketplaces registered through the API earlier —
 adoption can be incremental.</p>
+<p>This schema is part of the <a href="../../reference/compatibility/#the-api-contract">compatibility promise</a>:
+a key added later is additive, but renaming or removing one is a breaking
+change like any other.</p>
 <h2 id="2-supply-the-secrets">2. Supply the secrets<a class="headerlink" href="#2-supply-the-secrets" title="Permanent link">&para;</a></h2>
 <p>The API generates receiver secrets and shows them once. The declarative form
 inverts that: <strong>you</strong> supply the secret, by environment-variable reference
