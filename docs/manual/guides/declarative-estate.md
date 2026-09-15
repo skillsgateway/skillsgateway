@@ -110,9 +110,8 @@ running process reads, or rotating an environment secret:
 $ curl -X POST localhost:8080/api/estate/reconcile
 ```
 
-Under role enforcement the report read is auditor-or-admin and the trigger is
-admin-only; the trigger itself is always on the ledger as
-`estate-reconcile-triggered`.
+The report read is auditor-or-admin and the trigger is admin-only; the
+trigger itself is always on the ledger as `estate-reconcile-triggered`.
 
 ## When an entry fails
 

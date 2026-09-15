@@ -471,9 +471,9 @@ Empty state: "No fetches recorded yet."
 
 The [adoption and staleness reports](api/adoption.md), read-only. Subtitle:
 "Who fetches what through the facade, aggregated from the append-only ledger,
-and which identities are not on the served tip." With
-[role enforcement](#authorization) enabled both underlying reads require the
-auditor role, so a session without it sees the page's error state.
+and which identities are not on the served tip." Both underlying reads require
+the auditor role (see [Authorization](#authorization)), so a session without
+it sees the page's error state.
 
 ### Window and totals
 

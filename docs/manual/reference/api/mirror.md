@@ -7,8 +7,8 @@ in [Configuration](../configuration.md#read-only-forge-mirror); what it is for
 and what it is not is in
 [The read-only forge mirror](../../guides/read-only-forge-mirror.md).
 
-Under role enforcement both are **admin-only** — not auditor reads. They name an
-outbound integration target and the state of a push credential's last use, which
+Both are **admin-only** — not auditor reads. They name an outbound integration
+target and the state of a push credential's last use, which
 is deployment infrastructure rather than a record of what the gateway served to
 whom; the reconcile route is the one that actually exercises that credential.
 

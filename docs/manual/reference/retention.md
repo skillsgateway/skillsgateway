@@ -212,9 +212,9 @@ follows, which is what keeps served content served.
 The on-demand passes work whether or not the scheduler is enabled, which is what
 makes a policy inspectable before it is switched on.
 
-With [role enforcement](../guides/delegated-administration.md) enabled, the
-candidates preview requires **auditor** (or admin); the passes, the delete, and
-the restore require **admin**.
+The candidates preview requires **auditor** (or admin); the passes, the
+delete, and the restore require **admin**. See
+[Delegated administration](../guides/delegated-administration.md).
 
 ## Policies
 

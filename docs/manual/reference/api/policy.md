@@ -5,10 +5,10 @@ the evaluation variables, and the fail-closed semantics are in
 [Policy deny rules](../../guides/policy-rules.md); the declarative form is in
 [Configuration](../configuration.md#declarative-estate).
 
-Under role enforcement, rule mutations are **admin-only**, the listing is
-**auditor-or-admin**, and the playground requires permission to **approve the
-named snapshot** (it evaluates quarantine-backed facts, so it is scoped like
-the approval it rehearses).
+Rule mutations are **admin-only**, the listing is **auditor-or-admin**, and
+the playground requires permission to **approve the named snapshot** (it
+evaluates quarantine-backed facts, so it is scoped like the approval it
+rehearses).
 
 **Machine reach.** `policy:read` covers `GET /policy/rules` **and** `POST
 /policy/playground` — a `POST` inside a read scope, because the playground

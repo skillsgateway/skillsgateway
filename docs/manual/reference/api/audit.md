@@ -7,9 +7,9 @@ conceptual treatment.
 
 ---
 
-With [role enforcement](../../guides/delegated-administration.md) enabled: the
-ledger and export reads and the sink listing require **auditor** (or admin);
-sink create, delete, and cursor reset require **admin**.
+The ledger and export reads and the sink listing require **auditor** (or
+admin); sink create, delete, and cursor reset require **admin**. See
+[Delegated administration](../../guides/delegated-administration.md).
 
 **Machine reach.** `audit:read` covers the ledger read and the export;
 `audit-sinks:read` the sink listing; `audit-sinks:write` sink creation,

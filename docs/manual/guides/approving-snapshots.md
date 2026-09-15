@@ -24,10 +24,10 @@ serving nothing shows every path as new: approving it serves all of it.
 
 The same reads exist on the API (`GET /api/snapshots/{id}/files`, `.../file`,
 `.../diff` — see
-[the API reference](../reference/api/marketplaces.md#snapshot-preview)). With
-[role enforcement](delegated-administration.md) enabled they require admin or
-an approver grant for the marketplace, because they return held quarantine
-content.
+[the API reference](../reference/api/marketplaces.md#snapshot-preview)). They
+require admin or an approver grant for the marketplace (see
+[Delegated administration](delegated-administration.md)), because they return
+held quarantine content.
 
 ### Contents
 
@@ -422,10 +422,8 @@ at this exact upstream commit and said no.
 Two independent questions, answered in this order.
 
 **May this principal approve here at all?** That is
-[delegated administration](delegated-administration.md): with role enforcement
-enabled, an admin or an approver scoped to the marketplace. With it disabled —
-the default — any authenticated session can register, ingest, approve and
-reject, and access to the portal is itself the reviewer privilege.
+[delegated administration](delegated-administration.md): an admin or an
+approver scoped to the marketplace.
 
 **May this principal approve *this* snapshot?** That is the four-eyes rule
 above, and it is a different question: it is about what the reviewer already did
