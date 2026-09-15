@@ -151,20 +151,29 @@ class ConnectorToggleTests extends AbstractGatewayTest {
                 // Every configured connector, in the order the chain runs them.
                 .andExpect(jsonPath("$.length()").value(chain.size()))
                 .andExpect(jsonPath("$[0].name").value(global))
-                .andExpect(jsonPath("$[*].name").value(chain))
+                .andExpect(jsonPath("$[1].name").value(scoped))
+                .andExpect(jsonPath("$[2].name").value(untouched))
                 // A setting at the global scope: enabled, and named as global rather than default.
-                .andExpect(jsonPath("$[?(@.name == '%s')].source".formatted(global)).value("GLOBAL"))
-                .andExpect(jsonPath("$[?(@.name == '%s')].enabled".formatted(global)).value(true))
-                .andExpect(jsonPath("$[?(@.name == '%s')].updatedBy".formatted(global)).value("root"))
+                .andExpect(jsonPath("$[?(@.name == '%s')].source".formatted(global))
+                        .value("GLOBAL"))
+                .andExpect(jsonPath("$[?(@.name == '%s')].enabled".formatted(global))
+                        .value(true))
+                .andExpect(jsonPath("$[?(@.name == '%s')].updatedBy".formatted(global))
+                        .value("root"))
                 // The per-marketplace setting wins, and carries its note.
-                .andExpect(jsonPath("$[?(@.name == '%s')].source".formatted(scoped)).value("MARKETPLACE"))
-                .andExpect(jsonPath("$[?(@.name == '%s')].enabled".formatted(scoped)).value(false))
+                .andExpect(jsonPath("$[?(@.name == '%s')].source".formatted(scoped))
+                        .value("MARKETPLACE"))
+                .andExpect(jsonPath("$[?(@.name == '%s')].enabled".formatted(scoped))
+                        .value(false))
                 .andExpect(jsonPath("$[?(@.name == '%s')].reason".formatted(scoped))
                         .value("vendor keys, expected"))
                 // No setting at all is its own source, not a missing value.
-                .andExpect(jsonPath("$[?(@.name == '%s')].source".formatted(untouched)).value("DEFAULT"))
-                .andExpect(jsonPath("$[?(@.name == '%s')].enabled".formatted(untouched)).value(true))
-                .andExpect(jsonPath("$[?(@.name == '%s')].version".formatted(untouched)).isNotEmpty());
+                .andExpect(jsonPath("$[?(@.name == '%s')].source".formatted(untouched))
+                        .value("DEFAULT"))
+                .andExpect(jsonPath("$[?(@.name == '%s')].enabled".formatted(untouched))
+                        .value(true))
+                .andExpect(jsonPath("$[?(@.name == '%s')].version".formatted(untouched))
+                        .isNotEmpty());
 
         mockMvc.perform(get("/api/marketplaces/{name}/vetting-chain", "no-such-marketplace")
                         .with(root))

@@ -158,12 +158,13 @@
             "type": "string"
           },
           "source": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ChainSource"
-              }
+            "description": "Which setting decided the state",
+            "enum": [
+              "MARKETPLACE",
+              "GLOBAL",
+              "DEFAULT"
             ],
-            "description": "Which setting decided the state"
+            "type": "string"
           },
           "updatedAt": {
             "description": "When the deciding setting was last set, or null for the default",
@@ -180,15 +181,6 @@
           }
         },
         "type": "object"
-      },
-      "ChainSource": {
-        "description": "Which setting decided a connector's effective state for a marketplace",
-        "enum": [
-          "MARKETPLACE",
-          "GLOBAL",
-          "DEFAULT"
-        ],
-        "type": "string"
       },
       "ChangeSyncModeRequest": {
         "description": "Sync mode change request",
@@ -2383,7 +2375,7 @@
         },
         "type": "object"
       },
-      "StreamingResponseBody": {},
+      "StreamingResponseBody": { },
       "SubscriberView": {
         "description": "A webhook subscriber without its signing secret",
         "properties": {
@@ -3065,7 +3057,7 @@
               "*/*": {
                 "schema": {
                   "items": {
-                    "additionalProperties": {},
+                    "additionalProperties": { },
                     "type": "object"
                   },
                   "type": "array"

@@ -1537,8 +1537,11 @@ export interface components {
             order?: number;
             /** @description The note recorded with the deciding setting, or null when it is the default */
             reason?: string;
-            /** @description Which setting decided the state */
-            source?: components["schemas"]["ChainSource"];
+            /**
+             * @description Which setting decided the state
+             * @enum {string}
+             */
+            source?: "MARKETPLACE" | "GLOBAL" | "DEFAULT";
             /**
              * Format: date-time
              * @description When the deciding setting was last set, or null for the default
@@ -1549,11 +1552,6 @@ export interface components {
             /** @description Identity of the rule set the connector currently carries */
             version?: string;
         };
-        /**
-         * @description Which setting decided a connector's effective state for a marketplace
-         * @enum {string}
-         */
-        ChainSource: "MARKETPLACE" | "GLOBAL" | "DEFAULT";
         /** @description Sync mode change request */
         ChangeSyncModeRequest: {
             /**

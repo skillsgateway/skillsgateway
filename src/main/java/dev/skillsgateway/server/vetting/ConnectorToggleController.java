@@ -88,8 +88,8 @@ public class ConnectorToggleController {
         roleService.requireAdmin(authentication);
         Marketplace marketplace = marketplaceRepository
                 .findByName(name)
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND, "marketplace '%s' not found".formatted(name)));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "marketplace '%s' not found".formatted(name)));
         return vettingService.connectors().stream()
                 .map(connector -> {
                     ConnectorToggleService.Resolution resolution =

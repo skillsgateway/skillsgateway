@@ -27,7 +27,8 @@ public record ChainConnectorView(
         @Schema(description = "Whether the connector runs for this marketplace")
         boolean enabled,
 
-        @Schema(description = "Which setting decided the state") ChainSource source,
+        @Schema(description = "Which setting decided the state")
+        ChainSource source,
 
         @Schema(description = "The note recorded with the deciding setting, or null when it is the default")
         String reason,

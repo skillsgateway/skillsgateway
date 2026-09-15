@@ -170,7 +170,11 @@ public final class MachineApiRegistry {
             // chain itself, and even seeing the current settings is reserved to administrators —
             // no scope may let a machine credential turn off the control that governs it.
             get("/api/vetting/connector-toggles"),
-            put("/api/vetting/connectors/{name}/toggle"));
+            put("/api/vetting/connectors/{name}/toggle"),
+            // The same settings resolved for one marketplace (GW_VETTING_0029.5). Reading which
+            // connectors a marketplace actually runs is reading the settings themselves, so it is
+            // unreachable for the same reason the settings list is.
+            get("/api/marketplaces/{name}/vetting-chain"));
 
     private MachineApiRegistry() {}
 
