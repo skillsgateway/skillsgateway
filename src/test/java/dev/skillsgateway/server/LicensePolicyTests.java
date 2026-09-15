@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.approval.VettingBlockedException;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.persistence.Snapshot;
-import dev.skillsgateway.server.vetting.LicenseScanConnector;
+import dev.skillsgateway.server.vetting.LicenseScanVetter;
 import dev.skillsgateway.server.vetting.Severity;
 import dev.skillsgateway.server.vetting.VettingRepository;
 import dev.skillsgateway.server.vetting.WaiverEvaluation;
@@ -58,12 +58,12 @@ class LicensePolicyTests extends AbstractGatewayTest {
                 registerAndIngest(name, createUpstream(DEFAULT_MANIFEST, Map.of("LICENSE", LicenseFixtures.AGPL_3_0)));
         long snapshotId = registered.snapshot().id();
 
-        // The violation is an ordinary blocking finding: the standard refusal names the connector
+        // The violation is an ordinary blocking finding: the standard refusal names the vetter
         // and the uncovered rule, exactly as it does for a planted credential.
         assertThatThrownBy(() -> approvalService.approve(snapshotId, "alice"))
                 .isInstanceOf(VettingBlockedException.class)
                 .satisfies(thrown -> {
-                    assertThat(((VettingBlockedException) thrown).blockingConnectors())
+                    assertThat(((VettingBlockedException) thrown).blockingVetters())
                             .contains("license-scan");
                     assertThat(((VettingBlockedException) thrown).uncoveredFindings())
                             .extracting(WaiverEvaluation.UncoveredFinding::ruleId)
@@ -78,10 +78,10 @@ class LicensePolicyTests extends AbstractGatewayTest {
             assertThat(finding.severity()).isEqualTo(Severity.CRITICAL);
             assertThat(finding.message()).contains("AGPL-3.0");
         });
-        // The policy in force is attributable from the run itself (GW_VETTING_0012): the connector version
+        // The policy in force is attributable from the run itself (GW_VETTING_0012): the vetter version
         // carries a digest of the lists, so this chain identity differs from a default deployment.
         assertThat(run.chain()).contains("license-scan@");
-        String defaultVersion = new LicenseScanConnector(new SkillsGatewayProperties(
+        String defaultVersion = new LicenseScanVetter(new SkillsGatewayProperties(
                         null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
                         null))
                 .version();
@@ -168,7 +168,7 @@ class LicensePolicyTests extends AbstractGatewayTest {
 
     private static List<dev.skillsgateway.server.vetting.Finding> findings(VettingRepository.Run run, String ruleId) {
         return run.verdicts().stream()
-                .filter(verdict -> "license-scan".equals(verdict.connector()))
+                .filter(verdict -> "license-scan".equals(verdict.vetter()))
                 .flatMap(verdict -> verdict.findings().stream())
                 .filter(finding -> finding.id().equals(ruleId))
                 .toList();

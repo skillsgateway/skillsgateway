@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
  * pinned to the snapshot's commit SHA, evaluated under the license policy currently configured.
  *
  * <p>Deliberately recomputed rather than read back from a recorded chain run: detection is cheap,
- * the answer exists for snapshots that predate the license connector, and the report states current
+ * the answer exists for snapshots that predate the license vetter, and the report states current
  * policy truth — recorded runs remain the historical evidence the approval gate reads.
  */
 @Service

@@ -16,12 +16,12 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Persistence of chain runs, their per-connector verdicts, and the findings behind them
+ * Persistence of chain runs, their per-vetter verdicts, and the findings behind them
  * (GW_VETTING_0001).
  *
  * <p>Runs are append-only: a re-vetting pass inserts a new run rather than updating the previous
  * one, so a snapshot's vetting history is the list of its runs, and nothing ever edits what a
- * connector said. Accepting a finding is a waiver ({@link WaiverRepository}) layered over the run
+ * vetter said. Accepting a finding is a waiver ({@link WaiverRepository}) layered over the run
  * at evaluation time, never an edit to the run itself (GW_VETTING_0008).
  */
 @Repository
@@ -35,7 +35,7 @@ public class VettingRepository {
 
     /**
      * A run an operator asked for. This is also how a scanner or advisory feed update is turned
-     * into fresh evidence today: the built-in connectors have no external feed to subscribe to, so
+     * into fresh evidence today: the built-in vetters have no external feed to subscribe to, so
      * "the feed moved" is an operator calling the re-vet endpoint (GW_VETTING_0012).
      */
     public static final String TRIGGER_REVET_MANUAL = "revet-manual";
@@ -63,16 +63,16 @@ public class VettingRepository {
                 .single();
     }
 
-    /** Records one connector's verdict and its findings. */
+    /** Records one vetter's verdict and its findings. */
     @Requirements({"GW_FACADE_0009"})
     @Transactional
-    public void recordVerdict(long runId, String connector, int position, Verdict verdict) {
+    public void recordVerdict(long runId, String vetter, int position, Verdict verdict) {
         long verdictId = jdbc.sql(
-                        "INSERT INTO vetting_verdicts (run_id, connector, position, state, detail, report_url,"
-                                + " created_at) VALUES (:runId, :connector, :position, :state::vetting_verdict_state, :detail, :reportUrl,"
+                        "INSERT INTO vetting_verdicts (run_id, vetter, position, state, detail, report_url,"
+                                + " created_at) VALUES (:runId, :vetter, :position, :state::vetting_verdict_state, :detail, :reportUrl,"
                                 + " :now) RETURNING id")
                 .param("runId", runId)
-                .param("connector", connector)
+                .param("vetter", vetter)
                 .param("position", position)
                 .param("state", verdict.state().stored())
                 .param("detail", detailOf(verdict))
@@ -96,8 +96,8 @@ public class VettingRepository {
     /**
      * A one-line summary so the verdict row is readable without joining the findings (GW_VETTING_0023).
      * When there are findings it names how many and the worst severity; when there are none it
-     * falls back to the connector's coverage summary — what it examined — so a clean pass records
-     * substance rather than a null that reads the same as "the connector never ran".
+     * falls back to the vetter's coverage summary — what it examined — so a clean pass records
+     * substance rather than a null that reads the same as "the vetter never ran".
      */
     private static String detailOf(Verdict verdict) {
         if (verdict.findings().isEmpty()) {
@@ -165,7 +165,7 @@ public class VettingRepository {
      * The run's verdicts, each carrying its findings, in two statements whatever the chain length.
      *
      * <p>It used to be one findings query per verdict, so the cost of reading a run grew with the
-     * number of connectors in the chain — the one place ADR 0013 conceded an ORM's fetch join would
+     * number of vetters in the chain — the one place ADR 0013 conceded an ORM's fetch join would
      * genuinely have helped. The join below is that fetch join, written by hand: every finding of
      * the run in one pass, grouped by verdict in memory. Grouping preserves id order within a
      * verdict, which is the order the per-verdict query returned, and a verdict with no findings
@@ -173,7 +173,7 @@ public class VettingRepository {
      */
     private List<VerdictView> verdicts(long runId) {
         List<VerdictView> verdicts = jdbc.sql(
-                        "SELECT * FROM vetting_verdicts WHERE run_id = :runId ORDER BY position, connector")
+                        "SELECT * FROM vetting_verdicts WHERE run_id = :runId ORDER BY position, vetter")
                 .param("runId", runId)
                 .query(VettingRepository::mapVerdict)
                 .list();
@@ -184,7 +184,7 @@ public class VettingRepository {
         return verdicts.stream()
                 .map(verdict -> new VerdictView(
                         verdict.verdictId(),
-                        verdict.connector(),
+                        verdict.vetter(),
                         verdict.position(),
                         verdict.state(),
                         verdict.detail(),
@@ -213,26 +213,26 @@ public class VettingRepository {
         return byVerdict;
     }
 
-    @Schema(description = "One connector's recorded verdict within a chain run")
+    @Schema(description = "One vetter's recorded verdict within a chain run")
     public record VerdictView(
             @Schema(description = "Verdict id") long verdictId,
-            @Schema(description = "Connector name") String connector,
+            @Schema(description = "Vetter name") String vetter,
 
-            @Schema(description = "Position of the connector in the chain")
+            @Schema(description = "Position of the vetter in the chain")
             int position,
 
-            @Schema(description = "The connector's conclusion")
+            @Schema(description = "The vetter's conclusion")
             VerdictState state,
 
             @Schema(
                     description = "One-line summary: how many findings and the worst severity, or — for a clean"
-                            + " pass with no findings — what the connector examined")
+                            + " pass with no findings — what the vetter examined")
             String detail,
 
-            @Schema(description = "External report URL, when the connector produced one")
+            @Schema(description = "External report URL, when the vetter produced one")
             String reportUrl,
 
-            @Schema(description = "What the connector found")
+            @Schema(description = "What the vetter found")
             List<Finding> findings) {}
 
     @Schema(description = "One execution of the vetting chain against a snapshot")
@@ -254,25 +254,25 @@ public class VettingRepository {
             Instant finishedAt,
 
             @Schema(
-                    description = "Identity of the chain that produced the run: connector@version in chain order",
+                    description = "Identity of the chain that produced the run: vetter@version in chain order",
                     example = "prompt-injection@1,secret-scan@1")
             String chain,
 
             @Schema(description = "The run's verdicts, in chain order")
             List<VerdictView> verdicts) {
 
-        /** The connectors that are the reason this run blocks; empty when it does not. */
-        public List<String> blockingConnectors() {
+        /** The vetters that are the reason this run blocks; empty when it does not. */
+        public List<String> blockingVetters() {
             return verdicts.stream()
                     .filter(verdict -> !verdict.state().clearing())
-                    .map(VerdictView::connector)
+                    .map(VerdictView::vetter)
                     .toList();
         }
 
-        /** The recorded state of one connector's verdict in this run, or empty if it has none. */
-        public java.util.Optional<VerdictState> stateOf(String connector) {
+        /** The recorded state of one vetter's verdict in this run, or empty if it has none. */
+        public java.util.Optional<VerdictState> stateOf(String vetter) {
             return verdicts.stream()
-                    .filter(verdict -> verdict.connector().equals(connector))
+                    .filter(verdict -> verdict.vetter().equals(vetter))
                     .map(VerdictView::state)
                     .findFirst();
         }
@@ -298,7 +298,7 @@ public class VettingRepository {
     private static VerdictView mapVerdict(ResultSet rs, int rowNum) throws SQLException {
         return new VerdictView(
                 rs.getLong("id"),
-                rs.getString("connector"),
+                rs.getString("vetter"),
                 rs.getInt("position"),
                 VerdictState.of(rs.getString("state")),
                 rs.getString("detail"),

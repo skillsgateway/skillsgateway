@@ -97,7 +97,7 @@ final class SkillSpec {
         }
     }
 
-    /** The dated pin plus a digest of the constraint table, recorded as the connector's version. */
+    /** The dated pin plus a digest of the constraint table, recorded as the vetter's version. */
     String version() {
         return pin + "+schema-" + digest;
     }

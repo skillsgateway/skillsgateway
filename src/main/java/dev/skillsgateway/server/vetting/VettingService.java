@@ -22,17 +22,17 @@ import org.springframework.stereotype.Service;
 
 /**
  * The vetting orchestrator (GW_VETTING_0001, GW_VETTING_0002, GW_VETTING_0006). The gateway does not vet content itself —
- * it runs the configured connectors in order against the quarantined, SHA-pinned snapshot,
+ * it runs the configured vetters in order against the quarantined, SHA-pinned snapshot,
  * normalizes their answers, records them against the snapshot, and aggregates them fail-closed.
  *
  * <p>Three properties are deliberate and load-bearing:
  *
  * <ul>
- *   <li><b>Every connector runs.</b> The chain does not short-circuit on the first failure: a
+ *   <li><b>Every vetter runs.</b> The chain does not short-circuit on the first failure: a
  *       reviewer deciding on a snapshot should see everything that is wrong with it, and a recorded
- *       run should not depend on which connector happened to be first.
- *   <li><b>A connector cannot be skipped.</b> Anything a connector throws — including an
- *       {@link Error} — and any connector that outruns its time limit becomes an
+ *       run should not depend on which vetter happened to be first.
+ *   <li><b>A vetter cannot be skipped.</b> Anything a vetter throws — including an
+ *       {@link Error} — and any vetter that outruns its time limit becomes an
  *       {@link VerdictState#ERROR} verdict, which blocks. There is no catch-and-continue path.
  *   <li><b>Vetting never changes snapshot state.</b> The snapshot stays held; the run gates the
  *       approval. Keeping the two apart is what lets a later re-vetting pass record a new run
@@ -54,27 +54,27 @@ public class VettingService {
      */
     public static final String VETTING_ACTOR = "vetting";
 
-    private final List<VettingConnector> connectors;
+    private final List<Vetter> vetters;
     private final VettingRepository vettingRepository;
     private final GitStorage storage;
     private final AdminAuditLogger auditLogger;
     private final WebhookService webhookService;
     private final WaiverService waiverService;
-    private final ConnectorToggleService toggleService;
+    private final VetterToggleService toggleService;
     private final SkillsGatewayProperties.Vetting properties;
     private final ExecutorService executor;
 
     public VettingService(
-            List<VettingConnector> connectors,
+            List<Vetter> vetters,
             VettingRepository vettingRepository,
             GitStorage storage,
             AdminAuditLogger auditLogger,
             WebhookService webhookService,
             WaiverService waiverService,
-            ConnectorToggleService toggleService,
+            VetterToggleService toggleService,
             SkillsGatewayProperties properties) {
-        this.connectors = connectors.stream()
-                .sorted(Comparator.comparingInt(VettingConnector::order).thenComparing(VettingConnector::name))
+        this.vetters = vetters.stream()
+                .sorted(Comparator.comparingInt(Vetter::order).thenComparing(Vetter::name))
                 .toList();
         this.vettingRepository = vettingRepository;
         this.storage = storage;
@@ -83,29 +83,29 @@ public class VettingService {
         this.waiverService = waiverService;
         this.toggleService = toggleService;
         this.properties = properties.vetting();
-        // Daemon threads: a connector that ignores interruption after a timeout must never keep
-        // the JVM alive. The abandoned thread is the accepted cost of in-process connectors;
-        // process isolation is the sandbox-runner connector, a separate capability.
+        // Daemon threads: a vetter that ignores interruption after a timeout must never keep
+        // the JVM alive. The abandoned thread is the accepted cost of in-process vetters;
+        // process isolation is the sandbox-runner vetter, a separate capability.
         this.executor = Executors.newCachedThreadPool(runnable -> {
-            Thread thread = new Thread(runnable, "vetting-connector");
+            Thread thread = new Thread(runnable, "vetting-vetter");
             thread.setDaemon(true);
             return thread;
         });
     }
 
     /** The chain as configured, in the order it runs. */
-    public List<VettingConnector> connectors() {
-        return connectors;
+    public List<Vetter> vetters() {
+        return vetters;
     }
 
     /**
-     * Identity of the chain as configured right now: {@code connector@version} for each connector,
+     * Identity of the chain as configured right now: {@code vetter@version} for each vetter,
      * in chain order (GW_VETTING_0012). Stamped on every run so that a changed answer about unchanged
      * content can be attributed to the chain rather than guessed at.
      */
     public String chainIdentity() {
-        return connectors.stream()
-                .map(connector -> connector.name() + "@" + connector.version())
+        return vetters.stream()
+                .map(vetter -> vetter.name() + "@" + vetter.version())
                 .collect(java.util.stream.Collectors.joining(","));
     }
 
@@ -119,15 +119,15 @@ public class VettingService {
     }
 
     /**
-     * The ledger detail of one connector verdict (GW_VETTING_0006). It leads with {@code connector=state}
+     * The ledger detail of one vetter verdict (GW_VETTING_0006). It leads with {@code vetter=state}
      * so the row is scannable, then carries the finding count and the worst severity present and a
      * reference to the chain run the verdict belongs to — so the ledger is auditable on its own
      * rather than as a pointer back into the vetting tables. For a clean pass with no findings it
-     * appends the connector's coverage statement (GW_VETTING_0023), so a passing row still says what was
+     * appends the vetter's coverage statement (GW_VETTING_0023), so a passing row still says what was
      * examined instead of only that nothing was found.
      */
     @Requirements({"GW_VETTING_0006", "GW_VETTING_0022"})
-    static String verdictDetail(VettingConnector connector, Verdict verdict, long runId) {
+    static String verdictDetail(Vetter vetter, Verdict verdict, long runId) {
         String worst = verdict.findings().stream()
                 .map(Finding::severity)
                 .max(Severity::compareTo)
@@ -135,7 +135,7 @@ public class VettingService {
                 .orElse("none");
         StringBuilder detail = new StringBuilder("%s=%s; findings=%d; worst=%s; run=%d"
                 .formatted(
-                        connector.name(),
+                        vetter.name(),
                         verdict.state().stored(),
                         verdict.findings().size(),
                         worst,
@@ -154,7 +154,7 @@ public class VettingService {
      * that has to reason about the run it just produced — re-vetting does — can read it back
      * rather than guess which one is latest.
      *
-     * <p>Nothing about the vetting itself differs by trigger: the same connectors run over the same
+     * <p>Nothing about the vetting itself differs by trigger: the same vetters run over the same
      * pinned content, and the snapshot's state is untouched whatever the answer. What a re-vetting
      * verdict <em>means</em> is decided by {@code RevetService}, not here, so this method stays the
      * one place the chain executes.
@@ -162,25 +162,25 @@ public class VettingService {
     @Requirements({"GW_VETTING_0001", "GW_VETTING_0002", "GW_VETTING_0006", "GW_VETTING_0012", "GW_VETTING_0029.2"})
     public Run run(Snapshot snapshot, String marketplace, String trigger) {
         long runId = vettingRepository.startRun(snapshot.id(), trigger, chainIdentity());
-        List<VerdictState> states = new ArrayList<>(connectors.size());
+        List<VerdictState> states = new ArrayList<>(vetters.size());
         try (QuarantineSnapshot content = open(snapshot, marketplace)) {
             int position = 0;
-            for (VettingConnector connector : connectors) {
-                // A connector an administrator switched off for this marketplace is skipped, not
+            for (Vetter vetter : vetters) {
+                // A vetter an administrator switched off for this marketplace is skipped, not
                 // run, and recorded as a distinct disabled verdict so the disablement is part of
                 // the run's evidence rather than a silently shorter chain (GW_VETTING_0029.2). The
                 // aggregation counts it as neither clearing nor blocking (GW_VETTING_0029.3).
-                Verdict verdict = toggleService.enabled(connector.name(), snapshot.marketplaceId())
-                        ? runGuarded(connector, content)
-                        : Verdict.disabled(connector.name(), "for marketplace '" + marketplace + "'");
-                vettingRepository.recordVerdict(runId, connector.name(), position++, verdict);
+                Verdict verdict = toggleService.enabled(vetter.name(), snapshot.marketplaceId())
+                        ? runGuarded(vetter, content)
+                        : Verdict.disabled(vetter.name(), "for marketplace '" + marketplace + "'");
+                vettingRepository.recordVerdict(runId, vetter.name(), position++, verdict);
                 states.add(verdict.state());
                 auditLogger.record(
                         VETTING_ACTOR,
                         marketplace,
                         "vetting-verdict",
                         snapshot.sha(),
-                        verdictDetail(connector, verdict, runId));
+                        verdictDetail(vetter, verdict, runId));
             }
         } catch (Exception e) {
             // The content itself could not be opened: nothing was vetted, so nothing clears. The
@@ -197,7 +197,7 @@ public class VettingService {
                 marketplace,
                 "vetting-completed",
                 snapshot.sha(),
-                "trigger=%s; outcome=%s; connectors=%d; run=%d; chain=%s"
+                "trigger=%s; outcome=%s; vetters=%d; run=%d; chain=%s"
                         .formatted(trigger, outcome.stored(), states.size(), runId, chainIdentity()));
         webhookService.emit(
                 WebhookEvent.SNAPSHOT_VETTED, marketplace, snapshot.id(), snapshot.sha(), snapshot.state(), "vetting");
@@ -216,7 +216,7 @@ public class VettingService {
      *
      * <p>What travels is the <em>effective</em> outcome, the one that gates approval, so a receiver
      * can tell "approve will succeed" from "waive or fix first" without a follow-up call — and
-     * nothing beyond counts, connector names and identifiers (GW_WEBHOOK_0007).
+     * nothing beyond counts, vetter names and identifiers (GW_WEBHOOK_0007).
      */
     @Requirements({"GW_WEBHOOK_0006"})
     private void announceIfAwaitingApproval(Snapshot snapshot, String marketplace, long runId) {
@@ -234,7 +234,7 @@ public class VettingService {
                         runId,
                         effect.outcome().name(),
                         effect.recordedOutcome().name(),
-                        effect.blockingConnectors(),
+                        effect.blockingVetters(),
                         effect.uncovered().size(),
                         effect.suppressions().size()));
     }
@@ -250,28 +250,28 @@ public class VettingService {
     }
 
     /**
-     * One connector, with both failure modes closed: anything it throws becomes an error verdict,
+     * One vetter, with both failure modes closed: anything it throws becomes an error verdict,
      * and so does outrunning the configured timeout.
      */
     @Requirements({"GW_VETTING_0002"})
-    private Verdict runGuarded(VettingConnector connector, SnapshotUnderVetting content) {
-        Future<Verdict> future = executor.submit(() -> connector.vet(content));
+    private Verdict runGuarded(Vetter vetter, SnapshotUnderVetting content) {
+        Future<Verdict> future = executor.submit(() -> vetter.vet(content));
         try {
             Verdict verdict = future.get(properties.timeout().toMillis(), TimeUnit.MILLISECONDS);
-            return verdict == null ? Verdict.error(connector.name(), "returned no verdict") : verdict;
+            return verdict == null ? Verdict.error(vetter.name(), "returned no verdict") : verdict;
         } catch (TimeoutException e) {
             future.cancel(true);
-            log.warn("vetting connector '{}' exceeded {}", connector.name(), properties.timeout());
-            return Verdict.error(connector.name(), "timed out after " + properties.timeout());
+            log.warn("vetter '{}' exceeded {}", vetter.name(), properties.timeout());
+            return Verdict.error(vetter.name(), "timed out after " + properties.timeout());
         } catch (InterruptedException e) {
             future.cancel(true);
             Thread.currentThread().interrupt();
-            return Verdict.error(connector.name(), "interrupted");
+            return Verdict.error(vetter.name(), "interrupted");
         } catch (Exception e) {
-            // ExecutionException wraps whatever the connector threw, Throwable included.
+            // ExecutionException wraps whatever the vetter threw, Throwable included.
             Throwable cause = e.getCause() == null ? e : e.getCause();
-            log.warn("vetting connector '{}' failed", connector.name(), cause);
-            return Verdict.error(connector.name(), cause.getClass().getSimpleName() + ": " + cause.getMessage());
+            log.warn("vetter '{}' failed", vetter.name(), cause);
+            return Verdict.error(vetter.name(), cause.getClass().getSimpleName() + ": " + cause.getMessage());
         }
     }
 

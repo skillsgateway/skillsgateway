@@ -4,12 +4,12 @@ import java.io.IOException;
 import java.util.function.Predicate;
 
 /**
- * What a connector is given: the snapshot's identity and read-only access to the bytes pinned to
+ * What a vetter is given: the snapshot's identity and read-only access to the bytes pinned to
  * its commit SHA.
  *
- * <p>Deliberately not a JGit {@code Repository}. A connector must not be able to write to
+ * <p>Deliberately not a JGit {@code Repository}. A vetter must not be able to write to
  * quarantine, move a ref, or reach another marketplace's content, so the seam it gets is a walk
- * over one commit tree and nothing more. That also means an out-of-process connector can be handed
+ * over one commit tree and nothing more. That also means an out-of-process vetter can be handed
  * the same abstraction over a fetched tarball without changing the SPI.
  */
 public interface SnapshotUnderVetting {
@@ -28,8 +28,8 @@ public interface SnapshotUnderVetting {
      * Files larger than the configured cap are reported to the visitor as skipped rather than
      * silently dropped.
      *
-     * <p>A connector that reads only some file kinds says so here rather than filtering inside its
-     * visitor: the selection is applied before content is read, so a blob no connector asked for is
+     * <p>A vetter that reads only some file kinds says so here rather than filtering inside its
+     * visitor: the selection is applied before content is read, so a blob no vetter asked for is
      * never inflated (GW_VETTING_0030).
      */
     void walk(Predicate<String> wanted, FileVisitor visitor) throws IOException;

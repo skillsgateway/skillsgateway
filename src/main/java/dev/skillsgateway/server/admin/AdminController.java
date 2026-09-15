@@ -401,7 +401,7 @@ public class AdminController {
                     + " first. A snapshot whose"
                     + " effective vetting outcome is blocked — its chain run objects and at least one blocking"
                     + " finding is not covered by an active waiver, including a snapshot with no chain run at"
-                    + " all — is refused, and the problem document names both the blocking connectors and the"
+                    + " all — is refused, and the problem document names both the blocking vetters and the"
                     + " uncovered findings. Record a scoped, expiring waiver for each of those findings and"
                     + " approve again; every waiver that let the approval through is written to the ledger."
                     + " Alternatively an administrator — and only an administrator — may set overrideVetting with"
@@ -444,8 +444,8 @@ public class AdminController {
                     marketplace,
                     ApprovalService.EVENT_OVERRIDE,
                     snapshot.sha(),
-                    "reason=%s; blockingConnectors=%s; uncovered=%s"
-                            .formatted(over.reason(), over.blockingConnectors(), over.uncoveredFindings()));
+                    "reason=%s; blockingVetters=%s; uncovered=%s"
+                            .formatted(over.reason(), over.blockingVetters(), over.uncoveredFindings()));
         }
         // The age at approval is on the decision's own ledger entry (GW_APPROVAL_0004.5): what the cooling-off
         // window was worth for this snapshot is only reconstructible if the entry says how long the
@@ -598,7 +598,7 @@ public class AdminController {
     }
 
     /**
-     * Fail-closed approval gate (GW_APPROVAL_0003). The response names the connectors that blocked and,
+     * Fail-closed approval gate (GW_APPROVAL_0003). The response names the vetters that blocked and,
      * beside them, every blocking finding no active waiver covers — which is exactly the set of
      * waivers the reviewer must record for this approval to succeed.
      */
@@ -606,7 +606,7 @@ public class AdminController {
     public ProblemDetail vettingBlocked(VettingBlockedException e) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
         problem.setTitle("Vetting chain blocked this snapshot");
-        problem.setProperty("blockingConnectors", e.blockingConnectors());
+        problem.setProperty("blockingVetters", e.blockingVetters());
         problem.setProperty("uncoveredFindings", e.uncoveredFindings());
         return problem;
     }

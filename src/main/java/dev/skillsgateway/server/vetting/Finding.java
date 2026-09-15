@@ -3,7 +3,7 @@ package dev.skillsgateway.server.vetting;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * One thing a connector found.
+ * One thing a vetter found.
  *
  * @param id stable rule identifier ({@code aws-access-key-id}), never an ordinal — it is the
  *     identity a scoped waiver will later be written against, so it must survive reordering and
@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param location where in the snapshot it was found, normally {@code path:line}
  * @param message what a reviewer needs to read, never containing the matched secret itself
  */
-@Schema(description = "One thing a vetting connector found in a snapshot")
+@Schema(description = "One thing a vetter found in a snapshot")
 public record Finding(
         @Schema(description = "Stable rule identifier, e.g. aws-access-key-id", example = "aws-access-key-id")
         String id,

@@ -155,7 +155,7 @@ public class WebhookController {
                     "0000000000000000000000000000000000000000",
                     "held",
                     "scheduler",
-                    new WebhookService.VettingSummary(1, "BLOCKED", "BLOCKED", List.of("example-connector"), 1, 0));
+                    new WebhookService.VettingSummary(1, "BLOCKED", "BLOCKED", List.of("example-vetter"), 1, 0));
 
     /**
      * The filter vocabulary, served so the portal can offer it instead of asking an operator to

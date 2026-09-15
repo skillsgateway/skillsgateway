@@ -108,7 +108,7 @@ public class WebhookService {
 
     /**
      * What the vetting chain concluded about a snapshot awaiting approval (GW_WEBHOOK_0007): counts,
-     * connector names and identifiers, and deliberately nothing else.
+     * vetter names and identifiers, and deliberately nothing else.
      *
      * <p>No finding message, rule id or location appears here. A webhook target is authorised by a
      * URL scheme allowlist, not by an identity, and a finding's location is a path inside
@@ -135,16 +135,16 @@ public class WebhookService {
             String outcome,
 
             @Schema(
-                    description = "What the connectors themselves concluded, before any waiver was applied",
+                    description = "What the vetters themselves concluded, before any waiver was applied",
                     allowableValues = {"CLEAR", "BLOCKED"},
                     requiredMode = Schema.RequiredMode.REQUIRED)
             String recordedOutcome,
 
             @Schema(
                     description =
-                            "Names of the connectors that are the reason it blocks; empty when nothing" + " objects",
+                            "Names of the vetters that are the reason it blocks; empty when nothing" + " objects",
                     requiredMode = Schema.RequiredMode.REQUIRED)
-            List<String> blockingConnectors,
+            List<String> blockingVetters,
 
             @Schema(
                     description = "How many blocking findings no active waiver covers",
@@ -157,7 +157,7 @@ public class WebhookService {
             int waivedFindings) {
 
         public VettingSummary {
-            blockingConnectors = blockingConnectors == null ? List.of() : List.copyOf(blockingConnectors);
+            blockingVetters = blockingVetters == null ? List.of() : List.copyOf(blockingVetters);
         }
     }
 

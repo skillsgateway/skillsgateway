@@ -11,7 +11,7 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 /**
  * Parses a skill's SKILL.md YAML frontmatter. Two readers share it: the policy facts (GW_APPROVAL_0007),
- * which need the declared tools and must fail closed, and the conformance connector (GW_INGEST_0028),
+ * which need the declared tools and must fail closed, and the conformance vetter (GW_INGEST_0028),
  * which needs the whole mapping and must never throw.
  *
  * <p>{@link #tools(String)} keeps the fail-closed contract: tools that cannot be read must never

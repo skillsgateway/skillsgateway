@@ -14,20 +14,20 @@ import java.util.List;
  */
 public class VettingBlockedException extends RuntimeException {
 
-    private final transient List<String> blockingConnectors;
+    private final transient List<String> blockingVetters;
     private final transient List<WaiverEvaluation.UncoveredFinding> uncoveredFindings;
 
     public VettingBlockedException(
             long snapshotId,
-            List<String> blockingConnectors,
+            List<String> blockingVetters,
             List<WaiverEvaluation.UncoveredFinding> uncoveredFindings) {
-        super(message(snapshotId, blockingConnectors, uncoveredFindings));
-        this.blockingConnectors = List.copyOf(blockingConnectors);
+        super(message(snapshotId, blockingVetters, uncoveredFindings));
+        this.blockingVetters = List.copyOf(blockingVetters);
         this.uncoveredFindings = List.copyOf(uncoveredFindings);
     }
 
-    public List<String> blockingConnectors() {
-        return blockingConnectors;
+    public List<String> blockingVetters() {
+        return blockingVetters;
     }
 
     /** The blocking findings no active waiver covers; empty when the chain never produced any. */
@@ -37,11 +37,11 @@ public class VettingBlockedException extends RuntimeException {
 
     private static String message(
             long snapshotId,
-            List<String> blockingConnectors,
+            List<String> blockingVetters,
             List<WaiverEvaluation.UncoveredFinding> uncoveredFindings) {
-        String cause = blockingConnectors.isEmpty()
+        String cause = blockingVetters.isEmpty()
                 ? "the vetting chain has not produced a clear outcome for it"
-                : "the vetting connectors %s did not clear it".formatted(String.join(", ", blockingConnectors));
+                : "the vetters %s did not clear it".formatted(String.join(", ", blockingVetters));
         String uncovered = uncoveredFindings.isEmpty()
                 ? ""
                 : " Uncovered findings: %s."

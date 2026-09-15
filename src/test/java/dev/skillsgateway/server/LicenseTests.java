@@ -171,12 +171,12 @@ class LicenseTests extends AbstractGatewayTest {
                 .message();
     }
 
-    private VettingRepository.VerdictView verdictOf(long snapshotId, String connector) {
+    private VettingRepository.VerdictView verdictOf(long snapshotId, String vetter) {
         VettingRepository.Run run = vettingRepository.latestRun(snapshotId).orElseThrow();
         return run.verdicts().stream()
-                .filter(candidate -> candidate.connector().equals(connector))
+                .filter(candidate -> candidate.vetter().equals(vetter))
                 .findFirst()
-                .orElseThrow(() -> new AssertionError("no verdict of connector " + connector));
+                .orElseThrow(() -> new AssertionError("no verdict of vetter " + vetter));
     }
 
     private List<Finding> findingsOf(long snapshotId, String ruleId) {

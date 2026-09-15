@@ -1,7 +1,7 @@
 # Vendored Agent Skills specification
 
 `agentskills-2026-08-04.json` is the constraint table the `skill-conformance`
-vetting connector validates every `SKILL.md` against.
+vetter validates every `SKILL.md` against.
 
 ## Where it came from
 
@@ -24,10 +24,10 @@ validator, which is the executable statement of the same specification:
 
 - **`allowed-tools`** is described as a space-separated string. The reference
   validator does not check its shape at all, and YAML lists are widespread in
-  published skills, so the connector accepts a string or a list of scalars and
+  published skills, so the vetter accepts a string or a list of scalars and
   checks nothing else.
 - **A field the table does not list** is an error in the reference validator.
-  The connector reports it informationally instead: the specification defines
+  The vetter reports it informationally instead: the specification defines
   `metadata` precisely so clients can carry properties it does not define, and
   a pinned copy of a moving document must not turn next month's new field into
   this month's blocked marketplace.
@@ -40,9 +40,9 @@ validator, which is the executable statement of the same specification:
    The filename is part of the version the gateway records against every chain
    run, and a run has to stay attributable to the bytes that produced it.
 3. Point `SkillSpec.RESOURCE` at the new file and update this page.
-4. Expect every marketplace's next chain run to carry a new connector version.
+4. Expect every marketplace's next chain run to carry a new vetter version.
    That is the point: it is what makes a changed verdict about unchanged content
    attributable to the specification bump.
 
-The connector never fetches any of this at vet time. A chain run must be
+The vetter never fetches any of this at vet time. A chain run must be
 reproducible from the repository alone.

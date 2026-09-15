@@ -68,7 +68,7 @@ public enum WaiverScope {
     /**
      * The path part of a finding location. Locations are normally {@code path:line}; the trailing
      * {@code :line} is stripped only when it really is a line number, so a location that is not a
-     * path at all (a connector name on an error verdict) survives intact and can still be named
+     * path at all (a vetter name on an error verdict) survives intact and can still be named
      * by an exact-match waiver.
      */
     static String pathOf(String location) {

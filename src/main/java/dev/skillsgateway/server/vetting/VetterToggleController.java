@@ -20,22 +20,22 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * The administrative connector on/off surface (GW_VETTING_0029.4). Both endpoints are administrator-only:
+ * The administrative vetter on/off surface (GW_VETTING_0029.4). Both endpoints are administrator-only:
  * the switch that governs the vetting chain, and even the visibility of its current settings, are
  * not something a marketplace-scoped approver may reach — that would let the owner of content turn
  * off the control that governs it.
  */
 @RestController
 @RequestMapping("/api")
-public class ConnectorToggleController {
+public class VetterToggleController {
 
-    private final ConnectorToggleService toggleService;
+    private final VetterToggleService toggleService;
     private final RoleService roleService;
     private final VettingService vettingService;
     private final MarketplaceRepository marketplaceRepository;
 
-    public ConnectorToggleController(
-            ConnectorToggleService toggleService,
+    public VetterToggleController(
+            VetterToggleService toggleService,
             RoleService roleService,
             VettingService vettingService,
             MarketplaceRepository marketplaceRepository) {
@@ -45,9 +45,9 @@ public class ConnectorToggleController {
         this.marketplaceRepository = marketplaceRepository;
     }
 
-    @Schema(description = "Enable or disable a vetting connector, globally or for one marketplace")
+    @Schema(description = "Enable or disable a vetter, globally or for one marketplace")
     public record ToggleRequest(
-            @Schema(description = "Whether the connector should run under this setting")
+            @Schema(description = "Whether the vetter should run under this setting")
             Boolean enabled,
 
             @Schema(description = "Marketplace to scope the setting to; omit for the global setting")
@@ -56,17 +56,17 @@ public class ConnectorToggleController {
             @Schema(description = "Optional note recorded with the change and on the audit ledger")
             String reason) {}
 
-    @GetMapping("/vetting/connector-toggles")
+    @GetMapping("/vetting/vetter-toggles")
     @Requirements({"GW_VETTING_0029.4"})
     @Tag(name = "Vetting")
     @Operation(
-            summary = "List connector enable/disable settings",
-            description = "Every administrative enable/disable setting for the vetting connectors — the"
+            summary = "List vetter enable/disable settings",
+            description = "Every administrative enable/disable setting for the vetters — the"
                     + " global settings and the per-marketplace overrides. Administrator-only: the switch that"
                     + " governs the vetting chain is not shown to marketplace-scoped approvers.")
-    @ApiResponse(responseCode = "200", description = "The connector settings")
+    @ApiResponse(responseCode = "200", description = "The vetter settings")
     @ApiResponse(responseCode = "403", description = "Caller does not hold the administrative role")
-    public List<ConnectorToggle> toggles(Authentication authentication) {
+    public List<VetterToggle> toggles(Authentication authentication) {
         roleService.requireAdmin(authentication);
         return toggleService.list();
     }
@@ -76,7 +76,7 @@ public class ConnectorToggleController {
     @Tag(name = "Vetting")
     @Operation(
             summary = "A marketplace's effective vetting chain",
-            description = "Every configured connector in the order it runs, with the state its enablement resolves"
+            description = "Every configured vetter in the order it runs, with the state its enablement resolves"
                     + " to for this marketplace and which setting decided it — the marketplace-scoped setting, the"
                     + " global setting, or the absence of any setting. The resolution is the chain's own, not a"
                     + " recombination of the settings list, so it cannot disagree with what actually runs."
@@ -84,23 +84,23 @@ public class ConnectorToggleController {
     @ApiResponse(responseCode = "200", description = "The effective chain, in chain order")
     @ApiResponse(responseCode = "403", description = "Caller does not hold the administrative role")
     @ApiResponse(responseCode = "404", description = "Named marketplace not found")
-    public List<ChainConnectorView> vettingChain(@PathVariable String name, Authentication authentication) {
+    public List<ChainVetterView> vettingChain(@PathVariable String name, Authentication authentication) {
         roleService.requireAdmin(authentication);
         Marketplace marketplace = marketplaceRepository
                 .findByName(name)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "marketplace '%s' not found".formatted(name)));
-        return vettingService.connectors().stream()
-                .map(connector -> {
-                    ConnectorToggleService.Resolution resolution =
-                            toggleService.resolve(connector.name(), marketplace.id());
-                    ConnectorToggle setting = resolution.setting();
-                    return new ChainConnectorView(
-                            connector.name(),
-                            connector.order(),
-                            connector.description(),
-                            connector.version(),
-                            connector instanceof ExternalVettingConnector,
+        return vettingService.vetters().stream()
+                .map(vetter -> {
+                    VetterToggleService.Resolution resolution =
+                            toggleService.resolve(vetter.name(), marketplace.id());
+                    VetterToggle setting = resolution.setting();
+                    return new ChainVetterView(
+                            vetter.name(),
+                            vetter.order(),
+                            vetter.description(),
+                            vetter.version(),
+                            vetter instanceof ExternalVettingConnector,
                             resolution.enabled(),
                             resolution.source(),
                             setting == null ? null : setting.reason(),
@@ -110,23 +110,23 @@ public class ConnectorToggleController {
                 .toList();
     }
 
-    @PutMapping("/vetting/connectors/{name}/toggle")
+    @PutMapping("/vetting/vetters/{name}/toggle")
     @Requirements({"GW_VETTING_0029.1", "GW_VETTING_0029.4"})
     @Tag(name = "Vetting")
     @Operation(
-            summary = "Enable or disable a connector",
-            description = "Switches a specific vetting connector on or off, globally or for one named marketplace,"
-                    + " and records the change on the audit ledger. Any connector in the chain can be switched,"
+            summary = "Enable or disable a vetter",
+            description = "Switches a specific vetter on or off, globally or for one named marketplace,"
+                    + " and records the change on the audit ledger. Any vetter in the chain can be switched,"
                     + " built-in or operator-configured (skills-gateway.vetting.external[*]). A per-marketplace"
-                    + " setting overrides the global one; the absence of any setting means the connector runs. A"
-                    + " disabled connector is not run at ingestion or re-vetting but is recorded as a distinct"
-                    + " disabled verdict on the chain run, and disabling every connector leaves a run blocked rather"
+                    + " setting overrides the global one; the absence of any setting means the vetter runs. A"
+                    + " disabled vetter is not run at ingestion or re-vetting but is recorded as a distinct"
+                    + " disabled verdict on the chain run, and disabling every vetter leaves a run blocked rather"
                     + " than clear. Administrator-only.")
     @ApiResponse(responseCode = "200", description = "The setting after the change")
     @ApiResponse(responseCode = "403", description = "Caller does not hold the administrative role")
     @ApiResponse(responseCode = "404", description = "Named marketplace not found")
-    @ApiResponse(responseCode = "422", description = "Unknown connector, or the enabled field was omitted")
-    public ConnectorToggle toggle(
+    @ApiResponse(responseCode = "422", description = "Unknown vetter, or the enabled field was omitted")
+    public VetterToggle toggle(
             @PathVariable String name, @RequestBody ToggleRequest request, Authentication authentication) {
         roleService.requireAdmin(authentication);
         if (request == null || request.enabled() == null) {

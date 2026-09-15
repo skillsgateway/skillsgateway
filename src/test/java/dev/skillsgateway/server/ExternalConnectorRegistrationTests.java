@@ -14,17 +14,17 @@ import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.storage.GitStorage;
-import dev.skillsgateway.server.vetting.ConnectorToggle;
-import dev.skillsgateway.server.vetting.ConnectorToggleRepository;
-import dev.skillsgateway.server.vetting.ConnectorToggleService;
+import dev.skillsgateway.server.vetting.VetterToggle;
+import dev.skillsgateway.server.vetting.VetterToggleRepository;
+import dev.skillsgateway.server.vetting.VetterToggleService;
 import dev.skillsgateway.server.vetting.ExternalVettingConfiguration;
-import dev.skillsgateway.server.vetting.LicenseScanConnector;
-import dev.skillsgateway.server.vetting.PromptInjectionConnector;
-import dev.skillsgateway.server.vetting.SecretScanConnector;
-import dev.skillsgateway.server.vetting.SkillConformanceConnector;
+import dev.skillsgateway.server.vetting.LicenseScanVetter;
+import dev.skillsgateway.server.vetting.PromptInjectionVetter;
+import dev.skillsgateway.server.vetting.SecretScanVetter;
+import dev.skillsgateway.server.vetting.SkillConformanceVetter;
 import dev.skillsgateway.server.vetting.Verdict;
 import dev.skillsgateway.server.vetting.VerdictState;
-import dev.skillsgateway.server.vetting.VettingConnector;
+import dev.skillsgateway.server.vetting.Vetter;
 import dev.skillsgateway.server.vetting.VettingRepository;
 import dev.skillsgateway.server.vetting.VettingService;
 import dev.skillsgateway.server.vetting.WaiverService;
@@ -51,7 +51,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Verification that an operator-configured external connector is bound from configuration and joins
+ * Verification that an operator-configured external vetter is bound from configuration and joins
  * the ordered chain (GW_VETTING_0024). The credential uses a {@code ${...}} placeholder to prove
  * placeholder resolution — a literal in a manifest is exactly what the write-only contract exists to
  * avoid.
@@ -61,17 +61,17 @@ import org.springframework.context.annotation.Configuration;
  * {@code skills-gateway.vetting.external[*]} straight off the {@code Environment} and registers a
  * bean per entry. So this cannot be varied inside a running gateway's context — but neither does it
  * need one. An {@link ApplicationContextRunner} refreshes a real context containing the registrar,
- * the built-in connectors and the service that orders them, which is the entire population the
+ * the built-in vetters and the service that orders them, which is the entire population the
  * assertions read, and it starts no web server, no datasource and no PostgreSQL container.
  *
  * <p>What that gives up is the component scan: the built-ins are named here rather than discovered.
  * The chain as production assembles it stays verified where it always was, in {@code VettingTests}
- * and {@code ConnectorToggleTests}, which run it against real content in the shared context.
+ * and {@code VetterToggleTests}, which run it against real content in the shared context.
  *
- * <p>The same context is also where the administrative on/off switch meets an external connector
- * (GW_VETTING_0029.1, GW_VETTING_0029.2): the switch's known-connector set is the injected {@code
- * List<VettingConnector>}, which an external connector joins like any other, so this is the one
- * harness in which both an external connector and the switch exist together.
+ * <p>The same context is also where the administrative on/off switch meets an external vetter
+ * (GW_VETTING_0029.1, GW_VETTING_0029.2): the switch's known-vetter set is the injected {@code
+ * List<Vetter>}, which an external vetter joins like any other, so this is the one
+ * harness in which both an external vetter and the switch exist together.
  */
 class ExternalConnectorRegistrationTests {
 
@@ -113,8 +113,8 @@ class ExternalConnectorRegistrationTests {
     }
 
     /**
-     * The built-in connectors, the service that orders them, and the real on/off switch over that
-     * same connector list. The persistence collaborators are mocks exposed as beans so a test can
+     * The built-in vetters, the service that orders them, and the real on/off switch over that
+     * same vetter list. The persistence collaborators are mocks exposed as beans so a test can
      * stub and read them: what is under test is the switch's rule and the chain's honouring of it,
      * not the SQL underneath.
      */
@@ -123,8 +123,8 @@ class ExternalConnectorRegistrationTests {
     static class ChainUnderTest {
 
         @Bean
-        ConnectorToggleRepository connectorToggleRepository() {
-            return mock(ConnectorToggleRepository.class);
+        VetterToggleRepository vetterToggleRepository() {
+            return mock(VetterToggleRepository.class);
         }
 
         @Bean
@@ -148,44 +148,44 @@ class ExternalConnectorRegistrationTests {
         }
 
         @Bean
-        ConnectorToggleService connectorToggleService(
-                ConnectorToggleRepository repository,
+        VetterToggleService vetterToggleService(
+                VetterToggleRepository repository,
                 MarketplaceRepository marketplaces,
                 AdminAuditLogger auditLogger,
-                List<VettingConnector> connectors) {
-            return new ConnectorToggleService(repository, marketplaces, auditLogger, connectors);
+                List<Vetter> vetters) {
+            return new VetterToggleService(repository, marketplaces, auditLogger, vetters);
         }
 
         @Bean
-        SecretScanConnector secretScanConnector() {
-            return new SecretScanConnector();
+        SecretScanVetter secretScanVetter() {
+            return new SecretScanVetter();
         }
 
         @Bean
-        PromptInjectionConnector promptInjectionConnector() {
-            return new PromptInjectionConnector();
+        PromptInjectionVetter promptInjectionVetter() {
+            return new PromptInjectionVetter();
         }
 
         @Bean
-        LicenseScanConnector licenseScanConnector(SkillsGatewayProperties properties) {
-            return new LicenseScanConnector(properties);
+        LicenseScanVetter licenseScanVetter(SkillsGatewayProperties properties) {
+            return new LicenseScanVetter(properties);
         }
 
         @Bean
-        SkillConformanceConnector skillConformanceConnector(SkillsGatewayProperties properties) {
-            return new SkillConformanceConnector(properties);
+        SkillConformanceVetter skillConformanceVetter(SkillsGatewayProperties properties) {
+            return new SkillConformanceVetter(properties);
         }
 
         @Bean
         VettingService vettingService(
-                List<VettingConnector> connectors,
+                List<Vetter> vetters,
                 VettingRepository vettingRepository,
                 GitStorage storage,
                 AdminAuditLogger auditLogger,
-                ConnectorToggleService toggleService,
+                VetterToggleService toggleService,
                 SkillsGatewayProperties properties) {
             return new VettingService(
-                    connectors,
+                    vetters,
                     vettingRepository,
                     storage,
                     auditLogger,
@@ -198,23 +198,23 @@ class ExternalConnectorRegistrationTests {
 
     @Test
     @SVCs({"SVC_GW_VETTING_0024"})
-    void aConfiguredExternalConnectorJoinsTheChainInItsConfiguredPosition() {
+    void aConfiguredExternalVetterJoinsTheChainInItsConfiguredPosition() {
         contexts.run(context -> {
             VettingService vettingService = context.getBean(VettingService.class);
 
             // order=1 sits ahead of every built-in (whose orders start at 100), so it is first.
-            VettingConnector first = vettingService.connectors().getFirst();
+            Vetter first = vettingService.vetters().getFirst();
             assertThat(first.name()).isEqualTo("llm-review");
             assertThat(first.version()).isEqualTo("7");
             assertThat(first.description()).contains("IT Security LLM review endpoint");
 
-            // The built-ins are still all present: the external connector is added, not a
+            // The built-ins are still all present: the external vetter is added, not a
             // replacement.
-            assertThat(vettingService.connectors())
-                    .extracting(VettingConnector::name)
+            assertThat(vettingService.vetters())
+                    .extracting(Vetter::name)
                     .contains("secret-scan", "prompt-injection", "license-scan", "llm-review");
 
-            // The chain identity — stamped on every run (GW_VETTING_0012) — now names the external connector
+            // The chain identity — stamped on every run (GW_VETTING_0012) — now names the external vetter
             // and its version, so a run is attributable to the exact external chain that produced it.
             assertThat(vettingService.chainIdentity()).startsWith("llm-review@7,");
         });
@@ -222,10 +222,10 @@ class ExternalConnectorRegistrationTests {
 
     @Test
     @SVCs({"SVC_GW_VETTING_0029.1", "SVC_GW_VETTING_0029.2"})
-    void anExternalConnectorIsSubjectToTheSameSwitchAsABuiltIn() {
+    void anExternalVetterIsSubjectToTheSameSwitchAsABuiltIn() {
         contexts.run(context -> {
-            ConnectorToggleService toggles = context.getBean(ConnectorToggleService.class);
-            ConnectorToggleRepository toggleRepository = context.getBean(ConnectorToggleRepository.class);
+            VetterToggleService toggles = context.getBean(VetterToggleService.class);
+            VetterToggleRepository toggleRepository = context.getBean(VetterToggleRepository.class);
             MarketplaceRepository marketplaces = context.getBean(MarketplaceRepository.class);
             VettingRepository vettingRepository = context.getBean(VettingRepository.class);
             GitStorage storage = context.getBean(GitStorage.class);
@@ -233,26 +233,26 @@ class ExternalConnectorRegistrationTests {
 
             given(marketplaces.findByName(MARKETPLACE)).willReturn(Optional.of(marketplace()));
 
-            // The switch accepts the external connector's name for one marketplace: its
-            // known-connector set is the chain, not a list of built-ins.
+            // The switch accepts the external vetter's name for one marketplace: its
+            // known-vetter set is the chain, not a list of built-ins.
             toggles.set("llm-review", MARKETPLACE, false, "answers too slowly for this marketplace", "root");
             verify(toggleRepository)
                     .set("llm-review", MARKETPLACE_ID, false, "answers too slowly for this marketplace", "root");
 
-            // A name no connector in the chain carries is still refused, and the refusal names the
-            // external connector among the ones that could have been meant.
+            // A name no vetter in the chain carries is still refused, and the refusal names the
+            // external vetter among the ones that could have been meant.
             assertThatThrownBy(() -> toggles.set("lm-review", MARKETPLACE, false, null, "root"))
-                    .hasMessageContaining("unknown connector 'lm-review'")
-                    .hasMessageContaining("the configured connectors are")
+                    .hasMessageContaining("unknown vetter 'lm-review'")
+                    .hasMessageContaining("the configured vetters are")
                     .hasMessageContaining("llm-review");
 
             // And a chain run for that marketplace honours the setting exactly as it does for a
-            // built-in: the connector is skipped and a distinct disabled verdict recorded in its
-            // place. Nothing listens on the configured URL, so a connector that had run would have
+            // built-in: the vetter is skipped and a distinct disabled verdict recorded in its
+            // place. Nothing listens on the configured URL, so a vetter that had run would have
             // produced an error verdict — DISABLED is evidence it was never called.
             given(toggleRepository.find("llm-review", MARKETPLACE_ID))
                     .willReturn(Optional.of(
-                            new ConnectorToggle(1L, "llm-review", MARKETPLACE_ID, false, null, "root", Instant.now())));
+                            new VetterToggle(1L, "llm-review", MARKETPLACE_ID, false, null, "root", Instant.now())));
             given(storage.quarantine(MARKETPLACE)).willReturn(quarantineRepository());
             given(vettingRepository.startRun(eq(SNAPSHOT_ID), any(), any())).willReturn(RUN_ID);
 
@@ -261,7 +261,7 @@ class ExternalConnectorRegistrationTests {
             vettingService.run(snapshot(), MARKETPLACE, VettingRepository.TRIGGER_REVET_MANUAL);
 
             ArgumentCaptor<Verdict> verdict = ArgumentCaptor.forClass(Verdict.class);
-            // Position 0: order=1 puts the external connector ahead of every built-in.
+            // Position 0: order=1 puts the external vetter ahead of every built-in.
             verify(vettingRepository).recordVerdict(eq(RUN_ID), eq("llm-review"), eq(0), verdict.capture());
             assertThat(verdict.getValue().state()).isEqualTo(VerdictState.DISABLED);
         });

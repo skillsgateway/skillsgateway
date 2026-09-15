@@ -12,52 +12,52 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * The administrative connector on/off switch (GW_VETTING_0029.1, GW_VETTING_0029.4), and the only place its resolution rule
- * lives. The rule is deliberately narrow: a connector's effective state for a marketplace is its
+ * The administrative vetter on/off switch (GW_VETTING_0029.1, GW_VETTING_0029.4), and the only place its resolution rule
+ * lives. The rule is deliberately narrow: a vetter's effective state for a marketplace is its
  * per-marketplace setting when one exists, otherwise its global setting, otherwise enabled.
  *
  * <p>Reversing the previous stance that the chain had no enable/disable switch is a trust-boundary
  * change (ADR 0009), so the switch is reserved to administrators at the controller, and every
  * change is audited here — the one path both the API and any future declarative reconciliation go
- * through — with the connector, the scope and the new state named. A toggle for a connector name no
- * connector currently carries is refused rather than stored silently: a typo that matched nothing
+ * through — with the vetter, the scope and the new state named. A toggle for a vetter name no
+ * vetter currently carries is refused rather than stored silently: a typo that matched nothing
  * would be a control an administrator believes is off while it is on.
  *
- * <p>The known set is the injected chain, so an operator's external connector is switchable on the
+ * <p>The known set is the injected chain, so an operator's external vetter is switchable on the
  * same terms as a built-in. The guarantees that keep the switch from becoming a blanket approval
- * (GW_VETTING_0029.2 - GW_VETTING_0029.4) are properties of the run, not of which connector was
+ * (GW_VETTING_0029.2 - GW_VETTING_0029.4) are properties of the run, not of which vetter was
  * switched, so they hold for either kind.
  */
 @Service
-public class ConnectorToggleService {
+public class VetterToggleService {
 
-    /** Ledger event when a connector is switched off (GW_VETTING_0029.4). */
-    public static final String EVENT_DISABLED = "connector-disabled";
+    /** Ledger event when a vetter is switched off (GW_VETTING_0029.4). */
+    public static final String EVENT_DISABLED = "vetter-disabled";
 
-    /** Ledger event when a connector is switched back on (GW_VETTING_0029.4). */
-    public static final String EVENT_ENABLED = "connector-enabled";
+    /** Ledger event when a vetter is switched back on (GW_VETTING_0029.4). */
+    public static final String EVENT_ENABLED = "vetter-enabled";
 
-    private final ConnectorToggleRepository repository;
+    private final VetterToggleRepository repository;
     private final MarketplaceRepository marketplaceRepository;
     private final AdminAuditLogger auditLogger;
-    private final Set<String> knownConnectors;
+    private final Set<String> knownVetters;
 
-    public ConnectorToggleService(
-            ConnectorToggleRepository repository,
+    public VetterToggleService(
+            VetterToggleRepository repository,
             MarketplaceRepository marketplaceRepository,
             AdminAuditLogger auditLogger,
-            List<VettingConnector> connectors) {
+            List<Vetter> vetters) {
         this.repository = repository;
         this.marketplaceRepository = marketplaceRepository;
         this.auditLogger = auditLogger;
-        this.knownConnectors = connectors.stream().map(VettingConnector::name).collect(Collectors.toUnmodifiableSet());
+        this.knownVetters = vetters.stream().map(Vetter::name).collect(Collectors.toUnmodifiableSet());
     }
 
     /**
-     * A connector's effective state for one marketplace and the setting that decided it, or a
+     * A vetter's effective state for one marketplace and the setting that decided it, or a
      * {@link ChainSource#DEFAULT} resolution with no setting when nothing has ever been set.
      */
-    public record Resolution(boolean enabled, ChainSource source, ConnectorToggle setting) {}
+    public record Resolution(boolean enabled, ChainSource source, VetterToggle setting) {}
 
     /**
      * The resolution rule (GW_VETTING_0029.1), and the only place it lives: the per-marketplace setting if
@@ -66,34 +66,34 @@ public class ConnectorToggleService {
      * rather than as a decision somebody made.
      */
     @Requirements({"GW_VETTING_0029.1"})
-    public Resolution resolve(String connector, long marketplaceId) {
+    public Resolution resolve(String vetter, long marketplaceId) {
         return repository
-                .find(connector, marketplaceId)
+                .find(vetter, marketplaceId)
                 .map(toggle -> new Resolution(toggle.enabled(), ChainSource.MARKETPLACE, toggle))
                 .or(() -> repository
-                        .findGlobal(connector)
+                        .findGlobal(vetter)
                         .map(toggle -> new Resolution(toggle.enabled(), ChainSource.GLOBAL, toggle)))
                 .orElseGet(() -> new Resolution(true, ChainSource.DEFAULT, null));
     }
 
-    /** Whether a connector runs for one marketplace's chain run (GW_VETTING_0029.1). */
+    /** Whether a vetter runs for one marketplace's chain run (GW_VETTING_0029.1). */
     @Requirements({"GW_VETTING_0029.1"})
-    public boolean enabled(String connector, long marketplaceId) {
-        return resolve(connector, marketplaceId).enabled();
+    public boolean enabled(String vetter, long marketplaceId) {
+        return resolve(vetter, marketplaceId).enabled();
     }
 
     /**
-     * Sets the enablement of a connector globally ({@code marketplaceName} null) or for one
-     * marketplace, and writes the change to the ledger. Refuses an unknown connector name and an
+     * Sets the enablement of a vetter globally ({@code marketplaceName} null) or for one
+     * marketplace, and writes the change to the ledger. Refuses an unknown vetter name and an
      * unknown marketplace name so a mistaken toggle fails loudly instead of matching nothing.
      */
     @Requirements({"GW_VETTING_0029.1", "GW_VETTING_0029.4"})
-    public ConnectorToggle set(
-            String connector, String marketplaceName, boolean enabled, String reason, String principal) {
-        if (connector == null || !knownConnectors.contains(connector)) {
+    public VetterToggle set(
+            String vetter, String marketplaceName, boolean enabled, String reason, String principal) {
+        if (vetter == null || !knownVetters.contains(vetter)) {
             throw new ResponseStatusException(
                     HttpStatus.UNPROCESSABLE_ENTITY,
-                    "unknown connector '%s'; the configured connectors are %s".formatted(connector, knownConnectors));
+                    "unknown vetter '%s'; the configured vetters are %s".formatted(vetter, knownVetters));
         }
         Long marketplaceId = null;
         String scope = "global";
@@ -105,7 +105,7 @@ public class ConnectorToggleService {
             marketplaceId = marketplace.id();
             scope = "marketplace(" + marketplaceName + ")";
         }
-        ConnectorToggle toggle = repository.set(connector, marketplaceId, enabled, blankToNull(reason), principal);
+        VetterToggle toggle = repository.set(vetter, marketplaceId, enabled, blankToNull(reason), principal);
         // The ledger's marketplace column is NOT NULL; a global toggle uses the "-" placeholder the
         // other global-scope events (grants, estate failures) use.
         auditLogger.record(
@@ -113,17 +113,17 @@ public class ConnectorToggleService {
                 marketplaceId == null ? "-" : marketplaceName,
                 enabled ? EVENT_ENABLED : EVENT_DISABLED,
                 null,
-                "connector=%s scope=%s enabled=%s%s"
+                "vetter=%s scope=%s enabled=%s%s"
                         .formatted(
-                                connector,
+                                vetter,
                                 scope,
                                 enabled,
                                 reason == null || reason.isBlank() ? "" : " reason=" + reason));
         return toggle;
     }
 
-    /** Every setting there is. Admin-only at the controller: connector settings are not public. */
-    public List<ConnectorToggle> list() {
+    /** Every setting there is. Admin-only at the controller: vetter settings are not public. */
+    public List<VetterToggle> list() {
         return repository.list();
     }
 

@@ -23,8 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
  *
  * <p>The manual endpoints exist for the case the scheduled sweep cannot serve: a scanner or
  * advisory feed has moved and the answer is wanted now, not at the next tick. The built-in
- * connectors have no external feed to subscribe to, so an operator calling these after updating a
- * connector <em>is</em> the feed integration in v1; a webhook-triggered one is a follow-on.
+ * vetters have no external feed to subscribe to, so an operator calling these after updating a
+ * vetter <em>is</em> the feed integration in v1; a webhook-triggered one is a follow-on.
  */
 @RestController
 @RequestMapping("/api")
@@ -48,7 +48,7 @@ public class RevetController {
                     + " right now — objects to the content, the violation is written to the ledger and announced"
                     + " as snapshot.revet_violation. In enforce mode the snapshot is then revoked and its"
                     + " published refs are removed; in warn mode, the default, publication is untouched. A run"
-                    + " that only blocks because a connector errored or has not answered is recorded as"
+                    + " that only blocks because a vetter errored or has not answered is recorded as"
                     + " inconclusive and never revokes anything.")
     @ApiResponse(responseCode = "200", description = "The re-vetting run and what it concluded")
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
@@ -65,7 +65,7 @@ public class RevetController {
             summary = "Re-vet every approved snapshot of a marketplace now",
             description = "Runs the vetting chain again over every live approved snapshot of the marketplace, one"
                     + " run each, and applies the configured re-vetting mode to each result. This is the"
-                    + " operational answer to a connector rule set or advisory feed that has just been updated.")
+                    + " operational answer to a vetter rule set or advisory feed that has just been updated.")
     @ApiResponse(responseCode = "200", description = "What the pass re-vetted and concluded")
     @ApiResponse(responseCode = "404", description = "Marketplace not found")
     public RevetService.PassResult revetMarketplace(@PathVariable String name, Authentication authentication) {

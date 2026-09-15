@@ -235,7 +235,7 @@ class ExternalSourceResolutionTests extends AbstractGatewayTest {
     @SVCs({"SVC_GW_INGEST_0024.1"})
     void a_secret_planted_in_the_external_repository_is_found_by_vetting() throws Exception {
         // The payoff of rewriting before vetting rather than at publish time: the closure *is* the
-        // commit, so the chain sees external content with no connector change and no bypass.
+        // commit, so the chain sees external content with no vetter change and no bypass.
         FORGE.publish("acme/leaky", Map.of("DEPLOY.md", "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE\n"));
         Registered registered =
                 registerAndIngest(uniqueName("res"), createUpstream(manifestWithExternal("acme/leaky")));
@@ -243,7 +243,7 @@ class ExternalSourceResolutionTests extends AbstractGatewayTest {
         VettingRepository.Run run =
                 vettingRepository.latestRun(registered.snapshot().id()).orElseThrow();
         List<Finding> findings = run.verdicts().stream()
-                .filter(verdict -> "secret-scan".equals(verdict.connector()))
+                .filter(verdict -> "secret-scan".equals(verdict.vetter()))
                 .findFirst()
                 .orElseThrow()
                 .findings();

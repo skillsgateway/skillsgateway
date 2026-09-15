@@ -7,10 +7,10 @@ import java.util.Locale;
 import org.springframework.stereotype.Component;
 
 /**
- * Built-in connector: prompt-injection markers in a snapshot's instruction content (GW_VETTING_0004).
+ * Built-in vetter: prompt-injection markers in a snapshot's instruction content (GW_VETTING_0004).
  *
  * <p>Threat T1 is that {@code SKILL.md}, slash commands and agent definitions are <em>prose that
- * executes</em> with the agent's privileges. This connector reads that prose and looks for the
+ * executes</em> with the agent's privileges. This vetter reads that prose and looks for the
  * markers of a known payload: instruction-override phrasing, attempts to make the agent disclose
  * its system prompt, references to credential file locations, instructions to hide activity from
  * the user or the reviewer, pipe-to-shell one-liners, and invisible or bidirectional control
@@ -20,11 +20,11 @@ import org.springframework.stereotype.Component;
  * understanding. An attacker who paraphrases ("disregard the guidance you were given earlier"),
  * splits an instruction across files, or encodes it walks straight past every rule here. A passing
  * verdict means "no known marker matched"; it is not a statement that the instructions are safe.
- * The semantic answer is the LLM review connector (ARCHITECTURE.md §14.2), which is not in this
+ * The semantic answer is the LLM review vetter (ARCHITECTURE.md §14.2), which is not in this
  * chain yet. Use this as triage that tells a reviewer where to look first.
  */
 @Component
-public class PromptInjectionConnector implements VettingConnector {
+public class PromptInjectionVetter implements Vetter {
 
     /** Instruction content: Markdown is where skills, commands and agents carry their prose. */
     private static final List<String> INSTRUCTION_SUFFIXES = List.of(".md", ".mdc", ".markdown", ".txt");
@@ -112,7 +112,7 @@ public class PromptInjectionConnector implements VettingConnector {
         List<Finding> findings = new ArrayList<>();
         int[] counts = new int[2]; // {scanned, skipped}
         try {
-            snapshot.walk(PromptInjectionConnector::instructionContent, (path, content) -> {
+            snapshot.walk(PromptInjectionVetter::instructionContent, (path, content) -> {
                 if (content == null) {
                     counts[1]++;
                     findings.add(new Finding(
