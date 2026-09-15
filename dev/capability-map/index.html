@@ -10,31 +10,31 @@
       
       
       
-        <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/dev/guides/verifying-an-object-store/">
+        <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/dev/capability-map/">
       
       
-        <link rel="prev" href="../storage-backends/">
+        <link rel="prev" href="../architecture/">
       
       
-        <link rel="next" href="../deploying-on-kubernetes/">
+        <link rel="next" href="../concepts/lifecycle/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/favicon.svg">
+      <link rel="icon" href="../assets/favicon.svg">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>Verifying conditional writes against a real bucket - Skills Gateway</title>
+        <title>Capability map - Skills Gateway</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,9 +53,9 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/extra.css">
+      <link rel="stylesheet" href="../assets/extra.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#verifying-conditional-writes-against-a-real-bucket" class="md-skip">
+        <a href="#capability-map" class="md-skip">
           Skip to content
         </a>
       
@@ -100,9 +100,9 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Skills Gateway" class="md-header__button md-logo" aria-label="Skills Gateway" data-md-component="logo">
+    <a href=".." title="Skills Gateway" class="md-header__button md-logo" aria-label="Skills Gateway" data-md-component="logo">
       
-  <img src="../../assets/logo.svg" alt="logo">
+  <img src="../assets/logo.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -119,7 +119,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Verifying conditional writes against a real bucket
+              Capability map
             
           </span>
         </div>
@@ -237,9 +237,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Skills Gateway" class="md-nav__button md-logo" aria-label="Skills Gateway" data-md-component="logo">
+    <a href=".." title="Skills Gateway" class="md-nav__button md-logo" aria-label="Skills Gateway" data-md-component="logo">
       
-  <img src="../../assets/logo.svg" alt="logo">
+  <img src="../assets/logo.svg" alt="logo">
 
     </a>
     Skills Gateway
@@ -266,7 +266,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -293,7 +293,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/" class="md-nav__link">
+      <a href="../architecture/" class="md-nav__link">
         
   
   
@@ -317,10 +317,37 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../capability-map/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability map
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -336,6 +363,37 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#deliberately-parked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deliberately parked
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -413,7 +471,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/lifecycle/" class="md-nav__link">
+      <a href="../concepts/lifecycle/" class="md-nav__link">
         
   
   
@@ -441,7 +499,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/vetting/" class="md-nav__link">
+      <a href="../concepts/vetting/" class="md-nav__link">
         
   
   
@@ -469,7 +527,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/snapshots-and-ledger/" class="md-nav__link">
+      <a href="../concepts/snapshots-and-ledger/" class="md-nav__link">
         
   
   
@@ -497,7 +555,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/trust-boundaries/" class="md-nav__link">
+      <a href="../concepts/trust-boundaries/" class="md-nav__link">
         
   
   
@@ -525,7 +583,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/related-work/" class="md-nav__link">
+      <a href="../concepts/related-work/" class="md-nav__link">
         
   
   
@@ -553,7 +611,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/glossary/" class="md-nav__link">
+      <a href="../concepts/glossary/" class="md-nav__link">
         
   
   
@@ -585,10 +643,8 @@
       
   
   
-    
   
   
-  
     
     
       
@@ -649,11 +705,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
@@ -674,7 +730,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -692,7 +748,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../local-development/" class="md-nav__link">
+      <a href="../guides/local-development/" class="md-nav__link">
         
   
   
@@ -720,7 +776,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../registering-a-marketplace/" class="md-nav__link">
+      <a href="../guides/registering-a-marketplace/" class="md-nav__link">
         
   
   
@@ -748,7 +804,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../publishing-first-party-skills/" class="md-nav__link">
+      <a href="../guides/publishing-first-party-skills/" class="md-nav__link">
         
   
   
@@ -776,7 +832,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../upstream-sync/" class="md-nav__link">
+      <a href="../guides/upstream-sync/" class="md-nav__link">
         
   
   
@@ -804,7 +860,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../approving-snapshots/" class="md-nav__link">
+      <a href="../guides/approving-snapshots/" class="md-nav__link">
         
   
   
@@ -832,7 +888,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../waiving-findings/" class="md-nav__link">
+      <a href="../guides/waiving-findings/" class="md-nav__link">
         
   
   
@@ -860,7 +916,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../license-compliance/" class="md-nav__link">
+      <a href="../guides/license-compliance/" class="md-nav__link">
         
   
   
@@ -888,7 +944,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../re-vetting/" class="md-nav__link">
+      <a href="../guides/re-vetting/" class="md-nav__link">
         
   
   
@@ -916,7 +972,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../consuming-skills/" class="md-nav__link">
+      <a href="../guides/consuming-skills/" class="md-nav__link">
         
   
   
@@ -944,7 +1000,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../client-enforcement/" class="md-nav__link">
+      <a href="../guides/client-enforcement/" class="md-nav__link">
         
   
   
@@ -972,7 +1028,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../virtual-catalog/" class="md-nav__link">
+      <a href="../guides/virtual-catalog/" class="md-nav__link">
         
   
   
@@ -1000,7 +1056,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../lifecycle-webhooks/" class="md-nav__link">
+      <a href="../guides/lifecycle-webhooks/" class="md-nav__link">
         
   
   
@@ -1028,7 +1084,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../read-only-forge-mirror/" class="md-nav__link">
+      <a href="../guides/read-only-forge-mirror/" class="md-nav__link">
         
   
   
@@ -1056,7 +1112,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../exporting-the-audit-ledger/" class="md-nav__link">
+      <a href="../guides/exporting-the-audit-ledger/" class="md-nav__link">
         
   
   
@@ -1084,7 +1140,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../snapshot-retention/" class="md-nav__link">
+      <a href="../guides/snapshot-retention/" class="md-nav__link">
         
   
   
@@ -1112,7 +1168,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../delegated-administration/" class="md-nav__link">
+      <a href="../guides/delegated-administration/" class="md-nav__link">
         
   
   
@@ -1140,7 +1196,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../identity-providers/" class="md-nav__link">
+      <a href="../guides/identity-providers/" class="md-nav__link">
         
   
   
@@ -1168,7 +1224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../declarative-estate/" class="md-nav__link">
+      <a href="../guides/declarative-estate/" class="md-nav__link">
         
   
   
@@ -1196,7 +1252,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../policy-rules/" class="md-nav__link">
+      <a href="../guides/policy-rules/" class="md-nav__link">
         
   
   
@@ -1224,7 +1280,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../storage-backends/" class="md-nav__link">
+      <a href="../guides/storage-backends/" class="md-nav__link">
         
   
   
@@ -1249,37 +1305,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Verifying conditional writes against a real bucket
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../guides/verifying-an-object-store/" class="md-nav__link">
         
   
   
@@ -1295,114 +1324,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#what-the-suite-asserts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What the suite asserts
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#before-you-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Before you start
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#1-create-a-scratch-bucket" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Create a scratch bucket
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-run-the-suite" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Run the suite
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-read-the-result" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Read the result
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-tear-the-bucket-down" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Tear the bucket down
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-this-does-and-does-not-settle" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What this does and does not settle
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        See also
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1415,7 +1336,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../deploying-on-kubernetes/" class="md-nav__link">
+      <a href="../guides/deploying-on-kubernetes/" class="md-nav__link">
         
   
   
@@ -1443,7 +1364,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../deploying-without-kubernetes/" class="md-nav__link">
+      <a href="../guides/deploying-without-kubernetes/" class="md-nav__link">
         
   
   
@@ -1471,7 +1392,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../releasing/" class="md-nav__link">
+      <a href="../guides/releasing/" class="md-nav__link">
         
   
   
@@ -1578,7 +1499,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/configuration/" class="md-nav__link">
+      <a href="../reference/configuration/" class="md-nav__link">
         
   
   
@@ -1642,7 +1563,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../reference/api/" class="md-nav__link ">
+            <a href="../reference/api/" class="md-nav__link ">
               
   
   
@@ -1686,7 +1607,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/marketplaces/" class="md-nav__link">
+      <a href="../reference/api/marketplaces/" class="md-nav__link">
         
   
   
@@ -1714,7 +1635,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/tokens/" class="md-nav__link">
+      <a href="../reference/api/tokens/" class="md-nav__link">
         
   
   
@@ -1742,7 +1663,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/audit/" class="md-nav__link">
+      <a href="../reference/api/audit/" class="md-nav__link">
         
   
   
@@ -1770,7 +1691,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/adoption/" class="md-nav__link">
+      <a href="../reference/api/adoption/" class="md-nav__link">
         
   
   
@@ -1798,7 +1719,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/roles/" class="md-nav__link">
+      <a href="../reference/api/roles/" class="md-nav__link">
         
   
   
@@ -1826,7 +1747,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/estate/" class="md-nav__link">
+      <a href="../reference/api/estate/" class="md-nav__link">
         
   
   
@@ -1854,7 +1775,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/policy/" class="md-nav__link">
+      <a href="../reference/api/policy/" class="md-nav__link">
         
   
   
@@ -1882,7 +1803,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/mirror/" class="md-nav__link">
+      <a href="../reference/api/mirror/" class="md-nav__link">
         
   
   
@@ -1918,7 +1839,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/retention/" class="md-nav__link">
+      <a href="../reference/retention/" class="md-nav__link">
         
   
   
@@ -1946,7 +1867,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/container-image/" class="md-nav__link">
+      <a href="../reference/container-image/" class="md-nav__link">
         
   
   
@@ -1974,7 +1895,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/git-facade/" class="md-nav__link">
+      <a href="../reference/git-facade/" class="md-nav__link">
         
   
   
@@ -2002,7 +1923,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/compatibility/" class="md-nav__link">
+      <a href="../reference/compatibility/" class="md-nav__link">
         
   
   
@@ -2030,7 +1951,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/portal/" class="md-nav__link">
+      <a href="../reference/portal/" class="md-nav__link">
         
   
   
@@ -2058,7 +1979,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/observability/" class="md-nav__link">
+      <a href="../reference/observability/" class="md-nav__link">
         
   
   
@@ -2086,7 +2007,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/decisions/" class="md-nav__link">
+      <a href="../reference/decisions/" class="md-nav__link">
         
   
   
@@ -2141,87 +2062,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-the-suite-asserts" class="md-nav__link">
+  <a href="#deliberately-parked" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What the suite asserts
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#before-you-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Before you start
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#1-create-a-scratch-bucket" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Create a scratch bucket
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-run-the-suite" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Run the suite
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-read-the-result" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Read the result
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-tear-the-bucket-down" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Tear the bucket down
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-this-does-and-does-not-settle" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What this does and does not settle
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        See also
+        Deliberately parked
       
     </span>
   </a>
@@ -2245,7 +2089,7 @@
 
 
   
-    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/guides/verifying-an-object-store.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/capability-map.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -2253,223 +2097,256 @@
   
 
 
-<h1 id="verifying-conditional-writes-against-a-real-bucket">Verifying conditional writes against a real bucket<a class="headerlink" href="#verifying-conditional-writes-against-a-real-bucket" title="Permanent link">&para;</a></h1>
-<p>The object-store backend rests on one primitive: a conditional <code>PutObject</code> that
-the store <strong>refuses</strong> when its precondition no longer holds. Everything else —
-atomic reference transitions, more than one replica, publication that a
-concurrent writer can neither lose nor half-observe — is a consequence of that
-one behaviour. A store that accepts every write regardless of <code>If-Match</code> would
-let a broken gateway pass its own concurrency suite: green, and meaningless.</p>
-<p>So the gateway ships the assertions rather than the assurance. This guide runs
-them against a real AWS S3 bucket, start to finish, and tears the bucket down
-afterwards.</p>
-<p>You do not need to do this to run the gateway. Do it when you want the evidence
-first-hand — before a production cutover, after a store or account policy
-changes, or because you would rather not take
-<a href="../storage-backends/#which-object-stores-work">the supported-store table</a> on
-trust.</p>
-<h2 id="what-the-suite-asserts">What the suite asserts<a class="headerlink" href="#what-the-suite-asserts" title="Permanent link">&para;</a></h2>
-<p>Nine tests, in <code>RealS3ConditionalWriteFidelityTests</code>. Seven of them are shared
-verbatim with the suite that runs against the local emulator on every build, so
-the two stores are held to one contract rather than two.</p>
+<h1 id="capability-map">Capability map<a class="headerlink" href="#capability-map" title="Permanent link">&para;</a></h1>
+<p>Every capability area the gateway has today, one row each. If you are asking
+"does the gateway do X?", the answer is on this page or it is no.</p>
 <table>
 <thead>
 <tr>
-<th>#</th>
-<th>Assertion</th>
+<th>Area</th>
+<th>What it does</th>
+<th>Trust boundary</th>
+<th>Requirements</th>
+<th>Docs</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>1</td>
-<td><code>If-Match</code> with the current ETag succeeds and returns a <strong>new</strong> ETag</td>
+<td>Registration</td>
+<td>Registers an upstream marketplace against the URL-scheme allowlist and a gateway-pinned ref.</td>
+<td>Registration</td>
+<td><code>GW_INGEST</code></td>
+<td><a href="../guides/registering-a-marketplace/">Registering a marketplace</a>, <a href="../concepts/trust-boundaries/">Trust boundaries</a></td>
 </tr>
 <tr>
-<td>2</td>
-<td><code>If-Match</code> with a stale ETag returns <strong>412</strong> <em>and the stored object is byte-for-byte unchanged</em></td>
+<td>Ingestion</td>
+<td>Clones a pinned commit into quarantine as an immutable snapshot with a provenance record and a content inventory.</td>
+<td>Registration</td>
+<td><code>GW_INGEST</code></td>
+<td><a href="../concepts/lifecycle/">Lifecycle</a></td>
 </tr>
 <tr>
-<td>3</td>
-<td><code>If-None-Match: *</code> creates exactly once; the second attempt returns 412 and does not overwrite</td>
+<td>Source resolution</td>
+<td>Resolves a manifest's external plugin sources into the snapshot under address, redirect and resource bounds, producing one composite commit.</td>
+<td>Resolution</td>
+<td><code>GW_INGEST</code></td>
+<td><a href="../concepts/trust-boundaries/">Trust boundaries</a></td>
 </tr>
 <tr>
-<td>4</td>
-<td>8 writers racing off one barrier from one base ETag → exactly <strong>one</strong> winner, <strong>7</strong> × 412, <strong>zero</strong> other errors</td>
+<td>Upstream sync</td>
+<td>Polls upstream or accepts an inbound forge webhook, and re-ingests when the pinned ref moves.</td>
+<td>Inbound webhook</td>
+<td><code>GW_INGEST</code></td>
+<td><a href="../guides/upstream-sync/">Syncing from upstream</a></td>
 </tr>
 <tr>
-<td>5</td>
-<td>ETags chain: the ETag a conditional PUT returns is the one the next PUT must present</td>
+<td>First-party publishing</td>
+<td>Accepts an authenticated push to a gateway-hosted marketplace; pushed content enters the same quarantine pipeline.</td>
+<td>Publication</td>
+<td><code>GW_FACADE</code>, <code>GW_INGEST</code></td>
+<td><a href="../guides/publishing-first-party-skills/">Publishing first-party skills</a></td>
 </tr>
 <tr>
-<td>M-A</td>
-<td><strong>Negative control.</strong> With <code>If-Match</code> dropped, all 8 racing writers commit</td>
+<td>Vetting chain</td>
+<td>Runs the ordered connector chain — secret scan, prompt injection, skill conformance, license, operator-configured external connectors — fail-closed.</td>
+<td>—</td>
+<td><code>GW_VETTING</code></td>
+<td><a href="../concepts/vetting/">Vetting</a></td>
 </tr>
 <tr>
-<td>M-B</td>
-<td><strong>Negative control.</strong> With <code>If-None-Match</code> dropped, the second create overwrites</td>
+<td>License compliance</td>
+<td>Detects a declared license at ingestion and evaluates it against allow and ban lists through the chain.</td>
+<td>—</td>
+<td><code>GW_VETTING</code></td>
+<td><a href="../guides/license-compliance/">License compliance</a></td>
 </tr>
 <tr>
-<td>6</td>
-<td>A committed write is visible to an independent client on its own connection, at the ETag the winning PUT returned</td>
+<td>Waivers</td>
+<td>Suppresses a named finding for a scope, with an expiry that restores the block.</td>
+<td>—</td>
+<td><code>GW_VETTING</code></td>
+<td><a href="../guides/waiving-findings/">Waiving a finding</a></td>
 </tr>
 <tr>
-<td>7</td>
-<td>A conditional PUT racing the DELETE that revocation performs is refused, and does not resurrect the object</td>
+<td>Re-vetting</td>
+<td>Re-runs the chain against already-approved snapshots and auto-quarantines a violation.</td>
+<td>Approval</td>
+<td><code>GW_VETTING</code></td>
+<td><a href="../guides/re-vetting/">Re-vetting</a></td>
+</tr>
+<tr>
+<td>Policy rules</td>
+<td>Evaluates CEL deny rules over snapshot facts as a fail-closed gate at approval.</td>
+<td>Approval</td>
+<td><code>GW_APPROVAL</code></td>
+<td><a href="../guides/policy-rules/">Policy deny rules</a></td>
+</tr>
+<tr>
+<td>Approval</td>
+<td>Holds everything until a human approves, enforcing the vetting outcome, a complete closure, four-eyes and a minimum release age; publishing is the only path to served content.</td>
+<td>Approval</td>
+<td><code>GW_APPROVAL</code></td>
+<td><a href="../guides/approving-snapshots/">Approving snapshots</a></td>
+</tr>
+<tr>
+<td>Snapshot preview</td>
+<td>Shows a reviewer the snapshot's files and its diff against the served baseline, read-only.</td>
+<td>—</td>
+<td><code>GW_INGEST</code>, <code>GW_APPROVAL</code></td>
+<td><a href="../guides/approving-snapshots/">Approving snapshots</a></td>
+</tr>
+<tr>
+<td>Git facade</td>
+<td>Serves approved snapshots over read-only git smart-HTTP, advertising only the refs it serves.</td>
+<td>Facade</td>
+<td><code>GW_FACADE</code></td>
+<td><a href="../reference/git-facade/">Git smart-HTTP facade</a></td>
+</tr>
+<tr>
+<td>Virtual catalog</td>
+<td>Synthesises one global catalog repository from the approved marketplaces, refreshed on publication changes.</td>
+<td>Facade</td>
+<td><code>GW_FACADE</code></td>
+<td><a href="../guides/virtual-catalog/">The virtual catalog</a></td>
+</tr>
+<tr>
+<td>Git storage</td>
+<td>Holds repositories on a named backend — filesystem or object store — with identical ref transitions and a verified migration between them.</td>
+<td>—</td>
+<td><code>GW_FACADE</code></td>
+<td><a href="../guides/storage-backends/">Storage backends</a></td>
+</tr>
+<tr>
+<td>Forge mirror</td>
+<td>Mirrors approved content outward to an external forge, read-only and never an enforcement path.</td>
+<td>Mirror (outbound)</td>
+<td><code>GW_FACADE</code></td>
+<td><a href="../guides/read-only-forge-mirror/">The read-only forge mirror</a></td>
+</tr>
+<tr>
+<td>Web authentication</td>
+<td>Authenticates the portal and REST API with OIDC only, keeping tokens out of the browser.</td>
+<td>Web surface</td>
+<td><code>GW_AUTH</code></td>
+<td><a href="../guides/identity-providers/">Identity providers</a></td>
+</tr>
+<tr>
+<td>Access tokens</td>
+<td>Issues, scopes, expires and rotates the hashed PATs git clients fetch with, attributing every fetch.</td>
+<td>Facade</td>
+<td><code>GW_AUTH</code></td>
+<td><a href="../reference/api/tokens/">Access tokens</a></td>
+</tr>
+<tr>
+<td>Machine credentials</td>
+<td>Gives pipelines a distinct credential scope that cannot reach judgement, retraction or the administrative interface.</td>
+<td>Machine API</td>
+<td><code>GW_AUTH</code></td>
+<td><a href="../reference/api/">REST API overview</a></td>
+</tr>
+<tr>
+<td>Roles</td>
+<td>Enforces deny-by-default <code>admin</code> / <code>approver</code> / <code>auditor</code> authority, granted by audited grants or a validated claim mapping.</td>
+<td>Roles</td>
+<td><code>GW_AUTH</code></td>
+<td><a href="../guides/delegated-administration/">Delegated administration</a></td>
+</tr>
+<tr>
+<td>Audit ledger</td>
+<td>Records every fetch and every administrative action append-only, with the kind of actor, and streams it to export sinks.</td>
+<td>—</td>
+<td><code>GW_AUDIT</code></td>
+<td><a href="../concepts/snapshots-and-ledger/">Snapshots and the ledger</a>, <a href="../guides/exporting-the-audit-ledger/">Exporting the ledger</a></td>
+</tr>
+<tr>
+<td>Adoption reporting</td>
+<td>Derives install inventory and staleness against the served tip from the fetch ledger.</td>
+<td>—</td>
+<td><code>GW_OBSERVABILITY</code></td>
+<td><a href="../reference/api/adoption/">Adoption API</a></td>
+</tr>
+<tr>
+<td>Observability</td>
+<td>Records gateway metrics, storage health and mirror divergence whether or not anybody asks.</td>
+<td>—</td>
+<td><code>GW_OBSERVABILITY</code></td>
+<td><a href="../reference/observability/">Observability</a></td>
+</tr>
+<tr>
+<td>Lifecycle webhooks</td>
+<td>Delivers signed snapshot-lifecycle events to subscribers with retry and backoff.</td>
+<td>—</td>
+<td><code>GW_WEBHOOK</code></td>
+<td><a href="../guides/lifecycle-webhooks/">Lifecycle webhooks</a></td>
+</tr>
+<tr>
+<td>Retention</td>
+<td>Soft-deletes and then compacts eligible snapshots; approved ones are never eligible.</td>
+<td>—</td>
+<td><code>GW_RETENTION</code></td>
+<td><a href="../guides/snapshot-retention/">Reclaiming snapshot storage</a></td>
+</tr>
+<tr>
+<td>Declarative estate</td>
+<td>Reconciles marketplaces, role grants, policy rules and webhook receivers from configuration through the same audited paths as the API.</td>
+<td>Registration, Roles</td>
+<td><code>GW_ESTATE</code></td>
+<td><a href="../guides/declarative-estate/">Declarative estate configuration</a></td>
+</tr>
+<tr>
+<td>Admin portal</td>
+<td>The seven pages an operator works in: overview, marketplaces, marketplace detail, audit, adoption, tokens, webhooks.</td>
+<td>Web surface</td>
+<td><code>GW_AUTH</code></td>
+<td><a href="../reference/portal/">Admin portal</a></td>
+</tr>
+<tr>
+<td>REST API contract</td>
+<td>Serves and publishes the versioned contract document, and detects a breaking change to it.</td>
+<td>—</td>
+<td><code>GW_API</code></td>
+<td><a href="../reference/api/">REST API overview</a></td>
+</tr>
+<tr>
+<td>Release and packaging</td>
+<td>Produces the container image and native-image release by digest, behind a gated release workflow.</td>
+<td>—</td>
+<td><code>GW_RELEASE</code></td>
+<td><a href="../reference/container-image/">Container image</a>, <a href="../guides/releasing/">Cutting a release</a></td>
 </tr>
 </tbody>
 </table>
-<p>Assertion 2 checks the <em>content</em> after the refusal, not only the status code: a
-store that answers 412 and writes anyway is the worst possible outcome, and a
-status-only assertion is exactly what misses it.</p>
-<div class="admonition note">
-<p class="admonition-title">Why two of them are backwards</p>
-<p>M-A and M-B are the reason the other seven mean anything. A store that
-refused writes for some unrelated reason — a policy, a lock, a quota —
-would answer 412 to everything and sail through assertions 1–5 while
-proving nothing at all. The controls drop the precondition and require the
-write to <strong>land</strong>. Only once both pass is a 412 elsewhere evidence that the
-precondition caused it.</p>
-<p>The emulator spike established this by hand-editing the preconditions out
-and re-running. Here they are standing tests, so the discrimination proof is
-re-established on every run instead of resting on a step someone remembered
-to do once.</p>
-</div>
-<h2 id="before-you-start">Before you start<a class="headerlink" href="#before-you-start" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>A scratch bucket you are willing to delete.</strong> The suite writes only under
-  one run-scoped prefix and deletes what it wrote, but do not point it at a
-  bucket holding anything you care about.</li>
-<li><strong>Credentials on the default AWS chain</strong> — environment variables, an SSO
-  profile, an instance role, whatever you normally use. The suite builds its
-  client with no credentials provider of its own and never reads, stores or logs
-  a credential.</li>
-<li><strong>A checkout and a JDK</strong>, since this is a test in this repository rather than
-  a shipped command.</li>
-</ul>
-<p>The identity that runs it needs <code>s3:PutObject</code>, <code>s3:GetObject</code> and
-<code>s3:DeleteObject</code> on <code>&lt;bucket&gt;/skills-gateway-fidelity/*</code>, and nothing else. It
-never lists the bucket.</p>
-<h2 id="1-create-a-scratch-bucket">1. Create a scratch bucket<a class="headerlink" href="#1-create-a-scratch-bucket" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>aws<span class="w"> </span>s3api<span class="w"> </span>create-bucket<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--bucket<span class="w"> </span>&lt;bucket&gt;<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--region<span class="w"> </span>&lt;region&gt;<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--create-bucket-configuration<span class="w"> </span><span class="nv">LocationConstraint</span><span class="o">=</span>&lt;region&gt;
-</code></pre></div>
-<div class="admonition tip">
-<p class="admonition-title">A plain bucket answers the plain question; a configured one answers more</p>
-<p>On a bucket with <strong>SSE-KMS</strong> or <strong>versioning</strong>, an ETag is not a content
-hash. That breaks any code that <em>computes</em> an expected ETag — and no
-assertion here computes one, they only chain the ETag the store returned. So
-pointing this suite at a bucket configured that way is itself the test for
-that case, at no extra effort:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>aws<span class="w"> </span>s3api<span class="w"> </span>put-bucket-versioning<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--bucket<span class="w"> </span>&lt;bucket&gt;<span class="w"> </span>--versioning-configuration<span class="w"> </span><span class="nv">Status</span><span class="o">=</span>Enabled
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>aws<span class="w"> </span>s3api<span class="w"> </span>put-bucket-encryption<span class="w"> </span>--bucket<span class="w"> </span>&lt;bucket&gt;<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>--server-side-encryption-configuration<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span><span class="s1">'{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"aws:kms","KMSMasterKeyID":"&lt;kms-key-id&gt;"}}]}'</span>
-</code></pre></div>
-<p>Turning either on changes the teardown in <a href="#4-tear-the-bucket-down">step 4</a>
-— versioning means deleting versions and delete markers, not objects.</p>
-</div>
-<h2 id="2-run-the-suite">2. Run the suite<a class="headerlink" href="#2-run-the-suite" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>./mvnw<span class="w"> </span>-o<span class="w"> </span>test-compile<span class="w"> </span>-DskipTests
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">SKILLS_GATEWAY_FIDELITY_S3_BUCKET</span><span class="o">=</span>&lt;bucket&gt;
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="nb">export</span><span class="w"> </span><span class="nv">SKILLS_GATEWAY_FIDELITY_S3_REGION</span><span class="o">=</span>&lt;region&gt;
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>./mvnw<span class="w"> </span>-o<span class="w"> </span>surefire:test<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">  </span>-Dtest<span class="o">=</span>RealS3ConditionalWriteFidelityTests<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">  </span>-DfailIfNoSpecifiedTests<span class="o">=</span><span class="nb">false</span>
-</code></pre></div>
-<p>Those two variables are the entire configuration surface. The equivalent system
-properties are <code>-Dskills-gateway.fidelity.s3.bucket</code> and
-<code>-Dskills-gateway.fidelity.s3.region</code>; a system property wins where both are
-set. Region is optional — without it the AWS SDK's own region chain decides.</p>
-<p>The bucket name is the opt-in. <strong>With no bucket named the suite skips</strong>, which
-is why <code>mvnw clean verify</code> is green on a machine with no AWS account and why CI
-never needs one.</p>
-<h2 id="3-read-the-result">3. Read the result<a class="headerlink" href="#3-read-the-result" title="Permanent link">&para;</a></h2>
-<p>A run that verified something says so:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Tests run: 9, Failures: 0, Errors: 0, Skipped: 0
-</code></pre></div>
-<p>A run that verified nothing also says so, and cannot be mistaken for the first:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Tests run: 9, Failures: 0, Errors: 0, Skipped: 9
-</code></pre></div>
-<p>Every skipped case carries the reason in
-<code>target/surefire-reports/dev.skillsgateway.server.storage.RealS3ConditionalWriteFidelityTests.txt</code>.
-Nine skips means the bucket variable did not reach the JVM — check that it is
-exported, not merely set.</p>
-<div class="admonition danger">
-<p class="admonition-title">A failure here is not a test problem</p>
-<p>These assertions do not exercise gateway code. If one fails, the store did
-not enforce a precondition it was asked to enforce, and the object-store
-backend has no correctness argument on it. Do not run the gateway against
-that store; there is no degraded mode, because last-writer-wins on the
-reference manifest is precisely the lost update the design exists to
-prevent.</p>
-<p>A failure of <strong>M-A or M-B</strong> is different and worse in its own way: the store
-refused a write that carried no precondition. The other assertions'
-412s then prove nothing, whatever they reported. Look for a bucket policy,
-an object lock or a quota before looking at the store.</p>
-</div>
-<h2 id="4-tear-the-bucket-down">4. Tear the bucket down<a class="headerlink" href="#4-tear-the-bucket-down" title="Permanent link">&para;</a></h2>
-<p>Each test deletes the keys it wrote, so a clean run leaves the prefix empty.
-Confirm that before deleting anything:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>aws<span class="w"> </span>s3api<span class="w"> </span>list-objects-v2<span class="w"> </span>--bucket<span class="w"> </span>&lt;bucket&gt;<span class="w"> </span>--prefix<span class="w"> </span>skills-gateway-fidelity/
-</code></pre></div>
-<p><code>KeyCount</code> should be <code>0</code>. Then:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">A plain bucket</label><label for="__tabbed_1_2">A versioned bucket</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>aws<span class="w"> </span>s3<span class="w"> </span>rm<span class="w"> </span>s3://&lt;bucket&gt;/skills-gateway-fidelity/<span class="w"> </span>--recursive
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>aws<span class="w"> </span>s3api<span class="w"> </span>delete-bucket<span class="w"> </span>--bucket<span class="w"> </span>&lt;bucket&gt;<span class="w"> </span>--region<span class="w"> </span>&lt;region&gt;
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<p>Versioning means the objects are not gone, only marked. <code>s3 rm</code> adds delete
-markers rather than removing anything, and <code>delete-bucket</code> refuses while any
-version remains.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>aws<span class="w"> </span>s3api<span class="w"> </span>list-object-versions<span class="w"> </span>--bucket<span class="w"> </span>&lt;bucket&gt;<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--query<span class="w"> </span><span class="s1">'{Objects: Versions[].{Key:Key,VersionId:VersionId}}'</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>--output<span class="w"> </span>json<span class="w"> </span>&gt;<span class="w"> </span>versions.json
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>aws<span class="w"> </span>s3api<span class="w"> </span>delete-objects<span class="w"> </span>--bucket<span class="w"> </span>&lt;bucket&gt;<span class="w"> </span>--delete<span class="w"> </span>file://versions.json
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>aws<span class="w"> </span>s3api<span class="w"> </span>list-object-versions<span class="w"> </span>--bucket<span class="w"> </span>&lt;bucket&gt;<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">  </span>--query<span class="w"> </span><span class="s1">'{Objects: DeleteMarkers[].{Key:Key,VersionId:VersionId}}'</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">  </span>--output<span class="w"> </span>json<span class="w"> </span>&gt;<span class="w"> </span>markers.json
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>aws<span class="w"> </span>s3api<span class="w"> </span>delete-objects<span class="w"> </span>--bucket<span class="w"> </span>&lt;bucket&gt;<span class="w"> </span>--delete<span class="w"> </span>file://markers.json
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>aws<span class="w"> </span>s3api<span class="w"> </span>delete-bucket<span class="w"> </span>--bucket<span class="w"> </span>&lt;bucket&gt;<span class="w"> </span>--region<span class="w"> </span>&lt;region&gt;
-</code></pre></div>
-</div>
-</div>
-</div>
-<h2 id="what-this-does-and-does-not-settle">What this does and does not settle<a class="headerlink" href="#what-this-does-and-does-not-settle" title="Permanent link">&para;</a></h2>
-<p>The suite verifies <strong>the store's conditional-write semantics</strong>. It does not
-exercise the gateway: no repository, no reference transition, no approval. That
-separation is deliberate — the point is to establish the primitive independently,
-so that a green concurrency suite above it means something.</p>
-<p>It is also not a substitute for the startup probe. The gateway probes the
-configured bucket every time it starts and refuses to run where the probe fails,
-so an unsupported store is a startup error rather than a corruption discovered
-during an approval. This guide is how you find out <em>before</em> that, and in more
-detail than a probe can.</p>
-<p>Two limits worth naming:</p>
-<ul>
-<li><strong>The suite targets AWS S3.</strong> There is no endpoint override, so an
-  S3-compatible store on another endpoint cannot be pointed at it today; for
-  those, the startup probe remains the answer.</li>
-<li><strong>Bucket configuration is yours to choose</strong>, and the result only covers what
-  you chose. A run against a plain bucket says nothing about SSE-KMS or
-  versioning — see the tip in <a href="#1-create-a-scratch-bucket">step 1</a>.</li>
-</ul>
-<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="../storage-backends/">Choosing and migrating the storage backend</a></li>
-<li><a href="../../reference/configuration/#git-storage">Configuration reference — Git storage</a></li>
-<li><a href="../../concepts/trust-boundaries/">Trust boundaries</a></li>
-</ul>
+<h2 id="deliberately-parked">Deliberately parked<a class="headerlink" href="#deliberately-parked" title="Permanent link">&para;</a></h2>
+<p>Scope that was considered and consciously not built. Each has an ADR; none has
+an open commitment.</p>
+<table>
+<thead>
+<tr>
+<th>Parked</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Estate import/export</td>
+<td><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0014-estate-import-export.md">ADR 0014 — Estate export: content and its attestations leave together; an import can only fill quarantine</a></td>
+</tr>
+<tr>
+<td>Corpus-aware vetting</td>
+<td><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md">ADR 0015 — Corpus questions are approval-gate preconditions, not vetting connectors</a></td>
+</tr>
+<tr>
+<td>Invocation metrics</td>
+<td><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0016-client-invocation-telemetry-is-not-ingested.md">ADR 0016 — Client invocation telemetry is not ingested; the gateway publishes presence instead</a></td>
+</tr>
+<tr>
+<td>Virtual catalogs per team</td>
+<td><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0017-virtual-catalogs-are-derived-views.md">ADR 0017 — Virtual catalogs stay derived views: they may subtract, never substitute</a></td>
+</tr>
+</tbody>
+</table>
+<p>Adding an area to the first table, or moving one out of the second, goes through
+the stop rule in <code>CLAUDE.md</code>.</p>
 
 
 
@@ -2529,10 +2406,10 @@ detail than a probe can.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "navigation.top", "navigation.indexes", "content.code.copy", "content.action.edit", "search.highlight", "search.suggest", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "dev", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "navigation.top", "navigation.indexes", "content.code.copy", "content.action.edit", "search.highlight", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "dev", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
