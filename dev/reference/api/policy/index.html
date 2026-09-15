@@ -2216,10 +2216,10 @@
 the evaluation variables, and the fail-closed semantics are in
 <a href="../../../guides/policy-rules/">Policy deny rules</a>; the declarative form is in
 <a href="../../configuration/#declarative-estate">Configuration</a>.</p>
-<p>Under role enforcement, rule mutations are <strong>admin-only</strong>, the listing is
-<strong>auditor-or-admin</strong>, and the playground requires permission to <strong>approve the
-named snapshot</strong> (it evaluates quarantine-backed facts, so it is scoped like
-the approval it rehearses).</p>
+<p>Rule mutations are <strong>admin-only</strong>, the listing is <strong>auditor-or-admin</strong>, and
+the playground requires permission to <strong>approve the named snapshot</strong> (it
+evaluates quarantine-backed facts, so it is scoped like the approval it
+rehearses).</p>
 <p><strong>Machine reach.</strong> <code>policy:read</code> covers <code>GET /policy/rules</code> <strong>and</strong> <code>POST
 /policy/playground</code> — a <code>POST</code> inside a read scope, because the playground
 evaluates a policy and persists nothing. <code>policy:write</code> covers rule creation,
@@ -2256,7 +2256,7 @@ at the very next approval — there is no propagation delay to wait out.</p>
 </tr>
 <tr>
 <td>403</td>
-<td>Enforcement is enabled and the caller is not an admin.</td>
+<td>The caller is not an admin.</td>
 </tr>
 <tr>
 <td>409</td>
@@ -2284,7 +2284,7 @@ at the very next approval — there is no propagation delay to wait out.</p>
 </tr>
 <tr>
 <td>403</td>
-<td>Enforcement is enabled and the caller holds neither auditor nor admin.</td>
+<td>The caller holds neither auditor nor admin.</td>
 </tr>
 </tbody>
 </table>
@@ -2306,7 +2306,7 @@ the audited off-switch — there is no per-snapshot waiver of a policy denial.</
 </tr>
 <tr>
 <td>403</td>
-<td>Enforcement is enabled and the caller is not an admin.</td>
+<td>The caller is not an admin.</td>
 </tr>
 <tr>
 <td>404</td>
@@ -2334,7 +2334,7 @@ the audited off-switch — there is no per-snapshot waiver of a policy denial.</
 </tr>
 <tr>
 <td>403</td>
-<td>Enforcement is enabled and the caller is not an admin.</td>
+<td>The caller is not an admin.</td>
 </tr>
 <tr>
 <td>404</td>
@@ -2384,7 +2384,7 @@ returns 200 with the error, so authoring is an edit-evaluate loop.</p>
 </tr>
 <tr>
 <td>403</td>
-<td>Enforcement is enabled and the caller may not approve that snapshot.</td>
+<td>The caller may not approve that snapshot.</td>
 </tr>
 <tr>
 <td>404</td>

@@ -3198,9 +3198,8 @@ pane: the pinned commit's actual content, not a summary of it.</p>
 </ul>
 <p>This is inspection, not execution: nothing fetched here is ever run, followed
 or injected as markup, and the pane changes nothing about what the facade
-serves. While role enforcement is enabled these reads are privileged — admin
-or an approver of this marketplace — so the pane shows an error to a session
-holding neither.</p>
+serves. These reads are privileged — admin or an approver of this marketplace
+— so the pane shows an error to a session holding neither.</p>
 <h3 id="set-up-a-client">Set up a client<a class="headerlink" href="#set-up-a-client" title="Permanent link">&para;</a></h3>
 <p>The page header carries a <strong>Set up a client</strong> button opening a wizard that
 composes, for this marketplace, everything a consumer needs — every URL derived
@@ -3272,8 +3271,8 @@ it is still published</em> (warn mode), or <em>revoked by a re-vetting violation
 through the facade, each with a fetch count and a last-fetch time, from
 <code>GET /api/snapshots/{id}/fetchers</code>. It is only requested for a revoked snapshot.
 When nobody fetched it, the panel says so rather than showing an empty list.
-While role enforcement is enabled this read is privileged — admin or an approver
-of this marketplace — so the panel shows an error to a session holding neither.</p>
+This read is privileged — admin or an approver of this marketplace — so the
+panel shows an error to a session holding neither.</p>
 <p>The way back is on the <a href="#marketplaces">marketplaces</a> page: a revoked snapshot's
 approve control reads <strong>Re-approve</strong> and goes through the ordinary gate. See
 <a href="../../guides/re-vetting/">Re-vetting approved content</a>.</p>
@@ -3431,9 +3430,9 @@ For a full, resumable pull, use the <a href="#export">NDJSON export</a> and its 
 <p><strong>Route:</strong> <code>/adoption</code> · <strong>Heading:</strong> Adoption</p>
 <p>The <a href="../api/adoption/">adoption and staleness reports</a>, read-only. Subtitle:
 "Who fetches what through the facade, aggregated from the append-only ledger,
-and which identities are not on the served tip." With
-<a href="#authorization">role enforcement</a> enabled both underlying reads require the
-auditor role, so a session without it sees the page's error state.</p>
+and which identities are not on the served tip." Both underlying reads require
+the auditor role (see <a href="#authorization">Authorization</a>), so a session without
+it sees the page's error state.</p>
 <h3 id="window-and-totals">Window and totals<a class="headerlink" href="#window-and-totals" title="Permanent link">&para;</a></h3>
 <p>A <strong>Report window</strong> button group — 7, 30 or 90 days, default 30, the active
 choice pressed — drives <code>GET /api/adoption?days=</code>. Beside it, stat chips:

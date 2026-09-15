@@ -2231,9 +2231,9 @@ different.</p>
 catalog commit itself. Fetches of <code>/git/catalog</code> land on the audit ledger under
 the name <code>catalog</code> like any marketplace, and a manual
 <code>POST /api/catalog/rebuild</code> (the on-demand repair path) is ledger-recorded with
-the acting identity and, with
-<a href="../delegated-administration/">role enforcement</a> enabled, requires <strong>admin</strong>;
-the catalog read stays open to any session.</p>
+the acting identity and requires <strong>admin</strong>
+(see <a href="../delegated-administration/">role enforcement</a>); the catalog read stays
+open to any session.</p>
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
 <p>The catalog name is <strong>reserved</strong>: registering a marketplace called <code>catalog</code>
 is refused, because the catalog occupies that facade path. See

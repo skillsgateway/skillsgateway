@@ -2423,9 +2423,8 @@ it from the report and the ledger:</p>
 running process reads, or rotating an environment secret:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/estate/reconcile
 </code></pre></div>
-<p>Under role enforcement the report read is auditor-or-admin and the trigger is
-admin-only; the trigger itself is always on the ledger as
-<code>estate-reconcile-triggered</code>.</p>
+<p>The report read is auditor-or-admin and the trigger is admin-only; the
+trigger itself is always on the ledger as <code>estate-reconcile-triggered</code>.</p>
 <h2 id="when-an-entry-fails">When an entry fails<a class="headerlink" href="#when-an-entry-fails" title="Permanent link">&para;</a></h2>
 <p>The gateway starts and serves anyway — a broken declaration must never take a
 working estate down — and the entry fails loudly, every run, until it

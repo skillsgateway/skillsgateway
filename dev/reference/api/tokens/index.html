@@ -2468,9 +2468,8 @@
 <h1 id="access-tokens">Access tokens<a class="headerlink" href="#access-tokens" title="Permanent link">&para;</a></h1>
 <p>Personal access tokens are the credential git clients use against the
 <a href="../../git-facade/">facade</a>. They are the only part of the API scoped per user,
-and they stay owner-scoped with
-<a href="../../../guides/delegated-administration/">role enforcement</a> enabled: managing
-your own tokens never requires a role.</p>
+and they stay owner-scoped: managing your own tokens never requires a role.
+See <a href="../../../guides/delegated-administration/">Delegated administration</a>.</p>
 <p>All paths are relative to <code>/api</code>.</p>
 <h2 id="token-format-and-storage">Token format and storage<a class="headerlink" href="#token-format-and-storage" title="Permanent link">&para;</a></h2>
 <p><code>sgw_</code> followed by 32 random bytes from a <code>SecureRandom</code>, Base64url-encoded
@@ -2891,19 +2890,17 @@ scopes, and its principal's roles. A credential scoped <code>audit:read</code> s
 <strong>403</strong> unless its principal holds <code>auditor</code> or <code>admin</code>, and one scoped
 <code>snapshots:read</code> reaches a snapshot's preview reads and its <code>/fetchers</code> report
 only where its principal approves that marketplace, or is an admin.</p>
-<p>Scope and allowlist enforcement, unlike role enforcement, does <strong>not</strong> consult
-that flag and is always on. The flag exists so an upgrade does not lock out
-sessions that predate role enforcement, and nothing predates a credential kind
-that did not exist.</p>
+<p>Scope and allowlist enforcement is independent of role enforcement; both are
+unconditional and always on.</p>
 <p>A machine principal acquires a role from the deployment's configuration
 (<code>skills-gateway.roles.admins</code>) or from a grant, which <code>estate.grants</code> can
 declare. It never acquires one from identity-provider claims: a credential has
 none.</p>
 <h3 id="post-apitokensmachine"><code>POST /api/tokens/machine</code><a class="headerlink" href="#post-apitokensmachine" title="Permanent link">&para;</a></h3>
-<p>Provisions a credential. Requires the <code>admin</code> role <strong>whether or not role
-enforcement is enabled</strong> — a credential outlives the session that created it,
-and under a default-off flag any user who completed a login could otherwise mint
-one that keeps working after their own account is deprovisioned.</p>
+<p>Provisions a credential. Requires the <code>admin</code> role — a credential outlives the
+session that created it, and without that requirement any user who completed a
+login could mint one that keeps working after their own account is
+deprovisioned.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p">{</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">"principal"</span><span class="p">:</span><span class="w"> </span><span class="s2">"terraform-ci"</span><span class="p">,</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"platform-pipeline"</span><span class="p">,</span>

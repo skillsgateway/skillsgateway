@@ -2229,9 +2229,9 @@
 <a href="../../../concepts/snapshots-and-ledger/">Snapshots and the audit ledger</a> for the
 conceptual treatment.</p>
 <hr />
-<p>With <a href="../../../guides/delegated-administration/">role enforcement</a> enabled: the
-ledger and export reads and the sink listing require <strong>auditor</strong> (or admin);
-sink create, delete, and cursor reset require <strong>admin</strong>.</p>
+<p>The ledger and export reads and the sink listing require <strong>auditor</strong> (or
+admin); sink create, delete, and cursor reset require <strong>admin</strong>. See
+<a href="../../../guides/delegated-administration/">Delegated administration</a>.</p>
 <p><strong>Machine reach.</strong> <code>audit:read</code> covers the ledger read and the export;
 <code>audit-sinks:read</code> the sink listing; <code>audit-sinks:write</code> sink creation,
 deletion and cursor reset. A machine read of the ledger writes <strong>no</strong> ledger
@@ -2240,8 +2240,7 @@ that is itself new content to export. See
 <a href="../tokens/#machine-api-credentials">Machine API credentials</a>.</p>
 <hr />
 <h2 id="get-apiaudit"><code>GET /api/audit</code><a class="headerlink" href="#get-apiaudit" title="Permanent link">&para;</a></h2>
-<p>Return the ledger. Requires an authenticated session — and, with role
-enforcement enabled, the auditor role.</p>
+<p>Return the ledger. Requires an authenticated session with the auditor role.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/audit
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">[{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"ts"</span><span class="p">:</span><span class="s2">"2026-08-15T09:04:11Z"</span><span class="p">,</span><span class="nt">"source"</span><span class="p">:</span><span class="s2">"10.0.0.4"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span>

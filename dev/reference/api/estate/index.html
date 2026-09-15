@@ -2129,9 +2129,9 @@ on-demand trigger. What the declaration itself looks like is in
 <a href="../../configuration/#declarative-estate">Configuration</a>; the GitOps
 walkthrough is in
 <a href="../../../guides/declarative-estate/">Declarative estate configuration</a>.</p>
-<p>Under role enforcement the report is <strong>auditor-or-admin</strong> (failure reasons
-expose operator infrastructure, like the subscriber and sink listings) and the
-trigger is <strong>admin-only</strong>.</p>
+<p>The report is <strong>auditor-or-admin</strong> (failure reasons expose operator
+infrastructure, like the subscriber and sink listings) and the trigger is
+<strong>admin-only</strong>.</p>
 <p><strong>Machine reach.</strong> <code>estate:read</code> covers the report and <code>estate:reconcile</code> the
 trigger — separately, so a credential that reads drift cannot also cause a
 convergence. See <a href="../tokens/#machine-api-credentials">Machine API credentials</a>.</p>
@@ -2194,7 +2194,7 @@ the history.</p>
 </tr>
 <tr>
 <td>403</td>
-<td>Enforcement is enabled and the caller holds neither auditor nor admin.</td>
+<td>The caller holds neither auditor nor admin.</td>
 </tr>
 <tr>
 <td>404</td>
@@ -2229,7 +2229,7 @@ the actor <code>config-reconciler</code>.</p>
 </tr>
 <tr>
 <td>403</td>
-<td>Enforcement is enabled and the caller is not an admin.</td>
+<td>The caller is not an admin.</td>
 </tr>
 </tbody>
 </table>

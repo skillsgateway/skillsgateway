@@ -2936,8 +2936,7 @@
 <h1 id="marketplaces-and-snapshots">Marketplaces and snapshots<a class="headerlink" href="#marketplaces-and-snapshots" title="Permanent link">&para;</a></h1>
 <p>The core API: registration, ingestion, the approval gate and provenance. All
 paths are relative to <code>/api</code>.</p>
-<p>With <a href="../../../guides/delegated-administration/">role enforcement</a> enabled:
-registration and sync-mode changes require <strong>admin</strong>; ingest, approve, reject,
+<p>Registration and sync-mode changes require <strong>admin</strong>; ingest, approve, reject,
 re-vet, and waiver create/delete require <strong>approver of the marketplace</strong> (or
 admin) — resolved server-side from the addressed snapshot or waiver where the
 route carries an id; every <code>GET</code> on this page stays open to any session, except
@@ -2946,7 +2945,8 @@ the <a href="#snapshot-preview">snapshot preview</a> reads and the
 approver-or-admin standing as a decision on that snapshot, and the connector
 settings, which are <strong>admin</strong>. Two administrative escape hatches require
 <strong>admin</strong> specifically: overriding a blocked vetting outcome on approve, and
-enabling or disabling a connector.</p>
+enabling or disabling a connector. See
+<a href="../../../guides/delegated-administration/">Delegated administration</a>.</p>
 <p><strong>Machine reach.</strong> <code>marketplaces:read</code> covers <code>GET /marketplaces</code>, <code>GET
 /catalog</code> and a snapshot's <code>/content</code>, <code>/content-diff</code>, <code>/licenses</code>,
 <code>/provenance</code> and <code>/release-age</code>; <code>snapshots:read</code> covers <code>/diff</code>, <code>/file</code>,
@@ -3307,7 +3307,7 @@ at 2000 entries; <code>"truncated": true</code> says it was cut.</p>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w"> </span><span class="nt">"entries"</span><span class="p">:[{</span><span class="nt">"path"</span><span class="p">:</span><span class="s2">".claude-plugin/marketplace.json"</span><span class="p">,</span><span class="nt">"size"</span><span class="p">:</span><span class="mi">180</span><span class="p">},</span>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">            </span><span class="p">{</span><span class="nt">"path"</span><span class="p">:</span><span class="s2">"plugins/acme-tools/skills/deploy/SKILL.md"</span><span class="p">,</span><span class="nt">"size"</span><span class="p">:</span><span class="mi">841</span><span class="p">}]}</span>
 </code></pre></div>
-<p><strong>200</strong> · <strong>403</strong> enforcement enabled, no applicable role · <strong>404</strong> unknown
+<p><strong>200</strong> · <strong>403</strong> no applicable role · <strong>404</strong> unknown
 snapshot.</p>
 <h3 id="get-snapshotsidfilepathpath"><code>GET /snapshots/{id}/file?path={path}</code><a class="headerlink" href="#get-snapshotsidfilepathpath" title="Permanent link">&para;</a></h3>
 <p>One blob, as text for rendering only. Content is cut at 128 KiB with
@@ -3316,7 +3316,7 @@ binary returns metadata with no <code>text</code> at all.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span><span class="nt">"path"</span><span class="p">:</span><span class="s2">"plugins/acme-tools/skills/deploy/SKILL.md"</span><span class="p">,</span>
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w"> </span><span class="nt">"size"</span><span class="p">:</span><span class="mi">841</span><span class="p">,</span><span class="nt">"binary"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="nt">"truncated"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="nt">"text"</span><span class="p">:</span><span class="s2">"# Deploy\n..."</span><span class="p">}</span>
 </code></pre></div>
-<p><strong>200</strong> · <strong>403</strong> enforcement enabled, no applicable role · <strong>404</strong> unknown
+<p><strong>200</strong> · <strong>403</strong> no applicable role · <strong>404</strong> unknown
 snapshot, or the path is not in the pinned tree.</p>
 <h3 id="get-snapshotsiddiff"><code>GET /snapshots/{id}/diff</code><a class="headerlink" href="#get-snapshotsiddiff" title="Permanent link">&para;</a></h3>
 <p>The delta a reviewer decides: added, modified and removed paths between the
@@ -3332,7 +3332,7 @@ revoked or unpublished — <code>baselineSha</code> is <code>null</code> and eve
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">             </span><span class="nt">"binary"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="nt">"truncated"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span>
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">             </span><span class="nt">"diff"</span><span class="p">:</span><span class="s2">"--- a/...\n+++ b/...\n@@ -1 +1 @@\n-old\n+new\n"</span><span class="p">}]}</span>
 </code></pre></div>
-<p><strong>200</strong> · <strong>403</strong> enforcement enabled, no applicable role · <strong>404</strong> unknown
+<p><strong>200</strong> · <strong>403</strong> no applicable role · <strong>404</strong> unknown
 snapshot.</p>
 <hr />
 <h2 id="get-snapshotsidvetting"><code>GET /snapshots/{id}/vetting</code><a class="headerlink" href="#get-snapshotsidvetting" title="Permanent link">&para;</a></h2>
@@ -3751,7 +3751,7 @@ the revocation it informs.</p>
 </tr>
 <tr>
 <td>403</td>
-<td>Enforcement is enabled and the caller may not approve that snapshot.</td>
+<td>The caller may not approve that snapshot.</td>
 </tr>
 <tr>
 <td>404</td>

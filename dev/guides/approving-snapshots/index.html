@@ -2538,10 +2538,10 @@ currently receiving, with per-file text diffs. A snapshot of a marketplace
 serving nothing shows every path as new: approving it serves all of it.</p>
 <p>The same reads exist on the API (<code>GET /api/snapshots/{id}/files</code>, <code>.../file</code>,
 <code>.../diff</code> — see
-<a href="../../reference/api/marketplaces/#snapshot-preview">the API reference</a>). With
-<a href="../delegated-administration/">role enforcement</a> enabled they require admin or
-an approver grant for the marketplace, because they return held quarantine
-content.</p>
+<a href="../../reference/api/marketplaces/#snapshot-preview">the API reference</a>). They
+require admin or an approver grant for the marketplace (see
+<a href="../delegated-administration/">Delegated administration</a>), because they return
+held quarantine content.</p>
 <h3 id="contents">Contents<a class="headerlink" href="#contents" title="Permanent link">&para;</a></h3>
 <p><code>GET /api/snapshots/{id}/content</code> enumerates what the snapshot declares — each
 plugin with its name, <code>source</code> and description, and the skills found under each.
@@ -2919,10 +2919,8 @@ at this exact upstream commit and said no.</p>
 <h2 id="who-may-approve">Who may approve<a class="headerlink" href="#who-may-approve" title="Permanent link">&para;</a></h2>
 <p>Two independent questions, answered in this order.</p>
 <p><strong>May this principal approve here at all?</strong> That is
-<a href="../delegated-administration/">delegated administration</a>: with role enforcement
-enabled, an admin or an approver scoped to the marketplace. With it disabled —
-the default — any authenticated session can register, ingest, approve and
-reject, and access to the portal is itself the reviewer privilege.</p>
+<a href="../delegated-administration/">delegated administration</a>: an admin or an
+approver scoped to the marketplace.</p>
 <p><strong>May this principal approve <em>this</em> snapshot?</strong> That is the four-eyes rule
 above, and it is a different question: it is about what the reviewer already did
 to the content in front of them, not about what they are permitted to do in
