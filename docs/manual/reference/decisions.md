@@ -158,7 +158,7 @@ separate, sequenced piece of work.
     The chain element is now called a **vetter**; **connector** was narrowed to
     the HTTP transport this ADR specifies. The decision is unchanged — one
     connector still contributes one vetter. See
-    [Glossary](../concepts/glossary.md#vetter).
+    [Glossary](../concepts/glossary.md).
 
 ### [ADR 0010 — Admin override of vetting automation (the cockpit model)](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0010-admin-override-of-vetting-automation.md)
 
@@ -182,7 +182,7 @@ whole blocked outcome.
 
     What this ADR calls a connector is now a **vetter**, and the switch covers
     every vetter in the chain, built-in or external. See
-    [Glossary](../concepts/glossary.md#vetter).
+    [Glossary](../concepts/glossary.md).
 
 ### [ADR 0011 — External plugin sources: admission before resolution](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md)
 
@@ -266,7 +266,7 @@ plainly that an export is not a backup.
 
     Read "vetting connector" here as **vetter**, the chain element this ADR
     declines to put a corpus question inside. See
-    [Glossary](../concepts/glossary.md#vetter).
+    [Glossary](../concepts/glossary.md).
 
 *Proposed.* The first mitigation for T5 (typosquatting) needs a rule that can ask a
 question of the approved estate, which a vetting connector structurally cannot be

@@ -266,7 +266,7 @@ pointer; the page it points at is where the mechanism is explained.
 :   The element of the vetting chain: whatever examines a snapshot and answers
     with a verdict and findings. Built in — `secret-scan`, `prompt-injection`,
     `license-scan`, `skill-conformance` — or external, reached over a
-    [connector](#connector). It is handed the snapshot's identity and a
+    connector. It is handed the snapshot's identity and a
     read-only walk over its files, and nothing else. An administrator can switch
     one off globally or for one marketplace — an audited act that records a
     `DISABLED` verdict rather than shortening the chain
