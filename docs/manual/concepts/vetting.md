@@ -435,6 +435,11 @@ until when.
 - [Waiving a vetting finding](../guides/waiving-findings.md) — accepting a risk,
   end to end.
 - [Admin portal](../reference/portal.md#vetting) — where the verdicts appear.
+  The chain above is drawn there as a
+  [flow per snapshot](../reference/portal.md#the-chain-flow), with a node per
+  step that opens its own evidence; an administrator gets the
+  [same flow per marketplace](../reference/portal.md#vetting-chain-administrators)
+  showing which connectors actually run for it and why.
 - [Configuration](../reference/configuration.md#vetting) — the knobs.
 - [Trust boundaries](trust-boundaries.md) — why approval is the boundary the
   chain protects.
