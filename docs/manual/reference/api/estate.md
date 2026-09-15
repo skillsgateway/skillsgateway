@@ -6,9 +6,9 @@ on-demand trigger. What the declaration itself looks like is in
 walkthrough is in
 [Declarative estate configuration](../../guides/declarative-estate.md).
 
-Under role enforcement the report is **auditor-or-admin** (failure reasons
-expose operator infrastructure, like the subscriber and sink listings) and the
-trigger is **admin-only**.
+The report is **auditor-or-admin** (failure reasons expose operator
+infrastructure, like the subscriber and sink listings) and the trigger is
+**admin-only**.
 
 **Machine reach.** `estate:read` covers the report and `estate:reconcile` the
 trigger — separately, so a credential that reads drift cannot also cause a
@@ -51,7 +51,7 @@ the history.
 | Status | Meaning |
 | --- | --- |
 | 200 | The last run's report. |
-| 403 | Enforcement is enabled and the caller holds neither auditor nor admin. |
+| 403 | The caller holds neither auditor nor admin. |
 | 404 | No reconciliation has run (not reachable in practice: startup always runs one). |
 
 ---
@@ -76,7 +76,7 @@ the actor `config-reconciler`.
 | Status | Meaning |
 | --- | --- |
 | 200 | The run's report, converged or not — a failed entry is a report line, not an error status. |
-| 403 | Enforcement is enabled and the caller is not an admin. |
+| 403 | The caller is not an admin. |
 
 !!! note "Reconciliation never deletes"
 

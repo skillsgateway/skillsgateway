@@ -285,9 +285,8 @@ pane: the pinned commit's actual content, not a summary of it.
 
 This is inspection, not execution: nothing fetched here is ever run, followed
 or injected as markup, and the pane changes nothing about what the facade
-serves. While role enforcement is enabled these reads are privileged — admin
-or an approver of this marketplace — so the pane shows an error to a session
-holding neither.
+serves. These reads are privileged — admin or an approver of this marketplace
+— so the pane shows an error to a session holding neither.
 
 ### Set up a client
 
@@ -355,8 +354,8 @@ it is still published* (warn mode), or *revoked by a re-vetting violation*
 through the facade, each with a fetch count and a last-fetch time, from
 `GET /api/snapshots/{id}/fetchers`. It is only requested for a revoked snapshot.
 When nobody fetched it, the panel says so rather than showing an empty list.
-While role enforcement is enabled this read is privileged — admin or an approver
-of this marketplace — so the panel shows an error to a session holding neither.
+This read is privileged — admin or an approver of this marketplace — so the
+panel shows an error to a session holding neither.
 
 The way back is on the [marketplaces](#marketplaces) page: a revoked snapshot's
 approve control reads **Re-approve** and goes through the ordinary gate. See
@@ -472,9 +471,9 @@ Empty state: "No fetches recorded yet."
 
 The [adoption and staleness reports](api/adoption.md), read-only. Subtitle:
 "Who fetches what through the facade, aggregated from the append-only ledger,
-and which identities are not on the served tip." With
-[role enforcement](#authorization) enabled both underlying reads require the
-auditor role, so a session without it sees the page's error state.
+and which identities are not on the served tip." Both underlying reads require
+the auditor role (see [Authorization](#authorization)), so a session without
+it sees the page's error state.
 
 ### Window and totals
 

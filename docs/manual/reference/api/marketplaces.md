@@ -3,8 +3,7 @@
 The core API: registration, ingestion, the approval gate and provenance. All
 paths are relative to `/api`.
 
-With [role enforcement](../../guides/delegated-administration.md) enabled:
-registration and sync-mode changes require **admin**; ingest, approve, reject,
+Registration and sync-mode changes require **admin**; ingest, approve, reject,
 re-vet, and waiver create/delete require **approver of the marketplace** (or
 admin) — resolved server-side from the addressed snapshot or waiver where the
 route carries an id; every `GET` on this page stays open to any session, except
@@ -13,7 +12,8 @@ the [snapshot preview](#snapshot-preview) reads and the
 approver-or-admin standing as a decision on that snapshot, and the connector
 settings, which are **admin**. Two administrative escape hatches require
 **admin** specifically: overriding a blocked vetting outcome on approve, and
-enabling or disabling a connector.
+enabling or disabling a connector. See
+[Delegated administration](../../guides/delegated-administration.md).
 
 **Machine reach.** `marketplaces:read` covers `GET /marketplaces`, `GET
 /catalog` and a snapshot's `/content`, `/content-diff`, `/licenses`,
@@ -352,7 +352,7 @@ at 2000 entries; `"truncated": true` says it was cut.
             {"path":"plugins/acme-tools/skills/deploy/SKILL.md","size":841}]}
 ```
 
-**200** · **403** enforcement enabled, no applicable role · **404** unknown
+**200** · **403** no applicable role · **404** unknown
 snapshot.
 
 ### `GET /snapshots/{id}/file?path={path}`
@@ -366,7 +366,7 @@ binary returns metadata with no `text` at all.
  "size":841,"binary":false,"truncated":false,"text":"# Deploy\n..."}
 ```
 
-**200** · **403** enforcement enabled, no applicable role · **404** unknown
+**200** · **403** no applicable role · **404** unknown
 snapshot, or the path is not in the pinned tree.
 
 ### `GET /snapshots/{id}/diff`
@@ -388,7 +388,7 @@ revoked or unpublished — `baselineSha` is `null` and every path is reported as
              "diff":"--- a/...\n+++ b/...\n@@ -1 +1 @@\n-old\n+new\n"}]}
 ```
 
-**200** · **403** enforcement enabled, no applicable role · **404** unknown
+**200** · **403** no applicable role · **404** unknown
 snapshot.
 
 ---
@@ -624,7 +624,7 @@ the revocation it informs.
 | Status | Cause |
 | --- | --- |
 | 200 | The identities that fetched the snapshot's content. |
-| 403 | Enforcement is enabled and the caller may not approve that snapshot. |
+| 403 | The caller may not approve that snapshot. |
 | 404 | Unknown snapshot. |
 
 ---

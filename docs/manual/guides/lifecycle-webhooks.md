@@ -37,9 +37,9 @@ receiver can tell the two apart. See
     `revoked` means enforcement already retracted it and
     `snapshot.revoked` follows.
 
-With [role enforcement](delegated-administration.md) enabled, registering and
-deleting subscribers require **admin**; the subscriber and delivery listings
-require **auditor** (or admin).
+Registering and deleting subscribers require **admin**; the subscriber and
+delivery listings require **auditor** (or admin). See
+[Delegated administration](delegated-administration.md).
 
 ## 1. Register a subscriber
 

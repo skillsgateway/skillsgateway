@@ -56,9 +56,9 @@ different.
 catalog commit itself. Fetches of `/git/catalog` land on the audit ledger under
 the name `catalog` like any marketplace, and a manual
 `POST /api/catalog/rebuild` (the on-demand repair path) is ledger-recorded with
-the acting identity and, with
-[role enforcement](delegated-administration.md) enabled, requires **admin**;
-the catalog read stays open to any session.
+the acting identity and requires **admin**
+(see [role enforcement](delegated-administration.md)); the catalog read stays
+open to any session.
 
 ## Configuration
 

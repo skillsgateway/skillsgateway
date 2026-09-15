@@ -2,9 +2,8 @@
 
 Personal access tokens are the credential git clients use against the
 [facade](../git-facade.md). They are the only part of the API scoped per user,
-and they stay owner-scoped with
-[role enforcement](../../guides/delegated-administration.md) enabled: managing
-your own tokens never requires a role.
+and they stay owner-scoped: managing your own tokens never requires a role.
+See [Delegated administration](../../guides/delegated-administration.md).
 
 All paths are relative to `/api`.
 
@@ -287,10 +286,8 @@ scopes, and its principal's roles. A credential scoped `audit:read` still gets
 `snapshots:read` reaches a snapshot's preview reads and its `/fetchers` report
 only where its principal approves that marketplace, or is an admin.
 
-Scope and allowlist enforcement, unlike role enforcement, does **not** consult
-that flag and is always on. The flag exists so an upgrade does not lock out
-sessions that predate role enforcement, and nothing predates a credential kind
-that did not exist.
+Scope and allowlist enforcement is independent of role enforcement; both are
+unconditional and always on.
 
 A machine principal acquires a role from the deployment's configuration
 (`skills-gateway.roles.admins`) or from a grant, which `estate.grants` can
@@ -299,10 +296,10 @@ none.
 
 ### `POST /api/tokens/machine`
 
-Provisions a credential. Requires the `admin` role **whether or not role
-enforcement is enabled** — a credential outlives the session that created it,
-and under a default-off flag any user who completed a login could otherwise mint
-one that keeps working after their own account is deprovisioned.
+Provisions a credential. Requires the `admin` role — a credential outlives the
+session that created it, and without that requirement any user who completed a
+login could mint one that keeps working after their own account is
+deprovisioned.
 
 ```json
 {

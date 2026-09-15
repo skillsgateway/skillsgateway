@@ -21,9 +21,9 @@ identities that never received anything.
 
 ---
 
-With [role enforcement](../../guides/delegated-administration.md) enabled, both
-reads require **auditor** (or admin) — they enumerate identities off the
-ledger, exactly like the ledger reads themselves.
+Both reads require **auditor** (or admin) — they enumerate identities off the
+ledger, exactly like the ledger reads themselves. See
+[Delegated administration](../../guides/delegated-administration.md).
 
 ---
 
