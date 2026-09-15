@@ -15,7 +15,7 @@ import { VettingFlow } from "./vetting-flow";
 function suppressionsOf(view: typeof waivedVetting) {
   return new Map<string, WaiverSuppression>(
     (view.suppressed ?? []).map((suppression) => [
-      `${suppression.connector ?? ""}|${suppression.ruleId ?? ""}|${suppression.location ?? ""}`,
+      `${suppression.vetter ?? ""}|${suppression.ruleId ?? ""}|${suppression.location ?? ""}`,
       suppression,
     ]),
   );
@@ -37,7 +37,7 @@ function snapshotStory(view: typeof blockedVetting) {
   return { label: SNAPSHOT_LABEL, headline: snapshotHeadline(nodes), nodes };
 }
 
-/** Every connector passed: the gate is open and nothing is waiting on a person to accept a risk. */
+/** Every vetter passed: the gate is open and nothing is waiting on a person to accept a risk. */
 export const Clear: Story = {
   args: snapshotStory(clearVetting),
   play: async ({ canvasElement }) => {
@@ -45,12 +45,12 @@ export const Clear: Story = {
     await expect(canvas.getByRole("list", { name: SNAPSHOT_LABEL })).toBeInTheDocument();
     // The answer is stated once, above the drawing, before anything is clicked.
     await expect(canvas.getByText("Clear")).toBeInTheDocument();
-    await expect(canvas.getByText("· 2 connectors, 0 findings")).toBeInTheDocument();
+    await expect(canvas.getByText("· 2 vetters, 0 findings")).toBeInTheDocument();
     await expect(canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: Approval, open` })).toBeInTheDocument();
   },
 };
 
-/** One connector failed. The headline names the step; the gate reads closed. */
+/** One vetter failed. The headline names the step; the gate reads closed. */
 export const Blocked: Story = {
   args: snapshotStory(blockedVetting),
   play: async ({ canvasElement }) => {
@@ -67,7 +67,7 @@ export const Blocked: Story = {
   },
 };
 
-/** Cleared only because a finding was accepted: the connector still reads as having failed. */
+/** Cleared only because a finding was accepted: the vetter still reads as having failed. */
 export const WithWaivers: Story = {
   args: {
     ...snapshotStory(waivedVetting),
@@ -83,7 +83,7 @@ export const WithWaivers: Story = {
   },
 };
 
-/** A connector an administrator switched off, and an external one that has not answered yet. */
+/** A vetter an administrator switched off, and an external one that has not answered yet. */
 export const SkippedAndPending: Story = {
   args: snapshotStory(disabledAndPendingVetting),
   play: async ({ canvasElement }) => {
@@ -96,12 +96,12 @@ export const SkippedAndPending: Story = {
   },
 };
 
-/** A node opens its own evidence: the findings behind the verdict, and what the connector is. */
+/** A node opens its own evidence: the findings behind the verdict, and what the vetter is. */
 export const NodeDetail: Story = {
   args: snapshotStory(blockedVetting),
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
-    await step("open the failing connector's node", async () => {
+    await step("open the failing vetter's node", async () => {
       await userEvent.click(canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: secret-scan, fail` }));
     });
     const dialog = within(await within(document.body).findByRole("dialog"));
@@ -119,7 +119,7 @@ export const MarketplaceChain: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText("2 of 3 connectors run")).toBeInTheDocument();
+    await expect(canvas.getByText("2 of 3 vetters run")).toBeInTheDocument();
     await expect(canvas.getByText("· secret-scan off for this marketplace")).toBeInTheDocument();
     // Each node carries where its state came from, so a default is not read as a decision.
     await expect(canvas.getByText("this marketplace")).toBeInTheDocument();
@@ -129,7 +129,7 @@ export const MarketplaceChain: Story = {
   },
 };
 
-/** Opening a configured connector: where its state came from, and the switch itself. */
+/** Opening a configured vetter: where its state came from, and the switch itself. */
 export const MarketplaceChainDetail: Story = {
   args: MarketplaceChain.args,
   play: async ({ canvasElement }) => {

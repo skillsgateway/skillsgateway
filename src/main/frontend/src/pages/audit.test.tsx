@@ -47,7 +47,7 @@ test("a_blocked_vetting_row_is_flagged_and_the_marketplace_links_to_its_detail",
           event: "vetting-completed",
           sha: "aaaabbbbccccddddeeeeffff0000111122223333",
           // The server writes the outcome lower-cased in the free-text detail.
-          detail: "trigger=ingestion; outcome=blocked; connectors=3; chain=secret-scan@1,prompt-injection@1,license-scan@1",
+          detail: "trigger=ingestion; outcome=blocked; vetters=3; chain=secret-scan@1,prompt-injection@1,license-scan@1",
         },
       ]),
     ),

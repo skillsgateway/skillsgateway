@@ -16,8 +16,8 @@ export type VettingView = components["schemas"]["VettingView"];
 export type VettingRun = components["schemas"]["Run"];
 export type VettingVerdict = components["schemas"]["VerdictView"];
 export type VettingFinding = components["schemas"]["Finding"];
-export type VettingConnectorInfo = components["schemas"]["ConnectorView"];
-export type ChainConnector = components["schemas"]["ChainConnectorView"];
+export type VetterInfo = components["schemas"]["VetterView"];
+export type ChainVetter = components["schemas"]["ChainVetterView"];
 export type Waiver = components["schemas"]["WaiverView"];
 export type WaiverSuppression = components["schemas"]["Suppression"];
 export type UncoveredFinding = components["schemas"]["UncoveredFinding"];
@@ -199,7 +199,7 @@ export function useIsAdmin() {
 }
 
 /**
- * A marketplace's effective vetting chain: every connector in the order it runs, the state its
+ * A marketplace's effective vetting chain: every vetter in the order it runs, the state its
  * enablement resolves to for this marketplace, and which setting decided that.
  *
  * Read from the server rather than recombined here from the settings list: "per-marketplace, else
@@ -212,23 +212,23 @@ export function useMarketplaceVettingChain(marketplace: string | null) {
   return useQuery({
     queryKey: ["marketplace-vetting-chain", marketplace],
     queryFn: () =>
-      api<ChainConnector[]>(`/api/marketplaces/${encodeURIComponent(marketplace ?? "")}/vetting-chain`),
+      api<ChainVetter[]>(`/api/marketplaces/${encodeURIComponent(marketplace ?? "")}/vetting-chain`),
     enabled: marketplace !== null,
   });
 }
 
 /**
- * Switch one built-in connector on or off for one marketplace. Administrator-only at the server,
- * audited there with the connector, the scope, the new state and the reason.
+ * Switch one built-in vetter on or off for one marketplace. Administrator-only at the server,
+ * audited there with the vetter, the scope, the new state and the reason.
  *
  * @Requirements GW_VETTING_0029.5
  */
-export function useToggleConnector() {
+export function useToggleVetter() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (request: { connector: string; marketplace: string; enabled: boolean; reason?: string }) =>
-      api<components["schemas"]["ConnectorToggle"]>(
-        `/api/vetting/connectors/${encodeURIComponent(request.connector)}/toggle`,
+    mutationFn: (request: { vetter: string; marketplace: string; enabled: boolean; reason?: string }) =>
+      api<components["schemas"]["VetterToggle"]>(
+        `/api/vetting/vetters/${encodeURIComponent(request.vetter)}/toggle`,
         {
           method: "PUT",
           body: JSON.stringify({

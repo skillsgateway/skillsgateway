@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { useMarketplaceVettingChain, useToggleConnector } from "@/api/queries";
+import { useMarketplaceVettingChain, useToggleVetter } from "@/api/queries";
 import { VettingFlow } from "@/components/vetting-flow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,41 +14,41 @@ import { marketplaceFlow, marketplaceHeadline, type FlowNode } from "@/lib/vetti
  * note is for rather than pretending it is required.
  */
 function ToggleControls({ node, marketplace }: { node: FlowNode; marketplace: string }) {
-  const toggle = useToggleConnector();
+  const toggle = useToggleVetter();
   const [reason, setReason] = useState("");
-  const connector = node.setting?.name ?? "";
+  const vetter = node.setting?.name ?? "";
   const enabled = node.setting?.enabled === true;
   const next = !enabled;
-  const hintId = `connector-toggle-hint-${connector}`;
+  const hintId = `vetter-toggle-hint-${vetter}`;
 
   return (
     <div className="mt-2 space-y-2 rounded-md border bg-muted/40 p-3">
       <div className="space-y-1">
-        <Label htmlFor={`connector-reason-${connector}`}>Reason (optional)</Label>
+        <Label htmlFor={`vetter-reason-${vetter}`}>Reason (optional)</Label>
         <Input
-          id={`connector-reason-${connector}`}
+          id={`vetter-reason-${vetter}`}
           autoComplete="off"
           value={reason}
           aria-describedby={hintId}
           onChange={(event) => setReason(event.target.value)}
-          placeholder={next ? "Why should this connector run here?" : "Why is this connector off here?"}
+          placeholder={next ? "Why should this vetter run here?" : "Why is this vetter off here?"}
         />
       </div>
       <p id={hintId} className="text-xs text-muted-foreground">
         The change is scoped to this marketplace and overrides the global setting. It is recorded on
-        the audit ledger with your identity, the connector, the scope, the new state and this note.
+        the audit ledger with your identity, the vetter, the scope, the new state and this note.
       </p>
       <Button
         size="sm"
         variant={next ? "default" : "outline"}
         disabled={toggle.isPending}
-        aria-label={`${next ? "Enable" : "Disable"} ${connector} for ${marketplace}`}
+        aria-label={`${next ? "Enable" : "Disable"} ${vetter} for ${marketplace}`}
         onClick={() =>
           toggle.mutate(
-            { connector, marketplace, enabled: next, reason: reason.trim() || undefined },
+            { vetter, marketplace, enabled: next, reason: reason.trim() || undefined },
             {
               onSuccess: () => {
-                toast.success(`${connector} ${next ? "enabled" : "disabled"} for ${marketplace}`);
+                toast.success(`${vetter} ${next ? "enabled" : "disabled"} for ${marketplace}`);
                 setReason("");
               },
               onError: (error) => toast.error(error.message),
@@ -70,7 +70,7 @@ function ToggleControls({ node, marketplace }: { node: FlowNode; marketplace: st
 
 /**
  * The effective vetting chain of one marketplace, drawn the way a snapshot's chain is drawn but
- * without verdicts: what will run, whether each connector is on, and which setting decided that.
+ * without verdicts: what will run, whether each vetter is on, and which setting decided that.
  *
  * Administrator-only. The caller decides whether to mount it; the server refuses the read to
  * anyone else regardless (GW_VETTING_0029.4), which is what actually protects it.
@@ -86,7 +86,7 @@ export function MarketplaceVettingChain({ marketplace }: { marketplace: string }
       <CardHeader>
         <CardTitle>Vetting chain</CardTitle>
         <CardDescription>
-          What runs against every snapshot of this marketplace, in order, and where each connector's
+          What runs against every snapshot of this marketplace, in order, and where each vetter's
           state comes from. Switching one off narrows the evidence behind an approval; it never makes
           one automatic.
         </CardDescription>

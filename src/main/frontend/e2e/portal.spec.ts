@@ -404,7 +404,7 @@ test("the_vetting_chain_is_drawn_as_a_flow_and_a_node_opens_its_evidence", async
   const { name } = await registerTaintedNamed(page, "flow");
   await page.getByRole("link", { name, exact: true }).click();
 
-  // The chain of the snapshot, in the order it ran: ingestion, the connectors, the aggregation,
+  // The chain of the snapshot, in the order it ran: ingestion, the vetters, the aggregation,
   // and the gate the reviewer is standing at.
   const flow = page.getByRole("list", { name: /^Vetting chain of snapshot \d+$/ }).first();
   await expect(flow).toBeVisible();
@@ -425,7 +425,7 @@ test("the_vetting_chain_is_drawn_as_a_flow_and_a_node_opens_its_evidence", async
   await expect(detail.getByText("instruction-override").first()).toBeVisible();
 
   // And the administrator surface: the effective chain of the marketplace itself, with the
-  // source of each connector's state (GW_VETTING_0029.5).
+  // source of each vetter's state (GW_VETTING_0029.5).
   await detail.press("Escape");
   const chain = page.getByRole("list", { name: `Vetting chain of ${name}` });
   await expect(chain).toBeVisible();

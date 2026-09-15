@@ -305,7 +305,7 @@ function ProvenanceDialog({ snapshotId, onClose }: { snapshotId: number; onClose
 }
 
 /**
- * The review step: the reviewer sees every connector's verdict and its findings before deciding.
+ * The review step: the reviewer sees every vetter's verdict and its findings before deciding.
  * A snapshot whose effective outcome is blocked cannot be approved from here at all — the way
  * past it is to accept each blocking finding with a scoped, expiring waiver, recorded from the
  * finding itself in the report below. The server enforces the same rule independently.
