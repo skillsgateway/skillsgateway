@@ -118,18 +118,29 @@ Making the gateway the *only* path is outside the gateway itself:
 Everything above is about what the gateway *accepts*. This is about what its own
 HTTP surface *promises*.
 
-!!! note "What this promise does not cover"
+!!! note "What this promise covers, and how each surface is checked"
 
-    It covers `/api/**` **and the lifecycle webhook deliveries**. It does **not**
-    currently extend to the `skills-gateway.*` configuration surface, the Helm
-    chart's values, or the declarative estate schema — those appear nowhere in
-    the OpenAPI document, so the diff below cannot see them, however hard a
-    renamed key there breaks a checked-in estate file. Whether those should carry
-    the same additive obligation — and what would gate it — is open in
-    [#121](https://github.com/skillsgateway/skillsgateway/issues/121). Their blast
-    radius is at least different in kind: a renamed configuration key fails at
-    startup, loudly, for the one operator who owns the file, rather than silently
-    in somebody's receiver.
+    It covers `/api/**`, the lifecycle webhook deliveries, and the
+    `skills-gateway.estate.*` declarative estate schema
+    ([guide](../guides/declarative-estate.md#1-declare-the-estate),
+    [reference](configuration.md#declarative-estate)). A renamed or removed
+    estate key breaks a checked-in estate file exactly as a removed API field
+    breaks a client, so the same additive-within-major rule applies: a key may
+    be added, but not renamed, removed, or narrowed, without a major release.
+
+    It does not extend to the rest of `skills-gateway.*`, or to the Helm
+    chart's values — those are operator-facing too, but nothing here declares
+    them a contract yet.
+
+    Enforcement differs by surface, not the obligation. `/api/**` and the
+    webhook deliveries are diffed by oasdiff because both are described in the
+    OpenAPI document. The estate schema is Spring `@ConfigurationProperties`,
+    not OpenAPI, so no diffable document exists for it today — enforcement is
+    by review, against this page and the configuration reference, of what the
+    PR title declares. A future gate could diff the
+    `spring-configuration-metadata.json` the build already generates, if a
+    reviewed miss shows the need; none exists yet, and this change does not add
+    one.
 
     Two consequences are live today. `skills-gateway.roles.enabled` was removed,
     and a deployment that still sets it is **refused at startup** rather than
@@ -193,7 +204,7 @@ grow too.
 
 ### How it is enforced
 
-Three mechanisms, and it is worth being clear about which is which.
+Several mechanisms, and it is worth being clear about which is which.
 
 | Rule | Enforced by |
 | --- | --- |
@@ -201,6 +212,7 @@ Three mechanisms, and it is worth being clear about which is which.
 | A breaking change is detected | The **API contract** workflow diffs every pull request's contract against the one it forked from with [oasdiff](https://github.com/oasdiff/oasdiff), and fails on a breaking classification. |
 | A breaking change is declared | The same workflow requires the PR title — which becomes the squash commit subject, and so the release version — to carry `!` or `BREAKING CHANGE`. |
 | The prefix *was* moved | **Nobody.** No check can tell that a break should have been versioned instead; that is review's job. |
+| The estate schema is additive | **Nobody, mechanically.** `skills-gateway.estate.*` is not OpenAPI, so oasdiff never sees it. Review checks the PR title against this page and [Configuration](configuration.md#declarative-estate). |
 
 Two of oasdiff's default severities are raised to errors in `.oasdiff.yaml`:
 removing a response field, and removing an optional response header. Both are
