@@ -65,6 +65,10 @@ Grants may reference marketplaces declared in the same file (marketplaces
 reconcile first) **or** marketplaces registered through the API earlier —
 adoption can be incremental.
 
+This schema is part of the [compatibility promise](../reference/compatibility.md#the-api-contract):
+a key added later is additive, but renaming or removing one is a breaking
+change like any other.
+
 ## 2. Supply the secrets
 
 The API generates receiver secrets and shows them once. The declarative form
