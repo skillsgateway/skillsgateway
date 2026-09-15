@@ -49,7 +49,15 @@ public class VettingController {
             @Schema(description = "Position in the chain") int order,
 
             @Schema(description = "What the connector looks for, and what it cannot see")
-            String description) {}
+            String description,
+
+            @Schema(description = "Identity of the rule set the connector currently carries (GW_VETTING_0012)")
+            String version,
+
+            @Schema(
+                    description = "Whether the verdict is delegated to an operator-configured external service, so"
+                            + " that a verdict the gateway did not reach itself never reads as one that it did")
+            boolean external) {}
 
     @Schema(description = "A snapshot's latest vetting chain run, the waivers over it, and the chain that produced it")
     public record VettingView(
@@ -107,7 +115,12 @@ public class VettingController {
     public VettingView vetting(@PathVariable long id) {
         Snapshot snapshot = snapshotRepository.findById(id).orElseThrow(() -> new SnapshotNotFoundException(id));
         List<ConnectorView> connectors = vettingService.connectors().stream()
-                .map(connector -> new ConnectorView(connector.name(), connector.order(), connector.description()))
+                .map(connector -> new ConnectorView(
+                        connector.name(),
+                        connector.order(),
+                        connector.description(),
+                        connector.version(),
+                        connector instanceof ExternalVettingConnector))
                 .toList();
         VettingRepository.Run run = vettingService.latestRun(id).orElse(null);
         // Evaluated here rather than read from a column: the effective outcome is a function of

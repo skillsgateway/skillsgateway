@@ -15,6 +15,7 @@ import dev.skillsgateway.server.vetting.VettingConnector;
 import dev.skillsgateway.server.vetting.VettingService;
 import io.github.reqstool.annotations.SVCs;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,6 +120,67 @@ class ConnectorToggleTests extends AbstractGatewayTest {
         mockMvc.perform(get("/api/snapshots/{id}/vetting", snapshot.id()).with(root))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.outcome").value(VettingChain.Outcome.BLOCKED.name()));
+    }
+
+    @Test
+    @SVCs({"SVC_GW_VETTING_0029.5"})
+    void the_effective_chain_names_each_connectors_state_and_the_setting_that_decided_it() throws Exception {
+        String name = uniqueName("chain-view");
+        register(name, plantedUpstream());
+        List<String> chain =
+                vettingService.connectors().stream().map(VettingConnector::name).toList();
+        assertThat(chain).hasSizeGreaterThanOrEqualTo(3);
+        String global = chain.get(0);
+        String scoped = chain.get(1);
+        String untouched = chain.get(2);
+
+        // The global setting is deliberately enabled=true: it changes nothing about what runs, so
+        // it cannot leak into another test's expectations, while still being a *setting* whose
+        // source the chain has to report as global rather than as the default.
+        toggle(global, null, true, "kept on across the estate");
+        toggle(scoped, name, false, "vendor keys, expected");
+
+        // Connector settings are administrator-only to read (GW_VETTING_0029.4), and so is the chain
+        // that reports them.
+        mockMvc.perform(get("/api/marketplaces/{name}/vetting-chain", name)
+                        .with(oidcLogin().idToken(token -> token.subject("mallory"))))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/marketplaces/{name}/vetting-chain", name).with(root))
+                .andExpect(status().isOk())
+                // Every configured connector, in the order the chain runs them.
+                .andExpect(jsonPath("$.length()").value(chain.size()))
+                .andExpect(jsonPath("$[0].name").value(global))
+                .andExpect(jsonPath("$[*].name").value(chain))
+                // A setting at the global scope: enabled, and named as global rather than default.
+                .andExpect(jsonPath("$[?(@.name == '%s')].source".formatted(global)).value("GLOBAL"))
+                .andExpect(jsonPath("$[?(@.name == '%s')].enabled".formatted(global)).value(true))
+                .andExpect(jsonPath("$[?(@.name == '%s')].updatedBy".formatted(global)).value("root"))
+                // The per-marketplace setting wins, and carries its note.
+                .andExpect(jsonPath("$[?(@.name == '%s')].source".formatted(scoped)).value("MARKETPLACE"))
+                .andExpect(jsonPath("$[?(@.name == '%s')].enabled".formatted(scoped)).value(false))
+                .andExpect(jsonPath("$[?(@.name == '%s')].reason".formatted(scoped))
+                        .value("vendor keys, expected"))
+                // No setting at all is its own source, not a missing value.
+                .andExpect(jsonPath("$[?(@.name == '%s')].source".formatted(untouched)).value("DEFAULT"))
+                .andExpect(jsonPath("$[?(@.name == '%s')].enabled".formatted(untouched)).value(true))
+                .andExpect(jsonPath("$[?(@.name == '%s')].version".formatted(untouched)).isNotEmpty());
+
+        mockMvc.perform(get("/api/marketplaces/{name}/vetting-chain", "no-such-marketplace")
+                        .with(root))
+                .andExpect(status().isNotFound());
+    }
+
+    private void toggle(String connector, String marketplace, boolean enabled, String reason) throws Exception {
+        String body = marketplace == null
+                ? "{\"enabled\": %s, \"reason\": \"%s\"}".formatted(enabled, reason)
+                : "{\"enabled\": %s, \"marketplace\": \"%s\", \"reason\": \"%s\"}"
+                        .formatted(enabled, marketplace, reason);
+        mockMvc.perform(put("/api/vetting/connectors/{name}/toggle", connector)
+                        .with(root)
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk());
     }
 
     private Marketplace register(String name, Path upstream) {

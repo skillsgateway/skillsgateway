@@ -128,6 +128,10 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             // The connector settings are admin-only, not an auditor read (GW_VETTING_0029): the switch that
             // governs the vetting chain is not shown to marketplace-scoped approvers or auditors.
             "GET /api/vetting/connector-toggles",
+            // A marketplace's effective chain is the same settings resolved (GW_VETTING_0029.5), so it
+            // sits behind the same administrator check: reporting which connectors an approver's
+            // own marketplace runs is reporting the settings themselves.
+            "GET /api/marketplaces/{name}/vetting-chain",
             // The forge mirror's drift report (GW_FACADE_0023) is admin-only too: it names an outbound
             // integration target and the state of its credential's last use, which is deployment
             // infrastructure rather than a record of what the gateway served to whom.
@@ -322,6 +326,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             if (route.equals("GET /api/roles")
                     || route.equals("GET /api/tokens/machine")
                     || route.equals("GET /api/vetting/connector-toggles")
+                    || route.equals("GET /api/marketplaces/{name}/vetting-chain")
                     || route.equals("GET /api/mirror/drift")) {
                 // Grant administration (GW_AUTH_0013), the machine-credential listing (GW_AUTH_0023), the
                 // connector settings (GW_VETTING_0029) and the mirror's drift report (GW_FACADE_0023) are
