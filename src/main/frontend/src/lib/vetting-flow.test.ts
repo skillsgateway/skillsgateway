@@ -6,7 +6,14 @@ import {
   marketplaceChain,
   waivedVetting,
 } from "@/test/msw-handlers";
-import { marketplaceFlow, snapshotFlow, sourceWord } from "./vetting-flow";
+import {
+  marketplaceFlow,
+  marketplaceHeadline,
+  snapshotFlow,
+  snapshotHeadline,
+  sourceChip,
+  sourceWord,
+} from "./vetting-flow";
 
 describe("snapshotFlow", () => {
   it("draws ingest, every connector in run order, the outcome and the gate", () => {
@@ -113,6 +120,97 @@ describe("marketplaceFlow", () => {
     expect(nodes[1]?.setting?.source).toBe("MARKETPLACE");
     expect(nodes[2]?.setting?.source).toBe("GLOBAL");
     expect(nodes[3]?.setting?.source).toBe("DEFAULT");
+  });
+});
+
+describe("snapshotHeadline", () => {
+  it("names the step the chain stopped at and the worst severity behind it", () => {
+    const headline = snapshotHeadline(snapshotFlow(blockedVetting));
+    expect(headline.result).toBe("Blocked at step 1");
+    expect(headline.detail).toBe("secret-scan found 1 critical finding");
+    expect(headline.tone).toBe("blocked");
+  });
+
+  it("counts the chain rather than naming a step when it cleared", () => {
+    const headline = snapshotHeadline(snapshotFlow(clearVetting));
+    expect(headline.result).toBe("Clear");
+    expect(headline.detail).toBe("2 connectors, 0 findings");
+    expect(headline.tone).toBe("pass");
+  });
+
+  it("says what was accepted when it only cleared because of a waiver", () => {
+    const headline = snapshotHeadline(snapshotFlow(waivedVetting));
+    expect(headline.result).toBe("Clear with waivers");
+    expect(headline.detail).toBe("1 finding accepted");
+    // Never the pass tone: a snapshot that cleared on an acceptance is not a clean one.
+    expect(headline.tone).toBe("warn");
+  });
+
+  it("skips past a disabled step to the one that is actually holding the chain", () => {
+    const headline = snapshotHeadline(snapshotFlow(disabledAndPendingVetting));
+    expect(headline.result).toBe("Blocked at step 3");
+    expect(headline.detail).toBe("corp-llm-reviewer has not answered yet");
+  });
+
+  it("says the chain has not run rather than naming a step that never happened", () => {
+    const headline = snapshotHeadline(snapshotFlow({ ...blockedVetting, run: undefined }));
+    expect(headline.result).toBe("Blocked");
+    expect(headline.detail).toBe("the chain has not run against this snapshot");
+  });
+});
+
+describe("marketplaceHeadline", () => {
+  it("counts what runs and names what is off, with the scope it is off at", () => {
+    const headline = marketplaceHeadline(marketplaceFlow(marketplaceChain));
+    expect(headline.result).toBe("2 of 3 connectors run");
+    expect(headline.detail).toBe("secret-scan off for this marketplace");
+    // A narrowed chain is a fact to weigh, not a pass.
+    expect(headline.tone).toBe("idle");
+  });
+
+  it("reads as a pass only when the whole configured chain runs", () => {
+    const all = marketplaceChain.map((connector) => ({ ...connector, enabled: true }));
+    const headline = marketplaceHeadline(marketplaceFlow(all));
+    expect(headline.result).toBe("3 of 3 connectors run");
+    expect(headline.detail).toBe("every configured connector runs for this marketplace");
+    expect(headline.tone).toBe("pass");
+  });
+
+  it("names a globally disabled connector as off globally", () => {
+    const globallyOff = marketplaceChain.map((connector) =>
+      connector.name === "prompt-injection"
+        ? { ...connector, enabled: false, source: "GLOBAL" as const }
+        : { ...connector, enabled: true },
+    );
+    expect(marketplaceHeadline(marketplaceFlow(globallyOff)).detail).toBe(
+      "prompt-injection off globally",
+    );
+  });
+});
+
+describe("stage identity", () => {
+  it("numbers the connector stages and names the ends of the chain", () => {
+    expect(snapshotFlow(blockedVetting).map((node) => node.eyebrow)).toEqual([
+      "Source",
+      "Step 1",
+      "Step 2",
+      "Result",
+      "Gate",
+    ]);
+  });
+
+  it("puts who switched a connector off on the node itself", () => {
+    const nodes = marketplaceFlow(marketplaceChain);
+    expect(nodes[1]?.meta).toBe("off by alice");
+    expect(nodes[2]?.meta).toBeUndefined();
+  });
+});
+
+describe("sourceChip", () => {
+  it("names the scope short enough to sit on a node", () => {
+    expect(sourceChip("MARKETPLACE")).toBe("this marketplace");
+    expect(sourceChip("GLOBAL")).toBe("global");
+    expect(sourceChip(undefined)).toBe("default");
   });
 });
 

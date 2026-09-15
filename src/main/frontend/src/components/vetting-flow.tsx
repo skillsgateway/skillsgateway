@@ -19,7 +19,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { sourceWord, type FlowNode, type FlowTone } from "@/lib/vetting-flow";
+import {
+  sourceChip,
+  sourceWord,
+  type FlowHeadline,
+  type FlowNode,
+  type FlowTone,
+} from "@/lib/vetting-flow";
 
 /**
  * Tone as colour, in the theme's existing verdict language — and never on its own: every node
@@ -32,6 +38,19 @@ const toneText: Record<FlowTone, string> = {
   idle: "text-muted-foreground",
 };
 
+/**
+ * The stage's top edge, in the same two semantic colours the rest of the portal uses. It is a
+ * second, pre-attentive carrier of the state the node already spells out in words — a scanner
+ * finds the red stage in a long chain without reading it, and a reader who cannot rely on hue
+ * loses nothing, because the word is the carrier of meaning.
+ */
+const toneEdge: Record<FlowTone, string> = {
+  pass: "border-t-primary",
+  warn: "border-t-primary",
+  blocked: "border-t-destructive",
+  idle: "border-t-border",
+};
+
 function NodeIcon({ node }: { node: FlowNode }) {
   const className = `size-4 ${toneText[node.tone]}`;
   if (node.kind === "step" && node.id === "ingest") return <PackageOpen className={className} aria-hidden />;
@@ -42,6 +61,15 @@ function NodeIcon({ node }: { node: FlowNode }) {
   if (node.state === "skipped" || node.state === "disabled")
     return <CircleSlash className={className} aria-hidden />;
   return <CircleHelp className={className} aria-hidden />;
+}
+
+/** The system's stat chip, at the size a stage node can carry two of. */
+function NodeChip({ children }: { children: ReactNode }) {
+  return (
+    <span className="rounded-md border bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">
+      {children}
+    </span>
+  );
 }
 
 /** Stable identity of a finding within a run, matching the report's own key. */
@@ -219,11 +247,14 @@ function NodeDetail({
  */
 export function VettingFlow({
   label,
+  headline,
   nodes,
   suppressions,
   detailFooter,
 }: {
   label: string;
+  /** The one sentence above the drawing: what the chain concluded, and where it stopped. */
+  headline: FlowHeadline;
   nodes: FlowNode[];
   suppressions?: Map<string, WaiverSuppression>;
   /** Extra controls for a node's detail — the marketplace chain puts its toggle here. */
@@ -238,40 +269,54 @@ export function VettingFlow({
 
   return (
     <>
-      <ol aria-label={label} className="flex flex-wrap items-center gap-1.5">
-        {nodes.map((node, index) => (
-          <li key={node.id} className="flex items-center gap-1.5">
-            {index > 0 ? (
-              <ChevronRight className="size-4 shrink-0 text-muted-foreground/50" aria-hidden />
-            ) : null}
-            <button
-              type="button"
-              aria-label={`${label}: ${node.label}, ${node.state}`}
-              onClick={() => setOpenNode(node.id)}
-              className="flex min-w-32 flex-col gap-0.5 rounded-md border bg-muted/40 px-2.5 py-1.5 text-left outline-none transition-all hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-            >
-              <span className="flex items-center gap-1.5 text-sm font-medium">
-                <NodeIcon node={node} />
-                {node.label}
-              </span>
-              <span className={`text-xs ${toneText[node.tone]}`}>{node.state}</span>
-              {node.external || (node.waived ?? 0) > 0 ? (
-                <span className="flex flex-wrap gap-1 pt-0.5">
-                  {node.external ? (
-                    <span className="rounded-md border bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                      external
-                    </span>
-                  ) : null}
-                  {(node.waived ?? 0) > 0 ? (
-                    <span className="rounded-md border bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                      {node.waived} waived
-                    </span>
-                  ) : null}
+      <p className="text-sm">
+        <span className={`font-medium ${toneText[headline.tone]}`}>{headline.result}</span>
+        <span className="text-muted-foreground"> · {headline.detail}</span>
+      </p>
+      <ol aria-label={label} className="flex flex-wrap items-stretch gap-y-2">
+        {nodes.map((node, index) => {
+          // The stage the chain arrives at is the one drawn as a surface rather than an outline —
+          // terminal reads as terminal without a shadow, a second accent, or a size the others do
+          // not have. The ring is the Card's own silhouette, borrowed for the same reason.
+          const terminal = node.terminal === true;
+          return (
+            <li key={node.id} className="flex min-w-0 items-stretch">
+              {index > 0 ? (
+                <span className="flex w-6 shrink-0 items-center" aria-hidden>
+                  <span className="h-px flex-1 bg-border" />
+                  <ChevronRight className="-ml-1.5 size-3.5 shrink-0 text-muted-foreground/60" />
                 </span>
               ) : null}
-            </button>
-          </li>
-        ))}
+              <button
+                type="button"
+                aria-label={`${label}: ${node.label}, ${node.state}`}
+                onClick={() => setOpenNode(node.id)}
+                className={`flex min-h-20 min-w-36 flex-col gap-0.5 rounded-md border border-t-[3px] px-3 py-2 text-left outline-none transition-colors hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none ${toneEdge[node.tone]} ${terminal ? "bg-muted ring-1 ring-foreground/10" : "bg-muted/40"}`}
+              >
+                <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                  {node.eyebrow}
+                </span>
+                <span
+                  className={`flex items-center gap-1.5 text-sm ${terminal ? "font-semibold" : "font-medium"}`}
+                >
+                  <NodeIcon node={node} />
+                  {node.label}
+                </span>
+                <span className={`text-xs ${toneText[node.tone]}`}>{node.state}</span>
+                {node.meta ? (
+                  <span className="text-[11px] text-muted-foreground">{node.meta}</span>
+                ) : null}
+                {node.external || (node.waived ?? 0) > 0 || node.setting ? (
+                  <span className="mt-auto flex flex-wrap gap-1 pt-1">
+                    {node.setting ? <NodeChip>{sourceChip(node.setting.source)}</NodeChip> : null}
+                    {node.external ? <NodeChip>external</NodeChip> : null}
+                    {(node.waived ?? 0) > 0 ? <NodeChip>{node.waived} waived</NodeChip> : null}
+                  </span>
+                ) : null}
+              </button>
+            </li>
+          );
+        })}
       </ol>
       {selected ? (
         <Dialog open onOpenChange={(open) => (open ? undefined : setOpenNode(null))}>
@@ -279,11 +324,7 @@ export function VettingFlow({
             <DialogHeader>
               <DialogTitle>{selected.label}</DialogTitle>
               <DialogDescription>
-                {selected.kind === "connector"
-                  ? `Step ${nodes.indexOf(selected)} of the chain — ${selected.state}.`
-                  : selected.kind === "setting"
-                    ? `Step ${nodes.indexOf(selected)} of the chain — ${selected.state}.`
-                    : `${selected.state}.`}
+                {selected.eyebrow} of the chain — {selected.state}.
               </DialogDescription>
             </DialogHeader>
             <NodeDetail node={selected} suppressions={suppressions ?? new Map()} />

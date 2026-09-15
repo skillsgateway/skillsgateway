@@ -31,6 +31,12 @@ export interface FlowNode {
   label: string;
   state: string;
   tone: FlowTone;
+  /** What this node is in the chain: `Step 2`, `Source`, `Result`, `Gate`. */
+  eyebrow: string;
+  /** The stage the chain arrives at, drawn as a surface so the end reads as an end. */
+  terminal?: boolean;
+  /** One extra fact the node itself should carry, when there is one worth the line. */
+  meta?: string;
   /** One line of explanation, shown in the node's detail. */
   note?: string;
   /** A connector whose verdict the gateway delegates to an external service. */
@@ -127,6 +133,7 @@ export function snapshotFlow(view: VettingView | undefined): FlowNode[] {
       label: "Ingest",
       state: "quarantined",
       tone: "idle",
+      eyebrow: "Source",
       note:
         "The upstream commit was cloned into quarantine and pinned by SHA. Nothing here is served;" +
         " the chain below runs against this pinned content.",
@@ -141,21 +148,24 @@ export function snapshotFlow(view: VettingView | undefined): FlowNode[] {
           .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
           .map((connector) => ({ connector: connector.name }) as VettingVerdict);
 
-  for (const verdict of ordered) {
+  ordered.forEach((verdict, index) => {
     const name = verdict.connector ?? "";
     const connector = byName.get(name);
+    const findings = verdict.findings ?? [];
     nodes.push({
       id: `connector-${name}`,
       kind: "connector",
       label: name,
       state: verdictWord(verdict.state),
       tone: verdictTone(verdict.state),
+      eyebrow: `Step ${index + 1}`,
+      meta: findings.length > 0 ? `${findings.length} ${plural(findings.length, "finding")}` : undefined,
       external: connector?.external === true,
       waived: waived.get(name) ?? 0,
       verdict,
       connector,
     });
-  }
+  });
 
   const blocking = ordered
     .filter((verdict) => verdict.state === "FAIL" || verdict.state === "ERROR" || verdict.state === "PENDING")
@@ -167,6 +177,9 @@ export function snapshotFlow(view: VettingView | undefined): FlowNode[] {
     label: "Outcome",
     state: outcomeWord(view?.outcome),
     tone: outcomeTone(view?.outcome),
+    eyebrow: "Result",
+    // The aggregation is what the whole chain is for, so it is the stage drawn as arrival.
+    terminal: true,
     outcome: {
       recordedOutcome: view?.recordedOutcome,
       blocking,
@@ -181,6 +194,7 @@ export function snapshotFlow(view: VettingView | undefined): FlowNode[] {
     label: "Approval",
     state: blocked ? "closed" : "open",
     tone: blocked ? "blocked" : "idle",
+    eyebrow: "Gate",
     note: blocked
       ? "Approval is refused while the effective outcome is blocked. Each blocking finding has to be" +
         " accepted with a justified, expiring waiver before the gate opens."
@@ -205,11 +219,12 @@ export function marketplaceFlow(chain: ChainConnector[]): FlowNode[] {
       label: "Ingest",
       state: "quarantined",
       tone: "idle",
+      eyebrow: "Source",
       note: "Every snapshot of this marketplace enters quarantine and runs the chain below.",
     },
   ];
 
-  for (const connector of chain) {
+  chain.forEach((connector, index) => {
     const name = connector.name ?? "";
     nodes.push({
       id: `connector-${name}`,
@@ -217,10 +232,17 @@ export function marketplaceFlow(chain: ChainConnector[]): FlowNode[] {
       label: name,
       state: connector.enabled ? "enabled" : "disabled",
       tone: connector.enabled ? "pass" : "idle",
+      eyebrow: `Step ${index + 1}`,
+      // Who switched it off and when, on the node itself: a disabled step is the one an
+      // administrator scanning the chain has to be able to account for without opening it.
+      meta:
+        !connector.enabled && connector.updatedBy
+          ? `off by ${connector.updatedBy}`
+          : undefined,
       external: connector.external === true,
       setting: connector,
     });
-  }
+  });
 
   nodes.push({
     id: "gate",
@@ -228,6 +250,9 @@ export function marketplaceFlow(chain: ChainConnector[]): FlowNode[] {
     label: "Approval",
     state: "held",
     tone: "idle",
+    eyebrow: "Gate",
+    // No verdicts here, so the gate is where this drawing arrives.
+    terminal: true,
     note:
       "However the chain is configured, every snapshot is held until a person approves it." +
       " Switching connectors off narrows the evidence behind that decision; it never makes it" +
@@ -242,4 +267,117 @@ export function sourceWord(source: string | undefined): string {
   if (source === "MARKETPLACE") return "set for this marketplace";
   if (source === "GLOBAL") return "from the global setting";
   return "default — no setting recorded";
+}
+
+/** The same, short enough to sit on the node as a chip. */
+export function sourceChip(source: string | undefined): string {
+  if (source === "MARKETPLACE") return "this marketplace";
+  if (source === "GLOBAL") return "global";
+  return "default";
+}
+
+function plural(count: number, word: string): string {
+  return count === 1 ? word : `${word}s`;
+}
+
+/**
+ * The one sentence above the drawing: what the chain concluded and where it stopped.
+ *
+ * A reader should not have to parse five nodes to learn the answer — the nodes are where they go
+ * *next*, to find out why. Derived from the same node list the drawing renders, so the sentence
+ * and the picture cannot disagree.
+ */
+export interface FlowHeadline {
+  /** The answer, in one or two words. */
+  result: string;
+  tone: FlowTone;
+  /** What stands behind it: where it stopped, or what it is made of. */
+  detail: string;
+}
+
+/** The headline for a snapshot's chain. */
+export function snapshotHeadline(nodes: FlowNode[]): FlowHeadline {
+  const connectors = nodes.filter((node) => node.kind === "connector");
+  const outcome = nodes.find((node) => node.kind === "outcome");
+  const ran = connectors.filter((node) => node.state !== "not run");
+  const findings = connectors.reduce((total, node) => total + (node.verdict?.findings ?? []).length, 0);
+  const waived = connectors.reduce((total, node) => total + (node.waived ?? 0), 0);
+
+  if (outcome?.state === "clear") {
+    return {
+      result: "Clear",
+      tone: "pass",
+      detail: `${connectors.length} ${plural(connectors.length, "connector")}, ${findings} ${plural(findings, "finding")}`,
+    };
+  }
+  if (outcome?.state === "clear with waivers") {
+    return {
+      result: "Clear with waivers",
+      tone: "warn",
+      detail: `${waived} ${plural(waived, "finding")} accepted`,
+    };
+  }
+  if (ran.length === 0) {
+    return { result: "Blocked", tone: "blocked", detail: "the chain has not run against this snapshot" };
+  }
+
+  const stoppedAt = connectors.findIndex((node) => node.tone === "blocked" || node.state === "pending");
+  if (stoppedAt < 0) {
+    return { result: "Blocked", tone: "blocked", detail: "no connector cleared this snapshot" };
+  }
+  const node = connectors[stoppedAt]!;
+  return {
+    result: `Blocked at step ${stoppedAt + 1}`,
+    tone: "blocked",
+    detail: `${node.label} ${stoppedReason(node)}`,
+  };
+}
+
+/** Why the chain stopped at this node, in the words its own verdict supports. */
+function stoppedReason(node: FlowNode): string {
+  if (node.state === "pending") return "has not answered yet";
+  if (node.state === "error") return "did not produce a verdict";
+  const findings = node.verdict?.findings ?? [];
+  if (findings.length === 0) return "objected";
+  const worst = worstSeverity(findings.map((finding) => finding.severity));
+  return `found ${findings.length} ${worst ? `${worst.toLowerCase()} ` : ""}${plural(findings.length, "finding")}`;
+}
+
+/** Severity order as the gateway ranks it; the worst present is the one worth naming. */
+const SEVERITY_ORDER = ["INFO", "LOW", "MEDIUM", "HIGH", "CRITICAL"];
+
+function worstSeverity(severities: (string | undefined)[]): string | undefined {
+  let worst: string | undefined;
+  for (const severity of severities) {
+    if (severity === undefined) continue;
+    if (worst === undefined || SEVERITY_ORDER.indexOf(severity) > SEVERITY_ORDER.indexOf(worst)) {
+      worst = severity;
+    }
+  }
+  return worst;
+}
+
+/**
+ * The headline for a marketplace's configured chain: how much of it runs, and what is off.
+ *
+ * @Requirements GW_VETTING_0029.5
+ */
+export function marketplaceHeadline(nodes: FlowNode[]): FlowHeadline {
+  const connectors = nodes.filter((node) => node.kind === "setting");
+  const off = connectors.filter((node) => node.setting?.enabled !== true);
+  const on = connectors.length - off.length;
+  return {
+    result: `${on} of ${connectors.length} ${plural(connectors.length, "connector")} run`,
+    // Never "good": a narrowed chain is a fact for an administrator to weigh, not a pass.
+    tone: off.length === 0 ? "pass" : "idle",
+    detail:
+      off.length === 0
+        ? "every configured connector runs for this marketplace"
+        : off
+            .map(
+              (node) =>
+                `${node.label} off ${node.setting?.source === "GLOBAL" ? "globally" : "for this marketplace"}`,
+            )
+            .join(", "),
+  };
 }

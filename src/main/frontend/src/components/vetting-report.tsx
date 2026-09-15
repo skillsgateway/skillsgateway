@@ -25,7 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { snapshotFlow } from "@/lib/vetting-flow";
+import { snapshotFlow, snapshotHeadline } from "@/lib/vetting-flow";
 
 function verdictIcon(state?: string) {
   switch (state) {
@@ -365,6 +365,7 @@ export function VettingReport({ snapshotId }: { snapshotId: number }) {
     ]),
   );
   const uncovered = vetting.data?.uncovered ?? [];
+  const flow = snapshotFlow(vetting.data);
   return (
     <section aria-label={`Vetting of snapshot ${snapshotId}`} className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -383,7 +384,8 @@ export function VettingReport({ snapshotId }: { snapshotId: number }) {
           and a waiver is written next to the one being accepted. */}
       <VettingFlow
         label={`Vetting chain of snapshot ${snapshotId}`}
-        nodes={snapshotFlow(vetting.data)}
+        headline={snapshotHeadline(flow)}
+        nodes={flow}
         suppressions={suppressions}
       />
       {uncovered.length > 0 ? (

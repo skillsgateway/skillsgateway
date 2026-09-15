@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { marketplaceFlow, type FlowNode } from "@/lib/vetting-flow";
+import { marketplaceFlow, marketplaceHeadline, type FlowNode } from "@/lib/vetting-flow";
 
 /**
  * The switch itself, inside the node it belongs to. A reason is optional — the server accepts a
@@ -79,6 +79,7 @@ function ToggleControls({ node, marketplace }: { node: FlowNode; marketplace: st
  */
 export function MarketplaceVettingChain({ marketplace }: { marketplace: string }) {
   const chain = useMarketplaceVettingChain(marketplace);
+  const flow = chain.data ? marketplaceFlow(chain.data) : [];
 
   return (
     <Card>
@@ -100,7 +101,8 @@ export function MarketplaceVettingChain({ marketplace }: { marketplace: string }
         {chain.data ? (
           <VettingFlow
             label={`Vetting chain of ${marketplace}`}
-            nodes={marketplaceFlow(chain.data)}
+            headline={marketplaceHeadline(flow)}
+            nodes={flow}
             detailFooter={(node) =>
               node.kind === "setting" ? <ToggleControls node={node} marketplace={marketplace} /> : null
             }
