@@ -312,6 +312,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/marketplaces/{name}/vetting-chain": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A marketplace's effective vetting chain
+         * @description Every configured connector in the order it runs, with the state its enablement resolves to for this marketplace and which setting decided it — the marketplace-scoped setting, the global setting, or the absence of any setting. The resolution is the chain's own, not a recombination of the settings list, so it cannot disagree with what actually runs. Administrator-only, like the settings it reports.
+         */
+        get: operations["vettingChain"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/marketplaces/{name}/waivers": {
         parameters: {
             query?: never;
@@ -1500,6 +1520,38 @@ export interface components {
             /** @description Catalog commit SHA */
             sha?: string;
         };
+        /** @description A connector in a marketplace's effective vetting chain */
+        ChainConnectorView: {
+            /** @description What the connector looks for, and what it cannot see */
+            description?: string;
+            /** @description Whether the connector runs for this marketplace */
+            enabled?: boolean;
+            /** @description Whether the verdict is delegated to an operator-configured external service */
+            external?: boolean;
+            /** @description Stable connector name */
+            name?: string;
+            /**
+             * Format: int32
+             * @description Position in the chain
+             */
+            order?: number;
+            /** @description The note recorded with the deciding setting, or null when it is the default */
+            reason?: string;
+            /**
+             * @description Which setting decided the state
+             * @enum {string}
+             */
+            source?: "MARKETPLACE" | "GLOBAL" | "DEFAULT";
+            /**
+             * Format: date-time
+             * @description When the deciding setting was last set, or null for the default
+             */
+            updatedAt?: string;
+            /** @description The administrator who last set the deciding setting, or null for the default */
+            updatedBy?: string;
+            /** @description Identity of the rule set the connector currently carries */
+            version?: string;
+        };
         /** @description Sync mode change request */
         ChangeSyncModeRequest: {
             /**
@@ -1586,6 +1638,8 @@ export interface components {
         ConnectorView: {
             /** @description What the connector looks for, and what it cannot see */
             description?: string;
+            /** @description Whether the verdict is delegated to an operator-configured external service, so that a verdict the gateway did not reach itself never reads as one that it did */
+            external?: boolean;
             /** @description Stable connector name */
             name?: string;
             /**
@@ -1593,6 +1647,8 @@ export interface components {
              * @description Position in the chain
              */
             order?: number;
+            /** @description Identity of the rule set the connector currently carries (GW_VETTING_0012) */
+            version?: string;
         };
         /** @description One marketplace inside the served catalog revision */
         Constituent: {
@@ -3739,6 +3795,46 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["SyncModeView"];
+                };
+            };
+        };
+    };
+    vettingChain: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The effective chain, in chain order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChainConnectorView"][];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChainConnectorView"][];
+                };
+            };
+            /** @description Named marketplace not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChainConnectorView"][];
                 };
             };
         };

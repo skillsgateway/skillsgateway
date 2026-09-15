@@ -54,16 +54,32 @@ public class ConnectorToggleService {
     }
 
     /**
-     * Whether a connector runs for one marketplace's chain run (GW_VETTING_0029.1): the per-marketplace
-     * setting if there is one, otherwise the global setting, otherwise enabled.
+     * A connector's effective state for one marketplace and the setting that decided it, or a
+     * {@link ChainSource#DEFAULT} resolution with no setting when nothing has ever been set.
+     */
+    public record Resolution(boolean enabled, ChainSource source, ConnectorToggle setting) {}
+
+    /**
+     * The resolution rule (GW_VETTING_0029.1), and the only place it lives: the per-marketplace setting if
+     * there is one, otherwise the global setting, otherwise enabled. Returning the deciding setting
+     * alongside the answer is what lets the administrative chain view name a default as a default
+     * rather than as a decision somebody made.
      */
     @Requirements({"GW_VETTING_0029.1"})
-    public boolean enabled(String connector, long marketplaceId) {
+    public Resolution resolve(String connector, long marketplaceId) {
         return repository
                 .find(connector, marketplaceId)
-                .or(() -> repository.findGlobal(connector))
-                .map(ConnectorToggle::enabled)
-                .orElse(true);
+                .map(toggle -> new Resolution(toggle.enabled(), ChainSource.MARKETPLACE, toggle))
+                .or(() -> repository
+                        .findGlobal(connector)
+                        .map(toggle -> new Resolution(toggle.enabled(), ChainSource.GLOBAL, toggle)))
+                .orElseGet(() -> new Resolution(true, ChainSource.DEFAULT, null));
+    }
+
+    /** Whether a connector runs for one marketplace's chain run (GW_VETTING_0029.1). */
+    @Requirements({"GW_VETTING_0029.1"})
+    public boolean enabled(String connector, long marketplaceId) {
+        return resolve(connector, marketplaceId).enabled();
     }
 
     /**

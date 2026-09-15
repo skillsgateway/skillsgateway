@@ -16,6 +16,8 @@ export type VettingView = components["schemas"]["VettingView"];
 export type VettingRun = components["schemas"]["Run"];
 export type VettingVerdict = components["schemas"]["VerdictView"];
 export type VettingFinding = components["schemas"]["Finding"];
+export type VettingConnectorInfo = components["schemas"]["ConnectorView"];
+export type ChainConnector = components["schemas"]["ChainConnectorView"];
 export type Waiver = components["schemas"]["WaiverView"];
 export type WaiverSuppression = components["schemas"]["Suppression"];
 export type UncoveredFinding = components["schemas"]["UncoveredFinding"];
@@ -183,6 +185,60 @@ export function useSnapshotVetting(snapshotId: number | null) {
     queryKey: ["snapshot-vetting", snapshotId],
     queryFn: () => api<VettingView>(`/api/snapshots/${snapshotId}/vetting`),
     enabled: snapshotId !== null,
+  });
+}
+
+/**
+ * Whether this session holds the administrative role. A hint only: it decides whether an
+ * administrator-only surface is worth rendering, never whether the request behind it is allowed —
+ * the server checks every one of them independently.
+ */
+export function useIsAdmin() {
+  const me = useMe();
+  return (me.data?.roles ?? []).some((role) => role.role === "admin");
+}
+
+/**
+ * A marketplace's effective vetting chain: every connector in the order it runs, the state its
+ * enablement resolves to for this marketplace, and which setting decided that.
+ *
+ * Read from the server rather than recombined here from the settings list: "per-marketplace, else
+ * global, else enabled" is the rule that decides what actually runs, and a second copy of it in
+ * the browser would be free to disagree with the first.
+ *
+ * @Requirements GW_VETTING_0029.5
+ */
+export function useMarketplaceVettingChain(marketplace: string | null) {
+  return useQuery({
+    queryKey: ["marketplace-vetting-chain", marketplace],
+    queryFn: () =>
+      api<ChainConnector[]>(`/api/marketplaces/${encodeURIComponent(marketplace ?? "")}/vetting-chain`),
+    enabled: marketplace !== null,
+  });
+}
+
+/**
+ * Switch one built-in connector on or off for one marketplace. Administrator-only at the server,
+ * audited there with the connector, the scope, the new state and the reason.
+ *
+ * @Requirements GW_VETTING_0029.5
+ */
+export function useToggleConnector() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: { connector: string; marketplace: string; enabled: boolean; reason?: string }) =>
+      api<components["schemas"]["ConnectorToggle"]>(
+        `/api/vetting/connectors/${encodeURIComponent(request.connector)}/toggle`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            enabled: request.enabled,
+            marketplace: request.marketplace,
+            ...(request.reason ? { reason: request.reason } : {}),
+          }),
+        },
+      ),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["marketplace-vetting-chain"] }),
   });
 }
 

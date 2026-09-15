@@ -279,8 +279,11 @@ test("audit_page_exports_the_ledger_and_lists_sinks", async ({ page }) => {
   expect((await download).suggestedFilename()).toBe("audit-ledger.ndjson");
 });
 
-/** Registers the tainted fixture and ingests it, returning its marketplace card. */
-async function registerTainted(page: Page, prefix: string) {
+/**
+ * Registers the tainted fixture and ingests it, returning its marketplace card and the name it
+ * was registered under — the name is what addresses its detail page.
+ */
+async function registerTaintedNamed(page: Page, prefix: string): Promise<{ card: Locator; name: string }> {
   await page
     .getByRole("navigation", { name: "Main" })
     .getByRole("link", { name: "Marketplaces" })
@@ -300,7 +303,12 @@ async function registerTainted(page: Page, prefix: string) {
   const card = marketplaceRegion(page, name);
   await card.getByRole("button", { name: `Ingest ${name}` }).click();
   await expect(card.getByText("held", { exact: true })).toBeVisible();
-  return card;
+  return { card, name };
+}
+
+/** The same, for the tests that only need the card. */
+async function registerTainted(page: Page, prefix: string): Promise<Locator> {
+  return (await registerTaintedNamed(page, prefix)).card;
 }
 
 /**
@@ -383,6 +391,45 @@ test("vetting_verdicts_are_shown_and_a_blocked_snapshot_cannot_be_approved", asy
   const confirm = dialog.getByRole("button", { name: /Confirm approval of snapshot \d+/ });
   await expect(confirm).toBeDisabled();
   await expect(dialog.getByLabel("Reason for approving anyway")).toHaveCount(0);
+});
+
+/**
+ * The chain drawn as a chain, on the surface where a reviewer reads it: the marketplace detail
+ * page, where the report is inline rather than inside the approve dialog.
+ *
+ * @SVCs SVC_GW_VETTING_0031
+ */
+test("the_vetting_chain_is_drawn_as_a_flow_and_a_node_opens_its_evidence", async ({ page }) => {
+  await login(page, "alice");
+  const { name } = await registerTaintedNamed(page, "flow");
+  await page.getByRole("link", { name, exact: true }).click();
+
+  // The chain of the snapshot, in the order it ran: ingestion, the connectors, the aggregation,
+  // and the gate the reviewer is standing at.
+  const flow = page.getByRole("list", { name: /^Vetting chain of snapshot \d+$/ }).first();
+  await expect(flow).toBeVisible();
+  const steps = await flow.getByRole("button").evaluateAll((els) =>
+    els.map((el) => el.getAttribute("aria-label") ?? ""),
+  );
+  expect(steps.at(0)).toContain("Ingest");
+  expect(steps.at(-2)).toContain("Outcome");
+  expect(steps.at(-1)).toContain("Approval");
+  // Every state is a word, not a colour: the blocked chain says so on the outcome node itself.
+  expect(steps.at(-2)).toContain("blocked");
+  const injection = steps.find((label) => label.includes("prompt-injection"));
+  expect(injection).toBeDefined();
+
+  // A node is a control, and it opens that node's own evidence.
+  await flow.getByRole("button", { name: injection!, exact: true }).click();
+  const detail = page.getByRole("dialog");
+  await expect(detail.getByText("instruction-override").first()).toBeVisible();
+
+  // And the administrator surface: the effective chain of the marketplace itself, with the
+  // source of each connector's state (GW_VETTING_0029.5).
+  await detail.press("Escape");
+  const chain = page.getByRole("list", { name: `Vetting chain of ${name}` });
+  await expect(chain).toBeVisible();
+  await expect(chain.getByRole("button", { name: /prompt-injection, enabled$/ })).toBeVisible();
 });
 
 /**

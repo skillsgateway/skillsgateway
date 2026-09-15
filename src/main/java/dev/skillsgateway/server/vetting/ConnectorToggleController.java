@@ -1,5 +1,7 @@
 package dev.skillsgateway.server.vetting;
 
+import dev.skillsgateway.server.persistence.Marketplace;
+import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.roles.RoleService;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,10 +31,18 @@ public class ConnectorToggleController {
 
     private final ConnectorToggleService toggleService;
     private final RoleService roleService;
+    private final VettingService vettingService;
+    private final MarketplaceRepository marketplaceRepository;
 
-    public ConnectorToggleController(ConnectorToggleService toggleService, RoleService roleService) {
+    public ConnectorToggleController(
+            ConnectorToggleService toggleService,
+            RoleService roleService,
+            VettingService vettingService,
+            MarketplaceRepository marketplaceRepository) {
         this.toggleService = toggleService;
         this.roleService = roleService;
+        this.vettingService = vettingService;
+        this.marketplaceRepository = marketplaceRepository;
     }
 
     @Schema(description = "Enable or disable a vetting connector, globally or for one marketplace")
@@ -59,6 +69,45 @@ public class ConnectorToggleController {
     public List<ConnectorToggle> toggles(Authentication authentication) {
         roleService.requireAdmin(authentication);
         return toggleService.list();
+    }
+
+    @GetMapping("/marketplaces/{name}/vetting-chain")
+    @Requirements({"GW_VETTING_0029.4", "GW_VETTING_0029.5"})
+    @Tag(name = "Vetting")
+    @Operation(
+            summary = "A marketplace's effective vetting chain",
+            description = "Every configured connector in the order it runs, with the state its enablement resolves"
+                    + " to for this marketplace and which setting decided it — the marketplace-scoped setting, the"
+                    + " global setting, or the absence of any setting. The resolution is the chain's own, not a"
+                    + " recombination of the settings list, so it cannot disagree with what actually runs."
+                    + " Administrator-only, like the settings it reports.")
+    @ApiResponse(responseCode = "200", description = "The effective chain, in chain order")
+    @ApiResponse(responseCode = "403", description = "Caller does not hold the administrative role")
+    @ApiResponse(responseCode = "404", description = "Named marketplace not found")
+    public List<ChainConnectorView> vettingChain(@PathVariable String name, Authentication authentication) {
+        roleService.requireAdmin(authentication);
+        Marketplace marketplace = marketplaceRepository
+                .findByName(name)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "marketplace '%s' not found".formatted(name)));
+        return vettingService.connectors().stream()
+                .map(connector -> {
+                    ConnectorToggleService.Resolution resolution =
+                            toggleService.resolve(connector.name(), marketplace.id());
+                    ConnectorToggle setting = resolution.setting();
+                    return new ChainConnectorView(
+                            connector.name(),
+                            connector.order(),
+                            connector.description(),
+                            connector.version(),
+                            connector instanceof ExternalVettingConnector,
+                            resolution.enabled(),
+                            resolution.source(),
+                            setting == null ? null : setting.reason(),
+                            setting == null ? null : setting.updatedBy(),
+                            setting == null ? null : setting.updatedAt());
+                })
+                .toList();
     }
 
     @PutMapping("/vetting/connectors/{name}/toggle")

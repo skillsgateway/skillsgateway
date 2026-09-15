@@ -420,8 +420,8 @@ chain has never run against reports `"outcome":"BLOCKED"` and `"run":null`.
              "scope":"SNAPSHOT","scopeValue":"a1b2c3…","justification":"documented dummy key",
              "approvedBy":"alice","createdAt":"...","expiresAt":"2026-09-30T23:59:59Z",
              "revokedAt":null,"revokedBy":null,"active":true}],
- "connectors":[{"name":"secret-scan","order":100,"description":"..."},
-               {"name":"prompt-injection","order":200,"description":"..."}]}
+ "connectors":[{"name":"secret-scan","order":100,"description":"...","version":"3","external":false},
+               {"name":"prompt-injection","order":200,"description":"...","version":"1","external":false}]}
 ```
 
 | Field | Meaning |
@@ -431,6 +431,7 @@ chain has never run against reports `"outcome":"BLOCKED"` and `"run":null`.
 | `suppressed` | The findings an active waiver is currently removing from the computation. |
 | `uncovered` | The blocking findings no active waiver covers — the waivers approval still needs. |
 | `waivers` | The marketplace's waivers whose rule appears in this run, active and lapsed alike. |
+| `connectors` | The configured chain, in the order it runs: `name`, `order`, `description`, `version` (the rule set the connector currently carries) and `external` (the verdict is delegated to an operator-configured service rather than reached by a built-in connector). |
 | `override` | Present when an administrator approved this snapshot over a blocked outcome (`reason`, `blockingConnectors`, `uncoveredFindings`, `overriddenBy`, `overriddenAt`); `null` otherwise. Its presence is what surfaces the override so it is never indistinguishable from a clean approval. See [The vetting override](#administrative-override-of-a-blocked-outcome). |
 
 `state` is one of `PASS`, `WARN`, `FAIL`, `ERROR`, `PENDING`, `DISABLED`;
@@ -473,6 +474,37 @@ overrides.
 | --- | --- |
 | 200 | The connector settings. |
 | 403 | Caller does not hold the administrative role. |
+
+### `GET /marketplaces/{name}/vetting-chain`
+
+The marketplace's **effective** chain: every configured connector in the order it
+runs, the state its enablement resolves to for this marketplace, and which
+setting decided that. The resolution is the chain's own — not a recombination of
+the settings list — so it cannot disagree with what actually runs.
+
+```json
+[{"name":"secret-scan","order":100,"description":"...","version":"3","external":false,
+  "enabled":false,"source":"MARKETPLACE","reason":"vendor keys, expected",
+  "updatedBy":"alice","updatedAt":"2026-08-20T09:00:00Z"},
+ {"name":"prompt-injection","order":200,"description":"...","version":"1","external":false,
+  "enabled":true,"source":"GLOBAL","reason":null,"updatedBy":"root",
+  "updatedAt":"2026-08-01T09:00:00Z"},
+ {"name":"license-scan","order":300,"description":"...","version":"1","external":false,
+  "enabled":true,"source":"DEFAULT","reason":null,"updatedBy":null,"updatedAt":null}]
+```
+
+| Field | Meaning |
+| --- | --- |
+| `enabled` | Whether the connector runs for this marketplace. |
+| `source` | `MARKETPLACE` (a setting scoped to this marketplace), `GLOBAL` (the global setting), or `DEFAULT` (no setting at all, so it runs). The absence of a setting is its own source, never a missing value. |
+| `reason`, `updatedBy`, `updatedAt` | The note, the acting administrator and the time of whichever setting decided the state; `null` for `DEFAULT`. |
+| `external` | The verdict is delegated to an operator-configured external service. |
+
+| Status | Cause |
+| --- | --- |
+| 200 | The effective chain, in chain order. |
+| 403 | Caller does not hold the administrative role. |
+| 404 | Named marketplace not found. |
 
 ### `PUT /vetting/connectors/{name}/toggle`
 

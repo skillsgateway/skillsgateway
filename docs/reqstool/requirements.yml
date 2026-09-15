@@ -1850,3 +1850,20 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
+  - id: GW_VETTING_0029.5
+    title: Administrator surface for a marketplace's effective vetting chain
+    significance: shall
+    description: "The system shall show an administrator, and only an administrator, the effective vetting chain of a named marketplace: every configured connector in the order it runs, with the state its enablement resolves to for that marketplace and whether that state comes from a setting scoped to that marketplace, from the global setting, or from the absence of any setting, together with the note, the acting administrator and the time recorded for whichever setting decided it."
+    rationale: "The guarantee the parent requirement makes is about what the switch may not become, and nobody could check it: the settings list answers which rows exist, not which connectors run, and the one place the resolved chain appeared at all was a snapshot's own vetting view, which does not exist until the marketplace has been ingested — exactly the wrong moment, since the chain is worth configuring before the first ingestion. Naming the source of each state, and the absence of a setting as its own source, is what stops an administrator reading a default as a decision somebody made. Answering with the resolution the chain itself applies, rather than leaving a client to recombine per-marketplace and global rows, keeps a second implementation of the rule from being free to disagree with the one that decides what actually runs."
+    references:
+      requirement_ids: ["GW_VETTING_0029"]
+    categories: ["security", "interaction-capability"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0031
+    title: Portal vetting chain flow
+    significance: shall
+    description: "The system shall present a snapshot's vetting chain in the portal as an ordered flow from ingestion, through each connector in the order it runs, to the chain's aggregated outcome and the approval gate; shall convey each connector's verdict state by an icon and a word as well as by colour; shall mark a connector whose verdict the gateway delegates to an external service as external; and shall make each node of the flow a keyboard-reachable control that opens that node's own evidence — for a connector its findings with the ones an active waiver suppresses shown as accepted, its version and its self-description, and for the outcome node the connectors and the unwaived findings the aggregation is blocking on."
+    rationale: "The chain is an ordered pipeline, and rendering it as an unordered stack of blocks throws away the one thing a reviewer wants at a glance: where the snapshot got stopped, and what ran before and after it. Requiring an icon and a word beside the colour is not decoration — a console read under audit conditions is read by people who cannot rely on hue, and a state that exists only as a colour is a state some readers do not have. Marking an external connector is what keeps a verdict the gateway did not reach itself from reading as one that it did. Putting the evidence behind each node, rather than only in a list beneath, is what makes the overview usable as an entry point instead of an index that has to be cross-referenced."
+    categories: ["interaction-capability", "security"]
+    revision: 0.1.0
