@@ -114,8 +114,9 @@ class OpenApiContractTests extends AbstractGatewayTest {
     void contractWorkflowCarriesTheBreakingChangeContract() throws IOException {
         String workflow = Files.readString(REPO_ROOT.resolve(".github/workflows/api-contract.yml"));
 
-        // a title fixed after a red check has to re-run, as in check-semantic-pr.yml
-        assertThat(workflow).contains("types: [opened, edited, reopened, synchronize]");
+        // a title fixed after a red check has to re-run, as in check-semantic-pr.yml, and so
+        // does a label added after opening: the check reads both
+        assertThat(workflow).contains("types: [opened, edited, reopened, synchronize, labeled, unlabeled]");
 
         // the baseline is what this branch forked from, not whatever main has become since
         assertThat(workflow).contains("fetch-depth: 0");
