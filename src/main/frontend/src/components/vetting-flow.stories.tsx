@@ -141,3 +141,66 @@ export const MarketplaceChainDetail: Story = {
     await expect(dialog.getByText("default — no setting recorded")).toBeInTheDocument();
   },
 };
+
+/**
+ * The same clean run, four vetters long, so the flow draws its full seven nodes: Source, four
+ * steps, Result and Gate.
+ */
+const fourVetterVetting: typeof clearVetting = {
+  ...clearVetting,
+  run: {
+    ...clearVetting.run!,
+    verdicts: [
+      ...clearVetting.run!.verdicts!,
+      { verdictId: 20, vetter: "license-scan", position: 2, state: "PASS", findings: [] },
+      { verdictId: 21, vetter: "corp-llm-reviewer", position: 3, state: "PASS", findings: [] },
+    ],
+  },
+  vetters: [
+    ...clearVetting.vetters!,
+    { name: "license-scan", order: 300, description: "SPDX headers.", version: "1" },
+    {
+      name: "corp-llm-reviewer",
+      order: 400,
+      description: "An operator-configured external reviewer.",
+      version: "2026-09-01",
+      external: true,
+    },
+  ],
+};
+
+/**
+ * Seven nodes in a 720px column: the flow stays one unbroken left-to-right line and scrolls
+ * sideways instead of wrapping. A wrapped row left the Gate stranded on a second line, detached
+ * from the Result it follows, which is the whole reason the row does not wrap.
+ */
+export const SevenNodesNarrow: Story = {
+  args: snapshotStory(fourVetterVetting),
+  decorators: [
+    (Story) => (
+      <div style={{ width: 720 }}>
+        <Story />
+      </div>
+    ),
+  ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const list = canvas.getByRole("list", { name: SNAPSHOT_LABEL });
+    await expect(within(list).getAllByRole("listitem")).toHaveLength(7);
+
+    // The class contract, not the geometry: this runner compiles no Tailwind, so the rendered
+    // widths here are meaningless. What it can hold is that the row is a single non-wrapping
+    // line inside a container that scrolls — which is what keeps the gate beside the result.
+    await expect(list.className).toContain("flex");
+    await expect(list.className).not.toContain("wrap");
+    await expect(list.parentElement!.className).toContain("overflow-x-auto");
+
+    // A node that has to narrow still says its whole name to a pointer and to assistive tech.
+    await expect(canvas.getByTitle("corp-llm-reviewer")).toBeInTheDocument();
+
+    // The gate is still the last node of that line, and still reachable.
+    await expect(
+      canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: Approval, open` }),
+    ).toBeInTheDocument();
+  },
+};
