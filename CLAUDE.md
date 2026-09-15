@@ -36,6 +36,22 @@ mkdocs build --strict                   # docs site — pip install -r docs/requ
 Use `clean` for the reqstool gate: incremental compilation truncates the
 generated annotation files.
 
+## The stop rule (the gate that can say no)
+
+The gates above ask "is this well specified?". This one asks "should this exist?".
+
+- Before proposing new scope, look for an existing surface that can be narrowed
+  or removed instead. **Park it** and **archive it as a decision not to build**
+  are first-class outcomes, level with proposing it.
+- Do not queue OpenSpec changes that will not be started soon. An unstarted
+  proposal is accumulated scope, not progress.
+- A change that adds a backend package, an estate object type, a grantable role,
+  a scheduled sweep, or configuration leaves must say in its proposal why
+  `docs/manual/capability-map.md` cannot absorb it.
+- The mechanical halves are `ConfigSurfaceBudgetTests` (settable configuration
+  leaves) and `ContextBudgetTests` (Spring test contexts). Both are ratchets, not
+  targets: lowering one is free, raising one is the act the proposal must argue.
+
 ## Process
 
 - Every behavior change starts as an OpenSpec change (`/opsx:propose`). A PR

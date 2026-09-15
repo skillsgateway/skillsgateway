@@ -101,6 +101,7 @@ extra:
 nav:
   - Home: index.md
   - Architecture: architecture.md
+  - Capability map: capability-map.md
   - Concepts:
       - Lifecycle — quarantine to serve: concepts/lifecycle.md
       - Vetting — the connector chain: concepts/vetting.md
