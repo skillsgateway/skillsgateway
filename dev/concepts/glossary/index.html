@@ -2006,134 +2006,246 @@
 
 
 <h1 id="glossary">Glossary<a class="headerlink" href="#glossary" title="Permanent link">&para;</a></h1>
-<p>Terms as this project uses them. Several are ordinary git or security words with
-a narrower meaning here.</p>
+<p>Terms as this project uses them, in alphabetical order. Several are ordinary git
+or security words with a narrower meaning here. Each entry is a definition and a
+pointer; the page it points at is where the mechanism is explained.</p>
 <dl>
+<dt><strong>Adoption report</strong></dt>
+<dd>A read-only aggregation over the fetch ledger: per marketplace, who fetched
+what, how recently, and which SHAs are still the served tip. See
+<a href="../../reference/api/adoption/">Adoption</a>.</dd>
 <dt><strong>Approval</strong></dt>
-<dd>The single act that publishes content. <code>ApprovalService</code> fetches a pinned
-quarantine ref into the published repository and force-updates
-<code>refs/heads/main</code> to that SHA. It is the only code path that makes anything
-reachable by a client.</dd>
+<dd>The single act that publishes content, and the only code path that makes
+anything reachable by a client. See
+<a href="../../guides/approving-snapshots/">Approving and rejecting snapshots</a>.</dd>
 <dt><strong>Audit ledger</strong> (or just <em>ledger</em>)</dt>
-<dd>The append-only <code>fetch_log</code> table recording every facade fetch and every
-administrative action. No code path updates or deletes it.</dd>
-<dt><strong>Chain run</strong></dt>
-<dd>One execution of the vetting chain against one snapshot, recorded with its
-verdicts, its findings, and a fail-closed <code>clear</code> or <code>blocked</code> outcome.</dd>
-<dt><strong>Closure</strong></dt>
-<dd>The set of external plugin sources one composite <em>snapshot</em> serves, recorded
-with the snapshot as immutable value copies of what each source was declared
-as, what it resolved to, and where it was grafted. Queryable by source URL;
-checked against the pinned commit at approval.</dd>
-<dt><strong>Connector</strong></dt>
-<dd>A pluggable vetting component. It is handed a snapshot's identity and a
-read-only walk over its files, and answers with a verdict. The gateway
-orchestrates connectors; it does not vet content itself.</dd>
-<dt><strong>Finding</strong></dt>
-<dd>One thing a connector found: a stable rule id, a severity, a <code>path:line</code>
-location, and a message. The rule id is the identity a future waiver would
-be written against.</dd>
-<dt><strong>Override</strong></dt>
-<dd>Approving a snapshot whose chain run blocked, with a mandatory reason. The
-reason is recorded against the run and in the ledger. It is blanket and
-non-expiring — the minimum auditable escape hatch, not a waiver.</dd>
-<dt><strong>Verdict</strong></dt>
-<dd>A connector's conclusion about a snapshot: <code>PASS</code>, <code>WARN</code>, <code>FAIL</code>, <code>ERROR</code>
-or <code>PENDING</code>. Only <code>PASS</code> and <code>WARN</code> let a chain run clear.</dd>
+<dd>The append-only record of every facade fetch and every administrative
+action. No code path updates or deletes it. See
+<a href="../snapshots-and-ledger/">Snapshots and the audit ledger</a>.</dd>
+<dt><strong>Audit sink</strong></dt>
+<dd>A registered HTTP endpoint the gateway pushes ledger entries to, advancing
+its own cursor so delivery is at-least-once rather than best-effort. See
+<a href="../../guides/exporting-the-audit-ledger/#push-sinks">Exporting the audit ledger</a>.</dd>
 <dt><strong>BFF</strong> (backend for frontend)</dt>
 <dd>The pattern the portal uses: the application holds the OIDC tokens and the
-browser holds only a session cookie.</dd>
-<dt><strong>Facade</strong></dt>
-<dd>The read-only git smart-HTTP server at <code>/git/**</code>. The only surface end users
-touch. Authenticated by PAT only; writes impossible by construction.</dd>
+browser holds only a session cookie. See
+<a href="../trust-boundaries/">Trust boundaries</a>.</dd>
+<dt><strong>Blast radius</strong></dt>
+<dd>Who already fetched a snapshot, and therefore who is affected if it is
+retracted. <code>warn</code> mode measures it before <code>enforce</code> is granted the power to
+cause it. See
+<a href="../../guides/re-vetting/#warn-first-then-enforce">Re-vetting approved content</a>.</dd>
+<dt><strong>Chain identity</strong></dt>
+<dd>The identity and version of every connector that produced a chain run,
+stamped into the run. It is what makes "the same content, re-vetted by a
+changed chain" a distinguishable event. See
+<a href="../vetting/">Vetting — the connector chain</a>.</dd>
+<dt><strong>Chain run</strong></dt>
+<dd>One execution of the vetting chain against one snapshot, recorded with its
+verdicts and its findings. The record is raw evidence and is never
+rewritten. See <a href="../vetting/">Vetting — the connector chain</a>.</dd>
+<dt><strong>Closure</strong></dt>
+<dd>The set of external plugin sources one composite snapshot serves, recorded
+with the snapshot as immutable copies of what each source was declared as
+and what it resolved to. See
+<a href="../snapshots-and-ledger/#the-closure-record">the closure record</a>.</dd>
+<dt><strong>Compaction</strong></dt>
+<dd>The retention pass that irreversibly removes what an earlier evaluation
+marked for deletion, reclaiming the objects behind it. See
+<a href="../../reference/retention/#the-two-passes">Snapshot retention</a>.</dd>
+<dt><strong>Connector</strong></dt>
+<dd>A pluggable vetting component, built in or external, handed a snapshot's
+identity and a read-only walk over its files and answering with a verdict.
+An administrator can switch one off globally or for one marketplace — an
+audited act that records a <code>DISABLED</code> verdict rather than shortening the
+chain (<a href="../../reference/api/marketplaces/#connector-enabledisable">connector settings</a>).
+The word is used in this project only for a vetting component; integrations
+to external systems are subscribers, sinks or mirrors. The industry
+equivalents are Harbor's scanner adapter and Dependency-Track's analyzer.
+See <a href="../vetting/">Vetting — the connector chain</a>.</dd>
+<dt><strong>Effective outcome</strong></dt>
+<dd>What actually gates an approval: the recorded chain run with the waivers
+active at that instant layered over it, computed on every read.
+<code>CLEAR_WITH_WAIVERS</code> is deliberately a different word from <code>CLEAR</code>. See
+<a href="../vetting/#the-effective-outcome">The effective outcome</a>.</dd>
 <dt><strong>Estate</strong></dt>
-<dd>Everything the gateway governs that is created at runtime rather than
-coded: marketplaces, role grants, webhook subscribers, audit sinks. The
-estate can be managed interactively through the API, declared in
-configuration (<code>skills-gateway.estate.*</code>), or both.</dd>
+<dd>Everything the gateway governs that is created at runtime rather than coded:
+marketplaces, role grants, webhook subscribers, audit sinks and policy
+rules. It can be managed through the API, declared in configuration
+(<code>skills-gateway.estate.*</code>), or both. See
+<a href="../../guides/declarative-estate/">Declarative estate configuration</a>.</dd>
 <dt><strong>Estate reconciliation</strong></dt>
-<dd>Converging the running estate to the declared one, at startup and on
-demand: additive (nothing absent from the declaration is ever removed),
-idempotent (a converged estate reconciles with zero writes and zero ledger
-entries), audited under the actor <code>config-reconciler</code>, and failure-isolated
-(an invalid entry is reported, never fatal).</dd>
+<dd>Converging the running estate to the declared one, at startup and on demand.
+See <a href="../../guides/declarative-estate/">Declarative estate configuration</a>.</dd>
+<dt><strong>External plugin source</strong></dt>
+<dd>A plugin the marketplace manifest points at outside its own repository. The
+gateway admits nothing by default; when configured, an admitted source is
+resolved into the snapshot rather than dereferenced at install time. See
+<a href="../../reference/configuration/#ingestion-external-plugin-sources">external plugin sources</a>.</dd>
+<dt><strong>Facade</strong></dt>
+<dd>The read-only git smart-HTTP server at <code>/git/**</code>, the only surface end users
+touch. Authenticated by PAT only; writes impossible by construction. See
+<a href="../../reference/git-facade/">Git smart-HTTP facade</a>.</dd>
+<dt><strong>Finding</strong></dt>
+<dd>One thing a connector found: a stable rule id, a severity, a <code>path:line</code>
+location, and a message. The rule id is the identity a waiver is written
+against. See
+<a href="../vetting/#the-connector-contract">The connector contract</a>.</dd>
+<dt><strong>Forge mirror</strong></dt>
+<dd>An optional outbound copy of approved refs pushed to a repository on an
+external code host, for browsing only. It is off by default, and a fetch
+from it is on no ledger. See
+<a href="../../guides/read-only-forge-mirror/">The read-only forge mirror</a>.</dd>
+<dt><strong>Four-eyes</strong> (separation of duties)</dt>
+<dd>The rule that a reviewer may not approve a snapshot they themselves
+supplied — by registering the marketplace, triggering the ingestion, or
+authoring a waiver the approval leans on. It records by default and enforces
+on opt-in. See
+<a href="../../reference/configuration/#separation-of-duties-four-eyes">Separation of duties</a>.</dd>
 <dt><strong>Held</strong></dt>
 <dd>The state every snapshot starts in. Stored, inspectable, and serving
-nothing.</dd>
+nothing. See <a href="../lifecycle/">Lifecycle — quarantine to serve</a>.</dd>
+<dt><strong>Hosted marketplace</strong></dt>
+<dd>A marketplace whose content is pushed straight to the gateway rather than
+fetched, so it has <strong>no upstream</strong> and takes no clone URL. Everything after
+the push is unchanged: quarantined, vetted, held, and served only once
+somebody approves it. See
+<a href="../../guides/publishing-first-party-skills/">Publishing first-party skills</a>.</dd>
+<dt><strong>Ingestion</strong></dt>
+<dd>Cloning an upstream default branch into quarantine and pinning the tip
+commit as <code>refs/snapshots/{sha}</code>. Explicit by default; see <em>Sync mode</em> for
+the other triggers. See
+<a href="../../guides/upstream-sync/">Syncing from upstream automatically</a>.</dd>
+<dt><strong>Lease</strong></dt>
+<dd>A conditional database row one scheduled background pass takes before it
+runs, so a pass runs on one replica per interval rather than once per
+replica. It is never released early and lapses on its own. See
+<a href="../../guides/storage-backends/#running-more-than-one-replica">Running more than one replica</a>.</dd>
+<dt><strong>Machine API credential</strong></dt>
+<dd>An access token whose API scope list is non-empty — what a Terraform
+provider or a CI job holds. Not a second credential type: the same
+issue-rotate-revoke-expire lifecycle as every other token. See
+<a href="../../reference/api/tokens/#machine-api-credentials">Machine API credentials</a>.</dd>
+<dt><strong>Marketplace</strong></dt>
+<dd>A registered upstream git repository — in the Claude Code sense, one
+containing <code>.claude-plugin/marketplace.json</code> — or a hosted marketplace,
+which has no upstream at all. Its name is its identity in the portal, the
+API and the facade URL. See
+<a href="../../guides/registering-a-marketplace/">Registering a marketplace</a>.</dd>
+<dt><strong>Minimum release age</strong></dt>
+<dd>A cooling-off window: a snapshot ingested less than the configured time ago
+cannot be approved however clear its verdicts are. Checked at the approval
+request, and deliberately not a connector. See
+<a href="../../reference/configuration/#minimum-release-age">Minimum release age</a>.</dd>
+<dt><strong>Override</strong></dt>
+<dd>A per-approval act, reserved to an administrator, that approves one snapshot
+whose effective vetting outcome is blocked. A reason is mandatory; it lifts
+<strong>only</strong> the vetting gate — policy, minimum release age and four-eyes still
+decide — and it writes the distinct ledger event
+<code>snapshot-approved-over-vetting-failure</code>. See
+<a href="../../reference/api/marketplaces/#administrative-override-of-a-blocked-outcome">Administrative override of a blocked outcome</a>.</dd>
+<dt><strong>PAT</strong> (personal access token)</dt>
+<dd>The credential git clients authenticate with — <code>sgw_</code> plus 32 random bytes,
+stored only as a SHA-256 digest, shown exactly once. The same credential is
+the machine API credential when it carries API scopes. See
+<a href="../../reference/api/tokens/">Access tokens</a>.</dd>
+<dt><strong>Policy rule</strong></dt>
+<dd>A named CEL deny expression over a snapshot's facts, evaluated fail-closed
+at approval time; there is no per-snapshot override. See
+<a href="../../guides/policy-rules/">Policy deny rules</a>.</dd>
+<dt><strong>Provenance</strong></dt>
+<dd>The record of where a snapshot came from and who decided on it: marketplace,
+upstream URL, upstream SHA, state, ingestion time, deciding principal and
+timestamp. See
+<a href="../snapshots-and-ledger/">Snapshots and the audit ledger</a>.</dd>
+<dt><strong>Published repository</strong></dt>
+<dd><code>{data-dir}/published/{marketplace}.git</code>. Holds exactly one served ref,
+<code>refs/heads/main</code>. Created only by approval, read only by the facade. See
+<a href="../lifecycle/">Lifecycle — quarantine to serve</a>.</dd>
+<dt><strong>Quarantine repository</strong></dt>
+<dd><code>{data-dir}/quarantine/{marketplace}.git</code>. Holds one immutable
+<code>refs/snapshots/{sha}</code> per ingested commit. <strong>Never served.</strong> See
+<a href="../lifecycle/">Lifecycle — quarantine to serve</a>.</dd>
+<dt><strong>Re-vetting</strong></dt>
+<dd>Running the vetting chain again over snapshots that are already approved and
+being served, on a schedule or on demand, and deciding what a fresh answer
+means for content teams already depend on. See
+<a href="../../guides/re-vetting/">Re-vetting approved content</a>.</dd>
 <dt><strong>Revoked</strong></dt>
 <dd>A snapshot that was approved and published, and that a later re-vetting run
 retroactively quarantined. Its published refs are gone; its quarantined copy
 is not. It returns to being served only through a fresh approve decision.
 See <a href="../../guides/re-vetting/">Re-vetting approved content</a>.</dd>
-<dt><strong>Ingestion</strong></dt>
-<dd>Cloning an upstream default branch into quarantine and pinning the tip
-commit as <code>refs/snapshots/{sha}</code>. Explicit — there is no upstream watcher.</dd>
-<dt><strong>Marketplace</strong></dt>
-<dd>A registered upstream git repository. In the Claude Code sense, a repository
-containing <code>.claude-plugin/marketplace.json</code>. Its name is its identity in
-the portal, the API and the facade URL.</dd>
-<dt><strong>PAT</strong> (personal access token)</dt>
-<dd>The credential git clients authenticate with — <code>sgw_</code> plus 32 random bytes,
-stored only as a SHA-256 digest, shown exactly once.</dd>
-<dt><strong>Policy rule</strong></dt>
-<dd>A named <a href="../../guides/policy-rules/">CEL deny expression</a> over a snapshot's
-facts, compiled to a boolean at write time and evaluated fail-closed at
-approval time. A matching or erroring enabled rule refuses the approval;
-the deciding rule lands on the ledger as <code>policy-denied</code>. There is no
-per-snapshot override — the exception path is editing or disabling the
-rule, audited.</dd>
-<dt><strong>Provenance</strong></dt>
-<dd>The record of where a snapshot came from and who decided on it: marketplace,
-upstream URL, upstream SHA, state, ingestion time, deciding principal and
-timestamp.</dd>
-<dt><strong>Published repository</strong></dt>
-<dd><code>{data-dir}/published/{marketplace}.git</code>. Holds exactly one served ref,
-<code>refs/heads/main</code>. Created only by approval, read only by the facade.</dd>
-<dt><strong>Quarantine repository</strong></dt>
-<dd><code>{data-dir}/quarantine/{marketplace}.git</code>. Holds one immutable
-<code>refs/snapshots/{sha}</code> per ingested commit. <strong>Never served.</strong></dd>
-<dt><strong>Rotation</strong></dt>
-<dd>Replacing a token's secret while keeping its grant — name, scopes, and the
-same expiry deadline. The old token is revoked before the new one is
-issued, so a failure between the steps leaves no live secret rather than
-two.</dd>
-<dt><strong>Scope</strong> (of a token)</dt>
-<dd>The marketplace names a token may fetch through the facade; the virtual
-catalog's name is a valid entry. Empty means all. Out-of-scope answers are
-indistinguishable from not-found.</dd>
 <dt><strong>Role grant</strong></dt>
-<dd>One row of current state giving a principal a role — <code>admin</code> (global),
-<code>approver</code> (scoped to one marketplace), or <code>auditor</code> (global, read-only).
-Managed through <code>/api/roles</code>, audited on the ledger, and effective as soon
-as it is made. Principals in
-<code>skills-gateway.roles.admins</code> are admins by configuration, without a grant
-row, and cannot be revoked through the API.</dd>
+<dd>One row giving a principal a role — <code>admin</code>, <code>approver</code> (scoped to one
+marketplace) or <code>auditor</code>. Grant rows are one of three sources of roles,
+alongside the <code>skills-gateway.roles.admins</code> list and the identity provider's
+claim mappings; a session's effective roles are their <strong>union</strong>. See
+<a href="../../guides/identity-providers/#groups-instead-of-grants">Groups instead of grants</a>.</dd>
+<dt><strong>Rotation</strong></dt>
+<dd>Replacing a token's secret while keeping its grant — name, scopes and the
+same expiry deadline. The old token is revoked before the new one is issued.
+See <a href="../../reference/api/tokens/">Access tokens</a>.</dd>
+<dt><strong>Rule id</strong></dt>
+<dd>The stable identifier of one connector rule (<code>aws-access-key-id</code>), carried
+by every finding it raises and the identity a waiver names. It is part of
+the connector contract rather than a display string, and is unrelated to a
+<em>policy rule</em>. See
+<a href="../vetting/#the-connector-contract">The connector contract</a>.</dd>
+<dt><strong>Scope</strong> (of a token)</dt>
+<dd>Three separate dimensions with three different empty values: <code>scopes</code>
+(fetch through the facade), <code>pushScopes</code> (publish) and <code>apiScopes</code> (the
+control plane). See
+<a href="../../reference/api/tokens/#three-scope-dimensions-three-different-empty-values">Three scope dimensions</a>.</dd>
 <dt><strong>Skill</strong></dt>
 <dd>A unit of agent capability — a <code>SKILL.md</code> directory in the open Agent Skills
-format, or a component of a Claude Code plugin.</dd>
+format, or a component of a Claude Code plugin. See
+<a href="../../guides/consuming-skills/">Consuming approved skills</a>.</dd>
 <dt><strong>Snapshot</strong></dt>
-<dd>One upstream commit captured at one moment, with a vetting decision
-attached. The unit of review, approval, serving and audit.</dd>
+<dd>One commit captured at one moment, with a vetting decision attached — the
+unit of review, approval, serving and audit. It may be a composite commit
+the gateway synthesised from the upstream tree plus resolved external plugin
+sources, with the upstream commit as its parent. See
+<a href="../snapshots-and-ledger/#composite-snapshots">Composite snapshots</a>.</dd>
+<dt><strong>Suppression</strong></dt>
+<dd>What an active waiver does to a finding: it removes it from the inputs the
+effective outcome is derived from, so the verdict is recomputed without it.
+The recorded run still shows the finding. See
+<a href="../vetting/#the-effective-outcome">The effective outcome</a>.</dd>
 <dt><strong>Sync mode</strong></dt>
 <dd>How new upstream content reaches quarantine for one marketplace:
-<code>on-demand</code> (an operator's explicit call, the default), <code>scheduled</code> (the
-gateway's polling sweep), or <code>webhook</code> (a signed forge push webhook). Only
-the trigger — every mode lands snapshots <code>held</code> behind the same approval
-gate.</dd>
+<code>on-demand</code> (the default), <code>scheduled</code> or <code>webhook</code>. Only the trigger —
+every mode lands snapshots <code>held</code> behind the same approval gate. See
+<a href="../../guides/upstream-sync/">Syncing from upstream automatically</a>.</dd>
 <dt><strong>Upload-pack</strong></dt>
 <dd>The git smart-HTTP operation that serves objects to a fetching client. The
-only git service the <em>facade</em> enables; receive-pack (push) is disabled
-there. The separate publish endpoint enables both, for hosted marketplaces
-only.</dd>
+only git service the facade enables. See
+<a href="../../reference/git-facade/">Git smart-HTTP facade</a>.</dd>
+<dt><strong>Verdict</strong></dt>
+<dd>A connector's conclusion about a snapshot: <code>PASS</code>, <code>WARN</code>, <code>FAIL</code>, <code>ERROR</code>,
+<code>PENDING</code> or <code>DISABLED</code>. Only <code>PASS</code> and <code>WARN</code> clear, and <code>DISABLED</code> is the
+one state that neither clears nor blocks. See
+<a href="../vetting/#verdict-states">Verdict states</a>.</dd>
 <dt><strong>Violation</strong></dt>
-<dd>The reason ingestion flagged a snapshot — for example an external plugin
-source, which is rejected fail-closed in the current scope.</dd>
+<dd>The reason ingestion flagged a snapshot: an external plugin source that
+admission refused, that could not be resolved, or that exceeded a resolution
+budget. External sources are admissible where they are configured to be, so
+a violation records a refusal rather than their mere presence. See
+<a href="../../guides/approving-snapshots/#violations">Violations</a>.</dd>
 <dt><strong>Virtual catalog</strong></dt>
 <dd>The synthesized repository at <code>/git/catalog</code> vendoring the currently served
-snapshot of every marketplace under a namespaced subdirectory, with one
-merged manifest. Strictly derived from published content; rebuilt on every
-approval and revocation; each revision is a parentless commit, so retracted
-constituents are unreachable from every advertised ref.</dd>
+snapshot of every marketplace under one merged manifest, rebuilt on every
+approval and revocation. See
+<a href="../../guides/virtual-catalog/">The virtual catalog</a>.</dd>
+<dt><strong>Waiver</strong></dt>
+<dd>An accepted-risk exception for one finding rule, on one marketplace, within
+one scope, until one date. All four are mandatory, and so are a
+justification and the identity accepting the risk; there is no unlimited
+waiver. See <a href="../../guides/waiving-findings/">Waiving a vetting finding</a>.</dd>
+<dt><strong>Webhook subscriber</strong></dt>
+<dd>A registered endpoint the gateway delivers signed lifecycle events to, with
+its own retry budget and backoff. See
+<a href="../../guides/lifecycle-webhooks/">Receiving lifecycle webhooks</a>.</dd>
 </dl>
 
 

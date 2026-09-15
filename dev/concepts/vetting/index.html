@@ -509,6 +509,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#switching-a-connector-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Switching a connector off
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2281,6 +2292,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#switching-a-connector-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Switching a connector off
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2590,6 +2612,11 @@ is written against, so it is part of the contract rather than a display string.<
 <td>The connector was triggered and has not answered yet.</td>
 <td>Yes</td>
 </tr>
+<tr>
+<td><code>DISABLED</code></td>
+<td>An administrator switched the connector off for this marketplace, so the chain did not run it.</td>
+<td>No — and it does not clear either</td>
+</tr>
 </tbody>
 </table>
 <p>A connector does not choose its state directly: it emits findings, and the
@@ -2600,9 +2627,18 @@ has to get its severity right.</p>
 a webhook and answers later — fits without changing the gate. No built-in
 connector returns it; a configured <a href="#external-connectors">external connector</a>
 that answers <code>pending</code> does, and it blocks until it is resolved.</p>
+<h3 id="switching-a-connector-off">Switching a connector off<a class="headerlink" href="#switching-a-connector-off" title="Permanent link">&para;</a></h3>
+<p>An administrator can disable a connector globally or for one marketplace. A
+disabled connector is not run at ingestion or re-vetting; the chain records a
+<code>DISABLED</code> verdict in its place, so the disablement is part of the run's
+evidence rather than a silently shorter chain. Because <code>DISABLED</code> never clears,
+disabling every connector leaves a run blocked — the switch is not a blanket
+approval. The settings, the audit events and the endpoints are in
+<a href="../../reference/api/marketplaces/#connector-enabledisable">the API reference</a>.</p>
 <h2 id="fail-closed-aggregation">Fail-closed aggregation<a class="headerlink" href="#fail-closed-aggregation" title="Permanent link">&para;</a></h2>
-<p>A chain run is <strong>clear</strong> if and only if it produced at least one verdict and
-every verdict is <code>PASS</code> or <code>WARN</code>. Everything else is <strong>blocked</strong>:</p>
+<p>A chain run is <strong>clear</strong> if and only if it produced at least one clearing
+verdict and every verdict is <code>PASS</code>, <code>WARN</code> or <code>DISABLED</code>. Everything else is
+<strong>blocked</strong>:</p>
 <ul>
 <li>any connector that failed;</li>
 <li>any connector that crashed or timed out — a crash is a blocked snapshot, never
@@ -2621,9 +2657,15 @@ whose <strong>effective</strong> outcome is blocked, with <code>409</code> and a
 both the blocking connectors and — in <code>uncoveredFindings</code> — every blocking
 finding that no active waiver covers. That array is the reviewer's worklist: it
 is exactly the set of waivers that must exist for the approval to succeed.</p>
-<p>There is no blanket override. The only way past objecting connectors is to
-accept each blocking finding individually with a
+<p><strong>A reviewer has no override.</strong> The only way a reviewer gets past objecting
+connectors is to accept each blocking finding individually with a
 <a href="#waivers-accepted-risks-with-a-scope-and-an-expiry">waiver</a>.</p>
+<p>An <strong>administrator</strong> — and only an administrator — can approve a blocked
+snapshot outright, by supplying a mandatory reason. The override lifts only the
+vetting block: the policy, minimum-release-age and four-eyes gates still decide,
+and it lands on the ledger as its own event, so it is never indistinguishable
+from an approval the chain cleared. See
+<a href="../../reference/api/marketplaces/#administrative-override-of-a-blocked-outcome">Administrative override of a blocked outcome</a>.</p>
 <h3 id="not-a-connector-the-minimum-release-age">Not a connector: the minimum release age<a class="headerlink" href="#not-a-connector-the-minimum-release-age" title="Permanent link">&para;</a></h3>
 <p>The same gate carries one precondition the chain has nothing to do with. When
 <a href="../../reference/configuration/#minimum-release-age"><code>minimum-release-age</code></a> is

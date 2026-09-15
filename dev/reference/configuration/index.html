@@ -2812,7 +2812,7 @@
 </tr>
 <tr>
 <td><a href="#declarative-estate"><code>skills-gateway.estate.*</code></a></td>
-<td>The declared estate: marketplaces, role grants, webhook subscribers, audit sinks — reconciled at startup and on demand. <strong>Empty by default.</strong></td>
+<td>The declared estate: marketplaces, role grants, webhook subscribers, audit sinks, policy rules — reconciled at startup and on demand. <strong>Empty by default.</strong></td>
 <td>No — empty by default.</td>
 </tr>
 <tr>
@@ -3913,10 +3913,10 @@ deploy, and a re-vet turns the new posture into fresh evidence.</p>
 <p>Lowering <code>timeout</code> does not make vetting faster; it makes slow connectors
 fail. A connector that times out is recorded as <code>ERROR</code> and blocks the
 snapshot, so every affected approval then needs a <code>connector-error</code> waiver —
-which is a reviewer writing down that the scanner never looked.</p>
+which is a reviewer writing down that the connector never looked.</p>
 </div>
 <p>The chain, the verdict states, the aggregation rule, waivers, and the honest
-limits of the built-in scanners are described in
+limits of the built-in connectors are described in
 <a href="../../concepts/vetting/">Vetting — the connector chain</a>.</p>
 <h3 id="external-connectors">External connectors<a class="headerlink" href="#external-connectors" title="Permanent link">&para;</a></h3>
 <p>An operator can extend the chain with their own connectors — an LLM reviewer, a
