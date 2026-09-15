@@ -1,8 +1,8 @@
 package dev.skillsgateway.server.storage;
 
+import dev.skillsgateway.server.GatewayContext;
 import org.junit.jupiter.api.DisplayName;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import software.amazon.awssdk.services.s3.S3Client;
 
 /**
@@ -28,30 +28,15 @@ import software.amazon.awssdk.services.s3.S3Client;
  *
  * <p>This is the fidelity spike from task 2.1 of the {@code pluggable-git-storage} change. It
  * carries no {@code @SVCs} annotation: it verifies the store, not the gateway.
+ *
+ * <p>The context is the suite's shared one ({@code @GatewayContext}) rather than a second one of
+ * its own. What it used to declare differed from the shared set only in the administrator it named
+ * and in booting without a web server — neither of which any assertion here can observe, since
+ * every one of them talks to {@link S3Client}. Naming the annotation rather than extending {@code
+ * AbstractGatewayTest} is forced: the single inheritance slot is spent on {@link
+ * ConditionalWriteFidelitySuite}, which is where the assertions live.
  */
-@SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.NONE,
-        properties = {
-            // Dummy OIDC registration with explicit provider details: no discovery at startup.
-            "spring.security.oauth2.client.registration.idp.client-id=test",
-            "spring.security.oauth2.client.registration.idp.client-secret=test",
-            "spring.security.oauth2.client.registration.idp.authorization-grant-type=authorization_code",
-            "spring.security.oauth2.client.registration.idp.redirect-uri={baseUrl}/login/oauth2/code/idp",
-            "spring.security.oauth2.client.provider.idp.authorization-uri=https://idp.invalid/authorize",
-            "spring.security.oauth2.client.provider.idp.token-uri=https://idp.invalid/token",
-            "spring.security.oauth2.client.provider.idp.jwk-set-uri=https://idp.invalid/jwks",
-            "skills-gateway.data-dir=target/test-git-data",
-            // Authorization is always enforced and a gateway with no administrator refuses to start
-            // (GW_AUTH_0026). This suite boots the application to reach the store rather than the web
-            // surface, so it names one and never uses it.
-            "skills-gateway.roles.admins=fidelity-suite",
-            // Every background pass off: this test exercises the object store, not the gateway.
-            "skills-gateway.webhooks.enabled=false",
-            "skills-gateway.audit-export.enabled=false",
-            "skills-gateway.retention.enabled=false",
-            "skills-gateway.vetting.revet.enabled=false",
-            "skills-gateway.sync.enabled=false"
-        })
+@GatewayContext
 @DisplayName("Object-store conditional-write fidelity — Floci (Arconia dev service)")
 class ConditionalWriteFidelityTests extends ConditionalWriteFidelitySuite {
 

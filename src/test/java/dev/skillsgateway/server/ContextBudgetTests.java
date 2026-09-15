@@ -51,10 +51,14 @@ class ContextBudgetTests {
      * against the scheduled task, which {@code ForgeMirrorTests}'s disabled-sweep context cannot
      * express. Lowered to <b>29</b> by the second increment of #305, which retired the contexts of
      * {@code MachineLedgerTests}, {@code ClaimMappedRoleIsEnforcedTests} and {@code
-     * ExternalConnectorRegistrationTests}. Lower it whenever the count drops; raise it only with a
+     * ExternalConnectorRegistrationTests}. Lowered to <b>26</b> by the third increment, which moved
+     * {@code OidcRegistrationConfigurationTests} onto an {@code ApplicationContextRunner}, pointed
+     * {@code ConditionalWriteFidelityTests} at the shared {@code @GatewayContext}, and merged {@code
+     * TokenTtlCapTests} and {@code SessionCredentialExpiryTests} onto {@code
+     * AbstractCredentialLifetimeTest}. Lower it whenever the count drops; raise it only with a
      * reason worth reading.
      */
-    private static final int BUDGET = 29;
+    private static final int BUDGET = 26;
 
     /** Where the measured breakdown is written, so a run's numbers survive for a PR body. */
     private static final Path REPORT = Path.of("target", "context-budget.txt");

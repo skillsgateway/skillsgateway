@@ -283,16 +283,27 @@ number do I put here". It is:
 - **Could this test reuse an existing property set?** Two sets that differ only
   by a value nothing asserts on are two contexts for one posture. Suites that
   need only their own administrator's *name* share one declaration in
-  `AbstractNamedAdminsTest`, and the claim-mapping suites share
-  `AbstractClaimMappingTest`.
+  `AbstractNamedAdminsTest`, the claim-mapping suites share
+  `AbstractClaimMappingTest`, and the two credential-lifetime postures share
+  `AbstractCredentialLifetimeTest`.
+- **Could this test use the shared context outright?** A class that cannot
+  extend `AbstractGatewayTest` — because its single inheritance slot is already
+  spent — can still land on the same cache key by naming `@GatewayContext`, the
+  annotation that declares the shared property set. Copying the property list
+  instead works only until the copies drift, and the drift is silently another
+  context. `ConditionalWriteFidelityTests` is the worked example.
 - **Does this test need the *gateway* at all?** Configuration that is consumed
   while the context is built — a binding, a registrar, a startup refusal — is
   provable with an `ApplicationContextRunner` holding just the beans under test.
   That is the only conversion that removes a context outright rather than
   trading it for a cheaper one: the runner's context is created and closed per
   test and never enters the cache. `StorageBackendSelectionTests`,
-  `RoleBootstrapGuardTests` and `ExternalConnectorRegistrationTests` are the
-  worked examples.
+  `RoleBootstrapGuardTests`, `ExternalConnectorRegistrationTests` and
+  `OidcRegistrationConfigurationTests` are the worked examples. The last of
+  those shows the variant to reach for when the assertion is about the shipped
+  `application.yaml` rather than about a hand-written property: add
+  `ConfigDataApplicationContextInitializer` to the runner and it reads the same
+  file the application does.
 - **Is the property genuinely load-bearing?** A property set equal to a
   default configures nothing and costs a context.
 
