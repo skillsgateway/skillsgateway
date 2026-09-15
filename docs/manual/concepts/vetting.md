@@ -81,6 +81,7 @@ is written against, so it is part of the contract rather than a display string.
 | `FAIL` | Something that blocks. | Yes |
 | `ERROR` | The connector produced no verdict: it threw, or it exceeded its time limit. | Yes |
 | `PENDING` | The connector was triggered and has not answered yet. | Yes |
+| `DISABLED` | An administrator switched the connector off for this marketplace, so the chain did not run it. | No — and it does not clear either |
 
 A connector does not choose its state directly: it emits findings, and the
 verdict follows the worst severity present — `HIGH` or `CRITICAL` fails,
@@ -92,10 +93,21 @@ a webhook and answers later — fits without changing the gate. No built-in
 connector returns it; a configured [external connector](#external-connectors)
 that answers `pending` does, and it blocks until it is resolved.
 
+### Switching a connector off
+
+An administrator can disable a connector globally or for one marketplace. A
+disabled connector is not run at ingestion or re-vetting; the chain records a
+`DISABLED` verdict in its place, so the disablement is part of the run's
+evidence rather than a silently shorter chain. Because `DISABLED` never clears,
+disabling every connector leaves a run blocked — the switch is not a blanket
+approval. The settings, the audit events and the endpoints are in
+[the API reference](../reference/api/marketplaces.md#connector-enabledisable).
+
 ## Fail-closed aggregation
 
-A chain run is **clear** if and only if it produced at least one verdict and
-every verdict is `PASS` or `WARN`. Everything else is **blocked**:
+A chain run is **clear** if and only if it produced at least one clearing
+verdict and every verdict is `PASS`, `WARN` or `DISABLED`. Everything else is
+**blocked**:
 
 - any connector that failed;
 - any connector that crashed or timed out — a crash is a blocked snapshot, never
@@ -118,9 +130,16 @@ both the blocking connectors and — in `uncoveredFindings` — every blocking
 finding that no active waiver covers. That array is the reviewer's worklist: it
 is exactly the set of waivers that must exist for the approval to succeed.
 
-There is no blanket override. The only way past objecting connectors is to
-accept each blocking finding individually with a
+**A reviewer has no override.** The only way a reviewer gets past objecting
+connectors is to accept each blocking finding individually with a
 [waiver](#waivers-accepted-risks-with-a-scope-and-an-expiry).
+
+An **administrator** — and only an administrator — can approve a blocked
+snapshot outright, by supplying a mandatory reason. The override lifts only the
+vetting block: the policy, minimum-release-age and four-eyes gates still decide,
+and it lands on the ledger as its own event, so it is never indistinguishable
+from an approval the chain cleared. See
+[Administrative override of a blocked outcome](../reference/api/marketplaces.md#administrative-override-of-a-blocked-outcome).
 
 ### Not a connector: the minimum release age
 

@@ -174,9 +174,12 @@ per-call, not a server-side facade.
 
 Where Skills Gateway pins a snapshot and refuses to serve anything else, JFrog
 scans and signs an artifact and blocks on policy at consumption. Both keep the
-bytes; the mechanisms differ. The automated scanning story is a real capability
-Skills Gateway does not have — its gate is a human approving a snapshot, with
-no content scanner in the loop.
+bytes, and both scan them; the mechanisms differ. Skills Gateway runs a
+[vetting connector chain](vetting.md) over every snapshot before a human sees
+it, and the approval gate refuses a blocked outcome — so the scan is a
+precondition of the human decision rather than a replacement for it. What JFrog
+has and this does not is artifact signing, and scanning of the packaged formats
+Artifactory already holds.
 
 Two caveats. The public pages are marketing pages, and several claims — the
 exact approval state machine, what is audited, how remote-endpoint MCP servers
@@ -225,8 +228,9 @@ its approval cannot bind the bytes.
 
 **JFrog and Skills Gateway hold the bytes and gate them**, by different
 mechanisms — automated scanning and signing over immutable artifacts on one
-side, human approval of a SHA-pinned snapshot served through an authenticated
-facade on the other. This is the comparison worth thinking hardest about,
+side, an automated vetting chain plus human approval of a SHA-pinned snapshot
+served through an authenticated facade on the other. This is the comparison
+worth thinking hardest about,
 because the disagreement is genuine rather than a matter of scope.
 
 Two capabilities the comparison surfaces as honest gaps on this side:
@@ -236,11 +240,11 @@ Two capabilities the comparison surfaces as honest gaps on this side:
   hierarchy are both ahead here. It is a product feature, not an architectural
   difference, and it composes cleanly on top of the existing model if the
   estate grows large enough to need it.
-- **Automated content scanning** — JFrog scans and signs on upload; the gate
-  here is a human reading a diff. Nothing in the architecture prevents a
-  scanner from being added as an input to the approval decision, and the
-  append-only ledger is the right place to record what it found, but that is
-  not a capability today.
+- **Artifact signing** — JFrog signs what it scans, so a consumer can verify
+  provenance away from the serving system. Here the equivalent assurance is
+  positional: the facade serves only the approved SHA, and the ledger records
+  every fetch of it. That is strong inside the gateway's perimeter and offers
+  nothing outside it, which is a real difference rather than a matter of taste.
 
 What none of the three alternatives offers is the combination this project is
 built around: a snapshot the gateway itself holds, an approval that binds that
