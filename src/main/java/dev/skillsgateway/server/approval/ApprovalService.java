@@ -138,10 +138,11 @@ public class ApprovalService {
      * refused. The check precedes the state transition, so a refused approval leaves the snapshot
      * held and publishes nothing.
      *
-     * <p>There is no blanket override. Approving past objecting connectors means recording a scoped,
+     * <p>A reviewer has no override. Approving past objecting connectors means recording a scoped,
      * expiring waiver for each blocking finding first, so the reviewer accepts exactly what was
      * found and nothing else. The waivers that were in force are returned to the caller, which
-     * appends them to the ledger as the acting identity.
+     * appends them to the ledger as the acting identity. An administrator's override of a blocked
+     * outcome (GW_VETTING_0028) is a separate, audited act, not a reviewer's to make.
      *
      * <p>A snapshot that re-vetting revoked (GW_VETTING_0013) comes back through this exact method and no
      * other. That is what "not re-publishable without a fresh approve decision" means concretely:

@@ -1061,7 +1061,7 @@ export interface paths {
         };
         /**
          * List connector enable/disable settings
-         * @description Every administrative enable/disable setting for the built-in vetting connectors — the global settings and the per-marketplace overrides. Administrator-only: the switch that governs the vetting chain is not shown to marketplace-scoped approvers.
+         * @description Every administrative enable/disable setting for the vetting connectors — the global settings and the per-marketplace overrides. Administrator-only: the switch that governs the vetting chain is not shown to marketplace-scoped approvers.
          */
         get: operations["toggles"];
         put?: never;
@@ -1081,8 +1081,8 @@ export interface paths {
         };
         get?: never;
         /**
-         * Enable or disable a built-in connector
-         * @description Switches a specific built-in vetting connector on or off, globally or for one named marketplace, and records the change on the audit ledger. A per-marketplace setting overrides the global one; the absence of any setting means the connector runs. A disabled connector is not run at ingestion or re-vetting but is recorded as a distinct disabled verdict on the chain run, and disabling every connector leaves a run blocked rather than clear. Administrator-only.
+         * Enable or disable a connector
+         * @description Switches a specific vetting connector on or off, globally or for one named marketplace, and records the change on the audit ledger. Any connector in the chain can be switched, built-in or operator-configured (skills-gateway.vetting.external[*]). A per-marketplace setting overrides the global one; the absence of any setting means the connector runs. A disabled connector is not run at ingestion or re-vetting but is recorded as a distinct disabled verdict on the chain run, and disabling every connector leaves a run blocked rather than clear. Administrator-only.
          */
         put: operations["toggle"];
         post?: never;
@@ -1556,7 +1556,7 @@ export interface components {
              */
             waiverId?: number;
         };
-        /** @description An administrative enable/disable setting for one built-in vetting connector */
+        /** @description An administrative enable/disable setting for one vetting connector */
         ConnectorToggle: {
             /** @description The connector's stable name, e.g. secret-scan */
             connector?: string;
@@ -2897,7 +2897,7 @@ export interface components {
             /** @description HMAC secret for the inbound webhook — returned exactly once, here. Setting webhook mode again rotates it. Null for the other modes. */
             webhookSecret?: string;
         };
-        /** @description Enable or disable a built-in vetting connector, globally or for one marketplace */
+        /** @description Enable or disable a vetting connector, globally or for one marketplace */
         ToggleRequest: {
             /** @description Whether the connector should run under this setting */
             enabled?: boolean;

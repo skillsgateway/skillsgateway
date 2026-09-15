@@ -35,7 +35,7 @@ public class ConnectorToggleController {
         this.roleService = roleService;
     }
 
-    @Schema(description = "Enable or disable a built-in vetting connector, globally or for one marketplace")
+    @Schema(description = "Enable or disable a vetting connector, globally or for one marketplace")
     public record ToggleRequest(
             @Schema(description = "Whether the connector should run under this setting")
             Boolean enabled,
@@ -51,7 +51,7 @@ public class ConnectorToggleController {
     @Tag(name = "Vetting")
     @Operation(
             summary = "List connector enable/disable settings",
-            description = "Every administrative enable/disable setting for the built-in vetting connectors — the"
+            description = "Every administrative enable/disable setting for the vetting connectors — the"
                     + " global settings and the per-marketplace overrides. Administrator-only: the switch that"
                     + " governs the vetting chain is not shown to marketplace-scoped approvers.")
     @ApiResponse(responseCode = "200", description = "The connector settings")
@@ -65,13 +65,14 @@ public class ConnectorToggleController {
     @Requirements({"GW_VETTING_0029.1", "GW_VETTING_0029.4"})
     @Tag(name = "Vetting")
     @Operation(
-            summary = "Enable or disable a built-in connector",
-            description = "Switches a specific built-in vetting connector on or off, globally or for one named"
-                    + " marketplace, and records the change on the audit ledger. A per-marketplace setting overrides"
-                    + " the global one; the absence of any setting means the connector runs. A disabled connector is"
-                    + " not run at ingestion or re-vetting but is recorded as a distinct disabled verdict on the"
-                    + " chain run, and disabling every connector leaves a run blocked rather than clear."
-                    + " Administrator-only.")
+            summary = "Enable or disable a connector",
+            description = "Switches a specific vetting connector on or off, globally or for one named marketplace,"
+                    + " and records the change on the audit ledger. Any connector in the chain can be switched,"
+                    + " built-in or operator-configured (skills-gateway.vetting.external[*]). A per-marketplace"
+                    + " setting overrides the global one; the absence of any setting means the connector runs. A"
+                    + " disabled connector is not run at ingestion or re-vetting but is recorded as a distinct"
+                    + " disabled verdict on the chain run, and disabling every connector leaves a run blocked rather"
+                    + " than clear. Administrator-only.")
     @ApiResponse(responseCode = "200", description = "The setting after the change")
     @ApiResponse(responseCode = "403", description = "Caller does not hold the administrative role")
     @ApiResponse(responseCode = "404", description = "Named marketplace not found")

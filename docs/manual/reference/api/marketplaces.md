@@ -450,10 +450,14 @@ is described in [Vetting — the connector chain](../../concepts/vetting.md).
 
 ## Connector enable/disable
 
-An administrator can switch a built-in connector (secret-scan, prompt-injection,
-license-scan, skill-conformance) off or on, globally or for one marketplace. Both endpoints are
-**admin-only** — the switch that governs the vetting chain, and even the
-visibility of its settings, are not shown to marketplace-scoped approvers.
+An administrator can switch any connector in the chain off or on, globally or for
+one marketplace — a built-in (secret-scan, prompt-injection, license-scan,
+skill-conformance) or one of the operator's own
+[external connectors](../configuration.md#external-connectors). A name no
+connector in the chain carries is refused with a 422 naming the ones it does.
+Both endpoints are **admin-only** — the switch that governs the vetting chain,
+and even the visibility of its settings, are not shown to marketplace-scoped
+approvers.
 
 A disabled connector is **not run** at ingestion or re-vetting; the chain records
 a `DISABLED` verdict in its place, so the disablement is part of the run's
