@@ -27,12 +27,11 @@ public class VetterToggleRepository {
      */
     @Requirements({"GW_VETTING_0029.1"})
     public VetterToggle set(String vetter, Long marketplaceId, boolean enabled, String reason, String updatedBy) {
-        return jdbc.sql(
-                        "INSERT INTO vetter_toggles (vetter, marketplace_id, enabled, reason, updated_by, updated_at)"
-                                + " VALUES (:vetter, :marketplaceId, :enabled, :reason, :updatedBy, :now)"
-                                + " ON CONFLICT (vetter, marketplace_id) DO UPDATE"
-                                + " SET enabled = :enabled, reason = :reason, updated_by = :updatedBy, updated_at = :now"
-                                + " RETURNING *")
+        return jdbc.sql("INSERT INTO vetter_toggles (vetter, marketplace_id, enabled, reason, updated_by, updated_at)"
+                        + " VALUES (:vetter, :marketplaceId, :enabled, :reason, :updatedBy, :now)"
+                        + " ON CONFLICT (vetter, marketplace_id) DO UPDATE"
+                        + " SET enabled = :enabled, reason = :reason, updated_by = :updatedBy, updated_at = :now"
+                        + " RETURNING *")
                 .param("vetter", vetter)
                 .param("marketplaceId", marketplaceId)
                 .param("enabled", enabled)
@@ -45,8 +44,7 @@ public class VetterToggleRepository {
 
     /** The per-marketplace setting for a vetter, if one exists. */
     public Optional<VetterToggle> find(String vetter, long marketplaceId) {
-        return jdbc.sql("SELECT * FROM vetter_toggles WHERE vetter = :vetter"
-                        + " AND marketplace_id = :marketplaceId")
+        return jdbc.sql("SELECT * FROM vetter_toggles WHERE vetter = :vetter" + " AND marketplace_id = :marketplaceId")
                 .param("vetter", vetter)
                 .param("marketplaceId", marketplaceId)
                 .query(VetterToggle.class)

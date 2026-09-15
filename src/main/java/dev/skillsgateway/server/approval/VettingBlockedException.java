@@ -18,9 +18,7 @@ public class VettingBlockedException extends RuntimeException {
     private final transient List<WaiverEvaluation.UncoveredFinding> uncoveredFindings;
 
     public VettingBlockedException(
-            long snapshotId,
-            List<String> blockingVetters,
-            List<WaiverEvaluation.UncoveredFinding> uncoveredFindings) {
+            long snapshotId, List<String> blockingVetters, List<WaiverEvaluation.UncoveredFinding> uncoveredFindings) {
         super(message(snapshotId, blockingVetters, uncoveredFindings));
         this.blockingVetters = List.copyOf(blockingVetters);
         this.uncoveredFindings = List.copyOf(uncoveredFindings);
@@ -36,9 +34,7 @@ public class VettingBlockedException extends RuntimeException {
     }
 
     private static String message(
-            long snapshotId,
-            List<String> blockingVetters,
-            List<WaiverEvaluation.UncoveredFinding> uncoveredFindings) {
+            long snapshotId, List<String> blockingVetters, List<WaiverEvaluation.UncoveredFinding> uncoveredFindings) {
         String cause = blockingVetters.isEmpty()
                 ? "the vetting chain has not produced a clear outcome for it"
                 : "the vetters %s did not clear it".formatted(String.join(", ", blockingVetters));

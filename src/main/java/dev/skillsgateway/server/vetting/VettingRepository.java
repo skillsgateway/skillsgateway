@@ -67,10 +67,9 @@ public class VettingRepository {
     @Requirements({"GW_FACADE_0009"})
     @Transactional
     public void recordVerdict(long runId, String vetter, int position, Verdict verdict) {
-        long verdictId = jdbc.sql(
-                        "INSERT INTO vetting_verdicts (run_id, vetter, position, state, detail, report_url,"
-                                + " created_at) VALUES (:runId, :vetter, :position, :state::vetting_verdict_state, :detail, :reportUrl,"
-                                + " :now) RETURNING id")
+        long verdictId = jdbc.sql("INSERT INTO vetting_verdicts (run_id, vetter, position, state, detail, report_url,"
+                        + " created_at) VALUES (:runId, :vetter, :position, :state::vetting_verdict_state, :detail, :reportUrl,"
+                        + " :now) RETURNING id")
                 .param("runId", runId)
                 .param("vetter", vetter)
                 .param("position", position)
@@ -221,8 +220,7 @@ public class VettingRepository {
             @Schema(description = "Position of the vetter in the chain")
             int position,
 
-            @Schema(description = "The vetter's conclusion")
-            VerdictState state,
+            @Schema(description = "The vetter's conclusion") VerdictState state,
 
             @Schema(
                     description = "One-line summary: how many findings and the worst severity, or — for a clean"
@@ -232,8 +230,7 @@ public class VettingRepository {
             @Schema(description = "External report URL, when the vetter produced one")
             String reportUrl,
 
-            @Schema(description = "What the vetter found")
-            List<Finding> findings) {}
+            @Schema(description = "What the vetter found") List<Finding> findings) {}
 
     @Schema(description = "One execution of the vetting chain against a snapshot")
     public record Run(

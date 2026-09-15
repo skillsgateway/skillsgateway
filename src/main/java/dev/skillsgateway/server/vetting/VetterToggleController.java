@@ -92,8 +92,7 @@ public class VetterToggleController {
                         HttpStatus.NOT_FOUND, "marketplace '%s' not found".formatted(name)));
         return vettingService.vetters().stream()
                 .map(vetter -> {
-                    VetterToggleService.Resolution resolution =
-                            toggleService.resolve(vetter.name(), marketplace.id());
+                    VetterToggleService.Resolution resolution = toggleService.resolve(vetter.name(), marketplace.id());
                     VetterToggle setting = resolution.setting();
                     return new ChainVetterView(
                             vetter.name(),

@@ -12,8 +12,8 @@ import dev.skillsgateway.server.vetting.Severity;
 import dev.skillsgateway.server.vetting.SnapshotUnderVetting;
 import dev.skillsgateway.server.vetting.Verdict;
 import dev.skillsgateway.server.vetting.VerdictState;
-import dev.skillsgateway.server.vetting.VettingChain;
 import dev.skillsgateway.server.vetting.Vetter;
+import dev.skillsgateway.server.vetting.VettingChain;
 import dev.skillsgateway.server.vetting.VettingRepository;
 import dev.skillsgateway.server.vetting.VettingService;
 import dev.skillsgateway.server.vetting.WaiverEvaluation;
@@ -93,9 +93,8 @@ class VettingTests extends AbstractGatewayTest {
         assertThat(run.finishedAt()).isNotNull();
         assertThat(run.verdicts())
                 .extracting(VettingRepository.VerdictView::vetter)
-                .containsExactlyElementsOf(vettingService.vetters().stream()
-                        .map(Vetter::name)
-                        .toList());
+                .containsExactlyElementsOf(
+                        vettingService.vetters().stream().map(Vetter::name).toList());
         // Positions are dense and zero-based over the configured chain, whatever its size.
         assertThat(run.verdicts())
                 .extracting(VettingRepository.VerdictView::position)

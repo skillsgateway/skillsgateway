@@ -88,8 +88,7 @@ public class VetterToggleService {
      * unknown marketplace name so a mistaken toggle fails loudly instead of matching nothing.
      */
     @Requirements({"GW_VETTING_0029.1", "GW_VETTING_0029.4"})
-    public VetterToggle set(
-            String vetter, String marketplaceName, boolean enabled, String reason, String principal) {
+    public VetterToggle set(String vetter, String marketplaceName, boolean enabled, String reason, String principal) {
         if (vetter == null || !knownVetters.contains(vetter)) {
             throw new ResponseStatusException(
                     HttpStatus.UNPROCESSABLE_ENTITY,
@@ -115,10 +114,7 @@ public class VetterToggleService {
                 null,
                 "vetter=%s scope=%s enabled=%s%s"
                         .formatted(
-                                vetter,
-                                scope,
-                                enabled,
-                                reason == null || reason.isBlank() ? "" : " reason=" + reason));
+                                vetter, scope, enabled, reason == null || reason.isBlank() ? "" : " reason=" + reason));
         return toggle;
     }
 

@@ -141,8 +141,7 @@ public class WebhookService {
             String recordedOutcome,
 
             @Schema(
-                    description =
-                            "Names of the vetters that are the reason it blocks; empty when nothing" + " objects",
+                    description = "Names of the vetters that are the reason it blocks; empty when nothing" + " objects",
                     requiredMode = Schema.RequiredMode.REQUIRED)
             List<String> blockingVetters,
 

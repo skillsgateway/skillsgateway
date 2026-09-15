@@ -9,9 +9,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.Snapshot;
+import dev.skillsgateway.server.vetting.Vetter;
 import dev.skillsgateway.server.vetting.VetterToggleService;
 import dev.skillsgateway.server.vetting.VettingChain;
-import dev.skillsgateway.server.vetting.Vetter;
 import dev.skillsgateway.server.vetting.VettingService;
 import io.github.reqstool.annotations.SVCs;
 import java.nio.file.Path;
@@ -106,8 +106,7 @@ class VetterToggleTests extends AbstractGatewayTest {
         Marketplace c = register(name, plantedUpstream());
         // The real chain, not a list to keep in step: "every vetter" has to stay literally true
         // as vetters are added, or this test quietly stops testing what it names.
-        for (String vetter :
-                vettingService.vetters().stream().map(Vetter::name).toList()) {
+        for (String vetter : vettingService.vetters().stream().map(Vetter::name).toList()) {
             mockMvc.perform(put("/api/vetting/vetters/{name}/toggle", vetter)
                             .with(root)
                             .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
@@ -127,8 +126,7 @@ class VetterToggleTests extends AbstractGatewayTest {
     void the_effective_chain_names_each_vetters_state_and_the_setting_that_decided_it() throws Exception {
         String name = uniqueName("chain-view");
         register(name, plantedUpstream());
-        List<String> chain =
-                vettingService.vetters().stream().map(Vetter::name).toList();
+        List<String> chain = vettingService.vetters().stream().map(Vetter::name).toList();
         assertThat(chain).hasSizeGreaterThanOrEqualTo(3);
         String global = chain.get(0);
         String scoped = chain.get(1);
