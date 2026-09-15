@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
   useAudit,
+  useIsAdmin,
   useMarketplaces,
   useRestoreSnapshot,
   useRevetSnapshot,
@@ -27,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { MarketplaceVettingChain } from "@/components/marketplace-vetting-chain";
 import { RevocationNote, SnapshotStateBadge } from "@/components/snapshot-state";
 import { SetupWizard } from "@/components/setup-wizard";
 import { SnapshotContentDiff } from "@/components/snapshot-content-diff";
@@ -323,6 +325,7 @@ export function MarketplaceDetailPage() {
   const [openSnapshot, setOpenSnapshot] = useState<number | null>(null);
   const [openPreview, setOpenPreview] = useState<number | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const isAdmin = useIsAdmin();
   const marketplace = marketplaces.data?.find((m) => m.name === name);
 
   if (marketplaces.isLoading) return <p>Loading…</p>;
@@ -386,6 +389,11 @@ export function MarketplaceDetailPage() {
           </dl>
         </CardContent>
       </Card>
+
+      {/* Above the snapshots whose verdicts it explains, and only for a session that holds the
+          administrative role — the connector settings are not shown to marketplace-scoped
+          approvers, and the server refuses the read independently. */}
+      {isAdmin ? <MarketplaceVettingChain marketplace={marketplace.name ?? ""} /> : null}
 
       <div className="space-y-3">
         <h2 className="text-lg font-semibold">Snapshots</h2>

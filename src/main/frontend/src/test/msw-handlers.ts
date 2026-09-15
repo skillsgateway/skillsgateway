@@ -263,10 +263,140 @@ export const blockedVetting: Schemas["VettingView"] = {
     ],
   },
   connectors: [
-    { name: "secret-scan", order: 100, description: "Regex and entropy rules over text files." },
-    { name: "prompt-injection", order: 200, description: "Pattern heuristics over instructions." },
+    {
+      name: "secret-scan",
+      order: 100,
+      description: "Regex and entropy rules over text files.",
+      version: "3",
+      external: false,
+    },
+    {
+      name: "prompt-injection",
+      order: 200,
+      description: "Pattern heuristics over instructions.",
+      version: "1",
+      external: false,
+    },
   ],
 };
+
+/** A clean run: every connector passed and nothing is waiting on a waiver. */
+export const clearVetting: Schemas["VettingView"] = {
+  ...blockedVetting,
+  outcome: "CLEAR",
+  recordedOutcome: "CLEAR",
+  uncovered: [],
+  run: {
+    ...blockedVetting.run!,
+    outcome: "CLEAR",
+    verdicts: [
+      {
+        verdictId: 9,
+        connector: "secret-scan",
+        position: 0,
+        state: "PASS",
+        detail: "scanned 42 text files",
+        findings: [],
+      },
+      {
+        verdictId: 10,
+        connector: "prompt-injection",
+        position: 1,
+        state: "PASS",
+        detail: "scanned 3 skill instructions",
+        findings: [],
+      },
+    ],
+  },
+};
+
+/**
+ * A chain with a connector an administrator switched off and an external one that has not answered
+ * yet: the two states that are neither a pass nor a failure, and that the flow has to word as
+ * absences rather than conclusions.
+ */
+export const disabledAndPendingVetting: Schemas["VettingView"] = {
+  ...blockedVetting,
+  outcome: "BLOCKED",
+  recordedOutcome: "BLOCKED",
+  uncovered: [],
+  run: {
+    ...blockedVetting.run!,
+    verdicts: [
+      {
+        verdictId: 11,
+        connector: "secret-scan",
+        position: 0,
+        state: "DISABLED",
+        detail: "for marketplace 'corp-marketplace'",
+        findings: [],
+      },
+      {
+        verdictId: 12,
+        connector: "prompt-injection",
+        position: 1,
+        state: "PASS",
+        detail: "scanned 3 skill instructions",
+        findings: [],
+      },
+      {
+        verdictId: 13,
+        connector: "corp-llm-reviewer",
+        position: 2,
+        state: "PENDING",
+        detail: "triggered; awaiting the reviewer's callback",
+        findings: [],
+      },
+    ],
+  },
+  connectors: [
+    ...blockedVetting.connectors!,
+    {
+      name: "corp-llm-reviewer",
+      order: 300,
+      description: "An operator-configured external reviewer.",
+      version: "2026-09-01",
+      external: true,
+    },
+  ],
+};
+
+/** A marketplace's effective chain: one default, one global setting, one switched off here. */
+export const marketplaceChain: Schemas["ChainConnectorView"][] = [
+  {
+    name: "secret-scan",
+    order: 100,
+    description: "Regex and entropy rules over text files.",
+    version: "3",
+    external: false,
+    enabled: false,
+    source: "MARKETPLACE",
+    reason: "vendor keys, expected in this marketplace",
+    updatedBy: "alice",
+    updatedAt: "2026-08-20T09:00:00Z",
+  },
+  {
+    name: "prompt-injection",
+    order: 200,
+    description: "Pattern heuristics over instructions.",
+    version: "1",
+    external: false,
+    enabled: true,
+    source: "GLOBAL",
+    reason: "kept on across the estate",
+    updatedBy: "root",
+    updatedAt: "2026-08-01T09:00:00Z",
+  },
+  {
+    name: "license-scan",
+    order: 300,
+    description: "Declared licences against the configured policy.",
+    version: "1",
+    external: false,
+    enabled: true,
+    source: "DEFAULT",
+  },
+];
 
 /** The same run, once the blocking finding has been accepted: cleared, but visibly by a waiver. */
 export const waivedVetting: Schemas["VettingView"] = {
@@ -486,6 +616,17 @@ export const handlers = [
     HttpResponse.json<Schemas["WaiverView"]>(waivedVetting.waivers![0], { status: 201 }),
   ),
   http.get("/api/marketplaces/:name/waivers", () => HttpResponse.json(waivedVetting.waivers)),
+  http.get("/api/marketplaces/:name/vetting-chain", () => HttpResponse.json(marketplaceChain)),
+  http.put("/api/vetting/connectors/:name/toggle", ({ params }) =>
+    HttpResponse.json<Schemas["ConnectorToggle"]>({
+      id: 1,
+      connector: String(params.name),
+      marketplaceId: 1,
+      enabled: true,
+      updatedBy: "alice",
+      updatedAt: "2026-08-20T09:00:00Z",
+    }),
+  ),
   http.delete("/api/waivers/:id", () =>
     HttpResponse.json<Schemas["WaiverView"]>({ ...waivedVetting.waivers![0], active: false }),
   ),

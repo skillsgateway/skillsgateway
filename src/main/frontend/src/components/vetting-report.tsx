@@ -4,6 +4,7 @@ import {
   CircleAlert,
   CircleCheck,
   CircleHelp,
+  CircleSlash,
   ShieldCheck,
   ShieldOff,
 } from "lucide-react";
@@ -19,10 +20,12 @@ import {
   type WaiverSuppression,
 } from "@/api/queries";
 import { Timestamp } from "@/components/timestamp";
+import { VettingFlow } from "@/components/vetting-flow";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { snapshotFlow } from "@/lib/vetting-flow";
 
 function verdictIcon(state?: string) {
   switch (state) {
@@ -33,6 +36,8 @@ function verdictIcon(state?: string) {
     case "FAIL":
     case "ERROR":
       return <CircleAlert className="size-4 text-destructive" aria-hidden />;
+    case "DISABLED":
+      return <CircleSlash className="size-4 text-muted-foreground" aria-hidden />;
     default:
       return <CircleHelp className="size-4 text-muted-foreground" aria-hidden />;
   }
@@ -50,6 +55,11 @@ function verdictBadge(state?: string) {
       return <Badge variant="destructive">error</Badge>;
     case "PENDING":
       return <Badge variant="outline">pending</Badge>;
+    // Not a conclusion the connector reached: an administrator switched it off for this
+    // marketplace, so the chain recorded the skip in its place. It neither clears nor blocks, and
+    // it must never read as a pass.
+    case "DISABLED":
+      return <Badge variant="outline">disabled</Badge>;
     default:
       return <Badge variant="outline">{state ?? "unknown"}</Badge>;
   }
@@ -368,6 +378,14 @@ export function VettingReport({ snapshotId }: { snapshotId: number }) {
           </span>
         ) : null}
       </div>
+      {/* The overview, above the detail: where this snapshot is in the chain and what stopped it.
+          The per-connector list below is unchanged — it is where findings are read side by side
+          and a waiver is written next to the one being accepted. */}
+      <VettingFlow
+        label={`Vetting chain of snapshot ${snapshotId}`}
+        nodes={snapshotFlow(vetting.data)}
+        suppressions={suppressions}
+      />
       {uncovered.length > 0 ? (
         <p className="text-sm text-muted-foreground">
           Approval is blocked until each of these is waived:{" "}
