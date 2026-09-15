@@ -2601,3 +2601,23 @@ cases:
       THEN the first marketplace serves the approved snapshot again and the repair is on the audit ledger as the gateway's own act, while the second marketplace still serves what it served and the discrepancy is reported rather than retracted
     revision: "0.1.0"
 
+
+  - id: SVC_GW_VETTING_0029.5
+    requirement_ids: ["GW_VETTING_0029.5"]
+    title: The effective chain names each connector's resolved state and where it came from, and only to an administrator
+    verification: automated-test
+    description: |
+      GIVEN a marketplace, a connector disabled globally, a second connector disabled for that marketplace alone, a third with no setting at all, and a non-administrator principal
+      WHEN the effective vetting chain of that marketplace is read
+      THEN the chain lists every configured connector in the order it runs with the state its enablement resolves to for that marketplace and the source of that state — the marketplace-scoped setting, the global setting or the default — carrying the note and the acting administrator of whichever setting decided it, and the non-administrator is refused the read
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0031
+    requirement_ids: ["GW_VETTING_0031"]
+    title: The portal draws the chain as an ordered flow whose nodes open their own evidence
+    verification: automated-test
+    description: |
+      GIVEN an authenticated portal session and a marketplace whose snapshot the chain blocked
+      WHEN the reviewer opens the snapshot's review surface and activates a connector node of the chain flow
+      THEN the flow is shown with a node per chain step in the order the connectors run, each carrying its verdict state as a word beside its icon, and the activated node opens its own evidence naming the connector and the findings behind its verdict
+    revision: "0.1.0"
