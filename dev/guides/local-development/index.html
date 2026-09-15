@@ -2756,16 +2756,27 @@ number do I put here". It is:</p>
 <li><strong>Could this test reuse an existing property set?</strong> Two sets that differ only
   by a value nothing asserts on are two contexts for one posture. Suites that
   need only their own administrator's <em>name</em> share one declaration in
-  <code>AbstractNamedAdminsTest</code>, and the claim-mapping suites share
-  <code>AbstractClaimMappingTest</code>.</li>
+  <code>AbstractNamedAdminsTest</code>, the claim-mapping suites share
+  <code>AbstractClaimMappingTest</code>, and the two credential-lifetime postures share
+  <code>AbstractCredentialLifetimeTest</code>.</li>
+<li><strong>Could this test use the shared context outright?</strong> A class that cannot
+  extend <code>AbstractGatewayTest</code> — because its single inheritance slot is already
+  spent — can still land on the same cache key by naming <code>@GatewayContext</code>, the
+  annotation that declares the shared property set. Copying the property list
+  instead works only until the copies drift, and the drift is silently another
+  context. <code>ConditionalWriteFidelityTests</code> is the worked example.</li>
 <li><strong>Does this test need the <em>gateway</em> at all?</strong> Configuration that is consumed
   while the context is built — a binding, a registrar, a startup refusal — is
   provable with an <code>ApplicationContextRunner</code> holding just the beans under test.
   That is the only conversion that removes a context outright rather than
   trading it for a cheaper one: the runner's context is created and closed per
   test and never enters the cache. <code>StorageBackendSelectionTests</code>,
-  <code>RoleBootstrapGuardTests</code> and <code>ExternalConnectorRegistrationTests</code> are the
-  worked examples.</li>
+  <code>RoleBootstrapGuardTests</code>, <code>ExternalConnectorRegistrationTests</code> and
+  <code>OidcRegistrationConfigurationTests</code> are the worked examples. The last of
+  those shows the variant to reach for when the assertion is about the shipped
+  <code>application.yaml</code> rather than about a hand-written property: add
+  <code>ConfigDataApplicationContextInitializer</code> to the runner and it reads the same
+  file the application does.</li>
 <li><strong>Is the property genuinely load-bearing?</strong> A property set equal to a
   default configures nothing and costs a context.</li>
 </ul>
