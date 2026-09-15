@@ -11,14 +11,13 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.context.TestPropertySource;
 
 /**
- * The configured lifetime cap (GW_AUTH_0007) in force — its own context, because the cap is a
- * deployment decision and the shared fixture's tokens are deliberately unlimited.
+ * The configured lifetime cap (GW_AUTH_0007) in force — not the shared fixture's context, because the
+ * cap is a deployment decision and the shared fixture's tokens are deliberately unlimited. The
+ * posture it does run in is {@link AbstractCredentialLifetimeTest}, which declares the cap.
  */
-@TestPropertySource(properties = "skills-gateway.tokens.max-ttl=30d")
-class TokenTtlCapTests extends AbstractGatewayTest {
+class TokenTtlCapTests extends AbstractCredentialLifetimeTest {
 
     @Test
     @SVCs({"SVC_GW_AUTH_0007"})

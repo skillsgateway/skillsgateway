@@ -11,15 +11,16 @@ import io.github.reqstool.annotations.SVCs;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
 
 /**
  * A session credential dies on its own (GW_AUTH_0018, GW_AUTH_0007). The lifetime here is one millisecond,
  * so the credential is already past it by the time it is presented — which is the point: expiry is
  * a comparison at authentication time, so nothing has to run for it to take effect.
+ *
+ * <p>The lifetime is declared by {@link AbstractCredentialLifetimeTest}, whose javadoc explains why
+ * it is shared with the personal-access-token cap.
  */
-@TestPropertySource(properties = {"skills-gateway.tokens.session-ttl=1ms"})
-class SessionCredentialExpiryTests extends AbstractGatewayTest {
+class SessionCredentialExpiryTests extends AbstractCredentialLifetimeTest {
 
     @Autowired
     private TokenService tokenService;
