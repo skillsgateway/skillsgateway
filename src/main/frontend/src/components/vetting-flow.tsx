@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   AlertTriangle,
   ChevronRight,
@@ -262,6 +262,39 @@ export function VettingFlow({
 }) {
   const [openNode, setOpenNode] = useState<string | null>(null);
   const selected = nodes.find((node) => node.id === openNode);
+  const scroller = useRef<HTMLDivElement>(null);
+  const [overflow, setOverflow] = useState({ start: false, end: false });
+
+  const measure = useCallback(() => {
+    const element = scroller.current;
+    if (element === null) return;
+    const furthest = element.scrollWidth - element.clientWidth;
+    setOverflow({
+      start: element.scrollLeft > 1,
+      end: furthest > 1 && element.scrollLeft < furthest - 1,
+    });
+  }, []);
+
+  useEffect(() => {
+    const element = scroller.current;
+    if (element === null) return;
+    measure();
+    element.addEventListener("scroll", measure, { passive: true });
+    // jsdom has no ResizeObserver; the unit environment simply never re-measures, which is
+    // correct there — nothing resizes.
+    const observer =
+      typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(measure);
+    observer?.observe(element);
+    return () => {
+      element.removeEventListener("scroll", measure);
+      observer?.disconnect();
+    };
+  }, [measure, nodes]);
+
+  const mask =
+    overflow.start || overflow.end
+      ? `linear-gradient(to right, ${overflow.start ? "transparent" : "#000"}, #000 2rem, #000 calc(100% - 2rem), ${overflow.end ? "transparent" : "#000"})`
+      : undefined;
 
   if (nodes.length === 0) {
     return <p className="text-sm text-muted-foreground">No chain is configured.</p>;
@@ -273,51 +306,65 @@ export function VettingFlow({
         <span className={`font-medium ${toneText[headline.tone]}`}>{headline.result}</span>
         <span className="text-muted-foreground"> · {headline.detail}</span>
       </p>
-      <ol aria-label={label} className="flex flex-wrap items-stretch gap-y-2">
-        {nodes.map((node, index) => {
-          // The stage the chain arrives at is the one drawn as a surface rather than an outline —
-          // terminal reads as terminal without a shadow, a second accent, or a size the others do
-          // not have. The ring is the Card's own silhouette, borrowed for the same reason.
-          const terminal = node.terminal === true;
-          return (
-            <li key={node.id} className="flex min-w-0 items-stretch">
-              {index > 0 ? (
-                <span className="flex w-6 shrink-0 items-center" aria-hidden>
-                  <span className="h-px flex-1 bg-border" />
-                  <ChevronRight className="-ml-1.5 size-3.5 shrink-0 text-muted-foreground/60" />
-                </span>
-              ) : null}
-              <button
-                type="button"
-                aria-label={`${label}: ${node.label}, ${node.state}`}
-                onClick={() => setOpenNode(node.id)}
-                className={`flex min-h-20 min-w-36 flex-col gap-0.5 rounded-md border border-t-[3px] px-3 py-2 text-left outline-none transition-colors hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none ${toneEdge[node.tone]} ${terminal ? "bg-muted ring-1 ring-foreground/10" : "bg-muted/40"}`}
-              >
-                <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-                  {node.eyebrow}
-                </span>
-                <span
-                  className={`flex items-center gap-1.5 text-sm ${terminal ? "font-semibold" : "font-medium"}`}
-                >
-                  <NodeIcon node={node} />
-                  {node.label}
-                </span>
-                <span className={`text-xs ${toneText[node.tone]}`}>{node.state}</span>
-                {node.meta ? (
-                  <span className="text-[11px] text-muted-foreground">{node.meta}</span>
-                ) : null}
-                {node.external || (node.waived ?? 0) > 0 || node.setting ? (
-                  <span className="mt-auto flex flex-wrap gap-1 pt-1">
-                    {node.setting ? <NodeChip>{sourceChip(node.setting.source)}</NodeChip> : null}
-                    {node.external ? <NodeChip>external</NodeChip> : null}
-                    {(node.waived ?? 0) > 0 ? <NodeChip>{node.waived} waived</NodeChip> : null}
+      {/*
+        One row, never two: a wrapped chain orphans the gate on a line of its own, detached from
+        the result it follows. The negative margin gives the nodes' focus ring room inside a box
+        that clips. The fade is drawn only on an edge content actually continues past, and is a
+        mask rather than an overlay so it introduces no colour and needs no per-theme variant.
+      */}
+      <div
+        ref={scroller}
+        className="-m-1 overflow-x-auto p-1 [scrollbar-color:var(--border)_transparent] [scrollbar-gutter:stable] [scrollbar-width:thin]"
+        style={{ maskImage: mask, WebkitMaskImage: mask }}
+      >
+        <ol aria-label={label} className="flex items-stretch">
+          {nodes.map((node, index) => {
+            // The stage the chain arrives at is the one drawn as a surface rather than an outline —
+            // terminal reads as terminal without a shadow, a second accent, or a size the others do
+            // not have. The ring is the Card's own silhouette, borrowed for the same reason.
+            const terminal = node.terminal === true;
+            return (
+              <li key={node.id} className="flex min-w-36 items-stretch">
+                {index > 0 ? (
+                  <span className="flex w-6 shrink-0 items-center" aria-hidden>
+                    <span className="h-px flex-1 bg-border" />
+                    <ChevronRight className="-ml-1.5 size-3.5 shrink-0 text-muted-foreground/60" />
                   </span>
                 ) : null}
-              </button>
-            </li>
-          );
-        })}
-      </ol>
+                <button
+                  type="button"
+                  aria-label={`${label}: ${node.label}, ${node.state}`}
+                  onClick={() => setOpenNode(node.id)}
+                  className={`flex min-h-20 min-w-0 flex-1 flex-col gap-0.5 rounded-md border border-t-[3px] px-3 py-2 text-left outline-none transition-colors hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none ${toneEdge[node.tone]} ${terminal ? "bg-muted ring-1 ring-foreground/10" : "bg-muted/40"}`}
+                >
+                  <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                    {node.eyebrow}
+                  </span>
+                  <span
+                    className={`flex items-center gap-1.5 text-sm ${terminal ? "font-semibold" : "font-medium"}`}
+                  >
+                    <NodeIcon node={node} />
+                    <span className="min-w-0 truncate" title={node.label}>
+                      {node.label}
+                    </span>
+                  </span>
+                  <span className={`text-xs ${toneText[node.tone]}`}>{node.state}</span>
+                  {node.meta ? (
+                    <span className="text-[11px] text-muted-foreground">{node.meta}</span>
+                  ) : null}
+                  {node.external || (node.waived ?? 0) > 0 || node.setting ? (
+                    <span className="mt-auto flex flex-wrap gap-1 pt-1">
+                      {node.setting ? <NodeChip>{sourceChip(node.setting.source)}</NodeChip> : null}
+                      {node.external ? <NodeChip>external</NodeChip> : null}
+                      {(node.waived ?? 0) > 0 ? <NodeChip>{node.waived} waived</NodeChip> : null}
+                    </span>
+                  ) : null}
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
       {selected ? (
         <Dialog open onOpenChange={(open) => (open ? undefined : setOpenNode(null))}>
           <DialogContent className="sm:max-w-2xl">
