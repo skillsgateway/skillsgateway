@@ -2281,11 +2281,11 @@ actor kind — the vetting chain is the gateway's own automated subsystem, not a
 person, so the portal audit table and the ledger show it as <code>system</code>, never as a
 human actor.</p>
 <ul>
-<li>A <strong><code>vetting-verdict</code></strong> entry per connector. Its detail leads with
-  <code>connector=state</code> and then carries the finding count, the worst severity
+<li>A <strong><code>vetting-verdict</code></strong> entry per vetter. Its detail leads with
+  <code>vetter=state</code> and then carries the finding count, the worst severity
   present (<code>none</code> when there are none), and the id of the chain run — so the
   entry is auditable on its own rather than a pointer back into the vetting
-  tables. A clean pass additionally states what the connector examined (the files
+  tables. A clean pass additionally states what the vetter examined (the files
   it scanned and the rules it applied), so a pass reads as positive coverage
   rather than as silence:</li>
 </ul>
@@ -2294,7 +2294,7 @@ human actor.</p>
 </code></pre></div>
 <ul>
 <li>A <strong><code>vetting-completed</code></strong> entry per run, carrying the trigger, the fail-closed
-  outcome, the connector count, the same <code>run=</code> id, and the chain identity.</li>
+  outcome, the vetter count, the same <code>run=</code> id, and the chain identity.</li>
 </ul>
 <h2 id="the-cursor">The cursor<a class="headerlink" href="#the-cursor" title="Permanent link">&para;</a></h2>
 <p>Both paths are a <strong>cursor over the ledger</strong>, not a copy of it. The cursor is the

@@ -2341,7 +2341,7 @@ polling, batch payload, signature, replay — is in
 </tr>
 <tr>
 <td><code>detail</code></td>
-<td>Free-text qualifier, when the entry needs one: the vetting chain outcome, a connector's verdict, or the reason a reviewer gave when overriding a blocked outcome.</td>
+<td>Free-text qualifier, when the entry needs one: the vetting chain outcome, a vetter's verdict, or the reason a reviewer gave when overriding a blocked outcome.</td>
 </tr>
 <tr>
 <td><code>tokenId</code> / <code>token_id</code></td>
@@ -2500,13 +2500,13 @@ triggered the rebuild. See
 <tbody>
 <tr>
 <td><code>vetting-verdict</code></td>
-<td>One per connector per run.</td>
-<td><code>{connector}={state}</code>, e.g. <code>secret-scan=fail</code>.</td>
+<td>One per vetter per run.</td>
+<td><code>{vetter}={state}</code>, e.g. <code>secret-scan=fail</code>.</td>
 </tr>
 <tr>
 <td><code>vetting-completed</code></td>
 <td>Once per run.</td>
-<td><code>trigger={ingestion\|revet-scheduled\|revet-manual}; outcome={clear\|blocked}; connectors={n}; chain={connector@version,…}</code>.</td>
+<td><code>trigger={ingestion\|revet-scheduled\|revet-manual}; outcome={clear\|blocked}; vetters={n}; chain={vetter@version,…}</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -2530,12 +2530,12 @@ records <code>revet-policy</code> as the principal; an on-demand run records the
 <tr>
 <td><code>revet-inconclusive</code></td>
 <td>The chain could not conclude, so the snapshot stays approved.</td>
-<td>The connectors that could not answer.</td>
+<td>The vetters that could not answer.</td>
 </tr>
 <tr>
 <td><code>revet-violation</code></td>
 <td>A retroactive violation on an approved snapshot.</td>
-<td><code>trigger=…; mode={WARN\|ENFORCE}; connectors=…; rules=…; fetchedBy={n}</code>.</td>
+<td><code>trigger=…; mode={WARN\|ENFORCE}; vetters=…; rules=…; fetchedBy={n}</code>.</td>
 </tr>
 <tr>
 <td><code>revet-violation-affected</code></td>

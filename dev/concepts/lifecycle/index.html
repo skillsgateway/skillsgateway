@@ -2232,7 +2232,7 @@ physically lives in a different git repository from published content.</p>
 <div class="dd-diagram dd-light">
 <svg viewBox="0 0 960 1000" role="img" aria-labelledby="lifecycle-light-title lifecycle-light-desc" xmlns="http://www.w3.org/2000/svg">
     <title id="lifecycle-light-title">Skills Gateway snapshot lifecycle</title>
-    <desc id="lifecycle-light-desc">Flowchart of the quarantine-to-serve lifecycle: an upstream commit is ingested into a quarantined snapshot, vetted by the connector chain, decided by a reviewer, and only the ApprovalService publishes it across the trust boundary to the read-only facade; re-vetting can later revoke it, and every transition lands on the append-only audit ledger.</desc>
+    <desc id="lifecycle-light-desc">Flowchart of the quarantine-to-serve lifecycle: an upstream commit is ingested into a quarantined snapshot, vetted by the vetter chain, decided by a reviewer, and only the ApprovalService publishes it across the trust boundary to the read-only facade; re-vetting can later revoke it, and every transition lands on the append-only audit ledger.</desc>
     <defs>
       <marker id="arr-light" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
         <polygon points="0 0, 8 3, 0 6" fill="#5c576e"/>
@@ -2310,7 +2310,7 @@ physically lives in a different git repository from published content.</p>
     <rect x="200" y="356" width="240" height="56" rx="6" fill="#f7f5fa"/>
     <rect x="200" y="356" width="240" height="56" rx="6" fill="#ffffff" stroke="#26222f" stroke-width="1"/>
     <text x="320" y="380" class="ddl-node-name" text-anchor="middle">Vetting chain</text>
-    <text x="320" y="396" class="ddl-sub" text-anchor="middle">one verdict per connector</text>
+    <text x="320" y="396" class="ddl-sub" text-anchor="middle">one verdict per vetter</text>
 
     <!-- reviewer decision diamond -->
     <polygon points="320,452 408,500 320,548 232,500" fill="#f7f5fa"/>
@@ -2376,7 +2376,7 @@ physically lives in a different git repository from published content.</p>
 <div class="dd-diagram dd-dark">
 <svg viewBox="0 0 960 1000" role="img" aria-labelledby="lifecycle-dark-title lifecycle-dark-desc" xmlns="http://www.w3.org/2000/svg">
     <title id="lifecycle-dark-title">Skills Gateway snapshot lifecycle</title>
-    <desc id="lifecycle-dark-desc">Flowchart of the quarantine-to-serve lifecycle: an upstream commit is ingested into a quarantined snapshot, vetted by the connector chain, decided by a reviewer, and only the ApprovalService publishes it across the trust boundary to the read-only facade; re-vetting can later revoke it, and every transition lands on the append-only audit ledger.</desc>
+    <desc id="lifecycle-dark-desc">Flowchart of the quarantine-to-serve lifecycle: an upstream commit is ingested into a quarantined snapshot, vetted by the vetter chain, decided by a reviewer, and only the ApprovalService publishes it across the trust boundary to the read-only facade; re-vetting can later revoke it, and every transition lands on the append-only audit ledger.</desc>
     <defs>
       <marker id="arr-dark" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
         <polygon points="0 0, 8 3, 0 6" fill="#b3acc6"/>
@@ -2454,7 +2454,7 @@ physically lives in a different git repository from published content.</p>
     <rect x="200" y="356" width="240" height="56" rx="6" fill="#201c2a"/>
     <rect x="200" y="356" width="240" height="56" rx="6" fill="#2c2739" stroke="#f1eef8" stroke-width="1"/>
     <text x="320" y="380" class="ddd-node-name" text-anchor="middle">Vetting chain</text>
-    <text x="320" y="396" class="ddd-sub" text-anchor="middle">one verdict per connector</text>
+    <text x="320" y="396" class="ddd-sub" text-anchor="middle">one verdict per vetter</text>
 
     <!-- reviewer decision diamond -->
     <polygon points="320,452 408,500 320,548 232,500" fill="#201c2a"/>
@@ -2633,12 +2633,12 @@ registrant's. See <a href="../trust-boundaries/">Trust boundaries</a>.</p>
 snapshot is keyed by the upstream SHA, and the chain is not re-run for one that
 already exists.</p>
 <p>Once a snapshot is recorded as <code>held</code>, the <strong>vetting chain</strong> runs against the
-content just pinned: each connector answers with a verdict, the verdicts are
+content just pinned: each vetter answers with a verdict, the verdicts are
 recorded against the snapshot, and they aggregate fail-closed into a <code>clear</code> or
 <code>blocked</code> outcome. The chain never changes the snapshot's state — a vetted
 snapshot is still <code>held</code>. What it decides is whether approving it is an ordinary
 act or one that needs a written reason. See
-<a href="../vetting/">Vetting — the connector chain</a>.</p>
+<a href="../vetting/">Vetting — the vetter chain</a>.</p>
 <h2 id="stage-2-approval">Stage 2 — approval<a class="headerlink" href="#stage-2-approval" title="Permanent link">&para;</a></h2>
 <p>A held snapshot is inert. It is stored, it is inspectable in the portal, and it
 is serving nothing.</p>

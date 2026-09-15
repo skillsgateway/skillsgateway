@@ -2655,8 +2655,8 @@ nothing is implemented, and T5 remains uncovered until it is.</p>
 
     subgraph GW["Skills Gateway"]
         ING["Ingestion\nwatch · fetch · resolve\ntransitive sources"]
-        SCAN["Vetting orchestrator\ntrigger → connectors →\nverdict callbacks"]
-        CONN["Connectors\nsecret · injection · license ·\nconformance · LLM · sandbox"]
+        SCAN["Vetting orchestrator\ntrigger → vetters →\nverdict callbacks"]
+        CONN["Vetters\nsecret · injection · license ·\nconformance · LLM · sandbox"]
         POL["Policy engine\ntiers · licenses ·\nallow/deny · approvals"]
         PUB["Publisher\ncomposes virtual\nmarketplaces, rewrites\nsources, pins SHAs"]
         FAC["Git façade\nread-only smart-HTTP\n+ raw HTTPS"]
@@ -2728,13 +2728,13 @@ nothing is implemented, and T5 remains uncovered until it is.</p>
   path is bounded in address space, redirects, bytes and time behind that gate
   (see <a href="../concepts/trust-boundaries/">Trust boundaries</a>) — with network egress
   isolation, not those bounds, as the primary control.</li>
-<li><strong>Vetting orchestrator (connector-based).</strong> The gateway does not vet
+<li><strong>Vetting orchestrator (vetter-based).</strong> The gateway does not vet
   content itself — it orchestrates. Per snapshot it emits a vetting trigger
   (webhook/queue event carrying snapshot metadata and a fetch URL for the
-  content), fans it out to the configured connectors, and receives
-  asynchronous result callbacks. A connector is anything that can take the
+  content), fans it out to the configured vetters, and receives
+  asynchronous result callbacks. A vetter is anything that can take the
   trigger and eventually answer
-  <code>{connector, snapshot, verdict, report-url, findings[]}</code>:</li>
+  <code>{vetter, snapshot, verdict, report-url, findings[]}</code>:</li>
 <li><em>Scanners:</em> artifact and vulnerability scanners, malware signatures,
     dependency and secret scanning, license checks,
     obfuscation/invisible-Unicode detection in markdown.</li>
@@ -2744,17 +2744,17 @@ nothing is implemented, and T5 remains uncovered until it is.</p>
     purpose, alter its own review process? A triage signal, not a verdict.</li>
 <li><em>Sandbox runners:</em> execute bundled scripts and hooks in an instrumented
     sandbox; record file, network, and process behavior (T1/T2 tiers).</li>
-<li><em>Human processes:</em> a Jira ticket, a review queue — the MVP "connector" is
+<li><em>Human processes:</em> a Jira ticket, a review queue — the MVP "vetter" is
     simply an approve button in the portal.</li>
 </ul>
 <p>Results are normalized and attached to the snapshot forever. One analysis
   stays built-in because tiering depends on it: <em>manifest analysis</em> —
   enumerating registered hooks, MCP servers, commands, and agents (§6).
 - <strong>Policy engine.</strong> Policy-as-code consuming snapshot facts and the
-  normalized connector verdicts. The engine is embedded CEL (ADR 0006), and
+  normalized vetter verdicts. The engine is embedded CEL (ADR 0006), and
   its first slice ships: <a href="../guides/policy-rules/">deny rules</a> evaluated
   fail-closed at approval time, with a playground and ledger provenance.
-  The rest of the sketch — which connectors are required per tier,
+  The rest of the sketch — which vetters are required per tier,
   auto-approval conditions, license allowlists, org/team scoping, mandatory
   reviewers for T2 — attaches to the same engine if and when those are
   decided (auto-approval deliberately parked: it would delegate the human
@@ -2786,7 +2786,7 @@ nothing is implemented, and T5 remains uncovered until it is.</p>
     actor Dev as Developer
     participant Portal as Catalog/Portal
     participant Ing as Ingestion
-    participant Vet as Vetting connectors
+    participant Vet as Vetting vetters
     participant Rev as Reviewer (tiered)
     participant Pub as Publisher
     participant Fac as Git façade
@@ -2840,16 +2840,16 @@ published refs (<code>refs/heads/main</code> when it is still the tip, and the a
 <code>GET /api/snapshots/{id}/fetchers</code>, readable by an approver of the marketplace or
 an administrator. What triggers the recall is <strong>continuous re-vetting</strong> — the
 chain re-run over approved content on a schedule — rather than only a human
-pressing a button, so an acceptance that expired or a connector rule that landed
+pressing a button, so an acceptance that expired or a vetter rule that landed
 retracts content without waiting to be noticed.
 Two limits are deliberate:</p>
 <ul>
 <li>Enforcement is <strong>opt-in</strong> (<code>skills-gateway.vetting.revet.mode</code>, default
   <code>warn</code>). Retracting content teams already depend on must never begin because
   of an upgrade.</li>
-<li>A run that blocks only because a connector <strong>errored</strong> never revokes. An error
+<li>A run that blocks only because a vetter <strong>errored</strong> never revokes. An error
   is evidence about the scanner, not the content, and fail-closed there would
-  let one connector outage revoke an estate. Fail-closed still governs every
+  let one vetter outage revoke an estate. Fail-closed still governs every
   path that <em>publishes</em>.</li>
 </ul>
 <p>(d) — fleet force-uninstall — remains Phase 3.</p>
@@ -2988,8 +2988,8 @@ format-agnostic; tool specifics live in <strong>adapters</strong>:</p>
 <p>Stateless services (façade, ingestion, vetting orchestrator, publisher,
 portal) in front of Postgres (metadata, ledger) and git storage.
 OIDC SSO for humans, token auth for CI, SCIM for team scoping. Vetting
-connectors run outside the gateway and talk to it over the trigger/callback
-contract; sandbox connectors use isolated ephemeral runners. Air-gap friendly by construction: ingestion is the only
+vetters run outside the gateway and talk to it over the trigger/callback
+contract; sandbox vetters use isolated ephemeral runners. Air-gap friendly by construction: ingestion is the only
 component needing internet egress, and can run in a DMZ with one-way promotion
 inward.</p>
 <p><strong>Git storage is a named backend behind one seam.</strong> <code>GitStorage</code> hands callers
@@ -3040,7 +3040,7 @@ reference transitions at all — see
 <li><strong>Phase 1 — visibility &amp; choke point (MVP).</strong> Git façade + ingestion of
   <strong>local-source-only</strong> marketplaces (external plugin sources rejected
   fail-closed) + manual allowlist + one curated org marketplace + fetch audit
-  log. Default branch only; vetting is the manual-approval connector (an
+  log. Default branch only; vetting is the manual-approval vetter (an
   approve button). Even this closes T3/T4/T6 — T4 by rejection rather than
   rewriting — and gives Security eyes.</li>
 <li><strong>Phase 2 — governance.</strong> External plugin sources with transitive
@@ -3055,7 +3055,7 @@ reference transitions at all — see
   <code>enabled: false</code>. <em>Remaining:</em> the blast-radius re-vetting the closure query
   enables, <code>git</code> and <code>git-subdir</code>, the egress proxy, connect-time address
   pinning, and declared-<code>ref</code>/<code>sha</code> pinning. Also in this phase: a
-  connector framework with automated vetting
+  vetter framework with automated vetting
   (scanners, LLM review, sandbox), risk tiers, approval workflow with
   semantic diffs, policy-as-code, catalog/portal with request flow, per-team
   virtual marketplaces, multi-ref publication. <em>Implemented:</em> per-marketplace
@@ -3131,7 +3131,7 @@ reference transitions at all — see
 <li><strong>LLM review confidence.</strong> Semantic scanning of prose will have false
    negatives; adversaries will optimize against it. It must gate <em>triage
    priority</em>, not substitute for tier-appropriate human review.
-   Designated tooling for when this connector is built: <strong>promptfoo</strong>
+   Designated tooling for when this vetter is built: <strong>promptfoo</strong>
    (promptfoo.dev) as its eval + red-team harness — a CI-run corpus of
    known-malicious/benign skills asserting detection (prompt changes that
    degrade detection fail the build), plus adversarial injection

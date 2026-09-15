@@ -2252,7 +2252,7 @@ recorded as <strong>missing license</strong>.</p>
 <p>A banned or not-allowed license is an ordinary blocking finding. Approval is
 refused through the standard gate, and the refusal names the finding:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">409</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Vetting chain blocked this snapshot"</span><span class="p">,</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"blockingConnectors"</span><span class="p">:[</span><span class="s2">"license-scan"</span><span class="p">],</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"blockingVetters"</span><span class="p">:[</span><span class="s2">"license-scan"</span><span class="p">],</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w"> </span><span class="nt">"uncoveredFindings"</span><span class="p">:[{</span><span class="nt">"ruleId"</span><span class="p">:</span><span class="s2">"license-banned"</span><span class="p">,</span><span class="nt">"location"</span><span class="p">:</span><span class="s2">"LICENSE"</span><span class="p">}]}</span>
 </code></pre></div>
 <p>To accept the risk anyway, record a
@@ -2272,7 +2272,7 @@ It complements <code>/api/snapshots/{id}/content</code> and the gateway's own
 <code>/actuator/sbom</code> as the supply-chain read surface.</p>
 <h2 id="why-the-policy-is-configuration">Why the policy is configuration<a class="headerlink" href="#why-the-policy-is-configuration" title="Permanent link">&para;</a></h2>
 <p>Vetting evidence must be attributable: when a snapshot that cleared last month
-blocks today, was it the content or the policy? The <code>license-scan</code> connector
+blocks today, was it the content or the policy? The <code>license-scan</code> vetter
 stamps a digest of the lists into its recorded version, which is part of every
 run's chain identity — so the answer is on the record. That attribution works
 because the policy changes only by deploy; there is deliberately no API that

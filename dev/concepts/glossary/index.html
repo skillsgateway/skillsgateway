@@ -2063,14 +2063,14 @@ retracted. <code>warn</code> mode measures it before <code>enforce</code> is gra
 cause it. See
 <a href="../../guides/re-vetting/#warn-first-then-enforce">Re-vetting approved content</a>.</dd>
 <dt><strong>Chain identity</strong></dt>
-<dd>The identity and version of every connector that produced a chain run,
+<dd>The identity and version of every vetter that produced a chain run,
 stamped into the run. It is what makes "the same content, re-vetted by a
 changed chain" a distinguishable event. See
-<a href="../vetting/">Vetting — the connector chain</a>.</dd>
+<a href="../vetting/">Vetting — the vetter chain</a>.</dd>
 <dt><strong>Chain run</strong></dt>
 <dd>One execution of the vetting chain against one snapshot, recorded with its
 verdicts and its findings. The record is raw evidence and is never
-rewritten. See <a href="../vetting/">Vetting — the connector chain</a>.</dd>
+rewritten. See <a href="../vetting/">Vetting — the vetter chain</a>.</dd>
 <dt><strong>Closure</strong></dt>
 <dd>The set of external plugin sources one composite snapshot serves, recorded
 with the snapshot as immutable copies of what each source was declared as
@@ -2081,15 +2081,13 @@ and what it resolved to. See
 marked for deletion, reclaiming the objects behind it. See
 <a href="../../reference/retention/#the-two-passes">Snapshot retention</a>.</dd>
 <dt><strong>Connector</strong></dt>
-<dd>A pluggable vetting component, built in or external, handed a snapshot's
-identity and a read-only walk over its files and answering with a verdict.
-An administrator can switch one off globally or for one marketplace — an
-audited act that records a <code>DISABLED</code> verdict rather than shortening the
-chain (<a href="../../reference/api/marketplaces/#connector-enabledisable">connector settings</a>).
-The word is used in this project only for a vetting component; integrations
-to external systems are subscribers, sinks or mirrors. The industry
-equivalents are Harbor's scanner adapter and Dependency-Track's analyzer.
-See <a href="../vetting/">Vetting — the connector chain</a>.</dd>
+<dd>The transport that lets a vetter running outside the gateway take part: the
+HTTP trigger and callback contract configured under
+<code>skills-gateway.vetting.external[*]</code>. Every external connector contributes
+one vetter; a built-in vetter has no connector. The word means nothing
+wider in this project — integrations to other systems are subscribers, sinks
+or mirrors. See
+<a href="../vetting/#external-connectors">External connectors</a>.</dd>
 <dt><strong>Effective outcome</strong></dt>
 <dd>What actually gates an approval: the recorded chain run with the waivers
 active at that instant layered over it, computed on every read.
@@ -2114,10 +2112,10 @@ resolved into the snapshot rather than dereferenced at install time. See
 touch. Authenticated by PAT only; writes impossible by construction. See
 <a href="../../reference/git-facade/">Git smart-HTTP facade</a>.</dd>
 <dt><strong>Finding</strong></dt>
-<dd>One thing a connector found: a stable rule id, a severity, a <code>path:line</code>
+<dd>One thing a vetter found: a stable rule id, a severity, a <code>path:line</code>
 location, and a message. The rule id is the identity a waiver is written
 against. See
-<a href="../vetting/#the-connector-contract">The connector contract</a>.</dd>
+<a href="../vetting/#the-vetter-contract">The vetter contract</a>.</dd>
 <dt><strong>Forge mirror</strong></dt>
 <dd>An optional outbound copy of approved refs pushed to a repository on an
 external code host, for browsing only. It is off by default, and a fetch
@@ -2162,7 +2160,7 @@ API and the facade URL. See
 <dt><strong>Minimum release age</strong></dt>
 <dd>A cooling-off window: a snapshot ingested less than the configured time ago
 cannot be approved however clear its verdicts are. Checked at the approval
-request, and deliberately not a connector. See
+request, and deliberately not a vetter. See
 <a href="../../reference/configuration/#minimum-release-age">Minimum release age</a>.</dd>
 <dt><strong>Override</strong></dt>
 <dd>A per-approval act, reserved to an administrator, that approves one snapshot
@@ -2214,11 +2212,11 @@ claim mappings; a session's effective roles are their <strong>union</strong>. Se
 same expiry deadline. The old token is revoked before the new one is issued.
 See <a href="../../reference/api/tokens/">Access tokens</a>.</dd>
 <dt><strong>Rule id</strong></dt>
-<dd>The stable identifier of one connector rule (<code>aws-access-key-id</code>), carried
+<dd>The stable identifier of one vetter rule (<code>aws-access-key-id</code>), carried
 by every finding it raises and the identity a waiver names. It is part of
-the connector contract rather than a display string, and is unrelated to a
+the vetter contract rather than a display string, and is unrelated to a
 <em>policy rule</em>. See
-<a href="../vetting/#the-connector-contract">The connector contract</a>.</dd>
+<a href="../vetting/#the-vetter-contract">The vetter contract</a>.</dd>
 <dt><strong>Scope</strong> (of a token)</dt>
 <dd>Three separate dimensions with three different empty values: <code>scopes</code>
 (fetch through the facade), <code>pushScopes</code> (publish) and <code>apiScopes</code> (the
@@ -2249,10 +2247,22 @@ every mode lands snapshots <code>held</code> behind the same approval gate. See
 only git service the facade enables. See
 <a href="../../reference/git-facade/">Git smart-HTTP facade</a>.</dd>
 <dt><strong>Verdict</strong></dt>
-<dd>A connector's conclusion about a snapshot: <code>PASS</code>, <code>WARN</code>, <code>FAIL</code>, <code>ERROR</code>,
+<dd>A vetter's conclusion about a snapshot: <code>PASS</code>, <code>WARN</code>, <code>FAIL</code>, <code>ERROR</code>,
 <code>PENDING</code> or <code>DISABLED</code>. Only <code>PASS</code> and <code>WARN</code> clear, and <code>DISABLED</code> is the
 one state that neither clears nor blocks. See
 <a href="../vetting/#verdict-states">Verdict states</a>.</dd>
+<dt><strong>Vetter</strong></dt>
+<dd>The element of the vetting chain: whatever examines a snapshot and answers
+with a verdict and findings. Built in — <code>secret-scan</code>, <code>prompt-injection</code>,
+<code>license-scan</code>, <code>skill-conformance</code> — or external, reached over a
+connector. It is handed the snapshot's identity and a
+read-only walk over its files, and nothing else. An administrator can switch
+one off globally or for one marketplace — an audited act that records a
+<code>DISABLED</code> verdict rather than shortening the chain
+(<a href="../../reference/api/marketplaces/#vetter-enabledisable">vetter settings</a>).
+The industry equivalents are Harbor's scanner adapter and
+Dependency-Track's analyzer. See
+<a href="../vetting/">Vetting — the vetter chain</a>.</dd>
 <dt><strong>Violation</strong></dt>
 <dd>The reason ingestion flagged a snapshot: an external plugin source that
 admission refused, that could not be resolved, or that exceeded a resolution

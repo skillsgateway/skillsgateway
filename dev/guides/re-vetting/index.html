@@ -2288,7 +2288,7 @@
 
 
 <h1 id="re-vetting-approved-content">Re-vetting approved content<a class="headerlink" href="#re-vetting-approved-content" title="Permanent link">&para;</a></h1>
-<p>An approval is a judgement made against the evidence of one day. Connectors gain
+<p>An approval is a judgement made against the evidence of one day. Vetters gain
 rules, advisories land, and accepted risks expire — so an estate whose approvals
 are never re-examined slowly turns into a set of assertions nobody has checked.</p>
 <p>Continuous re-vetting runs the <a href="../../concepts/vetting/">vetting chain</a> again over
@@ -2298,7 +2298,7 @@ fresh answer means for content teams already depend on.</p>
 <p>On its schedule, the gateway takes the approved snapshots whose newest chain run
 is <strong>oldest</strong>, up to a batch size, and re-runs the chain over each. Each pass
 records a new run — trigger <code>revet-scheduled</code>, with the identity and version of
-every connector that produced it — and never edits the previous one.</p>
+every vetter that produced it — and never edits the previous one.</p>
 <p>Oldest-first in bounded batches is what makes this affordable. A sweep that
 re-vetted everything on every tick would be a periodic load spike proportional to
 the estate; one that picked arbitrarily would starve whichever snapshots it never
@@ -2325,12 +2325,12 @@ judgement, and the gateway draws three lines.</p>
 </tr>
 <tr>
 <td><strong>Violation</strong></td>
-<td>A connector objects to the <strong>content</strong>, and no active waiver covers the finding.</td>
+<td>A vetter objects to the <strong>content</strong>, and no active waiver covers the finding.</td>
 <td>Recorded, announced, and — in <code>enforce</code> mode — the snapshot is revoked.</td>
 </tr>
 <tr>
 <td><strong>Inconclusive</strong></td>
-<td>The run blocks only because a connector errored, timed out, has not answered, or produced no verdict at all.</td>
+<td>The run blocks only because a vetter errored, timed out, has not answered, or produced no verdict at all.</td>
 <td>Recorded and announced. The snapshot stays approved and served, in <strong>either</strong> mode.</td>
 </tr>
 </tbody>
@@ -2340,14 +2340,14 @@ instant layered over it. A finding somebody accepted, in writing, with an expiry
 must not quarantine content; otherwise a waiver would clear the approval gate
 only to be ignored by the next sweep.</p>
 <div class="admonition note">
-<p class="admonition-title">Why a broken connector never retracts anything</p>
+<p class="admonition-title">Why a broken vetter never retracts anything</p>
 <p>Approval asks <em>may this be published?</em> and fails closed on everything,
 because nothing is being served yet and the cost of an over-strict answer is
 one delayed review.</p>
 <p>Re-vetting asks <em>must this be retracted?</em>, and the cost of an over-strict
-answer is pulling live content out from under every consumer. A connector
+answer is pulling live content out from under every consumer. A vetter
 that threw is evidence about the <strong>scanner</strong>, not about the content — and a
-shared connector outage would otherwise revoke an entire estate at once,
+shared vetter outage would otherwise revoke an entire estate at once,
 turning a scanner bug into an outage of exactly the content the gateway
 exists to serve.</p>
 <p>Nothing is weakened: fail-closed still governs every path that <em>publishes</em>.
@@ -2361,7 +2361,7 @@ declined is retracting content on evidence that says nothing about it.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">warn (default)</label><label for="__tabbed_1_2">enforce</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<p>The violation is written to the ledger with the objecting connectors, the
+<p>The violation is written to the ledger with the objecting vetters, the
 rules behind it, and one entry per identity that had already fetched the
 snapshot. <code>snapshot.revet_violation</code> goes out to subscribers. The portal
 shows it.</p>
@@ -2412,12 +2412,12 @@ toast says what the run concluded.</p>
 <p>Both record their runs with trigger <code>revet-manual</code>.</p>
 <div class="admonition info">
 <p class="admonition-title">Scanner and advisory feeds</p>
-<p>The built-in <code>secret-scan</code> and <code>prompt-injection</code> connectors have no
+<p>The built-in <code>secret-scan</code> and <code>prompt-injection</code> vetters have no
 external feed to subscribe to: their rules ship with the gateway, as does
 the Agent Skills specification <code>skill-conformance</code> validates against. So
 "re-vet when the feed updates" is, today, an operator calling
-<code>POST /api/marketplaces/{name}/revet</code> after deploying a connector whose
-rules changed — and the run records the connector versions, so an answer
+<code>POST /api/marketplaces/{name}/revet</code> after deploying a vetter whose
+rules changed — and the run records the vetter versions, so an answer
 that changed can be attributed to the chain rather than guessed at.</p>
 <p>A webhook-triggered feed integration is a follow-on, not something this
 version does quietly.</p>
@@ -2434,7 +2434,7 @@ rather than silent.</p>
 
     S-&gt;&gt;S: chain run (trigger revet-scheduled)
     S-&gt;&gt;S: effective outcome vs active waivers
-    S-&gt;&gt;L: revet-violation (connectors, rules, mode)
+    S-&gt;&gt;L: revet-violation (vetters, rules, mode)
     S-&gt;&gt;L: revet-violation-affected (one per identity)
     S-&gt;&gt;W: snapshot.revet_violation
     S-&gt;&gt;DB: state approved → revoked
@@ -2509,7 +2509,7 @@ Size expiries so the risk is genuinely resolved before them.</p>
 </tr>
 <tr>
 <td><code>revet-violation</code></td>
-<td>A retroactive violation, with the objecting connectors, the rules and the mode in force.</td>
+<td>A retroactive violation, with the objecting vetters, the rules and the mode in force.</td>
 </tr>
 <tr>
 <td><code>revet-violation-affected</code></td>

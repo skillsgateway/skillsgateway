@@ -2737,6 +2737,13 @@ partial answer is an <code>error</code> verdict that blocks, never a pass (GW_VE
 condemn (GW_VETTING_0026). A <code>pending</code> answer is the <strong>asynchronous seam</strong> and blocks
 until resolved (GW_VETTING_0027); the inbound resolution callback is deliberately a
 separate, sequenced piece of work.</p>
+<div class="admonition note">
+<p class="admonition-title">Renamed 2026-09-15</p>
+<p>The chain element is now called a <strong>vetter</strong>; <strong>connector</strong> was narrowed to
+the HTTP transport this ADR specifies. The decision is unchanged — one
+connector still contributes one vetter. See
+<a href="../../concepts/glossary/">Glossary</a>.</p>
+</div>
 <h3 id="adr-0010-admin-override-of-vetting-automation-the-cockpit-model"><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0010-admin-override-of-vetting-automation.md">ADR 0010 — Admin override of vetting automation (the cockpit model)</a><a class="headerlink" href="#adr-0010-admin-override-of-vetting-automation-the-cockpit-model" title="Permanent link">&para;</a></h3>
 <p><em>Accepted, 2026-09-01.</em></p>
 <p>The airline-cockpit principle applied to vetting: automation can be
@@ -2752,6 +2759,12 @@ policy, release-age and four-eyes gates still run), writes a distinct
 it is never indistinguishable from a clean approval. The override does not
 replace scoped, expiring <strong>waivers</strong>; it is the rarer administrative act for a
 whole blocked outcome.</p>
+<div class="admonition note">
+<p class="admonition-title">Renamed 2026-09-15</p>
+<p>What this ADR calls a connector is now a <strong>vetter</strong>, and the switch covers
+every vetter in the chain, built-in or external. See
+<a href="../../concepts/glossary/">Glossary</a>.</p>
+</div>
 <h3 id="adr-0011-external-plugin-sources-admission-before-resolution"><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md">ADR 0011 — External plugin sources: admission before resolution</a><a class="headerlink" href="#adr-0011-external-plugin-sources-admission-before-resolution" title="Permanent link">&para;</a></h3>
 <p><em>Accepted, 2026-09-02.</em></p>
 <p>The staged reversal of the local-only stance. Support for external plugin
@@ -2816,6 +2829,12 @@ that a round trip is lossy by design, which is why this ADR recommends building
 <strong>export only</strong> for now and leaving import to its own change — and why it says
 plainly that an export is not a backup.</p>
 <h3 id="adr-0015-corpus-questions-are-approval-gate-preconditions-not-vetting-connectors"><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md">ADR 0015 — Corpus questions are approval-gate preconditions, not vetting connectors</a><a class="headerlink" href="#adr-0015-corpus-questions-are-approval-gate-preconditions-not-vetting-connectors" title="Permanent link">&para;</a></h3>
+<div class="admonition note">
+<p class="admonition-title">Renamed 2026-09-15</p>
+<p>Read "vetting connector" here as <strong>vetter</strong>, the chain element this ADR
+declines to put a corpus question inside. See
+<a href="../../concepts/glossary/">Glossary</a>.</p>
+</div>
 <p><em>Proposed.</em> The first mitigation for T5 (typosquatting) needs a rule that can ask a
 question of the approved estate, which a vetting connector structurally cannot be
 allowed to ask. A chain run is a pure function of (pinned content, chain identity),

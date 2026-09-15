@@ -2254,7 +2254,7 @@
 
 
 <h1 id="waiving-a-vetting-finding">Waiving a vetting finding<a class="headerlink" href="#waiving-a-vetting-finding" title="Permanent link">&para;</a></h1>
-<p>The <a href="../../concepts/vetting/">vetting chain</a> blocks approval whenever a connector
+<p>The <a href="../../concepts/vetting/">vetting chain</a> blocks approval whenever a vetter
 objects. Sometimes the objection is one you have looked at and decided to accept
 — a documented dummy credential in a fixtures directory, a phrase that trips the
 prompt-injection heuristics inside an example. A <strong>waiver</strong> is how you record
@@ -2282,11 +2282,11 @@ waiver and in the audit ledger.</p>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="go">{</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="go">  "status": 409,</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">  "title": "Vetting chain blocked this snapshot",</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="go">  "detail": "snapshot 1 cannot be approved: the vetting connectors secret-scan did not clear it. Uncovered findings: aws-access-key-id at plugins/hello/DEPLOY.md:5. Record a scoped, expiring waiver for each blocking finding — with a justification and an expiry — and approve again.",</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">  "blockingConnectors": ["secret-scan"],</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="go">  "detail": "snapshot 1 cannot be approved: the vetting vetters secret-scan did not clear it. Uncovered findings: aws-access-key-id at plugins/hello/DEPLOY.md:5. Record a scoped, expiring waiver for each blocking finding — with a justification and an expiry — and approve again.",</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">  "blockingVetters": ["secret-scan"],</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="go">  "uncoveredFindings": [</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="go">    {</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="go">      "connector": "secret-scan",</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="go">      "vetter": "secret-scan",</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="go">      "ruleId": "aws-access-key-id",</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="go">      "location": "plugins/hello/DEPLOY.md:5",</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="go">      "severity": "CRITICAL",</span>
@@ -2299,7 +2299,7 @@ waiver and in the audit ledger.</p>
 approval will succeed — covering some of them changes nothing.</p>
 <div class="admonition warning">
 <p class="admonition-title">Read the file before you accept the finding</p>
-<p>The connectors match shapes, so a finding is a place to look, not a verdict on
+<p>The vetters match shapes, so a finding is a place to look, not a verdict on
 its own. Open the location and confirm what is actually there. Accepting a
 real credential is how it reaches every developer who installs the skill.</p>
 </div>
@@ -2411,7 +2411,7 @@ marketplace.</p>
 </div>
 <h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../../concepts/vetting/#waivers-accepted-risks-with-a-scope-and-an-expiry">Vetting — the connector chain</a>
+<li><a href="../../concepts/vetting/#waivers-accepted-risks-with-a-scope-and-an-expiry">Vetting — the vetter chain</a>
   — the model and the effective-outcome rule.</li>
 <li><a href="../approving-snapshots/">Approving and rejecting snapshots</a> — the decision the
   waiver unblocks.</li>

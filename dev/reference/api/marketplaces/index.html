@@ -1829,22 +1829,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#connector-enabledisable" class="md-nav__link">
+  <a href="#vetter-enabledisable" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Connector enable/disable
+        Vetter enable/disable
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Connector enable/disable">
+    <nav class="md-nav" aria-label="Vetter enable/disable">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#get-vettingconnector-toggles" class="md-nav__link">
+  <a href="#get-vettingvetter-toggles" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /vetting/connector-toggles
+        GET /vetting/vetter-toggles
       
     </span>
   </a>
@@ -1863,10 +1863,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#put-vettingconnectorsnametoggle" class="md-nav__link">
+  <a href="#put-vettingvettersnametoggle" class="md-nav__link">
     <span class="md-ellipsis">
       
-        PUT /vetting/connectors/{name}/toggle
+        PUT /vetting/vetters/{name}/toggle
       
     </span>
   </a>
@@ -2709,22 +2709,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#connector-enabledisable" class="md-nav__link">
+  <a href="#vetter-enabledisable" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Connector enable/disable
+        Vetter enable/disable
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Connector enable/disable">
+    <nav class="md-nav" aria-label="Vetter enable/disable">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#get-vettingconnector-toggles" class="md-nav__link">
+  <a href="#get-vettingvetter-toggles" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /vetting/connector-toggles
+        GET /vetting/vetter-toggles
       
     </span>
   </a>
@@ -2743,10 +2743,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#put-vettingconnectorsnametoggle" class="md-nav__link">
+  <a href="#put-vettingvettersnametoggle" class="md-nav__link">
     <span class="md-ellipsis">
       
-        PUT /vetting/connectors/{name}/toggle
+        PUT /vetting/vetters/{name}/toggle
       
     </span>
   </a>
@@ -2964,10 +2964,10 @@ admin) — resolved server-side from the addressed snapshot or waiver where the
 route carries an id; every <code>GET</code> on this page stays open to any session, except
 the <a href="#snapshot-preview">snapshot preview</a> reads and the
 <a href="#get-snapshotsidfetchers">blast-radius report</a>, which take the same
-approver-or-admin standing as a decision on that snapshot, and the connector
+approver-or-admin standing as a decision on that snapshot, and the vetter
 settings, which are <strong>admin</strong>. Two administrative escape hatches require
 <strong>admin</strong> specifically: overriding a blocked vetting outcome on approve, and
-enabling or disabling a connector. See
+enabling or disabling a vetter. See
 <a href="../../../guides/delegated-administration/">Delegated administration</a>.</p>
 <p><strong>Machine reach.</strong> <code>marketplaces:read</code> covers <code>GET /marketplaces</code>, <code>GET
 /catalog</code> and a snapshot's <code>/content</code>, <code>/content-diff</code>, <code>/licenses</code>,
@@ -3358,7 +3358,7 @@ revoked or unpublished — <code>baselineSha</code> is <code>null</code> and eve
 snapshot.</p>
 <hr />
 <h2 id="get-snapshotsidvetting"><code>GET /snapshots/{id}/vetting</code><a class="headerlink" href="#get-snapshotsidvetting" title="Permanent link">&para;</a></h2>
-<p>The snapshot's latest vetting chain run: each connector's verdict in chain
+<p>The snapshot's latest vetting chain run: each vetter's verdict in chain
 order, the findings behind it, the waivers currently suppressing any of them,
 and the fail-closed <strong>effective</strong> aggregate that gates approval. A snapshot the
 chain has never run against reports <code>"outcome":"BLOCKED"</code> and <code>"run":null</code>.</p>
@@ -3366,14 +3366,14 @@ chain has never run against reports <code>"outcome":"BLOCKED"</code> and <code>"
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w"> </span><span class="nt">"run"</span><span class="p">:{</span><span class="nt">"runId"</span><span class="p">:</span><span class="mi">5</span><span class="p">,</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"trigger"</span><span class="p">:</span><span class="s2">"ingestion"</span><span class="p">,</span><span class="nt">"outcome"</span><span class="p">:</span><span class="s2">"BLOCKED"</span><span class="p">,</span>
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">        </span><span class="nt">"startedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"finishedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span>
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">        </span><span class="nt">"verdicts"</span><span class="p">:[</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">          </span><span class="p">{</span><span class="nt">"verdictId"</span><span class="p">:</span><span class="mi">9</span><span class="p">,</span><span class="nt">"connector"</span><span class="p">:</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="nt">"position"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"FAIL"</span><span class="p">,</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">          </span><span class="p">{</span><span class="nt">"verdictId"</span><span class="p">:</span><span class="mi">9</span><span class="p">,</span><span class="nt">"vetter"</span><span class="p">:</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="nt">"position"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"FAIL"</span><span class="p">,</span>
 <a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">           </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"1 finding(s); worst critical"</span><span class="p">,</span><span class="nt">"reportUrl"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
 <a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">           </span><span class="nt">"findings"</span><span class="p">:[{</span><span class="nt">"id"</span><span class="p">:</span><span class="s2">"aws-access-key-id"</span><span class="p">,</span><span class="nt">"severity"</span><span class="p">:</span><span class="s2">"CRITICAL"</span><span class="p">,</span>
 <a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">                        </span><span class="nt">"location"</span><span class="p">:</span><span class="s2">"plugins/hello/DEPLOY.md:5"</span><span class="p">,</span>
 <a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="w">                        </span><span class="nt">"message"</span><span class="p">:</span><span class="s2">"an AWS access key id is committed in this file"</span><span class="p">}]},</span>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">          </span><span class="p">{</span><span class="nt">"verdictId"</span><span class="p">:</span><span class="mi">10</span><span class="p">,</span><span class="nt">"connector"</span><span class="p">:</span><span class="s2">"prompt-injection"</span><span class="p">,</span><span class="nt">"position"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">          </span><span class="p">{</span><span class="nt">"verdictId"</span><span class="p">:</span><span class="mi">10</span><span class="p">,</span><span class="nt">"vetter"</span><span class="p">:</span><span class="s2">"prompt-injection"</span><span class="p">,</span><span class="nt">"position"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>
 <a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">           </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"PASS"</span><span class="p">,</span><span class="nt">"detail"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"reportUrl"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"findings"</span><span class="p">:[]}]},</span>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="w"> </span><span class="nt">"suppressed"</span><span class="p">:[{</span><span class="nt">"connector"</span><span class="p">:</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="nt">"ruleId"</span><span class="p">:</span><span class="s2">"aws-access-key-id"</span><span class="p">,</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="w"> </span><span class="nt">"suppressed"</span><span class="p">:[{</span><span class="nt">"vetter"</span><span class="p">:</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="nt">"ruleId"</span><span class="p">:</span><span class="s2">"aws-access-key-id"</span><span class="p">,</span>
 <a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="w">                </span><span class="nt">"location"</span><span class="p">:</span><span class="s2">"plugins/hello/DEPLOY.md:5"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span>
 <a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="w">                </span><span class="nt">"approvedBy"</span><span class="p">:</span><span class="s2">"alice"</span><span class="p">,</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-09-30T23:59:59Z"</span><span class="p">}],</span>
 <a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="w"> </span><span class="nt">"uncovered"</span><span class="p">:[],</span>
@@ -3381,7 +3381,7 @@ chain has never run against reports <code>"outcome":"BLOCKED"</code> and <code>"
 <a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="w">             </span><span class="nt">"scope"</span><span class="p">:</span><span class="s2">"SNAPSHOT"</span><span class="p">,</span><span class="nt">"scopeValue"</span><span class="p">:</span><span class="s2">"a1b2c3…"</span><span class="p">,</span><span class="nt">"justification"</span><span class="p">:</span><span class="s2">"documented dummy key"</span><span class="p">,</span>
 <a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="w">             </span><span class="nt">"approvedBy"</span><span class="p">:</span><span class="s2">"alice"</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-09-30T23:59:59Z"</span><span class="p">,</span>
 <a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="w">             </span><span class="nt">"revokedAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"revokedBy"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"active"</span><span class="p">:</span><span class="kc">true</span><span class="p">}],</span>
-<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="w"> </span><span class="nt">"connectors"</span><span class="p">:[{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="nt">"order"</span><span class="p">:</span><span class="mi">100</span><span class="p">,</span><span class="nt">"description"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"version"</span><span class="p">:</span><span class="s2">"3"</span><span class="p">,</span><span class="nt">"external"</span><span class="p">:</span><span class="kc">false</span><span class="p">},</span>
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="w"> </span><span class="nt">"vetters"</span><span class="p">:[{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="nt">"order"</span><span class="p">:</span><span class="mi">100</span><span class="p">,</span><span class="nt">"description"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"version"</span><span class="p">:</span><span class="s2">"3"</span><span class="p">,</span><span class="nt">"external"</span><span class="p">:</span><span class="kc">false</span><span class="p">},</span>
 <a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a><span class="w">               </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"prompt-injection"</span><span class="p">,</span><span class="nt">"order"</span><span class="p">:</span><span class="mi">200</span><span class="p">,</span><span class="nt">"description"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"version"</span><span class="p">:</span><span class="s2">"1"</span><span class="p">,</span><span class="nt">"external"</span><span class="p">:</span><span class="kc">false</span><span class="p">}]}</span>
 </code></pre></div>
 <table>
@@ -3398,7 +3398,7 @@ chain has never run against reports <code>"outcome":"BLOCKED"</code> and <code>"
 </tr>
 <tr>
 <td><code>recordedOutcome</code></td>
-<td>What the connectors themselves concluded: <code>CLEAR</code> or <code>BLOCKED</code>. Never rewritten by a waiver.</td>
+<td>What the vetters themselves concluded: <code>CLEAR</code> or <code>BLOCKED</code>. Never rewritten by a waiver.</td>
 </tr>
 <tr>
 <td><code>suppressed</code></td>
@@ -3413,22 +3413,22 @@ chain has never run against reports <code>"outcome":"BLOCKED"</code> and <code>"
 <td>The marketplace's waivers whose rule appears in this run, active and lapsed alike.</td>
 </tr>
 <tr>
-<td><code>connectors</code></td>
-<td>The configured chain, in the order it runs: <code>name</code>, <code>order</code>, <code>description</code>, <code>version</code> (the rule set the connector currently carries) and <code>external</code> (the verdict is delegated to an operator-configured service rather than reached by a built-in connector).</td>
+<td><code>vetters</code></td>
+<td>The configured chain, in the order it runs: <code>name</code>, <code>order</code>, <code>description</code>, <code>version</code> (the rule set the vetter currently carries) and <code>external</code> (the verdict is delegated to an operator-configured service rather than reached by a built-in vetter).</td>
 </tr>
 <tr>
 <td><code>override</code></td>
-<td>Present when an administrator approved this snapshot over a blocked outcome (<code>reason</code>, <code>blockingConnectors</code>, <code>uncoveredFindings</code>, <code>overriddenBy</code>, <code>overriddenAt</code>); <code>null</code> otherwise. Its presence is what surfaces the override so it is never indistinguishable from a clean approval. See <a href="#administrative-override-of-a-blocked-outcome">The vetting override</a>.</td>
+<td>Present when an administrator approved this snapshot over a blocked outcome (<code>reason</code>, <code>blockingVetters</code>, <code>uncoveredFindings</code>, <code>overriddenBy</code>, <code>overriddenAt</code>); <code>null</code> otherwise. Its presence is what surfaces the override so it is never indistinguishable from a clean approval. See <a href="#administrative-override-of-a-blocked-outcome">The vetting override</a>.</td>
 </tr>
 </tbody>
 </table>
 <p><code>state</code> is one of <code>PASS</code>, <code>WARN</code>, <code>FAIL</code>, <code>ERROR</code>, <code>PENDING</code>, <code>DISABLED</code>;
 <code>severity</code> is one of <code>INFO</code>, <code>LOW</code>, <code>MEDIUM</code>, <code>HIGH</code>, <code>CRITICAL</code>. A <code>DISABLED</code>
-verdict records that an administrator switched that connector off for the
-snapshot's marketplace (<a href="#connector-enabledisable">connector settings</a>); it is
+verdict records that an administrator switched that vetter off for the
+snapshot's marketplace (<a href="#vetter-enabledisable">vetter settings</a>); it is
 neither clearing nor blocking, but a run still needs one clearing verdict to
-clear, so disabling every connector leaves a run <code>BLOCKED</code>. What each state means
-is described in <a href="../../../concepts/vetting/">Vetting — the connector chain</a>.</p>
+clear, so disabling every vetter leaves a run <code>BLOCKED</code>. What each state means
+is described in <a href="../../../concepts/vetting/">Vetting — the vetter chain</a>.</p>
 <table>
 <thead>
 <tr>
@@ -3448,20 +3448,20 @@ is described in <a href="../../../concepts/vetting/">Vetting — the connector c
 </tbody>
 </table>
 <hr />
-<h2 id="connector-enabledisable">Connector enable/disable<a class="headerlink" href="#connector-enabledisable" title="Permanent link">&para;</a></h2>
-<p>An administrator can switch any connector in the chain off or on, globally or for
+<h2 id="vetter-enabledisable">Vetter enable/disable<a class="headerlink" href="#vetter-enabledisable" title="Permanent link">&para;</a></h2>
+<p>An administrator can switch any vetter in the chain off or on, globally or for
 one marketplace — a built-in (secret-scan, prompt-injection, license-scan,
 skill-conformance) or one of the operator's own
 <a href="../../configuration/#external-connectors">external connectors</a>. A name no
-connector in the chain carries is refused with a 422 naming the ones it does.
+vetter in the chain carries is refused with a 422 naming the ones it does.
 Both endpoints are <strong>admin-only</strong> — the switch that governs the vetting chain,
 and even the visibility of its settings, are not shown to marketplace-scoped
 approvers.</p>
-<p>A disabled connector is <strong>not run</strong> at ingestion or re-vetting; the chain records
+<p>A disabled vetter is <strong>not run</strong> at ingestion or re-vetting; the chain records
 a <code>DISABLED</code> verdict in its place, so the disablement is part of the run's
-evidence rather than a silently shorter chain. Disabling every connector leaves a
+evidence rather than a silently shorter chain. Disabling every vetter leaves a
 run <code>BLOCKED</code>, never cleared — the switch is not a blanket approval.</p>
-<h3 id="get-vettingconnector-toggles"><code>GET /vetting/connector-toggles</code><a class="headerlink" href="#get-vettingconnector-toggles" title="Permanent link">&para;</a></h3>
+<h3 id="get-vettingvetter-toggles"><code>GET /vetting/vetter-toggles</code><a class="headerlink" href="#get-vettingvetter-toggles" title="Permanent link">&para;</a></h3>
 <p>Lists every enable/disable setting — the global settings and the per-marketplace
 overrides.</p>
 <table>
@@ -3474,7 +3474,7 @@ overrides.</p>
 <tbody>
 <tr>
 <td>200</td>
-<td>The connector settings.</td>
+<td>The vetter settings.</td>
 </tr>
 <tr>
 <td>403</td>
@@ -3483,7 +3483,7 @@ overrides.</p>
 </tbody>
 </table>
 <h3 id="get-marketplacesnamevetting-chain"><code>GET /marketplaces/{name}/vetting-chain</code><a class="headerlink" href="#get-marketplacesnamevetting-chain" title="Permanent link">&para;</a></h3>
-<p>The marketplace's <strong>effective</strong> chain: every configured connector in the order it
+<p>The marketplace's <strong>effective</strong> chain: every configured vetter in the order it
 runs, the state its enablement resolves to for this marketplace, and which
 setting decided that. The resolution is the chain's own — not a recombination of
 the settings list — so it cannot disagree with what actually runs.</p>
@@ -3506,7 +3506,7 @@ the settings list — so it cannot disagree with what actually runs.</p>
 <tbody>
 <tr>
 <td><code>enabled</code></td>
-<td>Whether the connector runs for this marketplace.</td>
+<td>Whether the vetter runs for this marketplace.</td>
 </tr>
 <tr>
 <td><code>source</code></td>
@@ -3544,7 +3544,7 @@ the settings list — so it cannot disagree with what actually runs.</p>
 </tr>
 </tbody>
 </table>
-<h3 id="put-vettingconnectorsnametoggle"><code>PUT /vetting/connectors/{name}/toggle</code><a class="headerlink" href="#put-vettingconnectorsnametoggle" title="Permanent link">&para;</a></h3>
+<h3 id="put-vettingvettersnametoggle"><code>PUT /vetting/vetters/{name}/toggle</code><a class="headerlink" href="#put-vettingvettersnametoggle" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -3557,7 +3557,7 @@ the settings list — so it cannot disagree with what actually runs.</p>
 <tr>
 <td><code>enabled</code></td>
 <td>yes</td>
-<td><code>true</code> to run the connector, <code>false</code> to switch it off.</td>
+<td><code>true</code> to run the vetter, <code>false</code> to switch it off.</td>
 </tr>
 <tr>
 <td><code>marketplace</code></td>
@@ -3571,8 +3571,8 @@ the settings list — so it cannot disagree with what actually runs.</p>
 </tr>
 </tbody>
 </table>
-<p>Each toggle is audited (<code>connector-disabled</code> / <code>connector-enabled</code>) naming the
-administrator, the connector, the scope and the new state.</p>
+<p>Each toggle is audited (<code>vetter-disabled</code> / <code>vetter-enabled</code>) naming the
+administrator, the vetter, the scope and the new state.</p>
 <table>
 <thead>
 <tr>
@@ -3595,7 +3595,7 @@ administrator, the connector, the scope and the new state.</p>
 </tr>
 <tr>
 <td>422</td>
-<td>Unknown connector, or <code>enabled</code> omitted.</td>
+<td>Unknown vetter, or <code>enabled</code> omitted.</td>
 </tr>
 </tbody>
 </table>
@@ -3727,7 +3727,7 @@ violation does is a deployment setting, not a request parameter — see
 with trigger <code>revet-manual</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"corp-marketplace"</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab…"</span><span class="p">,</span><span class="nt">"runId"</span><span class="p">:</span><span class="mi">31</span><span class="p">,</span>
 <a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w"> </span><span class="nt">"classification"</span><span class="p">:</span><span class="s2">"VIOLATION"</span><span class="p">,</span><span class="nt">"outcome"</span><span class="p">:</span><span class="s2">"BLOCKED"</span><span class="p">,</span><span class="nt">"revoked"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"mode"</span><span class="p">:</span><span class="s2">"ENFORCE"</span><span class="p">,</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w"> </span><span class="nt">"uncovered"</span><span class="p">:[{</span><span class="nt">"connector"</span><span class="p">:</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="nt">"ruleId"</span><span class="p">:</span><span class="s2">"aws-access-key-id"</span><span class="p">,</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w"> </span><span class="nt">"uncovered"</span><span class="p">:[{</span><span class="nt">"vetter"</span><span class="p">:</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="nt">"ruleId"</span><span class="p">:</span><span class="s2">"aws-access-key-id"</span><span class="p">,</span>
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">               </span><span class="nt">"location"</span><span class="p">:</span><span class="s2">"plugins/hello/DEPLOY.md:5"</span><span class="p">,</span><span class="nt">"severity"</span><span class="p">:</span><span class="s2">"CRITICAL"</span><span class="p">,</span>
 <a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">               </span><span class="nt">"message"</span><span class="p">:</span><span class="s2">"an AWS access key id is committed in this file"</span><span class="p">}],</span>
 <a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="w"> </span><span class="nt">"affected"</span><span class="p">:[{</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"team-payments"</span><span class="p">,</span><span class="nt">"fetches"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span>
@@ -3743,7 +3743,7 @@ with trigger <code>revet-manual</code>.</p>
 <tbody>
 <tr>
 <td><code>classification</code></td>
-<td><code>CLEAR</code>, <code>VIOLATION</code> (the chain objects to the content), or <code>INCONCLUSIVE</code> (it blocks only because a connector errored, timed out, or has not answered).</td>
+<td><code>CLEAR</code>, <code>VIOLATION</code> (the chain objects to the content), or <code>INCONCLUSIVE</code> (it blocks only because a vetter errored, timed out, or has not answered).</td>
 </tr>
 <tr>
 <td><code>outcome</code></td>
@@ -3792,7 +3792,7 @@ with trigger <code>revet-manual</code>.</p>
 <h3 id="post-marketplacesnamerevet"><code>POST /marketplaces/{name}/revet</code><a class="headerlink" href="#post-marketplacesnamerevet" title="Permanent link">&para;</a></h3>
 <p>The same, over every live approved snapshot of the marketplace. This is the
 operational answer to a scanner rule set or advisory feed that has just moved:
-the built-in connectors have no feed to subscribe to, so an operator calling
+the built-in vetters have no feed to subscribe to, so an operator calling
 this after updating one is how a feed update becomes fresh evidence.</p>
 <p>Returns a pass summary — <code>revetted</code>, <code>violations</code>, <code>revoked</code>, <code>inconclusive</code>,
 and the individual <code>results</code>.</p>
@@ -3852,12 +3852,12 @@ the revocation it informs.</p>
 <p><strong>The only endpoint that publishes.</strong> Fetches the pinned quarantine ref into the
 published repository and force-updates <code>refs/heads/main</code> to that SHA.</p>
 <p><strong>The request body is optional.</strong> A snapshot whose effective vetting outcome is
-blocked is refused, and the problem document carries both <code>blockingConnectors</code>
+blocked is refused, and the problem document carries both <code>blockingVetters</code>
 and <code>uncoveredFindings</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">409</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Vetting chain blocked this snapshot"</span><span class="p">,</span>
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"snapshot 12 cannot be approved: …"</span><span class="p">,</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w"> </span><span class="nt">"blockingConnectors"</span><span class="p">:[</span><span class="s2">"secret-scan"</span><span class="p">],</span>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w"> </span><span class="nt">"uncoveredFindings"</span><span class="p">:[{</span><span class="nt">"connector"</span><span class="p">:</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="nt">"ruleId"</span><span class="p">:</span><span class="s2">"aws-access-key-id"</span><span class="p">,</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w"> </span><span class="nt">"blockingVetters"</span><span class="p">:[</span><span class="s2">"secret-scan"</span><span class="p">],</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w"> </span><span class="nt">"uncoveredFindings"</span><span class="p">:[{</span><span class="nt">"vetter"</span><span class="p">:</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="nt">"ruleId"</span><span class="p">:</span><span class="s2">"aws-access-key-id"</span><span class="p">,</span>
 <a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">                       </span><span class="nt">"location"</span><span class="p">:</span><span class="s2">"plugins/hello/DEPLOY.md:5"</span><span class="p">,</span><span class="nt">"severity"</span><span class="p">:</span><span class="s2">"CRITICAL"</span><span class="p">,</span>
 <a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">                       </span><span class="nt">"message"</span><span class="p">:</span><span class="s2">"an AWS access key id is committed in this file"</span><span class="p">}]}</span>
 </code></pre></div>

@@ -2521,7 +2521,7 @@ it carries enough to open a review item without a follow-up call:</p>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w"> </span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab9d1e4c7b6a5f80c3d2e1b0a9f8c7d6e5f"</span><span class="p">,</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w"> </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"held"</span><span class="p">,</span><span class="nt">"actor"</span><span class="p">:</span><span class="s2">"vetting"</span><span class="p">,</span>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w"> </span><span class="nt">"vetting"</span><span class="p">:{</span><span class="nt">"runId"</span><span class="p">:</span><span class="mi">17</span><span class="p">,</span><span class="nt">"outcome"</span><span class="p">:</span><span class="s2">"BLOCKED"</span><span class="p">,</span><span class="nt">"recordedOutcome"</span><span class="p">:</span><span class="s2">"BLOCKED"</span><span class="p">,</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">            </span><span class="nt">"blockingConnectors"</span><span class="p">:[</span><span class="s2">"secret-scan"</span><span class="p">],</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">            </span><span class="nt">"blockingVetters"</span><span class="p">:[</span><span class="s2">"secret-scan"</span><span class="p">],</span>
 <a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">            </span><span class="nt">"uncoveredFindings"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="nt">"waivedFindings"</span><span class="p">:</span><span class="mi">0</span><span class="p">}}</span>
 </code></pre></div>
 <p>The first seven fields are the ones every event carries, unchanged. The
@@ -2544,11 +2544,11 @@ it carries enough to open a review item without a follow-up call:</p>
 </tr>
 <tr>
 <td><code>recordedOutcome</code></td>
-<td>What the connectors concluded before any waiver was applied: <code>CLEAR</code> or <code>BLOCKED</code>.</td>
+<td>What the vetters concluded before any waiver was applied: <code>CLEAR</code> or <code>BLOCKED</code>.</td>
 </tr>
 <tr>
-<td><code>blockingConnectors</code></td>
-<td>Names of the connectors that are the reason it blocks. Empty when nothing objects.</td>
+<td><code>blockingVetters</code></td>
+<td>Names of the vetters that are the reason it blocks. Empty when nothing objects.</td>
 </tr>
 <tr>
 <td><code>uncoveredFindings</code></td>
@@ -2570,7 +2570,7 @@ back through the ordinary API, which emits <code>snapshot.approved</code> or
 stream your system is already reading.</p>
 <div class="admonition warning">
 <p class="admonition-title">The event announces; the API discloses</p>
-<p>The payload carries counts, connector names and identifiers — never a
+<p>The payload carries counts, vetter names and identifiers — never a
 finding's message, rule id or location, and never a file name from the
 snapshot. A webhook target is authorized by a URL scheme allowlist, not by
 an identity, and the point of quarantine is that unapproved content does not
