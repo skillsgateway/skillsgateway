@@ -136,7 +136,7 @@ flowchart LR
     subgraph GW["Skills Gateway"]
         ING["Ingestion\nwatch · fetch · resolve\ntransitive sources"]
         SCAN["Vetting orchestrator\ntrigger → connectors →\nverdict callbacks"]
-        CONN["Connectors\nscanners · LLM review ·\nsandbox · human approval"]
+        CONN["Connectors\nsecret · injection · license ·\nconformance · LLM · sandbox"]
         POL["Policy engine\ntiers · licenses ·\nallow/deny · approvals"]
         PUB["Publisher\ncomposes virtual\nmarketplaces, rewrites\nsources, pins SHAs"]
         FAC["Git façade\nread-only smart-HTTP\n+ raw HTTPS"]

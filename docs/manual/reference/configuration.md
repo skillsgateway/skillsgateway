@@ -16,7 +16,7 @@ Every setting the gateway reads, with its default and what consumes it.
 | [`skills-gateway.catalog.*`](#virtual-catalog) | The global virtual catalog and its reserved name. | No — all defaulted. |
 | [`skills-gateway.tokens.*`](#access-tokens) | Access-token policy: the maximum lifetime creation accepts. | No — defaulted (unlimited). |
 | [`skills-gateway.roles.*`](#delegated-administration) | The administrators and claim mappings the gateway derives roles from. **Enforcement is always on.** | **Yes** — a deployment that names no administrator refuses to start. |
-| [`skills-gateway.estate.*`](#declarative-estate) | The declared estate: marketplaces, role grants, webhook subscribers, audit sinks — reconciled at startup and on demand. **Empty by default.** | No — empty by default. |
+| [`skills-gateway.estate.*`](#declarative-estate) | The declared estate: marketplaces, role grants, webhook subscribers, audit sinks, policy rules — reconciled at startup and on demand. **Empty by default.** | No — empty by default. |
 | [`spring.datasource.*`](#datasource) | PostgreSQL connection. Supplied entirely by environment. | **Yes** |
 | [`spring.security.oauth2.client.*`](#oidc-login) | OIDC login for the web surface. | **Yes** |
 | [`server.servlet.session.cookie.same-site`](#session-cookie) | Whether the browser sends the session cookie on a cross-site request. | No — set to `lax` in `application.yaml`. |
@@ -694,10 +694,10 @@ someone reviews.
     Lowering `timeout` does not make vetting faster; it makes slow connectors
     fail. A connector that times out is recorded as `ERROR` and blocks the
     snapshot, so every affected approval then needs a `connector-error` waiver —
-    which is a reviewer writing down that the scanner never looked.
+    which is a reviewer writing down that the connector never looked.
 
 The chain, the verdict states, the aggregation rule, waivers, and the honest
-limits of the built-in scanners are described in
+limits of the built-in connectors are described in
 [Vetting — the connector chain](../concepts/vetting.md).
 
 ### External connectors

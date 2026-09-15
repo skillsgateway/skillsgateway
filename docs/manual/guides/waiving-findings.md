@@ -52,7 +52,7 @@ approval will succeed — covering some of them changes nothing.
 
 !!! warning "Read the file before you accept the finding"
 
-    The scanners match shapes, so a finding is a place to look, not a verdict on
+    The connectors match shapes, so a finding is a place to look, not a verdict on
     its own. Open the location and confirm what is actually there. Accepting a
     real credential is how it reaches every developer who installs the skill.
 
