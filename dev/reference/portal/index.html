@@ -2100,6 +2100,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#vetting-chain-administrators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vetting chain (administrators)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#snapshots" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2140,6 +2151,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Vetting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-chain-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The chain flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -2586,6 +2614,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#vetting-chain-administrators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vetting chain (administrators)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#snapshots" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2626,6 +2665,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Vetting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-chain-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The chain flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -3158,6 +3214,29 @@ link back.</p>
 <p>Forge metadata captured at registration, best effort: <strong>Forge</strong>, <strong>Project</strong>,
 <strong>Description</strong>, <strong>Last upstream update</strong>, <strong>Registered</strong>. Anything not captured
 shows "—".</p>
+<h3 id="vetting-chain-administrators">Vetting chain (administrators)<a class="headerlink" href="#vetting-chain-administrators" title="Permanent link">&para;</a></h3>
+<p><strong>Shown only to a session holding the <code>admin</code> role</strong>, above the snapshots. Fed by
+<code>GET /api/marketplaces/{name}/vetting-chain</code>, which the server refuses to anyone
+else — the switch that governs the chain, and the visibility of its settings, sit
+above the content they govern.</p>
+<p>It draws the <a href="#the-chain-flow">same flow</a> without verdicts, headed by how much of
+the chain runs and what is off:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>2 of 3 connectors run · secret-scan off for this marketplace
+</code></pre></div>
+<p>Every configured connector appears in the order it runs, each showing <code>enabled</code> or
+<code>disabled</code>, a chip naming <strong>where that state came from</strong> (<code>this marketplace</code>,
+<code>global</code>, <code>default</code>), and — for a connector that is off — who switched it off.
+Opening a node gives the same source in full, the connector's version, whether it
+is built in or external, when the deciding setting was last set, and the note left
+with it.</p>
+<p>The node's detail also carries the switch: an optional reason field and a single
+control that enables or disables that connector <strong>for this marketplace</strong>, calling
+<code>PUT /api/vetting/connectors/{name}/toggle</code>. A per-marketplace setting overrides
+the global one. Every change is written to the audit ledger with the acting
+administrator, the connector, the scope, the new state and the reason.</p>
+<p>Switching connectors off narrows the evidence behind an approval; it never makes
+one automatic. What that means for a run is described in
+<a href="../../concepts/vetting/#switching-a-connector-off">Switching a connector off</a>.</p>
 <h3 id="snapshots">Snapshots<a class="headerlink" href="#snapshots" title="Permanent link">&para;</a></h3>
 <p>One card per snapshot showing the short SHA (12 characters, monospace), the
 state badge, and the deciding principal once decided. A violation, when present,
@@ -3221,6 +3300,78 @@ from the address the browser is already on:</p>
 <p>Each snapshot card carries a <strong>Vetting</strong> section fed by
 <code>GET /api/snapshots/{id}/vetting</code>, above the contents toggle and always visible
 — the evidence is not behind a click.</p>
+<h4 id="the-chain-flow">The chain flow<a class="headerlink" href="#the-chain-flow" title="Permanent link">&para;</a></h4>
+<p>Above the per-connector list, the chain is drawn as an ordered flow — one node
+per step, left to right, wrapping on a narrow viewport:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Ingest → secret-scan → prompt-injection → Outcome → Approval
+</code></pre></div>
+<p>The order is the order the connectors ran, taken from the run's own recorded
+positions; for a snapshot the chain has not run against yet, it is the configured
+chain in the order it will run.</p>
+<p>Above the nodes, one sentence states the answer and where the chain stopped, so
+it can be read without opening anything:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Blocked at step 1 · secret-scan found 1 critical finding
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>Clear · 4 connectors, 0 findings
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>Clear with waivers · 2 findings accepted
+</code></pre></div>
+<p>How to read a node:</p>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Stage label</td>
+<td>Where the node sits: <code>Source</code>, <code>Step N</code> for each connector in run order, <code>Result</code>, <code>Gate</code>.</td>
+</tr>
+<tr>
+<td>Name</td>
+<td><code>Ingest</code>, a connector's name, <code>Outcome</code>, <code>Approval</code>.</td>
+</tr>
+<tr>
+<td>State word</td>
+<td><code>pass</code>, <code>warn</code>, <code>fail</code>, <code>error</code>, <code>pending</code>, <code>skipped</code>, <code>not run</code> for a connector; <code>clear</code>, <code>clear with waivers</code>, <code>blocked</code> for the outcome; <code>open</code> or <code>closed</code> for the approval gate. The word is always present — colour never carries a state on its own.</td>
+</tr>
+<tr>
+<td>Top edge</td>
+<td>The same state, as colour: the accent for a pass or warn, red for a fail or error, a plain hairline for anything that reached no conclusion. A second, scannable carrier of the word above it, never a replacement for it.</td>
+</tr>
+<tr>
+<td>Finding count</td>
+<td>How many findings that connector raised, when it raised any.</td>
+</tr>
+<tr>
+<td><code>external</code> chip</td>
+<td>The verdict comes from an operator-configured external service, not from a built-in connector.</td>
+</tr>
+<tr>
+<td><code>N waived</code> chip</td>
+<td>How many of that connector's findings an active waiver is suppressing. The connector keeps the verdict it reached: an accepted risk is never redrawn as a pass.</td>
+</tr>
+</tbody>
+</table>
+<p>The stage the chain arrives at — <code>Result</code> here, <code>Gate</code> on the marketplace chain —
+is drawn as a filled surface rather than an outline, so the end of the chain reads
+as the end.</p>
+<p>Every node is a button. Activating one opens its detail:</p>
+<ul>
+<li><strong>A connector</strong> — its verdict, its version, whether it is built in or external,
+  its self-description, and its findings, with a waived one struck through and
+  badged. A <code>skipped</code> node states that an administrator switched the connector
+  off for this marketplace and that the scope and reason are on the
+  <a href="#vetting-chain-administrators">marketplace's vetting chain</a>, which is
+  administrator-only.</li>
+<li><strong>The outcome</strong> — how the aggregation reached its answer, what the connectors
+  themselves recorded, which connectors are objecting, and the findings that
+  still need a waiver.</li>
+<li><strong>Ingest</strong> and <strong>Approval</strong> — what the step is, and why the gate is where it is.</li>
+</ul>
+<p>The flow is an overview; the per-connector list below it is where findings are
+read side by side and a waiver is written next to the one being accepted. Both
+are always shown.</p>
 <p>It shows the effective chain outcome badge and one block per connector: an icon
 and badge for the verdict state, the connector name, a one-line summary, and
 every finding as severity badge, rule id, <code>path:line</code>, and message. A connector
