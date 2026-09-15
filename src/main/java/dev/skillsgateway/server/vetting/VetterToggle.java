@@ -4,28 +4,28 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 
 /**
- * A standing administrative decision to enable or disable one vetting connector — built-in or
+ * A standing administrative decision to enable or disable one vetter — built-in or
  * operator-configured — globally or for a single marketplace (GW_VETTING_0029.1).
  *
  * <p>A {@code null} {@link #marketplaceId()} is the global setting; a row that names a marketplace
- * overrides the global one for that marketplace. The absence of any row for a connector means it is
- * enabled, so an empty table is exactly the behaviour before this feature existed: every connector
+ * overrides the global one for that marketplace. The absence of any row for a vetter means it is
+ * enabled, so an empty table is exactly the behaviour before this feature existed: every vetter
  * runs.
  *
  * @param marketplaceId the marketplace this setting is scoped to, or null for the global setting
  * @param reason the administrator's optional note, mirrored onto the ledger when the toggle is set
  */
-@Schema(description = "An administrative enable/disable setting for one vetting connector")
-public record ConnectorToggle(
+@Schema(description = "An administrative enable/disable setting for one vetter")
+public record VetterToggle(
         @Schema(description = "Setting id") long id,
 
-        @Schema(description = "The connector's stable name, e.g. secret-scan")
-        String connector,
+        @Schema(description = "The vetter's stable name, e.g. secret-scan")
+        String vetter,
 
         @Schema(description = "Marketplace this setting is scoped to, or null for the global setting")
         Long marketplaceId,
 
-        @Schema(description = "Whether the connector runs under this setting")
+        @Schema(description = "Whether the vetter runs under this setting")
         boolean enabled,
 
         @Schema(description = "The administrator's note for the setting, or null")

@@ -129,15 +129,15 @@
         },
         "type": "object"
       },
-      "ChainConnectorView": {
-        "description": "A connector in a marketplace's effective vetting chain",
+      "ChainVetterView": {
+        "description": "A vetter in a marketplace's effective vetting chain",
         "properties": {
           "description": {
-            "description": "What the connector looks for, and what it cannot see",
+            "description": "What the vetter looks for, and what it cannot see",
             "type": "string"
           },
           "enabled": {
-            "description": "Whether the connector runs for this marketplace",
+            "description": "Whether the vetter runs for this marketplace",
             "type": "boolean"
           },
           "external": {
@@ -145,7 +145,7 @@
             "type": "boolean"
           },
           "name": {
-            "description": "Stable connector name",
+            "description": "Stable vetter name",
             "type": "string"
           },
           "order": {
@@ -176,7 +176,7 @@
             "type": "string"
           },
           "version": {
-            "description": "Identity of the rule set the connector currently carries",
+            "description": "Identity of the rule set the vetter currently carries",
             "type": "string"
           }
         },
@@ -274,70 +274,6 @@
             "description": "The waiver the reviewer authored, for a waiver-author conflict",
             "format": "int64",
             "type": "integer"
-          }
-        },
-        "type": "object"
-      },
-      "ConnectorToggle": {
-        "description": "An administrative enable/disable setting for one vetting connector",
-        "properties": {
-          "connector": {
-            "description": "The connector's stable name, e.g. secret-scan",
-            "type": "string"
-          },
-          "enabled": {
-            "description": "Whether the connector runs under this setting",
-            "type": "boolean"
-          },
-          "id": {
-            "description": "Setting id",
-            "format": "int64",
-            "type": "integer"
-          },
-          "marketplaceId": {
-            "description": "Marketplace this setting is scoped to, or null for the global setting",
-            "format": "int64",
-            "type": "integer"
-          },
-          "reason": {
-            "description": "The administrator's note for the setting, or null",
-            "type": "string"
-          },
-          "updatedAt": {
-            "description": "When it was last set",
-            "format": "date-time",
-            "type": "string"
-          },
-          "updatedBy": {
-            "description": "Identity that last set it",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "ConnectorView": {
-        "description": "A connector configured in the vetting chain",
-        "properties": {
-          "description": {
-            "description": "What the connector looks for, and what it cannot see",
-            "type": "string"
-          },
-          "external": {
-            "description": "Whether the verdict is delegated to an operator-configured external service, so that a verdict the gateway did not reach itself never reads as one that it did",
-            "type": "boolean"
-          },
-          "name": {
-            "description": "Stable connector name",
-            "type": "string"
-          },
-          "order": {
-            "description": "Position in the chain",
-            "format": "int32",
-            "type": "integer"
-          },
-          "version": {
-            "description": "Identity of the rule set the connector currently carries (GW_VETTING_0012)",
-            "type": "string"
           }
         },
         "type": "object"
@@ -985,7 +921,7 @@
         "type": "object"
       },
       "Finding": {
-        "description": "One thing a vetting connector found in a snapshot",
+        "description": "One thing a vetter found in a snapshot",
         "properties": {
           "id": {
             "description": "Stable rule identifier, e.g. aws-access-key-id",
@@ -2019,7 +1955,7 @@
         "description": "One execution of the vetting chain against a snapshot",
         "properties": {
           "chain": {
-            "description": "Identity of the chain that produced the run: connector@version in chain order",
+            "description": "Identity of the chain that produced the run: vetter@version in chain order",
             "example": "prompt-injection@1,secret-scan@1",
             "type": "string"
           },
@@ -2415,10 +2351,6 @@
             "description": "Identity that accepted the risk",
             "type": "string"
           },
-          "connector": {
-            "description": "Connector whose verdict carried the finding",
-            "type": "string"
-          },
           "expiresAt": {
             "description": "When the acceptance lapses",
             "format": "date-time",
@@ -2430,6 +2362,10 @@
           },
           "ruleId": {
             "description": "Finding rule identifier",
+            "type": "string"
+          },
+          "vetter": {
+            "description": "Vetter whose verdict carried the finding",
             "type": "string"
           },
           "waiverId": {
@@ -2454,10 +2390,10 @@
         "type": "object"
       },
       "ToggleRequest": {
-        "description": "Enable or disable a vetting connector, globally or for one marketplace",
+        "description": "Enable or disable a vetter, globally or for one marketplace",
         "properties": {
           "enabled": {
-            "description": "Whether the connector should run under this setting",
+            "description": "Whether the vetter should run under this setting",
             "type": "boolean"
           },
           "marketplace": {
@@ -2549,10 +2485,6 @@
       "UncoveredFinding": {
         "description": "A blocking finding that no active waiver covers",
         "properties": {
-          "connector": {
-            "description": "Connector whose verdict carried the finding",
-            "type": "string"
-          },
           "location": {
             "description": "Where the finding was located",
             "type": "string"
@@ -2574,6 +2506,10 @@
               "HIGH",
               "CRITICAL"
             ],
+            "type": "string"
+          },
+          "vetter": {
+            "description": "Vetter whose verdict carried the finding",
             "type": "string"
           }
         },
@@ -2598,34 +2534,30 @@
         "type": "object"
       },
       "VerdictView": {
-        "description": "One connector's recorded verdict within a chain run",
+        "description": "One vetter's recorded verdict within a chain run",
         "properties": {
-          "connector": {
-            "description": "Connector name",
-            "type": "string"
-          },
           "detail": {
-            "description": "One-line summary: how many findings and the worst severity, or — for a clean pass with no findings — what the connector examined",
+            "description": "One-line summary: how many findings and the worst severity, or — for a clean pass with no findings — what the vetter examined",
             "type": "string"
           },
           "findings": {
-            "description": "What the connector found",
+            "description": "What the vetter found",
             "items": {
               "$ref": "#/components/schemas/Finding"
             },
             "type": "array"
           },
           "position": {
-            "description": "Position of the connector in the chain",
+            "description": "Position of the vetter in the chain",
             "format": "int32",
             "type": "integer"
           },
           "reportUrl": {
-            "description": "External report URL, when the connector produced one",
+            "description": "External report URL, when the vetter produced one",
             "type": "string"
           },
           "state": {
-            "description": "The connector's conclusion",
+            "description": "The vetter's conclusion",
             "enum": [
               "PASS",
               "WARN",
@@ -2640,6 +2572,74 @@
             "description": "Verdict id",
             "format": "int64",
             "type": "integer"
+          },
+          "vetter": {
+            "description": "Vetter name",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "VetterToggle": {
+        "description": "An administrative enable/disable setting for one vetter",
+        "properties": {
+          "enabled": {
+            "description": "Whether the vetter runs under this setting",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "Setting id",
+            "format": "int64",
+            "type": "integer"
+          },
+          "marketplaceId": {
+            "description": "Marketplace this setting is scoped to, or null for the global setting",
+            "format": "int64",
+            "type": "integer"
+          },
+          "reason": {
+            "description": "The administrator's note for the setting, or null",
+            "type": "string"
+          },
+          "updatedAt": {
+            "description": "When it was last set",
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedBy": {
+            "description": "Identity that last set it",
+            "type": "string"
+          },
+          "vetter": {
+            "description": "The vetter's stable name, e.g. secret-scan",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "VetterView": {
+        "description": "A vetter configured in the vetting chain",
+        "properties": {
+          "description": {
+            "description": "What the vetter looks for, and what it cannot see",
+            "type": "string"
+          },
+          "external": {
+            "description": "Whether the verdict is delegated to an operator-configured external service, so that a verdict the gateway did not reach itself never reads as one that it did",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "Stable vetter name",
+            "type": "string"
+          },
+          "order": {
+            "description": "Position in the chain",
+            "format": "int32",
+            "type": "integer"
+          },
+          "version": {
+            "description": "Identity of the rule set the vetter currently carries (GW_VETTING_0012)",
+            "type": "string"
           }
         },
         "type": "object"
@@ -2647,8 +2647,8 @@
       "VettingOverrideRecord": {
         "description": "An administrator's override of a blocked vetting outcome on a snapshot",
         "properties": {
-          "blockingConnectors": {
-            "description": "The connectors that were blocking, comma-separated",
+          "blockingVetters": {
+            "description": "The vetters that were blocking, comma-separated",
             "type": "string"
           },
           "id": {
@@ -2684,8 +2684,8 @@
       "VettingSummary": {
         "description": "Content-free summary of the vetting chain run a snapshot is waiting on",
         "properties": {
-          "blockingConnectors": {
-            "description": "Names of the connectors that are the reason it blocks; empty when nothing objects",
+          "blockingVetters": {
+            "description": "Names of the vetters that are the reason it blocks; empty when nothing objects",
             "items": {
               "type": "string"
             },
@@ -2701,7 +2701,7 @@
             "type": "string"
           },
           "recordedOutcome": {
-            "description": "What the connectors themselves concluded, before any waiver was applied",
+            "description": "What the vetters themselves concluded, before any waiver was applied",
             "enum": [
               "CLEAR",
               "BLOCKED"
@@ -2725,7 +2725,7 @@
           }
         },
         "required": [
-          "blockingConnectors",
+          "blockingVetters",
           "outcome",
           "recordedOutcome",
           "runId",
@@ -2737,13 +2737,6 @@
       "VettingView": {
         "description": "A snapshot's latest vetting chain run, the waivers over it, and the chain that produced it",
         "properties": {
-          "connectors": {
-            "description": "The connectors configured in the chain, in the order they run",
-            "items": {
-              "$ref": "#/components/schemas/ConnectorView"
-            },
-            "type": "array"
-          },
           "outcome": {
             "description": "The effective outcome, which is what gates approval: the run's verdicts with every waived finding removed. CLEAR_WITH_WAIVERS means nothing objects any more only because an active waiver is suppressing a finding. A snapshot with no run is blocked.",
             "enum": [
@@ -2758,7 +2751,7 @@
             "description": "Present when an administrator approved this snapshot over a blocked vetting outcome (GW_VETTING_0028); its presence is what surfaces the override so it is never indistinguishable from a clean approval. Null otherwise."
           },
           "recordedOutcome": {
-            "description": "What the connectors themselves concluded, before any waiver was applied",
+            "description": "What the vetters themselves concluded, before any waiver was applied",
             "enum": [
               "CLEAR",
               "BLOCKED"
@@ -2775,7 +2768,7 @@
             "type": "integer"
           },
           "suppressed": {
-            "description": "Findings an active waiver is currently suppressing, keyed by connector, rule and location",
+            "description": "Findings an active waiver is currently suppressing, keyed by vetter, rule and location",
             "items": {
               "$ref": "#/components/schemas/Suppression"
             },
@@ -2785,6 +2778,13 @@
             "description": "Blocking findings that no active waiver covers; the waivers approval still needs",
             "items": {
               "$ref": "#/components/schemas/UncoveredFinding"
+            },
+            "type": "array"
+          },
+          "vetters": {
+            "description": "The vetters configured in the chain, in the order they run",
+            "items": {
+              "$ref": "#/components/schemas/VetterView"
             },
             "type": "array"
           },
@@ -3550,7 +3550,7 @@
     },
     "/api/marketplaces/{name}/revet": {
       "post": {
-        "description": "Runs the vetting chain again over every live approved snapshot of the marketplace, one run each, and applies the configured re-vetting mode to each result. This is the operational answer to a connector rule set or advisory feed that has just been updated.",
+        "description": "Runs the vetting chain again over every live approved snapshot of the marketplace, one run each, and applies the configured re-vetting mode to each result. This is the operational answer to a vetter rule set or advisory feed that has just been updated.",
         "operationId": "revetMarketplace",
         "parameters": [
           {
@@ -3654,7 +3654,7 @@
     },
     "/api/marketplaces/{name}/vetting-chain": {
       "get": {
-        "description": "Every configured connector in the order it runs, with the state its enablement resolves to for this marketplace and which setting decided it — the marketplace-scoped setting, the global setting, or the absence of any setting. The resolution is the chain's own, not a recombination of the settings list, so it cannot disagree with what actually runs. Administrator-only, like the settings it reports.",
+        "description": "Every configured vetter in the order it runs, with the state its enablement resolves to for this marketplace and which setting decided it — the marketplace-scoped setting, the global setting, or the absence of any setting. The resolution is the chain's own, not a recombination of the settings list, so it cannot disagree with what actually runs. Administrator-only, like the settings it reports.",
         "operationId": "vettingChain",
         "parameters": [
           {
@@ -3672,7 +3672,7 @@
               "*/*": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/ChainConnectorView"
+                    "$ref": "#/components/schemas/ChainVetterView"
                   },
                   "type": "array"
                 }
@@ -3685,7 +3685,7 @@
               "*/*": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/ChainConnectorView"
+                    "$ref": "#/components/schemas/ChainVetterView"
                   },
                   "type": "array"
                 }
@@ -3698,7 +3698,7 @@
               "*/*": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/ChainConnectorView"
+                    "$ref": "#/components/schemas/ChainVetterView"
                   },
                   "type": "array"
                 }
@@ -4358,7 +4358,7 @@
     },
     "/api/snapshots/{id}/approve": {
       "post": {
-        "description": "Publishes the snapshot to the git facade and records the reviewer identity and timestamp. The request body is optional. Held snapshots and snapshots that re-vetting revoked can be approved; a revoked one is re-published only by this fresh decision, behind the same gate, which means the violation that revoked it must have been waived or fixed first. A snapshot whose effective vetting outcome is blocked — its chain run objects and at least one blocking finding is not covered by an active waiver, including a snapshot with no chain run at all — is refused, and the problem document names both the blocking connectors and the uncovered findings. Record a scoped, expiring waiver for each of those findings and approve again; every waiver that let the approval through is written to the ledger. Alternatively an administrator — and only an administrator — may set overrideVetting with a reason to approve over the block (GW_VETTING_0028): the override lifts only the vetting gate, is written to the ledger as a distinct event with the failing verdicts, and marks the snapshot approved over a vetting failure.",
+        "description": "Publishes the snapshot to the git facade and records the reviewer identity and timestamp. The request body is optional. Held snapshots and snapshots that re-vetting revoked can be approved; a revoked one is re-published only by this fresh decision, behind the same gate, which means the violation that revoked it must have been waived or fixed first. A snapshot whose effective vetting outcome is blocked — its chain run objects and at least one blocking finding is not covered by an active waiver, including a snapshot with no chain run at all — is refused, and the problem document names both the blocking vetters and the uncovered findings. Record a scoped, expiring waiver for each of those findings and approve again; every waiver that let the approval through is written to the ledger. Alternatively an administrator — and only an administrator — may set overrideVetting with a reason to approve over the block (GW_VETTING_0028): the override lifts only the vetting gate, is written to the ledger as a distinct event with the failing verdicts, and marks the snapshot approved over a vetting failure.",
         "operationId": "approve",
         "parameters": [
           {
@@ -5023,7 +5023,7 @@
     },
     "/api/snapshots/{id}/revet": {
       "post": {
-        "description": "Runs the vetting chain again over the snapshot's pinned content and records a new run with trigger revet-manual. If the run's effective outcome — after the waivers active right now — objects to the content, the violation is written to the ledger and announced as snapshot.revet_violation. In enforce mode the snapshot is then revoked and its published refs are removed; in warn mode, the default, publication is untouched. A run that only blocks because a connector errored or has not answered is recorded as inconclusive and never revokes anything.",
+        "description": "Runs the vetting chain again over the snapshot's pinned content and records a new run with trigger revet-manual. If the run's effective outcome — after the waivers active right now — objects to the content, the violation is written to the ledger and announced as snapshot.revet_violation. In enforce mode the snapshot is then revoked and its published refs are removed; in warn mode, the default, publication is untouched. A run that only blocks because a vetter errored or has not answered is recorded as inconclusive and never revokes anything.",
         "operationId": "revetSnapshot",
         "parameters": [
           {
@@ -5076,7 +5076,7 @@
     },
     "/api/snapshots/{id}/vetting": {
       "get": {
-        "description": "The snapshot's latest vetting chain run: each connector's verdict in chain order, the findings behind it, the waivers currently suppressing any of them, and the fail-closed effective aggregate that gates approval. A snapshot the chain has never run against reports a blocked outcome and no run.",
+        "description": "The snapshot's latest vetting chain run: each vetter's verdict in chain order, the findings behind it, the waivers currently suppressing any of them, and the fail-closed effective aggregate that gates approval. A snapshot the chain has never run against reports a blocked outcome and no run.",
         "operationId": "vetting",
         "parameters": [
           {
@@ -5552,9 +5552,9 @@
         ]
       }
     },
-    "/api/vetting/connector-toggles": {
+    "/api/vetting/vetter-toggles": {
       "get": {
-        "description": "Every administrative enable/disable setting for the vetting connectors — the global settings and the per-marketplace overrides. Administrator-only: the switch that governs the vetting chain is not shown to marketplace-scoped approvers.",
+        "description": "Every administrative enable/disable setting for the vetters — the global settings and the per-marketplace overrides. Administrator-only: the switch that governs the vetting chain is not shown to marketplace-scoped approvers.",
         "operationId": "toggles",
         "responses": {
           "200": {
@@ -5562,20 +5562,20 @@
               "*/*": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/ConnectorToggle"
+                    "$ref": "#/components/schemas/VetterToggle"
                   },
                   "type": "array"
                 }
               }
             },
-            "description": "The connector settings"
+            "description": "The vetter settings"
           },
           "403": {
             "content": {
               "*/*": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/ConnectorToggle"
+                    "$ref": "#/components/schemas/VetterToggle"
                   },
                   "type": "array"
                 }
@@ -5584,15 +5584,15 @@
             "description": "Caller does not hold the administrative role"
           }
         },
-        "summary": "List connector enable/disable settings",
+        "summary": "List vetter enable/disable settings",
         "tags": [
           "Vetting"
         ]
       }
     },
-    "/api/vetting/connectors/{name}/toggle": {
+    "/api/vetting/vetters/{name}/toggle": {
       "put": {
-        "description": "Switches a specific vetting connector on or off, globally or for one named marketplace, and records the change on the audit ledger. Any connector in the chain can be switched, built-in or operator-configured (skills-gateway.vetting.external[*]). A per-marketplace setting overrides the global one; the absence of any setting means the connector runs. A disabled connector is not run at ingestion or re-vetting but is recorded as a distinct disabled verdict on the chain run, and disabling every connector leaves a run blocked rather than clear. Administrator-only.",
+        "description": "Switches a specific vetter on or off, globally or for one named marketplace, and records the change on the audit ledger. Any vetter in the chain can be switched, built-in or operator-configured (skills-gateway.vetting.external[*]). A per-marketplace setting overrides the global one; the absence of any setting means the vetter runs. A disabled vetter is not run at ingestion or re-vetting but is recorded as a distinct disabled verdict on the chain run, and disabling every vetter leaves a run blocked rather than clear. Administrator-only.",
         "operationId": "toggle",
         "parameters": [
           {
@@ -5619,7 +5619,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConnectorToggle"
+                  "$ref": "#/components/schemas/VetterToggle"
                 }
               }
             },
@@ -5629,7 +5629,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConnectorToggle"
+                  "$ref": "#/components/schemas/VetterToggle"
                 }
               }
             },
@@ -5639,7 +5639,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConnectorToggle"
+                  "$ref": "#/components/schemas/VetterToggle"
                 }
               }
             },
@@ -5649,14 +5649,14 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConnectorToggle"
+                  "$ref": "#/components/schemas/VetterToggle"
                 }
               }
             },
-            "description": "Unknown connector, or the enabled field was omitted"
+            "description": "Unknown vetter, or the enabled field was omitted"
           }
         },
-        "summary": "Enable or disable a connector",
+        "summary": "Enable or disable a vetter",
         "tags": [
           "Vetting"
         ]

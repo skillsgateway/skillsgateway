@@ -11,9 +11,9 @@ import dev.skillsgateway.server.persistence.WebhookDelivery;
 import dev.skillsgateway.server.persistence.WebhookDeliveryRepository;
 import dev.skillsgateway.server.persistence.WebhookSubscriber;
 import dev.skillsgateway.server.persistence.WebhookSubscriberRepository;
-import dev.skillsgateway.server.vetting.ConnectorToggle;
-import dev.skillsgateway.server.vetting.ConnectorToggleRepository;
 import dev.skillsgateway.server.vetting.VerdictState;
+import dev.skillsgateway.server.vetting.VetterToggle;
+import dev.skillsgateway.server.vetting.VetterToggleRepository;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -43,7 +43,7 @@ class DataClassRowMapperTests extends AbstractGatewayTest {
     private TokenRepository tokenRepository;
 
     @Autowired
-    private ConnectorToggleRepository connectorToggleRepository;
+    private VetterToggleRepository vetterToggleRepository;
 
     @Autowired
     private WebhookSubscriberRepository webhookSubscriberRepository;
@@ -158,7 +158,7 @@ class DataClassRowMapperTests extends AbstractGatewayTest {
      * hand-written {@code rs.wasNull()} — the only places in the rollout where deleting the mapper
      * deleted a null decision rather than a straight column read. A mapper that turned an absent
      * value into zero would leave a token claiming to be a rotation of token 0, a per-marketplace
-     * connector setting where a global one was written, and a queued webhook delivery reporting
+     * vetter setting where a global one was written, and a queued webhook delivery reporting
      * HTTP 0 as its last status. None of those raise an error anywhere; they are only visible here.
      */
     @Test
@@ -168,12 +168,12 @@ class DataClassRowMapperTests extends AbstractGatewayTest {
                 .as("a token that is not a rotation names no predecessor")
                 .isNull();
 
-        ConnectorToggle global = connectorToggleRepository.set(uniqueName("mapper-conn"), null, false, "why", "alice");
+        VetterToggle global = vetterToggleRepository.set(uniqueName("mapper-conn"), null, false, "why", "alice");
         assertThat(global.marketplaceId())
-                .as("the global connector setting is scoped to no marketplace")
+                .as("the global vetter setting is scoped to no marketplace")
                 .isNull();
-        assertThat(connectorToggleRepository
-                        .findGlobal(global.connector())
+        assertThat(vetterToggleRepository
+                        .findGlobal(global.vetter())
                         .orElseThrow()
                         .marketplaceId())
                 .isNull();

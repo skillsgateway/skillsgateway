@@ -55,7 +55,7 @@ function verdictBadge(state?: string) {
       return <Badge variant="destructive">error</Badge>;
     case "PENDING":
       return <Badge variant="outline">pending</Badge>;
-    // Not a conclusion the connector reached: an administrator switched it off for this
+    // Not a conclusion the vetter reached: an administrator switched it off for this
     // marketplace, so the chain recorded the skip in its place. It neither clears nor blocks, and
     // it must never read as a pass.
     case "DISABLED":
@@ -78,8 +78,8 @@ export function OutcomeBadge({ outcome }: { outcome?: string }) {
 }
 
 /** Stable identity of a finding within a run, so a suppression can be matched to its row. */
-function findingKey(connector: string | undefined, finding: VettingFinding) {
-  return `${connector ?? ""}|${finding.id ?? ""}|${finding.location ?? ""}`;
+function findingKey(vetter: string | undefined, finding: VettingFinding) {
+  return `${vetter ?? ""}|${finding.id ?? ""}|${finding.location ?? ""}`;
 }
 
 /** The default expiry offered when accepting a risk: near enough to come back around. */
@@ -266,7 +266,7 @@ function VerdictCard({
     <div className="rounded-md border p-3">
       <div className="flex flex-wrap items-center gap-2">
         {verdictIcon(verdict.state)}
-        <span className="font-medium">{verdict.connector}</span>
+        <span className="font-medium">{verdict.vetter}</span>
         {verdictBadge(verdict.state)}
         {verdict.detail ? (
           <span className="text-xs text-muted-foreground">{verdict.detail}</span>
@@ -279,7 +279,7 @@ function VerdictCard({
               <FindingRow
                 snapshotId={snapshotId}
                 finding={finding}
-                suppression={suppressions.get(findingKey(verdict.connector, finding))}
+                suppression={suppressions.get(findingKey(verdict.vetter, finding))}
               />
             </li>
           ))}
@@ -339,7 +339,7 @@ function WaiverList({ waivers }: { waivers: Waiver[] }) {
 }
 
 /**
- * The reviewer's evidence: what every connector in the chain concluded about this snapshot, the
+ * The reviewer's evidence: what every vetter in the chain concluded about this snapshot, the
  * findings behind it, and which of those findings an accepted risk is currently suppressing.
  * Rendered before any approve/reject decision.
  *
@@ -360,7 +360,7 @@ export function VettingReport({ snapshotId }: { snapshotId: number }) {
   const verdicts = run?.verdicts ?? [];
   const suppressions = new Map<string, WaiverSuppression>(
     (vetting.data?.suppressed ?? []).map((suppression) => [
-      `${suppression.connector ?? ""}|${suppression.ruleId ?? ""}|${suppression.location ?? ""}`,
+      `${suppression.vetter ?? ""}|${suppression.ruleId ?? ""}|${suppression.location ?? ""}`,
       suppression,
     ]),
   );
@@ -380,7 +380,7 @@ export function VettingReport({ snapshotId }: { snapshotId: number }) {
         ) : null}
       </div>
       {/* The overview, above the detail: where this snapshot is in the chain and what stopped it.
-          The per-connector list below is unchanged — it is where findings are read side by side
+          The per-vetter list below is unchanged — it is where findings are read side by side
           and a waiver is written next to the one being accepted. */}
       <VettingFlow
         label={`Vetting chain of snapshot ${snapshotId}`}
@@ -403,7 +403,7 @@ export function VettingReport({ snapshotId }: { snapshotId: number }) {
         <div className="space-y-2">
           {verdicts.map((verdict) => (
             <VerdictCard
-              key={verdict.connector}
+              key={verdict.vetter}
               snapshotId={snapshotId}
               verdict={verdict}
               suppressions={suppressions}
@@ -412,13 +412,13 @@ export function VettingReport({ snapshotId }: { snapshotId: number }) {
         </div>
       )}
       <WaiverList waivers={vetting.data?.waivers ?? []} />
-      {(vetting.data?.connectors ?? []).length > 0 ? (
+      {(vetting.data?.vetters ?? []).length > 0 ? (
         <details className="text-xs text-muted-foreground">
-          <summary className="cursor-pointer">What these connectors can and cannot see</summary>
+          <summary className="cursor-pointer">What these vetters can and cannot see</summary>
           <ul className="mt-2 space-y-1">
-            {(vetting.data?.connectors ?? []).map((connector) => (
-              <li key={connector.name}>
-                <span className="font-mono">{connector.name}</span> — {connector.description}
+            {(vetting.data?.vetters ?? []).map((vetter) => (
+              <li key={vetter.name}>
+                <span className="font-mono">{vetter.name}</span> — {vetter.description}
               </li>
             ))}
           </ul>

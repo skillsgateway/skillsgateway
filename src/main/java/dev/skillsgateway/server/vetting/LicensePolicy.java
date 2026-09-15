@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 /**
  * The configured license allow/ban lists and their one evaluation rule (GW_VETTING_0020). Shared by the
- * connector (which turns evaluations into findings that gate approval) and the report endpoint
+ * vetter (which turns evaluations into findings that gate approval) and the report endpoint
  * (which states them per detection), so the two can never disagree.
  *
  * <p>The ban list is checked before the allow list: a license on both is reported as banned, the
@@ -54,7 +54,7 @@ final class LicensePolicy {
     }
 
     /**
-     * The connector's findings for a snapshot's detections: every identified license recorded
+     * The vetter's findings for a snapshot's detections: every identified license recorded
      * informationally, every policy objection as a blocking finding on its own rule id, unknown and
      * missing license as their own first-class states (GW_VETTING_0019, GW_VETTING_0020).
      */
@@ -110,7 +110,7 @@ final class LicensePolicy {
     }
 
     /**
-     * Stable identity of the policy in force, stamped into the connector version so every recorded
+     * Stable identity of the policy in force, stamped into the vetter version so every recorded
      * chain run names the policy it ran under (GW_VETTING_0012). {@code default} when nothing is
      * configured; otherwise a digest over the normalised, sorted lists.
      */

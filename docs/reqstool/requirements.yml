@@ -43,9 +43,9 @@ requirements:
     title: Manual approval decision
     significance: shall
     description: The system shall allow an authorized reviewer to approve or reject a held snapshot and record the decision, reviewer identity, and timestamp.
-    rationale: The MVP vetting connector is human approval; the decision record is the start of the provenance trail.
+    rationale: The MVP vetter is human approval; the decision record is the start of the provenance trail.
     categories: ["functional-suitability", "security"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_FACADE_0001
     title: Git smart-HTTP facade
@@ -297,60 +297,60 @@ requirements:
     revision: 0.1.0
 
   - id: GW_VETTING_0001
-    title: Ordered vetting connector chain at ingestion
+    title: Ordered vetter chain at ingestion
     significance: shall
-    description: The system shall run, at ingestion of a snapshot, an ordered chain of vetting connectors against the quarantined content pinned to the snapshot's commit SHA, and shall record for that chain run each connector's verdict together with its findings, each finding carrying a rule identifier, a severity, a location and a message.
-    rationale: Vetting must be evidence attached to the exact bytes a reviewer decides on; running the chain at ingestion against the SHA-pinned quarantine content and recording a verdict per connector and run makes the evidence reproducible, comparable between snapshots, and reusable by a later re-run.
+    description: The system shall run, at ingestion of a snapshot, an ordered chain of vetters against the quarantined content pinned to the snapshot's commit SHA, and shall record for that chain run each vetter's verdict together with its findings, each finding carrying a rule identifier, a severity, a location and a message.
+    rationale: Vetting must be evidence attached to the exact bytes a reviewer decides on; running the chain at ingestion against the SHA-pinned quarantine content and recording a verdict per vetter and run makes the evidence reproducible, comparable between snapshots, and reusable by a later re-run.
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_VETTING_0002
     title: Fail-closed vetting chain aggregation
     significance: shall
-    description: The system shall aggregate a chain run to a cleared outcome only when every connector in the chain returned a passing or warning verdict, and shall aggregate to a blocked outcome otherwise, counting a connector that fails, that reports an unfinished verdict, that raises an error, or that exceeds its time limit as blocking, and counting a snapshot with no recorded chain run as blocked.
+    description: The system shall aggregate a chain run to a cleared outcome only when every vetter in the chain returned a passing or warning verdict, and shall aggregate to a blocked outcome otherwise, counting a vetter that fails, that reports an unfinished verdict, that raises an error, or that exceeds its time limit as blocking, and counting a snapshot with no recorded chain run as blocked.
     rationale: A vetting chain whose failure mode is to let content through is worse than none; treating a crash, a timeout and an absent run as blocking removes every path by which a snapshot reaches the facade without evidence.
     categories: ["security", "reliability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_VETTING_0003
-    title: Secret scanning connector
+    title: Secret scanning vetter
     significance: shall
-    description: The system shall provide a built-in vetting connector that scans the textual content of a snapshot for credential material — including cloud access keys, private key blocks, forge and messaging service tokens, and assignment-shaped high-entropy values — and returns a failing verdict with a finding located at the offending path for each match of high severity.
+    description: The system shall provide a built-in vetter that scans the textual content of a snapshot for credential material — including cloud access keys, private key blocks, forge and messaging service tokens, and assignment-shaped high-entropy values — and returns a failing verdict with a finding located at the offending path for each match of high severity.
     rationale: Credentials committed into a skill repository are exfiltrated to every developer who installs it and are the most mechanically detectable class of harmful content, so they are the first thing the chain should catch.
     categories: ["security"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_VETTING_0004
-    title: Prompt-injection heuristic connector
+    title: Prompt-injection heuristic vetter
     significance: shall
-    description: The system shall provide a built-in vetting connector that scans a snapshot's Markdown instruction content for known prompt-injection markers — including instruction-override phrasing, attempts to disclose the system prompt, references to credential file locations, instructions to conceal actions from the user or reviewer, and invisible or bidirectional control characters — and returns a failing verdict with a finding located at the offending path for each match of high severity.
+    description: The system shall provide a built-in vetter that scans a snapshot's Markdown instruction content for known prompt-injection markers — including instruction-override phrasing, attempts to disclose the system prompt, references to credential file locations, instructions to conceal actions from the user or reviewer, and invisible or bidirectional control characters — and returns a failing verdict with a finding located at the offending path for each match of high severity.
     rationale: Skill instructions are prose that executes with the agent's privileges (threat T1); pattern heuristics cannot prove content safe but reliably surface the known markers a reviewer would otherwise have to find by reading every file.
     categories: ["security"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_APPROVAL_0003
     title: Approval gate on the vetting outcome
     significance: shall
-    description: The system shall refuse to approve a snapshot whose effective vetting outcome is blocked, shall name in the refusal both the connectors that blocked and every blocking finding that no active waiver covers, and shall approve such a snapshot only once an active waiver covers each of those findings.
+    description: The system shall refuse to approve a snapshot whose effective vetting outcome is blocked, shall name in the refusal both the vetters that blocked and every blocking finding that no active waiver covers, and shall approve such a snapshot only once an active waiver covers each of those findings.
     rationale: Recording verdicts without acting on them turns vetting into decoration; requiring an active, scoped waiver per blocking finding makes accepting a blocked snapshot a deliberate act aimed at exactly what was found, so a finding nobody examined can never ride along with one that was justified.
     categories: ["security", "functional-suitability"]
-    revision: 0.2.0
+    revision: 0.3.0
 
   - id: GW_VETTING_0005
     title: Portal vetting surface
     significance: shall
-    description: The system shall show, in the portal behind the OIDC session, each snapshot's effective chain outcome together with every connector's verdict and its findings, marking each finding a waiver currently suppresses, and shall refuse approval of a snapshot whose effective outcome is blocked.
+    description: The system shall show, in the portal behind the OIDC session, each snapshot's effective chain outcome together with every vetter's verdict and its findings, marking each finding a waiver currently suppresses, and shall refuse approval of a snapshot whose effective outcome is blocked.
     rationale: The reviewer is the control the whole gateway rests on; the evidence and the consequence of ignoring it must both be in front of that person at the moment of the decision, not in a log.
     categories: ["interaction-capability", "security"]
-    revision: 0.2.0
+    revision: 0.3.0
 
   - id: GW_VETTING_0006
     title: Vetting actions are audit-logged
     significance: shall
-    description: The system shall append every chain run outcome and every connector verdict to the append-only audit ledger with the marketplace, the snapshot commit SHA, and the acting identity.
+    description: The system shall append every chain run outcome and every vetter verdict to the append-only audit ledger with the marketplace, the snapshot commit SHA, and the acting identity.
     rationale: An auditor asking why a snapshot with findings is being served must be able to answer it from the ledger alone, without reading the vetting tables or trusting the portal.
     categories: ["security", "functional-suitability"]
-    revision: 0.2.0
+    revision: 0.3.0
 
   - id: GW_VETTING_0007
     title: Scoped, expiring vetting waivers
@@ -395,10 +395,10 @@ requirements:
   - id: GW_VETTING_0012
     title: Continuous re-vetting of approved snapshots
     significance: shall
-    description: The system shall re-run the vetting chain over already-approved snapshots on a configurable schedule, selecting the snapshots whose most recent chain run is oldest in bounded batches so that no pass re-vets the whole estate, shall record each pass as a new chain run carrying its trigger and the identity and version of every connector in the chain, shall leave the snapshot's own state unchanged by the run itself, and shall additionally re-vet a named snapshot or every approved snapshot of a named marketplace on demand.
-    rationale: An approval is a judgement made against the evidence of one day; connectors gain rules and acceptances lapse, so an estate whose approvals are never re-examined slowly becomes a set of unverified assertions. Oldest-first bounded batches make the cost proportional and the coverage fair, and the on-demand pass is how an updated scanner rule set is turned into fresh evidence now.
+    description: The system shall re-run the vetting chain over already-approved snapshots on a configurable schedule, selecting the snapshots whose most recent chain run is oldest in bounded batches so that no pass re-vets the whole estate, shall record each pass as a new chain run carrying its trigger and the identity and version of every vetter in the chain, shall leave the snapshot's own state unchanged by the run itself, and shall additionally re-vet a named snapshot or every approved snapshot of a named marketplace on demand.
+    rationale: An approval is a judgement made against the evidence of one day; vetters gain rules and acceptances lapse, so an estate whose approvals are never re-examined slowly becomes a set of unverified assertions. Oldest-first bounded batches make the cost proportional and the coverage fair, and the on-demand pass is how an updated scanner rule set is turned into fresh evidence now.
     categories: ["security", "reliability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_VETTING_0013
     title: Auto-quarantine of a violating approved snapshot
@@ -419,10 +419,10 @@ requirements:
   - id: GW_VETTING_0015
     title: An inconclusive re-vetting run never revokes
     significance: shall
-    description: The system shall distinguish a re-vetting run that blocks because a connector objected to the content from one that blocks only because a connector errored, timed out, has not answered, or produced no verdict at all, shall record the latter as inconclusive and leave the snapshot approved and served whatever the re-vetting mode, and shall continue to treat every such run as blocking for the purposes of approving, re-approving or publishing that snapshot.
-    rationale: A broken connector is evidence about the scanner and not about the content, and treating it as grounds for retraction would let a single scanner outage revoke an entire estate at once — turning a scanner bug into an outage of exactly the content the gateway exists to serve. Nothing is weakened, because fail-closed still governs every path that publishes.
+    description: The system shall distinguish a re-vetting run that blocks because a vetter objected to the content from one that blocks only because a vetter errored, timed out, has not answered, or produced no verdict at all, shall record the latter as inconclusive and leave the snapshot approved and served whatever the re-vetting mode, and shall continue to treat every such run as blocking for the purposes of approving, re-approving or publishing that snapshot.
+    rationale: A broken vetter is evidence about the scanner and not about the content, and treating it as grounds for retraction would let a single scanner outage revoke an entire estate at once — turning a scanner bug into an outage of exactly the content the gateway exists to serve. Nothing is weakened, because fail-closed still governs every path that publishes.
     categories: ["reliability", "security"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_VETTING_0016
     title: Re-vetting violations are announced with their affected consumers
@@ -435,10 +435,10 @@ requirements:
   - id: GW_VETTING_0017
     title: Re-vetting and revocation are audit-logged
     significance: shall
-    description: The system shall append to the append-only audit ledger the outcome of every re-vetting run with its trigger, each retroactive violation with the objecting connectors, the rules behind it and the mode in force, one entry per identity affected by that violation, and every revocation and unpublication with the acting identity and the marketplace.
+    description: The system shall append to the append-only audit ledger the outcome of every re-vetting run with its trigger, each retroactive violation with the objecting vetters, the rules behind it and the mode in force, one entry per identity affected by that violation, and every revocation and unpublication with the acting identity and the marketplace.
     rationale: A retraction of content that was previously approved is the most consequential thing the gateway does on its own; an auditor must be able to read what was found, when, under which policy, who was affected and what was taken away, from the ledger alone.
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_VETTING_0018
     title: Portal re-vetting and revocation surface
@@ -795,26 +795,26 @@ requirements:
   - id: GW_VETTING_0019
     title: Deterministic license detection at ingestion
     significance: shall
-    description: The system shall provide a built-in vetting connector that detects, over the quarantined content pinned to the snapshot's commit SHA, the licenses the snapshot declares — identifying license and copying files anywhere in the tree by a fixed fingerprint table of SPDX license identifiers, honoring an SPDX-License-Identifier tag inside such a file, and reading the license metadata fields of the marketplace manifest — recording every identified license as a finding located at its source, recording a license source that matches no known identifier as an unknown-license finding, and recording a snapshot carrying no license information at all as a missing-license finding, with detection deterministic so that the same content under the same connector version always yields the same findings.
+    description: The system shall provide a built-in vetter that detects, over the quarantined content pinned to the snapshot's commit SHA, the licenses the snapshot declares — identifying license and copying files anywhere in the tree by a fixed fingerprint table of SPDX license identifiers, honoring an SPDX-License-Identifier tag inside such a file, and reading the license metadata fields of the marketplace manifest — recording every identified license as a finding located at its source, recording a license source that matches no known identifier as an unknown-license finding, and recording a snapshot carrying no license information at all as a missing-license finding, with detection deterministic so that the same content under the same vetter version always yields the same findings.
     rationale: A reviewer deciding on third-party content is also deciding on its legal terms, and license files are mechanically identifiable; exact identifier matching keeps the evidence reproducible and comparable between runs, and naming the unknown and missing states explicitly turns the matcher's honest limits into reviewable findings instead of silent gaps.
     categories: ["functional-suitability", "security"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_VETTING_0020
     title: License allow and ban lists through the standard vetting path
     significance: shall
-    description: The system shall evaluate every detected license against an organisation-level configured ban list and allow list of SPDX identifiers, producing a blocking finding for a license on the ban list, and — when a non-empty allow list is configured — a blocking finding for an identified license absent from it and for an unknown or missing license, while with neither list configured recording identified licenses informationally and unknown or missing licenses as non-blocking warnings; every such finding shall flow through the standard vetting chain, so that it aggregates fail-closed, gates approval, is acceptable only by a scoped expiring waiver on its rule identifier, is re-examined by continuous re-vetting, and lands on the append-only ledger like any other verdict, and the connector's recorded version shall reflect the policy in force so a changed list is attributable in the chain identity.
-    rationale: A license policy that bypasses the vetting chain would need its own gate, acceptance and audit trail and would inevitably drift from them; riding the standard path makes a banned license exactly as loud, as waivable and as auditable as a planted credential, defaults that only warn keep an upgrade from blocking a working estate, and stamping the policy into the connector version answers whether the content or the policy changed.
+    description: The system shall evaluate every detected license against an organisation-level configured ban list and allow list of SPDX identifiers, producing a blocking finding for a license on the ban list, and — when a non-empty allow list is configured — a blocking finding for an identified license absent from it and for an unknown or missing license, while with neither list configured recording identified licenses informationally and unknown or missing licenses as non-blocking warnings; every such finding shall flow through the standard vetting chain, so that it aggregates fail-closed, gates approval, is acceptable only by a scoped expiring waiver on its rule identifier, is re-examined by continuous re-vetting, and lands on the append-only ledger like any other verdict, and the vetter's recorded version shall reflect the policy in force so a changed list is attributable in the chain identity.
+    rationale: A license policy that bypasses the vetting chain would need its own gate, acceptance and audit trail and would inevitably drift from them; riding the standard path makes a banned license exactly as loud, as waivable and as auditable as a planted credential, defaults that only warn keep an upgrade from blocking a working estate, and stamping the policy into the vetter version answers whether the content or the policy changed.
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_VETTING_0021
     title: Per-snapshot license report endpoint
     significance: shall
     description: The system shall answer, for any snapshot over an authenticated HTTP endpoint, a license report computed deterministically from the content pinned to the snapshot's commit SHA — each detected license with its SPDX identifier or its unknown state, the file path or manifest field it came from, and its evaluation under the license policy currently configured — and shall answer not-found for a snapshot that does not exist.
-    rationale: License questions are supply-chain questions and belong on the same read surface as the snapshot content inventory and the gateway's own SBOM; computing the report from the pinned content keeps it answerable for every snapshot regardless of when the connector was introduced and keeps the read a report of current policy truth while recorded chain runs remain the historical evidence.
+    rationale: License questions are supply-chain questions and belong on the same read surface as the snapshot content inventory and the gateway's own SBOM; computing the report from the pinned content keeps it answerable for every snapshot regardless of when the vetter was introduced and keeps the read a report of current policy truth while recorded chain runs remain the historical evidence.
     categories: ["functional-suitability", "security"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_APPROVAL_0010
     title: Separation of duties on snapshot approval
@@ -1254,42 +1254,42 @@ requirements:
   - id: GW_VETTING_0022
     title: A vetting ledger entry is self-describing and correctly attributed
     significance: shall
-    description: The system shall append every connector verdict to the audit ledger carrying the connector name, its conclusion, the number of findings and the worst finding severity present, and a reference to the chain run the verdict belongs to; shall append the run-completed entry carrying that same run reference; and shall attribute every entry produced by the automated vetting chain to the gateway acting on its own rather than to a person.
-    rationale: An auditor asking what a snapshot's vetting did must be able to answer it from the ledger alone; an entry that records only that a connector passed forces the reader back into the vetting tables to learn how much was examined and how it relates to the rest of the run, which is exactly the derivation the ledger exists to remove. Carrying the run reference on both the verdict and the completion entry is what lets the scattered per-connector rows be reassembled into the one run they came from. Typing the chain as the automated subsystem it is stops the ledger from asserting that a machine verdict was a human act, which is itself a transparency defect on the surface whose whole purpose is transparency.
+    description: The system shall append every vetter verdict to the audit ledger carrying the vetter name, its conclusion, the number of findings and the worst finding severity present, and a reference to the chain run the verdict belongs to; shall append the run-completed entry carrying that same run reference; and shall attribute every entry produced by the automated vetting chain to the gateway acting on its own rather than to a person.
+    rationale: An auditor asking what a snapshot's vetting did must be able to answer it from the ledger alone; an entry that records only that a vetter passed forces the reader back into the vetting tables to learn how much was examined and how it relates to the rest of the run, which is exactly the derivation the ledger exists to remove. Carrying the run reference on both the verdict and the completion entry is what lets the scattered per-vetter rows be reassembled into the one run they came from. Typing the chain as the automated subsystem it is stops the ledger from asserting that a machine verdict was a human act, which is itself a transparency defect on the surface whose whole purpose is transparency.
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_VETTING_0023
     title: A clean vetting pass records what it examined
     significance: shall
-    description: The system shall record on every connector verdict, including a pass that produced no findings, a non-empty statement of what the connector examined — the files it scanned and the rules it applied — so that a pass is distinguishable in the ledger and in the vetting report from a connector that did not run.
-    rationale: A pass with a null detail and no findings is indistinguishable from a connector that was never invoked, and on a fail-closed surface that ambiguity is dangerous — a reviewer reading "nothing found" cannot tell coverage from absence. Stating the coverage on the verdict itself makes a clean pass carry positive evidence of what was checked, the same way a finding carries positive evidence of what was wrong.
+    description: The system shall record on every vetter verdict, including a pass that produced no findings, a non-empty statement of what the vetter examined — the files it scanned and the rules it applied — so that a pass is distinguishable in the ledger and in the vetting report from a vetter that did not run.
+    rationale: A pass with a null detail and no findings is indistinguishable from a vetter that was never invoked, and on a fail-closed surface that ambiguity is dangerous — a reviewer reading "nothing found" cannot tell coverage from absence. Stating the coverage on the verdict itself makes a clean pass carry positive evidence of what was checked, the same way a finding carries positive evidence of what was wrong.
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_VETTING_0024
     title: Operator-configured external vetting connectors join the ordered chain
     significance: shall
-    description: The system shall allow an operator to configure external vetting connectors that each take a position in the ordered connector chain, run against the quarantined SHA-pinned snapshot alongside the built-in connectors, and have their verdicts recorded and aggregated by the same fail-closed rules; and shall stamp each configured external connector's identity and rule-set version into the chain identity recorded on every run.
-    rationale: The built-in connectors are compile-time beans, so adding an organisation's own reviewer — an LLM endpoint IT Security has prepared, a sandbox, a corporate scanner — meant changing code. Making external connectors configuration rather than API-managed runtime state keeps a chain run attributable — a connector whose endpoint, position or version could change through the API between two runs would make "the content cleared last month and blocks today" unanswerable, which is the question continuous re-vetting exists to raise. Configuration binds the chain to the deployment, so the run's stamped chain identity names the exact external chain that produced it.
+    description: The system shall allow an operator to configure external vetting connectors that each contribute one vetter to the ordered chain, run against the quarantined SHA-pinned snapshot alongside the built-in vetters, and have their verdicts recorded and aggregated by the same fail-closed rules; and shall stamp each configured external vetter's identity and rule-set version into the chain identity recorded on every run.
+    rationale: The built-in vetters are compile-time beans, so adding an organisation's own reviewer — an LLM endpoint IT Security has prepared, a sandbox, a corporate scanner — meant changing code. Making external vetters configuration rather than API-managed runtime state keeps a chain run attributable — a vetter whose endpoint, position or version could change through the API between two runs would make "the content cleared last month and blocks today" unanswerable, which is the question continuous re-vetting exists to raise. Configuration binds the chain to the deployment, so the run's stamped chain identity names the exact external chain that produced it.
     categories: ["functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_VETTING_0025
     title: An external vetting connector fails closed on any inconclusive answer
     significance: shall
     description: The system shall record an external vetting connector's verdict as an error — which blocks — whenever the connector's endpoint is unreachable, refuses the connection, or does not answer within the configured connect or read timeout; whenever it returns a non-success HTTP status, an empty body, a body larger than the configured response cap, or a body that cannot be parsed; whenever it declares a verdict state the system does not recognise or a finding the system cannot validate; and whenever the snapshot's scannable content exceeds the configured request cap so that no complete evidence bundle can be sent. In none of these cases shall the system record a passing or clearing verdict.
-    rationale: An external connector reaches a dependency the gateway does not control and cannot trust, so a timeout, an outage, a hostile response, or a truncated request must never be indistinguishable from a clean pass. This is the RevetVerdict fail-closed principle applied to a network boundary — the cheap, reversible cost of an over-strict answer is a blocked approval a reviewer resolves, while the cost of an over-lenient one is publishing content nothing actually vetted. A partial evidence bundle is treated the same way, because a verdict about content the connector never saw is not evidence about the snapshot.
+    rationale: An external connector reaches a dependency the gateway does not control and cannot trust, so a timeout, an outage, a hostile response, or a truncated request must never be indistinguishable from a clean pass. This is the RevetVerdict fail-closed principle applied to a network boundary — the cheap, reversible cost of an over-strict answer is a blocked approval a reviewer resolves, while the cost of an over-lenient one is publishing content nothing actually vetted. A partial evidence bundle is treated the same way, because a verdict about content the vetter never saw is not evidence about the snapshot.
     categories: ["security", "reliability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_VETTING_0026
     title: An external verdict is never weaker than its own findings, and its report link is recorded
     significance: shall
-    description: The system shall record an external vetting connector's verdict state as the more severe of the state the connector declared and the state its own returned findings imply; and shall persist the connector's findings and its external report link through the same verdict model the built-in connectors use, so that both are surfaced wherever a snapshot's vetting evidence is shown.
+    description: The system shall record an external vetting connector's verdict state as the more severe of the state the connector declared and the state its own returned findings imply; and shall persist the vetter's findings and its external report link through the same verdict model the built-in vetters use, so that both are surfaced wherever a snapshot's vetting evidence is shown.
     rationale: An external endpoint that returns a passing state alongside a high or critical finding is internally inconsistent, and trusting the declared state over the endpoint's own evidence would let a misconfigured or compromised reviewer pass content its findings condemn; taking the worse of the two closes that gap without discarding the endpoint's judgement where it is stricter. Recording the findings and the report link through the existing model means an external verdict is auditable and reviewable exactly like a built-in one, which is what the report-url field on the verdict was always for.
     categories: ["security"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_VETTING_0027
     title: An external vetting connector may answer asynchronously, which blocks until resolved
@@ -1302,58 +1302,58 @@ requirements:
   - id: GW_VETTING_0028
     title: Administrative override of a blocked vetting outcome
     significance: shall
-    description: The system shall allow an administrator, and only an administrator, to approve a held or revoked snapshot whose effective vetting outcome is blocked by supplying a non-empty reason, shall refuse such an override to a principal that is not an administrator and refuse it to an administrator who supplies no reason, shall leave every other approval precondition — the policy gate, the minimum release age and the separation-of-duties rule — in force so that the override lifts only the vetting block, shall record the override as a distinct audit-ledger event naming the acting administrator, the reason, and the connectors and uncovered findings that were blocking, and shall mark the approved snapshot as approved over a vetting failure so that the override is surfaced wherever the snapshot's vetting is shown and is never indistinguishable from an approval the chain cleared.
+    description: The system shall allow an administrator, and only an administrator, to approve a held or revoked snapshot whose effective vetting outcome is blocked by supplying a non-empty reason, shall refuse such an override to a principal that is not an administrator and refuse it to an administrator who supplies no reason, shall leave every other approval precondition — the policy gate, the minimum release age and the separation-of-duties rule — in force so that the override lifts only the vetting block, shall record the override as a distinct audit-ledger event naming the acting administrator, the reason, and the vetters and uncovered findings that were blocking, and shall mark the approved snapshot as approved over a vetting failure so that the override is surfaced wherever the snapshot's vetting is shown and is never indistinguishable from an approval the chain cleared.
     rationale: "The vetting chain is automation, and the human-in-command principle says the captain must be able to disconnect the autopilot deliberately rather than route around it quietly. The waiver mechanism accepts one finding narrowly and expiringly; the override is the broader, rarer act of an administrator taking responsibility for a whole blocked outcome, so it is reserved to the administrative role, refused without a stated reason, and written to the ledger as its own event with the failing verdicts attached — an override that read as a clean approval, or that left no distinct trail, would be exactly the silent bypass the control exists to prevent. Lifting only the vetting block keeps the override from becoming a skeleton key: separation of duties, the cooling-off window and the policy rules still decide the approval."
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_VETTING_0029
-    title: The connector on/off switch never becomes a blanket approval
+    title: The vetter on/off switch never becomes a blanket approval
     significance: shall
-    description: "The system shall let an administrator's use of the connector on/off switch change only which connectors run and how their absence is scored — never make the chain more permissive about what a connector's own verdicts already say. A disabled connector's absence shall never be indistinguishable from a clearing verdict, and disabling every connector shall leave a run blocked rather than clear."
-    rationale: "Reversing the previous stance that the chain had no enable/disable switch at all is a trust-boundary change (ADR 0009): the moment an administrator can silence a connector, silencing every connector must not silently become the easiest way to approve anything. The four guarantees below are how that is kept true — who may switch it, what runs because of it, how a disabled connector is scored, and that it is scored at all rather than omitted — and each can regress on its own without the others noticing."
+    description: "The system shall let an administrator's use of the vetter on/off switch change only which vetters run and how their absence is scored — never make the chain more permissive about what a vetter's own verdicts already say. A disabled vetter's absence shall never be indistinguishable from a clearing verdict, and disabling every vetter shall leave a run blocked rather than clear."
+    rationale: "Reversing the previous stance that the chain had no enable/disable switch at all is a trust-boundary change (ADR 0009): the moment an administrator can silence a vetter, silencing every vetter must not silently become the easiest way to approve anything. The four guarantees below are how that is kept true — who may switch it, what runs because of it, how a disabled vetter is scored, and that it is scored at all rather than omitted — and each can regress on its own without the others noticing."
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_VETTING_0029.1
-    title: A connector's effective state resolves per-marketplace, then global, then enabled
+    title: A vetter's effective state resolves per-marketplace, then global, then enabled
     significance: shall
-    description: "The system shall let an administrator disable or re-enable a specific vetting connector in the chain — built-in or operator-configured — either globally or for one named marketplace, and shall resolve a connector's effective state for a marketplace as its per-marketplace setting when one exists, otherwise its global setting, and otherwise enabled. The system shall refuse, naming the connectors the chain does carry, a toggle for a name no connector in the chain carries."
-    rationale: "A connector that is too noisy or wrong for one marketplace should be answerable without redeploying the gateway or turning it off for every other marketplace at the same time; the three-tier resolution is what lets a global default and a narrow exception coexist without an administrator having to restate the default everywhere it still applies. An operator's own connector is the likeliest candidate for that treatment and the costliest to silence any other way — changing the configured external chain changes it for every marketplace at once — so the switch covers the chain as configured rather than a fixed set of names, and the guarantees that keep it from becoming a blanket approval are properties of the run rather than of which connector was switched. Refusing an unrecognised name is what keeps a typo from leaving an administrator believing a control is off while it is on."
+    description: "The system shall let an administrator disable or re-enable a specific vetter in the chain — built-in or operator-configured — either globally or for one named marketplace, and shall resolve a vetter's effective state for a marketplace as its per-marketplace setting when one exists, otherwise its global setting, and otherwise enabled. The system shall refuse, naming the vetters the chain does carry, a toggle for a name no vetter in the chain carries."
+    rationale: "A vetter that is too noisy or wrong for one marketplace should be answerable without redeploying the gateway or turning it off for every other marketplace at the same time; the three-tier resolution is what lets a global default and a narrow exception coexist without an administrator having to restate the default everywhere it still applies. An operator's own vetter is the likeliest candidate for that treatment and the costliest to silence any other way — changing the configured external chain changes it for every marketplace at once — so the switch covers the chain as configured rather than a fixed set of names, and the guarantees that keep it from becoming a blanket approval are properties of the run rather than of which vetter was switched. Refusing an unrecognised name is what keeps a typo from leaving an administrator believing a control is off while it is on."
+    references:
+      requirement_ids: ["GW_VETTING_0029"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.3.0
+
+  - id: GW_VETTING_0029.2
+    title: A disabled vetter is skipped and recorded as a distinct disabled verdict
+    significance: shall
+    description: "The system shall skip a vetter that is disabled for a snapshot's marketplace when the vetting chain runs at ingestion or re-vetting, rather than running it, and shall record a distinct disabled verdict against that chain run in the vetter's place, so the disablement is part of the run's own evidence."
+    rationale: "Recording a skipped vetter as its own verdict rather than simply omitting it is what keeps the disablement fail-loud: a reviewer or an auditor reading the run sees that the vetter did not run and why, instead of a chain that is silently shorter than the estate's other marketplaces."
     references:
       requirement_ids: ["GW_VETTING_0029"]
     categories: ["security", "functional-suitability"]
     revision: 0.2.0
 
-  - id: GW_VETTING_0029.2
-    title: A disabled connector is skipped and recorded as a distinct disabled verdict
-    significance: shall
-    description: "The system shall skip a connector that is disabled for a snapshot's marketplace when the vetting chain runs at ingestion or re-vetting, rather than running it, and shall record a distinct disabled verdict against that chain run in the connector's place, so the disablement is part of the run's own evidence."
-    rationale: "Recording a skipped connector as its own verdict rather than simply omitting it is what keeps the disablement fail-loud: a reviewer or an auditor reading the run sees that the connector did not run and why, instead of a chain that is silently shorter than the estate's other marketplaces."
-    references:
-      requirement_ids: ["GW_VETTING_0029"]
-    categories: ["security", "functional-suitability"]
-    revision: 0.1.0
-
   - id: GW_VETTING_0029.3
     title: A disabled verdict counts as neither clearing nor blocking
     significance: shall
-    description: "The system shall count a disabled verdict as neither clearing nor blocking a chain run, while still requiring at least one clearing verdict for the run to clear, so that disabling every connector leaves the run blocked rather than clear."
+    description: "The system shall count a disabled verdict as neither clearing nor blocking a chain run, while still requiring at least one clearing verdict for the run to clear, so that disabling every vetter leaves the run blocked rather than clear."
     rationale: "Requiring positive clearing evidence, rather than merely the absence of a blocking one, is what stops disabling the whole chain from becoming a blanket approval: an estate that has switched everything off has proven nothing about the content it serves, and a disabled verdict must not be able to rescue one that has failed elsewhere either."
     references:
       requirement_ids: ["GW_VETTING_0029"]
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_VETTING_0029.4
     title: Every toggle is an audited, administrator-only action
     significance: shall
-    description: "The system shall record every toggle of a connector's enablement as an administrator-only, audited action naming the acting administrator, the connector, the scope and the new state, and shall neither show connector settings to nor accept a toggle from a principal that is not an administrator."
-    rationale: "The switch governs the vetting chain, so its own visibility and use have to sit above the content it governs: a marketplace-scoped approver who could see or flip it could quietly turn off the control that governs their own content, and an unaudited toggle would leave no way to answer why a connector was silent on a given run."
+    description: "The system shall record every toggle of a vetter's enablement as an administrator-only, audited action naming the acting administrator, the vetter, the scope and the new state, and shall neither show vetter settings to nor accept a toggle from a principal that is not an administrator."
+    rationale: "The switch governs the vetting chain, so its own visibility and use have to sit above the content it governs: a marketplace-scoped approver who could see or flip it could quietly turn off the control that governs their own content, and an unaudited toggle would leave no way to answer why a vetter was silent on a given run."
     references:
       requirement_ids: ["GW_VETTING_0029"]
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_INGEST_0019
     title: Typed plugin source model
@@ -1406,10 +1406,10 @@ requirements:
   - id: GW_WEBHOOK_0007
     title: The approval-pending event announces without disclosing
     significance: shall
-    description: The system shall carry, in the approval-pending event's payload, the marketplace, the snapshot identifier, the commit SHA the snapshot is pinned to, the snapshot's state, the identifier of the chain run being reported, the effective vetting outcome that gates approval, the outcome the connectors themselves recorded, the names of the connectors that block, and how many findings are uncovered and how many are suppressed by an active waiver. The system shall not carry in that payload any finding message, finding rule identifier, finding location, file name or other content of the quarantined snapshot, and shall keep the payload's remaining fields identical in name and meaning to those of every other lifecycle event.
-    rationale: "A webhook target is authorised by a URL scheme allowlist, not by an authenticated identity, so what the gateway pushes to one is disclosed to whoever holds that URL; the quarantine exists precisely so unapproved content does not leave it, and a finding's location is a path inside that content while its message quotes what was found. Counts, connector names and identifiers are the gateway's own metadata and are already visible in the refusal document and the ledger, and they are sufficient for the only decision a receiver makes on arrival — whether the snapshot can be approved now, needs a waiver, or needs fixing. A receiver that needs the detail is expected to read the vetting endpoint as an authenticated caller, which the identifiers in the payload address. Keeping the shared fields identical is what makes the event free to adopt for a receiver already parsing another one."
+    description: The system shall carry, in the approval-pending event's payload, the marketplace, the snapshot identifier, the commit SHA the snapshot is pinned to, the snapshot's state, the identifier of the chain run being reported, the effective vetting outcome that gates approval, the outcome the vetters themselves recorded, the names of the vetters that block, and how many findings are uncovered and how many are suppressed by an active waiver. The system shall not carry in that payload any finding message, finding rule identifier, finding location, file name or other content of the quarantined snapshot, and shall keep the payload's remaining fields identical in name and meaning to those of every other lifecycle event.
+    rationale: "A webhook target is authorised by a URL scheme allowlist, not by an authenticated identity, so what the gateway pushes to one is disclosed to whoever holds that URL; the quarantine exists precisely so unapproved content does not leave it, and a finding's location is a path inside that content while its message quotes what was found. Counts, vetter names and identifiers are the gateway's own metadata and are already visible in the refusal document and the ledger, and they are sufficient for the only decision a receiver makes on arrival — whether the snapshot can be approved now, needs a waiver, or needs fixing. A receiver that needs the detail is expected to read the vetting endpoint as an authenticated caller, which the identifiers in the payload address. Keeping the shared fields identical is what makes the event free to adopt for a receiver already parsing another one."
     categories: ["security", "compatibility"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_INGEST_0023
     title: Resolution of admitted external plugin sources into quarantine
@@ -1423,9 +1423,9 @@ requirements:
     title: The synthesised composite commit is the snapshot, not metadata beside it
     significance: shall
     description: "The system shall treat the commit it synthesises for a manifest with resolved external plugin sources as the snapshot itself rather than as metadata kept beside a separate snapshot identity: the commit that is pinned in quarantine, vetted, approved and served is that one synthesised commit, and every component at or behind a trust boundary reads the snapshot through it and through nothing else. The system shall synthesise such a commit for every snapshot whose manifest declares external plugin sources it resolves, and shall serve the ingested upstream commit unchanged, with no synthesised commit, for a manifest that declares none."
-    rationale: "Rewriting at ingestion rather than at publication is what makes the commit a reviewer approves the commit clients receive, and what makes the vetting chain see external content with no connector change: the synthesised commit is not metadata beside the snapshot, it is the snapshot. Making it the snapshot's identity means every component at or behind a trust boundary — vetting, approval, the facade, retention, the ledger — keeps reading one commit and never learns that external content exists, where a second column beside the old identity would force each of them to choose between two commits and a reason to trust one over the other. Each of the seven guarantees below states one part of that identity claim that can be verified, and can regress, on its own."
+    rationale: "Rewriting at ingestion rather than at publication is what makes the commit a reviewer approves the commit clients receive, and what makes the vetting chain see external content with no vetter change: the synthesised commit is not metadata beside the snapshot, it is the snapshot. Making it the snapshot's identity means every component at or behind a trust boundary — vetting, approval, the facade, retention, the ledger — keeps reading one commit and never learns that external content exists, where a second column beside the old identity would force each of them to choose between two commits and a reason to trust one over the other. Each of the seven guarantees below states one part of that identity claim that can be verified, and can regress, on its own."
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_INGEST_0024.1
     title: The composite's tree holds the upstream content, the grafted sources, and a manifest that points only inside it
@@ -1557,21 +1557,21 @@ requirements:
     title: A bound on the number of objects one source contributes
     significance: shall
     description: "The system shall bound, by configuration, the number of objects — files and directories — one external plugin source may contribute to a snapshot."
-    rationale: "Size alone does not bound the cost of walking content: a source of very many tiny files is cheap to store and expensive for everything that later traverses it, and every connector of a vetting chain, the content inventory and the diff all traverse it — at ingestion and again on every continuous re-vetting pass. Bounding the count is what keeps that standing cost proportional to what an operator agreed to admit rather than to how a publisher chose to lay out a repository."
+    rationale: "Size alone does not bound the cost of walking content: a source of very many tiny files is cheap to store and expensive for everything that later traverses it, and every vetter of a vetting chain, the content inventory and the diff all traverse it — at ingestion and again on every continuous re-vetting pass. Bounding the count is what keeps that standing cost proportional to what an operator agreed to admit rather than to how a publisher chose to lay out a repository."
     references:
       requirement_ids: ["GW_INGEST_0026"]
     categories: ["performance-efficiency", "security"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_INGEST_0026.6
     title: A bound on the largest single file one source contributes
     significance: shall
     description: "The system shall bound, by configuration, the size of the largest single file one external plugin source may contribute to a snapshot."
-    rationale: "A source can sit inside every aggregate bound and still hold one file that no consumer of the snapshot can handle, because a file is what a vetting connector reads whole. Bounding the largest file separately from the total is what keeps a single object from being the thing that fails a chain run, and it is the bound a legitimate marketplace shipping something genuinely large runs into first, which is why it has to be raisable on its own rather than only by raising every total beside it."
+    rationale: "A source can sit inside every aggregate bound and still hold one file that no consumer of the snapshot can handle, because a file is what a vetter reads whole. Bounding the largest file separately from the total is what keeps a single object from being the thing that fails a chain run, and it is the bound a legitimate marketplace shipping something genuinely large runs into first, which is why it has to be raisable on its own rather than only by raising every total beside it."
     references:
       requirement_ids: ["GW_INGEST_0026"]
     categories: ["performance-efficiency", "security"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_INGEST_0026.7
     title: A bound on the depth of a source's directory tree
@@ -1604,18 +1604,18 @@ requirements:
   - id: GW_VETTING_0030
     title: Bounded single-pass snapshot content access for a vetting chain run
     significance: shall
-    description: "The system shall walk a quarantined snapshot's tree once per vetting chain run, and shall read a file's content only when the path selection a connector declares asks for it. The system shall retain content it has read for reuse by the other connectors of the same run, within a configured bound on the bytes one run may retain, and shall re-read rather than retain content once that bound is reached. The system shall present each connector with the content an independent walk would have given it, including visiting a file that exceeds the per-file size cap as unread rather than omitting it, and shall retain nothing beyond the end of the run."
-    rationale: "Every connector reads the same pinned commit, so a chain that lets each of them walk and inflate the tree independently pays the whole cost of the snapshot once per connector — and the built-in chain's three connectors between them want the whole tree only once. Continuous re-vetting re-runs the chain over the entire approved estate on a schedule, so the multiplier is a standing cost of the estate rather than a one-off at ingestion. Reading only what a connector's declared selection asks for is what removes the largest part of it: the licence connector inflates an entire tree to read two file kinds. Bounding the retained content is what keeps the saving from becoming a new exposure — a snapshot is an upstream repository the gateway does not control, so an unbounded per-run cache would make any large repository a memory-exhaustion primitive against the gateway. Degrading past the bound to re-reading rather than to skipping is what keeps the bound a performance setting and never a coverage setting: no value of it can cause a connector to see less than it would have seen. Requiring the presented content to be identical to an independent walk's, oversize files included, is what makes this change invisible to every verdict and keeps the coverage statements a clean pass records truthful."
+    description: "The system shall walk a quarantined snapshot's tree once per vetting chain run, and shall read a file's content only when the path selection a vetter declares asks for it. The system shall retain content it has read for reuse by the other vetters of the same run, within a configured bound on the bytes one run may retain, and shall re-read rather than retain content once that bound is reached. The system shall present each vetter with the content an independent walk would have given it, including visiting a file that exceeds the per-file size cap as unread rather than omitting it, and shall retain nothing beyond the end of the run."
+    rationale: "Every vetter reads the same pinned commit, so a chain that lets each of them walk and inflate the tree independently pays the whole cost of the snapshot once per vetter — and the built-in chain's three vetters between them want the whole tree only once. Continuous re-vetting re-runs the chain over the entire approved estate on a schedule, so the multiplier is a standing cost of the estate rather than a one-off at ingestion. Reading only what a vetter's declared selection asks for is what removes the largest part of it: the licence vetter inflates an entire tree to read two file kinds. Bounding the retained content is what keeps the saving from becoming a new exposure — a snapshot is an upstream repository the gateway does not control, so an unbounded per-run cache would make any large repository a memory-exhaustion primitive against the gateway. Degrading past the bound to re-reading rather than to skipping is what keeps the bound a performance setting and never a coverage setting: no value of it can cause a vetter to see less than it would have seen. Requiring the presented content to be identical to an independent walk's, oversize files included, is what makes this change invisible to every verdict and keeps the coverage statements a clean pass records truthful."
     categories: ["performance-efficiency", "security"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_INGEST_0028
     title: SKILL.md conformance against a pinned Agent Skills specification
     significance: shall
-    description: "The system shall validate every skill's SKILL.md in a quarantined snapshot against an Agent Skills specification pinned in the gateway's own distribution, reporting each departure from it — an absent or unreadable frontmatter block, a missing required field, a field that violates its constraint, and a field the pinned specification does not define — as a vetting finding on its own stable rule identifier, located at the file it was found in. The system shall record the pinned specification's version as the connector's version on every run it takes part in, and shall never retrieve the specification over the network while vetting. The system shall treat conformance findings as advisory by default, and as blocking only when an operator has configured enforcement."
-    rationale: "The chain's existing connectors all ask whether content is dangerous; none asks whether it is well formed, so a skill that no agent can load is served without comment and the first person to discover it is whoever installed the marketplace. A conformance defect is also the one thing a reviewer can act on without judgement — a named missing field is a fact the publisher can fix, where a heuristic scanner's objection is a probability — so producing it improves the quality of every rejection the gateway issues. Pinning the specification inside the distribution rather than fetching it is what keeps a chain run reproducible: continuous re-vetting exists to ask whether a changed answer about approved content came from the content or from the rules, and a rule set that can change between two runs makes that question unanswerable while also placing a remote document inside the approval gate. Recording the pinned version as the connector version is what makes a specification bump attributable in exactly the way a rule change in any other connector is. Defaulting to advisory is what makes the connector safe to upgrade into: a verdict covers a whole snapshot, so a single malformed skill would otherwise block every other skill beside it, and blocking on a formatting defect would devalue the blocking states the gateway reserves for content it believes is unsafe."
+    description: "The system shall validate every skill's SKILL.md in a quarantined snapshot against an Agent Skills specification pinned in the gateway's own distribution, reporting each departure from it — an absent or unreadable frontmatter block, a missing required field, a field that violates its constraint, and a field the pinned specification does not define — as a vetting finding on its own stable rule identifier, located at the file it was found in. The system shall record the pinned specification's version as the vetter's version on every run it takes part in, and shall never retrieve the specification over the network while vetting. The system shall treat conformance findings as advisory by default, and as blocking only when an operator has configured enforcement."
+    rationale: "The chain's existing vetters all ask whether content is dangerous; none asks whether it is well formed, so a skill that no agent can load is served without comment and the first person to discover it is whoever installed the marketplace. A conformance defect is also the one thing a reviewer can act on without judgement — a named missing field is a fact the publisher can fix, where a heuristic scanner's objection is a probability — so producing it improves the quality of every rejection the gateway issues. Pinning the specification inside the distribution rather than fetching it is what keeps a chain run reproducible: continuous re-vetting exists to ask whether a changed answer about approved content came from the content or from the rules, and a rule set that can change between two runs makes that question unanswerable while also placing a remote document inside the approval gate. Recording the pinned version as the vetter version is what makes a specification bump attributable in exactly the way a rule change in any other vetter is. Defaulting to advisory is what makes the vetter safe to upgrade into: a verdict covers a whole snapshot, so a single malformed skill would otherwise block every other skill beside it, and blocking on a formatting defect would devalue the blocking states the gateway reserves for content it believes is unsafe."
     categories: ["functional-suitability", "maintainability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_INGEST_0029
     title: Warning on a duplicate upstream URL at registration
@@ -1853,17 +1853,17 @@ requirements:
   - id: GW_VETTING_0029.5
     title: Administrator surface for a marketplace's effective vetting chain
     significance: shall
-    description: "The system shall show an administrator, and only an administrator, the effective vetting chain of a named marketplace: every configured connector in the order it runs, with the state its enablement resolves to for that marketplace and whether that state comes from a setting scoped to that marketplace, from the global setting, or from the absence of any setting, together with the note, the acting administrator and the time recorded for whichever setting decided it."
-    rationale: "The guarantee the parent requirement makes is about what the switch may not become, and nobody could check it: the settings list answers which rows exist, not which connectors run, and the one place the resolved chain appeared at all was a snapshot's own vetting view, which does not exist until the marketplace has been ingested — exactly the wrong moment, since the chain is worth configuring before the first ingestion. Naming the source of each state, and the absence of a setting as its own source, is what stops an administrator reading a default as a decision somebody made. Answering with the resolution the chain itself applies, rather than leaving a client to recombine per-marketplace and global rows, keeps a second implementation of the rule from being free to disagree with the one that decides what actually runs."
+    description: "The system shall show an administrator, and only an administrator, the effective vetting chain of a named marketplace: every configured vetter in the order it runs, with the state its enablement resolves to for that marketplace and whether that state comes from a setting scoped to that marketplace, from the global setting, or from the absence of any setting, together with the note, the acting administrator and the time recorded for whichever setting decided it."
+    rationale: "The guarantee the parent requirement makes is about what the switch may not become, and nobody could check it: the settings list answers which rows exist, not which vetters run, and the one place the resolved chain appeared at all was a snapshot's own vetting view, which does not exist until the marketplace has been ingested — exactly the wrong moment, since the chain is worth configuring before the first ingestion. Naming the source of each state, and the absence of a setting as its own source, is what stops an administrator reading a default as a decision somebody made. Answering with the resolution the chain itself applies, rather than leaving a client to recombine per-marketplace and global rows, keeps a second implementation of the rule from being free to disagree with the one that decides what actually runs."
     references:
       requirement_ids: ["GW_VETTING_0029"]
     categories: ["security", "interaction-capability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_VETTING_0031
     title: Portal vetting chain flow
     significance: shall
-    description: "The system shall present a snapshot's vetting chain in the portal as an ordered flow from ingestion, through each connector in the order it runs, to the chain's aggregated outcome and the approval gate; shall convey each connector's verdict state by an icon and a word as well as by colour; shall mark a connector whose verdict the gateway delegates to an external service as external; and shall make each node of the flow a keyboard-reachable control that opens that node's own evidence — for a connector its findings with the ones an active waiver suppresses shown as accepted, its version and its self-description, and for the outcome node the connectors and the unwaived findings the aggregation is blocking on."
-    rationale: "The chain is an ordered pipeline, and rendering it as an unordered stack of blocks throws away the one thing a reviewer wants at a glance: where the snapshot got stopped, and what ran before and after it. Requiring an icon and a word beside the colour is not decoration — a console read under audit conditions is read by people who cannot rely on hue, and a state that exists only as a colour is a state some readers do not have. Marking an external connector is what keeps a verdict the gateway did not reach itself from reading as one that it did. Putting the evidence behind each node, rather than only in a list beneath, is what makes the overview usable as an entry point instead of an index that has to be cross-referenced."
+    description: "The system shall present a snapshot's vetting chain in the portal as an ordered flow from ingestion, through each vetter in the order it runs, to the chain's aggregated outcome and the approval gate; shall convey each vetter's verdict state by an icon and a word as well as by colour; shall mark a vetter whose verdict the gateway delegates to an external service as external; and shall make each node of the flow a keyboard-reachable control that opens that node's own evidence — for a vetter its findings with the ones an active waiver suppresses shown as accepted, its version and its self-description, and for the outcome node the vetters and the unwaived findings the aggregation is blocking on."
+    rationale: "The chain is an ordered pipeline, and rendering it as an unordered stack of blocks throws away the one thing a reviewer wants at a glance: where the snapshot got stopped, and what ran before and after it. Requiring an icon and a word beside the colour is not decoration — a console read under audit conditions is read by people who cannot rely on hue, and a state that exists only as a colour is a state some readers do not have. Marking an external vetter is what keeps a verdict the gateway did not reach itself from reading as one that it did. Putting the evidence behind each node, rather than only in a list beneath, is what makes the overview usable as an entry point instead of an index that has to be cross-referenced."
     categories: ["interaction-capability", "security"]
-    revision: 0.1.0
+    revision: 0.2.0

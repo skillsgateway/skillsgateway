@@ -11,7 +11,7 @@
 diagrams:
   - name: lifecycle
     source: docs/diagrams/lifecycle.mmd
-    source-sha256: 04433f76da694a0aa1f318f31c0217e18b07b6174e4dbb9a82418883e520f3ed
+    source-sha256: 3098b5add88afbcf465a721d132aaf99e42e8d571f7a6e6fd07667e952bbd1dc
     outputs:
       light: docs/manual/assets/diagrams/lifecycle-light.svg
       dark: docs/manual/assets/diagrams/lifecycle-dark.svg

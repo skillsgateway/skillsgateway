@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Import;
  * Wires the operator-configured external vetting connectors into the context (GW_VETTING_0024). Component
  * scan finds this configuration, which imports {@link ExternalVettingConnectorRegistrar}; the
  * registrar reads {@code skills-gateway.vetting.external[*]} and registers a bean per entry. An
- * empty or absent list registers nothing, so a deployment that configures no external connector
+ * empty or absent list registers nothing, so a deployment that configures no external vetter
  * behaves exactly as before.
  */
 @Configuration(proxyBeanMethods = false)

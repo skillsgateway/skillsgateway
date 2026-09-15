@@ -24,17 +24,17 @@ public class VettingOverrideRepository {
 
     @Requirements({"GW_VETTING_0028"})
     public VettingOverrideRecord record(
-            long snapshotId, String reason, String blockingConnectors, String uncoveredFindings, String overriddenBy) {
+            long snapshotId, String reason, String blockingVetters, String uncoveredFindings, String overriddenBy) {
         return jdbc.sql("INSERT INTO snapshot_vetting_overrides"
-                        + " (snapshot_id, reason, blocking_connectors, uncovered_findings, overridden_by, overridden_at)"
-                        + " VALUES (:snapshotId, :reason, :blockingConnectors, :uncoveredFindings, :overriddenBy, :now)"
+                        + " (snapshot_id, reason, blocking_vetters, uncovered_findings, overridden_by, overridden_at)"
+                        + " VALUES (:snapshotId, :reason, :blockingVetters, :uncoveredFindings, :overriddenBy, :now)"
                         + " ON CONFLICT (snapshot_id) DO UPDATE SET reason = :reason,"
-                        + " blocking_connectors = :blockingConnectors, uncovered_findings = :uncoveredFindings,"
+                        + " blocking_vetters = :blockingVetters, uncovered_findings = :uncoveredFindings,"
                         + " overridden_by = :overriddenBy, overridden_at = :now"
                         + " RETURNING *")
                 .param("snapshotId", snapshotId)
                 .param("reason", reason)
-                .param("blockingConnectors", blockingConnectors)
+                .param("blockingVetters", blockingVetters)
                 .param("uncoveredFindings", uncoveredFindings)
                 .param("overriddenBy", overriddenBy)
                 .param("now", OffsetDateTime.now())
@@ -55,7 +55,7 @@ public class VettingOverrideRepository {
                 rs.getLong("id"),
                 rs.getLong("snapshot_id"),
                 rs.getString("reason"),
-                rs.getString("blocking_connectors"),
+                rs.getString("blocking_vetters"),
                 rs.getString("uncovered_findings"),
                 rs.getString("overridden_by"),
                 overriddenAt == null ? null : overriddenAt.toInstant());

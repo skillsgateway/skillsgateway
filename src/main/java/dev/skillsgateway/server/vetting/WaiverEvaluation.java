@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * The effective-outcome rule (GW_VETTING_0008, GW_VETTING_0009), and the only place it lives.
  *
- * <p>A recorded run is raw evidence: it says what the connectors said, and no waiver ever rewrites
+ * <p>A recorded run is raw evidence: it says what the vetters said, and no waiver ever rewrites
  * it. What gates an approval is the <em>effective</em> outcome, derived here from that run plus the
  * waivers active at a given instant. Deriving rather than stamping is what makes expiry free: there
  * is no stored value that can go stale, so a waiver stops suppressing on the very next evaluation
@@ -42,8 +42,8 @@ public final class WaiverEvaluation {
     /** One finding a waiver is currently suppressing, and which waiver is doing it. */
     @Schema(description = "A finding an active waiver is currently suppressing")
     public record Suppression(
-            @Schema(description = "Connector whose verdict carried the finding")
-            String connector,
+            @Schema(description = "Vetter whose verdict carried the finding")
+            String vetter,
 
             @Schema(description = "Finding rule identifier") String ruleId,
 
@@ -58,11 +58,11 @@ public final class WaiverEvaluation {
             @Schema(description = "When the acceptance lapses")
             Instant expiresAt) {}
 
-    /** A finding that still blocks, with the connector it came from — the reviewer's worklist. */
+    /** A finding that still blocks, with the vetter it came from — the reviewer's worklist. */
     @Schema(description = "A blocking finding that no active waiver covers")
     public record UncoveredFinding(
-            @Schema(description = "Connector whose verdict carried the finding")
-            String connector,
+            @Schema(description = "Vetter whose verdict carried the finding")
+            String vetter,
 
             @Schema(description = "Finding rule identifier") String ruleId,
 
@@ -81,19 +81,19 @@ public final class WaiverEvaluation {
      * @param recordedOutcome what the run itself recorded, unchanged
      * @param suppressions every finding an active waiver is removing from the computation
      * @param uncovered the findings that still block; empty when {@code outcome} is not blocked
-     * @param blockingConnectors the connectors that are the reason it blocks
+     * @param blockingVetters the vetters that are the reason it blocks
      */
     public record Effect(
             VettingChain.Outcome outcome,
             VettingChain.Outcome recordedOutcome,
             List<Suppression> suppressions,
             List<UncoveredFinding> uncovered,
-            List<String> blockingConnectors) {
+            List<String> blockingVetters) {
 
         public Effect {
             suppressions = suppressions == null ? List.of() : List.copyOf(suppressions);
             uncovered = uncovered == null ? List.of() : List.copyOf(uncovered);
-            blockingConnectors = blockingConnectors == null ? List.of() : List.copyOf(blockingConnectors);
+            blockingVetters = blockingVetters == null ? List.of() : List.copyOf(blockingVetters);
         }
 
         public boolean blocked() {
@@ -123,7 +123,7 @@ public final class WaiverEvaluation {
         List<Waiver> candidates = waivers == null ? List.of() : waivers;
         List<Suppression> suppressions = new ArrayList<>();
         List<UncoveredFinding> uncovered = new ArrayList<>();
-        List<String> blockingConnectors = new ArrayList<>();
+        List<String> blockingVetters = new ArrayList<>();
         List<VerdictState> effectiveStates = new ArrayList<>(run.verdicts().size());
 
         for (VettingRepository.VerdictView verdict : run.verdicts()) {
@@ -134,7 +134,7 @@ public final class WaiverEvaluation {
                     residual.add(finding);
                 } else {
                     suppressions.add(new Suppression(
-                            verdict.connector(),
+                            verdict.vetter(),
                             finding.id(),
                             finding.location(),
                             waiver.id(),
@@ -145,11 +145,11 @@ public final class WaiverEvaluation {
             VerdictState effective = effectiveState(verdict, residual);
             effectiveStates.add(effective);
             if (!effective.clearing()) {
-                blockingConnectors.add(verdict.connector());
+                blockingVetters.add(verdict.vetter());
                 for (Finding finding : residual) {
                     if (finding.severity().atLeast(Severity.HIGH)) {
                         uncovered.add(new UncoveredFinding(
-                                verdict.connector(),
+                                verdict.vetter(),
                                 finding.id(),
                                 finding.location(),
                                 finding.severity(),
@@ -164,7 +164,7 @@ public final class WaiverEvaluation {
         if (!effective.blocked() && !suppressions.isEmpty()) {
             effective = VettingChain.Outcome.CLEAR_WITH_WAIVERS;
         }
-        return new Effect(effective, recorded, suppressions, uncovered, blockingConnectors);
+        return new Effect(effective, recorded, suppressions, uncovered, blockingVetters);
     }
 
     /**
@@ -176,7 +176,7 @@ public final class WaiverEvaluation {
      * {@link Verdict#of(List)} like every other state: it always carries an informational finding
      * so the disablement is visible on the run, and that finding's {@code INFO} severity would
      * otherwise re-derive to {@code PASS} on its own — an unwaived, purely bookkeeping finding
-     * turning a switched-off connector into positive clearing evidence it never produced, which is
+     * turning a switched-off vetter into positive clearing evidence it never produced, which is
      * exactly the blanket-approval loophole GW_VETTING_0029 forbids. Only when every finding on it has
      * actually been waived — residual empty, so something was named and accepted — does it clear,
      * the same "waiving everything clears the verdict" rule every other state gets.

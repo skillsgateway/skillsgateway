@@ -391,7 +391,7 @@ export function MarketplaceDetailPage() {
       </Card>
 
       {/* Above the snapshots whose verdicts it explains, and only for a session that holds the
-          administrative role — the connector settings are not shown to marketplace-scoped
+          administrative role — the vetter settings are not shown to marketplace-scoped
           approvers, and the server refuses the read independently. */}
       {isAdmin ? <MarketplaceVettingChain marketplace={marketplace.name ?? ""} /> : null}
 

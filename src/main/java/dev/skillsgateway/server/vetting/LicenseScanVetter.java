@@ -6,7 +6,7 @@ import java.io.IOException;
 import org.springframework.stereotype.Component;
 
 /**
- * Built-in connector: license compliance (GW_VETTING_0019, GW_VETTING_0020).
+ * Built-in vetter: license compliance (GW_VETTING_0019, GW_VETTING_0020).
  *
  * <p>Detects the licenses a snapshot declares — deterministically, via {@link LicenseDetector} —
  * and evaluates them against the organisation's configured allow/ban lists. Violations are ordinary
@@ -18,11 +18,11 @@ import org.springframework.stereotype.Component;
  * being scored; SPDX expression algebra and dependency-level licenses are out of scope.
  */
 @Component
-public class LicenseScanConnector implements VettingConnector {
+public class LicenseScanVetter implements Vetter {
 
     private final LicensePolicy policy;
 
-    public LicenseScanConnector(SkillsGatewayProperties properties) {
+    public LicenseScanVetter(SkillsGatewayProperties properties) {
         this.policy = new LicensePolicy(properties.vetting().license());
     }
 

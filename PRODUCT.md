@@ -74,7 +74,7 @@ Confirmed capabilities, as implemented today:
 | Area | What exists |
 | --- | --- |
 | Marketplaces | Register (name + clone URL), ingest the upstream default branch, browse snapshots and their plugin/skill inventory |
-| Vetting | A pluggable connector chain produces per-connector verdicts and findings; the effective outcome gates approval |
+| Vetting | A pluggable vetter chain produces per-vetter verdicts and findings; the effective outcome gates approval |
 | Waivers | A blocking finding can be accepted with a scoped (snapshot or path), justified, mandatorily expiring waiver |
 | Decisions | Approve / reject / re-approve a revoked snapshot; approval is what publishes |
 | Re-vetting | Scheduled and on-demand re-vetting of already-approved snapshots, with retroactive quarantine |

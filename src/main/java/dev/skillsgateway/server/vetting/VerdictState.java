@@ -4,21 +4,21 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Locale;
 
 /**
- * What one connector concluded about one snapshot.
+ * What one vetter concluded about one snapshot.
  *
  * <p>{@code ERROR} is deliberately distinct from {@code FAIL}: "this content is bad" and "the
- * connector broke" are different operational facts, even though {@link VettingChain} blocks on
- * both. {@code PENDING} is the seam for an asynchronous connector that answers by callback — no
+ * vetter broke" are different operational facts, even though {@link VettingChain} blocks on
+ * both. {@code PENDING} is the seam for an asynchronous vetter that answers by callback — no
  * built-in returns it in v1, but the aggregation already treats it as blocking, so the gate is
- * correct before the first async connector exists.
+ * correct before the first async vetter exists.
  *
- * <p>{@code DISABLED} is a third kind of thing again (GW_VETTING_0029): not a conclusion the connector
- * reached, but the record that an administrator switched the connector off for this snapshot's
+ * <p>{@code DISABLED} is a third kind of thing again (GW_VETTING_0029): not a conclusion the vetter
+ * reached, but the record that an administrator switched the vetter off for this snapshot's
  * marketplace, so the chain skipped it. It is the only state that neither clears nor blocks —
  * {@link VettingChain} treats it as absent for the block decision but still requires positive
- * clearing evidence elsewhere in the run, so disabling every connector leaves the run blocked.
+ * clearing evidence elsewhere in the run, so disabling every vetter leaves the run blocked.
  */
-@Schema(description = "A connector's conclusion about a snapshot")
+@Schema(description = "A vetter's conclusion about a snapshot")
 public enum VerdictState {
 
     /** Nothing found. */
@@ -30,14 +30,14 @@ public enum VerdictState {
     /** Found something that blocks approval. */
     FAIL,
 
-    /** The connector did not produce a verdict: it threw, or it exceeded its time limit. */
+    /** The vetter did not produce a verdict: it threw, or it exceeded its time limit. */
     ERROR,
 
-    /** The connector was triggered and has not answered yet. Blocks, like every non-verdict. */
+    /** The vetter was triggered and has not answered yet. Blocks, like every non-verdict. */
     PENDING,
 
     /**
-     * An administrator disabled this connector for the snapshot's marketplace (GW_VETTING_0029.2), so the
+     * An administrator disabled this vetter for the snapshot's marketplace (GW_VETTING_0029.2), so the
      * chain recorded this in its place instead of running it. Neither clears nor blocks.
      */
     DISABLED;
@@ -58,7 +58,7 @@ public enum VerdictState {
 
     /**
      * Whether this state blocks the chain. Everything that is not clearing blocks, with the one
-     * exception of {@link #DISABLED}: an administrator switching a connector off is a deliberate,
+     * exception of {@link #DISABLED}: an administrator switching a vetter off is a deliberate,
      * audited act, not an unanswered or broken verdict, so it must not fail the chain closed the
      * way a timeout or a crash does (GW_VETTING_0029.3). Positive clearing evidence is still required
      * elsewhere in the run — see {@link VettingChain#aggregate}.

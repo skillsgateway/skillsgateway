@@ -13,7 +13,7 @@ import java.time.Instant;
  * of overrides lives on the append-only audit ledger; this is the current standing marker.
  *
  * @param reason the administrator's stated reason for taking responsibility for the block
- * @param blockingConnectors the connectors that were blocking at the moment of the override
+ * @param blockingVetters the vetters that were blocking at the moment of the override
  * @param uncoveredFindings a human-readable summary of the blocking findings no waiver covered
  */
 @Schema(description = "An administrator's override of a blocked vetting outcome on a snapshot")
@@ -26,8 +26,8 @@ public record VettingOverrideRecord(
         @Schema(description = "The administrator's stated reason")
         String reason,
 
-        @Schema(description = "The connectors that were blocking, comma-separated")
-        String blockingConnectors,
+        @Schema(description = "The vetters that were blocking, comma-separated")
+        String blockingVetters,
 
         @Schema(description = "Summary of the blocking findings no waiver covered")
         String uncoveredFindings,

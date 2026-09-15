@@ -7,7 +7,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * The fail-closed aggregation rule with a disabled connector in the run (GW_VETTING_0029), exercised as the
+ * The fail-closed aggregation rule with a disabled vetter in the run (GW_VETTING_0029), exercised as the
  * pure static function it is — no database, no Spring context. These are the adversarial cases for
  * the one change that could turn the administrative off-switch into a blanket approval: a run made
  * only of disabled verdicts must still block, because switching every control off proves nothing.
@@ -25,7 +25,7 @@ class VettingChainDisabledTests {
 
     @Test
     @SVCs({"SVC_GW_VETTING_0029.3"})
-    void disabling_every_connector_blocks_rather_than_clears() {
+    void disabling_every_vetter_blocks_rather_than_clears() {
         // The load-bearing case: no positive clearing evidence, so no clear — an estate that has
         // switched everything off is blocked, not cleared.
         assertThat(VettingChain.aggregate(List.of(VerdictState.DISABLED))).isEqualTo(VettingChain.Outcome.BLOCKED);
@@ -36,7 +36,7 @@ class VettingChainDisabledTests {
     @Test
     @SVCs({"SVC_GW_VETTING_0029"})
     void a_disabled_verdict_never_rescues_a_failing_one() {
-        // Disabling one connector must not clear a snapshot another connector still objects to.
+        // Disabling one vetter must not clear a snapshot another vetter still objects to.
         assertThat(VettingChain.aggregate(List.of(VerdictState.PASS, VerdictState.DISABLED, VerdictState.FAIL)))
                 .isEqualTo(VettingChain.Outcome.BLOCKED);
         assertThat(VettingChain.aggregate(List.of(VerdictState.DISABLED, VerdictState.ERROR)))

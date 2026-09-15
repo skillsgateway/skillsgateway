@@ -41,7 +41,7 @@ import org.springframework.http.MediaType;
 class WebhookTests extends AbstractGatewayTest {
 
     /**
-     * A shaped AWS access key id that belongs to nobody — enough to make the secret-scan connector
+     * A shaped AWS access key id that belongs to nobody — enough to make the secret-scan vetter
      * block, which is what gives the approval-pending payload a summary worth asserting on.
      */
     private static final String PLANTED_SECRET = """
@@ -56,7 +56,7 @@ class WebhookTests extends AbstractGatewayTest {
 
     /** The vetting summary's field set — counts, names and identifiers, and nothing else. */
     private static final List<String> SUMMARY_FIELDS =
-            List.of("runId", "outcome", "recordedOutcome", "blockingConnectors", "uncoveredFindings", "waivedFindings");
+            List.of("runId", "outcome", "recordedOutcome", "blockingVetters", "uncoveredFindings", "waivedFindings");
 
     @Autowired
     private WebhookService webhookService;
@@ -217,7 +217,7 @@ class WebhookTests extends AbstractGatewayTest {
 
     /**
      * The trust-boundary half (GW_WEBHOOK_0007): the event says a blocked snapshot is waiting, in enough
-     * detail to triage it, and says nothing about what the connectors actually found. A webhook
+     * detail to triage it, and says nothing about what the vetters actually found. A webhook
      * target is authorised by a URL scheme allowlist, not by an identity, so the finding messages
      * and the paths they name stay behind the authenticated vetting endpoint.
      */
@@ -246,7 +246,7 @@ class WebhookTests extends AbstractGatewayTest {
         assertThat(((Number) vetting.get("runId")).longValue()).isPositive();
         assertThat(vetting.get("outcome")).isEqualTo("BLOCKED");
         assertThat(vetting.get("recordedOutcome")).isEqualTo("BLOCKED");
-        assertThat((List<String>) vetting.get("blockingConnectors")).contains("secret-scan");
+        assertThat((List<String>) vetting.get("blockingVetters")).contains("secret-scan");
         assertThat(((Number) vetting.get("uncoveredFindings")).intValue()).isPositive();
         assertThat(((Number) vetting.get("waivedFindings")).intValue()).isZero();
 

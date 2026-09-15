@@ -174,7 +174,7 @@ export const eventRegistry: Schemas["EventRegistry"] = {
       runId: 1,
       outcome: "BLOCKED",
       recordedOutcome: "BLOCKED",
-      blockingConnectors: ["example-connector"],
+      blockingVetters: ["example-vetter"],
       uncoveredFindings: 1,
       waivedFindings: 0,
     },
@@ -214,7 +214,7 @@ export const createdAuditSink: Schemas["CreatedSink"] = {
   createdAt: "2026-08-14T10:00:00Z",
 };
 
-/** A blocked chain run: one connector failed, one passed — the reviewer's evidence. */
+/** A blocked chain run: one vetter failed, one passed — the reviewer's evidence. */
 export const blockedVetting: Schemas["VettingView"] = {
   snapshotId: 1,
   outcome: "BLOCKED",
@@ -222,7 +222,7 @@ export const blockedVetting: Schemas["VettingView"] = {
   suppressed: [],
   uncovered: [
     {
-      connector: "secret-scan",
+      vetter: "secret-scan",
       ruleId: "aws-access-key-id",
       location: "plugins/hello/DEPLOY.md:5",
       severity: "CRITICAL",
@@ -240,7 +240,7 @@ export const blockedVetting: Schemas["VettingView"] = {
     verdicts: [
       {
         verdictId: 9,
-        connector: "secret-scan",
+        vetter: "secret-scan",
         position: 0,
         state: "FAIL",
         detail: "1 finding(s); worst critical",
@@ -255,14 +255,14 @@ export const blockedVetting: Schemas["VettingView"] = {
       },
       {
         verdictId: 10,
-        connector: "prompt-injection",
+        vetter: "prompt-injection",
         position: 1,
         state: "PASS",
         findings: [],
       },
     ],
   },
-  connectors: [
+  vetters: [
     {
       name: "secret-scan",
       order: 100,
@@ -280,7 +280,7 @@ export const blockedVetting: Schemas["VettingView"] = {
   ],
 };
 
-/** A clean run: every connector passed and nothing is waiting on a waiver. */
+/** A clean run: every vetter passed and nothing is waiting on a waiver. */
 export const clearVetting: Schemas["VettingView"] = {
   ...blockedVetting,
   outcome: "CLEAR",
@@ -292,7 +292,7 @@ export const clearVetting: Schemas["VettingView"] = {
     verdicts: [
       {
         verdictId: 9,
-        connector: "secret-scan",
+        vetter: "secret-scan",
         position: 0,
         state: "PASS",
         detail: "scanned 42 text files",
@@ -300,7 +300,7 @@ export const clearVetting: Schemas["VettingView"] = {
       },
       {
         verdictId: 10,
-        connector: "prompt-injection",
+        vetter: "prompt-injection",
         position: 1,
         state: "PASS",
         detail: "scanned 3 skill instructions",
@@ -311,7 +311,7 @@ export const clearVetting: Schemas["VettingView"] = {
 };
 
 /**
- * A chain with a connector an administrator switched off and an external one that has not answered
+ * A chain with a vetter an administrator switched off and an external one that has not answered
  * yet: the two states that are neither a pass nor a failure, and that the flow has to word as
  * absences rather than conclusions.
  */
@@ -325,7 +325,7 @@ export const disabledAndPendingVetting: Schemas["VettingView"] = {
     verdicts: [
       {
         verdictId: 11,
-        connector: "secret-scan",
+        vetter: "secret-scan",
         position: 0,
         state: "DISABLED",
         detail: "for marketplace 'corp-marketplace'",
@@ -333,7 +333,7 @@ export const disabledAndPendingVetting: Schemas["VettingView"] = {
       },
       {
         verdictId: 12,
-        connector: "prompt-injection",
+        vetter: "prompt-injection",
         position: 1,
         state: "PASS",
         detail: "scanned 3 skill instructions",
@@ -341,7 +341,7 @@ export const disabledAndPendingVetting: Schemas["VettingView"] = {
       },
       {
         verdictId: 13,
-        connector: "corp-llm-reviewer",
+        vetter: "corp-llm-reviewer",
         position: 2,
         state: "PENDING",
         detail: "triggered; awaiting the reviewer's callback",
@@ -349,8 +349,8 @@ export const disabledAndPendingVetting: Schemas["VettingView"] = {
       },
     ],
   },
-  connectors: [
-    ...blockedVetting.connectors!,
+  vetters: [
+    ...blockedVetting.vetters!,
     {
       name: "corp-llm-reviewer",
       order: 300,
@@ -362,7 +362,7 @@ export const disabledAndPendingVetting: Schemas["VettingView"] = {
 };
 
 /** A marketplace's effective chain: one default, one global setting, one switched off here. */
-export const marketplaceChain: Schemas["ChainConnectorView"][] = [
+export const marketplaceChain: Schemas["ChainVetterView"][] = [
   {
     name: "secret-scan",
     order: 100,
@@ -406,7 +406,7 @@ export const waivedVetting: Schemas["VettingView"] = {
   uncovered: [],
   suppressed: [
     {
-      connector: "secret-scan",
+      vetter: "secret-scan",
       ruleId: "aws-access-key-id",
       location: "plugins/hello/DEPLOY.md:5",
       waiverId: 3,
@@ -617,10 +617,10 @@ export const handlers = [
   ),
   http.get("/api/marketplaces/:name/waivers", () => HttpResponse.json(waivedVetting.waivers)),
   http.get("/api/marketplaces/:name/vetting-chain", () => HttpResponse.json(marketplaceChain)),
-  http.put("/api/vetting/connectors/:name/toggle", ({ params }) =>
-    HttpResponse.json<Schemas["ConnectorToggle"]>({
+  http.put("/api/vetting/vetters/:name/toggle", ({ params }) =>
+    HttpResponse.json<Schemas["VetterToggle"]>({
       id: 1,
-      connector: String(params.name),
+      vetter: String(params.name),
       marketplaceId: 1,
       enabled: true,
       updatedBy: "alice",

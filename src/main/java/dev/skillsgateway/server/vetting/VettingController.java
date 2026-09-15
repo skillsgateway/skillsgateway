@@ -43,15 +43,15 @@ public class VettingController {
         this.overrideRepository = overrideRepository;
     }
 
-    @Schema(description = "A connector configured in the vetting chain")
-    public record ConnectorView(
-            @Schema(description = "Stable connector name") String name,
+    @Schema(description = "A vetter configured in the vetting chain")
+    public record VetterView(
+            @Schema(description = "Stable vetter name") String name,
             @Schema(description = "Position in the chain") int order,
 
-            @Schema(description = "What the connector looks for, and what it cannot see")
+            @Schema(description = "What the vetter looks for, and what it cannot see")
             String description,
 
-            @Schema(description = "Identity of the rule set the connector currently carries (GW_VETTING_0012)")
+            @Schema(description = "Identity of the rule set the vetter currently carries (GW_VETTING_0012)")
             String version,
 
             @Schema(
@@ -72,7 +72,7 @@ public class VettingController {
             VettingChain.Outcome outcome,
 
             @Schema(
-                    description = "What the connectors themselves concluded, before any waiver was applied",
+                    description = "What the vetters themselves concluded, before any waiver was applied",
                     allowableValues = {"CLEAR", "BLOCKED"})
             VettingChain.Outcome recordedOutcome,
 
@@ -81,7 +81,7 @@ public class VettingController {
 
             @Schema(
                     description =
-                            "Findings an active waiver is currently suppressing, keyed by connector, rule and location")
+                            "Findings an active waiver is currently suppressing, keyed by vetter, rule and location")
             List<WaiverEvaluation.Suppression> suppressed,
 
             @Schema(description = "Blocking findings that no active waiver covers; the waivers approval still needs")
@@ -92,8 +92,8 @@ public class VettingController {
                             + " and lapsed alike, so an expired acceptance stays visible")
             List<WaiverController.WaiverView> waivers,
 
-            @Schema(description = "The connectors configured in the chain, in the order they run")
-            List<ConnectorView> connectors,
+            @Schema(description = "The vetters configured in the chain, in the order they run")
+            List<VetterView> vetters,
 
             @Schema(
                     description = "Present when an administrator approved this snapshot over a blocked vetting"
@@ -106,7 +106,7 @@ public class VettingController {
     @Tag(name = "Vetting")
     @Operation(
             summary = "Snapshot vetting verdicts",
-            description = "The snapshot's latest vetting chain run: each connector's verdict in chain order,"
+            description = "The snapshot's latest vetting chain run: each vetter's verdict in chain order,"
                     + " the findings behind it, the waivers currently suppressing any of them, and the"
                     + " fail-closed effective aggregate that gates approval. A snapshot the chain has never run"
                     + " against reports a blocked outcome and no run.")
@@ -114,13 +114,13 @@ public class VettingController {
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
     public VettingView vetting(@PathVariable long id) {
         Snapshot snapshot = snapshotRepository.findById(id).orElseThrow(() -> new SnapshotNotFoundException(id));
-        List<ConnectorView> connectors = vettingService.connectors().stream()
-                .map(connector -> new ConnectorView(
-                        connector.name(),
-                        connector.order(),
-                        connector.description(),
-                        connector.version(),
-                        connector instanceof ExternalVettingConnector))
+        List<VetterView> vetters = vettingService.vetters().stream()
+                .map(vetter -> new VetterView(
+                        vetter.name(),
+                        vetter.order(),
+                        vetter.description(),
+                        vetter.version(),
+                        vetter instanceof ExternalVettingConnector))
                 .toList();
         VettingRepository.Run run = vettingService.latestRun(id).orElse(null);
         // Evaluated here rather than read from a column: the effective outcome is a function of
@@ -148,7 +148,7 @@ public class VettingController {
                 effect.suppressions(),
                 effect.uncovered(),
                 relevant,
-                connectors,
+                vetters,
                 override);
     }
 

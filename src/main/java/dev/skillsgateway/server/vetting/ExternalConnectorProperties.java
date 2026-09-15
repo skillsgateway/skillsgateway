@@ -9,10 +9,10 @@ import java.util.Set;
  * One operator-configured external vetting connector (GW_VETTING_0024), bound from
  * {@code skills-gateway.vetting.external[*]}.
  *
- * <p>External connectors are deliberately <b>configuration</b>, not API-managed runtime state, for
+ * <p>External vetters are deliberately <b>configuration</b>, not API-managed runtime state, for
  * the same reason the license policy is (see {@code SkillsGatewayProperties.License}): a chain run
- * must be attributable, so the identity of every connector that took part is stamped into the run
- * (GW_VETTING_0012). A connector whose endpoint, position or rule-set version could be changed through the
+ * must be attributable, so the identity of every vetter that took part is stamped into the run
+ * (GW_VETTING_0012). A vetter whose endpoint, position or rule-set version could be changed through the
  * API between two runs would make "the content cleared last month and blocks today" unanswerable.
  * Binding the chain from configuration keeps its identity a property of the deployment. This is why
  * the estate obligation (declarative estate, #65) does not apply: nothing here is API-mutable.
@@ -21,7 +21,7 @@ import java.util.Set;
  * environment variable ({@code ${VETTING_LLM_TOKEN}}) rather than inlining a literal, and it is
  * never logged, audited, or echoed by any API.
  *
- * @param name stable connector identity, recorded on every verdict and shown to reviewers; must be
+ * @param name stable vetter identity, recorded on every verdict and shown to reviewers; must be
  *     unique across the chain and must not collide with a built-in ({@code secret-scan},
  *     {@code prompt-injection}, {@code license-scan}, {@code skill-conformance})
  * @param url endpoint the gateway POSTs the snapshot bundle to; required
@@ -56,7 +56,7 @@ public record ExternalConnectorProperties(
         Long maxResponseBytes,
         Long maxFileBytes) {
 
-    /** Built-in connector names an external connector may not shadow. */
+    /** Built-in vetter names an external vetter may not shadow. */
     public static final Set<String> RESERVED_NAMES =
             Set.of("secret-scan", "prompt-injection", "license-scan", "skill-conformance");
 
@@ -67,7 +67,7 @@ public record ExternalConnectorProperties(
         name = name.trim();
         if (RESERVED_NAMES.contains(name.toLowerCase(Locale.ROOT))) {
             throw new IllegalArgumentException(
-                    "external vetting connector: '" + name + "' collides with a built-in connector name");
+                    "external vetting connector: '" + name + "' collides with a built-in vetter name");
         }
         if (url == null) {
             throw new IllegalArgumentException("external vetting connector '" + name + "': url is required");

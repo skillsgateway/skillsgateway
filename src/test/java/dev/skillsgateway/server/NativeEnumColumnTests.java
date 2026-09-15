@@ -240,7 +240,7 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
         for (VerdictState state : VerdictState.values()) {
             vettingRepository.recordVerdict(
                     runId,
-                    "connector-" + state.stored(),
+                    "vetter-" + state.stored(),
                     position++,
                     new Verdict(state, findingPerSeverity(), null, null));
         }

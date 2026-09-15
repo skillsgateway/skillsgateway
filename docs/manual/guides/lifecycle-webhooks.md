@@ -186,7 +186,7 @@ it carries enough to open a review item without a follow-up call:
  "sha":"3f9c2ab9d1e4c7b6a5f80c3d2e1b0a9f8c7d6e5f",
  "state":"held","actor":"vetting",
  "vetting":{"runId":17,"outcome":"BLOCKED","recordedOutcome":"BLOCKED",
-            "blockingConnectors":["secret-scan"],
+            "blockingVetters":["secret-scan"],
             "uncoveredFindings":2,"waivedFindings":0}}
 ```
 
@@ -197,8 +197,8 @@ The first seven fields are the ones every event carries, unchanged. The
 | --- | --- |
 | `runId` | The chain run being reported. Correlates with `GET /api/snapshots/{id}/vetting`. |
 | `outcome` | The **effective** outcome, the one that gates approval: `CLEAR`, `CLEAR_WITH_WAIVERS` or `BLOCKED`. |
-| `recordedOutcome` | What the connectors concluded before any waiver was applied: `CLEAR` or `BLOCKED`. |
-| `blockingConnectors` | Names of the connectors that are the reason it blocks. Empty when nothing objects. |
+| `recordedOutcome` | What the vetters concluded before any waiver was applied: `CLEAR` or `BLOCKED`. |
+| `blockingVetters` | Names of the vetters that are the reason it blocks. Empty when nothing objects. |
 | `uncoveredFindings` | How many blocking findings no active waiver covers — the reviewer's worklist size. |
 | `waivedFindings` | How many findings an active waiver is currently suppressing. |
 
@@ -213,7 +213,7 @@ stream your system is already reading.
 
 !!! warning "The event announces; the API discloses"
 
-    The payload carries counts, connector names and identifiers — never a
+    The payload carries counts, vetter names and identifiers — never a
     finding's message, rule id or location, and never a file name from the
     snapshot. A webhook target is authorized by a URL scheme allowlist, not by
     an identity, and the point of quarantine is that unapproved content does not

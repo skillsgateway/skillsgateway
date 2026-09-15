@@ -76,7 +76,7 @@ polling, batch payload, signature, replay — is in
 | `event` | What happened — see below. |
 | `ref` | The ref involved, when there is one. For a facade fetch this is a ref the facade [advertised](../git-facade.md#what-is-served) for that request — see [Events](#events). |
 | `sha` | The commit involved, when there is one. |
-| `detail` | Free-text qualifier, when the entry needs one: the vetting chain outcome, a connector's verdict, or the reason a reviewer gave when overriding a blocked outcome. |
+| `detail` | Free-text qualifier, when the entry needs one: the vetting chain outcome, a vetter's verdict, or the reason a reviewer gave when overriding a blocked outcome. |
 | `tokenId` / `token_id` | Id of the credential that authenticated a facade entry (GW_AUTH_0009) or a machine API entry (GW_AUDIT_0007); null on interactive admin entries and on entries older than per-credential attribution. `GET /api/tokens` gives the owner the id→name mapping. |
 
 ### The actor type
@@ -164,8 +164,8 @@ triggered the rebuild. See
 
 | Event | When | `detail` |
 | --- | --- | --- |
-| `vetting-verdict` | One per connector per run. | `{connector}={state}`, e.g. `secret-scan=fail`. |
-| `vetting-completed` | Once per run. | `trigger={ingestion\|revet-scheduled\|revet-manual}; outcome={clear\|blocked}; connectors={n}; chain={connector@version,…}`. |
+| `vetting-verdict` | One per vetter per run. | `{vetter}={state}`, e.g. `secret-scan=fail`. |
+| `vetting-completed` | Once per run. | `trigger={ingestion\|revet-scheduled\|revet-manual}; outcome={clear\|blocked}; vetters={n}; chain={vetter@version,…}`. |
 
 **From continuous re-vetting** — see
 [Re-vetting approved content](../../guides/re-vetting.md). The scheduled sweep
@@ -174,8 +174,8 @@ records `revet-policy` as the principal; an on-demand run records the operator.
 | Event | When | `detail` |
 | --- | --- | --- |
 | `revet-clear` | A re-vetting run found nothing. | `trigger=…; outcome=…`. |
-| `revet-inconclusive` | The chain could not conclude, so the snapshot stays approved. | The connectors that could not answer. |
-| `revet-violation` | A retroactive violation on an approved snapshot. | `trigger=…; mode={WARN\|ENFORCE}; connectors=…; rules=…; fetchedBy={n}`. |
+| `revet-inconclusive` | The chain could not conclude, so the snapshot stays approved. | The vetters that could not answer. |
+| `revet-violation` | A retroactive violation on an approved snapshot. | `trigger=…; mode={WARN\|ENFORCE}; vetters=…; rules=…; fetchedBy={n}`. |
 | `revet-violation-affected` | One per identity that had already fetched the snapshot. | `principal=…; fetches=…; lastFetch=…`. |
 | `snapshot-revoked` | The state transition out of `approved`. | The violation that caused it. |
 | `snapshot-unpublished` | The published refs were removed. | Whether the marketplace still serves anything. |

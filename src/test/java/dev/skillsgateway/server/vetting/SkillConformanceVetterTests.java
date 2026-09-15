@@ -14,8 +14,8 @@ import java.util.function.Predicate;
 import org.junit.jupiter.api.Test;
 
 /**
- * Container-free verification of {@link SkillConformanceConnector} against the pinned Agent Skills
- * specification (GW_INGEST_0028). No Spring context and no database: the connector is a pure function from
+ * Container-free verification of {@link SkillConformanceVetter} against the pinned Agent Skills
+ * specification (GW_INGEST_0028). No Spring context and no database: the vetter is a pure function from
  * a snapshot's SKILL.md files to findings, so this is where every branch of it is pinned.
  *
  * <p>The adversarial half matters as much as the conformance half. Frontmatter comes from a
@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
  * document at the parser and assert that the loader's own limits refuse each one — by name, in the
  * finding's message, so the assertion cannot pass because something incidental happened to fail.
  */
-class SkillConformanceConnectorTests {
+class SkillConformanceVetterTests {
 
     private static final String CONFORMANT = """
             ---
@@ -71,16 +71,16 @@ class SkillConformanceConnectorTests {
     @Test
     @SVCs({"SVC_GW_INGEST_0028"})
     void onlyFilesInASkillDirectoryAreSelected() {
-        assertThat(SkillConformanceConnector.skillDefinition("plugins/hello/skills/hello/SKILL.md"))
+        assertThat(SkillConformanceVetter.skillDefinition("plugins/hello/skills/hello/SKILL.md"))
                 .isTrue();
-        assertThat(SkillConformanceConnector.skillDefinition("skills/hello/SKILL.md"))
+        assertThat(SkillConformanceVetter.skillDefinition("skills/hello/SKILL.md"))
                 .isTrue();
-        assertThat(SkillConformanceConnector.skillDefinition("plugins/hello/skills/hello/README.md"))
+        assertThat(SkillConformanceVetter.skillDefinition("plugins/hello/skills/hello/README.md"))
                 .isFalse();
-        assertThat(SkillConformanceConnector.skillDefinition("plugins/hello/SKILL.md"))
+        assertThat(SkillConformanceVetter.skillDefinition("plugins/hello/SKILL.md"))
                 .isFalse();
-        assertThat(SkillConformanceConnector.skillDefinition("SKILL.md")).isFalse();
-        assertThat(SkillConformanceConnector.skillDefinition("plugins/hello/skills/hello/deep/SKILL.md"))
+        assertThat(SkillConformanceVetter.skillDefinition("SKILL.md")).isFalse();
+        assertThat(SkillConformanceVetter.skillDefinition("plugins/hello/skills/hello/deep/SKILL.md"))
                 .isFalse();
     }
 
@@ -217,7 +217,7 @@ class SkillConformanceConnectorTests {
 
     @Test
     @SVCs({"SVC_GW_INGEST_0028"})
-    void aSkillTheConnectorCouldNotReadIsInformationalAdvisoryAndBlockingUnderEnforcement() {
+    void aSkillTheVetterCouldNotReadIsInformationalAdvisoryAndBlockingUnderEnforcement() {
         SnapshotUnderVetting oversize = snapshotOfBytes(PATH, null);
         assertThat(advisory().vet(oversize).findings()).singleElement().satisfies(finding -> {
             assertThat(finding.id()).isEqualTo("skill-not-scanned");
@@ -286,7 +286,7 @@ class SkillConformanceConnectorTests {
 
     @Test
     @SVCs({"SVC_GW_INGEST_0028"})
-    void malformedYamlIsAFindingAndNeverAnExceptionOutOfTheConnector() {
+    void malformedYamlIsAFindingAndNeverAnExceptionOutOfTheVetter() {
         assertThat(onlyFinding(advisory().vet(snapshotOf(Map.of(PATH, "---\nname: [unclosed\n---\n")))))
                 .satisfies(finding -> {
                     assertThat(finding.id()).isEqualTo("skill-frontmatter-malformed");
@@ -332,12 +332,12 @@ class SkillConformanceConnectorTests {
         return verdict.findings().getFirst();
     }
 
-    private static SkillConformanceConnector advisory() {
-        return new SkillConformanceConnector(properties(false));
+    private static SkillConformanceVetter advisory() {
+        return new SkillConformanceVetter(properties(false));
     }
 
-    private static SkillConformanceConnector enforcing() {
-        return new SkillConformanceConnector(properties(true));
+    private static SkillConformanceVetter enforcing() {
+        return new SkillConformanceVetter(properties(true));
     }
 
     private static SkillsGatewayProperties properties(boolean enforce) {

@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
  * row the gateway wrote when it first saw that commit, and which re-ingestion of the same commit
  * leaves untouched — puts the control out of that reach.
  *
- * <p>This is not a vetting connector, on purpose. A verdict is point-in-time evidence about
+ * <p>This is not a vetter, on purpose. A verdict is point-in-time evidence about
  * content; "too young" is a fact about <em>now</em>. Recorded as a FAIL it would keep blocking
  * after the age had passed, until some later re-vetting run happened to overwrite it, turning a
  * wait that clears itself into an operator task. Evaluated per approval request it stores nothing,

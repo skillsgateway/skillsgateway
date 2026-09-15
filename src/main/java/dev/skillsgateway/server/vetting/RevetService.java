@@ -30,7 +30,7 @@ import org.springframework.stereotype.Service;
  * (GW_VETTING_0012-GW_VETTING_0017).
  *
  * <p>Approval is a decision made against the evidence available on one day. This service exists
- * because that evidence goes stale: a connector gains a rule, a waiver lapses, an advisory lands.
+ * because that evidence goes stale: a vetter gains a rule, a waiver lapses, an advisory lands.
  * It re-runs the chain over content that is already being served, and decides what the fresh answer
  * means for content teams already depend on.
  *
@@ -244,8 +244,8 @@ public class RevetService {
                     marketplace,
                     EVENT_INCONCLUSIVE,
                     snapshot.sha(),
-                    "trigger=%s; the chain could not conclude, so the snapshot stays approved; connectors=%s"
-                            .formatted(trigger, effect.blockingConnectors()));
+                    "trigger=%s; the chain could not conclude, so the snapshot stays approved; vetters=%s"
+                            .formatted(trigger, effect.blockingVetters()));
         } else {
             auditLogger.record(
                     actor,
@@ -290,8 +290,8 @@ public class RevetService {
                 marketplace,
                 EVENT_VIOLATION,
                 snapshot.sha(),
-                "trigger=%s; mode=%s; connectors=%s; rules=%s; fetchedBy=%d"
-                        .formatted(trigger, properties.mode(), effect.blockingConnectors(), rules, affected.size()));
+                "trigger=%s; mode=%s; vetters=%s; rules=%s; fetchedBy=%d"
+                        .formatted(trigger, properties.mode(), effect.blockingVetters(), rules, affected.size()));
         for (FetchLogRepository.Fetcher fetcher : affected) {
             auditLogger.record(
                     actor,
@@ -313,7 +313,7 @@ public class RevetService {
                 snapshot.id(),
                 marketplace,
                 snapshot.sha(),
-                effect.blockingConnectors(),
+                effect.blockingVetters(),
                 properties.mode());
     }
 
@@ -331,7 +331,7 @@ public class RevetService {
      */
     @Requirements({"GW_VETTING_0013", "GW_VETTING_0017"})
     private boolean quarantine(Snapshot snapshot, String marketplace, WaiverEvaluation.Effect effect, String actor) {
-        String violation = "re-vetting violation: %s".formatted(effect.blockingConnectors());
+        String violation = "re-vetting violation: %s".formatted(effect.blockingVetters());
         Optional<Snapshot> revoked = snapshotRepository.revoke(snapshot.id(), actor, violation);
         if (revoked.isEmpty()) {
             log.info("snapshot {} was no longer approved when re-vetting tried to revoke it", snapshot.id());

@@ -11,19 +11,19 @@ import java.util.Locale;
  *
  * <p>A chain run is {@link Outcome#CLEAR} <em>if and only if</em> it produced at least one verdict
  * and every verdict is {@link VerdictState#PASS} or {@link VerdictState#WARN}. Everything else is
- * {@link Outcome#BLOCKED}: a failing connector, a connector that crashed or timed out, an
- * asynchronous connector that has not answered — and an empty verdict list.
+ * {@link Outcome#BLOCKED}: a failing vetter, a vetter that crashed or timed out, an
+ * asynchronous vetter that has not answered — and an empty verdict list.
  *
  * <p>Empty-is-blocked is the load-bearing case. It is what makes "the chain never ran" — a
- * snapshot ingested before this feature existed, a run that died halfway, a connector list that was
+ * snapshot ingested before this feature existed, a run that died halfway, a vetter list that was
  * misconfigured to nothing — fail closed rather than sail through the approval gate. There is no
  * input to this function that yields {@code CLEAR} without positive evidence.
  *
  * <p>A {@link VerdictState#DISABLED} verdict (GW_VETTING_0029.3) is the one state that is neither clearing
- * nor blocking: an administrator switched that connector off, which is a deliberate audited act
+ * nor blocking: an administrator switched that vetter off, which is a deliberate audited act
  * rather than a crash. It is discounted from the block decision — but not from the requirement for
  * positive evidence. A run whose only verdicts are {@code DISABLED} still {@code BLOCKED}s, so
- * disabling every connector can never be a way to clear a snapshot with no evidence behind it.
+ * disabling every vetter can never be a way to clear a snapshot with no evidence behind it.
  *
  * <p>This is a pure static function over states so that it can be tested exhaustively over every
  * combination of verdict states without a database, a repository, or a Spring context.
@@ -36,7 +36,7 @@ public final class VettingChain {
     @Schema(description = "Fail-closed aggregate of a chain run's verdicts")
     public enum Outcome {
 
-        /** Every connector answered, and none of them objects. */
+        /** Every vetter answered, and none of them objects. */
         CLEAR,
 
         /**

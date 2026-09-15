@@ -16,18 +16,18 @@ import {
 } from "./vetting-flow";
 
 describe("snapshotFlow", () => {
-  it("draws ingest, every connector in run order, the outcome and the gate", () => {
+  it("draws ingest, every vetter in run order, the outcome and the gate", () => {
     const nodes = snapshotFlow(blockedVetting);
     expect(nodes.map((node) => node.id)).toEqual([
       "ingest",
-      "connector-secret-scan",
-      "connector-prompt-injection",
+      "vetter-secret-scan",
+      "vetter-prompt-injection",
       "outcome",
       "gate",
     ]);
   });
 
-  it("orders the connectors by the position the run recorded, not by the array order", () => {
+  it("orders the vetters by the position the run recorded, not by the array order", () => {
     const shuffled = {
       ...blockedVetting,
       run: {
@@ -46,8 +46,8 @@ describe("snapshotFlow", () => {
 
   it("states every verdict as a word, never as colour alone", () => {
     const nodes = snapshotFlow(blockedVetting);
-    expect(nodes.find((node) => node.id === "connector-secret-scan")?.state).toBe("fail");
-    expect(nodes.find((node) => node.id === "connector-prompt-injection")?.state).toBe("pass");
+    expect(nodes.find((node) => node.id === "vetter-secret-scan")?.state).toBe("fail");
+    expect(nodes.find((node) => node.id === "vetter-prompt-injection")?.state).toBe("pass");
     expect(nodes.find((node) => node.id === "outcome")?.state).toBe("blocked");
   });
 
@@ -56,9 +56,9 @@ describe("snapshotFlow", () => {
     expect(snapshotFlow(clearVetting).find((node) => node.id === "gate")?.state).toBe("open");
   });
 
-  it("keeps a waived finding's connector at the verdict it reached, and counts the acceptance", () => {
-    const node = snapshotFlow(waivedVetting).find((n) => n.id === "connector-secret-scan");
-    // Accepted risk is never rendered as a clean result: the connector still failed.
+  it("keeps a waived finding's vetter at the verdict it reached, and counts the acceptance", () => {
+    const node = snapshotFlow(waivedVetting).find((n) => n.id === "vetter-secret-scan");
+    // Accepted risk is never rendered as a clean result: the vetter still failed.
     expect(node?.state).toBe("fail");
     expect(node?.waived).toBe(1);
     expect(snapshotFlow(waivedVetting).find((n) => n.id === "outcome")?.state).toBe(
@@ -66,15 +66,15 @@ describe("snapshotFlow", () => {
     );
   });
 
-  it("words a skipped and a pending connector as absences, and marks the external one", () => {
+  it("words a skipped and a pending vetter as absences, and marks the external one", () => {
     const nodes = snapshotFlow(disabledAndPendingVetting);
-    const skipped = nodes.find((node) => node.id === "connector-secret-scan");
-    const pending = nodes.find((node) => node.id === "connector-corp-llm-reviewer");
+    const skipped = nodes.find((node) => node.id === "vetter-secret-scan");
+    const pending = nodes.find((node) => node.id === "vetter-corp-llm-reviewer");
     expect(skipped?.state).toBe("skipped");
     expect(skipped?.tone).toBe("idle");
     expect(pending?.state).toBe("pending");
     expect(pending?.external).toBe(true);
-    // A pending connector has not answered, so the outcome node names it as objecting.
+    // A pending vetter has not answered, so the outcome node names it as objecting.
     expect(nodes.find((node) => node.id === "outcome")?.outcome?.blocking).toContain(
       "corp-llm-reviewer",
     );
@@ -102,7 +102,7 @@ describe("snapshotFlow", () => {
 });
 
 describe("marketplaceFlow", () => {
-  it("draws every configured connector with its enabled state, in chain order", () => {
+  it("draws every configured vetter with its enabled state, in chain order", () => {
     const nodes = marketplaceFlow(marketplaceChain);
     expect(nodes.map((node) => node.label)).toEqual([
       "Ingest",
@@ -134,7 +134,7 @@ describe("snapshotHeadline", () => {
   it("counts the chain rather than naming a step when it cleared", () => {
     const headline = snapshotHeadline(snapshotFlow(clearVetting));
     expect(headline.result).toBe("Clear");
-    expect(headline.detail).toBe("2 connectors, 0 findings");
+    expect(headline.detail).toBe("2 vetters, 0 findings");
     expect(headline.tone).toBe("pass");
   });
 
@@ -162,25 +162,25 @@ describe("snapshotHeadline", () => {
 describe("marketplaceHeadline", () => {
   it("counts what runs and names what is off, with the scope it is off at", () => {
     const headline = marketplaceHeadline(marketplaceFlow(marketplaceChain));
-    expect(headline.result).toBe("2 of 3 connectors run");
+    expect(headline.result).toBe("2 of 3 vetters run");
     expect(headline.detail).toBe("secret-scan off for this marketplace");
     // A narrowed chain is a fact to weigh, not a pass.
     expect(headline.tone).toBe("idle");
   });
 
   it("reads as a pass only when the whole configured chain runs", () => {
-    const all = marketplaceChain.map((connector) => ({ ...connector, enabled: true }));
+    const all = marketplaceChain.map((vetter) => ({ ...vetter, enabled: true }));
     const headline = marketplaceHeadline(marketplaceFlow(all));
-    expect(headline.result).toBe("3 of 3 connectors run");
-    expect(headline.detail).toBe("every configured connector runs for this marketplace");
+    expect(headline.result).toBe("3 of 3 vetters run");
+    expect(headline.detail).toBe("every configured vetter runs for this marketplace");
     expect(headline.tone).toBe("pass");
   });
 
-  it("names a globally disabled connector as off globally", () => {
-    const globallyOff = marketplaceChain.map((connector) =>
-      connector.name === "prompt-injection"
-        ? { ...connector, enabled: false, source: "GLOBAL" as const }
-        : { ...connector, enabled: true },
+  it("names a globally disabled vetter as off globally", () => {
+    const globallyOff = marketplaceChain.map((vetter) =>
+      vetter.name === "prompt-injection"
+        ? { ...vetter, enabled: false, source: "GLOBAL" as const }
+        : { ...vetter, enabled: true },
     );
     expect(marketplaceHeadline(marketplaceFlow(globallyOff)).detail).toBe(
       "prompt-injection off globally",
@@ -189,7 +189,7 @@ describe("marketplaceHeadline", () => {
 });
 
 describe("stage identity", () => {
-  it("numbers the connector stages and names the ends of the chain", () => {
+  it("numbers the vetter stages and names the ends of the chain", () => {
     expect(snapshotFlow(blockedVetting).map((node) => node.eyebrow)).toEqual([
       "Source",
       "Step 1",
@@ -199,7 +199,7 @@ describe("stage identity", () => {
     ]);
   });
 
-  it("puts who switched a connector off on the node itself", () => {
+  it("puts who switched a vetter off on the node itself", () => {
     const nodes = marketplaceFlow(marketplaceChain);
     expect(nodes[1]?.meta).toBe("off by alice");
     expect(nodes[2]?.meta).toBeUndefined();

@@ -85,7 +85,7 @@ class VettingOverrideTests extends AbstractGatewayTest {
                 .andExpect(jsonPath("$.state").value(Snapshot.APPROVED));
 
         // The override left a distinct, unmistakable trail: its own ledger event, naming the
-        // administrator, the reason and the connector that was blocking.
+        // administrator, the reason and the vetter that was blocking.
         List<Map<String, Object>> overrideEntries = fetchLogRepository.list().stream()
                 .filter(entry -> ApprovalService.EVENT_OVERRIDE.equals(entry.get("event")))
                 .filter(entry -> name.equals(entry.get("marketplace")))

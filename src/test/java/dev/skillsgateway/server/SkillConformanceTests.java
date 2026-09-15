@@ -15,14 +15,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * Verification of the {@code skill-conformance} connector inside the real chain (GW_INGEST_0028), under
+ * Verification of the {@code skill-conformance} vetter inside the real chain (GW_INGEST_0028), under
  * the default — advisory — posture. The blocking half lives in {@link SkillConformanceEnforceTests},
  * which runs its own Spring context: the posture is a deployment decision, deliberately not
  * settable per call, which is what makes it attributable per chain run.
  */
 class SkillConformanceTests extends AbstractGatewayTest {
 
-    private static final String CONNECTOR = "skill-conformance";
+    private static final String VETTER = "skill-conformance";
 
     private static final String BROKEN_SKILL = "plugins/hello/skills/broken/SKILL.md";
 
@@ -47,14 +47,14 @@ class SkillConformanceTests extends AbstractGatewayTest {
         assertThat(verdict.detail()).contains("scanned 1 SKILL.md file(s)").contains("agentskills-2026-08-04");
 
         // The pinned specification is part of the recorded chain identity, so a bump is attributable.
-        assertThat(run.chain()).contains(CONNECTOR + "@agentskills-2026-08-04+schema-");
+        assertThat(run.chain()).contains(VETTER + "@agentskills-2026-08-04+schema-");
         assertThat(run.chain()).contains("+advisory");
 
-        // The connector is in the chain the API advertises, not only in the run.
-        assertThat(vettingService.connectors().stream()
-                        .map(dev.skillsgateway.server.vetting.VettingConnector::name)
+        // The vetter is in the chain the API advertises, not only in the run.
+        assertThat(vettingService.vetters().stream()
+                        .map(dev.skillsgateway.server.vetting.Vetter::name)
                         .toList())
-                .contains(CONNECTOR);
+                .contains(VETTER);
     }
 
     @Test
@@ -71,7 +71,7 @@ class SkillConformanceTests extends AbstractGatewayTest {
                 verdictOf(vettingRepository.latestRun(snapshotId).orElseThrow());
         assertThat(verdict.state()).isEqualTo(VerdictState.WARN);
 
-        // Every finding names the file and says what to fix — the point of the connector.
+        // Every finding names the file and says what to fix — the point of the vetter.
         assertThat(verdict.findings()).allSatisfy(finding -> {
             assertThat(finding.location()).isEqualTo(BROKEN_SKILL);
             assertThat(finding.severity()).isEqualTo(Severity.MEDIUM);
@@ -95,7 +95,7 @@ class SkillConformanceTests extends AbstractGatewayTest {
 
     @Test
     @SVCs({"SVC_GW_INGEST_0028"})
-    void hostileFrontmatterIsAFindingAndNeverAnErroredConnector() throws Exception {
+    void hostileFrontmatterIsAFindingAndNeverAnErroredVetter() throws Exception {
         Registered registered = registerAndIngest(
                 uniqueName("confbomb"),
                 createUpstream(
@@ -105,7 +105,7 @@ class SkillConformanceTests extends AbstractGatewayTest {
         VettingRepository.VerdictView verdict = verdictOf(
                 vettingRepository.latestRun(registered.snapshot().id()).orElseThrow());
 
-        // An ERROR verdict here would mean the connector threw and the chain fell back to blocking;
+        // An ERROR verdict here would mean the vetter threw and the chain fell back to blocking;
         // a hostile document has to be an ordinary finding about the content instead.
         assertThat(verdict.state()).isEqualTo(VerdictState.WARN);
         assertThat(verdict.findings()).extracting(Finding::id).containsExactly("skill-frontmatter-malformed");
@@ -113,9 +113,9 @@ class SkillConformanceTests extends AbstractGatewayTest {
 
     private static VettingRepository.VerdictView verdictOf(VettingRepository.Run run) {
         List<VettingRepository.VerdictView> verdicts = run.verdicts().stream()
-                .filter(candidate -> candidate.connector().equals(CONNECTOR))
+                .filter(candidate -> candidate.vetter().equals(VETTER))
                 .toList();
-        assertThat(verdicts).as("verdict of connector '%s'", CONNECTOR).hasSize(1);
+        assertThat(verdicts).as("verdict of vetter '%s'", VETTER).hasSize(1);
         return verdicts.getFirst();
     }
 }

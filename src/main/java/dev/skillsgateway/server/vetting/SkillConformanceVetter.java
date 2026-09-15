@@ -12,7 +12,7 @@ import org.springframework.context.annotation.ImportRuntimeHints;
 import org.springframework.stereotype.Component;
 
 /**
- * Built-in connector: SKILL.md conformance against a pinned Agent Skills specification (GW_INGEST_0028).
+ * Built-in vetter: SKILL.md conformance against a pinned Agent Skills specification (GW_INGEST_0028).
  *
  * <p>The rest of the chain asks whether content is dangerous. This asks whether a skill is well
  * formed — whether its frontmatter carries the fields an agent needs to load and select it, in the
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
  * scanner's objection is a probability.
  *
  * <p>The specification is {@link SkillSpec vendored and dated}, never fetched — a chain run must be
- * reproducible from the repository alone — and its pin is recorded as this connector's
+ * reproducible from the repository alone — and its pin is recorded as this vetter's
  * {@link #version()}, so a snapshot flagged today that cleared last month is attributable to the
  * specification bump rather than guessed at (GW_VETTING_0012).
  *
@@ -34,11 +34,11 @@ import org.springframework.stereotype.Component;
  *
  * <p><b>What it cannot do.</b> It checks presence, type and shape. Whether a description actually
  * says what the skill does and when to use it — the thing that decides if an agent ever selects the
- * skill — is a judgement no deterministic rule makes, and this connector does not pretend to.
+ * skill — is a judgement no deterministic rule makes, and this vetter does not pretend to.
  */
 @Component
-@ImportRuntimeHints(SkillConformanceConnector.SpecResourceHints.class)
-public class SkillConformanceConnector implements VettingConnector {
+@ImportRuntimeHints(SkillConformanceVetter.SpecResourceHints.class)
+public class SkillConformanceVetter implements Vetter {
 
     private static final String SKILL_FILE = "/SKILL.md";
     private static final String SKILLS_DIRECTORY = "skills";
@@ -46,7 +46,7 @@ public class SkillConformanceConnector implements VettingConnector {
     private final SkillSpec spec;
     private final boolean enforce;
 
-    public SkillConformanceConnector(SkillsGatewayProperties properties) {
+    public SkillConformanceVetter(SkillsGatewayProperties properties) {
         this.spec = SkillSpec.load();
         this.enforce = properties.vetting().conformance().enforce();
     }
@@ -86,7 +86,7 @@ public class SkillConformanceConnector implements VettingConnector {
         List<Finding> findings = new ArrayList<>();
         int[] counts = new int[2]; // {examined, unread}
         try {
-            snapshot.walk(SkillConformanceConnector::skillDefinition, (path, content) -> {
+            snapshot.walk(SkillConformanceVetter::skillDefinition, (path, content) -> {
                 String text = ContentRules.text(content);
                 if (text == null) {
                     counts[1]++;
@@ -129,15 +129,15 @@ public class SkillConformanceConnector implements VettingConnector {
     }
 
     /**
-     * A SKILL.md the connector could not read. Informational under the default posture, matching
-     * the {@code file-not-scanned} convention the other connectors use; blocking under enforcement,
+     * A SKILL.md the vetter could not read. Informational under the default posture, matching
+     * the {@code file-not-scanned} convention the other vetters use; blocking under enforcement,
      * where "we could not check" must not read as "it conformed".
      */
     private Severity coverageSeverity() {
         return enforce ? Severity.HIGH : Severity.INFO;
     }
 
-    /** What the connector examined (GW_VETTING_0023), recorded even for a clean pass and for no skills at all. */
+    /** What the vetter examined (GW_VETTING_0023), recorded even for a clean pass and for no skills at all. */
     private String summary(int examined, int unread) {
         return "scanned %d SKILL.md file(s) under <plugin source>/skills/ against the %s Agent Skills"
                         .formatted(examined, spec.pin())
@@ -150,7 +150,7 @@ public class SkillConformanceConnector implements VettingConnector {
     /**
      * The specification's own layout: a skill is a directory under a plugin's {@code skills/}
      * holding a SKILL.md. Declared as the walk's selection so no other blob is opened on this
-     * connector's behalf (GW_VETTING_0030). Shape, not manifest: a skill directory the manifest happens
+     * vetter's behalf (GW_VETTING_0030). Shape, not manifest: a skill directory the manifest happens
      * not to declare is still content the snapshot ships, and consulting the manifest would let an
      * upstream hide a skill from conformance by omitting its plugin.
      */

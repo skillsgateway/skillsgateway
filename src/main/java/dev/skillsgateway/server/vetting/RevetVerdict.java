@@ -14,7 +14,7 @@ import java.util.Locale;
  *
  * <ul>
  *   <li><b>Approval</b> asks "may this be published?" and fails closed on everything: a failing
- *       connector, a crashed one, an absent run. Nothing is being served yet, so the cost of an
+ *       vetter, a crashed one, an absent run. Nothing is being served yet, so the cost of an
  *       over-strict answer is a delayed approval — cheap, reversible, and paid by one reviewer.
  *   <li><b>Re-vetting</b> asks "must this be retracted?" and that is not the same question. The
  *       content already carries a recorded approval decision made against positive evidence. The
@@ -22,12 +22,12 @@ import java.util.Locale;
  *       that fetched it.
  * </ul>
  *
- * <p>So an {@link VerdictState#ERROR} verdict — a connector that threw, timed out, or could not
+ * <p>So an {@link VerdictState#ERROR} verdict — a vetter that threw, timed out, or could not
  * read the snapshot — is deliberately <b>not</b> grounds for auto-quarantine. An error is evidence
  * about the scanner, not about the content: nothing in the snapshot changed, and a fleet-wide
- * connector outage would otherwise revoke an entire estate at once, turning a scanner bug into a
+ * vetter outage would otherwise revoke an entire estate at once, turning a scanner bug into a
  * self-inflicted outage of exactly the content the gateway exists to serve. The same reasoning
- * covers {@link VerdictState#PENDING} ("has not answered yet") and a run in which no connector
+ * covers {@link VerdictState#PENDING} ("has not answered yet") and a run in which no vetter
  * objected to the content at all — an empty or misconfigured chain must never retract anything.
  *
  * <p>Nothing is weakened by this. Fail-closed still governs every path that <em>publishes</em>: an
@@ -58,7 +58,7 @@ public final class RevetVerdict {
         VIOLATION,
 
         /**
-         * The run blocks, but only because the chain could not answer — a connector errored, timed
+         * The run blocks, but only because the chain could not answer — a vetter errored, timed
          * out, or has not answered. Recorded and announced; never grounds for revocation.
          */
         INCONCLUSIVE;
@@ -76,10 +76,10 @@ public final class RevetVerdict {
      * Classifies one re-vetting run.
      *
      * <p>The recorded verdict states decide inconclusiveness, not the post-waiver ones. That is
-     * deliberate: {@link Verdict#error} attaches a {@code CRITICAL connector-error} finding to an
+     * deliberate: {@link Verdict#error} attaches a {@code CRITICAL vetter-error} finding to an
      * error verdict, so re-deriving its state from residual findings would turn every unwaived
      * {@code ERROR} into a {@code FAIL} and undo the distinction this class exists to draw. A
-     * waiver can only ever remove an objection, so a connector that still blocks after waivers and
+     * waiver can only ever remove an objection, so a vetter that still blocks after waivers and
      * whose recorded answer was {@code ERROR} is an error that is still blocking.
      *
      * @param run the run that was just recorded, or null when there is none
@@ -95,16 +95,16 @@ public final class RevetVerdict {
             // to it. That gates publication, as it always did; it does not retract.
             return Classification.INCONCLUSIVE;
         }
-        List<String> blocking = effect.blockingConnectors();
+        List<String> blocking = effect.blockingVetters();
         if (blocking.isEmpty()) {
             // A run with no verdicts at all — a chain configured to nothing — blocks by the
             // fail-closed aggregate, but has named no fault in the content.
             return Classification.INCONCLUSIVE;
         }
-        for (String connector : blocking) {
-            VerdictState recorded = run.stateOf(connector).orElse(VerdictState.ERROR);
+        for (String vetter : blocking) {
+            VerdictState recorded = run.stateOf(vetter).orElse(VerdictState.ERROR);
             // ERROR and PENDING name no fault in the content; neither does DISABLED (GW_VETTING_0029) — an
-            // administrator switching a connector off says nothing about what it would have found,
+            // administrator switching a vetter off says nothing about what it would have found,
             // so it must not be read as the chain objecting to the content.
             if (recorded != VerdictState.ERROR
                     && recorded != VerdictState.PENDING

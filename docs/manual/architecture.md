@@ -135,8 +135,8 @@ flowchart LR
 
     subgraph GW["Skills Gateway"]
         ING["Ingestion\nwatch · fetch · resolve\ntransitive sources"]
-        SCAN["Vetting orchestrator\ntrigger → connectors →\nverdict callbacks"]
-        CONN["Connectors\nsecret · injection · license ·\nconformance · LLM · sandbox"]
+        SCAN["Vetting orchestrator\ntrigger → vetters →\nverdict callbacks"]
+        CONN["Vetters\nsecret · injection · license ·\nconformance · LLM · sandbox"]
         POL["Policy engine\ntiers · licenses ·\nallow/deny · approvals"]
         PUB["Publisher\ncomposes virtual\nmarketplaces, rewrites\nsources, pins SHAs"]
         FAC["Git façade\nread-only smart-HTTP\n+ raw HTTPS"]
@@ -210,13 +210,13 @@ flowchart LR
   path is bounded in address space, redirects, bytes and time behind that gate
   (see [Trust boundaries](concepts/trust-boundaries.md)) — with network egress
   isolation, not those bounds, as the primary control.
-- **Vetting orchestrator (connector-based).** The gateway does not vet
+- **Vetting orchestrator (vetter-based).** The gateway does not vet
   content itself — it orchestrates. Per snapshot it emits a vetting trigger
   (webhook/queue event carrying snapshot metadata and a fetch URL for the
-  content), fans it out to the configured connectors, and receives
-  asynchronous result callbacks. A connector is anything that can take the
+  content), fans it out to the configured vetters, and receives
+  asynchronous result callbacks. A vetter is anything that can take the
   trigger and eventually answer
-  `{connector, snapshot, verdict, report-url, findings[]}`:
+  `{vetter, snapshot, verdict, report-url, findings[]}`:
   - *Scanners:* artifact and vulnerability scanners, malware signatures,
     dependency and secret scanning, license checks,
     obfuscation/invisible-Unicode detection in markdown.
@@ -226,17 +226,17 @@ flowchart LR
     purpose, alter its own review process? A triage signal, not a verdict.
   - *Sandbox runners:* execute bundled scripts and hooks in an instrumented
     sandbox; record file, network, and process behavior (T1/T2 tiers).
-  - *Human processes:* a Jira ticket, a review queue — the MVP "connector" is
+  - *Human processes:* a Jira ticket, a review queue — the MVP "vetter" is
     simply an approve button in the portal.
 
   Results are normalized and attached to the snapshot forever. One analysis
   stays built-in because tiering depends on it: *manifest analysis* —
   enumerating registered hooks, MCP servers, commands, and agents (§6).
 - **Policy engine.** Policy-as-code consuming snapshot facts and the
-  normalized connector verdicts. The engine is embedded CEL (ADR 0006), and
+  normalized vetter verdicts. The engine is embedded CEL (ADR 0006), and
   its first slice ships: [deny rules](guides/policy-rules.md) evaluated
   fail-closed at approval time, with a playground and ledger provenance.
-  The rest of the sketch — which connectors are required per tier,
+  The rest of the sketch — which vetters are required per tier,
   auto-approval conditions, license allowlists, org/team scoping, mandatory
   reviewers for T2 — attaches to the same engine if and when those are
   decided (auto-approval deliberately parked: it would delegate the human
@@ -271,7 +271,7 @@ sequenceDiagram
     actor Dev as Developer
     participant Portal as Catalog/Portal
     participant Ing as Ingestion
-    participant Vet as Vetting connectors
+    participant Vet as Vetting vetters
     participant Rev as Reviewer (tiered)
     participant Pub as Publisher
     participant Fac as Git façade
@@ -331,16 +331,16 @@ published refs (`refs/heads/main` when it is still the tip, and the advertised
 `GET /api/snapshots/{id}/fetchers`, readable by an approver of the marketplace or
 an administrator. What triggers the recall is **continuous re-vetting** — the
 chain re-run over approved content on a schedule — rather than only a human
-pressing a button, so an acceptance that expired or a connector rule that landed
+pressing a button, so an acceptance that expired or a vetter rule that landed
 retracts content without waiting to be noticed.
 Two limits are deliberate:
 
 - Enforcement is **opt-in** (`skills-gateway.vetting.revet.mode`, default
   `warn`). Retracting content teams already depend on must never begin because
   of an upgrade.
-- A run that blocks only because a connector **errored** never revokes. An error
+- A run that blocks only because a vetter **errored** never revokes. An error
   is evidence about the scanner, not the content, and fail-closed there would
-  let one connector outage revoke an estate. Fail-closed still governs every
+  let one vetter outage revoke an estate. Fail-closed still governs every
   path that *publishes*.
 
 (d) — fleet force-uninstall — remains Phase 3.
@@ -469,8 +469,8 @@ format-agnostic; tool specifics live in **adapters**:
 Stateless services (façade, ingestion, vetting orchestrator, publisher,
 portal) in front of Postgres (metadata, ledger) and git storage.
 OIDC SSO for humans, token auth for CI, SCIM for team scoping. Vetting
-connectors run outside the gateway and talk to it over the trigger/callback
-contract; sandbox connectors use isolated ephemeral runners. Air-gap friendly by construction: ingestion is the only
+vetters run outside the gateway and talk to it over the trigger/callback
+contract; sandbox vetters use isolated ephemeral runners. Air-gap friendly by construction: ingestion is the only
 component needing internet egress, and can run in a DMZ with one-way promotion
 inward.
 
@@ -509,7 +509,7 @@ reference transitions at all — see
 - **Phase 1 — visibility & choke point (MVP).** Git façade + ingestion of
   **local-source-only** marketplaces (external plugin sources rejected
   fail-closed) + manual allowlist + one curated org marketplace + fetch audit
-  log. Default branch only; vetting is the manual-approval connector (an
+  log. Default branch only; vetting is the manual-approval vetter (an
   approve button). Even this closes T3/T4/T6 — T4 by rejection rather than
   rewriting — and gives Security eyes.
 - **Phase 2 — governance.** External plugin sources with transitive
@@ -524,7 +524,7 @@ reference transitions at all — see
   `enabled: false`. *Remaining:* the blast-radius re-vetting the closure query
   enables, `git` and `git-subdir`, the egress proxy, connect-time address
   pinning, and declared-`ref`/`sha` pinning. Also in this phase: a
-  connector framework with automated vetting
+  vetter framework with automated vetting
   (scanners, LLM review, sandbox), risk tiers, approval workflow with
   semantic diffs, policy-as-code, catalog/portal with request flow, per-team
   virtual marketplaces, multi-ref publication. *Implemented:* per-marketplace
@@ -600,7 +600,7 @@ reference transitions at all — see
 2. **LLM review confidence.** Semantic scanning of prose will have false
    negatives; adversaries will optimize against it. It must gate *triage
    priority*, not substitute for tier-appropriate human review.
-   Designated tooling for when this connector is built: **promptfoo**
+   Designated tooling for when this vetter is built: **promptfoo**
    (promptfoo.dev) as its eval + red-team harness — a CI-run corpus of
    known-malicious/benign skills asserting detection (prompt changes that
    degrade detection fail the build), plus adversarial injection
