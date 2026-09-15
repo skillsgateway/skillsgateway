@@ -154,7 +154,7 @@ they are user-owned credentials whose secret is shown exactly once.
 
 - **Not a general git host.** One branch, no tags, no pull requests, no issues.
   It is an ingestion point that happens to speak git.
-- **Not a way around review.** Same quarantine, same connectors, same approval.
+- **Not a way around review.** Same quarantine, same vetters, same approval.
 - **Not a mirror target.** Pushing content the gateway could have fetched works,
   but you lose the upstream's provenance for no gain. Register it as an upstream
   marketplace instead.

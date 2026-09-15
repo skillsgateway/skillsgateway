@@ -36,15 +36,15 @@ pointer; the page it points at is where the mechanism is explained.
     [Re-vetting approved content](../guides/re-vetting.md#warn-first-then-enforce).
 
 **Chain identity**
-:   The identity and version of every connector that produced a chain run,
+:   The identity and version of every vetter that produced a chain run,
     stamped into the run. It is what makes "the same content, re-vetted by a
     changed chain" a distinguishable event. See
-    [Vetting — the connector chain](vetting.md).
+    [Vetting — the vetter chain](vetting.md).
 
 **Chain run**
 :   One execution of the vetting chain against one snapshot, recorded with its
     verdicts and its findings. The record is raw evidence and is never
-    rewritten. See [Vetting — the connector chain](vetting.md).
+    rewritten. See [Vetting — the vetter chain](vetting.md).
 
 **Closure**
 :   The set of external plugin sources one composite snapshot serves, recorded
@@ -58,15 +58,13 @@ pointer; the page it points at is where the mechanism is explained.
     [Snapshot retention](../reference/retention.md#the-two-passes).
 
 **Connector**
-:   A pluggable vetting component, built in or external, handed a snapshot's
-    identity and a read-only walk over its files and answering with a verdict.
-    An administrator can switch one off globally or for one marketplace — an
-    audited act that records a `DISABLED` verdict rather than shortening the
-    chain ([connector settings](../reference/api/marketplaces.md#connector-enabledisable)).
-    The word is used in this project only for a vetting component; integrations
-    to external systems are subscribers, sinks or mirrors. The industry
-    equivalents are Harbor's scanner adapter and Dependency-Track's analyzer.
-    See [Vetting — the connector chain](vetting.md).
+:   The transport that lets a vetter running outside the gateway take part: the
+    HTTP trigger and callback contract configured under
+    `skills-gateway.vetting.external[*]`. Every external connector contributes
+    one vetter; a built-in vetter has no connector. The word means nothing
+    wider in this project — integrations to other systems are subscribers, sinks
+    or mirrors. See
+    [External connectors](vetting.md#external-connectors).
 
 **Effective outcome**
 :   What actually gates an approval: the recorded chain run with the waivers
@@ -97,10 +95,10 @@ pointer; the page it points at is where the mechanism is explained.
     [Git smart-HTTP facade](../reference/git-facade.md).
 
 **Finding**
-:   One thing a connector found: a stable rule id, a severity, a `path:line`
+:   One thing a vetter found: a stable rule id, a severity, a `path:line`
     location, and a message. The rule id is the identity a waiver is written
     against. See
-    [The connector contract](vetting.md#the-connector-contract).
+    [The vetter contract](vetting.md#the-vetter-contract).
 
 **Forge mirror**
 :   An optional outbound copy of approved refs pushed to a repository on an
@@ -154,7 +152,7 @@ pointer; the page it points at is where the mechanism is explained.
 **Minimum release age**
 :   A cooling-off window: a snapshot ingested less than the configured time ago
     cannot be approved however clear its verdicts are. Checked at the approval
-    request, and deliberately not a connector. See
+    request, and deliberately not a vetter. See
     [Minimum release age](../reference/configuration.md#minimum-release-age).
 
 **Override**
@@ -217,11 +215,11 @@ pointer; the page it points at is where the mechanism is explained.
     See [Access tokens](../reference/api/tokens.md).
 
 **Rule id**
-:   The stable identifier of one connector rule (`aws-access-key-id`), carried
+:   The stable identifier of one vetter rule (`aws-access-key-id`), carried
     by every finding it raises and the identity a waiver names. It is part of
-    the connector contract rather than a display string, and is unrelated to a
+    the vetter contract rather than a display string, and is unrelated to a
     *policy rule*. See
-    [The connector contract](vetting.md#the-connector-contract).
+    [The vetter contract](vetting.md#the-vetter-contract).
 
 **Scope** (of a token)
 :   Three separate dimensions with three different empty values: `scopes`
@@ -259,10 +257,23 @@ pointer; the page it points at is where the mechanism is explained.
     [Git smart-HTTP facade](../reference/git-facade.md).
 
 **Verdict**
-:   A connector's conclusion about a snapshot: `PASS`, `WARN`, `FAIL`, `ERROR`,
+:   A vetter's conclusion about a snapshot: `PASS`, `WARN`, `FAIL`, `ERROR`,
     `PENDING` or `DISABLED`. Only `PASS` and `WARN` clear, and `DISABLED` is the
     one state that neither clears nor blocks. See
     [Verdict states](vetting.md#verdict-states).
+
+**Vetter**
+:   The element of the vetting chain: whatever examines a snapshot and answers
+    with a verdict and findings. Built in — `secret-scan`, `prompt-injection`,
+    `license-scan`, `skill-conformance` — or external, reached over a
+    [connector](#connector). It is handed the snapshot's identity and a
+    read-only walk over its files, and nothing else. An administrator can switch
+    one off globally or for one marketplace — an audited act that records a
+    `DISABLED` verdict rather than shortening the chain
+    ([vetter settings](../reference/api/marketplaces.md#vetter-enabledisable)).
+    The industry equivalents are Harbor's scanner adapter and
+    Dependency-Track's analyzer. See
+    [Vetting — the vetter chain](vetting.md).
 
 **Violation**
 :   The reason ingestion flagged a snapshot: an external plugin source that

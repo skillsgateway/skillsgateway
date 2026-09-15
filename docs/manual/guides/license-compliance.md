@@ -55,7 +55,7 @@ refused through the standard gate, and the refusal names the finding:
 
 ```json
 {"status":409,"title":"Vetting chain blocked this snapshot",
- "blockingConnectors":["license-scan"],
+ "blockingVetters":["license-scan"],
  "uncoveredFindings":[{"ruleId":"license-banned","location":"LICENSE"}]}
 ```
 
@@ -82,7 +82,7 @@ It complements `/api/snapshots/{id}/content` and the gateway's own
 ## Why the policy is configuration
 
 Vetting evidence must be attributable: when a snapshot that cleared last month
-blocks today, was it the content or the policy? The `license-scan` connector
+blocks today, was it the content or the policy? The `license-scan` vetter
 stamps a digest of the lists into its recorded version, which is part of every
 run's chain identity — so the answer is on the record. That attribution works
 because the policy changes only by deploy; there is deliberately no API that

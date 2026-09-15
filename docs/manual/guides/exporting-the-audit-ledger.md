@@ -24,11 +24,11 @@ actor kind — the vetting chain is the gateway's own automated subsystem, not a
 person, so the portal audit table and the ledger show it as `system`, never as a
 human actor.
 
-- A **`vetting-verdict`** entry per connector. Its detail leads with
-  `connector=state` and then carries the finding count, the worst severity
+- A **`vetting-verdict`** entry per vetter. Its detail leads with
+  `vetter=state` and then carries the finding count, the worst severity
   present (`none` when there are none), and the id of the chain run — so the
   entry is auditable on its own rather than a pointer back into the vetting
-  tables. A clean pass additionally states what the connector examined (the files
+  tables. A clean pass additionally states what the vetter examined (the files
   it scanned and the rules it applied), so a pass reads as positive coverage
   rather than as silence:
 
@@ -38,7 +38,7 @@ human actor.
   ```
 
 - A **`vetting-completed`** entry per run, carrying the trigger, the fail-closed
-  outcome, the connector count, the same `run=` id, and the chain identity.
+  outcome, the vetter count, the same `run=` id, and the chain identity.
 
 ## The cursor
 

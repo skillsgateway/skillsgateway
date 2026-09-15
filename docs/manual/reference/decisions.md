@@ -153,6 +153,13 @@ condemn (GW_VETTING_0026). A `pending` answer is the **asynchronous seam** and b
 until resolved (GW_VETTING_0027); the inbound resolution callback is deliberately a
 separate, sequenced piece of work.
 
+!!! note "Renamed 2026-09-15"
+
+    The chain element is now called a **vetter**; **connector** was narrowed to
+    the HTTP transport this ADR specifies. The decision is unchanged — one
+    connector still contributes one vetter. See
+    [Glossary](../concepts/glossary.md#vetter).
+
 ### [ADR 0010 — Admin override of vetting automation (the cockpit model)](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0010-admin-override-of-vetting-automation.md)
 
 *Accepted, 2026-09-01.*
@@ -170,6 +177,12 @@ policy, release-age and four-eyes gates still run), writes a distinct
 it is never indistinguishable from a clean approval. The override does not
 replace scoped, expiring **waivers**; it is the rarer administrative act for a
 whole blocked outcome.
+
+!!! note "Renamed 2026-09-15"
+
+    What this ADR calls a connector is now a **vetter**, and the switch covers
+    every vetter in the chain, built-in or external. See
+    [Glossary](../concepts/glossary.md#vetter).
 
 ### [ADR 0011 — External plugin sources: admission before resolution](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md)
 
@@ -248,6 +261,12 @@ that a round trip is lossy by design, which is why this ADR recommends building
 plainly that an export is not a backup.
 
 ### [ADR 0015 — Corpus questions are approval-gate preconditions, not vetting connectors](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md)
+
+!!! note "Renamed 2026-09-15"
+
+    Read "vetting connector" here as **vetter**, the chain element this ADR
+    declines to put a corpus question inside. See
+    [Glossary](../concepts/glossary.md#vetter).
 
 *Proposed.* The first mitigation for T5 (typosquatting) needs a rule that can ask a
 question of the approved estate, which a vetting connector structurally cannot be

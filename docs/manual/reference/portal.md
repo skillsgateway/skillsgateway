@@ -249,25 +249,25 @@ It draws the [same flow](#the-chain-flow) without verdicts, headed by how much o
 the chain runs and what is off:
 
 ```text
-2 of 3 connectors run · secret-scan off for this marketplace
+2 of 3 vetters run · secret-scan off for this marketplace
 ```
 
-Every configured connector appears in the order it runs, each showing `enabled` or
+Every configured vetter appears in the order it runs, each showing `enabled` or
 `disabled`, a chip naming **where that state came from** (`this marketplace`,
-`global`, `default`), and — for a connector that is off — who switched it off.
-Opening a node gives the same source in full, the connector's version, whether it
+`global`, `default`), and — for a vetter that is off — who switched it off.
+Opening a node gives the same source in full, the vetter's version, whether it
 is built in or external, when the deciding setting was last set, and the note left
 with it.
 
 The node's detail also carries the switch: an optional reason field and a single
-control that enables or disables that connector **for this marketplace**, calling
-`PUT /api/vetting/connectors/{name}/toggle`. A per-marketplace setting overrides
+control that enables or disables that vetter **for this marketplace**, calling
+`PUT /api/vetting/vetters/{name}/toggle`. A per-marketplace setting overrides
 the global one. Every change is written to the audit ledger with the acting
-administrator, the connector, the scope, the new state and the reason.
+administrator, the vetter, the scope, the new state and the reason.
 
-Switching connectors off narrows the evidence behind an approval; it never makes
+Switching vetters off narrows the evidence behind an approval; it never makes
 one automatic. What that means for a run is described in
-[Switching a connector off](../concepts/vetting.md#switching-a-connector-off).
+[Switching a vetter off](../concepts/vetting.md#switching-a-vetter-off).
 
 ### Snapshots
 
@@ -346,14 +346,14 @@ Each snapshot card carries a **Vetting** section fed by
 
 #### The chain flow
 
-Above the per-connector list, the chain is drawn as an ordered flow — one node
+Above the per-vetter list, the chain is drawn as an ordered flow — one node
 per step, left to right, wrapping on a narrow viewport:
 
 ```text
 Ingest → secret-scan → prompt-injection → Outcome → Approval
 ```
 
-The order is the order the connectors ran, taken from the run's own recorded
+The order is the order the vetters ran, taken from the run's own recorded
 positions; for a snapshot the chain has not run against yet, it is the configured
 chain in the order it will run.
 
@@ -362,7 +362,7 @@ it can be read without opening anything:
 
 ```text
 Blocked at step 1 · secret-scan found 1 critical finding
-Clear · 4 connectors, 0 findings
+Clear · 4 vetters, 0 findings
 Clear with waivers · 2 findings accepted
 ```
 
@@ -370,13 +370,13 @@ How to read a node:
 
 | Part | Meaning |
 | --- | --- |
-| Stage label | Where the node sits: `Source`, `Step N` for each connector in run order, `Result`, `Gate`. |
-| Name | `Ingest`, a connector's name, `Outcome`, `Approval`. |
-| State word | `pass`, `warn`, `fail`, `error`, `pending`, `skipped`, `not run` for a connector; `clear`, `clear with waivers`, `blocked` for the outcome; `open` or `closed` for the approval gate. The word is always present — colour never carries a state on its own. |
+| Stage label | Where the node sits: `Source`, `Step N` for each vetter in run order, `Result`, `Gate`. |
+| Name | `Ingest`, a vetter's name, `Outcome`, `Approval`. |
+| State word | `pass`, `warn`, `fail`, `error`, `pending`, `skipped`, `not run` for a vetter; `clear`, `clear with waivers`, `blocked` for the outcome; `open` or `closed` for the approval gate. The word is always present — colour never carries a state on its own. |
 | Top edge | The same state, as colour: the accent for a pass or warn, red for a fail or error, a plain hairline for anything that reached no conclusion. A second, scannable carrier of the word above it, never a replacement for it. |
-| Finding count | How many findings that connector raised, when it raised any. |
-| `external` chip | The verdict comes from an operator-configured external service, not from a built-in connector. |
-| `N waived` chip | How many of that connector's findings an active waiver is suppressing. The connector keeps the verdict it reached: an accepted risk is never redrawn as a pass. |
+| Finding count | How many findings that vetter raised, when it raised any. |
+| `external` chip | The verdict comes from an operator-configured external service, not from a built-in vetter. |
+| `N waived` chip | How many of that vetter's findings an active waiver is suppressing. The vetter keeps the verdict it reached: an accepted risk is never redrawn as a pass. |
 
 The stage the chain arrives at — `Result` here, `Gate` on the marketplace chain —
 is drawn as a filled surface rather than an outline, so the end of the chain reads
@@ -384,24 +384,24 @@ as the end.
 
 Every node is a button. Activating one opens its detail:
 
-- **A connector** — its verdict, its version, whether it is built in or external,
+- **A vetter** — its verdict, its version, whether it is built in or external,
   its self-description, and its findings, with a waived one struck through and
-  badged. A `skipped` node states that an administrator switched the connector
+  badged. A `skipped` node states that an administrator switched the vetter
   off for this marketplace and that the scope and reason are on the
   [marketplace's vetting chain](#vetting-chain-administrators), which is
   administrator-only.
-- **The outcome** — how the aggregation reached its answer, what the connectors
-  themselves recorded, which connectors are objecting, and the findings that
+- **The outcome** — how the aggregation reached its answer, what the vetters
+  themselves recorded, which vetters are objecting, and the findings that
   still need a waiver.
 - **Ingest** and **Approval** — what the step is, and why the gate is where it is.
 
-The flow is an overview; the per-connector list below it is where findings are
+The flow is an overview; the per-vetter list below it is where findings are
 read side by side and a waiver is written next to the one being accepted. Both
 are always shown.
 
-It shows the effective chain outcome badge and one block per connector: an icon
-and badge for the verdict state, the connector name, a one-line summary, and
-every finding as severity badge, rule id, `path:line`, and message. A connector
+It shows the effective chain outcome badge and one block per vetter: an icon
+and badge for the verdict state, the vetter name, a one-line summary, and
+every finding as severity badge, rule id, `path:line`, and message. A vetter
 with nothing to report shows "Nothing found."
 
 A finding an active waiver is suppressing is struck through and badged
@@ -416,8 +416,8 @@ what must be waived before approval unblocks. See
 A snapshot the chain never ran against says so explicitly, and states that there
 is nothing to waive — a snapshot with no evidence cannot be approved at all.
 
-A collapsed *What these connectors can and cannot see* disclosure lists each
-configured connector and its self-description, so the limits of the heuristics
+A collapsed *What these vetters can and cannot see* disclosure lists each
+configured vetter and its self-description, so the limits of the heuristics
 are readable at the point of decision. The same section is embedded in the
 [approve dialog](#approve-dialog) on the marketplaces page.
 

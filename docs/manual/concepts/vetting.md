@@ -1,13 +1,13 @@
-# Vetting — the connector chain
+# Vetting — the vetter chain
 
 Every snapshot the gateway ingests is quarantined and pinned to an upstream
 commit SHA. Between that pin and the reviewer's decision the gateway runs a
-**vetting chain**: an ordered list of connectors, each of which looks at the
+**vetting chain**: an ordered list of vetters, each of which looks at the
 snapshot's content and answers with a verdict. The verdicts and their findings
 are recorded against the snapshot and shown to the reviewer before any approve
 or reject decision.
 
-The gateway does not vet content itself. It orchestrates: it runs connectors,
+The gateway does not vet content itself. It orchestrates: it runs vetters,
 normalises what they answer, records it, and aggregates it into a single
 outcome that gates approval.
 
@@ -21,7 +21,7 @@ flowchart TD
     M -->|ok| H["snapshot: held"]
     H --> C["Vetting chain"]
 
-    subgraph C["Vetting chain — ordered, all connectors run"]
+    subgraph C["Vetting chain — ordered, all vetters run"]
         direction TB
         C1["secret-scan (order 100)"] --> C2["prompt-injection (order 200)"] --> C3["license-scan (order 300)"] --> C4["skill-conformance (order 400)"]
     end
@@ -43,23 +43,23 @@ that has to be justified in writing.
 That separation is what lets the same chain run again, later, over a snapshot
 that is already approved and served — a new run against unchanged state. What
 such a run *means* is a separate judgement, described in
-[Re-vetting approved content](../guides/re-vetting.md): only a connector that
-objects to the content can retract it, and a connector that merely broke never
+[Re-vetting approved content](../guides/re-vetting.md): only a vetter that
+objects to the content can retract it, and a vetter that merely broke never
 can.
 
-## The connector contract
+## The vetter contract
 
-A connector has a stable name, a position in the chain, and one method that
+A vetter has a stable name, a position in the chain, and one method that
 takes the snapshot and returns a verdict. What it is given is deliberately
 narrow: the snapshot's id, its marketplace, its commit SHA, and a walk over the
-files in that commit. It is not given a repository handle, so a connector cannot
+files in that commit. It is not given a repository handle, so a vetter cannot
 move a ref, write to quarantine, or read another marketplace's content.
 
-The walk takes the connector's own selection of paths, and content is read only
+The walk takes the vetter's own selection of paths, and content is read only
 for the files that selection asks for. One chain run walks the commit's tree
-once and reads each selected file once however many connectors want it, so
+once and reads each selected file once however many vetters want it, so
 `license-scan` reading two file kinds no longer costs a full pass over the tree.
-What a connector sees is unchanged by this: a file over the size limit is still
+What a vetter sees is unchanged by this: a file over the size limit is still
 handed over unread rather than omitted. How much content a run keeps for that
 reuse is bounded by
 [`skills-gateway.vetting.content-cache-bytes`](../reference/configuration.md#vetting);
@@ -76,32 +76,32 @@ is written against, so it is part of the contract rather than a display string.
 
 | State | Meaning | Blocks approval |
 | --- | --- | --- |
-| `PASS` | The connector found nothing. | No |
+| `PASS` | The vetter found nothing. | No |
 | `WARN` | Something worth showing the reviewer that does not block. | No |
 | `FAIL` | Something that blocks. | Yes |
-| `ERROR` | The connector produced no verdict: it threw, or it exceeded its time limit. | Yes |
-| `PENDING` | The connector was triggered and has not answered yet. | Yes |
-| `DISABLED` | An administrator switched the connector off for this marketplace, so the chain did not run it. | No — and it does not clear either |
+| `ERROR` | The vetter produced no verdict: it threw, or it exceeded its time limit. | Yes |
+| `PENDING` | The vetter was triggered and has not answered yet. | Yes |
+| `DISABLED` | An administrator switched the vetter off for this marketplace, so the chain did not run it. | No — and it does not clear either |
 
-A connector does not choose its state directly: it emits findings, and the
+A vetter does not choose its state directly: it emits findings, and the
 verdict follows the worst severity present — `HIGH` or `CRITICAL` fails,
 `LOW` or `MEDIUM` warns, and `INFO` alone still passes. That way a new rule only
 has to get its severity right.
 
-`PENDING` exists so that an asynchronous connector — one that is triggered over
+`PENDING` exists so that an asynchronous vetter — one that is triggered over
 a webhook and answers later — fits without changing the gate. No built-in
-connector returns it; a configured [external connector](#external-connectors)
+vetter returns it; a configured [external connector](#external-connectors)
 that answers `pending` does, and it blocks until it is resolved.
 
-### Switching a connector off
+### Switching a vetter off
 
-An administrator can disable a connector globally or for one marketplace. A
-disabled connector is not run at ingestion or re-vetting; the chain records a
+An administrator can disable a vetter globally or for one marketplace. A
+disabled vetter is not run at ingestion or re-vetting; the chain records a
 `DISABLED` verdict in its place, so the disablement is part of the run's
 evidence rather than a silently shorter chain. Because `DISABLED` never clears,
-disabling every connector leaves a run blocked — the switch is not a blanket
+disabling every vetter leaves a run blocked — the switch is not a blanket
 approval. The settings, the audit events and the endpoints are in
-[the API reference](../reference/api/marketplaces.md#connector-enabledisable).
+[the API reference](../reference/api/marketplaces.md#vetter-enabledisable).
 
 ## Fail-closed aggregation
 
@@ -109,29 +109,29 @@ A chain run is **clear** if and only if it produced at least one clearing
 verdict and every verdict is `PASS`, `WARN` or `DISABLED`. Everything else is
 **blocked**:
 
-- any connector that failed;
-- any connector that crashed or timed out — a crash is a blocked snapshot, never
-  a skipped connector;
-- any connector that has not answered;
+- any vetter that failed;
+- any vetter that crashed or timed out — a crash is a blocked snapshot, never
+  a skipped vetter;
+- any vetter that has not answered;
 - **and a snapshot with no chain run at all.**
 
 That last case is the one that matters most. A snapshot ingested before the
 chain existed, or one whose run died halfway, is blocked — absence of evidence
 is not evidence of safety.
 
-All connectors run, in order; the chain does not stop at the first failure,
+All vetters run, in order; the chain does not stop at the first failure,
 because a reviewer should see everything that is wrong with a snapshot at once.
 
 ## The approval gate
 
 `POST /api/snapshots/{id}/approve` takes no request body. It refuses a snapshot
 whose **effective** outcome is blocked, with `409` and a problem document naming
-both the blocking connectors and — in `uncoveredFindings` — every blocking
+both the blocking vetters and — in `uncoveredFindings` — every blocking
 finding that no active waiver covers. That array is the reviewer's worklist: it
 is exactly the set of waivers that must exist for the approval to succeed.
 
 **A reviewer has no override.** The only way a reviewer gets past objecting
-connectors is to accept each blocking finding individually with a
+vetters is to accept each blocking finding individually with a
 [waiver](#waivers-accepted-risks-with-a-scope-and-an-expiry).
 
 An **administrator** — and only an administrator — can approve a blocked
@@ -141,7 +141,7 @@ and it lands on the ledger as its own event, so it is never indistinguishable
 from an approval the chain cleared. See
 [Administrative override of a blocked outcome](../reference/api/marketplaces.md#administrative-override-of-a-blocked-outcome).
 
-### Not a connector: the minimum release age
+### Not a vetter: the minimum release age
 
 The same gate carries one precondition the chain has nothing to do with. When
 [`minimum-release-age`](../reference/configuration.md#minimum-release-age) is
@@ -149,7 +149,7 @@ configured, a snapshot the gateway ingested less than that long ago cannot be
 approved however clear its verdicts are — a cooling-off window that gives the
 world time to notice a compromised release before this gateway adopts it.
 
-It is deliberately not a connector. A verdict is evidence about content at the
+It is deliberately not a vetter. A verdict is evidence about content at the
 moment it was gathered; "too young" is a fact about now. Recorded as a failing
 verdict it would keep blocking after the age had passed, until some later
 re-vetting run happened to replace it. Checked at the approval request instead,
@@ -184,7 +184,7 @@ under that path yet. That is why an expiry is mandatory rather than advisory.
 ### The effective outcome
 
 The recorded chain run is never rewritten. It stays raw evidence of what the
-connectors said. What gates an approval is the **effective outcome**, computed
+vetters said. What gates an approval is the **effective outcome**, computed
 on every read from that run plus the waivers active *at that instant*:
 
 - a `PASS` or `WARN` verdict stays clearing — a waiver can only ever remove an
@@ -192,7 +192,7 @@ on every read from that run plus the waivers active *at that instant*:
 - a blocking verdict **with no findings** stays blocking. `PENDING` can never be
   waived away, because there is nothing to name;
 - a blocking verdict **with** findings is re-derived from the findings that are
-  left, by the same severity rule the connector's own state came from. Waive
+  left, by the same severity rule the vetter's own state came from. Waive
   every `HIGH`/`CRITICAL` finding and the verdict clears.
 
 | Effective states | A waiver suppressed something | Outcome |
@@ -232,18 +232,18 @@ rather than merely observable in it.
     the snapshot under `enforce`. So under enforcement a waiver's expiry is a
     real deadline, not a reminder.
 
-!!! warning "`connector-error` is waivable"
+!!! warning "`vetter-error` is waivable"
 
-    A connector that crashed or timed out records a `connector-error` finding,
+    A vetter that crashed or timed out records a `vetter-error` finding,
     and the uniform rule above makes it waivable like any other. That is a real
     operational need — an external scanner down for a day — but it means
     accepting "the scanner never looked at this". It is the single most
     consequential thing a reviewer can write here, and the ledger names the rule
     so it can be found.
 
-## The built-in connectors
+## The built-in vetters
 
-All four connectors ship in the gateway and run in every chain. The first three ask
+All four vetters ship in the gateway and run in every chain. The first three ask
 whether the content is dangerous; the fourth asks whether it is well formed.
 
 ### `secret-scan`
@@ -290,7 +290,7 @@ resolved from license/copying files anywhere in the tree,
 
 With neither list configured — the default — nothing blocks: detection is
 recorded, and unknown or missing licenses warn so a reviewer sees them without
-any estate being blocked by an upgrade. The connector's recorded version
+any estate being blocked by an upgrade. The vetter's recorded version
 carries a digest of the policy in force, so a changed list is visible in every
 run's chain identity. The task-shaped walkthrough is
 [License compliance for skills](../guides/license-compliance.md); the same
@@ -308,14 +308,14 @@ detection is readable per snapshot at
     A `PASS` means "no known marker matched". It is triage that tells a reviewer
     where to look first — it is not a statement that the snapshot is safe, and
     reading the content is still the reviewer's job. Semantic review of skill
-    instructions needs an LLM review connector, which the gateway does not ship
+    instructions needs an LLM review vetter, which the gateway does not ship
     but an operator can add as an [external connector](#external-connectors).
 
 ### `skill-conformance`
 
 Validates every `SKILL.md` under a plugin's `skills/` directory against a
 **vendored, dated** copy of the [Agent Skills specification](https://agentskills.io/specification).
-This is the one connector that answers a question about correctness rather than
+This is the one vetter that answers a question about correctness rather than
 danger: whether the skill carries the frontmatter an agent needs to load and
 select it.
 
@@ -349,7 +349,7 @@ gateway. Nothing is retrieved over the network while vetting: a chain run has to
 be reproducible from the release alone, and
 [continuous re-vetting](../guides/re-vetting.md) has to be able to say whether a
 changed answer about approved content came from the content or from the rules.
-The connector's recorded version names the pin, a digest of its constraint table
+The vetter's recorded version names the pin, a digest of its constraint table
 and the posture in force — `skill-conformance@agentskills-2026-08-04+schema-2ae36a+advisory`
 — so a specification bump is visible in every run's chain identity.
 
@@ -364,22 +364,25 @@ and the posture in force — `skill-conformance@agentskills-2026-08-04+schema-2a
 
 ## External connectors
 
-An operator can extend the chain with their own connectors — an LLM reviewer, a
-sandbox detonator, a corporate scanner — configured under
-`skills-gateway.vetting.external` (see
+A **connector** is the transport that lets a vetter running outside the gateway
+take part: an HTTP endpoint the gateway POSTs the snapshot's scannable content
+to and reads a normalized `{state, reportUrl, findings[]}` back from, configured
+under `skills-gateway.vetting.external` (see
 [Configuration → External connectors](../reference/configuration.md#external-connectors)).
-Each is an HTTP endpoint the gateway POSTs the snapshot's scannable content to
-and reads a normalized `{state, reportUrl, findings[]}` back from. A configured
-external connector runs in the chain at its position and is recorded, aggregated
-and waivable exactly like a built-in one — its findings and its external report
-link surface wherever a built-in's do. The administrative
-[on/off switch](../reference/api/marketplaces.md#connector-enabledisable) reaches
-it on the same terms too: an administrator can disable an external connector
-globally or for one marketplace, and the run then records a `DISABLED` verdict in
-its place rather than a silently shorter chain.
+Each configured connector contributes exactly one vetter to the chain — an LLM
+reviewer, a sandbox detonator, a corporate scanner — and that is the only thing
+the word means here; the four built-ins are vetters with no connector.
 
-Because the endpoint is a dependency the gateway does not control, an external
-connector is **fail-closed** in the strong sense: an unreachable, slow, oversized,
+A vetter that arrives over a connector runs in the chain at its position and is
+recorded, aggregated and waivable exactly like a built-in one — its findings and
+its external report link surface wherever a built-in's do. The administrative
+[on/off switch](../reference/api/marketplaces.md#vetter-enabledisable) reaches
+it on the same terms too: an administrator can disable such a vetter globally or
+for one marketplace, and the run then records a `DISABLED` verdict in its place
+rather than a silently shorter chain.
+
+Because the endpoint is a dependency the gateway does not control, the connector
+is **fail-closed** in the strong sense: an unreachable, slow, oversized,
 unparseable, unrecognised or partial answer is an `ERROR` verdict, which blocks —
 a broken external reviewer holds a snapshot, it never lets one through. And the
 recorded state is the **worse** of what the endpoint declared and what its own
@@ -390,7 +393,7 @@ resolved.
 ## Coverage gaps are reported, not hidden
 
 A file larger than the configured size limit, or one that is not valid UTF-8, is
-not silently skipped: the connector records an informational
+not silently skipped: the vetter records an informational
 `file-not-scanned` finding naming the path — `skill-not-scanned` for
 `skill-conformance`, which reads only `SKILL.md` files. Informational findings do
 not change the verdict, but they are visible, so "the scanner did not look at
@@ -404,15 +407,15 @@ conformance a publishing requirement must not have "we could not check" read as
 
 ## What lands in the ledger
 
-Every chain run writes to the append-only ledger: one entry per connector
+Every chain run writes to the append-only ledger: one entry per vetter
 verdict (`vetting-verdict`) and one entry for the run outcome
 (`vetting-completed`). Both are attributed to the `system` actor kind — the chain
 is the gateway's own automated subsystem, not a person. A verdict entry leads
-with `connector=state` and then carries the finding count, the worst severity
+with `vetter=state` and then carries the finding count, the worst severity
 present, and the id of the chain run, so the entry is auditable on its own; a
-clean pass additionally states what the connector examined — the files it scanned
+clean pass additionally states what the vetter examined — the files it scanned
 and the rules it applied — so a pass in the ledger is never indistinguishable
-from a connector that did not run. The completion entry carries the same run id,
+from a vetter that did not run. The completion entry carries the same run id,
 so a run's scattered verdict entries reassemble into the one run they came from.
 
 The whole waiver lifecycle lands there too:
@@ -439,7 +442,7 @@ until when.
   [flow per snapshot](../reference/portal.md#the-chain-flow), with a node per
   step that opens its own evidence; an administrator gets the
   [same flow per marketplace](../reference/portal.md#vetting-chain-administrators)
-  showing which connectors actually run for it and why.
+  showing which vetters actually run for it and why.
 - [Configuration](../reference/configuration.md#vetting) — the knobs.
 - [Trust boundaries](trust-boundaries.md) — why approval is the boundary the
   chain protects.

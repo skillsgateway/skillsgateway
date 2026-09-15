@@ -9,10 +9,10 @@ admin) — resolved server-side from the addressed snapshot or waiver where the
 route carries an id; every `GET` on this page stays open to any session, except
 the [snapshot preview](#snapshot-preview) reads and the
 [blast-radius report](#get-snapshotsidfetchers), which take the same
-approver-or-admin standing as a decision on that snapshot, and the connector
+approver-or-admin standing as a decision on that snapshot, and the vetter
 settings, which are **admin**. Two administrative escape hatches require
 **admin** specifically: overriding a blocked vetting outcome on approve, and
-enabling or disabling a connector. See
+enabling or disabling a vetter. See
 [Delegated administration](../../guides/delegated-administration.md).
 
 **Machine reach.** `marketplaces:read` covers `GET /marketplaces`, `GET
@@ -395,7 +395,7 @@ snapshot.
 
 ## `GET /snapshots/{id}/vetting`
 
-The snapshot's latest vetting chain run: each connector's verdict in chain
+The snapshot's latest vetting chain run: each vetter's verdict in chain
 order, the findings behind it, the waivers currently suppressing any of them,
 and the fail-closed **effective** aggregate that gates approval. A snapshot the
 chain has never run against reports `"outcome":"BLOCKED"` and `"run":null`.
@@ -405,14 +405,14 @@ chain has never run against reports `"outcome":"BLOCKED"` and `"run":null`.
  "run":{"runId":5,"snapshotId":12,"trigger":"ingestion","outcome":"BLOCKED",
         "startedAt":"...","finishedAt":"...",
         "verdicts":[
-          {"verdictId":9,"connector":"secret-scan","position":0,"state":"FAIL",
+          {"verdictId":9,"vetter":"secret-scan","position":0,"state":"FAIL",
            "detail":"1 finding(s); worst critical","reportUrl":null,
            "findings":[{"id":"aws-access-key-id","severity":"CRITICAL",
                         "location":"plugins/hello/DEPLOY.md:5",
                         "message":"an AWS access key id is committed in this file"}]},
-          {"verdictId":10,"connector":"prompt-injection","position":1,
+          {"verdictId":10,"vetter":"prompt-injection","position":1,
            "state":"PASS","detail":null,"reportUrl":null,"findings":[]}]},
- "suppressed":[{"connector":"secret-scan","ruleId":"aws-access-key-id",
+ "suppressed":[{"vetter":"secret-scan","ruleId":"aws-access-key-id",
                 "location":"plugins/hello/DEPLOY.md:5","waiverId":3,
                 "approvedBy":"alice","expiresAt":"2026-09-30T23:59:59Z"}],
  "uncovered":[],
@@ -420,27 +420,27 @@ chain has never run against reports `"outcome":"BLOCKED"` and `"run":null`.
              "scope":"SNAPSHOT","scopeValue":"a1b2c3…","justification":"documented dummy key",
              "approvedBy":"alice","createdAt":"...","expiresAt":"2026-09-30T23:59:59Z",
              "revokedAt":null,"revokedBy":null,"active":true}],
- "connectors":[{"name":"secret-scan","order":100,"description":"...","version":"3","external":false},
+ "vetters":[{"name":"secret-scan","order":100,"description":"...","version":"3","external":false},
                {"name":"prompt-injection","order":200,"description":"...","version":"1","external":false}]}
 ```
 
 | Field | Meaning |
 | --- | --- |
 | `outcome` | The **effective** outcome — the one that gates approval: `CLEAR`, `CLEAR_WITH_WAIVERS`, or `BLOCKED`. Recomputed on every request from the run and the waivers active at that instant. |
-| `recordedOutcome` | What the connectors themselves concluded: `CLEAR` or `BLOCKED`. Never rewritten by a waiver. |
+| `recordedOutcome` | What the vetters themselves concluded: `CLEAR` or `BLOCKED`. Never rewritten by a waiver. |
 | `suppressed` | The findings an active waiver is currently removing from the computation. |
 | `uncovered` | The blocking findings no active waiver covers — the waivers approval still needs. |
 | `waivers` | The marketplace's waivers whose rule appears in this run, active and lapsed alike. |
-| `connectors` | The configured chain, in the order it runs: `name`, `order`, `description`, `version` (the rule set the connector currently carries) and `external` (the verdict is delegated to an operator-configured service rather than reached by a built-in connector). |
-| `override` | Present when an administrator approved this snapshot over a blocked outcome (`reason`, `blockingConnectors`, `uncoveredFindings`, `overriddenBy`, `overriddenAt`); `null` otherwise. Its presence is what surfaces the override so it is never indistinguishable from a clean approval. See [The vetting override](#administrative-override-of-a-blocked-outcome). |
+| `vetters` | The configured chain, in the order it runs: `name`, `order`, `description`, `version` (the rule set the vetter currently carries) and `external` (the verdict is delegated to an operator-configured service rather than reached by a built-in vetter). |
+| `override` | Present when an administrator approved this snapshot over a blocked outcome (`reason`, `blockingVetters`, `uncoveredFindings`, `overriddenBy`, `overriddenAt`); `null` otherwise. Its presence is what surfaces the override so it is never indistinguishable from a clean approval. See [The vetting override](#administrative-override-of-a-blocked-outcome). |
 
 `state` is one of `PASS`, `WARN`, `FAIL`, `ERROR`, `PENDING`, `DISABLED`;
 `severity` is one of `INFO`, `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`. A `DISABLED`
-verdict records that an administrator switched that connector off for the
-snapshot's marketplace ([connector settings](#connector-enabledisable)); it is
+verdict records that an administrator switched that vetter off for the
+snapshot's marketplace ([vetter settings](#vetter-enabledisable)); it is
 neither clearing nor blocking, but a run still needs one clearing verdict to
-clear, so disabling every connector leaves a run `BLOCKED`. What each state means
-is described in [Vetting — the connector chain](../../concepts/vetting.md).
+clear, so disabling every vetter leaves a run `BLOCKED`. What each state means
+is described in [Vetting — the vetter chain](../../concepts/vetting.md).
 
 | Status | Cause |
 | --- | --- |
@@ -449,35 +449,35 @@ is described in [Vetting — the connector chain](../../concepts/vetting.md).
 
 ---
 
-## Connector enable/disable
+## Vetter enable/disable
 
-An administrator can switch any connector in the chain off or on, globally or for
+An administrator can switch any vetter in the chain off or on, globally or for
 one marketplace — a built-in (secret-scan, prompt-injection, license-scan,
 skill-conformance) or one of the operator's own
 [external connectors](../configuration.md#external-connectors). A name no
-connector in the chain carries is refused with a 422 naming the ones it does.
+vetter in the chain carries is refused with a 422 naming the ones it does.
 Both endpoints are **admin-only** — the switch that governs the vetting chain,
 and even the visibility of its settings, are not shown to marketplace-scoped
 approvers.
 
-A disabled connector is **not run** at ingestion or re-vetting; the chain records
+A disabled vetter is **not run** at ingestion or re-vetting; the chain records
 a `DISABLED` verdict in its place, so the disablement is part of the run's
-evidence rather than a silently shorter chain. Disabling every connector leaves a
+evidence rather than a silently shorter chain. Disabling every vetter leaves a
 run `BLOCKED`, never cleared — the switch is not a blanket approval.
 
-### `GET /vetting/connector-toggles`
+### `GET /vetting/vetter-toggles`
 
 Lists every enable/disable setting — the global settings and the per-marketplace
 overrides.
 
 | Status | Cause |
 | --- | --- |
-| 200 | The connector settings. |
+| 200 | The vetter settings. |
 | 403 | Caller does not hold the administrative role. |
 
 ### `GET /marketplaces/{name}/vetting-chain`
 
-The marketplace's **effective** chain: every configured connector in the order it
+The marketplace's **effective** chain: every configured vetter in the order it
 runs, the state its enablement resolves to for this marketplace, and which
 setting decided that. The resolution is the chain's own — not a recombination of
 the settings list — so it cannot disagree with what actually runs.
@@ -495,7 +495,7 @@ the settings list — so it cannot disagree with what actually runs.
 
 | Field | Meaning |
 | --- | --- |
-| `enabled` | Whether the connector runs for this marketplace. |
+| `enabled` | Whether the vetter runs for this marketplace. |
 | `source` | `MARKETPLACE` (a setting scoped to this marketplace), `GLOBAL` (the global setting), or `DEFAULT` (no setting at all, so it runs). The absence of a setting is its own source, never a missing value. |
 | `reason`, `updatedBy`, `updatedAt` | The note, the acting administrator and the time of whichever setting decided the state; `null` for `DEFAULT`. |
 | `external` | The verdict is delegated to an operator-configured external service. |
@@ -506,23 +506,23 @@ the settings list — so it cannot disagree with what actually runs.
 | 403 | Caller does not hold the administrative role. |
 | 404 | Named marketplace not found. |
 
-### `PUT /vetting/connectors/{name}/toggle`
+### `PUT /vetting/vetters/{name}/toggle`
 
 | Field | Required | Meaning |
 | --- | --- | --- |
-| `enabled` | yes | `true` to run the connector, `false` to switch it off. |
+| `enabled` | yes | `true` to run the vetter, `false` to switch it off. |
 | `marketplace` | no | Scope the setting to one marketplace; omit for the global setting. A per-marketplace setting overrides the global one. |
 | `reason` | no | A note recorded with the change and on the audit ledger. |
 
-Each toggle is audited (`connector-disabled` / `connector-enabled`) naming the
-administrator, the connector, the scope and the new state.
+Each toggle is audited (`vetter-disabled` / `vetter-enabled`) naming the
+administrator, the vetter, the scope and the new state.
 
 | Status | Cause |
 | --- | --- |
 | 200 | The setting after the change. |
 | 403 | Caller does not hold the administrative role. |
 | 404 | Named marketplace not found. |
-| 422 | Unknown connector, or `enabled` omitted. |
+| 422 | Unknown vetter, or `enabled` omitted. |
 
 ---
 
@@ -599,7 +599,7 @@ with trigger `revet-manual`.
 ```json
 {"snapshotId":12,"marketplace":"corp-marketplace","sha":"3f9c2ab…","runId":31,
  "classification":"VIOLATION","outcome":"BLOCKED","revoked":true,"mode":"ENFORCE",
- "uncovered":[{"connector":"secret-scan","ruleId":"aws-access-key-id",
+ "uncovered":[{"vetter":"secret-scan","ruleId":"aws-access-key-id",
                "location":"plugins/hello/DEPLOY.md:5","severity":"CRITICAL",
                "message":"an AWS access key id is committed in this file"}],
  "affected":[{"principal":"team-payments","fetches":12,
@@ -608,7 +608,7 @@ with trigger `revet-manual`.
 
 | Field | Meaning |
 | --- | --- |
-| `classification` | `CLEAR`, `VIOLATION` (the chain objects to the content), or `INCONCLUSIVE` (it blocks only because a connector errored, timed out, or has not answered). |
+| `classification` | `CLEAR`, `VIOLATION` (the chain objects to the content), or `INCONCLUSIVE` (it blocks only because a vetter errored, timed out, or has not answered). |
 | `outcome` | The effective vetting outcome after the waivers active at that instant. |
 | `revoked` | Whether this run revoked and unpublished the snapshot. Always `false` in `warn` mode and for `INCONCLUSIVE`. |
 | `mode` | The re-vetting mode in force. |
@@ -625,7 +625,7 @@ with trigger `revet-manual`.
 
 The same, over every live approved snapshot of the marketplace. This is the
 operational answer to a scanner rule set or advisory feed that has just moved:
-the built-in connectors have no feed to subscribe to, so an operator calling
+the built-in vetters have no feed to subscribe to, so an operator calling
 this after updating one is how a feed update becomes fresh evidence.
 
 Returns a pass summary — `revetted`, `violations`, `revoked`, `inconclusive`,
@@ -667,14 +667,14 @@ the revocation it informs.
 published repository and force-updates `refs/heads/main` to that SHA.
 
 **The request body is optional.** A snapshot whose effective vetting outcome is
-blocked is refused, and the problem document carries both `blockingConnectors`
+blocked is refused, and the problem document carries both `blockingVetters`
 and `uncoveredFindings`:
 
 ```json
 {"status":409,"title":"Vetting chain blocked this snapshot",
  "detail":"snapshot 12 cannot be approved: …",
- "blockingConnectors":["secret-scan"],
- "uncoveredFindings":[{"connector":"secret-scan","ruleId":"aws-access-key-id",
+ "blockingVetters":["secret-scan"],
+ "uncoveredFindings":[{"vetter":"secret-scan","ruleId":"aws-access-key-id",
                        "location":"plugins/hello/DEPLOY.md:5","severity":"CRITICAL",
                        "message":"an AWS access key id is committed in this file"}]}
 ```

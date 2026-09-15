@@ -1,6 +1,6 @@
 # Waiving a vetting finding
 
-The [vetting chain](../concepts/vetting.md) blocks approval whenever a connector
+The [vetting chain](../concepts/vetting.md) blocks approval whenever a vetter
 objects. Sometimes the objection is one you have looked at and decided to accept
 — a documented dummy credential in a fixtures directory, a phrase that trips the
 prompt-injection heuristics inside an example. A **waiver** is how you record
@@ -33,11 +33,11 @@ $ curl -sS -X POST localhost:8080/api/snapshots/1/approve | jq
 {
   "status": 409,
   "title": "Vetting chain blocked this snapshot",
-  "detail": "snapshot 1 cannot be approved: the vetting connectors secret-scan did not clear it. Uncovered findings: aws-access-key-id at plugins/hello/DEPLOY.md:5. Record a scoped, expiring waiver for each blocking finding — with a justification and an expiry — and approve again.",
-  "blockingConnectors": ["secret-scan"],
+  "detail": "snapshot 1 cannot be approved: the vetting vetters secret-scan did not clear it. Uncovered findings: aws-access-key-id at plugins/hello/DEPLOY.md:5. Record a scoped, expiring waiver for each blocking finding — with a justification and an expiry — and approve again.",
+  "blockingVetters": ["secret-scan"],
   "uncoveredFindings": [
     {
-      "connector": "secret-scan",
+      "vetter": "secret-scan",
       "ruleId": "aws-access-key-id",
       "location": "plugins/hello/DEPLOY.md:5",
       "severity": "CRITICAL",
@@ -52,7 +52,7 @@ approval will succeed — covering some of them changes nothing.
 
 !!! warning "Read the file before you accept the finding"
 
-    The connectors match shapes, so a finding is a place to look, not a verdict on
+    The vetters match shapes, so a finding is a place to look, not a verdict on
     its own. Open the location and confirm what is actually there. Accepting a
     real credential is how it reaches every developer who installs the skill.
 
@@ -161,7 +161,7 @@ reverts to blocked and a future approval needs a fresh acceptance.
 
 ## Related
 
-- [Vetting — the connector chain](../concepts/vetting.md#waivers-accepted-risks-with-a-scope-and-an-expiry)
+- [Vetting — the vetter chain](../concepts/vetting.md#waivers-accepted-risks-with-a-scope-and-an-expiry)
   — the model and the effective-outcome rule.
 - [Approving and rejecting snapshots](approving-snapshots.md) — the decision the
   waiver unblocks.

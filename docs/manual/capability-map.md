@@ -10,7 +10,7 @@ Every capability area the gateway has today, one row each. If you are asking
 | Source resolution | Resolves a manifest's external plugin sources into the snapshot under address, redirect and resource bounds, producing one composite commit. | Resolution | `GW_INGEST` | [Trust boundaries](concepts/trust-boundaries.md) |
 | Upstream sync | Polls upstream or accepts an inbound forge webhook, and re-ingests when the pinned ref moves. | Inbound webhook | `GW_INGEST` | [Syncing from upstream](guides/upstream-sync.md) |
 | First-party publishing | Accepts an authenticated push to a gateway-hosted marketplace; pushed content enters the same quarantine pipeline. | Publication | `GW_FACADE`, `GW_INGEST` | [Publishing first-party skills](guides/publishing-first-party-skills.md) |
-| Vetting chain | Runs the ordered connector chain — secret scan, prompt injection, skill conformance, license, operator-configured external connectors — fail-closed. | — | `GW_VETTING` | [Vetting](concepts/vetting.md) |
+| Vetting chain | Runs the ordered vetter chain — secret scan, prompt injection, skill conformance, license, operator-configured external vetters — fail-closed. | — | `GW_VETTING` | [Vetting](concepts/vetting.md) |
 | License compliance | Detects a declared license at ingestion and evaluates it against allow and ban lists through the chain. | — | `GW_VETTING` | [License compliance](guides/license-compliance.md) |
 | Waivers | Suppresses a named finding for a scope, with an expiry that restores the block. | — | `GW_VETTING` | [Waiving a finding](guides/waiving-findings.md) |
 | Re-vetting | Re-runs the chain against already-approved snapshots and auto-quarantines a violation. | Approval | `GW_VETTING` | [Re-vetting](guides/re-vetting.md) |
@@ -43,7 +43,7 @@ an open commitment.
 | Parked | Decision |
 | --- | --- |
 | Estate import/export | [ADR 0014 — Estate export: content and its attestations leave together; an import can only fill quarantine](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0014-estate-import-export.md) |
-| Corpus-aware vetting | [ADR 0015 — Corpus questions are approval-gate preconditions, not vetting connectors](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md) |
+| Corpus-aware vetting | [ADR 0015 — Corpus questions are approval-gate preconditions, not vetting vetters](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md) |
 | Invocation metrics | [ADR 0016 — Client invocation telemetry is not ingested; the gateway publishes presence instead](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0016-client-invocation-telemetry-is-not-ingested.md) |
 | Virtual catalogs per team | [ADR 0017 — Virtual catalogs stay derived views: they may subtract, never substitute](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0017-virtual-catalogs-are-derived-views.md) |
 
