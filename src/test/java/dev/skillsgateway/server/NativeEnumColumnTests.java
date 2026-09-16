@@ -189,7 +189,8 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
         WebhookSubscriber subscriber =
                 webhookSubscriberRepository.create(uniqueName("enum-sub"), "http://localhost/hook", "secret", "*");
         try {
-            WebhookDelivery pending = webhookDeliveryRepository.enqueue(subscriber.id(), "snapshot.approved", "{}");
+            WebhookDelivery pending =
+                    webhookDeliveryRepository.enqueue(subscriber.id(), "marketplace.snapshot.approved", "{}");
             assertThat(pending.state()).isEqualTo(WebhookDelivery.PENDING);
 
             webhookDeliveryRepository.markDelivered(pending.id(), 1, 200);

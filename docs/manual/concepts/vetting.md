@@ -390,6 +390,9 @@ findings imply, so an endpoint cannot pass content its evidence condemns. An
 endpoint that needs to answer later returns `PENDING`, which blocks until it is
 resolved.
 
+See [Adding an external vetter](../guides/adding-an-external-vetter.md) for the
+wire contract and a minimal working example.
+
 ## Coverage gaps are reported, not hidden
 
 A file larger than the configured size limit, or one that is not valid UTF-8, is

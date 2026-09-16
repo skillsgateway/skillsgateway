@@ -229,7 +229,7 @@ cases:
     title: Lifecycle events reach only the subscribers that filter for them
     verification: automated-test
     description: |
-      GIVEN two webhook subscribers, one filtering for snapshot.approved and one filtering for snapshot.rejected
+      GIVEN two webhook subscribers, one filtering for marketplace.snapshot.approved and one filtering for marketplace.snapshot.rejected
       WHEN a snapshot is ingested and then approved
       THEN a delivery exists for the approved subscriber carrying the event name, marketplace, snapshot id, and commit SHA, and none exists for the rejected-only subscriber
     revision: "0.1.0"
@@ -2676,3 +2676,22 @@ cases:
       command as its primary copy target, and the held marketplace states on the page and inside the
       wizard that a clone is answered with not-found until a snapshot is approved
     revision: "0.2.0"
+  - id: SVC_GW_WEBHOOK_0008
+    requirement_ids: ["GW_WEBHOOK_0008"]
+    title: Every subscribable event is namespaced, the old spelling is refused, and a stored filter survives the rename
+    verification: automated-test
+    description: |
+      GIVEN a subscriber whose event filter was stored before the namespace existed and a marketplace whose snapshot is approved
+      WHEN the registry of subscribable events is read, a subscriber is registered with a filter naming an event under the old spelling, and the approval fans out
+      THEN every event the registry offers carries the namespace, the old spelling is refused as an unknown event, the stored filter has been rewritten to the namespaced spelling, and the delivery that reaches that subscriber carries the namespaced name in its event header and in its body
+    revision: "0.1.0"
+
+  - id: SVC_GW_WEBHOOK_0009
+    requirement_ids: ["GW_WEBHOOK_0009"]
+    title: Registering a marketplace, changing its trigger and toggling a vetter each announce themselves, and a refused action announces nothing
+    verification: automated-test
+    description: |
+      GIVEN a subscriber whose filter names the marketplace registration, update and vetter-toggle events
+      WHEN a marketplace is registered, its sync mode is changed, a vetter is disabled for it and a vetter is disabled globally, and then a registration with a disallowed url scheme, a sync-mode change for an unknown marketplace and a toggle of an unknown vetter are each attempted
+      THEN the subscriber receives one delivery per successful action, each naming the marketplace, the acting identity, the time and a content-free description of what changed, the global toggle reports the gateway-wide scope rather than a marketplace, no delivery carries the operator-supplied reason, and none of the three refused actions queues any delivery at all
+    revision: "0.1.0"

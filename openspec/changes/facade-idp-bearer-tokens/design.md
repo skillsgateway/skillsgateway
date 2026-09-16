@@ -70,9 +70,9 @@ The ways *this* change can hurt, each paired with the layer that catches it.
 | F4 | A tampered token is accepted | Payload edited, signature left alone — the classic | `tamperedSignatureIsRefused` |
 | F5 | The feature leaks when disabled | A filter registered unconditionally and gated on a boolean deep inside is one refactor away from fail-open | Bean is conditional on the property; `idpTokenIsRefusedWhenDisabled` runs in a context with the feature off |
 | F6 | The bearer path leaks onto `/api/**` | Chains are ordered, and an ordering mistake is invisible | `idpTokenReachesNoAdminEndpoint` |
-| F7 | The 401 challenge changes and every existing git client stops prompting | Adding an authentication mechanism to a Spring Security chain rewrites the entry point by default | Explicit `BasicAuthenticationEntryPoint`; `anonymousFetchStillGetsBasicChallenge` asserts the header verbatim |
+| F7 | The 401 challenge changes and every existing client stops prompting | Adding an authentication mechanism to a Spring Security chain rewrites the entry point by default | The bearer path never touches the entry point (D1), and `the_basic_challenge_is_unchanged_by_the_second_credential_kind` asserts the header over real HTTP rather than trusting that |
 | F8 | A PAT presented as a Bearer is accepted, or vice versa | The two credential kinds share a chain now | `patShapedStringInBearerHeaderIsRefused` |
-| F9 | Attribution silently degrades — a fetch recorded with no principal | `details == null` already means "no token"; adding a second null-details path could mean "no identity" too | `credentialKind` is `NOT NULL` for facade rows; `idpFetchIsAttributedToTheIdpPrincipal` asserts principal and kind together |
+| F9 | Attribution silently degrades — a fetch recorded with no principal | `details == null` already means "no token"; adding a second null-details path could mean "no identity" too | The provider refuses a token whose principal claim is absent or blank, so no authenticated request reaches the ledger without one; `the_ledger_says_which_kind_of_credential_fetched` asserts principal and kind together |
 | F10 | Enabling the feature on a deployment with no pinned issuer | The issuer is optional today and only warns | Startup refusal; `enablingWithoutAPinnedIssuerRefusesStartup` |
 
 F1–F4 and F8 are the adversarial pass: each is a token this code must refuse,
@@ -93,8 +93,15 @@ So: `FacadeBearerAuthenticationFilter` (modelled directly on
 `MachineApiAuthenticationFilter`, which solved the same problem on `/api/**`)
 plus `IdpBearerAuthenticationProvider` wrapping a `JwtDecoder`. The decoder is
 Spring Security's `NimbusJwtDecoder` with the validators named below — the
-validation is a resource server's, only the plumbing is ours. The entry point
-stays `BasicAuthenticationEntryPoint`, stated rather than inherited.
+validation is a resource server's, only the plumbing is ours.
+
+**Revised during implementation.** The design first said the entry point would be
+stated explicitly as a `BasicAuthenticationEntryPoint`. It is not. Restating a
+framework default is a way to get a realm string wrong, and the guarantee that
+matters is observable rather than declared: `httpBasic(Customizer.withDefaults())`
+is left exactly as it was, the bearer filter never short-circuits a refusal, and
+a test asserts the verbatim `WWW-Authenticate` header over real HTTP. The
+assertion is the control; the declaration would only have been a comment.
 
 *Alternative considered:* `oauth2ResourceServer` plus a
 `DelegatingAuthenticationEntryPoint` restoring the Basic challenge. Same amount
@@ -181,11 +188,19 @@ older than per-token attribution" and "an administrative entry". A ledger is
 append-only history; overloading a null is how history stops meaning what it
 said.
 
-So: `CREATE TYPE fetch_log_credential_kind AS ENUM ('pat', 'idp')`, a nullable
-`credential_kind` column (null on every non-facade entry, exactly as `token_id`
-is), folded into `V1__init.sql` per the project's single-migration rule. It
-follows `actor_type`'s precedent in every respect — including that it is
-denormalised on purpose and is not a foreign key.
+So: `CREATE TYPE fetch_log_credential_kind AS ENUM ('pat', 'idp')` and a
+nullable `credential_kind` column (null on every non-facade entry, exactly as
+`token_id` is). It follows `actor_type`'s precedent in every respect — including
+that it is denormalised on purpose and is not a foreign key.
+
+**As `V5__facade_credential_kind.sql`, not folded into `V1__init.sql`.** The
+code-conventions skill still says "single `V1__init.sql` until the owner says
+otherwise", and the repository says otherwise: `V2` and `V3` are both in `main`,
+so the initial migration has shipped and editing it would apply to no existing
+database. `V4` is reserved by the concurrent change for #394. Existing rows are
+deliberately **not** backfilled to `pat`: it would be true today and would also
+be the gateway writing history it did not witness, and an append-only ledger is
+allowed to say it does not know.
 
 Surfaced on the ledger read (`SELECT *`, so `GET /api/audit` carries it) and
 documented in the entry-field table beside `actorType`. The export record
@@ -292,9 +307,9 @@ Each line is one test. `evidence.md` maps them to their names and results.
 
 ## Migration Plan
 
-None required. The column is added to the single `V1__init.sql`, which
-Testcontainers recreates per run and which the project's convention keeps as one
-file until the owner says otherwise. No default changes, nothing is removed, and
-the feature is inert until an operator sets `enabled: true` and pins an issuer.
+One additive migration, `V5__facade_credential_kind.sql`: a new enum type and a
+nullable column on `fetch_log`. Nothing is backfilled, nothing is rewritten and
+no existing row changes. No default changes, nothing is removed, and the feature
+is inert until an operator sets `enabled: true` and pins an issuer.
 Rollback is setting `enabled: false`; the ledger rows already written keep their
 `credential_kind` and remain readable.

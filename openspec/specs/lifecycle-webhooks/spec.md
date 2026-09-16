@@ -45,6 +45,18 @@ The system SHALL implement GW_WEBHOOK_0007.
 #### Scenario: SVC_GW_WEBHOOK_0007
 The system SHALL pass SVC_GW_WEBHOOK_0007.
 
+### Requirement: GW_WEBHOOK_0008
+The system SHALL implement GW_WEBHOOK_0008.
+
+#### Scenario: SVC_GW_WEBHOOK_0008
+The system SHALL pass SVC_GW_WEBHOOK_0008.
+
+### Requirement: GW_WEBHOOK_0009
+The system SHALL implement GW_WEBHOOK_0009.
+
+#### Scenario: SVC_GW_WEBHOOK_0009
+The system SHALL pass SVC_GW_WEBHOOK_0009.
+
 ### Requirement: GW_API_0005
 The system SHALL implement GW_API_0005.
 

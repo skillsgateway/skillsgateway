@@ -176,8 +176,6 @@ CREATE INDEX idx_snapshots_revet_queue ON snapshots (id) WHERE state = 'approved
 -- against values that also look like ordinary identities.
 CREATE TYPE fetch_log_actor_type AS ENUM ('human', 'machine', 'system');
 
-CREATE TYPE fetch_log_credential_kind AS ENUM ('pat', 'idp');
-
 CREATE TABLE fetch_log (
     id BIGSERIAL PRIMARY KEY,
     ts TIMESTAMPTZ NOT NULL,
@@ -201,13 +199,7 @@ CREATE TABLE fetch_log (
     -- Which token authenticated a facade entry (GW_AUTH_0009); NULL on admin entries and on facade
     -- entries older than per-token attribution. Deliberately not a foreign key: the ledger is
     -- append-only history and must outlive any token row.
-    token_id BIGINT,
-    -- What kind of credential authenticated a facade entry (GW_AUTH_0041); NULL on every entry that no
-    -- credential authenticated, which is every administrative and system entry. It cannot be
-    -- derived from `token_id`: an identity-provider fetch names no token row, and so does an
-    -- administrative entry, and so does a facade entry written before per-token attribution
-    -- existed. Denormalised for the same reason `actor_type` is.
-    credential_kind fetch_log_credential_kind
+    token_id BIGINT
 );
 
 -- The staleness read's query (GW_OBSERVABILITY_0002): the latest content-transferring fetch per

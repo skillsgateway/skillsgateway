@@ -208,7 +208,7 @@ public class VettingService {
     /**
      * The approval-pending announcement (GW_WEBHOOK_0006): a finished chain run over a snapshot that is
      * still held is what "waiting for a person" means concretely, so it is said as its own event
-     * rather than left for a receiver to infer from {@code snapshot.vetted} — which also fires for
+     * rather than left for a receiver to infer from {@code marketplace.snapshot.vetted} — which also fires for
      * runs against approved content.
      *
      * <p>The guard is the snapshot's state as the chain was handed it, which the chain is

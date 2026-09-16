@@ -116,6 +116,7 @@ nav:
       - Syncing from upstream automatically: guides/upstream-sync.md
       - Approving and rejecting snapshots: guides/approving-snapshots.md
       - Waiving a vetting finding: guides/waiving-findings.md
+      - Adding an external vetter: guides/adding-an-external-vetter.md
       - License compliance for skills: guides/license-compliance.md
       - Re-vetting approved content: guides/re-vetting.md
       - Consuming approved skills: guides/consuming-skills.md

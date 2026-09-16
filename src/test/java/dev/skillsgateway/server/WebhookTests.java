@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,9 +12,14 @@ import com.jayway.jsonpath.JsonPath;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
+import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.WebhookDelivery;
 import dev.skillsgateway.server.persistence.WebhookDeliveryRepository;
+import dev.skillsgateway.server.persistence.WebhookSubscriber;
+import dev.skillsgateway.server.persistence.WebhookSubscriberRepository;
 import dev.skillsgateway.server.vetting.RevetService;
+import dev.skillsgateway.server.vetting.Vetter;
+import dev.skillsgateway.server.vetting.VettingService;
 import dev.skillsgateway.server.webhook.WebhookDispatcher;
 import dev.skillsgateway.server.webhook.WebhookEvent;
 import dev.skillsgateway.server.webhook.WebhookService;
@@ -29,10 +35,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
  * Lifecycle event webhooks: filtering (GW_WEBHOOK_0001), signing (GW_WEBHOOK_0002), retry with backoff (GW_WEBHOOK_0003),
@@ -54,6 +63,30 @@ class WebhookTests extends AbstractGatewayTest {
     private static final List<String> PAYLOAD_FIELDS =
             List.of("event", "occurredAt", "marketplace", "snapshotId", "sha", "state", "actor", "vetting");
 
+    /** The marketplace payload's top-level field set: the four shared fields, plus what changed. */
+    private static final List<String> MARKETPLACE_PAYLOAD_FIELDS =
+            List.of("event", "occurredAt", "marketplace", "actor", "detail");
+
+    /** The spellings the namespace replaced; none of them may still be offered or accepted. */
+    private static final List<String> LEGACY_EVENT_NAMES = List.of(
+            "snapshot.ingested",
+            "snapshot.approved",
+            "snapshot.rejected",
+            "snapshot.soft_deleted",
+            "snapshot.restored",
+            "snapshot.vetted",
+            "snapshot.revet_violation",
+            "snapshot.revoked",
+            "snapshot.approval_pending");
+
+    private static final String FILTER_MIGRATION = "db/migration/V3__namespace_webhook_events.sql";
+
+    private static final String FILTER_MIGRATION_PREDICATE = "WHERE events LIKE '%snapshot.%'";
+
+    private static final String TOGGLE_REASON_SCOPED = "vendor keys, expected";
+
+    private static final String TOGGLE_REASON_GLOBAL = "kept on across the estate";
+
     /** The vetting summary's field set — counts, names and identifiers, and nothing else. */
     private static final List<String> SUMMARY_FIELDS =
             List.of("runId", "outcome", "recordedOutcome", "blockingVetters", "uncoveredFindings", "waivedFindings");
@@ -72,6 +105,15 @@ class WebhookTests extends AbstractGatewayTest {
 
     @Autowired
     private RevetService revetService;
+
+    @Autowired
+    private WebhookSubscriberRepository subscriberRepository;
+
+    @Autowired
+    private VettingService vettingService;
+
+    @Autowired
+    private JdbcClient jdbc;
 
     /**
      * These tests drive the real dispatch pass, which takes the oldest {@code batchSize} due
@@ -166,7 +208,11 @@ class WebhookTests extends AbstractGatewayTest {
         assertThat(served).doesNotContain(WebhookEvent.AUDIT_EXPORT);
         // Every event the dispatcher can emit is offerable: a filter cannot be composed for an
         // event the registry hides, so a gap here is an event no subscriber could ever select.
-        assertThat(served).contains("snapshot.ingested", "snapshot.approved", "snapshot.revoked");
+        assertThat(served)
+                .contains(
+                        "marketplace.snapshot.ingested",
+                        "marketplace.snapshot.approved",
+                        "marketplace.snapshot.revoked");
     }
 
     /**
@@ -181,8 +227,8 @@ class WebhookTests extends AbstractGatewayTest {
     void a_held_snapshot_announces_itself_only_to_the_subscribers_that_asked() throws Exception {
         long pendingSubscriber = createSubscriber(
                 uniqueName("pending"), "https://receiver.invalid/hook", WebhookEvent.SNAPSHOT_APPROVAL_PENDING, null);
-        long elsewhereSubscriber =
-                createSubscriber(uniqueName("elsewhere"), "https://receiver.invalid/hook", "snapshot.rejected", null);
+        long elsewhereSubscriber = createSubscriber(
+                uniqueName("elsewhere"), "https://receiver.invalid/hook", "marketplace.snapshot.rejected", null);
 
         String served = mockMvc.perform(get("/api/webhooks/events").with(oidcLogin()))
                 .andExpect(status().isOk())
@@ -264,10 +310,10 @@ class WebhookTests extends AbstractGatewayTest {
     void lifecycleEventsReachOnlySubscribersFilteringForThem() throws Exception {
         String marketplace = uniqueName("corp");
         Path upstream = createUpstream(DEFAULT_MANIFEST);
-        long approvedSubscriber =
-                createSubscriber(uniqueName("approved"), "https://receiver.invalid/hook", "snapshot.approved", null);
-        long rejectedSubscriber =
-                createSubscriber(uniqueName("rejected"), "https://receiver.invalid/hook", "snapshot.rejected", null);
+        long approvedSubscriber = createSubscriber(
+                uniqueName("approved"), "https://receiver.invalid/hook", "marketplace.snapshot.approved", null);
+        long rejectedSubscriber = createSubscriber(
+                uniqueName("rejected"), "https://receiver.invalid/hook", "marketplace.snapshot.rejected", null);
 
         mockMvc.perform(post("/api/marketplaces")
                         .with(oidcLogin())
@@ -289,7 +335,7 @@ class WebhookTests extends AbstractGatewayTest {
         List<WebhookDelivery> forApproved = deliveryRepository.listBySubscriber(approvedSubscriber);
         assertThat(forApproved).hasSize(1);
         WebhookDelivery delivery = forApproved.getFirst();
-        assertThat(delivery.event()).isEqualTo("snapshot.approved");
+        assertThat(delivery.event()).isEqualTo("marketplace.snapshot.approved");
         assertThat(delivery.state()).isEqualTo(WebhookDelivery.PENDING);
         assertThat(delivery.payload())
                 .contains("\"marketplace\":\"%s\"".formatted(marketplace))
@@ -308,7 +354,7 @@ class WebhookTests extends AbstractGatewayTest {
             long subscriberId = createSubscriber(name, receiver.url(), "*", secret);
             assertThat(secret.toString()).startsWith("whsec_");
 
-            webhookService.emit("snapshot.approved", "corp", 42L, "abc123", "approved", "alice");
+            webhookService.emit("marketplace.snapshot.approved", "corp", 42L, "abc123", "approved", "alice");
             assertThat(webhookDispatcher.dispatchDue()).isPositive();
 
             assertThat(receiver.received).hasSize(1);
@@ -316,7 +362,7 @@ class WebhookTests extends AbstractGatewayTest {
             String expected = new WebhookSigner().sign(secret.toString(), request.body());
             assertThat(request.headers().get(WebhookSigner.SIGNATURE_HEADER)).isEqualTo(expected);
             assertThat(expected).startsWith("sha256=");
-            assertThat(request.headers().get(WebhookSigner.EVENT_HEADER)).isEqualTo("snapshot.approved");
+            assertThat(request.headers().get(WebhookSigner.EVENT_HEADER)).isEqualTo("marketplace.snapshot.approved");
             assertThat(request.headers().get(WebhookSigner.DELIVERY_HEADER)).isNotBlank();
 
             List<WebhookDelivery> deliveries = deliveryRepository.listBySubscriber(subscriberId);
@@ -339,7 +385,7 @@ class WebhookTests extends AbstractGatewayTest {
     void failingDeliveryIsRetriedWithBackoffAndFinallyFails() throws Exception {
         try (Receiver receiver = new Receiver(500)) {
             long subscriberId = createSubscriber(uniqueName("failing"), receiver.url(), "*", null);
-            webhookService.emit("snapshot.ingested", "corp", 7L, "def456", "held", "alice");
+            webhookService.emit("marketplace.snapshot.ingested", "corp", 7L, "def456", "held", "alice");
 
             WebhookDelivery first = dispatchOnce(subscriberId, 1);
             waitUntilDue(first);
@@ -381,5 +427,249 @@ class WebhookTests extends AbstractGatewayTest {
         if (millis > 0) {
             Thread.sleep(millis + 50);
         }
+    }
+
+    /**
+     * The namespace (GW_WEBHOOK_0008), from all four sides it can be observed from: the vocabulary the
+     * registry offers, the filter validator that refuses the old spelling, the migration that
+     * rewrites a filter stored under it, and the delivery that carries the new name in its header
+     * and its body.
+     *
+     * <p>The migration half is the one that matters most, and it is the least visible: a filter is
+     * an exact-match string, so a subscriber left naming an old spelling stops receiving anything
+     * and nothing reports that it has.
+     */
+    @Test
+    @SVCs({"SVC_GW_WEBHOOK_0008"})
+    void every_subscribable_event_is_namespaced_and_a_filter_stored_under_the_old_names_is_rewritten()
+            throws Exception {
+        String served = mockMvc.perform(get("/api/webhooks/events").with(oidcLogin()))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        List<String> offered = JsonPath.read(served, "$.events");
+        assertThat(offered)
+                .as("every subscribable event lives under the subject it is about")
+                .isNotEmpty()
+                .allSatisfy(event -> assertThat(event).startsWith("marketplace."));
+        assertThat(offered).doesNotContainAnyElementsOf(LEGACY_EVENT_NAMES);
+
+        // An old spelling is refused, not silently accepted and then never matched.
+        mockMvc.perform(post("/api/webhooks")
+                        .with(oidcLogin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"%s\",\"url\":\"https://receiver.invalid/hook\",\"events\":\"%s\"}"
+                                .formatted(uniqueName("legacy"), "snapshot.approved")))
+                .andExpect(status().isBadRequest());
+
+        // Subscribers whose filters predate the namespace, written straight to the table because
+        // the API would now refuse them, and then put through the shipped migration statement.
+        WebhookSubscriber stale = subscriberRepository.create(
+                uniqueName("stale"),
+                "https://receiver.invalid/hook",
+                "whsec_stale",
+                "snapshot.approved,snapshot.revoked");
+        WebhookSubscriber wildcard = subscriberRepository.create(
+                uniqueName("wild"), "https://receiver.invalid/hook", "whsec_wild", WebhookSubscriber.ALL_EVENTS);
+        WebhookSubscriber sink = subscriberRepository.create(
+                uniqueName("sink"), "https://receiver.invalid/hook", "whsec_sink", WebhookEvent.AUDIT_EXPORT);
+
+        try {
+            rewriteStoredFilters(List.of(stale.id(), wildcard.id(), sink.id()));
+
+            WebhookSubscriber rewritten =
+                    subscriberRepository.findById(stale.id()).orElseThrow();
+            assertThat(rewritten.events())
+                    .isEqualTo(WebhookEvent.SNAPSHOT_APPROVED + "," + WebhookEvent.SNAPSHOT_REVOKED);
+            assertThat(rewritten.subscribesTo(WebhookEvent.SNAPSHOT_APPROVED))
+                    .as("the rewritten filter still matches the event it was registered for")
+                    .isTrue();
+            assertThat(subscriberRepository
+                            .findById(wildcard.id())
+                            .orElseThrow()
+                            .events())
+                    .as("a wildcard filter names no event and is left alone")
+                    .isEqualTo(WebhookSubscriber.ALL_EVENTS);
+            assertThat(subscriberRepository.findById(sink.id()).orElseThrow().events())
+                    .as("audit.export is about the ledger, not a marketplace, and is not renamed")
+                    .isEqualTo(WebhookEvent.AUDIT_EXPORT);
+
+            // And the fourth side: what actually arrives carries the namespaced name. The approval
+            // goes through the API because that is where the emit lives.
+            Registered registered = registerAndIngest(uniqueName("nshook"), createUpstream(DEFAULT_MANIFEST));
+            mockMvc.perform(post("/api/snapshots/%d/approve"
+                                    .formatted(registered.snapshot().id()))
+                            .with(oidcLogin()))
+                    .andExpect(status().isOk());
+
+            List<WebhookDelivery> delivered = deliveryRepository.listBySubscriber(stale.id());
+            assertThat(delivered).isNotEmpty();
+            assertThat(delivered.getFirst().event()).isEqualTo(WebhookEvent.SNAPSHOT_APPROVED);
+            assertThat(delivered.getFirst().payload())
+                    .contains("\"event\":\"%s\"".formatted(WebhookEvent.SNAPSHOT_APPROVED));
+        } finally {
+            // The wildcard subscriber would otherwise collect a delivery for every event the rest
+            // of the suite emits and starve the shared dispatch batch — the hazard this class's
+            // @BeforeEach guards against.
+            subscriberRepository.delete(stale.id());
+            subscriberRepository.delete(wildcard.id());
+            subscriberRepository.delete(sink.id());
+        }
+    }
+
+    /**
+     * The marketplace-level events (GW_WEBHOOK_0009). One arrangement, because the three are the same
+     * claim: the emit sits beside the ledger write on the success path, so every successful
+     * administrative act announces itself exactly once and every refused one announces nothing.
+     *
+     * <p>The negative half is the load-bearing one. A receiver that acts on a registration the
+     * gateway refused is worse than one that hears nothing at all.
+     */
+    @Test
+    @SVCs({"SVC_GW_WEBHOOK_0009"})
+    void registering_updating_and_toggling_announce_themselves_and_a_refused_action_announces_nothing()
+            throws Exception {
+        long subscriber = createSubscriber(
+                uniqueName("estate"),
+                "https://receiver.invalid/hook",
+                String.join(
+                        ",",
+                        WebhookEvent.MARKETPLACE_REGISTERED,
+                        WebhookEvent.MARKETPLACE_UPDATED,
+                        WebhookEvent.MARKETPLACE_VETTER_TOGGLED),
+                null);
+
+        String marketplace = uniqueName("estatehook");
+        Path upstream = createUpstream(DEFAULT_MANIFEST);
+        mockMvc.perform(post("/api/marketplaces")
+                        .with(oidcLogin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"%s\",\"url\":\"%s\"}"
+                                .formatted(marketplace, upstream.toUri().toString())))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(put("/api/marketplaces/{name}/sync", marketplace)
+                        .with(oidcLogin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"mode\":\"scheduled\"}"))
+                .andExpect(status().isOk());
+
+        // The global toggle is deliberately enabled=true: it changes nothing about what runs, so it
+        // cannot leak into another test's expectations, while still being a gateway-wide act whose
+        // scope the event has to report as "-" rather than as a marketplace.
+        List<String> chain = vettingService.vetters().stream().map(Vetter::name).toList();
+        String globalVetter = chain.getFirst();
+        String scopedVetter = chain.get(1);
+        toggleVetter(scopedVetter, marketplace, false, TOGGLE_REASON_SCOPED);
+        toggleVetter(globalVetter, null, true, TOGGLE_REASON_GLOBAL);
+
+        List<WebhookDelivery> announced = deliveryRepository.listBySubscriber(subscriber);
+        assertThat(announced.stream().map(WebhookDelivery::event))
+                .containsExactlyInAnyOrder(
+                        WebhookEvent.MARKETPLACE_REGISTERED,
+                        WebhookEvent.MARKETPLACE_UPDATED,
+                        WebhookEvent.MARKETPLACE_VETTER_TOGGLED,
+                        WebhookEvent.MARKETPLACE_VETTER_TOGGLED);
+
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> registeredBody =
+                mapper.readValue(payloadOf(announced, WebhookEvent.MARKETPLACE_REGISTERED), Map.class);
+        // Exact, not "contains": the payload is a contract, so an added field is a decision too.
+        assertThat(registeredBody).containsOnlyKeys(MARKETPLACE_PAYLOAD_FIELDS.toArray(String[]::new));
+        assertThat(registeredBody.get("event")).isEqualTo(WebhookEvent.MARKETPLACE_REGISTERED);
+        assertThat(registeredBody.get("marketplace")).isEqualTo(marketplace);
+        assertThat(registeredBody.get("detail")).isEqualTo("origin=" + Marketplace.ORIGIN_UPSTREAM);
+        assertThat(String.valueOf(registeredBody.get("actor"))).isNotBlank();
+        assertThat(String.valueOf(registeredBody.get("occurredAt"))).isNotBlank();
+
+        Map<String, Object> updatedBody =
+                mapper.readValue(payloadOf(announced, WebhookEvent.MARKETPLACE_UPDATED), Map.class);
+        assertThat(updatedBody).containsOnlyKeys(MARKETPLACE_PAYLOAD_FIELDS.toArray(String[]::new));
+        assertThat(updatedBody.get("marketplace")).isEqualTo(marketplace);
+        assertThat(updatedBody.get("detail")).isEqualTo("mode=scheduled");
+
+        List<String> toggles = announced.stream()
+                .filter(delivery -> WebhookEvent.MARKETPLACE_VETTER_TOGGLED.equals(delivery.event()))
+                .map(WebhookDelivery::payload)
+                .toList();
+        assertThat(toggles)
+                .anySatisfy(payload -> assertThat(payload)
+                        .contains("\"marketplace\":\"%s\"".formatted(marketplace))
+                        .contains("vetter=%s".formatted(scopedVetter))
+                        .contains("enabled=false"))
+                .anySatisfy(payload -> assertThat(payload)
+                        .as("a gateway-wide toggle reports the gateway, not a marketplace")
+                        .contains("\"marketplace\":\"-\"")
+                        .contains("scope=global"));
+        assertThat(toggles)
+                .as("the operator's reason is free text and stays in the ledger; the event announces")
+                .allSatisfy(payload ->
+                        assertThat(payload).doesNotContain(TOGGLE_REASON_SCOPED).doesNotContain(TOGGLE_REASON_GLOBAL));
+
+        int queued = announced.size();
+
+        // A registration refused by the scheme allowlist, a sync-mode change for a marketplace that
+        // does not exist, and a toggle of a vetter that does not exist.
+        mockMvc.perform(post("/api/marketplaces")
+                        .with(oidcLogin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"%s\",\"url\":\"ftp://evil.invalid/repo.git\"}"
+                                .formatted(uniqueName("ftp"))))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(put("/api/marketplaces/{name}/sync", uniqueName("ghost"))
+                        .with(oidcLogin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"mode\":\"scheduled\"}"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(put("/api/vetting/vetters/{name}/toggle", "no-such-vetter")
+                        .with(oidcLogin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"enabled\": false}"))
+                .andExpect(status().isUnprocessableEntity());
+
+        assertThat(deliveryRepository.listBySubscriber(subscriber))
+                .as("a refused administrative action queues nothing")
+                .hasSize(queued);
+
+        // Leave no subscriber behind to collect the rest of the suite's events (see @BeforeEach).
+        subscriberRepository.delete(subscriber);
+    }
+
+    private static String payloadOf(List<WebhookDelivery> deliveries, String event) {
+        return deliveries.stream()
+                .filter(delivery -> event.equals(delivery.event()))
+                .map(WebhookDelivery::payload)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("no delivery of " + event));
+    }
+
+    private void toggleVetter(String vetter, String marketplace, boolean enabled, String reason) throws Exception {
+        String body = marketplace == null
+                ? "{\"enabled\": %s, \"reason\": \"%s\"}".formatted(enabled, reason)
+                : "{\"enabled\": %s, \"marketplace\": \"%s\", \"reason\": \"%s\"}"
+                        .formatted(enabled, marketplace, reason);
+        mockMvc.perform(put("/api/vetting/vetters/{name}/toggle", vetter)
+                        .with(oidcLogin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk());
+    }
+
+    /**
+     * Runs the shipped V3 statement over the named subscribers only. The migration itself rewrites
+     * every row once, at startup; re-running it unscoped against an already-migrated database would
+     * prefix the already-prefixed rows a second time, so the test narrows the predicate rather than
+     * copying the statement and letting the two drift.
+     */
+    private void rewriteStoredFilters(List<Long> subscriberIds) throws IOException {
+        String migration = new String(
+                new ClassPathResource(FILTER_MIGRATION).getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        assertThat(migration)
+                .as("the migration this test executes still carries the predicate it narrows")
+                .contains(FILTER_MIGRATION_PREDICATE);
+        String ids = subscriberIds.stream().map(String::valueOf).collect(Collectors.joining(","));
+        jdbc.sql(migration.replace(FILTER_MIGRATION_PREDICATE, "WHERE id IN (%s)".formatted(ids)))
+                .update();
     }
 }

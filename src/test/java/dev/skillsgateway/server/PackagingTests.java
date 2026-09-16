@@ -374,7 +374,7 @@ class PackagingTests {
     @Test
     @SVCs({"SVC_GW_RELEASE_0002"})
     void releaseWorkflowCarriesTheMultiArchPublicationContract() throws IOException {
-        Path file = REPO_ROOT.resolve(".github/workflows/native.yml");
+        Path file = REPO_ROOT.resolve(".github/workflows/container-image.yml");
         Map<String, Object> wf = parse(file);
         String body = Files.readString(file);
 

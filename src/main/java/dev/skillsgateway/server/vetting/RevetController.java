@@ -46,7 +46,7 @@ public class RevetController {
             description = "Runs the vetting chain again over the snapshot's pinned content and records a new run"
                     + " with trigger revet-manual. If the run's effective outcome — after the waivers active"
                     + " right now — objects to the content, the violation is written to the ledger and announced"
-                    + " as snapshot.revet_violation. In enforce mode the snapshot is then revoked and its"
+                    + " as marketplace.snapshot.revet_violation. In enforce mode the snapshot is then revoked and its"
                     + " published refs are removed; in warn mode, the default, publication is untouched. A run"
                     + " that only blocks because a vetter errored or has not answered is recorded as"
                     + " inconclusive and never revokes anything.")

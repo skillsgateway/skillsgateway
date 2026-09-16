@@ -100,9 +100,9 @@ mkdocs build --strict                   # docs site (pip install -r docs/require
 ```
 
 CI enforces the same gates per PR (`.github/workflows/ci.yml`) plus a container
-image build and smoke test on main (`native.yml`, named for the artifact it used
-to produce). For speed, CI splits them across parallel
-jobs: build + unit gates, the Storybook story tests, and the portal e2e run
+image build and smoke test on main (`container-image.yml`). For speed, CI
+splits them across parallel jobs: build + unit gates, the Storybook story
+tests, and the portal e2e run
 concurrently (the e2e job packages its own jar with `-DskipTests
 -Dskip.ui.verify=true`; the story tests get their own runner because a real
 chromium starves when it shares two cores with the Java build, #103), and a

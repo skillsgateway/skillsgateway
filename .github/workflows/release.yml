@@ -6,7 +6,7 @@ name: Release
 #
 # Before this existed, a release was two `tags:` triggers that happened to watch
 # for the same tag: docs.yml published the version and moved the `stable` alias,
-# native.yml pushed a GHCR tag, and nothing ordered them, gated them, or checked
+# container-image.yml pushed a GHCR tag, and nothing ordered them, gated them, or checked
 # that the tag was even reachable from main. A failed image build left a tag and
 # a half-published release standing.
 #
@@ -160,7 +160,7 @@ jobs:
   # on main, then pushed with the released version as its tag.
   image:
     needs: [prepare, tag]
-    uses: ./.github/workflows/native.yml
+    uses: ./.github/workflows/container-image.yml
     permissions:
       contents: read
       packages: write
