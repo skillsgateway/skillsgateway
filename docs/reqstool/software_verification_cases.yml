@@ -2694,6 +2694,45 @@ cases:
       command as its primary copy target, and the held marketplace states on the page and inside the
       wizard that a clone is answered with not-found until a snapshot is approved
     revision: "0.2.0"
+
+  - id: SVC_GW_AUTH_0044
+    requirement_ids: ["GW_AUTH_0044"]
+    title: The user menu names the identity and every role with where it came from
+    verification: automated-test
+    description: |
+      GIVEN portal sessions holding roles from configuration, from a stored grant, from an
+      identity-provider claim and from the development escape hatch, a session holding no role at
+      all, and a session whose membership claim the provider truncated
+      WHEN each session opens the signed-in user's menu
+      THEN the menu names the user, lists each role with the marketplace it is scoped to and the
+      origin of the role in plain words, states the no-role case together with what that session may
+      still do, and states that the list may be incomplete where the claim was truncated
+    revision: "0.2.0"
+
+  - id: SVC_GW_AUTH_0045
+    requirement_ids: ["GW_AUTH_0045"]
+    title: Signing out ends the session, and the escape hatch says there is none
+    verification: automated-test
+    description: |
+      GIVEN an authenticated portal session, and a portal running with the development
+      authentication escape hatch open
+      WHEN the user opens the signed-in user's menu and signs out, and when the escape-hatch session
+      opens the same menu
+      THEN the session is ended and the browser is no longer authenticated, and the escape-hatch
+      menu offers no sign-out control but states that there is no session to end
+    revision: "0.2.0"
+
+  - id: SVC_GW_AUTH_0046
+    requirement_ids: ["GW_AUTH_0046"]
+    title: Tokens are reached from the user menu and the existing address still resolves
+    verification: automated-test
+    description: |
+      GIVEN an authenticated portal session
+      WHEN the user opens the signed-in user's menu and follows it to their tokens, and when the
+      token page's existing address is opened directly
+      THEN both arrive at the token self-service page, and no estate-wide navigation entry offers it
+    revision: "0.2.0"
+
   - id: SVC_GW_WEBHOOK_0008
     requirement_ids: ["GW_WEBHOOK_0008"]
     title: Every subscribable event is namespaced, the old spelling is refused, and a stored filter survives the rename

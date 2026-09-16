@@ -63,8 +63,8 @@ Git clients authenticate with PATs, not with your portal session.
 
 === "Portal"
 
-    **Access tokens** → enter a name → **Create token**. The value appears in a
-    dialog with a copy button.
+    Open the user menu (top right) → **Your tokens** → enter a name → **Create
+    token**. The value appears in a dialog with a copy button.
 
 === "API"
 

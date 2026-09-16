@@ -15,23 +15,42 @@ A fixed sidebar, grouped:
 | Governance | Audit log | [`/audit`](#audit-log) |
 | Governance | Adoption | [`/adoption`](#adoption) |
 | Governance | Webhooks | [`/webhooks`](#webhooks) |
-| Access | Access tokens | [`/tokens`](#access-tokens) |
 | Tools | API reference | `/docs` — the Scalar API reference, not a portal route |
 
 [Marketplace detail](#marketplace-detail) is reached by clicking a marketplace,
-not from the sidebar.
+not from the sidebar. [Access tokens](#access-tokens) is a per-user concern, not
+estate-wide navigation — it is reached from the user menu, described next, and
+from the Overview page's Access tokens card; `/tokens` remains a resolvable
+address for existing bookmarks and links.
 
-The sidebar footer shows the signed-in username from `GET /api/me`. The header
-carries a breadcrumb and a theme toggle. The toggle is three-state and cycles
-**system → light → dark**: it defaults to _system_ (follow the operating
-system's appearance), and its icon shows the chosen state — a monitor for
-system, a sun for light, a moon for dark. The choice is remembered in the
-browser (`localStorage`); _system_ tracks the OS setting as it changes.
+## User menu
 
-!!! note "There is no logout control"
+The header's breadcrumb sits opposite a menu named after the signed-in user
+(`GET /api/me`). Opening it shows:
 
-    Ending a session means clearing the session cookie or logging out at the
-    identity provider.
+- **Signed in as** the username.
+- **Roles** — one line per effective role the session holds, said in the
+  reader's own terms rather than the API's wire values: `admin — from your
+  identity provider`, `approver of acme-skills — granted in the portal`, and so
+  on for a role sourced from configuration or from the local development
+  authentication escape hatch. A session holding no role is told so, together
+  with what it can still do (read the portal, manage its own access tokens),
+  rather than shown an empty list. If the identity provider truncated the
+  membership claim, a line says the role list may be incomplete.
+- The **theme control** — three-state, cycling **system → light → dark**: it
+  defaults to _system_ (follow the operating system's appearance), and its icon
+  and label state the chosen mode — a monitor for system, a sun for light, a
+  moon for dark. The choice is remembered in the browser (`localStorage`);
+  _system_ tracks the OS setting as it changes.
+- **Your tokens**, linking to [Access tokens](#access-tokens).
+- **Sign out**, which ends the browser session and returns to a fresh login.
+  Under the `skills-gateway.dev-insecure-auth` development escape hatch there is
+  no session to end, so the menu states that instead of offering a control that
+  would appear to fail.
+
+The menu only reports what the session holds; it never hides or disables a
+control by role — the server is the sole authority on what a request may do,
+and refuses what it must regardless of what the menu shows.
 
 ## Conventions across pages
 

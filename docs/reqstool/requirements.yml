@@ -1907,6 +1907,31 @@ requirements:
     rationale: "The wizard is the shortest path from an approved snapshot to a working client, and it was reachable only through an unremarkable control competing with the page heading. The held case is worse than undiscoverable: the wizard composes a clone command that cannot work yet, and nothing on the screen says why, so the consumer reads a correct refusal as a broken gateway."
     categories: ["interaction-capability"]
     revision: 0.2.0
+
+  - id: GW_AUTH_0044
+    title: Portal user menu with identity and effective roles
+    significance: shall
+    description: "The portal shall present the signed-in identity as a menu reachable from every page, stating the username, each effective role the session holds with the marketplace it is scoped to where it has one, and where that role came from, expressed in the reader's own terms rather than the wire vocabulary. It shall state a session holding no role as such, together with what that session may still do, and shall state that the list may be incomplete when the identity provider truncated the membership claim. The menu shall report; it shall not gate, hide or disable any control by role."
+    rationale: "A session refused a mutation cannot tell from the portal whether it lacks the role, holds it from a source that was revoked, or is seeing a claim the provider dropped; the answer is already computed and already on the wire, so requiring the reader to open the deployment's configuration to find it is a gap in the interface, not in the model. Reporting rather than gating keeps the server the single authority on what a session may do."
+    categories: ["interaction-capability", "security"]
+    revision: 0.2.0
+
+  - id: GW_AUTH_0045
+    title: Portal sign-out ends the browser session
+    significance: shall
+    description: "The portal shall offer a control that ends the browser session and returns the browser to a state where it is not authenticated, and shall state, where the deployment runs with the development authentication escape hatch open, that there is no session to end rather than offering a control that has no effect."
+    rationale: "The session cookie is the portal's only credential, and until now the sole way to surrender it was to clear it by hand or to log out at the identity provider — an operation on a shared or borrowed machine that a user should not have to know a browser's preferences to perform. Under the escape hatch the principal is invented per request, so a sign-out control there would appear to fail; saying so is the honest surface."
+    categories: ["interaction-capability", "security"]
+    revision: 0.2.0
+
+  - id: GW_AUTH_0046
+    title: Personal access tokens are a per-user surface reached from the user menu
+    significance: shall
+    description: "The portal shall present personal access token self-service as a per-user concern reached from the signed-in user's own menu rather than as an entry in the estate-wide navigation, and shall keep the page's existing address resolvable so that an existing link to it continues to work."
+    rationale: "A token is scoped to its principal server-side and is the one thing a session holding no role can still create, so listing it beside marketplaces and the audit ledger misfiles a personal surface as an estate-wide one. The address has been published in the documentation and bookmarked, and moving the entry point is not a reason to break it."
+    categories: ["interaction-capability", "compatibility"]
+    revision: 0.2.0
+
   - id: GW_WEBHOOK_0008
     title: Namespaced lifecycle event names
     significance: shall

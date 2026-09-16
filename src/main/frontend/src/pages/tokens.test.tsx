@@ -1,7 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { expect, test } from "vitest";
+import { server } from "@/test/msw-server";
 import { TokensPage } from "./tokens";
 
 function renderPage() {
@@ -55,4 +57,28 @@ test("a_token_that_has_never_authenticated_says_never", async () => {
   renderPage();
   const unused = await screen.findByRole("row", { name: /spare-laptop/ });
   expect(within(unused).getByText("never")).toBeInTheDocument();
+});
+
+/**
+ * The persona a role-less session is: tokens are scoped per principal server-side, so this
+ * page is the whole of what it can do here. An empty list is a stated state, and the create
+ * form is still offered — nothing about the page is gated on holding a role.
+ */
+test("a_session_with_no_role_sees_an_empty_token_list_and_can_still_create_one", async () => {
+  server.use(http.get("/api/tokens", () => HttpResponse.json([])));
+  renderPage();
+  expect(await screen.findByText("No tokens yet.")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Create token" })).toBeInTheDocument();
+});
+
+/** A refused or failed read is an error the reader can see, not an empty list. */
+test("a_failed_token_read_renders_the_servers_reason", async () => {
+  server.use(
+    http.get("/api/tokens", () =>
+      HttpResponse.json({ detail: "Token store unavailable" }, { status: 503 }),
+    ),
+  );
+  renderPage();
+  expect(await screen.findByRole("alert")).toHaveTextContent("Token store unavailable");
+  expect(screen.queryByText("No tokens yet.")).not.toBeInTheDocument();
 });
