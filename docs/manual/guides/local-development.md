@@ -344,6 +344,16 @@ Raising the number is a legitimate answer when a posture genuinely needs its
 own context; it is a deliberate edit with the reason in the commit message, not
 a formality.
 
+**Measured.** The surefire `spring.test.context.cache.maxSize` bound (separate
+from the `ContextBudgetTests` count above) was `8` from #302 until it was
+measured, not tuned, against 25 distinct contexts on 2026-09-16: `8` forces 4
+extra context rebuilds beyond the 25 unavoidable ones and a 6:46 run; `16` and
+`32` both eliminate the rebuilds (25 misses, the floor) at 5:44 and 5:00 — the
+two are equal on rebuild count, so that further drop is noise. The bound is now
+`16`: it gets the full speedup and still caps how many of the 25 contexts can
+be resident at once, rather than letting all of them stay live simultaneously,
+which is the condition that exhausted CI's heap in #302.
+
 ### Running the gates on Podman
 
 Podman is a supported way to run the container-backed gates, but not an
