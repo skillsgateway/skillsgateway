@@ -168,8 +168,13 @@ flowchart LR
 
 - **Git façade.** A read-only git smart-HTTP server serving (a) generated
   *virtual marketplaces* and (b) mirrored, pinned plugin repos, at stable
-  internal URLs. Authenticated via SSO-issued tokens (standard git credential
-  helper flow). This is the only surface end users ever talk to.
+  internal URLs. Authenticated via hashed personal access tokens over the
+  standard git credential-helper flow and, where a deployment enables it, an
+  identity-provider bearer token from the same provider the portal trusts
+  (GW_AUTH_0040, ADR 0019) — so a client that speaks generic OAuth can authenticate
+  against SSO with no token minted anywhere. Either way the fetch is attributed
+  to an identity and the ledger records which kind of credential it was. This is
+  the only surface end users ever talk to.
 - **Machine API chain.** A stateless sibling of the façade's chain for
   `/api/**` requests carrying `Authorization: Bearer`, so infrastructure-as-code
   and CI can configure the gateway with no browser. It authenticates only a
@@ -541,7 +546,11 @@ reference transitions at all — see
   team entitlements are deferred. SSO-derived short-lived credentials are
   *implemented* (GW_AUTH_0018): a git credential minted from a browser session with
   a gateway-set lifetime the holder cannot extend, no publication authority,
-  and a session-derived mark on the ledger — the identity half of ADR 0008,
+  and a session-derived mark on the ledger. Extended further by GW_AUTH_0040–GW_AUTH_0042
+  (ADR 0019): the facade optionally accepts an identity-provider bearer token
+  beside a PAT, so a generic-OAuth git client authenticates against SSO with no
+  token minted at all, and every facade fetch now records which kind of
+  credential authenticated it. Both are the identity half of ADR 0008,
   which declined serving from an external forge and keeps the audited facade
   canonical. The visibility half — an optional
   [read-only mirror](guides/read-only-forge-mirror.md) of approved content on an

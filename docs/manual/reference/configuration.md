@@ -1394,6 +1394,54 @@ gateway logs a warning at startup while it is unset.
 
 ---
 
+## Identity-provider bearer tokens on the facade
+
+Off by default. When enabled, `/git/**` accepts an OIDC access token or ID token
+from the identity provider configured above, **in addition to** a personal access
+token — see [the facade reference](git-facade.md#authentication) and
+[ADR 0019](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0019-facade-accepts-idp-bearer-tokens.md).
+
+```yaml
+skills-gateway:
+  facade:
+    idp-bearer:
+      enabled: false
+      audience: # unset — defaults to the OAuth2 client id
+```
+
+| Property | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `skills-gateway.facade.idp-bearer.enabled` | boolean | `false` | Whether `/git/**` accepts a bearer token. While `false`, no decoder, provider or filter is registered at all. |
+| `skills-gateway.facade.idp-bearer.audience` | string | _(unset)_ | The value `aud` must contain. Unset means `spring.security.oauth2.client.registration.idp.client-id`. |
+
+There is deliberately **no issuer or key-set property here.** The key set comes
+from the `idp` client registration's `jwk-set-uri` and the issuer from
+`skills-gateway.oidc.issuer`, so the facade cannot be configured to accept a
+token the browser login would refuse.
+
+!!! warning "Enabling this requires a pinned issuer"
+
+    With `enabled: true` and `skills-gateway.oidc.issuer` unset or blank, the
+    gateway **refuses to start**, naming both properties. A signature check alone
+    cannot separate one tenant of a shared authorization endpoint from another,
+    and the login path's provenance — the gateway itself exchanged a code over
+    TLS with a configured endpoint — does not exist for a bearer token arriving
+    at the facade.
+
+A token is accepted only if its signature verifies against the published key
+set, its `iss` equals the pinned issuer, its `aud` contains the expected
+audience, and the current time is within `nbf`/`exp` (60 seconds of clock
+leeway). Anything else is refused with the same bare 401 an unknown PAT gets.
+
+!!! note "Revocation belongs to the identity provider"
+
+    The gateway cannot revoke a bearer token. Its lifetime is the provider's —
+    usually minutes to an hour — and that short life is the control. A deployment
+    that needs gateway-side revocation keeps using
+    [access tokens](#access-tokens), which is why both exist.
+
+---
+
 ## Session cookie
 
 ```yaml

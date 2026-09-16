@@ -78,6 +78,7 @@ polling, batch payload, signature, replay — is in
 | `sha` | The commit involved, when there is one. |
 | `detail` | Free-text qualifier, when the entry needs one: the vetting chain outcome, a vetter's verdict, or the reason a reviewer gave when overriding a blocked outcome. |
 | `tokenId` / `token_id` | Id of the credential that authenticated a facade entry (GW_AUTH_0009) or a machine API entry (GW_AUDIT_0007); null on interactive admin entries and on entries older than per-credential attribution. `GET /api/tokens` gives the owner the id→name mapping. |
+| `credential_kind` | What kind of credential authenticated a facade fetch (GW_AUTH_0041): `pat` for a gateway-issued access token, `idp` for an [identity-provider bearer token](../git-facade.md#identity-provider-bearer-tokens). Null on every entry no credential authenticated — administrative and system entries — and on facade entries written before this column existed. Available on `GET /api/audit`; the export payload is unchanged, exactly as it is for `actor_type`. |
 
 ### The actor type
 
@@ -89,7 +90,8 @@ polling, batch payload, signature, replay — is in
 
 It is **denormalised on purpose**, and never a join: an entry written years ago
 must still say what it meant after the credential it names has been revoked and
-its row deleted — the same reasoning `token_id` already carries. Query it
+its row deleted — the same reasoning `token_id` and `credential_kind` already
+carry. Query it
 directly (`WHERE actor_type = 'machine'`) rather than comparing `principal`
 against a list of names.
 
