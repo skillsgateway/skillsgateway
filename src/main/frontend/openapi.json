@@ -1168,6 +1168,11 @@
             "format": "int64",
             "type": "integer"
           },
+          "lastUsedAt": {
+            "description": "When the credential most recently authenticated successfully, or null if it never has. Recorded at most once a minute, so it is approximate to that bound; the audit ledger is the exact, per-request record.",
+            "format": "date-time",
+            "type": "string"
+          },
           "machineOwner": {
             "description": "The identity that provisioned it",
             "type": "string"
@@ -2469,6 +2474,11 @@
             "description": "Token id",
             "format": "int64",
             "type": "integer"
+          },
+          "lastUsedAt": {
+            "description": "When the token most recently authenticated successfully, or null if it never has. Recorded at most once a minute, so it is approximate to that bound; the audit ledger is the exact, per-request record.",
+            "format": "date-time",
+            "type": "string"
           },
           "name": {
             "description": "Token name",
@@ -5220,7 +5230,7 @@
     },
     "/api/tokens": {
       "get": {
-        "description": "Only the caller's own tokens, never any secret.",
+        "description": "Only the caller's own tokens, never any secret. Each carries `lastUsedAt` — when it most recently authenticated successfully, or null if it never has — which is what tells a live credential from a forgotten one.",
         "operationId": "list_1",
         "responses": {
           "200": {
@@ -5285,7 +5295,7 @@
     },
     "/api/tokens/machine": {
       "get": {
-        "description": "Every machine credential, whoever provisioned it, never any secret. Deliberately not scoped to the caller: a machine credential's principal is not an identity anyone logs in as, so an owner-scoped listing would leave every one of them invisible — and unrevokable — during an incident. A person's own token listing is unaffected and still shows only their own.",
+        "description": "Every machine credential, whoever provisioned it, never any secret. Deliberately not scoped to the caller: a machine credential's principal is not an identity anyone logs in as, so an owner-scoped listing would leave every one of them invisible — and unrevokable — during an incident. A person's own token listing is unaffected and still shows only their own. Each carries `lastUsedAt`: when the credential most recently authenticated successfully, or null if it never has.",
         "operationId": "list_2",
         "responses": {
           "200": {

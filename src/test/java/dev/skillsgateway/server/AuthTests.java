@@ -97,7 +97,9 @@ class AuthTests extends AbstractGatewayTest {
         // pushScopes in GW_FACADE_0007 and sessionDerived in GW_AUTH_0018 — both facts about the grant, and
         // neither a secret. apiScopes joined in GW_AUTH_0020: on a personal access token it is always
         // empty, and asserting its presence here is what would catch it silently becoming
-        // populated on a credential nobody provisioned as a machine one.
+        // populated on a credential nobody provisioned as a machine one. lastUsedAt joined in
+        // GW_AUTH_0031: an observation about the credential, never a secret, and the field an operator
+        // reads before revoking.
         assertThat(entries.get(0).keySet())
                 .containsExactlyInAnyOrder(
                         "id",
@@ -109,7 +111,8 @@ class AuthTests extends AbstractGatewayTest {
                         "rotatedFrom",
                         "pushScopes",
                         "sessionDerived",
-                        "apiScopes");
+                        "apiScopes",
+                        "lastUsedAt");
 
         AccessToken stored = tokenService.authenticate(token).orElseThrow();
         assertThat(stored.tokenHash()).isNotEqualTo(token);

@@ -134,27 +134,22 @@ export const tokenViews: Schemas["TokenView"][] = [
     id: 7,
     name: "ci-runner",
     createdAt: "2026-08-14T10:00:00Z",
-    revokedAt: null,
     scopes: [],
-    expiresAt: null,
-    rotatedFrom: null,
     pushScopes: [],
     sessionDerived: false,
     apiScopes: [],
     lastUsedAt: "2026-08-14T13:00:00Z",
   },
+  // No lastUsedAt at all: nothing has ever authenticated with this one, which is the state the
+  // column has to say something useful about.
   {
     id: 8,
     name: "spare-laptop",
     createdAt: "2026-08-14T10:00:00Z",
-    revokedAt: null,
     scopes: [],
-    expiresAt: null,
-    rotatedFrom: null,
     pushScopes: [],
     sessionDerived: false,
     apiScopes: [],
-    lastUsedAt: null,
   },
 ];
 

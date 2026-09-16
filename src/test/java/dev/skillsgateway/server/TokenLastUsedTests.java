@@ -71,7 +71,9 @@ class TokenLastUsedTests extends AbstractGatewayTest {
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
         approve(registered.snapshot().id());
         TokenService.IssuedToken token = tokenService.create("alice", "last-used-pat");
-        assertThat(lastUsed(token.id())).as("a freshly issued token has never been used").isNull();
+        assertThat(lastUsed(token.id()))
+                .as("a freshly issued token has never been used")
+                .isNull();
 
         Instant before = Instant.now();
         GitResult clone = gitClone(facadeUrl(name, token.token()), newWorkDir("lastused-clone"));
@@ -107,8 +109,7 @@ class TokenLastUsedTests extends AbstractGatewayTest {
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        List<String> reported =
-                JsonPath.read(body, "$[?(@.id == %d)].lastUsedAt".formatted(credential.id()));
+        List<String> reported = JsonPath.read(body, "$[?(@.id == %d)].lastUsedAt".formatted(credential.id()));
         assertThat(reported).singleElement().isNotNull();
     }
 
@@ -156,8 +157,8 @@ class TokenLastUsedTests extends AbstractGatewayTest {
         assertThat(lastUsed(revoked.id())).isNull();
 
         // An expired token, refused by the same lookup for the other reason.
-        TokenService.IssuedToken expired =
-                tokenService.create("alice", "expired-last-used", List.of(), Instant.now().plusMillis(1));
+        TokenService.IssuedToken expired = tokenService.create(
+                "alice", "expired-last-used", List.of(), Instant.now().plusMillis(1));
         Thread.sleep(20);
         GitResult expiredClone = gitClone(facadeUrl(name, expired.token()), newWorkDir("refused-expired"));
         assertThat(expiredClone.exitCode()).as(expiredClone.output()).isNotZero();
