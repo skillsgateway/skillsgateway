@@ -7,9 +7,9 @@ import {
   type MarketplaceAdoption,
   type StaleIdentity,
 } from "@/api/queries";
+import { SegmentedGroup, type SegmentedOption } from "@/components/segmented-group";
 import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -19,7 +19,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const WINDOWS = [7, 30, 90] as const;
+const WINDOWS: readonly SegmentedOption<number>[] = [
+  { value: 7, label: "7 days" },
+  { value: 30, label: "30 days" },
+  { value: 90, label: "90 days" },
+] as const;
 
 function shortSha(sha: string | undefined): string {
   return sha ? sha.slice(0, 12) : "—";
@@ -162,19 +166,7 @@ export function AdoptionPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div role="group" aria-label="Report window" className="flex gap-1">
-          {WINDOWS.map((window) => (
-            <Button
-              key={window}
-              size="sm"
-              variant={window === days ? "default" : "outline"}
-              aria-pressed={window === days}
-              onClick={() => setDays(window)}
-            >
-              {window} days
-            </Button>
-          ))}
-        </div>
+        <SegmentedGroup label="Report window" hideLabel value={days} options={WINDOWS} onChange={setDays} />
         {adoption.data ? (
           <span className="flex flex-wrap gap-2">
             <StatChip value={totalFetches} label="fetches" />

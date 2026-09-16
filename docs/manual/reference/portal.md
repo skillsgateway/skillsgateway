@@ -359,7 +359,8 @@ Inside the wizard:
 1. **Personal access token** — the same show-once creation flow as the
    [Access tokens](#access-tokens) page. The name defaults to
    `{marketplace}-client` and the control disables again if it is emptied or left
-   whitespace. **Expires** defaults to 30 days rather than to never; the
+   whitespace. **Expires** is a button group — 7, 30 or 90 days, or no expiry —
+   defaulting to 30 days rather than to never; the
    gateway's own cap
    ([`skills-gateway.tokens.max-ttl`](configuration.md#access-tokens)) is not
    exposed to the browser, so a longer choice than the deployment allows is
@@ -368,8 +369,10 @@ Inside the wizard:
    closing it drops the value, and no previously issued token's value is ever
    shown.
 2. **Store the credential** — a `git credential approve` line for this host.
-   This is the **primary copy target**: a labelled button rather than one icon
-   among several, because a consumer who copies one thing should copy this.
+   This is the **primary copy target**, marked by a highlighted snippet box,
+   because a consumer who copies one thing should copy this. Its copy control is
+   the same corner icon button the other snippets use, so the three read as one
+   family.
 3. **Add the marketplace to Claude Code** —
    `claude plugin marketplace add {origin}/git/{name}`.
 4. **Clone directly** — the CI-shaped `git clone` URL with the token inline.

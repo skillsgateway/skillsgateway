@@ -624,7 +624,9 @@ test("the_setup_panel_leads_when_serving_and_explains_the_held_case", async ({ p
   await expect(page.getByTestId("setup-held-notice").last()).toContainText("404");
   // The credential line is the primary copy target, held or not.
   await expect(page.getByRole("button", { name: "Copy credential command" })).toBeVisible();
-  await expect(page.getByLabel("Expires")).toHaveValue("P30D");
+  await expect(
+    page.getByRole("group", { name: "Expires" }).getByRole("button", { name: "30 days" }),
+  ).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "Done" }).click();
 
   // Ingest and approve, then the same slot leads with the way in.

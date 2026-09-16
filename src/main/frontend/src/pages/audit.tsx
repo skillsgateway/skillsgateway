@@ -289,10 +289,13 @@ function LedgerTable({ rows }: { rows: AuditRow[] }) {
           const column = table.getColumn(f.id);
           const options = facets[f.id] ?? [];
           return (
-            <div key={f.id}>
+            // Wide enough for what actually goes in these boxes — a dotted event name such as
+            // marketplace.snapshot.approved is the longest of them — and growing to share the
+            // row, so nothing is read through a 160px window.
+            <div key={f.id} className="min-w-0 flex-1 basis-56">
               <Input
                 list={`facet-${f.id}`}
-                className="h-8 w-40 text-xs"
+                className="h-8 w-full text-xs"
                 aria-label={`Filter by ${f.label}`}
                 placeholder={`Filter ${f.label}…`}
                 value={(column?.getFilterValue() as string) ?? ""}

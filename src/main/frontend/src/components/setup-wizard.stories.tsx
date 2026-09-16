@@ -28,8 +28,30 @@ export const Serving: Story = {
     // The dialog renders in a portal attached to the document body.
     const body = within(canvasElement.ownerDocument.body);
     await expect(await body.findByRole("button", { name: "Copy credential command" })).toBeVisible();
-    await expect(body.getByLabelText("Expires")).toHaveValue("P30D");
+    await expect(
+      within(body.getByRole("group", { name: "Expires" })).getByRole("button", { name: "30 days" }),
+    ).toHaveAttribute("aria-pressed", "true");
     await expect(body.queryByTestId("setup-held-notice")).toBeNull();
+  },
+};
+
+/**
+ * The same wizard in the portal's dark theme.
+ *
+ * The lifetime control is a themed button group rather than a native `<select>` precisely so
+ * that this story is a fair picture of it: a browser paints a select's open list with its own
+ * chrome, and nothing in the theme reaches inside it.
+ */
+export const ServingDark: Story = {
+  args: { marketplace: "corp-marketplace", serving: true, onClose: () => {} },
+  parameters: { theme: "dark" },
+  play: async ({ canvasElement }) => {
+    const body = within(canvasElement.ownerDocument.body);
+    await expect(
+      within(await body.findByRole("group", { name: "Expires" })).getByRole("button", {
+        name: "No expiry",
+      }),
+    ).toHaveAttribute("aria-pressed", "false");
   },
 };
 

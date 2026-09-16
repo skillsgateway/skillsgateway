@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { expect, test } from "vitest";
@@ -68,17 +68,32 @@ test("the_lifetime_defaults_to_a_bounded_value_rather_than_to_never_expiring", a
   const user = userEvent.setup();
   renderWizard();
   await user.click(screen.getByRole("button", { name: "Set up a client" }));
-  expect(await screen.findByLabelText("Expires")).toHaveValue("P30D");
+  const group = within(await screen.findByRole("group", { name: "Expires" }));
+  expect(group.getByRole("button", { name: "30 days" })).toHaveAttribute("aria-pressed", "true");
+  expect(group.getByRole("button", { name: "No expiry" })).toHaveAttribute("aria-pressed", "false");
 });
 
-test("the_credential_command_is_the_primary_copy_target", async () => {
+test("choosing_a_lifetime_moves_the_pressed_state_to_it", async () => {
   const user = userEvent.setup();
   renderWizard();
   await user.click(screen.getByRole("button", { name: "Set up a client" }));
-  // One labelled, non-icon copy control, and it is the credential line. Everything else copies
-  // through an icon button named for what it copies.
+  const group = within(await screen.findByRole("group", { name: "Expires" }));
+  await user.click(group.getByRole("button", { name: "7 days" }));
+  expect(group.getByRole("button", { name: "7 days" })).toHaveAttribute("aria-pressed", "true");
+  expect(group.getByRole("button", { name: "30 days" })).toHaveAttribute("aria-pressed", "false");
+  // The choice is a choice, not a submit: the form must still be waiting for "Create token".
+  expect(screen.queryByText(/Token created/)).not.toBeInTheDocument();
+});
+
+test("every_snippet_copies_through_an_icon_button_named_for_what_it_copies", async () => {
+  const user = userEvent.setup();
+  renderWizard();
+  await user.click(screen.getByRole("button", { name: "Set up a client" }));
+  // The credential line leads on the box, not on a differently shaped control: the three
+  // snippets are one family, each with the same corner icon button.
   expect(await screen.findByRole("button", { name: "Copy credential command" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Copy marketplace add command" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Copy clone command" })).toBeInTheDocument();
 });
 
 test("a_held_marketplace_says_a_clone_is_answered_with_404", async () => {
