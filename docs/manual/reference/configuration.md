@@ -774,6 +774,9 @@ back a normalized `{state, reportUrl, findings[]}` where `state` is one of
     until resolved — the inbound resolution callback is a separate, later
     capability.
 
+See [Adding an external vetter](../guides/adding-an-external-vetter.md) for the
+wire contract in full and a minimal working example.
+
 ---
 
 ## Continuous re-vetting
