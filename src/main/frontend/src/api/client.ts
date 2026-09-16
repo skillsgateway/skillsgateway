@@ -42,6 +42,23 @@ async function parseError(response: Response): Promise<ApiError> {
   return new ApiError(response.status, detail);
 }
 
+/**
+ * Ends the browser session through Spring Security's own logout endpoint — the CSRF
+ * token the session chain requires is the one every other call already carries — and then
+ * returns to the portal root, which re-enters the login. The gateway registers no custom
+ * logout handling; this is the default endpoint, called with the default contract.
+ *
+ * @Requirements GW_AUTH_0045
+ */
+export async function signOut(): Promise<void> {
+  const token = csrfToken();
+  await fetch("/logout", {
+    method: "POST",
+    headers: token === undefined ? {} : { [CSRF_HEADER]: token },
+  });
+  window.location.assign("/");
+}
+
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const token = csrfToken();
   const response = await fetch(path, {

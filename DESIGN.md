@@ -304,10 +304,9 @@ and it exists solely to stop iOS zooming the viewport on focus.
 
 ## Layout
 
-A fixed two-pane shell. A 240px sidebar (`w-60`) holds the brand row, grouped
-navigation, and the signed-in identity pinned to the bottom behind a top border. The
-right pane is a bordered top bar (breadcrumb left, theme control right) above a
-content column centred at `max-w-6xl` with `px-6 py-8`.
+A fixed two-pane shell. A 240px sidebar (`w-60`) holds the brand row and grouped
+navigation. The right pane is a bordered top bar (breadcrumb left, the signed-in
+user menu right) above a content column centred at `max-w-6xl` with `px-6 py-8`.
 
 Within the content column the rhythm is `space-y-6` (24px) between page-level blocks,
 `space-y-3` inside a section, and `space-y-2` between a label and its control. Forms
@@ -443,15 +442,46 @@ visually attached to the detail it revealed. Captions sit below the table in mut
 Grouped sidebar. Each group is an 11px uppercase muted label over a list of 14px
 medium items with a 16px leading icon. The active item is filled
 `bg-sidebar-primary` with near-white text and keeps that fill on hover. The top bar
-carries the breadcrumb as violet uppercase micro-type, and the theme control.
+carries the breadcrumb as violet uppercase micro-type, and the signed-in user menu.
+Personal access tokens are not a sidebar entry — they are a per-user concern reached
+from the user menu ("Your tokens") and from the Overview page's Access tokens card;
+`/tokens` stays a resolvable route.
+
+### User menu
+
+The top-right of the header, one `DropdownMenu` (`components/ui/dropdown-menu.tsx`,
+a Base UI `Menu` trimmed to the parts this portal uses, ring instead of shadow per
+the Flat Field Rule). The trigger names the signed-in user (outline button, identity
+glyph, username, chevron) rather than an anonymous icon — the shell states who you
+are without a click. Its accessible name carries the full summary (username, every
+role with its source, and whether the claim list is truncated), because arrow-key
+traversal inside an open menu visits only items and would never reach plain text.
+
+Inside: **Signed in as** and the username; a **Roles** group, one line per effective
+role read as a sentence rather than the wire vocabulary (`admin — from your identity
+provider`, `approver of acme-skills — granted in the portal`), a marketplace-scoped
+approver role naming its marketplace; a session with no role states that in one
+line together with what it can still do (read the portal, manage its own tokens)
+rather than rendering an empty list; a truncated membership claim adds a line saying
+the list may be incomplete. Then the theme control, **Your tokens**, and **Sign
+out**. The menu reports; it never hides or disables a control by role — the server
+is the sole authority on what a session may do.
+
+Sign out posts to Spring Security's own `/logout` with the CSRF header every other
+call already carries, then returns to `/`, re-entering the login. Under
+`skills-gateway.dev-insecure-auth=true` there is no session to end — the control is
+replaced by a line saying so, rather than left in place to silently no-op.
 
 ### Theme control
 
-A single cycling button, not a switch: **system → light → dark → system**, defaulting
-to system so the portal follows the OS until told otherwise. The icon states the
-current mode rather than the next one (`Monitor` / `Sun` / `Moon`, lucide). The
-choice persists in `localStorage` via `next-themes`. Because system is a first-class
-state, no surface may be verified in only one rendered theme.
+Lives inside the user menu (moved from a lone top-bar icon) as a menu item that
+keeps the menu open on click. A single cycling control, not a switch: **system →
+light → dark → system**, defaulting to system so the portal follows the OS until
+told otherwise. The icon and label state the current mode rather than the next one
+(`Monitor` / `Sun` / `Moon`, lucide, plus a visible "Theme: {state}" label now that
+it is not a lone icon in a bar). The choice persists in `localStorage` via
+`next-themes`. Because system is a first-class state, no surface may be verified in
+only one rendered theme.
 
 ### Vetting report (signature component)
 

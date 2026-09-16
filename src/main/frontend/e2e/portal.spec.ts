@@ -36,6 +36,18 @@ async function submitRegister(page: Page) {
   await page.getByRole("button", { name: "Register", exact: true }).click();
 }
 
+/** Opens the signed-in user's menu in the header — identity, roles, theme, tokens, sign out. */
+async function openUserMenu(page: Page) {
+  await page.getByRole("button", { name: /Signed in as/ }).click();
+}
+
+/** Personal tokens are a per-user surface: the way in is the user menu, not the navigation. */
+async function openTokens(page: Page) {
+  await openUserMenu(page);
+  await page.getByRole("menuitem", { name: "Your tokens" }).click();
+  await expect(page.getByRole("heading", { name: "Access tokens" })).toBeVisible();
+}
+
 function uniqueName(prefix: string) {
   // A millisecond timestamp alone collides when parallel workers (CI shards,
   // --repeat-each) register in the same tick — the duplicate-name 500 then
@@ -154,11 +166,69 @@ test("the_approve_dialog_warns_that_the_reviewer_supplied_the_content_and_still_
 });
 
 /**
+ * The shell's identity surface, against a real login: the menu names the session and every
+ * role it holds with where that role came from. In this deployment the only role is mapped
+ * from the identity provider's group claim, which is exactly what the menu has to say.
+ *
+ * @SVCs SVC_GW_AUTH_0044
+ */
+test("the_user_menu_names_the_session_and_each_role_with_its_source", async ({ page }) => {
+  await login(page, "alice");
+  await openUserMenu(page);
+
+  const menu = page.getByRole("menu");
+  await expect(menu).toContainText("Signed in as");
+  await expect(menu).toContainText("alice");
+  await expect(menu).toContainText("admin — from your identity provider");
+  // It reports; it does not gate. Nothing here is hidden or disabled by role.
+  await expect(menu.getByRole("menuitem", { name: "Your tokens" })).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: /Theme:/ })).toBeVisible();
+
+  // Escape closes the menu and returns focus to its trigger.
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("menu")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Signed in as/ })).toBeFocused();
+});
+
+/**
+ * Tokens moved out of the estate-wide navigation and under the user menu; the address they
+ * have always had still resolves, so a bookmark or a documentation link is not broken by it.
+ *
+ * @SVCs SVC_GW_AUTH_0046
+ */
+test("tokens_are_reached_from_the_user_menu_and_the_route_still_resolves", async ({ page }) => {
+  await login(page, "alice");
+  await expect(
+    page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Access tokens" }),
+  ).toHaveCount(0);
+
+  await openTokens(page);
+
+  await page.goto("/tokens");
+  await expect(page.getByRole("heading", { name: "Access tokens" })).toBeVisible();
+});
+
+/**
+ * Signing out ends the session: the next page the browser asks for is the identity provider's,
+ * which is the only thing that proves the cookie no longer authenticates anything.
+ *
+ * @SVCs SVC_GW_AUTH_0045
+ */
+test("signing_out_ends_the_session", async ({ page }) => {
+  await login(page, "alice");
+  await openUserMenu(page);
+  await page.getByRole("menuitem", { name: "Sign out" }).click();
+
+  await page.waitForURL(/9090/);
+  await expect(page.getByPlaceholder(/enter any user/i)).toBeVisible();
+});
+
+/**
  * @SVCs SVC_GW_AUTH_0005, SVC_GW_AUTH_0031
  */
 test("token_cleartext_is_shown_once_and_revocation_marks_it_revoked", async ({ page }) => {
   await login(page, "alice");
-  await page.getByRole("link", { name: "Access tokens" }).click();
+  await openTokens(page);
 
   // The name is required: nothing can be submitted until one is entered.
   await expect(page.getByRole("button", { name: "Create token" })).toBeDisabled();
@@ -600,7 +670,7 @@ test("adoption_page_shows_a_real_facade_fetch_and_its_identity", async ({ page }
   await expect(card.getByText("approved", { exact: true })).toBeVisible();
 
   // A PAT minted in the portal, then a real `git clone` through the facade with it.
-  await page.getByRole("link", { name: "Access tokens" }).click();
+  await openTokens(page);
   const tokenName = uniqueName("adopttoken");
   await page.getByLabel("Token name").fill(tokenName);
   await page.getByRole("button", { name: "Create token" }).click();
@@ -628,7 +698,7 @@ test("adoption_page_shows_a_real_facade_fetch_and_its_identity", async ({ page }
 
   // And the credential that did the fetching now says so on its own row: a real facade
   // authentication is what moves Last used off "never" (SVC_GW_AUTH_0031).
-  await page.getByRole("link", { name: "Access tokens" }).click();
+  await openTokens(page);
   const tokenRow = page.getByRole("row", { name: new RegExp(tokenName) });
   await expect(tokenRow).toBeVisible();
   await expect(tokenRow.getByText("never", { exact: true })).toHaveCount(0);

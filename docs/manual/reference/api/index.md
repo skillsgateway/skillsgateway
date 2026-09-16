@@ -145,8 +145,8 @@ breaking and how it is enforced.
 
 `GET /api/me` returns the current principal, the session's effective roles
 with the **source** of each, and whether the identity provider truncated the
-membership claim. The portal uses it for the sidebar footer and, with roles,
-to adapt its controls.
+membership claim. The portal uses it for the user menu and, with roles, to
+adapt its controls.
 
 ```json
 {"username": "alice@example.com",
