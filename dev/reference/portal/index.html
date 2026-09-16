@@ -3302,12 +3302,16 @@ from the address the browser is already on:</p>
 — the evidence is not behind a click.</p>
 <h4 id="the-chain-flow">The chain flow<a class="headerlink" href="#the-chain-flow" title="Permanent link">&para;</a></h4>
 <p>Above the per-vetter list, the chain is drawn as an ordered flow — one node
-per step, left to right, wrapping on a narrow viewport:</p>
+per step, left to right:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Ingest → secret-scan → prompt-injection → Outcome → Approval
 </code></pre></div>
 <p>The order is the order the vetters ran, taken from the run's own recorded
 positions; for a snapshot the chain has not run against yet, it is the configured
 chain in the order it will run.</p>
+<p>The flow never wraps: nodes narrow their names before the row breaks, and on a
+screen too narrow for the whole chain it scrolls sideways — faded at the edge it
+continues past — so the gate is never stranded on a line of its own, away from
+the result it follows.</p>
 <p>Above the nodes, one sentence states the answer and where the chain stopped, so
 it can be read without opening anything:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Blocked at step 1 · secret-scan found 1 critical finding
