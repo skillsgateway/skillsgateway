@@ -2276,6 +2276,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#adr-0019-the-facade-accepts-identity-provider-bearer-tokens-beside-pats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0019 — The facade accepts identity-provider bearer tokens beside PATs
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2555,6 +2566,17 @@
     <span class="md-ellipsis">
       
         ADR 0018 — Requirement ids carry a domain: GW_&lt;DOMAIN&gt;_NNNN, minted manually
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-0019-the-facade-accepts-identity-provider-bearer-tokens-beside-pats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR 0019 — The facade accepts identity-provider bearer tokens beside PATs
       
     </span>
   </a>
@@ -2925,6 +2947,22 @@ and active OpenSpec change. Ids reserved and then abandoned, and provisional
 ids in still-unimplemented change proposals, were never real and stay as
 historical bare numbers. <code>.reqstool-ai.yaml</code> sets <code>req_prefix</code>/<code>svc_prefix</code>
 blank — ids are minted manually now, one domain sequence at a time.</p>
+<h3 id="adr-0019-the-facade-accepts-identity-provider-bearer-tokens-beside-pats"><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0019-facade-accepts-idp-bearer-tokens.md">ADR 0019 — The facade accepts identity-provider bearer tokens beside PATs</a><a class="headerlink" href="#adr-0019-the-facade-accepts-identity-provider-bearer-tokens-beside-pats" title="Permanent link">&para;</a></h3>
+<p><em>Accepted, 2026-09-16.</em> Decides option 2 of
+<a href="https://github.com/skillsgateway/skillsgateway/issues/392">issue #392</a> and
+supersedes the git-client half of <a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0002-toolchain-and-product-decisions.md">ADR 0002</a>.
+That ADR's argument was "git cannot do interactive OIDC"; a generic OAuth
+credential helper now can, so a plain <code>git clone</code> can authenticate against the
+organisation's own SSO with no token minted anywhere. The facade accepts such a
+token beside a PAT — off by default, validated by key-set signature, issuer,
+audience and time, taking the principal from the same claim the web session
+takes it from, and recording a distinct credential kind on the ledger. PATs are
+unchanged and remain the credential for CI. Anonymous fetch (option 1) is
+rejected outright because attribution is the one thing the product must be able
+to provide; the device flow (option 3) is rejected as redundant now that the
+client it existed for can run a browser flow. The trade recorded honestly: a
+bearer token's blast radius is far smaller than a PAT's, and the gateway cannot
+revoke one — expiry and the identity provider are the only levers.</p>
 
 
 

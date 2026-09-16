@@ -2552,8 +2552,20 @@ is a deliberate follow-up rather than a side effect of this change.</p>
 the web chain, and it is <strong>stateless</strong>:</p>
 <ul>
 <li>HTTP Basic, with a provider manager whose only provider is the PAT provider.
-  An OIDC browser session can never authenticate a git fetch, because no OIDC
-  provider exists in that chain.</li>
+  An OIDC browser <strong>session</strong> can never authenticate a git fetch: no cookie is
+  read and no session is created on this chain.</li>
+<li>Optionally, and off by default, a second credential kind: an
+  <a href="../../reference/git-facade/#identity-provider-bearer-tokens">identity-provider bearer token</a>
+  from the same provider the web surface trusts (GW_AUTH_0040). It is validated the
+  way a resource server validates one — key-set signature, issuer, audience,
+  <code>exp</code>/<code>nbf</code> — and the issuer pin the login path only warns about (GW_AUTH_0017)
+  becomes mandatory here, because a token arriving cold has none of the
+  provenance a code exchange has. While the capability is off, no filter,
+  provider or decoder exists on the path at all. It changes what a credential may
+  <em>be</em>, and nothing about what it may <em>reach</em>: a bearer token carries no scope
+  list, so it permits exactly what an unscoped PAT permits, and it reaches
+  nothing on <code>/api/**</code> (GW_AUTH_0042). See
+  <a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0019-facade-accepts-idp-bearer-tokens.md">ADR 0019</a>.</li>
 <li>Only the password field is read; the username is ignored (<code>token</code> by
   convention). This is what makes the standard git credential helper work
   unmodified.</li>
@@ -2606,7 +2618,7 @@ the web chain, and it is <strong>stateless</strong>:</p>
 <div class="admonition note">
 <p class="admonition-title">The facade chain is unconditional</p>
 <p>The <code>dev-insecure-auth</code> escape hatch does not touch it. <code>/git/**</code> requires a
-valid PAT even in development mode.</p>
+valid credential even in development mode.</p>
 </div>
 <h2 id="3-approval-held-content-becomes-served-content">3. Approval — held content becomes served content<a class="headerlink" href="#3-approval-held-content-becomes-served-content" title="Permanent link">&para;</a></h2>
 <p><code>ApprovalService</code> is the only publisher. The invariant is structural rather than

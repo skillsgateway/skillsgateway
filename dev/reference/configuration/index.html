@@ -1827,6 +1827,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#identity-provider-bearer-tokens-on-the-facade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identity-provider bearer tokens on the facade
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#session-cookie" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2722,6 +2733,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#identity-provider-bearer-tokens-on-the-facade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identity-provider bearer tokens on the facade
+      
+    </span>
+  </a>
   
 </li>
       
@@ -5045,12 +5067,72 @@ tenant's tokens verify against the same signing keys, so the issuer is the only
 thing that says which organisation the person logging in belongs to. The
 gateway logs a warning at startup while it is unset.</p>
 <hr />
+<h2 id="identity-provider-bearer-tokens-on-the-facade">Identity-provider bearer tokens on the facade<a class="headerlink" href="#identity-provider-bearer-tokens-on-the-facade" title="Permanent link">&para;</a></h2>
+<p>Off by default. When enabled, <code>/git/**</code> accepts an OIDC access token or ID token
+from the identity provider configured above, <strong>in addition to</strong> a personal access
+token — see <a href="../git-facade/#authentication">the facade reference</a> and
+<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0019-facade-accepts-idp-bearer-tokens.md">ADR 0019</a>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span><span class="nt">facade</span><span class="p">:</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span><span class="nt">idp-bearer</span><span class="p">:</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">      </span><span class="nt">audience</span><span class="p">:</span><span class="w"> </span><span class="c1"># unset — defaults to the OAuth2 client id</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>skills-gateway.facade.idp-bearer.enabled</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Whether <code>/git/**</code> accepts a bearer token. While <code>false</code>, no decoder, provider or filter is registered at all.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.facade.idp-bearer.audience</code></td>
+<td>string</td>
+<td><em>(unset)</em></td>
+<td>The value <code>aud</code> must contain. Unset means <code>spring.security.oauth2.client.registration.idp.client-id</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>There is deliberately <strong>no issuer or key-set property here.</strong> The key set comes
+from the <code>idp</code> client registration's <code>jwk-set-uri</code> and the issuer from
+<code>skills-gateway.oidc.issuer</code>, so the facade cannot be configured to accept a
+token the browser login would refuse.</p>
+<div class="admonition warning">
+<p class="admonition-title">Enabling this requires a pinned issuer</p>
+<p>With <code>enabled: true</code> and <code>skills-gateway.oidc.issuer</code> unset or blank, the
+gateway <strong>refuses to start</strong>, naming both properties. A signature check alone
+cannot separate one tenant of a shared authorization endpoint from another,
+and the login path's provenance — the gateway itself exchanged a code over
+TLS with a configured endpoint — does not exist for a bearer token arriving
+at the facade.</p>
+</div>
+<p>A token is accepted only if its signature verifies against the published key
+set, its <code>iss</code> equals the pinned issuer, its <code>aud</code> contains the expected
+audience, and the current time is within <code>nbf</code>/<code>exp</code> (60 seconds of clock
+leeway). Anything else is refused with the same bare 401 an unknown PAT gets.</p>
+<div class="admonition note">
+<p class="admonition-title">Revocation belongs to the identity provider</p>
+<p>The gateway cannot revoke a bearer token. Its lifetime is the provider's —
+usually minutes to an hour — and that short life is the control. A deployment
+that needs gateway-side revocation keeps using
+<a href="#access-tokens">access tokens</a>, which is why both exist.</p>
+</div>
+<hr />
 <h2 id="session-cookie">Session cookie<a class="headerlink" href="#session-cookie" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="nt">server</span><span class="p">:</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span><span class="nt">servlet</span><span class="p">:</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span><span class="nt">session</span><span class="p">:</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">      </span><span class="nt">cookie</span><span class="p">:</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">        </span><span class="nt">same-site</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lax</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="nt">server</span><span class="p">:</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span><span class="nt">servlet</span><span class="p">:</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">    </span><span class="nt">session</span><span class="p">:</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">      </span><span class="nt">cookie</span><span class="p">:</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">        </span><span class="nt">same-site</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lax</span>
 </code></pre></div>
 <p>Named rather than left to the browser, because Firefox and Safari apply no
 default at all: unset, the session cookie rides a cross-site request in those
@@ -5065,11 +5147,11 @@ CSRF token on the web chain, described under
 <a href="../../concepts/trust-boundaries/#the-web-surface">The web surface</a>.</p>
 <hr />
 <h2 id="actuator">Actuator<a class="headerlink" href="#actuator" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="nt">management</span><span class="p">:</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span><span class="nt">endpoints</span><span class="p">:</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">    </span><span class="nt">web</span><span class="p">:</span>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">      </span><span class="nt">exposure</span><span class="p">:</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">        </span><span class="nt">include</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">health,sbom</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="nt">management</span><span class="p">:</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">  </span><span class="nt">endpoints</span><span class="p">:</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span><span class="nt">web</span><span class="p">:</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">      </span><span class="nt">exposure</span><span class="p">:</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">        </span><span class="nt">include</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">health,sbom</span>
 </code></pre></div>
 <p>Only two endpoints are exposed. <code>/actuator/health</code> is the <strong>only</strong>
 unauthenticated path in the application; <code>/actuator/sbom</code> serves the CycloneDX
@@ -5082,11 +5164,11 @@ both Kubernetes probes point at the bare path.</p>
 </div>
 <hr />
 <h2 id="api-documentation">API documentation<a class="headerlink" href="#api-documentation" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="nt">scalar</span><span class="p">:</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">  </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/docs</span><span class="w">        </span><span class="c1"># the Scalar UI</span>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">  </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/v3/api-docs</span><span class="w">  </span><span class="c1"># the OpenAPI document it renders</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">  </span><span class="nt">theme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">purple</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="nt">scalar</span><span class="p">:</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">  </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/docs</span><span class="w">        </span><span class="c1"># the Scalar UI</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">  </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/v3/api-docs</span><span class="w">  </span><span class="c1"># the OpenAPI document it renders</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="w">  </span><span class="nt">theme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">purple</span>
 </code></pre></div>
 <p>Both paths sit behind the OIDC login like the rest of the web surface.</p>
 <hr />

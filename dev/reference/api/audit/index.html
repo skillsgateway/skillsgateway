@@ -2377,6 +2377,10 @@ polling, batch payload, signature, replay — is in
 <td><code>tokenId</code> / <code>token_id</code></td>
 <td>Id of the credential that authenticated a facade entry (GW_AUTH_0009) or a machine API entry (GW_AUDIT_0007); null on interactive admin entries and on entries older than per-credential attribution. <code>GET /api/tokens</code> gives the owner the id→name mapping.</td>
 </tr>
+<tr>
+<td><code>credential_kind</code></td>
+<td>What kind of credential authenticated a facade fetch (GW_AUTH_0041): <code>pat</code> for a gateway-issued access token, <code>idp</code> for an <a href="../../git-facade/#identity-provider-bearer-tokens">identity-provider bearer token</a>. Null on every entry no credential authenticated — administrative and system entries — and on facade entries written before this column existed. Available on <code>GET /api/audit</code>; the export payload is unchanged, exactly as it is for <code>actor_type</code>.</td>
+</tr>
 </tbody>
 </table>
 <h3 id="the-actor-type">The actor type<a class="headerlink" href="#the-actor-type" title="Permanent link">&para;</a></h3>
@@ -2408,7 +2412,8 @@ polling, batch payload, signature, replay — is in
 </table>
 <p>It is <strong>denormalised on purpose</strong>, and never a join: an entry written years ago
 must still say what it meant after the credential it names has been revoked and
-its row deleted — the same reasoning <code>token_id</code> already carries. Query it
+its row deleted — the same reasoning <code>token_id</code> and <code>credential_kind</code> already
+carry. Query it
 directly (<code>WHERE actor_type = 'machine'</code>) rather than comparing <code>principal</code>
 against a list of names.</p>
 <div class="admonition note">

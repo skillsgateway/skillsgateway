@@ -1951,6 +1951,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#identity-provider-bearer-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identity-provider bearer tokens
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-served" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2171,6 +2182,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#identity-provider-bearer-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identity-provider bearer tokens
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-is-served" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2257,8 +2279,12 @@ the web chain.</p>
 optional <code>.git</code> suffix. Anything else is a 404 — which is also what blocks path
 traversal into arbitrary directories.</p>
 <h2 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h2>
-<p>HTTP Basic, backed solely by the PAT provider. An OIDC session can never
-authenticate a git fetch, because no OIDC provider is registered in this chain.</p>
+<p>HTTP Basic, backed by the PAT provider. An OIDC browser <strong>session</strong> can never
+authenticate a git fetch: no session is read and no cookie is honoured on this
+chain. A second, opt-in credential kind is described under
+<a href="#identity-provider-bearer-tokens">Identity-provider bearer tokens</a> below; it is
+off unless an operator turned it on, and it does not change anything in this
+section.</p>
 <p><strong>Only the password field is read.</strong> The username is ignored; <code>token</code> is the
 convention. This is what makes the standard git credential helper work
 unmodified.</p>
@@ -2298,8 +2324,67 @@ exactly what the credential helper expects; a bad or revoked token gets 401 too.
 <div class="admonition note">
 <p class="admonition-title">The facade chain is unconditional</p>
 <p><code>skills-gateway.dev-insecure-auth=true</code> opens the web surface but does not
-touch <code>/git/**</code>. A valid PAT is still required.</p>
+touch <code>/git/**</code>. A valid credential is still required.</p>
 </div>
+<h2 id="identity-provider-bearer-tokens">Identity-provider bearer tokens<a class="headerlink" href="#identity-provider-bearer-tokens" title="Permanent link">&para;</a></h2>
+<p><strong>Off by default</strong>
+(<a href="../configuration/#identity-provider-bearer-tokens-on-the-facade"><code>skills-gateway.facade.idp-bearer.enabled</code></a>).
+While off, nothing described here exists — no filter, no provider, no decoder.</p>
+<p>When on, <code>/git/**</code> additionally accepts <code>Authorization: Bearer &lt;jwt&gt;</code> where the
+token was issued by the same identity provider the portal authenticates against.
+Both the OIDC access token and the ID token are accepted; providers disagree about
+which one a generic OAuth client receives, and the checks that matter are the same
+for both.</p>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Signature</td>
+<td>The <code>idp</code> registration's <code>jwk-set-uri</code>, cached and refreshed on an unknown <code>kid</code></td>
+</tr>
+<tr>
+<td><code>iss</code></td>
+<td><code>skills-gateway.oidc.issuer</code>, which this capability makes mandatory</td>
+</tr>
+<tr>
+<td><code>aud</code></td>
+<td><code>skills-gateway.facade.idp-bearer.audience</code>, defaulting to the OAuth2 client id; must <em>contain</em> it, and a token with no <code>aud</code> is refused</td>
+</tr>
+<tr>
+<td><code>exp</code> / <code>nbf</code></td>
+<td>The current time, with 60 seconds of clock leeway</td>
+</tr>
+</tbody>
+</table>
+<p>The principal is the claim named by
+<code>spring.security.oauth2.client.provider.idp.user-name-attribute</code> (<code>sub</code> by
+default) — the same claim a browser session's identity comes from. The same
+person fetching with an SSO token and with a portal-minted PAT therefore writes
+the same <code>principal</code> on the ledger, and the
+<a href="../api/adoption/">adoption report</a> cannot tell them apart.</p>
+<p><strong>Authorization is unchanged.</strong> A bearer token carries no marketplace scope list,
+so it permits every marketplace the gateway serves — exactly what an unscoped PAT
+permits. Roles are not consulted here for any credential kind.</p>
+<p><strong>The challenge is still <code>Basic</code>.</strong> An unauthenticated request, and a request
+whose bearer token is refused for any reason, both get the ordinary 401 with
+<code>WWW-Authenticate: Basic</code> — so a client holding an expired SSO token falls back
+to its credential helper instead of failing outright.</p>
+<div class="admonition warning">
+<p class="admonition-title">The gateway cannot revoke a bearer token</p>
+<p>Revocation is the identity provider's; the gateway's only lever is the
+token's own expiry, which is typically minutes to an hour. That short life is
+the control, and it is a genuinely different trade from a PAT: much smaller
+blast radius, no gateway-side kill switch. Deployments that need one keep
+using PATs.</p>
+</div>
+<p>A token accepted here reaches <strong>nothing</strong> on <code>/api/**</code>: the administrative
+interface authenticates only a gateway-issued machine credential, and the rest of
+the web surface only an interactive session.</p>
 <h2 id="what-is-served">What is served<a class="headerlink" href="#what-is-served" title="Permanent link">&para;</a></h2>
 <p>Two namespaces, from <code>{data-dir}/published/{marketplace}.git</code>, and nothing else:</p>
 <table>

@@ -3310,22 +3310,55 @@ or injected as markup, and the pane changes nothing about what the facade
 serves. These reads are privileged — admin or an approver of this marketplace
 — so the pane shows an error to a session holding neither.</p>
 <h3 id="set-up-a-client">Set up a client<a class="headerlink" href="#set-up-a-client" title="Permanent link">&para;</a></h3>
-<p>The page header carries a <strong>Set up a client</strong> button opening a wizard that
-composes, for this marketplace, everything a consumer needs — every URL derived
-from the address the browser is already on:</p>
+<p>A card at the <strong>top of the page</strong>, above the upstream metadata, opening a wizard
+that composes for this marketplace everything a consumer needs — every URL
+derived from the address the browser is already on.</p>
+<p>The card reads the marketplace's own state:</p>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>The card says</th>
+<th>And</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>At least one snapshot approved</td>
+<td><strong>Use this marketplace</strong></td>
+<td>offers the wizard</td>
+</tr>
+<tr>
+<td>No snapshot approved</td>
+<td><strong>Not being served yet</strong></td>
+<td>states that a clone is answered with <code>404</code> until one is, and that this is not a credential problem — a wrong or revoked token is answered with <code>401</code>. The wizard repeats it, for anyone who opens it without reading the page</td>
+</tr>
+</tbody>
+</table>
+<p>The portal has no <code>serving</code> snapshot state; "serving" here is derived the way the
+<a href="#adoption">Adoption</a> page derives it, from an approved snapshot existing.</p>
+<p>Inside the wizard:</p>
 <ol>
 <li><strong>Personal access token</strong> — the same show-once creation flow as the
-   <a href="#access-tokens">Access tokens</a> page (name required before the control
-   enables). A token minted here is filled into the snippets below <strong>only while
-   the wizard stays open</strong>; closing the wizard drops it, and no previously
-   issued token's value is ever shown.</li>
-<li><strong>Store the credential</strong> — a <code>git credential approve</code> line for this host.</li>
+   <a href="#access-tokens">Access tokens</a> page. The name defaults to
+   <code>{marketplace}-client</code> and the control disables again if it is emptied or left
+   whitespace. <strong>Expires</strong> defaults to 30 days rather than to never; the
+   gateway's own cap
+   (<a href="../configuration/#access-tokens"><code>skills-gateway.tokens.max-ttl</code></a>) is not
+   exposed to the browser, so a longer choice than the deployment allows is
+   refused by the server and the refusal is shown beneath the field. A token
+   minted here is filled into the snippets <strong>only while the wizard stays open</strong>;
+   closing it drops the value, and no previously issued token's value is ever
+   shown.</li>
+<li><strong>Store the credential</strong> — a <code>git credential approve</code> line for this host.
+   This is the <strong>primary copy target</strong>: a labelled button rather than one icon
+   among several, because a consumer who copies one thing should copy this.</li>
 <li><strong>Add the marketplace to Claude Code</strong> —
    <code>claude plugin marketplace add {origin}/git/{name}</code>.</li>
 <li><strong>Clone directly</strong> — the CI-shaped <code>git clone</code> URL with the token inline.</li>
 </ol>
-<p>Each snippet has a copy button. Until a token is minted the snippets carry the
-<code>&lt;YOUR_TOKEN&gt;</code> placeholder.</p>
+<p>The remaining snippets have icon copy buttons. Until a token is minted the
+snippets carry the <code>&lt;YOUR_TOKEN&gt;</code> placeholder.</p>
 <h3 id="vetting">Vetting<a class="headerlink" href="#vetting" title="Permanent link">&para;</a></h3>
 <p>Each snapshot card carries a <strong>Vetting</strong> section fed by
 <code>GET /api/snapshots/{id}/vetting</code>, above the contents toggle and always visible
