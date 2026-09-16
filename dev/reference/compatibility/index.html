@@ -2567,6 +2567,15 @@ events, each delivery's body fields and its <code>X-Skills-Gateway-*</code> tran
 headers — are described in the same document, under its top-level <code>webhooks</code>
 object, generated from the registry and the types the dispatcher uses. They only
 grow too.</p>
+<div class="admonition warning">
+<p class="admonition-title">The event names were renamed once, before 1.0</p>
+<p>Every <code>snapshot.&lt;x&gt;</code> event is now <code>marketplace.snapshot.&lt;x&gt;</code>, so that
+<code>marketplace.&lt;x&gt;</code> — what happened to the marketplace itself — has a namespace
+to live in. A subscriber's stored filter was rewritten by a migration, so no
+operator action was needed; a receiver matching on the name it was given has
+to be updated. This was a declared break under the rules below, and it is the
+kind of change that costs a major release once the contract is frozen.</p>
+</div>
 <table>
 <thead>
 <tr>

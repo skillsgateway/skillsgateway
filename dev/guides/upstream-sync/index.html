@@ -2343,7 +2343,7 @@ upstream uptime — automating ingestion does not couple them back together.</p>
 <h2 id="what-lands-on-the-ledger">What lands on the ledger<a class="headerlink" href="#what-lands-on-the-ledger" title="Permanent link">&para;</a></h2>
 <p>Every sync-triggered ingestion is recorded like a manual one, with the trigger
 as the acting identity — <code>scheduler</code> or <code>webhook</code> instead of a person — and
-emits the ordinary <code>snapshot.ingested</code> lifecycle event. Mode changes are
+emits the ordinary <code>marketplace.snapshot.ingested</code> lifecycle event. Mode changes are
 recorded with the operator who made them. An auditor reads which content
 arrived, when, and on whose (or what) authority from the ledger alone.</p>
 

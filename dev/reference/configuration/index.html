@@ -3241,7 +3241,7 @@ fails. The stores this has actually been exercised against are listed in
 </div>
 <hr />
 <h2 id="webhooks">Webhooks<a class="headerlink" href="#webhooks" title="Permanent link">&para;</a></h2>
-<p>Tuning for the outbound dispatcher that delivers snapshot lifecycle events. None
+<p>Tuning for the outbound dispatcher that delivers marketplace lifecycle events. None
 of it appears in <code>application.yaml</code>; every value below is a Java-side default,
 and omitting the whole block is identical to omitting each key.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
@@ -4798,7 +4798,7 @@ other entries.</p>
 <a id="__codelineno-15-35" name="__codelineno-15-35" href="#__codelineno-15-35"></a><span class="w">    </span><span class="nt">webhooks</span><span class="p">:</span>
 <a id="__codelineno-15-36" name="__codelineno-15-36" href="#__codelineno-15-36"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ci-bot</span>
 <a id="__codelineno-15-37" name="__codelineno-15-37" href="#__codelineno-15-37"></a><span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://ci.example.com/hooks/skills-gateway</span>
-<a id="__codelineno-15-38" name="__codelineno-15-38" href="#__codelineno-15-38"></a><span class="w">        </span><span class="nt">events</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">snapshot.approved,snapshot.rejected</span><span class="w">   </span><span class="c1"># omit for all events</span>
+<a id="__codelineno-15-38" name="__codelineno-15-38" href="#__codelineno-15-38"></a><span class="w">        </span><span class="nt">events</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">marketplace.snapshot.approved,marketplace.snapshot.rejected</span><span class="w">   </span><span class="c1"># omit for all events</span>
 <a id="__codelineno-15-39" name="__codelineno-15-39" href="#__codelineno-15-39"></a><span class="w">        </span><span class="nt">secret</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${SGW_ESTATE_CI_BOT_SECRET}</span>
 <a id="__codelineno-15-40" name="__codelineno-15-40" href="#__codelineno-15-40"></a>
 <a id="__codelineno-15-41" name="__codelineno-15-41" href="#__codelineno-15-41"></a><span class="w">    </span><span class="c1"># Audit export sinks; same secret contract as webhooks.</span>

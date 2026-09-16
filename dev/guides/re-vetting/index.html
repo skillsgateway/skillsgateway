@@ -2393,7 +2393,7 @@ declined is retracting content on evidence that says nothing about it.</p>
 <div class="tabbed-block">
 <p>The violation is written to the ledger with the objecting vetters, the
 rules behind it, and one entry per identity that had already fetched the
-snapshot. <code>snapshot.revet_violation</code> goes out to subscribers. The portal
+snapshot. <code>marketplace.snapshot.revet_violation</code> goes out to subscribers. The portal
 shows it.</p>
 <p><strong>Publication is untouched.</strong> The snapshot stays <code>approved</code> and every
 consumer keeps fetching it.</p>
@@ -2401,7 +2401,7 @@ consumer keeps fetching it.</p>
 <div class="tabbed-block">
 <p>Everything warn mode does, and then the snapshot is revoked: its state moves
 to <code>revoked</code>, the published refs it was reachable through are removed, and
-<code>snapshot.revoked</code> is emitted.</p>
+<code>marketplace.snapshot.revoked</code> is emitted.</p>
 </div>
 </div>
 </div>
@@ -2466,12 +2466,12 @@ rather than silent.</p>
     S-&gt;&gt;S: effective outcome vs active waivers
     S-&gt;&gt;L: revet-violation (vetters, rules, mode)
     S-&gt;&gt;L: revet-violation-affected (one per identity)
-    S-&gt;&gt;W: snapshot.revet_violation
+    S-&gt;&gt;W: marketplace.snapshot.revet_violation
     S-&gt;&gt;DB: state approved → revoked
     S-&gt;&gt;L: snapshot-revoked
     S-&gt;&gt;P: delete refs/heads/main and refs/snapshots/{sha}
     S-&gt;&gt;L: snapshot-unpublished
-    S-&gt;&gt;W: snapshot.revoked</code></pre>
+    S-&gt;&gt;W: marketplace.snapshot.revoked</code></pre>
 <p>The order is the safety property: the evidence and the announcement are written
 <strong>before</strong> anything is unpublished, so a crash mid-way leaves recorded content
 that is still served, never retracted content nobody can explain.</p>

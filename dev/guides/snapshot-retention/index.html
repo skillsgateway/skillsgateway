@@ -2382,8 +2382,8 @@ right now is never disturbed. See
 <code>retention-evaluated:…</code>, <code>snapshot-soft-deleted:&lt;reason&gt;</code>, <code>snapshot-restored</code>,
 <code>snapshot-purged</code> and <code>staging-refs-swept:count=&lt;n&gt;</code>. Policy-driven deletions are
 attributed to <code>retention-policy</code> rather than to a person.</p>
-<p>Soft delete and restore also fire the <code>snapshot.soft_deleted</code> and
-<code>snapshot.restored</code> webhook events, so an inventory system can follow deletions
+<p>Soft delete and restore also fire the <code>marketplace.snapshot.soft_deleted</code> and
+<code>marketplace.snapshot.restored</code> webhook events, so an inventory system can follow deletions
 the same way it follows approvals — see
 <a href="../lifecycle-webhooks/">Receiving lifecycle webhooks</a>.</p>
 <h2 id="turning-it-off-again">Turning it off again<a class="headerlink" href="#turning-it-off-again" title="Permanent link">&para;</a></h2>

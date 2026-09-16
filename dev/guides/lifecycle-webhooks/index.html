@@ -1098,6 +1098,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Events">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#snapshot-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Snapshot events
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#marketplace-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Marketplace events
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1122,6 +1150,28 @@
   
     <nav class="md-nav" aria-label="2. Handle the delivery">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-a-marketplace-event-carries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What a marketplace event carries
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-a-webhook-fetches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not a webhook: fetches
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#the-shape-is-published-and-it-only-grows" class="md-nav__link">
@@ -2196,6 +2246,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Events">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#snapshot-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Snapshot events
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#marketplace-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Marketplace events
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2220,6 +2298,28 @@
   
     <nav class="md-nav" aria-label="2. Handle the delivery">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-a-marketplace-event-carries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What a marketplace event carries
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-a-webhook-fetches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not a webhook: fetches
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#the-shape-is-published-and-it-only-grows" class="md-nav__link">
@@ -2323,6 +2423,9 @@ same decisions outward, so CI, chat and inventory systems learn about a snapshot
 the moment it is ingested, waiting for a review, approved or rejected instead of
 polling <code>/api/marketplaces</code>.</p>
 <h2 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h2>
+<p>Every event name says what it is about. <code>marketplace.snapshot.*</code> is what happened
+to one snapshot; <code>marketplace.*</code> is what happened to the marketplace itself.</p>
+<h3 id="snapshot-events">Snapshot events<a class="headerlink" href="#snapshot-events" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -2332,58 +2435,87 @@ polling <code>/api/marketplaces</code>.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>snapshot.ingested</code></td>
+<td><code>marketplace.snapshot.ingested</code></td>
 <td>An ingestion succeeded and produced a snapshot.</td>
 </tr>
 <tr>
-<td><code>snapshot.approved</code></td>
+<td><code>marketplace.snapshot.approved</code></td>
 <td>A held snapshot was approved and published.</td>
 </tr>
 <tr>
-<td><code>snapshot.rejected</code></td>
+<td><code>marketplace.snapshot.rejected</code></td>
 <td>A held snapshot was rejected.</td>
 </tr>
 <tr>
-<td><code>snapshot.soft_deleted</code></td>
+<td><code>marketplace.snapshot.soft_deleted</code></td>
 <td>A snapshot was marked deleted, by an administrator or by a retention policy.</td>
 </tr>
 <tr>
-<td><code>snapshot.restored</code></td>
+<td><code>marketplace.snapshot.restored</code></td>
 <td>A soft-deleted snapshot's marks were cleared.</td>
 </tr>
 <tr>
-<td><code>snapshot.vetted</code></td>
+<td><code>marketplace.snapshot.vetted</code></td>
 <td>A vetting chain run finished. The verdicts are readable at <code>GET /api/snapshots/{id}/vetting</code>.</td>
 </tr>
 <tr>
-<td><code>snapshot.approval_pending</code></td>
+<td><code>marketplace.snapshot.approval_pending</code></td>
 <td>A chain run finished and the snapshot is still <strong>held</strong>: it is waiting for a person. Carries a vetting summary — see <a href="#driving-approvals-from-your-own-system">Driving approvals from your own system</a>.</td>
 </tr>
 <tr>
-<td><code>snapshot.revet_violation</code></td>
+<td><code>marketplace.snapshot.revet_violation</code></td>
 <td>A re-vetting run found a violation on a snapshot that is <strong>already approved</strong>.</td>
 </tr>
 <tr>
-<td><code>snapshot.revoked</code></td>
+<td><code>marketplace.snapshot.revoked</code></td>
 <td>A snapshot was retroactively quarantined; the facade no longer serves it.</td>
 </tr>
 </tbody>
 </table>
-<p>Those are all of them. Deletion is orthogonal to the snapshot state machine,
-which is why the retention events carry the snapshot's unchanged vetting state.</p>
+<p>Deletion is orthogonal to the snapshot state machine, which is why the retention
+events carry the snapshot's unchanged vetting state.</p>
+<h3 id="marketplace-events">Marketplace events<a class="headerlink" href="#marketplace-events" title="Permanent link">&para;</a></h3>
+<p>These are about the estate rather than about content: what exists, what triggers
+its ingestion, and which vetters run against it. They carry
+<a href="#what-a-marketplace-event-carries">their own, shorter body</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Emitted when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>marketplace.registered</code></td>
+<td>A marketplace was registered, upstream or hosted.</td>
+</tr>
+<tr>
+<td><code>marketplace.updated</code></td>
+<td>A registered marketplace changed. Today that is its sync mode; the detail names the new one.</td>
+</tr>
+<tr>
+<td><code>marketplace.vetter_toggled</code></td>
+<td>A vetter was enabled or disabled, for one marketplace or across the gateway.</td>
+</tr>
+</tbody>
+</table>
+<p>Those are all of them. There is no <code>marketplace.removed</code>: the gateway has no
+deregistration — there is no <code>DELETE /api/marketplaces/{name}</code> — so there is
+nothing for it to announce.</p>
 <p>An action taken by a scheduled pass rather than by a person carries a policy
 actor — <code>retention-policy</code> for deletions, <code>revet-policy</code> for re-vetting — so a
 receiver can tell the two apart. See
 <a href="../snapshot-retention/">Reclaiming snapshot storage</a> and
 <a href="../re-vetting/">Re-vetting approved content</a>.</p>
 <div class="admonition warning">
-<p class="admonition-title"><code>snapshot.revet_violation</code> is the one that needs a receiver</p>
+<p class="admonition-title"><code>marketplace.snapshot.revet_violation</code> is the one that needs a receiver</p>
 <p>It says content a team is <em>already using</em> has stopped being acceptable, and
 in the default warn mode it is the only signal — nothing is unpublished, so
 nothing breaks to announce it. Read the payload's <code>state</code> to tell the two
 apart: <code>approved</code> means it is still being served and someone has to act;
 <code>revoked</code> means enforcement already retracted it and
-<code>snapshot.revoked</code> follows.</p>
+<code>marketplace.snapshot.revoked</code> follows.</p>
 </div>
 <p>Registering and deleting subscribers require <strong>admin</strong>; the subscriber and
 delivery listings require <strong>auditor</strong> (or admin). See
@@ -2401,10 +2533,10 @@ button.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/webhooks<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="err">'</span><span class="o">{</span><span class="s2">"name"</span>:<span class="s2">"ci-bot"</span>,<span class="s2">"url"</span>:<span class="s2">"https://ci.example.com/hooks/skills-gateway"</span>,
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">         "events":"snapshot.approved,snapshot.rejected"}'</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">         "events":"marketplace.snapshot.approved,marketplace.snapshot.rejected"}'</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"ci-bot"</span><span class="p">,</span><span class="nt">"url"</span><span class="p">:</span><span class="s2">"https://ci.example.com/hooks/skills-gateway"</span><span class="p">,</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"events"</span><span class="p">:</span><span class="s2">"snapshot.approved,snapshot.rejected"</span><span class="p">,</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"events"</span><span class="p">:</span><span class="s2">"marketplace.snapshot.approved,marketplace.snapshot.rejected"</span><span class="p">,</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w"> </span><span class="nt">"secret"</span><span class="p">:</span><span class="s2">"whsec_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}</span>
 </code></pre></div>
 </div>
@@ -2432,9 +2564,9 @@ button.</p>
 </tr>
 </tbody>
 </table>
-<p>The filter is exact-match per name: <code>*</code> is the only wildcard, and
-<code>snapshot.*</code> is not a valid filter. A subscriber only ever receives events its
-filter lists.</p>
+<p>The filter is exact-match per name: <code>*</code> is the only wildcard, and neither
+<code>marketplace.*</code> nor <code>marketplace.snapshot.*</code> is a valid filter. A subscriber only
+ever receives events its filter lists.</p>
 <p>Registering an outbound target is an egress decision, which is why it is an
 authenticated administrative act behind the same scheme allowlist as marketplace
 registration.</p>
@@ -2473,13 +2605,49 @@ deleting the subscriber and registering it again.</p>
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span><span class="nt">"event"</span><span class="p">:</span><span class="s2">"snapshot.approved"</span><span class="p">,</span><span class="nt">"occurredAt"</span><span class="p">:</span><span class="s2">"2026-08-15T09:14:22.481Z"</span><span class="p">,</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span><span class="nt">"event"</span><span class="p">:</span><span class="s2">"marketplace.snapshot.approved"</span><span class="p">,</span><span class="nt">"occurredAt"</span><span class="p">:</span><span class="s2">"2026-08-15T09:14:22.481Z"</span><span class="p">,</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w"> </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w"> </span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab9d1e4c7b6a5f80c3d2e1b0a9f8c7d6e5f"</span><span class="p">,</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w"> </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"approved"</span><span class="p">,</span><span class="nt">"actor"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">}</span>
 </code></pre></div>
 <p><code>state</code> is the snapshot state <em>after</em> the event, and <code>actor</code> is the principal
 that performed the admin action.</p>
+<h3 id="what-a-marketplace-event-carries">What a marketplace event carries<a class="headerlink" href="#what-a-marketplace-event-carries" title="Permanent link">&para;</a></h3>
+<p>A <code>marketplace.*</code> event has no snapshot to name, so its body is the four fields
+every event shares plus one:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span><span class="nt">"event"</span><span class="p">:</span><span class="s2">"marketplace.registered"</span><span class="p">,</span><span class="nt">"occurredAt"</span><span class="p">:</span><span class="s2">"2026-08-15T09:14:22.481Z"</span><span class="p">,</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w"> </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"actor"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"origin=upstream"</span><span class="p">}</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>marketplace</code></td>
+<td>The marketplace the change is about, or <code>-</code> when the change applies to the whole gateway — a vetter disabled everywhere rather than for one marketplace.</td>
+</tr>
+<tr>
+<td><code>detail</code></td>
+<td>What changed, as <code>key=value</code> pairs: <code>origin=upstream</code>, <code>mode=scheduled</code>, <code>vetter=secret-scan scope=global enabled=false</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><code>detail</code> carries gateway-side configuration values only. It never carries
+snapshot content, and it never carries operator-supplied free text — the reason
+an administrator types when switching a vetter off stays in the ledger, where an
+authenticated caller reads it. The event announces; the API discloses.</p>
+<h3 id="not-a-webhook-fetches">Not a webhook: fetches<a class="headerlink" href="#not-a-webhook-fetches" title="Permanent link">&para;</a></h3>
+<p>There is no event for "someone fetched this marketplace", and there will not be
+one. Fetch volume is orders of magnitude above administrative change, the ledger
+already records every fetch with the identity behind it, and an
+<a href="../exporting-the-audit-ledger/">audit sink</a> already pushes those ledger entries
+to a receiver in signed, retried batches. Anything a per-fetch webhook could tell
+you is derivable from a sink today, over a delivery path built for that volume.
+Configure a sink instead.</p>
 <h3 id="the-shape-is-published-and-it-only-grows">The shape is published, and it only grows<a class="headerlink" href="#the-shape-is-published-and-it-only-grows" title="Permanent link">&para;</a></h3>
 <p>Every delivery above is described in the gateway's own OpenAPI document, under
 its top-level <code>webhooks</code> object — one entry per event, carrying the four headers
@@ -2511,25 +2679,25 @@ is emitted and stored, so every retry sends byte-identical content.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Python</label><label for="__tabbed_2_2">Node</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span><span class="o">,</span><span class="w"> </span><span class="nn">hmac</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">verify</span><span class="p">(</span><span class="n">secret</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">header</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">expected</span> <span class="o">=</span> <span class="s2">"sha256="</span> <span class="o">+</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        <span class="n">secret</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">body</span><span class="p">,</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="k">return</span> <span class="n">hmac</span><span class="o">.</span><span class="n">compare_digest</span><span class="p">(</span><span class="n">expected</span><span class="p">,</span> <span class="n">header</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span><span class="o">,</span><span class="w"> </span><span class="nn">hmac</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">verify</span><span class="p">(</span><span class="n">secret</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">header</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">expected</span> <span class="o">=</span> <span class="s2">"sha256="</span> <span class="o">+</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>        <span class="n">secret</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">body</span><span class="p">,</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="k">return</span> <span class="n">hmac</span><span class="o">.</span><span class="n">compare_digest</span><span class="p">(</span><span class="n">expected</span><span class="p">,</span> <span class="n">header</span><span class="p">)</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">createHmac</span><span class="p">,</span><span class="w"> </span><span class="nx">timingSafeEqual</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">"node:crypto"</span><span class="p">;</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kd">function</span><span class="w"> </span><span class="nx">verify</span><span class="p">(</span><span class="nx">secret</span><span class="p">,</span><span class="w"> </span><span class="nx">body</span><span class="p">,</span><span class="w"> </span><span class="nx">header</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">expected</span><span class="w"> </span><span class="o">=</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="s2">"sha256="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">createHmac</span><span class="p">(</span><span class="s2">"sha256"</span><span class="p">,</span><span class="w"> </span><span class="nx">secret</span><span class="p">).</span><span class="nx">update</span><span class="p">(</span><span class="nx">body</span><span class="p">).</span><span class="nx">digest</span><span class="p">(</span><span class="s2">"hex"</span><span class="p">);</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">Buffer</span><span class="p">.</span><span class="kr">from</span><span class="p">(</span><span class="nx">expected</span><span class="p">);</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">Buffer</span><span class="p">.</span><span class="kr">from</span><span class="p">(</span><span class="nx">header</span><span class="p">);</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">a</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">b</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">timingSafeEqual</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span><span class="w"> </span><span class="nx">b</span><span class="p">);</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">createHmac</span><span class="p">,</span><span class="w"> </span><span class="nx">timingSafeEqual</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">"node:crypto"</span><span class="p">;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="kd">function</span><span class="w"> </span><span class="nx">verify</span><span class="p">(</span><span class="nx">secret</span><span class="p">,</span><span class="w"> </span><span class="nx">body</span><span class="p">,</span><span class="w"> </span><span class="nx">header</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">expected</span><span class="w"> </span><span class="o">=</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="s2">"sha256="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">createHmac</span><span class="p">(</span><span class="s2">"sha256"</span><span class="p">,</span><span class="w"> </span><span class="nx">secret</span><span class="p">).</span><span class="nx">update</span><span class="p">(</span><span class="nx">body</span><span class="p">).</span><span class="nx">digest</span><span class="p">(</span><span class="s2">"hex"</span><span class="p">);</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">Buffer</span><span class="p">.</span><span class="kr">from</span><span class="p">(</span><span class="nx">expected</span><span class="p">);</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">Buffer</span><span class="p">.</span><span class="kr">from</span><span class="p">(</span><span class="nx">header</span><span class="p">);</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">a</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">b</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">timingSafeEqual</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span><span class="w"> </span><span class="nx">b</span><span class="p">);</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="p">}</span>
 </code></pre></div>
 </div>
 </div>
@@ -2541,18 +2709,18 @@ before the body reaches any application logic. An unsigned or wrongly signed
 request is an unauthenticated request.</p>
 </div>
 <h2 id="driving-approvals-from-your-own-system">Driving approvals from your own system<a class="headerlink" href="#driving-approvals-from-your-own-system" title="Permanent link">&para;</a></h2>
-<p><code>snapshot.approval_pending</code> exists so the review can happen where your
+<p><code>marketplace.snapshot.approval_pending</code> exists so the review can happen where your
 organization already does reviews — a ticketing system, a change-approval board,
 a bot — instead of in the portal. It fires when a vetting chain run finishes and
 the snapshot is still <code>held</code>, which is exactly the moment a person is needed, and
 it carries enough to open a review item without a follow-up call:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">{</span><span class="nt">"event"</span><span class="p">:</span><span class="s2">"snapshot.approval_pending"</span><span class="p">,</span><span class="nt">"occurredAt"</span><span class="p">:</span><span class="s2">"2026-08-15T09:14:22.481Z"</span><span class="p">,</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w"> </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w"> </span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab9d1e4c7b6a5f80c3d2e1b0a9f8c7d6e5f"</span><span class="p">,</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w"> </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"held"</span><span class="p">,</span><span class="nt">"actor"</span><span class="p">:</span><span class="s2">"vetting"</span><span class="p">,</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w"> </span><span class="nt">"vetting"</span><span class="p">:{</span><span class="nt">"runId"</span><span class="p">:</span><span class="mi">17</span><span class="p">,</span><span class="nt">"outcome"</span><span class="p">:</span><span class="s2">"BLOCKED"</span><span class="p">,</span><span class="nt">"recordedOutcome"</span><span class="p">:</span><span class="s2">"BLOCKED"</span><span class="p">,</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">            </span><span class="nt">"blockingVetters"</span><span class="p">:[</span><span class="s2">"secret-scan"</span><span class="p">],</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">            </span><span class="nt">"uncoveredFindings"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="nt">"waivedFindings"</span><span class="p">:</span><span class="mi">0</span><span class="p">}}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span><span class="nt">"event"</span><span class="p">:</span><span class="s2">"marketplace.snapshot.approval_pending"</span><span class="p">,</span><span class="nt">"occurredAt"</span><span class="p">:</span><span class="s2">"2026-08-15T09:14:22.481Z"</span><span class="p">,</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w"> </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w"> </span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab9d1e4c7b6a5f80c3d2e1b0a9f8c7d6e5f"</span><span class="p">,</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w"> </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"held"</span><span class="p">,</span><span class="nt">"actor"</span><span class="p">:</span><span class="s2">"vetting"</span><span class="p">,</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w"> </span><span class="nt">"vetting"</span><span class="p">:{</span><span class="nt">"runId"</span><span class="p">:</span><span class="mi">17</span><span class="p">,</span><span class="nt">"outcome"</span><span class="p">:</span><span class="s2">"BLOCKED"</span><span class="p">,</span><span class="nt">"recordedOutcome"</span><span class="p">:</span><span class="s2">"BLOCKED"</span><span class="p">,</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">            </span><span class="nt">"blockingVetters"</span><span class="p">:[</span><span class="s2">"secret-scan"</span><span class="p">],</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">            </span><span class="nt">"uncoveredFindings"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="nt">"waivedFindings"</span><span class="p">:</span><span class="mi">0</span><span class="p">}}</span>
 </code></pre></div>
 <p>The first seven fields are the ones every event carries, unchanged. The
 <code>vetting</code> object is this event's own:</p>
@@ -2595,8 +2763,8 @@ it carries enough to open a review item without a follow-up call:</p>
 <code>CLEAR_WITH_WAIVERS</code> means it will, and only because someone accepted a risk;
 <code>BLOCKED</code> means it will be refused until every uncovered finding is
 <a href="../waiving-findings/">waived</a> or fixed upstream. Either decision goes
-back through the ordinary API, which emits <code>snapshot.approved</code> or
-<code>snapshot.rejected</code> in turn — so the round trip closes on the same webhook
+back through the ordinary API, which emits <code>marketplace.snapshot.approved</code> or
+<code>marketplace.snapshot.rejected</code> in turn — so the round trip closes on the same webhook
 stream your system is already reading.</p>
 <div class="admonition warning">
 <p class="admonition-title">The event announces; the API discloses</p>
@@ -2610,12 +2778,12 @@ leave it. Read the detail from
 </div>
 <p>Two things not to assume:</p>
 <ul>
-<li><strong>It is not <code>snapshot.vetted</code>.</strong> That one fires for <em>every</em> chain run,
+<li><strong>It is not <code>marketplace.snapshot.vetted</code>.</strong> That one fires for <em>every</em> chain run,
   including runs against content that is already approved, and says nothing
-  about a pending decision. Subscribe to <code>snapshot.approval_pending</code> if what you
+  about a pending decision. Subscribe to <code>marketplace.snapshot.approval_pending</code> if what you
   want is "someone has to look at this".</li>
 <li><strong>It says nothing about a revocation.</strong> A snapshot that re-vetting revoked is
-  decidable again, but it is announced by <code>snapshot.revoked</code> and means something
+  decidable again, but it is announced by <code>marketplace.snapshot.revoked</code> and means something
   else: content that was already in use has been retracted.</li>
 </ul>
 <h2 id="delivery-retry-and-backoff">Delivery, retry and backoff<a class="headerlink" href="#delivery-retry-and-backoff" title="Permanent link">&para;</a></h2>
@@ -2632,7 +2800,7 @@ an atomic conditional update, and POSTs it.</p>
     participant Rcv as Subscriber endpoint
 
     Reviewer-&gt;&gt;API: POST /api/snapshots/42/approve
-    API-&gt;&gt;DB: enqueue snapshot.approved (state=pending)
+    API-&gt;&gt;DB: enqueue marketplace.snapshot.approved (state=pending)
     API--&gt;&gt;Reviewer: 200 (never waits for the receiver)
 
     loop every poll-interval (5s)
@@ -2696,8 +2864,8 @@ across every retry of the same delivery — and treat handlers as idempotent.</p
 <p>Deliveries are claimed in batches and retried independently, so nothing
 guarantees the order two events for the same snapshot arrive in. One
 ingestion shows it plainly: the chain runs <em>inside</em> the ingestion, so
-<code>snapshot.vetted</code> and <code>snapshot.approval_pending</code> are queued <strong>before</strong>
-<code>snapshot.ingested</code> for the same snapshot. Treat every event as
+<code>marketplace.snapshot.vetted</code> and <code>marketplace.snapshot.approval_pending</code> are queued <strong>before</strong>
+<code>marketplace.snapshot.ingested</code> for the same snapshot. Treat every event as
 self-describing — the payload carries the marketplace, the snapshot, the SHA
 and the state — rather than as a step in a sequence.</p>
 </div>
@@ -2710,7 +2878,7 @@ subscriber, state, attempt count and last response — see
 <a href="../../reference/portal/#webhooks">Admin portal</a>.</p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>curl<span class="w"> </span><span class="s1">'localhost:8080/api/webhooks/deliveries?limit=20'</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>curl<span class="w"> </span><span class="s1">'localhost:8080/api/webhooks/deliveries?limit=20'</span>
 </code></pre></div>
 <p>Most recent first. <code>limit</code> defaults to 100 and is clamped to 500.</p>
 </div>
@@ -2719,7 +2887,7 @@ subscriber, state, attempt count and last response — see
 <p>Each row carries <code>state</code>, <code>attempts</code>, <code>lastStatus</code> and <code>lastError</code>, which is
 enough to tell a receiver that is down from one that is rejecting the payload.</p>
 <h2 id="remove-a-subscriber">Remove a subscriber<a class="headerlink" href="#remove-a-subscriber" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>localhost:8080/api/webhooks/1
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>localhost:8080/api/webhooks/1
 </code></pre></div>
 <p><strong>204</strong> on success, <strong>404</strong> if it never existed. The subscriber and its delivery
 history go with it, and no further events are queued for it. Subscriber creation
