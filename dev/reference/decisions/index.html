@@ -2600,7 +2600,8 @@ rather than here.</p>
 <h2 id="index">Index<a class="headerlink" href="#index" title="Permanent link">&para;</a></h2>
 <h3 id="adr-0001-use-java-for-the-product"><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0001-use-java-for-the-product.md">ADR 0001 — Use Java for the product</a><a class="headerlink" href="#adr-0001-use-java-for-the-product" title="Permanent link">&para;</a></h3>
 <p><em>Accepted, 2026-08-13.</em></p>
-<p><strong>Java</strong>, compiled with GraalVM native-image. The finalists were Java and Rust,
+<p><strong>Java</strong>, compiled with GraalVM native-image <em>(the packaging half was later
+reversed — see ADR 0012 below)</em>. The finalists were Java and Rust,
 and the deciding factor was git capability at the product horizon: embedded
 upload-pack serving, object-storage-native repositories, and fetch-time
 composition of virtual marketplaces exist today, production-proven, in <strong>JGit</strong>
