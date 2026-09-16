@@ -1701,6 +1701,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="GET /tokens">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lastusedat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        lastUsedAt
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2308,6 +2325,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="GET /tokens">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lastusedat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        lastUsedAt
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2567,10 +2601,52 @@ silently shortened.</p>
 <p>List the calling principal's tokens. Never returns the hash, and never returns
 another user's tokens.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">[{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"my-laptop"</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"revokedAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">"scopes"</span><span class="p">:[],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="kc">null</span><span class="p">}]</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">"scopes"</span><span class="p">:[],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">"lastUsedAt"</span><span class="p">:</span><span class="s2">"2026-09-16T08:41:00Z"</span><span class="p">}]</span>
 </code></pre></div>
 <p>A non-null <code>revokedAt</code> means the token no longer authenticates. Revoked tokens
 are retained rather than deleted, so the record of what existed survives.</p>
+<h3 id="lastusedat"><code>lastUsedAt</code><a class="headerlink" href="#lastusedat" title="Permanent link">&para;</a></h3>
+<p>When the token most recently authenticated <strong>successfully</strong>, on the facade or on
+the machine API. It is what tells a credential something still uses from one
+somebody minted and forgot, which is the question a revocation or rotation
+decision turns on.</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>An instant</td>
+<td>The token authenticated successfully at approximately that time.</td>
+</tr>
+<tr>
+<td><code>null</code></td>
+<td>No successful authentication has been recorded for it.</td>
+</tr>
+</tbody>
+</table>
+<p>Two properties of the field are worth reading before acting on it:</p>
+<ul>
+<li><strong>It is approximate.</strong> The gateway writes it at most once per token per
+  minute, so a token in continuous use reports a value up to a minute behind the
+  request that last used it. Anything needing the exact, per-request record has
+  the <a href="../audit/">audit ledger</a>, which is unchanged.</li>
+<li><strong>A refused authentication records nothing.</strong> An unrecognised secret, a
+  revoked or expired token, and a fetch token presented as a machine-API bearer
+  credential all leave the field exactly as it was. <code>lastUsedAt</code> is evidence
+  that a credential was accepted, never that one was presented.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Tokens issued before this field existed</p>
+<p>Nothing is backfilled, so a token that predates the field reads <code>null</code> until
+its next successful authentication — even if it has been in use for months.
+A <code>null</code> therefore means "no recorded use", not "provably never used". The
+ledger holds the fetches that happened before then.</p>
+</div>
 <p><strong>200.</strong></p>
 <hr />
 <h2 id="delete-tokensid"><code>DELETE /tokens/{id}</code><a class="headerlink" href="#delete-tokensid" title="Permanent link">&para;</a></h2>
@@ -2981,6 +3057,11 @@ anyone logs in as, so an owner-scoped listing would leave every one of them
 invisible — and unrevokable — during an incident. Each row carries its
 <code>machineOwner</code>, the person who provisioned it. <code>GET /api/tokens</code> is unaffected
 and still shows only the caller's own tokens.</p>
+<p>Each row also carries <a href="#lastusedat"><code>lastUsedAt</code></a>, with exactly the meaning it
+has on a personal token: when the credential most recently authenticated
+successfully, <code>null</code> if it never has, approximate to a minute, and untouched by
+any refused attempt. It is the field that identifies a pipeline credential
+nothing runs any more.</p>
 <h3 id="post-apitokensmachineidrotate"><code>POST /api/tokens/machine/{id}/rotate</code><a class="headerlink" href="#post-apitokensmachineidrotate" title="Permanent link">&para;</a></h3>
 <p>Same grant, new secret. The principal, name, expiry <strong>deadline</strong> and every one
 of the API scope values carry over, and the old credential is revoked before the

@@ -3823,6 +3823,10 @@ block and a clipboard button that flips to a checkmark for two seconds.</p>
 <td>Creation timestamp.</td>
 </tr>
 <tr>
+<td>Last used</td>
+<td>How long ago the token last authenticated successfully, or <strong>never</strong>. Hover for the exact instant.</td>
+</tr>
+<tr>
 <td>Status</td>
 <td><code>active</code> (primary badge) or <code>revoked</code> (destructive).</td>
 </tr>
@@ -3832,6 +3836,14 @@ block and a clipboard button that flips to a checkmark for two seconds.</p>
 </tr>
 </tbody>
 </table>
+<p><strong>Last used</strong> is the column to read before revoking: it separates a token
+something still authenticates with from one nobody has used. It shows the
+recency rather than the instant, because recency is the question; the exact time
+stays on the hover title, as on every other timestamp in the portal. The gateway
+records it at most once a minute, so it can be up to a minute behind, and a
+refused authentication never moves it — see
+<a href="../api/tokens/#lastusedat"><code>lastUsedAt</code></a> for what a <strong>never</strong> does and does not
+prove.</p>
 <p><strong>Revoke</strong> calls <code>DELETE /api/tokens/{id}</code> and toasts <em>Token '{name}' revoked</em>.
 It fires immediately. Revocation is recorded rather than deleted: the row stays
 with a <code>revoked</code> badge.</p>
