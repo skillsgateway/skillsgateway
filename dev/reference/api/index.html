@@ -2309,8 +2309,8 @@ breaking and how it is enforced.</p>
 <h2 id="session">Session<a class="headerlink" href="#session" title="Permanent link">&para;</a></h2>
 <p><code>GET /api/me</code> returns the current principal, the session's effective roles
 with the <strong>source</strong> of each, and whether the identity provider truncated the
-membership claim. The portal uses it for the sidebar footer and, with roles,
-to adapt its controls.</p>
+membership claim. The portal uses it for the user menu and, with roles, to
+adapt its controls.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span><span class="nt">"username"</span><span class="p">:</span><span class="w"> </span><span class="s2">"alice@example.com"</span><span class="p">,</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w"> </span><span class="nt">"roles"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"approver"</span><span class="p">,</span><span class="w"> </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="w"> </span><span class="s2">"acme"</span><span class="p">,</span><span class="w"> </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"grant"</span><span class="p">},</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">           </span><span class="p">{</span><span class="nt">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"auditor"</span><span class="p">,</span><span class="w"> </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"claim"</span><span class="p">}],</span>
