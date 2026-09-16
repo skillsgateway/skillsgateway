@@ -24,8 +24,12 @@ traversal into arbitrary directories.
 
 ## Authentication
 
-HTTP Basic, backed solely by the PAT provider. An OIDC session can never
-authenticate a git fetch, because no OIDC provider is registered in this chain.
+HTTP Basic, backed by the PAT provider. An OIDC browser **session** can never
+authenticate a git fetch: no session is read and no cookie is honoured on this
+chain. A second, opt-in credential kind is described under
+[Identity-provider bearer tokens](#identity-provider-bearer-tokens) below; it is
+off unless an operator turned it on, and it does not change anything in this
+section.
 
 **Only the password field is read.** The username is ignored; `token` is the
 convention. This is what makes the standard git credential helper work
@@ -73,7 +77,54 @@ exactly what the credential helper expects; a bad or revoked token gets 401 too.
 !!! note "The facade chain is unconditional"
 
     `skills-gateway.dev-insecure-auth=true` opens the web surface but does not
-    touch `/git/**`. A valid PAT is still required.
+    touch `/git/**`. A valid credential is still required.
+
+## Identity-provider bearer tokens
+
+**Off by default**
+([`skills-gateway.facade.idp-bearer.enabled`](configuration.md#identity-provider-bearer-tokens-on-the-facade)).
+While off, nothing described here exists — no filter, no provider, no decoder.
+
+When on, `/git/**` additionally accepts `Authorization: Bearer <jwt>` where the
+token was issued by the same identity provider the portal authenticates against.
+Both the OIDC access token and the ID token are accepted; providers disagree about
+which one a generic OAuth client receives, and the checks that matter are the same
+for both.
+
+| Check | Source |
+| --- | --- |
+| Signature | The `idp` registration's `jwk-set-uri`, cached and refreshed on an unknown `kid` |
+| `iss` | `skills-gateway.oidc.issuer`, which this capability makes mandatory |
+| `aud` | `skills-gateway.facade.idp-bearer.audience`, defaulting to the OAuth2 client id; must *contain* it, and a token with no `aud` is refused |
+| `exp` / `nbf` | The current time, with 60 seconds of clock leeway |
+
+The principal is the claim named by
+`spring.security.oauth2.client.provider.idp.user-name-attribute` (`sub` by
+default) — the same claim a browser session's identity comes from. The same
+person fetching with an SSO token and with a portal-minted PAT therefore writes
+the same `principal` on the ledger, and the
+[adoption report](api/adoption.md) cannot tell them apart.
+
+**Authorization is unchanged.** A bearer token carries no marketplace scope list,
+so it permits every marketplace the gateway serves — exactly what an unscoped PAT
+permits. Roles are not consulted here for any credential kind.
+
+**The challenge is still `Basic`.** An unauthenticated request, and a request
+whose bearer token is refused for any reason, both get the ordinary 401 with
+`WWW-Authenticate: Basic` — so a client holding an expired SSO token falls back
+to its credential helper instead of failing outright.
+
+!!! warning "The gateway cannot revoke a bearer token"
+
+    Revocation is the identity provider's; the gateway's only lever is the
+    token's own expiry, which is typically minutes to an hour. That short life is
+    the control, and it is a genuinely different trade from a PAT: much smaller
+    blast radius, no gateway-side kill switch. Deployments that need one keep
+    using PATs.
+
+A token accepted here reaches **nothing** on `/api/**`: the administrative
+interface authenticates only a gateway-issued machine credential, and the rest of
+the web surface only an interactive session.
 
 ## What is served
 

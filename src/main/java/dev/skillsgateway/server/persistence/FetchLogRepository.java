@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.persistence;
 
+import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -59,11 +60,34 @@ public class FetchLogRepository {
             String detail,
             Long tokenId,
             ActorType actorType) {
+        append(source, principal, marketplace, event, ref, sha, detail, tokenId, actorType, null);
+    }
+
+    /**
+     * As {@link #append}, naming the kind of credential that authenticated a facade entry
+     * (GW_AUTH_0041). Null is the honest value for every entry no credential authenticated — the
+     * administrative and system entries — and is written through the same explicit cast, so a
+     * value outside the set is a type error in the database rather than a string nobody checked.
+     */
+    @Requirements({"GW_AUTH_0041"})
+    public void append(
+            String source,
+            String principal,
+            String marketplace,
+            String event,
+            String ref,
+            String sha,
+            String detail,
+            Long tokenId,
+            ActorType actorType,
+            CredentialKind credentialKind) {
         jdbc.sql("INSERT INTO fetch_log"
-                        + " (ts, source, principal, marketplace, event, ref, sha, detail, token_id, actor_type)"
+                        + " (ts, source, principal, marketplace, event, ref, sha, detail, token_id, actor_type,"
+                        + " credential_kind)"
                         + " VALUES (:now, :source, :principal, :marketplace, :event, :ref, :sha, :detail, :tokenId,"
-                        + " :actorType::fetch_log_actor_type)")
+                        + " :actorType::fetch_log_actor_type, :credentialKind::fetch_log_credential_kind)")
                 .param("actorType", actorType.value())
+                .param("credentialKind", credentialKind == null ? null : credentialKind.value())
                 .param("now", OffsetDateTime.now())
                 .param("source", source)
                 .param("principal", principal)

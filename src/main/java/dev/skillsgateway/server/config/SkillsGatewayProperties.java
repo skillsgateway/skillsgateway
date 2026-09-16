@@ -25,6 +25,7 @@ public record SkillsGatewayProperties(
         Tokens tokens,
         Roles roles,
         Oidc oidc,
+        Facade facade,
         Estate estate,
         Storage storage,
         Ingestion ingestion,
@@ -69,6 +70,9 @@ public record SkillsGatewayProperties(
         }
         if (oidc == null) {
             oidc = new Oidc(null);
+        }
+        if (facade == null) {
+            facade = new Facade(null);
         }
         if (estate == null) {
             estate = new Estate(null, null, null, null, null);
@@ -711,6 +715,44 @@ public record SkillsGatewayProperties(
      *     authorization endpoint serves many tenants, this is the tenant boundary.
      */
     public record Oidc(String issuer) {}
+
+    /** Facade-only settings. Today that is one capability; see {@link IdpBearer}. */
+    public record Facade(IdpBearer idpBearer) {
+
+        public Facade {
+            if (idpBearer == null) {
+                idpBearer = new IdpBearer(null, null);
+            }
+        }
+    }
+
+    /**
+     * Whether the facade accepts an identity-provider bearer token beside a PAT (GW_AUTH_0040), and for
+     * which audience.
+     *
+     * <p>Two leaves, and neither has an existing home. The key set and the issuer are deliberately
+     * <em>not</em> here: they are read from the identity provider the web surface already trusts,
+     * so the gateway cannot be configured to accept at the facade what it would refuse at login.
+     *
+     * @param enabled off by default, and nothing is registered on the request path while it is.
+     *     Not inferred from whether an audience is set: a capability that widens a trust boundary
+     *     as a side effect of an unrelated value is the fail-open shape this avoids.
+     * @param audience what {@code aud} must contain. Null means the OAuth2 client id, which is what
+     *     an identity token carries by construction; a provider whose access tokens name a separate
+     *     resource identifier sets this, and there is no other leaf that names one.
+     */
+    @Requirements({"GW_AUTH_0040"})
+    public record IdpBearer(Boolean enabled, String audience) {
+
+        public IdpBearer {
+            if (enabled == null) {
+                enabled = false;
+            }
+            if (audience != null && audience.isBlank()) {
+                audience = null;
+            }
+        }
+    }
 
     /**
      * Access-token policy (GW_AUTH_0007).

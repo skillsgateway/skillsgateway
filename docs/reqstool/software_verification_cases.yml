@@ -2640,6 +2640,60 @@ cases:
       a token that has not authenticated
     revision: "0.1.0"
 
+  - id: SVC_GW_AUTH_0040
+    requirement_ids: ["GW_AUTH_0040"]
+    title: An identity-provider token clones, and every malformed or foreign one is refused alike
+    verification: automated-test
+    description: |
+      GIVEN a running gateway configured to accept identity-provider bearer tokens from a pinned
+      issuer, and a marketplace whose snapshot has been approved
+      WHEN a git client clones carrying a valid bearer token, and then requests are made carrying in
+      turn a token from another issuer, a token for another audience, an expired token, a
+      not-yet-valid token, a token whose payload was altered after signing, a token carrying no
+      audience, and a personal access token placed in the bearer header
+      THEN the clone with the valid token delivers the approved content, every other request is
+      refused without transferring anything, an unauthenticated request is still answered with a
+      basic-authentication challenge, and the same valid token is refused outright by a gateway on
+      which the capability is not enabled
+    revision: "0.2.0"
+
+  - id: SVC_GW_AUTH_0041
+    requirement_ids: ["GW_AUTH_0041"]
+    title: The ledger says which kind of credential fetched
+    verification: automated-test
+    description: |
+      GIVEN a running gateway accepting both personal access tokens and identity-provider bearer
+      tokens, and a marketplace whose snapshot has been approved
+      WHEN the same marketplace is fetched once with each kind of credential
+      THEN each resulting fetch entry names the principal the credential identifies and records the
+      kind of credential that authenticated it, the entry authenticated by the identity-provider
+      token names no gateway token, and the entry authenticated by the personal access token names
+      the token that authenticated it
+    revision: "0.2.0"
+
+  - id: SVC_GW_AUTH_0042
+    requirement_ids: ["GW_AUTH_0042"]
+    title: A token good enough to clone is not good enough to administer
+    verification: automated-test
+    description: |
+      GIVEN a running gateway configured to accept identity-provider bearer tokens on the git facade
+      WHEN an identity-provider bearer token that the facade accepts is presented to an
+      administrative endpoint that an authenticated session reaches
+      THEN the administrative request is refused
+    revision: "0.2.0"
+
+  - id: SVC_GW_AUTH_0043
+    requirement_ids: ["GW_AUTH_0043"]
+    title: The wizard leads where content is served and says what held means
+    verification: automated-test
+    description: |
+      GIVEN an authenticated portal session, a marketplace whose snapshot has been approved, and a
+      marketplace whose only snapshot is still held
+      WHEN the consumer opens each marketplace's page and its client set-up wizard
+      THEN the serving marketplace leads with the set-up panel and offers the credential-storage
+      command as its primary copy target, and the held marketplace states on the page and inside the
+      wizard that a clone is answered with not-found until a snapshot is approved
+    revision: "0.2.0"
   - id: SVC_GW_WEBHOOK_0008
     requirement_ids: ["GW_WEBHOOK_0008"]
     title: Every subscribable event is namespaced, the old spelling is refused, and a stored filter survives the rename

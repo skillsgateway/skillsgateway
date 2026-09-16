@@ -334,3 +334,21 @@ and active OpenSpec change. Ids reserved and then abandoned, and provisional
 ids in still-unimplemented change proposals, were never real and stay as
 historical bare numbers. `.reqstool-ai.yaml` sets `req_prefix`/`svc_prefix`
 blank — ids are minted manually now, one domain sequence at a time.
+
+### [ADR 0019 — The facade accepts identity-provider bearer tokens beside PATs](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0019-facade-accepts-idp-bearer-tokens.md)
+
+*Accepted, 2026-09-16.* Decides option 2 of
+[issue #392](https://github.com/skillsgateway/skillsgateway/issues/392) and
+supersedes the git-client half of [ADR 0002](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0002-toolchain-and-product-decisions.md).
+That ADR's argument was "git cannot do interactive OIDC"; a generic OAuth
+credential helper now can, so a plain `git clone` can authenticate against the
+organisation's own SSO with no token minted anywhere. The facade accepts such a
+token beside a PAT — off by default, validated by key-set signature, issuer,
+audience and time, taking the principal from the same claim the web session
+takes it from, and recording a distinct credential kind on the ledger. PATs are
+unchanged and remain the credential for CI. Anonymous fetch (option 1) is
+rejected outright because attribution is the one thing the product must be able
+to provide; the device flow (option 3) is rejected as redundant now that the
+client it existed for can run a browser flow. The trade recorded honestly: a
+bearer token's blast radius is far smaller than a PAT's, and the gateway cannot
+revoke one — expiry and the identity provider are the only levers.

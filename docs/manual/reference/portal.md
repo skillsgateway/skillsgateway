@@ -321,22 +321,42 @@ serves. These reads are privileged — admin or an approver of this marketplace
 
 ### Set up a client
 
-The page header carries a **Set up a client** button opening a wizard that
-composes, for this marketplace, everything a consumer needs — every URL derived
-from the address the browser is already on:
+A card at the **top of the page**, above the upstream metadata, opening a wizard
+that composes for this marketplace everything a consumer needs — every URL
+derived from the address the browser is already on.
+
+The card reads the marketplace's own state:
+
+| State | The card says | And |
+| --- | --- | --- |
+| At least one snapshot approved | **Use this marketplace** | offers the wizard |
+| No snapshot approved | **Not being served yet** | states that a clone is answered with `404` until one is, and that this is not a credential problem — a wrong or revoked token is answered with `401`. The wizard repeats it, for anyone who opens it without reading the page |
+
+The portal has no `serving` snapshot state; "serving" here is derived the way the
+[Adoption](#adoption) page derives it, from an approved snapshot existing.
+
+Inside the wizard:
 
 1. **Personal access token** — the same show-once creation flow as the
-   [Access tokens](#access-tokens) page (name required before the control
-   enables). A token minted here is filled into the snippets below **only while
-   the wizard stays open**; closing the wizard drops it, and no previously
-   issued token's value is ever shown.
+   [Access tokens](#access-tokens) page. The name defaults to
+   `{marketplace}-client` and the control disables again if it is emptied or left
+   whitespace. **Expires** defaults to 30 days rather than to never; the
+   gateway's own cap
+   ([`skills-gateway.tokens.max-ttl`](configuration.md#access-tokens)) is not
+   exposed to the browser, so a longer choice than the deployment allows is
+   refused by the server and the refusal is shown beneath the field. A token
+   minted here is filled into the snippets **only while the wizard stays open**;
+   closing it drops the value, and no previously issued token's value is ever
+   shown.
 2. **Store the credential** — a `git credential approve` line for this host.
+   This is the **primary copy target**: a labelled button rather than one icon
+   among several, because a consumer who copies one thing should copy this.
 3. **Add the marketplace to Claude Code** —
    `claude plugin marketplace add {origin}/git/{name}`.
 4. **Clone directly** — the CI-shaped `git clone` URL with the token inline.
 
-Each snippet has a copy button. Until a token is minted the snippets carry the
-`<YOUR_TOKEN>` placeholder.
+The remaining snippets have icon copy buttons. Until a token is minted the
+snippets carry the `<YOUR_TOKEN>` placeholder.
 
 ### Vetting
 

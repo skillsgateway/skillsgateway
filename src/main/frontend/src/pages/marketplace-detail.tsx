@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/table";
 import { MarketplaceVettingChain } from "@/components/marketplace-vetting-chain";
 import { RevocationNote, SnapshotStateBadge } from "@/components/snapshot-state";
-import { SetupWizard } from "@/components/setup-wizard";
+import { HeldNotice, SetupWizard } from "@/components/setup-wizard";
 import { SnapshotContentDiff } from "@/components/snapshot-content-diff";
 import { SnapshotPreview } from "@/components/snapshot-preview";
 import { VettingReport } from "@/components/vetting-report";
@@ -340,6 +340,10 @@ export function MarketplaceDetailPage() {
     );
 
   const snapshots = marketplace.snapshots ?? [];
+  // "Serving" is derived exactly as the adoption page derives it, and stated here rather than
+  // left implicit because the whole lead panel is gated on it: the portal's snapshot model has
+  // no `serving` state, only an approved snapshot that the facade then serves.
+  const serving = snapshots.some((snapshot) => snapshot.state === "approved");
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -357,14 +361,37 @@ export function MarketplaceDetailPage() {
           <h1 className="text-2xl font-semibold">{marketplace.name}</h1>
           <p className="break-all text-sm text-muted-foreground">{marketplace.url}</p>
         </div>
-        <Button className="ml-auto" onClick={() => setWizardOpen(true)}>
-          Set up a client
-        </Button>
       </div>
       {/* Unmounted when closed: a token minted inside lives only while the wizard is open. */}
       {wizardOpen ? (
-        <SetupWizard marketplace={marketplace.name ?? ""} onClose={() => setWizardOpen(false)} />
+        <SetupWizard
+          marketplace={marketplace.name ?? ""}
+          serving={serving}
+          onClose={() => setWizardOpen(false)}
+        />
       ) : null}
+
+      {/*
+        The lead panel (GW_AUTH_0043). First on the page, above the upstream metadata, because a
+        consumer's question on a marketplace that is serving is "how do I use this?" and the
+        answer used to be a control competing with the page heading. When nothing is served yet,
+        the same slot answers the question the page could not answer at all: why a clone is
+        refused with 404.
+      */}
+      <Card data-testid="setup-lead">
+        <CardHeader>
+          <CardTitle>{serving ? "Use this marketplace" : "Not being served yet"}</CardTitle>
+          <CardDescription>
+            {serving
+              ? "An approved snapshot is being served. Set up a client against it in one step."
+              : "No snapshot has been approved, so the facade has nothing to serve for this marketplace."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {serving ? null : <HeldNotice marketplace={marketplace.name ?? ""} />}
+          <Button onClick={() => setWizardOpen(true)}>Set up a client</Button>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

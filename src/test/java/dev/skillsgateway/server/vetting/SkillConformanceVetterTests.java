@@ -344,7 +344,7 @@ class SkillConformanceVetterTests {
         SkillsGatewayProperties.Vetting vetting = new SkillsGatewayProperties.Vetting(
                 null, null, null, null, null, null, null, null, new SkillsGatewayProperties.Conformance(enforce));
         return new SkillsGatewayProperties(
-                null, null, null, null, null, null, vetting, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, vetting, null, null, null, null, null, null, null, null, null, null,
                 null);
     }
 

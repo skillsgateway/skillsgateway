@@ -526,7 +526,57 @@ test("a_revoked_snapshot_shows_its_violation_and_who_had_already_fetched_it", as
 });
 
 /**
- * @SVCs SVC_GW_OBSERVABILITY_0004, SVC_GW_AUTH_0031
+ * The set-up panel leads on a marketplace that is serving, and on one that is not it says the
+ * thing the portal could not say before: a clone is answered with 404 until a snapshot is
+ * approved. Both states are exercised on the same marketplace, before and after the approval,
+ * so the panel is shown to react to the estate rather than to the fixture.
+ *
+ * @SVCs SVC_GW_AUTH_0043
+ */
+test("the_setup_panel_leads_when_serving_and_explains_the_held_case", async ({ page }) => {
+  await login(page, "alice");
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Marketplaces" })
+    .click();
+  const name = uniqueName("lead");
+  await page.getByRole("button", { name: "Register marketplace" }).click();
+  await page.getByLabel("Name").fill(name);
+  await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
+  await submitRegister(page);
+
+  // Nothing approved yet: the lead slot explains the refusal the consumer would otherwise read
+  // as a broken gateway, on the page and again inside the wizard.
+  await page.getByRole("link", { name, exact: true }).click();
+  await expect(page.getByTestId("setup-lead")).toContainText("Not being served yet");
+  await expect(page.getByTestId("setup-held-notice").first()).toContainText("404");
+  await page.getByRole("button", { name: "Set up a client" }).click();
+  await expect(page.getByTestId("setup-held-notice").last()).toContainText("404");
+  // The credential line is the primary copy target, held or not.
+  await expect(page.getByRole("button", { name: "Copy credential command" })).toBeVisible();
+  await expect(page.getByLabel("Expires")).toHaveValue("P30D");
+  await page.getByRole("button", { name: "Done" }).click();
+
+  // Ingest and approve, then the same slot leads with the way in.
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Marketplaces" })
+    .click();
+  await expandMarketplace(page, name);
+  const card = marketplaceRegion(page, name);
+  await card.getByRole("button", { name: `Ingest ${name}` }).click();
+  await expect(card.getByText("held", { exact: true })).toBeVisible();
+  await card.getByRole("button", { name: /Approve snapshot \d+/ }).click();
+  await page.getByRole("button", { name: /Confirm approval of snapshot \d+/ }).click();
+  await expect(card.getByText("approved", { exact: true })).toBeVisible();
+
+  await page.getByRole("link", { name, exact: true }).click();
+  await expect(page.getByTestId("setup-lead")).toContainText("Use this marketplace");
+  await expect(page.getByTestId("setup-held-notice")).toHaveCount(0);
+});
+
+/**
+* @SVCs SVC_GW_OBSERVABILITY_0004, SVC_GW_AUTH_0031
  */
 test("adoption_page_shows_a_real_facade_fetch_and_its_identity", async ({ page }) => {
   await login(page, "alice");
@@ -612,7 +662,10 @@ test("setup_wizard_composes_origin_derived_commands_and_holds_show_once", async 
   // No token yet: the snippets carry a placeholder, never a secret.
   await expect(page.getByTestId("wizard-clone-command")).toContainText("<YOUR_TOKEN>");
 
-  // Minting goes through the same show-once flow as the tokens page.
+  // Minting goes through the same show-once flow as the tokens page. The name field arrives with
+  // a default, so the disabled-until-valid rule is asserted by emptying it rather than by finding
+  // it empty.
+  await page.getByLabel("Token name").clear();
   await expect(page.getByRole("button", { name: "Create token" })).toBeDisabled();
   await page.getByLabel("Token name").fill(uniqueName("wiz"));
   await page.getByRole("button", { name: "Create token" }).click();

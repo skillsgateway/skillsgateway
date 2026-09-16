@@ -1876,6 +1876,37 @@ requirements:
     categories: ["security", "interaction-capability"]
     revision: 0.1.0
 
+  - id: GW_AUTH_0040
+    title: Identity-provider bearer tokens on the git facade
+    significance: shall
+    description: "The git facade shall, when explicitly enabled, authenticate a request presenting a bearer token issued by the same identity provider the web surface trusts, in addition to and without displacing personal access tokens; shall validate that token's signature against the provider's published key set and its issuer, audience, expiry and not-before, refusing any token failing any of those checks with the same indistinguishable refusal; shall take the principal from the same claim the web session takes it from, so the same person is named identically however the fetch was authenticated; shall refuse to start when the capability is enabled without a pinned issuer; and shall register nothing on the request path at all while the capability is disabled."
+    rationale: "Requiring a minted token before any clone is friction for every consumer, and git clients can now complete an interactive authorization flow themselves and present the resulting token. Accepting one costs nothing in attribution, because the identity is the provider's own subject. What it would cost if validated loosely is everything: a signature check alone admits every tenant of a multi-tenant endpoint, and an audience check alone admits every application registered at that provider. Pinning the issuer is therefore a precondition rather than a recommendation, and a capability that widens a trust boundary is one an operator has to have typed."
+    categories: ["security", "interaction-capability"]
+    revision: 0.2.0
+
+  - id: GW_AUTH_0041
+    title: Facade fetches record the kind of credential that authenticated them
+    significance: shall
+    description: "Every facade fetch entry on the audit ledger shall record which kind of credential authenticated it, stored on the entry itself and drawn from a closed set that distinguishes a gateway-issued access token from an identity-provider bearer token, and shall remain readable as what it meant after the credential it names no longer exists."
+    rationale: "A fetch authenticated by an identity-provider token names no gateway token row, so the existing per-token attribution column is empty for it — and that column's emptiness already means two other things, an administrative entry and an entry older than per-token attribution. Overloading it a third time would make the ledger unable to answer which credential kind was used without guessing, on exactly the surface where the question is asked after a leak."
+    categories: ["security"]
+    revision: 0.2.0
+
+  - id: GW_AUTH_0042
+    title: The administrative interface refuses identity-provider bearer tokens
+    significance: shall
+    description: "The administrative interface shall refuse a bearer token issued by the identity provider, whether or not the git facade is configured to accept one, and shall continue to authenticate only a gateway-issued machine credential on that path and only an interactive session on the rest of the web surface."
+    rationale: "The facade and the administrative interface are separate boundaries with separate credentials, and that separation currently holds because only one bearer-token mechanism exists. Adding a second one to the facade makes the separation something to state and verify rather than something the chain ordering happens to produce: an identity-provider token good enough to clone must not also be good enough to approve."
+    categories: ["security"]
+    revision: 0.2.0
+
+  - id: GW_AUTH_0043
+    title: The client wizard leads on a serving marketplace and states the held-snapshot outcome
+    significance: shall
+    description: "The portal shall present the client set-up wizard as the leading element of a marketplace that is serving approved content, with the credential-storage command as its primary copy target and a bounded default lifetime for a credential minted inside it; and shall state, on a marketplace with no approved snapshot, both on the marketplace's own page and within the wizard, that a clone will be answered with not-found until a snapshot is approved."
+    rationale: "The wizard is the shortest path from an approved snapshot to a working client, and it was reachable only through an unremarkable control competing with the page heading. The held case is worse than undiscoverable: the wizard composes a clone command that cannot work yet, and nothing on the screen says why, so the consumer reads a correct refusal as a broken gateway."
+    categories: ["interaction-capability"]
+    revision: 0.2.0
   - id: GW_WEBHOOK_0008
     title: Namespaced lifecycle event names
     significance: shall
