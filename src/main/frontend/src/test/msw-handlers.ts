@@ -125,6 +125,39 @@ export const issuedToken: Schemas["IssuedToken"] = {
   createdAt: "2026-08-14T10:00:00Z",
 };
 
+/**
+ * Two tokens, because the Last used column has exactly two shapes worth seeing: one a client
+ * authenticated with recently, and one that has never authenticated at all.
+ */
+export const tokenViews: Schemas["TokenView"][] = [
+  {
+    id: 7,
+    name: "ci-runner",
+    createdAt: "2026-08-14T10:00:00Z",
+    revokedAt: null,
+    scopes: [],
+    expiresAt: null,
+    rotatedFrom: null,
+    pushScopes: [],
+    sessionDerived: false,
+    apiScopes: [],
+    lastUsedAt: "2026-08-14T13:00:00Z",
+  },
+  {
+    id: 8,
+    name: "spare-laptop",
+    createdAt: "2026-08-14T10:00:00Z",
+    revokedAt: null,
+    scopes: [],
+    expiresAt: null,
+    rotatedFrom: null,
+    pushScopes: [],
+    sessionDerived: false,
+    apiScopes: [],
+    lastUsedAt: null,
+  },
+];
+
 export const subscriber: Schemas["SubscriberView"] = {
   id: 3,
   name: "ci-bot",
@@ -662,7 +695,7 @@ export const handlers = [
     HttpResponse.json(fileContent(new URL(request.url).searchParams.get("path") ?? "")),
   ),
   http.get("/api/snapshots/:id/diff", () => HttpResponse.json(snapshotDiff)),
-  http.get("/api/tokens", () => HttpResponse.json<Schemas["TokenView"][]>([])),
+  http.get("/api/tokens", () => HttpResponse.json<Schemas["TokenView"][]>(tokenViews)),
   http.post("/api/tokens", () => HttpResponse.json(issuedToken, { status: 201 })),
   http.get("/api/audit", () => HttpResponse.json([])),
   http.get("/api/audit/sinks", () => HttpResponse.json<Schemas["SinkView"][]>([auditSink])),

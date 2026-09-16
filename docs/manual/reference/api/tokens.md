@@ -79,11 +79,42 @@ another user's tokens.
 
 ```json
 [{"id":1,"name":"my-laptop","createdAt":"...","revokedAt":null,
-  "scopes":[],"expiresAt":null,"rotatedFrom":null}]
+  "scopes":[],"expiresAt":null,"rotatedFrom":null,
+  "lastUsedAt":"2026-09-16T08:41:00Z"}]
 ```
 
 A non-null `revokedAt` means the token no longer authenticates. Revoked tokens
 are retained rather than deleted, so the record of what existed survives.
+
+### `lastUsedAt`
+
+When the token most recently authenticated **successfully**, on the facade or on
+the machine API. It is what tells a credential something still uses from one
+somebody minted and forgot, which is the question a revocation or rotation
+decision turns on.
+
+| Value | Means |
+| --- | --- |
+| An instant | The token authenticated successfully at approximately that time. |
+| `null` | No successful authentication has been recorded for it. |
+
+Two properties of the field are worth reading before acting on it:
+
+- **It is approximate.** The gateway writes it at most once per token per
+  minute, so a token in continuous use reports a value up to a minute behind the
+  request that last used it. Anything needing the exact, per-request record has
+  the [audit ledger](audit.md), which is unchanged.
+- **A refused authentication records nothing.** An unrecognised secret, a
+  revoked or expired token, and a fetch token presented as a machine-API bearer
+  credential all leave the field exactly as it was. `lastUsedAt` is evidence
+  that a credential was accepted, never that one was presented.
+
+!!! note "Tokens issued before this field existed"
+
+    Nothing is backfilled, so a token that predates the field reads `null` until
+    its next successful authentication — even if it has been in use for months.
+    A `null` therefore means "no recorded use", not "provably never used". The
+    ledger holds the fetches that happened before then.
 
 **200.**
 
@@ -335,6 +366,12 @@ anyone logs in as, so an owner-scoped listing would leave every one of them
 invisible — and unrevokable — during an incident. Each row carries its
 `machineOwner`, the person who provisioned it. `GET /api/tokens` is unaffected
 and still shows only the caller's own tokens.
+
+Each row also carries [`lastUsedAt`](#lastusedat), with exactly the meaning it
+has on a personal token: when the credential most recently authenticated
+successfully, `null` if it never has, approximate to a minute, and untouched by
+any refused attempt. It is the field that identifies a pipeline credential
+nothing runs any more.
 
 ### `POST /api/tokens/machine/{id}/rotate`
 

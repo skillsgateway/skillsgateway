@@ -684,8 +684,18 @@ block and a clipboard button that flips to a checkmark for two seconds.
 | --- | --- |
 | Name | The name you gave it. |
 | Created | Creation timestamp. |
+| Last used | How long ago the token last authenticated successfully, or **never**. Hover for the exact instant. |
 | Status | `active` (primary badge) or `revoked` (destructive). |
 | Actions | **Revoke**, shown only while active. |
+
+**Last used** is the column to read before revoking: it separates a token
+something still authenticates with from one nobody has used. It shows the
+recency rather than the instant, because recency is the question; the exact time
+stays on the hover title, as on every other timestamp in the portal. The gateway
+records it at most once a minute, so it can be up to a minute behind, and a
+refused authentication never moves it — see
+[`lastUsedAt`](api/tokens.md#lastusedat) for what a **never** does and does not
+prove.
 
 **Revoke** calls `DELETE /api/tokens/{id}` and toasts *Token '{name}' revoked*.
 It fires immediately. Revocation is recorded rather than deleted: the row stays

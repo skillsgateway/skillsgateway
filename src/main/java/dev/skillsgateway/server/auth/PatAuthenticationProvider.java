@@ -21,7 +21,7 @@ public class PatAuthenticationProvider implements AuthenticationProvider {
     }
 
     @Override
-    @Requirements({"GW_AUTH_0003"})
+    @Requirements({"GW_AUTH_0003", "GW_AUTH_0031"})
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         Object credentials = authentication.getCredentials();
         if (credentials == null) {
@@ -37,6 +37,10 @@ public class PatAuthenticationProvider implements AuthenticationProvider {
                     // scopes (GW_AUTH_0006) and the audit hook can attribute the fetch to it
                     // (GW_AUTH_0009) without a second lookup.
                     authenticated.setDetails(accessToken);
+                    // The credential is accepted at this point and nowhere earlier, which is what
+                    // makes last use evidence of an acceptance rather than of an attempt
+                    // (GW_AUTH_0031).
+                    tokenService.recordUse(accessToken);
                     return (Authentication) authenticated;
                 })
                 .orElseThrow(() -> new BadCredentialsException("invalid token"));

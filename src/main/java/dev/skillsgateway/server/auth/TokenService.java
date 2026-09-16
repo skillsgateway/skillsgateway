@@ -318,6 +318,19 @@ public class TokenService {
         return tokenRepository.findActiveByHash(sha256Hex(presentedToken));
     }
 
+    /**
+     * Records that a credential authenticated successfully (GW_AUTH_0031).
+     *
+     * <p>Deliberately separate from {@link #authenticate}, which resolves a live row and is not
+     * itself the decision: the machine API chain calls it and then refuses anything without
+     * administrative scope, so stamping there would mark a refused request as a use. Each chain
+     * calls this on the branch where it has already decided to authenticate, and nowhere else.
+     */
+    @Requirements({"GW_AUTH_0031"})
+    public void recordUse(AccessToken token) {
+        tokenRepository.recordLastUsed(token.id());
+    }
+
     private String validateScopes(List<String> scopes) {
         if (scopes == null || scopes.isEmpty()) {
             return null;

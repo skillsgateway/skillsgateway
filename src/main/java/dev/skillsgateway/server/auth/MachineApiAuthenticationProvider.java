@@ -33,7 +33,7 @@ public class MachineApiAuthenticationProvider implements AuthenticationProvider 
     }
 
     @Override
-    @Requirements({"GW_AUTH_0021"})
+    @Requirements({"GW_AUTH_0021", "GW_AUTH_0031"})
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         Object credentials = authentication.getCredentials();
         if (credentials == null || credentials.toString().isBlank()) {
@@ -44,7 +44,13 @@ public class MachineApiAuthenticationProvider implements AuthenticationProvider 
                 // Revocation and expiry are already applied by the lookup (GW_AUTH_0007), so a
                 // revoked or expired credential never reaches this filter.
                 .filter(token -> token.machineCredential())
-                .<Authentication>map(MachineApiAuthentication::new)
+                // Last use is recorded after the filter and never before it: a fetch token presented
+                // here resolves a live row and is still refused, and a refusal records no use
+                // (GW_AUTH_0031).
+                .<Authentication>map(token -> {
+                    tokenService.recordUse(token);
+                    return new MachineApiAuthentication(token);
+                })
                 .orElseThrow(() -> new BadCredentialsException(REFUSED));
     }
 

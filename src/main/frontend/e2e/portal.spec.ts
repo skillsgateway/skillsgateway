@@ -154,7 +154,7 @@ test("the_approve_dialog_warns_that_the_reviewer_supplied_the_content_and_still_
 });
 
 /**
- * @SVCs SVC_GW_AUTH_0005
+ * @SVCs SVC_GW_AUTH_0005, SVC_GW_AUTH_0031
  */
 test("token_cleartext_is_shown_once_and_revocation_marks_it_revoked", async ({ page }) => {
   await login(page, "alice");
@@ -178,6 +178,10 @@ test("token_cleartext_is_shown_once_and_revocation_marks_it_revoked", async ({ p
   await expect(page.getByText(value ?? "__never__")).toHaveCount(0);
 
   const row = page.getByRole("row", { name: new RegExp(tokenName) });
+  // Nothing has authenticated with it yet, and the column says so rather than leaving a blank
+  // an operator would have to interpret (SVC_GW_AUTH_0031).
+  await expect(row.getByText("never", { exact: true })).toBeVisible();
+
   await row.getByRole("button", { name: `Revoke token ${tokenName}` }).click();
   await expect(row.getByText("revoked")).toBeVisible();
 });
@@ -522,7 +526,7 @@ test("a_revoked_snapshot_shows_its_violation_and_who_had_already_fetched_it", as
 });
 
 /**
- * @SVCs SVC_GW_OBSERVABILITY_0004
+ * @SVCs SVC_GW_OBSERVABILITY_0004, SVC_GW_AUTH_0031
  */
 test("adoption_page_shows_a_real_facade_fetch_and_its_identity", async ({ page }) => {
   await login(page, "alice");
@@ -571,6 +575,13 @@ test("adoption_page_shows_a_real_facade_fetch_and_its_identity", async ({ page }
   // alice fetched once: the card carries one fetch by one identity, on the served tip.
   const row = page.getByRole("row", { name: /current/ }).filter({ has: page.locator("td") });
   await expect(row.first()).toBeVisible();
+
+  // And the credential that did the fetching now says so on its own row: a real facade
+  // authentication is what moves Last used off "never" (SVC_GW_AUTH_0031).
+  await page.getByRole("link", { name: "Access tokens" }).click();
+  const tokenRow = page.getByRole("row", { name: new RegExp(tokenName) });
+  await expect(tokenRow).toBeVisible();
+  await expect(tokenRow.getByText("never", { exact: true })).toHaveCount(0);
 });
 
 /**

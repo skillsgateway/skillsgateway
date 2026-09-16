@@ -2621,3 +2621,21 @@ cases:
       WHEN the reviewer opens the snapshot's review surface and activates a vetter node of the chain flow
       THEN the flow is shown with a node per chain step in the order the vetters run, each carrying its verdict state as a word beside its icon, and the activated node opens its own evidence naming the vetter and the findings behind its verdict
     revision: "0.2.0"
+
+  - id: SVC_GW_AUTH_0031
+    requirement_ids: ["GW_AUTH_0031"]
+    title: Last use is stamped by a successful authentication, never by a refused one, and is shown per credential
+    verification: automated-test
+    description: |
+      GIVEN a live personal access token, a live machine API credential, a revoked token, an
+      expired token and an unrecognised secret
+      WHEN each is presented on the chain it belongs to, the two live credentials are presented
+      twice in quick succession and again after the write bound has passed, the fetch-only token is
+      also presented as a bearer credential on the machine API chain, and an operator opens the
+      access tokens page
+      THEN each live credential carries the time of its successful authentication and reports it in
+      its own listing, the second presentation within the bound leaves that time unchanged while the
+      one after it advances it, no refused presentation records anything against any credential, and
+      the page shows the recorded time per token with the exact instant available and says never for
+      a token that has not authenticated
+    revision: "0.1.0"
