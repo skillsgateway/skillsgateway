@@ -273,7 +273,8 @@ pointer; the page it points at is where the mechanism is explained.
     ([vetter settings](../reference/api/marketplaces.md#vetter-enabledisable)).
     The industry equivalents are Harbor's scanner adapter and
     Dependency-Track's analyzer. See
-    [Vetting — the vetter chain](vetting.md).
+    [Vetting — the vetter chain](vetting.md) and, for adding one of your own,
+    [Adding an external vetter](../guides/adding-an-external-vetter.md).
 
 **Violation**
 :   The reason ingestion flagged a snapshot: an external plugin source that
