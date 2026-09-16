@@ -173,10 +173,15 @@ public class SecurityConfig {
      * <p>Ordered ahead of the web chain, so this holds under
      * {@code skills-gateway.dev-insecure-auth=true} as well — the escape hatch opens the browser
      * surface, never the bearer path. The facade's posture, applied here.
+     *
+     * <p>That this provider is the <em>only</em> one here is now a guarantee in its own right
+     * (GW_AUTH_0042): the facade may be configured to accept an identity-provider bearer token
+     * (GW_AUTH_0040), and such a token reaches this chain — every {@code /api/**} request carrying a
+     * bearer header does — where it is refused like any other unknown credential.
      */
     @Bean
     @Order(4)
-    @Requirements({"GW_AUTH_0021", "GW_AUTH_0022"})
+    @Requirements({"GW_AUTH_0021", "GW_AUTH_0022", "GW_AUTH_0042"})
     public SecurityFilterChain machineApiChain(
             HttpSecurity http, MachineApiAuthenticationProvider machineApiAuthenticationProvider) throws Exception {
         AuthenticationManager authenticationManager = new ProviderManager(machineApiAuthenticationProvider);
