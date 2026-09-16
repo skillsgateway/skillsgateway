@@ -5,6 +5,8 @@ import dev.skillsgateway.server.ingestion.ForgeMetadataService;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.storage.GitStorage;
+import dev.skillsgateway.server.webhook.WebhookEvent;
+import dev.skillsgateway.server.webhook.WebhookService;
 import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
 import java.net.URI;
@@ -39,18 +41,21 @@ public class MarketplaceRegistrationService {
     private final ForgeMetadataService forgeMetadataService;
     private final AdminAuditLogger auditLogger;
     private final GitStorage storage;
+    private final WebhookService webhookService;
 
     public MarketplaceRegistrationService(
             MarketplaceRepository marketplaceRepository,
             SkillsGatewayProperties properties,
             ForgeMetadataService forgeMetadataService,
             AdminAuditLogger auditLogger,
-            GitStorage storage) {
+            GitStorage storage,
+            WebhookService webhookService) {
         this.marketplaceRepository = marketplaceRepository;
         this.properties = properties;
         this.forgeMetadataService = forgeMetadataService;
         this.auditLogger = auditLogger;
         this.storage = storage;
+        this.webhookService = webhookService;
     }
 
     /** A successful registration, plus any non-blocking warnings about it (GW_INGEST_0029). */
@@ -73,7 +78,7 @@ public class MarketplaceRegistrationService {
      * check and a supplied URL is a contradiction rather than an unused field; its origin
      * repository is created here so a publisher can push the moment registration returns.
      */
-    @Requirements({"GW_INGEST_0001", "GW_APPROVAL_0010", "GW_FACADE_0006"})
+    @Requirements({"GW_INGEST_0001", "GW_APPROVAL_0010", "GW_FACADE_0006", "GW_WEBHOOK_0009"})
     public RegistrationOutcome register(String name, String url, String origin, String pushPolicy, String actor) {
         if (name == null || !MARKETPLACE_NAME.matcher(name).matches()) {
             throw new ResponseStatusException(
@@ -113,6 +118,8 @@ public class MarketplaceRegistrationService {
             createOriginRepository(marketplace.name());
         }
         auditLogger.record(actor, marketplace.name(), "marketplace-registered", null, "origin=" + resolvedOrigin);
+        webhookService.emitMarketplace(
+                WebhookEvent.MARKETPLACE_REGISTERED, marketplace.name(), actor, "origin=" + resolvedOrigin);
         return new RegistrationOutcome(marketplace, warnings);
     }
 

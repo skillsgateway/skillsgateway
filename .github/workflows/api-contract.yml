@@ -10,7 +10,10 @@ on:
   pull_request:
     # `edited` matters here for the same reason as in check-semantic-pr.yml: this
     # check reads the PR title, so a title fixed after a red check has to re-run.
-    types: [opened, edited, reopened, synchronize]
+    # `labeled` and `unlabeled` for the same reason: it also reads the
+    # ⚠️ BREAKING CONTRACT label, and a re-run of the old event replays the old
+    # label set.
+    types: [opened, edited, reopened, synchronize, labeled, unlabeled]
 
 permissions:
   contents: read

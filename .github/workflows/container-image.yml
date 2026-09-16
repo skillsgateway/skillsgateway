@@ -1,9 +1,7 @@
 # The container image: built, smoke-tested, and -- only from a release --
 # published.
 #
-# The file is still called native.yml because release.yml calls it by path and
-# renaming it would move a reference nothing else gains from moving. What it
-# builds is no longer a native image: ADR 0012 made the release artifact the
+# What it builds is not a native image: ADR 0012 made the release artifact the
 # Spring Boot jar on a jlink runtime.
 name: Container image
 

@@ -159,8 +159,8 @@ Every retention action is in the append-only ledger with the acting identity:
 `snapshot-purged` and `staging-refs-swept:count=<n>`. Policy-driven deletions are
 attributed to `retention-policy` rather than to a person.
 
-Soft delete and restore also fire the `snapshot.soft_deleted` and
-`snapshot.restored` webhook events, so an inventory system can follow deletions
+Soft delete and restore also fire the `marketplace.snapshot.soft_deleted` and
+`marketplace.snapshot.restored` webhook events, so an inventory system can follow deletions
 the same way it follows approvals — see
 [Receiving lifecycle webhooks](lifecycle-webhooks.md).
 

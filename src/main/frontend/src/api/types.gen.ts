@@ -875,7 +875,7 @@ export interface paths {
         put?: never;
         /**
          * Re-vet an approved snapshot now
-         * @description Runs the vetting chain again over the snapshot's pinned content and records a new run with trigger revet-manual. If the run's effective outcome — after the waivers active right now — objects to the content, the violation is written to the ledger and announced as snapshot.revet_violation. In enforce mode the snapshot is then revoked and its published refs are removed; in warn mode, the default, publication is untouched. A run that only blocks because a vetter errored or has not answered is recorded as inconclusive and never revokes anything.
+         * @description Runs the vetting chain again over the snapshot's pinned content and records a new run with trigger revet-manual. If the run's effective outcome — after the waivers active right now — objects to the content, the violation is written to the ledger and announced as marketplace.snapshot.revet_violation. In enforce mode the snapshot is then revoked and its published refs are removed; in warn mode, the default, publication is untouched. A run that only blocks because a vetter errored or has not answered is recorded as inconclusive and never revokes anything.
          */
         post: operations["revetSnapshot"];
         delete?: never;
@@ -1147,7 +1147,7 @@ export interface paths {
         put?: never;
         /**
          * Register a webhook subscriber
-         * @description Registers a receiver for snapshot lifecycle events. The signing secret is returned exactly once, in this response, and is never readable afterwards.
+         * @description Registers a receiver for marketplace lifecycle events. The signing secret is returned exactly once, in this response, and is never readable afterwards.
          */
         post: operations["create"];
         delete?: never;
@@ -1185,7 +1185,7 @@ export interface paths {
         };
         /**
          * List the subscribable lifecycle events and the shape they deliver
-         * @description Every snapshot lifecycle event a subscriber may filter on, together with an illustrative example of each delivery body — so a receiver can be written against what it will actually parse. The per-event deliveries are described in full under the document's top-level `webhooks` object. Read-only, records nothing. The audit export event is not subscribable and never appears here.
+         * @description Every lifecycle event a subscriber may filter on, together with an illustrative example of each delivery body — so a receiver can be written against what it will actually parse. The per-event deliveries are described in full under the document's top-level `webhooks` object. Read-only, records nothing. The audit export event is not subscribable and never appears here.
          */
         get: operations["events"];
         put?: never;
@@ -1270,7 +1270,7 @@ export interface paths {
     };
 }
 export interface webhooks {
-    "snapshot.approval_pending": {
+    "marketplace.registered": {
         parameters: {
             query?: never;
             header?: never;
@@ -1280,17 +1280,17 @@ export interface webhooks {
         get?: never;
         put?: never;
         /**
-         * Delivery of snapshot.approval_pending
-         * @description Sent by the gateway to every enabled subscriber whose event filter includes `snapshot.approval_pending`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
+         * Delivery of marketplace.registered
+         * @description Sent by the gateway to every enabled subscriber whose event filter includes `marketplace.registered`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
          */
-        post: operations["webhook-snapshot.approval_pending"];
+        post: operations["webhook-marketplace.registered"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "snapshot.approved": {
+    "marketplace.snapshot.approval_pending": {
         parameters: {
             query?: never;
             header?: never;
@@ -1300,17 +1300,17 @@ export interface webhooks {
         get?: never;
         put?: never;
         /**
-         * Delivery of snapshot.approved
-         * @description Sent by the gateway to every enabled subscriber whose event filter includes `snapshot.approved`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
+         * Delivery of marketplace.snapshot.approval_pending
+         * @description Sent by the gateway to every enabled subscriber whose event filter includes `marketplace.snapshot.approval_pending`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
          */
-        post: operations["webhook-snapshot.approved"];
+        post: operations["webhook-marketplace.snapshot.approval_pending"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "snapshot.ingested": {
+    "marketplace.snapshot.approved": {
         parameters: {
             query?: never;
             header?: never;
@@ -1320,17 +1320,17 @@ export interface webhooks {
         get?: never;
         put?: never;
         /**
-         * Delivery of snapshot.ingested
-         * @description Sent by the gateway to every enabled subscriber whose event filter includes `snapshot.ingested`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
+         * Delivery of marketplace.snapshot.approved
+         * @description Sent by the gateway to every enabled subscriber whose event filter includes `marketplace.snapshot.approved`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
          */
-        post: operations["webhook-snapshot.ingested"];
+        post: operations["webhook-marketplace.snapshot.approved"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "snapshot.rejected": {
+    "marketplace.snapshot.ingested": {
         parameters: {
             query?: never;
             header?: never;
@@ -1340,17 +1340,17 @@ export interface webhooks {
         get?: never;
         put?: never;
         /**
-         * Delivery of snapshot.rejected
-         * @description Sent by the gateway to every enabled subscriber whose event filter includes `snapshot.rejected`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
+         * Delivery of marketplace.snapshot.ingested
+         * @description Sent by the gateway to every enabled subscriber whose event filter includes `marketplace.snapshot.ingested`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
          */
-        post: operations["webhook-snapshot.rejected"];
+        post: operations["webhook-marketplace.snapshot.ingested"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "snapshot.restored": {
+    "marketplace.snapshot.rejected": {
         parameters: {
             query?: never;
             header?: never;
@@ -1360,17 +1360,17 @@ export interface webhooks {
         get?: never;
         put?: never;
         /**
-         * Delivery of snapshot.restored
-         * @description Sent by the gateway to every enabled subscriber whose event filter includes `snapshot.restored`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
+         * Delivery of marketplace.snapshot.rejected
+         * @description Sent by the gateway to every enabled subscriber whose event filter includes `marketplace.snapshot.rejected`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
          */
-        post: operations["webhook-snapshot.restored"];
+        post: operations["webhook-marketplace.snapshot.rejected"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "snapshot.revet_violation": {
+    "marketplace.snapshot.restored": {
         parameters: {
             query?: never;
             header?: never;
@@ -1380,17 +1380,17 @@ export interface webhooks {
         get?: never;
         put?: never;
         /**
-         * Delivery of snapshot.revet_violation
-         * @description Sent by the gateway to every enabled subscriber whose event filter includes `snapshot.revet_violation`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
+         * Delivery of marketplace.snapshot.restored
+         * @description Sent by the gateway to every enabled subscriber whose event filter includes `marketplace.snapshot.restored`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
          */
-        post: operations["webhook-snapshot.revet_violation"];
+        post: operations["webhook-marketplace.snapshot.restored"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "snapshot.revoked": {
+    "marketplace.snapshot.revet_violation": {
         parameters: {
             query?: never;
             header?: never;
@@ -1400,17 +1400,17 @@ export interface webhooks {
         get?: never;
         put?: never;
         /**
-         * Delivery of snapshot.revoked
-         * @description Sent by the gateway to every enabled subscriber whose event filter includes `snapshot.revoked`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
+         * Delivery of marketplace.snapshot.revet_violation
+         * @description Sent by the gateway to every enabled subscriber whose event filter includes `marketplace.snapshot.revet_violation`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
          */
-        post: operations["webhook-snapshot.revoked"];
+        post: operations["webhook-marketplace.snapshot.revet_violation"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "snapshot.soft_deleted": {
+    "marketplace.snapshot.revoked": {
         parameters: {
             query?: never;
             header?: never;
@@ -1420,17 +1420,17 @@ export interface webhooks {
         get?: never;
         put?: never;
         /**
-         * Delivery of snapshot.soft_deleted
-         * @description Sent by the gateway to every enabled subscriber whose event filter includes `snapshot.soft_deleted`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
+         * Delivery of marketplace.snapshot.revoked
+         * @description Sent by the gateway to every enabled subscriber whose event filter includes `marketplace.snapshot.revoked`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
          */
-        post: operations["webhook-snapshot.soft_deleted"];
+        post: operations["webhook-marketplace.snapshot.revoked"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "snapshot.vetted": {
+    "marketplace.snapshot.soft_deleted": {
         parameters: {
             query?: never;
             header?: never;
@@ -1440,10 +1440,70 @@ export interface webhooks {
         get?: never;
         put?: never;
         /**
-         * Delivery of snapshot.vetted
-         * @description Sent by the gateway to every enabled subscriber whose event filter includes `snapshot.vetted`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
+         * Delivery of marketplace.snapshot.soft_deleted
+         * @description Sent by the gateway to every enabled subscriber whose event filter includes `marketplace.snapshot.soft_deleted`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
          */
-        post: operations["webhook-snapshot.vetted"];
+        post: operations["webhook-marketplace.snapshot.soft_deleted"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "marketplace.snapshot.vetted": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Delivery of marketplace.snapshot.vetted
+         * @description Sent by the gateway to every enabled subscriber whose event filter includes `marketplace.snapshot.vetted`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
+         */
+        post: operations["webhook-marketplace.snapshot.vetted"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "marketplace.updated": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Delivery of marketplace.updated
+         * @description Sent by the gateway to every enabled subscriber whose event filter includes `marketplace.updated`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
+         */
+        post: operations["webhook-marketplace.updated"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "marketplace.vetter_toggled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Delivery of marketplace.vetter_toggled
+         * @description Sent by the gateway to every enabled subscriber whose event filter includes `marketplace.vetter_toggled`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
+         */
+        post: operations["webhook-marketplace.vetter_toggled"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1710,7 +1770,7 @@ export interface components {
         CreateSubscriberRequest: {
             /**
              * @description Comma-delimited event filter, or * for every event
-             * @example snapshot.approved,snapshot.rejected
+             * @example marketplace.snapshot.approved,marketplace.snapshot.rejected
              */
             events?: string;
             /**
@@ -1969,11 +2029,13 @@ export interface components {
         };
         /** @description The subscribable lifecycle events and the shape of the deliveries that carry them */
         EventRegistry: {
-            /** @description Every snapshot lifecycle event a subscriber may filter on */
+            /** @description Every lifecycle event a subscriber may filter on */
             events: string[];
-            /** @description An illustrative body of the kind snapshot.approval_pending delivers: the same fields plus the vetting summary. Example values, not a real delivery. */
+            /** @description An illustrative body of the kind marketplace.snapshot.approval_pending delivers: the same fields plus the vetting summary. Example values, not a real delivery. */
             exampleApprovalPendingPayload: components["schemas"]["ApprovalPendingPayload"];
-            /** @description An illustrative body of the kind every event other than snapshot.approval_pending delivers. Example values, not a real delivery. */
+            /** @description An illustrative body of the kind the marketplace.* events deliver: what changed about a marketplace, with no snapshot to name. Example values, not a real delivery. */
+            exampleMarketplacePayload: components["schemas"]["MarketplacePayload"];
+            /** @description An illustrative body of the kind every marketplace.snapshot.* event other than marketplace.snapshot.approval_pending delivers. Example values, not a real delivery. */
             examplePayload: components["schemas"]["EventPayload"];
         };
         /** @description An identity that fetched a snapshot's content through the git facade */
@@ -2244,6 +2306,19 @@ export interface components {
             servedSha?: string;
             /** @description Per-snapshot-SHA breakdown, most recently fetched first */
             snapshots?: components["schemas"]["SnapshotAdoption"][];
+        };
+        /** @description Payload of a marketplace administration event */
+        MarketplacePayload: {
+            /** @description Acting identity */
+            actor: string;
+            /** @description What changed, as key=value pairs. Gateway-side configuration values only: never snapshot content, and never operator-supplied free text. */
+            detail: string;
+            /** @description Lifecycle event name */
+            event: string;
+            /** @description Marketplace name, or - when the change applies to the whole gateway rather than to one marketplace */
+            marketplace: string;
+            /** @description Event time, ISO-8601 */
+            occurredAt: string;
         };
         /** @description A registered marketplace with its snapshots and forge metadata */
         MarketplaceView: {
@@ -5590,7 +5665,39 @@ export interface operations {
             };
         };
     };
-    "webhook-snapshot.approval_pending": {
+    "webhook-marketplace.registered": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The lifecycle event name, identical to the payload's `event` field. */
+                "X-Skills-Gateway-Event": string;
+                /** @description Delivery id — stable across retries of the same delivery, and the receiver's de-duplication key. */
+                "X-Skills-Gateway-Delivery": string;
+                /** @description Time this attempt was sent, ISO-8601. */
+                "X-Skills-Gateway-Timestamp": string;
+                /** @description HMAC of the exact request body under the subscriber's signing secret, in the form `sha256=<hex>`. The guide states how it is computed and compared. */
+                "X-Skills-Gateway-Signature": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The event body, serialized once so every retry sends identical bytes. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarketplacePayload"];
+            };
+        };
+        responses: {
+            /** @description Accepted. Any 2xx marks the delivery delivered; the body is not read. Anything else is retried. */
+            "2XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "webhook-marketplace.snapshot.approval_pending": {
         parameters: {
             query?: never;
             header: {
@@ -5622,7 +5729,7 @@ export interface operations {
             };
         };
     };
-    "webhook-snapshot.approved": {
+    "webhook-marketplace.snapshot.approved": {
         parameters: {
             query?: never;
             header: {
@@ -5654,7 +5761,7 @@ export interface operations {
             };
         };
     };
-    "webhook-snapshot.ingested": {
+    "webhook-marketplace.snapshot.ingested": {
         parameters: {
             query?: never;
             header: {
@@ -5686,7 +5793,7 @@ export interface operations {
             };
         };
     };
-    "webhook-snapshot.rejected": {
+    "webhook-marketplace.snapshot.rejected": {
         parameters: {
             query?: never;
             header: {
@@ -5718,7 +5825,7 @@ export interface operations {
             };
         };
     };
-    "webhook-snapshot.restored": {
+    "webhook-marketplace.snapshot.restored": {
         parameters: {
             query?: never;
             header: {
@@ -5750,7 +5857,7 @@ export interface operations {
             };
         };
     };
-    "webhook-snapshot.revet_violation": {
+    "webhook-marketplace.snapshot.revet_violation": {
         parameters: {
             query?: never;
             header: {
@@ -5782,7 +5889,7 @@ export interface operations {
             };
         };
     };
-    "webhook-snapshot.revoked": {
+    "webhook-marketplace.snapshot.revoked": {
         parameters: {
             query?: never;
             header: {
@@ -5814,7 +5921,7 @@ export interface operations {
             };
         };
     };
-    "webhook-snapshot.soft_deleted": {
+    "webhook-marketplace.snapshot.soft_deleted": {
         parameters: {
             query?: never;
             header: {
@@ -5846,7 +5953,7 @@ export interface operations {
             };
         };
     };
-    "webhook-snapshot.vetted": {
+    "webhook-marketplace.snapshot.vetted": {
         parameters: {
             query?: never;
             header: {
@@ -5866,6 +5973,70 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["EventPayload"];
+            };
+        };
+        responses: {
+            /** @description Accepted. Any 2xx marks the delivery delivered; the body is not read. Anything else is retried. */
+            "2XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "webhook-marketplace.updated": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The lifecycle event name, identical to the payload's `event` field. */
+                "X-Skills-Gateway-Event": string;
+                /** @description Delivery id — stable across retries of the same delivery, and the receiver's de-duplication key. */
+                "X-Skills-Gateway-Delivery": string;
+                /** @description Time this attempt was sent, ISO-8601. */
+                "X-Skills-Gateway-Timestamp": string;
+                /** @description HMAC of the exact request body under the subscriber's signing secret, in the form `sha256=<hex>`. The guide states how it is computed and compared. */
+                "X-Skills-Gateway-Signature": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The event body, serialized once so every retry sends identical bytes. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarketplacePayload"];
+            };
+        };
+        responses: {
+            /** @description Accepted. Any 2xx marks the delivery delivered; the body is not read. Anything else is retried. */
+            "2XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "webhook-marketplace.vetter_toggled": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The lifecycle event name, identical to the payload's `event` field. */
+                "X-Skills-Gateway-Event": string;
+                /** @description Delivery id — stable across retries of the same delivery, and the receiver's de-duplication key. */
+                "X-Skills-Gateway-Delivery": string;
+                /** @description Time this attempt was sent, ISO-8601. */
+                "X-Skills-Gateway-Timestamp": string;
+                /** @description HMAC of the exact request body under the subscriber's signing secret, in the form `sha256=<hex>`. The guide states how it is computed and compared. */
+                "X-Skills-Gateway-Signature": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The event body, serialized once so every retry sends identical bytes. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarketplacePayload"];
             };
         };
         responses: {

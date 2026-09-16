@@ -162,7 +162,7 @@ export const subscriber: Schemas["SubscriberView"] = {
   id: 3,
   name: "ci-bot",
   url: "https://ci.example.com/hooks/skills-gateway",
-  events: "snapshot.approved",
+  events: "marketplace.snapshot.approved",
   enabled: true,
   createdAt: "2026-08-14T10:00:00Z",
 };
@@ -170,8 +170,8 @@ export const subscriber: Schemas["SubscriberView"] = {
 export const delivery: Schemas["WebhookDelivery"] = {
   id: 11,
   subscriberId: 3,
-  event: "snapshot.approved",
-  payload: '{"event":"snapshot.approved"}',
+  event: "marketplace.snapshot.approved",
+  payload: '{"event":"marketplace.snapshot.approved"}',
   state: "delivered",
   attempts: 1,
   nextAttemptAt: "2026-08-14T10:00:00Z",
@@ -185,9 +185,15 @@ export const delivery: Schemas["WebhookDelivery"] = {
  * a field renamed in the payload fails typechecking here rather than at a receiver (ADR 0003).
  */
 export const eventRegistry: Schemas["EventRegistry"] = {
-  events: ["snapshot.ingested", "snapshot.approved", "snapshot.rejected", "snapshot.revoked"],
+  events: [
+    "marketplace.snapshot.ingested",
+    "marketplace.snapshot.approved",
+    "marketplace.snapshot.rejected",
+    "marketplace.snapshot.revoked",
+    "marketplace.registered",
+  ],
   examplePayload: {
-    event: "snapshot.approved",
+    event: "marketplace.snapshot.approved",
     occurredAt: "2026-08-14T10:00:00Z",
     marketplace: "example-marketplace",
     snapshotId: 1,
@@ -196,7 +202,7 @@ export const eventRegistry: Schemas["EventRegistry"] = {
     actor: "reviewer@example.com",
   },
   exampleApprovalPendingPayload: {
-    event: "snapshot.approval_pending",
+    event: "marketplace.snapshot.approval_pending",
     occurredAt: "2026-08-14T10:00:00Z",
     marketplace: "example-marketplace",
     snapshotId: 1,
@@ -211,6 +217,13 @@ export const eventRegistry: Schemas["EventRegistry"] = {
       uncoveredFindings: 1,
       waivedFindings: 0,
     },
+  },
+  exampleMarketplacePayload: {
+    event: "marketplace.registered",
+    occurredAt: "2026-08-14T10:00:00Z",
+    marketplace: "example-marketplace",
+    actor: "admin@example.com",
+    detail: "origin=upstream",
   },
 };
 

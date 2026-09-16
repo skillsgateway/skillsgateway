@@ -246,7 +246,7 @@ Every retention action lands in the append-only ledger with the acting identity:
 | `snapshot-purged` | Each compaction removal, carrying the SHA. |
 | `staging-refs-swept:count=<n>` | Each compaction pass that removed abandoned staging refs from a marketplace's published repository. |
 
-Soft delete and restore also emit the `snapshot.soft_deleted` and
-`snapshot.restored` [lifecycle webhook events](../guides/lifecycle-webhooks.md).
+Soft delete and restore also emit the `marketplace.snapshot.soft_deleted` and
+`marketplace.snapshot.restored` [lifecycle webhook events](../guides/lifecycle-webhooks.md).
 A policy-driven deletion carries the actor `retention-policy`, so a receiver can
 tell a scheduled deletion from an operator's.

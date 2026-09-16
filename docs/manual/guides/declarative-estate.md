@@ -53,7 +53,7 @@ skills-gateway:
     webhooks:
       - name: ci-bot
         url: https://ci.example.com/hooks/skills-gateway
-        events: snapshot.approved,snapshot.rejected
+        events: marketplace.snapshot.approved,marketplace.snapshot.rejected
         secret: ${SGW_ESTATE_CI_BOT_SECRET}
     audit-sinks:
       - name: siem
