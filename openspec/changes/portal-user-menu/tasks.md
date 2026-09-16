@@ -40,6 +40,6 @@
 
 ## 7. Gates and archive
 
-- [ ] 7.1 `./mvnw clean verify`, `pnpm test:stories`, `pnpm e2e`, `reqstool status local -p docs/reqstool`, `openspec validate --all --strict`, `mkdocs build --strict`
-- [ ] 7.2 Write `evidence.md` from one final fresh run after the last edit
-- [ ] 7.3 Archive the change as the final commit
+- [x] 7.1 `./mvnw clean verify`, `pnpm test:stories`, `pnpm e2e`, `reqstool status local -p docs/reqstool`, `openspec validate --all --strict`, `mkdocs build --strict`
+- [x] 7.2 Write `evidence.md` from one final fresh run after the last edit
+- [x] 7.3 Archive the change as the final commit
