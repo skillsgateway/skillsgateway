@@ -32,7 +32,7 @@
   description saying NULL means never and that the value is approximate.
 - [x] 4.2 Add `lastUsedAt` to `MachineTokenController.MachineCredentialView`
   likewise.
-- [ ] 4.3 Regenerate `src/main/frontend/openapi.json` from `OpenApiDocsTests`'
+- [x] 4.3 Regenerate `src/main/frontend/openapi.json` from `OpenApiDocsTests`'
   `target/openapi.json` and `src/api/types.gen.ts` with
   `(cd src/main/frontend && pnpm gen:api-types)`. Never hand-edit either.
 
@@ -83,16 +83,16 @@
 
 ## 8. Design harness
 
-- [ ] 8.1 Run `/impeccable audit` and `/impeccable harden` on the Access tokens
+- [x] 8.1 Run `/impeccable audit` and `/impeccable harden` on the Access tokens
   page (a changed page, not a new one — no `critique`); fix or dismiss with a
   reason in the PR body.
 
 ## 9. Gates and evidence
 
-- [ ] 9.1 `./mvnw -q spotless:apply`, then `./mvnw clean verify`.
-- [ ] 9.2 `(cd src/main/frontend && pnpm test:stories)` and
+- [x] 9.1 `./mvnw -q spotless:apply`, then `./mvnw clean verify`.
+- [x] 9.2 `(cd src/main/frontend && pnpm test:stories)` and
   `(cd src/main/frontend && pnpm e2e)`.
-- [ ] 9.3 `reqstool status local -p docs/reqstool` ends PASS.
-- [ ] 9.4 `openspec validate --all --strict` and `mkdocs build --strict`.
-- [ ] 9.5 Write `openspec/changes/token-last-used/evidence.md` from one final
+- [x] 9.3 `reqstool status local -p docs/reqstool` ends PASS.
+- [x] 9.4 `openspec validate --all --strict` and `mkdocs build --strict`.
+- [x] 9.5 Write `openspec/changes/token-last-used/evidence.md` from one final
   fresh run after the last code edit, with the commit SHA.
