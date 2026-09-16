@@ -33,7 +33,7 @@ Every capability area the gateway has today, one row each. If you are asking
 | Declarative estate | Reconciles marketplaces, role grants, policy rules and webhook receivers from configuration through the same audited paths as the API. | Registration, Roles | `GW_ESTATE` | [Declarative estate configuration](guides/declarative-estate.md) |
 | Admin portal | The seven pages an operator works in: overview, marketplaces, marketplace detail, audit, adoption, tokens, webhooks. | Web surface | `GW_AUTH` | [Admin portal](reference/portal.md) |
 | REST API contract | Serves and publishes the versioned contract document, and detects a breaking change to it. | — | `GW_API` | [REST API overview](reference/api/index.md) |
-| Release and packaging | Produces the container image and native-image release by digest, behind a gated release workflow. | — | `GW_RELEASE` | [Container image](reference/container-image.md), [Cutting a release](guides/releasing.md) |
+| Release and packaging | Produces the container image release by digest, behind a gated release workflow. | — | `GW_RELEASE` | [Container image](reference/container-image.md), [Cutting a release](guides/releasing.md) |
 
 ## Deliberately parked
 

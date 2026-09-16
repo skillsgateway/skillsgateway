@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
   # Releases arrive here, not through a tag trigger. A `tags:` trigger would fire
   # the moment release.yml pushed the tag, moving the `stable` alias before anyone
-  # approved the release -- and racing native.yml rather than being ordered with
-  # it. So a hand-pushed tag no longer publishes docs, deliberately.
+  # approved the release -- and racing container-image.yml rather than being
+  # ordered with it. So a hand-pushed tag no longer publishes docs, deliberately.
   workflow_call:
     inputs:
       version:
