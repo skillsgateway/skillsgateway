@@ -18,8 +18,10 @@ import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
 /**
- * An operator-configured {@link VettingConnector} that delegates the verdict to an external HTTP
- * service — an LLM reviewer, a sandbox, a corporate scanner (GW_VETTING_0024, GW_VETTING_0025, GW_VETTING_0026, GW_VETTING_0027).
+ * The connector that turns an external endpoint into a {@link Vetter} in the chain — an LLM
+ * reviewer, a sandbox, a corporate scanner (GW_VETTING_0024, GW_VETTING_0025, GW_VETTING_0026, GW_VETTING_0027).
+ * It is the transport, not the judgement: one configured connector contributes exactly one vetter,
+ * and everything downstream of {@link #vet} sees a vetter like any other.
  *
  * <p>The gateway POSTs the snapshot bundle ({@link ExternalVetRequest}) and reads back the
  * normalized {@link ExternalVetResponse}. It never trusts the network: <b>every</b> way the call
@@ -34,7 +36,7 @@ import org.springframework.web.client.RestClient;
  *       error;
  *   <li>a {@code state} the gateway does not recognize, or a malformed finding — error;
  *   <li>a snapshot whose scannable content exceeds {@code max-request-bytes} — error, because a
- *       partial bundle would earn a verdict about content the connector never saw.
+ *       partial bundle would earn a verdict about content the vetter never saw.
  * </ul>
  *
  * <p>Two further trust properties:
@@ -48,15 +50,15 @@ import org.springframework.web.client.RestClient;
  *       callback is a separate capability; until it exists a {@code pending} answer simply blocks.
  * </ul>
  *
- * <p>This connector never throws from {@link #vet}: it always returns a verdict, and a broken
+ * <p>This vetter never throws from {@link #vet}: it always returns a verdict, and a broken
  * dependency returns an error verdict rather than propagating. {@code VettingService} would catch a
  * throw anyway; returning a descriptive error keeps the reason in the finding a reviewer reads.
  */
-public class ExternalVettingConnector implements VettingConnector {
+public class ExternalVettingConnector implements Vetter {
 
     private static final Logger log = LoggerFactory.getLogger(ExternalVettingConnector.class);
 
-    /** Rank of the states this connector may resolve to, for the worst-of rule. Excludes PENDING. */
+    /** Rank of the states this vetter may resolve to, for the worst-of rule. Excludes PENDING. */
     private static final Map<VerdictState, Integer> RANK =
             Map.of(VerdictState.PASS, 0, VerdictState.WARN, 1, VerdictState.FAIL, 2);
 
@@ -176,15 +178,15 @@ public class ExternalVettingConnector implements VettingConnector {
     }
 
     /**
-     * What this connector examined (GW_VETTING_0023): the endpoint it delegated to and the version of the
+     * What this vetter examined (GW_VETTING_0023): the endpoint it delegated to and the version of the
      * external rule set it declared, recorded even for a clean pass so a pass is distinguishable
-     * from a connector that never ran.
+     * from a vetter that never ran.
      */
     private String summary() {
-        return "delegated to external connector '%s' (%s) at %s".formatted(name(), version(), props.url());
+        return "delegated to external vetter '%s' (%s) at %s".formatted(name(), version(), props.url());
     }
 
-    /** Accepts only the states an external connector may declare; {@code error} is gateway-internal. */
+    /** Accepts only the states an external vetter may declare; {@code error} is gateway-internal. */
     private static VerdictState parseState(String state) {
         if (state == null || state.isBlank()) {
             return null;
@@ -225,7 +227,7 @@ public class ExternalVettingConnector implements VettingConnector {
         long[] total = {0};
         boolean[] overflow = {false};
         // No path selection: the bundle is the whole snapshot, because what an operator's
-        // connector looks at is its business and not something this side may narrow.
+        // vetter looks at is its business and not something this side may narrow.
         snapshot.walk((path, content) -> {
             if (overflow[0]) {
                 return;

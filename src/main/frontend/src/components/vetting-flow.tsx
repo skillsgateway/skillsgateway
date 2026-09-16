@@ -73,8 +73,8 @@ function NodeChip({ children }: { children: ReactNode }) {
 }
 
 /** Stable identity of a finding within a run, matching the report's own key. */
-function findingKey(connector: string | undefined, finding: VettingFinding) {
-  return `${connector ?? ""}|${finding.id ?? ""}|${finding.location ?? ""}`;
+function findingKey(vetter: string | undefined, finding: VettingFinding) {
+  return `${vetter ?? ""}|${finding.id ?? ""}|${finding.location ?? ""}`;
 }
 
 function FindingLine({
@@ -100,7 +100,7 @@ function FindingLine({
   );
 }
 
-/** What one node is evidence of. The connector body is the report's row, opened from the drawing. */
+/** What one node is evidence of. The vetter body is the report's row, opened from the drawing. */
 function NodeDetail({
   node,
   suppressions,
@@ -108,7 +108,7 @@ function NodeDetail({
   node: FlowNode;
   suppressions: Map<string, WaiverSuppression>;
 }) {
-  if (node.kind === "connector") {
+  if (node.kind === "vetter") {
     const findings = node.verdict?.findings ?? [];
     return (
       <div className="space-y-3">
@@ -116,21 +116,21 @@ function NodeDetail({
           <dt className="font-medium">Verdict</dt>
           <dd className={toneText[node.tone]}>{node.state}</dd>
           <dt className="font-medium">Version</dt>
-          <dd className="font-mono text-xs">{node.connector?.version ?? "—"}</dd>
+          <dd className="font-mono text-xs">{node.vetter?.version ?? "—"}</dd>
           <dt className="font-medium">Kind</dt>
           <dd>{node.external ? "external service" : "built in"}</dd>
         </dl>
-        {node.connector?.description ? (
-          <p className="text-sm text-muted-foreground">{node.connector.description}</p>
+        {node.vetter?.description ? (
+          <p className="text-sm text-muted-foreground">{node.vetter.description}</p>
         ) : null}
         {node.verdict?.detail ? (
           <p className="text-sm text-muted-foreground">{node.verdict.detail}</p>
         ) : null}
         {node.state === "skipped" ? (
           <p className="text-sm text-muted-foreground">
-            An administrator switched this connector off for this marketplace, so the chain recorded
-            the skip instead of running it. Who did it, at what scope and why are connector settings,
-            shown on the marketplace's effective chain to an administrator — a skipped connector is
+            An administrator switched this vetter off for this marketplace, so the chain recorded
+            the skip instead of running it. Who did it, at what scope and why are vetter settings,
+            shown on the marketplace's effective chain to an administrator — a skipped vetter is
             never a clearing verdict, and a run with nothing left to clear it stays blocked.
           </p>
         ) : null}
@@ -140,7 +140,7 @@ function NodeDetail({
               <FindingLine
                 key={`${finding.id}-${finding.location}-${index}`}
                 finding={finding}
-                suppression={suppressions.get(findingKey(node.verdict?.connector, finding))}
+                suppression={suppressions.get(findingKey(node.verdict?.vetter, finding))}
               />
             ))}
           </div>
@@ -157,13 +157,13 @@ function NodeDetail({
     return (
       <div className="space-y-3 text-sm">
         <p className="text-muted-foreground">
-          The outcome is recomputed from the run and the waivers active right now: every connector
+          The outcome is recomputed from the run and the waivers active right now: every vetter
           has to clear, a skipped one counts as neither clearing nor blocking, and at least one
-          connector must have cleared for the chain to clear at all.
+          vetter must have cleared for the chain to clear at all.
         </p>
         {node.outcome?.recordedOutcome ? (
           <p className="text-muted-foreground">
-            The connectors themselves recorded{" "}
+            The vetters themselves recorded{" "}
             <span className="font-medium text-foreground">{node.outcome.recordedOutcome}</span>.
           </p>
         ) : null}
@@ -172,7 +172,7 @@ function NodeDetail({
             Objecting: <span className="font-mono text-xs">{blocking.join(", ")}</span>.
           </p>
         ) : (
-          <p className="text-muted-foreground">No connector is objecting.</p>
+          <p className="text-muted-foreground">No vetter is objecting.</p>
         )}
         {uncovered.length > 0 ? (
           <div className="space-y-1">
@@ -235,7 +235,7 @@ function NodeDetail({
 }
 
 /**
- * The vetting chain drawn as the ordered path it is: ingestion, each connector in the order it
+ * The vetting chain drawn as the ordered path it is: ingestion, each vetter in the order it
  * runs, the aggregated outcome, and the approval gate.
  *
  * It is a list of buttons rather than a rendered graph. The chain has one predecessor and one

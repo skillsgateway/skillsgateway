@@ -3,7 +3,7 @@ flowchart TD
     B --> C{"Ingestion accepts?"}
     C -->|"external source,<br/>disallowed scheme"| D["Rejected fail-closed<br/>violation recorded"]
     C -->|ok| E["Snapshot: held<br/>refs/snapshots/{sha} in quarantine"]
-    E --> V["Vetting chain runs<br/>verdict per connector"]
+    E --> V["Vetting chain runs<br/>verdict per vetter"]
     V --> F["Reviewer inspects<br/>verdicts + contents + provenance"]
     F -->|reject| G["state: rejected<br/>previous approval keeps serving"]
     F -->|approve| H["ApprovalService publishes<br/>refs/heads/main → sha"]

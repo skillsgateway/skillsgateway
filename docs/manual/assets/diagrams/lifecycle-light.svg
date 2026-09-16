@@ -1,6 +1,6 @@
 <svg viewBox="0 0 960 1000" role="img" aria-labelledby="lifecycle-light-title lifecycle-light-desc" xmlns="http://www.w3.org/2000/svg">
     <title id="lifecycle-light-title">Skills Gateway snapshot lifecycle</title>
-    <desc id="lifecycle-light-desc">Flowchart of the quarantine-to-serve lifecycle: an upstream commit is ingested into a quarantined snapshot, vetted by the connector chain, decided by a reviewer, and only the ApprovalService publishes it across the trust boundary to the read-only facade; re-vetting can later revoke it, and every transition lands on the append-only audit ledger.</desc>
+    <desc id="lifecycle-light-desc">Flowchart of the quarantine-to-serve lifecycle: an upstream commit is ingested into a quarantined snapshot, vetted by the vetter chain, decided by a reviewer, and only the ApprovalService publishes it across the trust boundary to the read-only facade; re-vetting can later revoke it, and every transition lands on the append-only audit ledger.</desc>
     <defs>
       <marker id="arr-light" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
         <polygon points="0 0, 8 3, 0 6" fill="#5c576e"/>
@@ -78,7 +78,7 @@
     <rect x="200" y="356" width="240" height="56" rx="6" fill="#f7f5fa"/>
     <rect x="200" y="356" width="240" height="56" rx="6" fill="#ffffff" stroke="#26222f" stroke-width="1"/>
     <text x="320" y="380" class="ddl-node-name" text-anchor="middle">Vetting chain</text>
-    <text x="320" y="396" class="ddl-sub" text-anchor="middle">one verdict per connector</text>
+    <text x="320" y="396" class="ddl-sub" text-anchor="middle">one verdict per vetter</text>
 
     <!-- reviewer decision diamond -->
     <polygon points="320,452 408,500 320,548 232,500" fill="#f7f5fa"/>

@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * Verification of the enforcing posture of the {@code skill-conformance} connector (GW_INGEST_0028). Its
+ * Verification of the enforcing posture of the {@code skill-conformance} vetter (GW_INGEST_0028). Its
  * own Spring context via {@link TestPropertySource}: the posture is a deployment decision, not
  * settable per call, which is exactly what makes it attributable per chain run.
  *
@@ -46,12 +46,12 @@ class SkillConformanceEnforceTests extends AbstractGatewayTest {
                 createUpstream(DEFAULT_MANIFEST, Map.of(BROKEN_SKILL, "---\nname: broken\n---\n# Broken\n")));
         long snapshotId = registered.snapshot().id();
 
-        // The defect is an ordinary blocking finding: the standard refusal names the connector and
+        // The defect is an ordinary blocking finding: the standard refusal names the vetter and
         // the uncovered rule, exactly as it does for a planted credential.
         assertThatThrownBy(() -> approvalService.approve(snapshotId, "alice"))
                 .isInstanceOf(VettingBlockedException.class)
                 .satisfies(thrown -> {
-                    assertThat(((VettingBlockedException) thrown).blockingConnectors())
+                    assertThat(((VettingBlockedException) thrown).blockingVetters())
                             .contains("skill-conformance");
                     assertThat(((VettingBlockedException) thrown).uncoveredFindings())
                             .extracting(WaiverEvaluation.UncoveredFinding::ruleId)
@@ -62,7 +62,7 @@ class SkillConformanceEnforceTests extends AbstractGatewayTest {
 
         VettingRepository.Run run = vettingRepository.latestRun(snapshotId).orElseThrow();
         assertThat(run.verdicts())
-                .filteredOn(verdict -> "skill-conformance".equals(verdict.connector()))
+                .filteredOn(verdict -> "skill-conformance".equals(verdict.vetter()))
                 .singleElement()
                 .satisfies(verdict -> {
                     assertThat(verdict.state()).isEqualTo(VerdictState.FAIL);

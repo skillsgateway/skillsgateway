@@ -266,7 +266,7 @@ blocked outcome on approve, by stating a reason — the override lifts only the
 vetting gate, leaving policy, cooling-off and four-eyes in force, and writes a
 distinct `snapshot-approved-over-vetting-failure` event plus a standing marker so
 the served snapshot is never indistinguishable from a clean approval. An
-administrator can also **disable a connector**, globally or per marketplace — but
+administrator can also **disable a vetter**, globally or per marketplace — but
 the disablement is recorded as a `disabled` verdict on every run, and a run with
 nothing but disabled verdicts stays *blocked*, so switching the chain off is
 never a way to clear content. The override is the rarer, whole-outcome

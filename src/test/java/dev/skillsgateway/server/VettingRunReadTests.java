@@ -97,7 +97,7 @@ class VettingRunReadTests extends AbstractGatewayTest {
         // A second run on the same snapshot, written first so its findings carry the lower ids:
         // a join that forgot to filter by run would fold them into the run under test.
         long otherRun = vettingRepository.startRun(snapshot.id(), VettingRepository.TRIGGER_INGESTION, "other@1");
-        vettingRepository.recordVerdict(otherRun, "other-connector", 0, verdict(VerdictState.FAIL, "other", 3));
+        vettingRepository.recordVerdict(otherRun, "other-vetter", 0, verdict(VerdictState.FAIL, "other", 3));
 
         long runId = vettingRepository.startRun(snapshot.id(), VettingRepository.TRIGGER_REVET_MANUAL, "test@1");
         // Positions are recorded out of order so the read's ORDER BY is doing the sorting.
@@ -110,7 +110,7 @@ class VettingRunReadTests extends AbstractGatewayTest {
 
         assertThat(verdicts)
                 .as("verdicts come back in chain order")
-                .extracting(VettingRepository.VerdictView::connector)
+                .extracting(VettingRepository.VerdictView::vetter)
                 .containsExactly("first", "second", "third");
 
         assertThat(verdicts.get(0).findings())
@@ -151,7 +151,7 @@ class VettingRunReadTests extends AbstractGatewayTest {
     private long runWith(long snapshotId, int verdicts) {
         long runId = vettingRepository.startRun(snapshotId, VettingRepository.TRIGGER_INGESTION, "test@1");
         for (int i = 0; i < verdicts; i++) {
-            vettingRepository.recordVerdict(runId, "connector-" + i, i, verdict(VerdictState.PASS, "v" + i, 2));
+            vettingRepository.recordVerdict(runId, "vetter-" + i, i, verdict(VerdictState.PASS, "v" + i, 2));
         }
         return runId;
     }

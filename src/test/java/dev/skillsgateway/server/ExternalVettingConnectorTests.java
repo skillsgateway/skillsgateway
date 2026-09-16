@@ -13,8 +13,8 @@ import dev.skillsgateway.server.vetting.ExternalConnectorProperties;
 import dev.skillsgateway.server.vetting.ExternalVettingConnector;
 import dev.skillsgateway.server.vetting.Finding;
 import dev.skillsgateway.server.vetting.VerdictState;
+import dev.skillsgateway.server.vetting.Vetter;
 import dev.skillsgateway.server.vetting.VettingChain;
-import dev.skillsgateway.server.vetting.VettingConnector;
 import dev.skillsgateway.server.vetting.VettingRepository;
 import dev.skillsgateway.server.vetting.VettingService;
 import dev.skillsgateway.server.webhook.WebhookService;
@@ -33,13 +33,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * Verification of the external vetting connector (GW_VETTING_0024-GW_VETTING_0027). This connector reaches a network
+ * Verification of the external vetting connector (GW_VETTING_0024-GW_VETTING_0027). This vetter reaches a network
  * dependency the gateway does not control, so these tests are adversarial where it counts: a hostile
  * or unreachable endpoint, a malformed answer, an oversized answer, and an endpoint that tries to
  * pass content its own findings condemn. The one property under test throughout is fail-closed —
  * every inconclusive answer must block, never silently pass.
  *
- * <p>The connectors run through a real {@link VettingService} over a real ingested snapshot (the
+ * <p>The vetters run through a real {@link VettingService} over a real ingested snapshot (the
  * {@link #chainOf} helper mirrors the one in {@code VettingTests}), so recording, ordering and the
  * fail-closed aggregate are exercised end to end, against a real in-process HTTP endpoint.
  */
@@ -61,7 +61,7 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
     private SkillsGatewayProperties properties;
 
     @Autowired
-    private dev.skillsgateway.server.vetting.ConnectorToggleService connectorToggleService;
+    private dev.skillsgateway.server.vetting.VetterToggleService vetterToggleService;
 
     @Autowired
     private dev.skillsgateway.server.vetting.WaiverService waiverService;
@@ -82,13 +82,13 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
 
     @Test
     @SVCs({"SVC_GW_VETTING_0024"})
-    void anExternalConnectorPassIsRecordedAndClears() throws Exception {
+    void anExternalVetterPassIsRecordedAndClears() throws Exception {
         endpoint.respond(200, "{\"state\":\"pass\"}");
         String name = uniqueName("extpass");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
 
         VettingChain.Outcome outcome =
-                chainOf(connector("llm-review", endpoint.url())).vet(registered.snapshot(), name);
+                chainOf(vetter("llm-review", endpoint.url())).vet(registered.snapshot(), name);
 
         assertThat(outcome).isEqualTo(VettingChain.Outcome.CLEAR);
         VettingRepository.VerdictView verdict = verdictOf(registered, "llm-review");
@@ -109,7 +109,7 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
 
         VettingChain.Outcome outcome =
-                chainOf(connector("llm-review", endpoint.url())).vet(registered.snapshot(), name);
+                chainOf(vetter("llm-review", endpoint.url())).vet(registered.snapshot(), name);
 
         assertThat(outcome).isEqualTo(VettingChain.Outcome.BLOCKED);
         VettingRepository.VerdictView verdict = verdictOf(registered, "llm-review");
@@ -136,7 +136,7 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
 
         VettingChain.Outcome outcome =
-                chainOf(connector("llm-review", endpoint.url())).vet(registered.snapshot(), name);
+                chainOf(vetter("llm-review", endpoint.url())).vet(registered.snapshot(), name);
 
         assertThat(outcome).isEqualTo(VettingChain.Outcome.BLOCKED);
         assertThat(verdictOf(registered, "llm-review").state()).isEqualTo(VerdictState.FAIL);
@@ -154,7 +154,7 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
 
         VettingChain.Outcome outcome =
-                chainOf(connector("llm-review", endpoint.url())).vet(registered.snapshot(), name);
+                chainOf(vetter("llm-review", endpoint.url())).vet(registered.snapshot(), name);
 
         assertThat(outcome).isEqualTo(VettingChain.Outcome.BLOCKED);
         assertThat(verdictOf(registered, "llm-review").state()).isEqualTo(VerdictState.PENDING);
@@ -180,32 +180,32 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
         long snapshotId = registered.snapshot().id();
 
         // 1. Unreachable endpoint: a port nothing is listening on (connection refused).
-        assertBlockedError(registered, name, connector("llm-review", unreachableUrl()));
+        assertBlockedError(registered, name, vetter("llm-review", unreachableUrl()));
 
         // 2. A non-2xx status.
         endpoint.respond(500, "boom");
-        assertBlockedError(registered, name, connector("llm-review", endpoint.url()));
+        assertBlockedError(registered, name, vetter("llm-review", endpoint.url()));
 
-        // 3. A read timeout: the endpoint hangs past the connector's read timeout.
+        // 3. A read timeout: the endpoint hangs past the vetter's read timeout.
         endpoint.hang(Duration.ofSeconds(5));
-        assertBlockedError(registered, name, shortTimeoutConnector("llm-review", endpoint.url()));
+        assertBlockedError(registered, name, shortTimeoutVetter("llm-review", endpoint.url()));
 
         // 4. A body Jackson cannot parse.
         endpoint.respond(200, "this is not json");
-        assertBlockedError(registered, name, connector("llm-review", endpoint.url()));
+        assertBlockedError(registered, name, vetter("llm-review", endpoint.url()));
 
         // 5. A state the gateway does not recognize (an endpoint inventing a pass-like word).
         endpoint.respond(200, "{\"state\":\"approved\"}");
-        assertBlockedError(registered, name, connector("llm-review", endpoint.url()));
+        assertBlockedError(registered, name, vetter("llm-review", endpoint.url()));
 
         // 6. A malformed finding: an unknown severity is not a pass.
         endpoint.respond(
                 200, "{\"state\":\"warn\",\"findings\":[{\"id\":\"x\",\"severity\":\"spicy\",\"message\":\"m\"}]}");
-        assertBlockedError(registered, name, connector("llm-review", endpoint.url()));
+        assertBlockedError(registered, name, vetter("llm-review", endpoint.url()));
 
         // 7. An oversized response, larger than max-response-bytes.
         endpoint.respond(200, "{\"state\":\"pass\",\"reportUrl\":\"" + "x".repeat(4096) + "\"}");
-        assertBlockedError(registered, name, tinyResponseConnector("llm-review", endpoint.url()));
+        assertBlockedError(registered, name, tinyResponseVetter("llm-review", endpoint.url()));
 
         // And after all of that, the snapshot is still held and still unapprovable.
         assertThat(snapshotRepository.findById(snapshotId).orElseThrow().state())
@@ -214,22 +214,22 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
                 .isInstanceOf(VettingBlockedException.class);
     }
 
-    private void assertBlockedError(Registered registered, String marketplace, VettingConnector connector) {
-        VettingChain.Outcome outcome = chainOf(connector).vet(registered.snapshot(), marketplace);
-        assertThat(outcome).as("outcome for %s", connector.description()).isEqualTo(VettingChain.Outcome.BLOCKED);
-        VettingRepository.VerdictView verdict = verdictOf(registered, connector.name());
-        assertThat(verdict.state()).as("state for %s", connector.description()).isEqualTo(VerdictState.ERROR);
+    private void assertBlockedError(Registered registered, String marketplace, Vetter vetter) {
+        VettingChain.Outcome outcome = chainOf(vetter).vet(registered.snapshot(), marketplace);
+        assertThat(outcome).as("outcome for %s", vetter.description()).isEqualTo(VettingChain.Outcome.BLOCKED);
+        VettingRepository.VerdictView verdict = verdictOf(registered, vetter.name());
+        assertThat(verdict.state()).as("state for %s", vetter.description()).isEqualTo(VerdictState.ERROR);
         assertThat(verdict.findings()).extracting(Finding::message).anySatisfy(message -> assertThat(message)
                 .contains("produced no verdict"));
     }
 
-    private ExternalVettingConnector connector(String name, String url) {
+    private ExternalVettingConnector vetter(String name, String url) {
         return new ExternalVettingConnector(new ExternalConnectorProperties(
                 name,
                 URI.create(url),
                 10,
                 "1",
-                "external test connector",
+                "external test vetter",
                 null,
                 null,
                 null,
@@ -240,13 +240,13 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
                 null));
     }
 
-    private ExternalVettingConnector shortTimeoutConnector(String name, String url) {
+    private ExternalVettingConnector shortTimeoutVetter(String name, String url) {
         return new ExternalVettingConnector(new ExternalConnectorProperties(
                 name,
                 URI.create(url),
                 10,
                 "1",
-                "external test connector (short read timeout)",
+                "external test vetter (short read timeout)",
                 null,
                 null,
                 null,
@@ -257,13 +257,13 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
                 null));
     }
 
-    private ExternalVettingConnector tinyResponseConnector(String name, String url) {
+    private ExternalVettingConnector tinyResponseVetter(String name, String url) {
         return new ExternalVettingConnector(new ExternalConnectorProperties(
                 name,
                 URI.create(url),
                 10,
                 "1",
-                "external test connector (tiny response cap)",
+                "external test vetter (tiny response cap)",
                 null,
                 null,
                 null,
@@ -283,23 +283,23 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
         return "http://127.0.0.1:" + port + "/vet";
     }
 
-    private VettingService chainOf(VettingConnector... connectors) {
+    private VettingService chainOf(Vetter... vetters) {
         return new VettingService(
-                List.of(connectors),
+                List.of(vetters),
                 vettingRepository,
                 storage,
                 auditLogger,
                 webhookService,
                 waiverService,
-                connectorToggleService,
+                vetterToggleService,
                 properties);
     }
 
-    private VettingRepository.VerdictView verdictOf(Registered registered, String connector) {
+    private VettingRepository.VerdictView verdictOf(Registered registered, String vetter) {
         VettingRepository.Run run =
                 vettingRepository.latestRun(registered.snapshot().id()).orElseThrow();
         return run.verdicts().stream()
-                .filter(candidate -> candidate.connector().equals(connector))
+                .filter(candidate -> candidate.vetter().equals(vetter))
                 .findFirst()
                 .orElseThrow();
     }

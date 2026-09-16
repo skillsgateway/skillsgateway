@@ -58,7 +58,7 @@ abstract class AbstractGatewayTest {
 
     /**
      * The default fixture's skill, conformant with the Agent Skills specification the
-     * skill-conformance connector pins (GW_INGEST_0028): a clean fixture has to mean a clean chain, or
+     * skill-conformance vetter pins (GW_INGEST_0028): a clean fixture has to mean a clean chain, or
      * every test that asserts one would be asserting around a standing finding instead.
      */
     protected static final String CONFORMANT_SKILL = """
@@ -151,7 +151,7 @@ abstract class AbstractGatewayTest {
 
     /**
      * As {@link #createUpstream(String)}, with extra files committed on top — the fixture shape the
-     * vetting tests need to plant content a connector should react to.
+     * vetting tests need to plant content a vetter should react to.
      */
     protected static Path createUpstream(String manifestJson, Map<String, String> extraFiles)
             throws IOException, GitAPIException {

@@ -455,7 +455,7 @@ state, no surface may be verified in only one rendered theme.
 
 ### Vetting report (signature component)
 
-The screen the product exists for. A section per connector: verdict icon, connector
+The screen the product exists for. A section per vetter: verdict icon, vetter
 name, verdict badge, then its findings as one dense line each — severity badge,
 monospace rule id, monospace location, message. A high-severity finding carries a
 "Waive…" button that opens the evidence panel (`rounded-md border bg-muted/40 p-3`)

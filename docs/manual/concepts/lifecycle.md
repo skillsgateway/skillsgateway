@@ -91,12 +91,12 @@ snapshot is keyed by the upstream SHA, and the chain is not re-run for one that
 already exists.
 
 Once a snapshot is recorded as `held`, the **vetting chain** runs against the
-content just pinned: each connector answers with a verdict, the verdicts are
+content just pinned: each vetter answers with a verdict, the verdicts are
 recorded against the snapshot, and they aggregate fail-closed into a `clear` or
 `blocked` outcome. The chain never changes the snapshot's state — a vetted
 snapshot is still `held`. What it decides is whether approving it is an ordinary
 act or one that needs a written reason. See
-[Vetting — the connector chain](vetting.md).
+[Vetting — the vetter chain](vetting.md).
 
 ## Stage 2 — approval
 

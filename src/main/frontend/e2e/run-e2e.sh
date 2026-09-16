@@ -42,7 +42,7 @@ cat > "$UPSTREAM_DIR/.claude-plugin/marketplace.json" <<'EOF'
   ]
 }
 EOF
-# Conformant with the Agent Skills specification the skill-conformance connector pins:
+# Conformant with the Agent Skills specification the skill-conformance vetter pins:
 # the clean fixture has to stay clean in the portal the acceptance tests drive.
 cat > "$UPSTREAM_DIR/plugins/hello/skills/hello/SKILL.md" <<'EOF'
 ---
@@ -55,7 +55,7 @@ git -C "$UPSTREAM_DIR" add -A
 git -C "$UPSTREAM_DIR" -c user.name=e2e -c user.email=e2e@example.com \
   -c commit.gpgsign=false commit -q -m "e2e marketplace fixture"
 
-# Tainted fixture: same shape, with instructions the prompt-injection connector must catch.
+# Tainted fixture: same shape, with instructions the prompt-injection vetter must catch.
 git init -q -b main "$TAINTED_DIR"
 mkdir -p "$TAINTED_DIR/.claude-plugin" "$TAINTED_DIR/plugins/hello/skills/hello"
 cat > "$TAINTED_DIR/.claude-plugin/marketplace.json" <<'EOF'

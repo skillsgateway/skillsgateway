@@ -9,7 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Shared machinery for the pattern-matching built-in connectors: strict UTF-8 decoding (which
+ * Shared machinery for the pattern-matching built-in vetters: strict UTF-8 decoding (which
  * doubles as the binary filter), line-accurate locations, and a rule type.
  */
 final class ContentRules {
@@ -26,7 +26,7 @@ final class ContentRules {
 
     /**
      * Decodes a blob as UTF-8, returning {@code null} when it is not valid UTF-8 — which is the
-     * binary test these connectors use. A binary blob is not silently ignored: callers report it,
+     * binary test these vetters use. A binary blob is not silently ignored: callers report it,
      * because "the scanner could not read this file" is information a reviewer needs.
      */
     static String text(byte[] content) {

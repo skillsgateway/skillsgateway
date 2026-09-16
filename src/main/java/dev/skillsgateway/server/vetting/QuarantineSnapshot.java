@@ -19,17 +19,17 @@ import org.eclipse.jgit.treewalk.TreeWalk;
  * {@link SnapshotUnderVetting} backed by the marketplace's quarantine repository, pinned to the
  * snapshot's commit.
  *
- * <p>The repository handle is held by the run, not by the connectors: one open per chain run, each
- * connector walking the same commit tree. Connectors only ever see paths and bytes, so no connector
+ * <p>The repository handle is held by the run, not by the vetters: one open per chain run, each
+ * vetter walking the same commit tree. Vetters only ever see paths and bytes, so no vetter
  * can reach a ref, another commit, or another marketplace.
  *
  * <p>The tree itself is walked once, in the constructor, into an index of paths and blob ids
- * (GW_VETTING_0030). Every connector's walk then iterates that index, opens only the blobs its selection
- * asks for, and reuses what an earlier connector already read — so a chain of three connectors
+ * (GW_VETTING_0030). Every vetter's walk then iterates that index, opens only the blobs its selection
+ * asks for, and reuses what an earlier vetter already read — so a chain of three vetters
  * costs one tree walk and one inflation of each blob any of them wanted, rather than three of each.
  *
  * <p>Not thread-safe by construction but safe under the concurrency the chain actually has: a
- * connector abandoned after its timeout may still be walking while the next one starts, so the
+ * vetter abandoned after its timeout may still be walking while the next one starts, so the
  * index is immutable and the cache and its budget are concurrent.
  */
 final class QuarantineSnapshot implements SnapshotUnderVetting, AutoCloseable {
@@ -111,7 +111,7 @@ final class QuarantineSnapshot implements SnapshotUnderVetting, AutoCloseable {
     }
 
     /**
-     * A blob's bytes, from the run's cache when an earlier connector already read it. Keyed by blob
+     * A blob's bytes, from the run's cache when an earlier vetter already read it. Keyed by blob
      * id rather than path, so a file copied into every plugin costs one entry.
      */
     private byte[] content(ObjectId blob) throws IOException {
@@ -120,7 +120,7 @@ final class QuarantineSnapshot implements SnapshotUnderVetting, AutoCloseable {
             return cached;
         }
         ObjectLoader loader = repository.open(blob);
-        // Oversized blobs are handed over as null rather than dropped: a connector that cares can
+        // Oversized blobs are handed over as null rather than dropped: a vetter that cares can
         // report that it could not see the file, which is the fail-closed behaviour. Silently
         // skipping would be a hole an attacker can pad their way into.
         if (loader.getSize() > maxFileBytes) {

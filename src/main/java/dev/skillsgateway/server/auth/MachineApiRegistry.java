@@ -166,13 +166,13 @@ public final class MachineApiRegistry {
             // route that actually exercises its credential against the forge. If the report is
             // reserved to administrators, the button that acts on it cannot be less so.
             post("/api/mirror/reconcile"),
-            // The connector on/off switch (GW_VETTING_0029.4): administrator judgement over the vetting
+            // The vetter on/off switch (GW_VETTING_0029.4): administrator judgement over the vetting
             // chain itself, and even seeing the current settings is reserved to administrators —
             // no scope may let a machine credential turn off the control that governs it.
-            get("/api/vetting/connector-toggles"),
-            put("/api/vetting/connectors/{name}/toggle"),
+            get("/api/vetting/vetter-toggles"),
+            put("/api/vetting/vetters/{name}/toggle"),
             // The same settings resolved for one marketplace (GW_VETTING_0029.5). Reading which
-            // connectors a marketplace actually runs is reading the settings themselves, so it is
+            // vetters a marketplace actually runs is reading the settings themselves, so it is
             // unreachable for the same reason the settings list is.
             get("/api/marketplaces/{name}/vetting-chain"));
 

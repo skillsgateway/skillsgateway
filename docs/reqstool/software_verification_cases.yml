@@ -366,23 +366,23 @@ cases:
 
   - id: SVC_GW_VETTING_0001
     requirement_ids: ["GW_VETTING_0001"]
-    title: Ingestion records a chain run with a verdict per connector
+    title: Ingestion records a chain run with a verdict per vetter
     verification: automated-test
     description: |
       GIVEN a registered marketplace whose upstream content is clean
       WHEN the marketplace is ingested and the snapshot's vetting record is read
-      THEN a chain run exists for the snapshot's commit SHA holding one verdict per configured connector, in chain order, each with its findings
-    revision: "0.1.0"
+      THEN a chain run exists for the snapshot's commit SHA holding one verdict per configured vetter, in chain order, each with its findings
+    revision: "0.2.0"
 
   - id: SVC_GW_VETTING_0002
     requirement_ids: ["GW_VETTING_0002"]
-    title: A connector that throws blocks the snapshot instead of being skipped
+    title: A vetter that throws blocks the snapshot instead of being skipped
     verification: automated-test
     description: |
-      GIVEN a chain containing a connector that raises an exception
+      GIVEN a chain containing a vetter that raises an exception
       WHEN a snapshot is ingested and its vetting record is read
-      THEN the failing connector has an error verdict carrying the failure, the run outcome is blocked, and the snapshot is still held and unserved
-    revision: "0.1.0"
+      THEN the failing vetter has an error verdict carrying the failure, the run outcome is blocked, and the snapshot is still held and unserved
+    revision: "0.2.0"
 
   - id: SVC_GW_VETTING_0003
     requirement_ids: ["GW_VETTING_0003"]
@@ -421,8 +421,8 @@ cases:
     description: |
       GIVEN an authenticated portal session and a marketplace whose snapshot has a blocked chain outcome
       WHEN the reviewer opens the snapshot's vetting detail
-      THEN the connector verdicts and their findings are shown and the approval control is refused while the effective outcome is blocked
-    revision: "0.2.0"
+      THEN the vetter verdicts and their findings are shown and the approval control is refused while the effective outcome is blocked
+    revision: "0.3.0"
 
   - id: SVC_GW_VETTING_0006
     requirement_ids: ["GW_VETTING_0006"]
@@ -431,8 +431,8 @@ cases:
     description: |
       GIVEN a snapshot taken through a blocking chain run
       WHEN the audit ledger is read
-      THEN it holds an entry for the chain run outcome and an entry per connector verdict, each with the marketplace, the commit SHA, and the acting identity
-    revision: "0.2.0"
+      THEN it holds an entry for the chain run outcome and an entry per vetter verdict, each with the marketplace, the commit SHA, and the acting identity
+    revision: "0.3.0"
 
   - id: SVC_GW_VETTING_0007
     requirement_ids: ["GW_VETTING_0007"]
@@ -491,8 +491,8 @@ cases:
     description: |
       GIVEN several approved snapshots whose latest chain runs are of different ages, and a held and a rejected snapshot alongside them
       WHEN a re-vetting sweep runs with a batch size smaller than the number of eligible snapshots, and a snapshot is re-vetted on demand
-      THEN only approved snapshots are selected, the oldest-vetted ones are taken first, no more than the batch size are re-vetted, each pass records a new chain run carrying its trigger and the chain's connector versions, and the snapshots' own states are unchanged by the runs
-    revision: "0.1.0"
+      THEN only approved snapshots are selected, the oldest-vetted ones are taken first, no more than the batch size are re-vetted, each pass records a new chain run carrying its trigger and the chain's vetter versions, and the snapshots' own states are unchanged by the runs
+    revision: "0.2.0"
 
   - id: SVC_GW_VETTING_0013
     requirement_ids: ["GW_VETTING_0013"]
@@ -516,13 +516,13 @@ cases:
 
   - id: SVC_GW_VETTING_0015
     requirement_ids: ["GW_VETTING_0015"]
-    title: A connector error during re-vetting never revokes the snapshot
+    title: A vetter error during re-vetting never revokes the snapshot
     verification: automated-test
     description: |
-      GIVEN an approved and published snapshot in a gateway configured to enforce re-vetting violations, and a connector that throws or exceeds its time limit
+      GIVEN an approved and published snapshot in a gateway configured to enforce re-vetting violations, and a vetter that throws or exceeds its time limit
       WHEN the snapshot is re-vetted, and separately when the run produces no verdict at all
       THEN each run is recorded as inconclusive, the snapshot stays approved and served, and the recorded run still blocks that snapshot's approval
-    revision: "0.1.0"
+    revision: "0.2.0"
 
   - id: SVC_GW_VETTING_0016
     requirement_ids: ["GW_VETTING_0016"]
@@ -541,8 +541,8 @@ cases:
     description: |
       GIVEN an approved snapshot that an identity has fetched, re-vetted under enforcement into a violation and then re-approved after a waiver
       WHEN the audit ledger is read
-      THEN it holds the re-vetting run's outcome with its trigger, the violation with the objecting connectors and the mode in force, an entry naming the affected identity, the revocation, the unpublication, and the fresh approval, each with the marketplace and the acting identity
-    revision: "0.1.0"
+      THEN it holds the re-vetting run's outcome with its trigger, the violation with the objecting vetters and the mode in force, an entry naming the affected identity, the revocation, the unpublication, and the fresh approval, each with the marketplace and the acting identity
+    revision: "0.2.0"
 
   - id: SVC_GW_VETTING_0018
     requirement_ids: ["GW_VETTING_0018"]
@@ -969,9 +969,9 @@ cases:
     verification: automated-test
     description: |
       GIVEN snapshots carrying an MIT license file, an Apache-2.0 COPYING file, a license file whose only identification is an SPDX-License-Identifier tag, a manifest declaring a plugin license, a license file of unrecognizable text, and no license information at all
-      WHEN each snapshot is ingested and the license connector's verdict is read
+      WHEN each snapshot is ingested and the license vetter's verdict is read
       THEN each identified license is a finding naming its SPDX identifier and located at its file path or manifest field, the unrecognizable file yields an unknown-license finding at its path, the snapshot without license information yields a missing-license finding, and re-running the chain over the same content yields the same findings
-    revision: "0.1.0"
+    revision: "0.2.0"
   - id: SVC_GW_VETTING_0020
     requirement_ids: ["GW_VETTING_0020"]
     title: Ban and allow lists block through the ordinary gate, defaults only warn
@@ -1639,45 +1639,45 @@ cases:
     title: Vetting ledger entries carry the run, the finding count and severity, and a system actor
     verification: automated-test
     description: |
-      GIVEN a snapshot taken through a chain run that both fails and passes connectors
+      GIVEN a snapshot taken through a chain run that both fails and passes vetters
       WHEN the audit ledger is read
-      THEN each vetting-verdict entry carries the connector name and conclusion, the
+      THEN each vetting-verdict entry carries the vetter name and conclusion, the
       number of findings, the worst severity present or none, and the id of the chain
       run it belongs to
       AND the vetting-completed entry carries that same run id
       AND every vetting entry is typed as the gateway acting on its own rather than as a
       human actor
-    revision: "0.1.0"
+    revision: "0.2.0"
 
   - id: SVC_GW_VETTING_0023
     requirement_ids: ["GW_VETTING_0023"]
-    title: A clean connector pass records the coverage it examined
+    title: A clean vetter pass records the coverage it examined
     verification: automated-test
     description: |
       GIVEN a snapshot whose content trips no secret-scan or prompt-injection rule
       WHEN its recorded verdicts and the ledger are read
-      THEN each passing connector's detail is non-empty and states what it examined —
+      THEN each passing vetter's detail is non-empty and states what it examined —
       the files it scanned and the rules it applied — rather than being null and
-      indistinguishable from a connector that never ran
-    revision: "0.1.0"
+      indistinguishable from a vetter that never ran
+    revision: "0.2.0"
 
   - id: SVC_GW_VETTING_0024
     requirement_ids: ["GW_VETTING_0024"]
-    title: A configured external connector joins the chain and runs in order
+    title: A configured external vetter joins the chain and runs in order
     verification: automated-test
     description: |
       GIVEN a gateway configured with an external vetting connector at an ordered
       position, endpoint URL and rule-set version
       WHEN the chain is inspected and a snapshot is vetted
-      THEN the external connector appears in the chain at its configured position
+      THEN the external vetter appears in the chain at its configured position
       alongside the unremoved built-ins, the chain identity names it and its version,
       the snapshot bundle it is sent carries the snapshot identity and its scannable
       file content, and a passing answer is recorded as a passing verdict that clears
-    revision: "0.1.0"
+    revision: "0.2.0"
 
   - id: SVC_GW_VETTING_0025
     requirement_ids: ["GW_VETTING_0025"]
-    title: Every inconclusive answer from an external connector blocks
+    title: Every inconclusive answer from an external vetter blocks
     verification: automated-test
     description: |
       GIVEN an external vetting connector whose endpoint is in turn unreachable,
@@ -1689,32 +1689,32 @@ cases:
       THEN each case records an error verdict and a blocked outcome, none records a
       passing or clearing verdict, and a snapshot so blocked stays held and cannot be
       approved
-    revision: "0.1.0"
+    revision: "0.2.0"
 
   - id: SVC_GW_VETTING_0026
     requirement_ids: ["GW_VETTING_0026"]
     title: External verdicts take the worst of declared and derived, and carry their report link
     verification: automated-test
     description: |
-      GIVEN an external connector that returns a failing state with findings and a
+      GIVEN an external vetter that returns a failing state with findings and a
       report link, and separately one that declares a passing state alongside a
       critical finding
       WHEN each snapshot is vetted
       THEN the failing verdict persists its findings and its report link through the
       verdict model, and the declared pass alongside a critical finding is recorded as
       a failing verdict that blocks, while informational findings alone still pass
-    revision: "0.1.0"
+    revision: "0.2.0"
 
   - id: SVC_GW_VETTING_0027
     requirement_ids: ["GW_VETTING_0027"]
-    title: A pending answer from an external connector blocks as the async seam
+    title: A pending answer from an external vetter blocks as the async seam
     verification: automated-test
     description: |
       GIVEN an external vetting connector whose endpoint answers with a pending state
       WHEN the snapshot is vetted
       THEN the verdict is recorded as pending, the run outcome is blocked, the pending
       state does not clear, and the snapshot stays held and cannot be approved
-    revision: "0.1.0"
+    revision: "0.2.0"
 
   - id: SVC_GW_VETTING_0028
     requirement_ids: ["GW_VETTING_0028"]
@@ -1722,7 +1722,7 @@ cases:
     verification: automated-test
     description: |
       GIVEN a held snapshot whose effective vetting outcome is blocked by a failing
-      connector no waiver covers
+      vetter no waiver covers
       WHEN a non-administrator approver of the marketplace requests approval with the
       override set, an administrator requests the override with no reason, and an
       administrator requests the override with a reason
@@ -1730,9 +1730,9 @@ cases:
       nothing published, the administrator's reasonless override is refused, the
       administrator's override with a reason approves and publishes the snapshot, the
       ledger carries a distinct override event naming the administrator, the reason and
-      the connectors and uncovered findings that were blocking, and the snapshot's
+      the vetters and uncovered findings that were blocking, and the snapshot's
       vetting surface reports it approved over a vetting failure rather than clear
-    revision: "0.1.0"
+    revision: "0.2.0"
 
   - id: SVC_GW_VETTING_0029
     requirement_ids: ["GW_VETTING_0029"]
@@ -1746,43 +1746,43 @@ cases:
 
   - id: SVC_GW_VETTING_0029.1
     requirement_ids: ["GW_VETTING_0029.1"]
-    title: A connector disabled for one marketplace is skipped there while an unrelated marketplace still runs it
+    title: A vetter disabled for one marketplace is skipped there while an unrelated marketplace still runs it
     verification: automated-test
     description: |
-      GIVEN a built-in connector enabled by default for two marketplaces, and a chain that also carries an operator-configured external connector
-      WHEN an administrator disables the built-in for one of the two marketplaces by name and both marketplaces are then ingested, and the external connector is disabled by name for a marketplace of its own
-      THEN the disabled marketplace's chain run treats the built-in as not run while the other marketplace's run still executes it and still blocks on the same content, the external connector's name is accepted by the switch on the same terms, and a name no connector in the chain carries is refused with a message naming the connectors it does carry
-    revision: "0.2.0"
+      GIVEN a built-in vetter enabled by default for two marketplaces, and a chain that also carries an operator-configured external vetter
+      WHEN an administrator disables the built-in for one of the two marketplaces by name and both marketplaces are then ingested, and the external vetter is disabled by name for a marketplace of its own
+      THEN the disabled marketplace's chain run treats the built-in as not run while the other marketplace's run still executes it and still blocks on the same content, the external vetter's name is accepted by the switch on the same terms, and a name no vetter in the chain carries is refused with a message naming the vetters it does carry
+    revision: "0.3.0"
 
   - id: SVC_GW_VETTING_0029.2
     requirement_ids: ["GW_VETTING_0029.2"]
-    title: A disabled connector is recorded as a distinct disabled verdict rather than omitted
+    title: A disabled vetter is recorded as a distinct disabled verdict rather than omitted
     verification: automated-test
     description: |
-      GIVEN a marketplace whose built-in connector an administrator has disabled, and a second marketplace whose operator-configured external connector an administrator has disabled
+      GIVEN a marketplace whose built-in vetter an administrator has disabled, and a second marketplace whose operator-configured external vetter an administrator has disabled
       WHEN each marketplace's snapshot is put through the chain
-      THEN each run's verdict for the disabled connector is the distinct DISABLED state rather than an absent entry, whether the connector is built-in or external, and the first run's overall outcome still clears on the other connectors' evidence
-    revision: "0.2.0"
+      THEN each run's verdict for the disabled vetter is the distinct DISABLED state rather than an absent entry, whether the vetter is built-in or external, and the first run's overall outcome still clears on the other vetters' evidence
+    revision: "0.3.0"
 
   - id: SVC_GW_VETTING_0029.3
     requirement_ids: ["GW_VETTING_0029.3"]
-    title: Disabling every connector blocks the run rather than clearing it
+    title: Disabling every vetter blocks the run rather than clearing it
     verification: automated-test
     description: |
       GIVEN the DISABLED verdict state, both as the pure aggregation function's input and as a real chain run's outcome
-      WHEN a run's verdicts are all DISABLED, and, through the real API, every built-in connector is disabled for one marketplace before it is ingested
-      THEN the pure function classifies DISABLED as neither clearing nor blocking on its own, a run made only of DISABLED verdicts aggregates to BLOCKED, and the marketplace ingested with every connector disabled is blocked rather than clear
-    revision: "0.1.0"
+      WHEN a run's verdicts are all DISABLED, and, through the real API, every built-in vetter is disabled for one marketplace before it is ingested
+      THEN the pure function classifies DISABLED as neither clearing nor blocking on its own, a run made only of DISABLED verdicts aggregates to BLOCKED, and the marketplace ingested with every vetter disabled is blocked rather than clear
+    revision: "0.2.0"
 
   - id: SVC_GW_VETTING_0029.4
     requirement_ids: ["GW_VETTING_0029.4"]
-    title: Only an administrator may see or change connector settings, and every change is on the ledger
+    title: Only an administrator may see or change vetter settings, and every change is on the ledger
     verification: automated-test
     description: |
       GIVEN a marketplace and a non-administrator principal
-      WHEN the non-administrator attempts to toggle a connector and to read the connector settings, and an administrator then disables the connector for that marketplace with a reason
-      THEN the non-administrator is refused both the toggle and the read, and the ledger carries exactly one entry for the administrator's toggle naming the administrator, the connector, the scope and the new state
-    revision: "0.1.0"
+      WHEN the non-administrator attempts to toggle a vetter and to read the vetter settings, and an administrator then disables the vetter for that marketplace with a reason
+      THEN the non-administrator is refused both the toggle and the read, and the ledger carries exactly one entry for the administrator's toggle naming the administrator, the vetter, the scope and the new state
+    revision: "0.2.0"
 
   - id: SVC_GW_INGEST_0019
     requirement_ids: ["GW_INGEST_0019"]
@@ -1896,11 +1896,11 @@ cases:
       WHEN that snapshot is ingested and the chain run finishes
       THEN the delivery's payload carries exactly the documented field set at the top
       level and within its vetting summary, reports the blocked effective outcome, the
-      recorded outcome, the run identifier, the name of the blocking connector and the
+      recorded outcome, the run identifier, the name of the blocking vetter and the
       number of uncovered and waived findings, and contains no finding message, no
       finding rule identifier, no finding location and no file name from the quarantined
       snapshot
-    revision: "0.1.0"
+    revision: "0.2.0"
 
   - id: SVC_GW_INGEST_0023
     requirement_ids: ["GW_INGEST_0023"]
@@ -2169,15 +2169,15 @@ cases:
     title: A chain run reads each selected blob once and never opens an unselected one
     verification: automated-test
     description: |
-      GIVEN a quarantined snapshot holding a file inside a connector's declared path
+      GIVEN a quarantined snapshot holding a file inside a vetter's declared path
       selection, a file outside it, a file over the per-file size cap, and content
       larger than the configured per-run retention bound
-      WHEN connectors walk the snapshot with their declared selections
+      WHEN vetters walk the snapshot with their declared selections
       THEN the file outside the selection is never opened, a file two walks select is
       inflated once and served from the retained content on the second walk, the file
       over the per-file cap is still visited as unread, and content beyond the retention
       bound is still served in full on every walk
-    revision: "0.1.0"
+    revision: "0.2.0"
 
   - id: SVC_GW_INGEST_0028
     requirement_ids: ["GW_INGEST_0028"]
@@ -2192,10 +2192,10 @@ cases:
       THEN the conformant skill raises nothing, every departure is reported as its own
       finding located at the file, the undefined field is informational, the hostile
       frontmatter is refused as a finding rather than parsed or thrown out of the
-      connector, the verdict is advisory under the default posture and blocking under
+      vetter, the verdict is advisory under the default posture and blocking under
       configured enforcement, and the run records the pinned specification's version as
-      the connector's version
-    revision: "0.1.0"
+      the vetter's version
+    revision: "0.2.0"
 
   - id: SVC_GW_INGEST_0029
     requirement_ids: ["GW_INGEST_0029"]
@@ -2604,13 +2604,13 @@ cases:
 
   - id: SVC_GW_VETTING_0029.5
     requirement_ids: ["GW_VETTING_0029.5"]
-    title: The effective chain names each connector's resolved state and where it came from, and only to an administrator
+    title: The effective chain names each vetter's resolved state and where it came from, and only to an administrator
     verification: automated-test
     description: |
-      GIVEN a marketplace, a connector disabled globally, a second connector disabled for that marketplace alone, a third with no setting at all, and a non-administrator principal
+      GIVEN a marketplace, a vetter disabled globally, a second vetter disabled for that marketplace alone, a third with no setting at all, and a non-administrator principal
       WHEN the effective vetting chain of that marketplace is read
-      THEN the chain lists every configured connector in the order it runs with the state its enablement resolves to for that marketplace and the source of that state — the marketplace-scoped setting, the global setting or the default — carrying the note and the acting administrator of whichever setting decided it, and the non-administrator is refused the read
-    revision: "0.1.0"
+      THEN the chain lists every configured vetter in the order it runs with the state its enablement resolves to for that marketplace and the source of that state — the marketplace-scoped setting, the global setting or the default — carrying the note and the acting administrator of whichever setting decided it, and the non-administrator is refused the read
+    revision: "0.2.0"
 
   - id: SVC_GW_VETTING_0031
     requirement_ids: ["GW_VETTING_0031"]
@@ -2618,6 +2618,6 @@ cases:
     verification: automated-test
     description: |
       GIVEN an authenticated portal session and a marketplace whose snapshot the chain blocked
-      WHEN the reviewer opens the snapshot's review surface and activates a connector node of the chain flow
-      THEN the flow is shown with a node per chain step in the order the connectors run, each carrying its verdict state as a word beside its icon, and the activated node opens its own evidence naming the connector and the findings behind its verdict
-    revision: "0.1.0"
+      WHEN the reviewer opens the snapshot's review surface and activates a vetter node of the chain flow
+      THEN the flow is shown with a node per chain step in the order the vetters run, each carrying its verdict state as a word beside its icon, and the activated node opens its own evidence naming the vetter and the findings behind its verdict
+    revision: "0.2.0"

@@ -1,6 +1,6 @@
 # Re-vetting approved content
 
-An approval is a judgement made against the evidence of one day. Connectors gain
+An approval is a judgement made against the evidence of one day. Vetters gain
 rules, advisories land, and accepted risks expire — so an estate whose approvals
 are never re-examined slowly turns into a set of assertions nobody has checked.
 
@@ -13,7 +13,7 @@ fresh answer means for content teams already depend on.
 On its schedule, the gateway takes the approved snapshots whose newest chain run
 is **oldest**, up to a batch size, and re-runs the chain over each. Each pass
 records a new run — trigger `revet-scheduled`, with the identity and version of
-every connector that produced it — and never edits the previous one.
+every vetter that produced it — and never edits the previous one.
 
 Oldest-first in bounded batches is what makes this affordable. A sweep that
 re-vetted everything on every tick would be a periodic load spike proportional to
@@ -32,24 +32,24 @@ judgement, and the gateway draws three lines.
 | Classification | When | What happens |
 | --- | --- | --- |
 | **Clear** | Nothing objects, or only an active waiver stands between the run and clear. | Nothing. The run is recorded. |
-| **Violation** | A connector objects to the **content**, and no active waiver covers the finding. | Recorded, announced, and — in `enforce` mode — the snapshot is revoked. |
-| **Inconclusive** | The run blocks only because a connector errored, timed out, has not answered, or produced no verdict at all. | Recorded and announced. The snapshot stays approved and served, in **either** mode. |
+| **Violation** | A vetter objects to the **content**, and no active waiver covers the finding. | Recorded, announced, and — in `enforce` mode — the snapshot is revoked. |
+| **Inconclusive** | The run blocks only because a vetter errored, timed out, has not answered, or produced no verdict at all. | Recorded and announced. The snapshot stays approved and served, in **either** mode. |
 
 The effective outcome is what decides — the run with the waivers active at that
 instant layered over it. A finding somebody accepted, in writing, with an expiry,
 must not quarantine content; otherwise a waiver would clear the approval gate
 only to be ignored by the next sweep.
 
-!!! note "Why a broken connector never retracts anything"
+!!! note "Why a broken vetter never retracts anything"
 
     Approval asks *may this be published?* and fails closed on everything,
     because nothing is being served yet and the cost of an over-strict answer is
     one delayed review.
 
     Re-vetting asks *must this be retracted?*, and the cost of an over-strict
-    answer is pulling live content out from under every consumer. A connector
+    answer is pulling live content out from under every consumer. A vetter
     that threw is evidence about the **scanner**, not about the content — and a
-    shared connector outage would otherwise revoke an entire estate at once,
+    shared vetter outage would otherwise revoke an entire estate at once,
     turning a scanner bug into an outage of exactly the content the gateway
     exists to serve.
 
@@ -65,7 +65,7 @@ only to be ignored by the next sweep.
 
 === "warn (default)"
 
-    The violation is written to the ledger with the objecting connectors, the
+    The violation is written to the ledger with the objecting vetters, the
     rules behind it, and one entry per identity that had already fetched the
     snapshot. `snapshot.revet_violation` goes out to subscribers. The portal
     shows it.
@@ -122,12 +122,12 @@ Both record their runs with trigger `revet-manual`.
 
 !!! info "Scanner and advisory feeds"
 
-    The built-in `secret-scan` and `prompt-injection` connectors have no
+    The built-in `secret-scan` and `prompt-injection` vetters have no
     external feed to subscribe to: their rules ship with the gateway, as does
     the Agent Skills specification `skill-conformance` validates against. So
     "re-vet when the feed updates" is, today, an operator calling
-    `POST /api/marketplaces/{name}/revet` after deploying a connector whose
-    rules changed — and the run records the connector versions, so an answer
+    `POST /api/marketplaces/{name}/revet` after deploying a vetter whose
+    rules changed — and the run records the vetter versions, so an answer
     that changed can be attributed to the chain rather than guessed at.
 
     A webhook-triggered feed integration is a follow-on, not something this
@@ -148,7 +148,7 @@ sequenceDiagram
 
     S->>S: chain run (trigger revet-scheduled)
     S->>S: effective outcome vs active waivers
-    S->>L: revet-violation (connectors, rules, mode)
+    S->>L: revet-violation (vetters, rules, mode)
     S->>L: revet-violation-affected (one per identity)
     S->>W: snapshot.revet_violation
     S->>DB: state approved → revoked
@@ -218,7 +218,7 @@ Rejecting it instead is the terminal answer.
 | `vetting-completed` | Every run, with its trigger, outcome and chain identity. |
 | `revet-clear` | A re-vetting run that found nothing. |
 | `revet-inconclusive` | The chain could not conclude; the snapshot stays approved. |
-| `revet-violation` | A retroactive violation, with the objecting connectors, the rules and the mode in force. |
+| `revet-violation` | A retroactive violation, with the objecting vetters, the rules and the mode in force. |
 | `revet-violation-affected` | One entry per identity that had already fetched the snapshot. |
 | `snapshot-revoked` | The state transition out of `approved`. |
 | `snapshot-unpublished` | The refs that were removed, and whether the marketplace still serves anything. |

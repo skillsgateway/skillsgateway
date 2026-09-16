@@ -4,27 +4,27 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 
 /**
- * One connector of a marketplace's effective vetting chain (GW_VETTING_0029.5): what it is, whether it
+ * One vetter of a marketplace's effective vetting chain (GW_VETTING_0029.5): what it is, whether it
  * runs for this marketplace, and which setting decided that.
  *
  * @param reason the note recorded with the deciding setting, or null when a default decided it
  * @param updatedBy the administrator who last set the deciding setting, or null for a default
  */
-@Schema(description = "A connector in a marketplace's effective vetting chain")
-public record ChainConnectorView(
-        @Schema(description = "Stable connector name") String name,
+@Schema(description = "A vetter in a marketplace's effective vetting chain")
+public record ChainVetterView(
+        @Schema(description = "Stable vetter name") String name,
         @Schema(description = "Position in the chain") int order,
 
-        @Schema(description = "What the connector looks for, and what it cannot see")
+        @Schema(description = "What the vetter looks for, and what it cannot see")
         String description,
 
-        @Schema(description = "Identity of the rule set the connector currently carries")
+        @Schema(description = "Identity of the rule set the vetter currently carries")
         String version,
 
         @Schema(description = "Whether the verdict is delegated to an operator-configured external service")
         boolean external,
 
-        @Schema(description = "Whether the connector runs for this marketplace")
+        @Schema(description = "Whether the vetter runs for this marketplace")
         boolean enabled,
 
         @Schema(description = "Which setting decided the state")

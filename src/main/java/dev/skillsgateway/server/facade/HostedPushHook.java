@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
  * the append-only ledger, so "what was approved has since been rewritten" stays answerable.
  *
  * <p>Ingestion happens after the push completes, not inside it: vetting a snapshot inside the
- * receive transaction would make {@code git push} block on the connector chain and make the
+ * receive transaction would make {@code git push} block on the vetter chain and make the
  * chain's timeout the publisher's timeout.
  */
 @Component

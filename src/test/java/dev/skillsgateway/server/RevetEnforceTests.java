@@ -171,23 +171,23 @@ class RevetEnforceTests extends AbstractGatewayTest {
      * The deliberate exception to fail-closed, from both ends.
      *
      * <p>First for real: the chain cannot read the snapshot at all, which is the shape every
-     * connector outage takes. Under enforcement — the strictest configuration there is — the
+     * vetter outage takes. Under enforcement — the strictest configuration there is — the
      * snapshot must stay approved and served, because nothing about its content was established.
      *
      * <p>Then exhaustively and purely, over every verdict state the chain can produce, so the rule
-     * is verified for the states no built-in connector emits today ({@code PENDING}) and for the
+     * is verified for the states no built-in vetter emits today ({@code PENDING}) and for the
      * degenerate runs a misconfiguration produces (no verdicts, no run).
      */
     @Test
     @SVCs({"SVC_GW_VETTING_0015"})
-    void aConnectorErrorDuringRevettingNeverRevokesTheSnapshot() throws Exception {
+    void aVetterErrorDuringRevettingNeverRevokesTheSnapshot() throws Exception {
         Registered registered = registerAndIngest(uniqueName("revetinconc"), createUpstream(DEFAULT_MANIFEST));
         String name = registered.marketplace().name();
         long id = registered.snapshot().id();
         approve(id);
 
         // Take the content away from the scanner without touching the content itself: the pinned
-        // commit becomes unreadable, which is exactly what a broken connector looks like to the
+        // commit becomes unreadable, which is exactly what a broken vetter looks like to the
         // chain — an ERROR verdict and a blocked run, about a snapshot nothing has examined.
         deleteQuarantine(name);
 
@@ -222,13 +222,13 @@ class RevetEnforceTests extends AbstractGatewayTest {
                 assertThat(classification).as("state %s", state).isEqualTo(RevetVerdict.Classification.VIOLATION);
             } else {
                 // ERROR and PENDING: the chain did not answer. DISABLED (GW_VETTING_0029): an administrator
-                // switched the connector off, which says nothing about the content. None of the
+                // switched the vetter off, which says nothing about the content. None of the
                 // three names a fault, so nothing is retracted.
                 assertThat(classification).as("state %s", state).isEqualTo(RevetVerdict.Classification.INCONCLUSIVE);
             }
         }
         // A chain configured to nothing blocks, but names no fault in the content, so it must not
-        // become a fleet-wide retraction the first time someone mis-edits the connector list.
+        // become a fleet-wide retraction the first time someone mis-edits the vetter list.
         assertThat(RevetVerdict.classify(
                         emptyRun(), WaiverEvaluation.evaluate(emptyRun(), List.of(), "abc123", Instant.now())))
                 .isEqualTo(RevetVerdict.Classification.INCONCLUSIVE);

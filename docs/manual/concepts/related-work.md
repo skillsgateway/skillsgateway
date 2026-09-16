@@ -175,7 +175,7 @@ per-call, not a server-side facade.
 Where Skills Gateway pins a snapshot and refuses to serve anything else, JFrog
 scans and signs an artifact and blocks on policy at consumption. Both keep the
 bytes, and both scan them; the mechanisms differ. Skills Gateway runs a
-[vetting connector chain](vetting.md) over every snapshot before a human sees
+[vetting vetter chain](vetting.md) over every snapshot before a human sees
 it, and the approval gate refuses a blocked outcome — so the scan is a
 precondition of the human decision rather than a replacement for it. What JFrog
 has and this does not is artifact signing, and scanning of the packaged formats

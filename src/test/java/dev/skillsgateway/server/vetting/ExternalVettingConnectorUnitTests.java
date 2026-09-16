@@ -49,9 +49,9 @@ class ExternalVettingConnectorUnitTests {
     @SVCs({"SVC_GW_VETTING_0024"})
     void aPassIsMappedToAPassVerdict() {
         stub.respond(200, "{\"state\":\"pass\"}");
-        Verdict verdict = connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "clean content")));
+        Verdict verdict = vetter(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "clean content")));
         assertThat(verdict.state()).isEqualTo(VerdictState.PASS);
-        // The bundle carried the file's text content, the same view a built-in connector walks.
+        // The bundle carried the file's text content, the same view a built-in vetter walks.
         assertThat(stub.lastBody()).contains("clean content").contains("\"scanned\":true");
     }
 
@@ -61,7 +61,7 @@ class ExternalVettingConnectorUnitTests {
         stub.respond(200, """
                 {"state":"fail","reportUrl":"https://r.example/1","findings":[
                   {"id":"exfil","severity":"high","location":"SKILL.md:2","message":"exfiltration"}]}""");
-        Verdict verdict = connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x")));
+        Verdict verdict = vetter(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x")));
         assertThat(verdict.state()).isEqualTo(VerdictState.FAIL);
         assertThat(verdict.reportUrl()).isEqualTo("https://r.example/1");
         assertThat(verdict.findings()).singleElement().satisfies(f -> assertThat(f.id())
@@ -74,7 +74,7 @@ class ExternalVettingConnectorUnitTests {
         stub.respond(
                 200,
                 "{\"state\":\"pass\",\"findings\":[{\"id\":\"backdoor\",\"severity\":\"critical\",\"message\":\"m\"}]}");
-        Verdict verdict = connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x")));
+        Verdict verdict = vetter(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x")));
         assertThat(verdict.state()).isEqualTo(VerdictState.FAIL);
     }
 
@@ -83,7 +83,7 @@ class ExternalVettingConnectorUnitTests {
     void informationalFindingsAloneStillPass() {
         stub.respond(
                 200, "{\"state\":\"pass\",\"findings\":[{\"id\":\"note\",\"severity\":\"info\",\"message\":\"m\"}]}");
-        Verdict verdict = connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x")));
+        Verdict verdict = vetter(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x")));
         assertThat(verdict.state()).isEqualTo(VerdictState.PASS);
     }
 
@@ -91,7 +91,7 @@ class ExternalVettingConnectorUnitTests {
     @SVCs({"SVC_GW_VETTING_0027"})
     void aPendingAnswerIsRecordedAsPendingWhichBlocks() {
         stub.respond(200, "{\"state\":\"pending\"}");
-        Verdict verdict = connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x")));
+        Verdict verdict = vetter(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x")));
         assertThat(verdict.state()).isEqualTo(VerdictState.PENDING);
         assertThat(verdict.state().clearing()).isFalse();
     }
@@ -100,9 +100,9 @@ class ExternalVettingConnectorUnitTests {
     @SVCs({"SVC_GW_VETTING_0024"})
     void theConfiguredCredentialIsSentToTheEndpoint() {
         stub.respond(200, "{\"state\":\"pass\"}");
-        ExternalVettingConnector connector = new ExternalVettingConnector(new ExternalConnectorProperties(
+        ExternalVettingConnector vetter = new ExternalVettingConnector(new ExternalConnectorProperties(
                 "llm", URI.create(stub.url()), 10, "1", "d", "sekret", null, null, null, null, null, null, null));
-        connector.vet(snapshotOf(Map.of("SKILL.md", "x")));
+        vetter.vet(snapshotOf(Map.of("SKILL.md", "x")));
         assertThat(stub.lastHeader("Authorization")).isEqualTo("Bearer sekret");
     }
 
@@ -112,20 +112,20 @@ class ExternalVettingConnectorUnitTests {
     @SVCs({"SVC_GW_VETTING_0025"})
     void aNon2xxStatusIsAnErrorVerdict() {
         stub.respond(503, "unavailable");
-        assertError(connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
+        assertError(vetter(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
     @Test
     @SVCs({"SVC_GW_VETTING_0025"})
     void anUnreachableEndpointIsAnErrorVerdict() throws IOException {
-        assertError(connector(deadUrl()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
+        assertError(vetter(deadUrl()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
     @Test
     @SVCs({"SVC_GW_VETTING_0025"})
     void aReadTimeoutIsAnErrorVerdict() {
         stub.hang(Duration.ofSeconds(3));
-        ExternalVettingConnector connector = new ExternalVettingConnector(new ExternalConnectorProperties(
+        ExternalVettingConnector vetter = new ExternalVettingConnector(new ExternalConnectorProperties(
                 "llm",
                 URI.create(stub.url()),
                 10,
@@ -139,42 +139,42 @@ class ExternalVettingConnectorUnitTests {
                 null,
                 null,
                 null));
-        assertError(connector.vet(snapshotOf(Map.of("SKILL.md", "x"))));
+        assertError(vetter.vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
     @Test
     @SVCs({"SVC_GW_VETTING_0025"})
     void anUnparseableBodyIsAnErrorVerdict() {
         stub.respond(200, "definitely not json");
-        assertError(connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
+        assertError(vetter(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
     @Test
     @SVCs({"SVC_GW_VETTING_0025"})
     void anEmptyBodyIsAnErrorVerdict() {
         stub.respond(200, "");
-        assertError(connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
+        assertError(vetter(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
     @Test
     @SVCs({"SVC_GW_VETTING_0025"})
     void aJsonNullBodyIsAnErrorVerdict() {
         stub.respond(200, "null");
-        assertError(connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
+        assertError(vetter(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
     @Test
     @SVCs({"SVC_GW_VETTING_0025"})
     void anUnrecognizedStateIsAnErrorVerdict() {
         stub.respond(200, "{\"state\":\"approved\"}");
-        assertError(connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
+        assertError(vetter(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
     @Test
     @SVCs({"SVC_GW_VETTING_0025"})
     void aMissingStateIsAnErrorVerdict() {
         stub.respond(200, "{\"reportUrl\":\"https://r.example/1\"}");
-        assertError(connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
+        assertError(vetter(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
     @Test
@@ -182,7 +182,7 @@ class ExternalVettingConnectorUnitTests {
     void anEndpointDeclaringErrorIsAnErrorVerdict() {
         // 'error' is a gateway-internal state; an endpoint may not declare it as a verdict.
         stub.respond(200, "{\"state\":\"error\"}");
-        assertError(connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
+        assertError(vetter(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
     @Test
@@ -190,33 +190,33 @@ class ExternalVettingConnectorUnitTests {
     void aMalformedFindingSeverityIsAnErrorVerdict() {
         stub.respond(
                 200, "{\"state\":\"warn\",\"findings\":[{\"id\":\"x\",\"severity\":\"spicy\",\"message\":\"m\"}]}");
-        assertError(connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
+        assertError(vetter(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
     @Test
     @SVCs({"SVC_GW_VETTING_0025"})
     void aFindingMissingItsIdIsAnErrorVerdict() {
         stub.respond(200, "{\"state\":\"warn\",\"findings\":[{\"severity\":\"low\",\"message\":\"m\"}]}");
-        assertError(connector(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
+        assertError(vetter(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
     @Test
     @SVCs({"SVC_GW_VETTING_0025"})
     void anOversizedResponseIsAnErrorVerdict() {
         stub.respond(200, "{\"state\":\"pass\",\"reportUrl\":\"" + "x".repeat(4096) + "\"}");
-        ExternalVettingConnector connector = new ExternalVettingConnector(new ExternalConnectorProperties(
+        ExternalVettingConnector vetter = new ExternalVettingConnector(new ExternalConnectorProperties(
                 "llm", URI.create(stub.url()), 10, "1", "d", null, null, null, null, null, null, 64L, null));
-        assertError(connector.vet(snapshotOf(Map.of("SKILL.md", "x"))));
+        assertError(vetter.vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
     @Test
     @SVCs({"SVC_GW_VETTING_0025"})
     void aSnapshotBundleOverTheRequestCapIsAnErrorVerdict() {
         stub.respond(200, "{\"state\":\"pass\"}");
-        ExternalVettingConnector connector = new ExternalVettingConnector(new ExternalConnectorProperties(
+        ExternalVettingConnector vetter = new ExternalVettingConnector(new ExternalConnectorProperties(
                 "llm", URI.create(stub.url()), 10, "1", "d", null, null, null, null, null, 8L, null, null));
         // The single file's content exceeds max-request-bytes=8, so no valid bundle can be shipped.
-        assertError(connector.vet(snapshotOf(Map.of("SKILL.md", "this content is well over eight bytes"))));
+        assertError(vetter.vet(snapshotOf(Map.of("SKILL.md", "this content is well over eight bytes"))));
     }
 
     @Test
@@ -224,7 +224,7 @@ class ExternalVettingConnectorUnitTests {
     void aBinaryFileIsShippedUnscannedNotDropped() {
         stub.respond(200, "{\"state\":\"pass\"}");
         // Invalid UTF-8 makes ContentRules.text return null: present, marked not scanned, not dropped.
-        connector(stub.url()).vet(snapshotOfBytes("logo.png", new byte[] {(byte) 0xFF, (byte) 0xFE, 'x'}));
+        vetter(stub.url()).vet(snapshotOfBytes("logo.png", new byte[] {(byte) 0xFF, (byte) 0xFE, 'x'}));
         assertThat(stub.lastBody()).contains("\"path\":\"logo.png\"").contains("\"scanned\":false");
     }
 
@@ -236,7 +236,7 @@ class ExternalVettingConnectorUnitTests {
                 .contains("produced no verdict"));
     }
 
-    private static ExternalVettingConnector connector(String url) {
+    private static ExternalVettingConnector vetter(String url) {
         return new ExternalVettingConnector(new ExternalConnectorProperties(
                 "llm", URI.create(url), 10, "1", "d", null, null, null, null, null, null, null, null));
     }

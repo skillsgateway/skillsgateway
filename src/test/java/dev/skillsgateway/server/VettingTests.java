@@ -12,8 +12,8 @@ import dev.skillsgateway.server.vetting.Severity;
 import dev.skillsgateway.server.vetting.SnapshotUnderVetting;
 import dev.skillsgateway.server.vetting.Verdict;
 import dev.skillsgateway.server.vetting.VerdictState;
+import dev.skillsgateway.server.vetting.Vetter;
 import dev.skillsgateway.server.vetting.VettingChain;
-import dev.skillsgateway.server.vetting.VettingConnector;
 import dev.skillsgateway.server.vetting.VettingRepository;
 import dev.skillsgateway.server.vetting.VettingService;
 import dev.skillsgateway.server.vetting.WaiverEvaluation;
@@ -31,7 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Verification of the vetting chain (GW_VETTING_0001-GW_VETTING_0006). The chain is a trust-boundary control, so
- * these tests are adversarial where it counts: a connector that crashes, planted credentials and
+ * these tests are adversarial where it counts: a vetter that crashes, planted credentials and
  * planted injection markers, and an approval that tries to walk past a blocked outcome.
  */
 class VettingTests extends AbstractGatewayTest {
@@ -79,11 +79,11 @@ class VettingTests extends AbstractGatewayTest {
     private SkillsGatewayProperties properties;
 
     @Autowired
-    private dev.skillsgateway.server.vetting.ConnectorToggleService connectorToggleService;
+    private dev.skillsgateway.server.vetting.VetterToggleService vetterToggleService;
 
     @Test
     @SVCs({"SVC_GW_VETTING_0001"})
-    void ingestionRecordsAChainRunWithAVerdictPerConnector() throws Exception {
+    void ingestionRecordsAChainRunWithAVerdictPerVetter() throws Exception {
         Registered registered = registerAndIngest(uniqueName("vetclean"), createUpstream(DEFAULT_MANIFEST));
 
         VettingRepository.Run run =
@@ -92,15 +92,14 @@ class VettingTests extends AbstractGatewayTest {
         assertThat(run.trigger()).isEqualTo(VettingRepository.TRIGGER_INGESTION);
         assertThat(run.finishedAt()).isNotNull();
         assertThat(run.verdicts())
-                .extracting(VettingRepository.VerdictView::connector)
-                .containsExactlyElementsOf(vettingService.connectors().stream()
-                        .map(VettingConnector::name)
-                        .toList());
+                .extracting(VettingRepository.VerdictView::vetter)
+                .containsExactlyElementsOf(
+                        vettingService.vetters().stream().map(Vetter::name).toList());
         // Positions are dense and zero-based over the configured chain, whatever its size.
         assertThat(run.verdicts())
                 .extracting(VettingRepository.VerdictView::position)
                 .containsExactlyElementsOf(java.util.stream.IntStream.range(
-                                0, vettingService.connectors().size())
+                                0, vettingService.vetters().size())
                         .boxed()
                         .toList());
         // Clean content: the chain clears, and every verdict carries its (empty) finding list.
@@ -115,7 +114,7 @@ class VettingTests extends AbstractGatewayTest {
      */
     @Test
     @SVCs({"SVC_GW_VETTING_0002"})
-    void aggregationClearsOnlyWhenEveryConnectorAnsweredWithoutObjecting() {
+    void aggregationClearsOnlyWhenEveryVetterAnsweredWithoutObjecting() {
         assertThat(VettingChain.aggregate(List.of())).isEqualTo(VettingChain.Outcome.BLOCKED);
         assertThat(VettingChain.aggregate(null)).isEqualTo(VettingChain.Outcome.BLOCKED);
         for (VerdictState first : VerdictState.values()) {
@@ -124,7 +123,7 @@ class VettingTests extends AbstractGatewayTest {
                     .isEqualTo(first.clearing() ? VettingChain.Outcome.CLEAR : VettingChain.Outcome.BLOCKED);
             for (VerdictState second : VerdictState.values()) {
                 // A verdict blocks unless it clears or is DISABLED (GW_VETTING_0029): an administrator
-                // switching a connector off is discounted from the block decision, but positive
+                // switching a vetter off is discounted from the block decision, but positive
                 // clearing evidence is still required from somewhere in the run.
                 boolean anyBlocking = first.blocking() || second.blocking();
                 boolean anyClearing = first.clearing() || second.clearing();
@@ -135,26 +134,26 @@ class VettingTests extends AbstractGatewayTest {
                         .isEqualTo(expected);
             }
         }
-        // A null state in the list is a broken connector contract, not a pass.
+        // A null state in the list is a broken vetter contract, not a pass.
         assertThat(VettingChain.aggregate(java.util.Collections.singletonList(null)))
                 .isEqualTo(VettingChain.Outcome.BLOCKED);
     }
 
-    /** A connector that throws is recorded as an error and blocks; it is never skipped. */
+    /** A vetter that throws is recorded as an error and blocks; it is never skipped. */
     @Test
     @SVCs({"SVC_GW_VETTING_0002"})
-    void aConnectorThatThrowsBlocksTheSnapshotAndLeavesItUnserved() throws Exception {
+    void aVetterThatThrowsBlocksTheSnapshotAndLeavesItUnserved() throws Exception {
         String name = uniqueName("vetcrash");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
 
-        VettingService crashingChain = chainOf(new CrashingConnector());
+        VettingService crashingChain = chainOf(new CrashingVetter());
         VettingChain.Outcome outcome = crashingChain.vet(registered.snapshot(), name);
 
         assertThat(outcome).isEqualTo(VettingChain.Outcome.BLOCKED);
         VettingRepository.Run run =
                 vettingRepository.latestRun(registered.snapshot().id()).orElseThrow();
         assertThat(run.verdicts()).singleElement().satisfies(verdict -> {
-            assertThat(verdict.connector()).isEqualTo("crashing");
+            assertThat(verdict.vetter()).isEqualTo("crashing");
             assertThat(verdict.state()).isEqualTo(VerdictState.ERROR);
             assertThat(verdict.findings())
                     .extracting(dev.skillsgateway.server.vetting.Finding::message)
@@ -238,7 +237,7 @@ class VettingTests extends AbstractGatewayTest {
         assertThatThrownBy(() -> approvalService.approve(snapshotId, "alice"))
                 .isInstanceOf(VettingBlockedException.class)
                 .satisfies(thrown -> {
-                    assertThat(((VettingBlockedException) thrown).blockingConnectors())
+                    assertThat(((VettingBlockedException) thrown).blockingVetters())
                             .contains("secret-scan");
                     assertThat(((VettingBlockedException) thrown).uncoveredFindings())
                             .extracting(WaiverEvaluation.UncoveredFinding::ruleId)
@@ -319,7 +318,7 @@ class VettingTests extends AbstractGatewayTest {
                     assertThat(entry.get("sha")).isEqualTo(sha);
                     assertThat(String.valueOf(entry.get("detail"))).contains("outcome=blocked");
                 });
-        // The verdict rows still lead with connector=state, and now carry the finding count, the
+        // The verdict rows still lead with vetter=state, and now carry the finding count, the
         // worst severity and the run they belong to (GW_VETTING_0022) — additive over the old assertion.
         assertThat(entries)
                 .filteredOn(entry -> "vetting-verdict".equals(entry.get("event")))
@@ -387,7 +386,7 @@ class VettingTests extends AbstractGatewayTest {
     }
 
     /**
-     * A clean connector pass records what it examined (GW_VETTING_0023): its verdict detail is non-empty
+     * A clean vetter pass records what it examined (GW_VETTING_0023): its verdict detail is non-empty
      * and states the coverage, so "pass" is distinguishable from "did not run" — in the recorded
      * verdict and in the ledger alike.
      */
@@ -418,35 +417,35 @@ class VettingTests extends AbstractGatewayTest {
                         entry -> assertThat(String.valueOf(entry.get("detail"))).contains("scanned"));
     }
 
-    /** A chain with exactly the given connectors, over the real repository and storage. */
-    private VettingService chainOf(VettingConnector... connectors) {
+    /** A chain with exactly the given vetters, over the real repository and storage. */
+    private VettingService chainOf(Vetter... vetters) {
         return new VettingService(
-                List.of(connectors),
+                List.of(vetters),
                 vettingRepository,
                 storage,
                 auditLogger,
                 webhookService,
                 waiverService,
-                connectorToggleService,
+                vetterToggleService,
                 properties);
     }
 
-    private VettingRepository.VerdictView verdictOf(Registered registered, String connector) {
+    private VettingRepository.VerdictView verdictOf(Registered registered, String vetter) {
         VettingRepository.Run run =
                 vettingRepository.latestRun(registered.snapshot().id()).orElseThrow();
         Optional<VettingRepository.VerdictView> verdict = run.verdicts().stream()
-                .filter(candidate -> candidate.connector().equals(connector))
+                .filter(candidate -> candidate.vetter().equals(vetter))
                 .findFirst();
-        assertThat(verdict).as("verdict of connector '%s'", connector).isPresent();
+        assertThat(verdict).as("verdict of vetter '%s'", vetter).isPresent();
         return verdict.orElseThrow();
     }
 
-    private List<dev.skillsgateway.server.vetting.Finding> findingsOf(Registered registered, String connector) {
-        return verdictOf(registered, connector).findings();
+    private List<dev.skillsgateway.server.vetting.Finding> findingsOf(Registered registered, String vetter) {
+        return verdictOf(registered, vetter).findings();
     }
 
-    /** The adversary in the chain: a connector that does the one thing it must not get away with. */
-    private static final class CrashingConnector implements VettingConnector {
+    /** The adversary in the chain: a vetter that does the one thing it must not get away with. */
+    private static final class CrashingVetter implements Vetter {
 
         @Override
         public String name() {
@@ -460,7 +459,7 @@ class VettingTests extends AbstractGatewayTest {
 
         @Override
         public String description() {
-            return "test connector that always throws";
+            return "test vetter that always throws";
         }
 
         @Override

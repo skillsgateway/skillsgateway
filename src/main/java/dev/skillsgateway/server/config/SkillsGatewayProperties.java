@@ -810,12 +810,12 @@ public record SkillsGatewayProperties(
      * switching off the record rather than the gate — a snapshot with no chain run is blocked
      * either way, so the only thing a kill switch would buy is a blocked estate with no findings.
      *
-     * @param timeout how long a single connector may take before its verdict is recorded as an
-     *     error, which blocks; a wedged connector must never wedge ingestion
-     * @param maxFileBytes files larger than this are handed to connectors as unread, and reported
+     * @param timeout how long a single vetter may take before its verdict is recorded as an
+     *     error, which blocks; a wedged vetter must never wedge ingestion
+     * @param maxFileBytes files larger than this are handed to vetters as unread, and reported
      *     as an informational finding rather than skipped in silence
      * @param contentCacheBytes how much of a snapshot's content one chain run may hold so that the
-     *     connectors after the first read it instead of inflating it again (GW_VETTING_0030). Past it
+     *     vetters after the first read it instead of inflating it again (GW_VETTING_0030). Past it
      *     content is re-read rather than kept, so this is a speed setting and never a coverage
      *     one. It is bounded rather than unlimited because the content is an upstream repository
      *     the gateway does not control.
@@ -832,7 +832,7 @@ public record SkillsGatewayProperties(
      *     (GW_APPROVAL_0004.2).
      * @param revet continuous re-vetting of approved content (GW_VETTING_0012-GW_VETTING_0017)
      * @param license the org-level license policy (GW_VETTING_0020)
-     * @param conformance the posture of the built-in SKILL.md conformance connector (GW_INGEST_0028)
+     * @param conformance the posture of the built-in SKILL.md conformance vetter (GW_INGEST_0028)
      */
     public record Vetting(
             Duration timeout,
@@ -877,7 +877,7 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * The posture of the built-in {@code skill-conformance} connector (GW_INGEST_0028).
+     * The posture of the built-in {@code skill-conformance} vetter (GW_INGEST_0028).
      *
      * <p>Defaults to advisory, and the default is the load-bearing part. A verdict covers a whole
      * snapshot, so a blocking default would let one malformed skill hold up every other skill in
@@ -887,7 +887,7 @@ public record SkillsGatewayProperties(
      * license lists and re-vetting enforcement offer.
      *
      * <p>Like the license lists this is configuration rather than API-managed runtime state: it is
-     * stamped into the connector's recorded version, so every run names the posture it ran under
+     * stamped into the vetter's recorded version, so every run names the posture it ran under
      * and a changed answer about unchanged content stays attributable (GW_VETTING_0012).
      *
      * @param enforce whether conformance defects block approval instead of warning
@@ -903,11 +903,11 @@ public record SkillsGatewayProperties(
 
     /**
      * The organisation-level license policy (GW_VETTING_0020), evaluated by the built-in license-scan
-     * vetting connector and reported by the per-snapshot license endpoint (GW_VETTING_0021).
+     * vetter and reported by the per-snapshot license endpoint (GW_VETTING_0021).
      *
      * <p>Deliberately configuration rather than API-managed runtime state: vetting policy must be
      * attributable per chain run (GW_VETTING_0012), and a policy that changes only by deploy — its digest
-     * stamped into the connector's recorded version — keeps every run's chain identity naming the
+     * stamped into the vetter's recorded version — keeps every run's chain identity naming the
      * policy it ran under. Both lists default to empty, under which identified licenses are
      * informational and unknown or missing licenses only warn, so an upgrade blocks nothing.
      *

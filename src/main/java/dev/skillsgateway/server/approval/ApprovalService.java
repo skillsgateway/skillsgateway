@@ -138,7 +138,7 @@ public class ApprovalService {
      * refused. The check precedes the state transition, so a refused approval leaves the snapshot
      * held and publishes nothing.
      *
-     * <p>A reviewer has no override. Approving past objecting connectors means recording a scoped,
+     * <p>A reviewer has no override. Approving past objecting vetters means recording a scoped,
      * expiring waiver for each blocking finding first, so the reviewer accepts exactly what was
      * found and nothing else. The waivers that were in force are returned to the caller, which
      * appends them to the ledger as the acting identity. An administrator's override of a blocked
@@ -209,7 +209,7 @@ public class ApprovalService {
                 // lifted — the block is recorded rather than refused — and every other gate below
                 // still runs. Without a request the refusal is exactly as before.
                 if (!overrideRequest.vettingFailure()) {
-                    throw new VettingBlockedException(snapshotId, effect.blockingConnectors(), effect.uncovered());
+                    throw new VettingBlockedException(snapshotId, effect.blockingVetters(), effect.uncovered());
                 }
                 if (!overrideRequest.hasReason()) {
                     throw new MissingOverrideReasonException(snapshotId);
@@ -254,7 +254,7 @@ public class ApprovalService {
                 : vettingOverrideRepository.record(
                         snapshotId,
                         override.reason(),
-                        override.blockingConnectors(),
+                        override.blockingVetters(),
                         override.uncoveredFindings(),
                         reviewer);
         // The published set just grew; the catalog re-derives from it (GW_FACADE_0004). Never fails the
@@ -274,16 +274,16 @@ public class ApprovalService {
      * effective outcome before the state transition, so it names exactly what the administrator
      * took responsibility for.
      */
-    private record OverrideCapture(String reason, String blockingConnectors, String uncoveredFindings) {
+    private record OverrideCapture(String reason, String blockingVetters, String uncoveredFindings) {
 
         static OverrideCapture of(String reason, WaiverEvaluation.Effect effect) {
-            String connectors = String.join(", ", effect.blockingConnectors());
+            String vetters = String.join(", ", effect.blockingVetters());
             String findings = effect.uncovered().isEmpty()
                     ? "(none itemised)"
                     : effect.uncovered().stream()
                             .map(finding -> "%s at %s".formatted(finding.ruleId(), finding.location()))
                             .collect(java.util.stream.Collectors.joining("; "));
-            return new OverrideCapture(reason, connectors.isBlank() ? null : connectors, findings);
+            return new OverrideCapture(reason, vetters.isBlank() ? null : vetters, findings);
         }
     }
 

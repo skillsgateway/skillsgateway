@@ -283,7 +283,7 @@ export interface paths {
         put?: never;
         /**
          * Re-vet every approved snapshot of a marketplace now
-         * @description Runs the vetting chain again over every live approved snapshot of the marketplace, one run each, and applies the configured re-vetting mode to each result. This is the operational answer to a connector rule set or advisory feed that has just been updated.
+         * @description Runs the vetting chain again over every live approved snapshot of the marketplace, one run each, and applies the configured re-vetting mode to each result. This is the operational answer to a vetter rule set or advisory feed that has just been updated.
          */
         post: operations["revetMarketplace"];
         delete?: never;
@@ -321,7 +321,7 @@ export interface paths {
         };
         /**
          * A marketplace's effective vetting chain
-         * @description Every configured connector in the order it runs, with the state its enablement resolves to for this marketplace and which setting decided it — the marketplace-scoped setting, the global setting, or the absence of any setting. The resolution is the chain's own, not a recombination of the settings list, so it cannot disagree with what actually runs. Administrator-only, like the settings it reports.
+         * @description Every configured vetter in the order it runs, with the state its enablement resolves to for this marketplace and which setting decided it — the marketplace-scoped setting, the global setting, or the absence of any setting. The resolution is the chain's own, not a recombination of the settings list, so it cannot disagree with what actually runs. Administrator-only, like the settings it reports.
          */
         get: operations["vettingChain"];
         put?: never;
@@ -615,7 +615,7 @@ export interface paths {
         put?: never;
         /**
          * Approve a held or revoked snapshot
-         * @description Publishes the snapshot to the git facade and records the reviewer identity and timestamp. The request body is optional. Held snapshots and snapshots that re-vetting revoked can be approved; a revoked one is re-published only by this fresh decision, behind the same gate, which means the violation that revoked it must have been waived or fixed first. A snapshot whose effective vetting outcome is blocked — its chain run objects and at least one blocking finding is not covered by an active waiver, including a snapshot with no chain run at all — is refused, and the problem document names both the blocking connectors and the uncovered findings. Record a scoped, expiring waiver for each of those findings and approve again; every waiver that let the approval through is written to the ledger. Alternatively an administrator — and only an administrator — may set overrideVetting with a reason to approve over the block (GW_VETTING_0028): the override lifts only the vetting gate, is written to the ledger as a distinct event with the failing verdicts, and marks the snapshot approved over a vetting failure.
+         * @description Publishes the snapshot to the git facade and records the reviewer identity and timestamp. The request body is optional. Held snapshots and snapshots that re-vetting revoked can be approved; a revoked one is re-published only by this fresh decision, behind the same gate, which means the violation that revoked it must have been waived or fixed first. A snapshot whose effective vetting outcome is blocked — its chain run objects and at least one blocking finding is not covered by an active waiver, including a snapshot with no chain run at all — is refused, and the problem document names both the blocking vetters and the uncovered findings. Record a scoped, expiring waiver for each of those findings and approve again; every waiver that let the approval through is written to the ledger. Alternatively an administrator — and only an administrator — may set overrideVetting with a reason to approve over the block (GW_VETTING_0028): the override lifts only the vetting gate, is written to the ledger as a distinct event with the failing verdicts, and marks the snapshot approved over a vetting failure.
          */
         post: operations["approve"];
         delete?: never;
@@ -875,7 +875,7 @@ export interface paths {
         put?: never;
         /**
          * Re-vet an approved snapshot now
-         * @description Runs the vetting chain again over the snapshot's pinned content and records a new run with trigger revet-manual. If the run's effective outcome — after the waivers active right now — objects to the content, the violation is written to the ledger and announced as snapshot.revet_violation. In enforce mode the snapshot is then revoked and its published refs are removed; in warn mode, the default, publication is untouched. A run that only blocks because a connector errored or has not answered is recorded as inconclusive and never revokes anything.
+         * @description Runs the vetting chain again over the snapshot's pinned content and records a new run with trigger revet-manual. If the run's effective outcome — after the waivers active right now — objects to the content, the violation is written to the ledger and announced as snapshot.revet_violation. In enforce mode the snapshot is then revoked and its published refs are removed; in warn mode, the default, publication is untouched. A run that only blocks because a vetter errored or has not answered is recorded as inconclusive and never revokes anything.
          */
         post: operations["revetSnapshot"];
         delete?: never;
@@ -893,7 +893,7 @@ export interface paths {
         };
         /**
          * Snapshot vetting verdicts
-         * @description The snapshot's latest vetting chain run: each connector's verdict in chain order, the findings behind it, the waivers currently suppressing any of them, and the fail-closed effective aggregate that gates approval. A snapshot the chain has never run against reports a blocked outcome and no run.
+         * @description The snapshot's latest vetting chain run: each vetter's verdict in chain order, the findings behind it, the waivers currently suppressing any of them, and the fail-closed effective aggregate that gates approval. A snapshot the chain has never run against reports a blocked outcome and no run.
          */
         get: operations["vetting"];
         put?: never;
@@ -1072,7 +1072,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/vetting/connector-toggles": {
+    "/api/vetting/vetter-toggles": {
         parameters: {
             query?: never;
             header?: never;
@@ -1080,8 +1080,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List connector enable/disable settings
-         * @description Every administrative enable/disable setting for the vetting connectors — the global settings and the per-marketplace overrides. Administrator-only: the switch that governs the vetting chain is not shown to marketplace-scoped approvers.
+         * List vetter enable/disable settings
+         * @description Every administrative enable/disable setting for the vetters — the global settings and the per-marketplace overrides. Administrator-only: the switch that governs the vetting chain is not shown to marketplace-scoped approvers.
          */
         get: operations["toggles"];
         put?: never;
@@ -1092,7 +1092,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/vetting/connectors/{name}/toggle": {
+    "/api/vetting/vetters/{name}/toggle": {
         parameters: {
             query?: never;
             header?: never;
@@ -1101,8 +1101,8 @@ export interface paths {
         };
         get?: never;
         /**
-         * Enable or disable a connector
-         * @description Switches a specific vetting connector on or off, globally or for one named marketplace, and records the change on the audit ledger. Any connector in the chain can be switched, built-in or operator-configured (skills-gateway.vetting.external[*]). A per-marketplace setting overrides the global one; the absence of any setting means the connector runs. A disabled connector is not run at ingestion or re-vetting but is recorded as a distinct disabled verdict on the chain run, and disabling every connector leaves a run blocked rather than clear. Administrator-only.
+         * Enable or disable a vetter
+         * @description Switches a specific vetter on or off, globally or for one named marketplace, and records the change on the audit ledger. Any vetter in the chain can be switched, built-in or operator-configured (skills-gateway.vetting.external[*]). A per-marketplace setting overrides the global one; the absence of any setting means the vetter runs. A disabled vetter is not run at ingestion or re-vetting but is recorded as a distinct disabled verdict on the chain run, and disabling every vetter leaves a run blocked rather than clear. Administrator-only.
          */
         put: operations["toggle"];
         post?: never;
@@ -1520,15 +1520,15 @@ export interface components {
             /** @description Catalog commit SHA */
             sha?: string;
         };
-        /** @description A connector in a marketplace's effective vetting chain */
-        ChainConnectorView: {
-            /** @description What the connector looks for, and what it cannot see */
+        /** @description A vetter in a marketplace's effective vetting chain */
+        ChainVetterView: {
+            /** @description What the vetter looks for, and what it cannot see */
             description?: string;
-            /** @description Whether the connector runs for this marketplace */
+            /** @description Whether the vetter runs for this marketplace */
             enabled?: boolean;
             /** @description Whether the verdict is delegated to an operator-configured external service */
             external?: boolean;
-            /** @description Stable connector name */
+            /** @description Stable vetter name */
             name?: string;
             /**
              * Format: int32
@@ -1549,7 +1549,7 @@ export interface components {
             updatedAt?: string;
             /** @description The administrator who last set the deciding setting, or null for the default */
             updatedBy?: string;
-            /** @description Identity of the rule set the connector currently carries */
+            /** @description Identity of the rule set the vetter currently carries */
             version?: string;
         };
         /** @description Sync mode change request */
@@ -1607,48 +1607,6 @@ export interface components {
              * @description The waiver the reviewer authored, for a waiver-author conflict
              */
             waiverId?: number;
-        };
-        /** @description An administrative enable/disable setting for one vetting connector */
-        ConnectorToggle: {
-            /** @description The connector's stable name, e.g. secret-scan */
-            connector?: string;
-            /** @description Whether the connector runs under this setting */
-            enabled?: boolean;
-            /**
-             * Format: int64
-             * @description Setting id
-             */
-            id?: number;
-            /**
-             * Format: int64
-             * @description Marketplace this setting is scoped to, or null for the global setting
-             */
-            marketplaceId?: number;
-            /** @description The administrator's note for the setting, or null */
-            reason?: string;
-            /**
-             * Format: date-time
-             * @description When it was last set
-             */
-            updatedAt?: string;
-            /** @description Identity that last set it */
-            updatedBy?: string;
-        };
-        /** @description A connector configured in the vetting chain */
-        ConnectorView: {
-            /** @description What the connector looks for, and what it cannot see */
-            description?: string;
-            /** @description Whether the verdict is delegated to an operator-configured external service, so that a verdict the gateway did not reach itself never reads as one that it did */
-            external?: boolean;
-            /** @description Stable connector name */
-            name?: string;
-            /**
-             * Format: int32
-             * @description Position in the chain
-             */
-            order?: number;
-            /** @description Identity of the rule set the connector currently carries (GW_VETTING_0012) */
-            version?: string;
         };
         /** @description One marketplace inside the served catalog revision */
         Constituent: {
@@ -2068,7 +2026,7 @@ export interface components {
             /** @description True when the listing was cut at the tree-size limit */
             truncated?: boolean;
         };
-        /** @description One thing a vetting connector found in a snapshot */
+        /** @description One thing a vetter found in a snapshot */
         Finding: {
             /**
              * @description Stable rule identifier, e.g. aws-access-key-id
@@ -2670,7 +2628,7 @@ export interface components {
         /** @description One execution of the vetting chain against a snapshot */
         Run: {
             /**
-             * @description Identity of the chain that produced the run: connector@version in chain order
+             * @description Identity of the chain that produced the run: vetter@version in chain order
              * @example prompt-injection@1,secret-scan@1
              */
             chain?: string;
@@ -2930,8 +2888,6 @@ export interface components {
         Suppression: {
             /** @description Identity that accepted the risk */
             approvedBy?: string;
-            /** @description Connector whose verdict carried the finding */
-            connector?: string;
             /**
              * Format: date-time
              * @description When the acceptance lapses
@@ -2941,6 +2897,8 @@ export interface components {
             location?: string;
             /** @description Finding rule identifier */
             ruleId?: string;
+            /** @description Vetter whose verdict carried the finding */
+            vetter?: string;
             /**
              * Format: int64
              * @description Waiver suppressing it
@@ -2953,9 +2911,9 @@ export interface components {
             /** @description HMAC secret for the inbound webhook — returned exactly once, here. Setting webhook mode again rotates it. Null for the other modes. */
             webhookSecret?: string;
         };
-        /** @description Enable or disable a vetting connector, globally or for one marketplace */
+        /** @description Enable or disable a vetter, globally or for one marketplace */
         ToggleRequest: {
-            /** @description Whether the connector should run under this setting */
+            /** @description Whether the vetter should run under this setting */
             enabled?: boolean;
             /** @description Marketplace to scope the setting to; omit for the global setting */
             marketplace?: string;
@@ -3012,8 +2970,6 @@ export interface components {
         };
         /** @description A blocking finding that no active waiver covers */
         UncoveredFinding: {
-            /** @description Connector whose verdict carried the finding */
-            connector?: string;
             /** @description Where the finding was located */
             location?: string;
             /** @description Reviewer-facing explanation */
@@ -3025,6 +2981,8 @@ export interface components {
              * @enum {string}
              */
             severity?: "INFO" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+            /** @description Vetter whose verdict carried the finding */
+            vetter?: string;
         };
         /** @description Policy rule update request; the name is the path */
         UpdateRuleRequest: {
@@ -3035,23 +2993,21 @@ export interface components {
             /** @description CEL expression; must compile to a boolean */
             expression?: string;
         };
-        /** @description One connector's recorded verdict within a chain run */
+        /** @description One vetter's recorded verdict within a chain run */
         VerdictView: {
-            /** @description Connector name */
-            connector?: string;
-            /** @description One-line summary: how many findings and the worst severity, or — for a clean pass with no findings — what the connector examined */
+            /** @description One-line summary: how many findings and the worst severity, or — for a clean pass with no findings — what the vetter examined */
             detail?: string;
-            /** @description What the connector found */
+            /** @description What the vetter found */
             findings?: components["schemas"]["Finding"][];
             /**
              * Format: int32
-             * @description Position of the connector in the chain
+             * @description Position of the vetter in the chain
              */
             position?: number;
-            /** @description External report URL, when the connector produced one */
+            /** @description External report URL, when the vetter produced one */
             reportUrl?: string;
             /**
-             * @description The connector's conclusion
+             * @description The vetter's conclusion
              * @enum {string}
              */
             state?: "PASS" | "WARN" | "FAIL" | "ERROR" | "PENDING" | "DISABLED";
@@ -3060,11 +3016,55 @@ export interface components {
              * @description Verdict id
              */
             verdictId?: number;
+            /** @description Vetter name */
+            vetter?: string;
+        };
+        /** @description An administrative enable/disable setting for one vetter */
+        VetterToggle: {
+            /** @description Whether the vetter runs under this setting */
+            enabled?: boolean;
+            /**
+             * Format: int64
+             * @description Setting id
+             */
+            id?: number;
+            /**
+             * Format: int64
+             * @description Marketplace this setting is scoped to, or null for the global setting
+             */
+            marketplaceId?: number;
+            /** @description The administrator's note for the setting, or null */
+            reason?: string;
+            /**
+             * Format: date-time
+             * @description When it was last set
+             */
+            updatedAt?: string;
+            /** @description Identity that last set it */
+            updatedBy?: string;
+            /** @description The vetter's stable name, e.g. secret-scan */
+            vetter?: string;
+        };
+        /** @description A vetter configured in the vetting chain */
+        VetterView: {
+            /** @description What the vetter looks for, and what it cannot see */
+            description?: string;
+            /** @description Whether the verdict is delegated to an operator-configured external service, so that a verdict the gateway did not reach itself never reads as one that it did */
+            external?: boolean;
+            /** @description Stable vetter name */
+            name?: string;
+            /**
+             * Format: int32
+             * @description Position in the chain
+             */
+            order?: number;
+            /** @description Identity of the rule set the vetter currently carries (GW_VETTING_0012) */
+            version?: string;
         };
         /** @description An administrator's override of a blocked vetting outcome on a snapshot */
         VettingOverrideRecord: {
-            /** @description The connectors that were blocking, comma-separated */
-            blockingConnectors?: string;
+            /** @description The vetters that were blocking, comma-separated */
+            blockingVetters?: string;
             /**
              * Format: int64
              * @description Override id
@@ -3089,15 +3089,15 @@ export interface components {
         };
         /** @description Content-free summary of the vetting chain run a snapshot is waiting on */
         VettingSummary: {
-            /** @description Names of the connectors that are the reason it blocks; empty when nothing objects */
-            blockingConnectors: string[];
+            /** @description Names of the vetters that are the reason it blocks; empty when nothing objects */
+            blockingVetters: string[];
             /**
              * @description The effective outcome, which is what gates approval: the run with every waived finding removed. CLEAR means an approval will succeed; CLEAR_WITH_WAIVERS that it will, and only because someone accepted a risk; BLOCKED that it will not.
              * @enum {string}
              */
             outcome: "CLEAR" | "CLEAR_WITH_WAIVERS" | "BLOCKED";
             /**
-             * @description What the connectors themselves concluded, before any waiver was applied
+             * @description What the vetters themselves concluded, before any waiver was applied
              * @enum {string}
              */
             recordedOutcome: "CLEAR" | "BLOCKED";
@@ -3119,8 +3119,6 @@ export interface components {
         };
         /** @description A snapshot's latest vetting chain run, the waivers over it, and the chain that produced it */
         VettingView: {
-            /** @description The connectors configured in the chain, in the order they run */
-            connectors?: components["schemas"]["ConnectorView"][];
             /**
              * @description The effective outcome, which is what gates approval: the run's verdicts with every waived finding removed. CLEAR_WITH_WAIVERS means nothing objects any more only because an active waiver is suppressing a finding. A snapshot with no run is blocked.
              * @enum {string}
@@ -3129,7 +3127,7 @@ export interface components {
             /** @description Present when an administrator approved this snapshot over a blocked vetting outcome (GW_VETTING_0028); its presence is what surfaces the override so it is never indistinguishable from a clean approval. Null otherwise. */
             override?: components["schemas"]["VettingOverrideRecord"];
             /**
-             * @description What the connectors themselves concluded, before any waiver was applied
+             * @description What the vetters themselves concluded, before any waiver was applied
              * @enum {string}
              */
             recordedOutcome?: "CLEAR" | "BLOCKED";
@@ -3140,10 +3138,12 @@ export interface components {
              * @description Snapshot id
              */
             snapshotId?: number;
-            /** @description Findings an active waiver is currently suppressing, keyed by connector, rule and location */
+            /** @description Findings an active waiver is currently suppressing, keyed by vetter, rule and location */
             suppressed?: components["schemas"]["Suppression"][];
             /** @description Blocking findings that no active waiver covers; the waivers approval still needs */
             uncovered?: components["schemas"]["UncoveredFinding"][];
+            /** @description The vetters configured in the chain, in the order they run */
+            vetters?: components["schemas"]["VetterView"][];
             /** @description Waivers of this snapshot's marketplace whose rule appears in this run, active and lapsed alike, so an expired acceptance stays visible */
             waivers?: components["schemas"]["WaiverView"][];
         };
@@ -3816,7 +3816,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ChainConnectorView"][];
+                    "*/*": components["schemas"]["ChainVetterView"][];
                 };
             };
             /** @description Caller does not hold the administrative role */
@@ -3825,7 +3825,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ChainConnectorView"][];
+                    "*/*": components["schemas"]["ChainVetterView"][];
                 };
             };
             /** @description Named marketplace not found */
@@ -3834,7 +3834,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ChainConnectorView"][];
+                    "*/*": components["schemas"]["ChainVetterView"][];
                 };
             };
         };
@@ -5263,13 +5263,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description The connector settings */
+            /** @description The vetter settings */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ConnectorToggle"][];
+                    "*/*": components["schemas"]["VetterToggle"][];
                 };
             };
             /** @description Caller does not hold the administrative role */
@@ -5278,7 +5278,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ConnectorToggle"][];
+                    "*/*": components["schemas"]["VetterToggle"][];
                 };
             };
         };
@@ -5304,7 +5304,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ConnectorToggle"];
+                    "*/*": components["schemas"]["VetterToggle"];
                 };
             };
             /** @description Caller does not hold the administrative role */
@@ -5313,7 +5313,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ConnectorToggle"];
+                    "*/*": components["schemas"]["VetterToggle"];
                 };
             };
             /** @description Named marketplace not found */
@@ -5322,16 +5322,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ConnectorToggle"];
+                    "*/*": components["schemas"]["VetterToggle"];
                 };
             };
-            /** @description Unknown connector, or the enabled field was omitted */
+            /** @description Unknown vetter, or the enabled field was omitted */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ConnectorToggle"];
+                    "*/*": components["schemas"]["VetterToggle"];
                 };
             };
         };

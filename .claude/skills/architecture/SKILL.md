@@ -7,9 +7,9 @@ description: Skills Gateway system architecture — quarantine/approve/serve mod
 
 Read these sources rather than reasoning from memory; they are canonical:
 
-- `docs/manual/architecture.md` — full architecture: threat model (T1–T6), connector-based
+- `docs/manual/architecture.md` — full architecture: threat model (T1–T6), vetter-based
   vetting, two-repo promotion (quarantine → published), git facade,
-  observability, roadmap (§14 has the phase plan; §14.2 the vetting connectors).
+  observability, roadmap (§14 has the phase plan; §14.2 the vetting vetters).
 - `docs/decisions/0001-use-java-for-the-product.md` — why Java.
 - `docs/decisions/0002-toolchain-and-product-decisions.md` — Boot 4, Maven+Nisse,
   JGit-embedded, JdbcClient+Flyway (no JPA), GraalVM native as release profile,

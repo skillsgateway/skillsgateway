@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 
 /**
- * Built-in connector: credential material committed into a snapshot (GW_VETTING_0003).
+ * Built-in vetter: credential material committed into a snapshot (GW_VETTING_0003).
  *
  * <p>Credentials in a skill repository are exfiltrated to every developer who installs it, and they
  * are the most mechanically detectable class of harmful content — shaped tokens (AWS, GitHub,
@@ -19,10 +19,10 @@ import org.springframework.stereotype.Component;
  * means "none of these patterns matched", never "there are no secrets".
  *
  * <p>Findings never echo the matched value — the ledger and the portal would then hold the secret
- * the connector was complaining about.
+ * the vetter was complaining about.
  */
 @Component
-public class SecretScanConnector implements VettingConnector {
+public class SecretScanVetter implements Vetter {
 
     /** Assignment-shaped candidates: the value is entropy-tested rather than shape-tested. */
     private static final Pattern ASSIGNED_SECRET =
@@ -93,7 +93,7 @@ public class SecretScanConnector implements VettingConnector {
         int[] counts = new int[2]; // {scanned, skipped}
         try {
             // No path selection: a credential is as likely in a script or a config file as in
-            // prose, so this connector is the one that genuinely wants the whole tree.
+            // prose, so this vetter is the one that genuinely wants the whole tree.
             snapshot.walk((path, content) -> {
                 if (content == null) {
                     counts[1]++;

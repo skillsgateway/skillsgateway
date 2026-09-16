@@ -8,9 +8,9 @@
  * @Requirements GW_VETTING_0031
  */
 import type {
-  ChainConnector,
+  ChainVetter,
   UncoveredFinding,
-  VettingConnectorInfo,
+  VetterInfo,
   VettingVerdict,
   VettingView,
   WaiverSuppression,
@@ -22,7 +22,7 @@ import type {
  */
 export type FlowTone = "pass" | "warn" | "blocked" | "idle";
 
-export type FlowNodeKind = "step" | "connector" | "outcome" | "setting";
+export type FlowNodeKind = "step" | "vetter" | "outcome" | "setting";
 
 /** One node of the drawn chain. `state` is the word shown beside the icon — never colour alone. */
 export interface FlowNode {
@@ -39,18 +39,18 @@ export interface FlowNode {
   meta?: string;
   /** One line of explanation, shown in the node's detail. */
   note?: string;
-  /** A connector whose verdict the gateway delegates to an external service. */
+  /** A vetter whose verdict the gateway delegates to an external service. */
   external?: boolean;
-  /** How many of this connector's findings an active waiver is suppressing. */
+  /** How many of this vetter's findings an active waiver is suppressing. */
   waived?: number;
   verdict?: VettingVerdict;
-  connector?: VettingConnectorInfo;
+  vetter?: VetterInfo;
   outcome?: {
     recordedOutcome?: string;
     blocking: string[];
     uncovered: UncoveredFinding[];
   };
-  setting?: ChainConnector;
+  setting?: ChainVetter;
 }
 
 /** The verdict states, as the flow words them. `DISABLED` is not a conclusion — it is an absence. */
@@ -84,7 +84,7 @@ export function verdictTone(state: string | undefined): FlowTone {
       return "blocked";
     default:
       // PENDING, DISABLED and "never ran" are all absences of a conclusion. They are drawn quietly
-      // and the outcome node is where the consequence is stated — a disabled connector does not
+      // and the outcome node is where the consequence is stated — a disabled vetter does not
       // block, a pending one does, and inventing a shade per case would say neither.
       return "idle";
   }
@@ -102,18 +102,18 @@ export function outcomeTone(outcome: string | undefined): FlowTone {
   return "blocked";
 }
 
-/** Suppressions grouped by the connector that raised the finding, so a node can count its own. */
-function waivedByConnector(suppressions: WaiverSuppression[]): Map<string, number> {
+/** Suppressions grouped by the vetter that raised the finding, so a node can count its own. */
+function waivedByVetter(suppressions: WaiverSuppression[]): Map<string, number> {
   const counts = new Map<string, number>();
   for (const suppression of suppressions) {
-    const key = suppression.connector ?? "";
+    const key = suppression.vetter ?? "";
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   return counts;
 }
 
 /**
- * The chain a snapshot actually went through: ingestion, every connector in the order the run
+ * The chain a snapshot actually went through: ingestion, every vetter in the order the run
  * recorded, the aggregation, and the gate.
  *
  * The verdicts are the source of the order when there is a run — that is the order they executed
@@ -122,9 +122,9 @@ function waivedByConnector(suppressions: WaiverSuppression[]): Map<string, numbe
  */
 export function snapshotFlow(view: VettingView | undefined): FlowNode[] {
   const verdicts = view?.run?.verdicts ?? [];
-  const configured = view?.connectors ?? [];
-  const byName = new Map(configured.map((connector) => [connector.name ?? "", connector]));
-  const waived = waivedByConnector(view?.suppressed ?? []);
+  const configured = view?.vetters ?? [];
+  const byName = new Map(configured.map((vetter) => [vetter.name ?? "", vetter]));
+  const waived = waivedByVetter(view?.suppressed ?? []);
 
   const nodes: FlowNode[] = [
     {
@@ -146,30 +146,30 @@ export function snapshotFlow(view: VettingView | undefined): FlowNode[] {
       : configured
           .slice()
           .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-          .map((connector) => ({ connector: connector.name }) as VettingVerdict);
+          .map((vetter) => ({ vetter: vetter.name }) as VettingVerdict);
 
   ordered.forEach((verdict, index) => {
-    const name = verdict.connector ?? "";
-    const connector = byName.get(name);
+    const name = verdict.vetter ?? "";
+    const vetter = byName.get(name);
     const findings = verdict.findings ?? [];
     nodes.push({
-      id: `connector-${name}`,
-      kind: "connector",
+      id: `vetter-${name}`,
+      kind: "vetter",
       label: name,
       state: verdictWord(verdict.state),
       tone: verdictTone(verdict.state),
       eyebrow: `Step ${index + 1}`,
       meta: findings.length > 0 ? `${findings.length} ${plural(findings.length, "finding")}` : undefined,
-      external: connector?.external === true,
+      external: vetter?.external === true,
       waived: waived.get(name) ?? 0,
       verdict,
-      connector,
+      vetter,
     });
   });
 
   const blocking = ordered
     .filter((verdict) => verdict.state === "FAIL" || verdict.state === "ERROR" || verdict.state === "PENDING")
-    .map((verdict) => verdict.connector ?? "");
+    .map((verdict) => verdict.vetter ?? "");
 
   nodes.push({
     id: "outcome",
@@ -211,7 +211,7 @@ export function snapshotFlow(view: VettingView | undefined): FlowNode[] {
  *
  * @Requirements GW_VETTING_0029.5
  */
-export function marketplaceFlow(chain: ChainConnector[]): FlowNode[] {
+export function marketplaceFlow(chain: ChainVetter[]): FlowNode[] {
   const nodes: FlowNode[] = [
     {
       id: "ingest",
@@ -224,23 +224,23 @@ export function marketplaceFlow(chain: ChainConnector[]): FlowNode[] {
     },
   ];
 
-  chain.forEach((connector, index) => {
-    const name = connector.name ?? "";
+  chain.forEach((vetter, index) => {
+    const name = vetter.name ?? "";
     nodes.push({
-      id: `connector-${name}`,
+      id: `vetter-${name}`,
       kind: "setting",
       label: name,
-      state: connector.enabled ? "enabled" : "disabled",
-      tone: connector.enabled ? "pass" : "idle",
+      state: vetter.enabled ? "enabled" : "disabled",
+      tone: vetter.enabled ? "pass" : "idle",
       eyebrow: `Step ${index + 1}`,
       // Who switched it off and when, on the node itself: a disabled step is the one an
       // administrator scanning the chain has to be able to account for without opening it.
       meta:
-        !connector.enabled && connector.updatedBy
-          ? `off by ${connector.updatedBy}`
+        !vetter.enabled && vetter.updatedBy
+          ? `off by ${vetter.updatedBy}`
           : undefined,
-      external: connector.external === true,
-      setting: connector,
+      external: vetter.external === true,
+      setting: vetter,
     });
   });
 
@@ -255,14 +255,14 @@ export function marketplaceFlow(chain: ChainConnector[]): FlowNode[] {
     terminal: true,
     note:
       "However the chain is configured, every snapshot is held until a person approves it." +
-      " Switching connectors off narrows the evidence behind that decision; it never makes it" +
+      " Switching vetters off narrows the evidence behind that decision; it never makes it" +
       " automatic — a run with nothing left to clear it is blocked, not clear.",
   });
 
   return nodes;
 }
 
-/** Where a connector's effective state came from, as an administrator reads it. */
+/** Where a vetter's effective state came from, as an administrator reads it. */
 export function sourceWord(source: string | undefined): string {
   if (source === "MARKETPLACE") return "set for this marketplace";
   if (source === "GLOBAL") return "from the global setting";
@@ -297,17 +297,17 @@ export interface FlowHeadline {
 
 /** The headline for a snapshot's chain. */
 export function snapshotHeadline(nodes: FlowNode[]): FlowHeadline {
-  const connectors = nodes.filter((node) => node.kind === "connector");
+  const vetters = nodes.filter((node) => node.kind === "vetter");
   const outcome = nodes.find((node) => node.kind === "outcome");
-  const ran = connectors.filter((node) => node.state !== "not run");
-  const findings = connectors.reduce((total, node) => total + (node.verdict?.findings ?? []).length, 0);
-  const waived = connectors.reduce((total, node) => total + (node.waived ?? 0), 0);
+  const ran = vetters.filter((node) => node.state !== "not run");
+  const findings = vetters.reduce((total, node) => total + (node.verdict?.findings ?? []).length, 0);
+  const waived = vetters.reduce((total, node) => total + (node.waived ?? 0), 0);
 
   if (outcome?.state === "clear") {
     return {
       result: "Clear",
       tone: "pass",
-      detail: `${connectors.length} ${plural(connectors.length, "connector")}, ${findings} ${plural(findings, "finding")}`,
+      detail: `${vetters.length} ${plural(vetters.length, "vetter")}, ${findings} ${plural(findings, "finding")}`,
     };
   }
   if (outcome?.state === "clear with waivers") {
@@ -321,11 +321,11 @@ export function snapshotHeadline(nodes: FlowNode[]): FlowHeadline {
     return { result: "Blocked", tone: "blocked", detail: "the chain has not run against this snapshot" };
   }
 
-  const stoppedAt = connectors.findIndex((node) => node.tone === "blocked" || node.state === "pending");
+  const stoppedAt = vetters.findIndex((node) => node.tone === "blocked" || node.state === "pending");
   if (stoppedAt < 0) {
-    return { result: "Blocked", tone: "blocked", detail: "no connector cleared this snapshot" };
+    return { result: "Blocked", tone: "blocked", detail: "no vetter cleared this snapshot" };
   }
-  const node = connectors[stoppedAt]!;
+  const node = vetters[stoppedAt]!;
   return {
     result: `Blocked at step ${stoppedAt + 1}`,
     tone: "blocked",
@@ -363,16 +363,16 @@ function worstSeverity(severities: (string | undefined)[]): string | undefined {
  * @Requirements GW_VETTING_0029.5
  */
 export function marketplaceHeadline(nodes: FlowNode[]): FlowHeadline {
-  const connectors = nodes.filter((node) => node.kind === "setting");
-  const off = connectors.filter((node) => node.setting?.enabled !== true);
-  const on = connectors.length - off.length;
+  const vetters = nodes.filter((node) => node.kind === "setting");
+  const off = vetters.filter((node) => node.setting?.enabled !== true);
+  const on = vetters.length - off.length;
   return {
-    result: `${on} of ${connectors.length} ${plural(connectors.length, "connector")} run`,
+    result: `${on} of ${vetters.length} ${plural(vetters.length, "vetter")} run`,
     // Never "good": a narrowed chain is a fact for an administrator to weigh, not a pass.
     tone: off.length === 0 ? "pass" : "idle",
     detail:
       off.length === 0
-        ? "every configured connector runs for this marketplace"
+        ? "every configured vetter runs for this marketplace"
         : off
             .map(
               (node) =>

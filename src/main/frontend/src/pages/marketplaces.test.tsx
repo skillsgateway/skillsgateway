@@ -131,7 +131,7 @@ test("register_dialog_rejects_invalid_name_and_malformed_url", async () => {
 
 /**
  * The blocked snapshot cannot be approved by clicking through: the dialog shows the failing
- * connector's finding, keeps the confirm control disabled, and offers the only way past it —
+ * vetter's finding, keeps the confirm control disabled, and offers the only way past it —
  * accepting that finding with a justification and an expiry.
  */
 test("approving_a_blocked_snapshot_shows_the_findings_and_offers_a_waiver", async () => {

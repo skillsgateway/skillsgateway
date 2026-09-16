@@ -83,7 +83,7 @@ class QuarantineSnapshotTests {
 
     @Test
     @SVCs({"SVC_GW_VETTING_0030"})
-    void aBlobTwoConnectorsSelectIsInflatedOnce() throws Exception {
+    void aBlobTwoVettersSelectIsInflatedOnce() throws Exception {
         try (QuarantineSnapshot snapshot = open(MAX_FILE_BYTES, CACHE_BYTES)) {
             byte[] first = walk(snapshot, "LICENSE"::equals).get("LICENSE");
             byte[] second = walk(snapshot, path -> true).get("LICENSE");

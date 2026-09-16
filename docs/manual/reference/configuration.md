@@ -562,23 +562,23 @@ refused rather than silently resolved somewhere else.
 
 ## Vetting
 
-The connector chain that runs at ingestion. Java-side defaults; nothing appears
+The vetter chain that runs at ingestion. Java-side defaults; nothing appears
 in `application.yaml`.
 
 ```yaml
 skills-gateway:
   vetting:
-    # How long a single connector may take before its verdict is recorded as an
-    # error — which blocks the snapshot. A wedged connector must never wedge
-    # ingestion, and a connector that never answers must never look like a pass.
+    # How long a single vetter may take before its verdict is recorded as an
+    # error — which blocks the snapshot. A wedged vetter must never wedge
+    # ingestion, and a vetter that never answers must never look like a pass.
     timeout: 30s
 
-    # Files larger than this are handed to connectors unread. They are reported
+    # Files larger than this are handed to vetters unread. They are reported
     # as an informational 'file-not-scanned' finding, never skipped in silence.
     max-file-bytes: 1048576
 
     # How much of a snapshot's content one chain run may hold so that the
-    # connectors after the first read it instead of inflating it again. Past
+    # vetters after the first read it instead of inflating it again. Past
     # this, content is re-read rather than kept: a snapshot larger than the
     # bound costs speed, never coverage.
     content-cache-bytes: 33554432
@@ -594,7 +594,7 @@ skills-gateway:
     minimum-release-age: 0s
 
     # The organisation-level license policy, evaluated by the built-in
-    # license-scan connector. Both lists default to empty, under which
+    # license-scan vetter. Both lists default to empty, under which
     # identified licenses are informational and an unknown or missing license
     # only warns — an upgrade blocks nothing.
     license:
@@ -605,7 +605,7 @@ skills-gateway:
       # allow list: a license on both is reported as banned.
       banned: [AGPL-3.0]
 
-    # The posture of the built-in skill-conformance connector, which validates
+    # The posture of the built-in skill-conformance vetter, which validates
     # every SKILL.md against the Agent Skills specification vendored in the
     # gateway. Advisory by default: defects are recorded and shown to the
     # reviewer, and block nothing.
@@ -618,9 +618,9 @@ skills-gateway:
 
 | Property | Type | Default | Notes |
 | --- | --- | --- | --- |
-| `skills-gateway.vetting.timeout` | duration | `30s` | Per connector, per run. Exceeding it is an `ERROR` verdict, which blocks. |
+| `skills-gateway.vetting.timeout` | duration | `30s` | Per vetter, per run. Exceeding it is an `ERROR` verdict, which blocks. |
 | `skills-gateway.vetting.max-file-bytes` | integer | `1048576` | Zero or negative falls back to the default. |
-| `skills-gateway.vetting.content-cache-bytes` | integer | `33554432` | Content one chain run may retain for reuse across its connectors. Zero or negative falls back to the default. |
+| `skills-gateway.vetting.content-cache-bytes` | integer | `33554432` | Content one chain run may retain for reuse across its vetters. Zero or negative falls back to the default. |
 | `skills-gateway.vetting.waiver-sweep-interval` | duration | `1h` | How often `waiver-expired` ledger entries are written. Has no effect on the gate. |
 | `skills-gateway.vetting.waiver-sweep-batch-size` | integer | `200` | Lapsed waivers recorded per pass. |
 | `skills-gateway.vetting.minimum-release-age` | duration | `0s` | How long the gateway must have held a commit before it may be approved. `0` disables the gate. |
@@ -660,7 +660,7 @@ someone reviews.
 !!! note "The license policy is configuration on purpose"
 
     Vetting policy must be attributable per chain run: the `license-scan`
-    connector stamps a digest of these lists into its recorded version, so a
+    vetter stamps a digest of these lists into its recorded version, so a
     changed answer about unchanged content can be traced to the policy change
     that caused it. That is why the lists change by deploy, not by API — see
     [License compliance for skills](../guides/license-compliance.md). After
@@ -670,13 +670,13 @@ someone reviews.
 
     Deliberately. A snapshot with no chain run is blocked either way, so a kill
     switch would buy an estate of blocked snapshots with no findings to explain
-    them. To get past a connector that is wrong about a snapshot, waive the
+    them. To get past a vetter that is wrong about a snapshot, waive the
     findings it raised — scoped, justified and expiring, and on the record.
 
 !!! note "Conformance enforcement is a decision, not a default"
 
     `conformance.enforce` is `false` out of the box, and an upgrade therefore
-    blocks nothing: the `skill-conformance` connector records every departure
+    blocks nothing: the `skill-conformance` vetter records every departure
     from the pinned Agent Skills specification as a warning the reviewer sees.
     Turning it on makes those same departures blocking — a snapshot with one
     malformed `SKILL.md` then needs a waiver per finding before any of its
@@ -685,26 +685,26 @@ someone reviews.
     conformed". Watch the advisory findings for a cycle first; they are exactly
     the set that would block.
 
-    Like the license lists, the posture is stamped into the connector's recorded
+    Like the license lists, the posture is stamped into the vetter's recorded
     version, so every run names the posture it ran under. Changing it is a
     deploy, and a re-vet turns the new posture into fresh evidence.
 
-!!! warning "A shortened timeout silently converts slow connectors into blockers"
+!!! warning "A shortened timeout silently converts slow vetters into blockers"
 
-    Lowering `timeout` does not make vetting faster; it makes slow connectors
-    fail. A connector that times out is recorded as `ERROR` and blocks the
-    snapshot, so every affected approval then needs a `connector-error` waiver —
-    which is a reviewer writing down that the connector never looked.
+    Lowering `timeout` does not make vetting faster; it makes slow vetters
+    fail. A vetter that times out is recorded as `ERROR` and blocks the
+    snapshot, so every affected approval then needs a `vetter-error` waiver —
+    which is a reviewer writing down that the vetter never looked.
 
 The chain, the verdict states, the aggregation rule, waivers, and the honest
-limits of the built-in connectors are described in
-[Vetting — the connector chain](../concepts/vetting.md).
+limits of the built-in vetters are described in
+[Vetting — the vetter chain](../concepts/vetting.md).
 
 ### External connectors
 
-An operator can extend the chain with their own connectors — an LLM reviewer, a
+An operator can extend the chain with their own vetters — an LLM reviewer, a
 sandbox, a corporate scanner — under `skills-gateway.vetting.external`. Each
-entry becomes a connector at its configured `order`, running against the
+entry becomes a vetter at its configured `order`, running against the
 quarantined snapshot alongside the built-ins and recorded by the same
 fail-closed rules. An empty or absent list changes nothing.
 
@@ -824,11 +824,11 @@ skills-gateway:
     one names the identities that had already fetched the snapshot, which is
     the blast radius `enforce` would have caused.
 
-!!! note "A broken connector never revokes anything"
+!!! note "A broken vetter never revokes anything"
 
-    A run that blocks only because a connector errored, timed out, or has not
+    A run that blocks only because a vetter errored, timed out, or has not
     answered is recorded as **inconclusive**, and leaves the snapshot approved
-    and served in either mode. Retraction needs a connector that objects to the
+    and served in either mode. Retraction needs a vetter that objects to the
     *content*. This does not loosen the approval gate: an inconclusive run still
     blocks approving, re-approving or publishing that snapshot.
 

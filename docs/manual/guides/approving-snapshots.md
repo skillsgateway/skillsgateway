@@ -136,20 +136,20 @@ override; re-ingest the marketplace and review the new snapshot.
 
 Before anything else, read what the vetting chain concluded. The snapshot card
 on the marketplace detail page — and the approve dialog itself — shows the chain
-outcome and, per connector, its verdict and every finding with the file and line
+outcome and, per vetter, its verdict and every finding with the file and line
 it came from.
 
-A **blocked** outcome means at least one connector failed, errored or has not
+A **blocked** outcome means at least one vetter failed, errored or has not
 answered, or that the chain never ran for this snapshot at all.
 
 !!! warning "A clear outcome is not a clean bill of health"
 
-    The built-in connectors are pattern matchers. They catch known credential
+    The built-in vetters are pattern matchers. They catch known credential
     shapes and known prompt-injection markers; a paraphrased instruction or an
     unshaped secret goes straight past them. Treat `clear` as "nothing known
-    matched", and keep reading the content. The limits of each connector are
-    listed under *What these connectors can and cannot see* next to the
-    verdicts, and in [Vetting — the connector chain](../concepts/vetting.md).
+    matched", and keep reading the content. The limits of each vetter are
+    listed under *What these vetters can and cannot see* next to the
+    verdicts, and in [Vetting — the vetter chain](../concepts/vetting.md).
 
 ## What to look for
 
