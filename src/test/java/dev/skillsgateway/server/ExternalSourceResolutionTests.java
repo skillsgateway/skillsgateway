@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.ingestion.SnapshotContentService;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.Snapshot;
-import dev.skillsgateway.server.storage.GitStorage;
 import dev.skillsgateway.server.vetting.Finding;
 import dev.skillsgateway.server.vetting.VettingRepository;
 import io.github.reqstool.annotations.SVCs;
@@ -26,97 +25,33 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.TestPropertySource;
 
 /**
  * External plugin source resolution end to end (GW_INGEST_0023, GW_INGEST_0024, GW_INGEST_0025, GW_INGEST_0026, GW_INGEST_0027),
  * against a real JGit fetch over a real HTTP transport served in this process by
  * {@link GitHttpFixture}.
  *
- * <p>Its own Spring context, because enabling external sources is a deployment decision: the shared
- * context must keep the shipped default, which is what SVC_GW_INGEST_0003 pins and what
- * {@code IngestionTests} verifies is untouched by this change.
- *
- * <p>{@code allow-private-networks} is on here because the fixture is on loopback — and the
- * metadata-endpoint case below is the check that this does <em>not</em> also unlock the link-local
- * range, which is the whole reason the address policy has two tiers.
+ * <p>The arrangement — external sources enabled, the in-process forge, the transfer budgets — is
+ * {@link AbstractExternalSourceTest}, which is where the budgets this suite exceeds deliberately
+ * are declared. Carrying a near-copy of that list here is what made this suite a second
+ * application context (#305); the two lists were identical but for the budgets, and the budgets
+ * are as true of the closure suites as of this one.
  *
  * <p>The suite is deliberately weighted towards refusals. The happy path is one property (a held
  * composite whose manifest points only inside the gateway); everything else is a way the resolver
  * could leave a snapshot half-resolved, contact something it must not, or spend more than it may.
  */
-@TestPropertySource(
-        properties = {
-            "skills-gateway.ingestion.external-sources.enabled=true",
-            "skills-gateway.ingestion.external-sources.allowed-types=github",
-            "skills-gateway.ingestion.external-sources.allow-private-networks=true",
-            // Small enough that the fixture can exceed them, large enough for real fixture repos.
-            "skills-gateway.ingestion.external-sources.budgets.max-received-bytes=1MB",
-            "skills-gateway.ingestion.external-sources.budgets.max-blob-bytes=64KB",
-            "skills-gateway.ingestion.external-sources.budgets.max-redirects=2",
-            "skills-gateway.ingestion.external-sources.budgets.deadline=60s"
-        })
-class ExternalSourceResolutionTests extends AbstractGatewayTest {
+class ExternalSourceResolutionTests extends AbstractExternalSourceTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-
-    /**
-     * Started in a static initialiser rather than {@code @BeforeAll}: the context reads
-     * {@code github-base-url} while it starts, which is before any lifecycle callback runs.
-     */
-    private static final GitHttpFixture FORGE = startForge();
-
-    private static GitHttpFixture startForge() {
-        try {
-            return new GitHttpFixture();
-        } catch (IOException e) {
-            throw new IllegalStateException("could not start the in-process forge", e);
-        }
-    }
-
-    @DynamicPropertySource
-    static void forgeBaseUrl(DynamicPropertyRegistry registry) {
-        registry.add("skills-gateway.ingestion.external-sources.github-base-url", FORGE::baseUrl);
-    }
-
-    @AfterAll
-    static void stopForge() {
-        FORGE.close();
-    }
-
-    @Autowired
-    private GitStorage storage;
 
     @Autowired
     private SnapshotContentService contentService;
 
     @Autowired
     private VettingRepository vettingRepository;
-
-    @BeforeEach
-    void resetForge() {
-        FORGE.reset();
-    }
-
-    /** A marketplace manifest declaring one local plugin and one external source. */
-    private static String manifestWithExternal(String ownerRepo) {
-        return """
-                {
-                  "name": "test-marketplace",
-                  "owner": {"name": "Test"},
-                  "plugins": [
-                    {"name": "hello", "source": "./plugins/hello", "description": "local"},
-                    {"name": "tools", "source": {"source": "github", "repo": "%s"}, "description": "external"}
-                  ]
-                }
-                """.formatted(ownerRepo);
-    }
 
     @Test
     // The parent SVC brackets the whole "composite is the snapshot" claim end to end: this test

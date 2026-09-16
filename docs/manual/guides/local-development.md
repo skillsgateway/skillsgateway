@@ -292,6 +292,15 @@ number do I put here". It is:
   annotation that declares the shared property set. Copying the property list
   instead works only until the copies drift, and the drift is silently another
   context. `ConditionalWriteFidelityTests` is the worked example.
+- **Could this test share an existing sibling abstract class?** A suite that
+  copies most of another abstract test's property set to add a few of its
+  own — rather than genuinely needing a different posture — is a second
+  context for the same arrangement. Move the differing properties into the
+  shared base class once they are true of every subclass, and extend it.
+  `ExternalSourceResolutionTests` folding into `AbstractExternalSourceTest`
+  is the worked example: the transfer budgets it deliberately exceeds were
+  loose enough that the two suites already sharing that base class
+  (`SnapshotClosureTests`, `ClosureCompletenessTests`) stay well under them.
 - **Does this test need the *gateway* at all?** Configuration that is consumed
   while the context is built — a binding, a registrar, a startup refusal — is
   provable with an `ApplicationContextRunner` holding just the beans under test.
@@ -303,7 +312,15 @@ number do I put here". It is:
   those shows the variant to reach for when the assertion is about the shipped
   `application.yaml` rather than about a hand-written property: add
   `ConfigDataApplicationContextInitializer` to the runner and it reads the same
-  file the application does.
+  file the application does. A class forced to share a full-server posture
+  group (like the forwarded-headers suites, see below) only because it needs
+  *some* member of that group's configuration, while its own assertion is
+  against wiring rather than a live request, can move the same way: a
+  `WebApplicationContextRunner` over just the `@Configuration` under test.
+  `ForwardedHeadersRelativeRedirectsTests` is the worked example — it asserts
+  a `FilterRegistrationBean`'s own field, which needs `ForwardedHeadersConfig`
+  and nothing else the other five postures in that group boot a real server
+  for.
 - **Is the property genuinely load-bearing?** A property set equal to a
   default configures nothing and costs a context.
 

@@ -55,18 +55,18 @@ class ContextBudgetTests {
      * {@code OidcRegistrationConfigurationTests} onto an {@code ApplicationContextRunner}, pointed
      * {@code ConditionalWriteFidelityTests} at the shared {@code @GatewayContext}, and merged {@code
      * TokenTtlCapTests} and {@code SessionCredentialExpiryTests} onto {@code
-     * AbstractCredentialLifetimeTest}. Lower it whenever the count drops; raise it only with a
-     * reason worth reading.
-     *
-     * <p>Raised to <b>27</b> for {@code IdpBearerFacadeTests} (#392). Whether the facade accepts an
-     * identity-provider bearer token is a deployment decision with no per-request form, and both
-     * states have to be exercised: the shared context is the "off" one — that is what "off by
-     * default" means, and {@code IdpBearerDisabledTests} deliberately runs there rather than
-     * bringing a context of its own. The "on" state cannot be reached from it, because enabling the
-     * capability changes what beans exist at all. One context, and it buys the whole negative
-     * matrix for a trust boundary.
+     * AbstractCredentialLifetimeTest}. Raised to <b>27</b> for {@code IdpBearerFacadeTests} (#392).
+     * Whether the facade accepts an identity-provider bearer token is a deployment decision with no
+     * per-request form, and both states have to be exercised: the shared context is the "off" one —
+     * that is what "off by default" means, and {@code IdpBearerDisabledTests} deliberately runs
+     * there rather than bringing a context of its own. The "on" state cannot be reached from it,
+     * because enabling the capability changes what beans exist at all. One context, and it buys the
+     * whole negative matrix for a trust boundary. Lowered to <b>25</b> by the fourth increment, which
+     * folded {@code ExternalSourceResolutionTests} into {@code AbstractExternalSourceTest} and moved
+     * {@code ForwardedHeadersRelativeRedirectsTests} onto a {@code WebApplicationContextRunner}.
+     * Lower it whenever the count drops; raise it only with a reason worth reading.
      */
-    private static final int BUDGET = 27;
+    private static final int BUDGET = 25;
 
     /** Where the measured breakdown is written, so a run's numbers survive for a PR body. */
     private static final Path REPORT = Path.of("target", "context-budget.txt");

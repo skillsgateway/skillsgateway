@@ -22,19 +22,32 @@ import org.springframework.test.context.TestPropertySource;
 
 /**
  * A gateway with external sources enabled against the in-process forge: the arrangement every
- * closure test needs (GW_INGEST_0030, GW_APPROVAL_0013). Its own Spring context for the reason
- * {@code ExternalSourceResolutionTests} gives — the shared context keeps the shipped default.
+ * external-source suite needs (GW_INGEST_0023, GW_INGEST_0030, GW_APPROVAL_0013). Its own Spring
+ * context, because enabling external sources is a deployment decision and the shared context must
+ * keep the shipped default — which is what SVC_GW_INGEST_0003 pins and what {@code IngestionTests}
+ * verifies is untouched.
+ *
+ * <p>{@code allow-private-networks} is on because the fixture is on loopback; the
+ * metadata-endpoint case in {@code ExternalSourceResolutionTests} is the check that this does
+ * <em>not</em> also unlock the link-local range.
  *
  * <p>The forge is started in a static initialiser because the context reads
  * {@code github-base-url} while it starts, and it is closed by a shutdown hook rather than an
- * {@code @AfterAll}: two suites share it, and whichever ran first must not pull it out from under
- * the other.
+ * {@code @AfterAll}: three suites share it, and whichever ran first must not pull it out from under
+ * the others.
  */
 @TestPropertySource(
         properties = {
             "skills-gateway.ingestion.external-sources.enabled=true",
             "skills-gateway.ingestion.external-sources.allowed-types=github",
             "skills-gateway.ingestion.external-sources.allow-private-networks=true",
+            // Small enough that the fixture can exceed them, large enough for real fixture repos.
+            // Declared here rather than only where they are exercised: a subclass that repeated
+            // three of these four lines would be a second cache key, which is how this posture
+            // came to cost two application contexts (#305).
+            "skills-gateway.ingestion.external-sources.budgets.max-received-bytes=1MB",
+            "skills-gateway.ingestion.external-sources.budgets.max-blob-bytes=64KB",
+            "skills-gateway.ingestion.external-sources.budgets.max-redirects=2",
             "skills-gateway.ingestion.external-sources.budgets.deadline=60s"
         })
 abstract class AbstractExternalSourceTest extends AbstractGatewayTest {
