@@ -3378,7 +3378,8 @@ derived from the address the browser is already on.</p>
 <li><strong>Personal access token</strong> — the same show-once creation flow as the
    <a href="#access-tokens">Access tokens</a> page. The name defaults to
    <code>{marketplace}-client</code> and the control disables again if it is emptied or left
-   whitespace. <strong>Expires</strong> defaults to 30 days rather than to never; the
+   whitespace. <strong>Expires</strong> is a button group — 7, 30 or 90 days, or no expiry —
+   defaulting to 30 days rather than to never; the
    gateway's own cap
    (<a href="../configuration/#access-tokens"><code>skills-gateway.tokens.max-ttl</code></a>) is not
    exposed to the browser, so a longer choice than the deployment allows is
@@ -3387,8 +3388,10 @@ derived from the address the browser is already on.</p>
    closing it drops the value, and no previously issued token's value is ever
    shown.</li>
 <li><strong>Store the credential</strong> — a <code>git credential approve</code> line for this host.
-   This is the <strong>primary copy target</strong>: a labelled button rather than one icon
-   among several, because a consumer who copies one thing should copy this.</li>
+   This is the <strong>primary copy target</strong>, marked by a highlighted snippet box,
+   because a consumer who copies one thing should copy this. Its copy control is
+   the same corner icon button the other snippets use, so the three read as one
+   family.</li>
 <li><strong>Add the marketplace to Claude Code</strong> —
    <code>claude plugin marketplace add {origin}/git/{name}</code>.</li>
 <li><strong>Clone directly</strong> — the CI-shaped <code>git clone</code> URL with the token inline.</li>
