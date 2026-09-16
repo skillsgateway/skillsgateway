@@ -58,6 +58,14 @@ The gates above ask "is this well specified?". This one asks "should this exist?
   isn't done until its change is archived into `openspec/specs/`
   (`/opsx:archive`) as the final commit of the PR, after implementation and
   gates.
+- **"Implement" means the skill flow, not the CLI by hand:** `/opsx:propose`
+  (proposal, design, delta specs, tasks, reqstool ids allocated), then
+  `/opsx:apply` (work the tasks; this is where the reqstool integration runs),
+  then the gates, `evidence.md`, and `/opsx:archive`. Subagents invoke the
+  same skills (`openspec-propose`, `openspec-apply-change`,
+  `openspec-archive-change`) through the Skill tool; copying the shape of an
+  archived change with the `openspec` CLI is not the process. Docs-only and
+  test-only changes need no OpenSpec change.
 - Requirements live in `docs/reqstool/` (SSOT, `GW_*` / `SVC_GW_*`). Never state
   requirement text anywhere else; code carries `@Requirements`/`@SVCs`
   annotations (Java) or JSDoc tags (TypeScript).
