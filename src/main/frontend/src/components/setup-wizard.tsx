@@ -2,6 +2,7 @@ import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCreateToken } from "@/api/queries";
+import { SegmentedGroup } from "@/components/segmented-group";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 /** Value shown in every snippet until a token is minted inside this wizard instance. */
 const TOKEN_PLACEHOLDER = "<YOUR_TOKEN>";
@@ -36,9 +38,11 @@ const LIFETIMES = [
   { value: "none", label: "No expiry", days: null },
 ] as const;
 
-const DEFAULT_LIFETIME = "P30D";
+type Lifetime = (typeof LIFETIMES)[number]["value"];
 
-function expiryFor(value: string): string | undefined {
+const DEFAULT_LIFETIME: Lifetime = "P30D";
+
+function expiryFor(value: Lifetime): string | undefined {
   const chosen = LIFETIMES.find((lifetime) => lifetime.value === value);
   if (!chosen || chosen.days === null) return undefined;
   const at = new Date(Date.now() + chosen.days * 24 * 60 * 60 * 1000);
@@ -63,64 +67,40 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   );
 }
 
+/**
+ * One command with its own copy control.
+ *
+ * `lead` marks the credential line — the one a consumer who copies a single thing should copy.
+ * That emphasis is carried by the box, not by a differently shaped control: all three snippets
+ * copy from the same corner with the same icon button, so the set reads as one family.
+ */
 function Snippet({
   title,
   command,
   copyLabel,
   testId,
+  lead = false,
 }: {
   title: string;
   command: string;
   copyLabel: string;
   testId: string;
+  lead?: boolean;
 }) {
   return (
     <div className="space-y-1">
       <div className="text-sm font-medium">{title}</div>
-      <div className="flex items-start gap-2 rounded-md border bg-muted p-3">
+      <div
+        className={cn(
+          "flex items-start gap-2 rounded-md border p-3",
+          lead ? "border-primary/40 bg-primary/5" : "bg-muted",
+        )}
+      >
         <code data-testid={testId} className="min-w-0 flex-1 font-mono text-xs whitespace-pre-wrap break-all">
           {command}
         </code>
         <CopyButton value={command} label={copyLabel} />
       </div>
-    </div>
-  );
-}
-
-/**
- * The primary snippet: the one line that makes every later git command work without prompting.
- *
- * It leads, and its copy control is a labelled primary button rather than an icon beside the
- * others, because a consumer who copies exactly one thing from this wizard should copy this.
- */
-function PrimarySnippet({ command }: { command: string }) {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(command);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error("Could not access the clipboard");
-    }
-  };
-  return (
-    <div className="space-y-2 rounded-md border border-primary/40 bg-primary/5 p-3">
-      <div className="text-sm font-medium">Store the credential — run this first</div>
-      <code
-        data-testid="wizard-credential-config"
-        className="block font-mono text-xs break-all whitespace-pre-wrap"
-      >
-        {command}
-      </code>
-      <Button onClick={() => void copy()}>
-        {copied ? (
-          <Check className="size-4" aria-hidden />
-        ) : (
-          <Copy className="size-4" aria-hidden />
-        )}
-        {copied ? "Copied" : "Copy credential command"}
-      </Button>
     </div>
   );
 }
@@ -175,7 +155,7 @@ export function SetupWizard({
   // consumer who has not thought about it is better served by a name that says where it came
   // from than by an empty control between them and a working client.
   const [name, setName] = useState(`${marketplace}-client`);
-  const [lifetime, setLifetime] = useState<string>(DEFAULT_LIFETIME);
+  const [lifetime, setLifetime] = useState<Lifetime>(DEFAULT_LIFETIME);
   const [cleartext, setCleartext] = useState<string | null>(null);
 
   // Same rule as the tokens page it reuses: the server requires a name (NOT NULL), and a
@@ -236,23 +216,13 @@ export function SetupWizard({
                       aria-describedby="wizard-token-name-hint"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="wizard-token-lifetime">Expires</Label>
-                    <select
-                      id="wizard-token-lifetime"
-                      data-testid="wizard-token-lifetime"
-                      value={lifetime}
-                      onChange={(event) => setLifetime(event.target.value)}
-                      aria-describedby="wizard-token-name-hint"
-                      className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                    >
-                      {LIFETIMES.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <SegmentedGroup
+                    label="Expires"
+                    value={lifetime}
+                    options={LIFETIMES}
+                    onChange={setLifetime}
+                    describedBy="wizard-token-name-hint"
+                  />
                   <Button type="submit" disabled={!canCreate}>
                     {create.isPending ? "Creating…" : "Create token"}
                   </Button>
@@ -274,8 +244,12 @@ export function SetupWizard({
               </>
             )}
           </form>
-          <PrimarySnippet
+          <Snippet
+            lead
+            title="Store the credential — run this first"
             command={`printf 'protocol=${protocol.replace(":", "")}\\nhost=${host}\\nusername=token\\npassword=${token}\\n' | git credential approve`}
+            copyLabel="Copy credential command"
+            testId="wizard-credential-config"
           />
           <Snippet
             title="2. Add the marketplace to Claude Code"
