@@ -89,7 +89,7 @@ public final class ObjectStoreTestSupport {
         SkillsGatewayProperties.Storage storage = new SkillsGatewayProperties.Storage(
                 SkillsGatewayProperties.Storage.Backend.OBJECT_STORE, objectStore, null);
         return new SkillsGatewayProperties(
-                data, null, null, null, null, null, null, null, null, null, null, null, null, null, storage, null,
+                data, null, null, null, null, null, null, null, null, null, null, null, null, null, null, storage, null,
                 null);
     }
 

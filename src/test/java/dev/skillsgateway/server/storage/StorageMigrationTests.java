@@ -272,7 +272,8 @@ class StorageMigrationTests {
 
     private static GitStorage filesystem(Path root) throws IOException {
         return new FilesystemGitStorage(new SkillsGatewayProperties(
-                root, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null));
+                root, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null));
     }
 
     private static GitStorage objectStore() throws IOException {

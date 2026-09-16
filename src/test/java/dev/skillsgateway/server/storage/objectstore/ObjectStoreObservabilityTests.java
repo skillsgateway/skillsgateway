@@ -214,7 +214,8 @@ class ObjectStoreObservabilityTests {
     void theHealthIndicatorReportsTheFilesystemBackend() throws Exception {
         Path data = Files.createTempDirectory("git-storage-health-");
         SkillsGatewayProperties properties = new SkillsGatewayProperties(
-                data, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                data, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null);
 
         Health health = new GitStorageHealthIndicator(
                         new dev.skillsgateway.server.storage.FilesystemGitStorage(properties), properties)

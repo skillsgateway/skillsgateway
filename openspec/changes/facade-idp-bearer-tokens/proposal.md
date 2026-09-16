@@ -93,6 +93,34 @@ reordered or made conditional. `GW_AUTH_0014 — Client setup wizard` still hold
 `GW_AUTH_0043` adds placement and the held-snapshot statement beside it rather
 than amending it.
 
+## The stop rule
+
+This change adds configuration leaves and a Spring test context, so it owes the
+argument `CLAUDE.md` asks for.
+
+**Why `docs/manual/capability-map.md` cannot absorb it.** The map records what
+the gateway can already do; the question here is whether a credential the
+gateway does not currently accept should be accepted at its most sensitive
+surface. There is no existing capability to narrow or point at: the facade takes
+exactly one credential kind today, and "use a PAT" is precisely the step the
+issue is about removing. Nothing in the map can be deleted in exchange either —
+PATs stay, unchanged, as the credential for CI and for every client that cannot
+open a browser.
+
+**What restraint bought.** Four things the obvious version of this feature would
+have added, and did not: a second issuer setting, a JWKS setting, token
+introspection for opaque access tokens, and role-scoped facade authorization.
+The first two are read from the identity provider the portal already trusts; the
+third is unnecessary because every provider issues a JWT identity token; the
+fourth is refused outright in `design.md` (D6) because it would make an SSO
+token *more* restricted than the PAT the portal mints for the same person.
+
+**The ratchets.** `ConfigSurfaceBudgetTests` rises by two and
+`ContextBudgetTests` by one, each with the argument written where the number
+lives. The context is unavoidable: the capability changes which beans exist, so
+"on" and "off" cannot be the same context — and the "off" suite deliberately
+uses the shared one rather than adding a second.
+
 ## Impact
 
 **A trust-boundary change**, and the [old-coder](../../.claude/skills/old-coder/SKILL.md)

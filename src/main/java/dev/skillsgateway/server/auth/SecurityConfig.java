@@ -5,6 +5,7 @@ import io.github.reqstool.annotations.Requirements;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -27,6 +28,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoderFactory;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
 
@@ -41,21 +43,48 @@ public class SecurityConfig {
      */
     public static final String DEV_PRINCIPAL = "dev";
 
-    /** Stateless PAT-over-Basic chain for git clients; 401 + Basic challenge on failure. */
+    /**
+     * Stateless chain for git clients; 401 + Basic challenge on failure.
+     *
+     * <p>Two credential kinds, side by side. A PAT over HTTP Basic is the original and the default,
+     * and nothing about it changes here. An identity-provider bearer token (GW_AUTH_0040) is accepted
+     * as well <em>only</em> when {@code skills-gateway.facade.idp-bearer.enabled} is set, which is
+     * what puts {@link IdpBearerAuthenticationProvider} in the context at all — with the default
+     * configuration this method adds no filter and registers no second provider, so the chain is
+     * byte-for-byte what it was.
+     *
+     * <p><b>The challenge deliberately stays Basic.</b> That is why the bearer path is a filter of
+     * ours rather than {@code oauth2ResourceServer()}: the configurer would install a bearer entry
+     * point, and {@code WWW-Authenticate: Bearer} is precisely the header that stops git's
+     * credential helper from asking for a password. A refused bearer token therefore does not
+     * short-circuit either — it leaves the context empty and lets this chain answer exactly as it
+     * answers an anonymous request, so a client holding an expired SSO token falls back to the
+     * helper instead of failing outright.
+     */
     @Bean
     @Order(1)
-    public SecurityFilterChain gitChain(HttpSecurity http, PatAuthenticationProvider patAuthenticationProvider)
+    @Requirements({"GW_AUTH_0003", "GW_AUTH_0040"})
+    public SecurityFilterChain gitChain(
+            HttpSecurity http,
+            PatAuthenticationProvider patAuthenticationProvider,
+            ObjectProvider<IdpBearerAuthenticationProvider> idpBearerAuthenticationProvider)
             throws Exception {
         http.securityMatcher("/git/**")
                 // No CSRF token: this chain carries no ambient credential for a
                 // third-party page to ride. Every request authenticates itself with a
-                // PAT over Basic, no session is created, and no cookie is honoured, so
-                // a forged cross-site request arrives unauthenticated.
+                // PAT over Basic or a bearer token the gateway validates on the spot, no
+                // session is created, and no cookie is honoured, so a forged cross-site
+                // request arrives unauthenticated.
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationManager(new ProviderManager(patAuthenticationProvider))
                 .httpBasic(Customizer.withDefaults())
                 .authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated());
+        IdpBearerAuthenticationProvider bearer = idpBearerAuthenticationProvider.getIfAvailable();
+        if (bearer != null) {
+            http.addFilterBefore(
+                    new FacadeBearerAuthenticationFilter(new ProviderManager(bearer)), BasicAuthenticationFilter.class);
+        }
         return http.build();
     }
 
