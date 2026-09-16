@@ -14,7 +14,6 @@ description: Skills Gateway build commands, quality gates, Java and TypeScript c
 (cd src/main/frontend && pnpm e2e)    # Playwright vs the real jar + mock OIDC IdP (compose.e2e.yaml)
 reqstool status local -p docs/reqstool  # must end "N/N complete · PASS" (run after the two above)
 openspec validate --all --strict
-./mvnw -Pnative -DskipTests native:compile   # GraalVM native binary (release path; CI does this)
 ```
 
 - Always `clean` before trusting the reqstool gate: the annotation processor

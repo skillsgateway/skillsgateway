@@ -13,7 +13,8 @@ rather than here.
 
 *Accepted, 2026-08-13.*
 
-**Java**, compiled with GraalVM native-image. The finalists were Java and Rust,
+**Java**, compiled with GraalVM native-image *(the packaging half was later
+reversed — see ADR 0012 below)*. The finalists were Java and Rust,
 and the deciding factor was git capability at the product horizon: embedded
 upload-pack serving, object-storage-native repositories, and fetch-time
 composition of virtual marketplaces exist today, production-proven, in **JGit**

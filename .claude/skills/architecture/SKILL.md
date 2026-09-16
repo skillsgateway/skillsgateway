@@ -12,8 +12,10 @@ Read these sources rather than reasoning from memory; they are canonical:
   observability, roadmap (§14 has the phase plan; §14.2 the vetting vetters).
 - `docs/decisions/0001-use-java-for-the-product.md` — why Java.
 - `docs/decisions/0002-toolchain-and-product-decisions.md` — Boot 4, Maven+Nisse,
-  JGit-embedded, JdbcClient+Flyway (no JPA), GraalVM native as release profile,
-  OIDC-only SSO, app-as-BFF, PATs for git clients.
+  JGit-embedded, JdbcClient+Flyway (no JPA), OIDC-only SSO, app-as-BFF, PATs for
+  git clients.
+- `docs/decisions/0012-native-image-as-the-release-artifact.md` — the release
+  artifact is a JVM container, not a native image.
 - `docs/decisions/0003-agentic-first-frontend-stack.md` — portal stack and the
   closed-SDLC verification harness (the load-bearing half).
 - `openspec/specs/` — the living capability specs (IDs resolve via reqstool).

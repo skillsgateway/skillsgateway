@@ -36,7 +36,6 @@
         <spotless.version>3.10.2</spotless.version>
         <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
         <checkstyle.version>14.1.0</checkstyle.version>
-        <native-plugin.version>1.1.12</native-plugin.version>
         <reqstool-plugin.version>1.1.0</reqstool-plugin.version>
         <arconia.version>0.30.0</arconia.version>
         <awssdk.version>2.54.17</awssdk.version>
@@ -45,7 +44,7 @@
         <springdoc.version>3.1.1</springdoc.version>
         <scalar.version>0.4.4</scalar.version>
         <!-- Skips the UI gate execution (typecheck/lint/vitest/tags) without skipping
-             the UI build; used by the native workflow where no browsers exist. -->
+             the UI build; used by the container-image workflow, where no browsers exist. -->
         <skip.ui.verify>false</skip.ui.verify>
         <frontend-plugin.version>2.0.2</frontend-plugin.version>
         <node.version>v24.14.1</node.version>
@@ -484,59 +483,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <profiles>
-        <!-- Release profile only — daily dev runs on JIT (ADR 0002). -->
-        <profile>
-            <id>native</id>
-            <!-- native-image compiles from this project's own runtime classpath, which
-                 `optional` does not narrow — left alone it links Testcontainers and the
-                 dev services into the binary. Test scope here keeps them out; verify with
-                 `strings target/skills-gateway-server | grep -c org.testcontainers`. -->
-            <dependencies>
-                <dependency>
-                    <groupId>io.arconia</groupId>
-                    <artifactId>arconia-dev-services-postgresql</artifactId>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>io.arconia</groupId>
-                    <artifactId>arconia-dev-services-lgtm</artifactId>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>io.arconia</groupId>
-                    <artifactId>arconia-dev-services-floci</artifactId>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>io.awspring.cloud</groupId>
-                    <artifactId>spring-cloud-aws-starter-s3</artifactId>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>io.arconia</groupId>
-                    <artifactId>arconia-opentelemetry-spring-boot-starter</artifactId>
-                    <scope>test</scope>
-                </dependency>
-            </dependencies>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.graalvm.buildtools</groupId>
-                        <artifactId>native-maven-plugin</artifactId>
-                        <version>${native-plugin.version}</version>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <buildArgs>
-                                <!-- Mostly-static: everything statically linked except glibc,
-                                     so the binary runs on distroless *base* (no libz there). -->
-                                <buildArg>--static-nolibc</buildArg>
-                            </buildArgs>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>

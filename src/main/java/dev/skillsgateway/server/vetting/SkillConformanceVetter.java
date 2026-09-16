@@ -6,9 +6,6 @@ import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.aot.hint.RuntimeHints;
-import org.springframework.aot.hint.RuntimeHintsRegistrar;
-import org.springframework.context.annotation.ImportRuntimeHints;
 import org.springframework.stereotype.Component;
 
 /**
@@ -37,7 +34,6 @@ import org.springframework.stereotype.Component;
  * skill — is a judgement no deterministic rule makes, and this vetter does not pretend to.
  */
 @Component
-@ImportRuntimeHints(SkillConformanceVetter.SpecResourceHints.class)
 public class SkillConformanceVetter implements Vetter {
 
     private static final String SKILL_FILE = "/SKILL.md";
@@ -171,14 +167,5 @@ public class SkillConformanceVetter implements Vetter {
     private static String directoryOf(String path) {
         String directory = path.substring(0, path.length() - SKILL_FILE.length());
         return directory.substring(directory.lastIndexOf('/') + 1);
-    }
-
-    /** The vendored specification is read from the classpath, so the packaged jar has to keep it. */
-    static final class SpecResourceHints implements RuntimeHintsRegistrar {
-
-        @Override
-        public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
-            hints.resources().registerPattern(SkillSpec.RESOURCE);
-        }
     }
 }
