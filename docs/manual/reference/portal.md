@@ -347,7 +347,7 @@ Each snapshot card carries a **Vetting** section fed by
 #### The chain flow
 
 Above the per-vetter list, the chain is drawn as an ordered flow — one node
-per step, left to right, wrapping on a narrow viewport:
+per step, left to right:
 
 ```text
 Ingest → secret-scan → prompt-injection → Outcome → Approval
@@ -356,6 +356,11 @@ Ingest → secret-scan → prompt-injection → Outcome → Approval
 The order is the order the vetters ran, taken from the run's own recorded
 positions; for a snapshot the chain has not run against yet, it is the configured
 chain in the order it will run.
+
+The flow never wraps: nodes narrow their names before the row breaks, and on a
+screen too narrow for the whole chain it scrolls sideways — faded at the edge it
+continues past — so the gate is never stranded on a line of its own, away from
+the result it follows.
 
 Above the nodes, one sentence states the answer and where the chain stopped, so
 it can be read without opening anything:
