@@ -443,7 +443,7 @@ and when it lapses.
 ## Reviewing somewhere else
 
 The decision does not have to be made in the portal. The gateway announces every
-snapshot that is waiting for a person as a `snapshot.approval_pending` webhook,
+snapshot that is waiting for a person as a `marketplace.snapshot.approval_pending` webhook,
 with the vetting summary attached, and the approve and reject endpoints on this
 page are the ones an external system calls back — see
 [Driving approvals from your own system](lifecycle-webhooks.md#driving-approvals-from-your-own-system).

@@ -161,7 +161,7 @@ public class WebhookService {
     }
 
     /**
-     * The {@code snapshot.approval_pending} body (GW_WEBHOOK_0006, GW_WEBHOOK_0007): the seven fields every
+     * The {@code marketplace.snapshot.approval_pending} body (GW_WEBHOOK_0006, GW_WEBHOOK_0007): the seven fields every
      * lifecycle event carries, in the same names and order as {@link EventPayload}, plus the
      * vetting summary. Keeping the shared half identical is what makes the event free to adopt for
      * a receiver already parsing another one — one unknown key, nothing else to change.
@@ -197,6 +197,39 @@ public class WebhookService {
                     description = "What the chain concluded about the snapshot being waited on",
                     requiredMode = Schema.RequiredMode.REQUIRED)
             VettingSummary vetting) {}
+
+    /**
+     * The {@code marketplace.*} body (GW_WEBHOOK_0009): what changed about a marketplace, who changed it
+     * and when. The four shared fields keep the names and the order {@link EventPayload} uses, so a
+     * receiver already parsing a snapshot event has one unknown key and nothing else to change.
+     *
+     * <p>There is no {@code snapshotId}, {@code sha} or {@code state} because a marketplace event
+     * has no snapshot, and a sentinel for them would be a value the schema calls required and the
+     * receiver has to know means nothing.
+     */
+    @Schema(description = "Payload of a marketplace administration event")
+    @Requirements({"GW_WEBHOOK_0009"})
+    public record MarketplacePayload(
+            @Schema(description = "Lifecycle event name", requiredMode = Schema.RequiredMode.REQUIRED)
+            String event,
+
+            @Schema(description = "Event time, ISO-8601", requiredMode = Schema.RequiredMode.REQUIRED)
+            String occurredAt,
+
+            @Schema(
+                    description = "Marketplace name, or - when the change applies to the whole gateway"
+                            + " rather than to one marketplace",
+                    requiredMode = Schema.RequiredMode.REQUIRED)
+            String marketplace,
+
+            @Schema(description = "Acting identity", requiredMode = Schema.RequiredMode.REQUIRED)
+            String actor,
+
+            @Schema(
+                    description = "What changed, as key=value pairs. Gateway-side configuration values only:"
+                            + " never snapshot content, and never operator-supplied free text.",
+                    requiredMode = Schema.RequiredMode.REQUIRED)
+            String detail) {}
 
     /** The secret is stored recoverably because signing needs it, and is never read back over the API. */
     @Requirements({"GW_WEBHOOK_0002"})
@@ -320,7 +353,7 @@ public class WebhookService {
     }
 
     /**
-     * The payload-rich emit (GW_WEBHOOK_0006, GW_WEBHOOK_0007): {@code snapshot.approval_pending} with the vetting
+     * The payload-rich emit (GW_WEBHOOK_0006, GW_WEBHOOK_0007): {@code marketplace.snapshot.approval_pending} with the vetting
      * summary a receiver triages on.
      *
      * <p>Typed to its payload rather than offered as a general {@code emit(String, Object)}. That is
@@ -342,6 +375,19 @@ public class WebhookService {
                         state,
                         actor,
                         vetting));
+    }
+
+    /**
+     * A marketplace administration event (GW_WEBHOOK_0009). Called after the ledger write on the success
+     * path, so a refused action reaches no emit at all.
+     *
+     * <p>{@code detail} is assembled at the call site from gateway-side configuration values —
+     * never from snapshot content, and never from operator-supplied free text such as a toggle's
+     * reason. The ledger keeps that; an authenticated caller reads it there.
+     */
+    @Requirements({"GW_WEBHOOK_0009"})
+    public List<WebhookDelivery> emitMarketplace(String event, String marketplace, String actor, String detail) {
+        return fanOut(event, () -> new MarketplacePayload(event, Instant.now().toString(), marketplace, actor, detail));
     }
 
     /**

@@ -181,7 +181,8 @@ class DataClassRowMapperTests extends AbstractGatewayTest {
         WebhookSubscriber subscriber =
                 webhookSubscriberRepository.create(uniqueName("mapper-sub"), "http://localhost/hook", "s", "*");
         try {
-            WebhookDelivery queued = webhookDeliveryRepository.enqueue(subscriber.id(), "snapshot.approved", "{}");
+            WebhookDelivery queued =
+                    webhookDeliveryRepository.enqueue(subscriber.id(), "marketplace.snapshot.approved", "{}");
             assertThat(queued.lastStatus())
                     .as("a delivery that has not been attempted reports no status")
                     .isNull();

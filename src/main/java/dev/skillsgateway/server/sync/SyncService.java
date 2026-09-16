@@ -63,7 +63,7 @@ public class SyncService {
      * (re-)generates the secret — which is also the rotation mechanism — and leaving it discards
      * the key. The secret is returned exactly once, here; no read path ever exposes it.
      */
-    @Requirements({"GW_INGEST_0010", "GW_INGEST_0014", "GW_FACADE_0006"})
+    @Requirements({"GW_INGEST_0010", "GW_INGEST_0014", "GW_FACADE_0006", "GW_WEBHOOK_0009"})
     public Optional<ModeChange> changeMode(String name, String mode, String actor) {
         // A hosted marketplace has no upstream to poll or be notified about: its ingestion trigger
         // is the push itself (GW_FACADE_0006). The table's CHECK is the backstop; this is the answer.
@@ -75,8 +75,13 @@ public class SyncService {
         });
         String secret = Marketplace.SYNC_WEBHOOK.equals(mode) ? newSecret() : null;
         Optional<Marketplace> updated = marketplaceRepository.updateSyncMode(name, mode, secret);
-        updated.ifPresent(
-                marketplace -> auditLogger.record(actor, marketplace.name(), "sync-mode-changed", null, mode));
+        updated.ifPresent(marketplace -> {
+            auditLogger.record(actor, marketplace.name(), "sync-mode-changed", null, mode);
+            // The ingestion trigger is the only marketplace mutation the gateway has, so this is
+            // what marketplace.updated currently means (GW_WEBHOOK_0009). The generated secret is never
+            // in the detail; it is returned once, to the caller, and to nobody else.
+            webhookService.emitMarketplace(WebhookEvent.MARKETPLACE_UPDATED, marketplace.name(), actor, "mode=" + mode);
+        });
         return updated.map(marketplace -> new ModeChange(marketplace, secret));
     }
 
