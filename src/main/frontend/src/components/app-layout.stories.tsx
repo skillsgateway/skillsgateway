@@ -8,7 +8,7 @@ import { UserMenuView } from "./app-layout";
  * The signed-in user's menu, one story per persona it has to survive. The play functions open
  * the menu, so axe (violations are errors) inspects the popup rather than the trigger alone.
  *
- * @Requirements GW_AUTH_0044 GW_AUTH_0045 GW_AUTH_0046
+ * @Requirements GW_AUTH_0044, GW_AUTH_0045, GW_AUTH_0046
  */
 const meta = {
   title: "Shell/UserMenu",

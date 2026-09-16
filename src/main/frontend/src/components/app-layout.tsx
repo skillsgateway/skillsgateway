@@ -190,7 +190,7 @@ function RolesSection({ me }: { me: MeView }) {
  * all, a truncated claim, the development escape hatch, and a session that could not be
  * read — is a story rather than a fixture nobody can reach.
  *
- * @Requirements GW_AUTH_0044 GW_AUTH_0045 GW_AUTH_0046
+ * @Requirements GW_AUTH_0044, GW_AUTH_0045, GW_AUTH_0046
  */
 export function UserMenuView({
   me,
@@ -292,7 +292,7 @@ function UserMenu() {
  * Portal shell: grouped sidebar navigation, breadcrumb top bar, and the signed-in user's
  * menu — identity, roles, theme, personal tokens and sign out.
  *
- * @Requirements GW_INGEST_0007 GW_AUTH_0044
+ * @Requirements GW_INGEST_0007, GW_AUTH_0044
  */
 export function AppLayout() {
   const location = useLocation();
