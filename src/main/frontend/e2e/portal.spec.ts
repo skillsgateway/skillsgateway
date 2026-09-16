@@ -576,7 +576,7 @@ test("the_setup_panel_leads_when_serving_and_explains_the_held_case", async ({ p
 });
 
 /**
-* @SVCs SVC_GW_OBSERVABILITY_0004, SVC_GW_AUTH_0031
+ * @SVCs SVC_GW_OBSERVABILITY_0004, SVC_GW_AUTH_0031
  */
 test("adoption_page_shows_a_real_facade_fetch_and_its_identity", async ({ page }) => {
   await login(page, "alice");
