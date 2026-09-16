@@ -933,7 +933,7 @@ export interface paths {
         };
         /**
          * List your tokens
-         * @description Only the caller's own tokens, never any secret.
+         * @description Only the caller's own tokens, never any secret. Each carries `lastUsedAt` — when it most recently authenticated successfully, or null if it never has — which is what tells a live credential from a forgotten one.
          */
         get: operations["list_1"];
         put?: never;
@@ -957,7 +957,7 @@ export interface paths {
         };
         /**
          * List machine API credentials
-         * @description Every machine credential, whoever provisioned it, never any secret. Deliberately not scoped to the caller: a machine credential's principal is not an identity anyone logs in as, so an owner-scoped listing would leave every one of them invisible — and unrevokable — during an incident. A person's own token listing is unaffected and still shows only their own.
+         * @description Every machine credential, whoever provisioned it, never any secret. Deliberately not scoped to the caller: a machine credential's principal is not an identity anyone logs in as, so an owner-scoped listing would leave every one of them invisible — and unrevokable — during an incident. A person's own token listing is unaffected and still shows only their own. Each carries `lastUsedAt`: when the credential most recently authenticated successfully, or null if it never has.
          */
         get: operations["list_2"];
         put?: never;
@@ -2223,6 +2223,11 @@ export interface components {
              * @description Credential id
              */
             id?: number;
+            /**
+             * Format: date-time
+             * @description When the credential most recently authenticated successfully, or null if it never has. Recorded at most once a minute, so it is approximate to that bound; the audit ledger is the exact, per-request record.
+             */
+            lastUsedAt?: string;
             /** @description The identity that provisioned it */
             machineOwner?: string;
             /** @description Credential name */
@@ -3014,6 +3019,11 @@ export interface components {
              * @description Token id
              */
             id?: number;
+            /**
+             * Format: date-time
+             * @description When the token most recently authenticated successfully, or null if it never has. Recorded at most once a minute, so it is approximate to that bound; the audit ledger is the exact, per-request record.
+             */
+            lastUsedAt?: string;
             /** @description Token name */
             name?: string;
             /** @description Hosted marketplaces this token may publish to; empty grants none */

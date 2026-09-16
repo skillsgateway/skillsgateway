@@ -107,7 +107,13 @@ public class MachineTokenController {
             List<String> apiScopes,
 
             @Schema(description = "The identity that provisioned it")
-            String machineOwner) {}
+            String machineOwner,
+
+            @Schema(
+                    description = "When the credential most recently authenticated successfully, or null if"
+                            + " it never has. Recorded at most once a minute, so it is approximate to that"
+                            + " bound; the audit ledger is the exact, per-request record.")
+            Instant lastUsedAt) {}
 
     @PostMapping
     @Requirements({"GW_AUTH_0020", "GW_AUTH_0023", "GW_AUTH_0024"})
@@ -142,7 +148,7 @@ public class MachineTokenController {
     }
 
     @GetMapping
-    @Requirements({"GW_AUTH_0024"})
+    @Requirements({"GW_AUTH_0024", "GW_AUTH_0031"})
     @Tag(name = "Tokens")
     @Operation(
             summary = "List machine API credentials",
@@ -150,7 +156,8 @@ public class MachineTokenController {
                     + " not scoped to the caller: a machine credential's principal is not an identity anyone"
                     + " logs in as, so an owner-scoped listing would leave every one of them invisible —"
                     + " and unrevokable — during an incident. A person's own token listing is unaffected"
-                    + " and still shows only their own.")
+                    + " and still shows only their own. Each carries `lastUsedAt`: when the credential most"
+                    + " recently authenticated successfully, or null if it never has.")
     @ApiResponse(responseCode = "200", description = "Every machine credential")
     @ApiResponse(responseCode = "403", description = "The caller does not hold the admin role")
     public List<MachineCredentialView> list(Authentication authentication) {
@@ -239,6 +246,7 @@ public class MachineTokenController {
                 token.expiresAt(),
                 token.rotatedFrom(),
                 token.apiScopeList(),
-                token.machineOwner());
+                token.machineOwner(),
+                token.lastUsedAt());
     }
 }

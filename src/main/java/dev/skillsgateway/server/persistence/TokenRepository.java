@@ -1,6 +1,7 @@
 package dev.skillsgateway.server.persistence;
 
 import io.github.reqstool.annotations.Requirements;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -11,6 +12,13 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class TokenRepository {
+
+    /**
+     * How stale a credential's recorded last use must be before another successful authentication
+     * rewrites it (GW_AUTH_0031). A constant rather than a setting: nothing reads the value at finer
+     * resolution, and an auditor who needs the exact record has the append-only fetch ledger.
+     */
+    private static final Duration LAST_USED_WRITE_INTERVAL = Duration.ofMinutes(1);
 
     private final JdbcClient jdbc;
 
@@ -151,6 +159,30 @@ public class TokenRepository {
                         .param("id", id)
                         .update()
                 > 0;
+    }
+
+    /**
+     * Stamps the moment a credential authenticated successfully (GW_AUTH_0031), at most once per
+     * {@link #LAST_USED_WRITE_INTERVAL}.
+     *
+     * <p>The throttle is the statement's own WHERE clause rather than a read-then-write or an
+     * in-memory cache: there is no lost-update window — concurrent requests for one credential race
+     * on one row and the loser writes nothing — and no per-instance state that would make a
+     * multi-replica gateway write once per minute <em>each</em>. A busy credential therefore costs
+     * one statement that matches no row per request.
+     *
+     * <p>Only ever called once a chain has decided to authenticate; see
+     * {@code TokenService#recordUse}.
+     */
+    @Requirements({"GW_AUTH_0031"})
+    public void recordLastUsed(long id) {
+        OffsetDateTime now = OffsetDateTime.now();
+        jdbc.sql("UPDATE access_tokens SET last_used_at = :now"
+                        + " WHERE id = :id AND (last_used_at IS NULL OR last_used_at <= :threshold)")
+                .param("now", now)
+                .param("id", id)
+                .param("threshold", now.minus(LAST_USED_WRITE_INTERVAL))
+                .update();
     }
 
     public boolean revoke(long id, String principal) {

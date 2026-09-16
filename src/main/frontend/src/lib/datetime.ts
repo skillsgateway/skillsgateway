@@ -17,6 +17,21 @@ const instantFormat = new Intl.DateTimeFormat(undefined, {
 
 const dayFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
 
+const relativeFormat = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+
+/**
+ * Largest-first, so the boundary below each one is where the next takes over. Ordering matters:
+ * "3 days ago" is the answer a reader wants, not "72 hours ago".
+ */
+const RELATIVE_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
+  ["year", 365 * 24 * 60 * 60],
+  ["month", 30 * 24 * 60 * 60],
+  ["week", 7 * 24 * 60 * 60],
+  ["day", 24 * 60 * 60],
+  ["hour", 60 * 60],
+  ["minute", 60],
+];
+
 /** Full precision, including the zone, for the hover title. */
 const preciseFormat = new Intl.DateTimeFormat(undefined, {
   dateStyle: "full",
@@ -49,4 +64,26 @@ export function formatDay(value: string | null | undefined): string {
 export function formatPrecise(value: string): string {
   const parsed = parse(value);
   return parsed ? `${preciseFormat.format(parsed)} · ${value}` : value;
+}
+
+/**
+ * How long ago, in the reader's locale, e.g. "3 hours ago". The precise instant is never lost — the
+ * caller keeps it in the `datetime` attribute and the tooltip — so this is a reading aid rather
+ * than the value itself.
+ */
+export function formatRelative(value: string | null | undefined): string {
+  const parsed = parse(value);
+  if (!parsed) {
+    return value || ABSENT;
+  }
+  const seconds = (parsed.getTime() - Date.now()) / 1000;
+  const magnitude = Math.abs(seconds);
+  for (const [unit, size] of RELATIVE_UNITS) {
+    if (magnitude >= size) {
+      return relativeFormat.format(Math.round(seconds / size), unit);
+    }
+  }
+  // Under a minute. "now" reads better than "in 0 seconds", which is what rounding would give
+  // for a value recorded during the request that rendered the page.
+  return relativeFormat.format(0, "minute");
 }

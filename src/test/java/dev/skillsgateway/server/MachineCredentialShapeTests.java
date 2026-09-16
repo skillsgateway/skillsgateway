@@ -28,6 +28,7 @@ class MachineCredentialShapeTests {
                 pushScopes,
                 false,
                 apiScopes,
+                null,
                 null);
     }
 

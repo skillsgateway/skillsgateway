@@ -1,7 +1,13 @@
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useCreateToken, useRevokeToken, useTokens, type IssuedToken } from "@/api/queries";
+import {
+  useCreateToken,
+  useRevokeToken,
+  useTokens,
+  type IssuedToken,
+  type TokenView,
+} from "@/api/queries";
 import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -65,6 +71,72 @@ export function IssuedTokenDialog({ issued, onClose }: { issued: IssuedToken; on
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * The token list. Presentational: it renders what it is given and reports a revocation upwards,
+ * so both states of the Last used column can be seen in a story without a server.
+ *
+ * "Last used" is relative because the question it answers is recency, and the exact instant stays
+ * one hover away. "never" rather than the em dash used elsewhere: a credential nothing has
+ * authenticated with is a fact worth reading, not an absent value.
+ *
+ * @Requirements GW_AUTH_0031
+ */
+export function TokenTable({
+  tokens,
+  onRevoke,
+  revoking = false,
+}: {
+  tokens: TokenView[];
+  onRevoke: (token: TokenView) => void;
+  revoking?: boolean;
+}) {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Name</TableHead>
+          <TableHead>Created</TableHead>
+          <TableHead>Last used</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {tokens.map((token) => (
+          <TableRow key={token.id}>
+            <TableCell>{token.name}</TableCell>
+            <TableCell><Timestamp value={token.createdAt} /></TableCell>
+            <TableCell>
+              <Timestamp
+                value={token.lastUsedAt}
+                relative
+                absent="never"
+                className={token.lastUsedAt ? undefined : "text-muted-foreground"}
+              />
+            </TableCell>
+            <TableCell>
+              {token.revokedAt ? <Badge variant="destructive">revoked</Badge> : <Badge>active</Badge>}
+            </TableCell>
+            <TableCell className="text-right">
+              {!token.revokedAt ? (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  aria-label={`Revoke token ${token.name}`}
+                  onClick={() => onRevoke(token)}
+                  disabled={revoking}
+                >
+                  Revoke
+                </Button>
+              ) : null}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
 
@@ -140,45 +212,16 @@ export function TokensPage() {
         <p className="text-sm text-muted-foreground">No tokens yet.</p>
       ) : null}
       {tokens.data && tokens.data.length > 0 ? (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {tokens.data.map((token) => (
-              <TableRow key={token.id}>
-                <TableCell>{token.name}</TableCell>
-                <TableCell><Timestamp value={token.createdAt} /></TableCell>
-                <TableCell>
-                  {token.revokedAt ? <Badge variant="destructive">revoked</Badge> : <Badge>active</Badge>}
-                </TableCell>
-                <TableCell className="text-right">
-                  {!token.revokedAt ? (
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      aria-label={`Revoke token ${token.name}`}
-                      onClick={() =>
-                        revoke.mutate(token.id ?? 0, {
-                          onSuccess: () => toast.success(`Token '${token.name}' revoked`),
-                          onError: (error) => toast.error(error.message),
-                        })
-                      }
-                      disabled={revoke.isPending}
-                    >
-                      Revoke
-                    </Button>
-                  ) : null}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <TokenTable
+          tokens={tokens.data}
+          revoking={revoke.isPending}
+          onRevoke={(token) =>
+            revoke.mutate(token.id ?? 0, {
+              onSuccess: () => toast.success(`Token '${token.name}' revoked`),
+              onError: (error) => toast.error(error.message),
+            })
+          }
+        />
       ) : null}
       {issued ? <IssuedTokenDialog issued={issued} onClose={() => setIssued(null)} /> : null}
     </div>

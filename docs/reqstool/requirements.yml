@@ -1868,6 +1868,14 @@ requirements:
     categories: ["interaction-capability", "security"]
     revision: 0.2.0
 
+  - id: GW_AUTH_0031
+    title: The last use of a credential is recorded and reported
+    significance: shall
+    description: "The system shall record, against a credential, the time at which it most recently authenticated successfully — on the git facade and on the machine API alike — and shall report that time wherever a credential is listed, distinguishing a credential that has never authenticated from one that has. The system shall record nothing against a credential whose authentication was refused, for any reason: an unrecognised secret, a revoked or expired credential, or a credential the chain refuses because it does not hold the authority that chain requires. The system shall bound how often the recorded time is written for a single credential, and the recorded time is accordingly approximate to that bound; the append-only ledger remains the exact, per-request record."
+    rationale: "A credential's listing already says when it was created, what it may reach and when it expires, and none of that answers the question revocation and rotation actually turn on: is anybody still using this? Without it an operator cannot tell the credential a pipeline authenticates with every ten minutes from the one a person minted and forgot, so the safe action — revoking anything unfamiliar — is the one nobody dares take, and dead credentials accumulate. The ledger holds the answer as history, but only as history that must be queried and joined; the state belongs on the credential that has it. Recording only on success is what keeps the value honest: a time written by a refused attempt would make the field evidence that an unknown or revoked secret was accepted, which is the opposite of what an auditor reads it as. Bounding the write rate is what keeps the value affordable on a path taken by every fetch — the resolution an operator needs to decide whether a credential is live is coarse, and paying a row write per request to exceed it would trade a real cost for precision nobody reads."
+    categories: ["security", "interaction-capability"]
+    revision: 0.1.0
+
   - id: GW_AUTH_0040
     title: Identity-provider bearer tokens on the git facade
     significance: shall

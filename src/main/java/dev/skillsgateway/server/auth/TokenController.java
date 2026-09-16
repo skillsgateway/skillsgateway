@@ -86,7 +86,13 @@ public class TokenController {
                     description = "Named administrative API scopes this credential holds. Empty for every"
                             + " personal access token: reaching the control plane is a grant, never a"
                             + " baseline, so an empty list here means none rather than all.")
-            List<String> apiScopes) {}
+            List<String> apiScopes,
+
+            @Schema(
+                    description = "When the token most recently authenticated successfully, or null if it"
+                            + " never has. Recorded at most once a minute, so it is approximate to that"
+                            + " bound; the audit ledger is the exact, per-request record.")
+            Instant lastUsedAt) {}
 
     @Schema(description = "Session credential request: the lifetime is the gateway's, so there is no field for it")
     public record SessionCredentialRequest(
@@ -147,8 +153,13 @@ public class TokenController {
     }
 
     @GetMapping
+    @Requirements({"GW_AUTH_0031"})
     @Tag(name = "Tokens")
-    @Operation(summary = "List your tokens", description = "Only the caller's own tokens, never any secret.")
+    @Operation(
+            summary = "List your tokens",
+            description = "Only the caller's own tokens, never any secret. Each carries `lastUsedAt` — when it"
+                    + " most recently authenticated successfully, or null if it never has — which is what"
+                    + " tells a live credential from a forgotten one.")
     public List<TokenView> list(Authentication authentication) {
         return tokenService.list(authentication.getName()).stream()
                 .map(TokenController::view)
@@ -241,7 +252,8 @@ public class TokenController {
                 token.rotatedFrom(),
                 token.pushScopeList(),
                 token.sessionDerived(),
-                token.apiScopeList());
+                token.apiScopeList(),
+                token.lastUsedAt());
     }
 
     @ExceptionHandler(TokenService.InvalidTokenRequestException.class)

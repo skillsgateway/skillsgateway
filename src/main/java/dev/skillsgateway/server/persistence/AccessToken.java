@@ -4,6 +4,11 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * A credential row. {@code lastUsedAt} is when it most recently authenticated successfully
+ * (GW_AUTH_0031), or null if it never has; it is approximate to the write bound in
+ * {@link TokenRepository#recordLastUsed}, and the fetch ledger stays the exact record.
+ */
 public record AccessToken(
         long id,
         String principal,
@@ -17,7 +22,8 @@ public record AccessToken(
         String pushScopes,
         boolean sessionDerived,
         String apiScopes,
-        String machineOwner) {
+        String machineOwner,
+        Instant lastUsedAt) {
 
     /** The scope list, empty meaning every marketplace (GW_AUTH_0006). */
     public List<String> scopeList() {
