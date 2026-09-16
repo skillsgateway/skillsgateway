@@ -230,7 +230,7 @@ skills-gateway:
 
 ## Webhooks
 
-Tuning for the outbound dispatcher that delivers snapshot lifecycle events. None
+Tuning for the outbound dispatcher that delivers marketplace lifecycle events. None
 of it appears in `application.yaml`; every value below is a Java-side default,
 and omitting the whole block is identical to omitting each key.
 
@@ -1263,7 +1263,7 @@ skills-gateway:
     webhooks:
       - name: ci-bot
         url: https://ci.example.com/hooks/skills-gateway
-        events: snapshot.approved,snapshot.rejected   # omit for all events
+        events: marketplace.snapshot.approved,marketplace.snapshot.rejected   # omit for all events
         secret: ${SGW_ESTATE_CI_BOT_SECRET}
 
     # Audit export sinks; same secret contract as webhooks.

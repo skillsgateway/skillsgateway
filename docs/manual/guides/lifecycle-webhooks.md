@@ -7,20 +7,41 @@ polling `/api/marketplaces`.
 
 ## Events
 
+Every event name says what it is about. `marketplace.snapshot.*` is what happened
+to one snapshot; `marketplace.*` is what happened to the marketplace itself.
+
+### Snapshot events
+
 | Event | Emitted when |
 | --- | --- |
-| `snapshot.ingested` | An ingestion succeeded and produced a snapshot. |
-| `snapshot.approved` | A held snapshot was approved and published. |
-| `snapshot.rejected` | A held snapshot was rejected. |
-| `snapshot.soft_deleted` | A snapshot was marked deleted, by an administrator or by a retention policy. |
-| `snapshot.restored` | A soft-deleted snapshot's marks were cleared. |
-| `snapshot.vetted` | A vetting chain run finished. The verdicts are readable at `GET /api/snapshots/{id}/vetting`. |
-| `snapshot.approval_pending` | A chain run finished and the snapshot is still **held**: it is waiting for a person. Carries a vetting summary — see [Driving approvals from your own system](#driving-approvals-from-your-own-system). |
-| `snapshot.revet_violation` | A re-vetting run found a violation on a snapshot that is **already approved**. |
-| `snapshot.revoked` | A snapshot was retroactively quarantined; the facade no longer serves it. |
+| `marketplace.snapshot.ingested` | An ingestion succeeded and produced a snapshot. |
+| `marketplace.snapshot.approved` | A held snapshot was approved and published. |
+| `marketplace.snapshot.rejected` | A held snapshot was rejected. |
+| `marketplace.snapshot.soft_deleted` | A snapshot was marked deleted, by an administrator or by a retention policy. |
+| `marketplace.snapshot.restored` | A soft-deleted snapshot's marks were cleared. |
+| `marketplace.snapshot.vetted` | A vetting chain run finished. The verdicts are readable at `GET /api/snapshots/{id}/vetting`. |
+| `marketplace.snapshot.approval_pending` | A chain run finished and the snapshot is still **held**: it is waiting for a person. Carries a vetting summary — see [Driving approvals from your own system](#driving-approvals-from-your-own-system). |
+| `marketplace.snapshot.revet_violation` | A re-vetting run found a violation on a snapshot that is **already approved**. |
+| `marketplace.snapshot.revoked` | A snapshot was retroactively quarantined; the facade no longer serves it. |
 
-Those are all of them. Deletion is orthogonal to the snapshot state machine,
-which is why the retention events carry the snapshot's unchanged vetting state.
+Deletion is orthogonal to the snapshot state machine, which is why the retention
+events carry the snapshot's unchanged vetting state.
+
+### Marketplace events
+
+These are about the estate rather than about content: what exists, what triggers
+its ingestion, and which vetters run against it. They carry
+[their own, shorter body](#what-a-marketplace-event-carries).
+
+| Event | Emitted when |
+| --- | --- |
+| `marketplace.registered` | A marketplace was registered, upstream or hosted. |
+| `marketplace.updated` | A registered marketplace changed. Today that is its sync mode; the detail names the new one. |
+| `marketplace.vetter_toggled` | A vetter was enabled or disabled, for one marketplace or across the gateway. |
+
+Those are all of them. There is no `marketplace.removed`: the gateway has no
+deregistration — there is no `DELETE /api/marketplaces/{name}` — so there is
+nothing for it to announce.
 
 An action taken by a scheduled pass rather than by a person carries a policy
 actor — `retention-policy` for deletions, `revet-policy` for re-vetting — so a
@@ -28,14 +49,14 @@ receiver can tell the two apart. See
 [Reclaiming snapshot storage](snapshot-retention.md) and
 [Re-vetting approved content](re-vetting.md).
 
-!!! warning "`snapshot.revet_violation` is the one that needs a receiver"
+!!! warning "`marketplace.snapshot.revet_violation` is the one that needs a receiver"
 
     It says content a team is *already using* has stopped being acceptable, and
     in the default warn mode it is the only signal — nothing is unpublished, so
     nothing breaks to announce it. Read the payload's `state` to tell the two
     apart: `approved` means it is still being served and someone has to act;
     `revoked` means enforcement already retracted it and
-    `snapshot.revoked` follows.
+    `marketplace.snapshot.revoked` follows.
 
 Registering and deleting subscribers require **admin**; the subscriber and
 delivery listings require **auditor** (or admin). See
@@ -56,12 +77,12 @@ delivery listings require **auditor** (or admin). See
     $ curl -X POST localhost:8080/api/webhooks \
         -H 'Content-Type: application/json' \
         -d '{"name":"ci-bot","url":"https://ci.example.com/hooks/skills-gateway",
-             "events":"snapshot.approved,snapshot.rejected"}'
+             "events":"marketplace.snapshot.approved,marketplace.snapshot.rejected"}'
     ```
 
     ```json
     {"id":1,"name":"ci-bot","url":"https://ci.example.com/hooks/skills-gateway",
-     "events":"snapshot.approved,snapshot.rejected",
+     "events":"marketplace.snapshot.approved,marketplace.snapshot.rejected",
      "secret":"whsec_...","createdAt":"..."}
     ```
 
@@ -71,9 +92,9 @@ delivery listings require **auditor** (or admin). See
 | `url` | The scheme must be on `skills-gateway.allowed-url-schemes`. Unparseable or scheme-less URLs are rejected — the check fails closed. **400**. |
 | `events` | Comma-delimited event names, or `*` for every event. Blank means `*`. An unknown name is **400**, not silently dropped. `GET /api/webhooks/events` answers the names this gateway accepts. |
 
-The filter is exact-match per name: `*` is the only wildcard, and
-`snapshot.*` is not a valid filter. A subscriber only ever receives events its
-filter lists.
+The filter is exact-match per name: `*` is the only wildcard, and neither
+`marketplace.*` nor `marketplace.snapshot.*` is a valid filter. A subscriber only
+ever receives events its filter lists.
 
 Registering an outbound target is an egress decision, which is why it is an
 authenticated administrative act behind the same scheme allowlist as marketplace
@@ -98,7 +119,7 @@ Each delivery is a `POST` of a JSON body with four headers:
 | `X-Skills-Gateway-Signature` | `sha256=<lowercase hex>` — HMAC-SHA256 over the exact body bytes, keyed with the subscriber's secret. |
 
 ```json
-{"event":"snapshot.approved","occurredAt":"2026-08-15T09:14:22.481Z",
+{"event":"marketplace.snapshot.approved","occurredAt":"2026-08-15T09:14:22.481Z",
  "marketplace":"acme","snapshotId":42,
  "sha":"3f9c2ab9d1e4c7b6a5f80c3d2e1b0a9f8c7d6e5f",
  "state":"approved","actor":"alice@example.com"}
@@ -106,6 +127,36 @@ Each delivery is a `POST` of a JSON body with four headers:
 
 `state` is the snapshot state *after* the event, and `actor` is the principal
 that performed the admin action.
+
+### What a marketplace event carries
+
+A `marketplace.*` event has no snapshot to name, so its body is the four fields
+every event shares plus one:
+
+```json
+{"event":"marketplace.registered","occurredAt":"2026-08-15T09:14:22.481Z",
+ "marketplace":"acme","actor":"alice@example.com","detail":"origin=upstream"}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `marketplace` | The marketplace the change is about, or `-` when the change applies to the whole gateway — a vetter disabled everywhere rather than for one marketplace. |
+| `detail` | What changed, as `key=value` pairs: `origin=upstream`, `mode=scheduled`, `vetter=secret-scan scope=global enabled=false`. |
+
+`detail` carries gateway-side configuration values only. It never carries
+snapshot content, and it never carries operator-supplied free text — the reason
+an administrator types when switching a vetter off stays in the ledger, where an
+authenticated caller reads it. The event announces; the API discloses.
+
+### Not a webhook: fetches
+
+There is no event for "someone fetched this marketplace", and there will not be
+one. Fetch volume is orders of magnitude above administrative change, the ledger
+already records every fetch with the identity behind it, and an
+[audit sink](exporting-the-audit-ledger.md) already pushes those ledger entries
+to a receiver in signed, retried batches. Anything a per-fetch webhook could tell
+you is derivable from a sink today, over a delivery path built for that volume.
+Configure a sink instead.
 
 ### The shape is published, and it only grows
 
@@ -174,14 +225,14 @@ is emitted and stored, so every retry sends byte-identical content.
 
 ## Driving approvals from your own system
 
-`snapshot.approval_pending` exists so the review can happen where your
+`marketplace.snapshot.approval_pending` exists so the review can happen where your
 organization already does reviews — a ticketing system, a change-approval board,
 a bot — instead of in the portal. It fires when a vetting chain run finishes and
 the snapshot is still `held`, which is exactly the moment a person is needed, and
 it carries enough to open a review item without a follow-up call:
 
 ```json
-{"event":"snapshot.approval_pending","occurredAt":"2026-08-15T09:14:22.481Z",
+{"event":"marketplace.snapshot.approval_pending","occurredAt":"2026-08-15T09:14:22.481Z",
  "marketplace":"acme","snapshotId":42,
  "sha":"3f9c2ab9d1e4c7b6a5f80c3d2e1b0a9f8c7d6e5f",
  "state":"held","actor":"vetting",
@@ -207,8 +258,8 @@ The first seven fields are the ones every event carries, unchanged. The
 `CLEAR_WITH_WAIVERS` means it will, and only because someone accepted a risk;
 `BLOCKED` means it will be refused until every uncovered finding is
 [waived](waiving-findings.md) or fixed upstream. Either decision goes
-back through the ordinary API, which emits `snapshot.approved` or
-`snapshot.rejected` in turn — so the round trip closes on the same webhook
+back through the ordinary API, which emits `marketplace.snapshot.approved` or
+`marketplace.snapshot.rejected` in turn — so the round trip closes on the same webhook
 stream your system is already reading.
 
 !!! warning "The event announces; the API discloses"
@@ -223,12 +274,12 @@ stream your system is already reading.
 
 Two things not to assume:
 
-- **It is not `snapshot.vetted`.** That one fires for *every* chain run,
+- **It is not `marketplace.snapshot.vetted`.** That one fires for *every* chain run,
   including runs against content that is already approved, and says nothing
-  about a pending decision. Subscribe to `snapshot.approval_pending` if what you
+  about a pending decision. Subscribe to `marketplace.snapshot.approval_pending` if what you
   want is "someone has to look at this".
 - **It says nothing about a revocation.** A snapshot that re-vetting revoked is
-  decidable again, but it is announced by `snapshot.revoked` and means something
+  decidable again, but it is announced by `marketplace.snapshot.revoked` and means something
   else: content that was already in use has been retracted.
 
 ## Delivery, retry and backoff
@@ -248,7 +299,7 @@ sequenceDiagram
     participant Rcv as Subscriber endpoint
 
     Reviewer->>API: POST /api/snapshots/42/approve
-    API->>DB: enqueue snapshot.approved (state=pending)
+    API->>DB: enqueue marketplace.snapshot.approved (state=pending)
     API-->>Reviewer: 200 (never waits for the receiver)
 
     loop every poll-interval (5s)
@@ -295,8 +346,8 @@ Tune all of this under
     Deliveries are claimed in batches and retried independently, so nothing
     guarantees the order two events for the same snapshot arrive in. One
     ingestion shows it plainly: the chain runs *inside* the ingestion, so
-    `snapshot.vetted` and `snapshot.approval_pending` are queued **before**
-    `snapshot.ingested` for the same snapshot. Treat every event as
+    `marketplace.snapshot.vetted` and `marketplace.snapshot.approval_pending` are queued **before**
+    `marketplace.snapshot.ingested` for the same snapshot. Treat every event as
     self-describing — the payload carries the marketplace, the snapshot, the SHA
     and the state — rather than as a step in a sequence.
 

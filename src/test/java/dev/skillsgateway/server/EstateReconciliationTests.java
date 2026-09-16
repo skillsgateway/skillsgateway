@@ -59,7 +59,7 @@ import org.springframework.test.context.TestPropertySource;
             "skills-gateway.estate.grants[1].role=auditor",
             "skills-gateway.estate.webhooks[0].name=estate-hook",
             "skills-gateway.estate.webhooks[0].url=https://receiver.invalid/hook",
-            "skills-gateway.estate.webhooks[0].events=snapshot.approved",
+            "skills-gateway.estate.webhooks[0].events=marketplace.snapshot.approved",
             "skills-gateway.estate.webhooks[0].secret=${test.estate.hook-secret}",
             "skills-gateway.estate.audit-sinks[0].name=estate-siem",
             "skills-gateway.estate.audit-sinks[0].url=https://siem.invalid/ingest",
@@ -113,7 +113,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
 
         WebhookSubscriber hook = subscriberRepository.findByName("estate-hook").orElseThrow();
         assertThat(hook.url()).isEqualTo("https://receiver.invalid/hook");
-        assertThat(hook.events()).isEqualTo("snapshot.approved");
+        assertThat(hook.events()).isEqualTo("marketplace.snapshot.approved");
         // The declared ${test.estate.hook-secret} placeholder resolved to the operator's value.
         assertThat(hook.secret()).isEqualTo(HOOK_SECRET);
 
@@ -376,7 +376,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
                         new DeclaredWebhook(
                                 declared,
                                 "https://pending.invalid/hook",
-                                WebhookEvent.SNAPSHOT_APPROVAL_PENDING + ",snapshot.approved",
+                                WebhookEvent.SNAPSHOT_APPROVAL_PENDING + ",marketplace.snapshot.approved",
                                 "estate-pending-secret-0123456789"),
                         new DeclaredWebhook(
                                 typo,
@@ -390,7 +390,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
 
         assertThat(actionOf(report, declared)).isEqualTo("created");
         assertThat(subscriberRepository.findByName(declared).orElseThrow().events())
-                .isEqualTo(WebhookEvent.SNAPSHOT_APPROVAL_PENDING + ",snapshot.approved");
+                .isEqualTo(WebhookEvent.SNAPSHOT_APPROVAL_PENDING + ",marketplace.snapshot.approved");
         assertThat(actionOf(report, typo)).isEqualTo("failed");
         assertThat(entryOf(report, typo).detail()).contains("unknown event");
         assertThat(subscriberRepository.findByName(typo)).isEmpty();

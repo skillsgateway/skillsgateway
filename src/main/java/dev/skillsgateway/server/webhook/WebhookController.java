@@ -58,7 +58,7 @@ public class WebhookController {
 
             @Schema(
                     description = "Comma-delimited event filter, or * for every event",
-                    example = "snapshot.approved,snapshot.rejected")
+                    example = "marketplace.snapshot.approved,marketplace.snapshot.rejected")
             String events) {}
 
     /** Never exposes the signing secret; it is returned only by the creation response. */
@@ -80,8 +80,8 @@ public class WebhookController {
     @Tag(name = "Webhooks")
     @Operation(
             summary = "Register a webhook subscriber",
-            description = "Registers a receiver for snapshot lifecycle events. The signing secret is returned"
-                    + " exactly once, in this response, and is never readable afterwards.")
+            description = "Registers a receiver for marketplace lifecycle events. The signing secret is"
+                    + " returned exactly once, in this response, and is never readable afterwards.")
     @ApiResponse(responseCode = "201", description = "Subscriber registered; response carries the show-once secret")
     @ApiResponse(responseCode = "400", description = "Disallowed URL scheme, or an unknown event name")
     @ApiResponse(responseCode = "409", description = "A subscriber with that name already exists")
@@ -110,7 +110,8 @@ public class WebhookController {
      * The subscribable vocabulary <em>and</em> the shape of what arrives — a subscriber that reads
      * this knows what it may filter on and what it will have to parse.
      *
-     * <p>The two example bodies are what put {@code EventPayload} and {@code ApprovalPendingPayload}
+     * <p>The three example bodies are what put {@code EventPayload}, {@code ApprovalPendingPayload}
+     * and {@code MarketplacePayload}
      * inside the {@code paths} surface the contract gate diffs, where a removed field is an error
      * rather than the warning it is on the request side of a {@code webhooks} entry. That placement
      * is the code half of GW_API_0006 — the other half is the workflow and its severity file, which no
@@ -121,21 +122,30 @@ public class WebhookController {
     @Requirements({"GW_API_0006"})
     public record EventRegistry(
             @Schema(
-                    description = "Every snapshot lifecycle event a subscriber may filter on",
+                    description = "Every lifecycle event a subscriber may filter on",
                     requiredMode = Schema.RequiredMode.REQUIRED)
             List<String> events,
 
             @Schema(
-                    description = "An illustrative body of the kind every event other than"
-                            + " snapshot.approval_pending delivers. Example values, not a real delivery.",
+                    description = "An illustrative body of the kind every marketplace.snapshot.* event other"
+                            + " than marketplace.snapshot.approval_pending delivers. Example values, not a real"
+                            + " delivery.",
                     requiredMode = Schema.RequiredMode.REQUIRED)
             WebhookService.EventPayload examplePayload,
 
             @Schema(
-                    description = "An illustrative body of the kind snapshot.approval_pending delivers: the"
-                            + " same fields plus the vetting summary. Example values, not a real delivery.",
+                    description = "An illustrative body of the kind marketplace.snapshot.approval_pending"
+                            + " delivers: the same fields plus the vetting summary. Example values, not a real"
+                            + " delivery.",
                     requiredMode = Schema.RequiredMode.REQUIRED)
-            WebhookService.ApprovalPendingPayload exampleApprovalPendingPayload) {}
+            WebhookService.ApprovalPendingPayload exampleApprovalPendingPayload,
+
+            @Schema(
+                    description = "An illustrative body of the kind the marketplace.* events deliver: what"
+                            + " changed about a marketplace, with no snapshot to name. Example values, not a"
+                            + " real delivery.",
+                    requiredMode = Schema.RequiredMode.REQUIRED)
+            WebhookService.MarketplacePayload exampleMarketplacePayload) {}
 
     private static final WebhookService.EventPayload EXAMPLE_PAYLOAD = new WebhookService.EventPayload(
             WebhookEvent.SNAPSHOT_APPROVED,
@@ -157,6 +167,14 @@ public class WebhookController {
                     "scheduler",
                     new WebhookService.VettingSummary(1, "BLOCKED", "BLOCKED", List.of("example-vetter"), 1, 0));
 
+    private static final WebhookService.MarketplacePayload EXAMPLE_MARKETPLACE_PAYLOAD =
+            new WebhookService.MarketplacePayload(
+                    WebhookEvent.MARKETPLACE_REGISTERED,
+                    "2026-01-01T00:00:00Z",
+                    "example-marketplace",
+                    "admin@example.com",
+                    "origin=upstream");
+
     /**
      * The filter vocabulary, served so the portal can offer it instead of asking an operator to
      * spell it. {@link WebhookEvent#AUDIT_EXPORT} is absent by construction: it is not in
@@ -167,7 +185,7 @@ public class WebhookController {
     @Tag(name = "Webhooks")
     @Operation(
             summary = "List the subscribable lifecycle events and the shape they deliver",
-            description = "Every snapshot lifecycle event a subscriber may filter on, together with an"
+            description = "Every lifecycle event a subscriber may filter on, together with an"
                     + " illustrative example of each delivery body — so a receiver can be written against"
                     + " what it will actually parse. The per-event deliveries are described in full under"
                     + " the document's top-level `webhooks` object. Read-only, records nothing. The audit"
@@ -175,7 +193,8 @@ public class WebhookController {
     @ApiResponse(responseCode = "200", description = "The event registry")
     public EventRegistry events(Authentication authentication) {
         roleService.requireAuditor(authentication);
-        return new EventRegistry(WebhookEvent.ALL, EXAMPLE_PAYLOAD, EXAMPLE_APPROVAL_PENDING_PAYLOAD);
+        return new EventRegistry(
+                WebhookEvent.ALL, EXAMPLE_PAYLOAD, EXAMPLE_APPROVAL_PENDING_PAYLOAD, EXAMPLE_MARKETPLACE_PAYLOAD);
     }
 
     @DeleteMapping("/{id}")

@@ -112,8 +112,8 @@ test("a_partial_selection_submits_the_comma_delimited_names", async () => {
     expect(screen.getByRole("checkbox", { name: "All events" })).toBeChecked(),
   );
   await user.click(screen.getByRole("checkbox", { name: "All events" }));
-  await user.click(screen.getByRole("checkbox", { name: "snapshot.approved" }));
-  await user.click(screen.getByRole("checkbox", { name: "snapshot.revoked" }));
+  await user.click(screen.getByRole("checkbox", { name: "marketplace.snapshot.approved" }));
+  await user.click(screen.getByRole("checkbox", { name: "marketplace.snapshot.revoked" }));
   await user.type(screen.getByLabelText("Subscriber name"), "ci-bot");
   await user.type(screen.getByLabelText("Target URL"), "https://ci.example.com/hooks");
   await user.click(screen.getByRole("button", { name: "Add subscriber" }));
@@ -122,7 +122,7 @@ test("a_partial_selection_submits_the_comma_delimited_names", async () => {
     expect(submitted).toEqual({
       name: "ci-bot",
       url: "https://ci.example.com/hooks",
-      events: "snapshot.approved,snapshot.revoked",
+      events: "marketplace.snapshot.approved,marketplace.snapshot.revoked",
     }),
   );
 });
@@ -145,12 +145,12 @@ test("add_subscriber_is_disabled_when_no_event_is_selected", async () => {
 test("typing_narrows_the_offered_events_without_changing_the_selection", async () => {
   const user = userEvent.setup();
   renderPage();
-  expect(await screen.findByRole("checkbox", { name: "snapshot.revoked" })).toBeInTheDocument();
+  expect(await screen.findByRole("checkbox", { name: "marketplace.snapshot.revoked" })).toBeInTheDocument();
 
   await user.type(screen.getByLabelText("Events"), "approved");
 
-  expect(screen.getByRole("checkbox", { name: "snapshot.approved" })).toBeInTheDocument();
-  expect(screen.queryByRole("checkbox", { name: "snapshot.revoked" })).not.toBeInTheDocument();
+  expect(screen.getByRole("checkbox", { name: "marketplace.snapshot.approved" })).toBeInTheDocument();
+  expect(screen.queryByRole("checkbox", { name: "marketplace.snapshot.revoked" })).not.toBeInTheDocument();
   // Narrowing the view must not deselect what it hides.
   expect(screen.getByRole("checkbox", { name: "All events" })).toBeChecked();
 });
@@ -159,7 +159,7 @@ test("a_stored_filter_naming_an_unknown_event_is_marked", async () => {
   server.use(
     http.get("/api/webhooks", () =>
       HttpResponse.json([
-        { id: 1, name: "stale-bot", url: "https://stale.test/hook", events: "snapshot.aproved", enabled: true },
+        { id: 1, name: "stale-bot", url: "https://stale.test/hook", events: "marketplace.snapshot.aproved", enabled: true },
       ]),
     ),
   );

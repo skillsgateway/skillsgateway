@@ -1867,3 +1867,19 @@ requirements:
     rationale: "The chain is an ordered pipeline, and rendering it as an unordered stack of blocks throws away the one thing a reviewer wants at a glance: where the snapshot got stopped, and what ran before and after it. Requiring an icon and a word beside the colour is not decoration — a console read under audit conditions is read by people who cannot rely on hue, and a state that exists only as a colour is a state some readers do not have. Marking an external vetter is what keeps a verdict the gateway did not reach itself from reading as one that it did. Putting the evidence behind each node, rather than only in a list beneath, is what makes the overview usable as an entry point instead of an index that has to be cross-referenced."
     categories: ["interaction-capability", "security"]
     revision: 0.2.0
+
+  - id: GW_WEBHOOK_0008
+    title: Namespaced lifecycle event names
+    significance: shall
+    description: "The system shall name every subscribable lifecycle event under a namespace that identifies what the event is about, shall publish that vocabulary as the event names a subscriber may filter on, shall refuse a filter naming an event outside it, and shall carry the same name in the delivery's event header and in the delivered body. It shall rewrite the stored event filter of every existing subscriber when a name in that vocabulary changes, so that a subscriber keeps receiving what it asked for without operator action."
+    rationale: "A flat vocabulary in which every name begins with the one subject the gateway had events for leaves a second subject nowhere to go: an event about the marketplace itself would either collide with the snapshot names or sit beside them as an unrelated second top level, and the choice would have to be made again for every subject after it. Event names are part of the published payload contract, so the namespace is worth the one breaking rename it costs before the contract is frozen, and is worth nothing after. Rewriting the stored filters is what keeps the rename from being a silent outage: a filter is an exact-match string, so a receiver whose filter still names the old spelling stops receiving anything and nothing reports that it has."
+    categories: ["functional-suitability", "compatibility"]
+    revision: 0.1.0
+
+  - id: GW_WEBHOOK_0009
+    title: Marketplace administration event webhooks
+    significance: shall
+    description: "The system shall deliver an event to every subscriber whose filter includes it when a marketplace is registered, when a marketplace's ingestion trigger is changed, and when a vetter's enablement is changed, naming the marketplace, the acting identity, the time and a content-free description of what changed, and shall distinguish a change scoped to one marketplace from one that applies to the whole gateway. It shall emit no event for an administrative action that was refused."
+    rationale: "The events the gateway sent were all about snapshots, so a system tracking the estate itself — which marketplaces exist, what triggers their ingestion, which vetters run against them — had to poll for it or read the ledger after the fact. These are the changes an inventory or a change-management system needs to hear about as they happen, and the ledger already records each one, so the emission belongs beside the ledger write where the two cannot disagree about whether the action happened. The description stays content-free and carries no operator-supplied free text for the same reason the approval-pending payload does: a webhook target is authorized by a URL scheme allowlist, not by an identity, so the event announces and the API discloses. Emitting nothing for a refused action is what keeps a receiver from acting on a change that was never made."
+    categories: ["functional-suitability", "interaction-capability"]
+    revision: 0.1.0

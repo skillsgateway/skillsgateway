@@ -165,6 +165,15 @@ headers — are described in the same document, under its top-level `webhooks`
 object, generated from the registry and the types the dispatcher uses. They only
 grow too.
 
+!!! warning "The event names were renamed once, before 1.0"
+
+    Every `snapshot.<x>` event is now `marketplace.snapshot.<x>`, so that
+    `marketplace.<x>` — what happened to the marketplace itself — has a namespace
+    to live in. A subscriber's stored filter was rewritten by a migration, so no
+    operator action was needed; a receiver matching on the name it was given has
+    to be updated. This was a declared break under the rules below, and it is the
+    kind of change that costs a major release once the contract is frozen.
+
 | Change | Additive? |
 | --- | --- |
 | A new endpoint, a new optional field, a new enum value | **Yes.** Ships as a minor. |

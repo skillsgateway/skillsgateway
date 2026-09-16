@@ -92,6 +92,6 @@ upstream uptime — automating ingestion does not couple them back together.
 
 Every sync-triggered ingestion is recorded like a manual one, with the trigger
 as the acting identity — `scheduler` or `webhook` instead of a person — and
-emits the ordinary `snapshot.ingested` lifecycle event. Mode changes are
+emits the ordinary `marketplace.snapshot.ingested` lifecycle event. Mode changes are
 recorded with the operator who made them. An auditor reads which content
 arrived, when, and on whose (or what) authority from the ledger alone.

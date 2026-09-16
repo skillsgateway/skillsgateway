@@ -3,6 +3,8 @@ package dev.skillsgateway.server.vetting;
 import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
+import dev.skillsgateway.server.webhook.WebhookEvent;
+import dev.skillsgateway.server.webhook.WebhookService;
 import io.github.reqstool.annotations.Requirements;
 import java.util.List;
 import java.util.Set;
@@ -40,16 +42,19 @@ public class VetterToggleService {
     private final VetterToggleRepository repository;
     private final MarketplaceRepository marketplaceRepository;
     private final AdminAuditLogger auditLogger;
+    private final WebhookService webhookService;
     private final Set<String> knownVetters;
 
     public VetterToggleService(
             VetterToggleRepository repository,
             MarketplaceRepository marketplaceRepository,
             AdminAuditLogger auditLogger,
+            WebhookService webhookService,
             List<Vetter> vetters) {
         this.repository = repository;
         this.marketplaceRepository = marketplaceRepository;
         this.auditLogger = auditLogger;
+        this.webhookService = webhookService;
         this.knownVetters = vetters.stream().map(Vetter::name).collect(Collectors.toUnmodifiableSet());
     }
 
@@ -87,7 +92,7 @@ public class VetterToggleService {
      * marketplace, and writes the change to the ledger. Refuses an unknown vetter name and an
      * unknown marketplace name so a mistaken toggle fails loudly instead of matching nothing.
      */
-    @Requirements({"GW_VETTING_0029.1", "GW_VETTING_0029.4"})
+    @Requirements({"GW_VETTING_0029.1", "GW_VETTING_0029.4", "GW_WEBHOOK_0009"})
     public VetterToggle set(String vetter, String marketplaceName, boolean enabled, String reason, String principal) {
         if (vetter == null || !knownVetters.contains(vetter)) {
             throw new ResponseStatusException(
@@ -115,6 +120,14 @@ public class VetterToggleService {
                 "vetter=%s scope=%s enabled=%s%s"
                         .formatted(
                                 vetter, scope, enabled, reason == null || reason.isBlank() ? "" : " reason=" + reason));
+        // The reason is operator-supplied free text and stays in the ledger: the event announces,
+        // an authenticated caller discloses (GW_WEBHOOK_0009). The "-" marketplace is the gateway-wide
+        // scope, the same placeholder the ledger row above carries.
+        webhookService.emitMarketplace(
+                WebhookEvent.MARKETPLACE_VETTER_TOGGLED,
+                marketplaceId == null ? "-" : marketplaceName,
+                principal,
+                "vetter=%s scope=%s enabled=%s".formatted(vetter, scope, enabled));
         return toggle;
     }
 

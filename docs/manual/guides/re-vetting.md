@@ -67,7 +67,7 @@ only to be ignored by the next sweep.
 
     The violation is written to the ledger with the objecting vetters, the
     rules behind it, and one entry per identity that had already fetched the
-    snapshot. `snapshot.revet_violation` goes out to subscribers. The portal
+    snapshot. `marketplace.snapshot.revet_violation` goes out to subscribers. The portal
     shows it.
 
     **Publication is untouched.** The snapshot stays `approved` and every
@@ -77,7 +77,7 @@ only to be ignored by the next sweep.
 
     Everything warn mode does, and then the snapshot is revoked: its state moves
     to `revoked`, the published refs it was reachable through are removed, and
-    `snapshot.revoked` is emitted.
+    `marketplace.snapshot.revoked` is emitted.
 
 Run `warn` for at least one full sweep cycle before enabling `enforce`, and read
 the `revet-violation` ledger entries. Each one names the identities that had
@@ -150,12 +150,12 @@ sequenceDiagram
     S->>S: effective outcome vs active waivers
     S->>L: revet-violation (vetters, rules, mode)
     S->>L: revet-violation-affected (one per identity)
-    S->>W: snapshot.revet_violation
+    S->>W: marketplace.snapshot.revet_violation
     S->>DB: state approved → revoked
     S->>L: snapshot-revoked
     S->>P: delete refs/heads/main and refs/snapshots/{sha}
     S->>L: snapshot-unpublished
-    S->>W: snapshot.revoked
+    S->>W: marketplace.snapshot.revoked
 ```
 
 The order is the safety property: the evidence and the announcement are written

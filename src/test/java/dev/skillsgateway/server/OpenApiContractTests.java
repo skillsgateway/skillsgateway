@@ -142,8 +142,13 @@ class OpenApiContractTests extends AbstractGatewayTest {
 
     private static final String APPROVAL_PENDING_PAYLOAD = "ApprovalPendingPayload";
 
+    private static final String MARKETPLACE_PAYLOAD = "MarketplacePayload";
+
     private static final List<String> PAYLOAD_FIELDS =
             List.of("event", "occurredAt", "marketplace", "snapshotId", "sha", "state", "actor");
+
+    private static final List<String> MARKETPLACE_PAYLOAD_FIELDS =
+            List.of("event", "occurredAt", "marketplace", "actor", "detail");
 
     private static final List<String> DELIVERY_HEADERS = List.of(
             WebhookSigner.EVENT_HEADER,
@@ -165,7 +170,11 @@ class OpenApiContractTests extends AbstractGatewayTest {
     private static void assertEachDeliveryReferencesItsOwnPayload(DocumentContext document) {
         for (String event : WebhookEvent.ALL) {
             String expected =
-                    WebhookEvent.SNAPSHOT_APPROVAL_PENDING.equals(event) ? APPROVAL_PENDING_PAYLOAD : EVENT_PAYLOAD;
+                    switch (WebhookEvent.shapeOf(event)) {
+                        case SNAPSHOT -> EVENT_PAYLOAD;
+                        case APPROVAL_PENDING -> APPROVAL_PENDING_PAYLOAD;
+                        case MARKETPLACE -> MARKETPLACE_PAYLOAD;
+                    };
             assertThat(document.<String>read("$.webhooks['%s'].post.requestBody.content['application/json'].schema.$ref"
                             .formatted(event)))
                     .as("%s delivers the body the service actually emits for it", event)
@@ -181,6 +190,9 @@ class OpenApiContractTests extends AbstractGatewayTest {
         assertThat(document.<List<String>>read("$.components.schemas.%s.required".formatted(APPROVAL_PENDING_PAYLOAD)))
                 .containsAll(PAYLOAD_FIELDS)
                 .contains("vetting");
+        assertThat(document.<List<String>>read("$.components.schemas.%s.required".formatted(MARKETPLACE_PAYLOAD)))
+                .as("a marketplace event names no snapshot, and says so by declaring only the fields it has")
+                .containsExactlyInAnyOrderElementsOf(MARKETPLACE_PAYLOAD_FIELDS);
         assertThat(document.<String>read(
                         "$.components.schemas.%s.properties.snapshotId.format".formatted(EVENT_PAYLOAD)))
                 .as("the type the diff would report as narrowed if it changed")
@@ -209,10 +221,11 @@ class OpenApiContractTests extends AbstractGatewayTest {
                 .contains("#/components/schemas/EventRegistry");
         Map<String, Object> properties = document.read("$.components.schemas.EventRegistry.properties");
         assertThat(properties.toString())
-                .as("both payload shapes hang off a response, where the diff rates a removed field an error"
+                .as("every payload shape hangs off a response, where the diff rates a removed field an error"
                         + " — on the request side of a webhooks entry it is only a warning (GW_API_0006)")
                 .contains("#/components/schemas/" + EVENT_PAYLOAD)
-                .contains("#/components/schemas/" + APPROVAL_PENDING_PAYLOAD);
+                .contains("#/components/schemas/" + APPROVAL_PENDING_PAYLOAD)
+                .contains("#/components/schemas/" + MARKETPLACE_PAYLOAD);
     }
 
     private static DocumentContext parse(String document) {

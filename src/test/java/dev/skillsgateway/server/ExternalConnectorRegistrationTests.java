@@ -153,7 +153,7 @@ class ExternalConnectorRegistrationTests {
                 MarketplaceRepository marketplaces,
                 AdminAuditLogger auditLogger,
                 List<Vetter> vetters) {
-            return new VetterToggleService(repository, marketplaces, auditLogger, vetters);
+            return new VetterToggleService(repository, marketplaces, auditLogger, mock(WebhookService.class), vetters);
         }
 
         @Bean
