@@ -396,6 +396,7 @@ class StagingRefSweepTests extends AbstractGatewayTest {
                 null,
                 null,
                 null,
+                null,
                 null);
     }
 

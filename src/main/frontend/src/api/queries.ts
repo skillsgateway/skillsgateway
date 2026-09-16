@@ -466,11 +466,21 @@ export function useTokens() {
   });
 }
 
+/**
+ * A token creation request as the portal sends it. `expiresAt` is optional because the tokens
+ * page does not offer a lifetime; the setup wizard does, and omitting it means a token that
+ * never expires — which is what this endpoint has always meant by an absent expiry.
+ */
+export type CreateToken = { name: string; expiresAt?: string };
+
 export function useCreateToken() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (name: string) =>
-      api<IssuedToken>("/api/tokens", { method: "POST", body: JSON.stringify({ name }) }),
+    mutationFn: (request: CreateToken | string) =>
+      api<IssuedToken>("/api/tokens", {
+        method: "POST",
+        body: JSON.stringify(typeof request === "string" ? { name: request } : request),
+      }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tokens"] }),
   });
 }

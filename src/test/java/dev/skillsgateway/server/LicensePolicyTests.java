@@ -83,7 +83,7 @@ class LicensePolicyTests extends AbstractGatewayTest {
         assertThat(run.chain()).contains("license-scan@");
         String defaultVersion = new LicenseScanVetter(new SkillsGatewayProperties(
                         null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                        null))
+                        null, null))
                 .version();
         String configuredVersion =
                 run.chain().lines().findFirst().orElseThrow().replaceAll(".*license-scan@([^,]*).*", "$1");

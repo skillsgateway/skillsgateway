@@ -5,11 +5,13 @@ modification — only a credential and a URL.
 
 !!! tip "The wizard does steps 1–4 for you"
 
-    On a marketplace's detail page in the portal, **Set up a client** composes
-    the exact commands below for that marketplace — token creation (show-once,
-    as always), the credential line, the `claude plugin marketplace add`
-    command, and the clone URL — each with a copy button. The rest of this
-    guide is the same procedure by hand. See
+    A marketplace's detail page in the portal leads with **Set up a client**,
+    which composes the exact commands below for that marketplace — token
+    creation (show-once, as always), the credential line, the `claude plugin
+    marketplace add` command, and the clone URL. The rest of this guide is the
+    same procedure by hand. If the page says the marketplace is **not being
+    served yet**, the commands are correct but will be answered `404` until a
+    snapshot is approved. See
     [the portal reference](../reference/portal.md#set-up-a-client).
 
 ## 1. Get a credential
@@ -17,6 +19,11 @@ modification — only a credential and a URL.
 Git clients authenticate with a token, not with your portal session cookie.
 There are two kinds, and for a human at a keyboard the first is the better
 default.
+
+If your gateway has
+[identity-provider bearer tokens](#no-credential-at-all-sso-in-the-credential-helper)
+switched on, there is a third option in which you mint nothing at all — skip to
+it.
 
 ### A session credential (recommended for people)
 
@@ -88,6 +95,84 @@ own.
     fresh secret with the identical grant and kills the old one in the same
     act. See [Access tokens](../reference/api/tokens.md).
 
+### No credential at all: SSO in the credential helper
+
+If the gateway sets
+[`skills-gateway.facade.idp-bearer.enabled`](../reference/configuration.md#identity-provider-bearer-tokens-on-the-facade),
+a git client that speaks generic OAuth can authenticate straight against your
+organisation's SSO. Nothing is minted, nothing is stored on the gateway, and the
+fetch is still attributed to you — the gateway takes your identity from the same
+claim the portal does.
+
+[Git Credential Manager](https://github.com/git-ecosystem/git-credential-manager)
+is configured entirely through `git config`. Four settings, all keyed on the
+gateway's URL:
+
+```console
+$ git config --global credential.https://skills.corp.example.oauthClientId corp-skills-gateway
+$ git config --global credential.https://skills.corp.example.oauthAuthorizeEndpoint https://idp.corp.example/oauth2/v2.0/authorize
+$ git config --global credential.https://skills.corp.example.oauthTokenEndpoint https://idp.corp.example/oauth2/v2.0/token
+$ git config --global credential.https://skills.corp.example.oauthScopes openid
+```
+
+Then clone with no credential in the URL at all:
+
+```console
+$ git clone https://skills.corp.example/git/acme
+```
+
+The first request is answered `401`, the helper opens a browser, you complete
+the usual SSO, and the token it receives is sent as
+`Authorization: Bearer …` on the retry.
+
+=== "Worked example (the mock provider the e2e suite runs)"
+
+    The repository's end-to-end suite runs a mock OIDC provider on
+    `localhost:9090` and the gateway on `localhost:8081`. Against that pair, with
+    the gateway started with `SKILLSGATEWAY_FACADE_IDPBEARER_ENABLED=true` and
+    `SKILLSGATEWAY_OIDC_ISSUER=http://localhost:9090/default`:
+
+    ```console
+    $ git config --global credential.http://localhost:8081.oauthClientId e2e-client
+    $ git config --global credential.http://localhost:8081.oauthAuthorizeEndpoint http://localhost:9090/default/authorize
+    $ git config --global credential.http://localhost:8081.oauthTokenEndpoint http://localhost:9090/default/token
+    $ git config --global credential.http://localhost:8081.oauthScopes openid
+    $ git clone http://localhost:8081/git/acme
+    ```
+
+    The values are real — they are the ones
+    [`e2e/run-e2e.sh`](https://github.com/skillsgateway/skillsgateway/blob/main/src/main/frontend/e2e/run-e2e.sh)
+    exports — but the **credential-helper half of this is not automated**: the
+    suite drives a browser, not a credential manager. What the suite does verify
+    end to end is the gateway's half, with a real `git clone` carrying a real
+    bearer token in a header.
+
+=== "Without a credential helper"
+
+    Any client that can set a header works, which is also how to test the
+    gateway's side directly:
+
+    ```console
+    $ git -c http.extraHeader="Authorization: Bearer ${SGW_ACCESS_TOKEN}" \
+        clone https://skills.corp.example/git/acme
+    ```
+
+    Do not put this in a shell history or a CI log — it is a bearer credential
+    like any other.
+
+!!! warning "Short-lived, and the gateway cannot revoke it"
+
+    A bearer token dies when the identity provider says so, usually within the
+    hour, and that is the whole control: the gateway has no kill switch for one.
+    If you need a credential you can revoke centrally — a CI pipeline's, most of
+    all — use a personal access token. That is why both exist.
+
+!!! note "Your marketplace scopes"
+
+    A bearer token has no scope list, so it reaches every marketplace the gateway
+    serves — the same as a personal access token created without `scopes`. If you
+    need a credential limited to one marketplace, create a scoped token.
+
 ## 2. Verify the remote
 
 The username is ignored; the token goes in the password field.
@@ -98,7 +183,9 @@ $ git ls-remote https://token:sgw_...@skills.corp.example/git/acme
 ```
 
 A 404 here means the marketplace has never had a snapshot approved — there is
-nothing to serve. A 401 means the token is wrong or revoked.
+nothing to serve. A 401 means the token is wrong, expired or revoked. The portal
+says the same thing on the marketplace's own page when nothing is being served
+yet, so the two are not confused for each other.
 
 ## 3. Store the credential
 

@@ -1,8 +1,10 @@
 package dev.skillsgateway.server.facade;
 
+import dev.skillsgateway.server.auth.IdpBearerAuthentication;
 import dev.skillsgateway.server.observability.GatewayMetrics;
 import dev.skillsgateway.server.persistence.AccessToken;
 import dev.skillsgateway.server.persistence.ActorType;
+import dev.skillsgateway.server.persistence.CredentialKind;
 import dev.skillsgateway.server.persistence.FetchLogRepository;
 import io.github.reqstool.annotations.Requirements;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -26,7 +28,7 @@ public class FetchAuditHook {
      * with several tokens is several distinct credentials, and a leak trace needs to know which
      * one fetched.
      */
-    @Requirements({"GW_AUDIT_0001", "GW_AUTH_0009", "GW_AUDIT_0007"})
+    @Requirements({"GW_AUDIT_0001", "GW_AUTH_0009", "GW_AUDIT_0007", "GW_AUTH_0041"})
     public void record(String source, String principal, String marketplace, String event, String ref, String sha) {
         AccessToken token = currentToken();
         fetchLogRepository.append(
@@ -38,7 +40,8 @@ public class FetchAuditHook {
                 sha,
                 null,
                 token == null ? null : token.id(),
-                actorType(token));
+                actorType(token),
+                credentialKind());
         // Counter only (GW_OBSERVABILITY_0003), tagged by the closed event vocabulary — never by marketplace,
         // SHA or principal; those dimensions live in the ledger and the adoption API.
         metrics.facadeFetch(event);
@@ -58,6 +61,27 @@ public class FetchAuditHook {
     @Requirements({"GW_AUDIT_0007"})
     private static ActorType actorType(AccessToken token) {
         return token != null && token.machineCredential() ? ActorType.MACHINE : ActorType.HUMAN;
+    }
+
+    /**
+     * Which kind of credential authenticated this request (GW_AUTH_0041), or {@code null} when none
+     * did — the honest value for an entry the gateway wrote about itself.
+     *
+     * <p>Read from the authentication rather than from the absence of a token id, because that
+     * absence already means two other things. The two kinds are mutually exclusive by
+     * construction: a PAT arrives over Basic and carries its row as the authentication's details;
+     * an identity-provider token arrives over Bearer and carries none.
+     */
+    @Requirements({"GW_AUTH_0041"})
+    public CredentialKind credentialKind() {
+        Authentication authentication = current();
+        if (authentication == null) {
+            return null;
+        }
+        if (authentication.getDetails() instanceof AccessToken) {
+            return CredentialKind.PAT;
+        }
+        return authentication instanceof IdpBearerAuthentication ? CredentialKind.IDP : null;
     }
 
     /** Name of the authenticated principal, or {@code null} when absent or anonymous. */

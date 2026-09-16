@@ -153,8 +153,20 @@ resolves completely or not at all.
 the web chain, and it is **stateless**:
 
 - HTTP Basic, with a provider manager whose only provider is the PAT provider.
-  An OIDC browser session can never authenticate a git fetch, because no OIDC
-  provider exists in that chain.
+  An OIDC browser **session** can never authenticate a git fetch: no cookie is
+  read and no session is created on this chain.
+- Optionally, and off by default, a second credential kind: an
+  [identity-provider bearer token](../reference/git-facade.md#identity-provider-bearer-tokens)
+  from the same provider the web surface trusts (GW_AUTH_0040). It is validated the
+  way a resource server validates one — key-set signature, issuer, audience,
+  `exp`/`nbf` — and the issuer pin the login path only warns about (GW_AUTH_0017)
+  becomes mandatory here, because a token arriving cold has none of the
+  provenance a code exchange has. While the capability is off, no filter,
+  provider or decoder exists on the path at all. It changes what a credential may
+  *be*, and nothing about what it may *reach*: a bearer token carries no scope
+  list, so it permits exactly what an unscoped PAT permits, and it reaches
+  nothing on `/api/**` (GW_AUTH_0042). See
+  [ADR 0019](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0019-facade-accepts-idp-bearer-tokens.md).
 - Only the password field is read; the username is ignored (`token` by
   convention). This is what makes the standard git credential helper work
   unmodified.
@@ -210,7 +222,7 @@ sequenceDiagram
 !!! note "The facade chain is unconditional"
 
     The `dev-insecure-auth` escape hatch does not touch it. `/git/**` requires a
-    valid PAT even in development mode.
+    valid credential even in development mode.
 
 ## 3. Approval — held content becomes served content
 

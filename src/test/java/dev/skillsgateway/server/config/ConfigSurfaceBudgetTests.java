@@ -40,8 +40,26 @@ class ConfigSurfaceBudgetTests {
      * {@code storage.object-store.cache.ref-freshness} is what took it to 104.
      *
      * <p>The cuts the assessment proposed are separate changes, and each one lowers this number.
+     *
+     * <p><b>Raised to 106 for the facade's identity-provider bearer capability</b> (#392), which is
+     * the question this docstring asks: can a deployment express what it needs with a leaf that
+     * already exists? For these two, no.
+     *
+     * <ul>
+     *   <li>{@code facade.idp-bearer.enabled} — the alternative is to infer the capability from
+     *       whether an audience happens to be set, which turns a trust-boundary widening into a
+     *       side effect of an unrelated value. A boundary moves when an operator types that it
+     *       should.
+     *   <li>{@code facade.idp-bearer.audience} — the OAuth2 client id is the default and is right
+     *       for an identity token by construction, and provably wrong for providers whose access
+     *       tokens name a separate resource identifier. No other leaf names one.
+     * </ul>
+     *
+     * <p>What did <em>not</em> cost a leaf is the argument that this is two and not four: the key
+     * set and the issuer are read from the identity provider the web surface already trusts, so
+     * they are not configurable here at all — and cannot diverge from it.
      */
-    private static final int BUDGET = 104;
+    private static final int BUDGET = 106;
 
     /** Where the measured breakdown is written, so a run's numbers survive for a PR body. */
     private static final Path REPORT = Path.of("target", "config-surface.txt");

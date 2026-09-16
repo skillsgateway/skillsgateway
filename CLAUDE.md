@@ -122,7 +122,12 @@ The gates above ask "is this well specified?". This one asks "should this exist?
 ## Boundaries
 
 - The quarantine repo is never served; only `ApprovalService` publishes.
-- The facade (`/git/**`) authenticates with PATs only; the web surface with
-  OIDC only (`skills-gateway.dev-insecure-auth=true` is a local-dev escape
-  hatch, never a default).
+- The facade (`/git/**`) authenticates with PATs, and — only where a deployment
+  sets `skills-gateway.facade.idp-bearer.enabled` — with an identity-provider
+  bearer token validated as a resource server validates one (ADR 0019, which
+  supersedes ADR 0002's "PATs only"). Never with a session or a cookie. The web
+  surface authenticates with OIDC only, `/api/**` additionally with a
+  gateway-issued machine credential and with nothing else
+  (`skills-gateway.dev-insecure-auth=true` is a local-dev escape hatch, never a
+  default).
 - Registration is the trust boundary: URL scheme allowlist, gateway-pinned ref.
