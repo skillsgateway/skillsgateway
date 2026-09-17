@@ -288,6 +288,28 @@ Switching vetters off narrows the evidence behind an approval; it never makes
 one automatic. What that means for a run is described in
 [Switching a vetter off](../concepts/vetting.md#switching-a-vetter-off).
 
+Beneath the drawing sit the two chain-level controls, fed by
+`GET /api/marketplaces/{name}/vetting-chain-settings`.
+
+**When a vetter fails** is a two-option control — *Run every vetter* or *Stop
+after a failure* — calling `PUT /api/vetting/chain-mode` for this marketplace,
+with an optional reason. The hint beside it states the cost rather than leaving
+it to be discovered on a snapshot: stopping early spares the vetters after a
+failure, and it also means a reviewer no longer sees everything that is wrong
+with a snapshot in one pass, and that a run which stopped is blocked until it has
+been run again — even after the finding that stopped it is waived. The line ends
+with where the current mode came from.
+
+**The order they run in** is a numbered list with a **Move _vetter_ up** and a
+**Move _vetter_ down** control on every row. The controls are ordinary buttons
+with names of their own, so the reordering is operable by keyboard and announced
+as what it does; there is no drag gesture to have an equivalent for. Movements
+are local until **Save order** writes the whole arrangement through
+`PUT /api/vetting/chain-order` — one intended reordering is one audited change,
+not one per hop — and **Discard changes** puts it back. While an arrangement is
+unsaved the drawing above shows the proposed order and the list says it is not
+saved yet.
+
 ### Snapshots
 
 One card per snapshot showing the short SHA (12 characters, monospace), the
@@ -411,7 +433,14 @@ it can be read without opening anything:
 Blocked at step 1 · secret-scan found 1 critical finding
 Clear · 4 vetters, 0 findings
 Clear with waivers · 2 findings accepted
+Stopped at step 1 · secret-scan found 1 critical finding, so 2 later vetters
+                    did not run — re-vet to see what they say
 ```
+
+The last of those is the one a reader must not skim past: a chain that
+[stopped early](../concepts/vetting.md#stopping-the-chain-after-a-failure) has a
+smaller verdict set, not a cleaner one, so the sentence says how many vetters
+never looked and what to do about it.
 
 How to read a node:
 
@@ -419,7 +448,7 @@ How to read a node:
 | --- | --- |
 | Stage label | Where the node sits: `Source`, `Step N` for each vetter in run order, `Result`, `Gate`. |
 | Name | `Ingest`, a vetter's name, `Outcome`, `Approval`. |
-| State word | `pass`, `warn`, `fail`, `error`, `pending`, `skipped`, `not run` for a vetter; `clear`, `clear with waivers`, `blocked` for the outcome; `open` or `closed` for the approval gate. The word is always present — colour never carries a state on its own. |
+| State word | `pass`, `warn`, `fail`, `error`, `pending`, `skipped` (switched off), `not reached` (the chain stopped before it), `not run` (no verdict at all) for a vetter; `clear`, `clear with waivers`, `blocked` for the outcome; `open` or `closed` for the approval gate. The word is always present — colour never carries a state on its own. |
 | Top edge | The same state, as colour: the accent for a pass or warn, red for a fail or error, a plain hairline for anything that reached no conclusion. A second, scannable carrier of the word above it, never a replacement for it. |
 | Finding count | How many findings that vetter raised, when it raised any. |
 | `external` chip | The verdict comes from an operator-configured external service, not from a built-in vetter. |
@@ -436,10 +465,13 @@ Every node is a button. Activating one opens its detail:
   badged. A `skipped` node states that an administrator switched the vetter
   off for this marketplace and that the scope and reason are on the
   [marketplace's vetting chain](#vetting-chain-administrators), which is
-  administrator-only.
+  administrator-only. A `not reached` node states that the chain stopped before
+  it, that this is an absence rather than a result, and that a waiver on the
+  finding which stopped the chain lets the next run get this far without standing
+  in for the verdict this vetter never gave.
 - **The outcome** — how the aggregation reached its answer, what the vetters
-  themselves recorded, which vetters are objecting, and the findings that
-  still need a waiver.
+  themselves recorded, which vetters are objecting, the vetters the run never
+  reached, and the findings that still need a waiver.
 - **Ingest** and **Approval** — what the step is, and why the gate is where it is.
 
 The flow is an overview; the per-vetter list below it is where findings are

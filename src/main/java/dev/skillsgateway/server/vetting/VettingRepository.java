@@ -99,6 +99,12 @@ public class VettingRepository {
      * substance rather than a null that reads the same as "the vetter never ran".
      */
     private static String detailOf(Verdict verdict) {
+        // A vetter the chain did not reach carries one purely bookkeeping finding, so the finding
+        // count would say nothing; what a reader wants on the row is which vetter stopped the chain
+        // (GW_VETTING_0032.2), which is exactly what its summary carries.
+        if (verdict.state() == VerdictState.NOT_REACHED && verdict.summary() != null) {
+            return verdict.summary();
+        }
         if (verdict.findings().isEmpty()) {
             return verdict.summary();
         }

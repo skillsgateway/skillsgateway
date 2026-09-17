@@ -49,11 +49,17 @@ export interface FlowNode {
     recordedOutcome?: string;
     blocking: string[];
     uncovered: UncoveredFinding[];
+    /** Vetters the run never got to, because the chain stopped. Empty for a complete run. */
+    notReached: string[];
   };
   setting?: ChainVetter;
 }
 
-/** The verdict states, as the flow words them. `DISABLED` is not a conclusion — it is an absence. */
+/**
+ * The verdict states, as the flow words them. `DISABLED` and `NOT_REACHED` are not conclusions —
+ * they are absences, and different ones: an administrator switched that vetter off, or the chain
+ * stopped before it got there. Both are told apart from "no verdict at all".
+ */
 export function verdictWord(state: string | undefined): string {
   switch (state) {
     case "PASS":
@@ -68,6 +74,8 @@ export function verdictWord(state: string | undefined): string {
       return "pending";
     case "DISABLED":
       return "skipped";
+    case "NOT_REACHED":
+      return "not reached";
     default:
       return "not run";
   }
@@ -83,9 +91,10 @@ export function verdictTone(state: string | undefined): FlowTone {
     case "ERROR":
       return "blocked";
     default:
-      // PENDING, DISABLED and "never ran" are all absences of a conclusion. They are drawn quietly
-      // and the outcome node is where the consequence is stated — a disabled vetter does not
-      // block, a pending one does, and inventing a shade per case would say neither.
+      // PENDING, DISABLED, NOT_REACHED and "never ran" are all absences of a conclusion. They are
+      // drawn quietly and the outcome node is where the consequence is stated — a disabled vetter
+      // does not block, a pending one does, a not-reached one blocks the whole run until it is
+      // re-run — and inventing a shade per case would say none of it.
       return "idle";
   }
 }
@@ -159,7 +168,13 @@ export function snapshotFlow(view: VettingView | undefined): FlowNode[] {
       state: verdictWord(verdict.state),
       tone: verdictTone(verdict.state),
       eyebrow: `Step ${index + 1}`,
-      meta: findings.length > 0 ? `${findings.length} ${plural(findings.length, "finding")}` : undefined,
+      // The bookkeeping finding a not-reached or disabled verdict carries is a record of why the
+      // vetter did not run, not something it found. Counting it on the node would read as a
+      // result, which is the one thing these states must never look like.
+      meta:
+        findings.length > 0 && verdict.state !== "NOT_REACHED" && verdict.state !== "DISABLED"
+          ? `${findings.length} ${plural(findings.length, "finding")}`
+          : undefined,
       external: vetter?.external === true,
       waived: waived.get(name) ?? 0,
       verdict,
@@ -184,6 +199,9 @@ export function snapshotFlow(view: VettingView | undefined): FlowNode[] {
       recordedOutcome: view?.recordedOutcome,
       blocking,
       uncovered: view?.uncovered ?? [],
+      notReached: ordered
+        .filter((verdict) => verdict.state === "NOT_REACHED")
+        .map((verdict) => verdict.vetter ?? ""),
     },
   });
 
@@ -197,7 +215,9 @@ export function snapshotFlow(view: VettingView | undefined): FlowNode[] {
     eyebrow: "Gate",
     note: blocked
       ? "Approval is refused while the effective outcome is blocked. Each blocking finding has to be" +
-        " accepted with a justified, expiring waiver before the gate opens."
+        " accepted with a justified, expiring waiver before the gate opens. Where the chain stopped" +
+        " early, a waiver alone will not open it: the run has to be repeated so that the vetters" +
+        " which never looked get to."
       : "The chain no longer objects. A person still has to approve: approval is what publishes the" +
         " snapshot to the git facade, and nothing is served until it happens.",
   });
@@ -299,7 +319,7 @@ export interface FlowHeadline {
 export function snapshotHeadline(nodes: FlowNode[]): FlowHeadline {
   const vetters = nodes.filter((node) => node.kind === "vetter");
   const outcome = nodes.find((node) => node.kind === "outcome");
-  const ran = vetters.filter((node) => node.state !== "not run");
+  const ran = vetters.filter((node) => node.state !== "not run" && node.state !== "not reached");
   const findings = vetters.reduce((total, node) => total + (node.verdict?.findings ?? []).length, 0);
   const waived = vetters.reduce((total, node) => total + (node.waived ?? 0), 0);
 
@@ -326,6 +346,21 @@ export function snapshotHeadline(nodes: FlowNode[]): FlowHeadline {
     return { result: "Blocked", tone: "blocked", detail: "no vetter cleared this snapshot" };
   }
   const node = vetters[stoppedAt]!;
+
+  // A chain that stopped early is the one case where the count of vetters is not the count of
+  // opinions, so the headline says so rather than leaving a reader to infer it from the nodes: a
+  // shorter chain must never read as a cleaner one.
+  const notReached = vetters.filter((candidate) => candidate.state === "not reached").length;
+  if (notReached > 0) {
+    return {
+      result: `Stopped at step ${stoppedAt + 1}`,
+      tone: "blocked",
+      detail:
+        `${node.label} ${stoppedReason(node)}, so ${notReached} later ` +
+        `${plural(notReached, "vetter")} did not run — re-vet to see what they say`,
+    };
+  }
+
   return {
     result: `Blocked at step ${stoppedAt + 1}`,
     tone: "blocked",
@@ -362,22 +397,25 @@ function worstSeverity(severities: (string | undefined)[]): string | undefined {
  *
  * @Requirements GW_VETTING_0029.5
  */
-export function marketplaceHeadline(nodes: FlowNode[]): FlowHeadline {
+export function marketplaceHeadline(nodes: FlowNode[], mode?: string): FlowHeadline {
   const vetters = nodes.filter((node) => node.kind === "setting");
   const off = vetters.filter((node) => node.setting?.enabled !== true);
   const on = vetters.length - off.length;
+  const stops = mode === "stop-after-fail";
+  const what =
+    off.length === 0
+      ? "every configured vetter runs for this marketplace"
+      : off
+          .map(
+            (node) =>
+              `${node.label} off ${node.setting?.source === "GLOBAL" ? "globally" : "for this marketplace"}`,
+          )
+          .join(", ");
   return {
     result: `${on} of ${vetters.length} ${plural(vetters.length, "vetter")} run`,
-    // Never "good": a narrowed chain is a fact for an administrator to weigh, not a pass.
-    tone: off.length === 0 ? "pass" : "idle",
-    detail:
-      off.length === 0
-        ? "every configured vetter runs for this marketplace"
-        : off
-            .map(
-              (node) =>
-                `${node.label} off ${node.setting?.source === "GLOBAL" ? "globally" : "for this marketplace"}`,
-            )
-            .join(", "),
+    // Never "good": a narrowed chain is a fact for an administrator to weigh, not a pass. A chain
+    // that stops early is narrower still, so it cannot read as a pass either.
+    tone: off.length === 0 && !stops ? "pass" : "idle",
+    detail: stops ? `${what} — and the chain stops at the first failure` : what,
   };
 }

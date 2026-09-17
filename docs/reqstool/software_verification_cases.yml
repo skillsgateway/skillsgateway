@@ -2752,3 +2752,93 @@ cases:
       WHEN a marketplace is registered, its sync mode is changed, a vetter is disabled for it and a vetter is disabled globally, and then a registration with a disallowed url scheme, a sync-mode change for an unknown marketplace and a toggle of an unknown vetter are each attempted
       THEN the subscriber receives one delivery per successful action, each naming the marketplace, the acting identity, the time and a content-free description of what changed, the global toggle reports the gateway-wide scope rather than a marketplace, no delivery carries the operator-supplied reason, and none of the three refused actions queues any delivery at all
     revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0032
+    requirement_ids: ["GW_VETTING_0032"]
+    title: The stopping mode runs no vetter after the first blocking failure, and still records one verdict per vetter
+    verification: automated-test
+    description: |
+      GIVEN a marketplace whose chain mode is set to stop after a failure and a snapshot whose content a vetter early in the chain fails
+      WHEN the chain runs against that snapshot
+      THEN no vetter after the failing one has run, the run carries one verdict for every vetter of the chain, and the run's outcome is blocked
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0032.1
+    requirement_ids: ["GW_VETTING_0032.1"]
+    title: The chain mode resolves per marketplace, then globally, then to running every vetter, and names its source
+    verification: automated-test
+    description: |
+      GIVEN a gateway with no chain mode set anywhere, then a global mode, then a mode set for one marketplace alone
+      WHEN the effective chain settings of that marketplace and of a second marketplace are read after each step
+      THEN the resolved mode is running every vetter with no setting recorded, then the global mode for both marketplaces naming the global setting as its source, then the marketplace's own mode for it alone naming the marketplace-scoped setting while the second marketplace still resolves to the global one
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0032.2
+    requirement_ids: ["GW_VETTING_0032.2"]
+    title: A vetter the chain did not reach is recorded in its own state, told apart from a disabled one, and never clears
+    verification: automated-test
+    description: |
+      GIVEN a marketplace whose chain mode is set to stop after a failure, one vetter after the failing one disabled for that marketplace, and a snapshot whose content the first vetter fails
+      WHEN the chain runs and the recorded run is read back
+      THEN the vetters after the failure are recorded as not reached naming the vetter that stopped the chain, the disabled one is still recorded as disabled, and no not-reached verdict counts as clearing evidence for the run
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0032.3
+    requirement_ids: ["GW_VETTING_0032.3"]
+    title: Waiving the finding that stopped the chain does not clear the run, and the snapshot cannot be approved
+    verification: automated-test
+    description: |
+      GIVEN a snapshot whose chain stopped after a failing vetter, leaving later vetters not reached
+      WHEN a waiver is written that covers every finding of the failing verdict and the effective outcome is read, and an approval of the snapshot is attempted
+      THEN the effective outcome is still blocked, the vetters that were not reached are named among the reasons it blocks, the approval is refused, and only after a fresh run that reaches every vetter does the outcome stop being blocked
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0032.4
+    requirement_ids: ["GW_VETTING_0032.4"]
+    title: The chain mode is administrator-only to set and to read, is audited on every change, and records nothing when refused
+    verification: automated-test
+    description: |
+      GIVEN an administrator, a non-administrator holding an approver role, and a marketplace
+      WHEN the non-administrator attempts to read and to set the chain mode, the administrator sets it globally and then for the marketplace, and a mode change naming a marketplace that does not exist is attempted
+      THEN the non-administrator is refused both the read and the write, each successful change writes a ledger entry naming the acting identity, the scope, the new mode and the note, and the refused change writes none
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0033
+    requirement_ids: ["GW_VETTING_0033"]
+    title: An administrator's order is the order the chain runs in, globally and per marketplace
+    verification: automated-test
+    description: |
+      GIVEN a gateway whose vetters run in their configured positions
+      WHEN an administrator sets a different order globally, a marketplace sets an order of its own, and a snapshot of each marketplace is ingested
+      THEN each run records its verdicts in the order that applies to its marketplace, the marketplace's own order wins over the global one, and a marketplace with no order of its own runs the global one
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0033.1
+    requirement_ids: ["GW_VETTING_0033.1"]
+    title: The resolved order is total, drops no vetter, and an unknown or duplicated name is refused and never stored
+    verification: automated-test
+    description: |
+      GIVEN a chain of built-in vetters and one operator-configured external vetter
+      WHEN an administrator sets an order naming only some of them, and then attempts an order naming a vetter that does not exist and an order naming one vetter twice, and a non-administrator attempts to set an order
+      THEN the resolved chain lists the named vetters first in the order given followed by the unnamed ones in their configured positions with ties broken by name, both malformed orders are refused and neither is stored nor audited, the non-administrator is refused, and each accepted change is on the ledger
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0033.2
+    requirement_ids: ["GW_VETTING_0033.2"]
+    title: A run records the mode and the resolved order it used, and changing either changes the recorded identity
+    verification: automated-test
+    description: |
+      GIVEN a marketplace with a default chain mode and order
+      WHEN a snapshot is vetted, the chain mode is changed and the snapshot is re-vetted, and then the order is changed and the snapshot is re-vetted again
+      THEN each run records a chain identity carrying the mode it used and its vetters in the order it used them, the three identities differ from one another, and the marketplace's effective chain reports the resolved mode and the resolved order
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0034
+    requirement_ids: ["GW_VETTING_0034"]
+    title: The portal sets the mode, reorders the chain by keyboard, and shows a chain that stopped early
+    verification: automated-test
+    description: |
+      GIVEN an authenticated administrator session, a marketplace whose vetting chain is shown, and a snapshot whose chain stopped after a failing vetter
+      WHEN the administrator sets the chain mode and moves a vetter with the named movement control reached by keyboard, and then opens the snapshot's chain flow
+      THEN the mode and the order are saved and shown with the source each resolves from, the reordering is operable without a pointer, and the snapshot's flow marks the vetters the run did not reach distinctly and says above the chain that the run stopped early and at which step
+    revision: "0.1.0"

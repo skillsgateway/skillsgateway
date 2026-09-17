@@ -507,6 +507,73 @@ test("the_vetting_chain_is_drawn_as_a_flow_and_a_node_opens_its_evidence", async
 });
 
 /**
+ * The two chain-level controls an administrator has, driven the way an administrator would drive
+ * them, and then the consequence on a snapshot.
+ *
+ * The reordering is operated by keyboard alone — focus the named movement control, press Enter —
+ * because that is the requirement, not an implementation detail: an ordering gesture with no
+ * keyboard equivalent is a control that some of the people who read this console do not have.
+ *
+ * @SVCs SVC_GW_VETTING_0034
+ */
+test("an_admin_sets_the_chain_mode_and_order_and_a_stopped_run_says_so", async ({ page }) => {
+  await login(page, "alice");
+
+  // Registered but not yet ingested: the moment the chain is actually worth configuring, and the
+  // only one at which this can be driven end to end without an approval in between.
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Marketplaces" })
+    .click();
+  const name = uniqueName("chainmode");
+  await page.getByRole("button", { name: "Register marketplace" }).click();
+  await page.getByLabel("Name").fill(name);
+  await page
+    .getByLabel("Clone URL")
+    .fill(process.env.E2E_TAINTED_UPSTREAM_URL ?? "file:///tmp/e2e-tainted");
+  await submitRegister(page);
+  await page.getByRole("link", { name, exact: true }).click();
+
+  // Stop the chain at the first failure for this marketplace.
+  const mode = page.getByRole("group", { name: "When a vetter fails" });
+  await expect(mode).toBeVisible();
+  await mode.getByRole("button", { name: "Stop after a failure" }).click();
+  await expect(mode.getByRole("button", { name: "Stop after a failure" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+
+  // Move the vetter that objects to this content to the front, without a pointer: focus the
+  // named movement control and press Enter. The requirement is the keyboard path, not the arrow.
+  const order = page.getByRole("list", { name: `Vetter order of ${name}` });
+  await order.getByRole("button", { name: "Move prompt-injection up" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(order.getByRole("listitem").first()).toContainText("prompt-injection");
+  await page.getByRole("button", { name: "Save order" }).click();
+  await expect(page.getByRole("button", { name: "Save order" })).toBeDisabled();
+
+  // The first snapshot therefore runs prompt-injection first, and the chain stops there.
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Marketplaces" })
+    .click();
+  await expandMarketplace(page, name);
+  const card = marketplaceRegion(page, name);
+  await card.getByRole("button", { name: `Ingest ${name}` }).click();
+  await expect(card.getByText("held", { exact: true })).toBeVisible();
+
+  await page.getByRole("link", { name, exact: true }).click();
+  const flow = page.getByRole("list", { name: /^Vetting chain of snapshot \d+$/ }).first();
+  // The headline says the chain stopped early and where, so a shorter chain is not read as a
+  // cleaner one, and the vetters it never reached say so on their own nodes.
+  await expect(page.getByText("Stopped at step 1")).toBeVisible();
+  await expect(flow.getByRole("button", { name: /secret-scan, not reached$/ })).toBeVisible();
+
+  // And the gate is shut: a run that stopped early is not a run that found nothing.
+  await expect(flow.getByRole("button", { name: /Approval, closed$/ })).toBeVisible();
+});
+
+/**
  * @SVCs SVC_GW_VETTING_0010
  */
 test("a_finding_is_waived_from_the_review_surface_and_the_waiver_is_listed", async ({ page }) => {

@@ -36,10 +36,16 @@ pointer; the page it points at is where the mechanism is explained.
     [Re-vetting approved content](../guides/re-vetting.md#warn-first-then-enforce).
 
 **Chain identity**
-:   The identity and version of every vetter that produced a chain run,
-    stamped into the run. It is what makes "the same content, re-vetted by a
-    changed chain" a distinguishable event. See
-    [Vetting — the vetter chain](vetting.md).
+:   The identity and version of every vetter that produced a chain run, in the
+    order it ran, together with the chain mode — stamped into the run. It is what
+    makes "the same content, re-vetted by a changed chain" a distinguishable
+    event. See [Vetting — the vetter chain](vetting.md).
+
+**Chain mode**
+:   How far a chain run goes: `run-all`, the default, runs every enabled vetter;
+    `stop-after-fail` stops after the first vetter that still objects. Set by an
+    administrator, per marketplace or globally. See
+    [Stopping the chain after a failure](vetting.md#stopping-the-chain-after-a-failure).
 
 **Chain run**
 :   One execution of the vetting chain against one snapshot, recorded with its
@@ -69,8 +75,16 @@ pointer; the page it points at is where the mechanism is explained.
 **Effective outcome**
 :   What actually gates an approval: the recorded chain run with the waivers
     active at that instant layered over it, computed on every read.
-    `CLEAR_WITH_WAIVERS` is deliberately a different word from `CLEAR`. See
+    `CLEAR_WITH_WAIVERS` is deliberately a different word from `CLEAR`. A run
+    carrying a *not reached* verdict is blocked whatever is waived. See
     [The effective outcome](vetting.md#the-effective-outcome).
+
+**Not reached**
+:   The verdict recorded for a vetter the chain stopped short of. Distinct from a
+    vetter an administrator switched off, and from one with no verdict at all: it
+    neither clears nor blocks on its own, but a run carrying one is blocked until
+    the chain has been run again. See
+    [Verdict states](vetting.md#verdict-states).
 
 **Estate**
 :   Everything the gateway governs that is created at runtime rather than coded:

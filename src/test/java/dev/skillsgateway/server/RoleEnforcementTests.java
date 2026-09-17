@@ -82,6 +82,8 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             // The administrative vetter on/off switch (GW_VETTING_0029): admin-only, so it walks with
             // the role-gated mutations and is denied to every non-admin.
             "PUT /api/vetting/vetters/{name}/toggle",
+            "PUT /api/vetting/chain-mode",
+            "PUT /api/vetting/chain-order",
             // Reconciling the read-only forge mirror (GW_FACADE_0027): admin-only for the same reason its
             // drift report is, and the route that actually exercises the push credential — if the
             // report is reserved, the button that acts on it cannot be less so.
@@ -128,6 +130,8 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             // The vetter settings are admin-only, not an auditor read (GW_VETTING_0029): the switch that
             // governs the vetting chain is not shown to marketplace-scoped approvers or auditors.
             "GET /api/vetting/vetter-toggles",
+            "GET /api/vetting/chain-settings",
+            "GET /api/marketplaces/{name}/vetting-chain-settings",
             // A marketplace's effective chain is the same settings resolved (GW_VETTING_0029.5), so it
             // sits behind the same administrator check: reporting which vetters an approver's
             // own marketplace runs is reporting the settings themselves.
@@ -326,11 +330,14 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             if (route.equals("GET /api/roles")
                     || route.equals("GET /api/tokens/machine")
                     || route.equals("GET /api/vetting/vetter-toggles")
+                    || route.equals("GET /api/vetting/chain-settings")
                     || route.equals("GET /api/marketplaces/{name}/vetting-chain")
+                    || route.equals("GET /api/marketplaces/{name}/vetting-chain-settings")
                     || route.equals("GET /api/mirror/drift")) {
                 // Grant administration (GW_AUTH_0013), the machine-credential listing (GW_AUTH_0023), the
-                // vetter settings (GW_VETTING_0029) and the mirror's drift report (GW_FACADE_0023) are
-                // admin-only, not auditor reads.
+                // vetter settings (GW_VETTING_0029), the chain mode and order (GW_VETTING_0032,
+                // GW_VETTING_0033) and the mirror's drift report (GW_FACADE_0023) are admin-only,
+                // not auditor reads.
                 continue;
             }
             mockMvc.perform(request(route).with(carol)).andExpect(status().isOk());

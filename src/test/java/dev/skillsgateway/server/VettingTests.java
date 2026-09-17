@@ -81,6 +81,9 @@ class VettingTests extends AbstractGatewayTest {
     @Autowired
     private dev.skillsgateway.server.vetting.VetterToggleService vetterToggleService;
 
+    @Autowired
+    private dev.skillsgateway.server.vetting.VettingChainSettingsService chainSettingsService;
+
     @Test
     @SVCs({"SVC_GW_VETTING_0001"})
     void ingestionRecordsAChainRunWithAVerdictPerVetter() throws Exception {
@@ -427,6 +430,7 @@ class VettingTests extends AbstractGatewayTest {
                 webhookService,
                 waiverService,
                 vetterToggleService,
+                chainSettingsService,
                 properties);
     }
 

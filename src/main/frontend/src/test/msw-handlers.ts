@@ -402,6 +402,82 @@ export const disabledAndPendingVetting: Schemas["VettingView"] = {
   ],
 };
 
+/**
+ * A run the chain stopped after the first failure: one FAIL, and the vetters after it recorded as
+ * never reached. The outcome is blocked and stays blocked until the chain is run again.
+ */
+export const shortCircuitedVetting: Schemas["VettingView"] = {
+  ...blockedVetting,
+  outcome: "BLOCKED",
+  recordedOutcome: "BLOCKED",
+  run: {
+    ...blockedVetting.run!,
+    chain: "secret-scan@3,prompt-injection@1,license-scan@1;mode=stop-after-fail",
+    verdicts: [
+      ...blockedVetting.run!.verdicts!.slice(0, 1),
+      {
+        verdictId: 31,
+        vetter: "prompt-injection",
+        position: 1,
+        state: "NOT_REACHED",
+        detail: "not run: the chain stopped at 'secret-scan'",
+        findings: [
+          {
+            id: "vetter-not-reached",
+            severity: "INFO",
+            location: "prompt-injection",
+            message: "the chain stopped at 'secret-scan' and did not reach vetter 'prompt-injection'",
+          },
+        ],
+      },
+      {
+        verdictId: 32,
+        vetter: "license-scan",
+        position: 2,
+        state: "NOT_REACHED",
+        detail: "not run: the chain stopped at 'secret-scan'",
+        findings: [
+          {
+            id: "vetter-not-reached",
+            severity: "INFO",
+            location: "license-scan",
+            message: "the chain stopped at 'secret-scan' and did not reach vetter 'license-scan'",
+          },
+        ],
+      },
+    ],
+  },
+  vetters: [
+    ...blockedVetting.vetters!.slice(0, 1),
+    { name: "prompt-injection", order: 200, description: "Pattern heuristics over instructions.", version: "1" },
+    { name: "license-scan", order: 300, description: "SPDX headers.", version: "1" },
+  ],
+};
+
+/** A marketplace running every vetter in its configured order, with nothing set anywhere. */
+export const chainSettingsDefault: Schemas["ChainSettingsView"] = {
+  mode: "run-all",
+  modeSource: "DEFAULT",
+  order: ["secret-scan", "prompt-injection", "license-scan"],
+  orderOverride: [],
+  orderSource: "DEFAULT",
+};
+
+/** The same marketplace, stopped early and reordered by an administrator. */
+export const chainSettingsStopping: Schemas["ChainSettingsView"] = {
+  mode: "stop-after-fail",
+  modeSource: "MARKETPLACE",
+  modeReason: "the external reviewer is billed per call",
+  modeUpdatedBy: "alice",
+  modeUpdatedAt: "2026-09-10T09:00:00Z",
+  order: ["prompt-injection", "secret-scan", "license-scan"],
+  orderOverride: ["prompt-injection", "secret-scan"],
+  orderSource: "MARKETPLACE",
+  orderReason: "cheapest first",
+  orderUpdatedBy: "alice",
+  orderUpdatedAt: "2026-09-10T09:01:00Z",
+};
+
 /** A marketplace's effective chain: one default, one global setting, one switched off here. */
 export const marketplaceChain: Schemas["ChainVetterView"][] = [
   {
@@ -658,6 +734,27 @@ export const handlers = [
   ),
   http.get("/api/marketplaces/:name/waivers", () => HttpResponse.json(waivedVetting.waivers)),
   http.get("/api/marketplaces/:name/vetting-chain", () => HttpResponse.json(marketplaceChain)),
+  http.get("/api/marketplaces/:name/vetting-chain-settings", () =>
+    HttpResponse.json(chainSettingsDefault),
+  ),
+  http.put("/api/vetting/chain-mode", () =>
+    HttpResponse.json<Schemas["ChainModeSetting"]>({
+      id: 1,
+      marketplaceId: 1,
+      mode: "stop-after-fail",
+      updatedBy: "alice",
+      updatedAt: "2026-09-10T09:00:00Z",
+    }),
+  ),
+  http.put("/api/vetting/chain-order", () =>
+    HttpResponse.json<Schemas["ChainOrderSetting"]>({
+      id: 1,
+      marketplaceId: 1,
+      vetters: ["prompt-injection", "secret-scan", "license-scan"],
+      updatedBy: "alice",
+      updatedAt: "2026-09-10T09:01:00Z",
+    }),
+  ),
   http.put("/api/vetting/vetters/:name/toggle", ({ params }) =>
     HttpResponse.json<Schemas["VetterToggle"]>({
       id: 1,

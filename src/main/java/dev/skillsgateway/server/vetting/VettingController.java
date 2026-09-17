@@ -114,7 +114,7 @@ public class VettingController {
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
     public VettingView vetting(@PathVariable long id) {
         Snapshot snapshot = snapshotRepository.findById(id).orElseThrow(() -> new SnapshotNotFoundException(id));
-        List<VetterView> vetters = vettingService.vetters().stream()
+        List<VetterView> vetters = vettingService.vetters(snapshot.marketplaceId()).stream()
                 .map(vetter -> new VetterView(
                         vetter.name(),
                         vetter.order(),

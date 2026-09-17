@@ -40,7 +40,23 @@ public enum VerdictState {
      * An administrator disabled this vetter for the snapshot's marketplace (GW_VETTING_0029.2), so the
      * chain recorded this in its place instead of running it. Neither clears nor blocks.
      */
-    DISABLED;
+    DISABLED,
+
+    /**
+     * The chain had already stopped when it got here (GW_VETTING_0032.2): a vetter before this one
+     * failed and the marketplace's chain mode is {@code stop-after-fail}, so this vetter was not
+     * run.
+     *
+     * <p>Deliberately not {@link #DISABLED}. Both are absences rather than conclusions and both
+     * neither clear nor block on their own, but one records a standing administrative decision and
+     * the other records a run that ran out of road; they have different remedies, and the ledger
+     * has to be able to tell them apart.
+     *
+     * <p>The consequence for the run is not on this state but on the effective outcome: a run
+     * carrying any {@code NOT_REACHED} verdict is blocked whatever the waivers say (GW_VETTING_0032.3),
+     * because the vetters it names never looked at the content. See {@link WaiverEvaluation}.
+     */
+    NOT_REACHED;
 
     /** Storage form: the lower-case name, matching the {@code vetting_verdicts.state} check. */
     public String stored() {
@@ -57,13 +73,17 @@ public enum VerdictState {
     }
 
     /**
-     * Whether this state blocks the chain. Everything that is not clearing blocks, with the one
-     * exception of {@link #DISABLED}: an administrator switching a vetter off is a deliberate,
-     * audited act, not an unanswered or broken verdict, so it must not fail the chain closed the
-     * way a timeout or a crash does (GW_VETTING_0029.3). Positive clearing evidence is still required
-     * elsewhere in the run — see {@link VettingChain#aggregate}.
+     * Whether this state blocks the chain. Everything that is not clearing blocks, with two
+     * exceptions: {@link #DISABLED}, because an administrator switching a vetter off is a
+     * deliberate, audited act rather than an unanswered or broken verdict and must not fail the
+     * chain closed the way a timeout or a crash does (GW_VETTING_0029.3); and {@link #NOT_REACHED},
+     * because a vetter the chain stopped short of did not object to anything either
+     * (GW_VETTING_0032.2). Neither is a licence to clear: positive clearing evidence is still
+     * required elsewhere in the run (see {@link VettingChain#aggregate}), and a run carrying a
+     * {@code NOT_REACHED} verdict is blocked outright at the effective outcome, which is the one
+     * that gates approval (see {@link WaiverEvaluation}).
      */
     public boolean blocking() {
-        return this != DISABLED && !clearing();
+        return this != DISABLED && this != NOT_REACHED && !clearing();
     }
 }

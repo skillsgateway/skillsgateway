@@ -64,6 +64,9 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
     private dev.skillsgateway.server.vetting.VetterToggleService vetterToggleService;
 
     @Autowired
+    private dev.skillsgateway.server.vetting.VettingChainSettingsService chainSettingsService;
+
+    @Autowired
     private dev.skillsgateway.server.vetting.WaiverService waiverService;
 
     private StubEndpoint endpoint;
@@ -292,6 +295,7 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
                 webhookService,
                 waiverService,
                 vetterToggleService,
+                chainSettingsService,
                 properties);
     }
 

@@ -18,6 +18,8 @@ export type VettingVerdict = components["schemas"]["VerdictView"];
 export type VettingFinding = components["schemas"]["Finding"];
 export type VetterInfo = components["schemas"]["VetterView"];
 export type ChainVetter = components["schemas"]["ChainVetterView"];
+export type ChainSettings = components["schemas"]["ChainSettingsView"];
+export type ChainMode = NonNullable<ChainSettings["mode"]>;
 export type Waiver = components["schemas"]["WaiverView"];
 export type WaiverSuppression = components["schemas"]["Suppression"];
 export type UncoveredFinding = components["schemas"]["UncoveredFinding"];
@@ -240,6 +242,74 @@ export function useToggleVetter() {
       ),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["marketplace-vetting-chain"] }),
   });
+}
+
+/**
+ * How far the chain runs for one marketplace and the order it runs in, each with the setting that
+ * decided it. A sibling of the chain read rather than part of it: these are properties of the
+ * chain, not of any one vetter.
+ *
+ * @Requirements GW_VETTING_0034
+ */
+export function useMarketplaceChainSettings(marketplace: string | null) {
+  return useQuery({
+    queryKey: ["marketplace-chain-settings", marketplace],
+    queryFn: () =>
+      api<ChainSettings>(
+        `/api/marketplaces/${encodeURIComponent(marketplace ?? "")}/vetting-chain-settings`,
+      ),
+    enabled: marketplace !== null,
+  });
+}
+
+/**
+ * Set how far the chain runs for one marketplace. Administrator-only at the server, audited there
+ * with the scope, the new mode and the reason.
+ *
+ * @Requirements GW_VETTING_0034
+ */
+export function useSetChainMode() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: { mode: ChainMode; marketplace: string; reason?: string }) =>
+      api<components["schemas"]["ChainModeSetting"]>("/api/vetting/chain-mode", {
+        method: "PUT",
+        body: JSON.stringify({
+          mode: request.mode,
+          marketplace: request.marketplace,
+          ...(request.reason ? { reason: request.reason } : {}),
+        }),
+      }),
+    onSuccess: () => invalidateChain(queryClient),
+  });
+}
+
+/**
+ * Set the order the vetters run in for one marketplace. The whole arrangement is sent at once, so
+ * one intended reordering is one audited change rather than one per movement.
+ *
+ * @Requirements GW_VETTING_0034
+ */
+export function useSetChainOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: { vetters: string[]; marketplace: string; reason?: string }) =>
+      api<components["schemas"]["ChainOrderSetting"]>("/api/vetting/chain-order", {
+        method: "PUT",
+        body: JSON.stringify({
+          vetters: request.vetters,
+          marketplace: request.marketplace,
+          ...(request.reason ? { reason: request.reason } : {}),
+        }),
+      }),
+    onSuccess: () => invalidateChain(queryClient),
+  });
+}
+
+/** Both chain reads move together: a mode or an order change reorders one and re-sources the other. */
+function invalidateChain(queryClient: ReturnType<typeof useQueryClient>) {
+  void queryClient.invalidateQueries({ queryKey: ["marketplace-vetting-chain"] });
+  void queryClient.invalidateQueries({ queryKey: ["marketplace-chain-settings"] });
 }
 
 /**

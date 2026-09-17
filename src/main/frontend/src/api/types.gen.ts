@@ -332,6 +332,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/marketplaces/{name}/vetting-chain-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A marketplace's effective chain mode and vetter order
+         * @description How far the chain runs for this marketplace and the order it runs in, with which setting decided each — the marketplace-scoped setting, the global setting, or the absence of any setting. The resolution is the chain's own, so it cannot disagree with what actually runs. Administrator-only.
+         */
+        get: operations["chainSettings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/marketplaces/{name}/waivers": {
         parameters: {
             query?: never;
@@ -1072,6 +1092,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/vetting/chain-mode": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set how far the vetting chain runs
+         * @description Sets the chain mode, globally or for one named marketplace, and records the change on the audit ledger. Under 'stop-after-fail' the chain stops after the first vetter whose verdict fails; the vetters after it are recorded as not reached rather than run, and a run carrying such a verdict is blocked whatever waivers exist — accepting the finding that stopped the chain takes effect on the next run, not on this one. 'run-all' is the default and runs every enabled vetter. A per-marketplace setting overrides the global one. Administrator-only.
+         */
+        put: operations["setMode"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vetting/chain-order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set the order the vetters run in
+         * @description Sets the vetter order, globally or for one named marketplace, and records the change on the audit ledger. The order need not name every vetter: the ones it does not name run after those it does, in their configured positions with ties broken by name, so an order can never drop a vetter by omission. A name no configured vetter carries, and a name given twice, are refused rather than stored. Order is only observable when the chain mode stops it early. Administrator-only.
+         */
+        put: operations["setOrder"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vetting/chain-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List chain mode and vetter order settings
+         * @description Every administrative chain-mode and vetter-order setting — the global settings and the per-marketplace overrides. Administrator-only: the settings that decide how much evidence stands behind an approval are not shown to marketplace-scoped approvers.
+         */
+        get: operations["settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/vetting/vetter-toggles": {
         parameters: {
             query?: never;
@@ -1579,6 +1659,125 @@ export interface components {
             generatedAt?: string;
             /** @description Catalog commit SHA */
             sha?: string;
+        };
+        /** @description Set how far the vetting chain runs, globally or for one marketplace */
+        ChainModeRequest: {
+            /** @description Marketplace to scope the setting to; omit for the global setting */
+            marketplace?: string;
+            /**
+             * @description How far the chain should run under this setting
+             * @enum {string}
+             */
+            mode?: "run-all" | "stop-after-fail";
+            /** @description Optional note recorded with the change and on the audit ledger */
+            reason?: string;
+        };
+        /** @description An administrative chain-mode setting */
+        ChainModeSetting: {
+            /**
+             * Format: int64
+             * @description Setting id
+             */
+            id?: number;
+            /**
+             * Format: int64
+             * @description Marketplace this setting is scoped to, or null for the global setting
+             */
+            marketplaceId?: number;
+            /**
+             * @description How far the chain runs under this setting
+             * @enum {string}
+             */
+            mode?: "run-all" | "stop-after-fail";
+            /** @description The administrator's note for the setting, or null */
+            reason?: string;
+            /**
+             * Format: date-time
+             * @description When it was last set
+             */
+            updatedAt?: string;
+            /** @description Identity that last set it */
+            updatedBy?: string;
+        };
+        /** @description Set the order the vetters run in, globally or for one marketplace */
+        ChainOrderRequest: {
+            /** @description Marketplace to scope the setting to; omit for the global setting */
+            marketplace?: string;
+            /** @description Optional note recorded with the change and on the audit ledger */
+            reason?: string;
+            /** @description Vetter names, in the order they should run */
+            vetters?: string[];
+        };
+        /** @description An administrative vetter-order setting */
+        ChainOrderSetting: {
+            /**
+             * Format: int64
+             * @description Setting id
+             */
+            id?: number;
+            /**
+             * Format: int64
+             * @description Marketplace this setting is scoped to, or null for the global setting
+             */
+            marketplaceId?: number;
+            /** @description The administrator's note for the setting, or null */
+            reason?: string;
+            /**
+             * Format: date-time
+             * @description When it was last set
+             */
+            updatedAt?: string;
+            /** @description Identity that last set it */
+            updatedBy?: string;
+            /** @description The vetter names, in the order the administrator arranged them */
+            vetters?: string[];
+        };
+        /** @description Every administrative chain mode and vetter order setting */
+        ChainSettings: {
+            /** @description The chain mode settings */
+            modes?: components["schemas"]["ChainModeSetting"][];
+            /** @description The vetter order settings */
+            orders?: components["schemas"]["ChainOrderSetting"][];
+        };
+        /** @description A marketplace's effective vetting chain settings */
+        ChainSettingsView: {
+            /**
+             * @description How far the chain runs for this marketplace
+             * @enum {string}
+             */
+            mode?: "run-all" | "stop-after-fail";
+            /** @description The note recorded with the deciding mode setting, or null for the default */
+            modeReason?: string;
+            /**
+             * @description Which setting decided the mode
+             * @enum {string}
+             */
+            modeSource?: "MARKETPLACE" | "GLOBAL" | "DEFAULT";
+            /**
+             * Format: date-time
+             * @description When the mode was last set, or null for the default
+             */
+            modeUpdatedAt?: string;
+            /** @description The administrator who last set the mode, or null for the default */
+            modeUpdatedBy?: string;
+            /** @description Every configured vetter, in the order this marketplace runs them */
+            order?: string[];
+            /** @description The arrangement an administrator set, or empty when none is set */
+            orderOverride?: string[];
+            /** @description The note recorded with the deciding order setting, or null for the default */
+            orderReason?: string;
+            /**
+             * @description Which setting decided the order
+             * @enum {string}
+             */
+            orderSource?: "MARKETPLACE" | "GLOBAL" | "DEFAULT";
+            /**
+             * Format: date-time
+             * @description When the order was last set, or null for the default
+             */
+            orderUpdatedAt?: string;
+            /** @description The administrator who last set the order, or null for the default */
+            orderUpdatedBy?: string;
         };
         /** @description A vetter in a marketplace's effective vetting chain */
         ChainVetterView: {
@@ -3095,7 +3294,7 @@ export interface components {
              * @description The vetter's conclusion
              * @enum {string}
              */
-            state?: "PASS" | "WARN" | "FAIL" | "ERROR" | "PENDING" | "DISABLED";
+            state?: "PASS" | "WARN" | "FAIL" | "ERROR" | "PENDING" | "DISABLED" | "NOT_REACHED";
             /**
              * Format: int64
              * @description Verdict id
@@ -3920,6 +4119,46 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ChainVetterView"][];
+                };
+            };
+        };
+    };
+    chainSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The effective chain settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChainSettingsView"];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChainSettingsView"];
+                };
+            };
+            /** @description Named marketplace not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChainSettingsView"];
                 };
             };
         };
@@ -5335,6 +5574,137 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+        };
+    };
+    setMode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChainModeRequest"];
+            };
+        };
+        responses: {
+            /** @description The setting after the change */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChainModeSetting"];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChainModeSetting"];
+                };
+            };
+            /** @description Named marketplace not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChainModeSetting"];
+                };
+            };
+            /** @description Unknown or omitted mode */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChainModeSetting"];
+                };
+            };
+        };
+    };
+    setOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChainOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description The setting after the change */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChainOrderSetting"];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChainOrderSetting"];
+                };
+            };
+            /** @description Named marketplace not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChainOrderSetting"];
+                };
+            };
+            /** @description Empty order, unknown vetter, or a vetter named twice */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChainOrderSetting"];
+                };
+            };
+        };
+    };
+    settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The chain settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChainSettings"];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChainSettings"];
                 };
             };
         };

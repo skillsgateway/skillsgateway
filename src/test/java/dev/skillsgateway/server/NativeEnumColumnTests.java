@@ -59,7 +59,7 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
                     "vetting_verdicts",
                     "state",
                     "vetting_verdict_state",
-                    List.of("pass", "warn", "fail", "error", "pending", "disabled")),
+                    List.of("pass", "warn", "fail", "error", "pending", "disabled", "not_reached")),
             new EnumColumn(
                     "vetting_findings",
                     "severity",

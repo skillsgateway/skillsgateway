@@ -4,6 +4,7 @@ import {
   ChevronRight,
   CircleAlert,
   CircleCheck,
+  CircleDashed,
   CircleHelp,
   CircleSlash,
   PackageOpen,
@@ -60,6 +61,9 @@ function NodeIcon({ node }: { node: FlowNode }) {
   if (node.tone === "blocked") return <CircleAlert className={className} aria-hidden />;
   if (node.state === "skipped" || node.state === "disabled")
     return <CircleSlash className={className} aria-hidden />;
+  // Its own icon, not the disabled one: a vetter nobody switched off and that still did not run is
+  // a different fact, and the drawing has to be readable as such without opening the node.
+  if (node.state === "not reached") return <CircleDashed className={className} aria-hidden />;
   return <CircleHelp className={className} aria-hidden />;
 }
 
@@ -126,6 +130,15 @@ function NodeDetail({
         {node.verdict?.detail ? (
           <p className="text-sm text-muted-foreground">{node.verdict.detail}</p>
         ) : null}
+        {node.state === "not reached" ? (
+          <p className="text-sm text-muted-foreground">
+            The chain stopped before this vetter and it was not run, so nothing here has been
+            examined by it. This is not a clean result and it is not a failure — it is an absence,
+            and it is why the run as a whole stays blocked until the chain is run again. Accepting
+            the finding that stopped the chain lets the next run get this far; it does not stand in
+            for the verdict this vetter never gave.
+          </p>
+        ) : null}
         {node.state === "skipped" ? (
           <p className="text-sm text-muted-foreground">
             An administrator switched this vetter off for this marketplace, so the chain recorded
@@ -154,12 +167,14 @@ function NodeDetail({
   if (node.kind === "outcome") {
     const blocking = node.outcome?.blocking ?? [];
     const uncovered = node.outcome?.uncovered ?? [];
+    const notReached = node.outcome?.notReached ?? [];
     return (
       <div className="space-y-3 text-sm">
         <p className="text-muted-foreground">
           The outcome is recomputed from the run and the waivers active right now: every vetter
           has to clear, a skipped one counts as neither clearing nor blocking, and at least one
-          vetter must have cleared for the chain to clear at all.
+          vetter must have cleared for the chain to clear at all. A run the chain stopped early is
+          blocked outright, because the vetters it did not reach have said nothing either way.
         </p>
         {node.outcome?.recordedOutcome ? (
           <p className="text-muted-foreground">
@@ -174,6 +189,14 @@ function NodeDetail({
         ) : (
           <p className="text-muted-foreground">No vetter is objecting.</p>
         )}
+        {notReached.length > 0 ? (
+          <p>
+            The chain stopped early, so{" "}
+            <span className="font-mono text-xs">{notReached.join(", ")}</span> never looked at this
+            snapshot. A run missing their verdicts is blocked whatever is waived; re-vet to get a
+            complete answer.
+          </p>
+        ) : null}
         {uncovered.length > 0 ? (
           <div className="space-y-1">
             <p>Approval is blocked until each of these is waived:</p>

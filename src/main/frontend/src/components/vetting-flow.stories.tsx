@@ -6,6 +6,7 @@ import {
   clearVetting,
   disabledAndPendingVetting,
   marketplaceChain,
+  shortCircuitedVetting,
   waivedVetting,
 } from "@/test/msw-handlers";
 import { marketplaceFlow, marketplaceHeadline, snapshotFlow, snapshotHeadline } from "@/lib/vetting-flow";
@@ -93,6 +94,55 @@ export const SkippedAndPending: Story = {
     await expect(canvas.getByText("skipped")).toBeInTheDocument();
     await expect(canvas.getByText("pending")).toBeInTheDocument();
     await expect(canvas.getByText("external")).toBeInTheDocument();
+  },
+};
+
+/**
+ * The chain stopped after the first failure. The two vetters behind it never looked, and the
+ * drawing has to say so loudly enough that a shorter chain is not mistaken for a cleaner one.
+ */
+export const ShortCircuited: Story = {
+  args: snapshotStory(shortCircuitedVetting),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    // The headline leads with the fact that costs the reviewer something.
+    await expect(canvas.getByText("Stopped at step 1")).toBeInTheDocument();
+    await expect(
+      canvas.getByText(
+        "· secret-scan found 1 critical finding, so 2 later vetters did not run — re-vet to see what they say",
+      ),
+    ).toBeInTheDocument();
+    // Each unreached vetter carries the state as a word on its own node, told apart from a
+    // vetter an administrator switched off and from one with no verdict at all.
+    await expect(
+      canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: prompt-injection, not reached` }),
+    ).toBeInTheDocument();
+    await expect(
+      canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: license-scan, not reached` }),
+    ).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: Approval, closed` })).toBeInTheDocument();
+  },
+};
+
+/** The same run in the portal's dark theme. */
+export const ShortCircuitedDark: Story = {
+  args: snapshotStory(shortCircuitedVetting),
+  parameters: { theme: "dark" },
+};
+
+/** The unreached node's own evidence: why it did not run, and what that costs. */
+export const ShortCircuitedDetail: Story = {
+  args: snapshotStory(shortCircuitedVetting),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    await step("open the first vetter the chain never reached", async () => {
+      await userEvent.click(
+        canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: prompt-injection, not reached` }),
+      );
+    });
+    const dialog = within(await within(document.body).findByRole("dialog"));
+    await expect(dialog.getByText(/it is an absence/)).toBeInTheDocument();
+    await expect(dialog.getByText(/does not stand in/)).toBeInTheDocument();
   },
 };
 
