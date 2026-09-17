@@ -1,9 +1,23 @@
 # Read automatically by oasdiff run from the repository root, and by the oasdiff
 # step in .github/workflows/api-contract.yml.
 #
-# The listed file raises the two response-side removals oasdiff rates WARN to
-# ERR. They are warnings only because the field or header is not in a `required`
-# array, and no response schema this gateway serves marks anything required — so
-# under `fail-on: ERR` every response-field removal passed the gate (#216), the
-# one thing the additive promise most obviously forbids.
+# The listed file makes oasdiff's severities agree with the promise the contract
+# actually makes (docs/manual/reference/compatibility.md, "The API contract").
+# It moves in both directions, and each entry is a statement about that promise
+# rather than about the tool:
+#
+# - The two response-side removals are raised from WARN to ERR. They are warnings
+#   only because the field or header is not in a `required` array, and no response
+#   schema this gateway serves marks anything required — so under `fail-on: ERR`
+#   every response-field removal passed the gate (#216), the one thing the
+#   additive promise most obviously forbids.
+# - A new enum value in a response is lowered from ERR to WARN. The contract lists
+#   "a new endpoint, a new optional field, a new enum value" as additive and says
+#   so twice, and the estate has already shipped one as a minor: `DISABLED` joined
+#   the verdict states in #228. oasdiff rates it ERR on the general worry that a
+#   client may have compiled a closed enum; this gateway's answer is the one the
+#   document gives — a consumer must tolerate a value it does not recognise, the
+#   same rule webhook receivers are held to for unrecognised keys. Lowering it to
+#   WARN keeps it visible in the diff without declaring a major for a new verdict
+#   state. Removing or renaming an enum value stays an error.
 severity-levels: .oasdiff-severity-levels.txt

@@ -184,6 +184,21 @@ grow too.
 | Removing or renaming an event, a delivery body field, or a transport header | **No.** |
 | Gating a route that was reachable without the role it should always have required | **Additive to the document, narrowing in fact.** See below. |
 
+!!! note "A new enum value obliges the consumer, not the gateway"
+
+    The table says a new enum value is additive, and it is — but only because the
+    obligation sits on the other side: a client must tolerate a value it does not
+    recognise, the same rule a webhook receiver is held to for keys it does not
+    know. A verdict state, a snapshot state or a credential kind can join its set
+    in a minor, and a consumer that compiled the set closed will see something it
+    has no branch for. Render it, log it, ignore it — do not fail on it.
+
+    The diff tool disagrees by default, and is configured to the contract's answer
+    rather than the other way round: `response-property-enum-value-added` is
+    lowered to a warning in `.oasdiff-severity-levels.txt`, so the addition still
+    appears in the diff without declaring a major. *Removing* or renaming a value
+    remains a break, because nothing on the consumer's side can absorb one.
+
 !!! note "Closing a security gap narrows a route without moving the prefix"
 
     A route that was readable by callers who should never have reached it is
