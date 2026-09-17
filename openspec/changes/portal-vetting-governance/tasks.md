@@ -58,7 +58,7 @@
 - [x] 9.2 Component tests for the selection, the confirm-before-apply rule and the partial-failure rendering
 - [x] 9.3 MSW handlers for the three new endpoints
 - [x] 9.4 Playwright spec with `@SVCs`: set a global default, then clear a marketplace's override
-- [ ] 9.5 Run `/impeccable audit`, `/impeccable harden` and `/impeccable critique` on the new page and fix what they flag
+- [x] 9.5 Run `/impeccable audit`, `/impeccable harden` and `/impeccable critique` on the new page and fix what they flag
 
 ## 10. Documentation
 
@@ -69,8 +69,8 @@
 
 ## 11. Gates and evidence
 
-- [ ] 11.1 `./mvnw clean verify`
-- [ ] 11.2 `pnpm test:stories` and `pnpm e2e`
-- [ ] 11.3 `reqstool status local -p docs/reqstool` ends PASS
-- [ ] 11.4 `openspec validate --all --strict` and `mkdocs build --strict`
-- [ ] 11.5 Write `openspec/changes/portal-vetting-governance/evidence.md` from one final fresh run
+- [x] 11.1 `./mvnw clean verify`
+- [x] 11.2 `pnpm test:stories` and `pnpm e2e`
+- [x] 11.3 `reqstool status local -p docs/reqstool` ends PASS
+- [x] 11.4 `openspec validate --all --strict` and `mkdocs build --strict`
+- [x] 11.5 Write `openspec/changes/portal-vetting-governance/evidence.md` from one final fresh run
