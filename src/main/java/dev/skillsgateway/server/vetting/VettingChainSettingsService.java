@@ -37,6 +37,12 @@ public class VettingChainSettingsService {
     /** Ledger event when the vetter order is set (GW_VETTING_0033.1). */
     public static final String EVENT_ORDER_SET = "vetting-chain-order-set";
 
+    /** Ledger event when a marketplace's mode override is removed (GW_VETTING_0036). */
+    public static final String EVENT_MODE_CLEARED = "vetting-chain-mode-cleared";
+
+    /** Ledger event when a marketplace's order override is removed (GW_VETTING_0036). */
+    public static final String EVENT_ORDER_CLEARED = "vetting-chain-order-cleared";
+
     /** The ledger's marketplace column is NOT NULL; a gateway-wide scope uses this placeholder. */
     private static final String GLOBAL_SCOPE = "-";
 
@@ -103,6 +109,16 @@ public class VettingChainSettingsService {
      */
     @Requirements({"GW_VETTING_0032.1", "GW_VETTING_0032.4"})
     public ChainModeSetting setMode(ChainMode mode, String marketplaceName, String reason, String principal) {
+        return setMode(mode, marketplaceName, reason, principal, null);
+    }
+
+    /**
+     * The same, with the correlation id of the estate-wide act this change is one marketplace of
+     * (GW_VETTING_0037). Null for an ordinary single-scope change.
+     */
+    @Requirements({"GW_VETTING_0032.1", "GW_VETTING_0032.4", "GW_VETTING_0037"})
+    public ChainModeSetting setMode(
+            ChainMode mode, String marketplaceName, String reason, String principal, String correlationId) {
         if (mode == null) {
             throw new ResponseStatusException(
                     HttpStatus.UNPROCESSABLE_ENTITY,
@@ -115,7 +131,12 @@ public class VettingChainSettingsService {
                 scope.ledgerMarketplace(),
                 EVENT_MODE_SET,
                 null,
-                "mode=%s scope=%s%s".formatted(mode.stored(), scope.description(), reasonSuffix(reason)));
+                "mode=%s scope=%s%s%s"
+                        .formatted(
+                                mode.stored(),
+                                scope.description(),
+                                reasonSuffix(reason),
+                                correlationSuffix(correlationId)));
         return setting;
     }
 
@@ -126,6 +147,13 @@ public class VettingChainSettingsService {
      */
     @Requirements({"GW_VETTING_0033", "GW_VETTING_0033.1"})
     public ChainOrderSetting setOrder(List<String> requested, String marketplaceName, String reason, String principal) {
+        return setOrder(requested, marketplaceName, reason, principal, null);
+    }
+
+    /** The same, carrying the correlation id of an estate-wide act (GW_VETTING_0037). */
+    @Requirements({"GW_VETTING_0033", "GW_VETTING_0033.1", "GW_VETTING_0037"})
+    public ChainOrderSetting setOrder(
+            List<String> requested, String marketplaceName, String reason, String principal, String correlationId) {
         List<String> order = validateOrder(requested);
         Scope scope = scopeOf(marketplaceName);
         ChainOrderSetting setting = repository.setOrder(scope.marketplaceId(), order, blankToNull(reason), principal);
@@ -134,8 +162,78 @@ public class VettingChainSettingsService {
                 scope.ledgerMarketplace(),
                 EVENT_ORDER_SET,
                 null,
-                "order=%s scope=%s%s".formatted(String.join(",", order), scope.description(), reasonSuffix(reason)));
+                "order=%s scope=%s%s%s"
+                        .formatted(
+                                String.join(",", order),
+                                scope.description(),
+                                reasonSuffix(reason),
+                                correlationSuffix(correlationId)));
         return setting;
+    }
+
+    /**
+     * Removes a marketplace's mode override so the marketplace resolves from the global setting or
+     * the default again (GW_VETTING_0036). Answers whether anything was there to remove; a scope
+     * that had no override writes nothing and is not audited — a record that nothing happened is
+     * noise an estate-wide clear would generate by the dozen.
+     */
+    @Requirements({"GW_VETTING_0036"})
+    public boolean clearMode(String marketplaceName, String reason, String principal, String correlationId) {
+        Scope scope = requireMarketplaceScope(marketplaceName);
+        if (!repository.deleteMode(scope.marketplaceId())) {
+            return false;
+        }
+        auditLogger.record(
+                principal,
+                scope.ledgerMarketplace(),
+                EVENT_MODE_CLEARED,
+                null,
+                "scope=%s%s%s".formatted(scope.description(), reasonSuffix(reason), correlationSuffix(correlationId)));
+        return true;
+    }
+
+    /** The same for a marketplace's order override (GW_VETTING_0036). */
+    @Requirements({"GW_VETTING_0036"})
+    public boolean clearOrder(String marketplaceName, String reason, String principal, String correlationId) {
+        Scope scope = requireMarketplaceScope(marketplaceName);
+        if (!repository.deleteOrder(scope.marketplaceId())) {
+            return false;
+        }
+        auditLogger.record(
+                principal,
+                scope.ledgerMarketplace(),
+                EVENT_ORDER_CLEARED,
+                null,
+                "scope=%s%s%s".formatted(scope.description(), reasonSuffix(reason), correlationSuffix(correlationId)));
+        return true;
+    }
+
+    /**
+     * The global scope's own resolution: the global setting if there is one, otherwise the default.
+     * The same rule as {@link #resolveMode(long)} with its first step removed, which is exactly what
+     * "as it applies to a marketplace with no override" means (GW_VETTING_0035).
+     */
+    @Requirements({"GW_VETTING_0035"})
+    public ModeResolution resolveGlobalMode() {
+        return repository
+                .findGlobalMode()
+                .map(setting -> new ModeResolution(setting.mode(), ChainSource.GLOBAL, setting))
+                .orElseGet(() -> new ModeResolution(ChainMode.RUN_ALL, ChainSource.DEFAULT, null));
+    }
+
+    /** The same one level down, for the order (GW_VETTING_0035). */
+    @Requirements({"GW_VETTING_0035"})
+    public OrderResolution resolveGlobalOrder() {
+        return repository
+                .findGlobalOrder()
+                .map(setting -> new OrderResolution(setting.vetters(), ChainSource.GLOBAL, setting))
+                .orElseGet(() -> new OrderResolution(List.of(), ChainSource.DEFAULT, null));
+    }
+
+    /** The chain a marketplace with no order override runs, in order (GW_VETTING_0035). */
+    @Requirements({"GW_VETTING_0035"})
+    public List<Vetter> globalOrderedVetters() {
+        return VetterOrder.resolve(vetters, resolveGlobalOrder().override());
     }
 
     /** Every mode setting there is. Admin-only at the controller, like the toggles. */
@@ -153,7 +251,8 @@ public class VettingChainSettingsService {
      * each of them once. Refusing rather than sanitising is the point: a silently dropped name is a
      * vetter the administrator believes they moved.
      */
-    private List<String> validateOrder(List<String> requested) {
+    @Requirements({"GW_VETTING_0033.1", "GW_VETTING_0037"})
+    public List<String> validateOrder(List<String> requested) {
         if (requested == null || requested.isEmpty()) {
             throw new ResponseStatusException(
                     HttpStatus.UNPROCESSABLE_ENTITY,
@@ -210,6 +309,21 @@ public class VettingChainSettingsService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "marketplace '%s' not found".formatted(marketplaceName)));
         return new Scope(marketplace.id(), marketplace.name());
+    }
+
+    /** A marketplace scope, refusing the global one: only a marketplace can hold an override. */
+    private Scope requireMarketplaceScope(String marketplaceName) {
+        Scope scope = scopeOf(marketplaceName);
+        if (scope.marketplaceId() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNPROCESSABLE_ENTITY, "an override is cleared for a marketplace, not globally");
+        }
+        return scope;
+    }
+
+    /** The thread that ties one marketplace's entry to the estate-wide act it was part of. */
+    static String correlationSuffix(String correlationId) {
+        return correlationId == null || correlationId.isBlank() ? "" : " bulk=" + correlationId;
     }
 
     private static String reasonSuffix(String reason) {

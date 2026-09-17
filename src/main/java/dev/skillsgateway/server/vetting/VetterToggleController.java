@@ -71,6 +71,39 @@ public class VetterToggleController {
         return toggleService.list();
     }
 
+    @GetMapping("/vetting/global-chain")
+    @Requirements({"GW_VETTING_0035"})
+    @Tag(name = "Vetting")
+    @Operation(
+            summary = "The chain a marketplace with no override runs",
+            description = "Every configured vetter in the order it runs for a marketplace that overrides nothing,"
+                    + " with the state its enablement resolves to there and which setting decided it. The"
+                    + " sibling of the per-marketplace chain read, one resolution level up, so the estate-wide"
+                    + " surface cannot disagree with the per-marketplace one. The source is never MARKETPLACE"
+                    + " here — only GLOBAL or DEFAULT. Administrator-only.")
+    @ApiResponse(responseCode = "200", description = "The default chain, in chain order")
+    @ApiResponse(responseCode = "403", description = "Caller does not hold the administrative role")
+    public List<ChainVetterView> globalVettingChain(Authentication authentication) {
+        roleService.requireAdmin(authentication);
+        return vettingService.globalVetters().stream()
+                .map(vetter -> {
+                    VetterToggleService.Resolution resolution = toggleService.resolveGlobal(vetter.name());
+                    VetterToggle setting = resolution.setting();
+                    return new ChainVetterView(
+                            vetter.name(),
+                            vetter.order(),
+                            vetter.description(),
+                            vetter.version(),
+                            vetter instanceof ExternalVettingConnector,
+                            resolution.enabled(),
+                            resolution.source(),
+                            setting == null ? null : setting.reason(),
+                            setting == null ? null : setting.updatedBy(),
+                            setting == null ? null : setting.updatedAt());
+                })
+                .toList();
+    }
+
     @GetMapping("/marketplaces/{name}/vetting-chain")
     @Requirements({"GW_VETTING_0029.4", "GW_VETTING_0029.5"})
     @Tag(name = "Vetting")

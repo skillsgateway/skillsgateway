@@ -121,6 +121,15 @@ public class VettingService {
     }
 
     /**
+     * The chain a marketplace with no order override of its own runs, in order (GW_VETTING_0035).
+     * The same arrangement as {@link #vetters(long)} resolved one level up.
+     */
+    @Requirements({"GW_VETTING_0035"})
+    public List<Vetter> globalVetters() {
+        return VetterOrder.resolve(vetters, chainSettings.resolveGlobalOrder().override());
+    }
+
+    /**
      * Identity of the chain as configured right now, with no marketplace's settings applied. The
      * default-scope answer; production paths stamp {@link #chainIdentity(long)} instead.
      */

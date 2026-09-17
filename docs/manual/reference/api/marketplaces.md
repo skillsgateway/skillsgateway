@@ -511,6 +511,22 @@ back on — it is not the step number.
 | 403 | Caller does not hold the administrative role. |
 | 404 | Named marketplace not found. |
 
+### `GET /vetting/global-chain`
+
+The chain **a marketplace with no override of its own** runs: every configured
+vetter in the order it runs there, the state its enablement resolves to, and which
+setting decided it. The same shape as
+[`GET /marketplaces/{name}/vetting-chain`](#get-marketplacesnamevetting-chain),
+one resolution level up — the gateway resolves it, so an estate-wide surface
+cannot disagree with the per-marketplace one.
+
+`source` is `GLOBAL` or `DEFAULT` here; `MARKETPLACE` cannot occur.
+
+| Status | Cause |
+| --- | --- |
+| 200 | The default chain, in chain order. |
+| 403 | Caller does not hold the administrative role. |
+
 ### `PUT /vetting/vetters/{name}/toggle`
 
 | Field | Required | Meaning |
@@ -565,6 +581,19 @@ per-marketplace overrides.
 | Status | Cause |
 | --- | --- |
 | 200 | The chain settings. |
+| 403 | Caller does not hold the administrative role. |
+
+### `GET /vetting/global-chain-settings`
+
+The mode and the order **a marketplace with no override of its own** runs, and
+which setting decided each. The same shape as
+[`GET /marketplaces/{name}/vetting-chain-settings`](#get-marketplacesnamevetting-chain-settings)
+one resolution level up; `modeSource` and `orderSource` are `GLOBAL` or `DEFAULT`
+here, never `MARKETPLACE`.
+
+| Status | Cause |
+| --- | --- |
+| 200 | The default chain settings. |
 | 403 | Caller does not hold the administrative role. |
 
 ### `GET /marketplaces/{name}/vetting-chain-settings`
@@ -633,6 +662,69 @@ vetter by omission. Audited as `vetting-chain-order-set`.
 | 403 | Caller does not hold the administrative role. |
 | 404 | Named marketplace not found. |
 | 422 | Empty order, unknown vetter, or a vetter named twice. |
+
+### `POST /vetting/chain-settings/bulk`
+
+One chain change addressed to several marketplaces as a single audited act, and
+the **only** way to remove a per-marketplace override. Admin-only.
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `marketplaces` | yes | The marketplaces the change applies to. Blanks are refused; duplicates are folded. |
+| `action` | yes | `set-mode`, `set-order`, `set-vetter` or `clear`. |
+| `mode` | for `set-mode` | `run-all` or `stop-after-fail`. |
+| `vetters` | for `set-order` | Vetter names, in the order they should run. |
+| `vetter`, `enabled` | for `set-vetter` | Which vetter to switch, and to what. |
+| `clear` | for `clear` | Any of `mode`, `order`, `vetters` — which kinds of override to remove. |
+| `reason` | no | A note recorded with every change and on every ledger entry the request causes. |
+
+**Clearing an override is a removal, not a write.** An override equal to the
+default still pins the marketplace — its `source` stays `MARKETPLACE`, so a later
+change to the global setting does not reach it. Only `clear` puts the source back
+to `GLOBAL` or `DEFAULT`. Clearing is idempotent: a marketplace with no override
+of that kind is reported `UNCHANGED` and writes nothing, to the store or to the
+ledger. `vetters` clears every vetter override that marketplace holds, auditing
+each by name.
+
+**Validated whole, applied per marketplace.** Everything knowable without
+touching a marketplace — an empty selection, an unknown action, mode, vetter or
+override kind, an empty order, a vetter named twice — is refused with 422 before
+anything is stored or recorded. Each named marketplace is then attempted
+independently: one that no longer resolves fails alone.
+
+```json
+{"correlationId":"9f1c8e2a-…","applied":1,"unchanged":0,"failed":1,
+ "results":[{"marketplace":"corp","status":"APPLIED","detail":"mode=stop-after-fail"},
+            {"marketplace":"gone","status":"FAILED","detail":"marketplace 'gone' not found"}]}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `correlationId` | Carried on every ledger entry this request caused, as ` bulk=<id>` in the entry's detail. An auditor reads the entries as one act rather than a loop. |
+| `applied` / `unchanged` / `failed` | A summary of `results`, never a substitute for it. |
+| `results[].status` | `APPLIED`, `UNCHANGED` (nothing to clear) or `FAILED`. |
+| `results[].detail` | What changed, or the server's reason for refusing. |
+
+Each affected marketplace receives its **own** ledger entry, through the same
+service a single-scope request goes through — `vetting-chain-mode-set`,
+`vetting-chain-order-set`, `vetter-enabled` / `vetter-disabled`, or the clears
+`vetting-chain-mode-cleared`, `vetting-chain-order-cleared` and
+`vetter-toggle-cleared`. There is no summary entry: the correlation id is the
+thread, and a summary that could disagree with the entries it summarises would be
+a liability.
+
+| Status | Cause |
+| --- | --- |
+| 200 | Every named marketplace was applied or already in the requested state. |
+| 207 | At least one named marketplace was refused. Read `results`. |
+| 403 | Caller does not hold the administrative role. |
+| 422 | Unknown action, mode, vetter or override kind; an empty selection; an empty or invalid order. |
+
+!!! warning "207 is not a success"
+
+    A client that reads only the status code learns that something did not happen;
+    one that reads `applied` alone would report a partial failure as a success.
+    Read `results`.
 
 ---
 

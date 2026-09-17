@@ -6,6 +6,7 @@ import {
   Monitor,
   Moon,
   ScrollText,
+  ShieldCheck,
   Store,
   Sun,
   TrendingUp,
@@ -30,9 +31,19 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/api/client";
-import { useMe, type EffectiveRole, type MeView } from "@/api/queries";
+import { useIsAdmin, useMe, type EffectiveRole, type MeView } from "@/api/queries";
 
-const groups = [
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof Home;
+  /** Matched exactly rather than by prefix — only the overview needs it. */
+  end?: boolean;
+  /** Offered only to a session holding the administrative role. */
+  adminOnly?: boolean;
+};
+
+const groups: { label: string; items: NavItem[] }[] = [
   {
     label: "Gateway",
     items: [
@@ -44,6 +55,10 @@ const groups = [
     label: "Governance",
     items: [
       { to: "/audit", label: "Audit log", icon: ScrollText },
+      // Admin-only: the chain settings decide how much evidence stands behind every approval, so
+      // neither they nor their values are shown to approvers or auditors. Hiding the entry is a
+      // courtesy — the server refuses every read behind it independently.
+      { to: "/vetting", label: "Vetting", icon: ShieldCheck, adminOnly: true },
       { to: "/adoption", label: "Adoption", icon: TrendingUp },
       { to: "/webhooks", label: "Webhooks", icon: Webhook },
     ],
@@ -55,6 +70,7 @@ function breadcrumb(pathname: string): string {
   if (pathname.startsWith("/marketplaces/")) return "Marketplace detail";
   if (pathname.startsWith("/marketplaces")) return "Marketplaces";
   if (pathname.startsWith("/audit")) return "Audit log";
+  if (pathname.startsWith("/vetting")) return "Vetting";
   if (pathname.startsWith("/adoption")) return "Adoption";
   if (pathname.startsWith("/tokens")) return "Access tokens";
   if (pathname.startsWith("/webhooks")) return "Webhooks";
@@ -296,6 +312,9 @@ function UserMenu() {
  */
 export function AppLayout() {
   const location = useLocation();
+  // A hint only: the administrator-only pages are protected by the server refusing their reads,
+  // not by the sidebar declining to mention them.
+  const isAdmin = useIsAdmin();
   return (
     <div className="flex min-h-screen bg-background text-foreground">
       <aside className="flex w-60 shrink-0 flex-col border-r bg-sidebar">
@@ -310,7 +329,9 @@ export function AppLayout() {
                 {group.label}
               </div>
               <ul className="space-y-0.5">
-                {group.items.map(({ to, label, icon: Icon, end }) => (
+                {group.items
+                  .filter((item) => item.adminOnly !== true || isAdmin)
+                  .map(({ to, label, icon: Icon, end }) => (
                   <li key={to}>
                     <NavLink
                       to={to}

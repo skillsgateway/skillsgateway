@@ -2031,3 +2031,31 @@ requirements:
     rationale: "Both settings are administrator-only and neither has a surface, so without this they are a REST call an operator writes by hand against a control that decides how much evidence stands behind every approval. Reordering is the case where a pointer-only implementation is easiest and least acceptable: the people who read a console under audit conditions include people who do not use a pointer, and an ordering gesture with no keyboard equivalent is a control they do not have. Distinguishing a not-reached vetter from a disabled one and from an absent verdict in the drawing is the portal half of the same distinction the ledger keeps, and stating the early stop in words above the chain is what keeps a shorter chain from reading as a cleaner one to somebody scanning the page."
     categories: ["interaction-capability", "security"]
     revision: 0.1.0
+
+  - id: GW_VETTING_0035
+    title: Estate-wide portal governance of the vetting chain
+    significance: shall
+    description: "The portal shall carry an administrator-only surface that governs the vetting chain across the estate: the chain as it applies to a marketplace with no override of its own — the mode, the vetter order and each vetter's enablement — every marketplace that departs from that default and what it departs in, and the controls to change either. The surface shall be offered in the portal's navigation only to a session holding the administrative role, shall state its refusal to any other session rather than rendering an empty page, and shall report every resolved state as the gateway resolves it rather than recomposing the resolution in the browser."
+    rationale: "All three chain settings resolve per marketplace, then globally, then to a default, and only the per-marketplace half has ever had a surface. The estate-wide half is therefore a REST call an operator writes by hand against the control that decides how much evidence stands behind every approval in every marketplace — and the question an administrator most often has, which marketplaces depart from what we decided, has no answer in the portal at all. Resolving in the gateway rather than in the browser is the same rule the per-marketplace surface already follows: a second copy of the resolution is free to disagree with the one that decides what actually runs, and a page that quietly disagrees about which vetters run is worse than no page."
+    categories: ["interaction-capability", "security"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0036
+    title: An administrator can clear a marketplace's chain override
+    significance: shall
+    description: "The system shall let an administrator remove a marketplace's chain-mode, vetter-order or vetter-enablement override so that the marketplace resolves from the global setting or from the default again, and shall record each removal on the audit ledger with the acting identity, the scope and the note. A removal shall be distinct from writing the default value as an override: after a removal the marketplace's effective setting shall report its source as the global setting or the default and never as the marketplace. Removing an override that does not exist shall leave both the stored settings and the ledger unchanged rather than failing."
+    references:
+      requirement_ids: ["GW_VETTING_0029.1", "GW_VETTING_0032.1", "GW_VETTING_0033.1"]
+    rationale: "The absence of a setting is a value in this model, not a missing one — it is what makes a later change to the global default reach a marketplace at all — and nothing in the API could produce it. Writing the default value as an override looks the same on one screen and behaves differently forever after: the marketplace is pinned, and the next global decision silently passes it by. Without a real removal an estate can only accumulate overrides, which is the state in which nobody can say what the global setting actually governs. Making the no-op silent keeps a bulk clear over a selection where most marketplaces override nothing from filling the ledger with records that nothing happened."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0037
+    title: One chain change applied to several marketplaces as a single audited act
+    significance: shall
+    description: "The system shall accept one chain change — a mode, an order, a vetter's enablement, or the removal of overrides — addressed to several named marketplaces as a single administrator-only request, and the portal shall show which marketplaces are affected and what each would change from and to before the change is applied. A request whose shape is invalid shall be refused whole, with nothing stored and nothing recorded. Otherwise each named marketplace shall be attempted independently and the response shall report the outcome per marketplace and shall distinguish a request in which every marketplace succeeded from one in which any did not, and the portal shall not report a partial failure as a success. Every marketplace the request changed shall receive its own audit ledger entry carrying the request's shared note and a correlation identifier common to the act."
+    references:
+      requirement_ids: ["GW_VETTING_0029.4", "GW_VETTING_0032.4", "GW_VETTING_0033.1"]
+    rationale: "Turning a vetter off across the estate is one decision, and a loop of single requests records it as a coincidence: an auditor reading the ledger afterwards cannot tell a deliberate estate-wide change from an administrator who happened to touch five marketplaces in five minutes. A correlation identifier on each entry is what makes the act legible without giving up the per-marketplace entry the scope actually needs. Partial failure is kept visible rather than hidden or converted into a whole-request refusal because the alternatives both lie: a success that silently skipped two marketplaces leaves the operator believing the estate is one way when it is another, and refusing everything because one name went away is the worse answer mid-rollout."
+    categories: ["security", "interaction-capability"]
+    revision: 0.1.0

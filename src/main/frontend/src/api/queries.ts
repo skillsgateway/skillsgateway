@@ -20,6 +20,13 @@ export type VetterInfo = components["schemas"]["VetterView"];
 export type ChainVetter = components["schemas"]["ChainVetterView"];
 export type ChainSettings = components["schemas"]["ChainSettingsView"];
 export type ChainMode = NonNullable<ChainSettings["mode"]>;
+export type ChainModeSetting = components["schemas"]["ChainModeSetting"];
+export type ChainOrderSetting = components["schemas"]["ChainOrderSetting"];
+export type VetterToggle = components["schemas"]["VetterToggle"];
+export type ChainSettingsList = components["schemas"]["ChainSettings"];
+export type BulkChainChange = components["schemas"]["BulkChainChange"];
+export type BulkChainResult = components["schemas"]["BulkChainResult"];
+export type BulkChainOutcome = components["schemas"]["Outcome"];
 export type Waiver = components["schemas"]["WaiverView"];
 export type WaiverSuppression = components["schemas"]["Suppression"];
 export type UncoveredFinding = components["schemas"]["UncoveredFinding"];
@@ -228,19 +235,98 @@ export function useMarketplaceVettingChain(marketplace: string | null) {
 export function useToggleVetter() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (request: { vetter: string; marketplace: string; enabled: boolean; reason?: string }) =>
-      api<components["schemas"]["VetterToggle"]>(
-        `/api/vetting/vetters/${encodeURIComponent(request.vetter)}/toggle`,
-        {
-          method: "PUT",
-          body: JSON.stringify({
-            enabled: request.enabled,
-            marketplace: request.marketplace,
-            ...(request.reason ? { reason: request.reason } : {}),
-          }),
-        },
-      ),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["marketplace-vetting-chain"] }),
+    mutationFn: (request: { vetter: string; marketplace?: string; enabled: boolean; reason?: string }) =>
+      api<VetterToggle>(`/api/vetting/vetters/${encodeURIComponent(request.vetter)}/toggle`, {
+        method: "PUT",
+        body: JSON.stringify({
+          enabled: request.enabled,
+          // An omitted marketplace is the global setting — the server's own contract, not a
+          // convention invented here. Sending an empty string would be a different request.
+          ...(request.marketplace ? { marketplace: request.marketplace } : {}),
+          ...(request.reason ? { reason: request.reason } : {}),
+        }),
+      }),
+    onSuccess: () => invalidateChain(queryClient),
+  });
+}
+
+/**
+ * The chain as it applies to a marketplace with no override of its own: every configured vetter in
+ * the order it runs there, and which setting decided each state.
+ *
+ * Read from the server for the reason {@link useMarketplaceVettingChain} records one level down —
+ * the resolution rule lives in the gateway, and a copy of it here would be free to disagree with
+ * the one that decides what actually runs.
+ *
+ * @Requirements GW_VETTING_0035
+ */
+export function useGlobalVettingChain(enabled = true) {
+  return useQuery({
+    queryKey: ["global-vetting-chain"],
+    queryFn: () => api<ChainVetter[]>("/api/vetting/global-chain"),
+    enabled,
+  });
+}
+
+/**
+ * The mode and the order a marketplace with no override runs, with the setting that decided each.
+ *
+ * @Requirements GW_VETTING_0035
+ */
+export function useGlobalChainSettings(enabled = true) {
+  return useQuery({
+    queryKey: ["global-chain-settings"],
+    queryFn: () => api<ChainSettings>("/api/vetting/global-chain-settings"),
+    enabled,
+  });
+}
+
+/**
+ * Every chain-mode and vetter-order setting there is — the globals and the per-marketplace
+ * overrides. The only read that enumerates overrides without asking marketplace by marketplace.
+ *
+ * @Requirements GW_VETTING_0035
+ */
+export function useChainSettingsList(enabled = true) {
+  return useQuery({
+    queryKey: ["chain-settings-list"],
+    queryFn: () => api<ChainSettingsList>("/api/vetting/chain-settings"),
+    enabled,
+  });
+}
+
+/**
+ * Every vetter enable/disable setting there is, globals and overrides alike.
+ *
+ * @Requirements GW_VETTING_0035
+ */
+export function useVetterToggles(enabled = true) {
+  return useQuery({
+    queryKey: ["vetter-toggles"],
+    queryFn: () => api<VetterToggle[]>("/api/vetting/vetter-toggles"),
+    enabled,
+  });
+}
+
+/**
+ * One chain change applied to several marketplaces, and the only way to clear an override.
+ *
+ * The response is read whole, never by status code alone: 207 means at least one marketplace was
+ * refused, and `results` is what says which. A caller that reported `applied` as the answer would
+ * report a partial failure as a success.
+ *
+ * @Requirements GW_VETTING_0036
+ * @Requirements GW_VETTING_0037
+ */
+export function useBulkChainSettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: BulkChainChange) =>
+      api<BulkChainResult>("/api/vetting/chain-settings/bulk", {
+        method: "POST",
+        body: JSON.stringify(request),
+      }),
+    onSuccess: () => invalidateChain(queryClient),
   });
 }
 
@@ -271,12 +357,12 @@ export function useMarketplaceChainSettings(marketplace: string | null) {
 export function useSetChainMode() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (request: { mode: ChainMode; marketplace: string; reason?: string }) =>
-      api<components["schemas"]["ChainModeSetting"]>("/api/vetting/chain-mode", {
+    mutationFn: (request: { mode: ChainMode; marketplace?: string; reason?: string }) =>
+      api<ChainModeSetting>("/api/vetting/chain-mode", {
         method: "PUT",
         body: JSON.stringify({
           mode: request.mode,
-          marketplace: request.marketplace,
+          ...(request.marketplace ? { marketplace: request.marketplace } : {}),
           ...(request.reason ? { reason: request.reason } : {}),
         }),
       }),
@@ -293,12 +379,12 @@ export function useSetChainMode() {
 export function useSetChainOrder() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (request: { vetters: string[]; marketplace: string; reason?: string }) =>
-      api<components["schemas"]["ChainOrderSetting"]>("/api/vetting/chain-order", {
+    mutationFn: (request: { vetters: string[]; marketplace?: string; reason?: string }) =>
+      api<ChainOrderSetting>("/api/vetting/chain-order", {
         method: "PUT",
         body: JSON.stringify({
           vetters: request.vetters,
-          marketplace: request.marketplace,
+          ...(request.marketplace ? { marketplace: request.marketplace } : {}),
           ...(request.reason ? { reason: request.reason } : {}),
         }),
       }),
@@ -306,10 +392,22 @@ export function useSetChainOrder() {
   });
 }
 
-/** Both chain reads move together: a mode or an order change reorders one and re-sources the other. */
+/**
+ * Every chain read moves together. A mode or an order change reorders one read and re-sources the
+ * other, and a global change or a cleared override changes what a marketplace resolves to without
+ * touching that marketplace's own row — so a narrower invalidation would leave a stale page.
+ */
 function invalidateChain(queryClient: ReturnType<typeof useQueryClient>) {
-  void queryClient.invalidateQueries({ queryKey: ["marketplace-vetting-chain"] });
-  void queryClient.invalidateQueries({ queryKey: ["marketplace-chain-settings"] });
+  for (const key of [
+    "marketplace-vetting-chain",
+    "marketplace-chain-settings",
+    "global-vetting-chain",
+    "global-chain-settings",
+    "chain-settings-list",
+    "vetter-toggles",
+  ]) {
+    void queryClient.invalidateQueries({ queryKey: [key] });
+  }
 }
 
 /**

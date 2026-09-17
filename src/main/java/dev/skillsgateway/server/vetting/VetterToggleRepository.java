@@ -42,6 +42,27 @@ public class VetterToggleRepository {
                 .single();
     }
 
+    /**
+     * Removes a marketplace's override of one vetter, so the vetter resolves from the global
+     * setting or the default again (GW_VETTING_0036). Answers whether a row actually went away.
+     */
+    @Requirements({"GW_VETTING_0036"})
+    public boolean delete(String vetter, long marketplaceId) {
+        return jdbc.sql("DELETE FROM vetter_toggles WHERE vetter = :vetter AND marketplace_id = :marketplaceId")
+                        .param("vetter", vetter)
+                        .param("marketplaceId", marketplaceId)
+                        .update()
+                > 0;
+    }
+
+    /** Every override one marketplace holds, so a clear of all of them can audit each by name. */
+    public List<VetterToggle> listFor(long marketplaceId) {
+        return jdbc.sql("SELECT * FROM vetter_toggles WHERE marketplace_id = :marketplaceId ORDER BY vetter")
+                .param("marketplaceId", marketplaceId)
+                .query(VetterToggle.class)
+                .list();
+    }
+
     /** The per-marketplace setting for a vetter, if one exists. */
     public Optional<VetterToggle> find(String vetter, long marketplaceId) {
         return jdbc.sql("SELECT * FROM vetter_toggles WHERE vetter = :vetter" + " AND marketplace_id = :marketplaceId")
