@@ -1947,3 +1947,87 @@ requirements:
     rationale: "The events the gateway sent were all about snapshots, so a system tracking the estate itself — which marketplaces exist, what triggers their ingestion, which vetters run against them — had to poll for it or read the ledger after the fact. These are the changes an inventory or a change-management system needs to hear about as they happen, and the ledger already records each one, so the emission belongs beside the ledger write where the two cannot disagree about whether the action happened. The description stays content-free and carries no operator-supplied free text for the same reason the approval-pending payload does: a webhook target is authorized by a URL scheme allowlist, not by an identity, so the event announces and the API discloses. Emitting nothing for a refused action is what keeps a receiver from acting on a change that was never made."
     categories: ["functional-suitability", "interaction-capability"]
     revision: 0.1.0
+
+  - id: GW_VETTING_0032
+    title: An administrator can stop the vetting chain after a blocking failure
+    significance: shall
+    description: "The system shall resolve, for every vetting chain run, a chain mode that is either to run every enabled vetter or to stop after the first blocking failure, and shall, under the stopping mode, run no vetter after the first one whose verdict still objects to the content once the accepted risks active at that moment are applied. The system shall record a verdict for every vetter of the chain whether or not it ran, and shall never let the mode be the reason a run clears."
+    rationale: "Every enabled vetter runs against every snapshot, so a snapshot a cheap deterministic scan has already condemned is still handed to whatever comes after it — an external service billed per call, a sandbox detonation, a review that takes minutes. That cost is paid again on every scheduled re-vetting pass over the whole approved estate, so it is a standing cost rather than a one-off. Stopping is also the only thing that makes chain order a real control rather than a display order. What the gateway may not buy with it is a cheaper answer: the reason all vetters ran was that a reviewer deciding on a snapshot could see everything wrong with it in one place, and a run's verdict set was complete by construction. So the saving is allowed only where the answer is already decided — the chain is already blocked when it stops — and the mode is confined to that case rather than being a general early exit. Applying the active accepted risks before deciding to stop is what keeps an acceptance usable at all under this mode: a verdict whose findings a reviewer has already accepted does not condemn the snapshot, and a chain that stopped on it anyway would stop on it again on every later run, so the fresh, complete run the acceptance exists to enable could never happen and the gate would stay shut permanently."
+    categories: ["performance-efficiency", "security"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0032.1
+    title: The chain mode resolves per marketplace, then globally, then to running every vetter
+    significance: shall
+    description: "The system shall resolve the chain mode for a marketplace as the mode set for that marketplace when one is set, otherwise the mode set globally when one is set, otherwise running every enabled vetter. The system shall report, with the resolved mode, whether it came from a setting scoped to that marketplace, from the global setting, or from the absence of any setting."
+    references:
+      requirement_ids: ["GW_VETTING_0032"]
+    rationale: "The gateway already has exactly one resolution rule for an administrative vetting setting, the one the vetter on/off switch uses, and an administrator reasoning about a marketplace's chain should not have to hold two. Defaulting to running every vetter is what makes the feature's arrival invisible: an estate that sets nothing behaves exactly as it did. Naming the source of the resolved mode, and the absence of a setting as its own source, is what stops an administrator reading a default as a decision somebody made — the same reason the effective chain names it for enablement."
+    categories: ["security", "interaction-capability"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0032.2
+    title: A vetter the chain stopped short of is recorded as not reached, and is not a conclusion
+    significance: shall
+    description: "The system shall record, for every vetter the chain did not run because it had already stopped, a verdict in a state that is distinct from every state a vetter can return and distinct from the state that records an administrator's disablement, naming the vetter whose verdict stopped the chain. That state shall neither clear nor block on its own, and shall never be derivable into a clearing state. A vetter an administrator has disabled shall keep being recorded as disabled whether or not the chain had already stopped."
+    references:
+      requirement_ids: ["GW_VETTING_0032"]
+    rationale: "A silently shorter chain is the failure this requirement exists to prevent: a run listing three verdicts where the chain has five says nothing about the other two, and a reader has no way to tell a vetter that was never configured from one the chain ran out of road before. Reusing the disabled state would collapse two different facts — a standing administrative decision, and a run that stopped — into one, and the ledger is exactly where that distinction has to survive, because the two have different remedies. Naming the vetter that stopped the chain on the record itself is what makes the run answer 'why' without a join. Refusing to let the state derive into a clearing one closes the same loophole the disabled state already has a guard for: the bookkeeping finding it carries is informational, and an informational finding alone re-derives to a pass, which would turn a vetter that never looked into positive evidence it never produced."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0032.3
+    title: A run that stopped early is blocked until a complete run replaces it
+    significance: shall
+    description: "The system shall treat the effective outcome of a chain run that carries any not-reached verdict as blocked, whatever waivers are active, and shall name the vetters that were not reached among the reasons it blocks. Accepting the finding that stopped the chain shall not clear such a run; it shall take effect on a subsequent run."
+    references:
+      requirement_ids: ["GW_VETTING_0032"]
+    rationale: "This is the whole risk of stopping early, and the only rule that closes it. Without it, waiving the finding that stopped the chain leaves a run whose surviving verdicts are one waived pass and a tail of vetters that never looked — one clearing verdict, nothing blocking — and the approval gate opens on evidence nobody gathered. That is strictly worse than the state before the feature existed, because it is indistinguishable at the gate from a chain that ran to the end and found nothing. Blocking until a complete run exists makes the waiver do what a reviewer intends it to do, which is to let the chain get further next time, rather than to substitute for the part of the chain that never ran. Naming the unreached vetters as reasons is what tells the reviewer that the remedy is a re-run rather than another waiver."
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0032.4
+    title: Changing the chain mode is an audited, administrator-only act
+    significance: shall
+    description: "The system shall reserve setting the chain mode, and reading the chain mode settings, to an administrator, and shall record every change on the audit ledger with the acting identity, the scope, the new mode and the administrator's optional note. The system shall refuse a mode change naming a marketplace that does not exist, and shall record nothing on the ledger for a refused change."
+    references:
+      requirement_ids: ["GW_VETTING_0032"]
+    rationale: "The mode decides how much evidence stands behind every approval in a marketplace, so it is the same kind of control as the vetter on/off switch and is reserved on the same terms: a marketplace-scoped approver is often the owner of the content the chain governs, and letting them narrow the chain that governs it — or even see how it is configured — inverts the trust boundary. Auditing every change is what makes a narrowed chain attributable after the fact, which is the only thing that makes it safe to offer at all. Recording nothing for a refused change keeps the ledger from asserting a change that never happened."
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0033
+    title: An administrator can order the vetting chain
+    significance: shall
+    description: "The system shall let an administrator set the order in which the vetters run, globally or for a single marketplace, resolved by the same rule as the chain mode, and shall apply that order to every chain run of that marketplace and to the effective chain it reports. The system shall keep each vetter's configured position as the order when no administrator has set one."
+    rationale: "Order only becomes a control once the chain can stop, and then it is the control that decides what stopping is worth: a chain that runs a per-call external review before a deterministic secret scan saves nothing by stopping. Deploy-time configuration cannot express it, because the right order is a property of a marketplace's content and cost, which an operator learns after the deployment. Keeping the configured positions as the default is what makes the setting additive: an estate that sets no order runs exactly the chain it ran before."
+    categories: ["functional-suitability", "performance-efficiency"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0033.1
+    title: The resolved vetter order is total and deterministic, and an order naming an unknown vetter is refused
+    significance: shall
+    description: "The system shall resolve a total order over every configured vetter: those an administrator's order names, in the order it names them, followed by those it does not name, in their configured positions with ties broken by name. The system shall refuse an order that names a vetter no configured vetter carries, and one that names the same vetter twice, and shall neither store nor act on a refused order. The system shall reserve setting the order, and reading the order settings, to an administrator, and shall record every change on the audit ledger with the acting identity, the scope, the order and the administrator's optional note."
+    references:
+      requirement_ids: ["GW_VETTING_0033"]
+    rationale: "A partial order is not a chain: two vetters the rule cannot separate would run in whatever order the container happened to inject them, which makes a run irreproducible and a recorded chain identity a statement about nothing. Appending the vetters an order does not name, rather than dropping them, is what keeps an override from silently removing a control — including a vetter a later release adds, or an operator's new external connector, neither of which an existing override can know about. Refusing an unknown or duplicated name is the same fail-loud stance the vetter switch takes and exists for the same reason: an order that matched nothing is a chain an administrator believes they arranged. The setting is administrator-only and audited because rearranging the chain under a stopping mode decides which vetters get to look at all, which is a decision about evidence, not about presentation."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0033.2
+    title: The chain mode and the resolved vetter order are part of a run's recorded chain identity
+    significance: shall
+    description: "The system shall record, with every chain run, the chain mode the run used and the vetters in the order the run used, alongside the identity of each vetter's rule set, and shall report the resolved mode and the resolved order on the administrative surface that shows a marketplace's effective chain."
+    references:
+      requirement_ids: ["GW_VETTING_0033"]
+    rationale: "Continuous re-vetting exists to answer one question about a snapshot that cleared last month and is blocked today: was it the content that changed, or the chain? The recorded chain identity is the whole answer, and a mode or an order that is not in it makes the answer wrong rather than incomplete — two runs with identical vetter versions can now legitimately produce different verdict sets, and nothing on either run would say why. Reporting both on the effective-chain surface is the same point before the fact: the configuration has to be readable at the moment it is worth changing, which is before the marketplace's first ingestion."
+    categories: ["security", "maintainability"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0034
+    title: Portal control of the chain mode and the vetter order, and a chain that stopped early
+    significance: shall
+    description: "The portal shall let an administrator read and set a marketplace's chain mode and vetter order from the marketplace's vetting chain, shall make the reordering operable by keyboard with a named control per movement, and shall show for each setting whether it comes from that marketplace, from the global setting or from the absence of any setting. The portal shall render a vetter a run did not reach distinctly from one a vetter disabled and from one that has no verdict, and shall state in words, above the chain, that the run stopped early and at which step."
+    rationale: "Both settings are administrator-only and neither has a surface, so without this they are a REST call an operator writes by hand against a control that decides how much evidence stands behind every approval. Reordering is the case where a pointer-only implementation is easiest and least acceptable: the people who read a console under audit conditions include people who do not use a pointer, and an ordering gesture with no keyboard equivalent is a control they do not have. Distinguishing a not-reached vetter from a disabled one and from an absent verdict in the drawing is the portal half of the same distinction the ledger keeps, and stating the early stop in words above the chain is what keeps a shorter chain from reading as a cleaner one to somebody scanning the page."
+    categories: ["interaction-capability", "security"]
+    revision: 0.1.0
