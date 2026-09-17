@@ -105,10 +105,14 @@ public final class RevetVerdict {
             VerdictState recorded = run.stateOf(vetter).orElse(VerdictState.ERROR);
             // ERROR and PENDING name no fault in the content; neither does DISABLED (GW_VETTING_0029) — an
             // administrator switching a vetter off says nothing about what it would have found,
-            // so it must not be read as the chain objecting to the content.
+            // so it must not be read as the chain objecting to the content. NOT_REACHED
+            // (GW_VETTING_0032.2) is the same kind of silence for the same reason: a vetter the
+            // chain stopped short of examined nothing, and retracting live content on the strength
+            // of a verdict nobody reached would turn a cost-saving setting into an outage.
             if (recorded != VerdictState.ERROR
                     && recorded != VerdictState.PENDING
-                    && recorded != VerdictState.DISABLED) {
+                    && recorded != VerdictState.DISABLED
+                    && recorded != VerdictState.NOT_REACHED) {
                 return Classification.VIOLATION;
             }
         }

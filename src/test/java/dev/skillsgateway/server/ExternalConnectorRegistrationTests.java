@@ -25,6 +25,8 @@ import dev.skillsgateway.server.vetting.Vetter;
 import dev.skillsgateway.server.vetting.VetterToggle;
 import dev.skillsgateway.server.vetting.VetterToggleRepository;
 import dev.skillsgateway.server.vetting.VetterToggleService;
+import dev.skillsgateway.server.vetting.VettingChainSettingsRepository;
+import dev.skillsgateway.server.vetting.VettingChainSettingsService;
 import dev.skillsgateway.server.vetting.VettingRepository;
 import dev.skillsgateway.server.vetting.VettingService;
 import dev.skillsgateway.server.vetting.WaiverService;
@@ -157,6 +159,20 @@ class ExternalConnectorRegistrationTests {
         }
 
         @Bean
+        VettingChainSettingsRepository chainSettingsRepository() {
+            return mock(VettingChainSettingsRepository.class);
+        }
+
+        @Bean
+        VettingChainSettingsService chainSettingsService(
+                VettingChainSettingsRepository repository,
+                MarketplaceRepository marketplaces,
+                AdminAuditLogger auditLogger,
+                List<Vetter> vetters) {
+            return new VettingChainSettingsService(repository, marketplaces, auditLogger, vetters);
+        }
+
+        @Bean
         SecretScanVetter secretScanVetter() {
             return new SecretScanVetter();
         }
@@ -183,6 +199,7 @@ class ExternalConnectorRegistrationTests {
                 GitStorage storage,
                 AdminAuditLogger auditLogger,
                 VetterToggleService toggleService,
+                VettingChainSettingsService chainSettings,
                 SkillsGatewayProperties properties) {
             return new VettingService(
                     vetters,
@@ -192,6 +209,7 @@ class ExternalConnectorRegistrationTests {
                     mock(WebhookService.class),
                     mock(WaiverService.class),
                     toggleService,
+                    chainSettings,
                     properties);
         }
     }

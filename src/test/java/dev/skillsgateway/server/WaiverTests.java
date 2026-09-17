@@ -378,7 +378,14 @@ class WaiverTests extends AbstractGatewayTest {
                     WaiverEvaluation.evaluate(run(state, List.of(critical)), List.of(covering), sha, now);
             assertThat(withWaiver.outcome())
                     .as("state %s with its only finding waived", state)
-                    .isEqualTo(VettingChain.Outcome.CLEAR_WITH_WAIVERS);
+                    // The one state a waiver cannot rescue, and deliberately so: a vetter the chain
+                    // stopped short of never looked at the content, so a run carrying one is blocked
+                    // however much of it is accepted (GW_VETTING_0032.3). Its finding is pure
+                    // bookkeeping; there is nothing in it for a reviewer to have accepted.
+                    .isEqualTo(
+                            state == VerdictState.NOT_REACHED
+                                    ? VettingChain.Outcome.BLOCKED
+                                    : VettingChain.Outcome.CLEAR_WITH_WAIVERS);
 
             WaiverEvaluation.Effect withoutWaiver =
                     WaiverEvaluation.evaluate(run(state, List.of(critical)), List.of(), sha, now);

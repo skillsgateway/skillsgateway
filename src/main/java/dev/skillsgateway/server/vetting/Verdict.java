@@ -86,6 +86,31 @@ public record Verdict(
                 null);
     }
 
+    /**
+     * The verdict recorded in place of a vetter the chain never got to, because a vetter before it
+     * failed and the marketplace's chain mode is {@code stop-after-fail} (GW_VETTING_0032.2).
+     *
+     * <p>Carries an informational finding naming the vetter that stopped the chain, so the run
+     * answers "why did this one not run" without a join. {@code INFO} keeps it out of the severity
+     * derivation, and {@link WaiverEvaluation} never re-derives a {@code NOT_REACHED} verdict
+     * anyway: waiving this bookkeeping finding must not be able to promote a vetter that never
+     * looked into positive clearing evidence.
+     *
+     * @param stoppedBy the vetter whose blocking verdict stopped the chain
+     */
+    @Requirements({"GW_VETTING_0032.2"})
+    public static Verdict notReached(String vetter, String stoppedBy) {
+        return new Verdict(
+                VerdictState.NOT_REACHED,
+                List.of(new Finding(
+                        "vetter-not-reached",
+                        Severity.INFO,
+                        vetter,
+                        "the chain stopped at '%s' and did not reach vetter '%s'".formatted(stoppedBy, vetter))),
+                null,
+                "not run: the chain stopped at '%s'".formatted(stoppedBy));
+    }
+
     /** The verdict recorded for a vetter that threw or timed out; never a silent skip. */
     public static Verdict error(String vetter, String detail) {
         return new Verdict(

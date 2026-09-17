@@ -174,7 +174,15 @@ public final class MachineApiRegistry {
             // The same settings resolved for one marketplace (GW_VETTING_0029.5). Reading which
             // vetters a marketplace actually runs is reading the settings themselves, so it is
             // unreachable for the same reason the settings list is.
-            get("/api/marketplaces/{name}/vetting-chain"));
+            get("/api/marketplaces/{name}/vetting-chain"),
+            // How far the chain runs and the order it runs in (GW_VETTING_0032, GW_VETTING_0033):
+            // the same administrator judgement over the chain as the switch, reserved on the same
+            // terms. A machine credential that could stop the chain early, or move a vetter behind
+            // the one that stops it, would be deciding how much evidence gates an approval.
+            get("/api/vetting/chain-settings"),
+            put("/api/vetting/chain-mode"),
+            put("/api/vetting/chain-order"),
+            get("/api/marketplaces/{name}/vetting-chain-settings"));
 
     private MachineApiRegistry() {}
 

@@ -7,8 +7,8 @@ import dev.skillsgateway.server.storage.GitStorage;
 import dev.skillsgateway.server.webhook.WebhookEvent;
 import dev.skillsgateway.server.webhook.WebhookService;
 import io.github.reqstool.annotations.Requirements;
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -28,9 +28,13 @@ import org.springframework.stereotype.Service;
  * <p>Three properties are deliberate and load-bearing:
  *
  * <ul>
- *   <li><b>Every vetter runs.</b> The chain does not short-circuit on the first failure: a
- *       reviewer deciding on a snapshot should see everything that is wrong with it, and a recorded
- *       run should not depend on which vetter happened to be first.
+ *   <li><b>Every vetter runs, unless an administrator has said otherwise.</b> The default chain
+ *       mode is {@link ChainMode#RUN_ALL}, because a reviewer deciding on a snapshot should see
+ *       everything that is wrong with it and a recorded run should not depend on which vetter
+ *       happened to be first. Under {@link ChainMode#STOP_AFTER_FAIL} (GW_VETTING_0032) the chain
+ *       stops after the first failing verdict and records the rest {@link VerdictState#NOT_REACHED}
+ *       — never absent — and such a run is blocked at the gate whatever waivers exist
+ *       (GW_VETTING_0032.3), so the shorter chain can never be the cheaper answer.
  *   <li><b>A vetter cannot be skipped.</b> Anything a vetter throws — including an
  *       {@link Error} — and any vetter that outruns its time limit becomes an
  *       {@link VerdictState#ERROR} verdict, which blocks. There is no catch-and-continue path.
@@ -61,6 +65,7 @@ public class VettingService {
     private final WebhookService webhookService;
     private final WaiverService waiverService;
     private final VetterToggleService toggleService;
+    private final VettingChainSettingsService chainSettings;
     private final SkillsGatewayProperties.Vetting properties;
     private final ExecutorService executor;
 
@@ -72,10 +77,10 @@ public class VettingService {
             WebhookService webhookService,
             WaiverService waiverService,
             VetterToggleService toggleService,
+            VettingChainSettingsService chainSettings,
             SkillsGatewayProperties properties) {
-        this.vetters = vetters.stream()
-                .sorted(Comparator.comparingInt(Vetter::order).thenComparing(Vetter::name))
-                .toList();
+        this.vetters = vetters.stream().sorted(VetterOrder.CONFIGURED).toList();
+        this.chainSettings = chainSettings;
         this.vettingRepository = vettingRepository;
         this.storage = storage;
         this.auditLogger = auditLogger;
@@ -93,20 +98,58 @@ public class VettingService {
         });
     }
 
-    /** The chain as configured, in the order it runs. */
+    /**
+     * The chain as configured, in its configured order — no marketplace's settings applied. What a
+     * surface that is not about one marketplace shows, and the order every marketplace runs until an
+     * administrator arranges one of its own.
+     */
     public List<Vetter> vetters() {
         return vetters;
     }
 
     /**
-     * Identity of the chain as configured right now: {@code vetter@version} for each vetter,
-     * in chain order (GW_VETTING_0012). Stamped on every run so that a changed answer about unchanged
-     * content can be attributed to the chain rather than guessed at.
+     * The chain of one marketplace, in the order it runs there (GW_VETTING_0033).
+     *
+     * <p>Arranged over <em>this</em> service's own vetters rather than over the settings service's,
+     * so a chain assembled from a subset of the vetters — which is how the vetting tests isolate one
+     * of them — is ordered rather than replaced.
+     */
+    @Requirements({"GW_VETTING_0033"})
+    public List<Vetter> vetters(long marketplaceId) {
+        return VetterOrder.resolve(
+                vetters, chainSettings.resolveOrder(marketplaceId).override());
+    }
+
+    /**
+     * Identity of the chain as configured right now, with no marketplace's settings applied. The
+     * default-scope answer; production paths stamp {@link #chainIdentity(long)} instead.
      */
     public String chainIdentity() {
-        return vetters.stream()
-                .map(vetter -> vetter.name() + "@" + vetter.version())
-                .collect(java.util.stream.Collectors.joining(","));
+        return chainIdentity(vetters, ChainMode.RUN_ALL);
+    }
+
+    /**
+     * Identity of the chain one marketplace runs right now: {@code vetter@version} for each vetter
+     * in the order that marketplace runs them, then the chain mode (GW_VETTING_0012,
+     * GW_VETTING_0033.2). Stamped on every run so that a changed answer about unchanged content can
+     * be attributed to the chain rather than guessed at — which now has to include the mode and the
+     * order, because two runs with identical vetter versions can legitimately produce different
+     * verdict sets.
+     *
+     * <p>The mode is appended rather than prefixed so the string still opens with the chain itself,
+     * as every row recorded before the mode existed does.
+     */
+    @Requirements({"GW_VETTING_0012", "GW_VETTING_0033.2"})
+    public String chainIdentity(long marketplaceId) {
+        return chainIdentity(
+                vetters(marketplaceId), chainSettings.resolveMode(marketplaceId).mode());
+    }
+
+    private static String chainIdentity(List<Vetter> ordered, ChainMode mode) {
+        return ordered.stream()
+                        .map(vetter -> vetter.name() + "@" + vetter.version())
+                        .collect(java.util.stream.Collectors.joining(","))
+                + ";mode=" + mode.stored();
     }
 
     /**
@@ -140,7 +183,8 @@ public class VettingService {
                         verdict.findings().size(),
                         worst,
                         runId));
-        if (verdict.findings().isEmpty() && verdict.summary() != null) {
+        if (verdict.summary() != null
+                && (verdict.findings().isEmpty() || verdict.state() == VerdictState.NOT_REACHED)) {
             detail.append("; ").append(verdict.summary());
         }
         return detail.toString();
@@ -159,20 +203,59 @@ public class VettingService {
      * verdict <em>means</em> is decided by {@code RevetService}, not here, so this method stays the
      * one place the chain executes.
      */
-    @Requirements({"GW_VETTING_0001", "GW_VETTING_0002", "GW_VETTING_0006", "GW_VETTING_0012", "GW_VETTING_0029.2"})
+    @Requirements({
+        "GW_VETTING_0001",
+        "GW_VETTING_0002",
+        "GW_VETTING_0006",
+        "GW_VETTING_0012",
+        "GW_VETTING_0029.2",
+        "GW_VETTING_0032",
+        "GW_VETTING_0032.2"
+    })
     public Run run(Snapshot snapshot, String marketplace, String trigger) {
-        long runId = vettingRepository.startRun(snapshot.id(), trigger, chainIdentity());
-        List<VerdictState> states = new ArrayList<>(vetters.size());
+        List<Vetter> chain = vetters(snapshot.marketplaceId());
+        ChainMode mode = chainSettings.resolveMode(snapshot.marketplaceId()).mode();
+        String chainIdentity = chainIdentity(chain, mode);
+        long runId = vettingRepository.startRun(snapshot.id(), trigger, chainIdentity);
+        // Read once, and only when the mode can actually use them: under run-all nothing consults
+        // them here, and the effective outcome reads them again at evaluation time regardless.
+        List<Waiver> waivers = mode == ChainMode.STOP_AFTER_FAIL ? waiverService.forSnapshot(snapshot) : List.of();
+        List<VerdictState> states = new ArrayList<>(chain.size());
         try (QuarantineSnapshot content = open(snapshot, marketplace)) {
             int position = 0;
-            for (Vetter vetter : vetters) {
+            // Set once the chain has stopped, to the vetter whose verdict stopped it; every vetter
+            // after that is recorded not reached rather than run (GW_VETTING_0032.2).
+            String stoppedBy = null;
+            for (Vetter vetter : chain) {
                 // A vetter an administrator switched off for this marketplace is skipped, not
                 // run, and recorded as a distinct disabled verdict so the disablement is part of
                 // the run's evidence rather than a silently shorter chain (GW_VETTING_0029.2). The
                 // aggregation counts it as neither clearing nor blocking (GW_VETTING_0029.3).
-                Verdict verdict = toggleService.enabled(vetter.name(), snapshot.marketplaceId())
-                        ? runGuarded(vetter, content)
-                        : Verdict.disabled(vetter.name(), "for marketplace '" + marketplace + "'");
+                //
+                // The switch is consulted before the stop: an administrator's standing decision is
+                // the older and more informative fact and holds whatever the chain did, so a
+                // disabled vetter after the stop still reads disabled rather than not reached.
+                Verdict verdict;
+                if (!toggleService.enabled(vetter.name(), snapshot.marketplaceId())) {
+                    verdict = Verdict.disabled(vetter.name(), "for marketplace '" + marketplace + "'");
+                } else if (stoppedBy != null) {
+                    verdict = Verdict.notReached(vetter.name(), stoppedBy);
+                } else {
+                    verdict = runGuarded(vetter, content);
+                    // Only a FAIL stops the chain. An ERROR is a fact about the gateway rather than
+                    // about the content, and letting a crash silence the rest of the chain would
+                    // turn a flaky vetter into a coverage outage; a PENDING has concluded nothing.
+                    //
+                    // And only a FAIL a reviewer has not already accepted: the chain stops when the
+                    // snapshot is already condemned, which a waived finding does not make it.
+                    // Without this the same verdict would stop the chain on every later run too,
+                    // and the fresh run a waiver exists to enable could never get any further.
+                    if (mode == ChainMode.STOP_AFTER_FAIL
+                            && verdict.state() == VerdictState.FAIL
+                            && WaiverEvaluation.stillObjects(verdict, waivers, snapshot.sha(), Instant.now())) {
+                        stoppedBy = vetter.name();
+                    }
+                }
                 vettingRepository.recordVerdict(runId, vetter.name(), position++, verdict);
                 states.add(verdict.state());
                 auditLogger.record(
@@ -198,7 +281,7 @@ public class VettingService {
                 "vetting-completed",
                 snapshot.sha(),
                 "trigger=%s; outcome=%s; vetters=%d; run=%d; chain=%s"
-                        .formatted(trigger, outcome.stored(), states.size(), runId, chainIdentity()));
+                        .formatted(trigger, outcome.stored(), states.size(), runId, chainIdentity));
         webhookService.emit(
                 WebhookEvent.SNAPSHOT_VETTED, marketplace, snapshot.id(), snapshot.sha(), snapshot.state(), "vetting");
         announceIfAwaitingApproval(snapshot, marketplace, runId);

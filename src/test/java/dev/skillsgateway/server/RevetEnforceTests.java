@@ -222,8 +222,9 @@ class RevetEnforceTests extends AbstractGatewayTest {
                 assertThat(classification).as("state %s", state).isEqualTo(RevetVerdict.Classification.VIOLATION);
             } else {
                 // ERROR and PENDING: the chain did not answer. DISABLED (GW_VETTING_0029): an administrator
-                // switched the vetter off, which says nothing about the content. None of the
-                // three names a fault, so nothing is retracted.
+                // switched the vetter off, which says nothing about the content. NOT_REACHED
+                // (GW_VETTING_0032.2): the chain stopped before this vetter, so it examined nothing.
+                // None of the four names a fault, so nothing is retracted.
                 assertThat(classification).as("state %s", state).isEqualTo(RevetVerdict.Classification.INCONCLUSIVE);
             }
         }

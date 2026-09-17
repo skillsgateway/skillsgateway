@@ -25,6 +25,11 @@ import java.util.Locale;
  * positive evidence. A run whose only verdicts are {@code DISABLED} still {@code BLOCKED}s, so
  * disabling every vetter can never be a way to clear a snapshot with no evidence behind it.
  *
+ * <p>{@link VerdictState#NOT_REACHED} (GW_VETTING_0032.2) is discounted here on the same terms, for
+ * the same reason: a vetter the chain stopped short of objected to nothing. It is not discounted at
+ * the gate — {@link WaiverEvaluation} blocks any run carrying one outright (GW_VETTING_0032.3) —
+ * because a run that stopped early is missing evidence rather than merely missing an objection.
+ *
  * <p>This is a pure static function over states so that it can be tested exhaustively over every
  * combination of verdict states without a database, a repository, or a Spring context.
  */

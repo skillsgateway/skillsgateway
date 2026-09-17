@@ -129,6 +129,214 @@
         },
         "type": "object"
       },
+      "ChainModeRequest": {
+        "description": "Set how far the vetting chain runs, globally or for one marketplace",
+        "properties": {
+          "marketplace": {
+            "description": "Marketplace to scope the setting to; omit for the global setting",
+            "type": "string"
+          },
+          "mode": {
+            "description": "How far the chain should run under this setting",
+            "enum": [
+              "run-all",
+              "stop-after-fail"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "description": "Optional note recorded with the change and on the audit ledger",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ChainModeSetting": {
+        "description": "An administrative chain-mode setting",
+        "properties": {
+          "id": {
+            "description": "Setting id",
+            "format": "int64",
+            "type": "integer"
+          },
+          "marketplaceId": {
+            "description": "Marketplace this setting is scoped to, or null for the global setting",
+            "format": "int64",
+            "type": "integer"
+          },
+          "mode": {
+            "description": "How far the chain runs under this setting",
+            "enum": [
+              "run-all",
+              "stop-after-fail"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "description": "The administrator's note for the setting, or null",
+            "type": "string"
+          },
+          "updatedAt": {
+            "description": "When it was last set",
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedBy": {
+            "description": "Identity that last set it",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ChainOrderRequest": {
+        "description": "Set the order the vetters run in, globally or for one marketplace",
+        "properties": {
+          "marketplace": {
+            "description": "Marketplace to scope the setting to; omit for the global setting",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Optional note recorded with the change and on the audit ledger",
+            "type": "string"
+          },
+          "vetters": {
+            "description": "Vetter names, in the order they should run",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ChainOrderSetting": {
+        "description": "An administrative vetter-order setting",
+        "properties": {
+          "id": {
+            "description": "Setting id",
+            "format": "int64",
+            "type": "integer"
+          },
+          "marketplaceId": {
+            "description": "Marketplace this setting is scoped to, or null for the global setting",
+            "format": "int64",
+            "type": "integer"
+          },
+          "reason": {
+            "description": "The administrator's note for the setting, or null",
+            "type": "string"
+          },
+          "updatedAt": {
+            "description": "When it was last set",
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedBy": {
+            "description": "Identity that last set it",
+            "type": "string"
+          },
+          "vetters": {
+            "description": "The vetter names, in the order the administrator arranged them",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ChainSettings": {
+        "description": "Every administrative chain mode and vetter order setting",
+        "properties": {
+          "modes": {
+            "description": "The chain mode settings",
+            "items": {
+              "$ref": "#/components/schemas/ChainModeSetting"
+            },
+            "type": "array"
+          },
+          "orders": {
+            "description": "The vetter order settings",
+            "items": {
+              "$ref": "#/components/schemas/ChainOrderSetting"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ChainSettingsView": {
+        "description": "A marketplace's effective vetting chain settings",
+        "properties": {
+          "mode": {
+            "description": "How far the chain runs for this marketplace",
+            "enum": [
+              "run-all",
+              "stop-after-fail"
+            ],
+            "type": "string"
+          },
+          "modeReason": {
+            "description": "The note recorded with the deciding mode setting, or null for the default",
+            "type": "string"
+          },
+          "modeSource": {
+            "description": "Which setting decided the mode",
+            "enum": [
+              "MARKETPLACE",
+              "GLOBAL",
+              "DEFAULT"
+            ],
+            "type": "string"
+          },
+          "modeUpdatedAt": {
+            "description": "When the mode was last set, or null for the default",
+            "format": "date-time",
+            "type": "string"
+          },
+          "modeUpdatedBy": {
+            "description": "The administrator who last set the mode, or null for the default",
+            "type": "string"
+          },
+          "order": {
+            "description": "Every configured vetter, in the order this marketplace runs them",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "orderOverride": {
+            "description": "The arrangement an administrator set, or empty when none is set",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "orderReason": {
+            "description": "The note recorded with the deciding order setting, or null for the default",
+            "type": "string"
+          },
+          "orderSource": {
+            "description": "Which setting decided the order",
+            "enum": [
+              "MARKETPLACE",
+              "GLOBAL",
+              "DEFAULT"
+            ],
+            "type": "string"
+          },
+          "orderUpdatedAt": {
+            "description": "When the order was last set, or null for the default",
+            "format": "date-time",
+            "type": "string"
+          },
+          "orderUpdatedBy": {
+            "description": "The administrator who last set the order, or null for the default",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ChainVetterView": {
         "description": "A vetter in a marketplace's effective vetting chain",
         "properties": {
@@ -2612,7 +2820,8 @@
               "FAIL",
               "ERROR",
               "PENDING",
-              "DISABLED"
+              "DISABLED",
+              "NOT_REACHED"
             ],
             "type": "string"
           },
@@ -3756,6 +3965,58 @@
           }
         },
         "summary": "A marketplace's effective vetting chain",
+        "tags": [
+          "Vetting"
+        ]
+      }
+    },
+    "/api/marketplaces/{name}/vetting-chain-settings": {
+      "get": {
+        "description": "How far the chain runs for this marketplace and the order it runs in, with which setting decided each — the marketplace-scoped setting, the global setting, or the absence of any setting. The resolution is the chain's own, so it cannot disagree with what actually runs. Administrator-only.",
+        "operationId": "chainSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainSettingsView"
+                }
+              }
+            },
+            "description": "The effective chain settings"
+          },
+          "403": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainSettingsView"
+                }
+              }
+            },
+            "description": "Caller does not hold the administrative role"
+          },
+          "404": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainSettingsView"
+                }
+              }
+            },
+            "description": "Named marketplace not found"
+          }
+        },
+        "summary": "A marketplace's effective chain mode and vetter order",
         "tags": [
           "Vetting"
         ]
@@ -5597,6 +5858,162 @@
         "summary": "Rotate a token",
         "tags": [
           "Tokens"
+        ]
+      }
+    },
+    "/api/vetting/chain-mode": {
+      "put": {
+        "description": "Sets the chain mode, globally or for one named marketplace, and records the change on the audit ledger. Under 'stop-after-fail' the chain stops after the first vetter whose verdict fails; the vetters after it are recorded as not reached rather than run, and a run carrying such a verdict is blocked whatever waivers exist — accepting the finding that stopped the chain takes effect on the next run, not on this one. 'run-all' is the default and runs every enabled vetter. A per-marketplace setting overrides the global one. Administrator-only.",
+        "operationId": "setMode",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChainModeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainModeSetting"
+                }
+              }
+            },
+            "description": "The setting after the change"
+          },
+          "403": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainModeSetting"
+                }
+              }
+            },
+            "description": "Caller does not hold the administrative role"
+          },
+          "404": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainModeSetting"
+                }
+              }
+            },
+            "description": "Named marketplace not found"
+          },
+          "422": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainModeSetting"
+                }
+              }
+            },
+            "description": "Unknown or omitted mode"
+          }
+        },
+        "summary": "Set how far the vetting chain runs",
+        "tags": [
+          "Vetting"
+        ]
+      }
+    },
+    "/api/vetting/chain-order": {
+      "put": {
+        "description": "Sets the vetter order, globally or for one named marketplace, and records the change on the audit ledger. The order need not name every vetter: the ones it does not name run after those it does, in their configured positions with ties broken by name, so an order can never drop a vetter by omission. A name no configured vetter carries, and a name given twice, are refused rather than stored. Order is only observable when the chain mode stops it early. Administrator-only.",
+        "operationId": "setOrder",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChainOrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainOrderSetting"
+                }
+              }
+            },
+            "description": "The setting after the change"
+          },
+          "403": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainOrderSetting"
+                }
+              }
+            },
+            "description": "Caller does not hold the administrative role"
+          },
+          "404": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainOrderSetting"
+                }
+              }
+            },
+            "description": "Named marketplace not found"
+          },
+          "422": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainOrderSetting"
+                }
+              }
+            },
+            "description": "Empty order, unknown vetter, or a vetter named twice"
+          }
+        },
+        "summary": "Set the order the vetters run in",
+        "tags": [
+          "Vetting"
+        ]
+      }
+    },
+    "/api/vetting/chain-settings": {
+      "get": {
+        "description": "Every administrative chain-mode and vetter-order setting — the global settings and the per-marketplace overrides. Administrator-only: the settings that decide how much evidence stands behind an approval are not shown to marketplace-scoped approvers.",
+        "operationId": "settings",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainSettings"
+                }
+              }
+            },
+            "description": "The chain settings"
+          },
+          "403": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainSettings"
+                }
+              }
+            },
+            "description": "Caller does not hold the administrative role"
+          }
+        },
+        "summary": "List chain mode and vetter order settings",
+        "tags": [
+          "Vetting"
         ]
       }
     },
