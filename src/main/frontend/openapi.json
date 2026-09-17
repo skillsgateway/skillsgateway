@@ -64,6 +64,100 @@
         },
         "type": "object"
       },
+      "BulkChainChange": {
+        "description": "One vetting-chain change addressed to several marketplaces",
+        "properties": {
+          "action": {
+            "description": "Which change to make",
+            "enum": [
+              "set-mode",
+              "set-order",
+              "set-vetter",
+              "clear"
+            ],
+            "type": "string"
+          },
+          "clear": {
+            "description": "For clear: which overrides to remove",
+            "enum": [
+              "mode",
+              "order",
+              "vetters"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "enabled": {
+            "description": "For set-vetter: whether the vetter should run",
+            "type": "boolean"
+          },
+          "marketplaces": {
+            "description": "The marketplaces the change applies to; each is attempted independently",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "mode": {
+            "description": "For set-mode: how far the chain should run",
+            "enum": [
+              "run-all",
+              "stop-after-fail"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "description": "Note recorded with every change and on every ledger entry the request causes",
+            "type": "string"
+          },
+          "vetter": {
+            "description": "For set-vetter: which vetter to switch",
+            "type": "string"
+          },
+          "vetters": {
+            "description": "For set-order: the vetter names, in the order they should run",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "BulkChainResult": {
+        "description": "The outcome of one estate-wide vetting-chain change",
+        "properties": {
+          "applied": {
+            "description": "How many marketplaces changed",
+            "format": "int32",
+            "type": "integer"
+          },
+          "correlationId": {
+            "description": "Identifier shared by every ledger entry this request caused",
+            "type": "string"
+          },
+          "failed": {
+            "description": "How many were refused",
+            "format": "int32",
+            "type": "integer"
+          },
+          "results": {
+            "description": "The outcome per marketplace, in the order the request named them",
+            "items": {
+              "$ref": "#/components/schemas/Outcome"
+            },
+            "type": "array"
+          },
+          "unchanged": {
+            "description": "How many already held the requested state, so nothing was written",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "Candidate": {
         "description": "A snapshot a retention policy would delete, and the criterion that selected it",
         "properties": {
@@ -1766,6 +1860,29 @@
           },
           "url": {
             "description": "Mirror clone URL; never carries a credential",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Outcome": {
+        "description": "What an estate-wide change did to one marketplace",
+        "properties": {
+          "detail": {
+            "description": "What changed, or why it was refused",
+            "type": "string"
+          },
+          "marketplace": {
+            "description": "The marketplace as the request named it",
+            "type": "string"
+          },
+          "status": {
+            "description": "applied, unchanged, or failed",
+            "enum": [
+              "APPLIED",
+              "UNCHANGED",
+              "FAILED"
+            ],
             "type": "string"
           }
         },
@@ -6012,6 +6129,138 @@
           }
         },
         "summary": "List chain mode and vetter order settings",
+        "tags": [
+          "Vetting"
+        ]
+      }
+    },
+    "/api/vetting/chain-settings/bulk": {
+      "post": {
+        "description": "Sets the chain mode, sets the vetter order, switches one vetter, or removes per-marketplace overrides, across the named marketplaces, as a single act. The request's shape is validated whole — an unknown action, mode, vetter or override kind is refused with 422 and nothing is stored or recorded. Each marketplace is then attempted independently: the answer is 200 when every one succeeded and 207 when any did not, and 'results' reports the outcome per marketplace either way. Clearing is idempotent — a marketplace with no override of that kind is reported unchanged and writes nothing. Every marketplace the request changed receives its own ledger entry carrying the shared reason and the response's correlationId, so the entries read as one act. Administrator-only.",
+        "operationId": "bulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkChainChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkChainResult"
+                }
+              }
+            },
+            "description": "Every named marketplace was applied or already in that state"
+          },
+          "207": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkChainResult"
+                }
+              }
+            },
+            "description": "At least one named marketplace was refused; see 'results'"
+          },
+          "403": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkChainResult"
+                }
+              }
+            },
+            "description": "Caller does not hold the administrative role"
+          },
+          "422": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkChainResult"
+                }
+              }
+            },
+            "description": "Unknown action, mode, vetter or override kind, or an empty selection"
+          }
+        },
+        "summary": "Apply one chain change to several marketplaces",
+        "tags": [
+          "Vetting"
+        ]
+      }
+    },
+    "/api/vetting/global-chain": {
+      "get": {
+        "description": "Every configured vetter in the order it runs for a marketplace that overrides nothing, with the state its enablement resolves to there and which setting decided it. The sibling of the per-marketplace chain read, one resolution level up, so the estate-wide surface cannot disagree with the per-marketplace one. The source is never MARKETPLACE here — only GLOBAL or DEFAULT. Administrator-only.",
+        "operationId": "globalVettingChain",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ChainVetterView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The default chain, in chain order"
+          },
+          "403": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ChainVetterView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Caller does not hold the administrative role"
+          }
+        },
+        "summary": "The chain a marketplace with no override runs",
+        "tags": [
+          "Vetting"
+        ]
+      }
+    },
+    "/api/vetting/global-chain-settings": {
+      "get": {
+        "description": "How far the chain runs and the order it runs in for a marketplace that overrides neither, with which setting decided each. The same shape as the per-marketplace read one resolution level up, so the estate-wide surface and the per-marketplace one cannot disagree. The source is never MARKETPLACE here — only GLOBAL or DEFAULT. Administrator-only.",
+        "operationId": "globalChainSettings",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainSettingsView"
+                }
+              }
+            },
+            "description": "The default chain settings"
+          },
+          "403": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainSettingsView"
+                }
+              }
+            },
+            "description": "Caller does not hold the administrative role"
+          }
+        },
+        "summary": "The chain mode and vetter order a marketplace with no override runs",
         "tags": [
           "Vetting"
         ]

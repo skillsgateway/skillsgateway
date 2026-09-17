@@ -1,40 +1,40 @@
 ## 1. Traceability
 
-- [ ] 1.1 Add `GW_VETTING_0035`, `GW_VETTING_0036` and `GW_VETTING_0037` to `docs/reqstool/requirements.yml`
-- [ ] 1.2 Add `SVC_GW_VETTING_0035`, `SVC_GW_VETTING_0036` and `SVC_GW_VETTING_0037` to `docs/reqstool/software_verification_cases.yml`
+- [x] 1.1 Add `GW_VETTING_0035`, `GW_VETTING_0036` and `GW_VETTING_0037` to `docs/reqstool/requirements.yml`
+- [x] 1.2 Add `SVC_GW_VETTING_0035`, `SVC_GW_VETTING_0036` and `SVC_GW_VETTING_0037` to `docs/reqstool/software_verification_cases.yml`
 
 ## 2. Server — clearing an override
 
-- [ ] 2.1 Add `deleteMode(marketplaceId)` and `deleteOrder(marketplaceId)` to `VettingChainSettingsRepository`, each reporting whether a row went away
-- [ ] 2.2 Add `delete(vetter, marketplaceId)` to `VetterToggleRepository`, likewise
-- [ ] 2.3 Add `clearMode`/`clearOrder` to `VettingChainSettingsService` and `clear` to `VetterToggleService`, each auditing `vetting-chain-mode-cleared` / `vetting-chain-order-cleared` / `vetter-toggle-cleared` only when a row actually went away, with `@Requirements({"GW_VETTING_0036"})`
+- [x] 2.1 Add `deleteMode(marketplaceId)` and `deleteOrder(marketplaceId)` to `VettingChainSettingsRepository`, each reporting whether a row went away
+- [x] 2.2 Add `delete(vetter, marketplaceId)` to `VetterToggleRepository`, likewise
+- [x] 2.3 Add `clearMode`/`clearOrder` to `VettingChainSettingsService` and `clear` to `VetterToggleService`, each auditing `vetting-chain-mode-cleared` / `vetting-chain-order-cleared` / `vetter-toggle-cleared` only when a row actually went away, with `@Requirements({"GW_VETTING_0036"})`
 
 ## 3. Server — the global reads
 
-- [ ] 3.1 Add `GET /api/vetting/global-chain` to `VetterToggleController` returning `List<ChainVetterView>` resolved at the global scope, admin-only, with OpenAPI annotations
-- [ ] 3.2 Add `GET /api/vetting/global-chain-settings` to `VettingChainSettingsController` returning `ChainSettingsView` for the no-override case, admin-only, with OpenAPI annotations
-- [ ] 3.3 Give both a global-scope resolution path in the services so no rule is duplicated in a controller
+- [x] 3.1 Add `GET /api/vetting/global-chain` to `VetterToggleController` returning `List<ChainVetterView>` resolved at the global scope, admin-only, with OpenAPI annotations
+- [x] 3.2 Add `GET /api/vetting/global-chain-settings` to `VettingChainSettingsController` returning `ChainSettingsView` for the no-override case, admin-only, with OpenAPI annotations
+- [x] 3.3 Give both a global-scope resolution path in the services so no rule is duplicated in a controller
 
 ## 4. Server — the bulk endpoint
 
-- [ ] 4.1 Add `VettingChainBulkService` — whole-request validation, correlation id, per-marketplace application delegated to the existing set/clear services
-- [ ] 4.2 Add the request/result records (`BulkRequest`, `BulkResult`, `BulkOutcome`) with `@Schema` descriptions
-- [ ] 4.3 Add `POST /api/vetting/chain-settings/bulk`, admin-only, answering `200` when every marketplace succeeded and `207` when any did not, with `@Requirements({"GW_VETTING_0037"})`
-- [ ] 4.4 Stamp `bulk=<correlationId>` onto every ledger entry the request causes
+- [x] 4.1 Add `VettingChainBulkService` — whole-request validation, correlation id, per-marketplace application delegated to the existing set/clear services
+- [x] 4.2 Add the request/result records (`BulkRequest`, `BulkResult`, `BulkOutcome`) with `@Schema` descriptions
+- [x] 4.3 Add `POST /api/vetting/chain-settings/bulk`, admin-only, answering `200` when every marketplace succeeded and `207` when any did not, with `@Requirements({"GW_VETTING_0037"})`
+- [x] 4.4 Stamp `bulk=<correlationId>` onto every ledger entry the request causes
 
 ## 5. Server tests
 
-- [ ] 5.1 `VettingChainOverrideClearTests` — clearing returns the source to `GLOBAL`/`DEFAULT`; writing the default value as an override does not; clearing what is not there writes nothing to the ledger
-- [ ] 5.2 Bulk: a non-administrator is refused; an unknown vetter name and an unknown mode are refused whole with nothing written or audited
-- [ ] 5.3 Bulk: an unknown marketplace in a selection of several answers `207`, fails only that item, applies the rest
-- [ ] 5.4 Bulk: every affected marketplace gets its own ledger entry carrying the shared reason and the one correlation id
-- [ ] 5.5 The two global reads: admin-only, and they report `GLOBAL`/`DEFAULT` sources and never `MARKETPLACE`
-- [ ] 5.6 Tag the verifying tests with `@SVCs`
+- [x] 5.1 `VettingChainOverrideClearTests` — clearing returns the source to `GLOBAL`/`DEFAULT`; writing the default value as an override does not; clearing what is not there writes nothing to the ledger
+- [x] 5.2 Bulk: a non-administrator is refused; an unknown vetter name and an unknown mode are refused whole with nothing written or audited
+- [x] 5.3 Bulk: an unknown marketplace in a selection of several answers `207`, fails only that item, applies the rest
+- [x] 5.4 Bulk: every affected marketplace gets its own ledger entry carrying the shared reason and the one correlation id
+- [x] 5.5 The two global reads: admin-only, and they report `GLOBAL`/`DEFAULT` sources and never `MARKETPLACE`
+- [x] 5.6 Tag the verifying tests with `@SVCs`
 
 ## 6. API contract
 
-- [ ] 6.1 Regenerate `src/main/frontend/openapi.json` from `OpenApiDocsTests` output
-- [ ] 6.2 Regenerate `src/main/frontend/src/api/types.gen.ts` with `pnpm gen:api-types`
+- [x] 6.1 Regenerate `src/main/frontend/openapi.json` from `OpenApiDocsTests` output
+- [x] 6.2 Regenerate `src/main/frontend/src/api/types.gen.ts` with `pnpm gen:api-types`
 
 ## 7. Portal — shared controls
 

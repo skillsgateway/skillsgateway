@@ -1152,6 +1152,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/vetting/chain-settings/bulk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply one chain change to several marketplaces
+         * @description Sets the chain mode, sets the vetter order, switches one vetter, or removes per-marketplace overrides, across the named marketplaces, as a single act. The request's shape is validated whole — an unknown action, mode, vetter or override kind is refused with 422 and nothing is stored or recorded. Each marketplace is then attempted independently: the answer is 200 when every one succeeded and 207 when any did not, and 'results' reports the outcome per marketplace either way. Clearing is idempotent — a marketplace with no override of that kind is reported unchanged and writes nothing. Every marketplace the request changed receives its own ledger entry carrying the shared reason and the response's correlationId, so the entries read as one act. Administrator-only.
+         */
+        post: operations["bulk"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vetting/global-chain": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The chain a marketplace with no override runs
+         * @description Every configured vetter in the order it runs for a marketplace that overrides nothing, with the state its enablement resolves to there and which setting decided it. The sibling of the per-marketplace chain read, one resolution level up, so the estate-wide surface cannot disagree with the per-marketplace one. The source is never MARKETPLACE here — only GLOBAL or DEFAULT. Administrator-only.
+         */
+        get: operations["globalVettingChain"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vetting/global-chain-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The chain mode and vetter order a marketplace with no override runs
+         * @description How far the chain runs and the order it runs in for a marketplace that overrides neither, with which setting decided each. The same shape as the per-marketplace read one resolution level up, so the estate-wide surface and the per-marketplace one cannot disagree. The source is never MARKETPLACE here — only GLOBAL or DEFAULT. Administrator-only.
+         */
+        get: operations["globalChainSettings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/vetting/vetter-toggles": {
         parameters: {
             query?: never;
@@ -1621,6 +1681,56 @@ export interface components {
             overrideVetting?: boolean;
             /** @description The administrator's reason for overriding the block; required when overrideVetting */
             reason?: string;
+        };
+        /** @description One vetting-chain change addressed to several marketplaces */
+        BulkChainChange: {
+            /**
+             * @description Which change to make
+             * @enum {string}
+             */
+            action?: "set-mode" | "set-order" | "set-vetter" | "clear";
+            /**
+             * @description For clear: which overrides to remove
+             * @enum {array}
+             */
+            clear?: "mode" | "order" | "vetters";
+            /** @description For set-vetter: whether the vetter should run */
+            enabled?: boolean;
+            /** @description The marketplaces the change applies to; each is attempted independently */
+            marketplaces?: string[];
+            /**
+             * @description For set-mode: how far the chain should run
+             * @enum {string}
+             */
+            mode?: "run-all" | "stop-after-fail";
+            /** @description Note recorded with every change and on every ledger entry the request causes */
+            reason?: string;
+            /** @description For set-vetter: which vetter to switch */
+            vetter?: string;
+            /** @description For set-order: the vetter names, in the order they should run */
+            vetters?: string[];
+        };
+        /** @description The outcome of one estate-wide vetting-chain change */
+        BulkChainResult: {
+            /**
+             * Format: int32
+             * @description How many marketplaces changed
+             */
+            applied?: number;
+            /** @description Identifier shared by every ledger entry this request caused */
+            correlationId?: string;
+            /**
+             * Format: int32
+             * @description How many were refused
+             */
+            failed?: number;
+            /** @description The outcome per marketplace, in the order the request named them */
+            results?: components["schemas"]["Outcome"][];
+            /**
+             * Format: int32
+             * @description How many already held the requested state, so nothing was written
+             */
+            unchanged?: number;
         };
         /** @description A snapshot a retention policy would delete, and the criterion that selected it */
         Candidate: {
@@ -2649,6 +2759,18 @@ export interface components {
             staleOnMirror?: string[];
             /** @description Mirror clone URL; never carries a credential */
             url?: string;
+        };
+        /** @description What an estate-wide change did to one marketplace */
+        Outcome: {
+            /** @description What changed, or why it was refused */
+            detail?: string;
+            /** @description The marketplace as the request named it */
+            marketplace?: string;
+            /**
+             * @description applied, unchanged, or failed
+             * @enum {string}
+             */
+            status?: "APPLIED" | "UNCHANGED" | "FAILED";
         };
         /** @description Outcome of a retention pass */
         PassResult: {
@@ -5705,6 +5827,115 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ChainSettings"];
+                };
+            };
+        };
+    };
+    bulk: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkChainChange"];
+            };
+        };
+        responses: {
+            /** @description Every named marketplace was applied or already in that state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BulkChainResult"];
+                };
+            };
+            /** @description At least one named marketplace was refused; see 'results' */
+            207: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BulkChainResult"];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BulkChainResult"];
+                };
+            };
+            /** @description Unknown action, mode, vetter or override kind, or an empty selection */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BulkChainResult"];
+                };
+            };
+        };
+    };
+    globalVettingChain: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The default chain, in chain order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChainVetterView"][];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChainVetterView"][];
+                };
+            };
+        };
+    };
+    globalChainSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The default chain settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChainSettingsView"];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChainSettingsView"];
                 };
             };
         };
