@@ -2299,6 +2299,13 @@ four-eyes eligibility, waiver lists) and its own
 <a href="../../reference/api/tokens/">access tokens</a>. Reading the pinned files
 themselves — the preview panes — and the blast-radius report is not browsing:
 those take the approver's standing, listed above.</p>
+<p>The <strong>vetting chain settings</strong> are admin-only in both directions and are not an
+auditor read: the per-marketplace card on
+<a href="../../reference/portal/#vetting-chain-administrators">Marketplace detail</a> and the
+estate-wide <a href="../../reference/portal/#vetting-governance">Vetting page</a> are shown
+to an <code>admin</code> and to nobody else. They decide how much evidence stands behind
+every approval, and a marketplace-scoped approver is frequently the owner of the
+content the chain governs.</p>
 <p>Enforcement lives at the REST API, which is what the portal speaks. The
 <a href="../../reference/git-facade/">git facade</a> is untouched: its authorization is
 token scopes, a different credential for a different surface.</p>
