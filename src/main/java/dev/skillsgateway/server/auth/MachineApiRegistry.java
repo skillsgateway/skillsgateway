@@ -182,7 +182,15 @@ public final class MachineApiRegistry {
             get("/api/vetting/chain-settings"),
             put("/api/vetting/chain-mode"),
             put("/api/vetting/chain-order"),
-            get("/api/marketplaces/{name}/vetting-chain-settings"));
+            get("/api/marketplaces/{name}/vetting-chain-settings"),
+            // The same three settings one resolution level up, and across the estate
+            // (GW_VETTING_0035, GW_VETTING_0036, GW_VETTING_0037). Unreachable for the reason above,
+            // only more so: the bulk route is the one call that could narrow every marketplace's
+            // chain at once, and removing an override is how a marketplace stops being governed by
+            // the setting an administrator thought they had pinned it to.
+            get("/api/vetting/global-chain"),
+            get("/api/vetting/global-chain-settings"),
+            post("/api/vetting/chain-settings/bulk"));
 
     private MachineApiRegistry() {}
 

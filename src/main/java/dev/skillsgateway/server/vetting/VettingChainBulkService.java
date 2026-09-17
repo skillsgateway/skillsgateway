@@ -51,19 +51,18 @@ public class VettingChainBulkService {
 
         String correlationId = UUID.randomUUID().toString();
         List<BulkChainResult.Outcome> results = new ArrayList<>(marketplaces.size());
-        int applied = 0;
-        int unchanged = 0;
-        int failed = 0;
         for (String marketplace : marketplaces) {
-            BulkChainResult.Outcome outcome = applyOne(action, plan, request, marketplace, principal, correlationId);
-            results.add(outcome);
-            switch (outcome.status()) {
-                case APPLIED -> applied++;
-                case UNCHANGED -> unchanged++;
-                case FAILED -> failed++;
-            }
+            results.add(applyOne(action, plan, request, marketplace, principal, correlationId));
         }
-        return new BulkChainResult(correlationId, applied, unchanged, failed, results);
+        // The counts are derived from the outcomes rather than tallied alongside them: a summary
+        // that could disagree with the list it summarises is the failure this response shape exists
+        // to prevent, and two places to increment is how that disagreement arrives.
+        return new BulkChainResult(
+                correlationId,
+                count(results, BulkChainResult.Status.APPLIED),
+                count(results, BulkChainResult.Status.UNCHANGED),
+                count(results, BulkChainResult.Status.FAILED),
+                results);
     }
 
     /** The request's shape, once it is known to be one the gateway could carry out. */
@@ -155,29 +154,30 @@ public class VettingChainBulkService {
             String correlationId) {
         List<String> cleared = new ArrayList<>();
         for (BulkChainChange.Clear kind : kinds) {
-            switch (kind) {
-                case MODE -> {
-                    if (settingsService.clearMode(marketplace, reason, principal, correlationId)) {
-                        cleared.add("mode");
-                    }
-                }
-                case ORDER -> {
-                    if (settingsService.clearOrder(marketplace, reason, principal, correlationId)) {
-                        cleared.add("order");
-                    }
-                }
-                case VETTERS -> {
-                    int count = toggleService.clearAll(marketplace, reason, principal, correlationId);
-                    if (count > 0) {
-                        cleared.add(count + " vetter override" + (count == 1 ? "" : "s"));
-                    }
-                }
+            String removed =
+                    switch (kind) {
+                        case MODE ->
+                            settingsService.clearMode(marketplace, reason, principal, correlationId) ? "mode" : null;
+                        case ORDER ->
+                            settingsService.clearOrder(marketplace, reason, principal, correlationId) ? "order" : null;
+                        case VETTERS -> {
+                            int count = toggleService.clearAll(marketplace, reason, principal, correlationId);
+                            yield count == 0 ? null : count + " vetter override" + (count == 1 ? "" : "s");
+                        }
+                    };
+            if (removed != null) {
+                cleared.add(removed);
             }
         }
         return cleared.isEmpty()
                 ? new BulkChainResult.Outcome(
                         marketplace, BulkChainResult.Status.UNCHANGED, "no override of that kind to clear")
                 : applied(marketplace, "cleared " + String.join(", ", cleared));
+    }
+
+    private static int count(List<BulkChainResult.Outcome> results, BulkChainResult.Status status) {
+        return (int)
+                results.stream().filter(outcome -> outcome.status() == status).count();
     }
 
     private static BulkChainResult.Outcome applied(String marketplace, String detail) {

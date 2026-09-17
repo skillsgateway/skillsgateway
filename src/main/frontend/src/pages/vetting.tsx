@@ -172,7 +172,7 @@ function Governance() {
           {chain.data ? (
             <VettingFlow
               label="The default vetting chain"
-              headline={marketplaceHeadline(flow, settings.data?.mode)}
+              headline={marketplaceHeadline(flow, settings.data?.mode, "default")}
               nodes={flow}
               detailFooter={(node) => (node.kind === "setting" ? <ToggleControls node={node} /> : null)}
             />

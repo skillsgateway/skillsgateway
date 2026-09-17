@@ -968,6 +968,11 @@ test("an_admin_sets_the_default_chain_and_clears_a_marketplaces_override", async
   await page.getByRole("link", { name: "Govern the chain across the estate" }).click();
   await expect(page.getByRole("heading", { name: "Vetting", level: 1 })).toBeVisible();
 
+  // And it is a real address, not only a client-side hop: a bookmarked /vetting has to resolve
+  // through the gateway's SPA forward rather than 404.
+  await page.goto("/vetting");
+  await expect(page.getByRole("heading", { name: "Vetting", level: 1 })).toBeVisible();
+
   // The default chain, written globally. What the assertion can see is the source: a setting now
   // exists where none did. It is then put back to run-all, so the estate this shared gateway serves
   // to every other test ends where it started — with a global row that resolves to the default.
