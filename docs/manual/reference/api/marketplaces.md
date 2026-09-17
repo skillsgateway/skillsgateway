@@ -482,6 +482,11 @@ runs, the state its enablement resolves to for this marketplace, and which
 setting decided that. The resolution is the chain's own — not a recombination of
 the settings list — so it cannot disagree with what actually runs.
 
+The array order is the order the chain runs in, including any administrator's
+[arrangement](#chain-mode-and-vetter-order). Each entry's `order` field stays the
+vetter's own configured position, which is the tie-break the resolved order falls
+back on — it is not the step number.
+
 ```json
 [{"name":"secret-scan","order":100,"description":"...","version":"3","external":false,
   "enabled":false,"source":"MARKETPLACE","reason":"vendor keys, expected",
@@ -523,6 +528,111 @@ administrator, the vetter, the scope and the new state.
 | 403 | Caller does not hold the administrative role. |
 | 404 | Named marketplace not found. |
 | 422 | Unknown vetter, or `enabled` omitted. |
+
+---
+
+## Chain mode and vetter order
+
+Two settings shape a chain run beyond which vetters are switched on: how far the
+chain goes, and the order it goes in. Both resolve exactly as the on/off switch
+does — the setting scoped to the marketplace, else the global setting, else the
+default — and both are **admin-only** to set and to read, for the same reason:
+they decide how much evidence stands behind every approval in a marketplace.
+
+| Chain mode | What it does |
+| --- | --- |
+| `run-all` | Every enabled vetter runs. The default. |
+| `stop-after-fail` | The chain stops after the first vetter whose verdict still objects once active waivers are applied; the vetters after it are recorded `NOT_REACHED` rather than run. |
+
+A run carrying a `NOT_REACHED` verdict is **blocked whatever waivers exist**.
+Accepting the finding that stopped the chain lets the *next* run get further; it
+does not clear the run whose later vetters never looked. See
+[Stopping the chain after a failure](../../concepts/vetting.md#stopping-the-chain-after-a-failure).
+
+### `GET /vetting/chain-settings`
+
+Every chain-mode and vetter-order setting — the global settings and the
+per-marketplace overrides.
+
+```json
+{"modes":[{"id":1,"marketplaceId":null,"mode":"run-all","reason":null,
+           "updatedBy":"root","updatedAt":"2026-09-10T09:00:00Z"}],
+ "orders":[{"id":1,"marketplaceId":7,"vetters":["prompt-injection","secret-scan"],
+            "reason":"cheapest first","updatedBy":"alice",
+            "updatedAt":"2026-09-10T09:01:00Z"}]}
+```
+
+| Status | Cause |
+| --- | --- |
+| 200 | The chain settings. |
+| 403 | Caller does not hold the administrative role. |
+
+### `GET /marketplaces/{name}/vetting-chain-settings`
+
+The marketplace's **effective** mode and order, and which setting decided each.
+A sibling of the chain read rather than part of it: these are properties of the
+chain, not of any one vetter.
+
+```json
+{"mode":"stop-after-fail","modeSource":"MARKETPLACE",
+ "modeReason":"the external reviewer is billed per call",
+ "modeUpdatedBy":"alice","modeUpdatedAt":"2026-09-10T09:00:00Z",
+ "order":["prompt-injection","secret-scan","license-scan"],
+ "orderOverride":["prompt-injection","secret-scan"],
+ "orderSource":"MARKETPLACE","orderReason":"cheapest first",
+ "orderUpdatedBy":"alice","orderUpdatedAt":"2026-09-10T09:01:00Z"}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `mode` | `run-all` or `stop-after-fail`, as it resolves for this marketplace. |
+| `order` | Every configured vetter, in the order this marketplace runs them. |
+| `orderOverride` | The arrangement an administrator set, which need not name every vetter; empty when none is set. |
+| `modeSource`, `orderSource` | `MARKETPLACE`, `GLOBAL` or `DEFAULT` — the absence of a setting is its own source, never a missing value. |
+| `modeReason`/`orderReason`, `…UpdatedBy`, `…UpdatedAt` | The note, the acting administrator and the time of whichever setting decided it; `null` for `DEFAULT`. |
+
+| Status | Cause |
+| --- | --- |
+| 200 | The effective chain settings. |
+| 403 | Caller does not hold the administrative role. |
+| 404 | Named marketplace not found. |
+
+### `PUT /vetting/chain-mode`
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `mode` | yes | `run-all` or `stop-after-fail`. |
+| `marketplace` | no | Scope the setting to one marketplace; omit for the global setting. |
+| `reason` | no | A note recorded with the change and on the audit ledger. |
+
+Audited as `vetting-chain-mode-set`, naming the administrator, the scope, the
+new mode and the note. A refused change writes nothing.
+
+| Status | Cause |
+| --- | --- |
+| 200 | The setting after the change. |
+| 403 | Caller does not hold the administrative role. |
+| 404 | Named marketplace not found. |
+| 422 | Unknown mode, or `mode` omitted. |
+
+### `PUT /vetting/chain-order`
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `vetters` | yes | Vetter names, in the order they should run. It need not name every vetter. |
+| `marketplace` | no | Scope the setting to one marketplace; omit for the global setting. |
+| `reason` | no | A note recorded with the change and on the audit ledger. |
+
+The vetters the arrangement does not name run **after** those it does, in their
+configured positions with ties broken by name, so an arrangement can never drop a
+vetter by omission. Audited as `vetting-chain-order-set`.
+
+| Status | Cause |
+| --- | --- |
+| 200 | The setting after the change. |
+| 403 | Caller does not hold the administrative role. |
+| 404 | Named marketplace not found. |
+| 422 | Empty order, unknown vetter, or a vetter named twice. |
 
 ---
 

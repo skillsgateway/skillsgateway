@@ -21,7 +21,7 @@ flowchart TD
     M -->|ok| H["snapshot: held"]
     H --> C["Vetting chain"]
 
-    subgraph C["Vetting chain — ordered, all vetters run"]
+    subgraph C["Vetting chain — ordered; every vetter by default"]
         direction TB
         C1["secret-scan (order 100)"] --> C2["prompt-injection (order 200)"] --> C3["license-scan (order 300)"] --> C4["skill-conformance (order 400)"]
     end
@@ -82,6 +82,7 @@ is written against, so it is part of the contract rather than a display string.
 | `ERROR` | The vetter produced no verdict: it threw, or it exceeded its time limit. | Yes |
 | `PENDING` | The vetter was triggered and has not answered yet. | Yes |
 | `DISABLED` | An administrator switched the vetter off for this marketplace, so the chain did not run it. | No — and it does not clear either |
+| `NOT_REACHED` | The chain stopped before this vetter, so it was not run. | No — and it does not clear either, but see below |
 
 A vetter does not choose its state directly: it emits findings, and the
 verdict follows the worst severity present — `HIGH` or `CRITICAL` fails,
@@ -103,11 +104,94 @@ disabling every vetter leaves a run blocked — the switch is not a blanket
 approval. The settings, the audit events and the endpoints are in
 [the API reference](../reference/api/marketplaces.md#vetter-enabledisable).
 
+### Stopping the chain after a failure
+
+By default the chain runs every enabled vetter, whatever the ones before it
+concluded. An administrator can change that for one marketplace, or globally:
+
+| Chain mode | What it does |
+| --- | --- |
+| `run-all` | Every enabled vetter runs. The default. |
+| `stop-after-fail` | The chain stops after the first vetter whose verdict still objects to the content, and the vetters after it are recorded `NOT_REACHED`. |
+
+What it buys is real: an expensive vetter — one billed per call, or one that
+detonates the snapshot in a sandbox — is not spent on content a cheap
+deterministic scan has already condemned, and that cost is otherwise paid again
+on every [re-vetting](../guides/re-vetting.md) pass over the whole approved
+estate.
+
+**What it costs a reviewer** is equally real, and is the reason it is off by
+default. A run that stopped early is not a shorter description of the same
+answer; it is a smaller answer. The reviewer no longer sees everything that is
+wrong with a snapshot in one pass, so a fix-and-re-ingest loop can take several
+rounds, each revealing one more objection. Under `run-all` a run's verdict set is
+complete by construction; under `stop-after-fail` it is not, and the portal says
+so above the chain.
+
+Three properties keep a shorter run from becoming a cleaner one:
+
+- **Nothing is omitted.** Every vetter of the chain still has a verdict. A
+  vetter that was not reached says so, and says which vetter stopped the chain.
+- **`NOT_REACHED` never clears.** Like `DISABLED` it is an absence rather than a
+  conclusion, and the aggregation still requires at least one clearing verdict.
+- **A run that stopped early is blocked, whatever is waived.** This is the one
+  that matters. Accepting the finding that stopped the chain does *not* clear the
+  run — the vetters behind it never looked at the content, and a gate opened on
+  their silence would be indistinguishable from a gate opened on a clean chain. A
+  waiver makes the **next** run get further; the run that stopped stays blocked
+  until the chain has been run again. Re-vet the snapshot, and the gate is then
+  decided on complete evidence.
+
+Only a `FAIL` stops the chain — not an `ERROR`, which is a fact about the
+gateway rather than about the content, and not a `PENDING`, which has concluded
+nothing. And only a `FAIL` that a reviewer has not already accepted: a verdict
+whose findings are all waived does not condemn the snapshot, so the chain runs
+on past it.
+
+Changing the mode is an administrator-only, audited act, like the on/off switch.
+The endpoints are in
+[the API reference](../reference/api/marketplaces.md#chain-mode-and-vetter-order).
+
+### The order the vetters run in
+
+Order only becomes a control once the chain can stop: under `run-all` it decides
+nothing but the sequence of the run and the left-to-right position in the
+portal's chain flow. Under `stop-after-fail` it decides which vetters get to look
+at all, so the cheap and deterministic ones belong first.
+
+An administrator can set the order globally or for one marketplace. The
+arrangement need not name every vetter. The **resolved** order is:
+
+1. the vetters the arrangement names, in the order it names them;
+2. then every vetter it does not name, by its configured position, with ties
+   broken by the vetter's name.
+
+That rule is total and deterministic, so a recorded run is reproducible, and an
+arrangement can never drop a vetter by omission — including a vetter a later
+release of the gateway adds, or an [external
+connector](#external-connectors) an operator configures afterwards. An
+arrangement naming a vetter that does not exist, or naming one twice, is refused
+rather than stored.
+
+### How the settings resolve
+
+Both settings resolve the same way the
+[vetter on/off switch](#switching-a-vetter-off) does: the setting scoped to the
+marketplace when there is one, otherwise the global setting, otherwise the
+default. The administrative surface reports which of the three decided, so a
+default is never mistaken for a decision somebody made.
+
+Both are recorded with every run, in the run's **chain identity**, alongside each
+vetter's rule-set version — `secret-scan@3,prompt-injection@1;mode=run-all`. That
+is what keeps [re-vetting](../guides/re-vetting.md) able to answer its own
+question: when a snapshot that cleared last month is blocked today, was it the
+content that changed, or the chain?
+
 ## Fail-closed aggregation
 
 A chain run is **clear** if and only if it produced at least one clearing
-verdict and every verdict is `PASS`, `WARN` or `DISABLED`. Everything else is
-**blocked**:
+verdict and every verdict is `PASS`, `WARN`, `DISABLED` or `NOT_REACHED`.
+Everything else is **blocked**:
 
 - any vetter that failed;
 - any vetter that crashed or timed out — a crash is a blocked snapshot, never
@@ -119,8 +203,14 @@ That last case is the one that matters most. A snapshot ingested before the
 chain existed, or one whose run died halfway, is blocked — absence of evidence
 is not evidence of safety.
 
-All vetters run, in order; the chain does not stop at the first failure,
-because a reviewer should see everything that is wrong with a snapshot at once.
+- **and a run that stopped early**, however its verdicts aggregate and whatever
+  waivers are active: the vetters it did not reach have said nothing either way,
+  so the run is missing evidence rather than merely missing an objection.
+
+By default all vetters run, in order, and the chain does not stop at the first
+failure, because a reviewer should see everything that is wrong with a snapshot
+at once. An administrator can trade that away per marketplace — see
+[Stopping the chain after a failure](#stopping-the-chain-after-a-failure).
 
 ## The approval gate
 
