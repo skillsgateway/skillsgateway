@@ -2093,10 +2093,15 @@ retracted. <code>warn</code> mode measures it before <code>enforce</code> is gra
 cause it. See
 <a href="../../guides/re-vetting/#warn-first-then-enforce">Re-vetting approved content</a>.</dd>
 <dt><strong>Chain identity</strong></dt>
-<dd>The identity and version of every vetter that produced a chain run,
-stamped into the run. It is what makes "the same content, re-vetted by a
-changed chain" a distinguishable event. See
-<a href="../vetting/">Vetting — the vetter chain</a>.</dd>
+<dd>The identity and version of every vetter that produced a chain run, in the
+order it ran, together with the chain mode — stamped into the run. It is what
+makes "the same content, re-vetted by a changed chain" a distinguishable
+event. See <a href="../vetting/">Vetting — the vetter chain</a>.</dd>
+<dt><strong>Chain mode</strong></dt>
+<dd>How far a chain run goes: <code>run-all</code>, the default, runs every enabled vetter;
+<code>stop-after-fail</code> stops after the first vetter that still objects. Set by an
+administrator, per marketplace or globally. See
+<a href="../vetting/#stopping-the-chain-after-a-failure">Stopping the chain after a failure</a>.</dd>
 <dt><strong>Chain run</strong></dt>
 <dd>One execution of the vetting chain against one snapshot, recorded with its
 verdicts and its findings. The record is raw evidence and is never
@@ -2121,8 +2126,15 @@ or mirrors. See
 <dt><strong>Effective outcome</strong></dt>
 <dd>What actually gates an approval: the recorded chain run with the waivers
 active at that instant layered over it, computed on every read.
-<code>CLEAR_WITH_WAIVERS</code> is deliberately a different word from <code>CLEAR</code>. See
+<code>CLEAR_WITH_WAIVERS</code> is deliberately a different word from <code>CLEAR</code>. A run
+carrying a <em>not reached</em> verdict is blocked whatever is waived. See
 <a href="../vetting/#the-effective-outcome">The effective outcome</a>.</dd>
+<dt><strong>Not reached</strong></dt>
+<dd>The verdict recorded for a vetter the chain stopped short of. Distinct from a
+vetter an administrator switched off, and from one with no verdict at all: it
+neither clears nor blocks on its own, but a run carrying one is blocked until
+the chain has been run again. See
+<a href="../vetting/#verdict-states">Verdict states</a>.</dd>
 <dt><strong>Estate</strong></dt>
 <dd>Everything the gateway governs that is created at runtime rather than coded:
 marketplaces, role grants, webhook subscribers, audit sinks and policy

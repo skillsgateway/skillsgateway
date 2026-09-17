@@ -1909,6 +1909,67 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#chain-mode-and-vetter-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chain mode and vetter order
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Chain mode and vetter order">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-vettingchain-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /vetting/chain-settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-marketplacesnamevetting-chain-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /marketplaces/{name}/vetting-chain-settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#put-vettingchain-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PUT /vetting/chain-mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#put-vettingchain-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PUT /vetting/chain-order
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#vetting-waivers" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2789,6 +2850,67 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#chain-mode-and-vetter-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chain mode and vetter order
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Chain mode and vetter order">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-vettingchain-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /vetting/chain-settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-marketplacesnamevetting-chain-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /marketplaces/{name}/vetting-chain-settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#put-vettingchain-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PUT /vetting/chain-mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#put-vettingchain-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PUT /vetting/chain-order
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#vetting-waivers" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3517,6 +3639,10 @@ overrides.</p>
 runs, the state its enablement resolves to for this marketplace, and which
 setting decided that. The resolution is the chain's own — not a recombination of
 the settings list — so it cannot disagree with what actually runs.</p>
+<p>The array order is the order the chain runs in, including any administrator's
+<a href="#chain-mode-and-vetter-order">arrangement</a>. Each entry's <code>order</code> field stays the
+vetter's own configured position, which is the tie-break the resolved order falls
+back on — it is not the step number.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="p">[{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="nt">"order"</span><span class="p">:</span><span class="mi">100</span><span class="p">,</span><span class="nt">"description"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"version"</span><span class="p">:</span><span class="s2">"3"</span><span class="p">,</span><span class="nt">"external"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="nt">"enabled"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="nt">"source"</span><span class="p">:</span><span class="s2">"MARKETPLACE"</span><span class="p">,</span><span class="nt">"reason"</span><span class="p">:</span><span class="s2">"vendor keys, expected"</span><span class="p">,</span>
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span><span class="nt">"updatedBy"</span><span class="p">:</span><span class="s2">"alice"</span><span class="p">,</span><span class="nt">"updatedAt"</span><span class="p">:</span><span class="s2">"2026-08-20T09:00:00Z"</span><span class="p">},</span>
@@ -3630,6 +3756,237 @@ administrator, the vetter, the scope and the new state.</p>
 </tbody>
 </table>
 <hr />
+<h2 id="chain-mode-and-vetter-order">Chain mode and vetter order<a class="headerlink" href="#chain-mode-and-vetter-order" title="Permanent link">&para;</a></h2>
+<p>Two settings shape a chain run beyond which vetters are switched on: how far the
+chain goes, and the order it goes in. Both resolve exactly as the on/off switch
+does — the setting scoped to the marketplace, else the global setting, else the
+default — and both are <strong>admin-only</strong> to set and to read, for the same reason:
+they decide how much evidence stands behind every approval in a marketplace.</p>
+<table>
+<thead>
+<tr>
+<th>Chain mode</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>run-all</code></td>
+<td>Every enabled vetter runs. The default.</td>
+</tr>
+<tr>
+<td><code>stop-after-fail</code></td>
+<td>The chain stops after the first vetter whose verdict still objects once active waivers are applied; the vetters after it are recorded <code>NOT_REACHED</code> rather than run.</td>
+</tr>
+</tbody>
+</table>
+<p>A run carrying a <code>NOT_REACHED</code> verdict is <strong>blocked whatever waivers exist</strong>.
+Accepting the finding that stopped the chain lets the <em>next</em> run get further; it
+does not clear the run whose later vetters never looked. See
+<a href="../../../concepts/vetting/#stopping-the-chain-after-a-failure">Stopping the chain after a failure</a>.</p>
+<h3 id="get-vettingchain-settings"><code>GET /vetting/chain-settings</code><a class="headerlink" href="#get-vettingchain-settings" title="Permanent link">&para;</a></h3>
+<p>Every chain-mode and vetter-order setting — the global settings and the
+per-marketplace overrides.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="p">{</span><span class="nt">"modes"</span><span class="p">:[{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"marketplaceId"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"mode"</span><span class="p">:</span><span class="s2">"run-all"</span><span class="p">,</span><span class="nt">"reason"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">           </span><span class="nt">"updatedBy"</span><span class="p">:</span><span class="s2">"root"</span><span class="p">,</span><span class="nt">"updatedAt"</span><span class="p">:</span><span class="s2">"2026-09-10T09:00:00Z"</span><span class="p">}],</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w"> </span><span class="nt">"orders"</span><span class="p">:[{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"marketplaceId"</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span><span class="nt">"vetters"</span><span class="p">:[</span><span class="s2">"prompt-injection"</span><span class="p">,</span><span class="s2">"secret-scan"</span><span class="p">],</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">            </span><span class="nt">"reason"</span><span class="p">:</span><span class="s2">"cheapest first"</span><span class="p">,</span><span class="nt">"updatedBy"</span><span class="p">:</span><span class="s2">"alice"</span><span class="p">,</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">            </span><span class="nt">"updatedAt"</span><span class="p">:</span><span class="s2">"2026-09-10T09:01:00Z"</span><span class="p">}]}</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>The chain settings.</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Caller does not hold the administrative role.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="get-marketplacesnamevetting-chain-settings"><code>GET /marketplaces/{name}/vetting-chain-settings</code><a class="headerlink" href="#get-marketplacesnamevetting-chain-settings" title="Permanent link">&para;</a></h3>
+<p>The marketplace's <strong>effective</strong> mode and order, and which setting decided each.
+A sibling of the chain read rather than part of it: these are properties of the
+chain, not of any one vetter.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="p">{</span><span class="nt">"mode"</span><span class="p">:</span><span class="s2">"stop-after-fail"</span><span class="p">,</span><span class="nt">"modeSource"</span><span class="p">:</span><span class="s2">"MARKETPLACE"</span><span class="p">,</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w"> </span><span class="nt">"modeReason"</span><span class="p">:</span><span class="s2">"the external reviewer is billed per call"</span><span class="p">,</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w"> </span><span class="nt">"modeUpdatedBy"</span><span class="p">:</span><span class="s2">"alice"</span><span class="p">,</span><span class="nt">"modeUpdatedAt"</span><span class="p">:</span><span class="s2">"2026-09-10T09:00:00Z"</span><span class="p">,</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w"> </span><span class="nt">"order"</span><span class="p">:[</span><span class="s2">"prompt-injection"</span><span class="p">,</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="s2">"license-scan"</span><span class="p">],</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w"> </span><span class="nt">"orderOverride"</span><span class="p">:[</span><span class="s2">"prompt-injection"</span><span class="p">,</span><span class="s2">"secret-scan"</span><span class="p">],</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="w"> </span><span class="nt">"orderSource"</span><span class="p">:</span><span class="s2">"MARKETPLACE"</span><span class="p">,</span><span class="nt">"orderReason"</span><span class="p">:</span><span class="s2">"cheapest first"</span><span class="p">,</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="w"> </span><span class="nt">"orderUpdatedBy"</span><span class="p">:</span><span class="s2">"alice"</span><span class="p">,</span><span class="nt">"orderUpdatedAt"</span><span class="p">:</span><span class="s2">"2026-09-10T09:01:00Z"</span><span class="p">}</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mode</code></td>
+<td><code>run-all</code> or <code>stop-after-fail</code>, as it resolves for this marketplace.</td>
+</tr>
+<tr>
+<td><code>order</code></td>
+<td>Every configured vetter, in the order this marketplace runs them.</td>
+</tr>
+<tr>
+<td><code>orderOverride</code></td>
+<td>The arrangement an administrator set, which need not name every vetter; empty when none is set.</td>
+</tr>
+<tr>
+<td><code>modeSource</code>, <code>orderSource</code></td>
+<td><code>MARKETPLACE</code>, <code>GLOBAL</code> or <code>DEFAULT</code> — the absence of a setting is its own source, never a missing value.</td>
+</tr>
+<tr>
+<td><code>modeReason</code>/<code>orderReason</code>, <code>…UpdatedBy</code>, <code>…UpdatedAt</code></td>
+<td>The note, the acting administrator and the time of whichever setting decided it; <code>null</code> for <code>DEFAULT</code>.</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>The effective chain settings.</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Caller does not hold the administrative role.</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Named marketplace not found.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="put-vettingchain-mode"><code>PUT /vetting/chain-mode</code><a class="headerlink" href="#put-vettingchain-mode" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mode</code></td>
+<td>yes</td>
+<td><code>run-all</code> or <code>stop-after-fail</code>.</td>
+</tr>
+<tr>
+<td><code>marketplace</code></td>
+<td>no</td>
+<td>Scope the setting to one marketplace; omit for the global setting.</td>
+</tr>
+<tr>
+<td><code>reason</code></td>
+<td>no</td>
+<td>A note recorded with the change and on the audit ledger.</td>
+</tr>
+</tbody>
+</table>
+<p>Audited as <code>vetting-chain-mode-set</code>, naming the administrator, the scope, the
+new mode and the note. A refused change writes nothing.</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>The setting after the change.</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Caller does not hold the administrative role.</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Named marketplace not found.</td>
+</tr>
+<tr>
+<td>422</td>
+<td>Unknown mode, or <code>mode</code> omitted.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="put-vettingchain-order"><code>PUT /vetting/chain-order</code><a class="headerlink" href="#put-vettingchain-order" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>vetters</code></td>
+<td>yes</td>
+<td>Vetter names, in the order they should run. It need not name every vetter.</td>
+</tr>
+<tr>
+<td><code>marketplace</code></td>
+<td>no</td>
+<td>Scope the setting to one marketplace; omit for the global setting.</td>
+</tr>
+<tr>
+<td><code>reason</code></td>
+<td>no</td>
+<td>A note recorded with the change and on the audit ledger.</td>
+</tr>
+</tbody>
+</table>
+<p>The vetters the arrangement does not name run <strong>after</strong> those it does, in their
+configured positions with ties broken by name, so an arrangement can never drop a
+vetter by omission. Audited as <code>vetting-chain-order-set</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>The setting after the change.</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Caller does not hold the administrative role.</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Named marketplace not found.</td>
+</tr>
+<tr>
+<td>422</td>
+<td>Empty order, unknown vetter, or a vetter named twice.</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="vetting-waivers">Vetting waivers<a class="headerlink" href="#vetting-waivers" title="Permanent link">&para;</a></h2>
 <p>A waiver accepts one finding rule, on one marketplace, within one scope, until
 one expiry. See
@@ -3637,9 +3994,9 @@ one expiry. See
 <a href="../../../concepts/vetting/#waivers-accepted-risks-with-a-scope-and-an-expiry">the concept page</a>
 for the matching rules.</p>
 <h3 id="post-snapshotsidwaivers"><code>POST /snapshots/{id}/waivers</code><a class="headerlink" href="#post-snapshotsidwaivers" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="p">{</span><span class="nt">"ruleId"</span><span class="p">:</span><span class="s2">"aws-access-key-id"</span><span class="p">,</span><span class="nt">"scope"</span><span class="p">:</span><span class="s2">"SNAPSHOT"</span><span class="p">,</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w"> </span><span class="nt">"justification"</span><span class="p">:</span><span class="s2">"documented dummy key in the fixtures directory"</span><span class="p">,</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w"> </span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-09-30T23:59:59Z"</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="p">{</span><span class="nt">"ruleId"</span><span class="p">:</span><span class="s2">"aws-access-key-id"</span><span class="p">,</span><span class="nt">"scope"</span><span class="p">:</span><span class="s2">"SNAPSHOT"</span><span class="p">,</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w"> </span><span class="nt">"justification"</span><span class="p">:</span><span class="s2">"documented dummy key in the fixtures directory"</span><span class="p">,</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w"> </span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-09-30T23:59:59Z"</span><span class="p">}</span>
 </code></pre></div>
 <table>
 <thead>
@@ -3755,13 +4112,13 @@ violation does is a deployment setting, not a request parameter — see
 <h3 id="post-snapshotsidrevet"><code>POST /snapshots/{id}/revet</code><a class="headerlink" href="#post-snapshotsidrevet" title="Permanent link">&para;</a></h3>
 <p>Runs the chain again over the snapshot's pinned content, recording a new run
 with trigger <code>revet-manual</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"corp-marketplace"</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab…"</span><span class="p">,</span><span class="nt">"runId"</span><span class="p">:</span><span class="mi">31</span><span class="p">,</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w"> </span><span class="nt">"classification"</span><span class="p">:</span><span class="s2">"VIOLATION"</span><span class="p">,</span><span class="nt">"outcome"</span><span class="p">:</span><span class="s2">"BLOCKED"</span><span class="p">,</span><span class="nt">"revoked"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"mode"</span><span class="p">:</span><span class="s2">"ENFORCE"</span><span class="p">,</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w"> </span><span class="nt">"uncovered"</span><span class="p">:[{</span><span class="nt">"vetter"</span><span class="p">:</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="nt">"ruleId"</span><span class="p">:</span><span class="s2">"aws-access-key-id"</span><span class="p">,</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">               </span><span class="nt">"location"</span><span class="p">:</span><span class="s2">"plugins/hello/DEPLOY.md:5"</span><span class="p">,</span><span class="nt">"severity"</span><span class="p">:</span><span class="s2">"CRITICAL"</span><span class="p">,</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">               </span><span class="nt">"message"</span><span class="p">:</span><span class="s2">"an AWS access key id is committed in this file"</span><span class="p">}],</span>
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="w"> </span><span class="nt">"affected"</span><span class="p">:[{</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"team-payments"</span><span class="p">,</span><span class="nt">"fetches"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="w">              </span><span class="nt">"lastFetch"</span><span class="p">:</span><span class="s2">"2026-08-14T22:10:00Z"</span><span class="p">}]}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"corp-marketplace"</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab…"</span><span class="p">,</span><span class="nt">"runId"</span><span class="p">:</span><span class="mi">31</span><span class="p">,</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w"> </span><span class="nt">"classification"</span><span class="p">:</span><span class="s2">"VIOLATION"</span><span class="p">,</span><span class="nt">"outcome"</span><span class="p">:</span><span class="s2">"BLOCKED"</span><span class="p">,</span><span class="nt">"revoked"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"mode"</span><span class="p">:</span><span class="s2">"ENFORCE"</span><span class="p">,</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w"> </span><span class="nt">"uncovered"</span><span class="p">:[{</span><span class="nt">"vetter"</span><span class="p">:</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="nt">"ruleId"</span><span class="p">:</span><span class="s2">"aws-access-key-id"</span><span class="p">,</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">               </span><span class="nt">"location"</span><span class="p">:</span><span class="s2">"plugins/hello/DEPLOY.md:5"</span><span class="p">,</span><span class="nt">"severity"</span><span class="p">:</span><span class="s2">"CRITICAL"</span><span class="p">,</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">               </span><span class="nt">"message"</span><span class="p">:</span><span class="s2">"an AWS access key id is committed in this file"</span><span class="p">}],</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w"> </span><span class="nt">"affected"</span><span class="p">:[{</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"team-payments"</span><span class="p">,</span><span class="nt">"fetches"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">              </span><span class="nt">"lastFetch"</span><span class="p">:</span><span class="s2">"2026-08-14T22:10:00Z"</span><span class="p">}]}</span>
 </code></pre></div>
 <table>
 <thead>
@@ -3848,7 +4205,7 @@ and the individual <code>results</code>.</p>
 <p>Every authenticated identity that <strong>received</strong> this snapshot's content through
 the git facade, with how often and when it last did — the blast radius of a
 retroactive violation, read from the append-only fetch ledger.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="p">[{</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"team-payments"</span><span class="p">,</span><span class="nt">"fetches"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"lastFetch"</span><span class="p">:</span><span class="s2">"2026-08-14T22:10:00Z"</span><span class="p">}]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="p">[{</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"team-payments"</span><span class="p">,</span><span class="nt">"fetches"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"lastFetch"</span><span class="p">:</span><span class="s2">"2026-08-14T22:10:00Z"</span><span class="p">}]</span>
 </code></pre></div>
 <p>Only pack transfers count. A ref advertisement means a client asked, not that it
 received anything, so counting it would name teams that never got the content.</p>
@@ -3884,12 +4241,12 @@ published repository and force-updates <code>refs/heads/main</code> to that SHA.
 <p><strong>The request body is optional.</strong> A snapshot whose effective vetting outcome is
 blocked is refused, and the problem document carries both <code>blockingVetters</code>
 and <code>uncoveredFindings</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">409</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Vetting chain blocked this snapshot"</span><span class="p">,</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"snapshot 12 cannot be approved: …"</span><span class="p">,</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w"> </span><span class="nt">"blockingVetters"</span><span class="p">:[</span><span class="s2">"secret-scan"</span><span class="p">],</span>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w"> </span><span class="nt">"uncoveredFindings"</span><span class="p">:[{</span><span class="nt">"vetter"</span><span class="p">:</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="nt">"ruleId"</span><span class="p">:</span><span class="s2">"aws-access-key-id"</span><span class="p">,</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">                       </span><span class="nt">"location"</span><span class="p">:</span><span class="s2">"plugins/hello/DEPLOY.md:5"</span><span class="p">,</span><span class="nt">"severity"</span><span class="p">:</span><span class="s2">"CRITICAL"</span><span class="p">,</span>
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">                       </span><span class="nt">"message"</span><span class="p">:</span><span class="s2">"an AWS access key id is committed in this file"</span><span class="p">}]}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">409</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Vetting chain blocked this snapshot"</span><span class="p">,</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"snapshot 12 cannot be approved: …"</span><span class="p">,</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w"> </span><span class="nt">"blockingVetters"</span><span class="p">:[</span><span class="s2">"secret-scan"</span><span class="p">],</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w"> </span><span class="nt">"uncoveredFindings"</span><span class="p">:[{</span><span class="nt">"vetter"</span><span class="p">:</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="nt">"ruleId"</span><span class="p">:</span><span class="s2">"aws-access-key-id"</span><span class="p">,</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="w">                       </span><span class="nt">"location"</span><span class="p">:</span><span class="s2">"plugins/hello/DEPLOY.md:5"</span><span class="p">,</span><span class="nt">"severity"</span><span class="p">:</span><span class="s2">"CRITICAL"</span><span class="p">,</span>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="w">                       </span><span class="nt">"message"</span><span class="p">:</span><span class="s2">"an AWS access key id is committed in this file"</span><span class="p">}]}</span>
 </code></pre></div>
 <p><code>uncoveredFindings</code> is the complete worklist: record a waiver for each entry and
 the approval succeeds. Every waiver that was in force is appended to the audit
@@ -3898,26 +4255,26 @@ ledger as <code>waiver-applied</code>.</p>
 <a href="../../configuration/#minimum-release-age">minimum release age</a> is refused by the
 same status with a different problem document — one nothing in the API can
 unblock, because it clears itself:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">409</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Snapshot has not reached the minimum release age"</span><span class="p">,</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"snapshot 12 cannot be approved yet: …"</span><span class="p">,</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w"> </span><span class="nt">"configKey"</span><span class="p">:</span><span class="s2">"skills-gateway.vetting.minimum-release-age"</span><span class="p">,</span>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w"> </span><span class="nt">"minimumReleaseAge"</span><span class="p">:</span><span class="s2">"PT72H"</span><span class="p">,</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w"> </span><span class="nt">"eligibility"</span><span class="p">:{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"eligible"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span>
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="w">                </span><span class="nt">"firstIngestedAt"</span><span class="p">:</span><span class="s2">"2026-08-16T09:00:00Z"</span><span class="p">,</span>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="w">                </span><span class="nt">"eligibleAt"</span><span class="p">:</span><span class="s2">"2026-08-19T09:00:00Z"</span><span class="p">,</span>
-<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a><span class="w">                </span><span class="nt">"ageSeconds"</span><span class="p">:</span><span class="mi">57600</span><span class="p">,</span><span class="nt">"remainingSeconds"</span><span class="p">:</span><span class="mi">187200</span><span class="p">,</span>
-<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a><span class="w">                </span><span class="nt">"minimumReleaseAgeSeconds"</span><span class="p">:</span><span class="mi">259200</span><span class="p">}}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">409</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Snapshot has not reached the minimum release age"</span><span class="p">,</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"snapshot 12 cannot be approved yet: …"</span><span class="p">,</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w"> </span><span class="nt">"configKey"</span><span class="p">:</span><span class="s2">"skills-gateway.vetting.minimum-release-age"</span><span class="p">,</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w"> </span><span class="nt">"minimumReleaseAge"</span><span class="p">:</span><span class="s2">"PT72H"</span><span class="p">,</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="w"> </span><span class="nt">"eligibility"</span><span class="p">:{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"eligible"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="w">                </span><span class="nt">"firstIngestedAt"</span><span class="p">:</span><span class="s2">"2026-08-16T09:00:00Z"</span><span class="p">,</span>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="w">                </span><span class="nt">"eligibleAt"</span><span class="p">:</span><span class="s2">"2026-08-19T09:00:00Z"</span><span class="p">,</span>
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="w">                </span><span class="nt">"ageSeconds"</span><span class="p">:</span><span class="mi">57600</span><span class="p">,</span><span class="nt">"remainingSeconds"</span><span class="p">:</span><span class="mi">187200</span><span class="p">,</span>
+<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a><span class="w">                </span><span class="nt">"minimumReleaseAgeSeconds"</span><span class="p">:</span><span class="mi">259200</span><span class="p">}}</span>
 </code></pre></div>
 <p>Under an enforcing
 <a href="../../../guides/approving-snapshots/#separation-of-duties">four-eyes rule</a> an
 approval by an identity on the snapshot's supply side is refused by the same
 status, with the conflicting acts named:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">409</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Four-eyes rule refused this approval"</span><span class="p">,</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"four-eyes rule refused approval of snapshot 12: …"</span><span class="p">,</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w"> </span><span class="nt">"configKey"</span><span class="p">:</span><span class="s2">"skills-gateway.approval.four-eyes.mode"</span><span class="p">,</span>
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w"> </span><span class="nt">"conflicts"</span><span class="p">:[{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"registered-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">},</span>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="w">              </span><span class="p">{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"ingested-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">},</span>
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="w">              </span><span class="p">{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"waiver-author"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="mi">7</span><span class="p">}]}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">409</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Four-eyes rule refused this approval"</span><span class="p">,</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"four-eyes rule refused approval of snapshot 12: …"</span><span class="p">,</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w"> </span><span class="nt">"configKey"</span><span class="p">:</span><span class="s2">"skills-gateway.approval.four-eyes.mode"</span><span class="p">,</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w"> </span><span class="nt">"conflicts"</span><span class="p">:[{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"registered-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">},</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">              </span><span class="p">{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"ingested-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">},</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="w">              </span><span class="p">{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"waiver-author"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="mi">7</span><span class="p">}]}</span>
 </code></pre></div>
 <p>Nothing in the API unblocks this one either: a different identity has to
 approve. Under the default <code>warn</code> mode the same conflicts are detected, the
@@ -3926,9 +4283,9 @@ ledger beside <code>snapshot-approved</code>.</p>
 <p>Ahead of every gate above, a snapshot whose recorded
 <a href="../../../concepts/snapshots-and-ledger/#the-closure-record">closure</a> does not
 describe the commit it pins is refused, and every discrepancy is named:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">409</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Snapshot closure is incomplete"</span><span class="p">,</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"snapshot 12 cannot be approved: its recorded closure does not describe the commit it pins — …"</span><span class="p">,</span>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w"> </span><span class="nt">"discrepancies"</span><span class="p">:[</span><span class="s2">"the served manifest declares plugin 'tools' at _plugins/tools, which the recorded closure does not contain"</span><span class="p">]}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">409</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Snapshot closure is incomplete"</span><span class="p">,</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"snapshot 12 cannot be approved: its recorded closure does not describe the commit it pins — …"</span><span class="p">,</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w"> </span><span class="nt">"discrepancies"</span><span class="p">:[</span><span class="s2">"the served manifest declares plugin 'tools' at _plugins/tools, which the recorded closure does not contain"</span><span class="p">]}</span>
 </code></pre></div>
 <p>Nothing the gateway does produces this state, so there is no override for it:
 it means something other than the gateway has altered the snapshot's rows or
@@ -3968,7 +4325,7 @@ revocation marks.</p>
 <p>The airline-cockpit escape hatch: an <strong>administrator — and only an
 administrator</strong> — may approve a snapshot whose effective outcome is blocked by
 sending a body:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="p">{</span><span class="nt">"overrideVetting"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"reason"</span><span class="p">:</span><span class="w"> </span><span class="s2">"vendor-signed key, accepted risk in TICKET-42"</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="p">{</span><span class="nt">"overrideVetting"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"reason"</span><span class="p">:</span><span class="w"> </span><span class="s2">"vendor-signed key, accepted risk in TICKET-42"</span><span class="p">}</span>
 </code></pre></div>
 <p>The override <strong>lifts only the vetting gate</strong> — the policy, minimum-release-age
 and four-eyes gates still run. A <code>reason</code> is required (a reasonless override is
@@ -3993,9 +4350,9 @@ silent bypass.</p>
 <a href="../../configuration/#minimum-release-age">minimum release age</a>, and when it will
 if it has not. This is the same computation the approve endpoint gates on, so
 the two can never disagree.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"eligible"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w"> </span><span class="nt">"firstIngestedAt"</span><span class="p">:</span><span class="s2">"2026-08-16T09:00:00Z"</span><span class="p">,</span><span class="nt">"eligibleAt"</span><span class="p">:</span><span class="s2">"2026-08-19T09:00:00Z"</span><span class="p">,</span>
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w"> </span><span class="nt">"ageSeconds"</span><span class="p">:</span><span class="mi">57600</span><span class="p">,</span><span class="nt">"remainingSeconds"</span><span class="p">:</span><span class="mi">187200</span><span class="p">,</span><span class="nt">"minimumReleaseAgeSeconds"</span><span class="p">:</span><span class="mi">259200</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"eligible"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w"> </span><span class="nt">"firstIngestedAt"</span><span class="p">:</span><span class="s2">"2026-08-16T09:00:00Z"</span><span class="p">,</span><span class="nt">"eligibleAt"</span><span class="p">:</span><span class="s2">"2026-08-19T09:00:00Z"</span><span class="p">,</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w"> </span><span class="nt">"ageSeconds"</span><span class="p">:</span><span class="mi">57600</span><span class="p">,</span><span class="nt">"remainingSeconds"</span><span class="p">:</span><span class="mi">187200</span><span class="p">,</span><span class="nt">"minimumReleaseAgeSeconds"</span><span class="p">:</span><span class="mi">259200</span><span class="p">}</span>
 </code></pre></div>
 <table>
 <thead>
@@ -4056,9 +4413,9 @@ the two can never disagree.</p>
 object to <strong>the calling identity</strong> approving this snapshot, and what the
 configured mode would do about it. Decides nothing; the approve endpoint
 enforces the rule independently.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="p">{</span><span class="nt">"mode"</span><span class="p">:</span><span class="s2">"ENFORCE"</span><span class="p">,</span><span class="nt">"refused"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w"> </span><span class="nt">"conflicts"</span><span class="p">:[{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"registered-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">},</span>
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">              </span><span class="p">{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"ingested-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">}]}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="p">{</span><span class="nt">"mode"</span><span class="p">:</span><span class="s2">"ENFORCE"</span><span class="p">,</span><span class="nt">"refused"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="w"> </span><span class="nt">"conflicts"</span><span class="p">:[{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"registered-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">},</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">              </span><span class="p">{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"ingested-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">}]}</span>
 </code></pre></div>
 <table>
 <thead>
@@ -4120,18 +4477,18 @@ the gateway makes, not a caller.</p>
 <hr />
 <h2 id="get-snapshotsidprovenance"><code>GET /snapshots/{id}/provenance</code><a class="headerlink" href="#get-snapshotsidprovenance" title="Permanent link">&para;</a></h2>
 <p>Where the snapshot came from and who decided on it.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"origin"</span><span class="p">:</span><span class="s2">"upstream"</span><span class="p">,</span>
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w"> </span><span class="nt">"upstreamUrl"</span><span class="p">:</span><span class="s2">"https://github.com/acme/skills.git"</span><span class="p">,</span>
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w"> </span><span class="nt">"upstreamSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"9e1d77c..."</span><span class="p">,</span>
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w"> </span><span class="nt">"closure"</span><span class="p">:{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span><span class="nt">"digest"</span><span class="p">:</span><span class="s2">"4c2a…"</span><span class="p">,</span><span class="nt">"upstreamSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span>
-<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="w">            </span><span class="nt">"transformerVersion"</span><span class="p">:</span><span class="s2">"1"</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span>
-<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="w">            </span><span class="nt">"members"</span><span class="p">:[{</span><span class="nt">"pluginName"</span><span class="p">:</span><span class="s2">"tools"</span><span class="p">,</span><span class="nt">"sourceType"</span><span class="p">:</span><span class="s2">"github"</span><span class="p">,</span>
-<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="w">                        </span><span class="nt">"declaredSource"</span><span class="p">:</span><span class="s2">"acme/tools"</span><span class="p">,</span><span class="nt">"declaredRef"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"declaredSha"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a><span class="w">                        </span><span class="nt">"cloneUrl"</span><span class="p">:</span><span class="s2">"https://github.com/acme/tools"</span><span class="p">,</span>
-<a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a><span class="w">                        </span><span class="nt">"resolvedSha"</span><span class="p">:</span><span class="s2">"b7e0c1d..."</span><span class="p">,</span><span class="nt">"treeSha"</span><span class="p">:</span><span class="s2">"d41a9f2..."</span><span class="p">,</span>
-<a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a><span class="w">                        </span><span class="nt">"graftPath"</span><span class="p">:</span><span class="s2">"_plugins/tools"</span><span class="p">,</span><span class="nt">"objectCount"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"inflatedBytes"</span><span class="p">:</span><span class="mi">4096</span><span class="p">}]},</span>
-<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a><span class="w"> </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"approved"</span><span class="p">,</span><span class="nt">"violation"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"ingestedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span>
-<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a><span class="w"> </span><span class="nt">"decidedBy"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span><span class="nt">"decidedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"origin"</span><span class="p">:</span><span class="s2">"upstream"</span><span class="p">,</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="w"> </span><span class="nt">"upstreamUrl"</span><span class="p">:</span><span class="s2">"https://github.com/acme/skills.git"</span><span class="p">,</span>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="w"> </span><span class="nt">"upstreamSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"9e1d77c..."</span><span class="p">,</span>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="w"> </span><span class="nt">"closure"</span><span class="p">:{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span><span class="nt">"digest"</span><span class="p">:</span><span class="s2">"4c2a…"</span><span class="p">,</span><span class="nt">"upstreamSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="w">            </span><span class="nt">"transformerVersion"</span><span class="p">:</span><span class="s2">"1"</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span>
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a><span class="w">            </span><span class="nt">"members"</span><span class="p">:[{</span><span class="nt">"pluginName"</span><span class="p">:</span><span class="s2">"tools"</span><span class="p">,</span><span class="nt">"sourceType"</span><span class="p">:</span><span class="s2">"github"</span><span class="p">,</span>
+<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a><span class="w">                        </span><span class="nt">"declaredSource"</span><span class="p">:</span><span class="s2">"acme/tools"</span><span class="p">,</span><span class="nt">"declaredRef"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"declaredSha"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
+<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a><span class="w">                        </span><span class="nt">"cloneUrl"</span><span class="p">:</span><span class="s2">"https://github.com/acme/tools"</span><span class="p">,</span>
+<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a><span class="w">                        </span><span class="nt">"resolvedSha"</span><span class="p">:</span><span class="s2">"b7e0c1d..."</span><span class="p">,</span><span class="nt">"treeSha"</span><span class="p">:</span><span class="s2">"d41a9f2..."</span><span class="p">,</span>
+<a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a><span class="w">                        </span><span class="nt">"graftPath"</span><span class="p">:</span><span class="s2">"_plugins/tools"</span><span class="p">,</span><span class="nt">"objectCount"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"inflatedBytes"</span><span class="p">:</span><span class="mi">4096</span><span class="p">}]},</span>
+<a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a><span class="w"> </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"approved"</span><span class="p">,</span><span class="nt">"violation"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"ingestedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span>
+<a id="__codelineno-27-12" name="__codelineno-27-12" href="#__codelineno-27-12"></a><span class="w"> </span><span class="nt">"decidedBy"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span><span class="nt">"decidedAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}</span>
 </code></pre></div>
 <p><code>upstreamSha</code> is the commit ingested from upstream and <code>sha</code> the commit served;
 they differ only for a composite snapshot. <code>closure</code> is the

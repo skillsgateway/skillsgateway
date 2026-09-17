@@ -3303,6 +3303,25 @@ administrator, the vetter, the scope, the new state and the reason.</p>
 <p>Switching vetters off narrows the evidence behind an approval; it never makes
 one automatic. What that means for a run is described in
 <a href="../../concepts/vetting/#switching-a-vetter-off">Switching a vetter off</a>.</p>
+<p>Beneath the drawing sit the two chain-level controls, fed by
+<code>GET /api/marketplaces/{name}/vetting-chain-settings</code>.</p>
+<p><strong>When a vetter fails</strong> is a two-option control — <em>Run every vetter</em> or <em>Stop
+after a failure</em> — calling <code>PUT /api/vetting/chain-mode</code> for this marketplace,
+with an optional reason. The hint beside it states the cost rather than leaving
+it to be discovered on a snapshot: stopping early spares the vetters after a
+failure, and it also means a reviewer no longer sees everything that is wrong
+with a snapshot in one pass, and that a run which stopped is blocked until it has
+been run again — even after the finding that stopped it is waived. The line ends
+with where the current mode came from.</p>
+<p><strong>The order they run in</strong> is a numbered list with a <strong>Move <em>vetter</em> up</strong> and a
+<strong>Move <em>vetter</em> down</strong> control on every row. The controls are ordinary buttons
+with names of their own, so the reordering is operable by keyboard and announced
+as what it does; there is no drag gesture to have an equivalent for. Movements
+are local until <strong>Save order</strong> writes the whole arrangement through
+<code>PUT /api/vetting/chain-order</code> — one intended reordering is one audited change,
+not one per hop — and <strong>Discard changes</strong> puts it back. While an arrangement is
+unsaved the drawing above shows the proposed order and the list says it is not
+saved yet.</p>
 <h3 id="snapshots">Snapshots<a class="headerlink" href="#snapshots" title="Permanent link">&para;</a></h3>
 <p>One card per snapshot showing the short SHA (12 characters, monospace), the
 state badge, and the deciding principal once decided. A violation, when present,
@@ -3419,7 +3438,13 @@ it can be read without opening anything:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Blocked at step 1 · secret-scan found 1 critical finding
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>Clear · 4 vetters, 0 findings
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>Clear with waivers · 2 findings accepted
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>Stopped at step 1 · secret-scan found 1 critical finding, so 2 later vetters
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>                    did not run — re-vet to see what they say
 </code></pre></div>
+<p>The last of those is the one a reader must not skim past: a chain that
+<a href="../../concepts/vetting/#stopping-the-chain-after-a-failure">stopped early</a> has a
+smaller verdict set, not a cleaner one, so the sentence says how many vetters
+never looked and what to do about it.</p>
 <p>How to read a node:</p>
 <table>
 <thead>
@@ -3439,7 +3464,7 @@ it can be read without opening anything:</p>
 </tr>
 <tr>
 <td>State word</td>
-<td><code>pass</code>, <code>warn</code>, <code>fail</code>, <code>error</code>, <code>pending</code>, <code>skipped</code>, <code>not run</code> for a vetter; <code>clear</code>, <code>clear with waivers</code>, <code>blocked</code> for the outcome; <code>open</code> or <code>closed</code> for the approval gate. The word is always present — colour never carries a state on its own.</td>
+<td><code>pass</code>, <code>warn</code>, <code>fail</code>, <code>error</code>, <code>pending</code>, <code>skipped</code> (switched off), <code>not reached</code> (the chain stopped before it), <code>not run</code> (no verdict at all) for a vetter; <code>clear</code>, <code>clear with waivers</code>, <code>blocked</code> for the outcome; <code>open</code> or <code>closed</code> for the approval gate. The word is always present — colour never carries a state on its own.</td>
 </tr>
 <tr>
 <td>Top edge</td>
@@ -3469,10 +3494,13 @@ as the end.</p>
   badged. A <code>skipped</code> node states that an administrator switched the vetter
   off for this marketplace and that the scope and reason are on the
   <a href="#vetting-chain-administrators">marketplace's vetting chain</a>, which is
-  administrator-only.</li>
+  administrator-only. A <code>not reached</code> node states that the chain stopped before
+  it, that this is an absence rather than a result, and that a waiver on the
+  finding which stopped the chain lets the next run get this far without standing
+  in for the verdict this vetter never gave.</li>
 <li><strong>The outcome</strong> — how the aggregation reached its answer, what the vetters
-  themselves recorded, which vetters are objecting, and the findings that
-  still need a waiver.</li>
+  themselves recorded, which vetters are objecting, the vetters the run never
+  reached, and the findings that still need a waiver.</li>
 <li><strong>Ingest</strong> and <strong>Approval</strong> — what the step is, and why the gate is where it is.</li>
 </ul>
 <p>The flow is an overview; the per-vetter list below it is where findings are

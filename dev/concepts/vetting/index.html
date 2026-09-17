@@ -547,6 +547,39 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#stopping-the-chain-after-a-failure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stopping the chain after a failure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-order-the-vetters-run-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The order the vetters run in
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-the-settings-resolve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the settings resolve
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2360,6 +2393,39 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#stopping-the-chain-after-a-failure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stopping the chain after a failure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-order-the-vetters-run-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The order the vetters run in
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-the-settings-resolve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the settings resolve
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2591,7 +2657,7 @@ outcome that gates approval.</p>
     M --&gt;|ok| H["snapshot: held"]
     H --&gt; C["Vetting chain"]
 
-    subgraph C["Vetting chain — ordered, all vetters run"]
+    subgraph C["Vetting chain — ordered; every vetter by default"]
         direction TB
         C1["secret-scan (order 100)"] --&gt; C2["prompt-injection (order 200)"] --&gt; C3["license-scan (order 300)"] --&gt; C4["skill-conformance (order 400)"]
     end
@@ -2674,6 +2740,11 @@ is written against, so it is part of the contract rather than a display string.<
 <td>An administrator switched the vetter off for this marketplace, so the chain did not run it.</td>
 <td>No — and it does not clear either</td>
 </tr>
+<tr>
+<td><code>NOT_REACHED</code></td>
+<td>The chain stopped before this vetter, so it was not run.</td>
+<td>No — and it does not clear either, but see below</td>
+</tr>
 </tbody>
 </table>
 <p>A vetter does not choose its state directly: it emits findings, and the
@@ -2692,10 +2763,94 @@ evidence rather than a silently shorter chain. Because <code>DISABLED</code> nev
 disabling every vetter leaves a run blocked — the switch is not a blanket
 approval. The settings, the audit events and the endpoints are in
 <a href="../../reference/api/marketplaces/#vetter-enabledisable">the API reference</a>.</p>
+<h3 id="stopping-the-chain-after-a-failure">Stopping the chain after a failure<a class="headerlink" href="#stopping-the-chain-after-a-failure" title="Permanent link">&para;</a></h3>
+<p>By default the chain runs every enabled vetter, whatever the ones before it
+concluded. An administrator can change that for one marketplace, or globally:</p>
+<table>
+<thead>
+<tr>
+<th>Chain mode</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>run-all</code></td>
+<td>Every enabled vetter runs. The default.</td>
+</tr>
+<tr>
+<td><code>stop-after-fail</code></td>
+<td>The chain stops after the first vetter whose verdict still objects to the content, and the vetters after it are recorded <code>NOT_REACHED</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>What it buys is real: an expensive vetter — one billed per call, or one that
+detonates the snapshot in a sandbox — is not spent on content a cheap
+deterministic scan has already condemned, and that cost is otherwise paid again
+on every <a href="../../guides/re-vetting/">re-vetting</a> pass over the whole approved
+estate.</p>
+<p><strong>What it costs a reviewer</strong> is equally real, and is the reason it is off by
+default. A run that stopped early is not a shorter description of the same
+answer; it is a smaller answer. The reviewer no longer sees everything that is
+wrong with a snapshot in one pass, so a fix-and-re-ingest loop can take several
+rounds, each revealing one more objection. Under <code>run-all</code> a run's verdict set is
+complete by construction; under <code>stop-after-fail</code> it is not, and the portal says
+so above the chain.</p>
+<p>Three properties keep a shorter run from becoming a cleaner one:</p>
+<ul>
+<li><strong>Nothing is omitted.</strong> Every vetter of the chain still has a verdict. A
+  vetter that was not reached says so, and says which vetter stopped the chain.</li>
+<li><strong><code>NOT_REACHED</code> never clears.</strong> Like <code>DISABLED</code> it is an absence rather than a
+  conclusion, and the aggregation still requires at least one clearing verdict.</li>
+<li><strong>A run that stopped early is blocked, whatever is waived.</strong> This is the one
+  that matters. Accepting the finding that stopped the chain does <em>not</em> clear the
+  run — the vetters behind it never looked at the content, and a gate opened on
+  their silence would be indistinguishable from a gate opened on a clean chain. A
+  waiver makes the <strong>next</strong> run get further; the run that stopped stays blocked
+  until the chain has been run again. Re-vet the snapshot, and the gate is then
+  decided on complete evidence.</li>
+</ul>
+<p>Only a <code>FAIL</code> stops the chain — not an <code>ERROR</code>, which is a fact about the
+gateway rather than about the content, and not a <code>PENDING</code>, which has concluded
+nothing. And only a <code>FAIL</code> that a reviewer has not already accepted: a verdict
+whose findings are all waived does not condemn the snapshot, so the chain runs
+on past it.</p>
+<p>Changing the mode is an administrator-only, audited act, like the on/off switch.
+The endpoints are in
+<a href="../../reference/api/marketplaces/#chain-mode-and-vetter-order">the API reference</a>.</p>
+<h3 id="the-order-the-vetters-run-in">The order the vetters run in<a class="headerlink" href="#the-order-the-vetters-run-in" title="Permanent link">&para;</a></h3>
+<p>Order only becomes a control once the chain can stop: under <code>run-all</code> it decides
+nothing but the sequence of the run and the left-to-right position in the
+portal's chain flow. Under <code>stop-after-fail</code> it decides which vetters get to look
+at all, so the cheap and deterministic ones belong first.</p>
+<p>An administrator can set the order globally or for one marketplace. The
+arrangement need not name every vetter. The <strong>resolved</strong> order is:</p>
+<ol>
+<li>the vetters the arrangement names, in the order it names them;</li>
+<li>then every vetter it does not name, by its configured position, with ties
+   broken by the vetter's name.</li>
+</ol>
+<p>That rule is total and deterministic, so a recorded run is reproducible, and an
+arrangement can never drop a vetter by omission — including a vetter a later
+release of the gateway adds, or an <a href="#external-connectors">external
+connector</a> an operator configures afterwards. An
+arrangement naming a vetter that does not exist, or naming one twice, is refused
+rather than stored.</p>
+<h3 id="how-the-settings-resolve">How the settings resolve<a class="headerlink" href="#how-the-settings-resolve" title="Permanent link">&para;</a></h3>
+<p>Both settings resolve the same way the
+<a href="#switching-a-vetter-off">vetter on/off switch</a> does: the setting scoped to the
+marketplace when there is one, otherwise the global setting, otherwise the
+default. The administrative surface reports which of the three decided, so a
+default is never mistaken for a decision somebody made.</p>
+<p>Both are recorded with every run, in the run's <strong>chain identity</strong>, alongside each
+vetter's rule-set version — <code>secret-scan@3,prompt-injection@1;mode=run-all</code>. That
+is what keeps <a href="../../guides/re-vetting/">re-vetting</a> able to answer its own
+question: when a snapshot that cleared last month is blocked today, was it the
+content that changed, or the chain?</p>
 <h2 id="fail-closed-aggregation">Fail-closed aggregation<a class="headerlink" href="#fail-closed-aggregation" title="Permanent link">&para;</a></h2>
 <p>A chain run is <strong>clear</strong> if and only if it produced at least one clearing
-verdict and every verdict is <code>PASS</code>, <code>WARN</code> or <code>DISABLED</code>. Everything else is
-<strong>blocked</strong>:</p>
+verdict and every verdict is <code>PASS</code>, <code>WARN</code>, <code>DISABLED</code> or <code>NOT_REACHED</code>.
+Everything else is <strong>blocked</strong>:</p>
 <ul>
 <li>any vetter that failed;</li>
 <li>any vetter that crashed or timed out — a crash is a blocked snapshot, never
@@ -2706,8 +2861,15 @@ verdict and every verdict is <code>PASS</code>, <code>WARN</code> or <code>DISAB
 <p>That last case is the one that matters most. A snapshot ingested before the
 chain existed, or one whose run died halfway, is blocked — absence of evidence
 is not evidence of safety.</p>
-<p>All vetters run, in order; the chain does not stop at the first failure,
-because a reviewer should see everything that is wrong with a snapshot at once.</p>
+<ul>
+<li><strong>and a run that stopped early</strong>, however its verdicts aggregate and whatever
+  waivers are active: the vetters it did not reach have said nothing either way,
+  so the run is missing evidence rather than merely missing an objection.</li>
+</ul>
+<p>By default all vetters run, in order, and the chain does not stop at the first
+failure, because a reviewer should see everything that is wrong with a snapshot
+at once. An administrator can trade that away per marketplace — see
+<a href="#stopping-the-chain-after-a-failure">Stopping the chain after a failure</a>.</p>
 <h2 id="the-approval-gate">The approval gate<a class="headerlink" href="#the-approval-gate" title="Permanent link">&para;</a></h2>
 <p><code>POST /api/snapshots/{id}/approve</code> takes no request body. It refuses a snapshot
 whose <strong>effective</strong> outcome is blocked, with <code>409</code> and a problem document naming

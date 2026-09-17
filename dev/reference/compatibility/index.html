@@ -2615,6 +2615,20 @@ kind of change that costs a major release once the contract is frozen.</p>
 </tbody>
 </table>
 <div class="admonition note">
+<p class="admonition-title">A new enum value obliges the consumer, not the gateway</p>
+<p>The table says a new enum value is additive, and it is — but only because the
+obligation sits on the other side: a client must tolerate a value it does not
+recognise, the same rule a webhook receiver is held to for keys it does not
+know. A verdict state, a snapshot state or a credential kind can join its set
+in a minor, and a consumer that compiled the set closed will see something it
+has no branch for. Render it, log it, ignore it — do not fail on it.</p>
+<p>The diff tool disagrees by default, and is configured to the contract's answer
+rather than the other way round: <code>response-property-enum-value-added</code> is
+lowered to a warning in <code>.oasdiff-severity-levels.txt</code>, so the addition still
+appears in the diff without declaring a major. <em>Removing</em> or renaming a value
+remains a break, because nothing on the consumer's side can absorb one.</p>
+</div>
+<div class="admonition note">
 <p class="admonition-title">Closing a security gap narrows a route without moving the prefix</p>
 <p>A route that was readable by callers who should never have reached it is
 corrected in place: the guard is added, a <code>403</code> joins its documented
