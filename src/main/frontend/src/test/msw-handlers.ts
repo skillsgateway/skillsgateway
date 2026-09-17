@@ -515,6 +515,128 @@ export const marketplaceChain: Schemas["ChainVetterView"][] = [
   },
 ];
 
+/**
+ * The chain a marketplace with no override of its own runs. The source is never MARKETPLACE here,
+ * which is the property the estate page's claim rests on.
+ */
+export const globalChain: Schemas["ChainVetterView"][] = [
+  {
+    name: "secret-scan",
+    order: 100,
+    description: "Regex and entropy rules over text files.",
+    version: "3",
+    external: false,
+    enabled: true,
+    source: "DEFAULT",
+  },
+  {
+    name: "prompt-injection",
+    order: 200,
+    description: "Pattern heuristics over instructions.",
+    version: "1",
+    external: false,
+    enabled: true,
+    source: "GLOBAL",
+    reason: "kept on across the estate",
+    updatedBy: "root",
+    updatedAt: "2026-08-01T09:00:00Z",
+  },
+  {
+    name: "license-scan",
+    order: 300,
+    description: "Declared licences against the configured policy.",
+    version: "1",
+    external: false,
+    enabled: true,
+    source: "DEFAULT",
+  },
+];
+
+/** The default chain's mode and order, with nothing set anywhere. */
+export const globalChainSettings: Schemas["ChainSettingsView"] = {
+  mode: "run-all",
+  modeSource: "DEFAULT",
+  order: ["secret-scan", "prompt-injection", "license-scan"],
+  orderOverride: [],
+  orderSource: "DEFAULT",
+};
+
+/** Nothing in the estate departs from the default. */
+export const noChainOverrides: Schemas["ChainSettings"] = { modes: [], orders: [] };
+
+/** Two marketplaces that do: one pinned to a mode and an order, one with a vetter switched off. */
+export const chainOverrides: Schemas["ChainSettings"] = {
+  modes: [
+    {
+      id: 1,
+      marketplaceId: 1,
+      mode: "stop-after-fail",
+      reason: "the external reviewer is billed per call",
+      updatedBy: "alice",
+      updatedAt: "2026-09-10T09:00:00Z",
+    },
+  ],
+  orders: [
+    {
+      id: 1,
+      marketplaceId: 1,
+      vetters: ["prompt-injection", "secret-scan"],
+      reason: "cheapest first",
+      updatedBy: "alice",
+      updatedAt: "2026-09-10T09:01:00Z",
+    },
+  ],
+};
+
+/** A per-marketplace vetter override, alongside a global one that is not a departure. */
+export const vetterToggles: Schemas["VetterToggle"][] = [
+  {
+    id: 1,
+    vetter: "prompt-injection",
+    enabled: true,
+    reason: "kept on across the estate",
+    updatedBy: "root",
+    updatedAt: "2026-08-01T09:00:00Z",
+  },
+  {
+    id: 2,
+    vetter: "secret-scan",
+    marketplaceId: 2,
+    enabled: false,
+    reason: "vendor keys, expected here",
+    updatedBy: "alice",
+    updatedAt: "2026-08-20T09:00:00Z",
+  },
+];
+
+/** Every named marketplace took the change. */
+export const bulkApplied: Schemas["BulkChainResult"] = {
+  correlationId: "1f0d9c24-0c4a-4a4f-9a2b-2b6f5a1f0c21",
+  applied: 2,
+  unchanged: 0,
+  failed: 0,
+  results: [
+    { marketplace: "corp-marketplace", status: "APPLIED", detail: "mode=stop-after-fail" },
+    { marketplace: "partner-marketplace", status: "APPLIED", detail: "mode=stop-after-fail" },
+  ],
+};
+
+/** One of them did not, which the page must render as a failure rather than a footnote. */
+export const bulkPartialFailure: Schemas["BulkChainResult"] = {
+  correlationId: "8b4c1a90-6f21-4e0a-bb0d-2f0c7e4a91aa",
+  applied: 1,
+  unchanged: 0,
+  failed: 1,
+  results: [
+    { marketplace: "corp-marketplace", status: "APPLIED", detail: "mode=stop-after-fail" },
+    {
+      marketplace: "partner-marketplace",
+      status: "FAILED",
+      detail: "marketplace 'partner-marketplace' not found",
+    },
+  ],
+};
+
 /** The same run, once the blocking finding has been accepted: cleared, but visibly by a waiver. */
 export const waivedVetting: Schemas["VettingView"] = {
   ...blockedVetting,
@@ -737,6 +859,11 @@ export const handlers = [
   http.get("/api/marketplaces/:name/vetting-chain-settings", () =>
     HttpResponse.json(chainSettingsDefault),
   ),
+  http.get("/api/vetting/global-chain", () => HttpResponse.json(globalChain)),
+  http.get("/api/vetting/global-chain-settings", () => HttpResponse.json(globalChainSettings)),
+  http.get("/api/vetting/chain-settings", () => HttpResponse.json(noChainOverrides)),
+  http.get("/api/vetting/vetter-toggles", () => HttpResponse.json<Schemas["VetterToggle"][]>([])),
+  http.post("/api/vetting/chain-settings/bulk", () => HttpResponse.json(bulkApplied)),
   http.put("/api/vetting/chain-mode", () =>
     HttpResponse.json<Schemas["ChainModeSetting"]>({
       id: 1,

@@ -78,12 +78,7 @@
             "type": "string"
           },
           "clear": {
-            "description": "For clear: which overrides to remove",
-            "enum": [
-              "mode",
-              "order",
-              "vetters"
-            ],
+            "description": "For clear: which overrides to remove — any of mode, order, vetters",
             "items": {
               "type": "string"
             },

@@ -1689,11 +1689,8 @@ export interface components {
              * @enum {string}
              */
             action?: "set-mode" | "set-order" | "set-vetter" | "clear";
-            /**
-             * @description For clear: which overrides to remove
-             * @enum {array}
-             */
-            clear?: "mode" | "order" | "vetters";
+            /** @description For clear: which overrides to remove — any of mode, order, vetters */
+            clear?: string[];
             /** @description For set-vetter: whether the vetter should run */
             enabled?: boolean;
             /** @description The marketplaces the change applies to; each is attempted independently */

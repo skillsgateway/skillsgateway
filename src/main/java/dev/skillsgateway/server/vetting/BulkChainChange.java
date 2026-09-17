@@ -44,9 +44,9 @@ public record BulkChainChange(
         @Schema(description = "For set-vetter: whether the vetter should run")
         Boolean enabled,
 
-        @Schema(
-                description = "For clear: which overrides to remove",
-                allowableValues = {"mode", "order", "vetters"})
+        // No allowableValues: on a list field the annotation constrains the container rather than
+        // the element, which generates a client type that cannot hold the list at all.
+        @Schema(description = "For clear: which overrides to remove — any of mode, order, vetters")
         List<String> clear,
 
         @Schema(description = "Note recorded with every change and on every ledger entry the request causes")

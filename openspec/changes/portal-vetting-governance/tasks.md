@@ -38,34 +38,34 @@
 
 ## 7. Portal — shared controls
 
-- [ ] 7.1 Generalise `ModeControls`, `OrderControls` and the vetter toggle control to an optional scope (`marketplace?: string`, absent meaning global), with copy that switches on the scope
-- [ ] 7.2 Generalise `useMarketplaceChainSettings`, `useSetChainMode`, `useSetChainOrder` and `useToggleVetter` to the optional scope, and add `useGlobalVettingChain`, `useGlobalChainSettings` and `useBulkChainSettings`
-- [ ] 7.3 Confirm the marketplace detail card still behaves identically
+- [x] 7.1 Generalise `ModeControls`, `OrderControls` and the vetter toggle control to an optional scope (`marketplace?: string`, absent meaning global), with copy that switches on the scope
+- [x] 7.2 Generalise `useMarketplaceChainSettings`, `useSetChainMode`, `useSetChainOrder` and `useToggleVetter` to the optional scope, and add `useGlobalVettingChain`, `useGlobalChainSettings` and `useBulkChainSettings`
+- [x] 7.3 Confirm the marketplace detail card still behaves identically
 
 ## 8. Portal — the Vetting page
 
-- [ ] 8.1 Add `src/main/frontend/src/pages/vetting.tsx` with the default-chain section reusing `VettingFlow` and the generalised controls
-- [ ] 8.2 Add the overrides section — one row per departing marketplace, what it overrides, and *clear override*
-- [ ] 8.3 Add bulk edit — keyboard-operable selection and select-all, the action chooser, the confirm step listing affected marketplaces with before/after, and the reason field
-- [ ] 8.4 Render the result per marketplace; a response with any failure renders as a failure
-- [ ] 8.5 Add the non-admin refusal state
-- [ ] 8.6 Register the route in `main.tsx`, the sidebar entry in the Governance group (admin-only) and the breadcrumb in `app-layout.tsx`
-- [ ] 8.7 Link to the page from the marketplace detail vetting-chain card
+- [x] 8.1 Add `src/main/frontend/src/pages/vetting.tsx` with the default-chain section reusing `VettingFlow` and the generalised controls
+- [x] 8.2 Add the overrides section — one row per departing marketplace, what it overrides, and *clear override*
+- [x] 8.3 Add bulk edit — keyboard-operable selection and select-all, the action chooser, the confirm step listing affected marketplaces with before/after, and the reason field
+- [x] 8.4 Render the result per marketplace; a response with any failure renders as a failure
+- [x] 8.5 Add the non-admin refusal state
+- [x] 8.6 Register the route in `main.tsx`, the sidebar entry in the Governance group (admin-only) and the breadcrumb in `app-layout.tsx`
+- [x] 8.7 Link to the page from the marketplace detail vetting-chain card
 
 ## 9. Portal tests
 
-- [ ] 9.1 Stories per state: default only, overrides present, bulk confirm, bulk partial failure, non-admin refusal — axe clean, both themes, reduced motion
-- [ ] 9.2 Component tests for the selection, the confirm-before-apply rule and the partial-failure rendering
-- [ ] 9.3 MSW handlers for the three new endpoints
-- [ ] 9.4 Playwright spec with `@SVCs`: set a global default, then clear a marketplace's override
+- [x] 9.1 Stories per state: default only, overrides present, bulk confirm, bulk partial failure, non-admin refusal — axe clean, both themes, reduced motion
+- [x] 9.2 Component tests for the selection, the confirm-before-apply rule and the partial-failure rendering
+- [x] 9.3 MSW handlers for the three new endpoints
+- [x] 9.4 Playwright spec with `@SVCs`: set a global default, then clear a marketplace's override
 - [ ] 9.5 Run `/impeccable audit`, `/impeccable harden` and `/impeccable critique` on the new page and fix what they flag
 
 ## 10. Documentation
 
-- [ ] 10.1 `docs/manual/reference/portal.md` — the new page and the navigation table
-- [ ] 10.2 `docs/manual/reference/api/marketplaces.md` — the three new endpoints, the `207` contract, the clear semantics
-- [ ] 10.3 `docs/manual/concepts/vetting.md` — one pointer to the page
-- [ ] 10.4 `docs/manual/capability-map.md` and `docs/manual/guides/delegated-administration.md` if their lines change
+- [x] 10.1 `docs/manual/reference/portal.md` — the new page and the navigation table
+- [x] 10.2 `docs/manual/reference/api/marketplaces.md` — the three new endpoints, the `207` contract, the clear semantics
+- [x] 10.3 `docs/manual/concepts/vetting.md` — one pointer to the page
+- [x] 10.4 `docs/manual/capability-map.md` and `docs/manual/guides/delegated-administration.md` if their lines change
 
 ## 11. Gates and evidence
 

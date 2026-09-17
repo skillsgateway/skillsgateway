@@ -20,6 +20,14 @@ four-eyes eligibility, waiver lists) and its own
 themselves — the preview panes — and the blast-radius report is not browsing:
 those take the approver's standing, listed above.
 
+The **vetting chain settings** are admin-only in both directions and are not an
+auditor read: the per-marketplace card on
+[Marketplace detail](../reference/portal.md#vetting-chain-administrators) and the
+estate-wide [Vetting page](../reference/portal.md#vetting-governance) are shown
+to an `admin` and to nobody else. They decide how much evidence stands behind
+every approval, and a marketplace-scoped approver is frequently the owner of the
+content the chain governs.
+
 Enforcement lives at the REST API, which is what the portal speaks. The
 [git facade](../reference/git-facade.md) is untouched: its authorization is
 token scopes, a different credential for a different surface.

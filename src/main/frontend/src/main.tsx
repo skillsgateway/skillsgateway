@@ -10,6 +10,7 @@ import { MarketplaceDetailPage } from "@/pages/marketplace-detail";
 import { MarketplacesPage } from "@/pages/marketplaces";
 import { OverviewPage } from "@/pages/overview";
 import { TokensPage } from "@/pages/tokens";
+import { VettingPage } from "@/pages/vetting";
 import { WebhooksPage } from "@/pages/webhooks";
 import "./index.css";
 
@@ -27,6 +28,7 @@ const router = createBrowserRouter([
       { path: "/marketplaces", element: <MarketplacesPage /> },
       { path: "/marketplaces/:name", element: <MarketplaceDetailPage /> },
       { path: "/audit", element: <AuditPage /> },
+      { path: "/vetting", element: <VettingPage /> },
       { path: "/adoption", element: <AdoptionPage /> },
       { path: "/tokens", element: <TokensPage /> },
       { path: "/webhooks", element: <WebhooksPage /> },
