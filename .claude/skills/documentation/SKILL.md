@@ -47,7 +47,7 @@ verify`, the portal e2e suite, reqstool and OpenSpec.
 | `index.md` | "What is this and why does it exist?" | Background, the need, the non-negotiable goals, a threat-model summary |
 | `concepts/` | "How does it work?" | The lifecycle, snapshots and the ledger, trust boundaries, glossary. Explanation, not instructions |
 | `guides/` | "How do I do X?" | Task-shaped, start to finish, with runnable commands |
-| `reference/` | "What exactly is the contract?" | Configuration, REST API, facade, compatibility matrix, portal pages, ADR index. Exhaustive and lookup-shaped |
+| `reference/` | "What exactly is the contract?" | Configuration, REST API, facade, compatibility matrix, portal pages. Exhaustive and lookup-shaped |
 
 Add a page to `nav:` in `mkdocs.yml` when you create it — an unlisted page is a
 build warning under `--strict`.
@@ -71,6 +71,14 @@ build warning under `--strict`.
   (`../reference/portal.md#audit-log`). `--strict` verifies them.
 - Links to repository files that are outside the site (ADRs, `docs/reqstool/`)
   must be absolute GitHub URLs, since they are not part of `docs_dir`.
+- **An ADR is cited by linking the ADR itself, and never summarized on the
+  site.** Name it in full — `[ADR 0012 — A JVM container is the release
+  artifact](https://github.com/…/docs/decisions/0012-….md)` — so the reader
+  knows what the decision says without opening it. The site once carried an
+  index page paraphrasing every ADR; it was deleted because a paraphrase is a
+  second copy that goes stale, and because the decision record is a repository
+  artifact for contributors, not published documentation. `architecture.md` and
+  `concepts/trust-boundaries.md` are where the site explains *why*.
 
 ## Diagrams
 

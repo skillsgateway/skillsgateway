@@ -262,7 +262,7 @@ flowchart LR
 - **Read-only forge mirror** (optional, off by default). Pushes a copy of what
   the façade serves for one marketplace to a repository on an external code
   host, so people can browse and search approved content there. It is the
-  visibility half of [ADR 0008](reference/decisions.md) and is deliberately *not* a
+  visibility half of [ADR 0008 — The serving surface stays the embedded facade](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0008-serving-surface-stays-the-embedded-facade.md) and is deliberately *not* a
   component anything else depends on: it reads published storage and writes to
   the host, and no approval, revocation, authorization or fetch outcome consults
   it. A mirror that is down, stale or wrong changes nothing about what clients

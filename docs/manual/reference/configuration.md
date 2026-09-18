@@ -1542,7 +1542,7 @@ is built, with the property unset — so on the GraalVM native image the release
 used to publish it was never compiled in and no runtime value could switch it on.
 `native` never had that problem: Tomcat's valve is installed by a customizer that
 reads the property at runtime. The released image is a JVM container today
-([ADR 0012](decisions.md)), where neither shape can occur; the explicit
+([ADR 0012 — A JVM container is the release artifact](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0012-native-image-as-the-release-artifact.md)), where neither shape can occur; the explicit
 registration stays because it is what makes the setting mean one thing on every
 packaging rather than on the one that happens to ship.
 

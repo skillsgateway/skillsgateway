@@ -269,7 +269,7 @@ None of these gates can ever *open* on their own: none can approve. Policy rules
 in particular cannot auto-approve, because that would delegate the human decision
 this boundary exists to guarantee to an expression — a trust-model change,
 decided deliberately or not at all (ADR 0006 in
-[Architecture decisions](../reference/decisions.md)).
+[the architecture decision records](https://github.com/skillsgateway/skillsgateway/tree/main/docs/decisions)).
 
 What *a human* can do, deliberately and audibly, is the airline-cockpit escape
 hatch (ADR 0009): an **administrator** can disconnect the automation. Two acts,
@@ -403,7 +403,7 @@ this page.
 **It is somewhere else.** A separate servlet, resolving a separate repository,
 behind a separate filter chain. `/git/**` keeps its null receive-pack factory,
 so no push can reach a published repository — not by misconfiguration, because
-there is no shared object to misconfigure ([ADR 0007](../reference/decisions.md)).
+there is no shared object to misconfigure ([ADR 0007 — First-party hosting and the publish endpoint](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0007-first-party-hosting-and-the-publish-endpoint.md)).
 
 **It writes to neither quarantine nor published.** A push lands in the
 marketplace's *origin* repository. Ingestion then fetches out of it into

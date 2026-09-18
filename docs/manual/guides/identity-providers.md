@@ -1,6 +1,6 @@
 # Identity providers
 
-The gateway's web surface is OIDC-only ([ADR 0002](../reference/decisions.md)),
+The gateway's web surface is OIDC-only ([ADR 0002 — Toolchain and product decisions](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0002-toolchain-and-product-decisions.md)),
 and it is its own BFF: the browser holds a session cookie, never a token. This
 guide connects it to an enterprise identity provider and — the part that
 removes most of the day-to-day administration — turns the provider's **groups**

@@ -126,7 +126,7 @@ content.
     There is deliberately no auto-approval for trusted internal publishers, not
     even for content the organisation wrote itself. Removing the human from the
     gate is a product decision that has been made once already, in the negative
-    — see [ADR 0006](../reference/decisions.md) — and it is not something a
+    — see [ADR 0006 — Embedded CEL for policy rules](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0006-embedded-cel-for-policy-rules.md) — and it is not something a
     hosting feature gets to decide as a side effect.
 
 ## Declaring one in the estate

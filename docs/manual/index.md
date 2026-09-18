@@ -76,8 +76,8 @@ skill at all.
 The full threat model, including the designed-but-not-yet-built vetting
 vetters and risk tiers, is in
 [Architecture](architecture.md);
-the decisions behind the stack are in
-[Architecture decisions](reference/decisions.md).
+the decisions behind the stack are recorded as architecture decision records
+in the repository, at [docs/decisions/](https://github.com/skillsgateway/skillsgateway/tree/main/docs/decisions).
 
 ## Where to go next
 

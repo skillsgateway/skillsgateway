@@ -295,7 +295,7 @@ java -jar skills-gateway-server-<version>.jar \
     runner's own switch were fixed when that image was built, so the flags were
     accepted and the process started an ordinary server instead — a migration
     that could report having finished without having copied anything. The release
-    artifact is now a JVM container ([ADR 0012](../reference/decisions.md)) and
+    artifact is now a JVM container ([ADR 0012 — A JVM container is the release artifact](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0012-native-image-as-the-release-artifact.md)) and
     the migration runner reads its switch at runtime on every packaging, so the
     procedure above does what it says.
 
