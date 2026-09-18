@@ -46,20 +46,21 @@ verify`, the portal e2e suite, reqstool and OpenSpec.
 | --- | --- | --- |
 | `index.md` | "What is this and why does it exist?" | Background, the need, the non-negotiable goals, a threat-model summary |
 | `concepts/` | "How does it work?" | The lifecycle, snapshots and the ledger, trust boundaries, glossary. Explanation, not instructions |
-
-The nav groups pages by **audience**, not by directory: *How it works*
-(`architecture.md`, `capability-map.md`, `concepts/`), *Run it* (the operator's
-guides), *Govern it* (the administrator's and approver's), *Use it* (the
-consumer's), *Maintain the project* (`releasing.md`). A new guide goes in
-`guides/` on disk whatever it is; the nav section is chosen by asking who reads
-it. Adding a page means adding it to `mkdocs.yml` under the right section — a
-page absent from the nav still builds and is still served, so nothing catches
-the omission.
 | `guides/` | "How do I do X?" | Task-shaped, start to finish, with runnable commands |
 | `reference/` | "What exactly is the contract?" | Configuration, REST API, facade, compatibility matrix, portal pages. Exhaustive and lookup-shaped |
 
-Add a page to `nav:` in `mkdocs.yml` when you create it — an unlisted page is a
-build warning under `--strict`.
+That is the directory layout, and it is the *only* thing the directory decides.
+The **nav groups pages by audience**: *How it works* (`architecture.md`,
+`capability-map.md`, `concepts/`), *Run it* (the operator's guides), *Govern it*
+(the administrator's and approver's), *Use it* (the consumer's), *Maintain the
+project* (`releasing.md`). A new guide goes in `guides/` on disk whatever it is;
+its nav section is chosen by asking who reads it.
+
+**Add every new page to `nav:` in `mkdocs.yml`.** Nothing enforces this: an
+unlisted page still builds, is still rendered, and is still served at its URL,
+and `mkdocs build --strict` exits 0 without a warning. That is also why a page
+that should not be published has to be **deleted** rather than dropped from the
+nav.
 
 ## Writing conventions
 
