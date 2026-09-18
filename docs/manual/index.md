@@ -81,12 +81,19 @@ in the repository, at [docs/decisions/](https://github.com/skillsgateway/skillsg
 
 ## Where to go next
 
-- **New here?** [Lifecycle — quarantine to serve](concepts/lifecycle.md) is the
-  product in one page.
-- **Running it?** [Local development](guides/local-development.md), then
-  [Registering a marketplace](guides/registering-a-marketplace.md).
-- **Consuming it?** [Consuming approved skills](guides/consuming-skills.md).
-- **Operating it?** [Configuration](reference/configuration.md).
+The four sections after this one are named for what you are here to do.
+
+- **New here?** **How it works** —
+  [Lifecycle — quarantine to serve](concepts/lifecycle.md) is the product in one
+  page.
+- **Standing one up?** **Run it** — [Try it locally](guides/local-development.md)
+  first, then [Deploying on Kubernetes](guides/deploying-on-kubernetes.md) and
+  [Configuration](reference/configuration.md).
+- **Deciding what gets served?** **Govern it** —
+  [Registering a marketplace](guides/registering-a-marketplace.md), then
+  [Approving and rejecting snapshots](guides/approving-snapshots.md).
+- **Just want the skills?** **Use it** —
+  [Consuming approved skills](guides/consuming-skills.md).
 
 !!! warning "Status: pre-alpha"
 

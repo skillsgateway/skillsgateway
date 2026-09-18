@@ -100,41 +100,44 @@ extra:
 
 nav:
   - Home: index.md
-  - Architecture: architecture.md
-  - Capability map: capability-map.md
-  - Concepts:
+  - How it works:
+      - Architecture: architecture.md
+      - Capability map: capability-map.md
       - Lifecycle — quarantine to serve: concepts/lifecycle.md
       - Vetting — the connector chain: concepts/vetting.md
       - Snapshots and the audit ledger: concepts/snapshots-and-ledger.md
       - Trust boundaries: concepts/trust-boundaries.md
       - Related work: concepts/related-work.md
       - Glossary: concepts/glossary.md
-  - Guides:
-      - Local development: guides/local-development.md
+  - Run it:
+      - Try it locally: guides/local-development.md
+      - Deploying on Kubernetes: guides/deploying-on-kubernetes.md
+      - Deploying without Kubernetes: guides/deploying-without-kubernetes.md
+      - Choosing and migrating the storage backend: guides/storage-backends.md
+      - Verifying conditional writes against a real bucket: guides/verifying-an-object-store.md
+      - Identity providers: guides/identity-providers.md
+      - Delegated administration: guides/delegated-administration.md
+      - Declarative estate configuration: guides/declarative-estate.md
+      - Reclaiming snapshot storage: guides/snapshot-retention.md
+      - Exporting the audit ledger: guides/exporting-the-audit-ledger.md
+      - Making the gateway the only door: guides/client-enforcement.md
+      - Leaving the gateway: guides/leaving-the-gateway.md
+  - Govern it:
       - Registering a marketplace: guides/registering-a-marketplace.md
       - Publishing first-party skills: guides/publishing-first-party-skills.md
       - Syncing from upstream automatically: guides/upstream-sync.md
       - Approving and rejecting snapshots: guides/approving-snapshots.md
       - Waiving a vetting finding: guides/waiving-findings.md
-      - Adding an external vetter: guides/adding-an-external-vetter.md
+      - Policy deny rules: guides/policy-rules.md
       - License compliance for skills: guides/license-compliance.md
       - Re-vetting approved content: guides/re-vetting.md
-      - Consuming approved skills: guides/consuming-skills.md
-      - Making the gateway the only door: guides/client-enforcement.md
-      - The virtual catalog: guides/virtual-catalog.md
+      - Adding an external vetter: guides/adding-an-external-vetter.md
       - Receiving lifecycle webhooks: guides/lifecycle-webhooks.md
       - The read-only forge mirror: guides/read-only-forge-mirror.md
-      - Exporting the audit ledger: guides/exporting-the-audit-ledger.md
-      - Reclaiming snapshot storage: guides/snapshot-retention.md
-      - Delegated administration: guides/delegated-administration.md
-      - Identity providers: guides/identity-providers.md
-      - Declarative estate configuration: guides/declarative-estate.md
-      - Policy deny rules: guides/policy-rules.md
-      - Choosing and migrating the storage backend: guides/storage-backends.md
-      - Leaving the gateway: guides/leaving-the-gateway.md
-      - Verifying conditional writes against a real bucket: guides/verifying-an-object-store.md
-      - Deploying on Kubernetes: guides/deploying-on-kubernetes.md
-      - Deploying without Kubernetes: guides/deploying-without-kubernetes.md
+  - Use it:
+      - Consuming approved skills: guides/consuming-skills.md
+      - The virtual catalog: guides/virtual-catalog.md
+  - Maintain the project:
       - Cutting a release: guides/releasing.md
   - Reference:
       - Configuration: reference/configuration.md
