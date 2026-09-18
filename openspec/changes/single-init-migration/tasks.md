@@ -45,7 +45,7 @@
       `V1__init.sql` until it is — a non-empty diff is a real difference, not a
       formatting artefact, and the most likely causes are column order, enum
       value order, and a constraint or index name.
-- [ ] 3.3 Paste the exact commands and the empty diff into `evidence.md`.
+- [x] 3.3 Paste the exact commands and the empty diff into `evidence.md`.
 
 ## 4. Narrow the requirement
 
@@ -89,13 +89,13 @@
 
 ## 7. Gates and archive
 
-- [ ] 7.1 `./mvnw clean verify`
-- [ ] 7.2 `(cd src/main/frontend && pnpm test:stories)`
-- [ ] 7.3 `(cd src/main/frontend && pnpm e2e)`
-- [ ] 7.4 `reqstool status local -p docs/reqstool` — must end `PASS`
-- [ ] 7.5 `openspec validate --all --strict`
-- [ ] 7.6 `mkdocs build --strict`
-- [ ] 7.7 Write `evidence.md` from one final fresh run after the last edit,
+- [x] 7.1 `./mvnw clean verify`
+- [x] 7.2 `(cd src/main/frontend && pnpm test:stories)`
+- [x] 7.3 `(cd src/main/frontend && pnpm e2e)`
+- [x] 7.4 `reqstool status local -p docs/reqstool` — must end `PASS`
+- [x] 7.5 `openspec validate --all --strict`
+- [x] 7.6 `mkdocs build --strict`
+- [x] 7.7 Write `evidence.md` from one final fresh run after the last edit,
       including the schema diff from task 3.3 and the commit SHA.
 - [ ] 7.8 Open the PR with an **Evidence** section; archive the change as the
       final commit.
