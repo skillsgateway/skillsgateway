@@ -35,13 +35,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
-import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
  * Lifecycle event webhooks: filtering (GW_WEBHOOK_0001), signing (GW_WEBHOOK_0002), retry with backoff (GW_WEBHOOK_0003),
@@ -79,10 +76,6 @@ class WebhookTests extends AbstractGatewayTest {
             "snapshot.revoked",
             "snapshot.approval_pending");
 
-    private static final String FILTER_MIGRATION = "db/migration/V3__namespace_webhook_events.sql";
-
-    private static final String FILTER_MIGRATION_PREDICATE = "WHERE events LIKE '%snapshot.%'";
-
     private static final String TOGGLE_REASON_SCOPED = "vendor keys, expected";
 
     private static final String TOGGLE_REASON_GLOBAL = "kept on across the estate";
@@ -111,9 +104,6 @@ class WebhookTests extends AbstractGatewayTest {
 
     @Autowired
     private VettingService vettingService;
-
-    @Autowired
-    private JdbcClient jdbc;
 
     /**
      * These tests drive the real dispatch pass, which takes the oldest {@code batchSize} due
@@ -430,19 +420,18 @@ class WebhookTests extends AbstractGatewayTest {
     }
 
     /**
-     * The namespace (GW_WEBHOOK_0008), from all four sides it can be observed from: the vocabulary the
-     * registry offers, the filter validator that refuses the old spelling, the migration that
-     * rewrites a filter stored under it, and the delivery that carries the new name in its header
-     * and its body.
+     * The namespace (GW_WEBHOOK_0008), from the three sides it can be observed from: the vocabulary
+     * the registry offers, the filter validator that refuses the old spelling, and the delivery
+     * that carries the new name in its header and its body.
      *
-     * <p>The migration half is the one that matters most, and it is the least visible: a filter is
-     * an exact-match string, so a subscriber left naming an old spelling stops receiving anything
-     * and nothing reports that it has.
+     * <p>A fourth side used to be here — a data migration that rewrote a filter stored under an old
+     * spelling. GW_WEBHOOK_0008 no longer promises that repair: it was carried by a versioned
+     * migration, and while the project is pre-1.0 the schema is a single V1__init.sql applied to an
+     * empty database, so there are no stored filters for a migration to repair.
      */
     @Test
     @SVCs({"SVC_GW_WEBHOOK_0008"})
-    void every_subscribable_event_is_namespaced_and_a_filter_stored_under_the_old_names_is_rewritten()
-            throws Exception {
+    void every_subscribable_event_is_namespaced_and_a_legacy_spelling_is_refused() throws Exception {
         String served = mockMvc.perform(get("/api/webhooks/events").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn()
@@ -463,47 +452,39 @@ class WebhookTests extends AbstractGatewayTest {
                                 .formatted(uniqueName("legacy"), "snapshot.approved")))
                 .andExpect(status().isBadRequest());
 
-        // Subscribers whose filters predate the namespace, written straight to the table because
-        // the API would now refuse them, and then put through the shipped migration statement.
-        WebhookSubscriber stale = subscriberRepository.create(
-                uniqueName("stale"),
+        WebhookSubscriber subscriber = subscriberRepository.create(
+                uniqueName("ns"),
                 "https://receiver.invalid/hook",
-                "whsec_stale",
-                "snapshot.approved,snapshot.revoked");
+                "whsec_ns",
+                WebhookEvent.SNAPSHOT_APPROVED + "," + WebhookEvent.SNAPSHOT_REVOKED);
         WebhookSubscriber wildcard = subscriberRepository.create(
                 uniqueName("wild"), "https://receiver.invalid/hook", "whsec_wild", WebhookSubscriber.ALL_EVENTS);
         WebhookSubscriber sink = subscriberRepository.create(
                 uniqueName("sink"), "https://receiver.invalid/hook", "whsec_sink", WebhookEvent.AUDIT_EXPORT);
 
         try {
-            rewriteStoredFilters(List.of(stale.id(), wildcard.id(), sink.id()));
-
-            WebhookSubscriber rewritten =
-                    subscriberRepository.findById(stale.id()).orElseThrow();
-            assertThat(rewritten.events())
-                    .isEqualTo(WebhookEvent.SNAPSHOT_APPROVED + "," + WebhookEvent.SNAPSHOT_REVOKED);
-            assertThat(rewritten.subscribesTo(WebhookEvent.SNAPSHOT_APPROVED))
-                    .as("the rewritten filter still matches the event it was registered for")
+            assertThat(subscriber.subscribesTo(WebhookEvent.SNAPSHOT_APPROVED))
+                    .as("a filter written in the published vocabulary matches the event it names")
                     .isTrue();
             assertThat(subscriberRepository
                             .findById(wildcard.id())
                             .orElseThrow()
                             .events())
-                    .as("a wildcard filter names no event and is left alone")
+                    .as("a wildcard filter names no event")
                     .isEqualTo(WebhookSubscriber.ALL_EVENTS);
             assertThat(subscriberRepository.findById(sink.id()).orElseThrow().events())
-                    .as("audit.export is about the ledger, not a marketplace, and is not renamed")
+                    .as("audit.export is about the ledger, not a marketplace, and is not namespaced under one")
                     .isEqualTo(WebhookEvent.AUDIT_EXPORT);
 
-            // And the fourth side: what actually arrives carries the namespaced name. The approval
-            // goes through the API because that is where the emit lives.
+            // The third side: what actually arrives carries the namespaced name. The approval goes
+            // through the API because that is where the emit lives.
             Registered registered = registerAndIngest(uniqueName("nshook"), createUpstream(DEFAULT_MANIFEST));
             mockMvc.perform(post("/api/snapshots/%d/approve"
                                     .formatted(registered.snapshot().id()))
                             .with(oidcLogin()))
                     .andExpect(status().isOk());
 
-            List<WebhookDelivery> delivered = deliveryRepository.listBySubscriber(stale.id());
+            List<WebhookDelivery> delivered = deliveryRepository.listBySubscriber(subscriber.id());
             assertThat(delivered).isNotEmpty();
             assertThat(delivered.getFirst().event()).isEqualTo(WebhookEvent.SNAPSHOT_APPROVED);
             assertThat(delivered.getFirst().payload())
@@ -512,7 +493,7 @@ class WebhookTests extends AbstractGatewayTest {
             // The wildcard subscriber would otherwise collect a delivery for every event the rest
             // of the suite emits and starve the shared dispatch batch — the hazard this class's
             // @BeforeEach guards against.
-            subscriberRepository.delete(stale.id());
+            subscriberRepository.delete(subscriber.id());
             subscriberRepository.delete(wildcard.id());
             subscriberRepository.delete(sink.id());
         }
@@ -654,22 +635,5 @@ class WebhookTests extends AbstractGatewayTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isOk());
-    }
-
-    /**
-     * Runs the shipped V3 statement over the named subscribers only. The migration itself rewrites
-     * every row once, at startup; re-running it unscoped against an already-migrated database would
-     * prefix the already-prefixed rows a second time, so the test narrows the predicate rather than
-     * copying the statement and letting the two drift.
-     */
-    private void rewriteStoredFilters(List<Long> subscriberIds) throws IOException {
-        String migration = new String(
-                new ClassPathResource(FILTER_MIGRATION).getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        assertThat(migration)
-                .as("the migration this test executes still carries the predicate it narrows")
-                .contains(FILTER_MIGRATION_PREDICATE);
-        String ids = subscriberIds.stream().map(String::valueOf).collect(Collectors.joining(","));
-        jdbc.sql(migration.replace(FILTER_MIGRATION_PREDICATE, "WHERE id IN (%s)".formatted(ids)))
-                .update();
     }
 }

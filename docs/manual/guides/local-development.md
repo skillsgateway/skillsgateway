@@ -66,6 +66,26 @@ $ export SPRING_DATASOURCE_PASSWORD=skillsgateway
 Flyway builds the schema from a single consolidated migration on startup. There
 is nothing to configure and nothing to run by hand.
 
+!!! warning "A checksum failure means your local database predates a schema edit"
+
+    While the project is pre-1.0 the schema is **one** migration, edited in
+    place, so its checksum changes whenever the schema does and Flyway refuses a
+    database built from an older copy:
+
+    ```
+    Migration checksum mismatch for migration version 1
+    ```
+
+    There is no upgrade path and none is wanted — no deployment carries data
+    worth keeping yet. Drop the database and let it rebuild:
+
+    ```console
+    $ dropdb skillsgateway && createdb skillsgateway
+    ```
+
+    A container-backed database (the Arconia dev service, Testcontainers, the
+    e2e compose stack) rebuilds from scratch anyway and needs nothing.
+
 ## Authentication
 
 ### With an identity provider

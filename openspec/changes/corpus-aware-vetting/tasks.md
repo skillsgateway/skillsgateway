@@ -33,7 +33,7 @@ while this proposal is unimplemented. Task 1.1 is what puts them there.
 
 ## 2. Schema (SVC_GW_0194)
 
-- [ ] 2.1 `V2__snapshot_facts.sql`: `snapshot_facts` (`snapshot_id BIGINT NOT
+- [ ] 2.1 In `V1__init.sql` (not a new migration): `snapshot_facts` (`snapshot_id BIGINT NOT
       NULL UNIQUE REFERENCES snapshots(id) ON DELETE CASCADE`, `facts JSONB`,
       `builder_version TEXT NOT NULL`, `built_at TIMESTAMPTZ NOT NULL`,
       `unavailable_reason TEXT`, `CHECK (facts IS NOT NULL OR unavailable_reason

@@ -132,11 +132,11 @@ measurement: the pairs they match are the same name in any practical namespace.
 
 ## Impact
 
-- **DB**: `V2__snapshot_facts.sql` — `snapshot_facts` (`snapshot_id` UNIQUE FK,
+- **DB**: an edit to `V1__init.sql` — `snapshot_facts` (`snapshot_id` UNIQUE FK,
   `facts` JSONB, `builder_version`, `built_at`, `unavailable_reason`) and
   `snapshot_plugin_names` (`snapshot_id` FK, `plugin_name`, `location`,
-  `normalized_key`, index on `normalized_key`). The first migration after
-  `V1__init.sql`.
+  `normalized_key`, index on `normalized_key`). Not a new versioned migration:
+  while pre-1.0 the schema is a single `V1__init.sql` edited in place.
 - **Backend**: `SnapshotFactsService` (state excluded from the built map, a
   persisting entry point), `SnapshotFactsRepository` (new), `NameNormalizer`
   (new), `CollisionGate` (new, `dev.skillsgateway.server.approval`),

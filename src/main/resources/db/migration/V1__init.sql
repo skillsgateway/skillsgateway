@@ -16,10 +16,16 @@ CREATE TYPE snapshot_state AS ENUM ('held', 'approved', 'rejected', 'revoked');
 CREATE TYPE webhook_delivery_state AS ENUM ('pending', 'delivered', 'failed');
 CREATE TYPE audit_sink_kind AS ENUM ('webhook');
 CREATE TYPE vetting_run_outcome AS ENUM ('clear', 'blocked');
--- 'disabled' records that an administrator switched this connector off for the snapshot's
+-- 'disabled' records that an administrator switched this vetter off for the snapshot's
 -- marketplace (GW_VETTING_0023): the chain skipped it rather than running it. It is neither clearing
 -- nor blocking — the disablement is fail-loud evidence on the run, not a silent shorter chain.
-CREATE TYPE vetting_verdict_state AS ENUM ('pass', 'warn', 'fail', 'error', 'pending', 'disabled');
+--
+-- 'not_reached' records a vetter the chain never got to, because it had already stopped
+-- (GW_VETTING_0032.2). Deliberately not 'disabled': that records a standing administrative decision
+-- and this records a run that ran out of road, and the two have different remedies. Like 'disabled'
+-- it neither clears nor blocks on its own; unlike it, a run carrying one can never have a
+-- non-blocked effective outcome (GW_VETTING_0032.3).
+CREATE TYPE vetting_verdict_state AS ENUM ('pass', 'warn', 'fail', 'error', 'pending', 'disabled', 'not_reached');
 CREATE TYPE vetting_finding_severity AS ENUM ('info', 'low', 'medium', 'high', 'critical');
 CREATE TYPE vetting_waiver_scope_kind AS ENUM ('snapshot', 'path');
 CREATE TYPE role_grant_role AS ENUM ('admin', 'approver', 'auditor');
@@ -176,6 +182,10 @@ CREATE INDEX idx_snapshots_revet_queue ON snapshots (id) WHERE state = 'approved
 -- against values that also look like ordinary identities.
 CREATE TYPE fetch_log_actor_type AS ENUM ('human', 'machine', 'system');
 
+-- What kind of credential authenticated a facade fetch (GW_AUTH_0041): a gateway-issued personal
+-- access token, or a bearer token from the identity provider the web surface trusts (GW_AUTH_0040).
+CREATE TYPE fetch_log_credential_kind AS ENUM ('pat', 'idp');
+
 CREATE TABLE fetch_log (
     id BIGSERIAL PRIMARY KEY,
     ts TIMESTAMPTZ NOT NULL,
@@ -199,7 +209,14 @@ CREATE TABLE fetch_log (
     -- Which token authenticated a facade entry (GW_AUTH_0009); NULL on admin entries and on facade
     -- entries older than per-token attribution. Deliberately not a foreign key: the ledger is
     -- append-only history and must outlive any token row.
-    token_id BIGINT
+    token_id BIGINT,
+    -- Which *kind* of credential authenticated a facade fetch (GW_AUTH_0041), now that there is more
+    -- than one. A column and not an inference from `token_id`: that is already NULL on every
+    -- administrative entry, and giving the NULL a second meaning would leave the ledger unable to
+    -- answer, without guessing, the question it exists to answer after a leak. Nullable with no
+    -- default, because NULL is the honest value for an entry no credential authenticated.
+    -- Denormalised and not a foreign key for the same reason `actor_type` is.
+    credential_kind fetch_log_credential_kind
 );
 
 -- The staleness read's query (GW_OBSERVABILITY_0002): the latest content-transferring fetch per
@@ -249,6 +266,13 @@ CREATE TABLE access_tokens (
     -- responsible person, named once at provisioning rather than impersonated on every use,
     -- and what the administrative listing reports. NULL for every non-machine credential.
     machine_owner TEXT,
+    -- When this credential most recently authenticated successfully (GW_AUTH_0031). NULL means it
+    -- never has. Written at most once per credential per minute, so it is approximate to that
+    -- bound by design; the append-only `fetch_log` remains the exact per-request record. This
+    -- column exists so that "is anybody still using this credential?" is a fact of the credential
+    -- rather than a ledger query. Deliberately no index: it is read only alongside the row it
+    -- belongs to, never filtered on.
+    last_used_at TIMESTAMPTZ,
     -- A session-derived credential can never hold administrative scope (GW_AUTH_0021). Enforced by
     -- the database rather than by the one service method that mints them, so no future call
     -- site can launder a browser session -- whose lifetime the holder did not choose and whose
@@ -333,12 +357,12 @@ CREATE TABLE vetting_runs (
     trigger TEXT NOT NULL,
     started_at TIMESTAMPTZ NOT NULL,
     finished_at TIMESTAMPTZ,
-    -- Identity of the chain that produced the run: 'connector@version' for every connector, in
+    -- Identity of the chain that produced the run: 'vetter@version' for every vetter, in
     -- chain order. Recorded so "the same content was vetted again and the answer changed" can be
     -- told apart from "a different chain looked at it" without re-deriving anything (GW_VETTING_0012).
     chain TEXT,
     -- Fail-closed aggregate over the run's verdicts; see VettingChain. Deliberately raw: this
-    -- is what the connectors said, and waivers never rewrite it. The outcome that gates the
+    -- is what the vetters said, and waivers never rewrite it. The outcome that gates the
     -- approval is the *effective* one, derived on read from this run plus the waivers active
     -- at that instant (GW_VETTING_0008), which is what makes expiry (GW_VETTING_0009) need no scheduler.
     outcome vetting_run_outcome NOT NULL
@@ -350,16 +374,16 @@ CREATE INDEX idx_vetting_runs_latest ON vetting_runs (snapshot_id, id DESC);
 CREATE TABLE vetting_verdicts (
     id BIGSERIAL PRIMARY KEY,
     run_id BIGINT NOT NULL REFERENCES vetting_runs (id) ON DELETE CASCADE,
-    connector TEXT NOT NULL,
+    vetter TEXT NOT NULL,
     -- Position in the chain, so the recorded run can be replayed in the order it ran.
     position INTEGER NOT NULL,
-    -- 'pending' is groundwork for an asynchronous connector whose callback has not arrived;
+    -- 'pending' is groundwork for an asynchronous vetter whose callback has not arrived;
     -- the aggregation treats it as blocking, so the gate is already correct.
     state vetting_verdict_state NOT NULL,
     detail TEXT,
     report_url TEXT,
     created_at TIMESTAMPTZ NOT NULL,
-    UNIQUE (run_id, connector)
+    UNIQUE (run_id, vetter)
 );
 
 CREATE TABLE vetting_findings (
@@ -474,37 +498,74 @@ CREATE TABLE snapshot_vetting_overrides (
     reason TEXT NOT NULL CHECK (reason <> ''),
     -- What was blocking at the moment of the override, captured so the surface and an auditor can
     -- see what the administrator overrode without re-deriving it from the run: a comma-separated
-    -- connector list and a human-readable finding summary.
-    blocking_connectors TEXT,
+    -- vetter list and a human-readable finding summary.
+    blocking_vetters TEXT,
     uncovered_findings TEXT,
     overridden_by TEXT NOT NULL CHECK (overridden_by <> ''),
     overridden_at TIMESTAMPTZ NOT NULL
 );
 
--- Administrative connector enable/disable (GW_VETTING_0023): the standing decision to switch a built-in
--- connector off, globally or for one marketplace. NULL marketplace_id is the global setting; a
+-- Administrative vetter enable/disable (GW_VETTING_0023): the standing decision to switch a built-in
+-- vetter off, globally or for one marketplace. NULL marketplace_id is the global setting; a
 -- per-marketplace row overrides it. Absence of a row is "enabled", so the table's emptiness is
--- exactly today's behaviour — every connector runs. NULLS NOT DISTINCT so a duplicate global
--- setting for a connector is one row, upserted in place, never two.
+-- exactly today's behaviour — every vetter runs. NULLS NOT DISTINCT so a duplicate global
+-- setting for a vetter is one row, upserted in place, never two.
+--
+-- A vetter is the element of the chain; "connector" means only the HTTP transport that lets one
+-- run outside the gateway, which is configuration rather than rows. See the glossary.
 
-CREATE TABLE connector_toggles (
+CREATE TABLE vetter_toggles (
     id BIGSERIAL PRIMARY KEY,
-    -- The connector's stable name (VettingConnector.name()), e.g. 'secret-scan'. Not a foreign
-    -- key: connectors are code, not rows, and a toggle for a name no connector currently carries
-    -- is harmless — it simply matches nothing when the chain runs.
-    connector TEXT NOT NULL CHECK (connector <> ''),
+    -- The vetter's stable name (Vetter.name()), e.g. 'secret-scan'. Not a foreign key: vetters are
+    -- code, not rows, and a toggle for a name no vetter currently carries is harmless — it simply
+    -- matches nothing when the chain runs.
+    vetter TEXT NOT NULL CHECK (vetter <> ''),
     marketplace_id BIGINT REFERENCES marketplaces (id) ON DELETE CASCADE,
     enabled BOOLEAN NOT NULL,
-    -- The administrator's optional note for why the connector was switched, mirrored onto the
+    -- The administrator's optional note for why the vetter was switched, mirrored onto the
     -- ledger entry the toggle writes.
     reason TEXT,
     updated_by TEXT NOT NULL CHECK (updated_by <> ''),
     updated_at TIMESTAMPTZ NOT NULL,
-    UNIQUE NULLS NOT DISTINCT (connector, marketplace_id)
+    UNIQUE NULLS NOT DISTINCT (vetter, marketplace_id)
 );
 
 -- The chain's per-run lookup: every setting for one marketplace plus the globals.
-CREATE INDEX idx_connector_toggles_lookup ON connector_toggles (connector, marketplace_id);
+CREATE INDEX idx_vetter_toggles_lookup ON vetter_toggles (vetter, marketplace_id);
+
+-- The two administrative settings that shape a chain run beyond which vetters are switched on:
+-- the chain mode (GW_VETTING_0032) and the vetter order (GW_VETTING_0033). Both resolve by the rule
+-- vetter_toggles establishes: the row scoped to a marketplace, else the global row, else the
+-- default. Two tables rather than one row carrying two values, because each setting has its own
+-- note, its own acting administrator and its own timestamp.
+
+-- Whether the chain runs every enabled vetter or stops after the first blocking failure.
+CREATE TYPE vetting_chain_mode_mode AS ENUM ('run-all', 'stop-after-fail');
+
+CREATE TABLE vetting_chain_modes (
+    id BIGSERIAL PRIMARY KEY,
+    marketplace_id BIGINT REFERENCES marketplaces (id) ON DELETE CASCADE,
+    mode vetting_chain_mode_mode NOT NULL,
+    -- The administrator's optional note, mirrored onto the ledger entry the change writes.
+    reason TEXT,
+    updated_by TEXT NOT NULL CHECK (updated_by <> ''),
+    updated_at TIMESTAMPTZ NOT NULL,
+    UNIQUE NULLS NOT DISTINCT (marketplace_id)
+);
+
+CREATE TABLE vetting_chain_orders (
+    id BIGSERIAL PRIMARY KEY,
+    marketplace_id BIGINT REFERENCES marketplaces (id) ON DELETE CASCADE,
+    -- The vetter names an administrator arranged, in the order they arranged them. A whole value
+    -- that is replaced and never partially edited, so an array rather than a join table. It need
+    -- not name every vetter: the ones it does not name follow in their configured positions, which
+    -- is what keeps an override from silently dropping a control a later release adds.
+    vetters TEXT[] NOT NULL CHECK (cardinality(vetters) > 0),
+    reason TEXT,
+    updated_by TEXT NOT NULL CHECK (updated_by <> ''),
+    updated_at TIMESTAMPTZ NOT NULL,
+    UNIQUE NULLS NOT DISTINCT (marketplace_id)
+);
 
 -- Publication stages a snapshot's objects in the published repository under an unadvertised
 -- refs/staging/<sha> and only then moves the served references (GW_FACADE_0019). A process killed
