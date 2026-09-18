@@ -81,19 +81,21 @@ in the repository, at [docs/decisions/](https://github.com/skillsgateway/skillsg
 
 ## Where to go next
 
-The four sections after this one are named for what you are here to do.
+This site follows [Diátaxis](https://diataxis.fr): four sections, split by what
+you need right now rather than by who you are.
 
-- **New here?** **How it works** —
+- **Learning it?** [Try it locally](guides/local-development.md) — a gateway
+  running on your machine, start to finish.
+- **Understanding it?**
   [Lifecycle — quarantine to serve](concepts/lifecycle.md) is the product in one
-  page.
-- **Standing one up?** **Run it** — [Try it locally](guides/local-development.md)
-  first, then [Deploying on Kubernetes](guides/deploying-on-kubernetes.md) and
-  [Configuration](reference/configuration.md).
-- **Deciding what gets served?** **Govern it** —
-  [Registering a marketplace](guides/registering-a-marketplace.md), then
-  [Approving and rejecting snapshots](guides/approving-snapshots.md).
-- **Just want the skills?** **Use it** —
-  [Consuming approved skills](guides/consuming-skills.md).
+  page; [Architecture](architecture.md) is the whole picture.
+- **Doing something specific?** **How-to guides** — grouped into deploying and
+  operating, governing the estate, consuming skills, and maintaining the
+  project.
+- **Looking something up?** **Reference** —
+  [Configuration](reference/configuration.md), the
+  [REST API](reference/api/index.md), and the
+  [Glossary](concepts/glossary.md).
 
 !!! warning "Status: pre-alpha"
 

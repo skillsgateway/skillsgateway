@@ -50,11 +50,32 @@ verify`, the portal e2e suite, reqstool and OpenSpec.
 | `reference/` | "What exactly is the contract?" | Configuration, REST API, facade, compatibility matrix, portal pages. Exhaustive and lookup-shaped |
 
 That is the directory layout, and it is the *only* thing the directory decides.
-The **nav groups pages by audience**: *How it works* (`architecture.md`,
-`capability-map.md`, `concepts/`), *Run it* (the operator's guides), *Govern it*
-(the administrator's and approver's), *Use it* (the consumer's), *Maintain the
-project* (`releasing.md`). A new guide goes in `guides/` on disk whatever it is;
-its nav section is chosen by asking who reads it.
+
+### The site follows [Diátaxis](https://diataxis.fr)
+
+Four kinds of page, split by what the reader needs right now. **Ask which one
+you are writing before you write it** — most bad documentation is two types in
+one page.
+
+| Type | The reader's need | Test | Here |
+| --- | --- | --- | --- |
+| **Tutorial** | Learning — a guided first success, for someone who does not yet know what they want | Could a newcomer follow it start to finish and have something working? | `guides/local-development.md` |
+| **How-to guide** | A goal — solving one problem, for someone who already knows what they want | Does it name a task in its title and finish it? | Most of `guides/` |
+| **Reference** | Facts — describing the machinery, consulted not read | Is it exhaustive, lookup-shaped, and boring on purpose? | `reference/`, the capability map, the glossary |
+| **Explanation** | Understanding — why it is like this | Does it discuss and give context rather than instruct? | `architecture.md`, `concepts/` |
+
+The distinction that is easiest to get wrong is **tutorial versus how-to**. A
+tutorial is for someone learning; it makes choices for them and does not
+enumerate alternatives. A how-to is for someone working; it assumes competence
+and may branch. "Try it locally" is the one tutorial, and it must stay one.
+
+The `How-to guides` section is grouped by topic — *Deploy and operate*, *Govern
+the estate*, *Consume skills*, *Maintain the project*. That grouping is inside
+one Diátaxis type, which the framework allows; it is not a second taxonomy. Do
+not add such a grouping to any other section.
+
+A new page goes in `guides/`, `reference/` or `concepts/` on disk by its type,
+and into the matching nav section.
 
 **Add every new page to `nav:` in `mkdocs.yml`.** Nothing enforces this: an
 unlisted page still builds, is still rendered, and is still served at its URL,
