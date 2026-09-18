@@ -239,27 +239,30 @@ cannot be records and a re-verification campaign at a trust boundary.
 
 ### [ADR 0014 — Estate export: content and its attestations leave together; an import can only fill quarantine](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0014-estate-import-export.md)
 
-*Proposed, 2026-09-08.* Answers how an estate leaves a gateway, and on what
-terms one may enter. An export is **git bundles plus JSON and NDJSON in a
-directory**, readable by a plain git client and a text editor without a running
-gateway, in the same vocabulary the object-store backend already uses; content
-and attestation are one artefact by construction, because either half alone is
-worthless. One format, two selections — a marketplace to hand over, or the
-estate to archive. Secrets never leave: not tokens, and not the two HMAC keys
-that hide in `marketplaces.webhook_secret` and `webhook_subscribers.secret`.
-Revocations may never be omitted, because an omitted revocation reads as content
-that was never withdrawn. Verification inherits `StorageMigration`'s discipline —
-re-read both sides and compare, refuse rather than default to success — plus an
-offline mode that opens no database.
+*Rejected, 2026-09-18.* **No estate export is built.** The document proposed
+one — git bundles plus JSON in a directory, readable without a running gateway —
+and is kept as the record of what such a feature would have to be, not as a
+commitment to build it.
 
-The constraint that shapes the rest: **allow-shaped state never imports,
-deny-shaped state may.** An imported approval would be a way around the approval
-gate, so an approved snapshot imports as `held`, waivers and overrides and grants
-do not import at all, foreign verdicts are evidence rather than verdicts, and
-another instance's ledger is never grafted onto this one's. The consequence is
-that a round trip is lossy by design, which is why this ADR recommends building
-**export only** for now and leaving import to its own change — and why it says
-plainly that an export is not a backup.
+It was rejected on its own premise. The claim that an estate cannot leave does
+not survive the document's own decision to keep `pg_dump` plus a storage copy as
+the disaster-recovery answer: `StorageMigration` into the `filesystem` backend
+already produces bare repositories any git client clones, and a database backup
+already carries every attestation. The exit is a documented procedure rather
+than a button, and that is what the lock-in objection actually asked for — see
+[Leaving the gateway](../guides/leaving-the-gateway.md). Building it instead
+would commit permanently to an artefact format and open a new path for
+unreviewed quarantine content to leave as a file, for a capability nobody has
+yet requested.
+
+Three rules survive and bind any future attempt: **an import may never write
+`approved`** under any flag or signature, because a file has no provenance a
+running gateway can check; **credentials never leave**, including the HMAC key
+hiding inside `marketplaces.webhook_secret`; and **an export is not a backup**.
+What would reopen the question is a much smaller object — a registration-only
+export carrying marketplace URLs and settings but no git content, whose natural
+shape is the existing `skills-gateway.estate.*` declaration rather than a new
+format.
 
 ### [ADR 0015 — Corpus questions are approval-gate preconditions, not vetting connectors](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md)
 
