@@ -65,6 +65,28 @@ public class VettingChainSettingsRepository {
                 .single();
     }
 
+    /**
+     * Removes a marketplace's mode override, so the scope resolves from the global setting or the
+     * default again (GW_VETTING_0036). Answers whether a row actually went away: the caller audits
+     * a removal, and a scope that had nothing to remove is not one.
+     */
+    @Requirements({"GW_VETTING_0036"})
+    public boolean deleteMode(long marketplaceId) {
+        return jdbc.sql("DELETE FROM vetting_chain_modes WHERE marketplace_id = :marketplaceId")
+                        .param("marketplaceId", marketplaceId)
+                        .update()
+                > 0;
+    }
+
+    /** The same for a marketplace's order override (GW_VETTING_0036). */
+    @Requirements({"GW_VETTING_0036"})
+    public boolean deleteOrder(long marketplaceId) {
+        return jdbc.sql("DELETE FROM vetting_chain_orders WHERE marketplace_id = :marketplaceId")
+                        .param("marketplaceId", marketplaceId)
+                        .update()
+                > 0;
+    }
+
     public Optional<ChainModeSetting> findMode(long marketplaceId) {
         return jdbc.sql("SELECT * FROM vetting_chain_modes WHERE marketplace_id = :marketplaceId")
                 .param("marketplaceId", marketplaceId)

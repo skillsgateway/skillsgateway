@@ -397,19 +397,24 @@ function worstSeverity(severities: (string | undefined)[]): string | undefined {
  *
  * @Requirements GW_VETTING_0029.5
  */
-export function marketplaceHeadline(nodes: FlowNode[], mode?: string): FlowHeadline {
+export function marketplaceHeadline(
+  nodes: FlowNode[],
+  mode?: string,
+  // The same drawing serves one marketplace and the estate's default, and the difference is
+  // entirely in what "here" means. Saying "for this marketplace" on the page that governs every
+  // marketplace with no override would name the wrong scope on the page's own headline.
+  scope: "marketplace" | "default" = "marketplace",
+): FlowHeadline {
+  const here = scope === "marketplace" ? "for this marketplace" : "by default";
   const vetters = nodes.filter((node) => node.kind === "setting");
   const off = vetters.filter((node) => node.setting?.enabled !== true);
   const on = vetters.length - off.length;
   const stops = mode === "stop-after-fail";
   const what =
     off.length === 0
-      ? "every configured vetter runs for this marketplace"
+      ? `every configured vetter runs ${here}`
       : off
-          .map(
-            (node) =>
-              `${node.label} off ${node.setting?.source === "GLOBAL" ? "globally" : "for this marketplace"}`,
-          )
+          .map((node) => `${node.label} off ${node.setting?.source === "GLOBAL" ? "globally" : here}`)
           .join(", ");
   return {
     result: `${on} of ${vetters.length} ${plural(vetters.length, "vetter")} run`,

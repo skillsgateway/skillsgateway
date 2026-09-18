@@ -2842,3 +2842,33 @@ cases:
       WHEN the administrator sets the chain mode and moves a vetter with the named movement control reached by keyboard, and then opens the snapshot's chain flow
       THEN the mode and the order are saved and shown with the source each resolves from, the reordering is operable without a pointer, and the snapshot's flow marks the vetters the run did not reach distinctly and says above the chain that the run stopped early and at which step
     revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0035
+    requirement_ids: ["GW_VETTING_0035"]
+    title: The Vetting page governs the default chain and names every marketplace that departs from it
+    verification: automated-test
+    description: |
+      GIVEN an authenticated administrator session, a marketplace whose chain resolves entirely from the default, and a marketplace that overrides the chain mode
+      WHEN the administrator opens the Vetting page, sets the global default from it, and reads the overrides it lists
+      THEN the default chain is shown with the mode, the vetter order and each vetter's enablement resolved by the gateway, the global default is saved, the overriding marketplace is listed with what it overrides, and the page and its data are refused to a session that does not hold the administrative role
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0036
+    requirement_ids: ["GW_VETTING_0036"]
+    title: Clearing an override returns the marketplace to the global setting, and is not the same as writing the default
+    verification: automated-test
+    description: |
+      GIVEN a marketplace that overrides the chain mode, the vetter order and a vetter's enablement
+      WHEN an administrator writes the default value as an override, and then clears each override, and then clears an override that is not there
+      THEN writing the default value leaves the source reported as the marketplace, clearing returns the source to the global setting or the default and is recorded on the ledger, and clearing what is not there stores nothing and records nothing
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0037
+    requirement_ids: ["GW_VETTING_0037"]
+    title: One bulk chain change is validated whole, applied per marketplace, and audited as one act
+    verification: automated-test
+    description: |
+      GIVEN an authenticated administrator session and several registered marketplaces
+      WHEN a bulk chain change naming an unknown vetter is sent, then a bulk change naming a marketplace that does not exist alongside ones that do, and then a valid bulk change
+      THEN the invalid shape is refused whole with nothing stored and nothing recorded, the request carrying the unknown marketplace reports a per-marketplace outcome distinguishing it from a wholly successful request and still applies to the others, each changed marketplace carries its own ledger entry with the shared note and one correlation identifier, and a non-administrator is refused
+    revision: "0.1.0"

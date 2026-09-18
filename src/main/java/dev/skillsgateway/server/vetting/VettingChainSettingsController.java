@@ -90,6 +90,40 @@ public class VettingChainSettingsController {
         return new ChainSettings(settingsService.modes(), settingsService.orders());
     }
 
+    @GetMapping("/vetting/global-chain-settings")
+    @Requirements({"GW_VETTING_0035"})
+    @Tag(name = "Vetting")
+    @Operation(
+            summary = "The chain mode and vetter order a marketplace with no override runs",
+            description = "How far the chain runs and the order it runs in for a marketplace that overrides"
+                    + " neither, with which setting decided each. The same shape as the per-marketplace read one"
+                    + " resolution level up, so the estate-wide surface and the per-marketplace one cannot"
+                    + " disagree. The source is never MARKETPLACE here — only GLOBAL or DEFAULT."
+                    + " Administrator-only.")
+    @ApiResponse(responseCode = "200", description = "The default chain settings")
+    @ApiResponse(responseCode = "403", description = "Caller does not hold the administrative role")
+    public ChainSettingsView globalChainSettings(Authentication authentication) {
+        roleService.requireAdmin(authentication);
+        VettingChainSettingsService.ModeResolution mode = settingsService.resolveGlobalMode();
+        VettingChainSettingsService.OrderResolution order = settingsService.resolveGlobalOrder();
+        ChainModeSetting modeSetting = mode.setting();
+        ChainOrderSetting orderSetting = order.setting();
+        return new ChainSettingsView(
+                mode.mode(),
+                mode.source(),
+                modeSetting == null ? null : modeSetting.reason(),
+                modeSetting == null ? null : modeSetting.updatedBy(),
+                modeSetting == null ? null : modeSetting.updatedAt(),
+                settingsService.globalOrderedVetters().stream()
+                        .map(Vetter::name)
+                        .toList(),
+                order.override(),
+                order.source(),
+                orderSetting == null ? null : orderSetting.reason(),
+                orderSetting == null ? null : orderSetting.updatedBy(),
+                orderSetting == null ? null : orderSetting.updatedAt());
+    }
+
     @GetMapping("/marketplaces/{name}/vetting-chain-settings")
     @Requirements({"GW_VETTING_0032.1", "GW_VETTING_0033.2"})
     @Tag(name = "Vetting")

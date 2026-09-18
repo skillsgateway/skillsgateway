@@ -4,7 +4,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, userEvent, within } from "storybook/test";
 import type { ChainSettings } from "@/api/queries";
 import { chainSettingsDefault, chainSettingsStopping } from "@/test/msw-handlers";
-import { ModeControls, OrderControls } from "./marketplace-vetting-chain";
+import { ModeControls, OrderControls } from "./vetting-chain-controls";
 
 const MARKETPLACE = "corp-marketplace";
 

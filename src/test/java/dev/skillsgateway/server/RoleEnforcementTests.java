@@ -84,6 +84,9 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             "PUT /api/vetting/vetters/{name}/toggle",
             "PUT /api/vetting/chain-mode",
             "PUT /api/vetting/chain-order",
+            // The estate-wide form of the same three settings (GW_VETTING_0037), and the only way to
+            // remove an override (GW_VETTING_0036): the sharpest form of an admin-only control.
+            "POST /api/vetting/chain-settings/bulk",
             // Reconciling the read-only forge mirror (GW_FACADE_0027): admin-only for the same reason its
             // drift report is, and the route that actually exercises the push credential — if the
             // report is reserved, the button that acts on it cannot be less so.
@@ -136,6 +139,10 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             // sits behind the same administrator check: reporting which vetters an approver's
             // own marketplace runs is reporting the settings themselves.
             "GET /api/marketplaces/{name}/vetting-chain",
+            // The same settings one resolution level up (GW_VETTING_0035): what a marketplace with no
+            // override runs is the global setting itself, so it sits behind the same check.
+            "GET /api/vetting/global-chain",
+            "GET /api/vetting/global-chain-settings",
             // The forge mirror's drift report (GW_FACADE_0023) is admin-only too: it names an outbound
             // integration target and the state of its credential's last use, which is deployment
             // infrastructure rather than a record of what the gateway served to whom.
@@ -333,6 +340,8 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                     || route.equals("GET /api/vetting/chain-settings")
                     || route.equals("GET /api/marketplaces/{name}/vetting-chain")
                     || route.equals("GET /api/marketplaces/{name}/vetting-chain-settings")
+                    || route.equals("GET /api/vetting/global-chain")
+                    || route.equals("GET /api/vetting/global-chain-settings")
                     || route.equals("GET /api/mirror/drift")) {
                 // Grant administration (GW_AUTH_0013), the machine-credential listing (GW_AUTH_0023), the
                 // vetter settings (GW_VETTING_0029), the chain mode and order (GW_VETTING_0032,

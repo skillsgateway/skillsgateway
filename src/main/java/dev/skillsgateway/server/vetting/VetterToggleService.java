@@ -39,6 +39,9 @@ public class VetterToggleService {
     /** Ledger event when a vetter is switched back on (GW_VETTING_0029.4). */
     public static final String EVENT_ENABLED = "vetter-enabled";
 
+    /** Ledger event when a marketplace's override of one vetter is removed (GW_VETTING_0036). */
+    public static final String EVENT_CLEARED = "vetter-toggle-cleared";
+
     private final VetterToggleRepository repository;
     private final MarketplaceRepository marketplaceRepository;
     private final AdminAuditLogger auditLogger;
@@ -94,6 +97,21 @@ public class VetterToggleService {
      */
     @Requirements({"GW_VETTING_0029.1", "GW_VETTING_0029.4", "GW_WEBHOOK_0009"})
     public VetterToggle set(String vetter, String marketplaceName, boolean enabled, String reason, String principal) {
+        return set(vetter, marketplaceName, enabled, reason, principal, null);
+    }
+
+    /**
+     * The same, carrying the correlation id of the estate-wide act this change is one marketplace
+     * of (GW_VETTING_0037). Null for an ordinary single-scope change.
+     */
+    @Requirements({"GW_VETTING_0029.1", "GW_VETTING_0029.4", "GW_VETTING_0037", "GW_WEBHOOK_0009"})
+    public VetterToggle set(
+            String vetter,
+            String marketplaceName,
+            boolean enabled,
+            String reason,
+            String principal,
+            String correlationId) {
         if (vetter == null || !knownVetters.contains(vetter)) {
             throw new ResponseStatusException(
                     HttpStatus.UNPROCESSABLE_ENTITY,
@@ -117,9 +135,13 @@ public class VetterToggleService {
                 marketplaceId == null ? "-" : marketplaceName,
                 enabled ? EVENT_ENABLED : EVENT_DISABLED,
                 null,
-                "vetter=%s scope=%s enabled=%s%s"
+                "vetter=%s scope=%s enabled=%s%s%s"
                         .formatted(
-                                vetter, scope, enabled, reason == null || reason.isBlank() ? "" : " reason=" + reason));
+                                vetter,
+                                scope,
+                                enabled,
+                                reason == null || reason.isBlank() ? "" : " reason=" + reason,
+                                VettingChainSettingsService.correlationSuffix(correlationId)));
         // The reason is operator-supplied free text and stays in the ledger: the event announces,
         // an authenticated caller discloses (GW_WEBHOOK_0009). The "-" marketplace is the gateway-wide
         // scope, the same placeholder the ledger row above carries.
@@ -129,6 +151,86 @@ public class VetterToggleService {
                 principal,
                 "vetter=%s scope=%s enabled=%s".formatted(vetter, scope, enabled));
         return toggle;
+    }
+
+    /**
+     * Removes a marketplace's override of one vetter, so the vetter resolves from the global
+     * setting or the default again (GW_VETTING_0036). Answers whether anything was there to remove;
+     * a scope with no override writes nothing and is not audited.
+     *
+     * <p>No webhook is emitted: nothing about the vetter's effective state is known to have
+     * changed — clearing an override that agreed with the global setting changes nothing at all —
+     * and an announcement that may be about nothing is worse than none.
+     */
+    @Requirements({"GW_VETTING_0036"})
+    public boolean clear(String vetter, String marketplaceName, String reason, String principal, String correlationId) {
+        if (vetter == null || !knownVetters.contains(vetter)) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    "unknown vetter '%s'; the configured vetters are %s".formatted(vetter, knownVetters));
+        }
+        Marketplace marketplace = marketplaceRepository
+                .findByName(marketplaceName == null ? "" : marketplaceName)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "marketplace '%s' not found".formatted(marketplaceName)));
+        if (!repository.delete(vetter, marketplace.id())) {
+            return false;
+        }
+        auditLogger.record(
+                principal,
+                marketplace.name(),
+                EVENT_CLEARED,
+                null,
+                "vetter=%s scope=marketplace(%s)%s%s"
+                        .formatted(
+                                vetter,
+                                marketplace.name(),
+                                reason == null || reason.isBlank() ? "" : " reason=" + reason,
+                                VettingChainSettingsService.correlationSuffix(correlationId)));
+        return true;
+    }
+
+    /**
+     * Removes every vetter override one marketplace holds (GW_VETTING_0036), auditing each by name
+     * rather than as a count: "which vetters stopped being overridden here" is the question the
+     * ledger has to answer afterwards. Answers how many went away.
+     */
+    @Requirements({"GW_VETTING_0036"})
+    public int clearAll(String marketplaceName, String reason, String principal, String correlationId) {
+        Marketplace marketplace = marketplaceRepository
+                .findByName(marketplaceName == null ? "" : marketplaceName)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "marketplace '%s' not found".formatted(marketplaceName)));
+        int cleared = 0;
+        for (VetterToggle toggle : repository.listFor(marketplace.id())) {
+            if (clear(toggle.vetter(), marketplace.name(), reason, principal, correlationId)) {
+                cleared++;
+            }
+        }
+        return cleared;
+    }
+
+    /** The known set, so a bulk request can refuse a name before it touches any marketplace. */
+    @Requirements({"GW_VETTING_0037"})
+    public void requireKnown(String vetter) {
+        if (vetter == null || !knownVetters.contains(vetter)) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    "unknown vetter '%s'; the configured vetters are %s".formatted(vetter, knownVetters));
+        }
+    }
+
+    /**
+     * A vetter's state for a marketplace with no override of its own: the global setting if there
+     * is one, otherwise enabled (GW_VETTING_0035). The resolution rule with its first step removed,
+     * so the estate surface cannot disagree with the per-marketplace one.
+     */
+    @Requirements({"GW_VETTING_0035"})
+    public Resolution resolveGlobal(String vetter) {
+        return repository
+                .findGlobal(vetter)
+                .map(toggle -> new Resolution(toggle.enabled(), ChainSource.GLOBAL, toggle))
+                .orElseGet(() -> new Resolution(true, ChainSource.DEFAULT, null));
     }
 
     /** Every setting there is. Admin-only at the controller: vetter settings are not public. */

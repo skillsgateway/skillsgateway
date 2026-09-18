@@ -927,3 +927,77 @@ test("the_session_holds_an_admin_role_derived_from_the_identity_providers_group_
   expect(body.claimsTruncated).toBe(false);
   expect(body.roles).toContainEqual({ role: "admin", marketplace: null, source: "claim" });
 });
+
+/**
+ * The estate-wide half of the chain settings, driven the way an administrator would drive it: set
+ * the default from the Vetting page, see which marketplaces depart from it, and bring one back.
+ *
+ * The global mode is deliberately set to `run-all`, which is what it already resolves to. The
+ * assertion is not the behaviour — it is that the setting now exists, which the control reports by
+ * naming its source as the global setting rather than as the absence of one. Writing a behavioural
+ * default here would change what every other marketplace in this shared gateway runs.
+ *
+ * Clearing is the other half, and the one that could not be faked in the browser: an override equal
+ * to the default still pins the marketplace, so the proof is the source going back to the global
+ * setting, not the value staying the same.
+ *
+ * @SVCs SVC_GW_VETTING_0035, SVC_GW_VETTING_0036
+ */
+test("an_admin_sets_the_default_chain_and_clears_a_marketplaces_override", async ({ page }) => {
+  await login(page, "alice");
+
+  // A marketplace that departs from the default in exactly one way.
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Marketplaces" })
+    .click();
+  const name = uniqueName("estate");
+  await page.getByRole("button", { name: "Register marketplace" }).click();
+  await page.getByLabel("Name").fill(name);
+  await page
+    .getByLabel("Clone URL")
+    .fill(process.env.E2E_TAINTED_UPSTREAM_URL ?? "file:///tmp/e2e-tainted");
+  await submitRegister(page);
+  await page.getByRole("link", { name, exact: true }).click();
+
+  const marketplaceMode = page.getByRole("group", { name: "When a vetter fails" });
+  await marketplaceMode.getByRole("button", { name: "Stop after a failure" }).click();
+  await expect(page.getByText(/Currently set for this marketplace/)).toBeVisible();
+
+  // The page that governs the estate is one hop from the card that governs one marketplace.
+  await page.getByRole("link", { name: "Govern the chain across the estate" }).click();
+  await expect(page.getByRole("heading", { name: "Vetting", level: 1 })).toBeVisible();
+
+  // And it is a real address, not only a client-side hop: a bookmarked /vetting has to resolve
+  // through the gateway's SPA forward rather than 404.
+  await page.goto("/vetting");
+  await expect(page.getByRole("heading", { name: "Vetting", level: 1 })).toBeVisible();
+
+  // The default chain, written globally. What the assertion can see is the source: a setting now
+  // exists where none did. It is then put back to run-all, so the estate this shared gateway serves
+  // to every other test ends where it started — with a global row that resolves to the default.
+  const defaultMode = page.getByRole("group", { name: "When a vetter fails" });
+  await defaultMode.getByRole("button", { name: "Stop after a failure" }).click();
+  await expect(page.getByText(/Currently from the global setting/)).toBeVisible();
+  await defaultMode.getByRole("button", { name: "Run every vetter" }).click();
+  await expect(
+    defaultMode.getByRole("button", { name: "Run every vetter" }),
+  ).toHaveAttribute("aria-pressed", "true");
+
+  // The marketplace that departs shows up as a row saying what it departs in.
+  await expect(page.getByRole("row", { name: new RegExp(name) })).toContainText(
+    "mode: stop-after-fail",
+  );
+
+  // Clearing is a removal, not a write of the default value.
+  await page.getByRole("button", { name: `Clear every chain override on ${name}` }).click();
+  await expect(page.getByRole("row", { name: new RegExp(name) })).toHaveCount(0);
+
+  // And the marketplace now resolves from the global setting, which is what "cleared" has to mean.
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Marketplaces" })
+    .click();
+  await page.getByRole("link", { name, exact: true }).click();
+  await expect(page.getByText(/Currently from the global setting/)).toBeVisible();
+});

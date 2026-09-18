@@ -13,6 +13,7 @@ A fixed sidebar, grouped:
 | Gateway | Overview | [`/`](#overview) |
 | Gateway | Marketplaces | [`/marketplaces`](#marketplaces) |
 | Governance | Audit log | [`/audit`](#audit-log) |
+| Governance | Vetting | [`/vetting`](#vetting-governance) — **shown only to administrators** |
 | Governance | Adoption | [`/adoption`](#adoption) |
 | Governance | Webhooks | [`/webhooks`](#webhooks) |
 | Tools | API reference | `/docs` — the Scalar API reference, not a portal route |
@@ -263,6 +264,10 @@ shows "—".
 `GET /api/marketplaces/{name}/vetting-chain`, which the server refuses to anyone
 else — the switch that governs the chain, and the visibility of its settings, sit
 above the content they govern.
+
+The card's description links to [Vetting](#vetting-governance), which governs the
+default every setting here falls back to and lists every marketplace that departs
+from it.
 
 It draws the [same flow](#the-chain-flow) without verdicts, headed by how much of
 the chain runs and what is off:
@@ -556,6 +561,77 @@ Below the snapshots, the marketplace's slice of the ledger: the entries from
 verdict colouring as the [Audit log](#audit-log) page — a blocked verdict reads
 red here too. A **See the full ledger** link goes to `/audit`. Empty state:
 "Nothing recorded against this marketplace yet."
+
+---
+
+## Vetting (governance)
+
+**Route:** `/vetting` · **Heading:** Vetting
+
+**Administrator-only.** The sidebar offers the entry only to a session holding
+the `admin` role, and the page itself renders a stated refusal —
+*"This page needs the administrative role."* — to any other session rather than
+an empty shell. The server refuses each of the page's reads independently, which
+is what actually protects them.
+
+Where [Marketplace detail](#vetting-chain-administrators) governs one
+marketplace's chain, this page governs the estate: the chain every marketplace
+runs unless it says otherwise, and the ones that say otherwise.
+
+### The default chain
+
+The chain as it applies to **a marketplace with no override of its own** — the
+same drawing, the same per-vetter switch, and the same two chain-level controls
+as the marketplace card, scoped globally. Fed by
+`GET /api/vetting/global-chain` and `GET /api/vetting/global-chain-settings`,
+which resolve in the gateway rather than being recomposed in the browser, so this
+page cannot disagree with what actually runs. The source a control reports here is
+`global` or `default`, never `this marketplace`.
+
+Writing here calls the same endpoints the marketplace card calls with the
+`marketplace` field omitted, which is the global setting. A marketplace that
+overrides the setting keeps its own; clearing that override is how it comes back.
+
+### Overrides
+
+One row per marketplace whose chain departs from the default, showing what it
+departs in — `mode: stop-after-fail`, `order: …`, `secret-scan: off` — and a
+**Clear every chain override on _name_** control. Assembled from
+`GET /api/vetting/chain-settings`, `GET /api/vetting/vetter-toggles` and
+`GET /api/marketplaces`; a stored override whose marketplace is no longer
+registered still gets a row, labelled by its id and with its control disabled.
+
+!!! warning "Clearing is not setting the default value"
+
+    An override that happens to equal the default still pins the marketplace: its
+    source stays `this marketplace`, so the next change to the default passes it by.
+    **Clear override** removes the setting, which is the only thing that puts the
+    source back to `global` or `default`. Clearing a marketplace that overrides
+    nothing writes nothing and records nothing.
+
+Empty state: *"No marketplace overrides the default chain. Everything in the
+estate runs exactly what is above."*
+
+### Bulk edit
+
+Select marketplaces — individually or **All marketplaces** — then choose one
+change: *Set the chain mode*, *Set the vetter order*, *Switch a vetter*, or
+*Clear overrides*. Selection and every control are ordinary keyboard-operable
+controls; the order to apply uses the same named **Move _vetter_ up / down**
+buttons the marketplace card uses.
+
+**Review the change** is disabled until a selection exists, with a hint saying
+what is missing. It opens a confirm step that states the act in a sentence and
+lists every affected marketplace with its **Now** and **After** — stated as the
+marketplace's *own* setting (`no mode override` → `mode: stop-after-fail`),
+because that is what will be stored.
+
+**Apply to these marketplaces** calls
+[`POST /api/vetting/chain-settings/bulk`](api/marketplaces.md#post-vettingchain-settingsbulk).
+The result is rendered per marketplace — `applied`, `unchanged`, `failed` with
+the server's reason — together with the **correlation id** every ledger entry the
+act wrote carries. A response in which anything was refused renders as a failure,
+with an error toast and an `alert`; it is never reported as a success.
 
 ---
 
