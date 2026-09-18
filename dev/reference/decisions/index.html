@@ -638,6 +638,8 @@
       
         
       
+        
+      
     
     
     
@@ -1258,6 +1260,34 @@
     
   
     Choosing and migrating the storage backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/leaving-the-gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Leaving the gateway
   
 
     
@@ -2861,26 +2891,28 @@ transactions or locking, and those stay native SQL under any ORM — so JPA woul
 take over only the part that was never the problem, at the cost of entities that
 cannot be records and a re-verification campaign at a trust boundary.</p>
 <h3 id="adr-0014-estate-export-content-and-its-attestations-leave-together-an-import-can-only-fill-quarantine"><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0014-estate-import-export.md">ADR 0014 — Estate export: content and its attestations leave together; an import can only fill quarantine</a><a class="headerlink" href="#adr-0014-estate-export-content-and-its-attestations-leave-together-an-import-can-only-fill-quarantine" title="Permanent link">&para;</a></h3>
-<p><em>Proposed, 2026-09-08.</em> Answers how an estate leaves a gateway, and on what
-terms one may enter. An export is <strong>git bundles plus JSON and NDJSON in a
-directory</strong>, readable by a plain git client and a text editor without a running
-gateway, in the same vocabulary the object-store backend already uses; content
-and attestation are one artefact by construction, because either half alone is
-worthless. One format, two selections — a marketplace to hand over, or the
-estate to archive. Secrets never leave: not tokens, and not the two HMAC keys
-that hide in <code>marketplaces.webhook_secret</code> and <code>webhook_subscribers.secret</code>.
-Revocations may never be omitted, because an omitted revocation reads as content
-that was never withdrawn. Verification inherits <code>StorageMigration</code>'s discipline —
-re-read both sides and compare, refuse rather than default to success — plus an
-offline mode that opens no database.</p>
-<p>The constraint that shapes the rest: <strong>allow-shaped state never imports,
-deny-shaped state may.</strong> An imported approval would be a way around the approval
-gate, so an approved snapshot imports as <code>held</code>, waivers and overrides and grants
-do not import at all, foreign verdicts are evidence rather than verdicts, and
-another instance's ledger is never grafted onto this one's. The consequence is
-that a round trip is lossy by design, which is why this ADR recommends building
-<strong>export only</strong> for now and leaving import to its own change — and why it says
-plainly that an export is not a backup.</p>
+<p><em>Rejected, 2026-09-18.</em> <strong>No estate export is built.</strong> The document proposed
+one — git bundles plus JSON in a directory, readable without a running gateway —
+and is kept as the record of what such a feature would have to be, not as a
+commitment to build it.</p>
+<p>It was rejected on its own premise. The claim that an estate cannot leave does
+not survive the document's own decision to keep <code>pg_dump</code> plus a storage copy as
+the disaster-recovery answer: <code>StorageMigration</code> into the <code>filesystem</code> backend
+already produces bare repositories any git client clones, and a database backup
+already carries every attestation. The exit is a documented procedure rather
+than a button, and that is what the lock-in objection actually asked for — see
+<a href="../../guides/leaving-the-gateway/">Leaving the gateway</a>. Building it instead
+would commit permanently to an artefact format and open a new path for
+unreviewed quarantine content to leave as a file, for a capability nobody has
+yet requested.</p>
+<p>Three rules survive and bind any future attempt: <strong>an import may never write
+<code>approved</code></strong> under any flag or signature, because a file has no provenance a
+running gateway can check; <strong>credentials never leave</strong>, including the HMAC key
+hiding inside <code>marketplaces.webhook_secret</code>; and <strong>an export is not a backup</strong>.
+What would reopen the question is a much smaller object — a registration-only
+export carrying marketplace URLs and settings but no git content, whose natural
+shape is the existing <code>skills-gateway.estate.*</code> declaration rather than a new
+format.</p>
 <h3 id="adr-0015-corpus-questions-are-approval-gate-preconditions-not-vetting-connectors"><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md">ADR 0015 — Corpus questions are approval-gate preconditions, not vetting connectors</a><a class="headerlink" href="#adr-0015-corpus-questions-are-approval-gate-preconditions-not-vetting-connectors" title="Permanent link">&para;</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Renamed 2026-09-15</p>
