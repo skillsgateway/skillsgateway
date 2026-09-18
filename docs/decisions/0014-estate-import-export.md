@@ -1,8 +1,45 @@
 # ADR 0014 — Estate export: content and its attestations leave together; an import can only fill quarantine
 
-*Proposed, 2026-09-08. Answers the questions posed by
+*Rejected, 2026-09-18. Proposed 2026-09-08 to answer the questions posed by
 [#152](https://github.com/skillsgateway/skillsgateway/issues/152); extends the
 backend-to-backend movement decided under `pluggable-git-storage`.*
+
+## Rejected, and what answers the question instead
+
+**No estate export is built.** The analysis below stands as the record of what
+such a feature would have to be; it is not a commitment to build one, and the
+change that would have built it is deleted rather than parked.
+
+The motivating claim does not survive this document's own decision to keep
+`pg_dump` plus a storage copy as the disaster-recovery answer. An estate can
+already leave: `StorageMigration` into the `filesystem` backend produces bare
+repositories any git client clones without this product, and a database backup
+carries every attestation. That exit is a documented procedure rather than a
+button, and a documented procedure is what the objection actually asked for.
+[Leaving the gateway](../manual/guides/leaving-the-gateway.md) is that
+procedure, written down.
+
+Against that, building it means committing permanently to an artefact format
+and opening a new path for unreviewed quarantine content to leave as a file,
+for a capability no audit request, migration or regulator has yet asked for.
+The stop rule in `CLAUDE.md` refuses exactly this trade.
+
+Three rules from the analysis bind any future attempt, and are the reason this
+document is kept rather than deleted:
+
+- **An import may never write `approved`** — under any flag, confirmation or
+  signature. A file has no provenance a running gateway can check.
+- **Credentials never leave.** Access tokens, the inbound webhook HMAC key
+  hiding inside the marketplace row, outbound signing secrets and audit-sink
+  cursors are excluded by construction.
+- **An export is not a backup**, and must never be described as one.
+
+Two claims in the analysis are wrong and are not carried forward. The premise
+that the `object-store` backend has no plain-git exit is answered by the
+migration above. And the suggestion that a future import be built on
+`EstateReconciler` does not work: that component reconciles registrations,
+grants, receivers and rules, and has no snapshot concept at all — the only
+things an import may carry are the ones it cannot express.
 
 ## Context
 
@@ -412,6 +449,17 @@ Stated rather than smoothed over.
    scope carries the content and says loudly what it is.
 
 ## What would reopen this
+
+- **A registration-only export.** The owner's stated preference, and a much
+  smaller object than this document describes: emit each marketplace's
+  registration — its name, upstream URL, sync mode and settings — and no git
+  content at all, since a consumer who wants the content can point at the
+  upstream repositories directly. Its natural shape is not a new format but the
+  existing one: `skills-gateway.estate.*` is already a complete declaration of
+  registrations, grants, receivers and rules, and is already an accepted input.
+  An export that emits the running estate *as that declaration* adds no artefact
+  format, carries no content, and gives the GitOps adopter the file they would
+  otherwise hand-write. It is not proposed here and no change is queued for it.
 
 - **Signed attestations landing** (an ADR 0005 pull-forward). A signed approval
   from a named peer instance is a different object from a JSON file, and a

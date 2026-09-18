@@ -42,7 +42,7 @@ an open commitment.
 
 | Parked | Decision |
 | --- | --- |
-| Estate import/export | [ADR 0014 — Estate export: content and its attestations leave together; an import can only fill quarantine](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0014-estate-import-export.md) |
+| Estate import/export | [ADR 0014 — Estate export: content and its attestations leave together; an import can only fill quarantine](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0014-estate-import-export.md) — rejected; the exit is documented in [Leaving the gateway](guides/leaving-the-gateway.md) |
 | Corpus-aware vetting | [ADR 0015 — Corpus questions are approval-gate preconditions, not vetting vetters](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md) |
 | Invocation metrics | [ADR 0016 — Client invocation telemetry is not ingested; the gateway publishes presence instead](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0016-client-invocation-telemetry-is-not-ingested.md) |
 | Virtual catalogs per team | [ADR 0017 — Virtual catalogs stay derived views: they may subtract, never substitute](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0017-virtual-catalogs-are-derived-views.md) |

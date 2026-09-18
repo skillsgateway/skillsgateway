@@ -21,13 +21,16 @@ at the top of its `proposal.md`, in one paragraph, naming the thing it waits on.
 | Change | State | Waiting on |
 | --- | --- | --- |
 | `corpus-aware-vetting` | parked | **ADR 0015** acceptance, and its four open questions |
-| `estate-import-export` | parked | **ADR 0014** acceptance |
 | `invocation-adoption-metrics` | parked | **ADR 0016** acceptance |
 | `virtual-catalogs` | parked | nothing external — its defect half shipped; the rest is feature work |
 
-Three parked changes, three ADRs sitting at *Proposed*. **The backlog is not
-stalled on capacity. It is stalled on three decisions**, and any of them can be
-made without writing code.
+Two parked changes, two ADRs sitting at *Proposed*. **The backlog is not
+stalled on capacity. It is stalled on two decisions**, and either can be made
+without writing code.
+
+`estate-import-export` was the third, and is gone: [ADR 0014 — Estate export](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0014-estate-import-export.md)
+was rejected, so its change was deleted rather than left parked. An unstarted
+proposal is accumulated scope, not progress.
 
 ## Two things a reader gets wrong
 
