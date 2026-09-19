@@ -2941,21 +2941,35 @@ environment-oriented scope, so this is the closest equivalent to Gradle's
 </code></pre></div>
 <p>Flyway builds the schema from a single consolidated migration on startup. There
 is nothing to configure and nothing to run by hand.</p>
+<div class="admonition warning">
+<p class="admonition-title">A checksum failure means your local database predates a schema edit</p>
+<p>While the project is pre-1.0 the schema is <strong>one</strong> migration, edited in
+place, so its checksum changes whenever the schema does and Flyway refuses a
+database built from an older copy:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Migration checksum mismatch for migration version 1
+</code></pre></div>
+<p>There is no upgrade path and none is wanted — no deployment carries data
+worth keeping yet. Drop the database and let it rebuild:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>dropdb<span class="w"> </span>skillsgateway<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>createdb<span class="w"> </span>skillsgateway
+</code></pre></div>
+<p>A container-backed database (the Arconia dev service, Testcontainers, the
+e2e compose stack) rebuilds from scratch anyway and needs nothing.</p>
+</div>
 <h2 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h2>
 <h3 id="with-an-identity-provider">With an identity provider<a class="headerlink" href="#with-an-identity-provider" title="Permanent link">&para;</a></h3>
 <p>Point the OIDC variables at your IdP:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_OIDC_CLIENT_ID</span><span class="o">=</span>skills-gateway
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_OIDC_CLIENT_SECRET</span><span class="o">=</span>...
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_OIDC_AUTHORIZATION_URI</span><span class="o">=</span>https://idp.example.com/authorize
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_OIDC_TOKEN_URI</span><span class="o">=</span>https://idp.example.com/token
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_OIDC_JWK_SET_URI</span><span class="o">=</span>https://idp.example.com/jwks
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_OIDC_CLIENT_ID</span><span class="o">=</span>skills-gateway
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_OIDC_CLIENT_SECRET</span><span class="o">=</span>...
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_OIDC_AUTHORIZATION_URI</span><span class="o">=</span>https://idp.example.com/authorize
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_OIDC_TOKEN_URI</span><span class="o">=</span>https://idp.example.com/token
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_OIDC_JWK_SET_URI</span><span class="o">=</span>https://idp.example.com/jwks
 </code></pre></div>
 <p>The client registration id is <code>idp</code>, and the defaults are the placeholders
 <code>change-me</code> and <code>idp.invalid</code> so that the registration always exists. A gateway
 started without real values will not complete a login.</p>
 <h3 id="without-one-the-escape-hatch">Without one — the escape hatch<a class="headerlink" href="#without-one-the-escape-hatch" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>spring-boot:run<span class="w"> </span>-Dspring-boot.run.arguments<span class="o">=</span>--skills-gateway.dev-insecure-auth<span class="o">=</span><span class="nb">true</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="gp">$ </span>java<span class="w"> </span>-jar<span class="w"> </span>target/skills-gateway-server-*.jar<span class="w"> </span>--skills-gateway.dev-insecure-auth<span class="o">=</span><span class="nb">true</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>spring-boot:run<span class="w"> </span>-Dspring-boot.run.arguments<span class="o">=</span>--skills-gateway.dev-insecure-auth<span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="gp">$ </span>java<span class="w"> </span>-jar<span class="w"> </span>target/skills-gateway-server-*.jar<span class="w"> </span>--skills-gateway.dev-insecure-auth<span class="o">=</span><span class="nb">true</span>
 </code></pre></div>
 <div class="admonition danger">
 <p class="admonition-title">Never outside a development loop</p>
@@ -2982,8 +2996,8 @@ in <code>application.yaml</code> keep the local loop working. The full rule is i
 </div>
 <h2 id="verify-it-is-up">Verify it is up<a class="headerlink" href="#verify-it-is-up" title="Permanent link">&para;</a></h2>
 <p><code>/actuator/health</code> is the only unauthenticated endpoint:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span>localhost:8080/actuator/health
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="go">{"status":"UP"}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span>localhost:8080/actuator/health
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="go">{"status":"UP"}</span>
 </code></pre></div>
 <p>Then open <a href="http://localhost:8080/">http://localhost:8080/</a> and log in.</p>
 <div class="admonition tip">
@@ -3009,7 +3023,7 @@ all and is accepted only on the object-store backend. See
 the <code>object-store</code> backend instead, start the Compose profile that brings up a
 local S3-compatible store — Floci, the same emulator the build's object-store
 suites run against:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span><span class="nv">SGW_STORAGE_BACKEND</span><span class="o">=</span>object-store<span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>--profile<span class="w"> </span>object-store<span class="w"> </span>up
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="gp">$ </span><span class="nv">SGW_STORAGE_BACKEND</span><span class="o">=</span>object-store<span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>--profile<span class="w"> </span>object-store<span class="w"> </span>up
 </code></pre></div>
 <p>The bucket must exist before the gateway starts; create <code>skills-gateway</code> once
 with any S3 client pointed at <code>http://localhost:4566</code>. The gateway probes the
@@ -3028,11 +3042,11 @@ no compose file to start.</p>
 <p>It is <strong>opt-in through the <code>observability</code> Spring profile</strong> and off in every
 other run: <code>./mvnw clean verify</code> and the e2e suite start no LGTM container and
 attempt no OTLP export, which keeps the test loop fast and the logs quiet.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>spring-boot:run<span class="w"> </span>-Dspring-boot.run.profiles<span class="o">=</span>observability
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>spring-boot:run<span class="w"> </span>-Dspring-boot.run.profiles<span class="o">=</span>observability
 </code></pre></div>
 <p>The stack takes a moment to pull on first use. Watch the log for the Grafana
 URL, which is on a random port:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>Dev Service 'lgtm' is ready — Grafana: http://localhost:&lt;port&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>Dev Service 'lgtm' is ready — Grafana: http://localhost:&lt;port&gt;
 </code></pre></div>
 <p>Log in is not required (anonymous admin). Explore traces in <strong>Tempo</strong>, metrics
 in <strong>Prometheus</strong> and logs in <strong>Loki</strong>; all three are pre-provisioned as Grafana
@@ -3071,22 +3085,22 @@ deployed gateway to a collector is a separate, not-yet-implemented concern.</p>
 </div>
 <h2 id="ui-development-loop">UI development loop<a class="headerlink" href="#ui-development-loop" title="Permanent link">&para;</a></h2>
 <p>Only needed when changing the portal:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>src/main/frontend
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="gp">$ </span>corepack<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>pnpm
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="gp">$ </span>pnpm<span class="w"> </span>install
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="gp">$ </span>pnpm<span class="w"> </span>dev<span class="w">           </span><span class="c1"># proxies /api and /actuator to localhost:8080</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="gp">$ </span>pnpm<span class="w"> </span><span class="nb">test</span><span class="w">          </span><span class="c1"># jsdom unit tests</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="gp">$ </span>pnpm<span class="w"> </span>test:stories<span class="w">  </span><span class="c1"># Storybook story tests in real chromium</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="gp">$ </span>pnpm<span class="w"> </span>storybook
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>src/main/frontend
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="gp">$ </span>corepack<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>pnpm
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="gp">$ </span>pnpm<span class="w"> </span>install
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="gp">$ </span>pnpm<span class="w"> </span>dev<span class="w">           </span><span class="c1"># proxies /api and /actuator to localhost:8080</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="gp">$ </span>pnpm<span class="w"> </span><span class="nb">test</span><span class="w">          </span><span class="c1"># jsdom unit tests</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="gp">$ </span>pnpm<span class="w"> </span>test:stories<span class="w">  </span><span class="c1"># Storybook story tests in real chromium</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="gp">$ </span>pnpm<span class="w"> </span>storybook
 </code></pre></div>
 <h2 id="the-gates">The gates<a class="headerlink" href="#the-gates" title="Permanent link">&para;</a></h2>
 <p>All must pass before any pull request:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>clean<span class="w"> </span>verify<span class="w">                          </span><span class="c1"># Java + UI gates, packaged jar</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="gp">$ </span><span class="o">(</span><span class="nb">cd</span><span class="w"> </span>src/main/frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pnpm<span class="w"> </span>test:stories<span class="o">)</span><span class="w">  </span><span class="c1"># Storybook story tests in real chromium</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="gp">$ </span><span class="o">(</span><span class="nb">cd</span><span class="w"> </span>src/main/frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pnpm<span class="w"> </span>e2e<span class="o">)</span><span class="w">           </span><span class="c1"># real-browser e2e vs a mock OIDC IdP</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="gp">$ </span>reqstool<span class="w"> </span>status<span class="w"> </span><span class="nb">local</span><span class="w"> </span>-p<span class="w"> </span>docs/reqstool<span class="w">       </span><span class="c1"># must end "PASS"</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="gp">$ </span>openspec<span class="w"> </span>validate<span class="w"> </span>--all<span class="w"> </span>--strict
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="gp">$ </span>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict<span class="w">                        </span><span class="c1"># documentation</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>clean<span class="w"> </span>verify<span class="w">                          </span><span class="c1"># Java + UI gates, packaged jar</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="gp">$ </span><span class="o">(</span><span class="nb">cd</span><span class="w"> </span>src/main/frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pnpm<span class="w"> </span>test:stories<span class="o">)</span><span class="w">  </span><span class="c1"># Storybook story tests in real chromium</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="gp">$ </span><span class="o">(</span><span class="nb">cd</span><span class="w"> </span>src/main/frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pnpm<span class="w"> </span>e2e<span class="o">)</span><span class="w">           </span><span class="c1"># real-browser e2e vs a mock OIDC IdP</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="gp">$ </span>reqstool<span class="w"> </span>status<span class="w"> </span><span class="nb">local</span><span class="w"> </span>-p<span class="w"> </span>docs/reqstool<span class="w">       </span><span class="c1"># must end "PASS"</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="gp">$ </span>openspec<span class="w"> </span>validate<span class="w"> </span>--all<span class="w"> </span>--strict
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="gp">$ </span>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict<span class="w">                        </span><span class="c1"># documentation</span>
 </code></pre></div>
 <p>Use <code>clean</code> for the reqstool gate — incremental compilation truncates the
 generated annotation files.</p>
@@ -3100,8 +3114,8 @@ passes only when it ends <code>PASS</code>, and a script that checks <code>$?</c
 failing run green.</p>
 </div>
 <p>For the documentation gate:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="gp">$ </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>docs/requirements.txt
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="gp">$ </span>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="gp">$ </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>docs/requirements.txt
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="gp">$ </span>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict
 </code></pre></div>
 <h3 id="the-application-context-budget">The application-context budget<a class="headerlink" href="#the-application-context-budget" title="Permanent link">&para;</a></h3>
 <p><code>./mvnw verify</code> also enforces a budget on how many <em>distinct</em> Spring
@@ -3200,19 +3214,19 @@ than a broken environment — a wall of test errors, with nothing pointing at th
 container runtime — so they are worth setting up before the first run rather
 than diagnosing during it.</p>
 <p>Export both of these; the rest of this section is why.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">TESTCONTAINERS_RYUK_DISABLED</span><span class="o">=</span><span class="nb">true</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE</span><span class="o">=</span>/run/user/501/podman/podman.sock
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">TESTCONTAINERS_RYUK_DISABLED</span><span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE</span><span class="o">=</span>/run/user/501/podman/podman.sock
 </code></pre></div>
 <h4 id="ryuk-cannot-start-on-rootless-podman">Ryuk cannot start on rootless Podman<a class="headerlink" href="#ryuk-cannot-start-on-rootless-podman" title="Permanent link">&para;</a></h4>
 <p>Ryuk is the Testcontainers resource reaper. Under a rootless Podman machine it
 fails to start and every container-backed test errors:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>ERROR tc.testcontainers/ryuk:0.14.0 : Could not start container
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>Tests run: 3, Failures: 0, Errors: 3
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>ERROR tc.testcontainers/ryuk:0.14.0 : Could not start container
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>Tests run: 3, Failures: 0, Errors: 3
 </code></pre></div>
 <p><code>TESTCONTAINERS_RYUK_DISABLED=true</code> is the fix, and the consequence is that
 <strong>nothing reaps test containers</strong>. They accumulate across runs and each
 published port stays forwarded by <code>gvproxy</code>, so prune periodically:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="gp">$ </span>podman<span class="w"> </span>container<span class="w"> </span>prune<span class="w"> </span>-f
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="gp">$ </span>podman<span class="w"> </span>container<span class="w"> </span>prune<span class="w"> </span>-f
 </code></pre></div>
 <p>The alternative is a rootful machine (<code>podman machine stop &amp;&amp; podman machine set
 --rootful &amp;&amp; podman machine start</code>), where Ryuk works. Note that rootless and
@@ -3224,24 +3238,24 @@ which the object-store storage suites depend on — bind-mounts the container
 runtime's socket unconditionally. Without an override it resolves to the
 <strong>macOS-side</strong> path, which does not exist inside the machine VM, and the failure
 reads as a container-creation fault rather than a missing socket:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>Status 500 ... operation not supported
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>Status 500 ... operation not supported
 </code></pre></div>
 <p><code>TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE</code> must name the socket <strong>inside</strong> the VM,
 not on the host. Confirm it rather than copying it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="gp">$ </span>podman<span class="w"> </span>machine<span class="w"> </span>ssh<span class="w"> </span><span class="s1">'echo "$XDG_RUNTIME_DIR/podman/podman.sock"'</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="go">/run/user/501/podman/podman.sock</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="gp">$ </span>podman<span class="w"> </span>machine<span class="w"> </span>ssh<span class="w"> </span><span class="s1">'echo "$XDG_RUNTIME_DIR/podman/podman.sock"'</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="go">/run/user/501/podman/podman.sock</span>
 </code></pre></div>
 <p>The override is unnecessary on Linux, where the host path is the VM path; CI
 sets neither variable.</p>
 <h4 id="if-testcontainers-cannot-find-a-container-runtime-at-all">If Testcontainers cannot find a container runtime at all<a class="headerlink" href="#if-testcontainers-cannot-find-a-container-runtime-at-all" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>Could not find a valid Docker environment
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>Could not find a valid Docker environment
 </code></pre></div>
 <p>Testcontainers resolves the socket itself, so the <code>docker</code> CLI working proves
 nothing — under Podman <code>docker</code> is an alias, and <code>docker info</code> succeeds against
 a socket Testcontainers never consults. What it wants is <code>/var/run/docker.sock</code>,
 which <code>podman machine start</code> creates as a symlink into the machine's socket:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="gp">$ </span>ls<span class="w"> </span>-la<span class="w"> </span>/var/run/docker.sock
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="go">lrwxr-xr-x  1 root  daemon  ...  /var/run/docker.sock -&gt; ~/.local/share/containers/podman/machine/podman.sock</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="gp">$ </span>ls<span class="w"> </span>-la<span class="w"> </span>/var/run/docker.sock
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="go">lrwxr-xr-x  1 root  daemon  ...  /var/run/docker.sock -&gt; ~/.local/share/containers/podman/machine/podman.sock</span>
 </code></pre></div>
 <p>If it is missing, restart the machine. Exporting <code>DOCKER_HOST</code> from <code>podman
 machine inspect</code> also works.</p>
@@ -3252,9 +3266,9 @@ working while tests that use Testcontainers directly fail in the same build.</p>
 <p>The default machine is small. Under a parallel build the PostgreSQL, Floci and
 LGTM containers plus the CycloneDX step hit container-startup timeouts and OOM
 kills. Raise it in place — stop, set, start; storage is preserved:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="gp">$ </span>podman<span class="w"> </span>machine<span class="w"> </span>stop
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="gp">$ </span>podman<span class="w"> </span>machine<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--memory<span class="w"> </span><span class="m">8192</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="gp">$ </span>podman<span class="w"> </span>machine<span class="w"> </span>start
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="gp">$ </span>podman<span class="w"> </span>machine<span class="w"> </span>stop
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="gp">$ </span>podman<span class="w"> </span>machine<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--memory<span class="w"> </span><span class="m">8192</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="gp">$ </span>podman<span class="w"> </span>machine<span class="w"> </span>start
 </code></pre></div>
 <div class="admonition tip">
 <p class="admonition-title">A failed run is not always a failed change</p>

@@ -5277,6 +5277,11 @@ with a <code>password</code> key).</p>
 <p>There are no <code>spring.flyway.*</code> settings. The schema is built from a single
 consolidated migration on startup, because every environment — including
 Testcontainers and the e2e compose stack — builds it from scratch.</p>
+<p>That the schema is <em>one</em> migration rather than a chain is a consequence of
+being pre-1.0: with no compatibility promised between versions, there is no
+deployed database to upgrade, so a schema change edits <code>V1__init.sql</code>
+instead of adding a version behind it. At 1.0.0 that reverses — <code>V1</code> freezes
+and changes become incremental migrations.</p>
 </div>
 <hr />
 <h2 id="oidc-login">OIDC login<a class="headerlink" href="#oidc-login" title="Permanent link">&para;</a></h2>
