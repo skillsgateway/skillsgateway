@@ -43,6 +43,7 @@ public record Snapshot(
 
         @Schema(description = "Identity that revoked it, or null")
         String revokedBy,
+
         @Schema(
                 description = "Whether a re-vetting run or an administrator revoked it, or null if it never was."
                         + " The two lift differently: a re-vetting revocation lifts when its finding is cleared,"

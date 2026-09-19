@@ -243,6 +243,26 @@ public class SnapshotRepository {
     }
 
     /**
+     * The approved snapshot a marketplace would fall back to if the one it is serving were
+     * withdrawn (GW_APPROVAL_0016): its most recent approved snapshot other than the named one,
+     * ignoring soft-deleted rows, whose content has been reclaimed and cannot be served.
+     *
+     * <p>Returned as an option rather than defaulted to "serve nothing", because a caller who asked
+     * to roll back and cannot is refused rather than quietly given the other outcome.
+     */
+    @Requirements({"GW_APPROVAL_0016"})
+    public Optional<Snapshot> previousApproved(long marketplaceId, long excludingSnapshotId) {
+        return jdbc.sql("SELECT * FROM snapshots WHERE marketplace_id = :marketplaceId"
+                        + " AND id <> :excluding AND state = :approved::snapshot_state AND deleted_at IS NULL"
+                        + " ORDER BY id DESC LIMIT 1")
+                .param("marketplaceId", marketplaceId)
+                .param("excluding", excludingSnapshotId)
+                .param("approved", Snapshot.APPROVED)
+                .query(Snapshot.class)
+                .optional();
+    }
+
+    /**
      * The continuous re-vetting queue (GW_VETTING_0012): live approved snapshots whose most recent chain
      * run is older than {@code cutoff}, oldest first, and a snapshot that has never been vetted
      * before all of them.
@@ -410,9 +430,10 @@ public class SnapshotRepository {
      */
     @Requirements({"GW_RETENTION_0008"})
     public boolean purge(long id) {
-        return jdbc.sql("DELETE FROM snapshots WHERE id = :id AND deleted_at IS NOT NULL"
-                                + " AND state IN " + DELETABLE_STATES
-                                + " AND (revoked_kind IS NULL OR revoked_kind <> :administrative::snapshot_revocation_kind)")
+        return jdbc.sql(
+                                "DELETE FROM snapshots WHERE id = :id AND deleted_at IS NOT NULL"
+                                        + " AND state IN " + DELETABLE_STATES
+                                        + " AND (revoked_kind IS NULL OR revoked_kind <> :administrative::snapshot_revocation_kind)")
                         .param("id", id)
                         .param("administrative", Snapshot.REVOKED_ADMINISTRATIVELY)
                         .update()

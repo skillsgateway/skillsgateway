@@ -33,31 +33,31 @@
 
 ## 4. Revocation
 
-- [ ] 4.1 `RevocationService` beside `ApprovalService`.
-- [ ] 4.2 Conditional state transition first, as `RevetService.quarantine` does.
-- [ ] 4.3 Validate the served-content choice **before** the transition; refuse a
+- [x] 4.1 `RevocationService` beside `ApprovalService`.
+- [x] 4.2 Conditional state transition first, as `RevetService.quarantine` does.
+- [x] 4.3 Validate the served-content choice **before** the transition; refuse a
       missing choice and a rollback with no earlier approved snapshot.
-- [ ] 4.4 Unpublish, then ledger what the marketplace now serves.
-- [ ] 4.5 On rollback, publish the earlier snapshot and ledger it as a
+- [x] 4.4 Unpublish, then ledger what the marketplace now serves.
+- [x] 4.5 On rollback, publish the earlier snapshot and ledger it as a
       publication distinct from the revocation.
-- [ ] 4.6 Fail loudly and do not retry when the record and the wire disagree.
-- [ ] 4.7 Emit `marketplace.snapshot.revoked`.
-- [ ] 4.8 Comment the one-identity-to-revoke, two-to-reverse asymmetry.
+- [x] 4.6 Fail loudly and do not retry when the record and the wire disagree.
+- [x] 4.7 Emit `marketplace.snapshot.revoked`.
+- [x] 4.8 Comment the one-identity-to-revoke, two-to-reverse asymmetry.
 - [x] 4.9 `RevetService.quarantine` passes the re-vetting kind.
 
 ## 5. The approval gate and the reversal
 
-- [ ] 5.1 `doApprove` refuses an administratively revoked snapshot, after the
+- [x] 5.1 `doApprove` refuses an administratively revoked snapshot, after the
       closure check and before the other gates, naming the revocation.
-- [ ] 5.2 Extend `ApprovalOverride` with the reversal kind and its reason.
-- [ ] 5.3 Refuse a reversal by the revoking identity, **unconditionally** — not
+- [x] 5.2 Extend `ApprovalOverride` with the reversal kind and its reason.
+- [x] 5.3 Refuse a reversal by the revoking identity, **unconditionally** — not
       through `FourEyesGate`, whose default mode records and proceeds.
-- [ ] 5.4 Refuse a reversal with no reason, an empty reason, or a non-admin
+- [x] 5.4 Refuse a reversal with no reason, an empty reason, or a non-admin
       caller.
-- [ ] 5.5 Every other approval gate runs unchanged on a reversal.
-- [ ] 5.6 Write the marker only once publication lands, as the vetting override
+- [x] 5.5 Every other approval gate runs unchanged on a reversal.
+- [x] 5.6 Write the marker only once publication lands, as the vetting override
       does.
-- [ ] 5.7 Ledger the reversal naming the revocation it reverses.
+- [x] 5.7 Ledger the reversal naming the revocation it reverses.
 - [ ] 5.8 Confirm a re-vetting revocation still lifts by clearing the finding,
       with `SVC_GW_VETTING_0013` and `SVC_GW_APPROVAL_0013` untouched.
 
