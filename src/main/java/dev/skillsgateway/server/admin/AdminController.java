@@ -5,8 +5,17 @@ import dev.skillsgateway.server.approval.ClosureIncompleteException;
 import dev.skillsgateway.server.approval.FourEyesConflictException;
 import dev.skillsgateway.server.approval.FourEyesGate;
 import dev.skillsgateway.server.approval.MissingOverrideReasonException;
+import dev.skillsgateway.server.approval.MissingReversalReasonException;
+import dev.skillsgateway.server.approval.MissingRevocationReasonException;
+import dev.skillsgateway.server.approval.MissingServeAfterChoiceException;
+import dev.skillsgateway.server.approval.NotApprovedException;
+import dev.skillsgateway.server.approval.NothingToReverseException;
 import dev.skillsgateway.server.approval.ReleaseAgeGate;
+import dev.skillsgateway.server.approval.RevocationService;
+import dev.skillsgateway.server.approval.RollbackUnavailableException;
+import dev.skillsgateway.server.approval.SelfReversalException;
 import dev.skillsgateway.server.approval.SnapshotTooYoungException;
+import dev.skillsgateway.server.approval.SnapshotWithdrawnException;
 import dev.skillsgateway.server.approval.VettingBlockedException;
 import dev.skillsgateway.server.approval.VettingOverrideRecord;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
@@ -58,6 +67,7 @@ public class AdminController {
     private final SnapshotRepository snapshotRepository;
     private final IngestionService ingestionService;
     private final ApprovalService approvalService;
+    private final RevocationService revocationService;
     private final FetchLogRepository fetchLogRepository;
     private final SnapshotContentService snapshotContentService;
     private final LicenseReportService licenseReportService;
@@ -72,6 +82,7 @@ public class AdminController {
             SnapshotRepository snapshotRepository,
             IngestionService ingestionService,
             ApprovalService approvalService,
+            RevocationService revocationService,
             FetchLogRepository fetchLogRepository,
             SnapshotContentService snapshotContentService,
             LicenseReportService licenseReportService,
@@ -84,6 +95,7 @@ public class AdminController {
         this.snapshotRepository = snapshotRepository;
         this.ingestionService = ingestionService;
         this.approvalService = approvalService;
+        this.revocationService = revocationService;
         this.fetchLogRepository = fetchLogRepository;
         this.snapshotContentService = snapshotContentService;
         this.licenseReportService = licenseReportService;
@@ -379,7 +391,15 @@ public class AdminController {
                             + " (GW_VETTING_0028); a reason is then required and the override is recorded distinctly")
             Boolean overrideVetting,
 
-            @Schema(description = "The administrator's reason for overriding the block; required when overrideVetting")
+            @Schema(
+                    description = "Set true, as an administrator, to reverse another administrator's withdrawal of"
+                            + " this commit (GW_APPROVAL_0017); a reason is required, and the identity that"
+                            + " withdrew it may not be the one that reverses it")
+            Boolean reverseRevocation,
+
+            @Schema(
+                    description = "The administrator's reason for overriding the block or reversing the"
+                            + " withdrawal; required when either is set")
             String reason) {}
 
     @PostMapping("/snapshots/{id}/approve")
@@ -427,6 +447,12 @@ public class AdminController {
             // (GW_VETTING_0028). An approver may not override the control that governs their own content.
             roleService.requireAdmin(authentication);
             override = ApprovalService.ApprovalOverride.ofVettingFailure(request.reason());
+        } else if (request != null && Boolean.TRUE.equals(request.reverseRevocation())) {
+            // Reversing another administrator's withdrawal is admin-only for the same reason the
+            // vetting override is, and for one more: it puts back content somebody deliberately
+            // took off the wire (GW_APPROVAL_0017). An approver may not undo an administrator's act.
+            roleService.requireAdmin(authentication);
+            override = ApprovalService.ApprovalOverride.ofRevocationReversal(request.reason());
         } else {
             roleService.requireApproverOfSnapshot(authentication, id);
         }
@@ -595,6 +621,147 @@ public class AdminController {
     @ExceptionHandler(IngestionException.class)
     public ProblemDetail ingestionFailed(IngestionException e) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY, e.getMessage());
+    }
+
+    @Schema(description = "Withdraw an approved snapshot, saying what the marketplace serves afterwards")
+    public record RevokeRequest(
+            @Schema(
+                    description = "Why the snapshot is being withdrawn. Required and non-empty: withdrawal takes"
+                            + " one administrator and no second reviewer, so this is the whole of the record,"
+                            + " and it is what a later approval of the same commit is refused with")
+            String reason,
+
+            @Schema(
+                    description = "What the marketplace serves afterwards. Required, with no default, because"
+                            + " neither outcome is safe to assume: PREVIOUS_APPROVED republishes older content"
+                            + " that may carry the same compromise, and NOTHING takes the marketplace down",
+                    allowableValues = {"PREVIOUS_APPROVED", "NOTHING"})
+            RevocationService.ServeAfter serveAfter) {}
+
+    @Schema(description = "The outcome of withdrawing a snapshot")
+    public record RevokeResponse(
+            @Schema(description = "The withdrawn snapshot") Snapshot snapshot,
+
+            @Schema(description = "The snapshot now served, or null when the marketplace serves nothing")
+            Snapshot nowServing) {}
+
+    @PostMapping("/snapshots/{id}/revoke")
+    @Requirements({"GW_APPROVAL_0015", "GW_APPROVAL_0016"})
+    @Tag(name = "Snapshots")
+    @Operation(
+            summary = "Withdraw an approved snapshot",
+            description = "Takes an approved snapshot off the facade on a stated reason, records the withdrawal"
+                    + " on the append-only ledger and announces it. Admin-only, and deliberately without a"
+                    + " four-eyes rule: withdrawing cannot publish anything, so a second reviewer buys no"
+                    + " safety while costing time during an incident. It withdraws whatever the vetting chain"
+                    + " would currently conclude and whatever mode re-vetting is configured in — the point is"
+                    + " that the reason is knowledge the chain does not hold. The request must say what the"
+                    + " marketplace serves afterwards; a return to the previous approved snapshot is refused"
+                    + " before anything is withdrawn when there is none, rather than quietly serving nothing."
+                    + " Afterwards the commit cannot be approved again by an ordinary approval: reversing the"
+                    + " withdrawal takes an administrator other than the one who made it (GW_APPROVAL_0017),"
+                    + " and the record is kept by retention even once the content is reclaimed"
+                    + " (GW_RETENTION_0008). This stops the gateway serving the content; it does not reach"
+                    + " clients that already hold it.")
+    @ApiResponse(responseCode = "200", description = "Snapshot withdrawn")
+    @ApiResponse(responseCode = "404", description = "Snapshot not found")
+    @ApiResponse(
+            responseCode = "409",
+            description = "The snapshot is not approved, or a return to the previous approved snapshot was asked"
+                    + " for and the marketplace has none")
+    @ApiResponse(responseCode = "422", description = "No reason was stated, or no served-content choice was made")
+    public RevokeResponse revoke(
+            @PathVariable long id,
+            @RequestBody(required = false) RevokeRequest request,
+            Authentication authentication) {
+        roleService.requireAdmin(authentication);
+        if (request == null || request.serveAfter() == null) {
+            throw new MissingServeAfterChoiceException(id);
+        }
+        RevocationService.Revoked revoked =
+                revocationService.revoke(id, request.reason(), request.serveAfter(), authentication.getName());
+        return new RevokeResponse(revoked.snapshot(), revoked.rolledBackTo().orElse(null));
+    }
+
+    /**
+     * A withdrawal with no stated reason (GW_APPROVAL_0015). 422 rather than 409 for the same reason
+     * a missing override reason is: the snapshot's state is fine, the accountability is missing.
+     */
+    @ExceptionHandler(MissingRevocationReasonException.class)
+    public ProblemDetail missingRevocationReason(MissingRevocationReasonException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage());
+        problem.setTitle("Withdrawing a snapshot requires a reason");
+        return problem;
+    }
+
+    /** A withdrawal that did not say what the marketplace serves afterwards (GW_APPROVAL_0016). */
+    @ExceptionHandler(MissingServeAfterChoiceException.class)
+    public ProblemDetail missingServeAfter(MissingServeAfterChoiceException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage());
+        problem.setTitle("A withdrawal must say what the marketplace serves afterwards");
+        problem.setProperty("choices", java.util.List.of("PREVIOUS_APPROVED", "NOTHING"));
+        return problem;
+    }
+
+    /** A withdrawal of something that is not approved (GW_APPROVAL_0015). */
+    @ExceptionHandler(NotApprovedException.class)
+    public ProblemDetail notApproved(NotApprovedException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+        problem.setTitle("Only an approved snapshot can be withdrawn");
+        problem.setProperty("state", e.state());
+        return problem;
+    }
+
+    /**
+     * A return to the previous approved snapshot that cannot be honoured (GW_APPROVAL_0016). Raised
+     * before anything is withdrawn, so this response means nothing changed.
+     */
+    @ExceptionHandler(RollbackUnavailableException.class)
+    public ProblemDetail rollbackUnavailable(RollbackUnavailableException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+        problem.setTitle("There is no previous approved snapshot to serve");
+        problem.setProperty("marketplace", e.marketplace());
+        return problem;
+    }
+
+    /**
+     * An ordinary approval of a commit an administrator withdrew (GW_APPROVAL_0017). The withdrawal
+     * is named in full, because a reviewer who cannot see why they were refused will look for a way
+     * around it rather than ask whether the situation has changed.
+     */
+    @ExceptionHandler(SnapshotWithdrawnException.class)
+    public ProblemDetail snapshotWithdrawn(SnapshotWithdrawnException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+        problem.setTitle("An administrator withdrew this commit");
+        problem.setProperty("revokedBy", e.revokedBy());
+        problem.setProperty("revokedAt", e.revokedAt());
+        problem.setProperty("reason", e.reason());
+        return problem;
+    }
+
+    /** The administrator who withdrew a snapshot trying to reverse it themselves (GW_APPROVAL_0017). */
+    @ExceptionHandler(SelfReversalException.class)
+    public ProblemDetail selfReversal(SelfReversalException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+        problem.setTitle("A withdrawal is reversed by a different administrator");
+        problem.setProperty("administrator", e.administrator());
+        return problem;
+    }
+
+    /** A reversal with no stated reason (GW_APPROVAL_0017). */
+    @ExceptionHandler(MissingReversalReasonException.class)
+    public ProblemDetail missingReversalReason(MissingReversalReasonException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage());
+        problem.setTitle("Reversing a withdrawal requires a reason");
+        return problem;
+    }
+
+    /** A reversal of a withdrawal that is not there (GW_APPROVAL_0017). */
+    @ExceptionHandler(NothingToReverseException.class)
+    public ProblemDetail nothingToReverse(NothingToReverseException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+        problem.setTitle("There is no withdrawal to reverse");
+        return problem;
     }
 
     /**

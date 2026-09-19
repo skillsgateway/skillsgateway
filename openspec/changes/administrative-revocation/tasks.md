@@ -58,55 +58,55 @@
 - [x] 5.6 Write the marker only once publication lands, as the vetting override
       does.
 - [x] 5.7 Ledger the reversal naming the revocation it reverses.
-- [ ] 5.8 Confirm a re-vetting revocation still lifts by clearing the finding,
+- [x] 5.8 Confirm a re-vetting revocation still lifts by clearing the finding,
       with `SVC_GW_VETTING_0013` and `SVC_GW_APPROVAL_0013` untouched.
 
 ## 6. API
 
-- [ ] 6.1 `POST /api/snapshots/{id}/revoke` — admin-only, mandatory non-empty
+- [x] 6.1 `POST /api/snapshots/{id}/revoke` — admin-only, mandatory non-empty
       reason, required served-content choice with no default.
-- [ ] 6.2 The reversal rides the existing approve request; no new endpoint.
-- [ ] 6.3 Distinguishable refusals for each cause.
-- [ ] 6.4 Machine API scopes consistent with the existing approval scopes.
-- [ ] 6.5 Confirm the OpenAPI contract check sees it as additive.
+- [x] 6.2 The reversal rides the existing approve request; no new endpoint.
+- [x] 6.3 Distinguishable refusals for each cause.
+- [x] 6.4 Machine API scopes consistent with the existing approval scopes.
+- [x] 6.5 Confirm the OpenAPI contract check sees it as additive.
 
 ## 7. Tests — negative first (`old-coder` discipline)
 
-- [ ] 7.1 Prove each test fails before its implementation exists.
-- [ ] 7.2 Revoke refused: non-admin; missing reason; empty reason; snapshot not
+- [x] 7.1 Prove each test fails before its implementation exists.
+- [x] 7.2 Revoke refused: non-admin; missing reason; empty reason; snapshot not
       approved.
-- [ ] 7.3 Revoke takes effect with the chain clearing the snapshot and with
+- [x] 7.3 Revoke takes effect with the chain clearing the snapshot and with
       re-vetting in record-only mode.
-- [ ] 7.4 Two concurrent revocations: one succeeds, one is refused, unpublished
+- [x] 7.4 Two concurrent revocations: one succeeds, one is refused, unpublished
       exactly once.
-- [ ] 7.5 Rollback with no earlier approved snapshot: refused **and the snapshot
+- [x] 7.5 Rollback with no earlier approved snapshot: refused **and the snapshot
       is still approved**, asserted on state.
-- [ ] 7.6 Each served-content outcome writes its own ledger entries; a rollback
+- [x] 7.6 Each served-content outcome writes its own ledger entries; a rollback
       is recorded as a publication.
-- [ ] 7.7 Revoking a snapshot that is not the served one leaves the served set
+- [x] 7.7 Revoking a snapshot that is not the served one leaves the served set
       untouched.
-- [ ] 7.8 Ordinary approval of an administratively revoked snapshot is refused
+- [x] 7.8 Ordinary approval of an administratively revoked snapshot is refused
       and the refusal names the reason, actor and time.
-- [ ] 7.9 The revoker cannot reverse their own revocation; a second
+- [x] 7.9 The revoker cannot reverse their own revocation; a second
       administrator can; the marker is present afterwards.
-- [ ] 7.10 A waiver does not lift an administrative revocation.
-- [ ] 7.11 Retention reclaims an administratively revoked snapshot's content but
+- [x] 7.10 A waiver does not lift an administrative revocation.
+- [x] 7.11 Retention reclaims an administratively revoked snapshot's content but
       refuses to purge its record, while a re-vetting-revoked record purges.
-- [ ] 7.12 Reconciling a converged declarative estate revokes nothing and writes
+- [x] 7.12 Reconciling a converged declarative estate revokes nothing and writes
       no ledger entry.
 
 ## 8. Documentation
 
-- [ ] 8.1 `docs/manual/reference/api/marketplaces.md` — the endpoint, its body,
+- [x] 8.1 `docs/manual/reference/api/marketplaces.md` — the endpoint, its body,
       every refusal.
-- [ ] 8.2 `docs/manual/guides/approving-snapshots.md` — withdrawing, choosing
+- [x] 8.2 `docs/manual/guides/approving-snapshots.md` — withdrawing, choosing
       what is served afterwards, and how a withdrawal is reversed.
-- [ ] 8.3 `docs/manual/reference/retention.md` — the administrative-revocation
+- [x] 8.3 `docs/manual/reference/retention.md` — the administrative-revocation
       guard.
-- [ ] 8.4 State that revocation stops the gateway serving the content and does
+- [x] 8.4 State that revocation stops the gateway serving the content and does
       not reach clients that already hold it, linking
       [#427](https://github.com/skillsgateway/skillsgateway/issues/427).
-- [ ] 8.5 Any new page placed by its Diátaxis type and added to `nav:`.
+- [x] 8.5 Any new page placed by its Diátaxis type and added to `nav:`.
 
 ## 9. Gates and archive
 

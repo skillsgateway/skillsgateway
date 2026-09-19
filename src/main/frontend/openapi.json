@@ -58,8 +58,12 @@
             "type": "boolean"
           },
           "reason": {
-            "description": "The administrator's reason for overriding the block; required when overrideVetting",
+            "description": "The administrator's reason for overriding the block or reversing the withdrawal; required when either is set",
             "type": "string"
+          },
+          "reverseRevocation": {
+            "description": "Set true, as an administrator, to reverse another administrator's withdrawal of this commit (GW_APPROVAL_0017); a reason is required, and the identity that withdrew it may not be the one that reverses it",
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -2277,6 +2281,38 @@
         },
         "type": "object"
       },
+      "RevokeRequest": {
+        "description": "Withdraw an approved snapshot, saying what the marketplace serves afterwards",
+        "properties": {
+          "reason": {
+            "description": "Why the snapshot is being withdrawn. Required and non-empty: withdrawal takes one administrator and no second reviewer, so this is the whole of the record, and it is what a later approval of the same commit is refused with",
+            "type": "string"
+          },
+          "serveAfter": {
+            "description": "What the marketplace serves afterwards. Required, with no default, because neither outcome is safe to assume: PREVIOUS_APPROVED republishes older content that may carry the same compromise, and NOTHING takes the marketplace down",
+            "enum": [
+              "PREVIOUS_APPROVED",
+              "NOTHING"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "RevokeResponse": {
+        "description": "The outcome of withdrawing a snapshot",
+        "properties": {
+          "nowServing": {
+            "$ref": "#/components/schemas/Snapshot",
+            "description": "The snapshot now served, or null when the marketplace serves nothing"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/Snapshot",
+            "description": "The withdrawn snapshot"
+          }
+        },
+        "type": "object"
+      },
       "RoleGrant": {
         "description": "A role grant",
         "properties": {
@@ -2535,6 +2571,14 @@
           },
           "revokedBy": {
             "description": "Identity that revoked it, or null",
+            "type": "string"
+          },
+          "revokedKind": {
+            "description": "Whether a re-vetting run or an administrator revoked it, or null if it never was. The two lift differently: a re-vetting revocation lifts when its finding is cleared, an administrative one only when a second administrator reverses it",
+            "enum": [
+              "revet",
+              "administrative"
+            ],
             "type": "string"
           },
           "sha": {
@@ -4695,7 +4739,7 @@
     "/api/roles/{id}": {
       "delete": {
         "description": "Deletes the grant; the ledger keeps the history. Configuration-bootstrapped admins have no grant row, so they cannot be revoked here — by design, they are the escape hatch that survives a bad grant edit. Admin-only while role enforcement is enabled.",
-        "operationId": "revoke_3",
+        "operationId": "revoke_4",
         "parameters": [
           {
             "in": "path",
@@ -5495,6 +5539,78 @@
         ]
       }
     },
+    "/api/snapshots/{id}/revoke": {
+      "post": {
+        "description": "Takes an approved snapshot off the facade on a stated reason, records the withdrawal on the append-only ledger and announces it. Admin-only, and deliberately without a four-eyes rule: withdrawing cannot publish anything, so a second reviewer buys no safety while costing time during an incident. It withdraws whatever the vetting chain would currently conclude and whatever mode re-vetting is configured in — the point is that the reason is knowledge the chain does not hold. The request must say what the marketplace serves afterwards; a return to the previous approved snapshot is refused before anything is withdrawn when there is none, rather than quietly serving nothing. Afterwards the commit cannot be approved again by an ordinary approval: reversing the withdrawal takes an administrator other than the one who made it (GW_APPROVAL_0017), and the record is kept by retention even once the content is reclaimed (GW_RETENTION_0008). This stops the gateway serving the content; it does not reach clients that already hold it.",
+        "operationId": "revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevokeResponse"
+                }
+              }
+            },
+            "description": "Snapshot withdrawn"
+          },
+          "404": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevokeResponse"
+                }
+              }
+            },
+            "description": "Snapshot not found"
+          },
+          "409": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevokeResponse"
+                }
+              }
+            },
+            "description": "The snapshot is not approved, or a return to the previous approved snapshot was asked for and the marketplace has none"
+          },
+          "422": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevokeResponse"
+                }
+              }
+            },
+            "description": "No reason was stated, or no served-content choice was made"
+          }
+        },
+        "summary": "Withdraw an approved snapshot",
+        "tags": [
+          "Snapshots"
+        ]
+      }
+    },
     "/api/snapshots/{id}/vetting": {
       "get": {
         "description": "The snapshot's latest vetting chain run: each vetter's verdict in chain order, the findings behind it, the waivers currently suppressing any of them, and the fail-closed effective aggregate that gates approval. A snapshot the chain has never run against reports a blocked outcome and no run.",
@@ -5757,7 +5873,7 @@
     "/api/tokens/machine/{id}": {
       "delete": {
         "description": "Immediate and permanent, checked at authentication time rather than swept, so it takes effect on the credential's very next request. Audit-logged.",
-        "operationId": "revoke_2",
+        "operationId": "revoke_3",
         "parameters": [
           {
             "in": "path",
@@ -5894,7 +6010,7 @@
     "/api/tokens/{id}": {
       "delete": {
         "description": "Immediate and permanent; audit-logged.",
-        "operationId": "revoke_1",
+        "operationId": "revoke_2",
         "parameters": [
           {
             "in": "path",
@@ -6374,7 +6490,7 @@
     "/api/waivers/{id}": {
       "delete": {
         "description": "Revokes the waiver. It stops suppressing its finding immediately — the effective vetting outcome is recomputed on every read — so a snapshot that was cleared only by this waiver becomes blocked again. The row is kept, with its revoker and time.",
-        "operationId": "revoke",
+        "operationId": "revoke_1",
         "parameters": [
           {
             "in": "path",
