@@ -1927,6 +1927,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#administratively-withdrawn-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Administratively withdrawn snapshots
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#held-too-long" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2533,6 +2544,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#administratively-withdrawn-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Administratively withdrawn snapshots
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#held-too-long" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2715,9 +2737,31 @@ applies these:</p>
 <td>Nothing. An <code>approved</code> snapshot is never eligible, by policy or by hand.</td>
 <td>Not configurable</td>
 </tr>
+<tr>
+<td><a href="#administratively-withdrawn-snapshots">Administratively withdrawn</a></td>
+<td><strong>Partial guard</strong></td>
+<td>Nothing. The <em>content</em> of a snapshot an administrator revoked is reclaimed as usual; its <em>record</em> is never permanently removed.</td>
+<td>Not configurable</td>
+</tr>
 </tbody>
 </table>
 <p>A snapshot is deleted when a selector picks it and no veto or guard removes it.</p>
+<h3 id="administratively-withdrawn-snapshots">Administratively withdrawn snapshots<a class="headerlink" href="#administratively-withdrawn-snapshots" title="Permanent link">&para;</a></h3>
+<p>A snapshot an <a href="../../guides/approving-snapshots/#withdrawing-content-you-have-already-approved">administrator withdrew</a>
+is treated like any other for the purpose of reclaiming disk: it can be soft
+deleted, and its git content removed. What is never removed is the <strong>row</strong>.</p>
+<p>The refusal that stops a withdrawn commit being approved again is derived from
+that row. Delete it and the withdrawal expires on a timer nobody connected to
+it: the same upstream commit ingests afterwards as an ordinary held snapshot,
+carrying no trace that anything was withdrawn, and a reviewer approves it in
+good faith. Nothing refuses, and nothing is recorded — which makes it a quieter
+failure than the one the approval gate closes.</p>
+<p>Keeping the row is cheap. The bytes are the part worth reclaiming and the part
+nobody wants to keep; the row is small, and it is the only thing that remembers.</p>
+<p>This applies to <strong>administrative</strong> withdrawals only. A snapshot revoked by
+<a href="../../guides/re-vetting/">re-vetting</a> purges as before: that is a machine
+verdict a later run can reach again from the content itself, so nothing is lost
+when its row goes.</p>
 <h3 id="held-too-long">Held too long<a class="headerlink" href="#held-too-long" title="Permanent link">&para;</a></h3>
 <p><code>state = 'held'</code> and <code>created_at</code> older than <code>held-max-age</code> (default <code>90d</code>).
 This is the unreviewed-quarantine backlog: snapshots ingested by polling that

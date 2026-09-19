@@ -1194,10 +1194,60 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#re-approving-a-revoked-snapshot" class="md-nav__link">
+  <a href="#withdrawing-content-you-have-already-approved" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Re-approving a revoked snapshot
+        Withdrawing content you have already approved
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Withdrawing content you have already approved">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#you-must-say-what-the-marketplace-serves-afterwards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        You must say what the marketplace serves afterwards
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#putting-it-back-takes-a-second-administrator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Putting it back takes a second administrator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retention-keeps-the-record" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retention keeps the record
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#re-approving-a-snapshot-re-vetting-revoked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Re-approving a snapshot re-vetting revoked
       
     </span>
   </a>
@@ -2755,10 +2805,60 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#re-approving-a-revoked-snapshot" class="md-nav__link">
+  <a href="#withdrawing-content-you-have-already-approved" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Re-approving a revoked snapshot
+        Withdrawing content you have already approved
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Withdrawing content you have already approved">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#you-must-say-what-the-marketplace-serves-afterwards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        You must say what the marketplace serves afterwards
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#putting-it-back-takes-a-second-administrator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Putting it back takes a second administrator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retention-keeps-the-record" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retention keeps the record
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#re-approving-a-snapshot-re-vetting-revoked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Re-approving a snapshot re-vetting revoked
       
     </span>
   </a>
@@ -3173,7 +3273,89 @@ therefore answerable from the ledger alone.</p>
 <p>Reviewing is unaffected: the contents, the provenance and the vetting verdicts
 are all readable during the wait, so the waivers a blocked snapshot needs can be
 recorded while the window runs down rather than after it.</p>
-<h2 id="re-approving-a-revoked-snapshot">Re-approving a revoked snapshot<a class="headerlink" href="#re-approving-a-revoked-snapshot" title="Permanent link">&para;</a></h2>
+<h2 id="withdrawing-content-you-have-already-approved">Withdrawing content you have already approved<a class="headerlink" href="#withdrawing-content-you-have-already-approved" title="Permanent link">&para;</a></h2>
+<p>Sometimes what was approved turns out to be harmful and the vetting chain has
+nothing to say about it — a vulnerability disclosed upstream, a maintainer
+account compromised, a dependency found to be malicious. The chain will keep
+clearing the content, because none of that is visible in the files.</p>
+<p>An administrator withdraws it directly:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/42/revoke<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="err">'</span><span class="o">{</span><span class="s2">"reason"</span>:<span class="w"> </span><span class="s2">"CVE-2026-0001 in a vendored dependency"</span>,
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="go">         "serveAfter": "PREVIOUS_APPROVED"}'</span>
+</code></pre></div>
+<p>The snapshot stops being served, the withdrawal goes on the audit ledger with
+who made it and why, <code>marketplace.snapshot.revoked</code> fires, and the
+<a href="../read-only-forge-mirror/">forge mirror</a> reconciles. Quarantine is untouched,
+so the content is still there to re-review.</p>
+<p><strong>Admin-only, and there is no four-eyes rule on it.</strong> Approval needs two
+identities because publishing is the direction that can do harm; withdrawing
+only ever takes content off the wire, so a second reviewer buys no safety and
+costs time during an incident. The stated reason is the accountability, and it
+is mandatory.</p>
+<h3 id="you-must-say-what-the-marketplace-serves-afterwards">You must say what the marketplace serves afterwards<a class="headerlink" href="#you-must-say-what-the-marketplace-serves-afterwards" title="Permanent link">&para;</a></h3>
+<p><code>serveAfter</code> has no default, and a request without it is refused. Neither
+answer is safe to assume:</p>
+<table>
+<thead>
+<tr>
+<th><code>serveAfter</code></th>
+<th>What happens</th>
+<th>When it is right</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PREVIOUS_APPROVED</code></td>
+<td>The marketplace returns to its previous approved snapshot</td>
+<td>The predecessor is known-good</td>
+</tr>
+<tr>
+<td><code>NOTHING</code></td>
+<td>The marketplace serves nothing</td>
+<td>The compromise may be in the predecessor too — a poisoned transitive dependency usually is</td>
+</tr>
+</tbody>
+</table>
+<p>Asking to return when the marketplace has no earlier approved snapshot is
+refused <strong>before anything is withdrawn</strong>, so a request that cannot be honoured
+changes nothing rather than quietly leaving you with the other outcome. A
+return is recorded on the ledger as a publication in its own right.</p>
+<div class="admonition warning">
+<p class="admonition-title">This stops the gateway serving it; it does not reach clients</p>
+<p>Anyone who already cloned the content still has it. <code>GET
+/api/snapshots/{id}/fetchers</code> names every identity that fetched it — the
+blast radius — but nothing on the client side checks whether what it holds
+is still approved. See
+<a href="https://github.com/skillsgateway/skillsgateway/issues/427">#427</a>.</p>
+</div>
+<h3 id="putting-it-back-takes-a-second-administrator">Putting it back takes a second administrator<a class="headerlink" href="#putting-it-back-takes-a-second-administrator" title="Permanent link">&para;</a></h3>
+<p>A withdrawn commit cannot be approved again by an ordinary approval. The
+refusal names who withdrew it, when, and why — so a reviewer can judge whether
+anything has actually changed rather than assuming they have hit a bug.</p>
+<p>If it has changed — the withdrawal was a mistake, or the upstream problem is
+fixed — a <strong>different</strong> administrator reverses it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/42/approve<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="err">'</span><span class="o">{</span><span class="s2">"reverseRevocation"</span>:<span class="w"> </span>true,
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="go">         "reason": "upstream published a fix; re-reviewed"}'</span>
+</code></pre></div>
+<p>The administrator who withdrew it cannot be the one who reverses it. That is
+unconditional: withdrawing takes one identity because it cannot publish
+anything, and reversing does publish, so it takes two. Every other approval
+gate still runs.</p>
+<p>A waiver does <strong>not</strong> lift a withdrawal. Waivers clear vetting findings, and a
+withdrawal has no finding to clear — that is the whole point of it.</p>
+<p>The snapshot keeps a standing marker afterwards, so content served over a
+reversed withdrawal is never indistinguishable from content nobody ever
+withdrew.</p>
+<h3 id="retention-keeps-the-record">Retention keeps the record<a class="headerlink" href="#retention-keeps-the-record" title="Permanent link">&para;</a></h3>
+<p>An administratively withdrawn snapshot can have its <strong>content</strong> reclaimed by
+<a href="../snapshot-retention/">retention</a>, but its <strong>record</strong> is never removed. The
+refusal above is derived from that record, so deleting it would expire the
+withdrawal on a timer — and the same upstream commit would then ingest as an
+ordinary held snapshot with no trace that anything was ever withdrawn.</p>
+<h2 id="re-approving-a-snapshot-re-vetting-revoked">Re-approving a snapshot re-vetting revoked<a class="headerlink" href="#re-approving-a-snapshot-re-vetting-revoked" title="Permanent link">&para;</a></h2>
 <p>A snapshot that <a href="../re-vetting/">continuous re-vetting</a> revoked is decidable
 again, and the route back is this same <strong>Approve</strong> — deliberately, because a
 retraction the gateway made without a person has to be answerable by one.</p>
@@ -3185,6 +3367,9 @@ reviewer, a new timestamp, and the revocation marks cleared. What the snapshot
 was revoked for stays in the audit ledger.</p>
 <p>Rejecting it instead is the terminal answer, and the right one when the finding
 is not something anyone intends to accept.</p>
+<p>This is the one kind of revocation a waiver lifts. A chain verdict is an
+objection to something <em>in the content</em>, so clearing that objection answers it;
+an administrator's withdrawal is not, and needs the reversal above instead.</p>
 <h2 id="when-an-approval-fails">When an approval fails<a class="headerlink" href="#when-an-approval-fails" title="Permanent link">&para;</a></h2>
 <p>An approval publishes by moving the marketplace's served references onto the
 snapshot. That is a single all-or-nothing transition, and it can be refused — by
