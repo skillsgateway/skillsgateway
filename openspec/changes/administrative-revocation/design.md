@@ -27,17 +27,23 @@ a chain verdict, and the caller states what is served afterwards.
 
 - Revocation reachable as an administrative act, independent of vetting.
 - The served set after a revocation never changes by accident.
-- A revoked commit that cannot come back through the front door.
+- A withdrawal that outlives the incident, and lifts only by a second
+  administrator's recorded decision.
 
 **Non-Goals:**
 
-- Un-revoking. A revoked snapshot stays revoked; the way to serve that content
-  again is a fresh ingestion of a fresh upstream commit that has not been
-  revoked. Adding an "unrevoke" would make the durability in part 3 a lie.
+- A separate un-revoke endpoint. Reversal is not its own act: it is an approval
+  carrying an acknowledgement, on the request field
+  `GW_VETTING_0028 — Administrative override of a blocked vetting outcome`
+  already established. A second endpoint would be a second path into the served
+  set.
 - Reaching clients that already hold the content
   ([#427](https://github.com/skillsgateway/skillsgateway/issues/427)).
 - Pre-emptively blocking a commit never ingested. That is a denylist, which is a
   different object with a different lifecycle — see Decisions.
+- Blocking re-ingestion. `IngestionService` already returns the existing row for
+  a `(marketplace, sha)` in any state, so a revoked commit does not reappear as
+  held. Nothing to build.
 
 ## Decisions
 
@@ -93,42 +99,83 @@ state transition**, so a request that cannot be honoured changes nothing. The
 alternative — revoke, then discover there is nothing to roll back to, then serve
 nothing — would deliver an outcome the caller explicitly did not ask for.
 
-### The revoked-commit check is derived, and lives at both gates
+### Two kinds of revocation, one state, one column
 
-The question is "does a snapshot exist for this `(marketplace, sha)` in state
-`revoked`?", which `snapshots` already answers. One repository method, called
-from two places: the ingestion path before a snapshot row is created, and
-`ApprovalService.doApprove` beside the existing gates.
+`revoked` stays one state; a `revoked_kind` column records whether the chain or
+an administrator decided it. The kinds need distinguishing because **they lift
+differently**, and that is the only reason:
 
-*Alternative rejected:* a `revoked_commits` denylist table. It would add an
-estate object type — which the stop rule requires a proposal to argue for — and
-it can drift: a row saying a SHA is blocked, and a snapshot row saying it is not
-revoked, is a contradiction the derived form cannot express. The one capability
-the table would add and the derived form cannot — blocking a commit that has
-never been ingested — is not a need anyone has stated, and `policy-rules`
-already covers "refuse content matching this shape" at approval.
+- A **re-vetting** revocation is a machine verdict against a finding. It lifts
+  when the finding is cleared — a waiver, or an upstream fix the next run sees.
+  `GW_VETTING_0013` requires this and two SVC tests enforce it; neither changes.
+- An **administrative** revocation has no finding to clear. The chain already
+  clears the content; the objection exists only in a person's knowledge. So the
+  only thing that can lift it is another person.
 
-**Where in `doApprove` the gate goes matters.** It goes with the other gates,
-before any state transition and before publication, so a refused approval leaves
-the snapshot exactly as it was. It is cheap — one indexed lookup — so ordering
-against the vetting and policy gates is a readability question, not a
-performance one; it reads best first, because "this commit was withdrawn" is a
-more fundamental objection than anything the chain or the rules might say.
+A separate state was rejected: every place that reasons about snapshot state —
+retention, the catalog, the facade, the portal — would have to learn it, for a
+distinction that matters in exactly two places.
+
+A denylist table was rejected: it adds an estate object type the stop rule
+requires a proposal to argue for, and it can drift, since a row saying a SHA is
+blocked alongside a snapshot row saying it is not revoked is a contradiction the
+derived form cannot express.
+
+### The block lives at approval and at purge, not at ingestion
+
+**Approval.** `doApprove` refuses an administratively revoked snapshot unless
+the request carries a reversal. It goes *after* the closure check —
+`GW_APPROVAL_0013` mandates that one first — and before everything else.
+
+**Purge.** The refusal is derived from the row, which makes it exactly as
+durable as the row, and retention may currently delete a revoked row outright
+(`revoked` is in `DELETABLE_STATES`; `purge` is a hard `DELETE`). Without a
+guard the withdrawal expires on a timer nobody connected to it. Soft delete
+stays allowed — the content is the part worth reclaiming — and the hard delete
+is refused for the administrative kind only, naming why.
+
+**Not ingestion**, because `IngestionService` already returns the existing row
+for a `(marketplace, sha)` in any state. An earlier draft of this design
+specified an ingestion gate on the premise that a revoked commit would reappear
+as held on the next sync. That premise was false.
+
+### Reversal is an approval carrying an acknowledgement
+
+The shape already exists. `ApprovalOverride` carries the vetting-failure
+override: admin-only, mandatory reason, every other gate still running, a
+distinct ledger event, and a marker row so the override is never invisible.
+Reversal is a second kind on the same field, with the same properties and one
+more:
+
+**The reverser must not be the revoker, unconditionally.** Not through
+`FourEyesGate` — that gate compares the reviewer against the registrant, the
+ingester and waiver authors, never the revoker, and its default mode records a
+conflict and proceeds. Routing reversal through it would make single-handed
+reversal the default, which is the opposite of the intent.
+
+A marker row is needed rather than reading `revoked_by`, because
+`SnapshotRepository.decide` clears `revoked_at`, `revoked_by` and `violation` on
+the way to approved. Without a marker, a snapshot served over a reversed
+withdrawal is indistinguishable from one nobody ever withdrew.
 
 ### No four-eyes, and the asymmetry is stated in the code
 
-`GW_APPROVAL_0002` requires two identities to approve. Revocation deliberately
-requires one. The reason — publishing can do harm, withdrawing cannot, and a
+`GW_APPROVAL_0010 — Separation of duties on snapshot approval` requires two
+identities to approve. Revocation deliberately requires one, while *reversing*
+one requires two. The reason — publishing can do harm, withdrawing cannot, and a
 second reviewer during a live incident is latency with no corresponding safety —
 goes in a comment at the service, because the next reader will otherwise assume
 it was forgotten and "fix" it.
 
 ## Risks / Trade-offs
 
-- **An administrator revokes the wrong snapshot** → there is no un-revoke by
-  design, so the recovery is a fresh ingestion. Mitigated by the mandatory
-  reason and by the rollback option keeping the marketplace serving. Accepted:
-  the alternative is an unrevoke path that makes part 3 unenforceable.
+- **An administrator revokes the wrong snapshot** → a second administrator
+  reverses it on a stated reason. The revoker cannot do this alone, which is the
+  cost of the mistake and is deliberate.
+- **Reversal becomes the quiet way back in** → it cannot be reached by waiting,
+  by a waiver or by an ordinary approval; it needs a second identity, it names
+  the revocation on the ledger, and the marker keeps the episode visible
+  wherever the snapshot's vetting is shown.
 - **Revocation as denial of service.** A compromised admin credential can take
   every marketplace off the air. This is already true of the existing admin
   surface (deregistration, toggles) and the ledger is the control; noted rather
@@ -136,19 +183,17 @@ it was forgotten and "fix" it.
 - **The brief window where a rolling-back marketplace serves nothing** → bounded
   by two local git operations, and indistinguishable to a client from the
   serve-nothing outcome it must already handle.
-- **Refusing re-ingestion of a revoked commit hides a moved upstream** → no: the
-  refusal is per `(marketplace, sha)`, so a new upstream commit ingests
-  normally. Only the exact withdrawn commit is refused, and the refusal is on
-  the ledger rather than silent.
-- **A marketplace pinned to a revoked commit stops ingesting entirely** → true
-  and intended; the ledger entry says why on every sweep, which is the signal an
-  operator needs to move the pin.
+- **An administrator determined to serve the content routes around all of this**
+  → true, and it always was: a commit on top of the withdrawn one is a new SHA
+  the gate never sees. What this buys is a record, not prevention, and the design
+  should not pretend otherwise.
 
 ## Migration Plan
 
-None. No schema change, no existing behaviour altered — `RevetService` keeps
-revoking exactly as it did, and approval keeps its existing gates with one more
-in front. The new endpoint is additive within the major.
+One column on `snapshots`, folded into `V1__init.sql` per the pre-1.0
+convention, defaulting to the re-vetting kind so every existing revoked row
+reads as what it is. `RevetService` keeps revoking exactly as it did and gains
+only the kind it passes. The new endpoint is additive within the major.
 
 **Rollback** is `git revert`; snapshots revoked while it was deployed stay
 revoked, which is correct — reverting the code must not un-withdraw content

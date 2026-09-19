@@ -64,11 +64,31 @@ The system SHALL implement GW_APPROVAL_0017.
 #### Scenario: SVC_GW_APPROVAL_0017
 The system SHALL pass SVC_GW_APPROVAL_0017.
 
-WHEN an approval is requested for a snapshot whose marketplace and commit were
-previously revoked
-THEN the approval SHALL be refused, the snapshot SHALL remain unapproved, and
-nothing SHALL be published.
+WHEN a snapshot an administrator revoked is approved ordinarily
+THEN the approval SHALL be refused naming the revocation with its stated reason,
+acting identity and time, the snapshot SHALL remain unapproved, and nothing
+SHALL be published for it.
 
-WHEN such an approval is refused
-THEN the refusal SHALL name the revocation that caused it, carrying its stated
-reason, the identity that made it and when.
+WHEN the refusal happens and the vetting chain would currently clear the
+snapshot
+THEN the approval SHALL still be refused, since there is no finding to waive and
+only a person can contradict the person who withdrew it.
+
+WHEN an administrator reverses the revocation on a stated, non-empty reason and
+is not the identity that revoked it
+THEN the approval SHALL proceed subject to every other approval gate unchanged,
+the reversal SHALL be appended to the append-only audit ledger naming the
+revocation it reverses, and the snapshot SHALL be marked so that content served
+over a reversed administrative revocation is distinguishable from content no
+administrator ever withdrew.
+
+WHEN the identity that revoked the snapshot attempts to reverse it
+THEN the reversal SHALL be refused.
+
+WHEN a reversal states no reason or an empty reason, or is requested by a caller
+who is not an administrator
+THEN it SHALL be refused.
+
+WHEN a snapshot was revoked by re-vetting rather than by an administrator
+THEN it SHALL be approved again by clearing the finding that caused it, exactly
+as before, and SHALL NOT require a reversal.
