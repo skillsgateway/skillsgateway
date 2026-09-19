@@ -81,12 +81,21 @@ in the repository, at [docs/decisions/](https://github.com/skillsgateway/skillsg
 
 ## Where to go next
 
-- **New here?** [Lifecycle — quarantine to serve](concepts/lifecycle.md) is the
-  product in one page.
-- **Running it?** [Local development](guides/local-development.md), then
-  [Registering a marketplace](guides/registering-a-marketplace.md).
-- **Consuming it?** [Consuming approved skills](guides/consuming-skills.md).
-- **Operating it?** [Configuration](reference/configuration.md).
+This site follows [Diátaxis](https://diataxis.fr): four sections, split by what
+you need right now rather than by who you are.
+
+- **Learning it?** [Try it locally](guides/local-development.md) — a gateway
+  running on your machine, start to finish.
+- **Understanding it?**
+  [Lifecycle — quarantine to serve](concepts/lifecycle.md) is the product in one
+  page; [Architecture](architecture.md) is the whole picture.
+- **Doing something specific?** **How-to guides** — grouped into deploying and
+  operating, governing the estate, consuming skills, and maintaining the
+  project.
+- **Looking something up?** **Reference** —
+  [Configuration](reference/configuration.md), the
+  [REST API](reference/api/index.md), and the
+  [Glossary](concepts/glossary.md).
 
 !!! warning "Status: pre-alpha"
 
