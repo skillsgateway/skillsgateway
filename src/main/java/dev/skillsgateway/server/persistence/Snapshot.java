@@ -43,6 +43,12 @@ public record Snapshot(
 
         @Schema(description = "Identity that revoked it, or null")
         String revokedBy,
+        @Schema(
+                description = "Whether a re-vetting run or an administrator revoked it, or null if it never was."
+                        + " The two lift differently: a re-vetting revocation lifts when its finding is cleared,"
+                        + " an administrative one only when a second administrator reverses it",
+                allowableValues = {"revet", "administrative"})
+        String revokedKind,
 
         @Schema(description = "When the snapshot was soft-deleted, or null when it is live")
         Instant deletedAt,
@@ -52,6 +58,16 @@ public record Snapshot(
 
         @Schema(description = "End of the restore window; after it compaction removes the snapshot permanently")
         Instant purgeAfter) {
+
+    /** A re-vetting run revoked it: lifted by clearing the finding (GW_VETTING_0013). */
+    public static final String REVOKED_BY_REVET = "revet";
+
+    /**
+     * An administrator revoked it on knowledge the vetting chain does not hold (GW_APPROVAL_0015).
+     * There is no finding to clear — the chain already clears the content — so the only thing that
+     * lifts one is a reversal by a different administrator (GW_APPROVAL_0017).
+     */
+    public static final String REVOKED_ADMINISTRATIVELY = "administrative";
 
     public static final String HELD = "held";
     public static final String APPROVED = "approved";

@@ -332,7 +332,8 @@ public class RevetService {
     @Requirements({"GW_VETTING_0013", "GW_VETTING_0017"})
     private boolean quarantine(Snapshot snapshot, String marketplace, WaiverEvaluation.Effect effect, String actor) {
         String violation = "re-vetting violation: %s".formatted(effect.blockingVetters());
-        Optional<Snapshot> revoked = snapshotRepository.revoke(snapshot.id(), actor, violation);
+        Optional<Snapshot> revoked =
+                snapshotRepository.revoke(snapshot.id(), actor, violation, Snapshot.REVOKED_BY_REVET);
         if (revoked.isEmpty()) {
             log.info("snapshot {} was no longer approved when re-vetting tried to revoke it", snapshot.id());
             return false;

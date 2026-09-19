@@ -138,7 +138,7 @@ public class SnapshotRepository {
         }
         return jdbc.sql(
                         "UPDATE snapshots SET state = :state::snapshot_state, decided_by = :reviewer, decided_at = :now,"
-                                + " revoked_at = NULL, revoked_by = NULL, violation = NULL"
+                                + " revoked_at = NULL, revoked_by = NULL, revoked_kind = NULL, violation = NULL"
                                 + " WHERE id = :id RETURNING *")
                 .param("state", newState)
                 .param("reviewer", reviewer)
@@ -202,16 +202,42 @@ public class SnapshotRepository {
      * @return the revoked snapshot, or empty when it was not approved (already revoked, or never
      *     approved) — which the caller must treat as "someone else got there first", not an error
      */
-    @Requirements({"GW_FACADE_0009"})
-    public Optional<Snapshot> revoke(long id, String actor, String violation) {
+    @Requirements({"GW_FACADE_0009", "GW_APPROVAL_0015"})
+    public Optional<Snapshot> revoke(long id, String actor, String violation, String kind) {
         return jdbc.sql("UPDATE snapshots SET state = :state::snapshot_state, revoked_at = :now, revoked_by = :actor,"
-                        + " violation = :violation WHERE id = :id AND state = :approved::snapshot_state RETURNING *")
+                        + " revoked_kind = :kind::snapshot_revocation_kind, violation = :violation"
+                        + " WHERE id = :id AND state = :approved::snapshot_state RETURNING *")
                 .param("state", Snapshot.REVOKED)
                 .param("now", OffsetDateTime.now())
                 .param("actor", actor)
                 .param("violation", violation)
+                .param("kind", kind)
                 .param("id", id)
                 .param("approved", Snapshot.APPROVED)
+                .query(Snapshot.class)
+                .optional();
+    }
+
+    /**
+     * The administrative revocation standing against a marketplace's commit, if there is one
+     * (GW_APPROVAL_0017). Returns the revocation rather than a boolean because both callers have to
+     * name it: an approval refusal that does not say what was withdrawn, by whom and why reads as a
+     * defect, and a reviewer who thinks they have hit a defect looks for a way round it.
+     *
+     * <p>Derived from the snapshot row rather than held in a denylist, so it cannot disagree with
+     * the revocation it describes. That is also why {@link #purge} refuses to delete such a row
+     * (GW_RETENTION_0008): the row is the block.
+     */
+    @Requirements({"GW_APPROVAL_0017"})
+    public Optional<Snapshot> administrativeRevocationOf(long marketplaceId, String sha) {
+        return jdbc.sql("SELECT * FROM snapshots WHERE marketplace_id = :marketplaceId AND sha = :sha"
+                        + " AND state = :revoked::snapshot_state"
+                        + " AND revoked_kind = :kind::snapshot_revocation_kind"
+                        + " ORDER BY revoked_at DESC LIMIT 1")
+                .param("marketplaceId", marketplaceId)
+                .param("sha", sha)
+                .param("revoked", Snapshot.REVOKED)
+                .param("kind", Snapshot.REVOKED_ADMINISTRATIVELY)
                 .query(Snapshot.class)
                 .optional();
     }
@@ -368,11 +394,27 @@ public class SnapshotRepository {
                 .list();
     }
 
-    /** Permanent removal of the record; the caller has already removed the git storage. */
+    /**
+     * Permanent removal of the record; the caller has already removed the git storage.
+     *
+     * <p>An administratively revoked record is never removed (GW_RETENTION_0008). The refusal that
+     * keeps its commit from being approved again is derived from this row, so deleting it would
+     * expire the withdrawal on a timer nobody connected to it: the same upstream commit would
+     * ingest afterwards as an ordinary held snapshot carrying no trace that anything had been
+     * withdrawn, and a reviewer would approve it in good faith with nothing refusing and nothing
+     * recorded. The content is still reclaimed — that is the part worth reclaiming, and the row is
+     * small and is the only thing that remembers.
+     *
+     * <p>A re-vetting revocation is not retained, deliberately: it is a machine verdict a later run
+     * can reach again from the content itself, so nothing is lost when its row goes.
+     */
+    @Requirements({"GW_RETENTION_0008"})
     public boolean purge(long id) {
-        return jdbc.sql("DELETE FROM snapshots WHERE id = :id AND deleted_at IS NOT NULL" + " AND state IN "
-                                + DELETABLE_STATES)
+        return jdbc.sql("DELETE FROM snapshots WHERE id = :id AND deleted_at IS NOT NULL"
+                                + " AND state IN " + DELETABLE_STATES
+                                + " AND (revoked_kind IS NULL OR revoked_kind <> :administrative::snapshot_revocation_kind)")
                         .param("id", id)
+                        .param("administrative", Snapshot.REVOKED_ADMINISTRATIVELY)
                         .update()
                 > 0;
     }

@@ -14,21 +14,21 @@
 
 ## 2. Schema
 
-- [ ] 2.1 Add the revocation-kind column to `snapshots` in `V1__init.sql`,
+- [x] 2.1 Add the revocation-kind column to `snapshots` in `V1__init.sql`,
       defaulting to the re-vetting kind so existing revoked rows read correctly,
       with a comment saying why the two kinds are distinguished — they lift
       differently.
-- [ ] 2.2 Add the marker table or column for a snapshot approved over a reversed
+- [x] 2.2 Add the marker table or column for a snapshot approved over a reversed
       administrative revocation, mirroring `snapshot_vetting_overrides`, since
       `decide` clears `revoked_at`, `revoked_by` and `violation`.
 
 ## 3. Repository
 
-- [ ] 3.1 `SnapshotRepository.revoke` takes the kind.
-- [ ] 3.2 A lookup answering "was this `(marketplace, sha)` administratively
+- [x] 3.1 `SnapshotRepository.revoke` takes the kind.
+- [x] 3.2 A lookup answering "was this `(marketplace, sha)` administratively
       revoked?" returning the reason, actor and time — not a boolean, because
       the refusal must name them.
-- [ ] 3.3 `purge` refuses an administratively revoked row; soft delete is
+- [x] 3.3 `purge` refuses an administratively revoked row; soft delete is
       unaffected.
 
 ## 4. Revocation
@@ -43,7 +43,7 @@
 - [ ] 4.6 Fail loudly and do not retry when the record and the wire disagree.
 - [ ] 4.7 Emit `marketplace.snapshot.revoked`.
 - [ ] 4.8 Comment the one-identity-to-revoke, two-to-reverse asymmetry.
-- [ ] 4.9 `RevetService.quarantine` passes the re-vetting kind.
+- [x] 4.9 `RevetService.quarantine` passes the re-vetting kind.
 
 ## 5. The approval gate and the reversal
 
