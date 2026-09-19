@@ -110,11 +110,11 @@
 
 ## 9. Gates and archive
 
-- [ ] 9.1 `./mvnw clean verify`
-- [ ] 9.2 `(cd src/main/frontend && pnpm test:stories)`
-- [ ] 9.3 `(cd src/main/frontend && pnpm e2e)`
-- [ ] 9.4 `reqstool status local -p docs/reqstool` — must end `PASS`
-- [ ] 9.5 `openspec validate --all --strict`
-- [ ] 9.6 `mkdocs build --strict`
-- [ ] 9.7 `evidence.md` from one final fresh run after the last edit.
+- [x] 9.1 `./mvnw clean verify`
+- [x] 9.2 `(cd src/main/frontend && pnpm test:stories)`
+- [x] 9.3 `(cd src/main/frontend && pnpm e2e)`
+- [x] 9.4 `reqstool status local -p docs/reqstool` — must end `PASS`
+- [x] 9.5 `openspec validate --all --strict`
+- [x] 9.6 `mkdocs build --strict`
+- [x] 9.7 `evidence.md` from one final fresh run after the last edit.
 - [ ] 9.8 PR with an **Evidence** section; archive as the final commit.
