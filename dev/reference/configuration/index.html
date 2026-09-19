@@ -1449,8 +1449,6 @@
       
         
       
-        
-      
     
     
     
@@ -2398,34 +2396,6 @@
     
   
     Observability
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../decisions/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Architecture decisions
   
 
     
@@ -5268,7 +5238,7 @@ is built, with the property unset — so on the GraalVM native image the release
 used to publish it was never compiled in and no runtime value could switch it on.
 <code>native</code> never had that problem: Tomcat's valve is installed by a customizer that
 reads the property at runtime. The released image is a JVM container today
-(<a href="../decisions/">ADR 0012</a>), where neither shape can occur; the explicit
+(<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0012-native-image-as-the-release-artifact.md">ADR 0012 — A JVM container is the release artifact</a>), where neither shape can occur; the explicit
 registration stays because it is what makes the setting mean one thing on every
 packaging rather than on the one that happens to ship.</p>
 <hr />

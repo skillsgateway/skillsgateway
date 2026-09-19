@@ -1449,8 +1449,6 @@
       
         
       
-        
-      
     
     
     
@@ -2106,34 +2104,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../decisions/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Architecture decisions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -2256,7 +2226,7 @@
 JVM needs and nothing else — no shell, no package manager — with the runtime
 itself supplied by <code>jlink</code> rather than by a JDK in the base. The container runs
 as uid 65532 and needs nothing on its root filesystem writable, which is why the
-Helm chart mounts it read-only. <a href="../decisions/">ADR 0012</a> records why this
+Helm chart mounts it read-only. <a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0012-native-image-as-the-release-artifact.md">ADR 0012 — A JVM container is the release artifact</a> records why this
 replaced the GraalVM native binary the image previously carried.</p>
 <p>It is published as a <strong>multi-arch image index</strong> covering <code>linux/amd64</code> and
 <code>linux/arm64</code> — a plain <code>docker pull</code>/<code>docker run</code> resolves the manifest for

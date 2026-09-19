@@ -1639,8 +1639,6 @@
       
         
       
-        
-      
     
     
     
@@ -2194,34 +2192,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/decisions/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Architecture decisions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -2688,7 +2658,7 @@ are not identities and never conflict.</p>
 in particular cannot auto-approve, because that would delegate the human decision
 this boundary exists to guarantee to an expression — a trust-model change,
 decided deliberately or not at all (ADR 0006 in
-<a href="../../reference/decisions/">Architecture decisions</a>).</p>
+<a href="https://github.com/skillsgateway/skillsgateway/tree/main/docs/decisions">the architecture decision records</a>).</p>
 <p>What <em>a human</em> can do, deliberately and audibly, is the airline-cockpit escape
 hatch (ADR 0009): an <strong>administrator</strong> can disconnect the automation. Two acts,
 both admin-only and both on the ledger. An administrator can <strong>override</strong> a
@@ -2800,7 +2770,7 @@ this page.</p>
 <p><strong>It is somewhere else.</strong> A separate servlet, resolving a separate repository,
 behind a separate filter chain. <code>/git/**</code> keeps its null receive-pack factory,
 so no push can reach a published repository — not by misconfiguration, because
-there is no shared object to misconfigure (<a href="../../reference/decisions/">ADR 0007</a>).</p>
+there is no shared object to misconfigure (<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0007-first-party-hosting-and-the-publish-endpoint.md">ADR 0007 — First-party hosting and the publish endpoint</a>).</p>
 <p><strong>It writes to neither quarantine nor published.</strong> A push lands in the
 marketplace's <em>origin</em> repository. Ingestion then fetches out of it into
 quarantine exactly as it fetches from an upstream URL, so quarantine keeps the

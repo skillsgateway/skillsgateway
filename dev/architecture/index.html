@@ -1699,8 +1699,6 @@
       
         
       
-        
-      
     
     
     
@@ -2241,34 +2239,6 @@
     
   
     Observability
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/decisions/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Architecture decisions
   
 
     
@@ -2840,7 +2810,7 @@ nothing is implemented, and T5 remains uncovered until it is.</p>
 - <strong>Read-only forge mirror</strong> (optional, off by default). Pushes a copy of what
   the façade serves for one marketplace to a repository on an external code
   host, so people can browse and search approved content there. It is the
-  visibility half of <a href="../reference/decisions/">ADR 0008</a> and is deliberately <em>not</em> a
+  visibility half of <a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0008-serving-surface-stays-the-embedded-facade.md">ADR 0008 — The serving surface stays the embedded facade</a> and is deliberately <em>not</em> a
   component anything else depends on: it reads published storage and writes to
   the host, and no approval, revocation, authorization or fetch outcome consults
   it. A mirror that is down, stale or wrong changes nothing about what clients

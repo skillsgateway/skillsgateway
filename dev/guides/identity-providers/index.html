@@ -1651,8 +1651,6 @@
       
         
       
-        
-      
     
     
     
@@ -2206,34 +2204,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/decisions/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Architecture decisions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -2448,7 +2418,7 @@
 
 
 <h1 id="identity-providers">Identity providers<a class="headerlink" href="#identity-providers" title="Permanent link">&para;</a></h1>
-<p>The gateway's web surface is OIDC-only (<a href="../../reference/decisions/">ADR 0002</a>),
+<p>The gateway's web surface is OIDC-only (<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0002-toolchain-and-product-decisions.md">ADR 0002 — Toolchain and product decisions</a>),
 and it is its own BFF: the browser holds a session cookie, never a token. This
 guide connects it to an enterprise identity provider and — the part that
 removes most of the day-to-day administration — turns the provider's <strong>groups</strong>

@@ -1573,8 +1573,6 @@
       
         
       
-        
-      
     
     
     
@@ -2128,34 +2126,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/decisions/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Architecture decisions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -2306,7 +2276,7 @@ trusted publisher") would delegate that gate to an expression, which is a
 change to the trust model, not a feature. So rules can only <em>tighten</em> the
 human gate: a rule can refuse an approval, never grant one. The fuller
 rationale is in ADR 0006 (see
-<a href="../../reference/decisions/#adr-0006-embedded-cel-for-policy-rules-not-an-opa-sidecar">Architecture decisions</a>)
+<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0006-embedded-cel-for-policy-rules.md">ADR 0006 — Embedded CEL for policy rules</a>)
 and <a href="../../concepts/trust-boundaries/#3-approval-held-content-becomes-served-content">Trust boundaries</a>;
 if delegated approval is ever wanted, it will be decided there first —
 the engine, the playground and the provenance recording carry over
@@ -2476,7 +2446,7 @@ stored rule.</p>
   second, both before any state transition.</li>
 <li><a href="../../concepts/trust-boundaries/">Trust boundaries</a> — why only
   <code>ApprovalService</code> publishes.</li>
-<li>ADR 0006 in <a href="../../reference/decisions/">Architecture decisions</a> — why
+<li><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0006-embedded-cel-for-policy-rules.md">ADR 0006 — Embedded CEL for policy rules</a> — why
   embedded CEL and why deny-only.</li>
 </ul>
 

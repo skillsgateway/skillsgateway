@@ -1449,8 +1449,6 @@
       
         
       
-        
-      
     
     
     
@@ -2263,34 +2261,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../decisions/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Architecture decisions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -2749,7 +2719,7 @@ surgical, and ledger entries attribute fetches to something meaningful.</p>
 <h2 id="post-apitokenssession"><code>POST /api/tokens/session</code><a class="headerlink" href="#post-apitokenssession" title="Permanent link">&para;</a></h2>
 <p>Mint a short-lived git credential from the calling principal's browser session
 (GW_AUTH_0018). The identity half of
-<a href="../../decisions/">ADR 0008</a>: a human who has just proved who they are should
+<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0008-serving-surface-stays-the-embedded-facade.md">ADR 0008 — The serving surface stays the embedded facade</a>: a human who has just proved who they are should
 not have to create a second, standing credential in order to fetch.</p>
 <p><strong>Body</strong> — <code>{name, scopes?}</code></p>
 <p>There is deliberately <strong>no</strong> lifetime field. The gateway grants

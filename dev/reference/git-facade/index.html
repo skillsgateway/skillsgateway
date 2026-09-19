@@ -1449,8 +1449,6 @@
       
         
       
-        
-      
     
     
     
@@ -2128,34 +2126,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../decisions/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Architecture decisions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -2468,7 +2438,7 @@ misconfigure. This is a structural guarantee, not a policy one.</p>
 which is a different servlet resolving a different repository under a different
 token scope, and which cannot reach a published repository any more than this
 one can construct a <code>ReceivePack</code>. See
-<a href="../decisions/">ADR 0007</a> for why the two are separate objects rather than one
+<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0007-first-party-hosting-and-the-publish-endpoint.md">ADR 0007 — First-party hosting and the publish endpoint</a> for why the two are separate objects rather than one
 with a mode flag.</p>
 <h2 id="auditing">Auditing<a class="headerlink" href="#auditing" title="Permanent link">&para;</a></h2>
 <p>Two hooks append to the ledger:</p>

@@ -1662,8 +1662,6 @@
       
         
       
-        
-      
     
     
     
@@ -2204,34 +2202,6 @@
     
   
     Observability
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/decisions/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Architecture decisions
   
 
     
@@ -2826,7 +2796,7 @@ run it. Both <code>--spring.main.web-application-type=none</code> and the migrat
 runner's own switch were fixed when that image was built, so the flags were
 accepted and the process started an ordinary server instead — a migration
 that could report having finished without having copied anything. The release
-artifact is now a JVM container (<a href="../../reference/decisions/">ADR 0012</a>) and
+artifact is now a JVM container (<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0012-native-image-as-the-release-artifact.md">ADR 0012 — A JVM container is the release artifact</a>) and
 the migration runner reads its switch at runtime on every packaging, so the
 procedure above does what it says.</p>
 </div>
