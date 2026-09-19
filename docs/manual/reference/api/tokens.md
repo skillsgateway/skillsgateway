@@ -176,7 +176,7 @@ helper setup.
 
 Mint a short-lived git credential from the calling principal's browser session
 (GW_AUTH_0018). The identity half of
-[ADR 0008](../decisions.md): a human who has just proved who they are should
+[ADR 0008 — The serving surface stays the embedded facade](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0008-serving-surface-stays-the-embedded-facade.md): a human who has just proved who they are should
 not have to create a second, standing credential in order to fetch.
 
 **Body** — `{name, scopes?}`

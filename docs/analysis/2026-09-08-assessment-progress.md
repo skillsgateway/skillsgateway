@@ -13,16 +13,18 @@ KISS; do not wait for approval between PRs.**
 
 ## Status
 
+_Refreshed 2026-09-15: steps 3–8 had merged on 2026-09-09 but were still listed open here. Steps 9 and 10 remain not started._
+
 | # | Step | What | PR | State |
 | --- | --- | --- | --- | --- |
 | 1 | F6 | Gate the blast-radius report behind approver scoping | [#335](https://github.com/skillsgateway/skillsgateway/pull/335) | **merged** |
 | 2 | F4 | CSRF token on the cookie-authenticated surface | [#336](https://github.com/skillsgateway/skillsgateway/pull/336) | **merged** |
-| 3 | F5 | Derive `GET` routes; classify every read | [#337](https://github.com/skillsgateway/skillsgateway/pull/337) | **open** |
-| 4 | §2.1 | Catalog name collisions — the substitution defect | [#338](https://github.com/skillsgateway/skillsgateway/pull/338) | **open** |
-| 5 | D3 | Backlog triage: archive `invocation-adoption-metrics` as a "no"; park `corpus-aware-vetting` and `estate-import-export` | — | not started |
-| 6 | F3 | Reverse publish/record order; build the startup reconciliation its javadoc already claims | — | not started |
-| 7 | F2 | Postgres advisory lock per sweep, uniformly | — | not started |
-| 8 | F8/§4 | Collapse the 38 never-set knobs to constants; harden the 9 ingestion budgets | — | not started |
+| 3 | F5 | Derive `GET` routes; classify every read | [#337](https://github.com/skillsgateway/skillsgateway/pull/337) | **merged** |
+| 4 | §2.1 | Catalog name collisions — the substitution defect | [#338](https://github.com/skillsgateway/skillsgateway/pull/338) | **merged** |
+| 5 | D3 | Backlog triage: park all four unstarted changes (ADRs 0014–0017 proposed) | [#339](https://github.com/skillsgateway/skillsgateway/pull/339) | **merged** |
+| 6 | F3 | Publication reconciliation sweep (order not reversed) | [#340](https://github.com/skillsgateway/skillsgateway/pull/340) | **merged** |
+| 7 | F2 | Lease table per sweep, uniformly | [#341](https://github.com/skillsgateway/skillsgateway/pull/341) | **merged** |
+| 8 | F8/§4 | Config-surface ratchet (#342), interval agreement (#343), revocation freshness not a knob (#344), budgets clamped (#346) | [#342](https://github.com/skillsgateway/skillsgateway/pull/342) [#343](https://github.com/skillsgateway/skillsgateway/pull/343) [#344](https://github.com/skillsgateway/skillsgateway/pull/344) [#346](https://github.com/skillsgateway/skillsgateway/pull/346) | **merged** |
 | 9 | F7(1,3) | Ledger honesty + partitioning | — | not started |
 | 10 | F1, D4, D5 | Freeze object-store; stop rule in `CLAUDE.md`; one-page capability map | — | not started |
 

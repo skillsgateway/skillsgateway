@@ -6,7 +6,7 @@ the answer to "how do we get our estate out if we stop using this?", written
 down so the answer does not have to be taken on trust.
 
 **There is no export button, deliberately** — see
-[ADR 0014 — Estate export](../reference/decisions.md).
+[ADR 0014 — Estate export](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0014-estate-import-export.md).
 There does not need to be one: everything the gateway holds is already in two
 open formats you can read without this product — git repositories and a
 PostgreSQL database.
@@ -128,5 +128,5 @@ deployment, not a transfer to a different one.
 - [Choosing and migrating the storage backend](storage-backends.md) — the
   migration this page borrows, and the disaster-recovery story
 - [Exporting the audit ledger](exporting-the-audit-ledger.md)
-- [ADR 0014 — Estate export](../reference/decisions.md) — why there is no
+- [ADR 0014 — Estate export](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0014-estate-import-export.md) — why there is no
   export feature, and what would reopen the question

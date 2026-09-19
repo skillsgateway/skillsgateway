@@ -11,7 +11,7 @@ The base is `gcr.io/distroless/java-base-debian12:nonroot`: the OS libraries a
 JVM needs and nothing else — no shell, no package manager — with the runtime
 itself supplied by `jlink` rather than by a JDK in the base. The container runs
 as uid 65532 and needs nothing on its root filesystem writable, which is why the
-Helm chart mounts it read-only. [ADR 0012](decisions.md) records why this
+Helm chart mounts it read-only. [ADR 0012 — A JVM container is the release artifact](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0012-native-image-as-the-release-artifact.md) records why this
 replaced the GraalVM native binary the image previously carried.
 
 It is published as a **multi-arch image index** covering `linux/amd64` and

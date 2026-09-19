@@ -15,7 +15,7 @@ policy denial has no per-snapshot override.
     change to the trust model, not a feature. So rules can only *tighten* the
     human gate: a rule can refuse an approval, never grant one. The fuller
     rationale is in ADR 0006 (see
-    [Architecture decisions](../reference/decisions.md#adr-0006-embedded-cel-for-policy-rules-not-an-opa-sidecar))
+    [ADR 0006 — Embedded CEL for policy rules](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0006-embedded-cel-for-policy-rules.md))
     and [Trust boundaries](../concepts/trust-boundaries.md#3-approval-held-content-becomes-served-content);
     if delegated approval is ever wanted, it will be decided there first —
     the engine, the playground and the provenance recording carry over
@@ -168,5 +168,5 @@ skills-gateway:
   second, both before any state transition.
 - [Trust boundaries](../concepts/trust-boundaries.md) — why only
   `ApprovalService` publishes.
-- ADR 0006 in [Architecture decisions](../reference/decisions.md) — why
+- [ADR 0006 — Embedded CEL for policy rules](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0006-embedded-cel-for-policy-rules.md) — why
   embedded CEL and why deny-only.

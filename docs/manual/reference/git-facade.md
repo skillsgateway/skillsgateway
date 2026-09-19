@@ -175,7 +175,7 @@ The gateway does accept a push, for marketplaces it
 which is a different servlet resolving a different repository under a different
 token scope, and which cannot reach a published repository any more than this
 one can construct a `ReceivePack`. See
-[ADR 0007](decisions.md) for why the two are separate objects rather than one
+[ADR 0007 — First-party hosting and the publish endpoint](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0007-first-party-hosting-and-the-publish-endpoint.md) for why the two are separate objects rather than one
 with a mode flag.
 
 ## Auditing
