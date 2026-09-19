@@ -209,8 +209,10 @@ a number attached to it.
   concurrent branch touching it conflicts semantically, not textually.
 - **`ApprovalService.doApprove` gains a gate.** Trust boundary; `old-coder`
   discipline and adversarial tests, not happy-path coverage.
-- **`V2__snapshot_facts.sql` is the first migration after `V1__init.sql`.** Any
-  concurrent branch adding a migration collides on the version number.
+- **The new tables are added to `V1__init.sql`.** While pre-1.0 the schema is a
+  single migration edited in place, so any concurrent branch touching the schema
+  conflicts textually in that one file — which is the intended trade: a visible
+  merge conflict rather than two migrations racing for a version number.
 - **Declarative estate (#65).** The collision mode is configuration, not
   API-managed runtime state, so the `skills-gateway.estate.*` obligation does not
   apply — for the same reason ADR 0009 gave for external connectors. Waivers,

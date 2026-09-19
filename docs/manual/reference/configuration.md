@@ -1342,6 +1342,12 @@ with a `password` key).
     consolidated migration on startup, because every environment — including
     Testcontainers and the e2e compose stack — builds it from scratch.
 
+    That the schema is *one* migration rather than a chain is a consequence of
+    being pre-1.0: with no compatibility promised between versions, there is no
+    deployed database to upgrade, so a schema change edits `V1__init.sql`
+    instead of adding a version behind it. At 1.0.0 that reverses — `V1` freezes
+    and changes become incremental migrations.
+
 ---
 
 ## OIDC login

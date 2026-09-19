@@ -77,6 +77,14 @@ The gates above ask "is this well specified?". This one asks "should this exist?
   the title and nothing more. This applies to prose only — `@Requirements` /
   `@SVCs` annotations and reqstool YAML take bare ids, as their schemas require.
 - Never weaken or delete an existing SVC test to make a change pass.
+- **The schema is one migration while the project is pre-1.0.** A schema change
+  edits `src/main/resources/db/migration/V1__init.sql`; it does not add a
+  `V2__…` behind it. There is no compatibility between versions before 1.0.0, so
+  there is no deployed database to upgrade, and a chain only buys the ordering
+  problem that parallel PRs create. Two consequences: a data-repair migration has
+  no rows to repair and so is never the answer, and editing `V1` changes its
+  checksum, so every existing database is recreated rather than migrated. This
+  reverses at 1.0.0, when `V1` freezes.
 - Container-backed tests use **Arconia Dev Services** whenever one exists for the
   dependency. This project uses two: `arconia-dev-services-postgresql` (automatic
   in dev/test) and `arconia-dev-services-lgtm` (opt-in, Spring profile
