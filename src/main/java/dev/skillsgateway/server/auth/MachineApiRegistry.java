@@ -133,6 +133,10 @@ public final class MachineApiRegistry {
             // Publishes content; human judgement.
             post("/api/snapshots/{id}/approve"),
             post("/api/snapshots/{id}/reject"),
+            // Withdraws served content on knowledge no machine holds (GW_APPROVAL_0015). The reason
+            // is the whole of the accountability for an act that takes one identity and no second
+            // reviewer, and a credential in a pipeline cannot supply one that means anything.
+            post("/api/snapshots/{id}/revoke"),
             // Overrides the vetting chain, and withdraws that override; human judgement.
             post("/api/snapshots/{id}/waivers"),
             delete("/api/waivers/{id}"),

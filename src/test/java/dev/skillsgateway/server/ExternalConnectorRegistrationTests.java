@@ -324,6 +324,7 @@ class ExternalConnectorRegistrationTests {
                 null,
                 null,
                 null,
+                null,
                 null);
     }
 }

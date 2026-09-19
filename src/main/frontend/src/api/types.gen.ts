@@ -598,7 +598,7 @@ export interface paths {
          * Revoke a role grant
          * @description Deletes the grant; the ledger keeps the history. Configuration-bootstrapped admins have no grant row, so they cannot be revoked here — by design, they are the escape hatch that survives a bad grant edit. Admin-only while role enforcement is enabled.
          */
-        delete: operations["revoke_3"];
+        delete: operations["revoke_4"];
         options?: never;
         head?: never;
         patch?: never;
@@ -904,6 +904,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/snapshots/{id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraw an approved snapshot
+         * @description Takes an approved snapshot off the facade on a stated reason, records the withdrawal on the append-only ledger and announces it. Admin-only, and deliberately without a four-eyes rule: withdrawing cannot publish anything, so a second reviewer buys no safety while costing time during an incident. It withdraws whatever the vetting chain would currently conclude and whatever mode re-vetting is configured in — the point is that the reason is knowledge the chain does not hold. The request must say what the marketplace serves afterwards; a return to the previous approved snapshot is refused before anything is withdrawn when there is none, rather than quietly serving nothing. Afterwards the commit cannot be approved again by an ordinary approval: reversing the withdrawal takes an administrator other than the one who made it (GW_APPROVAL_0017), and the record is kept by retention even once the content is reclaimed (GW_RETENTION_0008). This stops the gateway serving the content; it does not reach clients that already hold it.
+         */
+        post: operations["revoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/snapshots/{id}/vetting": {
         parameters: {
             query?: never;
@@ -1006,7 +1026,7 @@ export interface paths {
          * Revoke a machine API credential
          * @description Immediate and permanent, checked at authentication time rather than swept, so it takes effect on the credential's very next request. Audit-logged.
          */
-        delete: operations["revoke_2"];
+        delete: operations["revoke_3"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1066,7 +1086,7 @@ export interface paths {
          * Revoke a token
          * @description Immediate and permanent; audit-logged.
          */
-        delete: operations["revoke_1"];
+        delete: operations["revoke_2"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1266,7 +1286,7 @@ export interface paths {
          * Withdraw a waiver
          * @description Revokes the waiver. It stops suppressing its finding immediately — the effective vetting outcome is recomputed on every read — so a snapshot that was cleared only by this waiver becomes blocked again. The row is kept, with its revoker and time.
          */
-        delete: operations["revoke"];
+        delete: operations["revoke_1"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1679,8 +1699,10 @@ export interface components {
         ApproveRequest: {
             /** @description Set true, as an administrator, to approve despite a blocked vetting outcome (GW_VETTING_0028); a reason is then required and the override is recorded distinctly */
             overrideVetting?: boolean;
-            /** @description The administrator's reason for overriding the block; required when overrideVetting */
+            /** @description The administrator's reason for overriding the block or reversing the withdrawal; required when either is set */
             reason?: string;
+            /** @description Set true, as an administrator, to reverse another administrator's withdrawal of this commit (GW_APPROVAL_0017); a reason is required, and the identity that withdrew it may not be the one that reverses it */
+            reverseRevocation?: boolean;
         };
         /** @description One vetting-chain change addressed to several marketplaces */
         BulkChainChange: {
@@ -2999,6 +3021,23 @@ export interface components {
             /** @description Blocking findings no active waiver covers; the reason for a violation */
             uncovered?: components["schemas"]["UncoveredFinding"][];
         };
+        /** @description Withdraw an approved snapshot, saying what the marketplace serves afterwards */
+        RevokeRequest: {
+            /** @description Why the snapshot is being withdrawn. Required and non-empty: withdrawal takes one administrator and no second reviewer, so this is the whole of the record, and it is what a later approval of the same commit is refused with */
+            reason?: string;
+            /**
+             * @description What the marketplace serves afterwards. Required, with no default, because neither outcome is safe to assume: PREVIOUS_APPROVED republishes older content that may carry the same compromise, and NOTHING takes the marketplace down
+             * @enum {string}
+             */
+            serveAfter?: "PREVIOUS_APPROVED" | "NOTHING";
+        };
+        /** @description The outcome of withdrawing a snapshot */
+        RevokeResponse: {
+            /** @description The snapshot now served, or null when the marketplace serves nothing */
+            nowServing?: components["schemas"]["Snapshot"];
+            /** @description The withdrawn snapshot */
+            snapshot?: components["schemas"]["Snapshot"];
+        };
         /** @description A role grant */
         RoleGrant: {
             /**
@@ -3180,6 +3219,11 @@ export interface components {
             revokedAt?: string;
             /** @description Identity that revoked it, or null */
             revokedBy?: string;
+            /**
+             * @description Whether a re-vetting run or an administrator revoked it, or null if it never was. The two lift differently: a re-vetting revocation lifts when its finding is cleared, an administrative one only when a second administrator reverses it
+             * @enum {string}
+             */
+            revokedKind?: "revet" | "administrative";
             /** @description Commit SHA the snapshot is pinned to and serves: the upstream commit, or the synthesised composite when external plugin sources were resolved */
             sha?: string;
             /**
@@ -4720,7 +4764,7 @@ export interface operations {
             };
         };
     };
-    revoke_3: {
+    revoke_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -5315,6 +5359,59 @@ export interface operations {
             };
         };
     };
+    revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RevokeRequest"];
+            };
+        };
+        responses: {
+            /** @description Snapshot withdrawn */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RevokeResponse"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RevokeResponse"];
+                };
+            };
+            /** @description The snapshot is not approved, or a return to the previous approved snapshot was asked for and the marketplace has none */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RevokeResponse"];
+                };
+            };
+            /** @description No reason was stated, or no served-content choice was made */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RevokeResponse"];
+                };
+            };
+        };
+    };
     vetting: {
         parameters: {
             query?: never;
@@ -5514,7 +5611,7 @@ export interface operations {
             };
         };
     };
-    revoke_2: {
+    revoke_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -5630,7 +5727,7 @@ export interface operations {
             };
         };
     };
-    revoke_1: {
+    revoke_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -6019,7 +6116,7 @@ export interface operations {
             };
         };
     };
-    revoke: {
+    revoke_1: {
         parameters: {
             query?: never;
             header?: never;

@@ -976,6 +976,86 @@ approver, who may approve a *clean* snapshot, cannot override a blocked one.
     who states a reason and is named on a distinct ledger event. Neither is a
     silent bypass.
 
+### Reversing an administrative withdrawal
+
+A snapshot an administrator
+[withdrew](#post-snapshotsidrevoke) cannot be approved by an ordinary approval:
+the request is refused `409` with a body naming `revokedBy`, `revokedAt` and
+`reason`. Lifting it takes a **different administrator**:
+
+```json
+{"reverseRevocation": true, "reason": "upstream published a fix; re-reviewed"}
+```
+
+| Refusal | Status | Cause |
+| --- | --- | --- |
+| An ordinary approval of a withdrawn commit | 409 | Names the withdrawal; use the body above |
+| The administrator who withdrew it | 409 | Reversing takes a second identity, unconditionally |
+| No reason, or an empty one | 422 | The reason is the record |
+| Nothing was withdrawn | 409 | A reversal that did nothing would make the marker's absence ambiguous |
+
+Every other approval gate still runs. A **waiver does not lift a withdrawal** —
+waivers clear vetting findings, and a withdrawal has none to clear. The snapshot
+keeps a standing marker afterwards, so content served over a reversed withdrawal
+is never indistinguishable from content nobody withdrew.
+
+---
+
+## `POST /snapshots/{id}/revoke`
+
+Withdraw an approved snapshot from the facade. **Admin-only**, and unreachable
+by a machine credential — the reason is the whole of the accountability for an
+act that takes one identity, and a credential in a pipeline cannot supply one
+that means anything.
+
+```console
+$ curl -X POST localhost:8080/api/snapshots/42/revoke \
+    -H 'Content-Type: application/json' \
+    -d '{"reason": "CVE-2026-0001 in a vendored dependency", "serveAfter": "PREVIOUS_APPROVED"}'
+```
+
+```json
+{"snapshot":{"id":42,"state":"revoked","revokedBy":"bob","revokedKind":"administrative",
+             "violation":"CVE-2026-0001 in a vendored dependency"},
+ "nowServing":{"id":41,"state":"approved","sha":"a1b2c3…"}}
+```
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `reason` | **Yes** | Why it is being withdrawn. Non-empty. Carried into the refusal any later approval of the same commit receives. |
+| `serveAfter` | **Yes** | `PREVIOUS_APPROVED` or `NOTHING`. **No default** — see below. |
+
+It withdraws whatever the vetting chain currently concludes and whatever mode
+re-vetting is in: the point is that the reason is knowledge the chain does not
+hold. There is **no four-eyes rule** — approval has one because publishing can
+do harm, and withdrawing only ever takes content off the wire.
+
+**`serveAfter` has no default and a request without it is refused `422`.**
+Neither answer is safe to assume: `PREVIOUS_APPROVED` republishes older content
+that may carry the same compromise, and `NOTHING` takes a marketplace down that
+may have a clean predecessor. A `PREVIOUS_APPROVED` with no earlier approved
+snapshot is refused `409` **before anything is withdrawn**, so nothing changes.
+
+| Status | Cause |
+| --- | --- |
+| 200 | Withdrawn; `nowServing` is the snapshot now served, or `null` |
+| 404 | Snapshot not found |
+| 409 | Not approved, or no previous approved snapshot to return to |
+| 422 | No reason, or no `serveAfter` |
+
+Afterwards: the withdrawal is on the ledger as `snapshot-revoked` with
+`snapshot-unpublished` beside it (and `snapshot-rolled-back` on a return),
+`marketplace.snapshot.revoked` fires, and the forge mirror reconciles.
+Quarantine is untouched. Retention may reclaim the content but
+[never the record](../retention.md#administratively-withdrawn-snapshots).
+
+!!! warning "This stops the gateway serving it; it does not reach clients"
+
+    Anyone who already cloned the content still has it.
+    [`GET /snapshots/{id}/fetchers`](#get-snapshotsidfetchers) names the blast
+    radius, but nothing on the client side checks whether what it holds is still
+    approved. See [#427](https://github.com/skillsgateway/skillsgateway/issues/427).
+
 ---
 
 ## `GET /snapshots/{id}/release-age`

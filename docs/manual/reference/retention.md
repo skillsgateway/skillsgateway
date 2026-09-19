@@ -18,8 +18,30 @@ applies these:
 | [Superseded](#superseded) | Selector | `held`, `rejected` or `revoked` snapshots of a marketplace that a later `approved` snapshot has overtaken, once older than `superseded-min-age`. | `superseded`, `superseded-min-age` |
 | [Minimum idle](#minimum-idle) | **Veto** | Nothing. It *removes* any candidate whose SHA was fetched from *its own* marketplace through the facade within `min-idle`. | `min-idle` |
 | [Approved](#approved-snapshots) | **Absolute guard** | Nothing. An `approved` snapshot is never eligible, by policy or by hand. | Not configurable |
+| [Administratively withdrawn](#administratively-withdrawn-snapshots) | **Partial guard** | Nothing. The *content* of a snapshot an administrator revoked is reclaimed as usual; its *record* is never permanently removed. | Not configurable |
 
 A snapshot is deleted when a selector picks it and no veto or guard removes it.
+
+### Administratively withdrawn snapshots
+
+A snapshot an [administrator withdrew](../guides/approving-snapshots.md#withdrawing-content-you-have-already-approved)
+is treated like any other for the purpose of reclaiming disk: it can be soft
+deleted, and its git content removed. What is never removed is the **row**.
+
+The refusal that stops a withdrawn commit being approved again is derived from
+that row. Delete it and the withdrawal expires on a timer nobody connected to
+it: the same upstream commit ingests afterwards as an ordinary held snapshot,
+carrying no trace that anything was withdrawn, and a reviewer approves it in
+good faith. Nothing refuses, and nothing is recorded — which makes it a quieter
+failure than the one the approval gate closes.
+
+Keeping the row is cheap. The bytes are the part worth reclaiming and the part
+nobody wants to keep; the row is small, and it is the only thing that remembers.
+
+This applies to **administrative** withdrawals only. A snapshot revoked by
+[re-vetting](../guides/re-vetting.md) purges as before: that is a machine
+verdict a later run can reach again from the content itself, so nothing is lost
+when its row goes.
 
 ### Held too long
 

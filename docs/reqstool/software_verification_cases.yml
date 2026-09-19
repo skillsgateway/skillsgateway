@@ -2602,6 +2602,44 @@ cases:
     revision: "0.1.0"
 
 
+  - id: SVC_GW_APPROVAL_0015
+    requirement_ids: ["GW_APPROVAL_0015"]
+    title: An administrator revokes an approved snapshot on a stated reason, whatever the chain says
+    verification: automated-test
+    description: |
+      GIVEN an approved and served snapshot whose vetting chain would currently clear it, with automated re-vetting configured only to record its findings
+      WHEN an administrator revokes it on a stated reason
+      THEN the snapshot is recorded revoked with that reason, the acting identity and the time, its content is no longer served, and the revocation is on the append-only audit ledger and announced as a lifecycle event, while the same request from a non-administrator, one with no reason, one with an empty reason, and one naming a snapshot that is not approved are each refused and change nothing
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0016
+    requirement_ids: ["GW_APPROVAL_0016"]
+    title: A revocation states what is served afterwards, and an impossible choice is refused before anything changes
+    verification: automated-test
+    description: |
+      GIVEN a marketplace serving an approved snapshot that has an earlier approved snapshot, and a second marketplace serving its only approved snapshot
+      WHEN the first is revoked asking to return to the previous approved snapshot, the second is revoked asking for the same, and a third revocation states no choice at all
+      THEN the first marketplace serves the earlier snapshot with the return recorded on the ledger as a publication distinct from the revocation, the second is refused with its snapshot still approved and still served, the third is refused, and a revocation of a snapshot that is not the served one leaves the served content unchanged
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0017
+    requirement_ids: ["GW_APPROVAL_0017"]
+    title: An administratively revoked snapshot needs a reversal by a second administrator, and the refusal names the revocation
+    verification: automated-test
+    description: |
+      GIVEN a snapshot one administrator revoked on a stated reason, whose vetting chain clears it
+      WHEN a reviewer approves it ordinarily, when the revoking administrator reverses the revocation, and when a second administrator reverses it on a stated reason
+      THEN the ordinary approval is refused naming the revocation with its reason, acting identity and time and nothing is published, the revoker's own reversal is refused, and the second administrator's reversal approves and serves the snapshot while the reversal is on the append-only audit ledger naming the revocation it reverses and the snapshot is marked as served over a reversed administrative revocation
+    revision: "0.1.0"
+  - id: SVC_GW_RETENTION_0008
+    requirement_ids: ["GW_RETENTION_0008"]
+    title: Retention reclaims an administratively revoked snapshot's content but never its record
+    verification: automated-test
+    description: |
+      GIVEN an administratively revoked snapshot selected by a retention policy, and a re-vetting-revoked snapshot selected by the same policy
+      WHEN retention reclaims their content and then permanently removes what it may
+      THEN both snapshots have their content reclaimed, the re-vetting-revoked record is removed, the administratively revoked record survives with the refusal stating that it is retained because an administrator revoked it, and re-ingesting that same upstream commit still finds the revocation
+    revision: "0.1.0"
   - id: SVC_GW_VETTING_0029.5
     requirement_ids: ["GW_VETTING_0029.5"]
     title: The effective chain names each vetter's resolved state and where it came from, and only to an administrator

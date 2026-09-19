@@ -72,6 +72,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             "POST /api/marketplaces/{name}/ingest",
             "POST /api/snapshots/{id}/approve",
             "POST /api/snapshots/{id}/reject",
+            "POST /api/snapshots/{id}/revoke",
             "POST /api/snapshots/{id}/revet",
             "POST /api/marketplaces/{name}/revet",
             "POST /api/snapshots/{id}/waivers",

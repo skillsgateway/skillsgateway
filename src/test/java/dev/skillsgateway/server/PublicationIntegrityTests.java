@@ -137,7 +137,7 @@ class PublicationIntegrityTests extends AbstractGatewayTest {
         long id = registered.snapshot().id();
         approve(id);
         Snapshot revoked = snapshotRepository
-                .revoke(id, "revet", "a violation its waivers do not cover")
+                .revoke(id, "revet", "a violation its waivers do not cover", Snapshot.REVOKED_BY_REVET)
                 .orElseThrow();
         assertThat(revoked.state()).isEqualTo(Snapshot.REVOKED);
         assertThat(revoked.revokedBy()).isEqualTo("revet");

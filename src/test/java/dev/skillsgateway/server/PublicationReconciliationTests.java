@@ -70,7 +70,8 @@ class PublicationReconciliationTests extends AbstractGatewayTest {
 
         // The row stops saying approved; the refs are untouched. This is what a revocation whose
         // unpublish failed leaves behind.
-        snapshotRepository.revoke(approved.id(), "alice", "arranged for the reconciliation test");
+        snapshotRepository.revoke(
+                approved.id(), "alice", "arranged for the reconciliation test", Snapshot.REVOKED_BY_REVET);
         assertThat(servedShas(marketplace)).contains(approved.sha());
 
         PublicationReconciler.Reconciliation pass = reconciler.reconcile("test");

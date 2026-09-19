@@ -13,6 +13,13 @@ CREATE TYPE marketplace_origin AS ENUM ('upstream', 'hosted');
 CREATE TYPE marketplace_push_policy AS ENUM ('append-only', 'allow-rewrite');
 CREATE TYPE marketplace_sync_mode AS ENUM ('on-demand', 'scheduled', 'webhook');
 CREATE TYPE snapshot_state AS ENUM ('held', 'approved', 'rejected', 'revoked');
+-- Who decided a revocation, which is what decides how it can be lifted (GW_APPROVAL_0017).
+-- 'revet' is a chain verdict against a finding: it lifts when the finding is cleared, by a waiver
+-- or by an upstream fix the next run sees, which is what GW_VETTING_0013 requires. 'administrative'
+-- is a person acting on knowledge the chain does not hold -- a disclosed vulnerability, a
+-- compromised maintainer -- and has no finding to clear, because the chain already clears the
+-- content. The only thing that can lift one is another person, so the two are told apart here.
+CREATE TYPE snapshot_revocation_kind AS ENUM ('revet', 'administrative');
 CREATE TYPE webhook_delivery_state AS ENUM ('pending', 'delivered', 'failed');
 CREATE TYPE audit_sink_kind AS ENUM ('webhook');
 CREATE TYPE vetting_run_outcome AS ENUM ('clear', 'blocked');
@@ -106,6 +113,11 @@ CREATE TABLE snapshots (
     -- when a fresh approve decision re-publishes the snapshot (GW_VETTING_0013).
     revoked_at TIMESTAMPTZ,
     revoked_by TEXT,
+    -- Which kind of revocation the stamps above record; NULL when the snapshot has never been
+    -- revoked, and cleared with them on re-approval. It exists because the two kinds lift
+    -- differently, and because retention may remove a 'revet' record but never an
+    -- 'administrative' one (GW_RETENTION_0008) -- the row is what remembers the withdrawal.
+    revoked_kind snapshot_revocation_kind,
     -- Retention (GW_RETENTION_0001..GW_RETENTION_0004). Deletion is orthogonal to the vetting state: a deleted
     -- snapshot keeps the state it was decided into, so the record of what was held, approved,
     -- or rejected survives, and a restore cannot invent a transition.
@@ -503,6 +515,33 @@ CREATE TABLE snapshot_vetting_overrides (
     uncovered_findings TEXT,
     overridden_by TEXT NOT NULL CHECK (overridden_by <> ''),
     overridden_at TIMESTAMPTZ NOT NULL
+);
+
+-- A snapshot approved over an administrative revocation somebody reversed (GW_APPROVAL_0017).
+-- A row of its own rather than a column, for the reason snapshot_vetting_overrides is one: the
+-- approval that reverses a revocation clears revoked_at, revoked_by and revoked_kind on its way to
+-- 'approved', so without this the episode would leave no trace and content served over a reversed
+-- withdrawal would be indistinguishable from content nobody ever withdrew.
+--
+-- The revocation's own details are copied in rather than referenced, because the columns they came
+-- from are cleared by the same approval that writes this row.
+CREATE TABLE snapshot_revocation_reversals (
+    id BIGSERIAL PRIMARY KEY,
+    snapshot_id BIGINT NOT NULL UNIQUE REFERENCES snapshots (id) ON DELETE CASCADE,
+    -- What the administrator who withdrew it said, and who they were. Kept so a reader sees what
+    -- was reversed, not merely that something was.
+    revocation_reason TEXT NOT NULL CHECK (revocation_reason <> ''),
+    revoked_by TEXT NOT NULL CHECK (revoked_by <> ''),
+    revoked_at TIMESTAMPTZ NOT NULL,
+    -- The reversing administrator's stated reason. Required and non-empty, like the override's.
+    reason TEXT NOT NULL CHECK (reason <> ''),
+    -- Never equal to revoked_by: reversing a withdrawal is a publication, so it takes a second
+    -- identity (GW_APPROVAL_0017). Enforced here as well as in the service, so no future call site
+    -- can let one administrator undo their own withdrawal alone.
+    reversed_by TEXT NOT NULL CHECK (reversed_by <> ''),
+    reversed_at TIMESTAMPTZ NOT NULL,
+    CONSTRAINT a_revocation_is_never_reversed_by_the_administrator_who_made_it
+        CHECK (reversed_by <> revoked_by)
 );
 
 -- Administrative vetter enable/disable (GW_VETTING_0023): the standing decision to switch a built-in

@@ -1211,6 +1211,14 @@ requirements:
     categories: ["reliability", "functional-suitability"]
     revision: 0.1.0
 
+  - id: GW_RETENTION_0008
+    title: An administrative revocation is never erased by retention
+    significance: shall
+    description: "The system shall never permanently remove the record of a snapshot an administrator revoked, whether selected by a retention policy or requested by hand, and shall continue to allow that snapshot's content to be reclaimed. It shall state, when it refuses such a removal, that the record is retained because the snapshot was administratively revoked."
+    rationale: "The block that keeps an administratively revoked commit from being approved again is derived from the snapshot's own row, which makes it exactly as durable as that row. Retention may already remove a revoked snapshot permanently, so without this guard the withdrawal expires on a timer nobody connected to it: once the row is gone, the next ingestion of the same upstream commit produces an ordinary held snapshot carrying no trace that anything was ever withdrawn, and a reviewer approves it in good faith. That is the laundering path, and it is quieter than the one the approval gate closes because nothing refuses and nothing is recorded. Keeping the row while still reclaiming the content is what makes the guard cheap: the bytes of a withdrawn snapshot are the part worth reclaiming and the part nobody wants to keep, whereas the row is small, and it is the only thing that remembers. Retaining only the administrative kind is deliberate — a re-vetting revocation is a machine verdict that a later run can reach again from the content itself, so nothing is lost when its row goes."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
   - id: GW_INGEST_0018
     title: An ingestion reports a pinned snapshot only when it is pinned
     significance: shall
@@ -1850,6 +1858,29 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
+  - id: GW_APPROVAL_0015
+    title: Administrative revocation of an approved snapshot
+    significance: shall
+    description: "The system shall let an administrator revoke an approved snapshot on a stated, non-empty reason, shall record the revocation with that reason, the acting identity and the time, shall stop serving the snapshot's content, and shall append the revocation to the append-only audit ledger and announce it as a lifecycle event. It shall revoke whatever the vetting chain would currently conclude about the snapshot and whatever mode automated re-vetting is configured in. It shall refuse a revocation requested by a caller who is not an administrator, one that states no reason or an empty reason, and one of a snapshot that is not approved."
+    rationale: "Revocation existed only as a side effect of a re-vetting run that blocked, in a mode that is not the default, so the one case it is most needed for had no path at all: content whose compromise is human knowledge the chain does not hold — a disclosed vulnerability, a compromised maintainer, a dependency found to be malicious. The remaining levers do not reach it either, because the policy gate runs at approval and cannot retract, and retention treats an approved snapshot as an absolute guard. Stating the reason is what makes the act accountable in the absence of a second reviewer, and it is why the reason is mandatory rather than merely recorded when supplied. No second identity is required, deliberately and in contrast to GW_APPROVAL_0010: the four-eyes rule exists because publishing is the direction that can do harm, and revocation only ever withdraws, so a second reviewer buys no safety while costing time during an active incident. Revoking independently of the chain and of the re-vetting mode is the whole point — a mode that governs what automated re-vetting does with its own findings has no bearing on a person's decision, and a chain that would clear the content is exactly the situation the administrator is overriding."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0016
+    title: What a marketplace serves after a revocation is a stated choice
+    significance: shall
+    description: "The system shall require a revocation to state what the marketplace serves afterwards — the marketplace's previous approved snapshot, or nothing — and shall refuse a revocation that states neither. It shall refuse, before revoking anything, a revocation that asks to serve the previous approved snapshot when the marketplace has none. It shall record the resulting served content on the append-only audit ledger, and shall record a return to a previous approved snapshot as a publication distinct from the revocation. It shall leave the served content unchanged when the revoked snapshot is not the one being served."
+    rationale: "Revoking the snapshot a marketplace serves otherwise takes that marketplace off the air as a side effect nobody chose. Neither outcome is a safe default and the system cannot pick between them: returning to the previous approved snapshot silently republishes older content that may carry the same compromise, because a poisoned transitive dependency is usually present in the previous snapshot too, while serving nothing takes down a marketplace whose predecessor may be obviously clean. Only the person holding the reason knows which, so the request is refused rather than defaulted. Refusing an impossible return before revoking anything is what keeps the caller from receiving an outcome they explicitly did not ask for: revoking first and then discovering there is nothing to return to would leave the marketplace serving nothing, which is the other option. Recording the return as a publication in its own right keeps the ledger a record of acts rather than of one act with a hidden second effect."
+    categories: ["functional-suitability", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0017
+    title: A snapshot an administrator revoked is approved again only on a recorded reversal by a second administrator
+    significance: shall
+    description: "The system shall refuse an ordinary approval of a snapshot an administrator revoked, shall leave it unapproved, shall publish nothing for it, and shall name in the refusal the revocation together with its stated reason, acting identity and time. It shall approve such a snapshot only when an administrator explicitly reverses the revocation on a stated, non-empty reason, and shall refuse a reversal requested by the identity that revoked it. It shall subject a reversal to every other approval gate unchanged. It shall append the reversal to the append-only audit ledger naming the revocation it reverses, and shall mark the snapshot so that content served over a reversed administrative revocation is never indistinguishable from content no administrator ever withdrew."
+    rationale: "A withdrawal an ordinary approval can undo is not a withdrawal: the same commit re-approved by a reviewer who knows nothing of the incident is the failure this gate exists to prevent. But permanence is the wrong remedy. An administrator revokes on knowledge the chain does not hold, and that knowledge can turn out to be wrong or to have been overtaken — a snapshot withdrawn in error during an incident, or a compromise that lay in an upstream dependency since fixed. Neither case has a finding to waive, because the chain already clears the content, so the only thing that can lift the block is a person contradicting the person who set it. Requiring a different identity, unconditionally rather than under a configurable mode, is what makes the reversal a decision by the organisation rather than a correction by one administrator. The requirement is stated against the administrative kind alone: a re-vetting revocation is lifted by clearing the finding that caused it, exactly as GW_VETTING_0013 requires, and nothing here changes that. Permanence would in any case have been a weaker control than it appears — an administrator who wanted the content served could commit on top of the withdrawn one and approve the resulting commit — so what is actually worth buying is not prevention but a record: a refusal that names the revocation, a reversal nobody can perform alone, and a marker that keeps the episode visible wherever the snapshot is shown."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
   - id: GW_VETTING_0029.5
     title: Administrator surface for a marketplace's effective vetting chain
     significance: shall

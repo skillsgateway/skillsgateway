@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -42,6 +43,7 @@ public class ApprovalService {
     private final FourEyesGate fourEyesGate;
     private final AdminAuditLogger auditLogger;
     private final VettingOverrideRepository vettingOverrideRepository;
+    private final RevocationReversalRepository revocationReversalRepository;
     private final ClosureCompletenessGate closureGate;
     private final SnapshotClosureRepository closureRepository;
     private final ApplicationEventPublisher events;
@@ -58,6 +60,7 @@ public class ApprovalService {
             FourEyesGate fourEyesGate,
             AdminAuditLogger auditLogger,
             VettingOverrideRepository vettingOverrideRepository,
+            RevocationReversalRepository revocationReversalRepository,
             ClosureCompletenessGate closureGate,
             SnapshotClosureRepository closureRepository,
             ApplicationEventPublisher events) {
@@ -72,10 +75,17 @@ public class ApprovalService {
         this.fourEyesGate = fourEyesGate;
         this.auditLogger = auditLogger;
         this.vettingOverrideRepository = vettingOverrideRepository;
+        this.revocationReversalRepository = revocationReversalRepository;
         this.closureGate = closureGate;
         this.closureRepository = closureRepository;
         this.events = events;
     }
+
+    /** Ledger event for an approval refused because an administrator had withdrawn the commit. */
+    public static final String EVENT_REFUSED_STANDING_REVOCATION = "approval-refused-withdrawn";
+
+    /** Ledger event for an administrator reversing another administrator's withdrawal. */
+    public static final String EVENT_REVOCATION_REVERSED = "snapshot-revocation-reversed";
 
     /** Ledger event for an approval the cooling-off window refused (GW_APPROVAL_0004.5). */
     static final String EVENT_REFUSED = "snapshot-approval-refused";
@@ -93,16 +103,26 @@ public class ApprovalService {
      * admin-only (enforced at the controller). {@link #none()} is the ordinary approval, which
      * overrides nothing.
      */
-    public record ApprovalOverride(boolean vettingFailure, String reason) {
+    public record ApprovalOverride(boolean vettingFailure, boolean revocationReversal, String reason) {
 
-        private static final ApprovalOverride NONE = new ApprovalOverride(false, null);
+        private static final ApprovalOverride NONE = new ApprovalOverride(false, false, null);
 
         public static ApprovalOverride none() {
             return NONE;
         }
 
         public static ApprovalOverride ofVettingFailure(String reason) {
-            return new ApprovalOverride(true, reason);
+            return new ApprovalOverride(true, false, reason);
+        }
+
+        /**
+         * An administrator reversing another administrator's withdrawal (GW_APPROVAL_0017). A second
+         * kind on this field rather than an endpoint of its own: reversing is not an act, it is an
+         * approval that acknowledges what it is undoing, and a second write path into the served
+         * set is the thing worth avoiding.
+         */
+        public static ApprovalOverride ofRevocationReversal(String reason) {
+            return new ApprovalOverride(false, true, reason);
         }
 
         public boolean hasReason() {
@@ -122,7 +142,10 @@ public class ApprovalService {
             List<FourEyesConflictException.Conflict> fourEyesConflicts,
 
             /** The administrator's override of a blocked vetting outcome, or null (GW_VETTING_0028). */
-            VettingOverrideRecord vettingOverride) {
+            VettingOverrideRecord vettingOverride,
+
+            /** The reversal of an administrator's withdrawal, or null (GW_APPROVAL_0017). */
+            RevocationReversalRecord revocationReversal) {
 
         public Approved {
             fourEyesConflicts = fourEyesConflicts == null ? List.of() : List.copyOf(fourEyesConflicts);
@@ -196,12 +219,20 @@ public class ApprovalService {
         List<FourEyesConflictException.Conflict> conflicts = List.of();
         Duration ingestionAge = Duration.ZERO;
         OverrideCapture override = null;
+        ReversalCapture reversal = null;
         if (current.decidable()) {
             // Before every other gate (GW_APPROVAL_0013), and before the override below can lift anything:
             // a snapshot whose recorded closure does not describe the commit it pins is refused
             // whatever vetting, policy or a reviewer say about it. The override lifts the vetting
             // gate; it is not a decision to publish content whose provenance is unknown.
             requireCompleteClosure(current, marketplace, reviewer);
+            // Then the withdrawal, before the gates that reason about content (GW_APPROVAL_0017).
+            // An administrator withdrew this commit on knowledge the chain does not hold, so there
+            // is no finding to waive and the chain will happily clear it — which is exactly why an
+            // ordinary approval must refuse here rather than further down. Lifting it is the one
+            // thing a waiver cannot do; only another administrator can, and never the one who
+            // withdrew it.
+            reversal = requireNoStandingRevocation(current, marketplace, overrideRequest, reviewer);
             WaiverEvaluation.Effect effect = waiverService.evaluate(current);
             if (effect.blocked()) {
                 // No blanket override existed here by design; GW_VETTING_0028 adds one, and only for an
@@ -249,6 +280,27 @@ public class ApprovalService {
         // must not exist for a snapshot that was never published. The ledger event is written by
         // the caller once approve returns, beside snapshot-approved, exactly as the four-eyes
         // warn-mode conflict is.
+        // Written only once the publication has landed, for the reason the vetting-override marker
+        // is: the snapshot is now served over a withdrawal somebody reversed, and a standing marker
+        // saying so must not exist for a snapshot that was never published.
+        RevocationReversalRecord reversalRecord = reversal == null
+                ? null
+                : revocationReversalRepository.record(
+                        snapshotId,
+                        reversal.revocationReason(),
+                        reversal.revokedBy(),
+                        reversal.revokedAt(),
+                        reversal.reason(),
+                        reviewer);
+        if (reversalRecord != null) {
+            auditLogger.record(
+                    reviewer,
+                    marketplace.name(),
+                    EVENT_REVOCATION_REVERSED,
+                    sha,
+                    "reversed the withdrawal by %s (%s); reason: %s"
+                            .formatted(reversal.revokedBy(), reversal.revocationReason(), reversal.reason()));
+        }
         VettingOverrideRecord overrideRecord = override == null
                 ? null
                 : vettingOverrideRepository.record(
@@ -265,7 +317,7 @@ public class ApprovalService {
         // affect this decision (GW_FACADE_0021): the publication has already landed, and a listener that
         // fails leaves it landed.
         events.publishEvent(new ServedContentChangedEvent(marketplace.name(), "snapshot-approved"));
-        return new Approved(decided, applied, ingestionAge, conflicts, overrideRecord);
+        return new Approved(decided, applied, ingestionAge, conflicts, overrideRecord, reversalRecord);
     }
 
     /**
@@ -353,6 +405,67 @@ public class ApprovalService {
                                             tooYoung.eligibility().remainingSeconds()))));
             throw tooYoung;
         }
+    }
+
+    /** What a reversal needs to remember until the publication it authorises has actually landed. */
+    private record ReversalCapture(
+            String revocationReason, String revokedBy, OffsetDateTime revokedAt, String reason) {}
+
+    /**
+     * The standing-withdrawal gate (GW_APPROVAL_0017): an ordinary approval of a commit an
+     * administrator withdrew is refused, and lifting it takes a second administrator.
+     *
+     * <p>Scoped to the administrative kind alone. A re-vetting revocation is a chain verdict against
+     * a finding, and it lifts by clearing that finding — a waiver, or an upstream fix the next run
+     * sees — which is what GW_VETTING_0013 requires and nothing here changes.
+     *
+     * <p>The refusal names the withdrawal, its reason, who made it and when. That is not a
+     * courtesy: a reviewer who meets an unexplained refusal reasonably suspects a defect and looks
+     * for a way around it, while one who is told what was withdrawn and why has what they need to
+     * judge whether anything has actually changed.
+     *
+     * <p>The second-identity check is deliberately not {@link FourEyesGate}. That gate compares the
+     * reviewer against the registrant, the ingester and waiver authors — never the revoker — and
+     * its default mode records a conflict and proceeds, which would make single-handed reversal the
+     * default. Here it is unconditional, and the database carries the same constraint so no later
+     * call site can lose it.
+     *
+     * @return what the reversal must record once publication lands, or null when there was no
+     *     standing withdrawal to reverse
+     */
+    @Requirements({"GW_APPROVAL_0017"})
+    private ReversalCapture requireNoStandingRevocation(
+            Snapshot snapshot, Marketplace marketplace, ApprovalOverride overrideRequest, String reviewer) {
+        Optional<Snapshot> withdrawn =
+                snapshotRepository.administrativeRevocationOf(snapshot.marketplaceId(), snapshot.sha());
+        if (withdrawn.isEmpty()) {
+            if (overrideRequest.revocationReversal()) {
+                throw new NothingToReverseException(snapshot.id());
+            }
+            return null;
+        }
+        Snapshot revocation = withdrawn.get();
+        if (!overrideRequest.revocationReversal()) {
+            auditLogger.record(
+                    reviewer,
+                    marketplace.name(),
+                    EVENT_REFUSED_STANDING_REVOCATION,
+                    snapshot.sha(),
+                    "withdrawn by %s: %s".formatted(revocation.revokedBy(), revocation.violation()));
+            throw new SnapshotWithdrawnException(
+                    snapshot.id(), revocation.violation(), revocation.revokedBy(), revocation.revokedAt());
+        }
+        if (!overrideRequest.hasReason()) {
+            throw new MissingReversalReasonException(snapshot.id());
+        }
+        if (reviewer.equals(revocation.revokedBy())) {
+            throw new SelfReversalException(snapshot.id(), reviewer);
+        }
+        return new ReversalCapture(
+                revocation.violation(),
+                revocation.revokedBy(),
+                revocation.revokedAt() == null ? null : revocation.revokedAt().atOffset(java.time.ZoneOffset.UTC),
+                overrideRequest.reason());
     }
 
     /**

@@ -173,7 +173,7 @@ class ClosureCompletenessTests extends AbstractExternalSourceTest {
         Composite composite = ingestComposite("gate");
         long id = composite.snapshot().id();
         approve(id);
-        assertThat(snapshotRepository.revoke(id, "sweep", "re-vetting found something"))
+        assertThat(snapshotRepository.revoke(id, "sweep", "re-vetting found something", Snapshot.REVOKED_BY_REVET))
                 .isPresent();
         deleteMembers(id);
 

@@ -318,7 +318,93 @@ Reviewing is unaffected: the contents, the provenance and the vetting verdicts
 are all readable during the wait, so the waivers a blocked snapshot needs can be
 recorded while the window runs down rather than after it.
 
-## Re-approving a revoked snapshot
+## Withdrawing content you have already approved
+
+Sometimes what was approved turns out to be harmful and the vetting chain has
+nothing to say about it — a vulnerability disclosed upstream, a maintainer
+account compromised, a dependency found to be malicious. The chain will keep
+clearing the content, because none of that is visible in the files.
+
+An administrator withdraws it directly:
+
+```console
+$ curl -X POST localhost:8080/api/snapshots/42/revoke \
+    -H 'Content-Type: application/json' \
+    -d '{"reason": "CVE-2026-0001 in a vendored dependency",
+         "serveAfter": "PREVIOUS_APPROVED"}'
+```
+
+The snapshot stops being served, the withdrawal goes on the audit ledger with
+who made it and why, `marketplace.snapshot.revoked` fires, and the
+[forge mirror](read-only-forge-mirror.md) reconciles. Quarantine is untouched,
+so the content is still there to re-review.
+
+**Admin-only, and there is no four-eyes rule on it.** Approval needs two
+identities because publishing is the direction that can do harm; withdrawing
+only ever takes content off the wire, so a second reviewer buys no safety and
+costs time during an incident. The stated reason is the accountability, and it
+is mandatory.
+
+### You must say what the marketplace serves afterwards
+
+`serveAfter` has no default, and a request without it is refused. Neither
+answer is safe to assume:
+
+| `serveAfter` | What happens | When it is right |
+| --- | --- | --- |
+| `PREVIOUS_APPROVED` | The marketplace returns to its previous approved snapshot | The predecessor is known-good |
+| `NOTHING` | The marketplace serves nothing | The compromise may be in the predecessor too — a poisoned transitive dependency usually is |
+
+Asking to return when the marketplace has no earlier approved snapshot is
+refused **before anything is withdrawn**, so a request that cannot be honoured
+changes nothing rather than quietly leaving you with the other outcome. A
+return is recorded on the ledger as a publication in its own right.
+
+!!! warning "This stops the gateway serving it; it does not reach clients"
+
+    Anyone who already cloned the content still has it. `GET
+    /api/snapshots/{id}/fetchers` names every identity that fetched it — the
+    blast radius — but nothing on the client side checks whether what it holds
+    is still approved. See
+    [#427](https://github.com/skillsgateway/skillsgateway/issues/427).
+
+### Putting it back takes a second administrator
+
+A withdrawn commit cannot be approved again by an ordinary approval. The
+refusal names who withdrew it, when, and why — so a reviewer can judge whether
+anything has actually changed rather than assuming they have hit a bug.
+
+If it has changed — the withdrawal was a mistake, or the upstream problem is
+fixed — a **different** administrator reverses it:
+
+```console
+$ curl -X POST localhost:8080/api/snapshots/42/approve \
+    -H 'Content-Type: application/json' \
+    -d '{"reverseRevocation": true,
+         "reason": "upstream published a fix; re-reviewed"}'
+```
+
+The administrator who withdrew it cannot be the one who reverses it. That is
+unconditional: withdrawing takes one identity because it cannot publish
+anything, and reversing does publish, so it takes two. Every other approval
+gate still runs.
+
+A waiver does **not** lift a withdrawal. Waivers clear vetting findings, and a
+withdrawal has no finding to clear — that is the whole point of it.
+
+The snapshot keeps a standing marker afterwards, so content served over a
+reversed withdrawal is never indistinguishable from content nobody ever
+withdrew.
+
+### Retention keeps the record
+
+An administratively withdrawn snapshot can have its **content** reclaimed by
+[retention](snapshot-retention.md), but its **record** is never removed. The
+refusal above is derived from that record, so deleting it would expire the
+withdrawal on a timer — and the same upstream commit would then ingest as an
+ordinary held snapshot with no trace that anything was ever withdrawn.
+
+## Re-approving a snapshot re-vetting revoked
 
 A snapshot that [continuous re-vetting](re-vetting.md) revoked is decidable
 again, and the route back is this same **Approve** — deliberately, because a
@@ -333,6 +419,10 @@ was revoked for stays in the audit ledger.
 
 Rejecting it instead is the terminal answer, and the right one when the finding
 is not something anyone intends to accept.
+
+This is the one kind of revocation a waiver lifts. A chain verdict is an
+objection to something *in the content*, so clearing that objection answers it;
+an administrator's withdrawal is not, and needs the reversal above instead.
 
 ## When an approval fails
 
