@@ -117,4 +117,4 @@
 - [x] 9.5 `openspec validate --all --strict`
 - [x] 9.6 `mkdocs build --strict`
 - [x] 9.7 `evidence.md` from one final fresh run after the last edit.
-- [ ] 9.8 PR with an **Evidence** section; archive as the final commit.
+- [x] 9.8 PR with an **Evidence** section; archive as the final commit.
