@@ -41,3 +41,9 @@ The system SHALL implement GW_AUTH_0022.
 #### Scenario: SVC_GW_AUTH_0022
 The system SHALL pass SVC_GW_AUTH_0022.
 
+### Requirement: GW_API_0007
+The system SHALL implement GW_API_0007.
+
+#### Scenario: SVC_GW_API_0007
+The system SHALL pass SVC_GW_API_0007.
+
