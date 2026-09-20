@@ -13,6 +13,9 @@ import {
   UserRound,
   Webhook,
   BookOpen,
+  BookMarked,
+  Code2,
+  ExternalLink,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
@@ -64,6 +67,31 @@ const groups: { label: string; items: NavItem[] }[] = [
     ],
   },
 ];
+
+// Kept in step with mkdocs.yml's `site_url` and `repo_url`; deliberately not configurable
+// (see the portal-links-out design).
+const DOCS_URL = "https://skillsgateway.github.io/skillsgateway/";
+const REPO_URL = "https://github.com/skillsgateway/skillsgateway";
+
+const toolLinkClass =
+  "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent";
+
+/** A Tools entry that leaves the portal. The icon is decoration, so the name carries the warning. */
+function OutboundLink({ href, label, icon: Icon }: { href: string; label: string; icon: typeof Home }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`${label}, opens in a new tab`}
+      className={toolLinkClass}
+    >
+      <Icon className="size-4" aria-hidden />
+      {label}
+      <ExternalLink className="ml-auto size-3 text-muted-foreground" aria-hidden />
+    </a>
+  );
+}
 
 function breadcrumb(pathname: string): string {
   if (pathname === "/") return "Overview";
@@ -355,13 +383,12 @@ export function AppLayout() {
             <div className="px-2 pb-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
               Tools
             </div>
-            <a
-              href="/docs"
-              className="flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent"
-            >
+            <a href="/docs" className={toolLinkClass}>
               <BookOpen className="size-4" aria-hidden />
               API reference
             </a>
+            <OutboundLink href={DOCS_URL} label="Documentation" icon={BookMarked} />
+            <OutboundLink href={REPO_URL} label="Source code" icon={Code2} />
           </div>
         </nav>
       </aside>

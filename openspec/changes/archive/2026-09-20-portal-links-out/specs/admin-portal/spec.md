@@ -1,10 +1,5 @@
-# admin-portal Specification
+## MODIFIED Requirements
 
-## Purpose
-
-The browser portal: marketplace and snapshot administration and personal access
-token self-service, served by the gateway itself behind the OIDC session.
-## Requirements
 ### Requirement: GW_INGEST_0007
 The system SHALL implement GW_INGEST_0007.
 
@@ -27,40 +22,3 @@ statement and its verification are unchanged.
 
 #### Scenario: SVC_GW_INGEST_0007
 The system SHALL pass SVC_GW_INGEST_0007.
-
-### Requirement: GW_AUTH_0005
-The system SHALL implement GW_AUTH_0005.
-
-#### Scenario: SVC_GW_AUTH_0005
-The system SHALL pass SVC_GW_AUTH_0005.
-
-### Requirement: GW_AUTH_0014
-The system SHALL implement GW_AUTH_0014.
-
-#### Scenario: SVC_GW_AUTH_0014
-The system SHALL pass SVC_GW_AUTH_0014.
-
-
-### Requirement: GW_AUTH_0043
-The system SHALL implement GW_AUTH_0043.
-
-#### Scenario: SVC_GW_AUTH_0043
-The system SHALL pass SVC_GW_AUTH_0043.
-
-### Requirement: GW_AUTH_0044
-The system SHALL implement GW_AUTH_0044.
-
-#### Scenario: SVC_GW_AUTH_0044
-The system SHALL pass SVC_GW_AUTH_0044.
-
-### Requirement: GW_AUTH_0045
-The system SHALL implement GW_AUTH_0045.
-
-#### Scenario: SVC_GW_AUTH_0045
-The system SHALL pass SVC_GW_AUTH_0045.
-
-### Requirement: GW_AUTH_0046
-The system SHALL implement GW_AUTH_0046.
-
-#### Scenario: SVC_GW_AUTH_0046
-The system SHALL pass SVC_GW_AUTH_0046.

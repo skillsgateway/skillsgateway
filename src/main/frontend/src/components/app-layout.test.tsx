@@ -185,3 +185,25 @@ test("a_session_that_cannot_be_read_is_an_error", () => {
   renderMenu({ isError: true });
   expect(screen.getByRole("alert")).toHaveTextContent("Could not read your session");
 });
+
+/**
+ * The manual and the source are one click from any page. Both leave the portal, and the icon
+ * saying so is decoration — the accessible name has to carry it (GW_INGEST_0007).
+ */
+test("the_sidebar_links_out_to_the_manual_and_the_source", async () => {
+  renderLayout();
+
+  for (const name of ["Documentation, opens in a new tab", "Source code, opens in a new tab"]) {
+    const link = await screen.findByRole("link", { name });
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link.getAttribute("rel")).toContain("noopener");
+  }
+  expect(screen.getByRole("link", { name: "Documentation, opens in a new tab" })).toHaveAttribute(
+    "href",
+    "https://skillsgateway.github.io/skillsgateway/",
+  );
+  expect(screen.getByRole("link", { name: "Source code, opens in a new tab" })).toHaveAttribute(
+    "href",
+    "https://github.com/skillsgateway/skillsgateway",
+  );
+});
