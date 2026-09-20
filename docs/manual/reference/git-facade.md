@@ -202,6 +202,15 @@ name are not separable here; the tip is the recorded answer. The `sha` column
 still pins the delivered content exactly, which is what
 [adoption and staleness](api/adoption.md) aggregate on — they never read `ref`.
 
+The `upload-pack` entry is appended when the send **begins**, so a transfer the
+client abandons is still recorded. The ledger names every identity that may hold
+the content, not every identity that provably received it.
+
+The append is synchronous and unguarded: a fetch fails outright if the ledger
+cannot be written. Serving is deliberately no more available than the record of
+it — see
+[Appending is on the serving path](../concepts/snapshots-and-ledger.md#appending-is-on-the-serving-path).
+
 See [Audit](api/audit.md#events) for the full entry contract, including what
 entries written before this behaviour shipped record.
 
