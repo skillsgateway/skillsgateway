@@ -3322,12 +3322,14 @@ refused <strong>before anything is withdrawn</strong>, so a request that cannot 
 changes nothing rather than quietly leaving you with the other outcome. A
 return is recorded on the ledger as a publication in its own right.</p>
 <div class="admonition warning">
-<p class="admonition-title">This stops the gateway serving it; it does not reach clients</p>
-<p>Anyone who already cloned the content still has it. <code>GET
+<p class="admonition-title">This stops the gateway serving it; it does not delete what clients hold</p>
+<p>Anyone who already cloned the content still has it on disk. <code>GET
 /api/snapshots/{id}/fetchers</code> names every identity that fetched it — the
-blast radius — but nothing on the client side checks whether what it holds
-is still approved. See
-<a href="https://github.com/skillsgateway/skillsgateway/issues/427">#427</a>.</p>
+blast radius — and a client can find out for itself by asking
+<a href="../../reference/git-facade/#checking-content-you-already-hold"><code>POST /status/snapshots</code></a>
+about the commits it holds. Nothing forces it to ask, so a withdrawal is
+only as fast as the
+<a href="../client-enforcement/#noticing-that-something-you-already-hold-was-withdrawn">check your fleet runs</a>.</p>
 </div>
 <h3 id="putting-it-back-takes-a-second-administrator">Putting it back takes a second administrator<a class="headerlink" href="#putting-it-back-takes-a-second-administrator" title="Permanent link">&para;</a></h3>
 <p>A withdrawn commit cannot be approved again by an ordinary approval. The

@@ -878,6 +878,34 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#noticing-that-something-you-already-hold-was-withdrawn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Noticing that something you already hold was withdrawn
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Noticing that something you already hold was withdrawn">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#where-to-run-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to run it
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2483,6 +2511,34 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#noticing-that-something-you-already-hold-was-withdrawn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Noticing that something you already hold was withdrawn
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Noticing that something you already hold was withdrawn">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#where-to-run-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to run it
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2595,6 +2651,71 @@ of client:</p>
   builds referencing unapproved sources fail. This catches what laptop-level
   controls miss before anything ships.</li>
 </ul>
+<h2 id="noticing-that-something-you-already-hold-was-withdrawn">Noticing that something you already hold was withdrawn<a class="headerlink" href="#noticing-that-something-you-already-hold-was-withdrawn" title="Permanent link">&para;</a></h2>
+<p>Everything above keeps unapproved content from arriving. It does nothing about
+content that arrived while it was approved and has since been
+<a href="../approving-snapshots/#withdrawing-content-you-have-already-approved">withdrawn</a>: the
+skills are already on disk, and the gateway cannot reach a client machine to
+take them back.</p>
+<p>So the client asks. <code>POST /status/snapshots</code> takes the marketplace-and-commit
+pairs a machine holds and answers one state each, and it authenticates with the
+same PAT a fetch uses — a client that can clone can ask.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>curl<span class="w"> </span>-sS<span class="w"> </span>-u<span class="w"> </span><span class="s2">"token:</span><span class="nv">$SKILLS_GATEWAY_PAT</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"holdings":[{"marketplace":"platform-skills","sha":"'</span><span class="s2">"</span><span class="k">$(</span>git<span class="w"> </span>-C<span class="w"> </span>~/.claude/marketplaces/platform-skills<span class="w"> </span>rev-parse<span class="w"> </span>HEAD<span class="k">)</span><span class="s2">"</span><span class="s1">'"}]}'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>https://skills.corp.example/status/snapshots
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">"results"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">      </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="w"> </span><span class="s2">"platform-skills"</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">      </span><span class="nt">"sha"</span><span class="p">:</span><span class="w"> </span><span class="s2">"9f2c1b…"</span><span class="p">,</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">      </span><span class="nt">"state"</span><span class="p">:</span><span class="w"> </span><span class="s2">"revoked"</span><span class="p">,</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">      </span><span class="nt">"revokedAt"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-09-19T08:14:02Z"</span><span class="p">,</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">      </span><span class="nt">"approvedOverReversedRevocation"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="p">}</span>
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title"><code>unknown</code> is not a pass — and neither is an error</p>
+<p><code>unknown</code> means the gateway makes <strong>no statement</strong>. It is the answer for a
+commit it never had, one whose record has aged out, a marketplace your
+token is not scoped to, and a marketplace that does not exist — deliberately
+the same answer for all four, so a leaked token cannot be used to map the
+estate. A client that treats <code>unknown</code> as "still fine" has inverted the safe
+direction. Treat <code>unknown</code>, a refusal, and an unreachable gateway alike:
+<strong>not approved</strong>.</p>
+</div>
+<p>The full contract — states, refusals, and why the withdrawal reason is not in
+the answer — is in the
+<a href="../../reference/git-facade/#checking-content-you-already-hold">facade reference</a>.</p>
+<h3 id="where-to-run-it">Where to run it<a class="headerlink" href="#where-to-run-it" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Placement</th>
+<th>Catches</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A scheduled job on managed machines (MDM, cron, a launch agent)</td>
+<td>Laptops that cloned and moved on. The common case, and the one nothing else reaches.</td>
+</tr>
+<tr>
+<td>A CI step before a build that uses skills</td>
+<td>Anything a pipeline cached. Fails the build rather than shipping with withdrawn content.</td>
+</tr>
+<tr>
+<td>A <a href="../../reference/api/marketplaces/">lifecycle webhook</a> subscriber</td>
+<td>Withdrawals as they happen — but only for machines that are online and subscribed, which is why it complements the poll rather than replacing it.</td>
+</tr>
+</tbody>
+</table>
+<p>Deciding what to do with a <code>revoked</code> answer is yours: fail a build, raise an
+alert, or re-clone the marketplace's current tip. The gateway deliberately does
+not reach into client filesystems — the goal is that a client can <em>know</em>.</p>
 
 
 

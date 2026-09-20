@@ -5063,11 +5063,16 @@ snapshot is refused <code>409</code> <strong>before anything is withdrawn</stron
 Quarantine is untouched. Retention may reclaim the content but
 <a href="../../retention/#administratively-withdrawn-snapshots">never the record</a>.</p>
 <div class="admonition warning">
-<p class="admonition-title">This stops the gateway serving it; it does not reach clients</p>
-<p>Anyone who already cloned the content still has it.
+<p class="admonition-title">This stops the gateway serving it; it does not delete what clients hold</p>
+<p>Anyone who already cloned the content still has it on disk, and the gateway
+does not reach into client machines.
 <a href="#get-snapshotsidfetchers"><code>GET /snapshots/{id}/fetchers</code></a> names the blast
-radius, but nothing on the client side checks whether what it holds is still
-approved. See <a href="https://github.com/skillsgateway/skillsgateway/issues/427">#427</a>.</p>
+radius, and a client can discover the withdrawal for itself by asking
+<a href="../../git-facade/#checking-content-you-already-hold"><code>POST /status/snapshots</code></a>
+about the commits it holds. Acting on the answer is the client's, so pair a
+withdrawal with whatever
+<a href="../../../guides/client-enforcement/#noticing-that-something-you-already-hold-was-withdrawn">fleet check</a>
+your estate runs.</p>
 </div>
 <hr />
 <h2 id="get-snapshotsidrelease-age"><code>GET /snapshots/{id}/release-age</code><a class="headerlink" href="#get-snapshotsidrelease-age" title="Permanent link">&para;</a></h2>

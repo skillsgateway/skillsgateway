@@ -2037,6 +2037,67 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#checking-content-you-already-hold" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checking content you already hold
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Checking content you already hold">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#refusals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Refusals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#it-is-not-a-fetch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        It is not a fetch
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#troubleshooting" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2537,6 +2598,67 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#checking-content-you-already-hold" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checking content you already hold
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Checking content you already hold">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#refusals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Refusals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#it-is-not-a-fetch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        It is not a fetch
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#troubleshooting" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2788,6 +2910,117 @@ still pins the delivered content exactly, which is what
 <a href="../api/adoption/">adoption and staleness</a> aggregate on — they never read <code>ref</code>.</p>
 <p>See <a href="../api/audit/#events">Audit</a> for the full entry contract, including what
 entries written before this behaviour shipped record.</p>
+<h2 id="checking-content-you-already-hold">Checking content you already hold<a class="headerlink" href="#checking-content-you-already-hold" title="Permanent link">&para;</a></h2>
+<p>Withdrawing a snapshot removes it from the served refs; it does not reach a
+machine that cloned it earlier. <code>POST /status/snapshots</code> is what such a machine
+asks.</p>
+<p>It is not under <code>/git/</code>, because that prefix is a JGit servlet mapping and no
+JSON endpoint is reachable beneath it. It is not under <code>/api/</code> either, because
+that surface accepts only an OIDC session or a gateway-issued machine
+credential, and a git client holds neither. It has its own stateless chain
+accepting exactly the credentials described under
+<a href="#authentication">Authentication</a> above — a PAT over Basic, and an
+identity-provider bearer token where that is enabled. No session is read, no
+cookie is honoured, and none is set.</p>
+<h3 id="request">Request<a class="headerlink" href="#request" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">"holdings"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="p">{</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="w"> </span><span class="s2">"platform-skills"</span><span class="p">,</span><span class="w"> </span><span class="nt">"sha"</span><span class="p">:</span><span class="w"> </span><span class="s2">"9f2c1b8e…"</span><span class="p">}</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="p">}</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>marketplace</code></td>
+<td>The name as it appears in the fetch URL, validated against <code>^[a-z0-9][a-z0-9_-]*$</code>.</td>
+</tr>
+<tr>
+<td><code>sha</code></td>
+<td>A full 40-character commit id. An abbreviation is refused.</td>
+</tr>
+<tr>
+<td><code>holdings</code></td>
+<td>At most <strong>256</strong> pairs per request.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="response">Response<a class="headerlink" href="#response" title="Permanent link">&para;</a></h3>
+<p>One result per requested pair, in the order asked, echoing the pair.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>state</code></td>
+<td><code>approved</code>, <code>revoked</code>, or <code>unknown</code>.</td>
+</tr>
+<tr>
+<td><code>revokedAt</code></td>
+<td>When the content was withdrawn. <code>null</code> unless the state is <code>revoked</code>.</td>
+</tr>
+<tr>
+<td><code>approvedOverReversedRevocation</code></td>
+<td><code>true</code> when this approval stands over a withdrawal that was later <a href="../../guides/approving-snapshots/#putting-it-back-takes-a-second-administrator">reversed</a>, so content served over a reversed withdrawal is never indistinguishable from content nobody ever withdrew.</td>
+</tr>
+</tbody>
+</table>
+<p><code>approved</code> ignores supersession on purpose. A later approval does not retract an
+earlier one — <code>refs/snapshots/&lt;sha&gt;</code> stays advertised — and the question a
+holder is asking is whether it may keep using what it has, not whether it is
+current. Staleness is <a href="../api/adoption/">adoption's</a> question.</p>
+<div class="admonition warning">
+<p class="admonition-title"><code>unknown</code> is the absence of a statement, never a pass</p>
+<p>It is the answer for a commit the gateway never held, one whose record has
+aged out, one that was ingested but never approved, a marketplace outside a
+<a href="../api/tokens/">scoped token's</a> list, and a marketplace that does not
+exist. Those are deliberately indistinguishable: the same rule that stops a
+scoped token enumerating marketplaces through the facade applies here, so
+the check cannot double as a directory of the estate. A client must treat
+<code>unknown</code> as not approved.</p>
+</div>
+<p><strong>The withdrawal reason is not in the answer.</strong> A reason is mandatory on a
+withdrawal and routinely names an undisclosed vulnerability or a compromised
+maintainer. An identity entitled to it reads it from the
+<a href="../api/audit/">ledger</a>, which is an auditor's read.</p>
+<h3 id="refusals">Refusals<a class="headerlink" href="#refusals" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td>More than 256 pairs, a malformed marketplace name, or a <code>sha</code> that is not a full commit id. The request is refused whole rather than partly answered — a partial answer that looks complete is the failure a holder cannot detect.</td>
+</tr>
+<tr>
+<td>401</td>
+<td>No credential, or one the facade does not accept.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="it-is-not-a-fetch">It is not a fetch<a class="headerlink" href="#it-is-not-a-fetch" title="Permanent link">&para;</a></h3>
+<p>Nothing on this path is appended to the audit ledger. The append-only record is
+of fetches and administrative acts; a row per client per poll would grow the
+ledger to record that somebody asked a question rather than received content.
+The signal is a counter instead — <code>skills_gateway.facade.held_content_answers</code>,
+tagged by the state answered, so an operator can see that clients are checking
+in and that some are still holding withdrawn content.</p>
+<p>How to deploy the check across a fleet is in
+<a href="../../guides/client-enforcement/#noticing-that-something-you-already-hold-was-withdrawn">making the gateway the only door</a>.</p>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

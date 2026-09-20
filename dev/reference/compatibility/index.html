@@ -2838,7 +2838,10 @@ has a top-level <code>_plugins</code>; an external plugin whose name is not
 HTTP surface <em>promises</em>.</p>
 <div class="admonition note">
 <p class="admonition-title">What this promise covers, and how each surface is checked</p>
-<p>It covers <code>/api/**</code>, the lifecycle webhook deliveries, and the
+<p>It covers <code>/api/**</code>, <code>/status/**</code> — the
+<a href="../git-facade/#checking-content-you-already-hold">revocation check</a>, which
+is described in the same OpenAPI document and diffed by the same gate — the
+lifecycle webhook deliveries, and the
 <code>skills-gateway.estate.*</code> declarative estate schema
 (<a href="../../guides/declarative-estate/#1-declare-the-estate">guide</a>,
 <a href="../configuration/#declarative-estate">reference</a>). A renamed or removed

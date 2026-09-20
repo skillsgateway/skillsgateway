@@ -2430,7 +2430,7 @@
 <tbody>
 <tr>
 <td>Web / API</td>
-<td>everything except <code>/git/**</code></td>
+<td>everything except the facade's paths below</td>
 <td>OIDC session cookie</td>
 </tr>
 <tr>
@@ -2440,7 +2440,7 @@
 </tr>
 <tr>
 <td>Git facade</td>
-<td><code>/git/**</code></td>
+<td><code>/git/**</code>, and the <a href="../git-facade/#checking-content-you-already-hold">revocation check</a> at <code>/status/**</code></td>
 <td>Personal access token over HTTP Basic</td>
 </tr>
 </tbody>
@@ -2665,6 +2665,10 @@ then incomplete; see <a href="../../guides/identity-providers/">Identity provide
 <tr>
 <td><code>/actuator/health</code></td>
 <td>The only unauthenticated path. Use the bare path for probes.</td>
+</tr>
+<tr>
+<td><code>/status/snapshots</code></td>
+<td>The <a href="../git-facade/#checking-content-you-already-hold">revocation check</a>: a facade-credentialled read, not part of <code>/api/**</code>.</td>
 </tr>
 <tr>
 <td><code>/actuator/sbom</code></td>
