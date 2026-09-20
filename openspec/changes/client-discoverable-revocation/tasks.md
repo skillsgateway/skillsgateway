@@ -113,13 +113,13 @@
 
 ## 7. Gates and archive
 
-- [ ] 7.1 `./mvnw clean verify` — foreground, its own call.
-- [ ] 7.2 `(cd src/main/frontend && pnpm test:stories)`
-- [ ] 7.3 `(cd src/main/frontend && pnpm e2e)`
-- [ ] 7.4 `reqstool status local -p docs/reqstool` — must end `PASS`
-- [ ] 7.5 `openspec validate --all --strict`
-- [ ] 7.6 `mkdocs build --strict`
-- [ ] 7.7 `evidence.md` from one final fresh run after the last edit.
+- [x] 7.1 `./mvnw clean verify` — foreground, its own call.
+- [x] 7.2 `(cd src/main/frontend && pnpm test:stories)`
+- [x] 7.3 `(cd src/main/frontend && pnpm e2e)`
+- [x] 7.4 `reqstool status local -p docs/reqstool` — must end `PASS`
+- [x] 7.5 `openspec validate --all --strict`
+- [x] 7.6 `mkdocs build --strict`
+- [x] 7.7 `evidence.md` from one final fresh run after the last edit.
 - [ ] 7.8 PR with an **Evidence** section, referencing
       [#427](https://github.com/skillsgateway/skillsgateway/issues/427) with a
       closing keyword; archive as the final commit.
