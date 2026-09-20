@@ -840,9 +840,9 @@ and the individual `results`.
 
 ### `GET /snapshots/{id}/fetchers`
 
-Every authenticated identity that **received** this snapshot's content through
-the git facade, with how often and when it last did — the blast radius of a
-retroactive violation, read from the append-only fetch ledger.
+Every authenticated identity this snapshot's content was **sent** to through
+the git facade, with how often and when it last was — the blast radius of a
+retroactive violation, read from the fetch ledger.
 
 ```json
 [{"principal":"team-payments","fetches":12,"lastFetch":"2026-08-14T22:10:00Z"}]
@@ -850,6 +850,10 @@ retroactive violation, read from the append-only fetch ledger.
 
 Only pack transfers count. A ref advertisement means a client asked, not that it
 received anything, so counting it would name teams that never got the content.
+
+A transfer is counted when it starts, so a client that abandoned the fetch still
+appears. The report over-reports rather than missing a holder, which is the
+direction a recall wants — but it is not a record of receipt.
 
 This read is **privileged**: an admin, or an approver of the snapshot's
 marketplace. It names identities, so seeing it is the same judgement as acting on

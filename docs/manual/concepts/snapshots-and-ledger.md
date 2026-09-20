@@ -165,10 +165,16 @@ snapshot must not require serving it.
 
 ## The audit ledger
 
-The ledger is one PostgreSQL table, `fetch_log`, and it is **append-only**: no
-code path in the product issues an `UPDATE` or `DELETE` against it. Retention
-does not compact it. That is what makes it usable as compliance evidence rather
-than as an operational log.
+The ledger is one PostgreSQL table, `fetch_log`, and the product only ever
+appends to it: no code path issues an `UPDATE` or `DELETE` against it, and
+retention does not compact it.
+
+That is a discipline of the **code**, not a constraint of the **schema**.
+`fetch_log` carries no trigger, no rule and no revoked grant, so anything
+holding write access to the database can still change a row — the gateway
+simply never does. Tamper-evidence comes from your own database controls and
+from [exporting the ledger](#exporting-it) to a system the gateway cannot
+reach, not from the table.
 
 | Column | Meaning |
 | --- | --- |
@@ -193,6 +199,26 @@ unavoidable ambiguity. Negotiation rounds are not recorded.
 
 **Administrative actions** — registration, ingestion, approve and reject, each
 carrying the acting OIDC principal.
+
+An `upload-pack` entry is appended when the gateway *begins* sending the pack,
+not when the client has finished receiving it, so a transfer that aborts midway
+still records as a fetch. For the question the ledger exists to answer — who
+might be holding this content — over-reporting is the safe direction, but it is
+not a record of receipt, and the
+[blast-radius report](../reference/api/marketplaces.md#get-snapshotsidfetchers)
+inherits it.
+
+### Appending is on the serving path
+
+A facade fetch appends its entry synchronously, inside the request: no queue, no
+background writer, and nothing catching a failure. Serving is therefore no more
+available than PostgreSQL — an outage fails the fetch outright rather than
+handing out content that goes unrecorded.
+
+That direction is deliberate. The gateway's claim is that nothing leaves it
+unaccounted for, and content served while the ledger was unreachable would
+falsify that claim for exactly the incident the ledger exists to answer. Size
+the database for the serving path, not for the reporting one.
 
 ### Reading it
 
@@ -223,8 +249,9 @@ append still in flight — bounded staleness in exchange for no gaps. See
 
 ### What the ledger is not
 
-- Not hash-chained — there is no tamper-evidence beyond the append-only
-  discipline of the code and your database controls.
+- Not self-proving — no entry carries a digest over its predecessor, and the
+  append-only property is the code's rather than the schema's (above), so the
+  table cannot attest to its own integrity.
 - Not itself retained or archived by the product. How long you keep it is your
   compliance decision.
 - Not a real-time alerting channel. Export is cursor-based and settles for a few

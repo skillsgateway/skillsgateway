@@ -1,9 +1,10 @@
 # Audit
 
-The ledger is an append-only table. No code path in the product issues an
-`UPDATE` or `DELETE` against it — see
+The product only ever appends to the ledger: no code path issues an `UPDATE` or
+`DELETE` against it. That is the code's discipline and not a constraint the
+schema enforces — see
 [Snapshots and the audit ledger](../../concepts/snapshots-and-ledger.md) for the
-conceptual treatment.
+conceptual treatment and for what does provide tamper-evidence.
 
 ---
 
