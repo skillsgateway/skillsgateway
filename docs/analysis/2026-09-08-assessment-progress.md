@@ -25,7 +25,7 @@ _Refreshed 2026-09-15: steps 3–8 had merged on 2026-09-09 but were still liste
 | 6 | F3 | Publication reconciliation sweep (order not reversed) | [#340](https://github.com/skillsgateway/skillsgateway/pull/340) | **merged** |
 | 7 | F2 | Lease table per sweep, uniformly | [#341](https://github.com/skillsgateway/skillsgateway/pull/341) | **merged** |
 | 8 | F8/§4 | Config-surface ratchet (#342), interval agreement (#343), revocation freshness not a knob (#344), budgets clamped (#346) | [#342](https://github.com/skillsgateway/skillsgateway/pull/342) [#343](https://github.com/skillsgateway/skillsgateway/pull/343) [#344](https://github.com/skillsgateway/skillsgateway/pull/344) [#346](https://github.com/skillsgateway/skillsgateway/pull/346) | **merged** |
-| 9 | F7(1,3) | Ledger honesty + partitioning | — | not started |
+| 9 | F7(1,3) | Ledger honesty + partitioning | [#444](https://github.com/skillsgateway/skillsgateway/pull/444) | **honesty half open**; partitioning not started |
 | 10 | F1, D4, D5 | Freeze object-store; stop rule in `CLAUDE.md`; one-page capability map | — | not started |
 
 **D1 is now satisfied** — F4 and F6 are both merged, so `docs/analysis/` may be
@@ -90,6 +90,15 @@ doing it; publishing was explicitly the owner's call.
 
 ## Known-open follow-ups found on the way (not yet done)
 
+- **F7 (step 9) splits in two, and only the first half is docs.** The honesty
+  half (F7.1, .4, .5) is [#444](https://github.com/skillsgateway/skillsgateway/pull/444) —
+  append-only is the code's discipline and not the schema's, the ledger
+  over-reports because `onSendPack` appends before the bytes go out, and the
+  synchronous unguarded insert couples serving availability to PostgreSQL. All
+  three verified in code first. F7.2 stays untouched: the assessment calls it
+  cosmetic. Partitioning (F7.3) is a behaviour change and needs a full OpenSpec
+  change — its design must open with whether a scheduled partition sweep can be
+  avoided, because the stop rule makes "adds a scheduled sweep" an argued cost.
 - **The `skills-gateway.roles.enabled` switch was removed (#210), but ~12 places
   still speak as if enforcement were conditional** — 10 × `403 | Enforcement is
   enabled and …` table rows in `reference/api/{policy,estate,roles,marketplaces}.md`,
