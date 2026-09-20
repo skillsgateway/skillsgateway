@@ -81,9 +81,3 @@ The system SHALL implement GW_AUTH_0026.
 #### Scenario: SVC_GW_AUTH_0026
 The system SHALL pass SVC_GW_AUTH_0026.
 
-### Requirement: GW_AUTH_0027
-The system SHALL implement GW_AUTH_0027.
-
-#### Scenario: SVC_GW_AUTH_0027
-The system SHALL pass SVC_GW_AUTH_0027.
-
