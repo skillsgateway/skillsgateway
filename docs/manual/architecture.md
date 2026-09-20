@@ -598,8 +598,13 @@ reference transitions at all — see
   per-repository manifest, a named and fail-closed backend selection, an
   offline verified migration between the two, and a chart that refuses a replica
   count or a storage shape the selected backend cannot honour
-  (GW_FACADE_0010, GW_FACADE_0011, GW_FACADE_0013, GW_FACADE_0014, GW_FACADE_0012). Real AWS S3 has not yet been
-  exercised against the conditional-write assertions.
+  (GW_FACADE_0010, GW_FACADE_0011, GW_FACADE_0013, GW_FACADE_0014, GW_FACADE_0012). The conditional-write
+  assertions have been run against a real AWS S3 bucket, and against Floci in
+  every build; see
+  [Choosing and migrating the storage backend](guides/storage-backends.md) for
+  what each store's row covers and
+  [Verifying conditional writes against a real bucket](guides/verifying-an-object-store.md)
+  for running them against your own.
 - *Implemented:* the scheduled background passes are cluster-safe — each takes a
   non-blocking, self-expiring lease in the gateway's database, so the estate
   gets one pass per interval however many replicas run, without leader election,
