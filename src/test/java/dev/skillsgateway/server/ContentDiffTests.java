@@ -118,12 +118,12 @@ class ContentDiffTests extends AbstractGatewayTest {
         assertThat((Integer) JsonPath.read(body, "$.summary.moved")).isEqualTo(1);
         assertThat((Integer) JsonPath.read(body, "$.summary.unchanged")).isEqualTo(1);
 
-        mockMvc.perform(get("/api/snapshots/999999999/content-diff").with(oidcLogin()))
+        mockMvc.perform(get("/api/v1/snapshots/999999999/content-diff").with(oidcLogin()))
                 .andExpect(status().isNotFound());
     }
 
     private String diff(long snapshotId) throws Exception {
-        return mockMvc.perform(get("/api/snapshots/%d/content-diff".formatted(snapshotId))
+        return mockMvc.perform(get("/api/v1/snapshots/%d/content-diff".formatted(snapshotId))
                         .with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn()

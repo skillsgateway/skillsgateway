@@ -28,7 +28,7 @@ class SessionCredentialExpiryTests extends AbstractCredentialLifetimeTest {
     @Test
     @SVCs({"SVC_GW_AUTH_0018"})
     void an_elapsed_session_credential_fails_authentication_with_no_sweep_involved() throws Exception {
-        String minted = mockMvc.perform(post("/api/tokens/session")
+        String minted = mockMvc.perform(post("/api/v1/tokens/session")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"laptop\"}"))

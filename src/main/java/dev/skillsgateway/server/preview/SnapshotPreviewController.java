@@ -27,7 +27,7 @@ import org.springframework.web.server.ResponseStatusException;
  * {@code /git/**} or changes what the facade serves.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class SnapshotPreviewController {
 
     private final SnapshotPreviewService previewService;

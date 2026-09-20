@@ -86,7 +86,7 @@ Three properties of the matching are worth knowing before you write mappings:
   the failure this avoids. Naming a marketplace that does not exist *yet* is
   fine: the mapping matches nothing until it is registered.
 
-`GET /api/me` reports the source of every effective role — `config`, `grant` or
+`GET /api/v1/me` reports the source of every effective role — `config`, `grant` or
 `claim` — so "why does this person have admin" is answerable from the session
 endpoint.
 
@@ -100,7 +100,7 @@ endpoint.
 
 Enforcement is unconditional, so there is no unenforced window to rehearse in —
 configure the mappings and the break-glass admin together, before the gateway's
-first start. Then log in and read `GET /api/me`: it reports every effective
+first start. Then log in and read `GET /api/v1/me`: it reports every effective
 role and its source, so a mapping that produces `claim` roles is confirmed
 working, and one that produces none tells you the claim did not arrive or the
 values do not match. The configuration admin is what keeps that a diagnosis
@@ -126,7 +126,7 @@ Providers cap how many groups a token may carry. Past the cap, some drop the
 claim entirely and set a marker instead — leaving a user who can see their own
 membership wondering why the gateway refuses them.
 
-The gateway detects that: `GET /api/me` reports `claimsTruncated: true`, and the
+The gateway detects that: `GET /api/v1/me` reports `claimsTruncated: true`, and the
 startup log says so too. It is deliberately distinguished from a session that
 simply has no memberships. The fix is on the provider's side — emit application
 roles instead of raw groups, or restrict the claim to the groups assigned to
@@ -207,14 +207,14 @@ unreadable; pick which cost you would rather pay, and be consistent.
 - **Groups** arrive in the `groups` claim as **object ids**, not display names —
   copy the object id from the group's overview page. Above roughly 200
   memberships the claim is dropped and `hasgroups: true` appears instead; the
-  gateway reports this as `claimsTruncated` on `/api/me`. Restricting the groups
+  gateway reports this as `claimsTruncated` on `/api/v1/me`. Restricting the groups
   claim to "groups assigned to the application" avoids it in most tenants; app
   roles avoid it entirely.
 
 ### 5. Verify
 
 ```console
-$ curl -s -b session.txt https://<gateway-host>/api/me | jq
+$ curl -s -b session.txt https://<gateway-host>/api/v1/me | jq
 {
   "username": "alice@example.com",
   "roles": [{"role": "admin", "marketplace": null, "source": "claim"}],

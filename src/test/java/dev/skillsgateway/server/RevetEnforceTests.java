@@ -297,7 +297,7 @@ class RevetEnforceTests extends AbstractGatewayTest {
         // Through the endpoint, not the service: the fresh approve decision has to be the ordinary
         // one a reviewer makes, ledger entry and all, or "re-publishable only by a recorded
         // decision" would be a claim about a code path nobody uses.
-        mockMvc.perform(post("/api/snapshots/{id}/approve", id)
+        mockMvc.perform(post("/api/v1/snapshots/{id}/approve", id)
                         .with(oidcLogin().idToken(token -> token.subject("bob")))
                         .with(csrf()))
                 .andExpect(status().isOk());

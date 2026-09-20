@@ -16,7 +16,7 @@ content it did not.
 A hosted marketplace takes no clone URL, because there is nothing to clone from:
 
 ```console
-$ curl -X POST localhost:8080/api/marketplaces \
+$ curl -X POST localhost:8080/api/v1/marketplaces \
     -H 'Content-Type: application/json' \
     -d '{"name": "platform-skills", "origin": "hosted"}'
 ```
@@ -44,7 +44,7 @@ Publication authority is **not** fetch authority. It is a separate scope, and it
 has no "all marketplaces" form:
 
 ```console
-$ curl -X POST localhost:8080/api/tokens \
+$ curl -X POST localhost:8080/api/v1/tokens \
     -H 'Content-Type: application/json' \
     -d '{"name": "platform-skills-ci", "pushScopes": ["platform-skills"]}'
 ```
@@ -113,7 +113,7 @@ The push ingests itself. Within moments there is a `held` snapshot at the
 commit you pushed, with a vetting chain run against it:
 
 ```console
-$ curl -s localhost:8080/api/marketplaces | jq '.[] | select(.name=="platform-skills") | .snapshots'
+$ curl -s localhost:8080/api/v1/marketplaces | jq '.[] | select(.name=="platform-skills") | .snapshots'
 ```
 
 From here it is the ordinary flow — review the findings, waive what you accept,

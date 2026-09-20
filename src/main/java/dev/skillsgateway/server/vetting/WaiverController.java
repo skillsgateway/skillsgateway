@@ -29,7 +29,7 @@ import org.springframework.web.server.ResponseStatusException;
  * what a marketplace has accepted, and withdraw one.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class WaiverController {
 
     private final WaiverService waiverService;

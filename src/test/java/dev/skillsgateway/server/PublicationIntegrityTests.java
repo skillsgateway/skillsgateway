@@ -61,7 +61,7 @@ class PublicationIntegrityTests extends AbstractGatewayTest {
         try {
             // Through the controller, because the ledger entry and the lifecycle event are written by
             // the caller once approve returns: the point is that neither is reached.
-            assertThatThrownBy(() -> mockMvc.perform(post("/api/snapshots/%d/approve".formatted(next.id()))
+            assertThatThrownBy(() -> mockMvc.perform(post("/api/v1/snapshots/%d/approve".formatted(next.id()))
                             .with(oidcLogin())))
                     .as("a publication that did not happen fails loudly")
                     .hasCauseInstanceOf(ApprovalException.class)
@@ -78,7 +78,7 @@ class PublicationIntegrityTests extends AbstractGatewayTest {
                 .as("a snapshot whose publication was refused is not approved")
                 .isEqualTo(Snapshot.HELD);
 
-        String audit = mockMvc.perform(get("/api/audit").with(oidcLogin()))
+        String audit = mockMvc.perform(get("/api/v1/audit").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()

@@ -1243,14 +1243,6 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.1.0
 
-  - id: GW_AUTH_0027
-    title: The removed enforcement property is refused rather than ignored
-    significance: shall
-    description: The system shall refuse to start when the removed authorization-enforcement property is present in its configuration in any form the framework resolves, including the relaxed and environment-variable spellings, and shall state in the refusal that the property was removed and that enforcement is now unconditional.
-    rationale: Unknown configuration properties are ignored, and for most properties that is the right behaviour. This one is different in one direction that matters, because an operator who set it to false was expressing an explicit intention that the gateway have no authorization, and silently ignoring that intention reverses it. Whichever way the reversal falls, a manifest that still carries the property and a manifest that never did are indistinguishable from inside the deployment, so the only way an operator learns their setting stopped being read is to be told. The refusal is a migration aid rather than a feature and is scheduled for removal at the next major, once no supported version has ever read the property.
-    categories: ["security", "maintainability"]
-    revision: 0.1.0
-
   - id: GW_AUTH_0028
     title: The development escape hatch confers the administrative role on its own principal
     significance: shall

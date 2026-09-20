@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
  * operator uses to inspect and apply a policy without waiting for (or enabling) the scheduler.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class RetentionController {
 
     private final RetentionService retentionService;

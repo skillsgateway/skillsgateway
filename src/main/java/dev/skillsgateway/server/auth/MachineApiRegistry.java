@@ -66,61 +66,68 @@ public final class MachineApiRegistry {
         scopes.put(
                 "marketplaces:read",
                 Set.of(
-                        get("/api/marketplaces"),
-                        get("/api/catalog"),
-                        get("/api/snapshots/{id}/content"),
+                        get("/api/v1/marketplaces"),
+                        get("/api/v1/catalog"),
+                        get("/api/v1/snapshots/{id}/content"),
                         // Beside the inventory rather than with the preview reads: it returns the
                         // same plugin and skill names that /content already gives this scope, plus
                         // those of an approved snapshot the facade is serving anyway, and no file
                         // content at all.
-                        get("/api/snapshots/{id}/content-diff"),
-                        get("/api/snapshots/{id}/licenses"),
-                        get("/api/snapshots/{id}/provenance"),
-                        get("/api/snapshots/{id}/release-age")));
+                        get("/api/v1/snapshots/{id}/content-diff"),
+                        get("/api/v1/snapshots/{id}/licenses"),
+                        get("/api/v1/snapshots/{id}/provenance"),
+                        get("/api/v1/snapshots/{id}/release-age")));
         scopes.put(
                 "snapshots:read",
                 Set.of(
-                        get("/api/snapshots/{id}/diff"),
-                        get("/api/snapshots/{id}/file"),
-                        get("/api/snapshots/{id}/files"),
-                        get("/api/snapshots/{id}/vetting"),
+                        get("/api/v1/snapshots/{id}/diff"),
+                        get("/api/v1/snapshots/{id}/file"),
+                        get("/api/v1/snapshots/{id}/files"),
+                        get("/api/v1/snapshots/{id}/vetting"),
                         // The only route in this scope that also needs a role: the blast-radius
                         // report is approver-scoped (GW_AUTH_0011), and reach is the intersection.
-                        get("/api/snapshots/{id}/fetchers"),
+                        get("/api/v1/snapshots/{id}/fetchers"),
                         // Four-eyes eligibility is a read of the same evidence surface: it reports
                         // whether a second reviewer is required and who the first was. Approval
                         // itself stays unreachable, which is what keeps this a read.
-                        get("/api/snapshots/{id}/four-eyes")));
-        scopes.put("marketplaces:register", Set.of(post("/api/marketplaces")));
-        scopes.put("marketplaces:ingest", Set.of(post("/api/marketplaces/{name}/ingest")));
-        scopes.put("vetting:run", Set.of(post("/api/marketplaces/{name}/revet"), post("/api/snapshots/{id}/revet")));
-        scopes.put("waivers:read", Set.of(get("/api/marketplaces/{name}/waivers")));
-        scopes.put("sync:write", Set.of(put("/api/marketplaces/{name}/sync")));
-        scopes.put("catalog:rebuild", Set.of(post("/api/catalog/rebuild")));
+                        get("/api/v1/snapshots/{id}/four-eyes")));
+        scopes.put("marketplaces:register", Set.of(post("/api/v1/marketplaces")));
+        scopes.put("marketplaces:ingest", Set.of(post("/api/v1/marketplaces/{name}/ingest")));
+        scopes.put(
+                "vetting:run", Set.of(post("/api/v1/marketplaces/{name}/revet"), post("/api/v1/snapshots/{id}/revet")));
+        scopes.put("waivers:read", Set.of(get("/api/v1/marketplaces/{name}/waivers")));
+        scopes.put("sync:write", Set.of(put("/api/v1/marketplaces/{name}/sync")));
+        scopes.put("catalog:rebuild", Set.of(post("/api/v1/catalog/rebuild")));
         scopes.put(
                 "webhooks:read",
-                Set.of(get("/api/webhooks"), get("/api/webhooks/deliveries"), get("/api/webhooks/events")));
-        scopes.put("webhooks:write", Set.of(post("/api/webhooks"), delete("/api/webhooks/{id}")));
-        scopes.put("audit:read", Set.of(get("/api/audit"), get("/api/audit/export")));
-        scopes.put("audit-sinks:read", Set.of(get("/api/audit/sinks")));
+                Set.of(get("/api/v1/webhooks"), get("/api/v1/webhooks/deliveries"), get("/api/v1/webhooks/events")));
+        scopes.put("webhooks:write", Set.of(post("/api/v1/webhooks"), delete("/api/v1/webhooks/{id}")));
+        scopes.put("audit:read", Set.of(get("/api/v1/audit"), get("/api/v1/audit/export")));
+        scopes.put("audit-sinks:read", Set.of(get("/api/v1/audit/sinks")));
         scopes.put(
                 "audit-sinks:write",
-                Set.of(post("/api/audit/sinks"), delete("/api/audit/sinks/{id}"), put("/api/audit/sinks/{id}/cursor")));
+                Set.of(
+                        post("/api/v1/audit/sinks"),
+                        delete("/api/v1/audit/sinks/{id}"),
+                        put("/api/v1/audit/sinks/{id}/cursor")));
         scopes.put(
                 "policy:read",
                 Set.of(
-                        get("/api/policy/rules"),
+                        get("/api/v1/policy/rules"),
                         // A POST inside a read scope, deliberately: the playground evaluates a
                         // policy against a candidate and persists nothing, so it reads.
-                        post("/api/policy/playground")));
+                        post("/api/v1/policy/playground")));
         scopes.put(
                 "policy:write",
-                Set.of(post("/api/policy/rules"), put("/api/policy/rules/{name}"), delete("/api/policy/rules/{name}")));
-        scopes.put("retention:read", Set.of(get("/api/retention/candidates")));
-        scopes.put("estate:read", Set.of(get("/api/estate")));
-        scopes.put("estate:reconcile", Set.of(post("/api/estate/reconcile")));
-        scopes.put("adoption:read", Set.of(get("/api/adoption"), get("/api/adoption/staleness")));
-        scopes.put("roles:read", Set.of(get("/api/roles")));
+                Set.of(
+                        post("/api/v1/policy/rules"),
+                        put("/api/v1/policy/rules/{name}"),
+                        delete("/api/v1/policy/rules/{name}")));
+        scopes.put("retention:read", Set.of(get("/api/v1/retention/candidates")));
+        scopes.put("estate:read", Set.of(get("/api/v1/estate")));
+        scopes.put("estate:reconcile", Set.of(post("/api/v1/estate/reconcile")));
+        scopes.put("adoption:read", Set.of(get("/api/v1/adoption"), get("/api/v1/adoption/staleness")));
+        scopes.put("roles:read", Set.of(get("/api/v1/roles")));
         return Map.copyOf(scopes);
     }
 
@@ -131,70 +138,70 @@ public final class MachineApiRegistry {
      */
     private static final Set<Route> UNREACHABLE = Set.of(
             // Publishes content; human judgement.
-            post("/api/snapshots/{id}/approve"),
-            post("/api/snapshots/{id}/reject"),
+            post("/api/v1/snapshots/{id}/approve"),
+            post("/api/v1/snapshots/{id}/reject"),
             // Withdraws served content on knowledge no machine holds (GW_APPROVAL_0015). The reason
             // is the whole of the accountability for an act that takes one identity and no second
             // reviewer, and a credential in a pipeline cannot supply one that means anything.
-            post("/api/snapshots/{id}/revoke"),
+            post("/api/v1/snapshots/{id}/revoke"),
             // Overrides the vetting chain, and withdraws that override; human judgement.
-            post("/api/snapshots/{id}/waivers"),
-            delete("/api/waivers/{id}"),
+            post("/api/v1/snapshots/{id}/waivers"),
+            delete("/api/v1/waivers/{id}"),
             // Soft-deletes every candidate it finds; purges permanently. Both retract content.
-            post("/api/retention/evaluate"),
-            post("/api/retention/compact"),
-            delete("/api/snapshots/{id}"),
-            post("/api/snapshots/{id}/restore"),
+            post("/api/v1/retention/evaluate"),
+            post("/api/v1/retention/compact"),
+            delete("/api/v1/snapshots/{id}"),
+            post("/api/v1/snapshots/{id}/restore"),
             // Privilege granting: estate.grants is the only route, with no credential in the
             // pipeline at all. A credential that can write grants can escalate what it reaches.
-            post("/api/roles"),
-            delete("/api/roles/{id}"),
+            post("/api/v1/roles"),
+            delete("/api/v1/roles/{id}"),
             // Credential minting, including the machine-credential provisioning added by this
             // change. A credential that can mint a sibling can evade its own revocation.
-            post("/api/tokens"),
-            get("/api/tokens"),
-            post("/api/tokens/session"),
-            post("/api/tokens/{id}/rotate"),
-            delete("/api/tokens/{id}"),
-            post("/api/tokens/machine"),
-            get("/api/tokens/machine"),
-            post("/api/tokens/machine/{id}/rotate"),
-            delete("/api/tokens/machine/{id}"),
+            post("/api/v1/tokens"),
+            get("/api/v1/tokens"),
+            post("/api/v1/tokens/session"),
+            post("/api/v1/tokens/{id}/rotate"),
+            delete("/api/v1/tokens/{id}"),
+            post("/api/v1/tokens/machine"),
+            get("/api/v1/tokens/machine"),
+            post("/api/v1/tokens/machine/{id}/rotate"),
+            delete("/api/v1/tokens/machine/{id}"),
             // A session identity page; a machine has no session.
-            get("/api/me"),
+            get("/api/v1/me"),
             // The forge mirror's drift report (GW_FACADE_0023): it names an outbound integration target
             // and the state of its credential's last use, which is deployment infrastructure
             // rather than anything the gateway serves. Administrator-only, and no scope reaches it.
-            get("/api/mirror/drift"),
+            get("/api/v1/mirror/drift"),
             // Reconciling that mirror on demand (GW_FACADE_0027): the same outbound integration, and the
             // route that actually exercises its credential against the forge. If the report is
             // reserved to administrators, the button that acts on it cannot be less so.
-            post("/api/mirror/reconcile"),
+            post("/api/v1/mirror/reconcile"),
             // The vetter on/off switch (GW_VETTING_0029.4): administrator judgement over the vetting
             // chain itself, and even seeing the current settings is reserved to administrators —
             // no scope may let a machine credential turn off the control that governs it.
-            get("/api/vetting/vetter-toggles"),
-            put("/api/vetting/vetters/{name}/toggle"),
+            get("/api/v1/vetting/vetter-toggles"),
+            put("/api/v1/vetting/vetters/{name}/toggle"),
             // The same settings resolved for one marketplace (GW_VETTING_0029.5). Reading which
             // vetters a marketplace actually runs is reading the settings themselves, so it is
             // unreachable for the same reason the settings list is.
-            get("/api/marketplaces/{name}/vetting-chain"),
+            get("/api/v1/marketplaces/{name}/vetting-chain"),
             // How far the chain runs and the order it runs in (GW_VETTING_0032, GW_VETTING_0033):
             // the same administrator judgement over the chain as the switch, reserved on the same
             // terms. A machine credential that could stop the chain early, or move a vetter behind
             // the one that stops it, would be deciding how much evidence gates an approval.
-            get("/api/vetting/chain-settings"),
-            put("/api/vetting/chain-mode"),
-            put("/api/vetting/chain-order"),
-            get("/api/marketplaces/{name}/vetting-chain-settings"),
+            get("/api/v1/vetting/chain-settings"),
+            put("/api/v1/vetting/chain-mode"),
+            put("/api/v1/vetting/chain-order"),
+            get("/api/v1/marketplaces/{name}/vetting-chain-settings"),
             // The same three settings one resolution level up, and across the estate
             // (GW_VETTING_0035, GW_VETTING_0036, GW_VETTING_0037). Unreachable for the reason above,
             // only more so: the bulk route is the one call that could narrow every marketplace's
             // chain at once, and removing an override is how a marketplace stops being governed by
             // the setting an administrator thought they had pinned it to.
-            get("/api/vetting/global-chain"),
-            get("/api/vetting/global-chain-settings"),
-            post("/api/vetting/chain-settings/bulk"));
+            get("/api/v1/vetting/global-chain"),
+            get("/api/v1/vetting/global-chain-settings"),
+            post("/api/v1/vetting/chain-settings/bulk"));
 
     private MachineApiRegistry() {}
 

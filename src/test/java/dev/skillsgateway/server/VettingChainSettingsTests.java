@@ -82,17 +82,17 @@ class VettingChainSettingsTests extends AbstractGatewayTest {
         // Every vetter of the chain still has a verdict: a shorter chain would be the failure this
         // state exists to prevent. The ones after secret-scan say they were not reached, and say
         // which vetter stopped the chain.
-        mockMvc.perform(get("/api/snapshots/{id}/vetting", snapshot.id()).with(root))
+        mockMvc.perform(get("/api/v1/snapshots/{id}/vetting", snapshot.id()).with(root))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.run.verdicts.length()").value(chain.size()))
                 .andExpect(jsonPath("$.run.verdicts[?(@.vetter == 'secret-scan')].state")
-                        .value("FAIL"))
-                .andExpect(jsonPath("$.outcome").value(VettingChain.Outcome.BLOCKED.name()));
+                        .value("fail"))
+                .andExpect(jsonPath("$.outcome").value(VettingChain.Outcome.BLOCKED.stored()));
 
         for (String vetter : chain.subList(chain.indexOf("secret-scan") + 1, chain.size())) {
-            mockMvc.perform(get("/api/snapshots/{id}/vetting", snapshot.id()).with(root))
+            mockMvc.perform(get("/api/v1/snapshots/{id}/vetting", snapshot.id()).with(root))
                     .andExpect(jsonPath("$.run.verdicts[?(@.vetter == '%s')].state".formatted(vetter))
-                            .value("NOT_REACHED"))
+                            .value("not_reached"))
                     .andExpect(jsonPath("$.run.verdicts[?(@.vetter == '%s')].detail".formatted(vetter))
                             .value(org.hamcrest.Matchers.hasItem(org.hamcrest.Matchers.containsString("secret-scan"))));
         }
@@ -129,10 +129,10 @@ class VettingChainSettingsTests extends AbstractGatewayTest {
         // The waiver is genuinely suppressing the finding — this is not a test of a waiver that
         // failed to match — and the run is blocked all the same, because the vetters after
         // secret-scan never looked at this content.
-        mockMvc.perform(get("/api/snapshots/{id}/vetting", snapshot.id()).with(root))
+        mockMvc.perform(get("/api/v1/snapshots/{id}/vetting", snapshot.id()).with(root))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.suppressed.length()").value(org.hamcrest.Matchers.greaterThan(0)))
-                .andExpect(jsonPath("$.outcome").value(VettingChain.Outcome.BLOCKED.name()));
+                .andExpect(jsonPath("$.outcome").value(VettingChain.Outcome.BLOCKED.stored()));
 
         assertThatThrownBy(() -> approvalService.approve(snapshot.id(), "alice"))
                 .isInstanceOf(VettingBlockedException.class);
@@ -140,11 +140,11 @@ class VettingChainSettingsTests extends AbstractGatewayTest {
         // The remedy is a fresh run, not a second waiver: with the finding suppressed the chain no
         // longer stops, every vetter looks, and only then is the gate decided.
         vettingService.run(snapshot, name, "revet-manual");
-        mockMvc.perform(get("/api/snapshots/{id}/vetting", snapshot.id()).with(root))
+        mockMvc.perform(get("/api/v1/snapshots/{id}/vetting", snapshot.id()).with(root))
                 .andExpect(status().isOk())
                 .andExpect(
                         jsonPath("$.run.verdicts[?(@.state == 'NOT_REACHED')]").isEmpty())
-                .andExpect(jsonPath("$.outcome").value(VettingChain.Outcome.CLEAR_WITH_WAIVERS.name()));
+                .andExpect(jsonPath("$.outcome").value(VettingChain.Outcome.CLEAR_WITH_WAIVERS.stored()));
     }
 
     @Test
@@ -160,8 +160,8 @@ class VettingChainSettingsTests extends AbstractGatewayTest {
         // No setting anywhere: the default, and named as the default rather than as a decision.
         chainSettingsOf(nameA)
                 .andExpect(jsonPath("$.mode").value("run-all"))
-                .andExpect(jsonPath("$.modeSource").value("DEFAULT"))
-                .andExpect(jsonPath("$.orderSource").value("DEFAULT"))
+                .andExpect(jsonPath("$.modeSource").value("default"))
+                .andExpect(jsonPath("$.orderSource").value("default"))
                 .andExpect(jsonPath("$.order").value(org.hamcrest.Matchers.equalTo(configured)));
 
         // A global setting that changes nothing about what runs — run-all is the default, and the
@@ -170,11 +170,11 @@ class VettingChainSettingsTests extends AbstractGatewayTest {
         setMode("run-all", null, "the estate default, stated");
         setOrder(configured, null, "the configured order, stated");
         chainSettingsOf(nameA)
-                .andExpect(jsonPath("$.modeSource").value("GLOBAL"))
-                .andExpect(jsonPath("$.orderSource").value("GLOBAL"))
+                .andExpect(jsonPath("$.modeSource").value("global"))
+                .andExpect(jsonPath("$.orderSource").value("global"))
                 .andExpect(jsonPath("$.modeReason").value("the estate default, stated"))
                 .andExpect(jsonPath("$.modeUpdatedBy").value("root"));
-        chainSettingsOf(nameB).andExpect(jsonPath("$.modeSource").value("GLOBAL"));
+        chainSettingsOf(nameB).andExpect(jsonPath("$.modeSource").value("global"));
 
         // A marketplace's own setting wins, and only for it.
         List<String> reordered = reversed(configured);
@@ -182,19 +182,19 @@ class VettingChainSettingsTests extends AbstractGatewayTest {
         setOrder(reordered, nameA, "cheapest first");
         chainSettingsOf(nameA)
                 .andExpect(jsonPath("$.mode").value("stop-after-fail"))
-                .andExpect(jsonPath("$.modeSource").value("MARKETPLACE"))
+                .andExpect(jsonPath("$.modeSource").value("marketplace"))
                 .andExpect(jsonPath("$.order").value(org.hamcrest.Matchers.equalTo(reordered)))
                 .andExpect(jsonPath("$.orderOverride").value(org.hamcrest.Matchers.equalTo(reordered)))
-                .andExpect(jsonPath("$.orderSource").value("MARKETPLACE"));
+                .andExpect(jsonPath("$.orderSource").value("marketplace"));
         chainSettingsOf(nameB)
                 .andExpect(jsonPath("$.mode").value("run-all"))
-                .andExpect(jsonPath("$.modeSource").value("GLOBAL"));
+                .andExpect(jsonPath("$.modeSource").value("global"));
 
         // The resolution the chain itself applies, not a recombination of the settings list.
         assertThat(orderedNames(a.id())).isEqualTo(reordered);
 
         // And the effective chain read reports the vetters in that same resolved order.
-        mockMvc.perform(get("/api/marketplaces/{name}/vetting-chain", nameA).with(root))
+        mockMvc.perform(get("/api/v1/marketplaces/{name}/vetting-chain", nameA).with(root))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value(reordered.getFirst()));
     }
@@ -218,7 +218,7 @@ class VettingChainSettingsTests extends AbstractGatewayTest {
         Snapshot snapshot = ingestionService.ingest(marketplace, null);
         assertThat(orderedNames(marketplace.id()).getLast()).isEqualTo("secret-scan");
 
-        mockMvc.perform(get("/api/snapshots/{id}/vetting", snapshot.id()).with(root))
+        mockMvc.perform(get("/api/v1/snapshots/{id}/vetting", snapshot.id()).with(root))
                 .andExpect(status().isOk())
                 // The vetter an order does not name is not dropped: it runs after the named ones.
                 .andExpect(jsonPath("$.run.verdicts.length()").value(configured.size()))
@@ -227,7 +227,7 @@ class VettingChainSettingsTests extends AbstractGatewayTest {
                         jsonPath("$.run.verdicts[?(@.state == 'NOT_REACHED')]").isEmpty())
                 .andExpect(jsonPath("$.run.verdicts[?(@.vetter == 'secret-scan')].position")
                         .value(configured.size() - 1))
-                .andExpect(jsonPath("$.outcome").value(VettingChain.Outcome.BLOCKED.name()));
+                .andExpect(jsonPath("$.outcome").value(VettingChain.Outcome.BLOCKED.stored()));
     }
 
     @Test
@@ -238,12 +238,12 @@ class VettingChainSettingsTests extends AbstractGatewayTest {
         int ledgerBefore = chainSettingEntries();
 
         // Not the switch, not the order, and not even the sight of either.
-        mockMvc.perform(putJson("/api/vetting/chain-mode", mallory, "{\"mode\": \"stop-after-fail\"}"))
+        mockMvc.perform(putJson("/api/v1/vetting/chain-mode", mallory, "{\"mode\": \"stop-after-fail\"}"))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(putJson("/api/vetting/chain-order", mallory, "{\"vetters\": [\"secret-scan\"]}"))
+        mockMvc.perform(putJson("/api/v1/vetting/chain-order", mallory, "{\"vetters\": [\"secret-scan\"]}"))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/vetting/chain-settings").with(mallory)).andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/marketplaces/{name}/vetting-chain-settings", name)
+        mockMvc.perform(get("/api/v1/vetting/chain-settings").with(mallory)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/marketplaces/{name}/vetting-chain-settings", name)
                         .with(mallory))
                 .andExpect(status().isForbidden());
 
@@ -251,33 +251,35 @@ class VettingChainSettingsTests extends AbstractGatewayTest {
         // rather than stored, because an arrangement that matched nothing is a chain an
         // administrator believes they arranged.
         mockMvc.perform(putJson(
-                        "/api/vetting/chain-order",
+                        "/api/v1/vetting/chain-order",
                         root,
                         "{\"vetters\": [\"secret-scan\", \"no-such-vetter\"], \"marketplace\": \"%s\"}"
                                 .formatted(name)))
                 .andExpect(status().isUnprocessableEntity());
         mockMvc.perform(putJson(
-                        "/api/vetting/chain-order",
+                        "/api/v1/vetting/chain-order",
                         root,
                         "{\"vetters\": [\"secret-scan\", \"secret-scan\"], \"marketplace\": \"%s\"}".formatted(name)))
                 .andExpect(status().isUnprocessableEntity());
         mockMvc.perform(putJson(
-                        "/api/vetting/chain-order", root, "{\"vetters\": [], \"marketplace\": \"%s\"}".formatted(name)))
+                        "/api/v1/vetting/chain-order",
+                        root,
+                        "{\"vetters\": [], \"marketplace\": \"%s\"}".formatted(name)))
                 .andExpect(status().isUnprocessableEntity());
 
         // An unknown mode, and an omitted one.
-        mockMvc.perform(putJson("/api/vetting/chain-mode", root, "{\"mode\": \"stop-eventually\"}"))
+        mockMvc.perform(putJson("/api/v1/vetting/chain-mode", root, "{\"mode\": \"stop-eventually\"}"))
                 .andExpect(status().isUnprocessableEntity());
-        mockMvc.perform(putJson("/api/vetting/chain-mode", root, "{}")).andExpect(status().isUnprocessableEntity());
+        mockMvc.perform(putJson("/api/v1/vetting/chain-mode", root, "{}")).andExpect(status().isUnprocessableEntity());
 
         // An unknown marketplace, for both.
         mockMvc.perform(putJson(
-                        "/api/vetting/chain-mode",
+                        "/api/v1/vetting/chain-mode",
                         root,
                         "{\"mode\": \"stop-after-fail\", \"marketplace\": \"no-such-marketplace\"}"))
                 .andExpect(status().isNotFound());
         mockMvc.perform(putJson(
-                        "/api/vetting/chain-order",
+                        "/api/v1/vetting/chain-order",
                         root,
                         "{\"vetters\": [\"secret-scan\"], \"marketplace\": \"no-such-marketplace\"}"))
                 .andExpect(status().isNotFound());
@@ -286,7 +288,7 @@ class VettingChainSettingsTests extends AbstractGatewayTest {
         assertThat(chainSettingEntries()).isEqualTo(ledgerBefore);
         // Nothing was stored for this marketplace: whatever the global setting happens to be, the
         // refused orders did not become a setting of its own.
-        chainSettingsOf(name).andExpect(jsonPath("$.orderSource").value(org.hamcrest.Matchers.not("MARKETPLACE")));
+        chainSettingsOf(name).andExpect(jsonPath("$.orderSource").value(org.hamcrest.Matchers.not("marketplace")));
 
         // The accepted change, by contrast, is on the ledger naming the identity, the scope and the
         // new value.
@@ -305,7 +307,7 @@ class VettingChainSettingsTests extends AbstractGatewayTest {
                             .contains("expensive external review last");
                 });
 
-        mockMvc.perform(get("/api/vetting/chain-settings").with(root))
+        mockMvc.perform(get("/api/v1/vetting/chain-settings").with(root))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.modes").isArray())
                 .andExpect(jsonPath("$.orders").isArray());
@@ -355,20 +357,20 @@ class VettingChainSettingsTests extends AbstractGatewayTest {
     }
 
     private org.springframework.test.web.servlet.ResultActions chainSettingsOf(String marketplace) throws Exception {
-        return mockMvc.perform(get("/api/marketplaces/{name}/vetting-chain-settings", marketplace)
+        return mockMvc.perform(get("/api/v1/marketplaces/{name}/vetting-chain-settings", marketplace)
                         .with(root))
                 .andExpect(status().isOk());
     }
 
     private void setMode(String mode, String marketplace, String reason) throws Exception {
-        mockMvc.perform(putJson("/api/vetting/chain-mode", root, json("mode", quote(mode), marketplace, reason)))
+        mockMvc.perform(putJson("/api/v1/vetting/chain-mode", root, json("mode", quote(mode), marketplace, reason)))
                 .andExpect(status().isOk());
     }
 
     private void setOrder(List<String> vetters, String marketplace, String reason) throws Exception {
         String array =
                 vetters.stream().map(VettingChainSettingsTests::quote).toList().toString();
-        mockMvc.perform(putJson("/api/vetting/chain-order", root, json("vetters", array, marketplace, reason)))
+        mockMvc.perform(putJson("/api/v1/vetting/chain-order", root, json("vetters", array, marketplace, reason)))
                 .andExpect(status().isOk());
     }
 

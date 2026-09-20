@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
  * change is the sharpest form of the same control, so the boundary is the same one.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class VettingChainBulkController {
 
     private final VettingChainBulkService bulkService;

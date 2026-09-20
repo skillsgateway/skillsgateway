@@ -53,9 +53,9 @@ class ForgeMirrorDisabledTests extends AbstractGatewayTest {
 
         // The endpoint answers rather than 404s, so an operator can tell "no mirror" from "no
         // gateway support for one" — and it is still administrator-only when there is nothing to see.
-        mockMvc.perform(get("/api/mirror/drift").with(oidcLogin().idToken(token -> token.subject("mallory"))))
+        mockMvc.perform(get("/api/v1/mirror/drift").with(oidcLogin().idToken(token -> token.subject("mallory"))))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/mirror/drift").with(oidcLogin().idToken(token -> token.subject("alice"))))
+        mockMvc.perform(get("/api/v1/mirror/drift").with(oidcLogin().idToken(token -> token.subject("alice"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.enabled").value(false))
                 .andExpect(jsonPath("$.marketplace").doesNotExist());
@@ -82,9 +82,9 @@ class ForgeMirrorDisabledTests extends AbstractGatewayTest {
 
         // The endpoint answers rather than 404s, for the same reason the drift report does — and is
         // administrator-only even when there is nothing for it to reconcile.
-        mockMvc.perform(post("/api/mirror/reconcile").with(oidcLogin().idToken(token -> token.subject("mallory"))))
+        mockMvc.perform(post("/api/v1/mirror/reconcile").with(oidcLogin().idToken(token -> token.subject("mallory"))))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(post("/api/mirror/reconcile").with(oidcLogin().idToken(token -> token.subject("alice"))))
+        mockMvc.perform(post("/api/v1/mirror/reconcile").with(oidcLogin().idToken(token -> token.subject("alice"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.enabled").value(false));
         assertThat(mirrorLedgerEvents()).isEmpty();

@@ -221,11 +221,11 @@ class ForgeMirrorTests extends AbstractGatewayTest {
     @Test
     @SVCs({"SVC_GW_FACADE_0023"})
     void the_drift_report_is_admin_only_and_never_carries_the_push_credential() throws Exception {
-        mockMvc.perform(get("/api/mirror/drift").with(oidcLogin().idToken(token -> token.subject("mallory"))))
+        mockMvc.perform(get("/api/v1/mirror/drift").with(oidcLogin().idToken(token -> token.subject("mallory"))))
                 .andExpect(status().isForbidden());
 
         String body = mockMvc.perform(
-                        get("/api/mirror/drift").with(oidcLogin().idToken(token -> token.subject("alice"))))
+                        get("/api/v1/mirror/drift").with(oidcLogin().idToken(token -> token.subject("alice"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.enabled").value(true))
                 .andExpect(jsonPath("$.marketplace").value(MIRRORED))

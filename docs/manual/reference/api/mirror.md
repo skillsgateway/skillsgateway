@@ -17,12 +17,12 @@ reason. See [Machine API credentials](tokens.md#machine-api-credentials).
 
 ---
 
-## `GET /api/mirror/drift`
+## `GET /api/v1/mirror/drift`
 
 Reads the mirror's references now and diffs them against published storage.
 
 ```console
-$ curl localhost:8080/api/mirror/drift
+$ curl localhost:8080/api/v1/mirror/drift
 ```
 
 ```json
@@ -73,13 +73,13 @@ otherwise.
 
 ---
 
-## `POST /api/mirror/reconcile`
+## `POST /api/v1/mirror/reconcile`
 
 Reconciles the mirror with what the facade serves now, and answers with the
-resulting comparison — the same body as `GET /api/mirror/drift`.
+resulting comparison — the same body as `GET /api/v1/mirror/drift`.
 
 ```console
-$ curl -X POST localhost:8080/api/mirror/reconcile
+$ curl -X POST localhost:8080/api/v1/mirror/reconcile
 ```
 
 Use it after fixing a code-host outage, rotating a rejected credential, or

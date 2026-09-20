@@ -29,7 +29,7 @@ class OpenApiDocsTests extends AbstractGatewayTest {
                 .getContentAsString();
 
         Map<String, Object> paths = JsonPath.read(doc, "$.paths");
-        assertThat(paths).containsKeys("/api/marketplaces", "/api/tokens", "/api/audit");
+        assertThat(paths).containsKeys("/api/v1/marketplaces", "/api/v1/tokens", "/api/v1/audit");
 
         Path out = Path.of("target", "openapi.json");
         Files.createDirectories(out.getParent());

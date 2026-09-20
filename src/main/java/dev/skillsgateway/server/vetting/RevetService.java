@@ -129,7 +129,7 @@ public class RevetService {
             @Schema(
                     description = "Mode in force for this run: WARN records the violation and leaves publication"
                             + " alone, ENFORCE revokes",
-                    allowableValues = {"WARN", "ENFORCE"})
+                    allowableValues = {"warn", "enforce"})
             SkillsGatewayProperties.RevetMode mode,
 
             @Schema(description = "Blocking findings no active waiver covers; the reason for a violation")

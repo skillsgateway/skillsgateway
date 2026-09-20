@@ -92,7 +92,7 @@ An `approved` snapshot is what the facade serves. It is never eligible:
   approved one;
 - the soft-delete `UPDATE` itself excludes approved snapshots, so served content
   stays served whatever a caller asks for;
-- `DELETE /api/snapshots/{id}` refuses an approved snapshot with **409** before
+- `DELETE /api/v1/snapshots/{id}` refuses an approved snapshot with **409** before
   anything is written.
 
 The guard is in SQL, not only in Java, which is why the check holds for the
@@ -131,8 +131,8 @@ passes so that a wrong criterion costs a mark rather than content.
 ```mermaid
 stateDiagram-v2
     [*] --> Live : ingested
-    Live --> SoftDeleted : evaluate() selects it,\nor DELETE /api/snapshots/{id}
-    SoftDeleted --> Live : POST /api/snapshots/{id}/restore\n(clears deleted_at)
+    Live --> SoftDeleted : evaluate() selects it,\nor DELETE /api/v1/snapshots/{id}
+    SoftDeleted --> Live : POST /api/v1/snapshots/{id}/restore\n(clears deleted_at)
     SoftDeleted --> Purged : compact() after purge_after
     Purged --> [*]
 
@@ -225,11 +225,11 @@ follows, which is what keeps served content served.
 
 | Endpoint | Purpose |
 | --- | --- |
-| `GET /api/retention/candidates` | Dry run — what a pass would select right now, each with the criterion that selected it. Writes nothing. `?marketplace=` restricts it. |
-| `POST /api/retention/evaluate` | Run one evaluation pass now. `?marketplace=` restricts it. **200** with `{selected, acted}`. |
-| `POST /api/retention/compact` | Run one compaction pass now. **200** with `{selected, acted}`. |
-| `DELETE /api/snapshots/{id}` | Soft-delete by hand, reason `manual`. **409** if approved or already deleted, **404** if unknown. |
-| `POST /api/snapshots/{id}/restore` | Clear the marks. **409** if the snapshot is not deleted, **404** if unknown. |
+| `GET /api/v1/retention/candidates` | Dry run — what a pass would select right now, each with the criterion that selected it. Writes nothing. `?marketplace=` restricts it. |
+| `POST /api/v1/retention/evaluate` | Run one evaluation pass now. `?marketplace=` restricts it. **200** with `{selected, acted}`. |
+| `POST /api/v1/retention/compact` | Run one compaction pass now. **200** with `{selected, acted}`. |
+| `DELETE /api/v1/snapshots/{id}` | Soft-delete by hand, reason `manual`. **409** if approved or already deleted, **404** if unknown. |
+| `POST /api/v1/snapshots/{id}/restore` | Clear the marks. **409** if the snapshot is not deleted, **404** if unknown. |
 
 The on-demand passes work whether or not the scheduler is enabled, which is what
 makes a policy inspectable before it is switched on.

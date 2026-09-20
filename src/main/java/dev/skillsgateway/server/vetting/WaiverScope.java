@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.vetting;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Locale;
 
@@ -57,6 +58,7 @@ public enum WaiverScope {
     abstract boolean matches(String scopeValue, String sha, String findingPath);
 
     /** Storage form: the lower-case name, matching the {@code vetting_waivers.scope_kind} check. */
+    @JsonValue
     public String stored() {
         return name().toLowerCase(Locale.ROOT);
     }

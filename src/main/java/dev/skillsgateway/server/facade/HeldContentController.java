@@ -76,7 +76,7 @@ public class HeldContentController {
      * asked a question rather than received content. The counter below carries the same signal at
      * fixed cost.
      */
-    @PostMapping("/status/snapshots")
+    @PostMapping("/status/v1/snapshots")
     @Tag(name = "Held content")
     @Operation(
             summary = "Ask whether content a client already holds is still approved",

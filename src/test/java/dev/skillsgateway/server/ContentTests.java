@@ -44,7 +44,7 @@ class ContentTests extends AbstractGatewayTest {
 
         Registered registered = registerAndIngest(uniqueName("corp"), upstream);
 
-        String body = mockMvc.perform(get("/api/snapshots/%d/content"
+        String body = mockMvc.perform(get("/api/v1/snapshots/%d/content"
                                 .formatted(registered.snapshot().id()))
                         .with(oidcLogin()))
                 .andExpect(status().isOk())
@@ -81,7 +81,7 @@ class ContentTests extends AbstractGatewayTest {
             String name = uniqueName("corp");
             String url = "http://127.0.0.1:%d/acme/skills.git"
                     .formatted(forge.getAddress().getPort());
-            String created = mockMvc.perform(MockMvcRequestBuilders.post("/api/marketplaces")
+            String created = mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/marketplaces")
                             .with(oidcLogin())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"name\":\"%s\",\"url\":\"%s\"}".formatted(name, url)))

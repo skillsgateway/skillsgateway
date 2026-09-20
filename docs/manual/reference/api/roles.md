@@ -25,12 +25,12 @@ surface for something with a safer route.
 
 ---
 
-## `GET /api/roles`
+## `GET /api/v1/roles`
 
 List every current grant.
 
 ```console
-$ curl localhost:8080/api/roles
+$ curl localhost:8080/api/v1/roles
 ```
 
 ```json
@@ -42,7 +42,7 @@ $ curl localhost:8080/api/roles
 
 Configuration-bootstrapped admins and roles derived from identity-provider
 claims are not grants and do not appear here; they show as effective roles with
-source `config` and `claim` on [`/api/me`](index.md#session).
+source `config` and `claim` on [`/api/v1/me`](index.md#session).
 
 | Status | Meaning |
 | --- | --- |
@@ -51,12 +51,12 @@ source `config` and `claim` on [`/api/me`](index.md#session).
 
 ---
 
-## `POST /api/roles`
+## `POST /api/v1/roles`
 
 Grant a role.
 
 ```console
-$ curl -X POST localhost:8080/api/roles \
+$ curl -X POST localhost:8080/api/v1/roles \
     -H 'Content-Type: application/json' \
     -d '{"principal": "alice@example.com", "role": "approver", "marketplace": "acme"}'
 ```
@@ -77,7 +77,7 @@ $ curl -X POST localhost:8080/api/roles \
 
 ---
 
-## `DELETE /api/roles/{id}`
+## `DELETE /api/v1/roles/{id}`
 
 Revoke a grant. The row is deleted; the ledger keeps the history as
 `role-revoked`.

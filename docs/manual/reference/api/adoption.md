@@ -27,7 +27,7 @@ ledger, exactly like the ledger reads themselves. See
 
 ---
 
-## `GET /api/adoption`
+## `GET /api/v1/adoption`
 
 The adoption report: per marketplace, the window's content-transferring
 fetches, distinct fetching identities, the most recent fetch, and a
@@ -38,7 +38,7 @@ per-snapshot-SHA breakdown with each SHA marked current against the served tip.
 | `days` | Report window in days. Default `30`; out-of-range values are clamped to `1..365`. |
 
 ```console
-$ curl "localhost:8080/api/adoption?days=30"
+$ curl "localhost:8080/api/v1/adoption?days=30"
 ```
 
 ```json
@@ -59,7 +59,7 @@ covers fetch activity, not the registry.
 
 ---
 
-## `GET /api/adoption/staleness`
+## `GET /api/v1/adoption/staleness`
 
 Every identity whose most recent content-transferring fetch of a marketplace
 received a SHA that is **not** that marketplace's currently served tip.
@@ -67,7 +67,7 @@ Window-free by design: staleness is a property of an identity's latest state,
 not of a reporting period.
 
 ```console
-$ curl localhost:8080/api/adoption/staleness
+$ curl localhost:8080/api/v1/adoption/staleness
 ```
 
 ```json

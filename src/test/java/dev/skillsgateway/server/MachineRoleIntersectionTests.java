@@ -54,19 +54,19 @@ class MachineRoleIntersectionTests extends AbstractNamedAdminsTest {
         // Scope but no role: the allowlist admits it, RoleService does not.
         String unroled = uniqueName("scoped-only");
         TokenService.IssuedToken scopedOnly = credential(unroled, List.of("audit:read"));
-        mockMvc.perform(bearer(get("/api/audit"), scopedOnly.token())).andExpect(status().isForbidden());
+        mockMvc.perform(bearer(get("/api/v1/audit"), scopedOnly.token())).andExpect(status().isForbidden());
 
         // Role but no scope: the role is irrelevant, because the allowlist never let it through.
         String unscoped = uniqueName("roled-only");
         roleService.grant(unscoped, RoleGrant.AUDITOR, null, "owner");
         TokenService.IssuedToken roledOnly = credential(unscoped, List.of("marketplaces:read"));
-        mockMvc.perform(bearer(get("/api/audit"), roledOnly.token())).andExpect(status().isForbidden());
+        mockMvc.perform(bearer(get("/api/v1/audit"), roledOnly.token())).andExpect(status().isForbidden());
 
         // Both: and only then does it work, which is what makes this an intersection.
         String both = uniqueName("both");
         roleService.grant(both, RoleGrant.AUDITOR, null, "owner");
         TokenService.IssuedToken complete = credential(both, List.of("audit:read"));
-        mockMvc.perform(bearer(get("/api/audit"), complete.token())).andExpect(status().isOk());
+        mockMvc.perform(bearer(get("/api/v1/audit"), complete.token())).andExpect(status().isOk());
     }
 
     @Test
@@ -78,17 +78,17 @@ class MachineRoleIntersectionTests extends AbstractNamedAdminsTest {
                 credential(principal, List.copyOf(dev.skillsgateway.server.auth.MachineApiRegistry.scopes()));
 
         // The role is real: with it, a scoped read it holds succeeds.
-        mockMvc.perform(bearer(get("/api/roles"), everything.token())).andExpect(status().isOk());
+        mockMvc.perform(bearer(get("/api/v1/roles"), everything.token())).andExpect(status().isOk());
         // And still nothing on the unreachable table, because no scope value reaches it.
-        mockMvc.perform(bearer(post("/api/roles"), everything.token())
+        mockMvc.perform(bearer(post("/api/v1/roles"), everything.token())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"principal\": \"mallory\", \"role\": \"admin\"}"))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(bearer(post("/api/snapshots/{id}/approve", 999999), everything.token())
+        mockMvc.perform(bearer(post("/api/v1/snapshots/{id}/approve", 999999), everything.token())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(bearer(post("/api/tokens/machine"), everything.token())
+        mockMvc.perform(bearer(post("/api/v1/tokens/machine"), everything.token())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isForbidden());

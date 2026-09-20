@@ -72,7 +72,7 @@ Register a marketplace. Fetches nothing.
 **Body** — `{name, url?, ref?, origin?, pushPolicy?}`
 
 ```console
-$ curl -X POST localhost:8080/api/marketplaces \
+$ curl -X POST localhost:8080/api/v1/marketplaces \
     -H 'Content-Type: application/json' \
     -d '{"name":"acme","url":"https://github.com/acme/skills.git"}'
 ```
@@ -127,7 +127,7 @@ marketplace the source is its own origin repository, and a push already does
 this — the endpoint stays available to re-ingest.
 
 ```console
-$ curl -X POST localhost:8080/api/marketplaces/acme/ingest
+$ curl -X POST localhost:8080/api/v1/marketplaces/acme/ingest
 ```
 
 | Status | Cause |
@@ -151,7 +151,7 @@ Set how upstream content reaches quarantine: `on-demand` (default),
 `scheduled`, or `webhook`. No mode bypasses approval.
 
 ```console
-$ curl -X PUT localhost:8080/api/marketplaces/acme/sync \
+$ curl -X PUT localhost:8080/api/v1/marketplaces/acme/sync \
     -H 'Content-Type: application/json' -d '{"mode":"webhook"}'
 ```
 
@@ -1013,7 +1013,7 @@ act that takes one identity, and a credential in a pipeline cannot supply one
 that means anything.
 
 ```console
-$ curl -X POST localhost:8080/api/snapshots/42/revoke \
+$ curl -X POST localhost:8080/api/v1/snapshots/42/revoke \
     -H 'Content-Type: application/json' \
     -d '{"reason": "CVE-2026-0001 in a vendored dependency", "serveAfter": "PREVIOUS_APPROVED"}'
 ```
@@ -1059,7 +1059,7 @@ Quarantine is untouched. Retention may reclaim the content but
     does not reach into client machines.
     [`GET /snapshots/{id}/fetchers`](#get-snapshotsidfetchers) names the blast
     radius, and a client can discover the withdrawal for itself by asking
-    [`POST /status/snapshots`](../git-facade.md#checking-content-you-already-hold)
+    [`POST /status/v1/snapshots`](../git-facade.md#checking-content-you-already-hold)
     about the commits it holds. Acting on the answer is the client's, so pair a
     withdrawal with whatever
     [fleet check](../../guides/client-enforcement.md#noticing-that-something-you-already-hold-was-withdrawn)

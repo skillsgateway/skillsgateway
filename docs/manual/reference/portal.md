@@ -29,7 +29,7 @@ address for existing bookmarks and links.
 ## User menu
 
 The header's breadcrumb sits opposite a menu named after the signed-in user
-(`GET /api/me`). Opening it shows:
+(`GET /api/v1/me`). Opening it shows:
 
 - **Signed in as** the username.
 - **Roles** — one line per effective role the session holds, said in the
@@ -107,7 +107,7 @@ log**.
 **Access tokens** — chips for active and revoked counts. Action: **Manage
 tokens**.
 
-Data comes from `GET /api/marketplaces`, `GET /api/tokens` and `GET /api/audit`;
+Data comes from `GET /api/v1/marketplaces`, `GET /api/v1/tokens` and `GET /api/v1/audit`;
 counts are computed in the browser, as there is no summary endpoint. While the
 queries are in flight the chips show an ellipsis.
 
@@ -140,7 +140,7 @@ ticked. This is a warning, not a block: the same upstream under a different name
 a legitimate test setup, so the server still accepts it; the acknowledgement only
 makes the collision deliberate rather than silent.
 
-Submits `POST /api/marketplaces`; toasts *Marketplace '{name}' registered*. The
+Submits `POST /api/v1/marketplaces`; toasts *Marketplace '{name}' registered*. The
 server runs the identical duplicate-URL check independently against every
 registered marketplace, not only the list this dialog already had loaded, and
 returns what it found in the response's `warnings`; each one is shown as its
@@ -161,7 +161,7 @@ One sortable row per marketplace:
 | Snapshots | A count badge. |
 
 Expanding a row reveals **Ingest**
-(`POST /api/marketplaces/{name}/ingest`, toasting *Snapshot {sha12} is {state}*),
+(`POST /api/v1/marketplaces/{name}/ingest`, toasting *Snapshot {sha12} is {state}*),
 an **Open detail** link, and the [snapshot table](#snapshot-table) with its
 review actions.
 
@@ -171,7 +171,7 @@ review actions.
 | --- | --- |
 | Commit | First 12 characters of the SHA, monospace. |
 | State | Badge — `approved` (primary), `held` (secondary), `rejected` and `revoked` (destructive). |
-| Vetting | Badge from `GET /api/snapshots/{id}/vetting`: `vetting clear` (primary), `vetting clear with waivers` (secondary) or `vetting blocked` (destructive). A snapshot the chain never ran against reads *blocked*. The waived case is a separate badge on purpose — an accepted risk must not read as a clean chain. |
+| Vetting | Badge from `GET /api/v1/snapshots/{id}/vetting`: `vetting clear` (primary), `vetting clear with waivers` (secondary) or `vetting blocked` (destructive). A snapshot the chain never ran against reads *blocked*. The waived case is a separate badge on purpose — an accepted risk must not read as a clean chain. |
 | Violation | The ingestion violation, or "—". |
 | Decided by | The deciding principal, or "—". |
 | Actions | Right-aligned buttons. |
@@ -187,7 +187,7 @@ the moment content becomes reachable by clients, so the verdicts come first.
 While a snapshot is inside the configured
 [minimum release age](configuration.md#minimum-release-age), the approve control
 is disabled and reads **Eligible in {remaining}** — from
-`GET /api/snapshots/{id}/release-age`, so the portal never computes the deadline
+`GET /api/v1/snapshots/{id}/release-age`, so the portal never computes the deadline
 from the browser's clock. **Reject** stays enabled: rejection is never age-gated.
 With the gate off (the default) the control reads **Approve** as before, and a
 snapshot whose eligibility has not been fetched yet is never disabled on
@@ -206,7 +206,7 @@ The dialog is also shut by the minimum release age, and says so in its own note:
 that one has no way past it in the portal at all, and needs none — it opens by
 itself at the stated time.
 
-Confirming calls `POST /api/snapshots/{id}/approve` with no body and toasts
+Confirming calls `POST /api/v1/snapshots/{id}/approve` with no body and toasts
 *Snapshot {id} approved*.
 
 #### Waiving a finding
@@ -224,7 +224,7 @@ that opens an inline form beside it:
 **and** the expiry is still in the future, which is exactly what the server
 requires.
 
-*Record waiver for {rule}* calls `POST /api/snapshots/{id}/waivers` and toasts
+*Record waiver for {rule}* calls `POST /api/v1/snapshots/{id}/waivers` and toasts
 *Waiver recorded for {rule}*. The finding is then struck through and badged
 **waived by {approver} until {date}**, and the outcome badge becomes
 **vetting clear with waivers** once nothing is left uncovered.
@@ -232,10 +232,10 @@ requires.
 Below the verdicts, **Accepted risks** lists every waiver whose rule appears in
 this run — active, expired and revoked alike — with its rule, scope,
 justification, approver and expiry. An active one carries
-*Revoke waiver {id}*, which calls `DELETE /api/waivers/{id}`.
+*Revoke waiver {id}*, which calls `DELETE /api/v1/waivers/{id}`.
 
 **Provenance** is always available, opening a dialog fed by
-`GET /api/snapshots/{id}/provenance`: marketplace, upstream URL, upstream SHA,
+`GET /api/v1/snapshots/{id}/provenance`: marketplace, upstream URL, upstream SHA,
 served SHA, state, ingested time, decided by, decided at — and, for a snapshot
 with resolved external plugin sources, the closure: each external plugin with
 the URL it was fetched through and the commit it resolved to.
@@ -263,7 +263,7 @@ shows "—".
 ### Vetting chain (administrators)
 
 **Shown only to a session holding the `admin` role**, above the snapshots. Fed by
-`GET /api/marketplaces/{name}/vetting-chain`, which the server refuses to anyone
+`GET /api/v1/marketplaces/{name}/vetting-chain`, which the server refuses to anyone
 else — the switch that governs the chain, and the visibility of its settings, sit
 above the content they govern.
 
@@ -287,7 +287,7 @@ with it.
 
 The node's detail also carries the switch: an optional reason field and a single
 control that enables or disables that vetter **for this marketplace**, calling
-`PUT /api/vetting/vetters/{name}/toggle`. A per-marketplace setting overrides
+`PUT /api/v1/vetting/vetters/{name}/toggle`. A per-marketplace setting overrides
 the global one. Every change is written to the audit ledger with the acting
 administrator, the vetter, the scope, the new state and the reason.
 
@@ -296,10 +296,10 @@ one automatic. What that means for a run is described in
 [Switching a vetter off](../concepts/vetting.md#switching-a-vetter-off).
 
 Beneath the drawing sit the two chain-level controls, fed by
-`GET /api/marketplaces/{name}/vetting-chain-settings`.
+`GET /api/v1/marketplaces/{name}/vetting-chain-settings`.
 
 **When a vetter fails** is a two-option control — *Run every vetter* or *Stop
-after a failure* — calling `PUT /api/vetting/chain-mode` for this marketplace,
+after a failure* — calling `PUT /api/v1/vetting/chain-mode` for this marketplace,
 with an optional reason. The hint beside it states the cost rather than leaving
 it to be discovered on a snapshot: stopping early spares the vetters after a
 failure, and it also means a reviewer no longer sees everything that is wrong
@@ -312,7 +312,7 @@ with where the current mode came from.
 with names of their own, so the reordering is operable by keyboard and announced
 as what it does; there is no drag gesture to have an equivalent for. Movements
 are local until **Save order** writes the whole arrangement through
-`PUT /api/vetting/chain-order` — one intended reordering is one audited change,
+`PUT /api/v1/vetting/chain-order` — one intended reordering is one audited change,
 not one per hop — and **Discard changes** puts it back. While an arrangement is
 unsaved the drawing above shows the proposed order and the list says it is not
 saved yet.
@@ -325,12 +325,12 @@ renders as destructive text beneath the header row.
 
 The **Show contents** toggle opens two sections.
 
-**What this snapshot ships** loads `GET /api/snapshots/{id}/content` and renders
+**What this snapshot ships** loads `GET /api/v1/snapshots/{id}/content` and renders
 one block per declared plugin: name, `source`, optional description, and one
 badge per skill found under it. Plugins with no skills show "no skills found".
 
 **Changes since the last approved snapshot** loads
-`GET /api/snapshots/{id}/content-diff` and lists only what differs from the
+`GET /api/v1/snapshots/{id}/content-diff` and lists only what differs from the
 marketplace's last approved snapshot, named above the list with its short SHA
 and summarised as count chips (added, changed, moved, removed). Each entry
 carries a status badge; a skill that moved between plugins is listed once,
@@ -349,15 +349,15 @@ The **Preview files** toggle on each snapshot card opens the reviewer preview
 pane: the pinned commit's actual content, not a summary of it.
 
 - **Files**: a scrollable file tree (path and size, from
-  `GET /api/snapshots/{id}/files`) beside a viewer for the selected file
-  (`GET /api/snapshots/{id}/file?path=`). A skill's `SKILL.md` is opened
+  `GET /api/v1/snapshots/{id}/files`) beside a viewer for the selected file
+  (`GET /api/v1/snapshots/{id}/file?path=`). A skill's `SKILL.md` is opened
   automatically. Markdown renders inertly — there is no HTML pipeline at all,
   so HTML embedded in a hostile file appears as visible text and links are
   shown but never navigable. Other text renders preformatted; a binary file is
   described ("Binary file (N bytes) — content is not rendered."); a file over
   the size cap says it is truncated and shows the first part.
 - **Diff vs served**: the delta against the marketplace's currently served
-  commit (`GET /api/snapshots/{id}/diff`) — one row per added, modified or
+  commit (`GET /api/v1/snapshots/{id}/diff`) — one row per added, modified or
   removed path, each expandable to its unified text diff. When nothing is
   served the pane says so: there is no baseline, and approving the snapshot
   serves all of it.
@@ -412,7 +412,7 @@ snippets carry the `<YOUR_TOKEN>` placeholder.
 ### Vetting
 
 Each snapshot card carries a **Vetting** section fed by
-`GET /api/snapshots/{id}/vetting`, above the contents toggle and always visible
+`GET /api/v1/snapshots/{id}/vetting`, above the contents toggle and always visible
 — the evidence is not behind a click.
 
 #### The chain flow
@@ -517,14 +517,14 @@ Above the vetting section, each snapshot card carries the re-vetting surface.
 | State `revoked` | *revoked by {revokedBy} on {revokedAt}*, and an **Already fetched by** panel. |
 | Anything else | Nothing — re-vetting is about content that is being served. |
 
-**Re-vet now** calls `POST /api/snapshots/{id}/revet` and toasts what the run
+**Re-vet now** calls `POST /api/v1/snapshots/{id}/revet` and toasts what the run
 concluded: *re-vetted clear*, *could not conclude*, *has a re-vetting violation;
 it is still published* (warn mode), or *revoked by a re-vetting violation*
 (enforce mode). Why the snapshot was revoked is the card's own `violation` line.
 
 **Already fetched by** lists every identity that received the snapshot's content
 through the facade, each with a fetch count and a last-fetch time, from
-`GET /api/snapshots/{id}/fetchers`. It is only requested for a revoked snapshot.
+`GET /api/v1/snapshots/{id}/fetchers`. It is only requested for a revoked snapshot.
 When nobody fetched it, the panel says so rather than showing an empty list.
 This read is privileged — admin or an approver of this marketplace — so the
 panel shows an error to a session holding neither.
@@ -543,8 +543,8 @@ Each snapshot card carries its retention state and the control that changes it:
 | Not deleted, state `approved` | Nothing — an approved snapshot is served by the facade and the gateway refuses to delete it. |
 | Deleted | A destructive `deleted` badge, "restorable until {purgeAfter}", and a **Restore** button. |
 
-**Delete** calls `DELETE /api/snapshots/{id}` and toasts *Snapshot {id} deleted;
-it can be restored*. **Restore** calls `POST /api/snapshots/{id}/restore` and
+**Delete** calls `DELETE /api/v1/snapshots/{id}` and toasts *Snapshot {id} deleted;
+it can be restored*. **Restore** calls `POST /api/v1/snapshots/{id}/restore` and
 toasts *Snapshot {id} restored*. Both fire immediately, like every other
 mutation in the portal — deletion here is a reversible mark, not a purge.
 
@@ -559,7 +559,7 @@ Empty state: "No snapshots yet."
 ### Audit log
 
 Below the snapshots, the marketplace's slice of the ledger: the entries from
-`GET /api/audit` whose marketplace is this one, newest first, with the same
+`GET /api/v1/audit` whose marketplace is this one, newest first, with the same
 verdict colouring as the [Audit log](#audit-log) page — a blocked verdict reads
 red here too. A **See the full ledger** link goes to `/audit`. Empty state:
 "Nothing recorded against this marketplace yet."
@@ -585,7 +585,7 @@ runs unless it says otherwise, and the ones that say otherwise.
 The chain as it applies to **a marketplace with no override of its own** — the
 same drawing, the same per-vetter switch, and the same two chain-level controls
 as the marketplace card, scoped globally. Fed by
-`GET /api/vetting/global-chain` and `GET /api/vetting/global-chain-settings`,
+`GET /api/v1/vetting/global-chain` and `GET /api/v1/vetting/global-chain-settings`,
 which resolve in the gateway rather than being recomposed in the browser, so this
 page cannot disagree with what actually runs. The source a control reports here is
 `global` or `default`, never `this marketplace`.
@@ -599,8 +599,8 @@ overrides the setting keeps its own; clearing that override is how it comes back
 One row per marketplace whose chain departs from the default, showing what it
 departs in — `mode: stop-after-fail`, `order: …`, `secret-scan: off` — and a
 **Clear every chain override on _name_** control. Assembled from
-`GET /api/vetting/chain-settings`, `GET /api/vetting/vetter-toggles` and
-`GET /api/marketplaces`; a stored override whose marketplace is no longer
+`GET /api/v1/vetting/chain-settings`, `GET /api/v1/vetting/vetter-toggles` and
+`GET /api/v1/marketplaces`; a stored override whose marketplace is no longer
 registered still gets a row, labelled by its id and with its control disabled.
 
 !!! warning "Clearing is not setting the default value"
@@ -629,7 +629,7 @@ marketplace's *own* setting (`no mode override` → `mode: stop-after-fail`),
 because that is what will be stored.
 
 **Apply to these marketplaces** calls
-[`POST /api/vetting/chain-settings/bulk`](api/marketplaces.md#post-vettingchain-settingsbulk).
+[`POST /api/v1/vetting/chain-settings/bulk`](api/marketplaces.md#post-vettingchain-settingsbulk).
 The result is rendered per marketplace — `applied`, `unchanged`, `failed` with
 the server's reason — together with the **correlation id** every ledger entry the
 act wrote carries. A response in which anything was refused renders as a failure,
@@ -646,13 +646,13 @@ fetch and administrative action, exportable to an external compliance system."
 
 ### Export
 
-A **Download ledger (NDJSON)** link pointing at `/api/audit/export` — a plain
+A **Download ledger (NDJSON)** link pointing at `/api/v1/audit/export` — a plain
 same-origin, session-authenticated download, not a fetch through the API client.
 
 ### Export sinks
 
 An inline form with **Sink name** and **Target URL** posts to
-`POST /api/audit/sinks`. **Add sink** stays disabled until the name matches
+`POST /api/v1/audit/sinks`. **Add sink** stays disabled until the name matches
 `^[a-z0-9][a-z0-9_-]*$` and the target URL parses with a scheme; the scheme
 allowlist itself stays server-side. The response opens the same show-once secret dialog as
 [Access tokens](#access-tokens) and [Webhooks](#webhooks).
@@ -668,9 +668,9 @@ allowlist itself stays server-side. The response opens the same show-once secret
 
 **Replay** sets the cursor to `0` — the whole ledger, from the beginning — and
 toasts *Sink '{name}' will replay the ledger*. Replaying to an arbitrary
-position is API-only (`PUT /api/audit/sinks/{id}/cursor`).
+position is API-only (`PUT /api/v1/audit/sinks/{id}/cursor`).
 
-**Delete** calls `DELETE /api/audit/sinks/{id}`, taking the sink's delivery
+**Delete** calls `DELETE /api/v1/audit/sinks/{id}`, taking the sink's delivery
 channel with it, and toasts *Sink '{name}' deleted*.
 
 Sink deliveries are ordinary webhook deliveries, so their attempts appear on the
@@ -680,7 +680,7 @@ Empty state: "No export sinks yet."
 
 ### Ledger
 
-The table, from `GET /api/audit`, **newest first** — the API answers in ledger
+The table, from `GET /api/v1/audit`, **newest first** — the API answers in ledger
 order, so the page sorts it by timestamp descending to open on what just
 happened. Any column header re-sorts it.
 
@@ -723,7 +723,7 @@ it sees the page's error state.
 ### Window and totals
 
 A **Report window** button group — 7, 30 or 90 days, default 30, the active
-choice pressed — drives `GET /api/adoption?days=`. Beside it, stat chips:
+choice pressed — drives `GET /api/v1/adoption?days=`. Beside it, stat chips:
 total fetches in the window, marketplaces fetched, and stale identities.
 
 ### Adoption by marketplace
@@ -765,7 +765,7 @@ signed with HMAC-SHA256 and retried with backoff until delivered."
 ### Add subscriber
 
 An inline form with **Subscriber name**, **Target URL** and **Events**. Events is
-a checkbox list built from `GET /api/webhooks/events`, so the portal offers exactly
+a checkbox list built from `GET /api/v1/webhooks/events`, so the portal offers exactly
 the names this gateway emits rather than asking for them: **All events** ticks or
 clears every one, and the box above the list narrows what is shown without
 changing what is selected. Every event is ticked by default, and that state submits
@@ -774,7 +774,7 @@ events added to the gateway later.
 
 **Add subscriber** stays disabled until the name matches `^[a-z0-9][a-z0-9_-]*$`,
 the target URL parses with a scheme, and at least one event is ticked; only then is
-`POST /api/webhooks` called. The scheme allowlist remains server-side and surfaces
+`POST /api/v1/webhooks` called. The scheme allowlist remains server-side and surfaces
 as an error toast.
 
 The response opens a show-once dialog — "This signing secret is shown exactly
@@ -792,14 +792,14 @@ button that flips to a checkmark for two seconds, the same pattern as
 | Status | `enabled` (primary badge) or `disabled` (secondary). |
 | Actions | **Delete**, which fires immediately. |
 
-**Delete** calls `DELETE /api/webhooks/{id}` and toasts *Subscriber '{name}'
+**Delete** calls `DELETE /api/v1/webhooks/{id}` and toasts *Subscriber '{name}'
 deleted*. It removes the delivery history with the subscriber.
 
 Empty state: "No subscribers yet."
 
 ### Delivery attempts
 
-From `GET /api/webhooks/deliveries` — the operator's view of a failing
+From `GET /api/v1/webhooks/deliveries` — the operator's view of a failing
 integration.
 
 | Column | Contents |
@@ -828,7 +828,7 @@ headers and signature verification.
 hashed at rest and shown exactly once."
 
 An inline form with a **Token name** field and a **Create token** button posts to
-`POST /api/tokens`. **Create token** stays disabled until the name field holds a
+`POST /api/v1/tokens`. **Create token** stays disabled until the name field holds a
 non-blank value — the name is trimmed before it is sent. The response opens a
 show-once dialog — "This value is shown
 exactly once — copy it now. Only a hash is stored." — with the token in a code
@@ -851,7 +851,7 @@ refused authentication never moves it — see
 [`lastUsedAt`](api/tokens.md#lastusedat) for what a **never** does and does not
 prove.
 
-**Revoke** calls `DELETE /api/tokens/{id}` and toasts *Token '{name}' revoked*.
+**Revoke** calls `DELETE /api/v1/tokens/{id}` and toasts *Token '{name}' revoked*.
 It fires immediately. Revocation is recorded rather than deleted: the row stays
 with a `revoked` badge.
 

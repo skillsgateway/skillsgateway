@@ -324,8 +324,8 @@ public class VettingService {
                 VETTING_ACTOR,
                 new WebhookService.VettingSummary(
                         runId,
-                        effect.outcome().name(),
-                        effect.recordedOutcome().name(),
+                        effect.outcome().stored(),
+                        effect.recordedOutcome().stored(),
                         effect.blockingVetters(),
                         effect.uncovered().size(),
                         effect.suppressions().size()));

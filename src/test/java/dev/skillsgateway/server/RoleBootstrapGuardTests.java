@@ -2,7 +2,6 @@ package dev.skillsgateway.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import dev.skillsgateway.server.config.RemovedPropertyGuard;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.roles.RoleBootstrapGuard;
 import io.github.reqstool.annotations.SVCs;
@@ -99,6 +98,6 @@ class RoleBootstrapGuardTests {
     /** The guard itself, not a stand-in: imported as the component the application scans. */
     @Configuration(proxyBeanMethods = false)
     @EnableConfigurationProperties(SkillsGatewayProperties.class)
-    @Import({RemovedPropertyGuard.class, RoleBootstrapGuard.class})
+    @Import(RoleBootstrapGuard.class)
     static class GuardUnderTest {}
 }

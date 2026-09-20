@@ -43,12 +43,12 @@ export type MeView = components["schemas"]["MeView"];
 export type EffectiveRole = components["schemas"]["EffectiveRole"];
 
 /** Same-origin download of the NDJSON ledger stream; the session cookie is the credential. */
-export const AUDIT_EXPORT_URL = "/api/audit/export";
+export const AUDIT_EXPORT_URL = "/api/v1/audit/export";
 
 export function useMe() {
   return useQuery({
     queryKey: ["me"],
-    queryFn: () => api<MeView>("/api/me"),
+    queryFn: () => api<MeView>("/api/v1/me"),
     staleTime: Infinity,
   });
 }
@@ -56,7 +56,7 @@ export function useMe() {
 export function useMarketplaces() {
   return useQuery({
     queryKey: ["marketplaces"],
-    queryFn: () => api<MarketplaceView[]>("/api/marketplaces"),
+    queryFn: () => api<MarketplaceView[]>("/api/v1/marketplaces"),
   });
 }
 
@@ -66,7 +66,7 @@ export function useRegisterMarketplace() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (request: { name: string; url: string }) =>
-      api<RegisteredMarketplace>("/api/marketplaces", {
+      api<RegisteredMarketplace>("/api/v1/marketplaces", {
         method: "POST",
         body: JSON.stringify(request),
       }),
@@ -78,7 +78,7 @@ export function useIngest() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (name: string) =>
-      api<Snapshot>(`/api/marketplaces/${encodeURIComponent(name)}/ingest`, { method: "POST" }),
+      api<Snapshot>(`/api/v1/marketplaces/${encodeURIComponent(name)}/ingest`, { method: "POST" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["marketplaces"] }),
   });
 }
@@ -92,7 +92,7 @@ export function useDecideSnapshot() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, decision }: { id: number; decision: "approve" | "reject" }) =>
-      api<Snapshot>(`/api/snapshots/${id}/${decision}`, { method: "POST" }),
+      api<Snapshot>(`/api/v1/snapshots/${id}/${decision}`, { method: "POST" }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["marketplaces"] });
       void queryClient.invalidateQueries({ queryKey: ["snapshot-vetting"] });
@@ -123,7 +123,7 @@ export function useCreateWaiver() {
       justification: string;
       expiresAt: string;
     }) =>
-      api<Waiver>(`/api/snapshots/${snapshotId}/waivers`, {
+      api<Waiver>(`/api/v1/snapshots/${snapshotId}/waivers`, {
         method: "POST",
         body: JSON.stringify({ ruleId, scope, path, justification, expiresAt }),
       }),
@@ -138,7 +138,7 @@ export function useCreateWaiver() {
 export function useRevokeWaiver() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => api<Waiver>(`/api/waivers/${id}`, { method: "DELETE" }),
+    mutationFn: (id: number) => api<Waiver>(`/api/v1/waivers/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["snapshot-vetting"] });
       void queryClient.invalidateQueries({ queryKey: ["waivers"] });
@@ -150,7 +150,7 @@ export function useRevokeWaiver() {
 export function useWaivers(marketplace: string | null) {
   return useQuery({
     queryKey: ["waivers", marketplace],
-    queryFn: () => api<Waiver[]>(`/api/marketplaces/${encodeURIComponent(marketplace!)}/waivers`),
+    queryFn: () => api<Waiver[]>(`/api/v1/marketplaces/${encodeURIComponent(marketplace!)}/waivers`),
     enabled: marketplace !== null,
   });
 }
@@ -165,7 +165,7 @@ export function useWaivers(marketplace: string | null) {
 export function useRevetSnapshot() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => api<RevetResult>(`/api/snapshots/${id}/revet`, { method: "POST" }),
+    mutationFn: (id: number) => api<RevetResult>(`/api/v1/snapshots/${id}/revet`, { method: "POST" }),
     onSuccess: () => {
       // The state may have moved to revoked, so the listing is invalidated too, not only the
       // vetting evidence.
@@ -183,7 +183,7 @@ export function useRevetSnapshot() {
 export function useSnapshotFetchers(snapshotId: number | null) {
   return useQuery({
     queryKey: ["snapshot-fetchers", snapshotId],
-    queryFn: () => api<Fetcher[]>(`/api/snapshots/${snapshotId}/fetchers`),
+    queryFn: () => api<Fetcher[]>(`/api/v1/snapshots/${snapshotId}/fetchers`),
     enabled: snapshotId !== null,
   });
 }
@@ -192,7 +192,7 @@ export function useSnapshotFetchers(snapshotId: number | null) {
 export function useSnapshotVetting(snapshotId: number | null) {
   return useQuery({
     queryKey: ["snapshot-vetting", snapshotId],
-    queryFn: () => api<VettingView>(`/api/snapshots/${snapshotId}/vetting`),
+    queryFn: () => api<VettingView>(`/api/v1/snapshots/${snapshotId}/vetting`),
     enabled: snapshotId !== null,
   });
 }
@@ -221,7 +221,7 @@ export function useMarketplaceVettingChain(marketplace: string | null) {
   return useQuery({
     queryKey: ["marketplace-vetting-chain", marketplace],
     queryFn: () =>
-      api<ChainVetter[]>(`/api/marketplaces/${encodeURIComponent(marketplace ?? "")}/vetting-chain`),
+      api<ChainVetter[]>(`/api/v1/marketplaces/${encodeURIComponent(marketplace ?? "")}/vetting-chain`),
     enabled: marketplace !== null,
   });
 }
@@ -236,7 +236,7 @@ export function useToggleVetter() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (request: { vetter: string; marketplace?: string; enabled: boolean; reason?: string }) =>
-      api<VetterToggle>(`/api/vetting/vetters/${encodeURIComponent(request.vetter)}/toggle`, {
+      api<VetterToggle>(`/api/v1/vetting/vetters/${encodeURIComponent(request.vetter)}/toggle`, {
         method: "PUT",
         body: JSON.stringify({
           enabled: request.enabled,
@@ -263,7 +263,7 @@ export function useToggleVetter() {
 export function useGlobalVettingChain(enabled = true) {
   return useQuery({
     queryKey: ["global-vetting-chain"],
-    queryFn: () => api<ChainVetter[]>("/api/vetting/global-chain"),
+    queryFn: () => api<ChainVetter[]>("/api/v1/vetting/global-chain"),
     enabled,
   });
 }
@@ -276,7 +276,7 @@ export function useGlobalVettingChain(enabled = true) {
 export function useGlobalChainSettings(enabled = true) {
   return useQuery({
     queryKey: ["global-chain-settings"],
-    queryFn: () => api<ChainSettings>("/api/vetting/global-chain-settings"),
+    queryFn: () => api<ChainSettings>("/api/v1/vetting/global-chain-settings"),
     enabled,
   });
 }
@@ -290,7 +290,7 @@ export function useGlobalChainSettings(enabled = true) {
 export function useChainSettingsList(enabled = true) {
   return useQuery({
     queryKey: ["chain-settings-list"],
-    queryFn: () => api<ChainSettingsList>("/api/vetting/chain-settings"),
+    queryFn: () => api<ChainSettingsList>("/api/v1/vetting/chain-settings"),
     enabled,
   });
 }
@@ -303,7 +303,7 @@ export function useChainSettingsList(enabled = true) {
 export function useVetterToggles(enabled = true) {
   return useQuery({
     queryKey: ["vetter-toggles"],
-    queryFn: () => api<VetterToggle[]>("/api/vetting/vetter-toggles"),
+    queryFn: () => api<VetterToggle[]>("/api/v1/vetting/vetter-toggles"),
     enabled,
   });
 }
@@ -322,7 +322,7 @@ export function useBulkChainSettings() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (request: BulkChainChange) =>
-      api<BulkChainResult>("/api/vetting/chain-settings/bulk", {
+      api<BulkChainResult>("/api/v1/vetting/chain-settings/bulk", {
         method: "POST",
         body: JSON.stringify(request),
       }),
@@ -342,7 +342,7 @@ export function useMarketplaceChainSettings(marketplace: string | null) {
     queryKey: ["marketplace-chain-settings", marketplace],
     queryFn: () =>
       api<ChainSettings>(
-        `/api/marketplaces/${encodeURIComponent(marketplace ?? "")}/vetting-chain-settings`,
+        `/api/v1/marketplaces/${encodeURIComponent(marketplace ?? "")}/vetting-chain-settings`,
       ),
     enabled: marketplace !== null,
   });
@@ -358,7 +358,7 @@ export function useSetChainMode() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (request: { mode: ChainMode; marketplace?: string; reason?: string }) =>
-      api<ChainModeSetting>("/api/vetting/chain-mode", {
+      api<ChainModeSetting>("/api/v1/vetting/chain-mode", {
         method: "PUT",
         body: JSON.stringify({
           mode: request.mode,
@@ -380,7 +380,7 @@ export function useSetChainOrder() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (request: { vetters: string[]; marketplace?: string; reason?: string }) =>
-      api<ChainOrderSetting>("/api/vetting/chain-order", {
+      api<ChainOrderSetting>("/api/v1/vetting/chain-order", {
         method: "PUT",
         body: JSON.stringify({
           vetters: request.vetters,
@@ -423,7 +423,7 @@ function invalidateChain(queryClient: ReturnType<typeof useQueryClient>) {
 export function useSnapshotReleaseAge(snapshotId: number | null) {
   return useQuery({
     queryKey: ["snapshot-release-age", snapshotId],
-    queryFn: () => api<Eligibility>(`/api/snapshots/${snapshotId}/release-age`),
+    queryFn: () => api<Eligibility>(`/api/v1/snapshots/${snapshotId}/release-age`),
     enabled: snapshotId !== null,
   });
 }
@@ -442,7 +442,7 @@ export function useSnapshotReleaseAge(snapshotId: number | null) {
 export function useSnapshotFourEyes(snapshotId: number | null) {
   return useQuery({
     queryKey: ["snapshot-four-eyes", snapshotId],
-    queryFn: () => api<FourEyesCheck>(`/api/snapshots/${snapshotId}/four-eyes`),
+    queryFn: () => api<FourEyesCheck>(`/api/v1/snapshots/${snapshotId}/four-eyes`),
     enabled: snapshotId !== null,
   });
 }
@@ -484,7 +484,7 @@ export function formatRemaining(seconds: number): string {
 export function useSoftDeleteSnapshot() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => api<Snapshot>(`/api/snapshots/${id}`, { method: "DELETE" }),
+    mutationFn: (id: number) => api<Snapshot>(`/api/v1/snapshots/${id}`, { method: "DELETE" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["marketplaces"] }),
   });
 }
@@ -492,7 +492,7 @@ export function useSoftDeleteSnapshot() {
 export function useRestoreSnapshot() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => api<Snapshot>(`/api/snapshots/${id}/restore`, { method: "POST" }),
+    mutationFn: (id: number) => api<Snapshot>(`/api/v1/snapshots/${id}/restore`, { method: "POST" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["marketplaces"] }),
   });
 }
@@ -500,7 +500,7 @@ export function useRestoreSnapshot() {
 export function useProvenance(snapshotId: number | null) {
   return useQuery({
     queryKey: ["provenance", snapshotId],
-    queryFn: () => api<Provenance>(`/api/snapshots/${snapshotId}/provenance`),
+    queryFn: () => api<Provenance>(`/api/v1/snapshots/${snapshotId}/provenance`),
     enabled: snapshotId !== null,
   });
 }
@@ -510,7 +510,7 @@ export type SnapshotContent = components["schemas"]["SnapshotContent"];
 export function useSnapshotContent(snapshotId: number | null) {
   return useQuery({
     queryKey: ["snapshot-content", snapshotId],
-    queryFn: () => api<SnapshotContent>(`/api/snapshots/${snapshotId}/content`),
+    queryFn: () => api<SnapshotContent>(`/api/v1/snapshots/${snapshotId}/content`),
     enabled: snapshotId !== null,
   });
 }
@@ -527,7 +527,7 @@ export type SnapshotSkillDiff = components["schemas"]["SkillDiff"];
 export function useSnapshotContentDiff(snapshotId: number | null) {
   return useQuery({
     queryKey: ["snapshot-content-diff", snapshotId],
-    queryFn: () => api<SnapshotContentDiff>(`/api/snapshots/${snapshotId}/content-diff`),
+    queryFn: () => api<SnapshotContentDiff>(`/api/v1/snapshots/${snapshotId}/content-diff`),
     enabled: snapshotId !== null,
   });
 }
@@ -541,7 +541,7 @@ export type SnapshotDiffEntry = components["schemas"]["DiffEntryView"];
 export function useSnapshotFiles(snapshotId: number | null) {
   return useQuery({
     queryKey: ["snapshot-files", snapshotId],
-    queryFn: () => api<SnapshotFileTree>(`/api/snapshots/${snapshotId}/files`),
+    queryFn: () => api<SnapshotFileTree>(`/api/v1/snapshots/${snapshotId}/files`),
     enabled: snapshotId !== null,
   });
 }
@@ -552,7 +552,7 @@ export function useSnapshotFile(snapshotId: number | null, path: string | null) 
     queryKey: ["snapshot-file", snapshotId, path],
     queryFn: () =>
       api<SnapshotFileContent>(
-        `/api/snapshots/${snapshotId}/file?path=${encodeURIComponent(path ?? "")}`,
+        `/api/v1/snapshots/${snapshotId}/file?path=${encodeURIComponent(path ?? "")}`,
       ),
     enabled: snapshotId !== null && path !== null,
   });
@@ -562,7 +562,7 @@ export function useSnapshotFile(snapshotId: number | null, path: string | null) 
 export function useSnapshotDiff(snapshotId: number | null) {
   return useQuery({
     queryKey: ["snapshot-diff", snapshotId],
-    queryFn: () => api<SnapshotDiff>(`/api/snapshots/${snapshotId}/diff`),
+    queryFn: () => api<SnapshotDiff>(`/api/v1/snapshots/${snapshotId}/diff`),
     enabled: snapshotId !== null,
   });
 }
@@ -574,7 +574,7 @@ export function useSnapshotDiff(snapshotId: number | null) {
 export function useAdoption(days: number) {
   return useQuery({
     queryKey: ["adoption", days],
-    queryFn: () => api<MarketplaceAdoption[]>(`/api/adoption?days=${days}`),
+    queryFn: () => api<MarketplaceAdoption[]>(`/api/v1/adoption?days=${days}`),
   });
 }
 
@@ -582,21 +582,21 @@ export function useAdoption(days: number) {
 export function useStaleness() {
   return useQuery({
     queryKey: ["adoption-staleness"],
-    queryFn: () => api<StaleIdentity[]>("/api/adoption/staleness"),
+    queryFn: () => api<StaleIdentity[]>("/api/v1/adoption/staleness"),
   });
 }
 
 export function useAudit() {
   return useQuery({
     queryKey: ["audit"],
-    queryFn: () => api<Record<string, unknown>[]>("/api/audit"),
+    queryFn: () => api<Record<string, unknown>[]>("/api/v1/audit"),
   });
 }
 
 export function useAuditSinks() {
   return useQuery({
     queryKey: ["audit-sinks"],
-    queryFn: () => api<SinkView[]>("/api/audit/sinks"),
+    queryFn: () => api<SinkView[]>("/api/v1/audit/sinks"),
   });
 }
 
@@ -604,7 +604,7 @@ export function useCreateAuditSink() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (request: { name: string; url: string }) =>
-      api<CreatedSink>("/api/audit/sinks", { method: "POST", body: JSON.stringify(request) }),
+      api<CreatedSink>("/api/v1/audit/sinks", { method: "POST", body: JSON.stringify(request) }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["audit-sinks"] }),
   });
 }
@@ -612,7 +612,7 @@ export function useCreateAuditSink() {
 export function useDeleteAuditSink() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => api<void>(`/api/audit/sinks/${id}`, { method: "DELETE" }),
+    mutationFn: (id: number) => api<void>(`/api/v1/audit/sinks/${id}`, { method: "DELETE" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["audit-sinks"] }),
   });
 }
@@ -622,7 +622,7 @@ export function useResetAuditSinkCursor() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, after }: { id: number; after: number }) =>
-      api<SinkView>(`/api/audit/sinks/${id}/cursor`, {
+      api<SinkView>(`/api/v1/audit/sinks/${id}/cursor`, {
         method: "PUT",
         body: JSON.stringify({ after }),
       }),
@@ -633,7 +633,7 @@ export function useResetAuditSinkCursor() {
 export function useTokens() {
   return useQuery({
     queryKey: ["tokens"],
-    queryFn: () => api<TokenView[]>("/api/tokens"),
+    queryFn: () => api<TokenView[]>("/api/v1/tokens"),
   });
 }
 
@@ -648,7 +648,7 @@ export function useCreateToken() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (request: CreateToken | string) =>
-      api<IssuedToken>("/api/tokens", {
+      api<IssuedToken>("/api/v1/tokens", {
         method: "POST",
         body: JSON.stringify(typeof request === "string" ? { name: request } : request),
       }),
@@ -659,7 +659,7 @@ export function useCreateToken() {
 export function useRevokeToken() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => api<void>(`/api/tokens/${id}`, { method: "DELETE" }),
+    mutationFn: (id: number) => api<void>(`/api/v1/tokens/${id}`, { method: "DELETE" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tokens"] }),
   });
 }
@@ -667,7 +667,7 @@ export function useRevokeToken() {
 export function useWebhookSubscribers() {
   return useQuery({
     queryKey: ["webhook-subscribers"],
-    queryFn: () => api<SubscriberView[]>("/api/webhooks"),
+    queryFn: () => api<SubscriberView[]>("/api/v1/webhooks"),
   });
 }
 
@@ -679,7 +679,7 @@ export function useWebhookSubscribers() {
 export function useWebhookEvents() {
   return useQuery({
     queryKey: ["webhook-events"],
-    queryFn: () => api<WebhookEventRegistry>("/api/webhooks/events"),
+    queryFn: () => api<WebhookEventRegistry>("/api/v1/webhooks/events"),
     staleTime: Infinity,
   });
 }
@@ -687,7 +687,7 @@ export function useWebhookEvents() {
 export function useWebhookDeliveries() {
   return useQuery({
     queryKey: ["webhook-deliveries"],
-    queryFn: () => api<WebhookDelivery[]>("/api/webhooks/deliveries?limit=50"),
+    queryFn: () => api<WebhookDelivery[]>("/api/v1/webhooks/deliveries?limit=50"),
   });
 }
 
@@ -695,7 +695,7 @@ export function useCreateWebhookSubscriber() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (request: { name: string; url: string; events: string[] }) =>
-      api<CreatedSubscriber>("/api/webhooks", { method: "POST", body: JSON.stringify(request) }),
+      api<CreatedSubscriber>("/api/v1/webhooks", { method: "POST", body: JSON.stringify(request) }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["webhook-subscribers"] }),
   });
 }
@@ -703,7 +703,7 @@ export function useCreateWebhookSubscriber() {
 export function useDeleteWebhookSubscriber() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => api<void>(`/api/webhooks/${id}`, { method: "DELETE" }),
+    mutationFn: (id: number) => api<void>(`/api/v1/webhooks/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["webhook-subscribers"] });
       void queryClient.invalidateQueries({ queryKey: ["webhook-deliveries"] });

@@ -21,12 +21,12 @@ that is itself new content to export. See
 
 ---
 
-## `GET /api/audit`
+## `GET /api/v1/audit`
 
 Return the ledger. Requires an authenticated session with the auditor role.
 
 ```console
-$ curl localhost:8080/api/audit
+$ curl localhost:8080/api/v1/audit
 ```
 
 ```json
@@ -53,11 +53,11 @@ schema-lessly.
 
 | Endpoint | Purpose |
 | --- | --- |
-| `GET /api/audit/export` | Stream entries as `application/x-ndjson`, one per line in ledger order. `?after=` (default `0`) and `?limit=` (default `1000`, capped at `10000`). The resume sequence comes back in `X-Skills-Gateway-Audit-Cursor`. |
-| `POST /api/audit/sinks` | Register a push sink. **201** with the show-once signing secret; **400** disallowed scheme, **409** name taken, **422** bad name. |
-| `GET /api/audit/sinks` | List sinks with `cursorPosition`, `ledgerHead` and `behind`. Secrets are never returned. |
-| `PUT /api/audit/sinks/{id}/cursor` | Set the position — replay. **200** with the sink, **404** unknown. |
-| `DELETE /api/audit/sinks/{id}` | Remove the sink and its delivery channel. **204**, or **404**. |
+| `GET /api/v1/audit/export` | Stream entries as `application/x-ndjson`, one per line in ledger order. `?after=` (default `0`) and `?limit=` (default `1000`, capped at `10000`). The resume sequence comes back in `X-Skills-Gateway-Audit-Cursor`. |
+| `POST /api/v1/audit/sinks` | Register a push sink. **201** with the show-once signing secret; **400** disallowed scheme, **409** name taken, **422** bad name. |
+| `GET /api/v1/audit/sinks` | List sinks with `cursorPosition`, `ledgerHead` and `behind`. Secrets are never returned. |
+| `PUT /api/v1/audit/sinks/{id}/cursor` | Set the position — replay. **200** with the sink, **404** unknown. |
+| `DELETE /api/v1/audit/sinks/{id}` | Remove the sink and its delivery channel. **204**, or **404**. |
 
 Both paths withhold entries younger than the commit-settling lag, and every
 entry carries its ledger `id` as the de-duplication key. Task-shaped coverage —
@@ -78,8 +78,8 @@ polling, batch payload, signature, replay — is in
 | `ref` | The ref involved, when there is one. For a facade fetch this is a ref the facade [advertised](../git-facade.md#what-is-served) for that request — see [Events](#events). |
 | `sha` | The commit involved, when there is one. |
 | `detail` | Free-text qualifier, when the entry needs one: the vetting chain outcome, a vetter's verdict, or the reason a reviewer gave when overriding a blocked outcome. |
-| `tokenId` / `token_id` | Id of the credential that authenticated a facade entry (GW_AUTH_0009) or a machine API entry (GW_AUDIT_0007); null on interactive admin entries and on entries older than per-credential attribution. `GET /api/tokens` gives the owner the id→name mapping. |
-| `credential_kind` | What kind of credential authenticated a facade fetch (GW_AUTH_0041): `pat` for a gateway-issued access token, `idp` for an [identity-provider bearer token](../git-facade.md#identity-provider-bearer-tokens). Null on every entry no credential authenticated — administrative and system entries — and on facade entries written before this column existed. Available on `GET /api/audit`; the export payload is unchanged, exactly as it is for `actor_type`. |
+| `tokenId` / `token_id` | Id of the credential that authenticated a facade entry (GW_AUTH_0009) or a machine API entry (GW_AUDIT_0007); null on interactive admin entries and on entries older than per-credential attribution. `GET /api/v1/tokens` gives the owner the id→name mapping. |
+| `credential_kind` | What kind of credential authenticated a facade fetch (GW_AUTH_0041): `pat` for a gateway-issued access token, `idp` for an [identity-provider bearer token](../git-facade.md#identity-provider-bearer-tokens). Null on every entry no credential authenticated — administrative and system entries — and on facade entries written before this column existed. Available on `GET /api/v1/audit`; the export payload is unchanged, exactly as it is for `actor_type`. |
 
 ### The actor type
 
@@ -143,7 +143,7 @@ the acting OIDC principal.
 
 | Event | When | `detail` |
 | --- | --- | --- |
-| `roles-read` | Every **authorized** read of `GET /api/roles`, by a person or a machine alike (GW_AUDIT_0007). A refused read records nothing. | `grants={n}`. |
+| `roles-read` | Every **authorized** read of `GET /api/v1/roles`, by a person or a machine alike (GW_AUDIT_0007). A refused read records nothing. | `grants={n}`. |
 | `machine-credential-created` | A machine API credential was provisioned. The actor is the administrator who provisioned it; the credential's own actions are recorded under its own principal. | `credential {id} '{name}' scopes=…; expires=…`. |
 | `machine-credential-rotated` | A machine API credential got a new secret with an identical grant. | As above. |
 | `machine-credential-revoked` | A machine API credential was revoked. | `credential {id} '{name}' principal=…`. |
@@ -205,7 +205,7 @@ FROM fetch_log
 WHERE sha = '3f9c2ab...' AND ts > now() - interval '90 days';
 ```
 
-`GET /api/snapshots/{id}/fetchers` answers exactly this from the API, and it is
+`GET /api/v1/snapshots/{id}/fetchers` answers exactly this from the API, and it is
 what the portal shows beneath a revoked snapshot. That endpoint is the approver's
 view of one snapshot — an admin, or an approver of its marketplace; an auditor
 asks the same question of the whole ledger through the reads on this page.

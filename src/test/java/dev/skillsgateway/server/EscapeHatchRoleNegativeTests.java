@@ -28,10 +28,10 @@ class EscapeHatchRoleNegativeTests extends AbstractGatewayTest {
     void a_principal_named_dev_holds_nothing_while_the_escape_hatch_is_off() throws Exception {
         var pretender = oidcLogin().idToken(token -> token.subject("dev"));
 
-        mockMvc.perform(get("/api/me").with(pretender))
+        mockMvc.perform(get("/api/v1/me").with(pretender))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.roles").isEmpty());
-        mockMvc.perform(post("/api/marketplaces")
+        mockMvc.perform(post("/api/v1/marketplaces")
                         .with(pretender)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\": \"%s\", \"url\": \"https://example.com/x.git\"}"
@@ -51,7 +51,7 @@ class EscapeHatchRoleNegativeTests extends AbstractGatewayTest {
         // Same name, real OIDC principal. Asserted separately from the case above because the two
         // are closed by different conditions in the check, and a single test would pass with either
         // one of them removed.
-        mockMvc.perform(get("/api/me").with(oidcLogin().idToken(token -> token.subject("dev"))))
+        mockMvc.perform(get("/api/v1/me").with(oidcLogin().idToken(token -> token.subject("dev"))))
                 .andExpect(status().isOk())
                 .andExpect(
                         jsonPath("$.roles[?(@.source == 'dev-insecure-auth')]").isEmpty());

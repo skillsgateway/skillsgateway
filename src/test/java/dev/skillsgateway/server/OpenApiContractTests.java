@@ -101,7 +101,7 @@ class OpenApiContractTests extends AbstractGatewayTest {
         // A check nobody has seen fail is a check nobody should trust: drop one endpoint from the
         // published copy and the real assertion above must go red.
         String served = servedDocument();
-        String drifted = OpenApiSnapshot.publishedForm(served).replace("\"/api/tokens\"", "\"/api/tokenz\"");
+        String drifted = OpenApiSnapshot.publishedForm(served).replace("\"/api/v1/tokens\"", "\"/api/v1/tokenz\"");
 
         assertThatThrownBy(() -> assertPublishedIsCurrent(drifted, served))
                 .isInstanceOf(AssertionError.class)
@@ -215,7 +215,7 @@ class OpenApiContractTests extends AbstractGatewayTest {
     }
 
     private static void assertThePayloadIsReachableFromPaths(DocumentContext document) {
-        Map<String, Object> responses = document.read("$.paths['/api/webhooks/events'].get.responses");
+        Map<String, Object> responses = document.read("$.paths['/api/v1/webhooks/events'].get.responses");
         assertThat(responses.toString())
                 .as("the events endpoint answers with the registry record, which is what pulls the payloads"
                         + " into the paths surface")
@@ -319,7 +319,7 @@ class OpenApiContractTests extends AbstractGatewayTest {
 
         assertThatThrownBy(() -> assertThePayloadIsReachableFromPaths(
                         mutated(served, root -> ((ObjectNode) root.required("paths")
-                                        .required("/api/webhooks/events")
+                                        .required("/api/v1/webhooks/events")
                                         .required("get")
                                         .required("responses"))
                                 .putObject("200"))))

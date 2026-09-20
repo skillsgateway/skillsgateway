@@ -61,22 +61,22 @@ class MachineCredentialAdminTests extends AbstractNamedAdminsTest {
         // now. What this suite still pins is narrower and worth keeping: provisioning is admin-only
         // and never approver-only or auditor-only, because a credential outlives the session that
         // minted it.
-        mockMvc.perform(get("/api/roles").with(anyone())).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/roles").with(anyone())).andExpect(status().isForbidden());
 
-        mockMvc.perform(post("/api/tokens/machine")
+        mockMvc.perform(post("/api/v1/tokens/machine")
                         .with(anyone())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body(uniqueName("nope"))))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/tokens/machine").with(anyone())).andExpect(status().isForbidden());
-        mockMvc.perform(delete("/api/tokens/machine/{id}", 999999).with(anyone()))
+        mockMvc.perform(get("/api/v1/tokens/machine").with(anyone())).andExpect(status().isForbidden());
+        mockMvc.perform(delete("/api/v1/tokens/machine/{id}", 999999).with(anyone()))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(post("/api/tokens/machine/{id}/rotate", 999999).with(anyone()))
+        mockMvc.perform(post("/api/v1/tokens/machine/{id}/rotate", 999999).with(anyone()))
                 .andExpect(status().isForbidden());
 
         // And the configured admin can do all four, so the refusal is the role and not the route.
         String principal = uniqueName("minted");
-        String created = mockMvc.perform(post("/api/tokens/machine")
+        String created = mockMvc.perform(post("/api/v1/tokens/machine")
                         .with(admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body(principal)))
@@ -85,8 +85,8 @@ class MachineCredentialAdminTests extends AbstractNamedAdminsTest {
                 .getResponse()
                 .getContentAsString();
         long id = com.jayway.jsonpath.JsonPath.<Number>read(created, "$.id").longValue();
-        mockMvc.perform(get("/api/tokens/machine").with(admin())).andExpect(status().isOk());
-        mockMvc.perform(post("/api/tokens/machine/{id}/rotate", id).with(admin()))
+        mockMvc.perform(get("/api/v1/tokens/machine").with(admin())).andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/tokens/machine/{id}/rotate", id).with(admin()))
                 .andExpect(status().isOk());
     }
 

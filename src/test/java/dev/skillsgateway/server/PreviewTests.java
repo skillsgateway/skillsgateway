@@ -46,7 +46,8 @@ class PreviewTests extends AbstractGatewayTest {
         long id = fixture.snapshot().id();
 
         // The tree lists exactly the pinned commit's paths, unbounded content notwithstanding.
-        String treeBody = mockMvc.perform(get("/api/snapshots/{id}/files", id).with(alice))
+        String treeBody = mockMvc.perform(
+                        get("/api/v1/snapshots/{id}/files", id).with(alice))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sha").value(fixture.snapshot().sha()))
                 .andExpect(jsonPath("$.truncated").value(false))
@@ -60,7 +61,7 @@ class PreviewTests extends AbstractGatewayTest {
         assertThat(paths).contains(MANIFEST_PATH, SKILL_PATH, "data/huge.txt", "assets/logo.bin");
 
         // A text blob returns its content.
-        mockMvc.perform(get("/api/snapshots/{id}/file", id)
+        mockMvc.perform(get("/api/v1/snapshots/{id}/file", id)
                         .param("path", SKILL_PATH)
                         .with(alice))
                 .andExpect(status().isOk())
@@ -69,7 +70,7 @@ class PreviewTests extends AbstractGatewayTest {
                 .andExpect(jsonPath("$.text").value(org.hamcrest.Matchers.containsString("Hello")));
 
         // Over the cap: truncated, with the marker saying so and the full size still reported.
-        String hugeBody = mockMvc.perform(get("/api/snapshots/{id}/file", id)
+        String hugeBody = mockMvc.perform(get("/api/v1/snapshots/{id}/file", id)
                         .param("path", "data/huge.txt")
                         .with(alice))
                 .andExpect(status().isOk())
@@ -83,7 +84,7 @@ class PreviewTests extends AbstractGatewayTest {
         assertThat(huge.get("size").asLong()).isEqualTo(oversized.getBytes().length);
 
         // Binary: metadata only, never bytes dressed up as text.
-        mockMvc.perform(get("/api/snapshots/{id}/file", id)
+        mockMvc.perform(get("/api/v1/snapshots/{id}/file", id)
                         .param("path", "assets/logo.bin")
                         .with(alice))
                 .andExpect(status().isOk())
@@ -93,14 +94,15 @@ class PreviewTests extends AbstractGatewayTest {
         // Paths are matched against tree entries and nothing else: an absent path and every
         // traversal shape are simply not found — there is no filesystem underneath to escape to.
         for (String bad : List.of("no-such-file.md", "../../../etc/passwd", "/etc/passwd", "plugins/../..")) {
-            mockMvc.perform(get("/api/snapshots/{id}/file", id)
+            mockMvc.perform(get("/api/v1/snapshots/{id}/file", id)
                             .param("path", bad)
                             .with(alice))
                     .andExpect(status().isNotFound());
         }
 
         // Unknown snapshot: not found, same as every other snapshot read.
-        mockMvc.perform(get("/api/snapshots/{id}/files", 999_999).with(alice)).andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/v1/snapshots/{id}/files", 999_999).with(alice))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -113,7 +115,7 @@ class PreviewTests extends AbstractGatewayTest {
         approve(baseId);
 
         // The served snapshot against itself: the baseline is itself, and nothing differs.
-        mockMvc.perform(get("/api/snapshots/{id}/diff", baseId).with(alice))
+        mockMvc.perform(get("/api/v1/snapshots/{id}/diff", baseId).with(alice))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.baselineSha").value(baseSha))
                 .andExpect(jsonPath("$.entries").isEmpty());
@@ -128,7 +130,7 @@ class PreviewTests extends AbstractGatewayTest {
                         null)
                 .id();
 
-        String body = mockMvc.perform(get("/api/snapshots/{id}/diff", heldId).with(alice))
+        String body = mockMvc.perform(get("/api/v1/snapshots/{id}/diff", heldId).with(alice))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.baselineSha").value(baseSha))
                 .andExpect(jsonPath("$.truncated").value(false))
@@ -150,7 +152,7 @@ class PreviewTests extends AbstractGatewayTest {
         // A marketplace serving nothing has no baseline; the honest answer is "all of it is new".
         Registered unserved = registerAndIngest(uniqueName("diffnone"), createUpstream(DEFAULT_MANIFEST));
         String noneBody = mockMvc.perform(
-                        get("/api/snapshots/{id}/diff", unserved.snapshot().id())
+                        get("/api/v1/snapshots/{id}/diff", unserved.snapshot().id())
                                 .with(alice))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.baselineSha").doesNotExist())

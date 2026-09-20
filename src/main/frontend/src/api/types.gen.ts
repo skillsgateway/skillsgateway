@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/api/adoption": {
+    "/api/v1/adoption": {
         parameters: {
             query?: never;
             header?: never;
@@ -24,7 +24,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/adoption/staleness": {
+    "/api/v1/adoption/staleness": {
         parameters: {
             query?: never;
             header?: never;
@@ -44,7 +44,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/audit": {
+    "/api/v1/audit": {
         parameters: {
             query?: never;
             header?: never;
@@ -64,7 +64,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/audit/export": {
+    "/api/v1/audit/export": {
         parameters: {
             query?: never;
             header?: never;
@@ -84,7 +84,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/audit/sinks": {
+    "/api/v1/audit/sinks": {
         parameters: {
             query?: never;
             header?: never;
@@ -108,7 +108,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/audit/sinks/{id}": {
+    "/api/v1/audit/sinks/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -128,7 +128,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/audit/sinks/{id}/cursor": {
+    "/api/v1/audit/sinks/{id}/cursor": {
         parameters: {
             query?: never;
             header?: never;
@@ -148,7 +148,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/catalog": {
+    "/api/v1/catalog": {
         parameters: {
             query?: never;
             header?: never;
@@ -168,7 +168,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/catalog/rebuild": {
+    "/api/v1/catalog/rebuild": {
         parameters: {
             query?: never;
             header?: never;
@@ -188,7 +188,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/estate": {
+    "/api/v1/estate": {
         parameters: {
             query?: never;
             header?: never;
@@ -208,7 +208,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/estate/reconcile": {
+    "/api/v1/estate/reconcile": {
         parameters: {
             query?: never;
             header?: never;
@@ -228,7 +228,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/marketplaces": {
+    "/api/v1/marketplaces": {
         parameters: {
             query?: never;
             header?: never;
@@ -252,7 +252,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/marketplaces/{name}/ingest": {
+    "/api/v1/marketplaces/{name}/ingest": {
         parameters: {
             query?: never;
             header?: never;
@@ -272,7 +272,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/marketplaces/{name}/revet": {
+    "/api/v1/marketplaces/{name}/revet": {
         parameters: {
             query?: never;
             header?: never;
@@ -292,7 +292,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/marketplaces/{name}/sync": {
+    "/api/v1/marketplaces/{name}/sync": {
         parameters: {
             query?: never;
             header?: never;
@@ -312,7 +312,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/marketplaces/{name}/vetting-chain": {
+    "/api/v1/marketplaces/{name}/vetting-chain": {
         parameters: {
             query?: never;
             header?: never;
@@ -332,7 +332,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/marketplaces/{name}/vetting-chain-settings": {
+    "/api/v1/marketplaces/{name}/vetting-chain-settings": {
         parameters: {
             query?: never;
             header?: never;
@@ -352,7 +352,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/marketplaces/{name}/waivers": {
+    "/api/v1/marketplaces/{name}/waivers": {
         parameters: {
             query?: never;
             header?: never;
@@ -372,7 +372,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/me": {
+    "/api/v1/me": {
         parameters: {
             query?: never;
             header?: never;
@@ -392,7 +392,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/mirror/drift": {
+    "/api/v1/mirror/drift": {
         parameters: {
             query?: never;
             header?: never;
@@ -412,7 +412,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/mirror/reconcile": {
+    "/api/v1/mirror/reconcile": {
         parameters: {
             query?: never;
             header?: never;
@@ -432,7 +432,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/policy/playground": {
+    "/api/v1/policy/playground": {
         parameters: {
             query?: never;
             header?: never;
@@ -452,7 +452,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/policy/rules": {
+    "/api/v1/policy/rules": {
         parameters: {
             query?: never;
             header?: never;
@@ -476,7 +476,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/policy/rules/{name}": {
+    "/api/v1/policy/rules/{name}": {
         parameters: {
             query?: never;
             header?: never;
@@ -500,7 +500,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/retention/candidates": {
+    "/api/v1/retention/candidates": {
         parameters: {
             query?: never;
             header?: never;
@@ -520,7 +520,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/retention/compact": {
+    "/api/v1/retention/compact": {
         parameters: {
             query?: never;
             header?: never;
@@ -540,7 +540,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/retention/evaluate": {
+    "/api/v1/retention/evaluate": {
         parameters: {
             query?: never;
             header?: never;
@@ -560,7 +560,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/roles": {
+    "/api/v1/roles": {
         parameters: {
             query?: never;
             header?: never;
@@ -584,7 +584,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/roles/{id}": {
+    "/api/v1/roles/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -604,7 +604,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/snapshots/{id}": {
+    "/api/v1/snapshots/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -624,7 +624,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/snapshots/{id}/approve": {
+    "/api/v1/snapshots/{id}/approve": {
         parameters: {
             query?: never;
             header?: never;
@@ -644,7 +644,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/snapshots/{id}/content": {
+    "/api/v1/snapshots/{id}/content": {
         parameters: {
             query?: never;
             header?: never;
@@ -664,7 +664,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/snapshots/{id}/content-diff": {
+    "/api/v1/snapshots/{id}/content-diff": {
         parameters: {
             query?: never;
             header?: never;
@@ -684,7 +684,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/snapshots/{id}/diff": {
+    "/api/v1/snapshots/{id}/diff": {
         parameters: {
             query?: never;
             header?: never;
@@ -704,7 +704,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/snapshots/{id}/fetchers": {
+    "/api/v1/snapshots/{id}/fetchers": {
         parameters: {
             query?: never;
             header?: never;
@@ -724,7 +724,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/snapshots/{id}/file": {
+    "/api/v1/snapshots/{id}/file": {
         parameters: {
             query?: never;
             header?: never;
@@ -744,7 +744,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/snapshots/{id}/files": {
+    "/api/v1/snapshots/{id}/files": {
         parameters: {
             query?: never;
             header?: never;
@@ -764,7 +764,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/snapshots/{id}/four-eyes": {
+    "/api/v1/snapshots/{id}/four-eyes": {
         parameters: {
             query?: never;
             header?: never;
@@ -784,7 +784,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/snapshots/{id}/licenses": {
+    "/api/v1/snapshots/{id}/licenses": {
         parameters: {
             query?: never;
             header?: never;
@@ -804,7 +804,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/snapshots/{id}/provenance": {
+    "/api/v1/snapshots/{id}/provenance": {
         parameters: {
             query?: never;
             header?: never;
@@ -824,7 +824,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/snapshots/{id}/reject": {
+    "/api/v1/snapshots/{id}/reject": {
         parameters: {
             query?: never;
             header?: never;
@@ -844,7 +844,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/snapshots/{id}/release-age": {
+    "/api/v1/snapshots/{id}/release-age": {
         parameters: {
             query?: never;
             header?: never;
@@ -864,7 +864,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/snapshots/{id}/restore": {
+    "/api/v1/snapshots/{id}/restore": {
         parameters: {
             query?: never;
             header?: never;
@@ -884,7 +884,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/snapshots/{id}/revet": {
+    "/api/v1/snapshots/{id}/revet": {
         parameters: {
             query?: never;
             header?: never;
@@ -904,7 +904,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/snapshots/{id}/revoke": {
+    "/api/v1/snapshots/{id}/revoke": {
         parameters: {
             query?: never;
             header?: never;
@@ -924,7 +924,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/snapshots/{id}/vetting": {
+    "/api/v1/snapshots/{id}/vetting": {
         parameters: {
             query?: never;
             header?: never;
@@ -944,7 +944,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/snapshots/{id}/waivers": {
+    "/api/v1/snapshots/{id}/waivers": {
         parameters: {
             query?: never;
             header?: never;
@@ -964,7 +964,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/tokens": {
+    "/api/v1/tokens": {
         parameters: {
             query?: never;
             header?: never;
@@ -988,7 +988,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/tokens/machine": {
+    "/api/v1/tokens/machine": {
         parameters: {
             query?: never;
             header?: never;
@@ -1012,7 +1012,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/tokens/machine/{id}": {
+    "/api/v1/tokens/machine/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1032,7 +1032,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/tokens/machine/{id}/rotate": {
+    "/api/v1/tokens/machine/{id}/rotate": {
         parameters: {
             query?: never;
             header?: never;
@@ -1052,7 +1052,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/tokens/session": {
+    "/api/v1/tokens/session": {
         parameters: {
             query?: never;
             header?: never;
@@ -1072,7 +1072,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/tokens/{id}": {
+    "/api/v1/tokens/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1092,7 +1092,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/tokens/{id}/rotate": {
+    "/api/v1/tokens/{id}/rotate": {
         parameters: {
             query?: never;
             header?: never;
@@ -1112,7 +1112,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/vetting/chain-mode": {
+    "/api/v1/vetting/chain-mode": {
         parameters: {
             query?: never;
             header?: never;
@@ -1132,7 +1132,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/vetting/chain-order": {
+    "/api/v1/vetting/chain-order": {
         parameters: {
             query?: never;
             header?: never;
@@ -1152,7 +1152,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/vetting/chain-settings": {
+    "/api/v1/vetting/chain-settings": {
         parameters: {
             query?: never;
             header?: never;
@@ -1172,7 +1172,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/vetting/chain-settings/bulk": {
+    "/api/v1/vetting/chain-settings/bulk": {
         parameters: {
             query?: never;
             header?: never;
@@ -1192,7 +1192,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/vetting/global-chain": {
+    "/api/v1/vetting/global-chain": {
         parameters: {
             query?: never;
             header?: never;
@@ -1212,7 +1212,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/vetting/global-chain-settings": {
+    "/api/v1/vetting/global-chain-settings": {
         parameters: {
             query?: never;
             header?: never;
@@ -1232,7 +1232,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/vetting/vetter-toggles": {
+    "/api/v1/vetting/vetter-toggles": {
         parameters: {
             query?: never;
             header?: never;
@@ -1252,7 +1252,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/vetting/vetters/{name}/toggle": {
+    "/api/v1/vetting/vetters/{name}/toggle": {
         parameters: {
             query?: never;
             header?: never;
@@ -1272,7 +1272,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/waivers/{id}": {
+    "/api/v1/waivers/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1292,7 +1292,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/webhooks": {
+    "/api/v1/webhooks": {
         parameters: {
             query?: never;
             header?: never;
@@ -1316,7 +1316,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/webhooks/deliveries": {
+    "/api/v1/webhooks/deliveries": {
         parameters: {
             query?: never;
             header?: never;
@@ -1336,7 +1336,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/webhooks/events": {
+    "/api/v1/webhooks/events": {
         parameters: {
             query?: never;
             header?: never;
@@ -1356,7 +1356,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/webhooks/{id}": {
+    "/api/v1/webhooks/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1428,7 +1428,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/status/snapshots": {
+    "/status/v1/snapshots": {
         parameters: {
             query?: never;
             header?: never;
@@ -1901,7 +1901,7 @@ export interface components {
              * @description Which setting decided the mode
              * @enum {string}
              */
-            modeSource?: "MARKETPLACE" | "GLOBAL" | "DEFAULT";
+            modeSource?: "marketplace" | "global" | "default";
             /**
              * Format: date-time
              * @description When the mode was last set, or null for the default
@@ -1919,7 +1919,7 @@ export interface components {
              * @description Which setting decided the order
              * @enum {string}
              */
-            orderSource?: "MARKETPLACE" | "GLOBAL" | "DEFAULT";
+            orderSource?: "marketplace" | "global" | "default";
             /**
              * Format: date-time
              * @description When the order was last set, or null for the default
@@ -1949,7 +1949,7 @@ export interface components {
              * @description Which setting decided the state
              * @enum {string}
              */
-            source?: "MARKETPLACE" | "GLOBAL" | "DEFAULT";
+            source?: "marketplace" | "global" | "default";
             /**
              * Format: date-time
              * @description When the deciding setting was last set, or null for the default
@@ -2454,7 +2454,7 @@ export interface components {
              * @description How much the finding matters
              * @enum {string}
              */
-            severity?: "INFO" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+            severity?: "info" | "low" | "medium" | "high" | "critical";
         };
         /** @description Whether the four-eyes rule would refuse this reviewer's approval of this snapshot */
         FourEyesCheck: {
@@ -2464,7 +2464,7 @@ export interface components {
              * @description The configured mode
              * @enum {string}
              */
-            mode?: "WARN" | "ENFORCE";
+            mode?: "warn" | "enforce";
             /** @description True when the mode is enforce and there is at least one conflict */
             refused?: boolean;
         };
@@ -2577,7 +2577,7 @@ export interface components {
              * @description Standing under the configured allow/ban policy
              * @enum {string}
              */
-            evaluation?: "OK" | "BANNED" | "NOT_ALLOWED" | "UNKNOWN";
+            evaluation?: "ok" | "banned" | "not_allowed" | "unknown";
             /** @description File path, or <manifest path>#<field> for manifest metadata */
             location?: string;
             /**
@@ -2848,7 +2848,7 @@ export interface components {
              * @description applied, unchanged, or failed
              * @enum {string}
              */
-            status?: "APPLIED" | "UNCHANGED" | "FAILED";
+            status?: "applied" | "unchanged" | "failed";
         };
         /** @description Outcome of a retention pass */
         PassResult: {
@@ -3050,19 +3050,19 @@ export interface components {
              * @description What the run means for already-approved content
              * @enum {string}
              */
-            classification?: "CLEAR" | "VIOLATION" | "INCONCLUSIVE";
+            classification?: "clear" | "violation" | "inconclusive";
             /** @description Marketplace it belongs to */
             marketplace?: string;
             /**
              * @description Mode in force for this run: WARN records the violation and leaves publication alone, ENFORCE revokes
              * @enum {string}
              */
-            mode?: "WARN" | "ENFORCE";
+            mode?: "warn" | "enforce";
             /**
              * @description The effective vetting outcome after active waivers
              * @enum {string}
              */
-            outcome?: "CLEAR" | "CLEAR_WITH_WAIVERS" | "BLOCKED";
+            outcome?: "clear" | "clear_with_waivers" | "blocked";
             /** @description Whether the snapshot was revoked and unpublished as a result */
             revoked?: boolean;
             /**
@@ -3085,10 +3085,10 @@ export interface components {
             /** @description Why the snapshot is being withdrawn. Required and non-empty: withdrawal takes one administrator and no second reviewer, so this is the whole of the record, and it is what a later approval of the same commit is refused with */
             reason?: string;
             /**
-             * @description What the marketplace serves afterwards. Required, with no default, because neither outcome is safe to assume: PREVIOUS_APPROVED republishes older content that may carry the same compromise, and NOTHING takes the marketplace down
+             * @description What the marketplace serves afterwards. Required, with no default, because neither outcome is safe to assume: `previous_approved` republishes older content that may carry the same compromise, and `nothing` takes the marketplace down
              * @enum {string}
              */
-            serveAfter?: "PREVIOUS_APPROVED" | "NOTHING";
+            serveAfter?: "previous_approved" | "nothing";
         };
         /** @description The outcome of withdrawing a snapshot */
         RevokeResponse: {
@@ -3137,7 +3137,7 @@ export interface components {
              * @description Fail-closed aggregate of the run's verdicts
              * @enum {string}
              */
-            outcome?: "CLEAR" | "CLEAR_WITH_WAIVERS" | "BLOCKED";
+            outcome?: "clear" | "clear_with_waivers" | "blocked";
             /**
              * Format: int64
              * @description Chain run id
@@ -3486,7 +3486,7 @@ export interface components {
              * @description How much it matters
              * @enum {string}
              */
-            severity?: "INFO" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+            severity?: "info" | "low" | "medium" | "high" | "critical";
             /** @description Vetter whose verdict carried the finding */
             vetter?: string;
         };
@@ -3516,7 +3516,7 @@ export interface components {
              * @description The vetter's conclusion
              * @enum {string}
              */
-            state?: "PASS" | "WARN" | "FAIL" | "ERROR" | "PENDING" | "DISABLED" | "NOT_REACHED";
+            state?: "pass" | "warn" | "fail" | "error" | "pending" | "disabled" | "not_reached";
             /**
              * Format: int64
              * @description Verdict id
@@ -3598,15 +3598,15 @@ export interface components {
             /** @description Names of the vetters that are the reason it blocks; empty when nothing objects */
             blockingVetters: string[];
             /**
-             * @description The effective outcome, which is what gates approval: the run with every waived finding removed. CLEAR means an approval will succeed; CLEAR_WITH_WAIVERS that it will, and only because someone accepted a risk; BLOCKED that it will not.
+             * @description The effective outcome, which is what gates approval: the run with every waived finding removed. `clear` means an approval will succeed; `clear_with_waivers` that it will, and only because someone accepted a risk; `blocked` that it will not.
              * @enum {string}
              */
-            outcome: "CLEAR" | "CLEAR_WITH_WAIVERS" | "BLOCKED";
+            outcome: "clear" | "clear_with_waivers" | "blocked";
             /**
              * @description What the vetters themselves concluded, before any waiver was applied
              * @enum {string}
              */
-            recordedOutcome: "CLEAR" | "BLOCKED";
+            recordedOutcome: "clear" | "blocked";
             /**
              * Format: int64
              * @description Identifier of the chain run this event reports
@@ -3626,17 +3626,17 @@ export interface components {
         /** @description A snapshot's latest vetting chain run, the waivers over it, and the chain that produced it */
         VettingView: {
             /**
-             * @description The effective outcome, which is what gates approval: the run's verdicts with every waived finding removed. CLEAR_WITH_WAIVERS means nothing objects any more only because an active waiver is suppressing a finding. A snapshot with no run is blocked.
+             * @description The effective outcome, which is what gates approval: the run's verdicts with every waived finding removed. `clear_with_waivers` means nothing objects any more only because an active waiver is suppressing a finding. A snapshot with no run is blocked.
              * @enum {string}
              */
-            outcome?: "CLEAR" | "CLEAR_WITH_WAIVERS" | "BLOCKED";
+            outcome?: "clear" | "clear_with_waivers" | "blocked";
             /** @description Present when an administrator approved this snapshot over a blocked vetting outcome (GW_VETTING_0028); its presence is what surfaces the override so it is never indistinguishable from a clean approval. Null otherwise. */
             override?: components["schemas"]["VettingOverrideRecord"];
             /**
              * @description What the vetters themselves concluded, before any waiver was applied
              * @enum {string}
              */
-            recordedOutcome?: "CLEAR" | "BLOCKED";
+            recordedOutcome?: "clear" | "blocked";
             /** @description The latest run with its verdicts and findings, or null if the chain never ran */
             run?: components["schemas"]["Run"];
             /**
@@ -3677,7 +3677,7 @@ export interface components {
              * @description SNAPSHOT pins the waiver to this snapshot's commit SHA; PATH applies it to a path in the marketplace and survives re-ingestion
              * @enum {string}
              */
-            scope: "SNAPSHOT" | "PATH";
+            scope: "snapshot" | "path";
         };
         /** @description A waiver as returned by the API, with its activity resolved as of now */
         WaiverView: {
@@ -3720,7 +3720,7 @@ export interface components {
              * @description How the scope value is matched
              * @enum {string}
              */
-            scope?: "SNAPSHOT" | "PATH";
+            scope?: "snapshot" | "path";
             /** @description A commit SHA for snapshot scope, a repository-relative path for path scope */
             scopeValue?: string;
         };

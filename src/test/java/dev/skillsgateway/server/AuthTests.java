@@ -28,9 +28,9 @@ class AuthTests extends AbstractGatewayTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/oauth2/authorization/idp"));
 
-        mockMvc.perform(get("/api/marketplaces")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/marketplaces")).andExpect(status().isUnauthorized());
 
-        mockMvc.perform(get("/api/marketplaces").with(oidcLogin())).andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/marketplaces").with(oidcLogin())).andExpect(status().isOk());
     }
 
     @Test
@@ -69,7 +69,7 @@ class AuthTests extends AbstractGatewayTest {
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
         approve(registered.snapshot().id());
 
-        String createBody = mockMvc.perform(post("/api/tokens")
+        String createBody = mockMvc.perform(post("/api/v1/tokens")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"ci\"}"))
@@ -84,7 +84,7 @@ class AuthTests extends AbstractGatewayTest {
                 .as("cleartext appears exactly once")
                 .hasSize(2);
 
-        String listBody = mockMvc.perform(get("/api/tokens").with(oidcLogin()))
+        String listBody = mockMvc.perform(get("/api/v1/tokens").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -117,7 +117,7 @@ class AuthTests extends AbstractGatewayTest {
         AccessToken stored = tokenService.authenticate(token).orElseThrow();
         assertThat(stored.tokenHash()).isNotEqualTo(token);
 
-        mockMvc.perform(delete("/api/tokens/" + id).with(oidcLogin())).andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/v1/tokens/" + id).with(oidcLogin())).andExpect(status().isNoContent());
 
         assertThat(tokenService.authenticate(token)).isEmpty();
         GitResult afterRevocation = gitClone(facadeUrl(name, token), newWorkDir("revoked"));

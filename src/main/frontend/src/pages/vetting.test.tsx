@@ -21,7 +21,7 @@ function renderPage() {
 
 function asAdmin() {
   server.use(
-    http.get("/api/me", () =>
+    http.get("/api/v1/me", () =>
       HttpResponse.json({
         username: "alice",
         roles: [{ role: "admin", source: "config" }],
@@ -47,8 +47,8 @@ test("a_session_without_the_administrative_role_is_refused_the_page", async () =
 test("an_administrator_reads_the_default_chain_and_the_marketplaces_that_depart_from_it", async () => {
   asAdmin();
   server.use(
-    http.get("/api/vetting/chain-settings", () => HttpResponse.json(chainOverrides)),
-    http.get("/api/vetting/vetter-toggles", () => HttpResponse.json(vetterToggles)),
+    http.get("/api/v1/vetting/chain-settings", () => HttpResponse.json(chainOverrides)),
+    http.get("/api/v1/vetting/vetter-toggles", () => HttpResponse.json(vetterToggles)),
   );
   renderPage();
 
@@ -69,7 +69,7 @@ test("a_bulk_change_that_refused_a_marketplace_is_reported_as_a_failure", async 
   asAdmin();
   const sent = vi.fn();
   server.use(
-    http.post("/api/vetting/chain-settings/bulk", async ({ request }) => {
+    http.post("/api/v1/vetting/chain-settings/bulk", async ({ request }) => {
       sent(await request.json());
       return HttpResponse.json(bulkPartialFailure, { status: 207 });
     }),

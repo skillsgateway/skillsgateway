@@ -29,14 +29,14 @@ import { snapshotFlow, snapshotHeadline } from "@/lib/vetting-flow";
 
 function verdictIcon(state?: string) {
   switch (state) {
-    case "PASS":
+    case "pass":
       return <CircleCheck className="size-4 text-primary" aria-hidden />;
-    case "WARN":
+    case "warn":
       return <AlertTriangle className="size-4 text-primary" aria-hidden />;
-    case "FAIL":
-    case "ERROR":
+    case "fail":
+    case "error":
       return <CircleAlert className="size-4 text-destructive" aria-hidden />;
-    case "DISABLED":
+    case "disabled":
       return <CircleSlash className="size-4 text-muted-foreground" aria-hidden />;
     default:
       return <CircleHelp className="size-4 text-muted-foreground" aria-hidden />;
@@ -45,20 +45,20 @@ function verdictIcon(state?: string) {
 
 function verdictBadge(state?: string) {
   switch (state) {
-    case "PASS":
+    case "pass":
       return <Badge>pass</Badge>;
-    case "WARN":
+    case "warn":
       return <Badge variant="secondary">warn</Badge>;
-    case "FAIL":
+    case "fail":
       return <Badge variant="destructive">fail</Badge>;
-    case "ERROR":
+    case "error":
       return <Badge variant="destructive">error</Badge>;
-    case "PENDING":
+    case "pending":
       return <Badge variant="outline">pending</Badge>;
     // Not a conclusion the vetter reached: an administrator switched it off for this
     // marketplace, so the chain recorded the skip in its place. It neither clears nor blocks, and
     // it must never read as a pass.
-    case "DISABLED":
+    case "disabled":
       return <Badge variant="outline">disabled</Badge>;
     default:
       return <Badge variant="outline">{state ?? "unknown"}</Badge>;
@@ -71,8 +71,8 @@ function verdictBadge(state?: string) {
  * clean chain.
  */
 export function OutcomeBadge({ outcome }: { outcome?: string }) {
-  if (outcome === "CLEAR") return <Badge>vetting clear</Badge>;
-  if (outcome === "CLEAR_WITH_WAIVERS")
+  if (outcome === "clear") return <Badge>vetting clear</Badge>;
+  if (outcome === "clear_with_waivers")
     return <Badge variant="secondary">vetting clear with waivers</Badge>;
   return <Badge variant="destructive">vetting blocked</Badge>;
 }
@@ -106,7 +106,7 @@ function WaiveForm({
   onCancel: () => void;
 }) {
   const create = useCreateWaiver();
-  const [scope, setScope] = useState<WaiverScope>("SNAPSHOT");
+  const [scope, setScope] = useState<WaiverScope>("snapshot");
   const [justification, setJustification] = useState("");
   const [expiresAt, setExpiresAt] = useState(defaultExpiry());
   const path = (finding.location ?? "").replace(/:\d+$/, "");
@@ -135,8 +135,8 @@ function WaiveForm({
             value={scope}
             onChange={(event) => setScope(event.target.value as WaiverScope)}
           >
-            <option value="SNAPSHOT">This snapshot only</option>
-            <option value="PATH">This path in the marketplace ({path || "—"})</option>
+            <option value="snapshot">This snapshot only</option>
+            <option value="path">This path in the marketplace ({path || "—"})</option>
           </select>
         </div>
         <div className="space-y-1">
@@ -179,7 +179,7 @@ function WaiveForm({
                 snapshotId,
                 ruleId: rule,
                 scope,
-                ...(scope === "PATH" ? { path } : {}),
+                ...(scope === "path" ? { path } : {}),
                 justification: justification.trim(),
                 expiresAt: new Date(expiryInstant).toISOString(),
               },
@@ -213,7 +213,7 @@ function FindingRow({
   suppression?: WaiverSuppression;
 }) {
   const [waiving, setWaiving] = useState(false);
-  const high = finding.severity === "HIGH" || finding.severity === "CRITICAL";
+  const high = finding.severity === "high" || finding.severity === "critical";
   const waived = suppression !== undefined;
   return (
     <div className="text-sm">
@@ -309,7 +309,7 @@ function WaiverList({ waivers }: { waivers: Waiver[] }) {
             </Badge>
             <span className="font-mono text-xs">{waiver.ruleId}</span>
             <span className="font-mono text-xs text-muted-foreground">
-              {waiver.scope === "SNAPSHOT" ? "snapshot" : "path"}: {waiver.scopeValue}
+              {waiver.scope === "snapshot" ? "snapshot" : "path"}: {waiver.scopeValue}
             </span>
             <span className="text-muted-foreground">{waiver.justification}</span>
             <span className="text-xs text-muted-foreground">
@@ -372,8 +372,8 @@ export function VettingReport({ snapshotId }: { snapshotId: number }) {
         <ShieldCheck className="size-4 text-primary" aria-hidden />
         <span className="font-medium">Vetting</span>
         <OutcomeBadge outcome={vetting.data?.outcome} />
-        {vetting.data?.recordedOutcome === "BLOCKED" &&
-        vetting.data?.outcome === "CLEAR_WITH_WAIVERS" ? (
+        {vetting.data?.recordedOutcome === "blocked" &&
+        vetting.data?.outcome === "clear_with_waivers" ? (
           <span className="text-xs text-muted-foreground">
             the chain objected; active waivers are suppressing what it found
           </span>

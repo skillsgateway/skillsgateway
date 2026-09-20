@@ -54,46 +54,46 @@ class RoleEnforcementTests extends AbstractGatewayTest {
      * rather than shipping unprotected.
      */
     private static final Set<String> ROLE_GATED_MUTATIONS = Set.of(
-            "POST /api/marketplaces",
-            "PUT /api/marketplaces/{name}/sync",
-            "POST /api/catalog/rebuild",
-            "DELETE /api/snapshots/{id}",
-            "POST /api/snapshots/{id}/restore",
-            "POST /api/retention/evaluate",
-            "POST /api/retention/compact",
-            "POST /api/webhooks",
-            "DELETE /api/webhooks/{id}",
-            "POST /api/audit/sinks",
-            "DELETE /api/audit/sinks/{id}",
-            "PUT /api/audit/sinks/{id}/cursor",
-            "POST /api/roles",
-            "DELETE /api/roles/{id}",
-            "POST /api/estate/reconcile",
-            "POST /api/marketplaces/{name}/ingest",
-            "POST /api/snapshots/{id}/approve",
-            "POST /api/snapshots/{id}/reject",
-            "POST /api/snapshots/{id}/revoke",
-            "POST /api/snapshots/{id}/revet",
-            "POST /api/marketplaces/{name}/revet",
-            "POST /api/snapshots/{id}/waivers",
-            "DELETE /api/waivers/{id}",
-            "POST /api/policy/rules",
-            "PUT /api/policy/rules/{name}",
-            "DELETE /api/policy/rules/{name}",
+            "POST /api/v1/marketplaces",
+            "PUT /api/v1/marketplaces/{name}/sync",
+            "POST /api/v1/catalog/rebuild",
+            "DELETE /api/v1/snapshots/{id}",
+            "POST /api/v1/snapshots/{id}/restore",
+            "POST /api/v1/retention/evaluate",
+            "POST /api/v1/retention/compact",
+            "POST /api/v1/webhooks",
+            "DELETE /api/v1/webhooks/{id}",
+            "POST /api/v1/audit/sinks",
+            "DELETE /api/v1/audit/sinks/{id}",
+            "PUT /api/v1/audit/sinks/{id}/cursor",
+            "POST /api/v1/roles",
+            "DELETE /api/v1/roles/{id}",
+            "POST /api/v1/estate/reconcile",
+            "POST /api/v1/marketplaces/{name}/ingest",
+            "POST /api/v1/snapshots/{id}/approve",
+            "POST /api/v1/snapshots/{id}/reject",
+            "POST /api/v1/snapshots/{id}/revoke",
+            "POST /api/v1/snapshots/{id}/revet",
+            "POST /api/v1/marketplaces/{name}/revet",
+            "POST /api/v1/snapshots/{id}/waivers",
+            "DELETE /api/v1/waivers/{id}",
+            "POST /api/v1/policy/rules",
+            "PUT /api/v1/policy/rules/{name}",
+            "DELETE /api/v1/policy/rules/{name}",
             // The administrative vetter on/off switch (GW_VETTING_0029): admin-only, so it walks with
             // the role-gated mutations and is denied to every non-admin.
-            "PUT /api/vetting/vetters/{name}/toggle",
-            "PUT /api/vetting/chain-mode",
-            "PUT /api/vetting/chain-order",
+            "PUT /api/v1/vetting/vetters/{name}/toggle",
+            "PUT /api/v1/vetting/chain-mode",
+            "PUT /api/v1/vetting/chain-order",
             // The estate-wide form of the same three settings (GW_VETTING_0037), and the only way to
             // remove an override (GW_VETTING_0036): the sharpest form of an admin-only control.
-            "POST /api/vetting/chain-settings/bulk",
+            "POST /api/v1/vetting/chain-settings/bulk",
             // Reconciling the read-only forge mirror (GW_FACADE_0027): admin-only for the same reason its
             // drift report is, and the route that actually exercises the push credential — if the
             // report is reserved, the button that acts on it cannot be less so.
-            "POST /api/mirror/reconcile",
+            "POST /api/v1/mirror/reconcile",
             // Read-only by contract, but a POST and approver-gated: it walks as a mutation.
-            "POST /api/policy/playground");
+            "POST /api/v1/policy/playground");
 
     /**
      * Owner-scoped by design (GW_AUTH_0010): a session's own tokens need no role. A session-derived
@@ -102,7 +102,10 @@ class RoleEnforcementTests extends AbstractGatewayTest {
      * it belongs here rather than behind a role.
      */
     private static final Set<String> OWNER_SCOPED_MUTATIONS = Set.of(
-            "POST /api/tokens", "POST /api/tokens/session", "POST /api/tokens/{id}/rotate", "DELETE /api/tokens/{id}");
+            "POST /api/v1/tokens",
+            "POST /api/v1/tokens/session",
+            "POST /api/v1/tokens/{id}/rotate",
+            "DELETE /api/v1/tokens/{id}");
 
     /**
      * Machine credential provisioning (GW_AUTH_0023): admin-only whether or not enforcement is enabled,
@@ -111,43 +114,45 @@ class RoleEnforcementTests extends AbstractGatewayTest {
      * actually exists for.
      */
     private static final Set<String> ALWAYS_ADMIN_MUTATIONS = Set.of(
-            "POST /api/tokens/machine", "POST /api/tokens/machine/{id}/rotate", "DELETE /api/tokens/machine/{id}");
+            "POST /api/v1/tokens/machine",
+            "POST /api/v1/tokens/machine/{id}/rotate",
+            "DELETE /api/v1/tokens/machine/{id}");
 
     /** The ledger and the operational listings: auditor-or-admin reads (GW_AUTH_0012). */
     private static final Set<String> PRIVILEGED_READS = Set.of(
             // Admin-only rather than an auditor read: it lists control-plane credentials, and it
             // is admin-only whether or not enforcement is enabled (GW_AUTH_0023). The auditor walk
             // below skips it for the same reason it skips grant administration.
-            "GET /api/tokens/machine",
-            "GET /api/audit",
-            "GET /api/audit/export",
-            "GET /api/audit/sinks",
-            "GET /api/adoption",
-            "GET /api/adoption/staleness",
-            "GET /api/webhooks",
-            "GET /api/webhooks/events",
-            "GET /api/webhooks/deliveries",
-            "GET /api/retention/candidates",
-            "GET /api/roles",
-            "GET /api/estate",
-            "GET /api/policy/rules",
+            "GET /api/v1/tokens/machine",
+            "GET /api/v1/audit",
+            "GET /api/v1/audit/export",
+            "GET /api/v1/audit/sinks",
+            "GET /api/v1/adoption",
+            "GET /api/v1/adoption/staleness",
+            "GET /api/v1/webhooks",
+            "GET /api/v1/webhooks/events",
+            "GET /api/v1/webhooks/deliveries",
+            "GET /api/v1/retention/candidates",
+            "GET /api/v1/roles",
+            "GET /api/v1/estate",
+            "GET /api/v1/policy/rules",
             // The vetter settings are admin-only, not an auditor read (GW_VETTING_0029): the switch that
             // governs the vetting chain is not shown to marketplace-scoped approvers or auditors.
-            "GET /api/vetting/vetter-toggles",
-            "GET /api/vetting/chain-settings",
-            "GET /api/marketplaces/{name}/vetting-chain-settings",
+            "GET /api/v1/vetting/vetter-toggles",
+            "GET /api/v1/vetting/chain-settings",
+            "GET /api/v1/marketplaces/{name}/vetting-chain-settings",
             // A marketplace's effective chain is the same settings resolved (GW_VETTING_0029.5), so it
             // sits behind the same administrator check: reporting which vetters an approver's
             // own marketplace runs is reporting the settings themselves.
-            "GET /api/marketplaces/{name}/vetting-chain",
+            "GET /api/v1/marketplaces/{name}/vetting-chain",
             // The same settings one resolution level up (GW_VETTING_0035): what a marketplace with no
             // override runs is the global setting itself, so it sits behind the same check.
-            "GET /api/vetting/global-chain",
-            "GET /api/vetting/global-chain-settings",
+            "GET /api/v1/vetting/global-chain",
+            "GET /api/v1/vetting/global-chain-settings",
             // The forge mirror's drift report (GW_FACADE_0023) is admin-only too: it names an outbound
             // integration target and the state of its credential's last use, which is deployment
             // infrastructure rather than a record of what the gateway served to whom.
-            "GET /api/mirror/drift");
+            "GET /api/v1/mirror/drift");
 
     /**
      * Reads scoped to the snapshot's own marketplace (GW_AUTH_0011): an approver of it, or an
@@ -156,29 +161,29 @@ class RoleEnforcementTests extends AbstractGatewayTest {
      * deciding on the snapshot rather than part of browsing it.
      */
     private static final Set<String> APPROVER_SCOPED_READS = Set.of(
-            "GET /api/snapshots/{id}/diff",
-            "GET /api/snapshots/{id}/file",
-            "GET /api/snapshots/{id}/files",
-            "GET /api/snapshots/{id}/fetchers");
+            "GET /api/v1/snapshots/{id}/diff",
+            "GET /api/v1/snapshots/{id}/file",
+            "GET /api/v1/snapshots/{id}/files",
+            "GET /api/v1/snapshots/{id}/fetchers");
 
     /** A session's own things: open to any authenticated session, scoped to that session. */
-    private static final Set<String> OWNER_SCOPED_READS = Set.of("GET /api/me", "GET /api/tokens");
+    private static final Set<String> OWNER_SCOPED_READS = Set.of("GET /api/v1/me", "GET /api/v1/tokens");
 
     /** The browsing surface: what the portal is for, open to any authenticated session. */
     private static final Set<String> OPEN_READS = Set.of(
-            "GET /api/catalog",
-            "GET /api/marketplaces",
-            "GET /api/marketplaces/{name}/waivers",
-            "GET /api/snapshots/{id}/content",
-            "GET /api/snapshots/{id}/content-diff",
-            "GET /api/snapshots/{id}/licenses",
-            "GET /api/snapshots/{id}/provenance",
-            "GET /api/snapshots/{id}/vetting",
+            "GET /api/v1/catalog",
+            "GET /api/v1/marketplaces",
+            "GET /api/v1/marketplaces/{name}/waivers",
+            "GET /api/v1/snapshots/{id}/content",
+            "GET /api/v1/snapshots/{id}/content-diff",
+            "GET /api/v1/snapshots/{id}/licenses",
+            "GET /api/v1/snapshots/{id}/provenance",
+            "GET /api/v1/snapshots/{id}/vetting",
             // Eligibility is a read of the same browsing surface, not a step toward approving: it
             // reports whether the cooling-off window has passed, and approve itself stays
             // role-gated. Classified here so that stays a decision rather than an omission.
-            "GET /api/snapshots/{id}/release-age",
-            "GET /api/snapshots/{id}/four-eyes");
+            "GET /api/v1/snapshots/{id}/release-age",
+            "GET /api/v1/snapshots/{id}/four-eyes");
 
     @Test
     @SVCs({"SVC_GW_AUTH_0010"})
@@ -219,12 +224,12 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                     .andExpect(status().isOk());
         }
 
-        mockMvc.perform(get("/api/me").with(mallory))
+        mockMvc.perform(get("/api/v1/me").with(mallory))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.roles").isEmpty());
 
         // A session's own tokens keep working end to end.
-        String tokenBody = mockMvc.perform(post("/api/tokens")
+        String tokenBody = mockMvc.perform(post("/api/v1/tokens")
                         .with(mallory)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\": \"walk-token\"}"))
@@ -235,13 +240,13 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         long tokenId = MAPPER.readTree(tokenBody).get("id").asLong();
         // Rotation retires the old token and issues a new one; the delete targets the successor.
         String rotated = mockMvc.perform(
-                        post("/api/tokens/{id}/rotate", tokenId).with(mallory))
+                        post("/api/v1/tokens/{id}/rotate", tokenId).with(mallory))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
         mockMvc.perform(delete(
-                                "/api/tokens/{id}",
+                                "/api/v1/tokens/{id}",
                                 MAPPER.readTree(rotated).get("id").asLong())
                         .with(mallory))
                 .andExpect(status().isNoContent());
@@ -263,37 +268,40 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         grant(root, bobName, "approver", nameA);
 
         // The whole approver surface works on A...
-        mockMvc.perform(post("/api/snapshots/{id}/approve", a.snapshot().id()).with(bob))
+        mockMvc.perform(post("/api/v1/snapshots/{id}/approve", a.snapshot().id())
+                        .with(bob))
                 .andExpect(status().isOk());
-        mockMvc.perform(post("/api/snapshots/{id}/waivers", a.snapshot().id())
+        mockMvc.perform(post("/api/v1/snapshots/{id}/waivers", a.snapshot().id())
                         .with(bob)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"ruleId\": \"aws-access-key-id\", \"scope\": \"PATH\","
+                        .content("{\"ruleId\": \"aws-access-key-id\", \"scope\": \"path\","
                                 + " \"path\": \"plugins/hello\", \"justification\": \"scoping test\","
                                 + " \"expiresAt\": \"2036-01-01T00:00:00Z\"}"))
                 .andExpect(status().isCreated());
         String waiversOfA = mockMvc.perform(
-                        get("/api/marketplaces/{name}/waivers", nameA).with(bob))
+                        get("/api/v1/marketplaces/{name}/waivers", nameA).with(bob))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
         long waiverOnA = MAPPER.readTree(waiversOfA).get(0).get("id").asLong();
-        mockMvc.perform(delete("/api/waivers/{id}", waiverOnA).with(bob)).andExpect(status().isOk());
-        mockMvc.perform(post("/api/snapshots/{id}/revet", a.snapshot().id()).with(bob))
+        mockMvc.perform(delete("/api/v1/waivers/{id}", waiverOnA).with(bob)).andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/snapshots/{id}/revet", a.snapshot().id()).with(bob))
                 .andExpect(status().isOk());
-        mockMvc.perform(post("/api/marketplaces/{name}/revet", nameA).with(bob)).andExpect(status().isOk());
-        mockMvc.perform(get("/api/snapshots/{id}/fetchers", a.snapshot().id()).with(bob))
+        mockMvc.perform(post("/api/v1/marketplaces/{name}/revet", nameA).with(bob))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/snapshots/{id}/fetchers", a.snapshot().id())
+                        .with(bob))
                 .andExpect(status().isOk());
         addUpstreamCommit(upstreamA, "reject-me");
         String heldOnA = mockMvc.perform(
-                        post("/api/marketplaces/{name}/ingest", nameA).with(bob))
+                        post("/api/v1/marketplaces/{name}/ingest", nameA).with(bob))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
         mockMvc.perform(post(
-                                "/api/snapshots/{id}/reject",
+                                "/api/v1/snapshots/{id}/reject",
                                 MAPPER.readTree(heldOnA).get("id").asLong())
                         .with(bob))
                 .andExpect(status().isOk());
@@ -309,21 +317,25 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                 "arranged for the cross-marketplace denial",
                 Instant.parse("2036-01-01T00:00:00Z"),
                 "root");
-        mockMvc.perform(post("/api/marketplaces/{name}/ingest", nameB).with(bob))
+        mockMvc.perform(post("/api/v1/marketplaces/{name}/ingest", nameB).with(bob))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(post("/api/snapshots/{id}/approve", bSnapshot).with(bob))
+        mockMvc.perform(post("/api/v1/snapshots/{id}/approve", bSnapshot).with(bob))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(post("/api/snapshots/{id}/reject", bSnapshot).with(bob)).andExpect(status().isForbidden());
-        mockMvc.perform(post("/api/snapshots/{id}/revet", bSnapshot).with(bob)).andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/snapshots/{id}/fetchers", bSnapshot).with(bob))
+        mockMvc.perform(post("/api/v1/snapshots/{id}/reject", bSnapshot).with(bob))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(post("/api/marketplaces/{name}/revet", nameB).with(bob)).andExpect(status().isForbidden());
-        mockMvc.perform(post("/api/snapshots/{id}/waivers", bSnapshot)
+        mockMvc.perform(post("/api/v1/snapshots/{id}/revet", bSnapshot).with(bob))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/snapshots/{id}/fetchers", bSnapshot).with(bob))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/v1/marketplaces/{name}/revet", nameB).with(bob))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/v1/snapshots/{id}/waivers", bSnapshot)
                         .with(bob)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(delete("/api/waivers/{id}", waiverOnB.id()).with(bob)).andExpect(status().isForbidden());
+        mockMvc.perform(delete("/api/v1/waivers/{id}", waiverOnB.id()).with(bob))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -335,15 +347,15 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         grant(root, carolName, "auditor", null);
 
         for (String route : PRIVILEGED_READS) {
-            if (route.equals("GET /api/roles")
-                    || route.equals("GET /api/tokens/machine")
-                    || route.equals("GET /api/vetting/vetter-toggles")
-                    || route.equals("GET /api/vetting/chain-settings")
-                    || route.equals("GET /api/marketplaces/{name}/vetting-chain")
-                    || route.equals("GET /api/marketplaces/{name}/vetting-chain-settings")
-                    || route.equals("GET /api/vetting/global-chain")
-                    || route.equals("GET /api/vetting/global-chain-settings")
-                    || route.equals("GET /api/mirror/drift")) {
+            if (route.equals("GET /api/v1/roles")
+                    || route.equals("GET /api/v1/tokens/machine")
+                    || route.equals("GET /api/v1/vetting/vetter-toggles")
+                    || route.equals("GET /api/v1/vetting/chain-settings")
+                    || route.equals("GET /api/v1/marketplaces/{name}/vetting-chain")
+                    || route.equals("GET /api/v1/marketplaces/{name}/vetting-chain-settings")
+                    || route.equals("GET /api/v1/vetting/global-chain")
+                    || route.equals("GET /api/v1/vetting/global-chain-settings")
+                    || route.equals("GET /api/v1/mirror/drift")) {
                 // Grant administration (GW_AUTH_0013), the machine-credential listing (GW_AUTH_0023), the
                 // vetter settings (GW_VETTING_0029), the chain mode and order (GW_VETTING_0032,
                 // GW_VETTING_0033) and the mirror's drift report (GW_FACADE_0023) are admin-only,
@@ -352,7 +364,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             }
             mockMvc.perform(request(route).with(carol)).andExpect(status().isOk());
         }
-        mockMvc.perform(get("/api/roles").with(carol)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/roles").with(carol)).andExpect(status().isForbidden());
 
         // An auditor is not an approver, and the reads scoped to a marketplace stay shut to one
         // (GW_AUTH_0011). The blast-radius report is the case that matters: the same facts reach an
@@ -360,7 +372,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         for (String route : APPROVER_SCOPED_READS) {
             mockMvc.perform(request(route).with(carol)).andExpect(status().isForbidden());
         }
-        mockMvc.perform(get("/api/tokens/machine").with(carol)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/tokens/machine").with(carol)).andExpect(status().isForbidden());
         for (String route : union(ROLE_GATED_MUTATIONS, ALWAYS_ADMIN_MUTATIONS)) {
             mockMvc.perform(request(route).with(carol)).andExpect(status().isForbidden());
         }
@@ -393,29 +405,33 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         // No role, and read-only auditor: refused — the auditor's charter is the ledger and the
         // listings (GW_AUTH_0012), not held content.
         for (var session : List.of(mallory, grace)) {
-            mockMvc.perform(get("/api/snapshots/{id}/files", onA).with(session)).andExpect(status().isForbidden());
-            mockMvc.perform(get("/api/snapshots/{id}/file", onA)
+            mockMvc.perform(get("/api/v1/snapshots/{id}/files", onA).with(session))
+                    .andExpect(status().isForbidden());
+            mockMvc.perform(get("/api/v1/snapshots/{id}/file", onA)
                             .param("path", MANIFEST_PATH)
                             .with(session))
                     .andExpect(status().isForbidden());
-            mockMvc.perform(get("/api/snapshots/{id}/diff", onA).with(session)).andExpect(status().isForbidden());
+            mockMvc.perform(get("/api/v1/snapshots/{id}/diff", onA).with(session))
+                    .andExpect(status().isForbidden());
         }
         // The owning approver and the admin read; the same approver is refused another
         // marketplace's snapshot through its bare id.
         for (var session : List.of(frank, root)) {
-            mockMvc.perform(get("/api/snapshots/{id}/files", onA).with(session)).andExpect(status().isOk());
-            mockMvc.perform(get("/api/snapshots/{id}/file", onA)
+            mockMvc.perform(get("/api/v1/snapshots/{id}/files", onA).with(session))
+                    .andExpect(status().isOk());
+            mockMvc.perform(get("/api/v1/snapshots/{id}/file", onA)
                             .param("path", MANIFEST_PATH)
                             .with(session))
                     .andExpect(status().isOk());
-            mockMvc.perform(get("/api/snapshots/{id}/diff", onA).with(session)).andExpect(status().isOk());
+            mockMvc.perform(get("/api/v1/snapshots/{id}/diff", onA).with(session))
+                    .andExpect(status().isOk());
         }
-        mockMvc.perform(get("/api/snapshots/{id}/files", onB).with(frank)).andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/snapshots/{id}/file", onB)
+        mockMvc.perform(get("/api/v1/snapshots/{id}/files", onB).with(frank)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/snapshots/{id}/file", onB)
                         .param("path", MANIFEST_PATH)
                         .with(frank))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/snapshots/{id}/diff", onB).with(frank)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/snapshots/{id}/diff", onB).with(frank)).andExpect(status().isForbidden());
     }
 
     /**
@@ -441,25 +457,25 @@ class RoleEnforcementTests extends AbstractGatewayTest {
 
         String playground = "{\"snapshotId\": %d, \"expression\": \"true\"}"
                 .formatted(a.snapshot().id());
-        mockMvc.perform(post("/api/policy/playground")
+        mockMvc.perform(post("/api/v1/policy/playground")
                         .with(henry)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(playground))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.matched").value(true));
-        mockMvc.perform(post("/api/policy/playground")
+        mockMvc.perform(post("/api/v1/policy/playground")
                         .with(root)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(playground))
                 .andExpect(status().isOk());
         // The auditor reads listings, never quarantine-backed facts; the foreign snapshot is
         // refused through its bare id exactly like the approval it rehearses.
-        mockMvc.perform(post("/api/policy/playground")
+        mockMvc.perform(post("/api/v1/policy/playground")
                         .with(ivy)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(playground))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(post("/api/policy/playground")
+        mockMvc.perform(post("/api/v1/policy/playground")
                         .with(henry)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"snapshotId\": %d, \"expression\": \"true\"}"
@@ -467,12 +483,12 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                 .andExpect(status().isForbidden());
 
         // Rule management is admin-only; the listing answers the auditor.
-        mockMvc.perform(post("/api/policy/rules")
+        mockMvc.perform(post("/api/v1/policy/rules")
                         .with(henry)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\": \"walk-rule\", \"expression\": \"true\"}"))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/policy/rules").with(ivy)).andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/policy/rules").with(ivy)).andExpect(status().isOk());
     }
 
     @Test
@@ -485,12 +501,12 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         registerAndIngest(marketplace, createUpstream(DEFAULT_MANIFEST));
 
         // Not an admin: cannot grant, cannot read the grants.
-        mockMvc.perform(post("/api/roles")
+        mockMvc.perform(post("/api/v1/roles")
                         .with(dave)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(grantJson(erin, "admin", null)))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/roles").with(dave)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/roles").with(dave)).andExpect(status().isForbidden());
 
         // Malformed grants are refused with the exact reasons the API documents.
         postGrant(root, grantJson(erin, "owner", null)).andExpect(status().isUnprocessableContent());
@@ -514,17 +530,17 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         });
 
         // The grant shows on erin's /api/me, and revocation lands on the ledger too.
-        mockMvc.perform(get("/api/me").with(oidcLogin().idToken(token -> token.subject(erin))))
+        mockMvc.perform(get("/api/v1/me").with(oidcLogin().idToken(token -> token.subject(erin))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.roles[0].role").value("approver"))
                 .andExpect(jsonPath("$.roles[0].marketplace").value(marketplace));
-        mockMvc.perform(delete("/api/roles/{id}", grantId).with(root)).andExpect(status().isNoContent());
-        mockMvc.perform(delete("/api/roles/{id}", grantId).with(root)).andExpect(status().isNotFound());
+        mockMvc.perform(delete("/api/v1/roles/{id}", grantId).with(root)).andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/v1/roles/{id}", grantId).with(root)).andExpect(status().isNotFound());
         assertThat(ledgerEntries("role-revoked", erin)).isNotEmpty();
 
         // The config-bootstrapped admin is effective but is not a grant row: there is nothing an
         // API call could revoke (GW_AUTH_0013) — its admin role comes from configuration alone.
-        String meAsRoot = mockMvc.perform(get("/api/me").with(root))
+        String meAsRoot = mockMvc.perform(get("/api/v1/me").with(root))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.roles[0].role").value("admin"))
                 .andReturn()
@@ -536,7 +552,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                         .get("marketplace")
                         .isNull())
                 .isTrue();
-        String allGrants = mockMvc.perform(get("/api/roles").with(root))
+        String allGrants = mockMvc.perform(get("/api/v1/roles").with(root))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -573,7 +589,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                         continue;
                     }
                     for (String pattern : info.getPathPatternsCondition().getPatternValues()) {
-                        if (pattern.startsWith("/api/")) {
+                        if (pattern.startsWith("/api/v1/")) {
                             routes.add(method.name() + " " + pattern);
                         }
                     }
@@ -625,7 +641,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
     }
 
     private ResultActions postGrant(OidcLoginRequestPostProcessor caller, String body) throws Exception {
-        return mockMvc.perform(post("/api/roles")
+        return mockMvc.perform(post("/api/v1/roles")
                 .with(caller)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body));

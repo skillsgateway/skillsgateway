@@ -376,9 +376,9 @@
           "modeSource": {
             "description": "Which setting decided the mode",
             "enum": [
-              "MARKETPLACE",
-              "GLOBAL",
-              "DEFAULT"
+              "marketplace",
+              "global",
+              "default"
             ],
             "type": "string"
           },
@@ -412,9 +412,9 @@
           "orderSource": {
             "description": "Which setting decided the order",
             "enum": [
-              "MARKETPLACE",
-              "GLOBAL",
-              "DEFAULT"
+              "marketplace",
+              "global",
+              "default"
             ],
             "type": "string"
           },
@@ -461,9 +461,9 @@
           "source": {
             "description": "Which setting decided the state",
             "enum": [
-              "MARKETPLACE",
-              "GLOBAL",
-              "DEFAULT"
+              "marketplace",
+              "global",
+              "default"
             ],
             "type": "string"
           },
@@ -1254,11 +1254,11 @@
           "severity": {
             "description": "How much the finding matters",
             "enum": [
-              "INFO",
-              "LOW",
-              "MEDIUM",
-              "HIGH",
-              "CRITICAL"
+              "info",
+              "low",
+              "medium",
+              "high",
+              "critical"
             ],
             "type": "string"
           }
@@ -1278,8 +1278,8 @@
           "mode": {
             "description": "The configured mode",
             "enum": [
-              "WARN",
-              "ENFORCE"
+              "warn",
+              "enforce"
             ],
             "type": "string"
           },
@@ -1498,10 +1498,10 @@
           "evaluation": {
             "description": "Standing under the configured allow/ban policy",
             "enum": [
-              "OK",
-              "BANNED",
-              "NOT_ALLOWED",
-              "UNKNOWN"
+              "ok",
+              "banned",
+              "not_allowed",
+              "unknown"
             ],
             "type": "string"
           },
@@ -1959,9 +1959,9 @@
           "status": {
             "description": "applied, unchanged, or failed",
             "enum": [
-              "APPLIED",
-              "UNCHANGED",
-              "FAILED"
+              "applied",
+              "unchanged",
+              "failed"
             ],
             "type": "string"
           }
@@ -2307,9 +2307,9 @@
           "classification": {
             "description": "What the run means for already-approved content",
             "enum": [
-              "CLEAR",
-              "VIOLATION",
-              "INCONCLUSIVE"
+              "clear",
+              "violation",
+              "inconclusive"
             ],
             "type": "string"
           },
@@ -2320,17 +2320,17 @@
           "mode": {
             "description": "Mode in force for this run: WARN records the violation and leaves publication alone, ENFORCE revokes",
             "enum": [
-              "WARN",
-              "ENFORCE"
+              "warn",
+              "enforce"
             ],
             "type": "string"
           },
           "outcome": {
             "description": "The effective vetting outcome after active waivers",
             "enum": [
-              "CLEAR",
-              "CLEAR_WITH_WAIVERS",
-              "BLOCKED"
+              "clear",
+              "clear_with_waivers",
+              "blocked"
             ],
             "type": "string"
           },
@@ -2370,10 +2370,10 @@
             "type": "string"
           },
           "serveAfter": {
-            "description": "What the marketplace serves afterwards. Required, with no default, because neither outcome is safe to assume: PREVIOUS_APPROVED republishes older content that may carry the same compromise, and NOTHING takes the marketplace down",
+            "description": "What the marketplace serves afterwards. Required, with no default, because neither outcome is safe to assume: `previous_approved` republishes older content that may carry the same compromise, and `nothing` takes the marketplace down",
             "enum": [
-              "PREVIOUS_APPROVED",
-              "NOTHING"
+              "previous_approved",
+              "nothing"
             ],
             "type": "string"
           }
@@ -2447,9 +2447,9 @@
           "outcome": {
             "description": "Fail-closed aggregate of the run's verdicts",
             "enum": [
-              "CLEAR",
-              "CLEAR_WITH_WAIVERS",
-              "BLOCKED"
+              "clear",
+              "clear_with_waivers",
+              "blocked"
             ],
             "type": "string"
           },
@@ -2996,11 +2996,11 @@
           "severity": {
             "description": "How much it matters",
             "enum": [
-              "INFO",
-              "LOW",
-              "MEDIUM",
-              "HIGH",
-              "CRITICAL"
+              "info",
+              "low",
+              "medium",
+              "high",
+              "critical"
             ],
             "type": "string"
           },
@@ -3055,13 +3055,13 @@
           "state": {
             "description": "The vetter's conclusion",
             "enum": [
-              "PASS",
-              "WARN",
-              "FAIL",
-              "ERROR",
-              "PENDING",
-              "DISABLED",
-              "NOT_REACHED"
+              "pass",
+              "warn",
+              "fail",
+              "error",
+              "pending",
+              "disabled",
+              "not_reached"
             ],
             "type": "string"
           },
@@ -3195,19 +3195,19 @@
             "type": "array"
           },
           "outcome": {
-            "description": "The effective outcome, which is what gates approval: the run with every waived finding removed. CLEAR means an approval will succeed; CLEAR_WITH_WAIVERS that it will, and only because someone accepted a risk; BLOCKED that it will not.",
+            "description": "The effective outcome, which is what gates approval: the run with every waived finding removed. `clear` means an approval will succeed; `clear_with_waivers` that it will, and only because someone accepted a risk; `blocked` that it will not.",
             "enum": [
-              "CLEAR",
-              "CLEAR_WITH_WAIVERS",
-              "BLOCKED"
+              "clear",
+              "clear_with_waivers",
+              "blocked"
             ],
             "type": "string"
           },
           "recordedOutcome": {
             "description": "What the vetters themselves concluded, before any waiver was applied",
             "enum": [
-              "CLEAR",
-              "BLOCKED"
+              "clear",
+              "blocked"
             ],
             "type": "string"
           },
@@ -3241,11 +3241,11 @@
         "description": "A snapshot's latest vetting chain run, the waivers over it, and the chain that produced it",
         "properties": {
           "outcome": {
-            "description": "The effective outcome, which is what gates approval: the run's verdicts with every waived finding removed. CLEAR_WITH_WAIVERS means nothing objects any more only because an active waiver is suppressing a finding. A snapshot with no run is blocked.",
+            "description": "The effective outcome, which is what gates approval: the run's verdicts with every waived finding removed. `clear_with_waivers` means nothing objects any more only because an active waiver is suppressing a finding. A snapshot with no run is blocked.",
             "enum": [
-              "CLEAR",
-              "CLEAR_WITH_WAIVERS",
-              "BLOCKED"
+              "clear",
+              "clear_with_waivers",
+              "blocked"
             ],
             "type": "string"
           },
@@ -3256,8 +3256,8 @@
           "recordedOutcome": {
             "description": "What the vetters themselves concluded, before any waiver was applied",
             "enum": [
-              "CLEAR",
-              "BLOCKED"
+              "clear",
+              "blocked"
             ],
             "type": "string"
           },
@@ -3327,8 +3327,8 @@
           "scope": {
             "description": "SNAPSHOT pins the waiver to this snapshot's commit SHA; PATH applies it to a path in the marketplace and survives re-ingestion",
             "enum": [
-              "SNAPSHOT",
-              "PATH"
+              "snapshot",
+              "path"
             ],
             "type": "string"
           }
@@ -3392,8 +3392,8 @@
           "scope": {
             "description": "How the scope value is matched",
             "enum": [
-              "SNAPSHOT",
-              "PATH"
+              "snapshot",
+              "path"
             ],
             "type": "string"
           },
@@ -3487,7 +3487,7 @@
   },
   "openapi": "3.1.0",
   "paths": {
-    "/api/adoption": {
+    "/api/v1/adoption": {
       "get": {
         "description": "Per marketplace: content-transferring fetches in the window, distinct fetching identities, the most recent fetch, and the per-snapshot-SHA breakdown with each SHA marked current against the served tip. Attribution is by authenticated identity as the ledger records it — the gateway has no team concept. Out-of-range windows are clamped to 1..365 days.",
         "operationId": "adoption",
@@ -3525,7 +3525,7 @@
         ]
       }
     },
-    "/api/adoption/staleness": {
+    "/api/v1/adoption/staleness": {
       "get": {
         "description": "Every identity whose most recent content-transferring fetch of a marketplace received a SHA that is not the currently served tip. A null servedSha means the marketplace stopped serving entirely (revoked or unpublished) — the identity holds retracted content. The report states facts, not verdicts: an identity may be pinned to an old SHA on purpose.",
         "operationId": "staleness",
@@ -3550,7 +3550,7 @@
         ]
       }
     },
-    "/api/audit": {
+    "/api/v1/audit": {
       "get": {
         "description": "Append-only record of every git facade fetch: client source address, authenticated identity, repository, ref, commit SHA, and timestamp. Portal actions are not in this ledger; approvals live in snapshot provenance.",
         "operationId": "audit",
@@ -3576,7 +3576,7 @@
         ]
       }
     },
-    "/api/audit/export": {
+    "/api/v1/audit/export": {
       "get": {
         "description": "Newline-delimited JSON, one ledger entry per line in ascending ledger sequence, for ingestion by an external SIEM. Poll incrementally by passing the sequence from the X-Skills-Gateway-Audit-Cursor response header back as 'after'; an empty body means the consumer is caught up. Entries younger than the commit-settling lag are withheld so a cursor can never step over an in-flight append.",
         "operationId": "export",
@@ -3619,7 +3619,7 @@
         ]
       }
     },
-    "/api/audit/sinks": {
+    "/api/v1/audit/sinks": {
       "get": {
         "description": "Every registered sink with its target, its position in the ledger, and how many entries it still has to receive. Signing secrets are never returned.",
         "operationId": "listSinks",
@@ -3704,7 +3704,7 @@
         ]
       }
     },
-    "/api/audit/sinks/{id}": {
+    "/api/v1/audit/sinks/{id}": {
       "delete": {
         "description": "Removes the sink and its delivery channel; no further batches are queued for it.",
         "operationId": "deleteSink",
@@ -3733,7 +3733,7 @@
         ]
       }
     },
-    "/api/audit/sinks/{id}/cursor": {
+    "/api/v1/audit/sinks/{id}/cursor": {
       "put": {
         "description": "Replay: setting the position back re-delivers every ledger entry after it on the next export pass. Receivers de-duplicate on the ledger sequence carried by each entry.",
         "operationId": "setCursor",
@@ -3786,7 +3786,7 @@
         ]
       }
     },
-    "/api/catalog": {
+    "/api/v1/catalog": {
       "get": {
         "description": "The catalog commit the facade is serving at /git/{catalog-name}, with the marketplace and upstream commit SHA of every constituent vendored into it.",
         "operationId": "catalog",
@@ -3818,7 +3818,7 @@
         ]
       }
     },
-    "/api/catalog/rebuild": {
+    "/api/v1/catalog/rebuild": {
       "post": {
         "description": "Regenerates the catalog from what every marketplace is serving right now. Approvals and revocations already do this on their own; this is the on-demand repair path, and it lands on the audit ledger with the acting identity.",
         "operationId": "rebuild",
@@ -3850,7 +3850,7 @@
         ]
       }
     },
-    "/api/estate": {
+    "/api/v1/estate": {
       "get": {
         "description": "The most recent reconciliation run — per declared entry, what was created, updated, unchanged, or failed and why. The report is held in memory; after a restart the startup run repopulates it. Secret values never appear. Auditor or admin, because failure reasons expose operator infrastructure.",
         "operationId": "lastRun",
@@ -3882,7 +3882,7 @@
         ]
       }
     },
-    "/api/estate/reconcile": {
+    "/api/v1/estate/reconcile": {
       "post": {
         "description": "Runs the same additive, idempotent reconciliation as startup against the current declaration and returns its report. A converged estate reconciles with zero writes and zero ledger entries; the trigger itself is an administrative action and is always recorded with the acting identity. Admin-only.",
         "operationId": "reconcileEstate",
@@ -3914,7 +3914,7 @@
         ]
       }
     },
-    "/api/marketplaces": {
+    "/api/v1/marketplaces": {
       "get": {
         "description": "All registered marketplaces with every snapshot and its state (held, approved, rejected, or revoked).",
         "operationId": "listMarketplaces",
@@ -3999,7 +3999,7 @@
         ]
       }
     },
-    "/api/marketplaces/{name}/ingest": {
+    "/api/v1/marketplaces/{name}/ingest": {
       "post": {
         "description": "Fetches the marketplace's upstream default branch into quarantine and records an immutable snapshot pinned to the upstream commit SHA. The snapshot is held until a reviewer approves it; manifests declaring non-local plugin sources are rejected.",
         "operationId": "ingest",
@@ -4051,7 +4051,7 @@
         ]
       }
     },
-    "/api/marketplaces/{name}/revet": {
+    "/api/v1/marketplaces/{name}/revet": {
       "post": {
         "description": "Runs the vetting chain again over every live approved snapshot of the marketplace, one run each, and applies the configured re-vetting mode to each result. This is the operational answer to a vetter rule set or advisory feed that has just been updated.",
         "operationId": "revetMarketplace",
@@ -4093,7 +4093,7 @@
         ]
       }
     },
-    "/api/marketplaces/{name}/sync": {
+    "/api/v1/marketplaces/{name}/sync": {
       "put": {
         "description": "Sets how upstream content reaches quarantine: on-demand (operator-triggered, the default), scheduled (the gateway polls upstream), or webhook (a signed forge push webhook triggers ingestion). Enabling webhook mode generates the HMAC secret and returns it exactly once — re-enabling rotates it, and no read endpoint ever returns it. No mode bypasses approval: sync-triggered snapshots land held.",
         "operationId": "changeSyncMode",
@@ -4155,7 +4155,7 @@
         ]
       }
     },
-    "/api/marketplaces/{name}/vetting-chain": {
+    "/api/v1/marketplaces/{name}/vetting-chain": {
       "get": {
         "description": "Every configured vetter in the order it runs, with the state its enablement resolves to for this marketplace and which setting decided it — the marketplace-scoped setting, the global setting, or the absence of any setting. The resolution is the chain's own, not a recombination of the settings list, so it cannot disagree with what actually runs. Administrator-only, like the settings it reports.",
         "operationId": "vettingChain",
@@ -4216,7 +4216,7 @@
         ]
       }
     },
-    "/api/marketplaces/{name}/vetting-chain-settings": {
+    "/api/v1/marketplaces/{name}/vetting-chain-settings": {
       "get": {
         "description": "How far the chain runs for this marketplace and the order it runs in, with which setting decided each — the marketplace-scoped setting, the global setting, or the absence of any setting. The resolution is the chain's own, so it cannot disagree with what actually runs. Administrator-only.",
         "operationId": "chainSettings",
@@ -4268,7 +4268,7 @@
         ]
       }
     },
-    "/api/marketplaces/{name}/waivers": {
+    "/api/v1/marketplaces/{name}/waivers": {
       "get": {
         "description": "Every waiver recorded for the marketplace, newest first, active and lapsed alike. A lapsed or revoked waiver is kept and returned with active=false: the record of what was once accepted, by whom and until when is part of the audit trail.",
         "operationId": "list_5",
@@ -4316,7 +4316,7 @@
         ]
       }
     },
-    "/api/me": {
+    "/api/v1/me": {
       "get": {
         "description": "Username of the authenticated browser session, the session's effective roles with the source of each, and whether the identity provider truncated the membership claim — how the portal and CLI adapt their controls to what the caller may do. Authorization is always enforced, so there is no enforcement flag to report.",
         "operationId": "me",
@@ -4338,7 +4338,7 @@
         ]
       }
     },
-    "/api/mirror/drift": {
+    "/api/v1/mirror/drift": {
       "get": {
         "description": "Reads the mirror's references now and diffs them against published storage. The mirror is a browsing convenience and never a serving surface, so a mirror that is missing, stale or unreachable says nothing about what clients receive. A mirror the gateway cannot read is reported as unreachable and never as in sync.",
         "operationId": "drift",
@@ -4370,7 +4370,7 @@
         ]
       }
     },
-    "/api/mirror/reconcile": {
+    "/api/v1/mirror/reconcile": {
       "post": {
         "description": "Pushes the served reference set and removes whatever the mirror still holds outside it, then answers with the resulting comparison. Use it after fixing a forge outage or rotating a rejected credential rather than waiting for the recurring reconciliation. It cannot affect what the facade serves, and a mirror that stays unreachable is reported as unreachable rather than failing the request.",
         "operationId": "reconcileMirror",
@@ -4402,7 +4402,7 @@
         ]
       }
     },
-    "/api/policy/playground": {
+    "/api/v1/policy/playground": {
       "post": {
         "description": "Compiles and evaluates any CEL expression over a real snapshot's facts — held, approved or revoked — and answers matched or the error. Read-only by contract: nothing is stored, nothing lands on the ledger, no state changes; the answer never carries snapshot content. This is how a rule is tested before it is enforced. Requires permission to approve the named snapshot.",
         "operationId": "playground",
@@ -4444,7 +4444,7 @@
         ]
       }
     },
-    "/api/policy/rules": {
+    "/api/v1/policy/rules": {
       "get": {
         "description": "Every stored rule, enabled or not, with its expression and attribution.",
         "operationId": "list_4",
@@ -4519,7 +4519,7 @@
         ]
       }
     },
-    "/api/policy/rules/{name}": {
+    "/api/v1/policy/rules/{name}": {
       "delete": {
         "description": "Removes the rule; the deletion lands on the audit ledger. Past denials it decided stay on the append-only ledger.",
         "operationId": "delete",
@@ -4627,7 +4627,7 @@
         ]
       }
     },
-    "/api/retention/candidates": {
+    "/api/v1/retention/candidates": {
       "get": {
         "description": "The snapshots the policies in force would delete right now, each with the criterion that selected it. A dry run: nothing is written.",
         "operationId": "candidates",
@@ -4663,7 +4663,7 @@
         ]
       }
     },
-    "/api/retention/compact": {
+    "/api/v1/retention/compact": {
       "post": {
         "description": "Permanently removes every soft-deleted snapshot whose restore window has elapsed, together with its pinned commit in the quarantine repository.",
         "operationId": "compact",
@@ -4685,7 +4685,7 @@
         ]
       }
     },
-    "/api/retention/evaluate": {
+    "/api/v1/retention/evaluate": {
       "post": {
         "description": "Soft-deletes every snapshot the policies select. Equivalent to what the scheduled pass does when retention is enabled.",
         "operationId": "evaluate",
@@ -4718,7 +4718,7 @@
         ]
       }
     },
-    "/api/roles": {
+    "/api/v1/roles": {
       "get": {
         "description": "Every current grant. Configuration-bootstrapped admins are not grants and do not appear here; they show up as an effective role on /api/me. Admin-only.",
         "operationId": "list_3",
@@ -4826,7 +4826,7 @@
         ]
       }
     },
-    "/api/roles/{id}": {
+    "/api/v1/roles/{id}": {
       "delete": {
         "description": "Deletes the grant; the ledger keeps the history. Configuration-bootstrapped admins have no grant row, so they cannot be revoked here — by design, they are the escape hatch that survives a bad grant edit. Admin-only.",
         "operationId": "revoke_4",
@@ -4858,7 +4858,7 @@
         ]
       }
     },
-    "/api/snapshots/{id}": {
+    "/api/v1/snapshots/{id}": {
       "delete": {
         "description": "Marks the snapshot deleted and restorable until the end of the marketplace's restore window; its vetting state is unchanged. Approved snapshots are served by the git facade and can never be deleted.",
         "operationId": "softDelete",
@@ -4911,7 +4911,7 @@
         ]
       }
     },
-    "/api/snapshots/{id}/approve": {
+    "/api/v1/snapshots/{id}/approve": {
       "post": {
         "description": "Publishes the snapshot to the git facade and records the reviewer identity and timestamp. The request body is optional. Held snapshots and snapshots that re-vetting revoked can be approved; a revoked one is re-published only by this fresh decision, behind the same gate, which means the violation that revoked it must have been waived or fixed first. A snapshot whose effective vetting outcome is blocked — its chain run objects and at least one blocking finding is not covered by an active waiver, including a snapshot with no chain run at all — is refused, and the problem document names both the blocking vetters and the uncovered findings. Record a scoped, expiring waiver for each of those findings and approve again; every waiver that let the approval through is written to the ledger. Alternatively an administrator — and only an administrator — may set overrideVetting with a reason to approve over the block (GW_VETTING_0028): the override lifts only the vetting gate, is written to the ledger as a distinct event with the failing verdicts, and marks the snapshot approved over a vetting failure.",
         "operationId": "approve",
@@ -4983,7 +4983,7 @@
         ]
       }
     },
-    "/api/snapshots/{id}/content": {
+    "/api/v1/snapshots/{id}/content": {
       "get": {
         "description": "The plugins declared by the snapshot's marketplace manifest and the skills found under each plugin's source tree — the basis for future per-plugin/per-skill limiting.",
         "operationId": "snapshotContent",
@@ -5026,7 +5026,7 @@
         ]
       }
     },
-    "/api/snapshots/{id}/content-diff": {
+    "/api/v1/snapshots/{id}/content-diff": {
       "get": {
         "description": "What approving this snapshot would add to what the marketplace already had approved: every plugin and skill on either side, each marked added, removed, changed, moved or unchanged, with a skill counted as changed when anything under its directory differs — not only its SKILL.md. A skill a plugin gave up and another took over is reported once, as moved, naming the plugin it came from. The baseline is the marketplace's newest live approved snapshot other than this one; with nothing approved the baseline is null and everything is added. Complements the file-level preview diff, which is against what the facade currently serves and returns the text of the change.",
         "operationId": "snapshotContentDiff",
@@ -5069,7 +5069,7 @@
         ]
       }
     },
-    "/api/snapshots/{id}/diff": {
+    "/api/v1/snapshots/{id}/diff": {
       "get": {
         "description": "Added, modified and removed paths between the pinned commit and the marketplace's currently served commit (the published repository's served tip), with a unified text diff per non-binary entry under the same size caps as file reads. When the marketplace serves nothing the baseline is null and every path is reported as added. Privileged.",
         "operationId": "diff",
@@ -5122,7 +5122,7 @@
         ]
       }
     },
-    "/api/snapshots/{id}/fetchers": {
+    "/api/v1/snapshots/{id}/fetchers": {
       "get": {
         "description": "Every authenticated identity that received this snapshot's content through the git facade, with how many times and when it last did — the blast radius of a retroactive violation, answered from the append-only fetch ledger. Only pack transfers count: a ref advertisement means the client asked, not that it received anything. Approver of the snapshot's marketplace, or administrator: it names identities, so it is the same judgement as acting on the revocation it informs.",
         "operationId": "fetchers",
@@ -5184,7 +5184,7 @@
         ]
       }
     },
-    "/api/snapshots/{id}/file": {
+    "/api/v1/snapshots/{id}/file": {
       "get": {
         "description": "One blob addressed strictly within the pinned commit's tree — a path the tree does not contain, traversal shapes included, is not found. Text is returned for rendering only, cut at 128 KiB with an explicit truncation marker; a blob detected as binary returns metadata without text. Privileged.",
         "operationId": "file",
@@ -5245,7 +5245,7 @@
         ]
       }
     },
-    "/api/snapshots/{id}/files": {
+    "/api/v1/snapshots/{id}/files": {
       "get": {
         "description": "Every path in exactly the commit the snapshot pins, resolved through the quarantine repository's object store, capped at 2000 entries with an explicit marker when cut. Privileged: admin or an approver of the snapshot's marketplace.",
         "operationId": "files",
@@ -5298,7 +5298,7 @@
         ]
       }
     },
-    "/api/snapshots/{id}/four-eyes": {
+    "/api/v1/snapshots/{id}/four-eyes": {
       "get": {
         "description": "Whether the separation-of-duties rule would object to this caller approving this snapshot, and what the configured mode would then do. A conflict names each supply-side act the caller performed on the snapshot: registering its marketplace, triggering its ingestion, or authoring a waiver the approval would rely on. The automated sync triggers are not identities and never conflict. Answered by the server because the waiver clause depends on which waivers the effective-outcome evaluation actually applies; the approval endpoint enforces the same rule independently, and this endpoint decides nothing.",
         "operationId": "fourEyes",
@@ -5341,7 +5341,7 @@
         ]
       }
     },
-    "/api/snapshots/{id}/licenses": {
+    "/api/v1/snapshots/{id}/licenses": {
       "get": {
         "description": "The licenses the snapshot declares — detected deterministically from license/copying files and marketplace-manifest metadata over the content pinned to the snapshot's commit SHA — each with its SPDX id (or its unknown state) and its standing under the license allow/ban policy currently configured. Computed from the pinned content and the current configuration: the historical evidence the approval gate read lives in the recorded vetting runs. Complements the snapshot content inventory and the gateway's own SBOM endpoint as the supply-chain read surface.",
         "operationId": "snapshotLicenses",
@@ -5384,7 +5384,7 @@
         ]
       }
     },
-    "/api/snapshots/{id}/provenance": {
+    "/api/v1/snapshots/{id}/provenance": {
       "get": {
         "description": "What was served, from where, and who approved it: upstream URL, upstream commit SHA, state, reviewer, and timestamps.",
         "operationId": "provenance",
@@ -5427,7 +5427,7 @@
         ]
       }
     },
-    "/api/snapshots/{id}/reject": {
+    "/api/v1/snapshots/{id}/reject": {
       "post": {
         "description": "Marks the snapshot rejected with the reviewer identity and timestamp; its content is never served again. This is the terminal answer to a re-vetting revocation the reviewer does not intend to waive.",
         "operationId": "reject",
@@ -5480,7 +5480,7 @@
         ]
       }
     },
-    "/api/snapshots/{id}/release-age": {
+    "/api/v1/snapshots/{id}/release-age": {
       "get": {
         "description": "Whether the snapshot has cleared the configured cooling-off window and may be approved, and when it will if it has not. The age is measured from the instant the gateway first ingested the commit — never from the commit's own timestamp, which whoever made the commit controls — and re-ingesting the same commit does not reset it. Computed on every request, so a snapshot becomes eligible with nothing having had to run in the background. With the gate off (the default) every snapshot reports eligible.",
         "operationId": "releaseAge",
@@ -5523,7 +5523,7 @@
         ]
       }
     },
-    "/api/snapshots/{id}/restore": {
+    "/api/v1/snapshots/{id}/restore": {
       "post": {
         "description": "Clears the deletion marks, provided compaction has not yet removed the snapshot.",
         "operationId": "restore",
@@ -5576,7 +5576,7 @@
         ]
       }
     },
-    "/api/snapshots/{id}/revet": {
+    "/api/v1/snapshots/{id}/revet": {
       "post": {
         "description": "Runs the vetting chain again over the snapshot's pinned content and records a new run with trigger revet-manual. If the run's effective outcome — after the waivers active right now — objects to the content, the violation is written to the ledger and announced as marketplace.snapshot.revet_violation. In enforce mode the snapshot is then revoked and its published refs are removed; in warn mode, the default, publication is untouched. A run that only blocks because a vetter errored or has not answered is recorded as inconclusive and never revokes anything.",
         "operationId": "revetSnapshot",
@@ -5629,7 +5629,7 @@
         ]
       }
     },
-    "/api/snapshots/{id}/revoke": {
+    "/api/v1/snapshots/{id}/revoke": {
       "post": {
         "description": "Takes an approved snapshot off the facade on a stated reason, records the withdrawal on the append-only ledger and announces it. Admin-only, and deliberately without a four-eyes rule: withdrawing cannot publish anything, so a second reviewer buys no safety while costing time during an incident. It withdraws whatever the vetting chain would currently conclude and whatever mode re-vetting is configured in — the point is that the reason is knowledge the chain does not hold. The request must say what the marketplace serves afterwards; a return to the previous approved snapshot is refused before anything is withdrawn when there is none, rather than quietly serving nothing. Afterwards the commit cannot be approved again by an ordinary approval: reversing the withdrawal takes an administrator other than the one who made it (GW_APPROVAL_0017), and the record is kept by retention even once the content is reclaimed (GW_RETENTION_0008). This stops the gateway serving the content; it does not reach clients that already hold it.",
         "operationId": "revoke",
@@ -5701,7 +5701,7 @@
         ]
       }
     },
-    "/api/snapshots/{id}/vetting": {
+    "/api/v1/snapshots/{id}/vetting": {
       "get": {
         "description": "The snapshot's latest vetting chain run: each vetter's verdict in chain order, the findings behind it, the waivers currently suppressing any of them, and the fail-closed effective aggregate that gates approval. A snapshot the chain has never run against reports a blocked outcome and no run.",
         "operationId": "vetting",
@@ -5744,7 +5744,7 @@
         ]
       }
     },
-    "/api/snapshots/{id}/waivers": {
+    "/api/v1/snapshots/{id}/waivers": {
       "post": {
         "description": "Records a scoped, expiring waiver for one finding rule. The marketplace — and, for SNAPSHOT scope, the commit SHA — are taken from the snapshot, so a waiver cannot be mis-scoped to content it does not belong to. A justification, the acting identity and a future expiry are all mandatory; an unlimited waiver cannot be expressed. While an active waiver covers a finding, that finding no longer contributes to the snapshot's effective vetting outcome.",
         "operationId": "create_3",
@@ -5807,7 +5807,7 @@
         ]
       }
     },
-    "/api/tokens": {
+    "/api/v1/tokens": {
       "get": {
         "description": "Only the caller's own tokens, never any secret. Each carries `lastUsedAt` — when it most recently authenticated successfully, or null if it never has — which is what tells a live credential from a forgotten one.",
         "operationId": "list_1",
@@ -5872,7 +5872,7 @@
         ]
       }
     },
-    "/api/tokens/machine": {
+    "/api/v1/tokens/machine": {
       "get": {
         "description": "Every machine credential, whoever provisioned it, never any secret. Deliberately not scoped to the caller: a machine credential's principal is not an identity anyone logs in as, so an owner-scoped listing would leave every one of them invisible — and unrevokable — during an incident. A person's own token listing is unaffected and still shows only their own. Each carries `lastUsedAt`: when the credential most recently authenticated successfully, or null if it never has.",
         "operationId": "list_2",
@@ -5960,7 +5960,7 @@
         ]
       }
     },
-    "/api/tokens/machine/{id}": {
+    "/api/v1/tokens/machine/{id}": {
       "delete": {
         "description": "Immediate and permanent, checked at authentication time rather than swept, so it takes effect on the credential's very next request. Audit-logged.",
         "operationId": "revoke_3",
@@ -5992,7 +5992,7 @@
         ]
       }
     },
-    "/api/tokens/machine/{id}/rotate": {
+    "/api/v1/tokens/machine/{id}/rotate": {
       "post": {
         "description": "Issues a fresh secret with the identical grant — the same principal, name, expiry deadline and every one of the same API scopes — and revokes the old credential first, so no moment has two live secrets.",
         "operationId": "rotate_1",
@@ -6055,7 +6055,7 @@
         ]
       }
     },
-    "/api/tokens/session": {
+    "/api/v1/tokens/session": {
       "post": {
         "description": "Issues a short-lived facade credential to the principal of the current browser session. Its lifetime is set by the gateway (`skills-gateway.tokens.session-ttl`) and cannot be chosen or extended by the caller — which is the whole difference between this and a personal access token. It carries no publication authority, and is marked session-derived wherever it appears, including on the audit ledger. It is NOT revoked when the session ends: the lifetime is the control.",
         "operationId": "createSessionCredential",
@@ -6097,7 +6097,7 @@
         ]
       }
     },
-    "/api/tokens/{id}": {
+    "/api/v1/tokens/{id}": {
       "delete": {
         "description": "Immediate and permanent; audit-logged.",
         "operationId": "revoke_2",
@@ -6126,7 +6126,7 @@
         ]
       }
     },
-    "/api/tokens/{id}/rotate": {
+    "/api/v1/tokens/{id}/rotate": {
       "post": {
         "description": "Issues a fresh secret with the identical grant — name, scopes, and the same expiry deadline — and revokes the old token first, so no moment has two live secrets. Only the owner may rotate, only a live token can be rotated, and the new cleartext is returned exactly once.",
         "operationId": "rotate",
@@ -6179,7 +6179,7 @@
         ]
       }
     },
-    "/api/vetting/chain-mode": {
+    "/api/v1/vetting/chain-mode": {
       "put": {
         "description": "Sets the chain mode, globally or for one named marketplace, and records the change on the audit ledger. Under 'stop-after-fail' the chain stops after the first vetter whose verdict fails; the vetters after it are recorded as not reached rather than run, and a run carrying such a verdict is blocked whatever waivers exist — accepting the finding that stopped the chain takes effect on the next run, not on this one. 'run-all' is the default and runs every enabled vetter. A per-marketplace setting overrides the global one. Administrator-only.",
         "operationId": "setMode",
@@ -6241,7 +6241,7 @@
         ]
       }
     },
-    "/api/vetting/chain-order": {
+    "/api/v1/vetting/chain-order": {
       "put": {
         "description": "Sets the vetter order, globally or for one named marketplace, and records the change on the audit ledger. The order need not name every vetter: the ones it does not name run after those it does, in their configured positions with ties broken by name, so an order can never drop a vetter by omission. A name no configured vetter carries, and a name given twice, are refused rather than stored. Order is only observable when the chain mode stops it early. Administrator-only.",
         "operationId": "setOrder",
@@ -6303,7 +6303,7 @@
         ]
       }
     },
-    "/api/vetting/chain-settings": {
+    "/api/v1/vetting/chain-settings": {
       "get": {
         "description": "Every administrative chain-mode and vetter-order setting — the global settings and the per-marketplace overrides. Administrator-only: the settings that decide how much evidence stands behind an approval are not shown to marketplace-scoped approvers.",
         "operationId": "settings",
@@ -6335,7 +6335,7 @@
         ]
       }
     },
-    "/api/vetting/chain-settings/bulk": {
+    "/api/v1/vetting/chain-settings/bulk": {
       "post": {
         "description": "Sets the chain mode, sets the vetter order, switches one vetter, or removes per-marketplace overrides, across the named marketplaces, as a single act. The request's shape is validated whole — an unknown action, mode, vetter or override kind is refused with 422 and nothing is stored or recorded. Each marketplace is then attempted independently: the answer is 200 when every one succeeded and 207 when any did not, and 'results' reports the outcome per marketplace either way. Clearing is idempotent — a marketplace with no override of that kind is reported unchanged and writes nothing. Every marketplace the request changed receives its own ledger entry carrying the shared reason and the response's correlationId, so the entries read as one act. Administrator-only.",
         "operationId": "bulk",
@@ -6397,7 +6397,7 @@
         ]
       }
     },
-    "/api/vetting/global-chain": {
+    "/api/v1/vetting/global-chain": {
       "get": {
         "description": "Every configured vetter in the order it runs for a marketplace that overrides nothing, with the state its enablement resolves to there and which setting decided it. The sibling of the per-marketplace chain read, one resolution level up, so the estate-wide surface cannot disagree with the per-marketplace one. The source is never MARKETPLACE here — only GLOBAL or DEFAULT. Administrator-only.",
         "operationId": "globalVettingChain",
@@ -6435,7 +6435,7 @@
         ]
       }
     },
-    "/api/vetting/global-chain-settings": {
+    "/api/v1/vetting/global-chain-settings": {
       "get": {
         "description": "How far the chain runs and the order it runs in for a marketplace that overrides neither, with which setting decided each. The same shape as the per-marketplace read one resolution level up, so the estate-wide surface and the per-marketplace one cannot disagree. The source is never MARKETPLACE here — only GLOBAL or DEFAULT. Administrator-only.",
         "operationId": "globalChainSettings",
@@ -6467,7 +6467,7 @@
         ]
       }
     },
-    "/api/vetting/vetter-toggles": {
+    "/api/v1/vetting/vetter-toggles": {
       "get": {
         "description": "Every administrative enable/disable setting for the vetters — the global settings and the per-marketplace overrides. Administrator-only: the switch that governs the vetting chain is not shown to marketplace-scoped approvers.",
         "operationId": "toggles",
@@ -6505,7 +6505,7 @@
         ]
       }
     },
-    "/api/vetting/vetters/{name}/toggle": {
+    "/api/v1/vetting/vetters/{name}/toggle": {
       "put": {
         "description": "Switches a specific vetter on or off, globally or for one named marketplace, and records the change on the audit ledger. Any vetter in the chain can be switched, built-in or operator-configured (skills-gateway.vetting.external[*]). A per-marketplace setting overrides the global one; the absence of any setting means the vetter runs. A disabled vetter is not run at ingestion or re-vetting but is recorded as a distinct disabled verdict on the chain run, and disabling every vetter leaves a run blocked rather than clear. Administrator-only.",
         "operationId": "toggle",
@@ -6577,7 +6577,7 @@
         ]
       }
     },
-    "/api/waivers/{id}": {
+    "/api/v1/waivers/{id}": {
       "delete": {
         "description": "Revokes the waiver. It stops suppressing its finding immediately — the effective vetting outcome is recomputed on every read — so a snapshot that was cleared only by this waiver becomes blocked again. The row is kept, with its revoker and time.",
         "operationId": "revoke_1",
@@ -6620,7 +6620,7 @@
         ]
       }
     },
-    "/api/webhooks": {
+    "/api/v1/webhooks": {
       "get": {
         "description": "Every registered receiver with its event filter. Signing secrets are never returned.",
         "operationId": "list",
@@ -6705,7 +6705,7 @@
         ]
       }
     },
-    "/api/webhooks/deliveries": {
+    "/api/v1/webhooks/deliveries": {
       "get": {
         "description": "Most recent deliveries first, with state, attempt count, and the last response status or error — the operator's view of a failing integration.",
         "operationId": "deliveries",
@@ -6742,7 +6742,7 @@
         ]
       }
     },
-    "/api/webhooks/events": {
+    "/api/v1/webhooks/events": {
       "get": {
         "description": "Every lifecycle event a subscriber may filter on, together with an illustrative example of each delivery body — so a receiver can be written against what it will actually parse. The per-event deliveries are described in full under the document's top-level `webhooks` object. Read-only, records nothing. The audit export event is not subscribable and never appears here.",
         "operationId": "events",
@@ -6764,7 +6764,7 @@
         ]
       }
     },
-    "/api/webhooks/{id}": {
+    "/api/v1/webhooks/{id}": {
       "delete": {
         "description": "Removes the subscriber and its delivery history; no further events are queued for it.",
         "operationId": "delete_1",
@@ -6876,7 +6876,7 @@
         ]
       }
     },
-    "/status/snapshots": {
+    "/status/v1/snapshots": {
       "post": {
         "description": "Answers one state per marketplace-and-commit pair, in the order asked. A pair the gateway makes no positive statement about is answered 'unknown', which is never a pass: a client that holds such content should treat it as withdrawn. Authenticates with the same credentials the git facade accepts, and answers only about marketplaces that credential could fetch.",
         "operationId": "status",

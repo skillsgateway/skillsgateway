@@ -67,7 +67,7 @@ class MachineApiRegistryTests extends AbstractGatewayTest {
             for (RequestMappingInfo info : mapping.getHandlerMethods().keySet()) {
                 for (RequestMethod method : info.getMethodsCondition().getMethods()) {
                     for (String pattern : info.getPathPatternsCondition().getPatternValues()) {
-                        if (pattern.startsWith("/api/")) {
+                        if (pattern.startsWith("/api/v1/")) {
                             routes.add(new Route(method.name(), pattern));
                         }
                     }

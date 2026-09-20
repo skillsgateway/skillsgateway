@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.vetting;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Locale;
 
@@ -12,6 +13,7 @@ public enum Severity {
     HIGH,
     CRITICAL;
 
+    @JsonValue
     public String stored() {
         return name().toLowerCase(Locale.ROOT);
     }

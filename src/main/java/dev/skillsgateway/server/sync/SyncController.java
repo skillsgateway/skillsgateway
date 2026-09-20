@@ -19,7 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 /** The sync-mode admin surface (GW_INGEST_0010), behind the OIDC session like every /api endpoint. */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class SyncController {
 
     private static final Set<String> MODES =

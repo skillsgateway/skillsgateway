@@ -65,7 +65,7 @@ test("a_token_that_has_never_authenticated_says_never", async () => {
  * form is still offered — nothing about the page is gated on holding a role.
  */
 test("a_session_with_no_role_sees_an_empty_token_list_and_can_still_create_one", async () => {
-  server.use(http.get("/api/tokens", () => HttpResponse.json([])));
+  server.use(http.get("/api/v1/tokens", () => HttpResponse.json([])));
   renderPage();
   expect(await screen.findByText("No tokens yet.")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Create token" })).toBeInTheDocument();
@@ -74,7 +74,7 @@ test("a_session_with_no_role_sees_an_empty_token_list_and_can_still_create_one",
 /** A refused or failed read is an error the reader can see, not an empty list. */
 test("a_failed_token_read_renders_the_servers_reason", async () => {
   server.use(
-    http.get("/api/tokens", () =>
+    http.get("/api/v1/tokens", () =>
       HttpResponse.json({ detail: "Token store unavailable" }, { status: 503 }),
     ),
   );

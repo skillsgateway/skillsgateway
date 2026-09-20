@@ -214,16 +214,16 @@ class FourEyesEnforceTests extends AbstractGatewayTest {
                 registerAndIngest(uniqueName("fe4http"), createUpstream(DEFAULT_MANIFEST), "dana", "dana");
         long id = registered.snapshot().id();
 
-        mockMvc.perform(get("/api/snapshots/{id}/four-eyes", id)
+        mockMvc.perform(get("/api/v1/snapshots/{id}/four-eyes", id)
                         .with(oidcLogin().idToken(token -> token.subject("dana"))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.mode").value("ENFORCE"))
+                .andExpect(jsonPath("$.mode").value("enforce"))
                 .andExpect(jsonPath("$.refused").value(true))
                 .andExpect(jsonPath("$.conflicts[*].role")
                         .value(org.hamcrest.Matchers.containsInAnyOrder(
                                 FourEyesGate.ROLE_REGISTERED_BY, FourEyesGate.ROLE_INGESTED_BY)));
 
-        mockMvc.perform(post("/api/snapshots/{id}/approve", id)
+        mockMvc.perform(post("/api/v1/snapshots/{id}/approve", id)
                         .with(oidcLogin().idToken(token -> token.subject("dana")))
                         .with(csrf()))
                 .andExpect(status().isConflict())
@@ -250,12 +250,12 @@ class FourEyesEnforceTests extends AbstractGatewayTest {
                 });
 
         // And an independent reviewer sees a clean pre-check and gets through.
-        mockMvc.perform(get("/api/snapshots/{id}/four-eyes", id)
+        mockMvc.perform(get("/api/v1/snapshots/{id}/four-eyes", id)
                         .with(oidcLogin().idToken(token -> token.subject("rachel"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.refused").value(false))
                 .andExpect(jsonPath("$.conflicts").isEmpty());
-        mockMvc.perform(post("/api/snapshots/{id}/approve", id)
+        mockMvc.perform(post("/api/v1/snapshots/{id}/approve", id)
                         .with(oidcLogin().idToken(token -> token.subject("rachel")))
                         .with(csrf()))
                 .andExpect(status().isOk());

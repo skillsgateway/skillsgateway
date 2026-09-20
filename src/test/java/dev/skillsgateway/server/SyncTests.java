@@ -73,7 +73,7 @@ class SyncTests extends AbstractGatewayTest {
         assertThat(secret).hasSize(64);
 
         // No read endpoint ever returns the secret; the mode is visible.
-        String listed = mockMvc.perform(get("/api/marketplaces").with(oidcLogin()))
+        String listed = mockMvc.perform(get("/api/v1/marketplaces").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -214,7 +214,7 @@ class SyncTests extends AbstractGatewayTest {
                 .id();
         try {
             String me = JsonPath.read(
-                    mockMvc.perform(get("/api/me").with(oidcLogin()))
+                    mockMvc.perform(get("/api/v1/me").with(oidcLogin()))
                             .andReturn()
                             .getResponse()
                             .getContentAsString(),
@@ -306,7 +306,7 @@ class SyncTests extends AbstractGatewayTest {
     }
 
     private org.springframework.test.web.servlet.ResultActions changeMode(String name, String mode) throws Exception {
-        return mockMvc.perform(put("/api/marketplaces/%s/sync".formatted(name))
+        return mockMvc.perform(put("/api/v1/marketplaces/%s/sync".formatted(name))
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"mode\":\"%s\"}".formatted(mode)))
@@ -315,7 +315,7 @@ class SyncTests extends AbstractGatewayTest {
 
     private void changeModeExpecting(
             String name, String mode, org.springframework.test.web.servlet.ResultMatcher expectation) throws Exception {
-        mockMvc.perform(put("/api/marketplaces/%s/sync".formatted(name))
+        mockMvc.perform(put("/api/v1/marketplaces/%s/sync".formatted(name))
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"mode\":\"%s\"}".formatted(mode)))

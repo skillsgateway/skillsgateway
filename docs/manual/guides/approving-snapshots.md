@@ -22,7 +22,7 @@ paths were added, modified or removed against the commit consumers are
 currently receiving, with per-file text diffs. A snapshot of a marketplace
 serving nothing shows every path as new: approving it serves all of it.
 
-The same reads exist on the API (`GET /api/snapshots/{id}/files`, `.../file`,
+The same reads exist on the API (`GET /api/v1/snapshots/{id}/files`, `.../file`,
 `.../diff` — see
 [the API reference](../reference/api/marketplaces.md#snapshot-preview)). They
 require admin or an approver grant for the marketplace (see
@@ -31,13 +31,13 @@ held quarantine content.
 
 ### Contents
 
-`GET /api/snapshots/{id}/content` enumerates what the snapshot declares — each
+`GET /api/v1/snapshots/{id}/content` enumerates what the snapshot declares — each
 plugin with its name, `source` and description, and the skills found under each.
 In the portal this is the **Show contents** toggle on the marketplace detail
 page.
 
 ```console
-$ curl localhost:8080/api/snapshots/1/content
+$ curl localhost:8080/api/v1/snapshots/1/content
 ```
 
 ```json
@@ -51,14 +51,14 @@ This works on `held` snapshots by design — reviewing must not require serving.
 ### What it changes
 
 The inventory says what the snapshot ships; `GET
-/api/snapshots/{id}/content-diff` says what approving it would add to what you
+/api/v1/snapshots/{id}/content-diff` says what approving it would add to what you
 already approved. Every plugin and skill is marked `added`, `removed`,
 `changed`, `moved` or `unchanged` against the marketplace's last approved
 snapshot, and a skill counts as changed when anything under its directory
 differs — not only its `SKILL.md`.
 
 ```console
-$ curl localhost:8080/api/snapshots/1/content-diff
+$ curl localhost:8080/api/v1/snapshots/1/content-diff
 ```
 
 On the tenth snapshot of a large marketplace this is the read worth starting
@@ -71,7 +71,7 @@ forty. In the portal it is the second half of the **Show contents** panel. See
 Where it came from and who has touched it:
 
 ```console
-$ curl localhost:8080/api/snapshots/1/provenance
+$ curl localhost:8080/api/v1/snapshots/1/provenance
 ```
 
 ```json
@@ -178,8 +178,8 @@ The threats that matter here are the ones no scanner catches:
 === "API"
 
     ```console
-    $ curl -X POST localhost:8080/api/snapshots/1/approve
-    $ curl -X POST localhost:8080/api/snapshots/1/reject
+    $ curl -X POST localhost:8080/api/v1/snapshots/1/approve
+    $ curl -X POST localhost:8080/api/v1/snapshots/1/reject
     ```
 
     Neither takes a request body. A snapshot the vetting chain blocked is
@@ -260,7 +260,7 @@ shut under `enforce` — and the API answers the same question without deciding
 anything:
 
 ```console
-$ curl localhost:8080/api/snapshots/1/four-eyes
+$ curl localhost:8080/api/v1/snapshots/1/four-eyes
 ```
 
 ```json
@@ -287,7 +287,7 @@ If your deployment configures
 a snapshot cannot be approved until the gateway has been holding its commit for
 that long. The portal shows the approve control disabled and reading **Eligible
 in 2d 4h**; the API answers `409` with the setting, the current age and the time
-remaining, and `GET /api/snapshots/{id}/release-age` answers the same question
+remaining, and `GET /api/v1/snapshots/{id}/release-age` answers the same question
 without attempting a decision.
 
 The window exists for a threat no scanner covers: a compromised release is
@@ -328,7 +328,7 @@ clearing the content, because none of that is visible in the files.
 An administrator withdraws it directly:
 
 ```console
-$ curl -X POST localhost:8080/api/snapshots/42/revoke \
+$ curl -X POST localhost:8080/api/v1/snapshots/42/revoke \
     -H 'Content-Type: application/json' \
     -d '{"reason": "CVE-2026-0001 in a vendored dependency",
          "serveAfter": "PREVIOUS_APPROVED"}'
@@ -363,9 +363,9 @@ return is recorded on the ledger as a publication in its own right.
 !!! warning "This stops the gateway serving it; it does not delete what clients hold"
 
     Anyone who already cloned the content still has it on disk. `GET
-    /api/snapshots/{id}/fetchers` names every identity that fetched it — the
+    /api/v1/snapshots/{id}/fetchers` names every identity that fetched it — the
     blast radius — and a client can find out for itself by asking
-    [`POST /status/snapshots`](../reference/git-facade.md#checking-content-you-already-hold)
+    [`POST /status/v1/snapshots`](../reference/git-facade.md#checking-content-you-already-hold)
     about the commits it holds. Nothing forces it to ask, so a withdrawal is
     only as fast as the
     [check your fleet runs](client-enforcement.md#noticing-that-something-you-already-hold-was-withdrawn).
@@ -380,7 +380,7 @@ If it has changed — the withdrawal was a mistake, or the upstream problem is
 fixed — a **different** administrator reverses it:
 
 ```console
-$ curl -X POST localhost:8080/api/snapshots/42/approve \
+$ curl -X POST localhost:8080/api/v1/snapshots/42/approve \
     -H 'Content-Type: application/json' \
     -d '{"reverseRevocation": true,
          "reason": "upstream published a fix; re-reviewed"}'

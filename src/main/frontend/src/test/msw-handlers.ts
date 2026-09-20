@@ -206,8 +206,8 @@ export const eventRegistry: Schemas["EventRegistry"] = {
     actor: "scheduler",
     vetting: {
       runId: 1,
-      outcome: "BLOCKED",
-      recordedOutcome: "BLOCKED",
+      outcome: "blocked",
+      recordedOutcome: "blocked",
       blockingVetters: ["example-vetter"],
       uncoveredFindings: 1,
       waivedFindings: 0,
@@ -258,15 +258,15 @@ export const createdAuditSink: Schemas["CreatedSink"] = {
 /** A blocked chain run: one vetter failed, one passed — the reviewer's evidence. */
 export const blockedVetting: Schemas["VettingView"] = {
   snapshotId: 1,
-  outcome: "BLOCKED",
-  recordedOutcome: "BLOCKED",
+  outcome: "blocked",
+  recordedOutcome: "blocked",
   suppressed: [],
   uncovered: [
     {
       vetter: "secret-scan",
       ruleId: "aws-access-key-id",
       location: "plugins/hello/DEPLOY.md:5",
-      severity: "CRITICAL",
+      severity: "critical",
       message: "an AWS access key id is committed in this file",
     },
   ],
@@ -275,7 +275,7 @@ export const blockedVetting: Schemas["VettingView"] = {
     runId: 5,
     snapshotId: 1,
     trigger: "ingestion",
-    outcome: "BLOCKED",
+    outcome: "blocked",
     startedAt: "2026-08-14T10:00:00Z",
     finishedAt: "2026-08-14T10:00:01Z",
     verdicts: [
@@ -283,12 +283,12 @@ export const blockedVetting: Schemas["VettingView"] = {
         verdictId: 9,
         vetter: "secret-scan",
         position: 0,
-        state: "FAIL",
+        state: "fail",
         detail: "1 finding(s); worst critical",
         findings: [
           {
             id: "aws-access-key-id",
-            severity: "CRITICAL",
+            severity: "critical",
             location: "plugins/hello/DEPLOY.md:5",
             message: "an AWS access key id is committed in this file",
           },
@@ -298,7 +298,7 @@ export const blockedVetting: Schemas["VettingView"] = {
         verdictId: 10,
         vetter: "prompt-injection",
         position: 1,
-        state: "PASS",
+        state: "pass",
         findings: [],
       },
     ],
@@ -324,18 +324,18 @@ export const blockedVetting: Schemas["VettingView"] = {
 /** A clean run: every vetter passed and nothing is waiting on a waiver. */
 export const clearVetting: Schemas["VettingView"] = {
   ...blockedVetting,
-  outcome: "CLEAR",
-  recordedOutcome: "CLEAR",
+  outcome: "clear",
+  recordedOutcome: "clear",
   uncovered: [],
   run: {
     ...blockedVetting.run!,
-    outcome: "CLEAR",
+    outcome: "clear",
     verdicts: [
       {
         verdictId: 9,
         vetter: "secret-scan",
         position: 0,
-        state: "PASS",
+        state: "pass",
         detail: "scanned 42 text files",
         findings: [],
       },
@@ -343,7 +343,7 @@ export const clearVetting: Schemas["VettingView"] = {
         verdictId: 10,
         vetter: "prompt-injection",
         position: 1,
-        state: "PASS",
+        state: "pass",
         detail: "scanned 3 skill instructions",
         findings: [],
       },
@@ -358,8 +358,8 @@ export const clearVetting: Schemas["VettingView"] = {
  */
 export const disabledAndPendingVetting: Schemas["VettingView"] = {
   ...blockedVetting,
-  outcome: "BLOCKED",
-  recordedOutcome: "BLOCKED",
+  outcome: "blocked",
+  recordedOutcome: "blocked",
   uncovered: [],
   run: {
     ...blockedVetting.run!,
@@ -368,7 +368,7 @@ export const disabledAndPendingVetting: Schemas["VettingView"] = {
         verdictId: 11,
         vetter: "secret-scan",
         position: 0,
-        state: "DISABLED",
+        state: "disabled",
         detail: "for marketplace 'corp-marketplace'",
         findings: [],
       },
@@ -376,7 +376,7 @@ export const disabledAndPendingVetting: Schemas["VettingView"] = {
         verdictId: 12,
         vetter: "prompt-injection",
         position: 1,
-        state: "PASS",
+        state: "pass",
         detail: "scanned 3 skill instructions",
         findings: [],
       },
@@ -384,7 +384,7 @@ export const disabledAndPendingVetting: Schemas["VettingView"] = {
         verdictId: 13,
         vetter: "corp-llm-reviewer",
         position: 2,
-        state: "PENDING",
+        state: "pending",
         detail: "triggered; awaiting the reviewer's callback",
         findings: [],
       },
@@ -408,8 +408,8 @@ export const disabledAndPendingVetting: Schemas["VettingView"] = {
  */
 export const shortCircuitedVetting: Schemas["VettingView"] = {
   ...blockedVetting,
-  outcome: "BLOCKED",
-  recordedOutcome: "BLOCKED",
+  outcome: "blocked",
+  recordedOutcome: "blocked",
   run: {
     ...blockedVetting.run!,
     chain: "secret-scan@3,prompt-injection@1,license-scan@1;mode=stop-after-fail",
@@ -419,12 +419,12 @@ export const shortCircuitedVetting: Schemas["VettingView"] = {
         verdictId: 31,
         vetter: "prompt-injection",
         position: 1,
-        state: "NOT_REACHED",
+        state: "not_reached",
         detail: "not run: the chain stopped at 'secret-scan'",
         findings: [
           {
             id: "vetter-not-reached",
-            severity: "INFO",
+            severity: "info",
             location: "prompt-injection",
             message: "the chain stopped at 'secret-scan' and did not reach vetter 'prompt-injection'",
           },
@@ -434,12 +434,12 @@ export const shortCircuitedVetting: Schemas["VettingView"] = {
         verdictId: 32,
         vetter: "license-scan",
         position: 2,
-        state: "NOT_REACHED",
+        state: "not_reached",
         detail: "not run: the chain stopped at 'secret-scan'",
         findings: [
           {
             id: "vetter-not-reached",
-            severity: "INFO",
+            severity: "info",
             location: "license-scan",
             message: "the chain stopped at 'secret-scan' and did not reach vetter 'license-scan'",
           },
@@ -457,22 +457,22 @@ export const shortCircuitedVetting: Schemas["VettingView"] = {
 /** A marketplace running every vetter in its configured order, with nothing set anywhere. */
 export const chainSettingsDefault: Schemas["ChainSettingsView"] = {
   mode: "run-all",
-  modeSource: "DEFAULT",
+  modeSource: "default",
   order: ["secret-scan", "prompt-injection", "license-scan"],
   orderOverride: [],
-  orderSource: "DEFAULT",
+  orderSource: "default",
 };
 
 /** The same marketplace, stopped early and reordered by an administrator. */
 export const chainSettingsStopping: Schemas["ChainSettingsView"] = {
   mode: "stop-after-fail",
-  modeSource: "MARKETPLACE",
+  modeSource: "marketplace",
   modeReason: "the external reviewer is billed per call",
   modeUpdatedBy: "alice",
   modeUpdatedAt: "2026-09-10T09:00:00Z",
   order: ["prompt-injection", "secret-scan", "license-scan"],
   orderOverride: ["prompt-injection", "secret-scan"],
-  orderSource: "MARKETPLACE",
+  orderSource: "marketplace",
   orderReason: "cheapest first",
   orderUpdatedBy: "alice",
   orderUpdatedAt: "2026-09-10T09:01:00Z",
@@ -487,7 +487,7 @@ export const marketplaceChain: Schemas["ChainVetterView"][] = [
     version: "3",
     external: false,
     enabled: false,
-    source: "MARKETPLACE",
+    source: "marketplace",
     reason: "vendor keys, expected in this marketplace",
     updatedBy: "alice",
     updatedAt: "2026-08-20T09:00:00Z",
@@ -499,7 +499,7 @@ export const marketplaceChain: Schemas["ChainVetterView"][] = [
     version: "1",
     external: false,
     enabled: true,
-    source: "GLOBAL",
+    source: "global",
     reason: "kept on across the estate",
     updatedBy: "root",
     updatedAt: "2026-08-01T09:00:00Z",
@@ -511,7 +511,7 @@ export const marketplaceChain: Schemas["ChainVetterView"][] = [
     version: "1",
     external: false,
     enabled: true,
-    source: "DEFAULT",
+    source: "default",
   },
 ];
 
@@ -527,7 +527,7 @@ export const globalChain: Schemas["ChainVetterView"][] = [
     version: "3",
     external: false,
     enabled: true,
-    source: "DEFAULT",
+    source: "default",
   },
   {
     name: "prompt-injection",
@@ -536,7 +536,7 @@ export const globalChain: Schemas["ChainVetterView"][] = [
     version: "1",
     external: false,
     enabled: true,
-    source: "GLOBAL",
+    source: "global",
     reason: "kept on across the estate",
     updatedBy: "root",
     updatedAt: "2026-08-01T09:00:00Z",
@@ -548,17 +548,17 @@ export const globalChain: Schemas["ChainVetterView"][] = [
     version: "1",
     external: false,
     enabled: true,
-    source: "DEFAULT",
+    source: "default",
   },
 ];
 
 /** The default chain's mode and order, with nothing set anywhere. */
 export const globalChainSettings: Schemas["ChainSettingsView"] = {
   mode: "run-all",
-  modeSource: "DEFAULT",
+  modeSource: "default",
   order: ["secret-scan", "prompt-injection", "license-scan"],
   orderOverride: [],
-  orderSource: "DEFAULT",
+  orderSource: "default",
 };
 
 /** Nothing in the estate departs from the default. */
@@ -616,8 +616,8 @@ export const bulkApplied: Schemas["BulkChainResult"] = {
   unchanged: 0,
   failed: 0,
   results: [
-    { marketplace: "corp-marketplace", status: "APPLIED", detail: "mode=stop-after-fail" },
-    { marketplace: "partner-marketplace", status: "APPLIED", detail: "mode=stop-after-fail" },
+    { marketplace: "corp-marketplace", status: "applied", detail: "mode=stop-after-fail" },
+    { marketplace: "partner-marketplace", status: "applied", detail: "mode=stop-after-fail" },
   ],
 };
 
@@ -628,10 +628,10 @@ export const bulkPartialFailure: Schemas["BulkChainResult"] = {
   unchanged: 0,
   failed: 1,
   results: [
-    { marketplace: "corp-marketplace", status: "APPLIED", detail: "mode=stop-after-fail" },
+    { marketplace: "corp-marketplace", status: "applied", detail: "mode=stop-after-fail" },
     {
       marketplace: "partner-marketplace",
-      status: "FAILED",
+      status: "failed",
       detail: "marketplace 'partner-marketplace' not found",
     },
   ],
@@ -640,8 +640,8 @@ export const bulkPartialFailure: Schemas["BulkChainResult"] = {
 /** The same run, once the blocking finding has been accepted: cleared, but visibly by a waiver. */
 export const waivedVetting: Schemas["VettingView"] = {
   ...blockedVetting,
-  outcome: "CLEAR_WITH_WAIVERS",
-  recordedOutcome: "BLOCKED",
+  outcome: "clear_with_waivers",
+  recordedOutcome: "blocked",
   uncovered: [],
   suppressed: [
     {
@@ -658,7 +658,7 @@ export const waivedVetting: Schemas["VettingView"] = {
       id: 3,
       marketplace: "corp-marketplace",
       ruleId: "aws-access-key-id",
-      scope: "SNAPSHOT",
+      scope: "snapshot",
       scopeValue: "a1b2c3",
       justification: "documented dummy key in fixtures",
       approvedBy: "alice",
@@ -829,19 +829,19 @@ export const staleIdentities: Schemas["StaleIdentity"][] = [
 ];
 
 export const handlers = [
-  http.get("/api/adoption", () => HttpResponse.json(marketplaceAdoption)),
-  http.get("/api/adoption/staleness", () => HttpResponse.json(staleIdentities)),
-  http.get("/api/me", () =>
+  http.get("/api/v1/adoption", () => HttpResponse.json(marketplaceAdoption)),
+  http.get("/api/v1/adoption/staleness", () => HttpResponse.json(staleIdentities)),
+  http.get("/api/v1/me", () =>
     HttpResponse.json({ username: "alice", roles: [], claimsTruncated: false }),
   ),
-  http.get("/api/marketplaces", () => HttpResponse.json([marketplace])),
-  http.post("/api/marketplaces", () =>
+  http.get("/api/v1/marketplaces", () => HttpResponse.json([marketplace])),
+  http.post("/api/v1/marketplaces", () =>
     HttpResponse.json<Schemas["RegisteredMarketplace"]>(
       { id: 2, name: "new-marketplace", url: "https://example.com/m.git", warnings: [] },
       { status: 201 },
     ),
   ),
-  http.delete("/api/snapshots/:id", () =>
+  http.delete("/api/v1/snapshots/:id", () =>
     HttpResponse.json<Schemas["Snapshot"]>({
       ...heldSnapshot,
       deletedAt: "2026-08-14T12:00:00Z",
@@ -849,22 +849,22 @@ export const handlers = [
       purgeAfter: "2026-08-28T12:00:00Z",
     }),
   ),
-  http.post("/api/snapshots/:id/restore", () => HttpResponse.json(heldSnapshot)),
-  http.get("/api/snapshots/:id/vetting", () => HttpResponse.json(blockedVetting)),
-  http.post("/api/snapshots/:id/waivers", () =>
+  http.post("/api/v1/snapshots/:id/restore", () => HttpResponse.json(heldSnapshot)),
+  http.get("/api/v1/snapshots/:id/vetting", () => HttpResponse.json(blockedVetting)),
+  http.post("/api/v1/snapshots/:id/waivers", () =>
     HttpResponse.json<Schemas["WaiverView"]>(waivedVetting.waivers![0], { status: 201 }),
   ),
-  http.get("/api/marketplaces/:name/waivers", () => HttpResponse.json(waivedVetting.waivers)),
-  http.get("/api/marketplaces/:name/vetting-chain", () => HttpResponse.json(marketplaceChain)),
-  http.get("/api/marketplaces/:name/vetting-chain-settings", () =>
+  http.get("/api/v1/marketplaces/:name/waivers", () => HttpResponse.json(waivedVetting.waivers)),
+  http.get("/api/v1/marketplaces/:name/vetting-chain", () => HttpResponse.json(marketplaceChain)),
+  http.get("/api/v1/marketplaces/:name/vetting-chain-settings", () =>
     HttpResponse.json(chainSettingsDefault),
   ),
-  http.get("/api/vetting/global-chain", () => HttpResponse.json(globalChain)),
-  http.get("/api/vetting/global-chain-settings", () => HttpResponse.json(globalChainSettings)),
-  http.get("/api/vetting/chain-settings", () => HttpResponse.json(noChainOverrides)),
-  http.get("/api/vetting/vetter-toggles", () => HttpResponse.json<Schemas["VetterToggle"][]>([])),
-  http.post("/api/vetting/chain-settings/bulk", () => HttpResponse.json(bulkApplied)),
-  http.put("/api/vetting/chain-mode", () =>
+  http.get("/api/v1/vetting/global-chain", () => HttpResponse.json(globalChain)),
+  http.get("/api/v1/vetting/global-chain-settings", () => HttpResponse.json(globalChainSettings)),
+  http.get("/api/v1/vetting/chain-settings", () => HttpResponse.json(noChainOverrides)),
+  http.get("/api/v1/vetting/vetter-toggles", () => HttpResponse.json<Schemas["VetterToggle"][]>([])),
+  http.post("/api/v1/vetting/chain-settings/bulk", () => HttpResponse.json(bulkApplied)),
+  http.put("/api/v1/vetting/chain-mode", () =>
     HttpResponse.json<Schemas["ChainModeSetting"]>({
       id: 1,
       marketplaceId: 1,
@@ -873,7 +873,7 @@ export const handlers = [
       updatedAt: "2026-09-10T09:00:00Z",
     }),
   ),
-  http.put("/api/vetting/chain-order", () =>
+  http.put("/api/v1/vetting/chain-order", () =>
     HttpResponse.json<Schemas["ChainOrderSetting"]>({
       id: 1,
       marketplaceId: 1,
@@ -882,7 +882,7 @@ export const handlers = [
       updatedAt: "2026-09-10T09:01:00Z",
     }),
   ),
-  http.put("/api/vetting/vetters/:name/toggle", ({ params }) =>
+  http.put("/api/v1/vetting/vetters/:name/toggle", ({ params }) =>
     HttpResponse.json<Schemas["VetterToggle"]>({
       id: 1,
       vetter: String(params.name),
@@ -892,48 +892,48 @@ export const handlers = [
       updatedAt: "2026-08-20T09:00:00Z",
     }),
   ),
-  http.delete("/api/waivers/:id", () =>
+  http.delete("/api/v1/waivers/:id", () =>
     HttpResponse.json<Schemas["WaiverView"]>({ ...waivedVetting.waivers![0], active: false }),
   ),
-  http.post("/api/snapshots/:id/approve", () =>
+  http.post("/api/v1/snapshots/:id/approve", () =>
     HttpResponse.json<Schemas["Snapshot"]>({ ...heldSnapshot, state: "approved", decidedBy: "alice" }),
   ),
-  http.post("/api/snapshots/:id/revet", () =>
+  http.post("/api/v1/snapshots/:id/revet", () =>
     HttpResponse.json<Schemas["RevetResult"]>({
       snapshotId: 1,
       marketplace: "corp-marketplace",
       sha: heldSnapshot.sha,
       runId: 9,
-      classification: "CLEAR",
-      outcome: "CLEAR",
+      classification: "clear",
+      outcome: "clear",
       revoked: false,
-      mode: "WARN",
+      mode: "warn",
       uncovered: [],
       affected: [],
     }),
   ),
-  http.get("/api/snapshots/:id/release-age", () => HttpResponse.json(eligible)),
+  http.get("/api/v1/snapshots/:id/release-age", () => HttpResponse.json(eligible)),
   // The default fixture is an independent reviewer: warn mode, nothing to declare. A story or a
   // test that wants the conflicted reviewer overrides this one handler.
-  http.get("/api/snapshots/:id/four-eyes", () =>
-    HttpResponse.json({ mode: "WARN", conflicts: [], refused: false }),
+  http.get("/api/v1/snapshots/:id/four-eyes", () =>
+    HttpResponse.json({ mode: "warn", conflicts: [], refused: false }),
   ),
-  http.get("/api/snapshots/:id/fetchers", () => HttpResponse.json(fetchers)),
-  http.get("/api/snapshots/:id/content", () => HttpResponse.json(snapshotContent)),
-  http.get("/api/snapshots/:id/provenance", () => HttpResponse.json(compositeProvenance)),
-  http.get("/api/snapshots/:id/content-diff", () => HttpResponse.json(contentDiff)),
-  http.get("/api/snapshots/:id/files", () => HttpResponse.json(fileTree)),
-  http.get("/api/snapshots/:id/file", ({ request }) =>
+  http.get("/api/v1/snapshots/:id/fetchers", () => HttpResponse.json(fetchers)),
+  http.get("/api/v1/snapshots/:id/content", () => HttpResponse.json(snapshotContent)),
+  http.get("/api/v1/snapshots/:id/provenance", () => HttpResponse.json(compositeProvenance)),
+  http.get("/api/v1/snapshots/:id/content-diff", () => HttpResponse.json(contentDiff)),
+  http.get("/api/v1/snapshots/:id/files", () => HttpResponse.json(fileTree)),
+  http.get("/api/v1/snapshots/:id/file", ({ request }) =>
     HttpResponse.json(fileContent(new URL(request.url).searchParams.get("path") ?? "")),
   ),
-  http.get("/api/snapshots/:id/diff", () => HttpResponse.json(snapshotDiff)),
-  http.get("/api/tokens", () => HttpResponse.json<Schemas["TokenView"][]>(tokenViews)),
-  http.post("/api/tokens", () => HttpResponse.json(issuedToken, { status: 201 })),
-  http.get("/api/audit", () => HttpResponse.json([])),
-  http.get("/api/audit/sinks", () => HttpResponse.json<Schemas["SinkView"][]>([auditSink])),
-  http.post("/api/audit/sinks", () => HttpResponse.json(createdAuditSink, { status: 201 })),
-  http.get("/api/webhooks", () => HttpResponse.json<Schemas["SubscriberView"][]>([subscriber])),
-  http.get("/api/webhooks/events", () => HttpResponse.json(eventRegistry)),
-  http.get("/api/webhooks/deliveries", () => HttpResponse.json<Schemas["WebhookDelivery"][]>([delivery])),
-  http.post("/api/webhooks", () => HttpResponse.json(createdSubscriber, { status: 201 })),
+  http.get("/api/v1/snapshots/:id/diff", () => HttpResponse.json(snapshotDiff)),
+  http.get("/api/v1/tokens", () => HttpResponse.json<Schemas["TokenView"][]>(tokenViews)),
+  http.post("/api/v1/tokens", () => HttpResponse.json(issuedToken, { status: 201 })),
+  http.get("/api/v1/audit", () => HttpResponse.json([])),
+  http.get("/api/v1/audit/sinks", () => HttpResponse.json<Schemas["SinkView"][]>([auditSink])),
+  http.post("/api/v1/audit/sinks", () => HttpResponse.json(createdAuditSink, { status: 201 })),
+  http.get("/api/v1/webhooks", () => HttpResponse.json<Schemas["SubscriberView"][]>([subscriber])),
+  http.get("/api/v1/webhooks/events", () => HttpResponse.json(eventRegistry)),
+  http.get("/api/v1/webhooks/deliveries", () => HttpResponse.json<Schemas["WebhookDelivery"][]>([delivery])),
+  http.post("/api/v1/webhooks", () => HttpResponse.json(createdSubscriber, { status: 201 })),
 ];

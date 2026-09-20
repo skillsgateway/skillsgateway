@@ -173,7 +173,7 @@ class WebhookTests extends AbstractGatewayTest {
                 .filter(event -> !event.isEmpty())
                 .map("\"%s\""::formatted)
                 .collect(Collectors.joining(","));
-        String body = mockMvc.perform(post("/api/webhooks")
+        String body = mockMvc.perform(post("/api/v1/webhooks")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"%s\",\"url\":\"%s\",\"events\":[%s]}".formatted(name, url, filter)))
@@ -195,7 +195,7 @@ class WebhookTests extends AbstractGatewayTest {
     @Test
     @SVCs({"SVC_GW_WEBHOOK_0005"})
     void the_event_registry_lists_every_dispatchable_event_and_never_the_export_event() throws Exception {
-        String body = mockMvc.perform(get("/api/webhooks/events").with(oidcLogin()))
+        String body = mockMvc.perform(get("/api/v1/webhooks/events").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -231,7 +231,7 @@ class WebhookTests extends AbstractGatewayTest {
         long elsewhereSubscriber = createSubscriber(
                 uniqueName("elsewhere"), "https://receiver.invalid/hook", "marketplace.snapshot.rejected", null);
 
-        String served = mockMvc.perform(get("/api/webhooks/events").with(oidcLogin()))
+        String served = mockMvc.perform(get("/api/v1/webhooks/events").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -291,8 +291,8 @@ class WebhookTests extends AbstractGatewayTest {
         Map<String, Object> vetting = (Map<String, Object>) body.get("vetting");
         assertThat(vetting).containsOnlyKeys(SUMMARY_FIELDS.toArray(String[]::new));
         assertThat(((Number) vetting.get("runId")).longValue()).isPositive();
-        assertThat(vetting.get("outcome")).isEqualTo("BLOCKED");
-        assertThat(vetting.get("recordedOutcome")).isEqualTo("BLOCKED");
+        assertThat(vetting.get("outcome")).isEqualTo("blocked");
+        assertThat(vetting.get("recordedOutcome")).isEqualTo("blocked");
         assertThat((List<String>) vetting.get("blockingVetters")).contains("secret-scan");
         assertThat(((Number) vetting.get("uncoveredFindings")).intValue()).isPositive();
         assertThat(((Number) vetting.get("waivedFindings")).intValue()).isZero();
@@ -316,13 +316,13 @@ class WebhookTests extends AbstractGatewayTest {
         long rejectedSubscriber = createSubscriber(
                 uniqueName("rejected"), "https://receiver.invalid/hook", "marketplace.snapshot.rejected", null);
 
-        mockMvc.perform(post("/api/marketplaces")
+        mockMvc.perform(post("/api/v1/marketplaces")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"%s\",\"url\":\"%s\"}"
                                 .formatted(marketplace, upstream.toUri().toString())))
                 .andExpect(status().isCreated());
-        String ingested = mockMvc.perform(post("/api/marketplaces/%s/ingest".formatted(marketplace))
+        String ingested = mockMvc.perform(post("/api/v1/marketplaces/%s/ingest".formatted(marketplace))
                         .with(oidcLogin()))
                 .andExpect(status().isCreated())
                 .andReturn()
@@ -330,7 +330,8 @@ class WebhookTests extends AbstractGatewayTest {
                 .getContentAsString();
         long snapshotId = ((Number) JsonPath.read(ingested, "$.id")).longValue();
         String sha = JsonPath.read(ingested, "$.sha");
-        mockMvc.perform(post("/api/snapshots/%d/approve".formatted(snapshotId)).with(oidcLogin()))
+        mockMvc.perform(post("/api/v1/snapshots/%d/approve".formatted(snapshotId))
+                        .with(oidcLogin()))
                 .andExpect(status().isOk());
 
         List<WebhookDelivery> forApproved = deliveryRepository.listBySubscriber(approvedSubscriber);
@@ -372,7 +373,7 @@ class WebhookTests extends AbstractGatewayTest {
                 assertThat(delivery.lastStatus()).isEqualTo(200);
             });
 
-            String listed = mockMvc.perform(get("/api/webhooks").with(oidcLogin()))
+            String listed = mockMvc.perform(get("/api/v1/webhooks").with(oidcLogin()))
                     .andExpect(status().isOk())
                     .andReturn()
                     .getResponse()
@@ -443,7 +444,7 @@ class WebhookTests extends AbstractGatewayTest {
     @Test
     @SVCs({"SVC_GW_WEBHOOK_0008"})
     void every_subscribable_event_is_namespaced_and_a_legacy_spelling_is_refused() throws Exception {
-        String served = mockMvc.perform(get("/api/webhooks/events").with(oidcLogin()))
+        String served = mockMvc.perform(get("/api/v1/webhooks/events").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -456,7 +457,7 @@ class WebhookTests extends AbstractGatewayTest {
         assertThat(offered).doesNotContainAnyElementsOf(LEGACY_EVENT_NAMES);
 
         // An old spelling is refused, not silently accepted and then never matched.
-        mockMvc.perform(post("/api/webhooks")
+        mockMvc.perform(post("/api/v1/webhooks")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"%s\",\"url\":\"https://receiver.invalid/hook\",\"events\":\"%s\"}"
@@ -493,7 +494,7 @@ class WebhookTests extends AbstractGatewayTest {
             // The third side: what actually arrives carries the namespaced name. The approval goes
             // through the API because that is where the emit lives.
             Registered registered = registerAndIngest(uniqueName("nshook"), createUpstream(DEFAULT_MANIFEST));
-            mockMvc.perform(post("/api/snapshots/%d/approve"
+            mockMvc.perform(post("/api/v1/snapshots/%d/approve"
                                     .formatted(registered.snapshot().id()))
                             .with(oidcLogin()))
                     .andExpect(status().isOk());
@@ -537,14 +538,14 @@ class WebhookTests extends AbstractGatewayTest {
 
         String marketplace = uniqueName("estatehook");
         Path upstream = createUpstream(DEFAULT_MANIFEST);
-        mockMvc.perform(post("/api/marketplaces")
+        mockMvc.perform(post("/api/v1/marketplaces")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"%s\",\"url\":\"%s\"}"
                                 .formatted(marketplace, upstream.toUri().toString())))
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(put("/api/marketplaces/{name}/sync", marketplace)
+        mockMvc.perform(put("/api/v1/marketplaces/{name}/sync", marketplace)
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"mode\":\"scheduled\"}"))
@@ -606,18 +607,18 @@ class WebhookTests extends AbstractGatewayTest {
 
         // A registration refused by the scheme allowlist, a sync-mode change for a marketplace that
         // does not exist, and a toggle of a vetter that does not exist.
-        mockMvc.perform(post("/api/marketplaces")
+        mockMvc.perform(post("/api/v1/marketplaces")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"%s\",\"url\":\"ftp://evil.invalid/repo.git\"}"
                                 .formatted(uniqueName("ftp"))))
                 .andExpect(status().isBadRequest());
-        mockMvc.perform(put("/api/marketplaces/{name}/sync", uniqueName("ghost"))
+        mockMvc.perform(put("/api/v1/marketplaces/{name}/sync", uniqueName("ghost"))
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"mode\":\"scheduled\"}"))
                 .andExpect(status().isNotFound());
-        mockMvc.perform(put("/api/vetting/vetters/{name}/toggle", "no-such-vetter")
+        mockMvc.perform(put("/api/v1/vetting/vetters/{name}/toggle", "no-such-vetter")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"enabled\": false}"))
@@ -644,7 +645,7 @@ class WebhookTests extends AbstractGatewayTest {
                 ? "{\"enabled\": %s, \"reason\": \"%s\"}".formatted(enabled, reason)
                 : "{\"enabled\": %s, \"marketplace\": \"%s\", \"reason\": \"%s\"}"
                         .formatted(enabled, marketplace, reason);
-        mockMvc.perform(put("/api/vetting/vetters/{name}/toggle", vetter)
+        mockMvc.perform(put("/api/v1/vetting/vetters/{name}/toggle", vetter)
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))

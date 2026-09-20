@@ -101,15 +101,15 @@ surface serves — so the declaration is in force from the first request. Verify
 it from the report and the ledger:
 
 ```console
-$ curl localhost:8080/api/estate
-$ curl localhost:8080/api/audit | jq '.[] | select(.principal == "config-reconciler")'
+$ curl localhost:8080/api/v1/estate
+$ curl localhost:8080/api/v1/audit | jq '.[] | select(.principal == "config-reconciler")'
 ```
 
 To converge without a restart — after editing the declaration source the
 running process reads, or rotating an environment secret:
 
 ```console
-$ curl -X POST localhost:8080/api/estate/reconcile
+$ curl -X POST localhost:8080/api/v1/estate/reconcile
 ```
 
 The report read is auditor-or-admin and the trigger is admin-only; the
@@ -124,7 +124,7 @@ converges:
 - `ERROR` in the application log,
 - `estate-reconciliation-failed` on the ledger (with the reason, never a
   secret),
-- an `"action": "failed"` entry in [`GET /api/estate`](../reference/api/estate.md).
+- an `"action": "failed"` entry in [`GET /api/v1/estate`](../reference/api/estate.md).
 
 Two failures are policy, not typos:
 
@@ -134,7 +134,7 @@ Two failures are policy, not typos:
   new marketplace instead.
 - **`sync-mode: webhook`.** Enabling webhook sync generates the inbound HMAC
   secret and returns it exactly once, which has no declarative form. Set it
-  through [`PUT /api/marketplaces/{name}/sync`](../reference/api/marketplaces.md)
+  through [`PUT /api/v1/marketplaces/{name}/sync`](../reference/api/marketplaces.md)
   like the [upstream sync guide](upstream-sync.md) describes.
 
 ## Declare converge-able state; call for acts and reads
@@ -156,13 +156,13 @@ This is where operators guess wrong, so the rule is worth stating as a rule:
   belongs to another team.
 
 **Role grants are estate-only.** No machine credential can call `POST
-/api/roles`, whatever scopes it holds, because `estate.grants` already serves
+/api/v1/roles`, whatever scopes it holds, because `estate.grants` already serves
 the same need with the same validation and no credential to steal. This is the
 sharpest case of the rule above rather than an exception to it.
 
 !!! note "A provider cannot converge a marketplace's whole lifecycle"
 
-    There is no `PUT` or `DELETE /api/marketplaces/{name}` — registration
+    There is no `PUT` or `DELETE /api/v1/marketplaces/{name}` — registration
     exists, deregistration does not — so `terraform destroy` has nothing to
     call. That is a pre-existing gap in the API rather than something machine
     credentials introduce, but a provider author meets it immediately.
@@ -209,7 +209,7 @@ An administrator does this once, from a browser session, naming only the scopes
 the pipeline needs and an expiry:
 
 ```bash
-curl -X POST https://gateway.example.com/api/tokens/machine \
+curl -X POST https://gateway.example.com/api/v1/tokens/machine \
   -H 'Content-Type: application/json' \
   --data '{
     "principal": "platform-ci",
@@ -229,18 +229,18 @@ store; the gateway keeps only a hash.
   env:
     SKILLS_GATEWAY_TOKEN: ${{ secrets.SKILLS_GATEWAY_TOKEN }}
   run: |
-    curl -sSf -X POST "$GATEWAY/api/estate/reconcile" \
+    curl -sSf -X POST "$GATEWAY/api/v1/estate/reconcile" \
       -H "Authorization: Bearer $SKILLS_GATEWAY_TOKEN"
 
 - name: Fail the build on unreconciled entries
   run: |
-    curl -sSf "$GATEWAY/api/estate" \
+    curl -sSf "$GATEWAY/api/v1/estate" \
       -H "Authorization: Bearer $SKILLS_GATEWAY_TOKEN" \
       | jq -e '.entries | map(select(.outcome == "failed")) | length == 0'
 ```
 
 A Terraform provider follows the same shape: the credential in the provider
-block, `POST /api/marketplaces` to register, `GET /api/estate` to read back.
+block, `POST /api/v1/marketplaces` to register, `GET /api/v1/estate` to read back.
 
 ### What this credential cannot do, by design
 
@@ -249,7 +249,7 @@ State it plainly, because a pipeline author will otherwise try:
 - **It cannot approve or reject a snapshot**, and cannot create or delete a
   waiver. Publishing content is a human decision, and no scope reaches it.
 - **It cannot retract content** — no snapshot delete, no restore, no retention
-  evaluate or compact. It can read `GET /api/retention/candidates` and stop
+  evaluate or compact. It can read `GET /api/v1/retention/candidates` and stop
   there.
 - **It cannot grant a role**, to anyone, including itself. Declare grants in
   `estate.grants` instead; `roles:read` lets the pipeline *detect* a grant made
@@ -268,7 +268,7 @@ State it plainly, because a pipeline author will otherwise try:
 ### Rotate it
 
 ```bash
-curl -X POST "$GATEWAY/api/tokens/machine/$ID/rotate"
+curl -X POST "$GATEWAY/api/v1/tokens/machine/$ID/rotate"
 ```
 
 The same principal, name, expiry deadline and every one of the same scopes, with

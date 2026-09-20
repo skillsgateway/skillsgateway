@@ -18,7 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 /** The catalog's admin surface (GW_FACADE_0005), behind the OIDC session like every /api endpoint. */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class CatalogController {
 
     private final CatalogService catalogService;

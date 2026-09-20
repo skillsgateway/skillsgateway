@@ -51,11 +51,11 @@ different.
 
 ## Provenance and audit
 
-`GET /api/catalog` returns the served revision and its constituents — the
+`GET /api/v1/catalog` returns the served revision and its constituents — the
 `(marketplace, SHA)` pairs vendored into it, which are also recorded in the
 catalog commit itself. Fetches of `/git/catalog` land on the audit ledger under
 the name `catalog` like any marketplace, and a manual
-`POST /api/catalog/rebuild` (the on-demand repair path) is ledger-recorded with
+`POST /api/v1/catalog/rebuild` (the on-demand repair path) is ledger-recorded with
 the acting identity and requires **admin**
 (see [role enforcement](delegated-administration.md)); the catalog read stays
 open to any session.
@@ -86,7 +86,7 @@ name is legitimate; substituting content is not.
 Every withheld name is announced: a WARN log line, a ledger entry
 `catalog-name-collision` from the `catalog-builder` actor naming the claimants,
 an increment of the `skills_gateway.catalog.collisions` counter, and an entry in
-the `collisions` field of `GET /api/catalog`. The counter is untagged — a
+the `collisions` field of `GET /api/v1/catalog`. The counter is untagged — a
 contested name is unbounded cardinality, so the ledger and the catalog read are
 where you look for *which*. That field is persisted in the catalog commit beside
 the constituents, so the served revision reports its own collisions.

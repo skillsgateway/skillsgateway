@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/webhooks")
+@RequestMapping("/api/v1/webhooks")
 public class WebhookController {
 
     /** Webhook administration is not tied to a marketplace; the ledger column is NOT NULL. */
@@ -166,7 +166,7 @@ public class WebhookController {
                     "0000000000000000000000000000000000000000",
                     "held",
                     "scheduler",
-                    new WebhookService.VettingSummary(1, "BLOCKED", "BLOCKED", List.of("example-vetter"), 1, 0));
+                    new WebhookService.VettingSummary(1, "blocked", "blocked", List.of("example-vetter"), 1, 0));
 
     private static final WebhookService.MarketplacePayload EXAMPLE_MARKETPLACE_PAYLOAD =
             new WebhookService.MarketplacePayload(

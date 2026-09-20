@@ -41,10 +41,10 @@ as an administrator — the one your configuration names, which the gateway refu
 to start without:
 
 ```console
-$ curl -X POST localhost:8080/api/roles \
+$ curl -X POST localhost:8080/api/v1/roles \
     -H 'Content-Type: application/json' \
     -d '{"principal": "alice@example.com", "role": "approver", "marketplace": "acme"}'
-$ curl -X POST localhost:8080/api/roles \
+$ curl -X POST localhost:8080/api/v1/roles \
     -H 'Content-Type: application/json' \
     -d '{"principal": "carol@example.com", "role": "auditor"}'
 ```
@@ -68,7 +68,7 @@ and would match nobody; groups reach the gateway through
 [claim mappings](identity-providers.md#groups-instead-of-grants) instead.
 
 Principals in `skills-gateway.roles.admins` are admins **by configuration**:
-they need no grant row, they appear on their own `/api/me` as a synthetic
+they need no grant row, they appear on their own `/api/v1/me` as a synthetic
 `admin` role, and no API call can revoke them. This is the escape hatch that
 survives any bad grant edit. Admins granted through the API work exactly as
 well — the configuration list is the one you cannot lose.
@@ -78,7 +78,7 @@ well — the configuration list is the one you cannot lose.
 Restart so the configuration above is read — there is no enforcement switch to
 flip, only the administrators it names. Then verify from a browser session:
 
-- `GET /api/me` reports your effective roles and where each came from.
+- `GET /api/v1/me` reports your effective roles and where each came from.
 - A session with no role gets **403** from every mutation and from the ledger,
   while browsing and its own tokens keep working.
 - Your approver can approve their marketplace and gets **403** for any other,
@@ -94,7 +94,7 @@ the marketplace.
 Grants are not the only source of a role. A session's effective roles are the
 union of three:
 
-| Source | `/api/me` reports | Managed by |
+| Source | `/api/v1/me` reports | Managed by |
 | --- | --- | --- |
 | `skills-gateway.roles.admins` | `config` | Whoever controls deployment. Unrevocable through the API. |
 | A row in the grants API | `grant` | Admins, at runtime, audited on the ledger. |

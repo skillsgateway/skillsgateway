@@ -85,7 +85,7 @@ class MinimumReleaseAgeTests extends AbstractGatewayTest {
         long id = registered.snapshot().id();
         ageBy(id, MINIMUM.plusHours(4));
 
-        mockMvc.perform(post("/api/snapshots/{id}/approve", id).with(oidcLogin()))
+        mockMvc.perform(post("/api/v1/snapshots/{id}/approve", id).with(oidcLogin()))
                 .andExpect(status().isOk());
 
         assertThat(snapshotRepository.findById(id).orElseThrow().state()).isEqualTo(Snapshot.APPROVED);
@@ -148,14 +148,14 @@ class MinimumReleaseAgeTests extends AbstractGatewayTest {
         Registered registered = registerAndIngest(uniqueName("cooloff"), createUpstream(DEFAULT_MANIFEST));
         long id = registered.snapshot().id();
 
-        mockMvc.perform(get("/api/snapshots/{id}/release-age", id).with(oidcLogin()))
+        mockMvc.perform(get("/api/v1/snapshots/{id}/release-age", id).with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.eligible").value(false))
                 .andExpect(jsonPath("$.minimumReleaseAgeSeconds").value((int) MINIMUM.toSeconds()))
                 .andExpect(jsonPath("$.remainingSeconds").value(org.hamcrest.Matchers.greaterThan(0)));
 
         // The refusal a reviewer would have hit carries the same numbers the report showed.
-        mockMvc.perform(post("/api/snapshots/{id}/approve", id).with(oidcLogin()))
+        mockMvc.perform(post("/api/v1/snapshots/{id}/approve", id).with(oidcLogin()))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.title").value("Snapshot has not reached the minimum release age"))
                 .andExpect(jsonPath("$.configKey").value(ReleaseAgeGate.CONFIG_KEY))
@@ -163,7 +163,7 @@ class MinimumReleaseAgeTests extends AbstractGatewayTest {
 
         ageBy(id, MINIMUM);
 
-        mockMvc.perform(get("/api/snapshots/{id}/release-age", id).with(oidcLogin()))
+        mockMvc.perform(get("/api/v1/snapshots/{id}/release-age", id).with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.eligible").value(true))
                 .andExpect(jsonPath("$.remainingSeconds").value(0));

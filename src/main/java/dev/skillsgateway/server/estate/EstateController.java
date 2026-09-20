@@ -17,7 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 /** The declarative estate's API surface (GW_ESTATE_0005): the last report, and the on-demand trigger. */
 @RestController
-@RequestMapping("/api/estate")
+@RequestMapping("/api/v1/estate")
 public class EstateController {
 
     /** Estate administration is not tied to a marketplace; the ledger column is NOT NULL. */

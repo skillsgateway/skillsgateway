@@ -746,9 +746,9 @@ function BulkResult({ result }: { result: BulkChainResult }) {
                 <TableCell>
                   <Badge
                     variant={
-                      outcome.status === "FAILED"
+                      outcome.status === "failed"
                         ? "destructive"
-                        : outcome.status === "APPLIED"
+                        : outcome.status === "applied"
                           ? "default"
                           : "secondary"
                     }

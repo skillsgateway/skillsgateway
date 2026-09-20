@@ -56,7 +56,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class AdminController {
 
     /** The gateway ingests only the upstream default branch; this is not consumer-selectable. */
@@ -633,9 +633,9 @@ public class AdminController {
 
             @Schema(
                     description = "What the marketplace serves afterwards. Required, with no default, because"
-                            + " neither outcome is safe to assume: PREVIOUS_APPROVED republishes older content"
-                            + " that may carry the same compromise, and NOTHING takes the marketplace down",
-                    allowableValues = {"PREVIOUS_APPROVED", "NOTHING"})
+                            + " neither outcome is safe to assume: `previous_approved` republishes older content"
+                            + " that may carry the same compromise, and `nothing` takes the marketplace down",
+                    allowableValues = {"previous_approved", "nothing"})
             RevocationService.ServeAfter serveAfter) {}
 
     @Schema(description = "The outcome of withdrawing a snapshot")
@@ -699,7 +699,7 @@ public class AdminController {
     public ProblemDetail missingServeAfter(MissingServeAfterChoiceException e) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage());
         problem.setTitle("A withdrawal must say what the marketplace serves afterwards");
-        problem.setProperty("choices", java.util.List.of("PREVIOUS_APPROVED", "NOTHING"));
+        problem.setProperty("choices", java.util.List.of("previous_approved", "nothing"));
         return problem;
     }
 

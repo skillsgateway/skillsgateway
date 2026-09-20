@@ -31,14 +31,14 @@ class ClaimMappedRoleIsEnforcedTests extends AbstractClaimMappingTest {
                 .idToken(token -> token.subject("dryrun-carol").claim("groups", java.util.List.of("gw-auditors")));
 
         // Reported, with the source that produced it...
-        mockMvc.perform(get("/api/me").with(carol))
+        mockMvc.perform(get("/api/v1/me").with(carol))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.roles[0].role").value("auditor"))
                 .andExpect(jsonPath("$.roles[0].source").value("claim"));
 
         // ... and binding: the auditor surface opens, and an admin mutation does not.
-        mockMvc.perform(get("/api/audit").with(carol)).andExpect(status().isOk());
-        mockMvc.perform(post("/api/marketplaces")
+        mockMvc.perform(get("/api/v1/audit").with(carol)).andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/marketplaces")
                         .with(carol)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"%s\",\"url\":\"https://example.com/x.git\"}"

@@ -50,9 +50,9 @@ class VettingOverrideTests extends AbstractGatewayTest {
         String bobName = "bob-" + uniqueName("p");
         var bob = oidcLogin().idToken(token -> token.subject(bobName));
         grantApprover(bobName, name);
-        mockMvc.perform(post("/api/snapshots/{id}/approve", snapshotId).with(bob))
+        mockMvc.perform(post("/api/v1/snapshots/{id}/approve", snapshotId).with(bob))
                 .andExpect(status().isConflict());
-        mockMvc.perform(post("/api/snapshots/{id}/approve", snapshotId)
+        mockMvc.perform(post("/api/v1/snapshots/{id}/approve", snapshotId)
                         .with(bob)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"overrideVetting\": true, \"reason\": \"I accept the risk\"}"))
@@ -63,21 +63,21 @@ class VettingOverrideTests extends AbstractGatewayTest {
         assertThat(approvalService.vettingOverride(snapshotId)).isEmpty();
 
         // An administrator may override — but only with a reason. Reasonless is refused (422).
-        mockMvc.perform(post("/api/snapshots/{id}/approve", snapshotId)
+        mockMvc.perform(post("/api/v1/snapshots/{id}/approve", snapshotId)
                         .with(root)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"overrideVetting\": true}"))
                 .andExpect(status().isUnprocessableEntity());
         // A plain administrative approval of the blocked snapshot is still refused: the override is
         // the only way past the block, and it is deliberate.
-        mockMvc.perform(post("/api/snapshots/{id}/approve", snapshotId).with(root))
+        mockMvc.perform(post("/api/v1/snapshots/{id}/approve", snapshotId).with(root))
                 .andExpect(status().isConflict());
         assertThat(snapshotRepository.findById(snapshotId).orElseThrow().state())
                 .isEqualTo(Snapshot.HELD);
 
         // The override with a reason approves and publishes the snapshot.
         String reason = "vendor-signed key, accepted risk tracked in TICKET-42";
-        mockMvc.perform(post("/api/snapshots/{id}/approve", snapshotId)
+        mockMvc.perform(post("/api/v1/snapshots/{id}/approve", snapshotId)
                         .with(root)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"overrideVetting\": true, \"reason\": \"%s\"}".formatted(reason)))
@@ -97,14 +97,14 @@ class VettingOverrideTests extends AbstractGatewayTest {
 
         // Fail-loud: the vetting surface reports the override so it is never indistinguishable from
         // an approval the chain cleared on its own merits.
-        mockMvc.perform(get("/api/snapshots/{id}/vetting", snapshotId).with(root))
+        mockMvc.perform(get("/api/v1/snapshots/{id}/vetting", snapshotId).with(root))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.override.reason").value(reason))
                 .andExpect(jsonPath("$.override.overriddenBy").value("root"));
     }
 
     private void grantApprover(String principal, String marketplace) throws Exception {
-        mockMvc.perform(post("/api/roles")
+        mockMvc.perform(post("/api/v1/roles")
                         .with(root)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"principal\": \"%s\", \"role\": \"approver\", \"marketplace\": \"%s\"}"

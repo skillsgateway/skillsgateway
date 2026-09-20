@@ -154,7 +154,7 @@ refuses any snapshot whose closure, served manifest and pinned tree disagree.
 
 ### What a snapshot contains
 
-`GET /api/snapshots/{id}/content` parses the captured commit and lists what it
+`GET /api/v1/snapshots/{id}/content` parses the captured commit and lists what it
 declares: each plugin with its name, `source` and description, and the skills
 found under each. A resolved external plugin appears like any other, with its
 `source` inside the snapshot, because by the time anything reads the snapshot
@@ -222,7 +222,7 @@ the database for the serving path, not for the reporting one.
 
 ### Reading it
 
-`GET /api/audit` returns the whole table, and the portal's
+`GET /api/v1/audit` returns the whole table, and the portal's
 [Audit log page](../reference/portal.md#audit-log) renders it. There is no
 filtering, search or paging: it is a recent-activity view.
 

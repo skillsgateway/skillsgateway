@@ -28,7 +28,7 @@ import org.springframework.web.server.ResponseStatusException;
  * and a marketplace-scoped approver is frequently the owner of the content the chain governs.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class VettingChainSettingsController {
 
     private final VettingChainSettingsService settingsService;

@@ -33,7 +33,7 @@ built from a manifest declaring external plugin sources — and those record the
 provenance in the commit message itself.
 
 ```console
-$ curl -H "Authorization: Bearer $TOKEN" localhost:8080/api/marketplaces
+$ curl -H "Authorization: Bearer $TOKEN" localhost:8080/api/v1/marketplaces
 ```
 
 Clone those URLs directly and you are out, with no further steps. This is the
@@ -105,7 +105,7 @@ over the API in NDJSON, with no database access:
 
 ```console
 $ curl -H "Authorization: Bearer $TOKEN" \
-    "localhost:8080/api/audit/export?limit=10000" > ledger.ndjson
+    "localhost:8080/api/v1/audit/export?limit=10000" > ledger.ndjson
 ```
 
 See [Exporting the audit ledger](exporting-the-audit-ledger.md).

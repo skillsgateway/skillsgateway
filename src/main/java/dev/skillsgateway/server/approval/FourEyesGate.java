@@ -158,7 +158,7 @@ public class FourEyesGate {
     public record FourEyesCheck(
             @Schema(
                     description = "The configured mode",
-                    allowableValues = {"WARN", "ENFORCE"})
+                    allowableValues = {"warn", "enforce"})
             SkillsGatewayProperties.FourEyesMode mode,
 
             @Schema(description = "The supply-side acts this reviewer performed on this snapshot")

@@ -117,9 +117,9 @@ describe("marketplaceFlow", () => {
 
   it("keeps the deciding setting on the node so the detail can name it", () => {
     const nodes = marketplaceFlow(marketplaceChain);
-    expect(nodes[1]?.setting?.source).toBe("MARKETPLACE");
-    expect(nodes[2]?.setting?.source).toBe("GLOBAL");
-    expect(nodes[3]?.setting?.source).toBe("DEFAULT");
+    expect(nodes[1]?.setting?.source).toBe("marketplace");
+    expect(nodes[2]?.setting?.source).toBe("global");
+    expect(nodes[3]?.setting?.source).toBe("default");
   });
 });
 
@@ -179,7 +179,7 @@ describe("marketplaceHeadline", () => {
   it("names a globally disabled vetter as off globally", () => {
     const globallyOff = marketplaceChain.map((vetter) =>
       vetter.name === "prompt-injection"
-        ? { ...vetter, enabled: false, source: "GLOBAL" as const }
+        ? { ...vetter, enabled: false, source: "global" as const }
         : { ...vetter, enabled: true },
     );
     expect(marketplaceHeadline(marketplaceFlow(globallyOff)).detail).toBe(
@@ -208,17 +208,17 @@ describe("stage identity", () => {
 
 describe("sourceChip", () => {
   it("names the scope short enough to sit on a node", () => {
-    expect(sourceChip("MARKETPLACE")).toBe("this marketplace");
-    expect(sourceChip("GLOBAL")).toBe("global");
+    expect(sourceChip("marketplace")).toBe("this marketplace");
+    expect(sourceChip("global")).toBe("global");
     expect(sourceChip(undefined)).toBe("default");
   });
 });
 
 describe("sourceWord", () => {
   it("names the absence of a setting as a default rather than as a decision", () => {
-    expect(sourceWord("MARKETPLACE")).toBe("set for this marketplace");
-    expect(sourceWord("GLOBAL")).toBe("from the global setting");
-    expect(sourceWord("DEFAULT")).toBe("default — no setting recorded");
+    expect(sourceWord("marketplace")).toBe("set for this marketplace");
+    expect(sourceWord("global")).toBe("from the global setting");
+    expect(sourceWord("default")).toBe("default — no setting recorded");
     expect(sourceWord(undefined)).toBe("default — no setting recorded");
   });
 });

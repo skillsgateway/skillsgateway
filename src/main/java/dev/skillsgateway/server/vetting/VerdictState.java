@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.vetting;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Locale;
 
@@ -58,7 +59,12 @@ public enum VerdictState {
      */
     NOT_REACHED;
 
-    /** Storage form: the lower-case name, matching the {@code vetting_verdicts.state} check. */
+    /**
+     * Storage form <em>and</em> wire form: the lower-case name, matching the
+     * {@code vetting_verdicts.state} check. One definition on purpose — a published enum value that
+     * spells itself differently from the column it came out of is two vocabularies to keep in step.
+     */
+    @JsonValue
     public String stored() {
         return name().toLowerCase(Locale.ROOT);
     }

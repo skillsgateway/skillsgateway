@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  * exactly like the ledger itself (auditor or admin).
  */
 @RestController
-@RequestMapping("/api/adoption")
+@RequestMapping("/api/v1/adoption")
 public class AdoptionController {
 
     private static final int DEFAULT_WINDOW_DAYS = 30;

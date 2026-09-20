@@ -22,7 +22,7 @@ selectable."
 ## Over the API
 
 ```console
-$ curl -X POST localhost:8080/api/marketplaces \
+$ curl -X POST localhost:8080/api/v1/marketplaces \
     -H 'Content-Type: application/json' \
     -d '{"name":"acme","url":"https://github.com/acme/skills.git"}'
 ```
@@ -78,7 +78,7 @@ API directly.
 Registration captures nothing. Press **Ingest** on the marketplace card, or:
 
 ```console
-$ curl -X POST localhost:8080/api/marketplaces/acme/ingest
+$ curl -X POST localhost:8080/api/v1/marketplaces/acme/ingest
 ```
 
 ```json
@@ -105,7 +105,7 @@ for new commits — a cron job, a CI schedule, or a forge webhook calling the
 ingest endpoint:
 
 ```console
-$ curl -X POST -u ... https://skills.corp.example/api/marketplaces/acme/ingest
+$ curl -X POST -u ... https://skills.corp.example/api/v1/marketplaces/acme/ingest
 ```
 
 !!! info "Ingestion is always safe to run"

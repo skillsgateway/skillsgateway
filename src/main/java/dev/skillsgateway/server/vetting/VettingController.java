@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
  * those findings an accepted risk is currently suppressing.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class VettingController {
 
     private final VettingService vettingService;
@@ -65,15 +65,15 @@ public class VettingController {
 
             @Schema(
                     description = "The effective outcome, which is what gates approval: the run's verdicts with"
-                            + " every waived finding removed. CLEAR_WITH_WAIVERS means nothing objects any more"
+                            + " every waived finding removed. `clear_with_waivers` means nothing objects any more"
                             + " only because an active waiver is suppressing a finding. A snapshot with no run"
                             + " is blocked.",
-                    allowableValues = {"CLEAR", "CLEAR_WITH_WAIVERS", "BLOCKED"})
+                    allowableValues = {"clear", "clear_with_waivers", "blocked"})
             VettingChain.Outcome outcome,
 
             @Schema(
                     description = "What the vetters themselves concluded, before any waiver was applied",
-                    allowableValues = {"CLEAR", "BLOCKED"})
+                    allowableValues = {"clear", "blocked"})
             VettingChain.Outcome recordedOutcome,
 
             @Schema(description = "The latest run with its verdicts and findings, or null if the chain never ran")

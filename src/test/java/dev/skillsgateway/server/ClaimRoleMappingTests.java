@@ -53,16 +53,16 @@ class ClaimRoleMappingTests extends AbstractClaimMappingTest {
         var alice = session("claim-alice", List.of("gw-admins"));
 
         // Registration is admin-only, and so is the grants API — which would show any row.
-        mockMvc.perform(post("/api/marketplaces")
+        mockMvc.perform(post("/api/v1/marketplaces")
                         .with(alice)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"%s\",\"url\":\"https://example.com/x.git\"}"
                                 .formatted(uniqueName("claimadmin"))))
                 .andExpect(status().isCreated());
-        mockMvc.perform(get("/api/roles").with(alice)).andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/roles").with(alice)).andExpect(status().isOk());
         assertThat(roleService.rolesOf("claim-alice")).isEmpty();
 
-        mockMvc.perform(get("/api/me").with(alice))
+        mockMvc.perform(get("/api/v1/me").with(alice))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.roles[0].role").value("admin"))
                 .andExpect(jsonPath("$.roles[0].source").value("claim"))
@@ -79,35 +79,36 @@ class ClaimRoleMappingTests extends AbstractClaimMappingTest {
         Registered own = registerAndIngest("claim-approver-mkt", createUpstream(DEFAULT_MANIFEST));
         Registered other = registerAndIngest(uniqueName("claimother"), createUpstream(DEFAULT_MANIFEST));
 
-        mockMvc.perform(post("/api/snapshots/{id}/approve", own.snapshot().id()).with(bob))
+        mockMvc.perform(post("/api/v1/snapshots/{id}/approve", own.snapshot().id())
+                        .with(bob))
                 .andExpect(status().isOk());
-        mockMvc.perform(post("/api/marketplaces/{name}/ingest", "claim-approver-mkt")
+        mockMvc.perform(post("/api/v1/marketplaces/{name}/ingest", "claim-approver-mkt")
                         .with(bob))
                 .andExpect(status().isCreated());
 
         // Another marketplace is refused by name and through a bare snapshot id (GW_AUTH_0011).
         mockMvc.perform(post(
-                                "/api/marketplaces/{name}/ingest",
+                                "/api/v1/marketplaces/{name}/ingest",
                                 other.marketplace().name())
                         .with(bob))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(post("/api/snapshots/{id}/approve", other.snapshot().id())
+        mockMvc.perform(post("/api/v1/snapshots/{id}/approve", other.snapshot().id())
                         .with(bob))
                 .andExpect(status().isForbidden());
 
         // ... and through a bare waiver id belonging to the other marketplace.
         String waiver = mockMvc.perform(
-                        post("/api/snapshots/{id}/waivers", other.snapshot().id())
+                        post("/api/v1/snapshots/{id}/waivers", other.snapshot().id())
                                 .with(root)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content("{\"ruleId\": \"aws-access-key-id\", \"scope\": \"PATH\","
+                                .content("{\"ruleId\": \"aws-access-key-id\", \"scope\": \"path\","
                                         + " \"path\": \"plugins/hello\", \"justification\": \"claim scoping test\","
                                         + " \"expiresAt\": \"2036-01-01T00:00:00Z\"}"))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        mockMvc.perform(delete("/api/waivers/{id}", ((Number) JsonPath.read(waiver, "$.id")).longValue())
+        mockMvc.perform(delete("/api/v1/waivers/{id}", ((Number) JsonPath.read(waiver, "$.id")).longValue())
                         .with(bob))
                 .andExpect(status().isForbidden());
     }
@@ -117,15 +118,15 @@ class ClaimRoleMappingTests extends AbstractClaimMappingTest {
     void a_mapped_auditor_claim_reads_the_ledger_and_is_refused_every_mutation() throws Exception {
         var carol = session("claim-carol", List.of("gw-auditors"));
 
-        mockMvc.perform(get("/api/audit").with(carol)).andExpect(status().isOk());
-        mockMvc.perform(get("/api/webhooks").with(carol)).andExpect(status().isOk());
-        mockMvc.perform(get("/api/retention/candidates").with(carol)).andExpect(status().isOk());
-        mockMvc.perform(post("/api/marketplaces")
+        mockMvc.perform(get("/api/v1/audit").with(carol)).andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/webhooks").with(carol)).andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/retention/candidates").with(carol)).andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/marketplaces")
                         .with(carol)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"auditor-denied\",\"url\":\"https://example.com/x.git\"}"))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(post("/api/catalog/rebuild").with(carol)).andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/v1/catalog/rebuild").with(carol)).andExpect(status().isForbidden());
     }
 
     @Test
@@ -135,14 +136,14 @@ class ClaimRoleMappingTests extends AbstractClaimMappingTest {
                 List.of("gw-admin", "gw-admins-extra", "xgw-admins", "GW-ADMINS", "Gw-Admins", "gw admins", "");
         for (String value : nearMisses) {
             var mallory = session("claim-mallory-" + Integer.toHexString(value.hashCode()), List.of(value));
-            mockMvc.perform(get("/api/roles").with(mallory)).andExpect(status().isForbidden());
-            mockMvc.perform(get("/api/me").with(mallory))
+            mockMvc.perform(get("/api/v1/roles").with(mallory)).andExpect(status().isForbidden());
+            mockMvc.perform(get("/api/v1/me").with(mallory))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.roles").isEmpty());
         }
 
         // Surrounding whitespace is the one thing YAML hides, so it is trimmed rather than kept.
-        mockMvc.perform(get("/api/roles").with(session("claim-padded", List.of("  gw-admins  "))))
+        mockMvc.perform(get("/api/v1/roles").with(session("claim-padded", List.of("  gw-admins  "))))
                 .andExpect(status().isOk());
     }
 
@@ -157,7 +158,7 @@ class ClaimRoleMappingTests extends AbstractClaimMappingTest {
 
         // An OIDC session carrying the values under a claim the gateway was not told to read.
         var decoy = oidcLogin().idToken(token -> token.subject("claim-decoy").claim("roles", List.of("gw-admins")));
-        mockMvc.perform(get("/api/roles").with(decoy)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/roles").with(decoy)).andExpect(status().isForbidden());
     }
 
     @Test
@@ -177,7 +178,7 @@ class ClaimRoleMappingTests extends AbstractClaimMappingTest {
         });
 
         String dave = "claim-dave";
-        mockMvc.perform(post("/api/roles")
+        mockMvc.perform(post("/api/v1/roles")
                         .with(root)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"principal\": \"" + dave + "\", \"role\": \"auditor\"}"))
@@ -204,10 +205,12 @@ class ClaimRoleMappingTests extends AbstractClaimMappingTest {
         assertThat(marketplaceRepository.findByName("claim-unregistered-mkt")).isEmpty();
         var ghost = session("claim-ghost", List.of("gw-approvers-ghost"));
         Registered fixture = registerAndIngest(uniqueName("ghosttarget"), createUpstream(DEFAULT_MANIFEST));
-        mockMvc.perform(post("/api/snapshots/{id}/approve", fixture.snapshot().id())
+        mockMvc.perform(post(
+                                "/api/v1/snapshots/{id}/approve",
+                                fixture.snapshot().id())
                         .with(ghost))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/me").with(ghost))
+        mockMvc.perform(get("/api/v1/me").with(ghost))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.roles[0].role").value("approver"))
                 .andExpect(jsonPath("$.roles[0].marketplace").value("claim-unregistered-mkt"));
@@ -241,31 +244,31 @@ class ClaimRoleMappingTests extends AbstractClaimMappingTest {
         // The overage shape: no groups claim, but the provider says there would have been one.
         var overflowing =
                 oidcLogin().idToken(token -> token.subject("claim-overflow").claim("hasgroups", true));
-        mockMvc.perform(get("/api/me").with(overflowing))
+        mockMvc.perform(get("/api/v1/me").with(overflowing))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.claimsTruncated").value(true))
                 .andExpect(jsonPath("$.roles").isEmpty());
-        mockMvc.perform(get("/api/roles").with(overflowing)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/roles").with(overflowing)).andExpect(status().isForbidden());
 
         // The distributed-claims shape says the same thing a different way.
         var distributed = oidcLogin()
                 .idToken(token -> token.subject("claim-distributed").claim("_claim_names", Map.of("groups", "src1")));
-        mockMvc.perform(get("/api/me").with(distributed))
+        mockMvc.perform(get("/api/v1/me").with(distributed))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.claimsTruncated").value(true));
 
         // A session that genuinely has no memberships is unprivileged, not truncated.
-        mockMvc.perform(get("/api/me").with(session("claim-nobody", List.of())))
+        mockMvc.perform(get("/api/v1/me").with(session("claim-nobody", List.of())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.claimsTruncated").value(false))
                 .andExpect(jsonPath("$.roles").isEmpty());
-        mockMvc.perform(get("/api/me").with(session("claim-noclaim", null)))
+        mockMvc.perform(get("/api/v1/me").with(session("claim-noclaim", null)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.claimsTruncated").value(false));
     }
 
     private List<Map<String, Object>> rolesOnMe(OidcLoginRequestPostProcessor caller) throws Exception {
-        String body = mockMvc.perform(get("/api/me").with(caller))
+        String body = mockMvc.perform(get("/api/v1/me").with(caller))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()

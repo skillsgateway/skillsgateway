@@ -41,7 +41,7 @@ class SessionCredentialTests extends AbstractGatewayTest {
     private GitStorage storage;
 
     private String mint(String body) throws Exception {
-        return mockMvc.perform(post("/api/tokens/session")
+        return mockMvc.perform(post("/api/v1/tokens/session")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -78,7 +78,7 @@ class SessionCredentialTests extends AbstractGatewayTest {
                 .as("a session credential never carries publication authority")
                 .isEmpty();
 
-        String standing = mockMvc.perform(post("/api/tokens")
+        String standing = mockMvc.perform(post("/api/v1/tokens")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"ci-runner\"}"))
@@ -153,7 +153,7 @@ class SessionCredentialTests extends AbstractGatewayTest {
         long id = ((Number) JsonPath.read(minted, "$.id")).longValue();
         Instant deadline = Instant.parse(JsonPath.read(minted, "$.expiresAt"));
 
-        mockMvc.perform(post("/api/tokens/{id}/rotate", id).with(oidcLogin()))
+        mockMvc.perform(post("/api/v1/tokens/{id}/rotate", id).with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sessionDerived").value(true))
                 .andExpect(jsonPath("$.expiresAt").value(deadline.toString()));

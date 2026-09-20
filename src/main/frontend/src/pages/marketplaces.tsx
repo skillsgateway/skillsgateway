@@ -327,7 +327,7 @@ function ApproveDialog({ snapshotId, onClose }: { snapshotId: number; onClose: (
   const releaseAge = useSnapshotReleaseAge(snapshotId);
   const fourEyes = useSnapshotFourEyes(snapshotId);
   const decide = useDecideSnapshot();
-  const blocked = vetting.data?.outcome === "BLOCKED" || vetting.data?.outcome === undefined;
+  const blocked = vetting.data?.outcome === "blocked" || vetting.data?.outcome === undefined;
   const tooYoung = releaseAge.data?.eligible === false;
   const remaining = formatRemaining(releaseAge.data?.remainingSeconds ?? 0);
   const conflicted = (fourEyes.data?.conflicts ?? []).length > 0;

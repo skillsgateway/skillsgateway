@@ -49,7 +49,7 @@ class MachineLedgerTests extends AbstractNamedAdminsTest {
         String principal = "ledger-machine";
         TokenService.IssuedToken machine = credential(principal, List.of("roles:read"));
 
-        mockMvc.perform(get("/api/roles").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
+        mockMvc.perform(get("/api/v1/roles").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
                 .andExpect(status().isOk());
 
         List<Map<String, Object>> entries = entriesFor(principal);
@@ -65,9 +65,9 @@ class MachineLedgerTests extends AbstractNamedAdminsTest {
     void the_ledger_separates_actor_kinds_without_string_parsing_or_a_join() throws Exception {
         String principal = "ledger-machine-kinds";
         TokenService.IssuedToken machine = credential(principal, List.of("roles:read"));
-        mockMvc.perform(get("/api/roles").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
+        mockMvc.perform(get("/api/v1/roles").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
                 .andExpect(status().isOk());
-        mockMvc.perform(get("/api/roles").with(oidcLogin().idToken(token -> token.subject("a-person"))))
+        mockMvc.perform(get("/api/v1/roles").with(oidcLogin().idToken(token -> token.subject("a-person"))))
                 .andExpect(status().isOk());
 
         List<Map<String, Object>> machineEntries = fetchLogRepository.listByActorType(ActorType.MACHINE);
@@ -93,7 +93,7 @@ class MachineLedgerTests extends AbstractNamedAdminsTest {
     void a_ledger_row_still_reports_its_actor_after_the_credential_it_names_is_deleted() throws Exception {
         String principal = "ledger-ephemeral";
         TokenService.IssuedToken machine = credential(principal, List.of("roles:read"));
-        mockMvc.perform(get("/api/roles").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
+        mockMvc.perform(get("/api/v1/roles").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
                 .andExpect(status().isOk());
 
         assertThat(tokenService.revokeMachineCredential(machine.id())).isTrue();
@@ -113,7 +113,7 @@ class MachineLedgerTests extends AbstractNamedAdminsTest {
     void no_entry_a_machine_credential_produces_names_the_provisioning_human() throws Exception {
         String principal = "ledger-owned";
         TokenService.IssuedToken machine = credential(principal, List.of("roles:read"));
-        mockMvc.perform(get("/api/roles").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
+        mockMvc.perform(get("/api/v1/roles").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
                 .andExpect(status().isOk());
 
         assertThat(entriesFor(principal))
@@ -134,7 +134,7 @@ class MachineLedgerTests extends AbstractNamedAdminsTest {
         String principal = "ledger-reader";
         TokenService.IssuedToken machine = credential(principal, List.of("roles:read"));
 
-        mockMvc.perform(get("/api/roles").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
+        mockMvc.perform(get("/api/v1/roles").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
                 .andExpect(status().isOk());
         assertThat(entriesFor(principal)).singleElement().satisfies(row -> {
             assertThat(row).containsEntry("event", "roles-read");
@@ -146,7 +146,7 @@ class MachineLedgerTests extends AbstractNamedAdminsTest {
         // grants untraced, and actor_type is what separates the two at query time — not which
         // rows happen to exist.
         String human = "ledger-person";
-        mockMvc.perform(get("/api/roles").with(oidcLogin().idToken(token -> token.subject(human))))
+        mockMvc.perform(get("/api/v1/roles").with(oidcLogin().idToken(token -> token.subject(human))))
                 .andExpect(status().isOk());
         assertThat(entriesFor(human)).singleElement().satisfies(row -> {
             assertThat(row).containsEntry("event", "roles-read");
@@ -167,7 +167,7 @@ class MachineLedgerTests extends AbstractNamedAdminsTest {
         TokenService.IssuedToken machine = credential(principal, List.of("audit:read"));
         int before = fetchLogRepository.list().size();
 
-        mockMvc.perform(get("/api/audit").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
+        mockMvc.perform(get("/api/v1/audit").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
                 .andExpect(status().isOk());
 
         assertThat(fetchLogRepository.list()).hasSize(before);
@@ -181,7 +181,7 @@ class MachineLedgerTests extends AbstractNamedAdminsTest {
         // A machine credential scoped elsewhere: the allowlist refuses it before the controller.
         TokenService.IssuedToken machine = credential(principal, List.of("marketplaces:read"));
 
-        mockMvc.perform(get("/api/roles").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
+        mockMvc.perform(get("/api/v1/roles").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
                 .andExpect(status().isForbidden());
 
         assertThat(entriesFor(principal)).isEmpty();

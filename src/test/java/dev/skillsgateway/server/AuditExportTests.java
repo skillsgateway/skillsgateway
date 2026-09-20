@@ -45,7 +45,7 @@ class AuditExportTests extends AbstractGatewayTest {
      * than an MVC async thread — see {@link SyncMvcAsyncTestConfiguration} for why that matters.
      */
     private Page export(long after, Integer limit) throws Exception {
-        String uri = "/api/audit/export?after=" + after + (limit == null ? "" : "&limit=" + limit);
+        String uri = "/api/v1/audit/export?after=" + after + (limit == null ? "" : "&limit=" + limit);
         MvcResult started = mockMvc.perform(get(uri).with(oidcLogin()))
                 .andExpect(request().asyncStarted())
                 .andReturn();
@@ -65,7 +65,7 @@ class AuditExportTests extends AbstractGatewayTest {
     }
 
     private long createSink(String name) throws Exception {
-        String body = mockMvc.perform(post("/api/audit/sinks")
+        String body = mockMvc.perform(post("/api/v1/audit/sinks")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"%s\",\"url\":\"https://siem.invalid/ingest\",\"after\":%d}"
@@ -158,7 +158,7 @@ class AuditExportTests extends AbstractGatewayTest {
         exportService.exportPass();
         assertThat(deliveryRepository.listBySubscriber(sink.subscriberId())).hasSize(1);
 
-        String body = mockMvc.perform(put("/api/audit/sinks/%d/cursor".formatted(sinkId))
+        String body = mockMvc.perform(put("/api/v1/audit/sinks/%d/cursor".formatted(sinkId))
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"after\":%d}".formatted(start)))

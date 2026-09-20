@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/tokens")
+@RequestMapping("/api/v1/tokens")
 public class TokenController {
 
     /** Token events are not tied to a marketplace; the ledger column is NOT NULL. */

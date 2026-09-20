@@ -128,15 +128,15 @@ public class WebhookService {
 
             @Schema(
                     description = "The effective outcome, which is what gates approval: the run with every waived"
-                            + " finding removed. CLEAR means an approval will succeed; CLEAR_WITH_WAIVERS that it"
-                            + " will, and only because someone accepted a risk; BLOCKED that it will not.",
-                    allowableValues = {"CLEAR", "CLEAR_WITH_WAIVERS", "BLOCKED"},
+                            + " finding removed. `clear` means an approval will succeed; `clear_with_waivers` that it"
+                            + " will, and only because someone accepted a risk; `blocked` that it will not.",
+                    allowableValues = {"clear", "clear_with_waivers", "blocked"},
                     requiredMode = Schema.RequiredMode.REQUIRED)
             String outcome,
 
             @Schema(
                     description = "What the vetters themselves concluded, before any waiver was applied",
-                    allowableValues = {"CLEAR", "BLOCKED"},
+                    allowableValues = {"clear", "blocked"},
                     requiredMode = Schema.RequiredMode.REQUIRED)
             String recordedOutcome,
 
