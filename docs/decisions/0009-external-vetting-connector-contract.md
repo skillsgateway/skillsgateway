@@ -99,7 +99,8 @@ sequenced** piece of work, not smuggled in half-built here.
   fail-closed `PENDING` that already holds.
 - **Send a fetch handle instead of content.** Rejected for v1: quarantined
   content is not served, so the external service cannot pull it; the gateway
-  ships a bounded bundle. Revisit if bundles get large.
+  ships a bounded bundle. Revisit if bundles get large — revisited in full, and
+  still rejected, by [ADR 0020](0020-external-vetters-are-pushed-content.md).
 
 ## Consequences
 

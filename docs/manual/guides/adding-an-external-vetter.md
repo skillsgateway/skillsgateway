@@ -22,6 +22,15 @@ The gateway POSTs the snapshot's identity and its scannable file content.
 Quarantined content is never fetchable through the facade, so the gateway
 ships it rather than handing your endpoint a URL to pull from.
 
+!!! note "What this contract cannot give you"
+
+    Only *scannable* content is sent: a file that is not valid UTF-8 text
+    arrives with `content: null`, whatever the caps are set to. So a vetter that
+    needs to run a snapshot — a sandbox detonator — cannot be built on this
+    contract, and no cap makes it possible. Why the gateway does not hand out a
+    signed fetch URL instead, and what would change that, is recorded in
+    [ADR 0020 — External vetters are pushed content](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0020-external-vetters-are-pushed-content.md).
+
 ```json
 {
   "snapshotId": 12,
