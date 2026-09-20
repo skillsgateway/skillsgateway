@@ -1428,6 +1428,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/status/snapshots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask whether content a client already holds is still approved
+         * @description Answers one state per marketplace-and-commit pair, in the order asked. A pair the gateway makes no positive statement about is answered 'unknown', which is never a pass: a client that holds such content should treat it as withdrawn. Authenticates with the same credentials the git facade accepts, and answers only about marketplaces that credential could fetch.
+         */
+        post: operations["status"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export interface webhooks {
     "marketplace.registered": {
@@ -2456,6 +2476,42 @@ export interface components {
              * @enum {string}
              */
             role: "admin" | "approver" | "auditor";
+        };
+        /** @description What the gateway will say about one pair a client holds */
+        HeldContentAnswer: {
+            /** @description True when this approval stands over an administrative revocation somebody reversed, so content served over a reversed withdrawal is never indistinguishable from content nobody ever withdrew */
+            approvedOverReversedRevocation?: boolean;
+            /** @description Marketplace name as asked */
+            marketplace?: string;
+            /**
+             * Format: date-time
+             * @description When the content was withdrawn; null unless the state is 'revoked'
+             */
+            revokedAt?: string;
+            /** @description Commit as asked */
+            sha?: string;
+            /**
+             * @description approved, revoked, or unknown. 'unknown' is not a pass: the gateway makes no positive statement, and a holder should treat the content as withdrawn.
+             * @enum {string}
+             */
+            state?: "approved" | "revoked" | "unknown";
+        };
+        /** @description One marketplace-and-commit pair a client holds */
+        HeldContentQuery: {
+            /** @description Marketplace name, as it appears in the fetch URL */
+            marketplace?: string;
+            /** @description The commit the client holds */
+            sha?: string;
+        };
+        /** @description One state per requested pair, in the order asked */
+        HeldContentReport: {
+            /** @description The answers */
+            results?: components["schemas"]["HeldContentAnswer"][];
+        };
+        /** @description The content a client holds and wants a statement about */
+        HeldContentRequest: {
+            /** @description Marketplace-and-commit pairs the client holds, at most 256 */
+            holdings?: components["schemas"]["HeldContentQuery"][];
         };
         /** @description A freshly issued token; the only time the cleartext is ever returned */
         IssuedToken: {
@@ -6367,6 +6423,48 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HeldContentRequest"];
+            };
+        };
+        responses: {
+            /** @description One state per requested pair, in the order asked */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["HeldContentReport"];
+                };
+            };
+            /** @description Malformed request, or more pairs than one request may carry */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["HeldContentReport"];
+                };
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["HeldContentReport"];
+                };
             };
         };
     };

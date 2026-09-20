@@ -113,6 +113,49 @@ public class SecurityConfig {
     }
 
     /**
+     * The revocation-check chain (GW_FACADE_0031): a third sibling of the facade and publication
+     * chains, and for the same reason the publication chain is one — the credential is the facade's,
+     * the surface is not the facade's. A holder asks whether content it already fetched is still
+     * approved, so the only credential that makes sense is the one it fetched with, and both of the
+     * facade's kinds are accepted: a PAT over Basic, and an identity-provider bearer token wherever
+     * {@code skills-gateway.facade.idp-bearer.enabled} puts {@link IdpBearerAuthenticationProvider}
+     * in the context.
+     *
+     * <p><b>Why not under {@code /git/**}.</b> That prefix is a servlet mapping owned by
+     * {@code GitServlet}, and an exact servlet mapping wins over the dispatcher, so no controller is
+     * reachable beneath it. <b>And why not {@code /api/**}:</b> that surface authenticates with an
+     * OIDC session or a gateway-issued machine credential and with nothing else, and a git client
+     * holds neither.
+     *
+     * <p>The Basic challenge stays Basic here too, for the reason {@code gitChain} gives: a refused
+     * bearer token must fall back to the credential helper rather than short-circuit.
+     */
+    @Bean
+    @Order(3)
+    @Requirements({"GW_FACADE_0031", "GW_FACADE_0032"})
+    public SecurityFilterChain revocationCheckChain(
+            HttpSecurity http,
+            PatAuthenticationProvider patAuthenticationProvider,
+            ObjectProvider<IdpBearerAuthenticationProvider> idpBearerAuthenticationProvider)
+            throws Exception {
+        http.securityMatcher("/status/**")
+                // No CSRF token, for the same reason as the facade and publication chains: every
+                // request authenticates itself, no session is created and no cookie is honoured,
+                // so a forged cross-site request arrives unauthenticated.
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationManager(new ProviderManager(patAuthenticationProvider))
+                .httpBasic(Customizer.withDefaults())
+                .authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated());
+        IdpBearerAuthenticationProvider bearer = idpBearerAuthenticationProvider.getIfAvailable();
+        if (bearer != null) {
+            http.addFilterBefore(
+                    new FacadeBearerAuthenticationFilter(new ProviderManager(bearer)), BasicAuthenticationFilter.class);
+        }
+        return http.build();
+    }
+
+    /**
      * Stateless anonymous chain for the inbound forge webhook (GW_INGEST_0012). Authentication is not
      * absent, it lives one layer down: the controller verifies an HMAC-SHA256 signature of the raw
      * body against the marketplace's gateway-generated secret and rejects everything else. Keeping
@@ -120,7 +163,7 @@ public class SecurityConfig {
      * controller takes no Authentication parameter (requests here are anonymous by design).
      */
     @Bean
-    @Order(3)
+    @Order(4)
     public SecurityFilterChain hooksChain(HttpSecurity http) throws Exception {
         http.securityMatcher("/hooks/**")
                 // No CSRF token: nothing here is authorized by a cookie or a session.
@@ -180,7 +223,7 @@ public class SecurityConfig {
      * bearer header does — where it is refused like any other unknown credential.
      */
     @Bean
-    @Order(4)
+    @Order(5)
     @Requirements({"GW_AUTH_0021", "GW_AUTH_0022", "GW_AUTH_0042"})
     public SecurityFilterChain machineApiChain(
             HttpSecurity http, MachineApiAuthenticationProvider machineApiAuthenticationProvider) throws Exception {
@@ -237,7 +280,7 @@ public class SecurityConfig {
      * individually.
      */
     @Bean
-    @Order(5)
+    @Order(6)
     @Requirements({"GW_AUTH_0002", "GW_AUTH_0030"})
     public SecurityFilterChain webChain(HttpSecurity http, SkillsGatewayProperties properties) throws Exception {
         if (properties.devInsecureAuth()) {

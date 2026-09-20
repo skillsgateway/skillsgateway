@@ -4,9 +4,9 @@ The gateway exposes three HTTP surfaces with different authentication:
 
 | Surface | Paths | Authentication |
 | --- | --- | --- |
-| Web / API | everything except `/git/**` | OIDC session cookie |
+| Web / API | everything except the facade's paths below | OIDC session cookie |
 | Machine API | `/api/**` with an `Authorization: Bearer` header | [Machine API credential](tokens.md#machine-api-credentials) |
-| Git facade | `/git/**` | Personal access token over HTTP Basic |
+| Git facade | `/git/**`, and the [revocation check](../git-facade.md#checking-content-you-already-hold) at `/status/**` | Personal access token over HTTP Basic |
 
 The three do not overlap. A personal access token reaches the facade and
 nothing else; a machine API credential reaches the API and nothing else — it
@@ -171,6 +171,7 @@ then incomplete; see [Identity providers](../../guides/identity-providers.md).
 | Path | Notes |
 | --- | --- |
 | `/actuator/health` | The only unauthenticated path. Use the bare path for probes. |
+| `/status/snapshots` | The [revocation check](../git-facade.md#checking-content-you-already-hold): a facade-credentialled read, not part of `/api/**`. |
 | `/actuator/sbom` | CycloneDX SBOM. Authenticated. |
 | `/v3/api-docs`, `/docs` | OpenAPI document and Scalar UI. Authenticated. |
 | `/oauth2/authorization/idp`, `/login/oauth2/code/idp` | OIDC login and callback. |

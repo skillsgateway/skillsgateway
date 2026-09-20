@@ -424,6 +424,17 @@ not one mechanism.
   allowlist covers MCP servers only) — there, egress policy carries the load.
   Per-client settings and vendor links:
   [making the gateway the only door](guides/client-enforcement.md).
+- **A pull-side check for what is already out there.** The controls above stop
+  unapproved content arriving; they do nothing about content that arrived while
+  it was approved and has since been withdrawn, which is precisely the case
+  revocation exists for. `POST /status/snapshots` lets a client ask whether the
+  commits it holds are still approved, authenticated with the PAT it already
+  fetches with. The gateway deliberately cannot reach into a client filesystem,
+  so this makes a withdrawal *discoverable* rather than enforceable — and a
+  client that never asks learns nothing, which is why it belongs beside the
+  fleet-managed settings rather than instead of them.
+  [Reference](reference/git-facade.md#checking-content-you-already-hold),
+  [how to deploy it](guides/client-enforcement.md#noticing-that-something-you-already-hold-was-withdrawn).
 - **CI as a backstop.** Pipelines resolve skills only through the gateway;
   builds referencing unapproved sources fail. Catches what laptop-level
   controls miss before anything ships.
