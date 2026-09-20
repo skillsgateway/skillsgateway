@@ -20,9 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Role grant management (GW_AUTH_0013). Admin-only while enforcement is enabled; while disabled the
- * grants are inert data any session may stage before flipping the switch — the flip itself is a
- * configuration decision, strictly more privileged than any API caller.
+ * Role grant management (GW_AUTH_0013). Admin-only.
  */
 @RestController
 @RequestMapping("/api")
@@ -63,10 +61,9 @@ public class RoleController {
     @Operation(
             summary = "List role grants",
             description = "Every current grant. Configuration-bootstrapped admins are not grants and do not"
-                    + " appear here; they show up as an effective role on /api/me. Admin-only while role"
-                    + " enforcement is enabled.")
+                    + " appear here; they show up as an effective role on /api/me. Admin-only.")
     @ApiResponse(responseCode = "200", description = "Current grants")
-    @ApiResponse(responseCode = "403", description = "Enforcement is enabled and the caller is not an admin")
+    @ApiResponse(responseCode = "403", description = "The caller is not an admin")
     @Requirements({"GW_AUTH_0013", "GW_AUDIT_0007", "GW_AUTH_0022"})
     public List<RoleGrant> list(Authentication authentication) {
         roleService.requireAdmin(authentication);
@@ -88,11 +85,9 @@ public class RoleController {
     @Operation(
             summary = "Grant a role",
             description = "Grants admin or auditor globally, or approver scoped to one existing marketplace."
-                    + " Every grant lands on the append-only ledger with the acting identity. Admin-only while"
-                    + " role enforcement is enabled; while disabled, grants are inert data a deployment stages"
-                    + " before enabling enforcement.")
+                    + " Every grant lands on the append-only ledger with the acting identity. Admin-only.")
     @ApiResponse(responseCode = "201", description = "Role granted")
-    @ApiResponse(responseCode = "403", description = "Enforcement is enabled and the caller is not an admin")
+    @ApiResponse(responseCode = "403", description = "The caller is not an admin")
     @ApiResponse(responseCode = "404", description = "Approver grant names a marketplace that does not exist")
     @ApiResponse(responseCode = "409", description = "The identical grant already exists")
     @ApiResponse(
@@ -113,9 +108,9 @@ public class RoleController {
             summary = "Revoke a role grant",
             description = "Deletes the grant; the ledger keeps the history. Configuration-bootstrapped admins"
                     + " have no grant row, so they cannot be revoked here — by design, they are the escape"
-                    + " hatch that survives a bad grant edit. Admin-only while role enforcement is enabled.")
+                    + " hatch that survives a bad grant edit. Admin-only.")
     @ApiResponse(responseCode = "204", description = "Grant revoked")
-    @ApiResponse(responseCode = "403", description = "Enforcement is enabled and the caller is not an admin")
+    @ApiResponse(responseCode = "403", description = "The caller is not an admin")
     @ApiResponse(responseCode = "404", description = "Grant not found")
     public ResponseEntity<Void> revoke(@PathVariable long id, Authentication authentication) {
         roleService.requireAdmin(authentication);

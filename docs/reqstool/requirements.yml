@@ -547,10 +547,10 @@ requirements:
   - id: GW_AUTH_0010
     title: Scoped admin roles with deny-by-default enforcement
     significance: shall
-    description: The system shall provide three delegated-administration roles for the web surface — a global admin, an approver scoped to one marketplace, and a read-only auditor, composing upward so an admin may do everything either other role may — behind a configuration switch that defaults to off with every authorization check passing, and shall, once the switch is enabled, refuse with an authorization error every REST API mutation and every audit-ledger and operational-listing read to a session holding no applicable role, while leaving the browsing surface and a session's own token management open to any authenticated session.
-    rationale: The portal's login was the only privilege there was, so delegating curation needs rights that are granted rather than implied by authentication; defaulting the switch to off means an upgrade can never lock an existing deployment out of its own gateway, and deny-by-default once enabled means a privileged endpoint added without a classification fails shut rather than open.
+    description: The system shall provide three delegated-administration roles for the web surface — a global admin, an approver scoped to one marketplace, and a read-only auditor, composing upward so an admin may do everything either other role may — and shall refuse with an authorization error every REST API mutation and every audit-ledger and operational-listing read to a session holding no applicable role, while leaving the browsing surface and a session's own token management open to any authenticated session.
+    rationale: The portal's login was the only privilege there was, so delegating curation needs rights that are granted rather than implied by authentication, and deny-by-default means a privileged endpoint added without a classification fails shut rather than open. Enforcement is unconditional (GW_AUTH_0025); the compatibility concern that a deployment could be locked out of its own gateway is answered at startup instead (GW_AUTH_0026).
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_AUTH_0011
     title: Per-marketplace approver scoping
@@ -571,10 +571,10 @@ requirements:
   - id: GW_AUTH_0013
     title: Audited role grants with configuration-bootstrapped admins
     significance: shall
-    description: The system shall store role grants in its database and let only admins read and manage them through the API while enforcement is enabled, shall require an approver grant to name a marketplace registered at grant time and forbid admin and auditor grants from naming one, shall refuse a duplicate grant, shall append every grant and revocation to the append-only ledger with the acting identity, the target principal, the role and the marketplace, shall additionally treat principals listed in configuration as admins that no API call can revoke, and shall report a session's effective roles and whether enforcement is enabled through the session identity endpoint.
+    description: The system shall store role grants in its database and let only admins read and manage them through the API, shall require an approver grant to name a marketplace registered at grant time and forbid admin and auditor grants from naming one, shall refuse a duplicate grant, shall append every grant and revocation to the append-only ledger with the acting identity, the target principal, the role and the marketplace, shall additionally treat principals listed in configuration as admins that no API call can revoke, and shall report a session's effective roles through the session identity endpoint.
     rationale: Who may do what must be answerable from the gateway's own records, and changing it must not need a redeploy; the configuration-listed admins are the escape hatch that survives any bad grant edit, so the API must not be able to take them away, and the identity endpoint is how the portal and CLI adapt to what the caller may do.
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_RELEASE_0002
     title: Container image publication by digest
@@ -691,10 +691,10 @@ requirements:
   - id: GW_INGEST_0015
     title: Snapshot file inspection
     significance: shall
-    description: The system shall let a reviewer read, for any snapshot, the file tree and individual file contents of exactly the commit the snapshot pins, resolved through the quarantine repository's object store with paths addressed only within the pinned commit's tree, shall bound the tree listing and mark it when cut, shall return a file exceeding a fixed size limit truncated with an explicit truncation marker and a file detected as binary as metadata without text content, shall answer a path absent from the tree — including any traversal-shaped path — with not-found, and shall, while role enforcement is enabled, refuse these reads to a session that is neither an admin nor an approver of the snapshot's marketplace.
+    description: The system shall let a reviewer read, for any snapshot, the file tree and individual file contents of exactly the commit the snapshot pins, resolved through the quarantine repository's object store with paths addressed only within the pinned commit's tree, shall bound the tree listing and mark it when cut, shall return a file exceeding a fixed size limit truncated with an explicit truncation marker and a file detected as binary as metadata without text content, shall answer a path absent from the tree — including any traversal-shaped path — with not-found, and shall refuse these reads to a session that is neither an admin nor an approver of the snapshot's marketplace.
     rationale: Approval is a content decision, so the reviewer must see the exact bytes the pin names rather than any working tree or upstream state; addressing reads through the commit tree removes the filesystem traversal surface entirely, the caps keep a hostile upstream from weaponizing the reviewer's own browser, and the reads expose held quarantine content, which is precisely the material the approver role scopes.
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_INGEST_0016
     title: Snapshot diff against the served baseline
@@ -1109,18 +1109,18 @@ requirements:
   - id: GW_AUTH_0022
     title: Machine reach is an allowlist that excludes judgement and retraction
     significance: shall
-    description: The system shall classify every administrative endpoint it serves as reachable under exactly one named scope or as unreachable by any credential, shall refuse to start or to build when an endpoint is classified as neither, and shall admit no combination of scopes and no role to any endpoint classified unreachable — which shall include every decision to publish, reject or override vetting, every operation that retracts or republishes content, every grant of privilege, and every path that mints a credential. This enforcement shall not depend on whether role enforcement is enabled.
+    description: The system shall classify every administrative endpoint it serves as reachable under exactly one named scope or as unreachable by any credential, shall refuse to start or to build when an endpoint is classified as neither, and shall admit no combination of scopes and no role to any endpoint classified unreachable — which shall include every decision to publish, reject or override vetting, every operation that retracts or republishes content, every grant of privilege, and every path that mints a credential.
     rationale: A denylist admits by silence, so the next act of judgement somebody adds would be machine-reachable by default and the mistake would be invisible in the diff that made it; an allowlist fails the other way, surfacing an omission as a bug report rather than as an incident. Acts of judgement and retractions of content are exactly the line the gateway's approval model draws, and a credential that can mint a sibling can evade its own revocation. Role enforcement defaults to off so that upgrading does not lock out existing sessions, but nothing predates a credential kind that does not exist yet, so there is no compatibility to preserve and the new path can deny by default from its first release.
     categories: ["security"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_AUTH_0023
     title: A machine principal's roles come from configuration and declaration only
     significance: shall
-    description: The system shall derive no role for a machine credential from identity-provider claims, shall let its principal hold a role only through the deployment's configuration or a declared or stored grant, shall require both a scope and the corresponding role before an operation is permitted once role enforcement is enabled, and shall require the administrative role for minting, listing and revoking a machine credential whether or not role enforcement is enabled.
+    description: The system shall derive no role for a machine credential from identity-provider claims, shall let its principal hold a role only through the deployment's configuration or a declared or stored grant, shall require both a scope and the corresponding role before an operation is permitted, and shall require the administrative role for minting, listing and revoking a machine credential.
     rationale: A machine credential has no claims, so claim-derived roles cannot apply to it, and that is the correct behaviour rather than a gap to close. Leaving the declarative grant as the only route means a machine credential's authority is written where the deployment's other desired state is written, with no credential in the pipeline and nothing a compromised credential can call to escalate itself. Requiring scope and role together makes authority an intersection, so an administratively-privileged machine principal still reaches nothing its credential was not scoped for. Minting is held to the administrative role regardless of the enforcement flag because a credential outlives the session that created it — under a default-off flag any user who completed a login could otherwise mint authority that survives their own account being deprovisioned.
     categories: ["security"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_AUTH_0024
     title: A machine credential must expire and is administered centrally

@@ -35,8 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
  * to remove. The difference is that it happens once, to create something with a stated expiry and
  * named scopes, rather than continuously to run a pipeline.
  *
- * <p>Every path here requires the {@code admin} role <b>whether or not role enforcement is
- * enabled</b>; see {@link RoleService#requireAdmin}.
+ * <p>Every path here requires the {@code admin} role; see {@link RoleService#requireAdmin}.
  */
 @RestController
 @RequestMapping("/api/tokens/machine")
@@ -124,8 +123,7 @@ public class MachineTokenController {
                     + " `Authorization: Bearer`. It carries no fetch and no publication authority, reaches"
                     + " only the endpoints its named scopes allow, and can never reach an act of human"
                     + " judgement, a retraction of content, a role grant or this endpoint. An expiry is"
-                    + " mandatory. The cleartext is returned exactly once. Requires the admin role whether"
-                    + " or not role enforcement is enabled.")
+                    + " mandatory. The cleartext is returned exactly once. Requires the admin role.")
     @ApiResponse(responseCode = "201", description = "Issued; the only response carrying the cleartext")
     @ApiResponse(responseCode = "403", description = "The caller does not hold the admin role")
     @ApiResponse(

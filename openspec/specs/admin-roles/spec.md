@@ -4,8 +4,8 @@
 
 Delegated administration of the web surface: the admin/approver/auditor role
 model with per-marketplace approver scoping, deny-by-default enforcement at
-the REST API once enabled, the auditor's read-only guarantee, the audited
-grant lifecycle with configuration-bootstrapped admins, and roles derived from
+the REST API, the auditor's read-only guarantee, the audited grant lifecycle
+with configuration-bootstrapped admins, and roles derived from
 the identity provider's own claims by configured mapping, with the source of
 every effective role reported and a truncated membership claim made visible.
 ## Requirements

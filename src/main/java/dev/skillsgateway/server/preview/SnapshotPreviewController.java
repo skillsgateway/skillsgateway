@@ -44,12 +44,10 @@ public class SnapshotPreviewController {
             summary = "File tree of the pinned commit",
             description = "Every path in exactly the commit the snapshot pins, resolved through the quarantine"
                     + " repository's object store, capped at 2000 entries with an explicit marker when cut."
-                    + " Privileged while role enforcement is enabled: admin or an approver of the snapshot's"
+                    + " Privileged: admin or an approver of the snapshot's"
                     + " marketplace.")
     @ApiResponse(responseCode = "200", description = "Paths and sizes of the pinned commit's tree")
-    @ApiResponse(
-            responseCode = "403",
-            description = "Role enforcement is enabled and the session holds no applicable role")
+    @ApiResponse(responseCode = "403", description = "The session holds no applicable role")
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
     public SnapshotPreviewService.FileTree files(@PathVariable long id, Authentication authentication) {
         roleService.requireApproverOfSnapshot(authentication, id);
@@ -63,11 +61,9 @@ public class SnapshotPreviewController {
             description = "One blob addressed strictly within the pinned commit's tree — a path the tree does"
                     + " not contain, traversal shapes included, is not found. Text is returned for rendering"
                     + " only, cut at 128 KiB with an explicit truncation marker; a blob detected as binary"
-                    + " returns metadata without text. Privileged while role enforcement is enabled.")
+                    + " returns metadata without text. Privileged.")
     @ApiResponse(responseCode = "200", description = "Blob metadata, and its text unless binary")
-    @ApiResponse(
-            responseCode = "403",
-            description = "Role enforcement is enabled and the session holds no applicable role")
+    @ApiResponse(responseCode = "403", description = "The session holds no applicable role")
     @ApiResponse(responseCode = "404", description = "Snapshot not found, or the path is not in the pinned tree")
     public SnapshotPreviewService.FileContent file(
             @PathVariable long id, @RequestParam String path, Authentication authentication) {
@@ -85,12 +81,10 @@ public class SnapshotPreviewController {
             description = "Added, modified and removed paths between the pinned commit and the marketplace's"
                     + " currently served commit (the published repository's served tip), with a unified text"
                     + " diff per non-binary entry under the same size caps as file reads. When the marketplace"
-                    + " serves nothing the baseline is null and every path is reported as added. Privileged"
-                    + " while role enforcement is enabled.")
+                    + " serves nothing the baseline is null and every path is reported as added."
+                    + " Privileged.")
     @ApiResponse(responseCode = "200", description = "The delta a reviewer decides")
-    @ApiResponse(
-            responseCode = "403",
-            description = "Role enforcement is enabled and the session holds no applicable role")
+    @ApiResponse(responseCode = "403", description = "The session holds no applicable role")
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
     public SnapshotPreviewService.SnapshotDiff diff(@PathVariable long id, Authentication authentication) {
         roleService.requireApproverOfSnapshot(authentication, id);

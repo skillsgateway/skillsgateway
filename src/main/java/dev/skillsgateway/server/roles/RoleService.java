@@ -24,7 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 /**
  * The authorization surface of the web chain (GW_AUTH_0010–GW_AUTH_0013): explicit {@code require*} calls
- * at the first line of every privileged controller method, deny-by-default once enabled. The
+ * at the first line of every privileged controller method, deny-by-default. The
  * whole surface is greppable as {@code requireA}; the facade is out of scope (its authorization
  * is token scopes, GW_AUTH_0006).
  *

@@ -197,7 +197,7 @@ export interface paths {
         };
         /**
          * Last estate reconciliation report
-         * @description The most recent reconciliation run — per declared entry, what was created, updated, unchanged, or failed and why. The report is held in memory; after a restart the startup run repopulates it. Secret values never appear. Auditor or admin while role enforcement is enabled, because failure reasons expose operator infrastructure.
+         * @description The most recent reconciliation run — per declared entry, what was created, updated, unchanged, or failed and why. The report is held in memory; after a restart the startup run repopulates it. Secret values never appear. Auditor or admin, because failure reasons expose operator infrastructure.
          */
         get: operations["lastRun"];
         put?: never;
@@ -219,7 +219,7 @@ export interface paths {
         put?: never;
         /**
          * Reconcile the declared estate now
-         * @description Runs the same additive, idempotent reconciliation as startup against the current declaration and returns its report. A converged estate reconciles with zero writes and zero ledger entries; the trigger itself is an administrative action and is always recorded with the acting identity. Admin-only while role enforcement is enabled.
+         * @description Runs the same additive, idempotent reconciliation as startup against the current declaration and returns its report. A converged estate reconciles with zero writes and zero ledger entries; the trigger itself is an administrative action and is always recorded with the acting identity. Admin-only.
          */
         post: operations["reconcileEstate"];
         delete?: never;
@@ -569,13 +569,13 @@ export interface paths {
         };
         /**
          * List role grants
-         * @description Every current grant. Configuration-bootstrapped admins are not grants and do not appear here; they show up as an effective role on /api/me. Admin-only while role enforcement is enabled.
+         * @description Every current grant. Configuration-bootstrapped admins are not grants and do not appear here; they show up as an effective role on /api/me. Admin-only.
          */
         get: operations["list_3"];
         put?: never;
         /**
          * Grant a role
-         * @description Grants admin or auditor globally, or approver scoped to one existing marketplace. Every grant lands on the append-only ledger with the acting identity. Admin-only while role enforcement is enabled; while disabled, grants are inert data a deployment stages before enabling enforcement.
+         * @description Grants admin or auditor globally, or approver scoped to one existing marketplace. Every grant lands on the append-only ledger with the acting identity. Admin-only.
          */
         post: operations["grant"];
         delete?: never;
@@ -596,7 +596,7 @@ export interface paths {
         post?: never;
         /**
          * Revoke a role grant
-         * @description Deletes the grant; the ledger keeps the history. Configuration-bootstrapped admins have no grant row, so they cannot be revoked here — by design, they are the escape hatch that survives a bad grant edit. Admin-only while role enforcement is enabled.
+         * @description Deletes the grant; the ledger keeps the history. Configuration-bootstrapped admins have no grant row, so they cannot be revoked here — by design, they are the escape hatch that survives a bad grant edit. Admin-only.
          */
         delete: operations["revoke_4"];
         options?: never;
@@ -693,7 +693,7 @@ export interface paths {
         };
         /**
          * Diff against the currently served commit
-         * @description Added, modified and removed paths between the pinned commit and the marketplace's currently served commit (the published repository's served tip), with a unified text diff per non-binary entry under the same size caps as file reads. When the marketplace serves nothing the baseline is null and every path is reported as added. Privileged while role enforcement is enabled.
+         * @description Added, modified and removed paths between the pinned commit and the marketplace's currently served commit (the published repository's served tip), with a unified text diff per non-binary entry under the same size caps as file reads. When the marketplace serves nothing the baseline is null and every path is reported as added. Privileged.
          */
         get: operations["diff"];
         put?: never;
@@ -733,7 +733,7 @@ export interface paths {
         };
         /**
          * One file of the pinned commit
-         * @description One blob addressed strictly within the pinned commit's tree — a path the tree does not contain, traversal shapes included, is not found. Text is returned for rendering only, cut at 128 KiB with an explicit truncation marker; a blob detected as binary returns metadata without text. Privileged while role enforcement is enabled.
+         * @description One blob addressed strictly within the pinned commit's tree — a path the tree does not contain, traversal shapes included, is not found. Text is returned for rendering only, cut at 128 KiB with an explicit truncation marker; a blob detected as binary returns metadata without text. Privileged.
          */
         get: operations["file"];
         put?: never;
@@ -753,7 +753,7 @@ export interface paths {
         };
         /**
          * File tree of the pinned commit
-         * @description Every path in exactly the commit the snapshot pins, resolved through the quarantine repository's object store, capped at 2000 entries with an explicit marker when cut. Privileged while role enforcement is enabled: admin or an approver of the snapshot's marketplace.
+         * @description Every path in exactly the commit the snapshot pins, resolved through the quarantine repository's object store, capped at 2000 entries with an explicit marker when cut. Privileged: admin or an approver of the snapshot's marketplace.
          */
         get: operations["files"];
         put?: never;
@@ -1003,7 +1003,7 @@ export interface paths {
         put?: never;
         /**
          * Provision a machine API credential
-         * @description Issues a non-interactive credential for the REST API, presented as `Authorization: Bearer`. It carries no fetch and no publication authority, reaches only the endpoints its named scopes allow, and can never reach an act of human judgement, a retraction of content, a role grant or this endpoint. An expiry is mandatory. The cleartext is returned exactly once. Requires the admin role whether or not role enforcement is enabled.
+         * @description Issues a non-interactive credential for the REST API, presented as `Authorization: Bearer`. It carries no fetch and no publication authority, reaches only the endpoints its named scopes allow, and can never reach an act of human judgement, a retraction of content, a role grant or this endpoint. An expiry is mandatory. The cleartext is returned exactly once. Requires the admin role.
          */
         post: operations["create_2"];
         delete?: never;
@@ -4105,7 +4105,7 @@ export interface operations {
                     "*/*": components["schemas"]["EstateReconciliation"];
                 };
             };
-            /** @description Enforcement is enabled and the caller is not an admin */
+            /** @description The caller is not an admin */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -4749,7 +4749,7 @@ export interface operations {
                     "*/*": components["schemas"]["RoleGrant"][];
                 };
             };
-            /** @description Enforcement is enabled and the caller is not an admin */
+            /** @description The caller is not an admin */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -4782,7 +4782,7 @@ export interface operations {
                     "*/*": components["schemas"]["RoleGrant"];
                 };
             };
-            /** @description Enforcement is enabled and the caller is not an admin */
+            /** @description The caller is not an admin */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -4838,7 +4838,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Enforcement is enabled and the caller is not an admin */
+            /** @description The caller is not an admin */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -5029,7 +5029,7 @@ export interface operations {
                     "*/*": components["schemas"]["SnapshotDiff"];
                 };
             };
-            /** @description Role enforcement is enabled and the session holds no applicable role */
+            /** @description The session holds no applicable role */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -5111,7 +5111,7 @@ export interface operations {
                     "*/*": components["schemas"]["FileContent"];
                 };
             };
-            /** @description Role enforcement is enabled and the session holds no applicable role */
+            /** @description The session holds no applicable role */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -5151,7 +5151,7 @@ export interface operations {
                     "*/*": components["schemas"]["FileTree"];
                 };
             };
-            /** @description Role enforcement is enabled and the session holds no applicable role */
+            /** @description The session holds no applicable role */
             403: {
                 headers: {
                     [name: string]: unknown;

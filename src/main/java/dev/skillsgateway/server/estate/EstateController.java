@@ -46,8 +46,8 @@ public class EstateController {
             summary = "Last estate reconciliation report",
             description = "The most recent reconciliation run — per declared entry, what was created, updated,"
                     + " unchanged, or failed and why. The report is held in memory; after a restart the startup"
-                    + " run repopulates it. Secret values never appear. Auditor or admin while role enforcement"
-                    + " is enabled, because failure reasons expose operator infrastructure.")
+                    + " run repopulates it. Secret values never appear. Auditor or admin, because failure"
+                    + " reasons expose operator infrastructure.")
     @ApiResponse(responseCode = "200", description = "The last reconciliation report")
     @ApiResponse(responseCode = "404", description = "No reconciliation has run")
     public EstateReconciliation lastRun(Authentication authentication) {
@@ -66,9 +66,9 @@ public class EstateController {
             description = "Runs the same additive, idempotent reconciliation as startup against the current"
                     + " declaration and returns its report. A converged estate reconciles with zero writes and"
                     + " zero ledger entries; the trigger itself is an administrative action and is always"
-                    + " recorded with the acting identity. Admin-only while role enforcement is enabled.")
+                    + " recorded with the acting identity. Admin-only.")
     @ApiResponse(responseCode = "200", description = "The run's report")
-    @ApiResponse(responseCode = "403", description = "Enforcement is enabled and the caller is not an admin")
+    @ApiResponse(responseCode = "403", description = "The caller is not an admin")
     public EstateReconciliation reconcile(Authentication authentication) {
         roleService.requireAdmin(authentication);
         auditLogger.record(authentication.getName(), NO_MARKETPLACE, "estate-reconcile-triggered", null);
