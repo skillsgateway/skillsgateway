@@ -2910,3 +2910,23 @@ cases:
       WHEN a bulk chain change naming an unknown vetter is sent, then a bulk change naming a marketplace that does not exist alongside ones that do, and then a valid bulk change
       THEN the invalid shape is refused whole with nothing stored and nothing recorded, the request carrying the unknown marketplace reports a per-marketplace outcome distinguishing it from a wholly successful request and still applies to the others, each changed marketplace carries its own ledger entry with the shared note and one correlation identifier, and a non-administrator is refused
     revision: "0.1.0"
+
+  - id: SVC_GW_FACADE_0031
+    requirement_ids: ["GW_FACADE_0031"]
+    title: A holder learns that what it holds is approved, superseded-but-approved, or withdrawn
+    verification: automated-test
+    description: |
+      GIVEN a marketplace whose approved snapshot has been superseded by a later approval, a snapshot that has been revoked, and a snapshot approved over a reversed administrative revocation
+      WHEN a client authenticated as the facade authenticates asks about those commits, and then asks about more pairs than the bound allows
+      THEN the superseded commit is reported approved, the revoked one is reported revoked with the time of its revocation, the one approved over a reversed revocation is distinguishable from one never withdrawn, each answer appears in the order asked, the oversized request is refused with none of its pairs answered, and no entry is appended to the audit ledger by any of them
+    revision: "0.1.0"
+
+  - id: SVC_GW_FACADE_0032
+    requirement_ids: ["GW_FACADE_0032"]
+    title: The check discloses nothing beyond what the same credential could fetch
+    verification: automated-test
+    description: |
+      GIVEN a token scoped to one marketplace, a second marketplace outside that scope, a marketplace that does not exist, a commit that was never ingested, a commit that was ingested and never approved, and a commit that was revoked with a stated reason
+      WHEN the scoped client asks about each of them, and an unauthenticated client asks about any of them
+      THEN the out-of-scope marketplace and the nonexistent one are answered identically, the never-ingested, never-approved and no-longer-recorded commits are answered identically, none of those answers claims approval, no part of the revocation reason appears in any answer, the unauthenticated request is refused, and an unscoped token still reaches every marketplace
+    revision: "0.1.0"

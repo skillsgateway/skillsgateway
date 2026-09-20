@@ -360,13 +360,15 @@ refused **before anything is withdrawn**, so a request that cannot be honoured
 changes nothing rather than quietly leaving you with the other outcome. A
 return is recorded on the ledger as a publication in its own right.
 
-!!! warning "This stops the gateway serving it; it does not reach clients"
+!!! warning "This stops the gateway serving it; it does not delete what clients hold"
 
-    Anyone who already cloned the content still has it. `GET
+    Anyone who already cloned the content still has it on disk. `GET
     /api/snapshots/{id}/fetchers` names every identity that fetched it — the
-    blast radius — but nothing on the client side checks whether what it holds
-    is still approved. See
-    [#427](https://github.com/skillsgateway/skillsgateway/issues/427).
+    blast radius — and a client can find out for itself by asking
+    [`POST /status/snapshots`](../reference/git-facade.md#checking-content-you-already-hold)
+    about the commits it holds. Nothing forces it to ask, so a withdrawal is
+    only as fast as the
+    [check your fleet runs](client-enforcement.md#noticing-that-something-you-already-hold-was-withdrawn).
 
 ### Putting it back takes a second administrator
 

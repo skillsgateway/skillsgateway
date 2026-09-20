@@ -440,6 +440,82 @@ public class SnapshotRepository {
                 > 0;
     }
 
+    /**
+     * What the gateway records about content a client says it holds (GW_FACADE_0031): one row per
+     * {@code (marketplace name, sha)} pair it recognises, and no row at all for one it does not.
+     *
+     * <p>One round trip for the whole batch rather than a lookup per pair, because this is a poll:
+     * a fleet asking hourly about what it holds must cost one indexed read each, not one per skill.
+     *
+     * <p>It selects the raw state and lets the caller decide what may be said about it. That is
+     * deliberate — {@link HeldContent#approved()} is the single place a snapshot state becomes a
+     * positive statement to a client, so a state added to {@code snapshot_state} later cannot leak
+     * through as a new answer by being absent from a filter here.
+     *
+     * <p>Marketplace scope is <em>not</em> checked here. The caller applies it before calling, the
+     * order {@code GitFacadeConfiguration.resolvePublished} establishes (GW_AUTH_0006), so an
+     * out-of-scope pair never reaches a query whose timing could distinguish it.
+     */
+    @Requirements({"GW_FACADE_0031"})
+    public List<HeldContent> heldContent(List<MarketplaceSha> pairs) {
+        if (pairs.isEmpty()) {
+            return List.of();
+        }
+        StringBuilder tuples = new StringBuilder();
+        for (int i = 0; i < pairs.size(); i++) {
+            tuples.append(i == 0 ? "" : ", ")
+                    .append("(:m")
+                    .append(i)
+                    .append(", :s")
+                    .append(i)
+                    .append(")");
+        }
+        var spec = jdbc.sql("SELECT m.name AS marketplace, s.sha AS sha, s.state AS state,"
+                + " s.revoked_at AS revoked_at, s.deleted_at AS deleted_at,"
+                + " (r.id IS NOT NULL) AS approved_over_reversed_revocation"
+                + " FROM snapshots s"
+                + " JOIN marketplaces m ON m.id = s.marketplace_id"
+                + " LEFT JOIN snapshot_revocation_reversals r ON r.snapshot_id = s.id"
+                + " WHERE (m.name, s.sha) IN (" + tuples + ")");
+        for (int i = 0; i < pairs.size(); i++) {
+            spec = spec.param("m" + i, pairs.get(i).marketplace())
+                    .param("s" + i, pairs.get(i).sha());
+        }
+        return spec.query(HeldContent.class).list();
+    }
+
+    /** A marketplace name and a commit a client says it holds. */
+    public record MarketplaceSha(String marketplace, String sha) {}
+
+    /**
+     * What the gateway records about one such commit. {@code state} is the stored state, not an
+     * answer: {@link #approved()} and {@link #revoked()} are the whole vocabulary a client is told,
+     * and anything else is the absence of a statement (GW_FACADE_0032).
+     */
+    public record HeldContent(
+            String marketplace,
+            String sha,
+            String state,
+            Instant revokedAt,
+            Instant deletedAt,
+            boolean approvedOverReversedRevocation) {
+
+        /**
+         * Supersession is deliberately not consulted: a later approval does not retract this one,
+         * {@code refs/snapshots/<sha>} stays advertised, and the question a holder asks is whether
+         * it may keep using what it has. A soft-deleted row is excluded even though an approved
+         * snapshot is an absolute guard against retention today — the guarantee is elsewhere, and
+         * this is the place that would have to be wrong for reclaimed content to be called served.
+         */
+        public boolean approved() {
+            return Snapshot.APPROVED.equals(state) && deletedAt == null;
+        }
+
+        public boolean revoked() {
+            return Snapshot.REVOKED.equals(state);
+        }
+    }
+
     /** A snapshot a retention policy selected, and the criterion that selected it. */
     public record Candidate(Snapshot snapshot, String reason) {
 

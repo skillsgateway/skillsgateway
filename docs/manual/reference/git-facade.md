@@ -205,6 +205,86 @@ still pins the delivered content exactly, which is what
 See [Audit](api/audit.md#events) for the full entry contract, including what
 entries written before this behaviour shipped record.
 
+## Checking content you already hold
+
+Withdrawing a snapshot removes it from the served refs; it does not reach a
+machine that cloned it earlier. `POST /status/snapshots` is what such a machine
+asks.
+
+It is not under `/git/`, because that prefix is a JGit servlet mapping and no
+JSON endpoint is reachable beneath it. It is not under `/api/` either, because
+that surface accepts only an OIDC session or a gateway-issued machine
+credential, and a git client holds neither. It has its own stateless chain
+accepting exactly the credentials described under
+[Authentication](#authentication) above — a PAT over Basic, and an
+identity-provider bearer token where that is enabled. No session is read, no
+cookie is honoured, and none is set.
+
+### Request
+
+```json
+{
+  "holdings": [
+    {"marketplace": "platform-skills", "sha": "9f2c1b8e…"}
+  ]
+}
+```
+
+| Field | Contract |
+| --- | --- |
+| `marketplace` | The name as it appears in the fetch URL, validated against `^[a-z0-9][a-z0-9_-]*$`. |
+| `sha` | A full 40-character commit id. An abbreviation is refused. |
+| `holdings` | At most **256** pairs per request. |
+
+### Response
+
+One result per requested pair, in the order asked, echoing the pair.
+
+| Field | Contract |
+| --- | --- |
+| `state` | `approved`, `revoked`, or `unknown`. |
+| `revokedAt` | When the content was withdrawn. `null` unless the state is `revoked`. |
+| `approvedOverReversedRevocation` | `true` when this approval stands over a withdrawal that was later [reversed](../guides/approving-snapshots.md#putting-it-back-takes-a-second-administrator), so content served over a reversed withdrawal is never indistinguishable from content nobody ever withdrew. |
+
+`approved` ignores supersession on purpose. A later approval does not retract an
+earlier one — `refs/snapshots/<sha>` stays advertised — and the question a
+holder is asking is whether it may keep using what it has, not whether it is
+current. Staleness is [adoption's](api/adoption.md) question.
+
+!!! warning "`unknown` is the absence of a statement, never a pass"
+
+    It is the answer for a commit the gateway never held, one whose record has
+    aged out, one that was ingested but never approved, a marketplace outside a
+    [scoped token's](api/tokens.md) list, and a marketplace that does not
+    exist. Those are deliberately indistinguishable: the same rule that stops a
+    scoped token enumerating marketplaces through the facade applies here, so
+    the check cannot double as a directory of the estate. A client must treat
+    `unknown` as not approved.
+
+**The withdrawal reason is not in the answer.** A reason is mandatory on a
+withdrawal and routinely names an undisclosed vulnerability or a compromised
+maintainer. An identity entitled to it reads it from the
+[ledger](api/audit.md), which is an auditor's read.
+
+### Refusals
+
+| Status | Cause |
+| --- | --- |
+| 400 | More than 256 pairs, a malformed marketplace name, or a `sha` that is not a full commit id. The request is refused whole rather than partly answered — a partial answer that looks complete is the failure a holder cannot detect. |
+| 401 | No credential, or one the facade does not accept. |
+
+### It is not a fetch
+
+Nothing on this path is appended to the audit ledger. The append-only record is
+of fetches and administrative acts; a row per client per poll would grow the
+ledger to record that somebody asked a question rather than received content.
+The signal is a counter instead — `skills_gateway.facade.held_content_answers`,
+tagged by the state answered, so an operator can see that clients are checking
+in and that some are still holding withdrawn content.
+
+How to deploy the check across a fleet is in
+[making the gateway the only door](../guides/client-enforcement.md#noticing-that-something-you-already-hold-was-withdrawn).
+
 ## Troubleshooting
 
 | Symptom | Cause |

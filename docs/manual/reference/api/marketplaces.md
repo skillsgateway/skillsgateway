@@ -1049,12 +1049,17 @@ Afterwards: the withdrawal is on the ledger as `snapshot-revoked` with
 Quarantine is untouched. Retention may reclaim the content but
 [never the record](../retention.md#administratively-withdrawn-snapshots).
 
-!!! warning "This stops the gateway serving it; it does not reach clients"
+!!! warning "This stops the gateway serving it; it does not delete what clients hold"
 
-    Anyone who already cloned the content still has it.
+    Anyone who already cloned the content still has it on disk, and the gateway
+    does not reach into client machines.
     [`GET /snapshots/{id}/fetchers`](#get-snapshotsidfetchers) names the blast
-    radius, but nothing on the client side checks whether what it holds is still
-    approved. See [#427](https://github.com/skillsgateway/skillsgateway/issues/427).
+    radius, and a client can discover the withdrawal for itself by asking
+    [`POST /status/snapshots`](../git-facade.md#checking-content-you-already-hold)
+    about the commits it holds. Acting on the answer is the client's, so pair a
+    withdrawal with whatever
+    [fleet check](../../guides/client-enforcement.md#noticing-that-something-you-already-hold-was-withdrawn)
+    your estate runs.
 
 ---
 

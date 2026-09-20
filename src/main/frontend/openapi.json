@@ -1308,6 +1308,78 @@
         ],
         "type": "object"
       },
+      "HeldContentAnswer": {
+        "description": "What the gateway will say about one pair a client holds",
+        "properties": {
+          "approvedOverReversedRevocation": {
+            "description": "True when this approval stands over an administrative revocation somebody reversed, so content served over a reversed withdrawal is never indistinguishable from content nobody ever withdrew",
+            "type": "boolean"
+          },
+          "marketplace": {
+            "description": "Marketplace name as asked",
+            "type": "string"
+          },
+          "revokedAt": {
+            "description": "When the content was withdrawn; null unless the state is 'revoked'",
+            "format": "date-time",
+            "type": "string"
+          },
+          "sha": {
+            "description": "Commit as asked",
+            "type": "string"
+          },
+          "state": {
+            "description": "approved, revoked, or unknown. 'unknown' is not a pass: the gateway makes no positive statement, and a holder should treat the content as withdrawn.",
+            "enum": [
+              "approved",
+              "revoked",
+              "unknown"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "HeldContentQuery": {
+        "description": "One marketplace-and-commit pair a client holds",
+        "properties": {
+          "marketplace": {
+            "description": "Marketplace name, as it appears in the fetch URL",
+            "type": "string"
+          },
+          "sha": {
+            "description": "The commit the client holds",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "HeldContentReport": {
+        "description": "One state per requested pair, in the order asked",
+        "properties": {
+          "results": {
+            "description": "The answers",
+            "items": {
+              "$ref": "#/components/schemas/HeldContentAnswer"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "HeldContentRequest": {
+        "description": "The content a client holds and wants a statement about",
+        "properties": {
+          "holdings": {
+            "description": "Marketplace-and-commit pairs the client holds, at most 256",
+            "items": {
+              "$ref": "#/components/schemas/HeldContentQuery"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "IssuedToken": {
         "description": "A freshly issued token; the only time the cleartext is ever returned",
         "properties": {
@@ -6783,6 +6855,58 @@
         "summary": "Forge push webhook",
         "tags": [
           "Sync"
+        ]
+      }
+    },
+    "/status/snapshots": {
+      "post": {
+        "description": "Answers one state per marketplace-and-commit pair, in the order asked. A pair the gateway makes no positive statement about is answered 'unknown', which is never a pass: a client that holds such content should treat it as withdrawn. Authenticates with the same credentials the git facade accepts, and answers only about marketplaces that credential could fetch.",
+        "operationId": "status",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HeldContentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HeldContentReport"
+                }
+              }
+            },
+            "description": "One state per requested pair, in the order asked"
+          },
+          "400": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HeldContentReport"
+                }
+              }
+            },
+            "description": "Malformed request, or more pairs than one request may carry"
+          },
+          "401": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HeldContentReport"
+                }
+              }
+            },
+            "description": "Unauthenticated"
+          }
+        },
+        "summary": "Ask whether content a client already holds is still approved",
+        "tags": [
+          "Held content"
         ]
       }
     }

@@ -120,7 +120,10 @@ HTTP surface *promises*.
 
 !!! note "What this promise covers, and how each surface is checked"
 
-    It covers `/api/**`, the lifecycle webhook deliveries, and the
+    It covers `/api/**`, `/status/**` — the
+    [revocation check](git-facade.md#checking-content-you-already-hold), which
+    is described in the same OpenAPI document and diffed by the same gate — the
+    lifecycle webhook deliveries, and the
     `skills-gateway.estate.*` declarative estate schema
     ([guide](../guides/declarative-estate.md#1-declare-the-estate),
     [reference](configuration.md#declarative-estate)). A renamed or removed

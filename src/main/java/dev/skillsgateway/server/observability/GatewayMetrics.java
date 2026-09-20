@@ -33,6 +33,13 @@ public class GatewayMetrics {
     /** Counter of catalog names withheld because more than one marketplace claimed them. */
     public static final String CATALOG_COLLISIONS = "skills_gateway.catalog.collisions";
 
+    /**
+     * Counter of answers the revocation check gave, tagged {@code state=approved|revoked|unknown}.
+     * The interesting series is {@code revoked}: it says clients are still holding content that has
+     * been withdrawn, which is the one thing nothing else in the gateway can observe.
+     */
+    public static final String HELD_CONTENT_ANSWERS = "skills_gateway.facade.held_content_answers";
+
     private final ObservationRegistry observations;
     private final MeterRegistry meters;
 
@@ -66,6 +73,12 @@ public class GatewayMetrics {
     @Requirements({"GW_OBSERVABILITY_0003"})
     public void facadeFetch(String event) {
         meters.counter(FACADE_FETCHES, "event", event).increment();
+    }
+
+    /** Counts one answer the revocation check gave (GW_FACADE_0031), by the state it reported. */
+    @Requirements({"GW_OBSERVABILITY_0003", "GW_FACADE_0031"})
+    public void heldContentAnswer(String state) {
+        meters.counter(HELD_CONTENT_ANSWERS, "state", state).increment();
     }
 
     /**

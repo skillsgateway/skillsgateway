@@ -27,7 +27,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class GitFacadeConfiguration {
 
-    private static final Pattern MARKETPLACE_NAME = Pattern.compile("^[a-z0-9][a-z0-9_-]*$");
+    /**
+     * The shape a marketplace name may have on the wire. Shared with {@link HeldContentController},
+     * which must accept exactly the names a fetch would, so the two surfaces cannot disagree about
+     * what is even askable.
+     */
+    static final Pattern MARKETPLACE_NAME = Pattern.compile("^[a-z0-9][a-z0-9_-]*$");
+
     private static final String SERVED_REF = GitStorage.SERVED_REF;
 
     /**
