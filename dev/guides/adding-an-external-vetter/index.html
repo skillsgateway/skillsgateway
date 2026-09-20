@@ -2594,6 +2594,15 @@ and shows where its verdicts surface.</p>
 <p>The gateway POSTs the snapshot's identity and its scannable file content.
 Quarantined content is never fetchable through the facade, so the gateway
 ships it rather than handing your endpoint a URL to pull from.</p>
+<div class="admonition note">
+<p class="admonition-title">What this contract cannot give you</p>
+<p>Only <em>scannable</em> content is sent: a file that is not valid UTF-8 text
+arrives with <code>content: null</code>, whatever the caps are set to. So a vetter that
+needs to run a snapshot — a sandbox detonator — cannot be built on this
+contract, and no cap makes it possible. Why the gateway does not hand out a
+signed fetch URL instead, and what would change that, is recorded in
+<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0020-external-vetters-are-pushed-content.md">ADR 0020 — External vetters are pushed content</a>.</p>
+</div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="w"> </span><span class="s2">"corp-marketplace"</span><span class="p">,</span>
