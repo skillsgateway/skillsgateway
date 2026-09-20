@@ -187,7 +187,8 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
     @SVCs({"SVC_GW_FACADE_0009"})
     void every_webhook_delivery_state_round_trips() {
         WebhookSubscriber subscriber =
-                webhookSubscriberRepository.create(uniqueName("enum-sub"), "http://localhost/hook", "secret", "*");
+                webhookSubscriberRepository.create(
+                        uniqueName("enum-sub"), "http://localhost/hook", "secret", List.of("*"));
         try {
             WebhookDelivery pending =
                     webhookDeliveryRepository.enqueue(subscriber.id(), "marketplace.snapshot.approved", "{}");
@@ -213,7 +214,8 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
     @SVCs({"SVC_GW_FACADE_0009"})
     void the_audit_sink_kind_round_trips() {
         WebhookSubscriber subscriber =
-                webhookSubscriberRepository.create(uniqueName("enum-sink-sub"), "http://localhost/hook", "s", "*");
+                webhookSubscriberRepository.create(
+                        uniqueName("enum-sink-sub"), "http://localhost/hook", "s", List.of("*"));
         try {
             AuditSink sink =
                     auditSinkRepository.create(uniqueName("enum-sink"), AuditSink.WEBHOOK, subscriber.id(), 0, 500);

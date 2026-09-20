@@ -456,11 +456,17 @@ class WebhookTests extends AbstractGatewayTest {
                 uniqueName("ns"),
                 "https://receiver.invalid/hook",
                 "whsec_ns",
-                WebhookEvent.SNAPSHOT_APPROVED + "," + WebhookEvent.SNAPSHOT_REVOKED);
+                List.of(WebhookEvent.SNAPSHOT_APPROVED, WebhookEvent.SNAPSHOT_REVOKED));
         WebhookSubscriber wildcard = subscriberRepository.create(
-                uniqueName("wild"), "https://receiver.invalid/hook", "whsec_wild", WebhookSubscriber.ALL_EVENTS);
+                uniqueName("wild"),
+                "https://receiver.invalid/hook",
+                "whsec_wild",
+                List.of(WebhookSubscriber.ALL_EVENTS));
         WebhookSubscriber sink = subscriberRepository.create(
-                uniqueName("sink"), "https://receiver.invalid/hook", "whsec_sink", WebhookEvent.AUDIT_EXPORT);
+                uniqueName("sink"),
+                "https://receiver.invalid/hook",
+                "whsec_sink",
+                List.of(WebhookEvent.AUDIT_EXPORT));
 
         try {
             assertThat(subscriber.subscribesTo(WebhookEvent.SNAPSHOT_APPROVED))

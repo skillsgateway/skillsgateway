@@ -159,7 +159,7 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
                 null,
                 null,
                 true,
-                "estate:read",
+                List.of("estate:read"),
                 "admin@example.invalid");
     }
 

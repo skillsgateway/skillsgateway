@@ -244,7 +244,7 @@ class RevetEnforceTests extends AbstractGatewayTest {
     @Test
     @SVCs({"SVC_GW_VETTING_0016"})
     void aViolationNamesTheIdentitiesThatFetchedTheSnapshot() throws Exception {
-        webhookService.createSubscriber(uniqueName("revetsub"), "http://127.0.0.1:1/hook", "*");
+        webhookService.createSubscriber(uniqueName("revetsub"), "http://127.0.0.1:1/hook", List.of("*"));
         Registered registered = approvedWithLapsedWaiver("revetblast");
         String name = registered.marketplace().name();
         long id = registered.snapshot().id();

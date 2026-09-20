@@ -17,6 +17,7 @@ import dev.skillsgateway.server.vetting.VetterToggleRepository;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -179,7 +180,8 @@ class DataClassRowMapperTests extends AbstractGatewayTest {
                 .isNull();
 
         WebhookSubscriber subscriber =
-                webhookSubscriberRepository.create(uniqueName("mapper-sub"), "http://localhost/hook", "s", "*");
+                webhookSubscriberRepository.create(
+                        uniqueName("mapper-sub"), "http://localhost/hook", "s", List.of("*"));
         try {
             WebhookDelivery queued =
                     webhookDeliveryRepository.enqueue(subscriber.id(), "marketplace.snapshot.approved", "{}");
