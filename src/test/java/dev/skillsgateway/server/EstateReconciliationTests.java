@@ -113,7 +113,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
 
         WebhookSubscriber hook = subscriberRepository.findByName("estate-hook").orElseThrow();
         assertThat(hook.url()).isEqualTo("https://receiver.invalid/hook");
-        assertThat(hook.events()).isEqualTo("marketplace.snapshot.approved");
+        assertThat(hook.events()).containsExactly("marketplace.snapshot.approved");
         // The declared ${test.estate.hook-secret} placeholder resolved to the operator's value.
         assertThat(hook.secret()).isEqualTo(HOOK_SECRET);
 
@@ -376,12 +376,12 @@ class EstateReconciliationTests extends AbstractGatewayTest {
                         new DeclaredWebhook(
                                 declared,
                                 "https://pending.invalid/hook",
-                                WebhookEvent.SNAPSHOT_APPROVAL_PENDING + ",marketplace.snapshot.approved",
+                                List.of(WebhookEvent.SNAPSHOT_APPROVAL_PENDING, "marketplace.snapshot.approved"),
                                 "estate-pending-secret-0123456789"),
                         new DeclaredWebhook(
                                 typo,
                                 "https://pending.invalid/hook",
-                                "snapshot.approval-pending",
+                                List.of("snapshot.approval-pending"),
                                 "estate-pending-secret-0123456789")),
                 null,
                 null);
@@ -390,7 +390,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
 
         assertThat(actionOf(report, declared)).isEqualTo("created");
         assertThat(subscriberRepository.findByName(declared).orElseThrow().events())
-                .isEqualTo(WebhookEvent.SNAPSHOT_APPROVAL_PENDING + ",marketplace.snapshot.approved");
+                .containsExactly(WebhookEvent.SNAPSHOT_APPROVAL_PENDING, "marketplace.snapshot.approved");
         assertThat(actionOf(report, typo)).isEqualTo("failed");
         assertThat(entryOf(report, typo).detail()).contains("unknown event");
         assertThat(subscriberRepository.findByName(typo)).isEmpty();

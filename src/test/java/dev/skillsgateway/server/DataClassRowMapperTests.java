@@ -179,9 +179,8 @@ class DataClassRowMapperTests extends AbstractGatewayTest {
                         .marketplaceId())
                 .isNull();
 
-        WebhookSubscriber subscriber =
-                webhookSubscriberRepository.create(
-                        uniqueName("mapper-sub"), "http://localhost/hook", "s", List.of("*"));
+        WebhookSubscriber subscriber = webhookSubscriberRepository.create(
+                uniqueName("mapper-sub"), "http://localhost/hook", "s", List.of("*"));
         try {
             WebhookDelivery queued =
                     webhookDeliveryRepository.enqueue(subscriber.id(), "marketplace.snapshot.approved", "{}");

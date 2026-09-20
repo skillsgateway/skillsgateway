@@ -652,9 +652,9 @@ public record SkillsGatewayProperties(
      * never logged, never audited, never answered by any API. Changing the referenced value rotates
      * the stored secret idempotently.
      *
-     * @param events comma-delimited event filter, or null/blank for every event
+     * @param events event filter, or null/empty for every event
      */
-    public record DeclaredWebhook(String name, String url, String events, String secret) {}
+    public record DeclaredWebhook(String name, String url, List<String> events, String secret) {}
 
     /**
      * A declared audit export sink (GW_ESTATE_0004); the secret contract is {@link DeclaredWebhook}'s.

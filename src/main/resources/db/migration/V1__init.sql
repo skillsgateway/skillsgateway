@@ -532,7 +532,7 @@ CREATE TABLE snapshot_vetting_overrides (
     -- see what the administrator overrode without re-deriving it from the run: the vetter list and
     -- a human-readable finding summary. NULL means nothing was blocking; never the empty array.
     blocking_vetters TEXT[] CHECK (blocking_vetters IS NULL OR cardinality(blocking_vetters) > 0),
-    uncovered_findings TEXT,
+    uncovered_findings TEXT[] CHECK (uncovered_findings IS NULL OR cardinality(uncovered_findings) > 0),
     overridden_by TEXT NOT NULL CHECK (overridden_by <> ''),
     overridden_at TIMESTAMPTZ NOT NULL
 );

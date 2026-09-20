@@ -96,8 +96,10 @@ class MachineCredentialShapeTests {
         assertThat(fetchOnly.permitsMarketplace("anything")).isTrue();
         assertThat(fetchOnly.permitsMarketplace("catalog")).isTrue();
         // And a fetch credential that also names marketplaces is unchanged either way.
-        assertThat(token(List.of("alpha"), null, null).permitsMarketplace("alpha")).isTrue();
-        assertThat(token(List.of("alpha"), null, null).permitsMarketplace("beta")).isFalse();
+        assertThat(token(List.of("alpha"), null, null).permitsMarketplace("alpha"))
+                .isTrue();
+        assertThat(token(List.of("alpha"), null, null).permitsMarketplace("beta"))
+                .isFalse();
     }
 
     @Test

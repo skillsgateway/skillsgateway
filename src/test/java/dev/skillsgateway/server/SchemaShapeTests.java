@@ -151,18 +151,18 @@ class SchemaShapeTests extends AbstractGatewayTest {
     void a_marketplace_name_breaking_the_scope_delimiter_pattern_is_refused_by_the_database() {
         // The API refuses this in MarketplaceRegistrationService; the constraint is what stops every
         // other write path, which is the reason the scope columns could assume the pattern held.
-        assertThatThrownBy(() -> jdbc.sql(
-                                "INSERT INTO marketplaces (name, url, created_at) VALUES (:name, :url, now())")
-                        .param("name", "alpha,beta")
-                        .param("url", "file:///upstream")
-                        .update())
+        assertThatThrownBy(
+                        () -> jdbc.sql("INSERT INTO marketplaces (name, url, created_at) VALUES (:name, :url, now())")
+                                .param("name", "alpha,beta")
+                                .param("url", "file:///upstream")
+                                .update())
                 .isInstanceOf(DataAccessException.class);
 
-        assertThatThrownBy(() -> jdbc.sql(
-                                "INSERT INTO marketplaces (name, url, created_at) VALUES (:name, :url, now())")
-                        .param("name", "Capitals")
-                        .param("url", "file:///upstream")
-                        .update())
+        assertThatThrownBy(
+                        () -> jdbc.sql("INSERT INTO marketplaces (name, url, created_at) VALUES (:name, :url, now())")
+                                .param("name", "Capitals")
+                                .param("url", "file:///upstream")
+                                .update())
                 .isInstanceOf(DataAccessException.class);
     }
 
@@ -184,7 +184,6 @@ class SchemaShapeTests extends AbstractGatewayTest {
                         .query(String.class)
                         .list())
                 .isNotEmpty()
-                .allSatisfy(trigger ->
-                        assertThat(trigger).isIn("ingestion", "revet-scheduled", "revet-manual"));
+                .allSatisfy(trigger -> assertThat(trigger).isIn("ingestion", "revet-scheduled", "revet-manual"));
     }
 }

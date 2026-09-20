@@ -31,10 +31,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -161,11 +163,20 @@ class WebhookTests extends AbstractGatewayTest {
         }
     }
 
+    /**
+     * {@code events} stays comma-separated here for the suite's convenience and is sent as the JSON
+     * array the API now takes: the wire shape changed, the tests' own vocabulary need not.
+     */
     private long createSubscriber(String name, String url, String events, StringBuilder secretOut) throws Exception {
+        String filter = Arrays.stream(events.split(","))
+                .map(String::trim)
+                .filter(event -> !event.isEmpty())
+                .map("\"%s\""::formatted)
+                .collect(Collectors.joining(","));
         String body = mockMvc.perform(post("/api/webhooks")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"%s\",\"url\":\"%s\",\"events\":\"%s\"}".formatted(name, url, events)))
+                        .content("{\"name\":\"%s\",\"url\":\"%s\",\"events\":[%s]}".formatted(name, url, filter)))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
@@ -463,10 +474,7 @@ class WebhookTests extends AbstractGatewayTest {
                 "whsec_wild",
                 List.of(WebhookSubscriber.ALL_EVENTS));
         WebhookSubscriber sink = subscriberRepository.create(
-                uniqueName("sink"),
-                "https://receiver.invalid/hook",
-                "whsec_sink",
-                List.of(WebhookEvent.AUDIT_EXPORT));
+                uniqueName("sink"), "https://receiver.invalid/hook", "whsec_sink", List.of(WebhookEvent.AUDIT_EXPORT));
 
         try {
             assertThat(subscriber.subscribesTo(WebhookEvent.SNAPSHOT_APPROVED))
@@ -477,10 +485,10 @@ class WebhookTests extends AbstractGatewayTest {
                             .orElseThrow()
                             .events())
                     .as("a wildcard filter names no event")
-                    .isEqualTo(WebhookSubscriber.ALL_EVENTS);
+                    .containsExactly(WebhookSubscriber.ALL_EVENTS);
             assertThat(subscriberRepository.findById(sink.id()).orElseThrow().events())
                     .as("audit.export is about the ledger, not a marketplace, and is not namespaced under one")
-                    .isEqualTo(WebhookEvent.AUDIT_EXPORT);
+                    .containsExactly(WebhookEvent.AUDIT_EXPORT);
 
             // The third side: what actually arrives carries the namespaced name. The approval goes
             // through the API because that is where the emit lives.

@@ -17,15 +17,6 @@ public record WebhookSubscriber(
         return events == null ? List.of() : events;
     }
 
-    /**
-     * The filter as the API still publishes it: comma-delimited. The column is {@code TEXT[]};
-     * the payload shape is a separate contract question and changing it is a breaking change, so
-     * the join lives here rather than the storage carrying the delimiter.
-     */
-    public String eventFilterAsText() {
-        return String.join(",", eventFilter());
-    }
-
     /** True when this subscriber asked for {@code event} (GW_WEBHOOK_0001). */
     public boolean subscribesTo(String event) {
         List<String> filter = eventFilter();

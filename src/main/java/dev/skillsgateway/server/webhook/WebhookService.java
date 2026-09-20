@@ -65,8 +65,8 @@ public class WebhookService {
             @Schema(description = "Subscriber name") String name,
             @Schema(description = "Target URL") String url,
 
-            @Schema(description = "Comma-delimited event filter, or * for all")
-            String events,
+            @Schema(description = "Event filter; the single element * means every event")
+            List<String> events,
 
             @Schema(description = "Signing secret - shown exactly once")
             String secret,
@@ -242,12 +242,11 @@ public class WebhookService {
      * the caller is the estate reconciler (GW_ESTATE_0004); null generates one, as the API always does.
      */
     @Requirements({"GW_WEBHOOK_0002"})
-    public CreatedSubscriber createSubscriber(
-            String name, String url, List<String> events, String suppliedSecret) {
+    public CreatedSubscriber createSubscriber(String name, String url, List<String> events, String suppliedSecret) {
         String secret = suppliedSecret == null ? generateSecret() : suppliedSecret;
         WebhookSubscriber stored = subscriberRepository.create(name, url, secret, events);
         return new CreatedSubscriber(
-                stored.id(), stored.name(), stored.url(), stored.eventFilterAsText(), secret, stored.createdAt());
+                stored.id(), stored.name(), stored.url(), stored.events(), secret, stored.createdAt());
     }
 
     private String generateSecret() {
@@ -264,7 +263,8 @@ public class WebhookService {
      * secret). Statuses match the API contract; a non-HTTP caller reports the reason instead.
      */
     @Requirements({"GW_WEBHOOK_0002"})
-    public CreatedSubscriber register(String name, String url, String events, String suppliedSecret, String actor) {
+    public CreatedSubscriber register(
+            String name, String url, List<String> events, String suppliedSecret, String actor) {
         if (name == null || !SUBSCRIBER_NAME.matcher(name).matches()) {
             throw new ResponseStatusException(
                     HttpStatus.UNPROCESSABLE_CONTENT, "name must match " + SUBSCRIBER_NAME.pattern());
@@ -304,15 +304,16 @@ public class WebhookService {
     }
 
     /**
-     * Blank filter means every event; unknown event names are rejected instead of silently ignored.
-     * Takes the payload's comma-delimited string and returns the storage form: this is the single
-     * boundary where the published shape and the column shape meet.
+     * An omitted or empty filter means every event; unknown event names are rejected instead of
+     * silently ignored. The column and the payload are both {@code TEXT[]}/array now, so this is
+     * validation and defaulting rather than a shape conversion.
      */
-    public static List<String> normalizeEvents(String events) {
-        if (events == null || events.isBlank()) {
+    public static List<String> normalizeEvents(List<String> events) {
+        if (events == null || events.isEmpty()) {
             return List.of(WebhookSubscriber.ALL_EVENTS);
         }
-        List<String> requested = List.of(events.split(",")).stream()
+        List<String> requested = events.stream()
+                .filter(e -> e != null)
                 .map(String::trim)
                 .filter(e -> !e.isEmpty())
                 .toList();
