@@ -1,7 +1,7 @@
 name: Docs preview
 
 # The rendered docs for a PR, before they merge: one self-contained HTML file
-# of the whole site, linked from the PR. docs.yml publishes the site for
+# of the whole site, surfaced as a check run on the PR. docs.yml publishes the site for
 # `dev` and for releases, but both are post-merge — prose changes can't be
 # reviewed from a diff. ci.yml already runs `mkdocs build --strict` on every
 # PR, so the link/anchor gate exists and doesn't belong here twice.
@@ -33,9 +33,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # The comment below. A fork PR's token is read-only whatever this says,
-      # which is what the comment step's own guard is for.
-      pull-requests: write
+      # The check run below. A fork PR's token is read-only whatever this says,
+      # which is what that step's own guard is for.
+      checks: write
     steps:
       - uses: actions/checkout@v7.0.1
 
@@ -75,29 +75,41 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      # Upserted by marker so a PR carries one comment, not one per push.
-      # Skipped on fork PRs, where the token can't write — the artifact is
-      # still on the run, reachable from the check.
-      - name: Link the preview from the PR
+      # A check run rather than a PR comment. The preview is a build output, and
+      # build outputs belong in the checks list next to the build that produced
+      # them: it is always in the same place, it does not push a notification to
+      # everyone watching the PR on every push, and it leaves the conversation
+      # for conversation. Re-running the workflow replaces the check rather than
+      # editing a comment nobody was looking for.
+      #
+      # Skipped on fork PRs, where the token cannot write — the artifact is still
+      # on the run, reachable from the workflow itself.
+      - name: Publish the preview as a check run
         if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          PR: ${{ github.event.number }}
           SHA: ${{ github.event.pull_request.head.sha }}
           URL: ${{ steps.upload.outputs.artifact-url }}
+          NAME: ${{ steps.render.outputs.name }}
         run: |
-          marker='<!-- docs-site-preview -->'
-          body="$marker
-          **Docs preview** for \`$(echo "$SHA" | cut -c1-7)\` — [open the single-file HTML](${URL})
-
-          <sub>The whole docs site as one self-contained HTML file, rendered from this PR. Updated on each push; expires after 14 days.</sub>"
-
-          id=$(gh api "repos/${REPO}/issues/${PR}/comments" --paginate \
-                 --jq '.[] | select(.body | startswith("<!-- docs-site-preview -->")) | .id' | head -1)
-
-          if [ -n "$id" ]; then
-            gh api -X PATCH "repos/${REPO}/issues/comments/${id}" -f body="$body" --silent
-          else
-            gh api -X POST "repos/${REPO}/issues/${PR}/comments" -f body="$body" --silent
-          fi
+          set -euo pipefail
+          # jq rather than a string of `-f` flags: the payload is nested, and jq
+          # does the escaping the summary's Markdown would otherwise need.
+          jq -n \
+            --arg sha "$SHA" \
+            --arg url "$URL" \
+            --arg name "$NAME" \
+            --arg short "${SHA:0:7}" \
+            '{
+              name: "Docs preview",
+              head_sha: $sha,
+              status: "completed",
+              conclusion: "success",
+              details_url: $url,
+              output: {
+                title: "The whole docs site as one HTML file",
+                summary: "[Download \($name)](\($url)) — every page concatenated into one self-contained HTML file, rendered from `\($short)`. Mermaid diagrams render on open. Nothing is deployed; the file expires after 14 days."
+              }
+            }' \
+            | gh api -X POST "repos/${REPO}/check-runs" --input - --silent
