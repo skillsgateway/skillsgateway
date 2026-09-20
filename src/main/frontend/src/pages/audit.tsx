@@ -136,7 +136,10 @@ function SortHeader({
  * @Requirements GW_AUDIT_0002, GW_AUDIT_0006
  */
 function LedgerTable({ rows }: { rows: AuditRow[] }) {
-  const [sorting, setSorting] = useState<SortingState>([{ id: "id", desc: true }]);
+  // Newest first. The column id has to be one the table actually has: "id" named no column, so
+  // TanStack silently ignored the whole sort and rendered the ledger oldest-first — which put an
+  // administrator's change at the bottom, or on the last page, right after they made it.
+  const [sorting, setSorting] = useState<SortingState>([{ id: "ts", desc: true }]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   // Completion options for each free-text filter. The marketplace column is sourced from the
@@ -612,7 +615,7 @@ export function AuditPage() {
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Ledger</h2>
         <p className="text-sm text-muted-foreground">
-          Every facade fetch and administrative action, in ledger order. A verdict row is
+          Every facade fetch and administrative action, newest first. A verdict row is
           coloured — a blocked snapshot reads red, the same as its marketplace — and each
           marketplace links to its detail page.
         </p>

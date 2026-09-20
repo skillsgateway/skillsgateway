@@ -680,7 +680,9 @@ Empty state: "No export sinks yet."
 
 ### Ledger
 
-The table, from `GET /api/audit`.
+The table, from `GET /api/audit`, **newest first** — the API answers in ledger
+order, so the page sorts it by timestamp descending to open on what just
+happened. Any column header re-sorts it.
 
 | Column | Contents |
 | --- | --- |
