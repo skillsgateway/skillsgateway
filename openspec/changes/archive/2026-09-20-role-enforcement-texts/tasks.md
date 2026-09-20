@@ -53,4 +53,4 @@ non-breaking, still no behavior change.
 - [x] 5.5 `openspec validate --all --strict`
 - [x] 5.6 `mkdocs build --strict`
 - [x] 5.7 Write `openspec/changes/role-enforcement-texts/evidence.md`: the commands and pasted result tails of one final fresh run after the last edit, plus the commit SHA.
-- [ ] 5.8 Open the PR with a non-`!` conventional-commit title and confirm **Breaking change detection** passes — the proof that description-only OpenAPI edits are additive.
+- [x] 5.8 Open the PR with a non-`!` conventional-commit title and confirm **Breaking change detection** passes — the proof that description-only OpenAPI edits are additive.
