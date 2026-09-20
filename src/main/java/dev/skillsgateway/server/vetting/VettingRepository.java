@@ -53,7 +53,8 @@ public class VettingRepository {
     @Requirements({"GW_FACADE_0009"})
     public long startRun(long snapshotId, String trigger, String chain) {
         return jdbc.sql("INSERT INTO vetting_runs (snapshot_id, trigger, started_at, outcome, chain)"
-                        + " VALUES (:snapshotId, :trigger, :now, :outcome::vetting_run_outcome, :chain) RETURNING id")
+                        + " VALUES (:snapshotId, :trigger::vetting_run_trigger, :now,"
+                        + " :outcome::vetting_run_outcome, :chain) RETURNING id")
                 .param("snapshotId", snapshotId)
                 .param("trigger", trigger)
                 .param("now", OffsetDateTime.now())

@@ -144,7 +144,7 @@ public class AuditExportService {
     @Requirements({"GW_AUDIT_0004"})
     public CreatedSink createWebhookSink(String name, String url, long cursorPosition, int batchSize, String secret) {
         WebhookService.CreatedSubscriber subscriber =
-                webhookService.createSubscriber(name, url, WebhookEvent.AUDIT_EXPORT, secret);
+                webhookService.createSubscriber(name, url, List.of(WebhookEvent.AUDIT_EXPORT), secret);
         AuditSink sink =
                 sinkRepository.create(name, AuditSink.WEBHOOK, subscriber.id(), Math.max(cursorPosition, 0), batchSize);
         return new CreatedSink(

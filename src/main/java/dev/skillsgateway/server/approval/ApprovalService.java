@@ -326,16 +326,17 @@ public class ApprovalService {
      * effective outcome before the state transition, so it names exactly what the administrator
      * took responsibility for.
      */
-    private record OverrideCapture(String reason, String blockingVetters, String uncoveredFindings) {
+    private record OverrideCapture(
+            String reason, List<String> blockingVetters, String uncoveredFindings) {
 
         static OverrideCapture of(String reason, WaiverEvaluation.Effect effect) {
-            String vetters = String.join(", ", effect.blockingVetters());
+            List<String> vetters = effect.blockingVetters();
             String findings = effect.uncovered().isEmpty()
                     ? "(none itemised)"
                     : effect.uncovered().stream()
                             .map(finding -> "%s at %s".formatted(finding.ruleId(), finding.location()))
                             .collect(java.util.stream.Collectors.joining("; "));
-            return new OverrideCapture(reason, vetters.isBlank() ? null : vetters, findings);
+            return new OverrideCapture(reason, vetters.isEmpty() ? null : List.copyOf(vetters), findings);
         }
     }
 

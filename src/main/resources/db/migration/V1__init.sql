@@ -23,6 +23,9 @@ CREATE TYPE snapshot_revocation_kind AS ENUM ('revet', 'administrative');
 CREATE TYPE webhook_delivery_state AS ENUM ('pending', 'delivered', 'failed');
 CREATE TYPE audit_sink_kind AS ENUM ('webhook');
 CREATE TYPE vetting_run_outcome AS ENUM ('clear', 'blocked');
+-- What caused a vetting run: ingestion, the continuous re-vetting sweep (GW_VETTING_0012), or an
+-- operator asking for one now -- which is also how a scanner feed update becomes fresh evidence.
+CREATE TYPE vetting_run_trigger AS ENUM ('ingestion', 'revet-scheduled', 'revet-manual');
 -- 'disabled' records that an administrator switched this vetter off for the snapshot's
 -- marketplace (GW_VETTING_0023): the chain skipped it rather than running it. It is neither clearing
 -- nor blocking — the disablement is fail-loud evidence on the run, not a silent shorter chain.
@@ -39,7 +42,11 @@ CREATE TYPE role_grant_role AS ENUM ('admin', 'approver', 'auditor');
 
 CREATE TABLE marketplaces (
     id BIGSERIAL PRIMARY KEY,
-    name TEXT NOT NULL UNIQUE,
+    -- Defence in depth, not the primary validation: MarketplaceRegistrationService already refuses
+    -- a bad name with a proper API error. The constraint is here so no *other* write path -- the
+    -- estate reconciler, a later service method, a fixture -- can introduce a name that the facade's
+    -- own route pattern would not accept. Do not move it on the assumption it is redundant.
+    name TEXT NOT NULL UNIQUE CHECK (name ~ '^[a-z0-9][a-z0-9_-]*$'),
     -- The identity that registered the marketplace (GW_APPROVAL_0010): the supply-side decision the
     -- four-eyes rule compares an approving reviewer against. Nullable for the same reason as
     -- snapshots.ingested_by — an unrecorded registrant never conflicts.
@@ -249,10 +256,10 @@ CREATE TABLE access_tokens (
     token_hash TEXT NOT NULL UNIQUE,
     created_at TIMESTAMPTZ NOT NULL,
     revoked_at TIMESTAMPTZ,
-    -- Comma-delimited marketplace names the token may fetch (GW_AUTH_0006); NULL grants every
-    -- marketplace, which is what every pre-scoping token meant. Names cannot contain the
-    -- delimiter (^[a-z0-9][a-z0-9_-]*$).
-    scopes TEXT,
+    -- Marketplace names the token may fetch (GW_AUTH_0006); NULL grants every marketplace, which is
+    -- what every pre-scoping token meant. An empty array is refused below, so NULL is the only
+    -- way to say "every" and cannot be confused with "none".
+    scopes TEXT[],
     -- Expiry is decided by comparing this to now at authentication time (GW_AUTH_0007): no sweep can
     -- be late and no scheduler outage can keep a dead token alive. NULL never expires.
     expires_at TIMESTAMPTZ,
@@ -262,17 +269,17 @@ CREATE TABLE access_tokens (
     -- rather than inferred from a short expiry: a short-lived PAT is an ordinary thing to want,
     -- and what the ledger needs to distinguish is how the credential was obtained.
     session_derived BOOLEAN NOT NULL DEFAULT FALSE,
-    -- Comma-delimited hosted marketplace names this token may PUSH to (GW_FACADE_0007). Deliberately
-    -- unlike `scopes`: NULL here means none, not all, so no token that predates publication --
-    -- and no token whose fetch scope is the every-marketplace form -- can write anything.
-    push_scopes TEXT,
-    -- Comma-delimited administrative scope values this token may exercise on /api/** (GW_AUTH_0020).
+    -- Hosted marketplace names this token may PUSH to (GW_FACADE_0007). Deliberately unlike
+    -- `scopes`: NULL here means none, not all, so no token that predates publication -- and no
+    -- token whose fetch scope is the every-marketplace form -- can write anything.
+    push_scopes TEXT[],
+    -- Administrative scope values this token may exercise on /api/** (GW_AUTH_0020).
     -- NULL means none -- the push default, not the fetch one, because reaching the control
     -- plane is a grant and never a baseline: every token that predates this column is exactly
     -- what it was, a fetch credential that cannot reach the API. A token is a machine API
     -- credential precisely when this is non-NULL, which is also what makes `scopes` mean
     -- nothing rather than everything for it.
-    api_scopes TEXT,
+    api_scopes TEXT[],
     -- The identity that provisioned a machine credential (GW_AUTH_0024). `principal` is the
     -- credential's own name, which is what the ledger attributes its actions to; this is the
     -- responsible person, named once at provisioning rather than impersonated on every use,
@@ -285,6 +292,16 @@ CREATE TABLE access_tokens (
     -- rather than a ledger query. Deliberately no index: it is read only alongside the row it
     -- belongs to, never filtered on.
     last_used_at TIMESTAMPTZ,
+    -- No scope list is ever the empty array (GW_AUTH_0006, GW_FACADE_0007, GW_AUTH_0020). One rule for all
+    -- three, so no reader has to remember which column tolerates what. It matters most on
+    -- `api_scopes`: an empty array satisfies IS NOT NULL, so it would make a credential count as a
+    -- machine credential -- forced to expire, barred from being session-derived -- while granting
+    -- no administrative reach at all, and the two constraints below would pass while meaning
+    -- something they were not written to mean. NULL stays the only way to say "unset".
+    CONSTRAINT scope_lists_are_never_empty CHECK (
+        (scopes IS NULL OR cardinality(scopes) > 0)
+        AND (push_scopes IS NULL OR cardinality(push_scopes) > 0)
+        AND (api_scopes IS NULL OR cardinality(api_scopes) > 0)),
     -- A session-derived credential can never hold administrative scope (GW_AUTH_0021). Enforced by
     -- the database rather than by the one service method that mints them, so no future call
     -- site can launder a browser session -- whose lifetime the holder did not choose and whose
@@ -299,6 +316,10 @@ CREATE TABLE access_tokens (
         CHECK (api_scopes IS NULL OR expires_at IS NOT NULL)
 );
 
+-- Every token listing is by principal (GW_AUTH_0005): the portal shows a person their own
+-- credentials, so this is the table's most frequent read and it filtered on an unindexed column.
+CREATE INDEX idx_access_tokens_principal ON access_tokens (principal);
+
 -- Lifecycle event webhooks (GW_WEBHOOK_0001..GW_WEBHOOK_0003).
 
 CREATE TABLE webhook_subscribers (
@@ -308,8 +329,9 @@ CREATE TABLE webhook_subscribers (
     -- Signing key: unlike a PAT this must stay recoverable, and is never returned
     -- by any read endpoint after creation.
     secret TEXT NOT NULL,
-    -- Comma-delimited event filter; '*' subscribes to every lifecycle event.
-    events TEXT NOT NULL,
+    -- Event filter; the single element '*' subscribes to every lifecycle event. Never empty: a
+    -- subscriber matching nothing is a subscriber nobody meant to create.
+    events TEXT[] NOT NULL CHECK (cardinality(events) > 0),
     enabled BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL
 );
@@ -363,10 +385,8 @@ CREATE TABLE audit_sinks (
 CREATE TABLE vetting_runs (
     id BIGSERIAL PRIMARY KEY,
     snapshot_id BIGINT NOT NULL REFERENCES snapshots (id) ON DELETE CASCADE,
-    -- What caused the run: 'ingestion', 'revet-scheduled' (the continuous re-vetting sweep,
-    -- GW_VETTING_0012) or 'revet-manual' (an operator asking for one now, which is also how a scanner
-    -- feed update is turned into fresh evidence).
-    trigger TEXT NOT NULL,
+    -- What caused the run; the type's own comment carries the vocabulary.
+    trigger vetting_run_trigger NOT NULL,
     started_at TIMESTAMPTZ NOT NULL,
     finished_at TIMESTAMPTZ,
     -- Identity of the chain that produced the run: 'vetter@version' for every vetter, in
@@ -509,9 +529,9 @@ CREATE TABLE snapshot_vetting_overrides (
     -- non-empty: an override with no reason is refused before it reaches this table.
     reason TEXT NOT NULL CHECK (reason <> ''),
     -- What was blocking at the moment of the override, captured so the surface and an auditor can
-    -- see what the administrator overrode without re-deriving it from the run: a comma-separated
-    -- vetter list and a human-readable finding summary.
-    blocking_vetters TEXT,
+    -- see what the administrator overrode without re-deriving it from the run: the vetter list and
+    -- a human-readable finding summary. NULL means nothing was blocking; never the empty array.
+    blocking_vetters TEXT[] CHECK (blocking_vetters IS NULL OR cardinality(blocking_vetters) > 0),
     uncovered_findings TEXT,
     overridden_by TEXT NOT NULL CHECK (overridden_by <> ''),
     overridden_at TIMESTAMPTZ NOT NULL

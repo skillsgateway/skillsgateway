@@ -232,7 +232,7 @@ public class WebhookController {
                 subscriber.id(),
                 subscriber.name(),
                 subscriber.url(),
-                subscriber.events(),
+                subscriber.eventFilterAsText(),
                 subscriber.enabled(),
                 subscriber.createdAt());
     }

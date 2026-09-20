@@ -1,8 +1,10 @@
 package dev.skillsgateway.server.approval;
 
 import io.github.reqstool.annotations.Requirements;
+import dev.skillsgateway.server.persistence.SqlArrays;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -24,17 +26,21 @@ public class VettingOverrideRepository {
 
     @Requirements({"GW_VETTING_0028"})
     public VettingOverrideRecord record(
-            long snapshotId, String reason, String blockingVetters, String uncoveredFindings, String overriddenBy) {
+            long snapshotId,
+            String reason,
+            List<String> blockingVetters,
+            String uncoveredFindings,
+            String overriddenBy) {
         return jdbc.sql("INSERT INTO snapshot_vetting_overrides"
                         + " (snapshot_id, reason, blocking_vetters, uncovered_findings, overridden_by, overridden_at)"
-                        + " VALUES (:snapshotId, :reason, :blockingVetters, :uncoveredFindings, :overriddenBy, :now)"
+                        + " VALUES (:snapshotId, :reason, :blockingVetters::text[], :uncoveredFindings, :overriddenBy, :now)"
                         + " ON CONFLICT (snapshot_id) DO UPDATE SET reason = :reason,"
-                        + " blocking_vetters = :blockingVetters, uncovered_findings = :uncoveredFindings,"
+                        + " blocking_vetters = :blockingVetters::text[], uncovered_findings = :uncoveredFindings,"
                         + " overridden_by = :overriddenBy, overridden_at = :now"
                         + " RETURNING *")
                 .param("snapshotId", snapshotId)
                 .param("reason", reason)
-                .param("blockingVetters", blockingVetters)
+                .param("blockingVetters", SqlArrays.literal(blockingVetters))
                 .param("uncoveredFindings", uncoveredFindings)
                 .param("overriddenBy", overriddenBy)
                 .param("now", OffsetDateTime.now())
@@ -55,9 +61,18 @@ public class VettingOverrideRepository {
                 rs.getLong("id"),
                 rs.getLong("snapshot_id"),
                 rs.getString("reason"),
-                rs.getString("blocking_vetters"),
+                joinedVetters(rs),
                 rs.getString("uncovered_findings"),
                 rs.getString("overridden_by"),
                 overriddenAt == null ? null : overriddenAt.toInstant());
+    }
+
+    /**
+     * The published shape is still the human-readable {@code ", "}-joined summary
+     * (GW_VETTING_0028); only storage became an array, so the join stays exactly as it was.
+     */
+    private static String joinedVetters(ResultSet rs) throws SQLException {
+        List<String> vetters = SqlArrays.read(rs, "blocking_vetters");
+        return vetters == null ? null : String.join(", ", vetters);
     }
 }

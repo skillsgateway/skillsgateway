@@ -1,7 +1,7 @@
 package dev.skillsgateway.server.vetting;
 
+import dev.skillsgateway.server.persistence.SqlArrays;
 import io.github.reqstool.annotations.Requirements;
-import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -57,7 +57,7 @@ public class VettingChainSettingsRepository {
                         + " updated_by = :updatedBy, updated_at = :now"
                         + " RETURNING *")
                 .param("marketplaceId", marketplaceId)
-                .param("vetters", arrayLiteral(vetters))
+                .param("vetters", SqlArrays.literal(vetters))
                 .param("reason", reason)
                 .param("updatedBy", updatedBy)
                 .param("now", OffsetDateTime.now())
@@ -138,8 +138,7 @@ public class VettingChainSettingsRepository {
     }
 
     private static ChainOrderSetting mapOrder(ResultSet rs, int rowNum) throws SQLException {
-        Array array = rs.getArray("vetters");
-        List<String> vetters = array == null ? List.of() : List.of((String[]) array.getArray());
+        List<String> vetters = SqlArrays.readOrEmpty(rs, "vetters");
         return new ChainOrderSetting(
                 rs.getLong("id"),
                 marketplaceId(rs),
@@ -157,19 +156,5 @@ public class VettingChainSettingsRepository {
     private static Instant instant(ResultSet rs, String column) throws SQLException {
         OffsetDateTime value = rs.getObject(column, OffsetDateTime.class);
         return value == null ? null : value.toInstant();
-    }
-
-    /** {@code {"a","b"}} — the array literal form, with every element quoted. */
-    private static String arrayLiteral(List<String> values) {
-        StringBuilder literal = new StringBuilder("{");
-        for (int index = 0; index < values.size(); index++) {
-            if (index > 0) {
-                literal.append(',');
-            }
-            literal.append('"')
-                    .append(values.get(index).replace("\\", "\\\\").replace("\"", "\\\""))
-                    .append('"');
-        }
-        return literal.append('}').toString();
     }
 }

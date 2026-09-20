@@ -1,6 +1,8 @@
 package dev.skillsgateway.server.persistence;
 
 import io.github.reqstool.annotations.Requirements;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -32,7 +34,7 @@ public class TokenRepository {
 
     @Requirements({"GW_AUTH_0006", "GW_AUTH_0007"})
     public AccessToken create(
-            String principal, String name, String tokenHash, String scopes, Instant expiresAt, Long rotatedFrom) {
+            String principal, String name, String tokenHash, List<String> scopes, Instant expiresAt, Long rotatedFrom) {
         return create(principal, name, tokenHash, scopes, expiresAt, rotatedFrom, null);
     }
 
@@ -41,10 +43,10 @@ public class TokenRepository {
             String principal,
             String name,
             String tokenHash,
-            String scopes,
+            List<String> scopes,
             Instant expiresAt,
             Long rotatedFrom,
-            String pushScopes) {
+            List<String> pushScopes) {
         return create(principal, name, tokenHash, scopes, expiresAt, rotatedFrom, pushScopes, false);
     }
 
@@ -53,10 +55,10 @@ public class TokenRepository {
             String principal,
             String name,
             String tokenHash,
-            String scopes,
+            List<String> scopes,
             Instant expiresAt,
             Long rotatedFrom,
-            String pushScopes,
+            List<String> pushScopes,
             boolean sessionDerived) {
         return create(
                 principal, name, tokenHash, scopes, expiresAt, rotatedFrom, pushScopes, sessionDerived, null, null);
@@ -72,31 +74,31 @@ public class TokenRepository {
             String principal,
             String name,
             String tokenHash,
-            String scopes,
+            List<String> scopes,
             Instant expiresAt,
             Long rotatedFrom,
-            String pushScopes,
+            List<String> pushScopes,
             boolean sessionDerived,
-            String apiScopes,
+            List<String> apiScopes,
             String machineOwner) {
         return jdbc.sql("INSERT INTO access_tokens"
                         + " (principal, name, token_hash, created_at, scopes, expires_at, rotated_from,"
                         + " push_scopes, session_derived, api_scopes, machine_owner)"
-                        + " VALUES (:principal, :name, :hash, :now, :scopes, :expiresAt, :rotatedFrom,"
-                        + " :pushScopes, :sessionDerived, :apiScopes, :machineOwner)"
+                        + " VALUES (:principal, :name, :hash, :now, :scopes::text[], :expiresAt, :rotatedFrom,"
+                        + " :pushScopes::text[], :sessionDerived, :apiScopes::text[], :machineOwner)"
                         + " RETURNING *")
-                .param("apiScopes", apiScopes)
+                .param("apiScopes", SqlArrays.literal(apiScopes))
                 .param("machineOwner", machineOwner)
-                .param("pushScopes", pushScopes)
+                .param("pushScopes", SqlArrays.literal(pushScopes))
                 .param("sessionDerived", sessionDerived)
                 .param("principal", principal)
                 .param("name", name)
                 .param("hash", tokenHash)
                 .param("now", OffsetDateTime.now())
-                .param("scopes", scopes)
+                .param("scopes", SqlArrays.literal(scopes))
                 .param("expiresAt", expiresAt == null ? null : expiresAt.atOffset(ZoneOffset.UTC))
                 .param("rotatedFrom", rotatedFrom)
-                .query(AccessToken.class)
+                .query(TokenRepository::map)
                 .single();
     }
 
@@ -110,7 +112,7 @@ public class TokenRepository {
                         + " AND (expires_at IS NULL OR expires_at > :now)")
                 .param("hash", tokenHash)
                 .param("now", OffsetDateTime.now())
-                .query(AccessToken.class)
+                .query(TokenRepository::map)
                 .optional();
     }
 
@@ -118,14 +120,14 @@ public class TokenRepository {
         return jdbc.sql("SELECT * FROM access_tokens WHERE id = :id AND principal = :principal")
                 .param("id", id)
                 .param("principal", principal)
-                .query(AccessToken.class)
+                .query(TokenRepository::map)
                 .optional();
     }
 
     public List<AccessToken> listByPrincipal(String principal) {
         return jdbc.sql("SELECT * FROM access_tokens WHERE principal = :principal ORDER BY id")
                 .param("principal", principal)
-                .query(AccessToken.class)
+                .query(TokenRepository::map)
                 .list();
     }
 
@@ -138,7 +140,7 @@ public class TokenRepository {
     @Requirements({"GW_AUTH_0024"})
     public List<AccessToken> listMachineCredentials() {
         return jdbc.sql("SELECT * FROM access_tokens WHERE api_scopes IS NOT NULL ORDER BY id")
-                .query(AccessToken.class)
+                .query(TokenRepository::map)
                 .list();
     }
 
@@ -147,7 +149,7 @@ public class TokenRepository {
     public Optional<AccessToken> findById(long id) {
         return jdbc.sql("SELECT * FROM access_tokens WHERE id = :id")
                 .param("id", id)
-                .query(AccessToken.class)
+                .query(TokenRepository::map)
                 .optional();
     }
 
@@ -193,5 +195,39 @@ public class TokenRepository {
                         .param("principal", principal)
                         .update()
                 > 0;
+    }
+
+    /**
+     * Explicit mapping because three columns are {@code TEXT[]}: the automatic record mapper cannot
+     * turn a {@link java.sql.Array} into a {@code List<String>}. NULL stays null rather than
+     * becoming an empty list — on {@code scopes} those mean opposite things (GW_AUTH_0006), and the
+     * schema refuses the empty array so that only one of them is ever representable.
+     */
+    private static AccessToken map(ResultSet rs, int rowNum) throws SQLException {
+        return new AccessToken(
+                rs.getLong("id"),
+                rs.getString("principal"),
+                rs.getString("name"),
+                rs.getString("token_hash"),
+                instant(rs, "created_at"),
+                instant(rs, "revoked_at"),
+                SqlArrays.read(rs, "scopes"),
+                instant(rs, "expires_at"),
+                nullableLong(rs, "rotated_from"),
+                SqlArrays.read(rs, "push_scopes"),
+                rs.getBoolean("session_derived"),
+                SqlArrays.read(rs, "api_scopes"),
+                rs.getString("machine_owner"),
+                instant(rs, "last_used_at"));
+    }
+
+    private static Instant instant(ResultSet rs, String column) throws SQLException {
+        OffsetDateTime value = rs.getObject(column, OffsetDateTime.class);
+        return value == null ? null : value.toInstant();
+    }
+
+    private static Long nullableLong(ResultSet rs, String column) throws SQLException {
+        long value = rs.getLong(column);
+        return rs.wasNull() ? null : value;
     }
 }

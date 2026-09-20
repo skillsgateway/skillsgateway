@@ -233,20 +233,21 @@ public class WebhookService {
 
     /** The secret is stored recoverably because signing needs it, and is never read back over the API. */
     @Requirements({"GW_WEBHOOK_0002"})
-    public CreatedSubscriber createSubscriber(String name, String url, String events) {
+    public CreatedSubscriber createSubscriber(String name, String url, List<String> events) {
         return createSubscriber(name, url, events, null);
     }
 
     /**
-     * As {@link #createSubscriber(String, String, String)}, with an operator-supplied secret when
+     * As {@link #createSubscriber(String, String, List)}, with an operator-supplied secret when
      * the caller is the estate reconciler (GW_ESTATE_0004); null generates one, as the API always does.
      */
     @Requirements({"GW_WEBHOOK_0002"})
-    public CreatedSubscriber createSubscriber(String name, String url, String events, String suppliedSecret) {
+    public CreatedSubscriber createSubscriber(
+            String name, String url, List<String> events, String suppliedSecret) {
         String secret = suppliedSecret == null ? generateSecret() : suppliedSecret;
         WebhookSubscriber stored = subscriberRepository.create(name, url, secret, events);
         return new CreatedSubscriber(
-                stored.id(), stored.name(), stored.url(), stored.events(), secret, stored.createdAt());
+                stored.id(), stored.name(), stored.url(), stored.eventFilterAsText(), secret, stored.createdAt());
     }
 
     private String generateSecret() {
@@ -269,7 +270,7 @@ public class WebhookService {
                     HttpStatus.UNPROCESSABLE_CONTENT, "name must match " + SUBSCRIBER_NAME.pattern());
         }
         requireAllowlistedScheme(url);
-        String normalizedEvents = normalizeEvents(events);
+        List<String> normalizedEvents = normalizeEvents(events);
         if (findSubscriber(name).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "subscriber '%s' already exists".formatted(name));
         }
@@ -302,17 +303,21 @@ public class WebhookService {
         }
     }
 
-    /** Blank filter means every event; unknown event names are rejected instead of silently ignored. */
-    public static String normalizeEvents(String events) {
+    /**
+     * Blank filter means every event; unknown event names are rejected instead of silently ignored.
+     * Takes the payload's comma-delimited string and returns the storage form: this is the single
+     * boundary where the published shape and the column shape meet.
+     */
+    public static List<String> normalizeEvents(String events) {
         if (events == null || events.isBlank()) {
-            return WebhookSubscriber.ALL_EVENTS;
+            return List.of(WebhookSubscriber.ALL_EVENTS);
         }
         List<String> requested = List.of(events.split(",")).stream()
                 .map(String::trim)
                 .filter(e -> !e.isEmpty())
                 .toList();
         if (requested.isEmpty()) {
-            return WebhookSubscriber.ALL_EVENTS;
+            return List.of(WebhookSubscriber.ALL_EVENTS);
         }
         for (String event : requested) {
             if (!WebhookSubscriber.ALL_EVENTS.equals(event) && !WebhookEvent.ALL.contains(event)) {
@@ -321,7 +326,7 @@ public class WebhookService {
                         "unknown event '%s'; known events: %s".formatted(event, WebhookEvent.ALL));
             }
         }
-        return String.join(",", requested);
+        return List.copyOf(new java.util.LinkedHashSet<>(requested));
     }
 
     public List<WebhookSubscriber> listSubscribers() {

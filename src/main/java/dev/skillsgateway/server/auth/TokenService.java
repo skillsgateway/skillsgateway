@@ -113,8 +113,8 @@ public class TokenService {
     @Requirements({"GW_AUTH_0004", "GW_AUTH_0006", "GW_AUTH_0007", "GW_FACADE_0007"})
     public IssuedToken create(
             String principal, String name, List<String> scopes, Instant expiresAt, List<String> pushScopes) {
-        String storedScopes = validateScopes(scopes);
-        String storedPushScopes = validatePushScopes(pushScopes);
+        List<String> storedScopes = validateScopes(scopes);
+        List<String> storedPushScopes = validatePushScopes(pushScopes);
         validateTtl(expiresAt);
         String secret = newSecret();
         AccessToken stored = tokenRepository.create(
@@ -130,7 +130,7 @@ public class TokenService {
      */
     @Requirements({"GW_AUTH_0018"})
     public IssuedToken createSessionCredential(String principal, String name, List<String> scopes) {
-        String storedScopes = validateScopes(scopes);
+        List<String> storedScopes = validateScopes(scopes);
         Instant expiresAt = Instant.now().plus(properties.tokens().sessionTtl());
         String secret = newSecret();
         AccessToken stored =
@@ -161,7 +161,7 @@ public class TokenService {
     @Requirements({"GW_AUTH_0020", "GW_AUTH_0021", "GW_AUTH_0024"})
     public IssuedToken createMachineCredential(
             String principal, String name, List<String> apiScopes, Instant expiresAt, String owner) {
-        String storedApiScopes = validateApiScopes(apiScopes);
+        List<String> storedApiScopes = validateApiScopes(apiScopes);
         validateMachineTtl(expiresAt);
         String secret = newSecret();
         AccessToken stored = tokenRepository.create(
@@ -235,7 +235,7 @@ public class TokenService {
     }
 
     @Requirements({"GW_AUTH_0020"})
-    private String validateApiScopes(List<String> apiScopes) {
+    private List<String> validateApiScopes(List<String> apiScopes) {
         if (apiScopes == null || apiScopes.isEmpty()) {
             throw new InvalidTokenRequestException("a machine credential must name at least one API scope;"
                     + " there is no value that grants every scope");
@@ -247,7 +247,7 @@ public class TokenService {
                                 .formatted(scope));
             }
         }
-        return String.join(",", new LinkedHashSet<>(apiScopes));
+        return List.copyOf(new LinkedHashSet<>(apiScopes));
     }
 
     @Requirements({"GW_AUTH_0024"})
@@ -331,7 +331,7 @@ public class TokenService {
         tokenRepository.recordLastUsed(token.id());
     }
 
-    private String validateScopes(List<String> scopes) {
+    private List<String> validateScopes(List<String> scopes) {
         if (scopes == null || scopes.isEmpty()) {
             return null;
         }
@@ -344,11 +344,11 @@ public class TokenService {
                         "unknown scope '%s': scopes name registered marketplaces or the catalog".formatted(scope));
             }
         }
-        return String.join(",", new LinkedHashSet<>(scopes));
+        return List.copyOf(new LinkedHashSet<>(scopes));
     }
 
     @Requirements({"GW_FACADE_0007"})
-    private String validatePushScopes(List<String> pushScopes) {
+    private List<String> validatePushScopes(List<String> pushScopes) {
         if (pushScopes == null || pushScopes.isEmpty()) {
             return null;
         }
@@ -362,7 +362,7 @@ public class TokenService {
                         "unknown push scope '%s': push scopes name registered hosted marketplaces".formatted(scope));
             }
         }
-        return String.join(",", new LinkedHashSet<>(pushScopes));
+        return List.copyOf(new LinkedHashSet<>(pushScopes));
     }
 
     private void validateTtl(Instant expiresAt) {
