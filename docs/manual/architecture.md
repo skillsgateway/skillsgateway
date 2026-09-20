@@ -473,7 +473,9 @@ format-agnostic; tool specifics live in **adapters**:
 
 Stateless services (façade, ingestion, vetting orchestrator, publisher,
 portal) in front of Postgres (metadata, ledger) and git storage.
-OIDC SSO for humans, token auth for CI, SCIM for team scoping. Vetting
+OIDC SSO for humans, PATs — or, where enabled, identity-provider bearer
+tokens — for CI; team scoping, and any SCIM provisioning behind it, is not
+built (see open question 5). Vetting
 vetters run outside the gateway and talk to it over the trigger/callback
 contract; sandbox vetters use isolated ephemeral runners. Air-gap friendly by construction: ingestion is the only
 component needing internet egress, and can run in a DMZ with one-way promotion
@@ -620,10 +622,16 @@ reference transitions at all — see
 4. **Ownership.** Curation sits naturally with the platform team, policy with
    Security — the approval-queue SLA (especially T0 auto-approval) is what
    keeps developers on the paved road. Decide this before the MVP ships.
-5. **Authn/authz — deferred by design.** MVP serves anonymous read on the
-   internal network (fetch logs degrade to IP-level; log source IPs from day
-   one). Later: token auth over the standard git credential-helper flow (no
-   client changes), OIDC for humans, SCIM for teams. Authz is then mostly
-   *visibility scoping* — which identities/teams see which virtual
-   marketplaces — plus admin/reviewer roles in the portal; it layers on
-   without changing the façade contract.
+5. **Authz — only the scoping half is still open.** Authentication is no
+   longer deferred and no path serves anonymous read: the façade takes PATs
+   over the standard git credential-helper flow and, where a deployment
+   enables it, identity-provider bearer tokens
+   ([ADR 0019 — The facade accepts identity-provider bearer tokens beside PATs](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0019-facade-accepts-idp-bearer-tokens.md));
+   the web surface is OIDC-only; `/api/**` additionally takes a
+   gateway-issued machine credential. Every fetch is attributed to a principal
+   and the token that authenticated it, not to an IP. Roles — global admin,
+   per-marketplace approver, read-only auditor — are derived from the identity
+   provider's own group or application-role claims. What stays open is
+   *visibility scoping*: which identities or teams see which virtual
+   marketplaces, and whether team membership arrives as a claim or by SCIM
+   provisioning. It layers on without changing the façade contract.
