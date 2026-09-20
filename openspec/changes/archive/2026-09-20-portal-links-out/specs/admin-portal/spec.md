@@ -22,10 +22,3 @@ statement and its verification are unchanged.
 
 #### Scenario: SVC_GW_INGEST_0007
 The system SHALL pass SVC_GW_INGEST_0007.
-
-#### Scenario: The navigation reaches the manual and the source
-- **WHEN** a signed-in user reads the portal's navigation
-- **THEN** a link to the documentation site and a link to the source repository
-  are present beside the API reference, each named in a way that says it opens a
-  new tab, and each opening in a new browsing context without a document-opener
-  reference

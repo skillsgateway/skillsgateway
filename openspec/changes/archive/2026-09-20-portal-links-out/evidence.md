@@ -1,7 +1,12 @@
 # Evidence — portal-links-out
 
-Commit: `0588b514` (the last code edit; every run below is after it).
+Commit: `97cc7a80` (the last code edit; every run below is after it).
 Machine: local, Linux, Docker available.
+
+Re-run in full after rebasing onto `main` at `8c97add3`, which had moved on by
+four merges including a `lucide-react` bump to 1.47.0 — the version that has to
+carry this change's three icons. The numbers below are that second run; nothing
+in the diff changed between them.
 
 ## `./mvnw clean verify`
 
@@ -21,11 +26,13 @@ $ (cd src/main/frontend && pnpm test:stories)
       Tests  45 passed (45)
 ```
 
-The first invocation failed all nine files at import with
+The first invocation after `mvnw clean` failed both times this change was
+gated — before the rebase with
 `Failed to fetch dynamically imported module: .../@storybook/addon-vitest/dist/vitest-plugin/setup-file-with-project-annotations.js`,
-with no test executed. It ran immediately after `mvnw clean`, on a cold
-Storybook cache; the plain re-run above is green with no change in between. This
-is the known flake in this harness, not a result of this change.
+and after it with `The iframe "…/setup-wizard.stories.tsx" did not become ready
+within 60000ms` — no test executed in either. Both times the plain re-run was
+green with nothing changed in between. It is the known flake in this harness on
+a cold Storybook cache, not a result of this change.
 
 ## End-to-end, real browser against the mock IdP
 
