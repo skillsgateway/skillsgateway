@@ -17,6 +17,8 @@ A fixed sidebar, grouped:
 | Governance | Adoption | [`/adoption`](#adoption) |
 | Governance | Webhooks | [`/webhooks`](#webhooks) |
 | Tools | API reference | `/docs` — the Scalar API reference, not a portal route |
+| Tools | Documentation | this manual — leaves the portal, opens in a new tab |
+| Tools | Source code | the project repository — leaves the portal, opens in a new tab |
 
 [Marketplace detail](#marketplace-detail) is reached by clicking a marketplace,
 not from the sidebar. [Access tokens](#access-tokens) is a per-user concern, not
