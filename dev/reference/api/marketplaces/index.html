@@ -4803,13 +4803,16 @@ and the individual <code>results</code>.</p>
 </tbody>
 </table>
 <h3 id="get-snapshotsidfetchers"><code>GET /snapshots/{id}/fetchers</code><a class="headerlink" href="#get-snapshotsidfetchers" title="Permanent link">&para;</a></h3>
-<p>Every authenticated identity that <strong>received</strong> this snapshot's content through
-the git facade, with how often and when it last did — the blast radius of a
-retroactive violation, read from the append-only fetch ledger.</p>
+<p>Every authenticated identity this snapshot's content was <strong>sent</strong> to through
+the git facade, with how often and when it last was — the blast radius of a
+retroactive violation, read from the fetch ledger.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="p">[{</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"team-payments"</span><span class="p">,</span><span class="nt">"fetches"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"lastFetch"</span><span class="p">:</span><span class="s2">"2026-08-14T22:10:00Z"</span><span class="p">}]</span>
 </code></pre></div>
 <p>Only pack transfers count. A ref advertisement means a client asked, not that it
 received anything, so counting it would name teams that never got the content.</p>
+<p>A transfer is counted when it starts, so a client that abandoned the fetch still
+appears. The report over-reports rather than missing a holder, which is the
+direction a recall wants — but it is not a record of receipt.</p>
 <p>This read is <strong>privileged</strong>: an admin, or an approver of the snapshot's
 marketplace. It names identities, so seeing it is the same judgement as acting on
 the revocation it informs.</p>

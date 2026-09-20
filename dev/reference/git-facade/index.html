@@ -2908,6 +2908,13 @@ the smart protocol carries only object ids in a want, so a clone and a fetch by
 name are not separable here; the tip is the recorded answer. The <code>sha</code> column
 still pins the delivered content exactly, which is what
 <a href="../api/adoption/">adoption and staleness</a> aggregate on — they never read <code>ref</code>.</p>
+<p>The <code>upload-pack</code> entry is appended when the send <strong>begins</strong>, so a transfer the
+client abandons is still recorded. The ledger names every identity that may hold
+the content, not every identity that provably received it.</p>
+<p>The append is synchronous and unguarded: a fetch fails outright if the ledger
+cannot be written. Serving is deliberately no more available than the record of
+it — see
+<a href="../../concepts/snapshots-and-ledger/#appending-is-on-the-serving-path">Appending is on the serving path</a>.</p>
 <p>See <a href="../api/audit/#events">Audit</a> for the full entry contract, including what
 entries written before this behaviour shipped record.</p>
 <h2 id="checking-content-you-already-hold">Checking content you already hold<a class="headerlink" href="#checking-content-you-already-hold" title="Permanent link">&para;</a></h2>

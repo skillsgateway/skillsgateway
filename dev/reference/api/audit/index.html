@@ -2565,10 +2565,11 @@
 
 
 <h1 id="audit">Audit<a class="headerlink" href="#audit" title="Permanent link">&para;</a></h1>
-<p>The ledger is an append-only table. No code path in the product issues an
-<code>UPDATE</code> or <code>DELETE</code> against it — see
+<p>The product only ever appends to the ledger: no code path issues an <code>UPDATE</code> or
+<code>DELETE</code> against it. That is the code's discipline and not a constraint the
+schema enforces — see
 <a href="../../../concepts/snapshots-and-ledger/">Snapshots and the audit ledger</a> for the
-conceptual treatment.</p>
+conceptual treatment and for what does provide tamper-evidence.</p>
 <hr />
 <p>The ledger and export reads and the sink listing require <strong>auditor</strong> (or
 admin); sink create, delete, and cursor reset require <strong>admin</strong>. See

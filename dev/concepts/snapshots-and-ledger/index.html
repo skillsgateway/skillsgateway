@@ -2391,6 +2391,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#appending-is-on-the-serving-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appending is on the serving path
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#reading-it" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2626,6 +2637,17 @@
     <span class="md-ellipsis">
       
         What gets recorded
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#appending-is-on-the-serving-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appending is on the serving path
       
     </span>
   </a>
@@ -2890,10 +2912,15 @@ that is what it is.</p>
 <p>This is the review surface, and it works on <code>held</code> snapshots — reviewing a
 snapshot must not require serving it.</p>
 <h2 id="the-audit-ledger">The audit ledger<a class="headerlink" href="#the-audit-ledger" title="Permanent link">&para;</a></h2>
-<p>The ledger is one PostgreSQL table, <code>fetch_log</code>, and it is <strong>append-only</strong>: no
-code path in the product issues an <code>UPDATE</code> or <code>DELETE</code> against it. Retention
-does not compact it. That is what makes it usable as compliance evidence rather
-than as an operational log.</p>
+<p>The ledger is one PostgreSQL table, <code>fetch_log</code>, and the product only ever
+appends to it: no code path issues an <code>UPDATE</code> or <code>DELETE</code> against it, and
+retention does not compact it.</p>
+<p>That is a discipline of the <strong>code</strong>, not a constraint of the <strong>schema</strong>.
+<code>fetch_log</code> carries no trigger, no rule and no revoked grant, so anything
+holding write access to the database can still change a row — the gateway
+simply never does. Tamper-evidence comes from your own database controls and
+from <a href="#exporting-it">exporting the ledger</a> to a system the gateway cannot
+reach, not from the table.</p>
 <table>
 <thead>
 <tr>
@@ -2946,6 +2973,22 @@ in the ledger from a clone of the tip — see
 unavoidable ambiguity. Negotiation rounds are not recorded.</p>
 <p><strong>Administrative actions</strong> — registration, ingestion, approve and reject, each
 carrying the acting OIDC principal.</p>
+<p>An <code>upload-pack</code> entry is appended when the gateway <em>begins</em> sending the pack,
+not when the client has finished receiving it, so a transfer that aborts midway
+still records as a fetch. For the question the ledger exists to answer — who
+might be holding this content — over-reporting is the safe direction, but it is
+not a record of receipt, and the
+<a href="../../reference/api/marketplaces/#get-snapshotsidfetchers">blast-radius report</a>
+inherits it.</p>
+<h3 id="appending-is-on-the-serving-path">Appending is on the serving path<a class="headerlink" href="#appending-is-on-the-serving-path" title="Permanent link">&para;</a></h3>
+<p>A facade fetch appends its entry synchronously, inside the request: no queue, no
+background writer, and nothing catching a failure. Serving is therefore no more
+available than PostgreSQL — an outage fails the fetch outright rather than
+handing out content that goes unrecorded.</p>
+<p>That direction is deliberate. The gateway's claim is that nothing leaves it
+unaccounted for, and content served while the ledger was unreachable would
+falsify that claim for exactly the incident the ledger exists to answer. Size
+the database for the serving path, not for the reporting one.</p>
 <h3 id="reading-it">Reading it<a class="headerlink" href="#reading-it" title="Permanent link">&para;</a></h3>
 <p><code>GET /api/audit</code> returns the whole table, and the portal's
 <a href="../../reference/portal/#audit-log">Audit log page</a> renders it. There is no
@@ -2968,8 +3011,9 @@ append still in flight — bounded staleness in exchange for no gaps. See
 <a href="../../guides/exporting-the-audit-ledger/">Exporting the audit ledger</a>.</p>
 <h3 id="what-the-ledger-is-not">What the ledger is not<a class="headerlink" href="#what-the-ledger-is-not" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Not hash-chained — there is no tamper-evidence beyond the append-only
-  discipline of the code and your database controls.</li>
+<li>Not self-proving — no entry carries a digest over its predecessor, and the
+  append-only property is the code's rather than the schema's (above), so the
+  table cannot attest to its own integrity.</li>
 <li>Not itself retained or archived by the product. How long you keep it is your
   compliance decision.</li>
 <li>Not a real-time alerting channel. Export is cursor-based and settles for a few
