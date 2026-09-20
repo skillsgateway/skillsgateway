@@ -149,3 +149,41 @@ test("created_sink_secret_is_shown_once_in_a_dialog", async () => {
   await user.click(screen.getByRole("button", { name: "Done" }));
   expect(screen.queryByTestId("sink-secret")).not.toBeInTheDocument();
 });
+
+/**
+ * The ledger opens newest first. The API answers in ledger order — oldest first — so an
+ * administrator who has just switched a vetter off would otherwise find their entry at the bottom
+ * of the table, or on its last page, and read the page as not having recorded the change at all.
+ */
+test("the_ledger_opens_with_the_newest_entry_first", async () => {
+  server.use(
+    http.get("/api/audit", () =>
+      HttpResponse.json([
+        {
+          id: 1,
+          ts: "2026-09-20T10:00:00.000Z",
+          principal: "dev",
+          marketplace: "clean-demo",
+          event: "marketplace-registered",
+        },
+        {
+          id: 2,
+          ts: "2026-09-20T14:37:29.827Z",
+          principal: "dev",
+          marketplace: "-",
+          event: "vetter-disabled",
+          detail: "vetter=secret-scan scope=global enabled=false",
+        },
+      ]),
+    ),
+  );
+  renderPage();
+
+  await screen.findByText("vetter-disabled");
+  // Row order, not row index: the page renders the sinks table above the ledger.
+  const rows = screen.getAllByRole("row").map((row) => row.textContent ?? "");
+  const newest = rows.findIndex((text) => text.includes("vetter-disabled"));
+  const oldest = rows.findIndex((text) => text.includes("marketplace-registered"));
+  expect(newest).toBeGreaterThan(-1);
+  expect(newest).toBeLessThan(oldest);
+});

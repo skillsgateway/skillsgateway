@@ -405,6 +405,9 @@ function invalidateChain(queryClient: ReturnType<typeof useQueryClient>) {
     "global-chain-settings",
     "chain-settings-list",
     "vetter-toggles",
+    // Every chain change writes a ledger row, so a loaded audit page is stale the moment one
+    // lands (nothing refetches on focus).
+    "audit",
   ]) {
     void queryClient.invalidateQueries({ queryKey: [key] });
   }
