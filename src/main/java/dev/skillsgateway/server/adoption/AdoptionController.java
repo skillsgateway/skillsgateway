@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * The adoption reporting surface (GW_OBSERVABILITY_0001, GW_OBSERVABILITY_0002): read-only, derived entirely from the fetch
  * ledger and the served tips. Both reads enumerate identities off the ledger, so they are gated
- * exactly like the ledger itself (auditor or admin once role enforcement is on).
+ * exactly like the ledger itself (auditor or admin).
  */
 @RestController
 @RequestMapping("/api/adoption")

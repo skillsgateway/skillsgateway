@@ -25,8 +25,8 @@ _Refreshed 2026-09-15: steps 3–8 had merged on 2026-09-09 but were still liste
 | 6 | F3 | Publication reconciliation sweep (order not reversed) | [#340](https://github.com/skillsgateway/skillsgateway/pull/340) | **merged** |
 | 7 | F2 | Lease table per sweep, uniformly | [#341](https://github.com/skillsgateway/skillsgateway/pull/341) | **merged** |
 | 8 | F8/§4 | Config-surface ratchet (#342), interval agreement (#343), revocation freshness not a knob (#344), budgets clamped (#346) | [#342](https://github.com/skillsgateway/skillsgateway/pull/342) [#343](https://github.com/skillsgateway/skillsgateway/pull/343) [#344](https://github.com/skillsgateway/skillsgateway/pull/344) [#346](https://github.com/skillsgateway/skillsgateway/pull/346) | **merged** |
-| 9 | F7(1,3) | Ledger honesty + partitioning | [#444](https://github.com/skillsgateway/skillsgateway/pull/444) | **honesty half open**; partitioning not started |
-| 10 | F1, D4, D5 | Freeze object-store; stop rule in `CLAUDE.md`; one-page capability map | — | not started |
+| 9 | F7(1,3) | Ledger honesty + partitioning | [#444](https://github.com/skillsgateway/skillsgateway/pull/444) | honesty half **merged**; partitioning not started |
+| 10 | F1, D4, D5 | Freeze object-store; stop rule in `CLAUDE.md`; one-page capability map | — | **D4 and D5 already shipped** (`CLAUDE.md` "The stop rule", `docs/manual/capability-map.md`); F1 is an owner decision, not work |
 
 **D1 is now satisfied** — F4 and F6 are both merged, so `docs/analysis/` may be
 committed and the assessment published whenever the owner wants. Ask before
@@ -99,12 +99,19 @@ doing it; publishing was explicitly the owner's call.
   cosmetic. Partitioning (F7.3) is a behaviour change and needs a full OpenSpec
   change — its design must open with whether a scheduled partition sweep can be
   avoided, because the stop rule makes "adds a scheduled sweep" an argued cost.
-- **The `skills-gateway.roles.enabled` switch was removed (#210), but ~12 places
-  still speak as if enforcement were conditional** — 10 × `403 | Enforcement is
-  enabled and …` table rows in `reference/api/{policy,estate,roles,marketplaces}.md`,
-  2 × "While role enforcement is enabled" in `reference/portal.md`, plus three
-  `@ApiResponse` strings and `GW_AUTH_0010`'s own description. A small docs-only
-  PR. Good candidate to fold in beside step 8.
+- **The `skills-gateway.roles.enabled` residue is half cleared (re-verified
+  2026-09-20).** The switch went in #210. The docs half is now clean — zero hits
+  for `Enforcement is enabled` or "While role enforcement is enabled" anywhere in
+  `docs/manual/`. Two halves remain, and neither is docs-only:
+    - `GW_AUTH_0010` — Scoped admin roles with deny-by-default enforcement still
+      describes the switch in its own text ("behind a configuration switch that
+      defaults to off … once the switch is enabled, refuse …"). Requirements are
+      the SSOT and code traces to it, so correcting it goes through OpenSpec, not
+      a hand edit.
+    - Four `@ApiResponse` strings still read `Enforcement is enabled and the
+      caller is not an admin` — `EstateController:71`, `RoleController:69,95,118`.
+      These ship in the published OpenAPI document. Description-only, so not a
+      breaking change.
 - `guides/delegated-administration.md` "snapshot contents" ambiguity — **fixed
   in step 3**.
 

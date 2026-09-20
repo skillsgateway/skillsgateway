@@ -3834,7 +3834,7 @@
     },
     "/api/estate": {
       "get": {
-        "description": "The most recent reconciliation run — per declared entry, what was created, updated, unchanged, or failed and why. The report is held in memory; after a restart the startup run repopulates it. Secret values never appear. Auditor or admin while role enforcement is enabled, because failure reasons expose operator infrastructure.",
+        "description": "The most recent reconciliation run — per declared entry, what was created, updated, unchanged, or failed and why. The report is held in memory; after a restart the startup run repopulates it. Secret values never appear. Auditor or admin, because failure reasons expose operator infrastructure.",
         "operationId": "lastRun",
         "responses": {
           "200": {
@@ -3866,7 +3866,7 @@
     },
     "/api/estate/reconcile": {
       "post": {
-        "description": "Runs the same additive, idempotent reconciliation as startup against the current declaration and returns its report. A converged estate reconciles with zero writes and zero ledger entries; the trigger itself is an administrative action and is always recorded with the acting identity. Admin-only while role enforcement is enabled.",
+        "description": "Runs the same additive, idempotent reconciliation as startup against the current declaration and returns its report. A converged estate reconciles with zero writes and zero ledger entries; the trigger itself is an administrative action and is always recorded with the acting identity. Admin-only.",
         "operationId": "reconcileEstate",
         "responses": {
           "200": {
@@ -3887,7 +3887,7 @@
                 }
               }
             },
-            "description": "Enforcement is enabled and the caller is not an admin"
+            "description": "The caller is not an admin"
           }
         },
         "summary": "Reconcile the declared estate now",
@@ -4702,7 +4702,7 @@
     },
     "/api/roles": {
       "get": {
-        "description": "Every current grant. Configuration-bootstrapped admins are not grants and do not appear here; they show up as an effective role on /api/me. Admin-only while role enforcement is enabled.",
+        "description": "Every current grant. Configuration-bootstrapped admins are not grants and do not appear here; they show up as an effective role on /api/me. Admin-only.",
         "operationId": "list_3",
         "responses": {
           "200": {
@@ -4729,7 +4729,7 @@
                 }
               }
             },
-            "description": "Enforcement is enabled and the caller is not an admin"
+            "description": "The caller is not an admin"
           }
         },
         "summary": "List role grants",
@@ -4738,7 +4738,7 @@
         ]
       },
       "post": {
-        "description": "Grants admin or auditor globally, or approver scoped to one existing marketplace. Every grant lands on the append-only ledger with the acting identity. Admin-only while role enforcement is enabled; while disabled, grants are inert data a deployment stages before enabling enforcement.",
+        "description": "Grants admin or auditor globally, or approver scoped to one existing marketplace. Every grant lands on the append-only ledger with the acting identity. Admin-only.",
         "operationId": "grant",
         "requestBody": {
           "content": {
@@ -4769,7 +4769,7 @@
                 }
               }
             },
-            "description": "Enforcement is enabled and the caller is not an admin"
+            "description": "The caller is not an admin"
           },
           "404": {
             "content": {
@@ -4810,7 +4810,7 @@
     },
     "/api/roles/{id}": {
       "delete": {
-        "description": "Deletes the grant; the ledger keeps the history. Configuration-bootstrapped admins have no grant row, so they cannot be revoked here — by design, they are the escape hatch that survives a bad grant edit. Admin-only while role enforcement is enabled.",
+        "description": "Deletes the grant; the ledger keeps the history. Configuration-bootstrapped admins have no grant row, so they cannot be revoked here — by design, they are the escape hatch that survives a bad grant edit. Admin-only.",
         "operationId": "revoke_4",
         "parameters": [
           {
@@ -4828,7 +4828,7 @@
             "description": "Grant revoked"
           },
           "403": {
-            "description": "Enforcement is enabled and the caller is not an admin"
+            "description": "The caller is not an admin"
           },
           "404": {
             "description": "Grant not found"
@@ -5053,7 +5053,7 @@
     },
     "/api/snapshots/{id}/diff": {
       "get": {
-        "description": "Added, modified and removed paths between the pinned commit and the marketplace's currently served commit (the published repository's served tip), with a unified text diff per non-binary entry under the same size caps as file reads. When the marketplace serves nothing the baseline is null and every path is reported as added. Privileged while role enforcement is enabled.",
+        "description": "Added, modified and removed paths between the pinned commit and the marketplace's currently served commit (the published repository's served tip), with a unified text diff per non-binary entry under the same size caps as file reads. When the marketplace serves nothing the baseline is null and every path is reported as added. Privileged.",
         "operationId": "diff",
         "parameters": [
           {
@@ -5085,7 +5085,7 @@
                 }
               }
             },
-            "description": "Role enforcement is enabled and the session holds no applicable role"
+            "description": "The session holds no applicable role"
           },
           "404": {
             "content": {
@@ -5168,7 +5168,7 @@
     },
     "/api/snapshots/{id}/file": {
       "get": {
-        "description": "One blob addressed strictly within the pinned commit's tree — a path the tree does not contain, traversal shapes included, is not found. Text is returned for rendering only, cut at 128 KiB with an explicit truncation marker; a blob detected as binary returns metadata without text. Privileged while role enforcement is enabled.",
+        "description": "One blob addressed strictly within the pinned commit's tree — a path the tree does not contain, traversal shapes included, is not found. Text is returned for rendering only, cut at 128 KiB with an explicit truncation marker; a blob detected as binary returns metadata without text. Privileged.",
         "operationId": "file",
         "parameters": [
           {
@@ -5208,7 +5208,7 @@
                 }
               }
             },
-            "description": "Role enforcement is enabled and the session holds no applicable role"
+            "description": "The session holds no applicable role"
           },
           "404": {
             "content": {
@@ -5229,7 +5229,7 @@
     },
     "/api/snapshots/{id}/files": {
       "get": {
-        "description": "Every path in exactly the commit the snapshot pins, resolved through the quarantine repository's object store, capped at 2000 entries with an explicit marker when cut. Privileged while role enforcement is enabled: admin or an approver of the snapshot's marketplace.",
+        "description": "Every path in exactly the commit the snapshot pins, resolved through the quarantine repository's object store, capped at 2000 entries with an explicit marker when cut. Privileged: admin or an approver of the snapshot's marketplace.",
         "operationId": "files",
         "parameters": [
           {
@@ -5261,7 +5261,7 @@
                 }
               }
             },
-            "description": "Role enforcement is enabled and the session holds no applicable role"
+            "description": "The session holds no applicable role"
           },
           "404": {
             "content": {
@@ -5892,7 +5892,7 @@
         ]
       },
       "post": {
-        "description": "Issues a non-interactive credential for the REST API, presented as `Authorization: Bearer`. It carries no fetch and no publication authority, reaches only the endpoints its named scopes allow, and can never reach an act of human judgement, a retraction of content, a role grant or this endpoint. An expiry is mandatory. The cleartext is returned exactly once. Requires the admin role whether or not role enforcement is enabled.",
+        "description": "Issues a non-interactive credential for the REST API, presented as `Authorization: Bearer`. It carries no fetch and no publication authority, reaches only the endpoints its named scopes allow, and can never reach an act of human judgement, a retraction of content, a role grant or this endpoint. An expiry is mandatory. The cleartext is returned exactly once. Requires the admin role.",
         "operationId": "create_2",
         "requestBody": {
           "content": {
