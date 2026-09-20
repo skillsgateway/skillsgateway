@@ -2940,6 +2940,28 @@ export interface components {
             /** @description Identity of the last update, or null */
             updatedBy?: string;
         };
+        /** @description An RFC 7807 problem document. Every refusal uses this shape, whatever raised it. */
+        ProblemDetail: {
+            /** @description Why this request in particular was refused. The field a client should show a user. */
+            detail?: string;
+            /**
+             * Format: uri
+             * @description The request path this problem occurred on.
+             */
+            instance?: string;
+            /**
+             * Format: int32
+             * @description The HTTP status code, repeated in the body.
+             */
+            status: number;
+            /** @description A short, human-readable summary of the type. */
+            title?: string;
+            /**
+             * Format: uri
+             * @description A URI identifying the problem type; `about:blank` when the status is the whole story.
+             */
+            type?: string;
+        };
         /** @description Provenance of a snapshot: what was served, from where, and who approved it */
         Provenance: {
             /** @description The resolved closure of external plugin sources, or null when there is none */
@@ -3918,7 +3940,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["CreatedSink"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description A sink or webhook subscriber with that name already exists */
@@ -3927,7 +3949,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["CreatedSink"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Invalid sink name */
@@ -3936,7 +3958,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["CreatedSink"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -3964,7 +3986,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
             };
         };
     };
@@ -3998,7 +4022,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SinkView"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4027,7 +4051,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["CatalogInfo"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4056,7 +4080,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["CatalogInfo"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4085,7 +4109,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["EstateReconciliation"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4114,7 +4138,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["EstateReconciliation"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4167,7 +4191,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["RegisteredMarketplace"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description A marketplace with that name already exists */
@@ -4176,7 +4200,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["RegisteredMarketplace"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Invalid marketplace name */
@@ -4185,7 +4209,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["RegisteredMarketplace"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4216,7 +4240,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Snapshot"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Upstream fetch failed */
@@ -4225,7 +4249,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Snapshot"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4256,7 +4280,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["PassResult"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4291,7 +4315,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SyncModeView"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Not a valid sync mode */
@@ -4300,7 +4324,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SyncModeView"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4331,7 +4355,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ChainVetterView"][];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Named marketplace not found */
@@ -4340,7 +4364,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ChainVetterView"][];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4371,7 +4395,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ChainSettingsView"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Named marketplace not found */
@@ -4380,7 +4404,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ChainSettingsView"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4411,7 +4435,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["WaiverView"][];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4460,7 +4484,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["MirrorReport"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4489,7 +4513,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["MirrorReport"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4522,7 +4546,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["PlaygroundResult"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4575,7 +4599,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["PolicyRule"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Malformed name, or an expression that does not compile */
@@ -4584,7 +4608,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["PolicyRule"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4619,7 +4643,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["PolicyRule"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description An expression that does not compile */
@@ -4628,7 +4652,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["PolicyRule"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4661,9 +4685,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": {
-                        [key: string]: string;
-                    };
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4758,7 +4780,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["RoleGrant"][];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4791,7 +4813,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["RoleGrant"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Approver grant names a marketplace that does not exist */
@@ -4800,7 +4822,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["RoleGrant"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description The identical grant already exists */
@@ -4809,7 +4831,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["RoleGrant"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Missing principal, unknown role, approver grant without a marketplace, or a global grant with one */
@@ -4818,7 +4840,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["RoleGrant"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4846,14 +4868,18 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
             };
             /** @description Grant not found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
             };
         };
     };
@@ -4883,7 +4909,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Snapshot"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Snapshot is approved, or already deleted */
@@ -4892,7 +4918,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Snapshot"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4927,7 +4953,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Snapshot"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Snapshot is neither held nor revoked, its effective vetting outcome is blocked and no override was supplied, it has not yet reached the configured minimum release age, or - under an enforcing four-eyes rule - the reviewer is on the snapshot's supply side */
@@ -4936,7 +4962,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Snapshot"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description An override was requested without a reason */
@@ -4945,7 +4971,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Snapshot"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -4976,7 +5002,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SnapshotContent"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5007,7 +5033,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ContentDiff"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5038,7 +5064,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SnapshotDiff"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Snapshot not found */
@@ -5047,7 +5073,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SnapshotDiff"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5078,7 +5104,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Fetcher"][];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Snapshot not found */
@@ -5087,7 +5113,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Fetcher"][];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5120,7 +5146,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["FileContent"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Snapshot not found, or the path is not in the pinned tree */
@@ -5129,7 +5155,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["FileContent"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5160,7 +5186,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["FileTree"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Snapshot not found */
@@ -5169,7 +5195,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["FileTree"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5200,7 +5226,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["FourEyesCheck"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5231,7 +5257,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["LicenseReport"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5262,7 +5288,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Provenance"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5293,7 +5319,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Snapshot"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Snapshot is neither held nor revoked */
@@ -5302,7 +5328,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Snapshot"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5333,7 +5359,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Eligibility"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5364,7 +5390,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Snapshot"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Snapshot is not deleted */
@@ -5373,7 +5399,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Snapshot"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5404,7 +5430,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["RevetResult"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description The snapshot is not approved; only served content is re-vetted */
@@ -5413,7 +5439,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["RevetResult"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5448,7 +5474,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["RevokeResponse"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description The snapshot is not approved, or a return to the previous approved snapshot was asked for and the marketplace has none */
@@ -5457,7 +5483,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["RevokeResponse"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description No reason was stated, or no served-content choice was made */
@@ -5466,7 +5492,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["RevokeResponse"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5497,7 +5523,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["VettingView"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5532,7 +5558,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["WaiverView"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Snapshot not found */
@@ -5541,7 +5567,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["WaiverView"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5594,7 +5620,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["IssuedToken"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5623,7 +5649,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["MachineCredentialView"][];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5656,7 +5682,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["IssuedToken"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Unknown or empty API scope, missing expiry, or a lifetime beyond the cap */
@@ -5665,7 +5691,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["IssuedToken"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5693,14 +5719,18 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
             };
             /** @description No such active machine credential */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
             };
         };
     };
@@ -5730,7 +5760,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["IssuedToken"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description No such machine credential */
@@ -5739,7 +5769,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["IssuedToken"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description The credential is revoked or expired; provision a new one */
@@ -5748,7 +5778,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["IssuedToken"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5781,7 +5811,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["IssuedToken"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5809,7 +5839,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
             };
         };
     };
@@ -5839,7 +5871,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["IssuedToken"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Token is revoked or expired; issue a new one instead */
@@ -5848,7 +5880,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["IssuedToken"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5881,7 +5913,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ChainModeSetting"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Named marketplace not found */
@@ -5890,7 +5922,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ChainModeSetting"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Unknown or omitted mode */
@@ -5899,7 +5931,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ChainModeSetting"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5932,7 +5964,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ChainOrderSetting"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Named marketplace not found */
@@ -5941,7 +5973,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ChainOrderSetting"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Empty order, unknown vetter, or a vetter named twice */
@@ -5950,7 +5982,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ChainOrderSetting"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -5979,7 +6011,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ChainSettings"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -6021,7 +6053,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["BulkChainResult"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Unknown action, mode, vetter or override kind, or an empty selection */
@@ -6030,7 +6062,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["BulkChainResult"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -6059,7 +6091,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ChainVetterView"][];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -6088,7 +6120,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ChainSettingsView"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -6117,7 +6149,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["VetterToggle"][];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -6152,7 +6184,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["VetterToggle"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Named marketplace not found */
@@ -6161,7 +6193,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["VetterToggle"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Unknown vetter, or the enabled field was omitted */
@@ -6170,7 +6202,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["VetterToggle"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -6201,7 +6233,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["WaiverView"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -6254,7 +6286,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["CreatedSubscriber"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description A subscriber with that name already exists */
@@ -6263,7 +6295,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["CreatedSubscriber"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Invalid subscriber name */
@@ -6272,7 +6304,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["CreatedSubscriber"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -6342,7 +6374,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
             };
         };
     };
@@ -6411,21 +6445,27 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
             };
             /** @description Unknown marketplace, or its sync mode is not webhook */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
             };
             /** @description Request body exceeds the configured bound */
             413: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
             };
         };
     };
@@ -6457,7 +6497,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["HeldContentReport"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Unauthenticated */
@@ -6466,7 +6506,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["HeldContentReport"];
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };

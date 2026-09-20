@@ -2508,6 +2508,19 @@ cases:
       and deleted, records the second as a repair of divergence naming the same, records
       nothing at all for the third, and carries the mirror credential in none of them
     revision: "0.1.0"
+  - id: SVC_GW_API_0007
+    requirement_ids: ["GW_API_0007"]
+    title: Every refusal is a problem document carrying its reason
+    verification: automated-test
+    description: |
+      GIVEN a request the gateway refuses
+      WHEN the refusal is raised by a ResponseStatusException, by an @ExceptionHandler,
+        or by request validation
+      THEN each answers application/problem+json carrying a status and a human-readable
+      detail, and none carries the framework's own default error keys
+      AND every non-success response in the published contract declares that same shape
+    revision: "0.1.0"
+
   - id: SVC_GW_API_0005
     requirement_ids: ["GW_API_0005"]
     title: The served document describes every lifecycle event, its body and its headers

@@ -13,6 +13,14 @@ server:
 spring:
   application:
     name: skills-gateway
+  mvc:
+    # Every refusal is an RFC 7807 document (GW_API_0007). Off by default in Boot, which is why
+    # ~35 ResponseStatusException call sites were answering with an empty body and no content type
+    # while the reference page documented ProblemDetail: the reason text the portal shows a user
+    # never reached it. The @ExceptionHandler methods already returned ProblemDetail; this is what
+    # makes the other two routes to a refusal agree with them.
+    problemdetails:
+      enabled: true
   security:
     oauth2:
       client:

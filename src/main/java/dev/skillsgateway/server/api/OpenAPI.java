@@ -46,16 +46,16 @@ import org.springframework.http.MediaType;
 
                                 ## Quick start
 
-                                1. `POST /api/marketplaces` — register an upstream by clone URL \
+                                1. `POST /api/v1/marketplaces` — register an upstream by clone URL \
                                 (http/https only; the gateway pins ingestion to the upstream \
                                 default branch — a `ref` cannot be supplied).
-                                2. `POST /api/marketplaces/{name}/ingest` — fetch the upstream \
+                                2. `POST /api/v1/marketplaces/{name}/ingest` — fetch the upstream \
                                 into quarantine; the snapshot is `held` (or `rejected` on policy \
                                 violation, e.g. non-local plugin sources).
-                                3. `GET /api/snapshots/{id}/content` — inspect the plugins and \
+                                3. `GET /api/v1/snapshots/{id}/content` — inspect the plugins and \
                                 skills the snapshot ships before deciding.
-                                4. `POST /api/snapshots/{id}/approve` — publish it to the facade.
-                                5. `POST /api/tokens` — issue a personal access token, then \
+                                4. `POST /api/v1/snapshots/{id}/approve` — publish it to the facade.
+                                5. `POST /api/v1/tokens` — issue a personal access token, then \
                                 `git clone http://token:<PAT>@<gateway>/git/{marketplace}`.
 
                                 ## Authentication
@@ -97,7 +97,7 @@ import org.springframework.http.MediaType;
                     name = "Webhooks",
                     description = "Receivers for marketplace lifecycle events, and the deliveries the gateway"
                             + " sends them. Each event the gateway posts is described under this document's top-level"
-                            + " `webhooks` object; `GET /api/webhooks/events` serves the same vocabulary with an"
+                            + " `webhooks` object; `GET /api/v1/webhooks/events` serves the same vocabulary with an"
                             + " example of each body."),
             @Tag(
                     name = "Policy",
@@ -124,6 +124,75 @@ public class OpenAPI {
         BuildProperties build = buildProperties.getIfAvailable();
         String version = build != null ? build.getVersion() : UNKNOWN_VERSION;
         return openApi -> openApi.getInfo().setVersion(version);
+    }
+
+    /** The component this document points every refusal at. */
+    private static final String PROBLEM_DETAIL = "ProblemDetail";
+
+    /**
+     * Every non-success response is an RFC 7807 document (GW_API_0007).
+     *
+     * <p>Derived rather than annotated. springdoc gives a response with no declared schema the
+     * operation's success schema, so before this every {@code @ApiResponse(responseCode = "409")}
+     * in the codebase — 96 of them — documented a refusal as though it returned the thing it
+     * refused to produce. Annotating each one would be 96 chances to forget, and forgetting is
+     * invisible: the document stays well-formed and simply lies.
+     *
+     * <p>The descriptions each {@code @ApiResponse} carries are kept. They say what that particular
+     * refusal means, which is the part worth writing by hand; only the body shape is imposed here.
+     */
+    @Bean
+    @Requirements({"GW_API_0007"})
+    OpenApiCustomizer refusalsAreProblemDocuments() {
+        return openApi -> {
+            openApi.getComponents().addSchemas(PROBLEM_DETAIL, problemDetailSchema());
+            openApi.getPaths().values().forEach(pathItem -> pathItem.readOperations()
+                    .forEach(operation -> {
+                        ApiResponses responses = operation.getResponses();
+                        if (responses == null) {
+                            return;
+                        }
+                        responses.forEach((code, response) -> {
+                            if (code.startsWith("4") || code.startsWith("5")) {
+                                response.setContent(new Content()
+                                        .addMediaType(
+                                                MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                                                new io.swagger.v3.oas.models.media.MediaType()
+                                                        .schema(new Schema<>().$ref(SCHEMA_REF + PROBLEM_DETAIL))));
+                            }
+                        });
+                    }));
+        };
+    }
+
+    /**
+     * RFC 7807, as Spring's {@code ProblemDetail} serializes it. Declared here rather than left to
+     * springdoc's reflection: nothing in the codebase returns the type from a mapped method, so
+     * there is no signature for it to read.
+     */
+    private static Schema<?> problemDetailSchema() {
+        Schema<?> schema = new io.swagger.v3.oas.models.media.ObjectSchema()
+                .description("An RFC 7807 problem document. Every refusal uses this shape, whatever raised it.");
+        schema.addProperty(
+                "type",
+                new StringSchema()
+                        .format("uri")
+                        .description("A URI identifying the problem type; `about:blank` when the status is the"
+                                + " whole story."));
+        schema.addProperty("title", new StringSchema().description("A short, human-readable summary of the type."));
+        schema.addProperty(
+                "status",
+                new io.swagger.v3.oas.models.media.IntegerSchema()
+                        .description("The HTTP status code, repeated in the body."));
+        schema.addProperty(
+                "detail",
+                new StringSchema()
+                        .description("Why this request in particular was refused. The field a client should show a"
+                                + " user."));
+        schema.addProperty(
+                "instance", new StringSchema().format("uri").description("The request path this problem occurred on."));
+        schema.setRequired(List.of("status"));
+        return schema;
     }
 
     /** Where a webhook body's schema lives once springdoc has emitted it from the events endpoint. */
