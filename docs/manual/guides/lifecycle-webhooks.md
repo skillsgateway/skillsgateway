@@ -77,12 +77,12 @@ delivery listings require **auditor** (or admin). See
     $ curl -X POST localhost:8080/api/webhooks \
         -H 'Content-Type: application/json' \
         -d '{"name":"ci-bot","url":"https://ci.example.com/hooks/skills-gateway",
-             "events":"marketplace.snapshot.approved,marketplace.snapshot.rejected"}'
+             "events":["marketplace.snapshot.approved","marketplace.snapshot.rejected"]}'
     ```
 
     ```json
     {"id":1,"name":"ci-bot","url":"https://ci.example.com/hooks/skills-gateway",
-     "events":"marketplace.snapshot.approved,marketplace.snapshot.rejected",
+     "events":["marketplace.snapshot.approved","marketplace.snapshot.rejected"],
      "secret":"whsec_...","createdAt":"..."}
     ```
 
@@ -90,7 +90,7 @@ delivery listings require **auditor** (or admin). See
 | --- | --- |
 | `name` | `^[a-z0-9][a-z0-9_-]*$`, unique. A bad name is **422**, a duplicate is **409**. |
 | `url` | The scheme must be on `skills-gateway.allowed-url-schemes`. Unparseable or scheme-less URLs are rejected — the check fails closed. **400**. |
-| `events` | Comma-delimited event names, or `*` for every event. Blank means `*`. An unknown name is **400**, not silently dropped. `GET /api/webhooks/events` answers the names this gateway accepts. |
+| `events` | An array of event names, or the single element `*` for every event. Omitted or empty means `*`. An unknown name is **400**, not silently dropped. `GET /api/webhooks/events` answers the names this gateway accepts. |
 
 The filter is exact-match per name: `*` is the only wildcard, and neither
 `marketplace.*` nor `marketplace.snapshot.*` is a valid filter. A subscriber only
