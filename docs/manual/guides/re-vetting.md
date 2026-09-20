@@ -188,7 +188,7 @@ notification is a follow-on; what exists today is the list an operator acts on.
 ## Getting a revoked snapshot back
 
 There is no un-revoke. The route back is the ordinary
-[approve](approving-snapshots.md#re-approving-a-revoked-snapshot) endpoint,
+[approve](approving-snapshots.md#re-approving-a-snapshot-re-vetting-revoked) endpoint,
 behind the same gate:
 
 1. Read the violation — the blocking findings are on the snapshot's vetting
