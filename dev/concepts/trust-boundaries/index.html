@@ -2445,6 +2445,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#credentials-at-rest-two-postures-and-the-reason-they-differ" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Credentials at rest — two postures, and the reason they differ
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-forge-mirror-outbound-and-outside-the-boundary" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2651,6 +2662,17 @@
     <span class="md-ellipsis">
       
         The storage itself
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#credentials-at-rest-two-postures-and-the-reason-they-differ" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Credentials at rest — two postures, and the reason they differ
       
     </span>
   </a>
@@ -3181,6 +3203,25 @@ anyone else's, and no way to detect one that already happened. What it does do
 is refuse to start against a store whose conditional writes are not faithful, so
 that its <em>own</em> concurrent writers cannot lose a transition. That is a different
 guarantee, and it is not a substitute for the policy.</p>
+<h2 id="credentials-at-rest-two-postures-and-the-reason-they-differ">Credentials at rest — two postures, and the reason they differ<a class="headerlink" href="#credentials-at-rest-two-postures-and-the-reason-they-differ" title="Permanent link">&para;</a></h2>
+<p>The database holds two kinds of secret, and they are stored differently on
+purpose. Stated here because the difference looks like an oversight and is not.</p>
+<p><strong>Personal access tokens are hashed.</strong> A PAT is verified by hashing what the
+client sent and comparing, so the gateway never needs the cleartext again. It is
+shown exactly once at creation and cannot be recovered afterwards — not by an
+administrator, not by a database reader.</p>
+<p><strong>Signing secrets are stored in cleartext.</strong> <code>webhook_subscribers.secret</code> and a
+hosted marketplace's <code>marketplaces.webhook_secret</code> are HMAC keys: signing an
+outbound delivery and verifying an inbound push both require the key itself, so a
+hash would make them useless. They are returned exactly once by the call that
+generates them and by no read endpoint afterwards, but they are readable to
+anything that can read the table.</p>
+<p>The consequence is worth being plain about: <strong>a database reader can forge a
+delivery signature and can forge an inbound push event.</strong> The mitigation is that
+the database is inside the trust boundary and is expected to be treated as such —
+the same expectation the storage volume carries above. Encrypting the column
+against a key held elsewhere would change that, and the gateway does not do it
+today.</p>
 <h2 id="the-forge-mirror-outbound-and-outside-the-boundary">The forge mirror — outbound, and outside the boundary<a class="headerlink" href="#the-forge-mirror-outbound-and-outside-the-boundary" title="Permanent link">&para;</a></h2>
 <p>The optional <a href="../../guides/read-only-forge-mirror/">read-only mirror</a> puts a copy
 of approved content on a host the gateway does not control. That copy is
