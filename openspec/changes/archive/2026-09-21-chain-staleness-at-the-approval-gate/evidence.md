@@ -67,9 +67,13 @@ implementation.** GW_VETTING_0038.1 had its SVC and its test but no
 
 ## Notes on the runs
 
-- **`E2E_GATEWAY_PORT=18500` was required** — an unrelated process on this
-  machine holds 8081. That is issue #458, fixed in flight as PR #461, not on
-  this branch.
+- **The port override is no longer needed** (updated after rebase). The run
+  tabled above needed `E2E_GATEWAY_PORT=18500`, because an unrelated process
+  holds 8081. #461 and #464 have since merged and this branch was rebased onto
+  them; the whole gate set was re-run on that base with no override:
+  `21 passed (1.7m)` e2e, `50 passed (50)` stories, `Tests run: 733` Java, and
+  `255/255 complete · PASS` for requirements — 255 rather than 253 because
+  #464's two retention requirements are now in the base.
 - **The jar bundles the portal.** `pnpm e2e` runs the newest jar under
   `target/`, so a frontend fix made after `mvnw verify` is not in it. The
   invalidation fix above appeared not to work until
