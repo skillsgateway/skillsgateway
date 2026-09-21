@@ -40,6 +40,23 @@ public class GatewayMetrics {
      */
     public static final String HELD_CONTENT_ANSWERS = "skills_gateway.facade.held_content_answers";
 
+    /**
+     * Rows in the audit ledger (GW_RETENTION_0009). "The table that ends the deployment" is only
+     * visible before it does if somebody is watching the number.
+     */
+    public static final String LEDGER_DEPTH = "skills_gateway.ledger.entries";
+
+    /**
+     * Seconds since the oldest ledger entry no enabled export sink has taken, or zero when there is
+     * nothing un-exported.
+     *
+     * <p>This is the gauge for the deployment the trim deliberately does nothing in: with no sink,
+     * nothing is eligible and the ledger grows forever, and this is where that shows up as a rising
+     * line rather than as a surprise. It is <em>defined</em> and not absent in that case, because a
+     * missing series is one nobody alerts on.
+     */
+    public static final String LEDGER_EXPORT_LAG = "skills_gateway.ledger.export_lag_seconds";
+
     private final ObservationRegistry observations;
     private final MeterRegistry meters;
 

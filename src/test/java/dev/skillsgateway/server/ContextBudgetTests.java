@@ -66,7 +66,12 @@ class ContextBudgetTests {
      * {@code ForwardedHeadersRelativeRedirectsTests} onto a {@code WebApplicationContextRunner}.
      * Lower it whenever the count drops; raise it only with a reason worth reading.
      */
-    private static final int BUDGET = 25;
+    // 26 since bound-ledger-growth. `LedgerTrimTests` deletes rows from `fetch_log`, which every
+    // suite in the shared context writes to, and its assertions turn on which export sinks are
+    // enabled — state those suites own. Sharing would have meant damaging their rows or weakening
+    // the negative assertions that justify a change which deletes audit evidence. The change's
+    // tasks.md asked for the shared context; this is the deliberate departure, and its reason.
+    private static final int BUDGET = 26;
 
     /** Where the measured breakdown is written, so a run's numbers survive for a PR body. */
     private static final Path REPORT = Path.of("target", "context-budget.txt");

@@ -29,7 +29,7 @@ Every capability area the gateway has today, one row each. If you are asking
 | Adoption reporting | Derives install inventory and staleness against the served tip from the fetch ledger. | — | `GW_OBSERVABILITY` | [Adoption API](reference/api/adoption.md) |
 | Observability | Records gateway metrics, storage health and mirror divergence whether or not anybody asks. | — | `GW_OBSERVABILITY` | [Observability](reference/observability.md) |
 | Lifecycle webhooks | Delivers signed snapshot-lifecycle events to subscribers with retry and backoff. | — | `GW_WEBHOOK` | [Lifecycle webhooks](guides/lifecycle-webhooks.md) |
-| Retention | Soft-deletes and then compacts eligible snapshots; approved ones are never eligible. | — | `GW_RETENTION` | [Reclaiming snapshot storage](guides/snapshot-retention.md) |
+| Retention | Soft-deletes and then compacts eligible snapshots; approved ones are never eligible. The same pass trims audit-ledger read entries, only behind every enabled export sink and never the administrative half. | — | `GW_RETENTION` | [Reclaiming snapshot storage](guides/snapshot-retention.md) |
 | Declarative estate | Reconciles marketplaces, role grants, policy rules and webhook receivers from configuration through the same audited paths as the API. | Registration, Roles | `GW_ESTATE` | [Declarative estate configuration](guides/declarative-estate.md) |
 | Admin portal | The eight pages an operator works in: overview, marketplaces, marketplace detail, vetting, audit, adoption, tokens, webhooks. | Web surface | `GW_AUTH` | [Admin portal](reference/portal.md) |
 | REST API contract | Serves and publishes the versioned contract document, and detects a breaking change to it. | — | `GW_API` | [REST API overview](reference/api/index.md) |

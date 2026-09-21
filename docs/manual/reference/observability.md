@@ -21,6 +21,8 @@ a time series.
 | `skills_gateway.approval` | timer (observation) | `decision=approve\|reject`, `outcome=success\|error` | Each approval decision. A vetting-blocked approval lands on `outcome=error` and still surfaces its refusal unchanged. |
 | `skills_gateway.facade.fetches` | counter | `event=info-refs\|upload-pack` | Every facade fetch entry as it is appended to the ledger. |
 | `skills_gateway.catalog.collisions` | counter | — | Each catalog name a rebuild withheld because more than one plugin claimed it. Untagged for the reason above: *which* name is a [ledger](api/audit.md) question. |
+| `skills_gateway.ledger.entries` | gauge | — | Approximate rows in the audit ledger, from the planner's estimate rather than a count — reading it must not scan the table it exists to warn about. |
+| `skills_gateway.ledger.export_lag_seconds` | gauge | — | Age of the oldest ledger entry no enabled export sink has taken. **Watch this**: with no sink registered the [ledger trim](../guides/snapshot-retention.md#7-bound-the-audit-ledger) removes nothing by design, and this is the line that climbs while it does. Zero when every entry has been exported. |
 
 The ingestion and approval instruments are Micrometer *observations*, so when
 tracing is enabled they also produce spans with the same names and tags.

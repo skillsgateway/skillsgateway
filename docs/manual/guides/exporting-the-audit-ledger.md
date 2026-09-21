@@ -173,6 +173,18 @@ Replay is a cursor write, not a mode:
 Everything after that position is delivered again on the next pass. **200** with
 the updated sink, **404** if the sink is unknown.
 
+!!! note "Replay reaches only what the ledger still holds"
+
+    If [ledger retention](snapshot-retention.md#7-bound-the-audit-ledger) is
+    enabled, trimming removes only entries **every** enabled sink has already
+    taken. So rewinding an existing sink can never ask for something it was not
+    handed once — but a sink **registered later**, starting at position `0`,
+    receives the ledger from the oldest surviving entry rather than from the
+    beginning of time.
+
+    Register the sinks you need **before** enabling the trim. A sink that does
+    not exist yet holds no position, and so bounds nothing.
+
 The sink list also reports how far behind the ledger head each sink is, which is
 the signal that a receiver is failing or that a batch size is too small for the
 poll interval:

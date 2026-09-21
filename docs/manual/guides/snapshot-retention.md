@@ -164,8 +164,56 @@ Soft delete and restore also fire the `marketplace.snapshot.soft_deleted` and
 the same way it follows approvals — see
 [Receiving lifecycle webhooks](lifecycle-webhooks.md).
 
+## 7. Bound the audit ledger
+
+Retention compacts *snapshots*. The audit ledger grows independently, and it grows
+faster: `info-refs` is appended on every `git fetch` whether or not anything
+transfers, so a few thousand developers polling every half hour is a couple of
+hundred thousand rows a day, and nothing removed them.
+
+The same six-hourly compaction pass now trims it, behind the same
+`enabled` switch and one setting:
+
+```yaml
+skills-gateway:
+  retention:
+    enabled: true
+    ledger-max-age: 90d
+```
+
+!!! warning "A ledger no sink exports is never trimmed — whatever this is set to"
+
+    An entry is eligible only when it is **both** older than `ledger-max-age`
+    **and** already taken by every enabled
+    [audit export sink](exporting-the-audit-ledger.md). The export position is
+    the gateway's only evidence that some other system holds a copy, so trimming
+    behind it is the one deletion that destroys no record.
+
+    With no enabled sink there is no such position, nothing is eligible, and the
+    trim does nothing at all. **Registering an export destination is the price of
+    bounding the table** — the gateway will not be both the sole holder of the
+    audit evidence and the thing that deletes it. Watch
+    `skills_gateway.ledger.export_lag_seconds` to see the ledger you are keeping
+    forever; see [Observability](../reference/observability.md).
+
+Unset, zero or negative switches the trim off rather than making every entry
+instantly eligible: the mis-typed value must not be the one that deletes.
+
+**Administrative entries are never trimmed.** Only the two facade read events
+(`info-refs`, `upload-pack`) are eligible; approvals, rejections, revocations,
+registrations, token and sink lifecycle — the compliance-bearing half, and the
+low-volume one — survive every pass whatever their age. The admitted set is a
+closed allowlist, so a ledger event added to the gateway later is not trimmable
+until somebody deliberately admits it.
+
+Each pass is bounded by a fixed work budget and resumes on the next one, so the
+first run against a ledger years deep does not hold the compaction lease until it
+finishes. When a pass removes anything it logs how many and which sink bounded
+it.
+
 ## Turning it off again
 
 Set `enabled: false`. The schedulers stop; already-marked snapshots keep their
 marks and stay restorable, and nothing new is selected or purged. Restoring them
-is the explicit second step.
+is the explicit second step. The ledger trim stops with them — it is a duty of the
+same pass — and clearing `ledger-max-age` stops it on its own.

@@ -113,9 +113,20 @@ class StagingRefSweepTests extends AbstractGatewayTest {
         return objectStoreStorage;
     }
 
+    @Autowired
+    private dev.skillsgateway.server.persistence.AuditSinkRepository auditSinkRepository;
+
     private RetentionService retentionOver(GitStorage over, SkillsGatewayProperties settings) {
         return new RetentionService(
-                marketplaceRepository, snapshotRepository, sightings, over, auditLogger, webhookService, settings);
+                marketplaceRepository,
+                snapshotRepository,
+                sightings,
+                over,
+                auditLogger,
+                webhookService,
+                auditSinkRepository,
+                fetchLogRepository,
+                settings);
     }
 
     // --- the four properties, on both backends --------------------------------------------------
@@ -378,7 +389,7 @@ class StagingRefSweepTests extends AbstractGatewayTest {
     /** The context's settings with one knob moved; nothing else in them reaches the sweep. */
     private SkillsGatewayProperties withStagingBound(Duration bound) {
         SkillsGatewayProperties.Retention retention =
-                new SkillsGatewayProperties.Retention(null, null, null, null, bound, null, null);
+                new SkillsGatewayProperties.Retention(null, null, null, null, bound, null, null, null);
         return new SkillsGatewayProperties(
                 properties.dataDir(),
                 null,
