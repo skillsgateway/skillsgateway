@@ -694,7 +694,7 @@ export function useWebhookDeliveries() {
 export function useCreateWebhookSubscriber() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (request: { name: string; url: string; events: string }) =>
+    mutationFn: (request: { name: string; url: string; events: string[] }) =>
       api<CreatedSubscriber>("/api/webhooks", { method: "POST", body: JSON.stringify(request) }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["webhook-subscribers"] }),
   });

@@ -1266,7 +1266,9 @@ skills-gateway:
     webhooks:
       - name: ci-bot
         url: https://ci.example.com/hooks/skills-gateway
-        events: marketplace.snapshot.approved,marketplace.snapshot.rejected   # omit for all events
+        events:                                 # omit for all events
+          - marketplace.snapshot.approved
+          - marketplace.snapshot.rejected
         secret: ${SGW_ESTATE_CI_BOT_SECRET}
 
     # Audit export sinks; same secret contract as webhooks.
@@ -1294,7 +1296,7 @@ skills-gateway:
 | `skills-gateway.estate.marketplaces[].url` | string | — | Scheme must be allowlisted. Immutable once registered: a differing declared URL is a reconciliation failure, never an update. |
 | `skills-gateway.estate.marketplaces[].sync-mode` | string | unset (not managed) | `on-demand` or `scheduled`; `webhook` is refused. Unset never touches the stored mode. |
 | `skills-gateway.estate.grants` | list | `[]` | Each entry: `principal`, `role` (`admin`/`approver`/`auditor`), `marketplace` (required for approver, forbidden otherwise). |
-| `skills-gateway.estate.webhooks` | list | `[]` | Each entry: `name`, `url`, optional `events`, `secret`. |
+| `skills-gateway.estate.webhooks` | list | `[]` | Each entry: `name`, `url`, optional `events` (a list; omitted means every event), `secret`. |
 | `skills-gateway.estate.webhooks[].secret` | string | — | Operator-supplied, minimum 16 characters, write-only. A changed value rotates the stored secret idempotently. |
 | `skills-gateway.estate.audit-sinks` | list | `[]` | Each entry: `name`, `url`, `secret`, optional `after`, optional `batch-size`. |
 | `skills-gateway.estate.audit-sinks[].after` | long | `0` | Seeds the ledger cursor **at creation only**; never re-applied to an existing sink. |

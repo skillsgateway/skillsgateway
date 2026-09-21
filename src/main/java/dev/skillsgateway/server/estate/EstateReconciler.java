@@ -246,7 +246,7 @@ public class EstateReconciler {
             return Entry.created("webhook", declared.name(), null);
         }
         WebhookSubscriber stored = existing.get();
-        String events = WebhookService.normalizeEvents(declared.events());
+        List<String> events = WebhookService.normalizeEvents(declared.events());
         List<String> changes = new ArrayList<>();
         if (!stored.url().equals(declared.url())) {
             changes.add("url");

@@ -2,6 +2,7 @@ package dev.skillsgateway.server.approval;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
+import java.util.List;
 
 /**
  * The record that an administrator approved a snapshot over a blocked vetting outcome (GW_VETTING_0028) —
@@ -14,7 +15,7 @@ import java.time.Instant;
  *
  * @param reason the administrator's stated reason for taking responsibility for the block
  * @param blockingVetters the vetters that were blocking at the moment of the override
- * @param uncoveredFindings a human-readable summary of the blocking findings no waiver covered
+ * @param uncoveredFindings the blocking findings no waiver covered, one entry each
  */
 @Schema(description = "An administrator's override of a blocked vetting outcome on a snapshot")
 public record VettingOverrideRecord(
@@ -26,11 +27,11 @@ public record VettingOverrideRecord(
         @Schema(description = "The administrator's stated reason")
         String reason,
 
-        @Schema(description = "The vetters that were blocking, comma-separated")
-        String blockingVetters,
+        @Schema(description = "The vetters that were blocking")
+        List<String> blockingVetters,
 
         @Schema(description = "Summary of the blocking findings no waiver covered")
-        String uncoveredFindings,
+        List<String> uncoveredFindings,
 
         @Schema(description = "Identity of the administrator who overrode the block")
         String overriddenBy,

@@ -57,9 +57,10 @@ public class WebhookController {
             String url,
 
             @Schema(
-                    description = "Comma-delimited event filter, or * for every event",
-                    example = "marketplace.snapshot.approved,marketplace.snapshot.rejected")
-            String events) {}
+                    description = "Event filter; the single element * subscribes to every event."
+                            + " Omitted or empty means every event.",
+                    example = "[\"marketplace.snapshot.approved\", \"marketplace.snapshot.rejected\"]")
+            List<String> events) {}
 
     /** Never exposes the signing secret; it is returned only by the creation response. */
     @Schema(description = "A webhook subscriber without its signing secret")
@@ -68,8 +69,8 @@ public class WebhookController {
             @Schema(description = "Subscriber name") String name,
             @Schema(description = "Target URL") String url,
 
-            @Schema(description = "Comma-delimited event filter, or *")
-            String events,
+            @Schema(description = "Event filter; the single element * means every event")
+            List<String> events,
 
             @Schema(description = "Whether deliveries are queued for this subscriber")
             boolean enabled,

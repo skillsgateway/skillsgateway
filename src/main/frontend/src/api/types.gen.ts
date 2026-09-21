@@ -2117,10 +2117,13 @@ export interface components {
         /** @description Webhook subscriber registration request */
         CreateSubscriberRequest: {
             /**
-             * @description Comma-delimited event filter, or * for every event
-             * @example marketplace.snapshot.approved,marketplace.snapshot.rejected
+             * @description Event filter; the single element * subscribes to every event. Omitted or empty means every event.
+             * @example [
+             *       "marketplace.snapshot.approved",
+             *       "marketplace.snapshot.rejected"
+             *     ]
              */
-            events?: string;
+            events?: string[];
             /**
              * @description Gateway-local subscriber name
              * @example ci-bot
@@ -2187,8 +2190,8 @@ export interface components {
              * @description Creation time
              */
             createdAt?: string;
-            /** @description Comma-delimited event filter, or * for all */
-            events?: string;
+            /** @description Event filter; the single element * means every event */
+            events?: string[];
             /**
              * Format: int64
              * @description Subscriber id
@@ -3370,8 +3373,8 @@ export interface components {
             createdAt?: string;
             /** @description Whether deliveries are queued for this subscriber */
             enabled?: boolean;
-            /** @description Comma-delimited event filter, or * */
-            events?: string;
+            /** @description Event filter; the single element * means every event */
+            events?: string[];
             /**
              * Format: int64
              * @description Subscriber id
@@ -3566,8 +3569,8 @@ export interface components {
         };
         /** @description An administrator's override of a blocked vetting outcome on a snapshot */
         VettingOverrideRecord: {
-            /** @description The vetters that were blocking, comma-separated */
-            blockingVetters?: string;
+            /** @description The vetters that were blocking */
+            blockingVetters?: string[];
             /**
              * Format: int64
              * @description Override id
@@ -3588,7 +3591,7 @@ export interface components {
              */
             snapshotId?: number;
             /** @description Summary of the blocking findings no waiver covered */
-            uncoveredFindings?: string;
+            uncoveredFindings?: string[];
         };
         /** @description Content-free summary of the vetting chain run a snapshot is waiting on */
         VettingSummary: {

@@ -157,7 +157,7 @@ export const subscriber: Schemas["SubscriberView"] = {
   id: 3,
   name: "ci-bot",
   url: "https://ci.example.com/hooks/skills-gateway",
-  events: "marketplace.snapshot.approved",
+  events: ["marketplace.snapshot.approved"],
   enabled: true,
   createdAt: "2026-08-14T10:00:00Z",
 };
@@ -226,7 +226,7 @@ export const createdSubscriber: Schemas["CreatedSubscriber"] = {
   id: 4,
   name: "new-bot",
   url: "https://ci.example.com/hooks/skills-gateway",
-  events: "*",
+  events: ["*"],
   secret: "whsec_shown_once",
   createdAt: "2026-08-14T10:00:00Z",
 };

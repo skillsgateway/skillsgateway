@@ -1,7 +1,6 @@
 package dev.skillsgateway.server.persistence;
 
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -16,21 +15,18 @@ public record AccessToken(
         String tokenHash,
         Instant createdAt,
         Instant revokedAt,
-        String scopes,
+        List<String> scopes,
         Instant expiresAt,
         Long rotatedFrom,
-        String pushScopes,
+        List<String> pushScopes,
         boolean sessionDerived,
-        String apiScopes,
+        List<String> apiScopes,
         String machineOwner,
         Instant lastUsedAt) {
 
     /** The scope list, empty meaning every marketplace (GW_AUTH_0006). */
     public List<String> scopeList() {
-        if (scopes == null || scopes.isBlank()) {
-            return List.of();
-        }
-        return Arrays.asList(scopes.split(","));
+        return scopes == null ? List.of() : scopes;
     }
 
     /**
@@ -57,10 +53,7 @@ public record AccessToken(
 
     /** The push scope list; empty means this token may push nowhere (GW_FACADE_0007). */
     public List<String> pushScopeList() {
-        if (pushScopes == null || pushScopes.isBlank()) {
-            return List.of();
-        }
-        return Arrays.asList(pushScopes.split(","));
+        return pushScopes == null ? List.of() : pushScopes;
     }
 
     /**
@@ -93,10 +86,7 @@ public record AccessToken(
      * </ul>
      */
     public List<String> apiScopeList() {
-        if (apiScopes == null || apiScopes.isBlank()) {
-            return List.of();
-        }
-        return Arrays.asList(apiScopes.split(","));
+        return apiScopes == null ? List.of() : apiScopes;
     }
 
     /**

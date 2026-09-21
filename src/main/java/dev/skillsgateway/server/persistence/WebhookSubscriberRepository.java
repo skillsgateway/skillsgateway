@@ -1,5 +1,7 @@
 package dev.skillsgateway.server.persistence;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -15,41 +17,41 @@ public class WebhookSubscriberRepository {
         this.jdbc = jdbc;
     }
 
-    public WebhookSubscriber create(String name, String url, String secret, String events) {
+    public WebhookSubscriber create(String name, String url, String secret, List<String> events) {
         return jdbc.sql("INSERT INTO webhook_subscribers (name, url, secret, events, enabled, created_at)"
-                        + " VALUES (:name, :url, :secret, :events, TRUE, :now) RETURNING *")
+                        + " VALUES (:name, :url, :secret, :events::text[], TRUE, :now) RETURNING *")
                 .param("name", name)
                 .param("url", url)
                 .param("secret", secret)
-                .param("events", events)
+                .param("events", SqlArrays.literal(events))
                 .param("now", OffsetDateTime.now())
-                .query(WebhookSubscriber.class)
+                .query(WebhookSubscriberRepository::map)
                 .single();
     }
 
     public List<WebhookSubscriber> list() {
         return jdbc.sql("SELECT * FROM webhook_subscribers ORDER BY id")
-                .query(WebhookSubscriber.class)
+                .query(WebhookSubscriberRepository::map)
                 .list();
     }
 
     public List<WebhookSubscriber> listEnabled() {
         return jdbc.sql("SELECT * FROM webhook_subscribers WHERE enabled ORDER BY id")
-                .query(WebhookSubscriber.class)
+                .query(WebhookSubscriberRepository::map)
                 .list();
     }
 
     public Optional<WebhookSubscriber> findById(long id) {
         return jdbc.sql("SELECT * FROM webhook_subscribers WHERE id = :id")
                 .param("id", id)
-                .query(WebhookSubscriber.class)
+                .query(WebhookSubscriberRepository::map)
                 .optional();
     }
 
     public Optional<WebhookSubscriber> findByName(String name) {
         return jdbc.sql("SELECT * FROM webhook_subscribers WHERE name = :name")
                 .param("name", name)
-                .query(WebhookSubscriber.class)
+                .query(WebhookSubscriberRepository::map)
                 .optional();
     }
 
@@ -58,14 +60,14 @@ public class WebhookSubscriberRepository {
      * — the estate reconciler — has already diffed, so a call here is always a real change; the
      * secret value never appears anywhere but this parameter and the stored row.
      */
-    public Optional<WebhookSubscriber> update(long id, String url, String secret, String events) {
-        return jdbc.sql("UPDATE webhook_subscribers SET url = :url, secret = :secret, events = :events"
+    public Optional<WebhookSubscriber> update(long id, String url, String secret, List<String> events) {
+        return jdbc.sql("UPDATE webhook_subscribers SET url = :url, secret = :secret, events = :events::text[]"
                         + " WHERE id = :id RETURNING *")
                 .param("url", url)
                 .param("secret", secret)
-                .param("events", events)
+                .param("events", SqlArrays.literal(events))
                 .param("id", id)
-                .query(WebhookSubscriber.class)
+                .query(WebhookSubscriberRepository::map)
                 .optional();
     }
 
@@ -74,5 +76,17 @@ public class WebhookSubscriberRepository {
                         .param("id", id)
                         .update()
                 > 0;
+    }
+
+    /** Explicit mapping because {@code events} is {@code TEXT[]}; the column is never NULL. */
+    private static WebhookSubscriber map(ResultSet rs, int rowNum) throws SQLException {
+        return new WebhookSubscriber(
+                rs.getLong("id"),
+                rs.getString("name"),
+                rs.getString("url"),
+                rs.getString("secret"),
+                SqlArrays.readOrEmpty(rs, "events"),
+                rs.getBoolean("enabled"),
+                rs.getObject("created_at", OffsetDateTime.class).toInstant());
     }
 }

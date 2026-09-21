@@ -1,7 +1,6 @@
 package dev.skillsgateway.server.persistence;
 
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -9,19 +8,13 @@ import java.util.List;
  * exposed by any read endpoint after creation (GW_WEBHOOK_0002).
  */
 public record WebhookSubscriber(
-        long id, String name, String url, String secret, String events, boolean enabled, Instant createdAt) {
+        long id, String name, String url, String secret, List<String> events, boolean enabled, Instant createdAt) {
 
     /** Event filter value subscribing to every lifecycle event. */
     public static final String ALL_EVENTS = "*";
 
     public List<String> eventFilter() {
-        if (events == null || events.isBlank()) {
-            return List.of();
-        }
-        return Arrays.stream(events.split(","))
-                .map(String::trim)
-                .filter(event -> !event.isEmpty())
-                .toList();
+        return events == null ? List.of() : events;
     }
 
     /** True when this subscriber asked for {@code event} (GW_WEBHOOK_0001). */

@@ -223,7 +223,7 @@ class SweepCoordinationTests extends AbstractGatewayTest {
 
     private AuditSink newSink(String name) {
         long subscriberId = subscriberRepository
-                .create(name, "https://siem.invalid/ingest", "whsec_" + name, "audit.export")
+                .create(name, "https://siem.invalid/ingest", "whsec_" + name, List.of("audit.export"))
                 .id();
         return sinkRepository.create(name, "webhook", subscriberId, 0L, 500);
     }

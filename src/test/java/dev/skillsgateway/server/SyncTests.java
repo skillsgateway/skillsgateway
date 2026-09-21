@@ -206,7 +206,11 @@ class SyncTests extends AbstractGatewayTest {
         Marketplace marketplace =
                 marketplaceRepository.register(name, upstream.toAbsolutePath().toString());
         long subscriberId = subscriberRepository
-                .create(uniqueName("sub"), "http://127.0.0.1:9/sink", "sub-secret", "marketplace.snapshot.ingested")
+                .create(
+                        uniqueName("sub"),
+                        "http://127.0.0.1:9/sink",
+                        "sub-secret",
+                        List.of("marketplace.snapshot.ingested"))
                 .id();
         try {
             String me = JsonPath.read(

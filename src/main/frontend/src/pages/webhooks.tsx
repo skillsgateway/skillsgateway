@@ -101,8 +101,8 @@ function deliveryBadge(state: string | undefined) {
  *  receiving events added to the registry after the subscriber was registered. */
 export const ALL_EVENTS = "*";
 
-function toWireFilter(selected: Set<string>, registry: string[]): string {
-  return selected.size === registry.length ? ALL_EVENTS : registry.filter((e) => selected.has(e)).join(",");
+function toWireFilter(selected: Set<string>, registry: string[]): string[] {
+  return selected.size === registry.length ? [ALL_EVENTS] : registry.filter((e) => selected.has(e));
 }
 
 /**
@@ -176,16 +176,16 @@ function EventFilterField({
  * called out rather than shown as an ordinary filter: it matches nothing, so the subscriber looks
  * healthy while receiving less than its owner thinks — the failure this whole field exists to stop.
  */
-function StoredFilter({ filter, registry }: { filter: string | undefined; registry: string[] }) {
-  if (!filter || filter === ALL_EVENTS) {
+function StoredFilter({ filter, registry }: { filter: string[] | undefined; registry: string[] }) {
+  if (!filter || filter.length === 0 || (filter.length === 1 && filter[0] === ALL_EVENTS)) {
     return <span className="rounded-md border bg-muted px-2 py-0.5 text-xs">all events</span>;
   }
-  const names = filter.split(",").map((name) => name.trim()).filter(Boolean);
+  const names = filter;
   // Until the registry loads there is nothing to check against, so nothing is called unknown.
   const unknown = registry.length === 0 ? [] : names.filter((name) => !registry.includes(name));
   return (
     <span className="space-x-1">
-      <span className="rounded-md border bg-muted px-2 py-0.5 text-xs">{filter}</span>
+      <span className="rounded-md border bg-muted px-2 py-0.5 text-xs">{filter.join(", ")}</span>
       {unknown.length > 0 ? (
         <Badge variant="destructive" title={`Not emitted by this gateway: ${unknown.join(", ")}`}>
           {unknown.length === 1 ? "unknown event" : "unknown events"}

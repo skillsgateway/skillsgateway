@@ -77,7 +77,7 @@ test("every_event_selected_submits_the_wildcard_filter", async () => {
   server.use(
     http.post("/api/webhooks", async ({ request }) => {
       submitted = await request.json();
-      return HttpResponse.json({ id: 9, name: "x", url: "https://x.test", events: "*", secret: "s" }, { status: 201 });
+      return HttpResponse.json({ id: 9, name: "x", url: "https://x.test", events: ["*"], secret: "s" }, { status: 201 });
     }),
   );
   renderPage();
@@ -93,17 +93,17 @@ test("every_event_selected_submits_the_wildcard_filter", async () => {
   await waitFor(() => expect(submitted).toEqual({
     name: "ci-bot",
     url: "https://ci.example.com/hooks",
-    events: "*",
+    events: ["*"],
   }));
 });
 
-test("a_partial_selection_submits_the_comma_delimited_names", async () => {
+test("a_partial_selection_submits_the_selected_names", async () => {
   const user = userEvent.setup();
   let submitted: unknown = null;
   server.use(
     http.post("/api/webhooks", async ({ request }) => {
       submitted = await request.json();
-      return HttpResponse.json({ id: 9, name: "x", url: "https://x.test", events: "x", secret: "s" }, { status: 201 });
+      return HttpResponse.json({ id: 9, name: "x", url: "https://x.test", events: ["x"], secret: "s" }, { status: 201 });
     }),
   );
   renderPage();
@@ -122,7 +122,7 @@ test("a_partial_selection_submits_the_comma_delimited_names", async () => {
     expect(submitted).toEqual({
       name: "ci-bot",
       url: "https://ci.example.com/hooks",
-      events: "marketplace.snapshot.approved,marketplace.snapshot.revoked",
+      events: ["marketplace.snapshot.approved", "marketplace.snapshot.revoked"],
     }),
   );
 });
@@ -159,7 +159,7 @@ test("a_stored_filter_naming_an_unknown_event_is_marked", async () => {
   server.use(
     http.get("/api/webhooks", () =>
       HttpResponse.json([
-        { id: 1, name: "stale-bot", url: "https://stale.test/hook", events: "marketplace.snapshot.aproved", enabled: true },
+        { id: 1, name: "stale-bot", url: "https://stale.test/hook", events: ["marketplace.snapshot.aproved"], enabled: true },
       ]),
     ),
   );

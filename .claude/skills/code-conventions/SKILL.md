@@ -41,6 +41,10 @@ openspec validate --all --strict
   takes two migrations), and no value can ever be dropped — `ALTER TYPE ... DROP
   VALUE` is "not implemented", so removing one means a replacement type and a
   rewrite of every dependent column.
+- A multi-valued column is `TEXT[]`, never a delimited string parsed in Java.
+  The array keeps the elements visible to the database, so membership is an
+  indexable `'acme' = ANY(scopes)` and cardinality is a `CHECK` rather than a
+  comment; a delimiter also silently depends on no value ever containing it.
 - JGit for all git operations — never subprocess git in production code.
   Tests may run the git binary only via `AbstractGatewayTest.git(...)`
   (isolated from host config).

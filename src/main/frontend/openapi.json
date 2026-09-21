@@ -728,9 +728,15 @@
         "description": "Webhook subscriber registration request",
         "properties": {
           "events": {
-            "description": "Comma-delimited event filter, or * for every event",
-            "example": "marketplace.snapshot.approved,marketplace.snapshot.rejected",
-            "type": "string"
+            "description": "Event filter; the single element * subscribes to every event. Omitted or empty means every event.",
+            "example": [
+              "marketplace.snapshot.approved",
+              "marketplace.snapshot.rejected"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "name": {
             "description": "Gateway-local subscriber name",
@@ -827,8 +833,11 @@
             "type": "string"
           },
           "events": {
-            "description": "Comma-delimited event filter, or * for all",
-            "type": "string"
+            "description": "Event filter; the single element * means every event",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "id": {
             "description": "Subscriber id",
@@ -2804,8 +2813,11 @@
             "type": "boolean"
           },
           "events": {
-            "description": "Comma-delimited event filter, or *",
-            "type": "string"
+            "description": "Event filter; the single element * means every event",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "id": {
             "description": "Subscriber id",
@@ -3133,8 +3145,11 @@
         "description": "An administrator's override of a blocked vetting outcome on a snapshot",
         "properties": {
           "blockingVetters": {
-            "description": "The vetters that were blocking, comma-separated",
-            "type": "string"
+            "description": "The vetters that were blocking",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "id": {
             "description": "Override id",
@@ -3161,7 +3176,10 @@
           },
           "uncoveredFindings": {
             "description": "Summary of the blocking findings no waiver covered",
-            "type": "string"
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           }
         },
         "type": "object"
