@@ -2788,14 +2788,14 @@ the usual SSO, and the token it receives is sent as
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p>The repository's end-to-end suite runs a mock OIDC provider on
-<code>localhost:9090</code> and the gateway on <code>localhost:8081</code>. Against that pair, with
+<code>localhost:9090</code> and the gateway on <code>localhost:18081</code>. Against that pair, with
 the gateway started with <code>SKILLSGATEWAY_FACADE_IDPBEARER_ENABLED=true</code> and
 <code>SKILLSGATEWAY_OIDC_ISSUER=http://localhost:9090/default</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>credential.http://localhost:8081.oauthClientId<span class="w"> </span>e2e-client
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="gp">$ </span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>credential.http://localhost:8081.oauthAuthorizeEndpoint<span class="w"> </span>http://localhost:9090/default/authorize
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="gp">$ </span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>credential.http://localhost:8081.oauthTokenEndpoint<span class="w"> </span>http://localhost:9090/default/token
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="gp">$ </span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>credential.http://localhost:8081.oauthScopes<span class="w"> </span>openid
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="gp">$ </span>git<span class="w"> </span>clone<span class="w"> </span>http://localhost:8081/git/acme
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>credential.http://localhost:18081.oauthClientId<span class="w"> </span>e2e-client
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="gp">$ </span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>credential.http://localhost:18081.oauthAuthorizeEndpoint<span class="w"> </span>http://localhost:9090/default/authorize
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="gp">$ </span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>credential.http://localhost:18081.oauthTokenEndpoint<span class="w"> </span>http://localhost:9090/default/token
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="gp">$ </span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>credential.http://localhost:18081.oauthScopes<span class="w"> </span>openid
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="gp">$ </span>git<span class="w"> </span>clone<span class="w"> </span>http://localhost:18081/git/acme
 </code></pre></div>
 <p>The values are real — they are the ones
 <a href="https://github.com/skillsgateway/skillsgateway/blob/main/src/main/frontend/e2e/run-e2e.sh"><code>e2e/run-e2e.sh</code></a>
